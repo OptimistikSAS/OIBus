@@ -3,8 +3,8 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="engine.scan-mode.list" id="title"></span>
-        @if (allScanModes.length) {
-          <span class="mx-1">({{ allScanModes.length }})</span>
+        @if (allScanModes().length) {
+          <span class="mx-1">({{ allScanModes().length }})</span>
         }
       </div>
       <div>
@@ -24,7 +24,8 @@
 </oib-box>
 
 <!-- the scan mode list -->
-@if (displayedScanModes.content.length !== 0) {
+@let displayed = displayedScanModes();
+@if (displayed.content.length !== 0) {
   <div>
     <table class="mb-2 table table-sm table-hover oib-table">
       <thead class="light">
@@ -51,7 +52,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (scanMode of displayedScanModes.content; track scanMode.id) {
+        @for (scanMode of displayed.content; track scanMode.id) {
           <tr>
             <td>{{ scanMode.name }}</td>
             <td>{{ scanMode.description }}</td>
@@ -111,8 +112,8 @@
         }
       </tbody>
     </table>
-    @if (displayedScanModes.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedScanModes" (pageChanged)="changePage($event)" />
+    @if (displayed.totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayed" (pageChanged)="changePage($event)" />
     }
   </div>
 } @else {

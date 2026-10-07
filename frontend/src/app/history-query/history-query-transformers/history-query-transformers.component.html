@@ -14,7 +14,7 @@
       </div>
     </div>
   </ng-template>
-  @if (transformersWithOptions.length) {
+  @if (transformersWithOptions().length) {
     <div class="mb-3 px-2">
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
@@ -25,7 +25,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.id) {
+          @for (transformerWithOptions of transformersWithOptions(); track transformerWithOptions.id) {
             <tr>
               <td>
                 @let itemLabel = getHistorySourceItemLabel(transformerWithOptions);

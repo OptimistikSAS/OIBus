@@ -3,7 +3,7 @@
 </div>
 <div class="modal-body">
   <div class="row">
-    @for (group of groupedNorthTypes; track group) {
+    @for (group of groupedNorthTypes(); track group) {
       <div class="col-lg-12 col-md-12">
         <h1 class="mt-2" [translate]="'enums.categories.' + group.category"></h1>
       </div>

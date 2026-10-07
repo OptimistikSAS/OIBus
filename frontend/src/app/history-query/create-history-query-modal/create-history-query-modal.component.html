@@ -20,7 +20,7 @@
         @if (!createForm.controls.fromExistingSouth.value) {
           <div class="form-group">
             <select [formControl]="createForm.controls.southType" id="south-type" class="form-select mb-2 mr-sm-2">
-              @for (southType of southTypes; track southType) {
+              @for (southType of southTypes(); track southType) {
                 <option [ngValue]="southType.id">{{ southType.id | oIBusSouthTypeEnum }}</option>
               }
             </select>
@@ -29,7 +29,7 @@
         } @else {
           <div class="form-group">
             <select [formControl]="createForm.controls.southId" id="south-connector" class="form-select mb-2 mr-sm-2">
-              @for (connector of southList; track connector.id) {
+              @for (connector of southList(); track connector.id) {
                 <option [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
               }
             </select>
@@ -52,7 +52,7 @@
         @if (!createForm.controls.fromExistingNorth.value) {
           <div class="form-group">
             <select [formControl]="createForm.controls.northType" id="north-type" class="form-select mb-2 mr-sm-2">
-              @for (northType of northTypes; track northType.id) {
+              @for (northType of northTypes(); track northType.id) {
                 <option [ngValue]="northType.id">{{ northType.id | oIBusNorthTypeEnum }}</option>
               }
             </select>
@@ -62,7 +62,7 @@
         @if (createForm.controls.fromExistingNorth.value) {
           <div class="form-group">
             <select [formControl]="createForm.controls.northId" id="north-connector" class="form-select mb-2 mr-sm-2">
-              @for (connector of northList; track connector) {
+              @for (connector of northList(); track connector) {
                 <option [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
               }
             </select>

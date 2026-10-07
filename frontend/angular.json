@@ -15,7 +15,7 @@
             "baseHref": "/",
             "outputPath": "../backend/dist/frontend",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js", "@angular/localize/init"],
+            "polyfills": ["@angular/localize/init"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {

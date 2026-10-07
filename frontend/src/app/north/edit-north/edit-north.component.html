@@ -1,12 +1,12 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
-    @if (manifest && form) {
+    @if (form && manifest(); as manifest) {
       <div class="col-md-10 col-lg-8">
         <div class="d-flex">
-          @if (mode === 'create') {
+          @if (mode() === 'create') {
             <h1 translate="north.create-title" [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"></h1>
           }
-          @if (mode === 'edit' && northConnector) {
+          @if (mode() === 'edit' && northConnector(); as northConnector) {
             <h1 translate="north.edit-title" [translateParams]="{ name: northConnector.name }"></h1>
           }
         </div>
@@ -60,14 +60,14 @@
                       (click)="form!.controls.settings.markAllAsTouched(); submit('test')"
                       translate="north.test-connection.button"
                     ></button>
-                    <oib-help [url]="northTypeHelpUrl" />
+                    <oib-help [url]="northTypeHelpUrl()" />
                   </div>
                 </div>
               </ng-template>
               <div formGroupName="settings" class="row">
                 <oib-oibus-object-form-control
-                  [scanModes]="scanModes"
-                  [certificates]="certificates"
+                  [scanModes]="scanModes()"
+                  [certificates]="certificates()"
                   [group]="form.controls.settings"
                   [objectAttribute]="manifest.settings"
                 />
@@ -81,7 +81,7 @@
                   <!-- Scan mode -->
                   <div class="col-4">
                     <div class="form-group">
-                      <oib-oibus-scan-mode-form-control [allScanModes]="scanModes" [scanModeAttribute]="scanModeAttribute" />
+                      <oib-oibus-scan-mode-form-control [allScanModes]="scanModes()" [scanModeAttribute]="scanModeAttribute" />
                     </div>
                   </div>
                   <!-- Number of elements -->
@@ -203,11 +203,11 @@
             </oib-box>
           </div>
           <oib-north-transformers
-            [scanModes]="scanModes"
-            [certificates]="certificates"
+            [scanModes]="scanModes()"
+            [certificates]="certificates()"
             [northManifest]="manifest"
-            [northConnector]="northConnector"
-            [transformers]="transformers"
+            [northConnector]="northConnector()"
+            [transformers]="transformers()"
             (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
           />
         </form>

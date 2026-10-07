@@ -130,9 +130,9 @@ Avoid synchronous DOM reads (`locator.element().textContent`, `querySelector`, `
 
 ### Change detection
 
-The tests are **zoneless**: the `vitest` build configuration in `angular.json` does not load zone.js (the application
-still does). Fixtures detect changes automatically, the same way a zoneless application does: after a template event
-(click, input…), after a signal used by a template changes, or after `markForCheck()`.
+The application and the tests are **zoneless** (`provideZonelessChangeDetection()`, no zone.js). Fixtures detect
+changes automatically, the same way the application does: after a template event (click, input…), after a signal used
+by a template changes, or after `markForCheck()`.
 
 So in tests:
 
@@ -146,8 +146,7 @@ ExpressionChangedAfterItHasBeenCheckedError`. Drive the component through its te
 And in components:
 
 - keep state rendered by the template in signals, especially state changed asynchronously (HTTP responses, modal
-  results, `await`): a plain field changed in a `subscribe()` callback or after an `await` is not rendered without
-  zone.js. When a signal is not practical (e.g. an array shared with a modal and mutated in place), call
+  results, `await`, timers): a plain field changed in a `subscribe()` callback or after an `await` is not rendered. When a signal is not practical (e.g. an array shared with a modal and mutated in place), call
   `ChangeDetectorRef.markForCheck()` after the change.
 - a template event already notifies Angular, so plain fields changed synchronously by an event handler are fine.
 

@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    @if (allHistoryQueries && allHistoryQueries.length > 0) {
+    @if (allHistoryQueries()?.length) {
       <!-- Status filter chips — clickable legend, doubling as the status filter -->
       <div class="d-flex align-items-center gap-1 flex-wrap py-2">
         <span class="filter-label text-muted" translate="history-query.status"></span>
@@ -55,7 +55,7 @@
         <div class="vr mx-2"></div>
 
         <span class="filter-label text-muted" translate="history-query.south-type"></span>
-        @for (type of southTypes; track type) {
+        @for (type of southTypes(); track type) {
           <button
             type="button"
             class="filter-chip d-flex align-items-center px-2 py-1"
@@ -76,7 +76,7 @@
         <div class="vr mx-2"></div>
 
         <span class="filter-label text-muted" translate="history-query.north-type"></span>
-        @for (type of northTypes; track type) {
+        @for (type of northTypes(); track type) {
           <button
             type="button"
             class="filter-chip d-flex align-items-center px-2 py-1"
@@ -99,17 +99,17 @@
 
   <div class="justify-content-end d-flex">
     <!-- only display it if there is more than 1 page -->
-    @if (displayedHistoryQueries.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end" [page]="displayedHistoryQueries" (pageChanged)="changePage($event)" />
+    @if (displayedHistoryQueries().totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end" [page]="displayedHistoryQueries()" (pageChanged)="changePage($event)" />
     }
   </div>
 
   <!-- the loading spinner when queries are not yet loaded -->
-  @if (!allHistoryQueries) {
+  @if (!allHistoryQueries()) {
     <oib-loading-spinner />
   } @else {
     <!-- the list of queries or a caption if empty -->
-    @if (displayedHistoryQueries.content.length !== 0) {
+    @if (displayedHistoryQueries().content.length !== 0) {
       <div>
         <table class="mt-2 table table-sm table-hover oib-table">
           <thead>
@@ -170,7 +170,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (query of displayedHistoryQueries.content; track query.id) {
+            @for (query of displayedHistoryQueries().content; track query.id) {
               <tr>
                 <td>
                   <span [ngbTooltip]="getStatusLabel(query.status) | translate" [class]="getStatusClass(query.status)"></span>

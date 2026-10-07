@@ -120,26 +120,26 @@ export class SouthDetailComponent {
   protected router = inject(Router);
   private route = inject(ActivatedRoute);
 
-  southConnector: SouthConnectorDTO | null = null;
-  manifest: SouthConnectorManifest | null = null;
+  readonly southConnector = signal<SouthConnectorDTO | null>(null);
+  readonly manifest = signal<SouthConnectorManifest | null>(null);
 
-  filteredItems: Array<SouthConnectorItemDTO> = [];
-  displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
+  readonly filteredItems = signal<Array<SouthConnectorItemDTO>>([]);
+  readonly displayedItems = signal<Page<SouthConnectorItemDTO>>(emptyPage());
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
   groupFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
   scanModeFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
   statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
 
-  displayedSettings: Array<{ key: string; value: string }> = [];
-  scanModes: Array<ScanModeDTO> = [];
-  certificates: Array<CertificateDTO> = [];
+  readonly displayedSettings = signal<Array<{ key: string; value: string }>>([]);
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly certificates = signal<Array<CertificateDTO>>([]);
 
   connectorMetrics = signal<SouthConnectorMetrics | null>(null);
   private metricsSubscription: Subscription | null = null;
-  oibusInfo: OIBusInfo | null = null;
+  readonly oibusInfo = signal<OIBusInfo | null>(null);
 
   // Mass action properties
-  selectedItems = new Map<string, SouthConnectorItemDTO>();
+  readonly selectedItems = signal(new Map<string, SouthConnectorItemDTO>());
   isAllSelected = false;
   isIndeterminate = false;
 
@@ -166,9 +166,9 @@ export class SouthDetailComponent {
     combineLatest([this.route.paramMap, this.scanModeService.list(), this.certificateService.list(), this.engineService.info$])
       .pipe(
         switchMap(([params, scanModes, certificates, engineInfo]) => {
-          this.scanModes = scanModes;
-          this.certificates = certificates;
-          this.oibusInfo = engineInfo;
+          this.scanModes.set(scanModes);
+          this.certificates.set(certificates);
+          this.oibusInfo.set(engineInfo);
           const southId = params.get('southId');
           if (southId) {
             return this.southConnectorService.findById(southId);
@@ -179,18 +179,18 @@ export class SouthDetailComponent {
           if (!southConnector) {
             return of(null);
           }
-          this.southConnector = southConnector;
-          return this.southConnectorService.getSouthManifest(this.southConnector!.type);
+          this.southConnector.set(southConnector);
+          return this.southConnectorService.getSouthManifest(southConnector.type);
         })
       )
       .subscribe(manifest => {
         if (!manifest) {
           return;
         }
-        this.manifest = manifest;
+        this.manifest.set(manifest);
 
-        const southSettings = this.southConnector!.settings as unknown as Record<string, string>;
-        this.displayedSettings = manifest.settings.attributes
+        const southSettings = this.southConnector()!.settings as unknown as Record<string, string>;
+        const displayedSettings = manifest.settings.attributes
           .filter(setting => isDisplayableAttribute(setting))
           .filter(setting => {
             const condition = manifest.settings.enablingConditions.find(
@@ -212,9 +212,10 @@ export class SouthDetailComponent {
                   : southSettings[setting.key]
             };
           });
+        this.displayedSettings.set(displayedSettings);
         this.resetPage();
 
-        this.startMetricsPolling(this.southConnector!.id);
+        this.startMetricsPolling(this.southConnector()!.id);
       });
     this.destroyRef.onDestroy(() => this.metricsSubscription?.unsubscribe());
 
@@ -247,12 +248,12 @@ export class SouthDetailComponent {
     });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCreation(
-      this.southConnector!.items,
-      this.scanModes,
-      this.certificates,
-      this.southConnector!.groups,
-      this.manifest!,
-      this.southConnector!.id,
+      this.southConnector()!.items,
+      this.scanModes(),
+      this.certificates(),
+      this.southConnector()!.groups,
+      this.manifest()!,
+      this.southConnector()!.id,
       this.southConnectorCommand,
       this.addOrEditGroup.bind(this),
       this.deleteGroup.bind(this)
@@ -260,7 +261,7 @@ export class SouthDetailComponent {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO) => {
-          return this.southConnectorService.createItem(this.southConnector!.id, {
+          return this.southConnectorService.createItem(this.southConnector()!.id, {
             id: command.id,
             name: command.name,
             enabled: command.enabled,
@@ -284,13 +285,13 @@ export class SouthDetailComponent {
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.southConnector = southConnector;
-        this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.southConnector.set(southConnector);
+        this.filteredItems.set(this.filter());
+        this.changePage(this.displayedItems().number);
         this.notificationService.success(`south.items.created`);
       });
   }
@@ -299,13 +300,13 @@ export class SouthDetailComponent {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(
-      this.southConnector!.items,
-      this.scanModes,
-      this.certificates,
-      this.southConnector!.groups,
-      this.manifest!,
+      this.southConnector()!.items,
+      this.scanModes(),
+      this.certificates(),
+      this.southConnector()!.groups,
+      this.manifest()!,
       item,
-      this.southConnector!.id,
+      this.southConnector()!.id,
       this.southConnectorCommand,
       this.addOrEditGroup.bind(this),
       this.deleteGroup.bind(this)
@@ -313,7 +314,7 @@ export class SouthDetailComponent {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO) => {
-          return this.southConnectorService.createItem(this.southConnector!.id, {
+          return this.southConnectorService.createItem(this.southConnector()!.id, {
             id: command.id || null,
             name: command.name,
             enabled: command.enabled,
@@ -337,13 +338,13 @@ export class SouthDetailComponent {
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.southConnector = southConnector;
-        this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.southConnector.set(southConnector);
+        this.filteredItems.set(this.filter());
+        this.changePage(this.displayedItems().number);
         this.notificationService.success(`south.items.created`);
       });
   }
@@ -359,15 +360,15 @@ export class SouthDetailComponent {
     });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
 
-    const tableIndex = findItemIndex(this.southConnector!.items, item);
+    const tableIndex = findItemIndex(this.southConnector()!.items, item);
     component.prepareForEdition(
-      this.southConnector!.items,
-      this.scanModes,
-      this.certificates,
-      this.southConnector!.groups,
-      this.manifest!,
+      this.southConnector()!.items,
+      this.scanModes(),
+      this.certificates(),
+      this.southConnector()!.groups,
+      this.manifest()!,
       item,
-      this.southConnector!.id,
+      this.southConnector()!.id,
       this.southConnectorCommand,
       tableIndex,
       this.addOrEditGroup.bind(this),
@@ -376,7 +377,7 @@ export class SouthDetailComponent {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO) => {
-          return this.southConnectorService.updateItem(this.southConnector!.id, command.id!, {
+          return this.southConnectorService.updateItem(this.southConnector()!.id, command.id!, {
             id: command.id,
             enabled: command.enabled,
             name: command.name,
@@ -400,13 +401,13 @@ export class SouthDetailComponent {
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.southConnector = southConnector;
-        this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.southConnector.set(southConnector);
+        this.filteredItems.set(this.filter());
+        this.changePage(this.displayedItems().number);
         this.notificationService.success(`south.items.updated`);
       });
   }
@@ -418,16 +419,16 @@ export class SouthDetailComponent {
       })
       .pipe(
         switchMap(() => {
-          return this.southConnectorService.deleteItem(this.southConnector!.id, item.id!);
+          return this.southConnectorService.deleteItem(this.southConnector()!.id, item.id!);
         }),
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.southConnector = southConnector;
-        this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.southConnector.set(southConnector);
+        this.filteredItems.set(this.filter());
+        this.changePage(this.displayedItems().number);
         this.notificationService.success('south.items.deleted');
       });
   }
@@ -439,14 +440,14 @@ export class SouthDetailComponent {
       })
       .pipe(
         switchMap(() => {
-          return this.southConnectorService.deleteAllItems(this.southConnector!.id);
+          return this.southConnectorService.deleteAllItems(this.southConnector()!.id);
         }),
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.southConnector = southConnector;
+        this.southConnector.set(southConnector);
         this.resetPage();
         this.notificationService.success('south.items.all-deleted');
       });
@@ -454,11 +455,11 @@ export class SouthDetailComponent {
 
   exportItems() {
     const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
-    const filename = this.southConnector!.name;
+    const filename = this.southConnector()!.name;
     modalRef.componentInstance.prepare(filename);
     modalRef.result.subscribe(response => {
       if (response) {
-        this.southConnectorService.exportItems(this.southConnector!.id, response.filename, response.delimiter).subscribe();
+        this.southConnectorService.exportItems(this.southConnector()!.id, response.filename, response.delimiter).subscribe();
       }
     });
   }
@@ -475,7 +476,7 @@ export class SouthDetailComponent {
       'recoveryStrategy',
       'syncWithGroup'
     ];
-    const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
+    const settingsAttribute = this.manifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     settingsAttribute.attributes.forEach(setting => {
@@ -488,7 +489,7 @@ export class SouthDetailComponent {
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
       this.southConnectorService
-        .checkImportItems(this.manifest!.id, this.southConnector!.items, file, delimiter, deleteItemsNotPresent)
+        .checkImportItems(this.manifest()!.id, this.southConnector()!.items, file, delimiter, deleteItemsNotPresent)
         .pipe(
           map(result => ({
             items: result.items.map(
@@ -520,33 +521,33 @@ export class SouthDetailComponent {
           }))
         );
 
-    if (this.manifest!.id === 'mqtt') {
+    if (this.manifest()!.id === 'mqtt') {
       modal.componentInstance.prepare(
-        this.manifest!,
+        this.manifest()!,
         expectedHeaders,
         optionalHeaders,
-        this.southConnector!.items.map(item => (item.settings as any)?.topic).filter(
-          topic => topic && typeof topic === 'string' && topic.trim()
-        ),
+        this.southConnector()!
+          .items.map(item => (item.settings as any)?.topic)
+          .filter(topic => topic && typeof topic === 'string' && topic.trim()),
         true,
         true,
         checkFn
       );
     } else {
-      modal.componentInstance.prepare(this.manifest!, expectedHeaders, optionalHeaders, [], false, true, checkFn);
+      modal.componentInstance.prepare(this.manifest()!, expectedHeaders, optionalHeaders, [], false, true, checkFn);
     }
 
     modal.result.subscribe((response: { items: Array<SouthConnectorItemCommandDTO>; eraseExisting: boolean } | undefined) => {
       if (!response) return;
       this.southConnectorService
-        .importItems(this.southConnector!.id, response.items, response.eraseExisting)
+        .importItems(this.southConnector()!.id, response.items, response.eraseExisting)
         .pipe(
           switchMap(() => {
-            return this.southConnectorService.findById(this.southConnector!.id);
+            return this.southConnectorService.findById(this.southConnector()!.id);
           })
         )
         .subscribe(southConnector => {
-          this.southConnector = southConnector;
+          this.southConnector.set(southConnector);
           this.resetPage();
           this.notificationService.success(`south.items.import.imported`);
         });
@@ -558,27 +559,27 @@ export class SouthDetailComponent {
     group: SouthItemGroupCommandDTO;
   }): Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO> {
     if (command.mode === 'create') {
-      return this.southConnectorService.createGroup(this.southConnector!.id, command.group).pipe(
+      return this.southConnectorService.createGroup(this.southConnector()!.id, command.group).pipe(
         switchMap(createdGroup =>
-          this.southConnectorService.findById(this.southConnector!.id).pipe(map(southConnector => ({ southConnector, createdGroup })))
+          this.southConnectorService.findById(this.southConnector()!.id).pipe(map(southConnector => ({ southConnector, createdGroup })))
         ),
         tap(({ southConnector }) => {
-          this.southConnector = southConnector;
-          this.filteredItems = this.filter();
-          this.changePage(this.displayedItems.number);
+          this.southConnector.set(southConnector);
+          this.filteredItems.set(this.filter());
+          this.changePage(this.displayedItems().number);
           this.notificationService.success('south.groups.created');
         }),
         map(({ createdGroup }) => createdGroup)
       );
     } else {
-      return this.southConnectorService.updateGroup(this.southConnector!.id, command.group!.id!, command.group).pipe(
+      return this.southConnectorService.updateGroup(this.southConnector()!.id, command.group!.id!, command.group).pipe(
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         }),
         tap(southConnector => {
-          this.southConnector = southConnector;
-          this.filteredItems = this.filter();
-          this.changePage(this.displayedItems.number);
+          this.southConnector.set(southConnector);
+          this.filteredItems.set(this.filter());
+          this.changePage(this.displayedItems().number);
         }),
         switchMap(southConnector => {
           return this.southConnectorService.getGroup(southConnector.id, command.group!.id!);
@@ -598,16 +599,16 @@ export class SouthDetailComponent {
       })
       .pipe(
         switchMap(() => {
-          return this.southConnectorService.deleteGroup(this.southConnector!.id, group.id!);
+          return this.southConnectorService.deleteGroup(this.southConnector()!.id, group.id!);
         }),
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         }),
         tap({
           next: southConnector => {
-            this.southConnector = southConnector;
-            this.filteredItems = this.filter();
-            this.changePage(this.displayedItems.number);
+            this.southConnector.set(southConnector);
+            this.filteredItems.set(this.filter());
+            this.changePage(this.displayedItems().number);
             this.notificationService.success('south.groups.deleted');
           },
           error: error => {
@@ -619,7 +620,7 @@ export class SouthDetailComponent {
   }
 
   getFieldValue(element: any, field: string): string {
-    const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
+    const settingsAttribute = this.manifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
 
@@ -631,13 +632,13 @@ export class SouthDetailComponent {
   }
 
   resetPage() {
-    this.filteredItems = this.filter();
+    this.filteredItems.set(this.filter());
     this.changePage(0);
   }
 
   changePage(pageNumber: number) {
     this.sortTable();
-    this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
+    this.displayedItems.set(createPageFromArray(this.filteredItems(), PAGE_SIZE, pageNumber));
   }
 
   filter(): Array<SouthConnectorItemDTO> {
@@ -646,7 +647,7 @@ export class SouthDetailComponent {
     const scanModeFilter = this.scanModeFilterControl.value;
     const statusFilter = this.statusFilterControl.value;
 
-    return this.southConnector!.items.filter(item => {
+    return this.southConnector()!.items.filter(item => {
       if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
       if (groupFilter === 'none' && item.group) return false;
       if (groupFilter && groupFilter !== 'none' && item.group?.id !== groupFilter) return false;
@@ -677,39 +678,40 @@ export class SouthDetailComponent {
   private sortTable() {
     if (this.currentColumnSort && this.columnSortStates[this.currentColumnSort] !== ColumnSortState.INDETERMINATE) {
       const ascending = this.columnSortStates[this.currentColumnSort] === ColumnSortState.ASCENDING;
+      const filteredItems = this.filteredItems();
 
       switch (this.currentColumnSort) {
         case 'name':
-          this.filteredItems.sort((a, b) => (ascending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)));
+          filteredItems.sort((a, b) => (ascending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)));
           break;
         case 'scanMode':
-          this.filteredItems.sort((a, b) =>
+          filteredItems.sort((a, b) =>
             ascending
               ? (a.scanMode?.name || '').localeCompare(b.scanMode?.name || '')
               : (b.scanMode?.name || '').localeCompare(a.scanMode?.name || '')
           );
           break;
         case 'group':
-          this.filteredItems.sort((a, b) => {
+          filteredItems.sort((a, b) => {
             const aGroup = a.group?.standardSettings.name || '';
             const bGroup = b.group?.standardSettings.name || '';
             return ascending ? aGroup.localeCompare(bGroup) : bGroup.localeCompare(aGroup);
           });
           break;
         case 'enabled':
-          this.filteredItems.sort((a, b) => {
+          filteredItems.sort((a, b) => {
             const aVal = a.enabled ? 1 : 0;
             const bVal = b.enabled ? 1 : 0;
             return ascending ? aVal - bVal : bVal - aVal;
           });
           break;
         case 'createdAt':
-          this.filteredItems.sort((a, b) =>
+          filteredItems.sort((a, b) =>
             ascending ? (a.createdAt || '').localeCompare(b.createdAt || '') : (b.createdAt || '').localeCompare(a.createdAt || '')
           );
           break;
         case 'updatedAt':
-          this.filteredItems.sort((a, b) =>
+          filteredItems.sort((a, b) =>
             ascending ? (a.updatedAt || '').localeCompare(b.updatedAt || '') : (b.updatedAt || '').localeCompare(a.updatedAt || '')
           );
           break;
@@ -719,127 +721,131 @@ export class SouthDetailComponent {
 
   // Mass action methods
   toggleItemSelection(item: SouthConnectorItemDTO) {
-    if (this.selectedItems.has(item.name)) {
-      this.selectedItems.delete(item.name);
+    const selectedItems = new Map(this.selectedItems());
+    if (selectedItems.has(item.name)) {
+      selectedItems.delete(item.name);
     } else {
-      this.selectedItems.set(item.name, item);
+      selectedItems.set(item.name, item);
     }
+    this.selectedItems.set(selectedItems);
     this.updateSelectionState();
   }
 
   selectAll() {
-    this.filteredItems.forEach(item => {
-      this.selectedItems.set(item.name, item);
+    const selectedItems = new Map(this.selectedItems());
+    this.filteredItems().forEach(item => {
+      selectedItems.set(item.name, item);
     });
+    this.selectedItems.set(selectedItems);
     this.updateSelectionState();
   }
 
   unselectAll() {
-    this.selectedItems.clear();
+    this.selectedItems.set(new Map());
     this.updateSelectionState();
   }
 
   updateSelectionState() {
-    const totalItems = this.filteredItems.length;
-    const selectedCount = this.selectedItems.size;
+    const totalItems = this.filteredItems().length;
+    const selectedCount = this.selectedItems().size;
 
     this.isAllSelected = selectedCount === totalItems && totalItems > 0;
     this.isIndeterminate = selectedCount > 0 && selectedCount < totalItems;
   }
 
   getSelectedItemsCount(): number {
-    return this.selectedItems.size;
+    return this.selectedItems().size;
   }
 
   enableSelectedItems() {
-    const itemIds = Array.from(this.selectedItems.values(), item => item.id);
+    const itemIds = Array.from(this.selectedItems().values(), item => item.id);
     if (itemIds.length === 0) return;
     this.southConnectorService
-      .enableItems(this.southConnector!.id, itemIds)
+      .enableItems(this.southConnector()!.id, itemIds)
       .pipe(
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.selectedItems.clear();
+        this.selectedItems.set(new Map());
         this.updateSelectionState();
-        this.southConnector = southConnector;
-        this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.southConnector.set(southConnector);
+        this.filteredItems.set(this.filter());
+        this.changePage(this.displayedItems().number);
         this.notificationService.success('south.items.enabled-multiple', { count: itemIds.length.toString() });
       });
   }
 
   disableSelectedItems() {
-    const itemIds = Array.from(this.selectedItems.values(), item => item.id);
+    const itemIds = Array.from(this.selectedItems().values(), item => item.id);
     if (itemIds.length === 0) return;
     this.southConnectorService
-      .disableItems(this.southConnector!.id, itemIds)
+      .disableItems(this.southConnector()!.id, itemIds)
       .pipe(
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.selectedItems.clear();
+        this.selectedItems.set(new Map());
         this.updateSelectionState();
-        this.southConnector = southConnector;
-        this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.southConnector.set(southConnector);
+        this.filteredItems.set(this.filter());
+        this.changePage(this.displayedItems().number);
         this.notificationService.success('south.items.disabled-multiple', { count: itemIds.length.toString() });
       });
   }
 
   deleteSelectedItems() {
-    const itemIds = Array.from(this.selectedItems.values(), item => item.id);
+    const itemIds = Array.from(this.selectedItems().values(), item => item.id);
     if (itemIds.length === 0) return;
     this.confirmationService
       .confirm({
         messageKey: 'south.items.delete-multiple-message',
-        interpolateParams: { count: this.selectedItems.size.toString() }
+        interpolateParams: { count: this.selectedItems().size.toString() }
       })
       .pipe(
         switchMap(() => {
-          return this.southConnectorService.deleteItems(this.southConnector!.id, itemIds);
+          return this.southConnectorService.deleteItems(this.southConnector()!.id, itemIds);
         }),
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.selectedItems.clear();
+        this.selectedItems.set(new Map());
         this.updateSelectionState();
-        this.southConnector = southConnector;
-        this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.southConnector.set(southConnector);
+        this.filteredItems.set(this.filter());
+        this.changePage(this.displayedItems().number);
         this.notificationService.success('south.items.deleted-multiple', { count: itemIds.length.toString() });
       });
   }
 
   moveSelectedItemsToGroup() {
-    const itemIds = Array.from(this.selectedItems.values(), item => item.id!);
+    const itemIds = Array.from(this.selectedItems().values(), item => item.id!);
     if (itemIds.length === 0) return;
 
     const modalRef = this.modalService.open(SelectGroupModalComponent, { backdrop: 'static' });
     const component: SelectGroupModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector!.groups, this.scanModes, this.manifest!, command => this.addOrEditGroup(command));
+    component.prepare(this.southConnector()!.groups, this.scanModes(), this.manifest()!, command => this.addOrEditGroup(command));
 
     modalRef.result
       .pipe(
         switchMap((groupId: string) => {
-          return this.southConnectorService.moveItemsToGroup(this.southConnector!.id, itemIds, groupId);
+          return this.southConnectorService.moveItemsToGroup(this.southConnector()!.id, itemIds, groupId);
         }),
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
+          return this.southConnectorService.findById(this.southConnector()!.id);
         })
       )
       .subscribe(southConnector => {
-        this.selectedItems.clear();
+        this.selectedItems.set(new Map());
         this.updateSelectionState();
-        this.southConnector = southConnector;
-        this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.southConnector.set(southConnector);
+        this.filteredItems.set(this.filter());
+        this.changePage(this.displayedItems().number);
         this.notificationService.success('south.items.moved-to-group', { count: itemIds.length.toString() });
       });
   }
@@ -848,17 +854,17 @@ export class SouthDetailComponent {
     const modalRef = this.modalService.open(ManageGroupsModalComponent, { size: 'lg', backdrop: 'static' });
     const component: ManageGroupsModalComponent = modalRef.componentInstance;
     component.prepare(
-      this.southConnector!.groups,
-      this.scanModes,
-      this.manifest!,
+      this.southConnector()!.groups,
+      this.scanModes(),
+      this.manifest()!,
       true,
-      groupId => this.southConnector!.items.filter(item => item.group?.id === groupId).length,
+      groupId => this.southConnector()!.items.filter(item => item.group?.id === groupId).length,
       this.addOrEditGroup.bind(this),
       this.deleteGroup.bind(this)
     );
     modalRef.result.subscribe(() => {
-      this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.filteredItems.set(this.filter());
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -866,11 +872,11 @@ export class SouthDetailComponent {
     const modalRef = this.modalService.open(ManageWorkflowsModalComponent, { size: 'xl', backdrop: 'static' });
     const component: ManageWorkflowsModalComponent = modalRef.componentInstance;
     component.prepareForDirectSave(
-      this.southConnector!.id,
-      this.southConnector!.settings,
-      this.scanModes,
-      this.manifest!,
-      this.southConnector!.groups,
+      this.southConnector()!.id,
+      this.southConnector()!.settings,
+      this.scanModes(),
+      this.manifest()!,
+      this.southConnector()!.groups,
       this.addOrEditGroup.bind(this),
       this.deleteGroup.bind(this),
       () => this.reloadAfterWorkflowRun()
@@ -880,10 +886,10 @@ export class SouthDetailComponent {
   /** A manual workflow run may have created/updated items directly on this connector - reload it so
    *  the item list reflects them without the user needing to leave and come back to this page. */
   private reloadAfterWorkflowRun() {
-    this.southConnectorService.findById(this.southConnector!.id).subscribe(southConnector => {
-      this.southConnector = southConnector;
-      this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+    this.southConnectorService.findById(this.southConnector()!.id).subscribe(southConnector => {
+      this.southConnector.set(southConnector);
+      this.filteredItems.set(this.filter());
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -892,15 +898,15 @@ export class SouthDetailComponent {
   }
 
   getScanMode(scanModeId: string | undefined) {
-    return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
+    return this.scanModes().find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
   }
 
   viewItemLastValue(item: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(ViewItemValueModalComponent, { size: 'lg' });
     const component: ViewItemValueModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector!.type, item.name, this.getGroupName(item));
+    component.prepare(this.southConnector()!.type, item.name, this.getGroupName(item));
 
-    this.southConnectorService.getItemLastValue(this.southConnector!.id, item.id!).subscribe({
+    this.southConnectorService.getItemLastValue(this.southConnector()!.id, item.id!).subscribe({
       next: response => component.setData(response),
       error: error => component.setError(error.message)
     });
@@ -909,43 +915,43 @@ export class SouthDetailComponent {
   testConnection() {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runTest('south', this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type);
+    component.runTest('south', this.southConnector()!.id, this.southConnector()!.settings, this.southConnector()!.type);
   }
 
   explore() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type);
+    component.prepare(this.southConnector()!.id, this.southConnector()!.settings, this.southConnector()!.type);
   }
 
   toggleConnector(value: boolean) {
     if (value) {
       this.southConnectorService
-        .start(this.southConnector!.id)
+        .start(this.southConnector()!.id)
         .pipe(
           tap(() => {
-            this.notificationService.success('south.started', { name: this.southConnector!.name });
+            this.notificationService.success('south.started', { name: this.southConnector()!.name });
           }),
           switchMap(() => {
-            return this.southConnectorService.findById(this.southConnector!.id);
+            return this.southConnectorService.findById(this.southConnector()!.id);
           })
         )
         .subscribe(southConnector => {
-          this.southConnector = southConnector;
+          this.southConnector.set(southConnector);
         });
     } else {
       this.southConnectorService
-        .stop(this.southConnector!.id)
+        .stop(this.southConnector()!.id)
         .pipe(
           tap(() => {
-            this.notificationService.success('south.stopped', { name: this.southConnector!.name });
+            this.notificationService.success('south.stopped', { name: this.southConnector()!.name });
           }),
           switchMap(() => {
-            return this.southConnectorService.findById(this.southConnector!.id);
+            return this.southConnectorService.findById(this.southConnector()!.id);
           })
         )
         .subscribe(southConnector => {
-          this.southConnector = southConnector;
+          this.southConnector.set(southConnector);
         });
     }
   }
@@ -960,8 +966,8 @@ export class SouthDetailComponent {
 
   get southConnectorCommand() {
     return {
-      ...this.southConnector!,
-      items: this.southConnector!.items.map(item => ({
+      ...this.southConnector()!,
+      items: this.southConnector()!.items.map(item => ({
         id: item.id,
         enabled: item.enabled,
         name: item.name,
@@ -983,7 +989,7 @@ export class SouthDetailComponent {
         rangeHigh: item.rangeHigh,
         maxCachingInterval: item.maxCachingInterval
       })),
-      groups: this.southConnector!.groups.map(group => ({
+      groups: this.southConnector()!.groups.map(group => ({
         id: group.id,
         standardSettings: {
           name: group.standardSettings.name,
