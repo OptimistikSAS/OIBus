@@ -334,4 +334,32 @@ describe('OianalyticsTransport (createTransport)', () => {
     await drainMicrotasks();
     assert.strictEqual(mockHTTPRequest.mock.calls.length, 1);
   });
+
+  it('close handler should send the last logs with a short timeout', async () => {
+    await createTransport(defaultOpts);
+    await capturedSourceFn!(makeSource([makeLog('final')]));
+
+    await capturedCloseFn!();
+
+    assert.strictEqual(mockBuildHttpOptions.mock.calls.length, 1);
+    assert.strictEqual(mockBuildHttpOptions.mock.calls[0]!.arguments[4], 5_000);
+  });
+
+  it('close handler should not send anything when there is no log left', async () => {
+    await createTransport(defaultOpts);
+
+    await capturedCloseFn!();
+
+    assert.strictEqual(mockHTTPRequest.mock.calls.length, 0);
+  });
+
+  it('interval sends should use the regular timeout', async () => {
+    await createTransport(defaultOpts);
+    await capturedSourceFn!(makeSource([makeLog('periodic')]));
+
+    mock.timers.tick(30000);
+    await drainMicrotasks();
+
+    assert.strictEqual(mockBuildHttpOptions.mock.calls[0]!.arguments[4], 30_000);
+  });
 });

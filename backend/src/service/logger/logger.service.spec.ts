@@ -20,6 +20,7 @@ let pinoMock: ReturnType<typeof mock.fn>;
 let pinoTransportMock: ReturnType<typeof mock.fn>;
 let mockTransportFlush: ReturnType<typeof mock.fn>;
 let mockTransportEnd: ReturnType<typeof mock.fn>;
+let mockTransportOn: ReturnType<typeof mock.fn>;
 let isoTimeFn: () => string;
 let service: LoggerServiceType;
 
@@ -36,7 +37,12 @@ before(async () => {
     if (cb) cb();
   });
   mockTransportEnd = mock.fn();
-  pinoTransportMock = mock.fn((_options: { targets: Array<{ target: string }> }) => ({ flush: mockTransportFlush, end: mockTransportEnd }));
+  mockTransportOn = mock.fn();
+  pinoTransportMock = mock.fn((_options: { targets: Array<{ target: string }> }) => ({
+    flush: mockTransportFlush,
+    end: mockTransportEnd,
+    on: mockTransportOn
+  }));
   (pinoMock as unknown as { transport: typeof pinoTransportMock }).transport = pinoTransportMock;
 
   // Replace pino in require cache with the mock
@@ -71,6 +77,7 @@ beforeEach(() => {
   pinoTransportMock.mock.resetCalls();
   mockTransportFlush.mock.resetCalls();
   mockTransportEnd.mock.resetCalls();
+  mockTransportOn.mock.resetCalls();
   encryptionMock.decryptText.mock.resetCalls();
   service = new LoggerService();
   service.init('folder');
@@ -374,6 +381,17 @@ describe('Logger', () => {
     assert.strictEqual(flushMock.mock.calls.length, 1);
     assert.strictEqual(endMock.mock.calls.length, 1);
     assert.strictEqual(service.rootLogger, null);
+  });
+
+  it('should handle transport errors instead of letting them crash the process', async () => {
+    const consoleErrorMock = mock.method(console, 'error', () => undefined);
+    await service.start(engineSettings, null);
+
+    assert.strictEqual(mockTransportOn.mock.calls.length, 1);
+    const [event, handler] = mockTransportOn.mock.calls[0]!.arguments as [string, (error: Error) => void];
+    assert.strictEqual(event, 'error');
+    handler(new Error('end() took too long (10s)'));
+    assert.deepStrictEqual(consoleErrorMock.mock.calls[0]!.arguments, ['Logger transport error: end() took too long (10s)']);
   });
 
   it('should skip silent targets when computing the most-verbose parent level', async () => {
