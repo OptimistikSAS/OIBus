@@ -26,7 +26,7 @@ import { ascendingDates } from '../../../shared/form/validators';
 import { ModalService } from '../../../shared/modal.service';
 import { PageLoader } from '../../../shared/page-loader.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { emptyPage } from '../../../shared/test-utils';
+import { emptyPage } from '../../../shared/utils/page.utils';
 import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
 
 /**

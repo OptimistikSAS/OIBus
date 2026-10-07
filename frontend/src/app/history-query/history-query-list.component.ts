@@ -26,7 +26,7 @@ import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { emptyPage } from '../shared/test-utils';
+import { emptyPage } from '../shared/utils/page.utils';
 import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
 
 type HistorySortField = 'name' | 'interval' | 'southType' | 'northType' | 'createdAt' | 'updatedAt' | null;

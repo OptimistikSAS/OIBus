@@ -12,7 +12,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject, stubRoute } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { ModalService } from '../../../shared/modal.service';
-import { toPage } from '../../../shared/test-utils';
+import { toPage } from '../../../shared/utils/page.utils';
 import { WorkflowRunHistoryComponent } from './workflow-run-history.component';
 
 const workflow: ConfigurationWorkflowDTO = {

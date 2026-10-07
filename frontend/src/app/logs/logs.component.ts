@@ -38,7 +38,7 @@ import { PageLoader } from '../shared/page-loader.service';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { visibleTimer } from '../shared/polling';
 import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
-import { emptyPage } from '../shared/test-utils';
+import { emptyPage } from '../shared/utils/page.utils';
 
 @Component({
   selector: 'oib-logs',

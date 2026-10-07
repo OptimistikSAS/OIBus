@@ -10,7 +10,7 @@ import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-se
 import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '@oibus/shared/domain/engine.model';
 
 import testData from '../../test/test-data';
-import { toPage } from '../shared/test-utils';
+import { toPage } from '../shared/utils/page.utils';
 import { DownloadService } from './download.service';
 import { HistoryQueryService } from './history-query.service';
 
