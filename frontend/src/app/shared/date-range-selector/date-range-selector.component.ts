@@ -5,7 +5,7 @@ import {
   Component,
   forwardRef,
   inject,
-  Input,
+  input,
   OnDestroy,
   OnInit
 } from '@angular/core';
@@ -51,9 +51,9 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
   private changeDetectorRef = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
 
-  @Input() startLabel = 'history-query.start';
-  @Input() endLabel = 'history-query.end';
-  @Input() defaultRange = 'last-day';
+  readonly startLabel = input('history-query.start');
+  readonly endLabel = input('history-query.end');
+  readonly defaultRange = input('last-day');
 
   predefinedRanges: Array<PredefinedRange> = [
     {
@@ -79,7 +79,7 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
   ];
 
   internalForm = this.fb.group({
-    rangeType: [this.defaultRange as string, Validators.required],
+    rangeType: [this.defaultRange() as string, Validators.required],
     startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
     endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]]
   });
@@ -107,7 +107,7 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
     // parent control so it starts valid (e.g. "last 10 minutes") instead of unset. This has to wait
     // until ngAfterViewInit: writeValue()/registerOnChange() (called by the host FormControlName)
     // only run after this component's own ngOnInit, so `onChange` isn't wired up yet in ngOnInit.
-    this.internalForm.controls.rangeType.setValue(this.defaultRange, { emitEvent: false });
+    this.internalForm.controls.rangeType.setValue(this.defaultRange(), { emitEvent: false });
     this.emitValue();
     // the template reads the internal form, changed here without any event: notify Angular
     this.changeDetectorRef.markForCheck();

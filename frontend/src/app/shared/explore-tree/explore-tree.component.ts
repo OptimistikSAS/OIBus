@@ -1,15 +1,5 @@
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  EventEmitter,
-  inject,
-  Input,
-  OnDestroy,
-  Output,
-  signal
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, input, OnDestroy, output, signal } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
@@ -69,7 +59,7 @@ export class ExploreTreeComponent implements OnDestroy {
   private southConnectorService = inject(SouthConnectorService);
   private changeDetectorRef = inject(ChangeDetectorRef);
 
-  @Output() nodeSelected = new EventEmitter<SouthConnectorExploreEntry>();
+  readonly nodeSelected = output<SouthConnectorExploreEntry>();
 
   /**
    * Height of the tree's own scroll region. Defaults to the standalone Explore modal's fill-the-modal
@@ -77,7 +67,7 @@ export class ExploreTreeComponent implements OnDestroy {
    * discovery-scope editor) should pass a smaller value instead of wrapping this component in a second
    * `overflow: auto` container of its own - two nested scroll regions produce two vertical scrollbars.
    */
-  @Input() maxHeight = '50vh';
+  readonly maxHeight = input('50vh');
 
   private api: SouthExploreApi | null = null;
   readonly selectable = signal(false);

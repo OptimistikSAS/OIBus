@@ -65,6 +65,19 @@ export default [
           }
         ],
         '@angular-eslint/prefer-on-push-component-change-detection': 'off',
+        // signal-based APIs and modern patterns
+        '@angular-eslint/computed-must-return': 'error',
+        '@angular-eslint/consistent-component-styles': 'error',
+        '@angular-eslint/no-async-lifecycle-method': 'error',
+        '@angular-eslint/no-implicit-take-until-destroyed': 'error',
+        '@angular-eslint/no-lifecycle-call': 'error',
+        '@angular-eslint/no-uncalled-signals': 'error',
+        '@angular-eslint/prefer-host-metadata-property': 'error',
+        '@angular-eslint/prefer-output-emitter-ref': 'error',
+        '@angular-eslint/prefer-output-readonly': 'error',
+        '@angular-eslint/prefer-signal-model': 'error',
+        '@angular-eslint/reactive-context-must-read-signal': 'error',
+        '@angular-eslint/require-lifecycle-on-prototype': 'error',
         '@typescript-eslint/array-type': [
           'error',
           {
@@ -131,6 +144,14 @@ export default [
         '@angular-eslint/template/require-switch-default': 'error',
         '@angular-eslint/template/prefer-control-flow': 'error',
         '@angular-eslint/template/prefer-self-closing-tags': 'error',
+        '@angular-eslint/template/no-any': 'error',
+        '@angular-eslint/template/prefer-at-empty': 'error',
+        '@angular-eslint/template/prefer-built-in-pipes': 'error',
+        '@angular-eslint/template/prefer-class-binding': 'error',
+        '@angular-eslint/template/prefer-contextual-for-variables': 'error',
+        '@angular-eslint/template/prefer-style-binding': 'error',
+        '@angular-eslint/template/role-has-required-aria': 'error',
+        '@angular-eslint/template/valid-aria': 'error',
         '@angular-eslint/template/eqeqeq': [
           'error',
           {

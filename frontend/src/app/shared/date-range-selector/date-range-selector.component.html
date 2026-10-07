@@ -25,7 +25,7 @@
     <div class="border rounded p-3">
       <div class="d-flex">
         <div class="flex-grow-1">
-          <oib-datetimepicker formControlName="startTime" [label]="startLabel" />
+          <oib-datetimepicker formControlName="startTime" [label]="startLabel()" />
           <val-errors controlName="startTime" />
         </div>
         <!-- Wrapper skips past the label row, then centers the icon inside exactly one form-control height -->
@@ -33,7 +33,7 @@
           <i class="fa fa-arrow-right oib-fa-arrow"></i>
         </div>
         <div class="flex-grow-1">
-          <oib-datetimepicker formControlName="endTime" [label]="endLabel" />
+          <oib-datetimepicker formControlName="endTime" [label]="endLabel()" />
           <val-errors controlName="endTime" />
         </div>
       </div>

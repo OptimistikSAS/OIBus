@@ -58,8 +58,7 @@
             </select>
             <val-errors [control]="createForm.controls.northType" />
           </div>
-        }
-        @if (createForm.controls.fromExistingNorth.value) {
+        } @else {
           <div class="form-group">
             <select [formControl]="createForm.controls.northId" id="north-connector" class="form-select mb-2 mr-sm-2">
               @for (connector of northList(); track connector) {

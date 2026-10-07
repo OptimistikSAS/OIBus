@@ -1,6 +1,6 @@
 /* eslint-disable @angular-eslint/directive-selector */
 
-import { Directive, ElementRef, HostListener, inject } from '@angular/core';
+import { Directive, ElementRef, inject } from '@angular/core';
 import { NgControl } from '@angular/forms';
 
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -18,7 +18,11 @@ import { TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
  * but wrapped in a directive instead of having to add the same code on every typeahead.
  */
 @Directive({
-  selector: '[ngbTypeahead]'
+  selector: '[ngbTypeahead]',
+  host: {
+    '(focus)': 'onFocus()',
+    '(blur)': 'onBlur()'
+  }
 })
 export class OpenTypeaheadOnFocusDirective {
   private focused$ = new Subject<boolean>();
@@ -39,13 +43,9 @@ export class OpenTypeaheadOnFocusDirective {
       )
       .subscribe(() => element.nativeElement.dispatchEvent(new Event('input')));
   }
-
-  @HostListener('focus')
   onFocus() {
     this.focused$.next(true);
   }
-
-  @HostListener('blur')
   onBlur() {
     this.focused$.next(false);
   }

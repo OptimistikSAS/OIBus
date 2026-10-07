@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -49,7 +49,6 @@ export class EditTransformerModalComponent {
   private confirmationService = inject(ConfirmationService);
   private fb = inject(NonNullableFormBuilder);
 
-  @ViewChild(OibCodeBlockComponent) editor: OibCodeBlockComponent | null = null;
   readonly mode = signal<'create' | 'edit'>('create');
   state = new ObservableState();
 

@@ -1,5 +1,5 @@
 /* eslint-disable @angular-eslint/directive-selector */
-import { Directive, HostBinding, inject } from '@angular/core';
+import { Directive, inject } from '@angular/core';
 import { NgControl } from '@angular/forms';
 
 import { ValdemortConfig } from 'ngx-valdemort';
@@ -11,13 +11,16 @@ import { ValdemortConfig } from 'ngx-valdemort';
  * and the error message appear together).
  */
 @Directive({
-  selector: '.form-control,.form-select'
+  selector: '.form-control,.form-select',
+  host: {
+    '[class.is-invalid]': 'isInvalid'
+  }
 })
 export class FormControlValidationDirective {
   private ngControl = inject(NgControl, { optional: true });
   private config = inject(ValdemortConfig);
 
-  @HostBinding('class.is-invalid') get isInvalid() {
+  get isInvalid() {
     return (
       this.ngControl &&
       this.ngControl.invalid &&
