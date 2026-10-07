@@ -30,7 +30,7 @@ import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.p
 import { PageLoader } from '../../shared/page-loader.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { visibleTimer } from '../../shared/polling';
-import { emptyPage } from '../../shared/test-utils';
+import { emptyPage } from '../../shared/utils/page.utils';
 import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 

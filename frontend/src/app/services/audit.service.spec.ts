@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { AuditLogDTO } from '@oibus/shared/api/audit.model';
 import { Page } from '@oibus/shared/common/types';
 
-import { toPage } from '../shared/test-utils';
+import { toPage } from '../shared/utils/page.utils';
 import { AuditService } from './audit.service';
 
 describe('AuditService', () => {

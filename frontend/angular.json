@@ -108,7 +108,8 @@
             "setupFiles": ["src/test/test.ts"],
             "coverage": true,
             "coverageReporters": ["text", "html", "json-summary", "json"],
-            "coverageInclude": ["src/app/**/*.ts"]
+            "coverageInclude": ["src/app/**/*.ts"],
+            "coverageExclude": ["src/app/**/test-utils.ts", "src/app/**/*-testing.ts", "src/app/**/*.testing.ts"]
           }
         }
       }

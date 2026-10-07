@@ -8,7 +8,7 @@ import { page } from 'vitest/browser';
 import { Page } from '@oibus/shared/common/types';
 
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
-import { emptyPage, toPage } from '../test-utils';
+import { emptyPage, toPage } from '../utils/page.utils';
 import { PaginationComponent } from './pagination.component';
 
 @Component({
