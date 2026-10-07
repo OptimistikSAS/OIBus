@@ -28,7 +28,7 @@ function samePassphraseValidator(passphraseForm: AbstractControl): ValidationErr
   selector: 'oib-export-certificate-modal',
   templateUrl: './export-certificate-modal.component.html',
   styleUrl: './export-certificate-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, NgbCollapse]
 })
 export class ExportCertificateModalComponent {
@@ -36,7 +36,7 @@ export class ExportCertificateModalComponent {
   private certificateService = inject(CertificateService);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
-  certificate: CertificateDTO | null = null;
+  readonly certificate = signal<CertificateDTO | null>(null);
   readonly formats = ALL_CERTIFICATE_EXPORT_FORMATS;
   state = new ObservableState();
   error = signal<string | null>(null);
@@ -76,7 +76,7 @@ export class ExportCertificateModalComponent {
   }
 
   prepare(certificate: CertificateDTO) {
-    this.certificate = certificate;
+    this.certificate.set(certificate);
   }
 
   canDismiss(): Observable<boolean> | boolean {
@@ -95,21 +95,22 @@ export class ExportCertificateModalComponent {
   }
 
   save() {
-    if (!this.form.valid || !this.certificate) {
+    const certificate = this.certificate();
+    if (!this.form.valid || !certificate) {
       return;
     }
 
     this.error.set(null);
     const formValue = this.form.getRawValue();
     const format = formValue.format;
-    const sanitisedName = this.sanitise(this.certificate.name);
+    const sanitisedName = this.sanitise(certificate.name);
     const certificateFilename = `${sanitisedName}.${format === 'DER' ? 'cer' : 'pem'}`;
 
-    const exports = [this.certificateService.exportCertificate(this.certificate.id, format, formValue.includeChain, certificateFilename)];
+    const exports = [this.certificateService.exportCertificate(certificate.id, format, formValue.includeChain, certificateFilename)];
 
     if (formValue.includePrivateKey) {
       const keyFilename = `${sanitisedName}-private-key.pem`;
-      exports.push(this.certificateService.exportPrivateKey(this.certificate.id, formValue.passphraseForm.passphrase, keyFilename));
+      exports.push(this.certificateService.exportPrivateKey(certificate.id, formValue.passphraseForm.passphrase, keyFilename));
     }
 
     concat(...exports)

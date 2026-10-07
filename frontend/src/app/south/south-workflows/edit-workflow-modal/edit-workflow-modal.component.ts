@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal, ViewChild } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -169,6 +169,7 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
 })
 export default class EditWorkflowModalComponent implements AfterViewInit {
   private modal = inject(NgbActiveModal);
+  private changeDetectorRef = inject(ChangeDetectorRef);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
@@ -196,18 +197,18 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   /** Root node id currently picked via the explore-tree node picker (tree-based connectors only) -
    *  null means "browse from the data source's true root". */
-  discoveryRootNodeId: string | null = null;
+  readonly discoveryRootNodeId = signal<string | null>(null);
   /** The dedicated metadata query, as typed by the user (SQL-family connectors only). */
   discoveryQuery = '';
 
   /** "Test query" state - runs discoveryQuery as currently typed, independent of Save. */
-  queryTestRunning = false;
-  queryTestError: string | null = null;
-  queryTestResult: OIBusRecordListContent | null = null;
+  readonly queryTestRunning = signal(false);
+  readonly queryTestError = signal<string | null>(null);
+  readonly queryTestResult = signal<OIBusRecordListContent | null>(null);
 
   /** Whether OIBus is currently registered with OIAnalytics - gates the "Push to OIAnalytics" mode,
    *  refreshed each time this modal is prepared (registration can change between two workflow edits). */
-  isRegistered = false;
+  readonly isRegistered = signal(false);
 
   // Saves through the page's own group callbacks, exactly like EditSouthItemModalComponent's own group
   // dropdown - bound from south-detail.component.ts (direct) or edit-south.component.ts (in memory) and
@@ -271,7 +272,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.currentManifest = manifest;
     this.southId = southId;
     this.southSettings = southSettings;
-    this.discoveryRootNodeId = null;
+    this.discoveryRootNodeId.set(null);
     this.discoveryQuery = '';
     this.itemMappableFields = buildItemMappableFields(manifest);
     this.itemFieldMappingValues = {};
@@ -308,7 +309,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.itemMappableFields = buildItemMappableFields(manifest);
 
     const scope = (workflow.discoveryScope ?? {}) as Record<string, unknown>;
-    this.discoveryRootNodeId = typeof scope['rootNodeId'] === 'string' ? scope['rootNodeId'] : null;
+    this.discoveryRootNodeId.set(typeof scope['rootNodeId'] === 'string' ? scope['rootNodeId'] : null);
     this.discoveryQuery = typeof scope['query'] === 'string' ? scope['query'] : '';
 
     this.itemFieldMappingValues = {};
@@ -368,7 +369,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    *  other one-shot fetch this modal makes. */
   private refreshRegistrationStatus() {
     this.engineService.getRegistrationSettings().subscribe(settings => {
-      this.isRegistered = settings.status === 'REGISTERED';
+      this.isRegistered.set(settings.status === 'REGISTERED');
     });
   }
 
@@ -572,6 +573,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
       this.groups.push(groupResult);
       this.onSelectGroup(groupResult.id!);
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -588,6 +590,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       } else {
         this.groups.push(groupResult);
       }
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -603,6 +606,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       if (this.itemFieldMappingValues['groupId'] === group.id) {
         this.onSelectGroup(null);
       }
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -680,13 +684,13 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     const component: SouthExploreModalComponent = modalRef.componentInstance;
     component.prepare(this.southId, this.southSettings, this.currentManifest.id, undefined, true);
     modalRef.result.subscribe((entry: SouthConnectorExploreEntry) => {
-      this.discoveryRootNodeId = entry.id;
+      this.discoveryRootNodeId.set(entry.id);
     });
   }
 
   /** Resets the discovery root back to "browse from the data source's true root". */
   clearRootNodeId() {
-    this.discoveryRootNodeId = null;
+    this.discoveryRootNodeId.set(null);
   }
 
   /**
@@ -698,17 +702,17 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     if (!query) {
       return;
     }
-    this.queryTestRunning = true;
-    this.queryTestError = null;
-    this.queryTestResult = null;
+    this.queryTestRunning.set(true);
+    this.queryTestError.set(null);
+    this.queryTestResult.set(null);
     this.southConnectorService.testDiscoveryQuery(this.southId, this.currentManifest.id, this.southSettings, query).subscribe({
       next: rows => {
-        this.queryTestRunning = false;
-        this.queryTestResult = { type: 'record-list', content: rows };
+        this.queryTestRunning.set(false);
+        this.queryTestResult.set({ type: 'record-list', content: rows });
       },
       error: error => {
-        this.queryTestRunning = false;
-        this.queryTestError = extractErrorMessage(error);
+        this.queryTestRunning.set(false);
+        this.queryTestError.set(extractErrorMessage(error));
       }
     });
   }
@@ -743,7 +747,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       discoveryScope = { query: this.discoveryQuery.trim() };
     } else if (this.isTreeBased) {
       // No rootNodeId at all means "browse from the data source's true root" - a deliberate, valid choice.
-      discoveryScope = this.discoveryRootNodeId ? { rootNodeId: this.discoveryRootNodeId } : {};
+      const rootNodeId = this.discoveryRootNodeId();
+      discoveryScope = rootNodeId ? { rootNodeId } : {};
     } else {
       discoveryScope = {};
     }

@@ -120,16 +120,17 @@ describe('EditHistoryQueryComponent', () => {
     const savedItems = [...component.inMemoryItems];
     const firstUnsaved = { ...savedItems[0], id: '', name: 'unsaved-1' };
     const secondUnsaved = { ...savedItems[0], id: '', name: 'unsaved-2' };
-    component.inMemoryItems = [...savedItems, firstUnsaved, secondUnsaved];
-    component.filteredItems = component.filter();
-    component.changePage(0);
-    fixture.detectChanges();
+    for (const unsaved of [firstUnsaved, secondUnsaved]) {
+      modalService.open.mockReturnValueOnce({ componentInstance: { prepareForCreation: vi.fn() }, result: of(unsaved) } as any);
+      component.addItem();
+    }
 
     const editedCommand = { ...secondUnsaved, name: 'unsaved-2-edited' };
     const prepareForEdition = vi.fn();
     modalService.open.mockReturnValue({ componentInstance: { prepareForEdition }, result: of(editedCommand) } as any);
 
     const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('.edit-south-item')).toHaveLength(savedItems.length + 2);
     await root
       .getByCss('.edit-south-item')
       .nth(savedItems.length + 1)

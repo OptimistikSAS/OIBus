@@ -2,7 +2,7 @@
   <h4 class="modal-title" translate="south.items.import.title"></h4>
 </div>
 <div class="modal-body">
-  @if (validationError) {
+  @if (validationError(); as validationError) {
     <div class="alert alert-danger" role="alert">
       <h6>
         <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
@@ -35,7 +35,7 @@
       </div>
     </div>
   }
-  @if (mqttValidationError) {
+  @if (mqttValidationError(); as mqttValidationError) {
     <div class="alert alert-danger" role="alert">
       <h6>
         <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
@@ -51,7 +51,7 @@
       </div>
     </div>
   }
-  @if (checkError) {
+  @if (checkError(); as checkError) {
     <div class="alert alert-danger" role="alert">
       <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
       <span translate="south.items.import.check-error" [translateParams]="{ error: checkError }"></span>
@@ -64,14 +64,14 @@
     <button
       type="button"
       class="m-1 w-50 btn btn-secondary"
-      [class.btn-danger]="validationError || mqttValidationError"
+      [class.btn-danger]="validationError() || mqttValidationError()"
       (click)="fileInput.click()"
       (drop)="onImportDrop($event)"
       (dragover)="onImportDragOver($event)"
       id="import-button"
     >
-      @if (selectedFile.name) {
-        <span>{{ selectedFile.name }}</span>
+      @if (selectedFile().name) {
+        <span>{{ selectedFile().name }}</span>
       } @else {
         <span translate="configuration.oibus.oibus-details.dynamic-forms.array.import.select-file"></span>
       }
@@ -86,7 +86,7 @@
         <option [ngValue]="delimiter" [translate]="'enums.csv-character.' + delimiter"></option>
       }
     </select>
-    @if (showEraseOption) {
+    @if (showEraseOption()) {
       <div class="form-check form-switch w-50 m-1">
         <input
           class="form-check-input"
@@ -101,13 +101,14 @@
   </div>
   <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
 
-  @if (checking) {
+  @if (checking()) {
     <div class="text-center my-3">
       <span translate="south.items.import.checking"></span>
     </div>
   }
 
-  @if (displayedItemsError.totalElements > 0) {
+  @let itemsError = displayedItemsError();
+  @if (itemsError.totalElements > 0) {
     <div>
       <h6>
         <i class="fa fa-solid fa-times me-2" style="color: red"></i>
@@ -121,7 +122,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (error of displayedItemsError.content; track error.item['name']) {
+          @for (error of itemsError.content; track error.item['name']) {
             <tr class="south-item">
               <td class="text-truncate" style="max-width: 200px" [title]="error.item['name']">
                 {{ error.item['name'] }}
@@ -135,12 +136,13 @@
       </table>
     </div>
     <div class="d-flex flex-row-reverse">
-      <div [class]="displayedItemsError.totalPages > 1 ? 'ms-2' : ''">
-        <oib-pagination [page]="displayedItemsError" (pageChanged)="changePageError($event)" />
+      <div [class]="itemsError.totalPages > 1 ? 'ms-2' : ''">
+        <oib-pagination [page]="itemsError" (pageChanged)="changePageError($event)" />
       </div>
     </div>
   }
-  @if (displayedItemsNew.totalElements > 0) {
+  @let itemsNew = displayedItemsNew();
+  @if (itemsNew.totalElements > 0) {
     <div>
       <h6>
         <i class="fa fa-solid fa-check me-2" style="color: green"></i>
@@ -165,7 +167,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (item of displayedItemsNew.content; track item.name) {
+            @for (item of itemsNew.content; track item.name) {
               <tr class="south-item">
                 <td class="text-truncate" style="max-width: 200px">
                   <span [ngbTooltip]="item.name">{{ item.name }}</span>
@@ -196,8 +198,8 @@
       </div>
     </div>
     <div class="d-flex flex-row-reverse">
-      <div [class]="displayedItemsNew.totalPages > 1 ? 'ms-2' : ''">
-        <oib-pagination [page]="displayedItemsNew" (pageChanged)="changePageNew($event)" />
+      <div [class]="itemsNew.totalPages > 1 ? 'ms-2' : ''">
+        <oib-pagination [page]="itemsNew" (pageChanged)="changePageNew($event)" />
       </div>
     </div>
   }
