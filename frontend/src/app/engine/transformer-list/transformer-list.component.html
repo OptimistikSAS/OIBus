@@ -3,8 +3,8 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="configuration.oibus.manifest.transformers.list" id="title"></span>
-        @if (allTransformers.length) {
-          <span class="mx-1">({{ allTransformers.length }})</span>
+        @if (allTransformers().length) {
+          <span class="mx-1">({{ allTransformers().length }})</span>
         }
       </div>
       <div>
@@ -25,7 +25,7 @@
 </oib-box>
 
 <!-- the Custom Transformers list -->
-@if (displayedTransformers.content.length !== 0) {
+@if (displayedTransformers().content.length !== 0) {
   <div>
     <table class="mb-2 table table-sm table-hover oib-table">
       <thead class="light">
@@ -53,7 +53,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (transformer of displayedTransformers.content; track transformer.id) {
+        @for (transformer of displayedTransformers().content; track transformer.id) {
           <tr>
             <td>{{ transformer.name }}</td>
             <td>{{ transformer.description }}</td>
@@ -102,8 +102,8 @@
         }
       </tbody>
     </table>
-    @if (displayedTransformers.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedTransformers" (pageChanged)="changePage($event)" />
+    @if (displayedTransformers().totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedTransformers()" (pageChanged)="changePage($event)" />
     }
   </div>
 } @else {

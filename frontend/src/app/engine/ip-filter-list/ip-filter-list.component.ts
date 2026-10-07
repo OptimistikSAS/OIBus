@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -52,17 +52,17 @@ export class IpFilterListComponent {
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/ip-filters');
 
-  allIpFilters: Array<IPFilterDTO> = [];
+  readonly allIpFilters = signal<Array<IPFilterDTO>>([]);
   private filteredIpFilters: Array<IPFilterDTO> = [];
-  displayedIpFilters: Page<IPFilterDTO> = emptyPage();
-  sortField: IpFilterSortField = null;
-  sortDirection: SortDirection = 'asc';
-  ignoreIpFilters = false;
+  readonly displayedIpFilters = signal<Page<IPFilterDTO>>(emptyPage());
+  readonly sortField = signal<IpFilterSortField>(null);
+  readonly sortDirection = signal<SortDirection>('asc');
+  readonly ignoreIpFilters = signal(false);
 
   constructor() {
     combineLatest([this.engineService.getInfo(), this.ipFilterService.list()]).subscribe(([info, ipFilterList]) => {
-      this.ignoreIpFilters = info.ignoreIpFilters;
-      this.allIpFilters = ipFilterList;
+      this.ignoreIpFilters.set(info.ignoreIpFilters);
+      this.allIpFilters.set(ipFilterList);
       this.updateList(0);
     });
   }
@@ -102,7 +102,7 @@ export class IpFilterListComponent {
   private refreshAfterEditIpFilterModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
     modalRef.result.subscribe((ipFilter: IPFilterDTO) => {
       this.ipFilterService.list().subscribe(ipFilters => {
-        this.allIpFilters = ipFilters;
+        this.allIpFilters.set(ipFilters);
         this.updateList(0);
       });
       this.notificationService.success(`engine.ip-filter.${mode}`, {
@@ -127,7 +127,7 @@ export class IpFilterListComponent {
       )
       .subscribe(() => {
         this.ipFilterService.list().subscribe(ipFilters => {
-          this.allIpFilters = ipFilters;
+          this.allIpFilters.set(ipFilters);
           this.updateList(0);
         });
         this.notificationService.success('engine.ip-filter.deleted', {
@@ -146,39 +146,40 @@ export class IpFilterListComponent {
 
   toggleSort(field: IpFilterSortField) {
     if (!field) return;
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    if (this.sortField() === field) {
+      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
     } else {
-      this.sortField = field;
-      this.sortDirection = 'asc';
+      this.sortField.set(field);
+      this.sortDirection.set('asc');
     }
     this.updateList(0);
   }
 
   getSortIcon(field: IpFilterSortField): string {
-    if (this.sortField !== field) return 'fa-sort';
-    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    if (this.sortField() !== field) return 'fa-sort';
+    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
   }
 
   changePage(pageNumber: number) {
-    this.displayedIpFilters = createPageFromArray(this.filteredIpFilters, PAGE_SIZE, pageNumber);
+    this.displayedIpFilters.set(createPageFromArray(this.filteredIpFilters, PAGE_SIZE, pageNumber));
   }
 
   private updateList(pageNumber: number) {
-    this.filteredIpFilters = [...this.allIpFilters];
+    this.filteredIpFilters = [...this.allIpFilters()];
     this.sortList();
     this.changePage(pageNumber);
   }
 
   private sortList() {
-    if (!this.sortField) return;
-    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    const field = this.sortField();
+    if (!field) return;
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
     this.filteredIpFilters = [...this.filteredIpFilters].sort((a, b) => {
-      if (this.sortField === 'address') {
+      if (field === 'address') {
         return a.address.localeCompare(b.address) * direction;
       }
-      const aVal = this.sortField === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
-      const bVal = this.sortField === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
+      const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
+      const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
       return aVal.localeCompare(bVal) * direction;
     });
   }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
@@ -48,8 +48,8 @@ export class ExploreNorthCacheComponent {
   private translateService = inject(TranslateService);
   private modalService = inject(ModalService);
 
-  northConnector: NorthConnectorDTO | null = null;
-  cacheContent: CacheSearchResult | null = null;
+  readonly northConnector = signal<NorthConnectorDTO | null>(null);
+  readonly cacheContent = signal<CacheSearchResult | null>(null);
   state = new ObservableState();
 
   constructor() {
@@ -64,7 +64,7 @@ export class ExploreNorthCacheComponent {
         })
       )
       .subscribe(northConnector => {
-        this.northConnector = northConnector;
+        this.northConnector.set(northConnector);
       });
   }
 
@@ -86,18 +86,18 @@ export class ExploreNorthCacheComponent {
     }
 
     this.northConnectorService
-      .searchCacheContent(this.northConnector!.id, {
+      .searchCacheContent(this.northConnector()!.id, {
         start: this.form.value.start,
         end: this.form.value.end,
         nameContains: this.form.value.nameContains,
         maxNumberOfFilesReturned: this.form.value.maxNumberOfFilesReturned!
       })
       .pipe(this.state.pendingUntilFinalization())
-      .subscribe(result => (this.cacheContent = result));
+      .subscribe(result => this.cacheContent.set(result));
   }
 
   getFullTitle(): string {
-    return this.translateService.instant('explore-cache.title', { name: this.northConnector!.name });
+    return this.translateService.instant('explore-cache.title', { name: this.northConnector()!.name });
   }
 
   viewCacheContent(viewCommand: {
@@ -109,7 +109,7 @@ export class ExploreNorthCacheComponent {
     };
   }) {
     this.northConnectorService
-      .getCacheFileContent(this.northConnector!.id, viewCommand.fileToRetrieve.folder, viewCommand.fileToRetrieve.filename)
+      .getCacheFileContent(this.northConnector()!.id, viewCommand.fileToRetrieve.folder, viewCommand.fileToRetrieve.filename)
       .pipe(this.state.pendingUntilFinalization())
       .subscribe(result => {
         const modalRef = this.modalService.open(FileContentModalComponent, { size: 'xl', backdrop: 'static' });
@@ -120,7 +120,7 @@ export class ExploreNorthCacheComponent {
 
   updateCacheContent(update: { type: 'north' | 'history'; id: string; updateCommand: CacheContentUpdateCommand }) {
     this.northConnectorService
-      .updateCacheContent(this.northConnector!.id, update.updateCommand)
+      .updateCacheContent(this.northConnector()!.id, update.updateCommand)
       .pipe(
         this.state.pendingUntilFinalization(),
         tap(() => this.notificationService.success('explore-cache.cache-updated'))

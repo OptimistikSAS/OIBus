@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
@@ -43,8 +43,8 @@ export class ExploreHistoryCacheComponent {
   private translateService = inject(TranslateService);
   private modalService = inject(ModalService);
 
-  historyQuery: HistoryQueryDTO | null = null;
-  cacheContent: CacheSearchResult | null = null;
+  readonly historyQuery = signal<HistoryQueryDTO | null>(null);
+  readonly cacheContent = signal<CacheSearchResult | null>(null);
   state = new ObservableState();
 
   constructor() {
@@ -59,7 +59,7 @@ export class ExploreHistoryCacheComponent {
         })
       )
       .subscribe(historyQuery => {
-        this.historyQuery = historyQuery;
+        this.historyQuery.set(historyQuery);
       });
   }
 
@@ -81,18 +81,18 @@ export class ExploreHistoryCacheComponent {
     }
 
     this.historyQueryService
-      .searchCacheContent(this.historyQuery!.id, {
+      .searchCacheContent(this.historyQuery()!.id, {
         start: this.form.value.start,
         end: this.form.value.end,
         nameContains: this.form.value.nameContains,
         maxNumberOfFilesReturned: this.form.value.maxNumberOfFilesReturned!
       })
       .pipe(this.state.pendingUntilFinalization())
-      .subscribe(result => (this.cacheContent = result));
+      .subscribe(result => this.cacheContent.set(result));
   }
 
   getFullTitle(): string {
-    return this.translateService.instant('explore-cache.title', { name: this.historyQuery!.name });
+    return this.translateService.instant('explore-cache.title', { name: this.historyQuery()!.name });
   }
 
   viewCacheContent(viewCommand: {
@@ -104,7 +104,7 @@ export class ExploreHistoryCacheComponent {
     };
   }) {
     this.historyQueryService
-      .getCacheFileContent(this.historyQuery!.id, viewCommand.fileToRetrieve.folder, viewCommand.fileToRetrieve.filename)
+      .getCacheFileContent(this.historyQuery()!.id, viewCommand.fileToRetrieve.folder, viewCommand.fileToRetrieve.filename)
       .pipe(this.state.pendingUntilFinalization())
       .subscribe(result => {
         const modalRef = this.modalService.open(FileContentModalComponent, { size: 'xl', backdrop: 'static' });
@@ -115,7 +115,7 @@ export class ExploreHistoryCacheComponent {
 
   updateCacheContent(update: { type: 'north' | 'history'; id: string; updateCommand: CacheContentUpdateCommand }) {
     this.historyQueryService
-      .updateCacheContent(this.historyQuery!.id, update.updateCommand)
+      .updateCacheContent(this.historyQuery()!.id, update.updateCommand)
       .pipe(
         this.state.pendingUntilFinalization(),
         tap(() => this.notificationService.success('explore-cache.cache-updated'))

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -65,15 +65,15 @@ export class CertificateListComponent {
     )
   );
 
-  sortField: CertificateSortField = null;
-  sortDirection: SortDirection = 'asc';
-  displayedCertificates: Page<CertificateDTO> = emptyPage();
+  readonly sortField = signal<CertificateSortField>(null);
+  readonly sortDirection = signal<SortDirection>('asc');
+  readonly displayedCertificates = signal<Page<CertificateDTO>>(emptyPage());
 
   constructor() {
     effect(() => {
       const certs = this.certificates();
       if (certs) {
-        this.updateList(certs, 0);
+        untracked(() => this.updateList(certs, 0));
       }
     });
   }
@@ -177,11 +177,11 @@ export class CertificateListComponent {
 
   toggleSort(field: CertificateSortField) {
     if (!field) return;
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    if (this.sortField() === field) {
+      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
     } else {
-      this.sortField = field;
-      this.sortDirection = 'asc';
+      this.sortField.set(field);
+      this.sortDirection.set('asc');
     }
     const certs = this.certificates();
     if (certs) {
@@ -190,8 +190,8 @@ export class CertificateListComponent {
   }
 
   getSortIcon(field: CertificateSortField): string {
-    if (this.sortField !== field) return 'fa-sort';
-    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    if (this.sortField() !== field) return 'fa-sort';
+    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
   }
 
   changePage(pageNumber: number) {
@@ -203,15 +203,15 @@ export class CertificateListComponent {
 
   private updateList(allCerts: Array<CertificateDTO>, pageNumber: number) {
     let sorted = [...allCerts];
-    if (this.sortField) {
-      const direction = this.sortDirection === 'asc' ? 1 : -1;
-      const field = this.sortField;
+    const field = this.sortField();
+    if (field) {
+      const direction = this.sortDirection() === 'asc' ? 1 : -1;
       sorted = sorted.sort((a, b) => {
         const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
         const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
         return aVal.localeCompare(bVal) * direction;
       });
     }
-    this.displayedCertificates = createPageFromArray(sorted, PAGE_SIZE, pageNumber);
+    this.displayedCertificates.set(createPageFromArray(sorted, PAGE_SIZE, pageNumber));
   }
 }

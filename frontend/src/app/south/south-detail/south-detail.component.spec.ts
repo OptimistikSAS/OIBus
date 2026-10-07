@@ -163,7 +163,7 @@ describe('SouthDetailComponent', () => {
       })
       .subscribe();
 
-    expect(fixture.componentInstance.filteredItems.find(item => item.id === itemWithGroup.id)?.group?.standardSettings.name).toBe(
+    expect(fixture.componentInstance.filteredItems().find(item => item.id === itemWithGroup.id)?.group?.standardSettings.name).toBe(
       'GroupA renamed'
     );
   });
@@ -188,7 +188,7 @@ describe('SouthDetailComponent', () => {
       })
       .subscribe();
 
-    expect(fixture.componentInstance.southConnector!.groups).toEqual([createdGroup]);
+    expect(fixture.componentInstance.southConnector()!.groups).toEqual([createdGroup]);
   });
 
   test('deleteGroup should delete on the server before refetching, and refresh the item list', () => {
@@ -219,7 +219,7 @@ describe('SouthDetailComponent', () => {
     fixture.componentInstance.deleteGroup(groupA).subscribe();
 
     expect(callOrder).toEqual(['delete', 'findById']);
-    expect(fixture.componentInstance.filteredItems.find(item => item.id === itemWithGroup.id)?.group).toBeNull();
+    expect(fixture.componentInstance.filteredItems().find(item => item.id === itemWithGroup.id)?.group).toBeNull();
     expect(notificationService.success).toHaveBeenCalledWith('south.groups.deleted');
   });
 
@@ -235,7 +235,7 @@ describe('SouthDetailComponent', () => {
     expect(prepare).toHaveBeenCalledWith('south_connector', southConnector.id);
 
     await root.getByCss('.show-audit-item').first().click();
-    expect(prepare).toHaveBeenLastCalledWith('south_item', fixture.componentInstance.displayedItems.content[0].id);
+    expect(prepare).toHaveBeenLastCalledWith('south_item', fixture.componentInstance.displayedItems().content[0].id);
   });
 
   test('manageGroups should open the manage groups modal with the current groups and items', () => {
@@ -303,7 +303,7 @@ describe('SouthDetailComponent', () => {
     onWorkflowRun();
 
     expect(southConnectorService.findById).toHaveBeenCalledWith(southConnector.id);
-    expect(fixture.componentInstance.southConnector).toEqual(southConnectorAfterRun);
+    expect(fixture.componentInstance.southConnector()).toEqual(southConnectorAfterRun);
   });
 
   test('should show the explore button when the manifest supports exploration', async () => {

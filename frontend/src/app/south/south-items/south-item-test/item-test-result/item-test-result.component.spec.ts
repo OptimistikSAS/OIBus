@@ -20,7 +20,7 @@ describe('ItemTestResultComponent', () => {
 
     fixture.componentInstance.displayInfo('Test info message');
 
-    expect(fixture.componentInstance.message).toEqual({ type: 'info', value: 'Test info message' });
+    expect(fixture.componentInstance.message()).toEqual({ type: 'info', value: 'Test info message' });
   });
 
   test('should display result for time-values content', () => {
@@ -42,8 +42,8 @@ describe('ItemTestResultComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.result).toEqual(content);
-    expect(fixture.componentInstance.message).toBeNull();
-    expect(fixture.componentInstance.isLoading).toBe(false);
+    expect(fixture.componentInstance.message()).toBeNull();
+    expect(fixture.componentInstance.isLoading()).toBe(false);
   });
 
   test('should drop stale table mode when a new result no longer supports it', () => {

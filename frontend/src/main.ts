@@ -1,5 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
+import { provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 
@@ -13,7 +13,7 @@ import { provideI18n } from './i18n/i18n';
 bootstrapApplication(AppComponent, {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideZonelessChangeDetection(),
     provideRouter(ROUTES),
     provideI18n(),
     provideDatepicker(),

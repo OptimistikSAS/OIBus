@@ -1,10 +1,10 @@
 <div id="test-result-container" [class.compact]="compact()">
-  @if (isLoading) {
+  @if (isLoading()) {
     <div id="loading-spinner-container" class="align-items-center d-flex justify-content-center">
       <oib-loading-spinner />
     </div>
   }
-  @if (message) {
+  @if (message(); as message) {
     <div id="message-container" [class]="'alert m-0 rounded-0' + (message.type === 'info' ? ' alert-primary' : ' alert-danger')">
       @if (message.type !== 'info') {
         <div>{{ 'south.test-item.status-message.' + message.type | translate }}</div>
@@ -14,19 +14,22 @@
     </div>
   }
 
-  @if (!isLoading && !message && result) {
+  @if (!isLoading() && !message() && result) {
     @if (displayMode() === 'table') {
-      @if (activePage.totalElements) {
+      @let page = activePage();
+      @if (page.totalElements) {
         <div class="d-flex flex-row-reverse">
-          <div [class]="activePage.totalPages > 1 ? 'ms-2' : ''">
-            <oib-pagination [page]="activePage" (pageChanged)="changePage($event)" />
+          <div [class]="page.totalPages > 1 ? 'ms-2' : ''">
+            <oib-pagination [page]="page" (pageChanged)="changePage($event)" />
           </div>
         </div>
       }
 
-      @switch (tableType) {
+      @let type = tableType();
+      @switch (type) {
         @case ('time-values') {
-          @if (tableView.totalElements === 0) {
+          @let timeValuesPage = tableView();
+          @if (timeValuesPage.totalElements === 0) {
             <div class="alert alert-info m-2">{{ 'south.test-item.table.no-values' | translate }}</div>
           } @else {
             <div id="tableView" class="mb-2 grid-table">
@@ -36,7 +39,7 @@
                 <div class="p-2">{{ 'south.test-item.table.value' | translate }}</div>
                 <div class="p-2">{{ 'south.test-item.table.other' | translate }}</div>
               </div>
-              @for (item of tableView.content; track $index) {
+              @for (item of timeValuesPage.content; track $index) {
                 @let data = convertDataToString(item.data);
                 <div class="grid-table-row">
                   <div class="align-items-center d-flex h-100 p-2">{{ item.timestamp }}</div>
@@ -52,16 +55,22 @@
         }
 
         @case ('generic') {
-          @if (genericTableView.totalElements === 0) {
+          @let genericPage = genericTableView();
+          @let headerNames = headers();
+          @if (genericPage.totalElements === 0) {
             <div class="alert alert-info m-2">{{ 'south.test-item.table.no-values' | translate }}</div>
           } @else {
-            <div id="tableView" class="mb-2 grid-table" [style]="'grid-template-columns: repeat(' + headers?.length + ', minmax(0, 1fr))'">
+            <div
+              id="tableView"
+              class="mb-2 grid-table"
+              [style]="'grid-template-columns: repeat(' + headerNames?.length + ', minmax(0, 1fr))'"
+            >
               <div class="grid-table-header fw-bold">
-                @for (header of headers; track $index) {
+                @for (header of headerNames; track $index) {
                   <div class="p-2">{{ header }}</div>
                 }
               </div>
-              @for (items of genericTableView.content; track $index) {
+              @for (items of genericPage.content; track $index) {
                 <div class="grid-table-row">
                   @for (item of items; track $index) {
                     <div class="align-items-center d-flex h-100 p-2" style="overflow-wrap: anywhere">{{ item }}</div>
@@ -76,7 +85,7 @@
     }
 
     @if (displayMode() === 'json' || displayMode() === 'any') {
-      @if (isContentEmpty) {
+      @if (isContentEmpty()) {
         <div class="alert alert-info m-2">{{ 'south.test-item.table.no-values' | translate }}</div>
       } @else {
         @if (chunkedValueProgress() && chunkedValueProgress() !== 1) {

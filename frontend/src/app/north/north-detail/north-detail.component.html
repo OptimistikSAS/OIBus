@@ -1,164 +1,166 @@
-@if (northConnector && manifest) {
-  <div class="oib-padded-container">
-    <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8">
-        <div class="oib-header-container mb-3">
-          <h1 id="title">
-            <span>{{ 'north.title' | translate: { name: northConnector.name, type: manifest.id | oIBusNorthTypeEnum } }}</span>
-            <span class="ms-3">
-              <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'north.tooltips.edit' | translate">
-                <i class="fa fa-pencil"></i>
-              </button>
-              <button
-                type="button"
-                class="btn btn-primary ms-1"
-                id="show-audit-button"
-                [ngbTooltip]="'north.tooltips.audit' | translate"
-                (click)="showAudit('north_connector', northConnector.id)"
-              >
-                <i class="fa fa-history"></i>
-              </button>
-            </span>
-            <button
-              class="btn btn-primary pull-right me-2"
-              id="north-enabled"
-              [ngbTooltip]="(northConnector.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
-              (click)="toggleConnector(!northConnector!.enabled)"
-            >
-              <i [class]="northConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
-            </button>
-          </h1>
-          <span class="text-disabled pull-right me-2">
-            <span translate="north.copy-cache-path" [translateParams]="{ id: northConnector.id }"></span>
-            <i
-              class="fa fa-copy ms-1"
-              role="button"
-              [ngbTooltip]="'north.tooltips.copy-cache-path' | translate"
-              [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/north-' + northConnector.id"
-              (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
-            ></i>
-          </span>
-        </div>
-        <!-- North metrics -->
-        @if (connectorMetrics) {
-          <oib-north-metrics [connectorMetrics]="connectorMetrics" [manifest]="manifest" [northConnector]="northConnector" />
-        }
-        <!-- Specific settings -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span
-                  translate="north.specific-settings"
-                  [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"
-                  id="specific-settings-title"
-                ></span>
-              </div>
-              <div>
+@if (northConnector(); as northConnector) {
+  @if (manifest(); as manifest) {
+    <div class="oib-padded-container">
+      <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+          <div class="oib-header-container mb-3">
+            <h1 id="title">
+              <span>{{ 'north.title' | translate: { name: northConnector.name, type: manifest.id | oIBusNorthTypeEnum } }}</span>
+              <span class="ms-3">
+                <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'north.tooltips.edit' | translate">
+                  <i class="fa fa-pencil"></i>
+                </button>
                 <button
-                  translate="north.test-connection.button"
                   type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                  id="test-connection"
-                  (click)="testConnection()"
-                ></button>
+                  class="btn btn-primary ms-1"
+                  id="show-audit-button"
+                  [ngbTooltip]="'north.tooltips.audit' | translate"
+                  (click)="showAudit('north_connector', northConnector.id)"
+                >
+                  <i class="fa fa-history"></i>
+                </button>
+              </span>
+              <button
+                class="btn btn-primary pull-right me-2"
+                id="north-enabled"
+                [ngbTooltip]="(northConnector.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
+                (click)="toggleConnector(!northConnector!.enabled)"
+              >
+                <i [class]="northConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
+              </button>
+            </h1>
+            <span class="text-disabled pull-right me-2">
+              <span translate="north.copy-cache-path" [translateParams]="{ id: northConnector.id }"></span>
+              <i
+                class="fa fa-copy ms-1"
+                role="button"
+                [ngbTooltip]="'north.tooltips.copy-cache-path' | translate"
+                [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/data-stream/north-' + northConnector.id"
+                (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+              ></i>
+            </span>
+          </div>
+          <!-- North metrics -->
+          @if (connectorMetrics(); as connectorMetrics) {
+            <oib-north-metrics [connectorMetrics]="connectorMetrics" [manifest]="manifest" [northConnector]="northConnector" />
+          }
+          <!-- Specific settings -->
+          <oib-box>
+            <ng-template oibBoxTitle>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span
+                    translate="north.specific-settings"
+                    [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"
+                    id="specific-settings-title"
+                  ></span>
+                </div>
+                <div>
+                  <button
+                    translate="north.test-connection.button"
+                    type="button"
+                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                    id="test-connection"
+                    (click)="testConnection()"
+                  ></button>
+                </div>
               </div>
-            </div>
-          </ng-template>
-          <table class="table table-sm table-hover oib-table mb-3">
-            <tbody class="north-settings">
-              <tr>
-                <td translate="north.status"></td>
-                <td>{{ northConnector.enabled | enabled }}</td>
-              </tr>
-              @for (setting of displayedSettings; track setting) {
+            </ng-template>
+            <table class="table table-sm table-hover oib-table mb-3">
+              <tbody class="north-settings">
                 <tr>
-                  <td>{{ setting.key | translate }}</td>
-                  <td>{{ setting.value }}</td>
+                  <td translate="north.status"></td>
+                  <td>{{ northConnector.enabled | enabled }}</td>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </oib-box>
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <span translate="north.caching.title"></span>
-              <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/north', northConnector.id, 'cache']"
-                ><span class="fa fa-search"></span><span class="mx-1" translate="north.caching.explore-cache"></span
-              ></a>
-            </div>
-          </ng-template>
-          <table class="table table-sm table-hover oib-table mb-3">
-            <tbody>
-              <tr>
-                <td translate="north.caching.trigger.title" style="width: 33%"></td>
-                <td
-                  translate="north.caching.trigger.value"
-                  [translateParams]="{
-                    scanMode: northConnector.caching.trigger.scanMode.name,
-                    numberOfElements: northConnector.caching.trigger.numberOfElements,
-                    numberOfFiles: northConnector.caching.trigger.numberOfFiles
-                  }"
-                ></td>
-              </tr>
-              <tr>
-                <td translate="north.caching.throttling.title"></td>
-                <td
-                  translate="north.caching.throttling.value"
-                  [translateParams]="{
-                    runMinDelay: northConnector.caching.throttling.runMinDelay,
-                    maxSize: northConnector.caching.throttling.maxSize,
-                    maxNumberOfElements: northConnector.caching.throttling.maxNumberOfElements
-                  }"
-                ></td>
-              </tr>
-              <tr>
-                <td translate="north.caching.error.title"></td>
-                <td
-                  translate="north.caching.error.value"
-                  [translateParams]="{
-                    retryInterval: northConnector.caching.error.retryInterval,
-                    retryCount: northConnector.caching.error.retryCount,
-                    retentionDuration: northConnector.caching.error.retentionDuration
-                  }"
-                ></td>
-              </tr>
-              <tr>
-                <td translate="north.caching.archive.title"></td>
-                <td
-                  translate="north.caching.archive.value"
-                  [translateParams]="{
-                    enabled: northConnector.caching.archive.enabled,
-                    retentionDuration: northConnector.caching.archive.retentionDuration
-                  }"
-                ></td>
-              </tr>
-            </tbody>
-          </table>
-        </oib-box>
-
-        <oib-north-transformers
-          [scanModes]="scanModes"
-          [certificates]="certificates"
-          [northManifest]="manifest"
-          [transformers]="transformers"
-          [northConnector]="northConnector"
-          [saveChangesDirectly]="true"
-          (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
-        />
-        <!-- Logs -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span id="logs-title" translate="logs.title"></span>
+                @for (setting of displayedSettings(); track setting) {
+                  <tr>
+                    <td>{{ setting.key | translate }}</td>
+                    <td>{{ setting.value }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </oib-box>
+          <oib-box>
+            <ng-template oibBoxTitle>
+              <div class="d-flex justify-content-between align-items-center">
+                <span translate="north.caching.title"></span>
+                <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/north', northConnector.id, 'cache']"
+                  ><span class="fa fa-search"></span><span class="mx-1" translate="north.caching.explore-cache"></span
+                ></a>
               </div>
-            </div>
-          </ng-template>
-        </oib-box>
-        <oib-logs [scopeId]="northId" scopeType="north" [embedded]="true" />
+            </ng-template>
+            <table class="table table-sm table-hover oib-table mb-3">
+              <tbody>
+                <tr>
+                  <td translate="north.caching.trigger.title" style="width: 33%"></td>
+                  <td
+                    translate="north.caching.trigger.value"
+                    [translateParams]="{
+                      scanMode: northConnector.caching.trigger.scanMode.name,
+                      numberOfElements: northConnector.caching.trigger.numberOfElements,
+                      numberOfFiles: northConnector.caching.trigger.numberOfFiles
+                    }"
+                  ></td>
+                </tr>
+                <tr>
+                  <td translate="north.caching.throttling.title"></td>
+                  <td
+                    translate="north.caching.throttling.value"
+                    [translateParams]="{
+                      runMinDelay: northConnector.caching.throttling.runMinDelay,
+                      maxSize: northConnector.caching.throttling.maxSize,
+                      maxNumberOfElements: northConnector.caching.throttling.maxNumberOfElements
+                    }"
+                  ></td>
+                </tr>
+                <tr>
+                  <td translate="north.caching.error.title"></td>
+                  <td
+                    translate="north.caching.error.value"
+                    [translateParams]="{
+                      retryInterval: northConnector.caching.error.retryInterval,
+                      retryCount: northConnector.caching.error.retryCount,
+                      retentionDuration: northConnector.caching.error.retentionDuration
+                    }"
+                  ></td>
+                </tr>
+                <tr>
+                  <td translate="north.caching.archive.title"></td>
+                  <td
+                    translate="north.caching.archive.value"
+                    [translateParams]="{
+                      enabled: northConnector.caching.archive.enabled,
+                      retentionDuration: northConnector.caching.archive.retentionDuration
+                    }"
+                  ></td>
+                </tr>
+              </tbody>
+            </table>
+          </oib-box>
+
+          <oib-north-transformers
+            [scanModes]="scanModes()"
+            [certificates]="certificates()"
+            [northManifest]="manifest"
+            [transformers]="transformers()"
+            [northConnector]="northConnector"
+            [saveChangesDirectly]="true"
+            (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
+          />
+          <!-- Logs -->
+          <oib-box>
+            <ng-template oibBoxTitle>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span id="logs-title" translate="logs.title"></span>
+                </div>
+              </div>
+            </ng-template>
+          </oib-box>
+          <oib-logs [scopeId]="northId()" scopeType="north" [embedded]="true" />
+        </div>
       </div>
     </div>
-  </div>
+  }
 }

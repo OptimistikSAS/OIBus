@@ -1,279 +1,305 @@
-@if (southConnector && manifest) {
-  <div class="oib-padded-container">
-    <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8">
-        <div class="oib-header-container mb-3">
-          <h1 id="title">
-            <span>{{ 'south.title' | translate: { name: southConnector.name, type: southConnector.type } }}</span>
-            <span class="ms-2">
-              <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'south.tooltips.edit' | translate">
-                <i class="fa fa-pencil"></i>
-              </button>
+@if (southConnector(); as southConnector) {
+  @if (manifest(); as manifest) {
+    <div class="oib-padded-container">
+      <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+          <div class="oib-header-container mb-3">
+            <h1 id="title">
+              <span>{{ 'south.title' | translate: { name: southConnector.name, type: southConnector.type } }}</span>
+              <span class="ms-2">
+                <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'south.tooltips.edit' | translate">
+                  <i class="fa fa-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary ms-1"
+                  id="show-audit-button"
+                  [ngbTooltip]="'south.tooltips.audit' | translate"
+                  (click)="showAudit('south_connector', southConnector.id)"
+                >
+                  <i class="fa fa-history"></i>
+                </button>
+              </span>
               <button
-                type="button"
-                class="btn btn-primary ms-1"
-                id="show-audit-button"
-                [ngbTooltip]="'south.tooltips.audit' | translate"
-                (click)="showAudit('south_connector', southConnector.id)"
+                class="btn btn-primary pull-right me-2"
+                id="south-enabled"
+                [ngbTooltip]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
+                (click)="toggleConnector(!southConnector.enabled)"
               >
-                <i class="fa fa-history"></i>
+                <i [class]="southConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
               </button>
+            </h1>
+            <span class="text-disabled pull-right me-2">
+              <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
+              <i
+                class="fa fa-copy ms-1"
+                role="button"
+                [ngbTooltip]="'south.tooltips.copy-cache-path' | translate"
+                [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/data-stream/south-' + southConnector.id"
+                (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+              ></i>
             </span>
-            <button
-              class="btn btn-primary pull-right me-2"
-              id="south-enabled"
-              [ngbTooltip]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-              (click)="toggleConnector(!southConnector.enabled)"
-            >
-              <i [class]="southConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
-            </button>
-          </h1>
-          <span class="text-disabled pull-right me-2">
-            <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
-            <i
-              class="fa fa-copy ms-1"
-              role="button"
-              [ngbTooltip]="'south.tooltips.copy-cache-path' | translate"
-              [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/south-' + southConnector.id"
-              (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
-            ></i>
-          </span>
-        </div>
-        <!-- South metrics -->
-        @if (connectorMetrics()) {
-          <oib-south-metrics [connectorMetrics]="connectorMetrics()!" [manifest]="manifest" [southConnector]="southConnector" />
-        }
-        <!-- Specific settings -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span
-                  translate="south.specific-settings"
-                  [translateParams]="{ type: manifest.id | oIBusSouthTypeEnum }"
-                  id="specific-settings-title"
-                ></span>
-              </div>
-              <div>
-                @if (manifest.explore) {
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                    id="explore"
-                    (click)="explore()"
-                    translate="south.explore.button"
-                  ></button>
-                }
-                <button
-                  translate="south.test-connection.button"
-                  type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn"
-                  [class.ms-3]="!manifest.explore"
-                  id="test-connection"
-                  (click)="testConnection()"
-                ></button>
-              </div>
-            </div>
-          </ng-template>
-          <table class="table table-sm table-hover oib-table mb-3">
-            <tbody class="south-settings">
-              <tr>
-                <td translate="south.status"></td>
-                <td>{{ southConnector.enabled | enabled }}</td>
-              </tr>
-              @for (setting of displayedSettings; track setting) {
-                <tr>
-                  <td>{{ setting.key | translate }}</td>
-                  <td>{{ setting.value }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </oib-box>
-        <!-- Items -->
-        <oib-box class="oib-south-items">
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span translate="south.items.title"></span>
-                @if (filteredItems.length) {
-                  <span class="mx-1">({{ filteredItems.length }})</span>
-                }
-                <button
-                  type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn ms-2"
-                  id="manage-groups-button"
-                  [ngbTooltip]="'south.groups.manage-button' | translate"
-                  (click)="manageGroups()"
-                >
-                  <span class="fa fa-folder me-1"></span>
-                  <span translate="south.groups.manage-button"></span>
-                  <span class="badge bg-secondary ms-1">{{ southConnector.groups.length }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn"
-                  id="manage-workflows-button"
-                  [ngbTooltip]="'south.workflows.manage-button' | translate"
-                  (click)="manageWorkflows()"
-                >
-                  <span class="fa fa-sync me-1"></span>
-                  <span translate="south.workflows.manage-button"></span>
-                </button>
-              </div>
-              <div class="ms-3">
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm oib-box-btn"
-                  [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.create' | translate"
-                  (click)="addItem()"
-                >
-                  <span class="fa fa-plus"></span>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn"
-                  id="export-items"
-                  (click)="exportItems()"
-                  translate="south.items.export.button"
-                ></button>
-                <button type="button" class="btn btn-secondary btn-sm oib-box-btn" (click)="importItems()" id="import-button">
-                  <span translate="south.items.import.button"></span>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-danger btn-sm oib-box-btn"
-                  (click)="deleteAllItems()"
-                  [disabled]="southConnector.items.length === 0"
-                  translate="south.items.delete-all"
-                  id="delete-all"
-                ></button>
-                <oib-help [url]="itemSectionHelpUrl" />
-              </div>
-            </div>
-          </ng-template>
-
-          <div class="mb-3">
-            <!-- Filter row -->
-            <div class="d-flex align-items-center gap-2 my-2">
-              <input
-                class="form-control form-control-sm flex-grow-1"
-                [formControl]="searchControl"
-                [placeholder]="'south.items.search-placeholder' | translate"
-                type="text"
-              />
-              <select class="form-select form-select-sm w-auto" [formControl]="groupFilterControl">
-                <option [ngValue]="null" translate="south.items.all-groups"></option>
-                <option value="none" translate="south.items.group-none"></option>
-                @for (group of southConnector.groups; track group.id) {
-                  <option [value]="group.id">{{ group.standardSettings.name }}</option>
-                }
-              </select>
-              <select class="form-select form-select-sm w-auto" [formControl]="scanModeFilterControl">
-                <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
-                @for (scanMode of scanModes; track scanMode.id) {
-                  <option [value]="scanMode.id">{{ scanMode.name }}</option>
-                }
-              </select>
-              <select class="form-select form-select-sm w-auto" [formControl]="statusFilterControl">
-                <option [ngValue]="null" translate="south.items.all-statuses"></option>
-                <option value="enabled" translate="south.items.enabled-label"></option>
-                <option value="disabled" translate="south.items.disabled-label"></option>
-              </select>
-            </div>
-
-            @if (displayedItems.content.length > 0) {
-              <!-- Selection Controls -->
-              <div class="d-flex justify-content-between align-items-center my-2">
-                <div class="d-flex align-items-center selection-controls">
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    (click)="selectAll()"
-                    [disabled]="getSelectedItemsCount() === filteredItems.length"
-                    id="select-all-button"
-                  >
-                    <span class="fa fa-check-square me-1"></span>
-                    <span translate="south.items.select-all"></span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    (click)="unselectAll()"
-                    [disabled]="getSelectedItemsCount() === 0"
-                    id="unselect-all-button"
-                  >
-                    <span class="fa fa-square-o me-1"></span>
-                    <span translate="south.items.unselect-all"></span>
-                  </button>
-                  @if (getSelectedItemsCount() > 0) {
-                    <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
-                      <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
-                        <span translate="south.items.mass-actions" [translateParams]="{ count: selectedItems.size }"></span>
-                        <span class="fa fa-caret-down ms-1"></span>
-                      </button>
-                      <div ngbDropdownMenu>
-                        <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
-                          <span class="fa fa-check me-2"></span>
-                          <span translate="south.items.enable"></span>
-                        </button>
-                        <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
-                          <span class="fa fa-times me-2"></span>
-                          <span translate="south.items.disable"></span>
-                        </button>
-                        <button type="button" ngbDropdownItem (click)="moveSelectedItemsToGroup()">
-                          <span class="fa fa-folder me-2"></span>
-                          <span translate="south.items.move-to-group"></span>
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
-                          <span class="fa fa-trash me-2"></span>
-                          <span translate="south.items.delete"></span>
-                        </button>
-                      </div>
-                    </div>
+          </div>
+          <!-- South metrics -->
+          @if (connectorMetrics()) {
+            <oib-south-metrics [connectorMetrics]="connectorMetrics()!" [manifest]="manifest" [southConnector]="southConnector" />
+          }
+          <!-- Specific settings -->
+          <oib-box>
+            <ng-template oibBoxTitle>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span
+                    translate="south.specific-settings"
+                    [translateParams]="{ type: manifest.id | oIBusSouthTypeEnum }"
+                    id="specific-settings-title"
+                  ></span>
+                </div>
+                <div>
+                  @if (manifest.explore) {
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                      id="explore"
+                      (click)="explore()"
+                      translate="south.explore.button"
+                    ></button>
                   }
+                  <button
+                    translate="south.test-connection.button"
+                    type="button"
+                    class="btn btn-secondary btn-sm oib-box-btn"
+                    [class.ms-3]="!manifest.explore"
+                    id="test-connection"
+                    (click)="testConnection()"
+                  ></button>
                 </div>
               </div>
+            </ng-template>
+            <table class="table table-sm table-hover oib-table mb-3">
+              <tbody class="south-settings">
+                <tr>
+                  <td translate="south.status"></td>
+                  <td>{{ southConnector.enabled | enabled }}</td>
+                </tr>
+                @for (setting of displayedSettings(); track setting) {
+                  <tr>
+                    <td>{{ setting.key | translate }}</td>
+                    <td>{{ setting.value }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </oib-box>
+          <!-- Items -->
+          <oib-box class="oib-south-items">
+            <ng-template oibBoxTitle>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span translate="south.items.title"></span>
+                  @if (filteredItems().length) {
+                    <span class="mx-1">({{ filteredItems().length }})</span>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm oib-box-btn ms-2"
+                    id="manage-groups-button"
+                    [ngbTooltip]="'south.groups.manage-button' | translate"
+                    (click)="manageGroups()"
+                  >
+                    <span class="fa fa-folder me-1"></span>
+                    <span translate="south.groups.manage-button"></span>
+                    <span class="badge bg-secondary ms-1">{{ southConnector.groups.length }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm oib-box-btn"
+                    id="manage-workflows-button"
+                    [ngbTooltip]="'south.workflows.manage-button' | translate"
+                    (click)="manageWorkflows()"
+                  >
+                    <span class="fa fa-sync me-1"></span>
+                    <span translate="south.workflows.manage-button"></span>
+                  </button>
+                </div>
+                <div class="ms-3">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm oib-box-btn"
+                    [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.create' | translate"
+                    (click)="addItem()"
+                  >
+                    <span class="fa fa-plus"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm oib-box-btn"
+                    id="export-items"
+                    (click)="exportItems()"
+                    translate="south.items.export.button"
+                  ></button>
+                  <button type="button" class="btn btn-secondary btn-sm oib-box-btn" (click)="importItems()" id="import-button">
+                    <span translate="south.items.import.button"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm oib-box-btn"
+                    (click)="deleteAllItems()"
+                    [disabled]="southConnector.items.length === 0"
+                    translate="south.items.delete-all"
+                    id="delete-all"
+                  ></button>
+                  <oib-help [url]="itemSectionHelpUrl" />
+                </div>
+              </div>
+            </ng-template>
 
-              <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
-              <ng-template #scheduleTooltip>
-                @if (tooltipItem) {
-                  <div class="text-start schedule-tooltip-content">
-                    @if (tooltipItem.group) {
-                      <div><strong translate="south.items.group"></strong>: {{ tooltipItem.group.standardSettings.name }}</div>
-                      @if (tooltipItem.syncWithGroup) {
-                        <div>
-                          <strong translate="south.items.scan-mode"></strong>: {{ tooltipItem.group.standardSettings.scanMode.name }}
+            <div class="mb-3">
+              <!-- Filter row -->
+              <div class="d-flex align-items-center gap-2 my-2">
+                <input
+                  class="form-control form-control-sm flex-grow-1"
+                  [formControl]="searchControl"
+                  [placeholder]="'south.items.search-placeholder' | translate"
+                  type="text"
+                />
+                <select class="form-select form-select-sm w-auto" [formControl]="groupFilterControl">
+                  <option [ngValue]="null" translate="south.items.all-groups"></option>
+                  <option value="none" translate="south.items.group-none"></option>
+                  @for (group of southConnector.groups; track group.id) {
+                    <option [value]="group.id">{{ group.standardSettings.name }}</option>
+                  }
+                </select>
+                <select class="form-select form-select-sm w-auto" [formControl]="scanModeFilterControl">
+                  <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
+                  @for (scanMode of scanModes(); track scanMode.id) {
+                    <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                  }
+                </select>
+                <select class="form-select form-select-sm w-auto" [formControl]="statusFilterControl">
+                  <option [ngValue]="null" translate="south.items.all-statuses"></option>
+                  <option value="enabled" translate="south.items.enabled-label"></option>
+                  <option value="disabled" translate="south.items.disabled-label"></option>
+                </select>
+              </div>
+
+              @if (displayedItems().content.length > 0) {
+                <!-- Selection Controls -->
+                <div class="d-flex justify-content-between align-items-center my-2">
+                  <div class="d-flex align-items-center selection-controls">
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="selectAll()"
+                      [disabled]="getSelectedItemsCount() === filteredItems().length"
+                      id="select-all-button"
+                    >
+                      <span class="fa fa-check-square me-1"></span>
+                      <span translate="south.items.select-all"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="unselectAll()"
+                      [disabled]="getSelectedItemsCount() === 0"
+                      id="unselect-all-button"
+                    >
+                      <span class="fa fa-square-o me-1"></span>
+                      <span translate="south.items.unselect-all"></span>
+                    </button>
+                    @if (getSelectedItemsCount() > 0) {
+                      <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
+                        <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
+                          <span translate="south.items.mass-actions" [translateParams]="{ count: selectedItems().size }"></span>
+                          <span class="fa fa-caret-down ms-1"></span>
+                        </button>
+                        <div ngbDropdownMenu>
+                          <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
+                            <span class="fa fa-check me-2"></span>
+                            <span translate="south.items.enable"></span>
+                          </button>
+                          <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
+                            <span class="fa fa-times me-2"></span>
+                            <span translate="south.items.disable"></span>
+                          </button>
+                          <button type="button" ngbDropdownItem (click)="moveSelectedItemsToGroup()">
+                            <span class="fa fa-folder me-2"></span>
+                            <span translate="south.items.move-to-group"></span>
+                          </button>
+                          <div class="dropdown-divider"></div>
+                          <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
+                            <span class="fa fa-trash me-2"></span>
+                            <span translate="south.items.delete"></span>
+                          </button>
                         </div>
-                        @if (manifest!.modes.history) {
-                          @if (tooltipItem.group.historySettings.maxReadInterval !== null) {
-                            <div>
-                              <strong translate="south.items.max-read-interval"></strong>:
-                              {{ tooltipItem.group.historySettings.maxReadInterval }}s
-                            </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
+                <ng-template #scheduleTooltip>
+                  @if (tooltipItem) {
+                    <div class="text-start schedule-tooltip-content">
+                      @if (tooltipItem.group) {
+                        <div><strong translate="south.items.group"></strong>: {{ tooltipItem.group.standardSettings.name }}</div>
+                        @if (tooltipItem.syncWithGroup) {
+                          <div>
+                            <strong translate="south.items.scan-mode"></strong>: {{ tooltipItem.group.standardSettings.scanMode.name }}
+                          </div>
+                          @if (manifest!.modes.history) {
+                            @if (tooltipItem.group.historySettings.maxReadInterval !== null) {
+                              <div>
+                                <strong translate="south.items.max-read-interval"></strong>:
+                                {{ tooltipItem.group.historySettings.maxReadInterval }}s
+                              </div>
+                            }
+                            @if (tooltipItem.group.historySettings.readDelay !== null) {
+                              <div>
+                                <strong translate="south.items.read-delay"></strong>: {{ tooltipItem.group.historySettings.readDelay }}ms
+                              </div>
+                            }
+                            @if (tooltipItem.group.historySettings.startTimeOffset !== null) {
+                              <div>
+                                <strong translate="south.items.start-time-offset"></strong>:
+                                {{ tooltipItem.group.historySettings.startTimeOffset }}ms
+                              </div>
+                            }
+                            @if (tooltipItem.group.historySettings.endTimeOffset !== null) {
+                              <div>
+                                <strong translate="south.items.end-time-offset"></strong>:
+                                {{ tooltipItem.group.historySettings.endTimeOffset }}ms
+                              </div>
+                            }
                           }
-                          @if (tooltipItem.group.historySettings.readDelay !== null) {
-                            <div>
-                              <strong translate="south.items.read-delay"></strong>: {{ tooltipItem.group.historySettings.readDelay }}ms
-                            </div>
+                        } @else {
+                          <div>
+                            <strong translate="south.items.scan-mode"></strong>: {{ tooltipItem.group!.standardSettings.scanMode.name }}
+                          </div>
+                          @if (manifest!.modes.history) {
+                            @if (tooltipItem.maxReadInterval !== null) {
+                              <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
+                            }
+                            @if (tooltipItem.readDelay !== null) {
+                              <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
+                            }
+                            @if (tooltipItem.startTimeOffset !== null) {
+                              <div><strong translate="south.items.start-time-offset"></strong>: {{ tooltipItem.startTimeOffset }}ms</div>
+                            }
+                            @if (tooltipItem.endTimeOffset !== null) {
+                              <div><strong translate="south.items.end-time-offset"></strong>: {{ tooltipItem.endTimeOffset }}ms</div>
+                            }
                           }
-                          @if (tooltipItem.group.historySettings.startTimeOffset !== null) {
-                            <div>
-                              <strong translate="south.items.start-time-offset"></strong>:
-                              {{ tooltipItem.group.historySettings.startTimeOffset }}ms
-                            </div>
-                          }
-                          @if (tooltipItem.group.historySettings.endTimeOffset !== null) {
-                            <div>
-                              <strong translate="south.items.end-time-offset"></strong>:
-                              {{ tooltipItem.group.historySettings.endTimeOffset }}ms
-                            </div>
-                          }
+                          <div class="text-warning mt-1">⚠ {{ 'south.items.not-synced-notice' | translate }}</div>
                         }
                       } @else {
                         <div>
-                          <strong translate="south.items.scan-mode"></strong>: {{ tooltipItem.group!.standardSettings.scanMode.name }}
+                          <strong translate="south.items.scan-mode"></strong>:
+                          {{
+                            tooltipItem.scanMode?.id === 'subscription'
+                              ? ('scan-mode.subscription' | translate)
+                              : tooltipItem.scanMode?.name || ''
+                          }}
                         </div>
                         @if (manifest!.modes.history) {
                           @if (tooltipItem.maxReadInterval !== null) {
@@ -289,227 +315,206 @@
                             <div><strong translate="south.items.end-time-offset"></strong>: {{ tooltipItem.endTimeOffset }}ms</div>
                           }
                         }
-                        <div class="text-warning mt-1">⚠ {{ 'south.items.not-synced-notice' | translate }}</div>
                       }
-                    } @else {
-                      <div>
-                        <strong translate="south.items.scan-mode"></strong>:
-                        {{
-                          tooltipItem.scanMode?.id === 'subscription'
-                            ? ('scan-mode.subscription' | translate)
-                            : tooltipItem.scanMode?.name || ''
-                        }}
-                      </div>
-                      @if (manifest!.modes.history) {
-                        @if (tooltipItem.maxReadInterval !== null) {
-                          <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
-                        }
-                        @if (tooltipItem.readDelay !== null) {
-                          <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
-                        }
-                        @if (tooltipItem.startTimeOffset !== null) {
-                          <div><strong translate="south.items.start-time-offset"></strong>: {{ tooltipItem.startTimeOffset }}ms</div>
-                        }
-                        @if (tooltipItem.endTimeOffset !== null) {
-                          <div><strong translate="south.items.end-time-offset"></strong>: {{ tooltipItem.endTimeOffset }}ms</div>
-                        }
+                      @if (isWindowExpired(tooltipItem.group ? tooltipItem.group.standardSettings.scanMode : tooltipItem.scanMode)) {
+                        <div class="text-warning mt-1">⚠ {{ 'engine.scan-mode.window-never-fires' | translate }}</div>
                       }
-                    }
-                    @if (isWindowExpired(tooltipItem.group ? tooltipItem.group.standardSettings.scanMode : tooltipItem.scanMode)) {
-                      <div class="text-warning mt-1">⚠ {{ 'engine.scan-mode.window-never-fires' | translate }}</div>
-                    }
-                  </div>
-                }
-              </ng-template>
-
-              <table class="mb-2 table table-sm table-hover oib-table">
-                <thead class="light">
-                  <tr>
-                    <th></th>
-                    <th style="width: 6rem; text-align: center">
-                      <button
-                        type="button"
-                        style="background: none; border: none; font-weight: bold; white-space: nowrap"
-                        (click)="toggleColumnSort('enabled')"
-                      >
-                        <span translate="south.items.status" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.enabled] }}"></span>
-                      </button>
-                    </th>
-                    <th>
-                      <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
-                        <span translate="south.items.name" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
-                      </button>
-                    </th>
-                    <th style="width: 14rem">
-                      <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('group')">
-                        <span translate="south.items.group-and-schedule" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.group] }}"></span>
-                      </button>
-                    </th>
-                    <th style="width: 10rem">
-                      <button
-                        type="button"
-                        style="background: none; border: none; font-weight: bold"
-                        (click)="toggleColumnSort('createdAt')"
-                      >
-                        <span translate="south.items.created-at" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.createdAt] }}"></span>
-                      </button>
-                    </th>
-                    <th style="width: 10rem">
-                      <button
-                        type="button"
-                        style="background: none; border: none; font-weight: bold"
-                        (click)="toggleColumnSort('updatedAt')"
-                      >
-                        <span translate="south.items.updated-at" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.updatedAt] }}"></span>
-                      </button>
-                    </th>
-                    <th style="width: 8rem"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of displayedItems.content; track item.name) {
-                    <tr class="south-item" (mouseenter)="tooltipItem = item">
-                      <td style="text-align: center">
-                        <input
-                          type="checkbox"
-                          class="form-check-input"
-                          [checked]="selectedItems.has(item.name!)"
-                          (change)="toggleItemSelection(item)"
-                          style="width: 16px; height: 16px; cursor: pointer"
-                        />
-                      </td>
-                      <td class="text-center">
-                        @if (item.enabled) {
-                          <span translate="south.items.enabled-label"></span>
-                        } @else {
-                          <span translate="south.items.disabled-label"></span>
-                        }
-                      </td>
-                      <td>{{ item.name }}</td>
-                      <td>
-                        <!-- Flex row so a long schedule label truncates on its own while the warning
-                             icons stay pinned and visible rather than being clipped with it. -->
-                        <span
-                          class="d-flex align-items-center"
-                          [ngbTooltip]="scheduleTooltip"
-                          container="body"
-                          tooltipClass="schedule-tooltip"
-                        >
-                          @if (!item.group) {
-                            <span class="text-truncate oib-schedule-label">
-                              <span translate="south.items.group-none"></span>
-                              <span class="text-muted ms-1"
-                                >({{
-                                  item.scanMode?.id === 'subscription' ? ('scan-mode.subscription' | translate) : item.scanMode?.name || ''
-                                }})</span
-                              >
-                            </span>
-                            @if (isWindowExpired(item.scanMode)) {
-                              <i class="fa fa-warning text-warning ms-1 flex-shrink-0 scan-mode-window-expired" aria-hidden="true"></i>
-                            }
-                          } @else {
-                            <span class="text-truncate oib-schedule-label">
-                              {{ item.group.standardSettings.name }}
-                              <span class="text-muted">({{ item.group.standardSettings.scanMode.name }})</span>
-                            </span>
-                            @if (!item.syncWithGroup) {
-                              <i class="fa fa-warning text-warning ms-1 flex-shrink-0" aria-hidden="true"></i>
-                            }
-                            @if (isWindowExpired(item.group.standardSettings.scanMode)) {
-                              <i class="fa fa-warning text-warning ms-1 flex-shrink-0 scan-mode-window-expired" aria-hidden="true"></i>
-                            }
-                          }
-                        </span>
-                      </td>
-                      <td>{{ item.createdAt | datetime: 'ff' }}</td>
-                      <td>{{ item.updatedAt | datetime: 'ff' }}</td>
-                      <td class="text-nowrap action-buttons">
-                        <div class="pull-right">
-                          <!-- Edit button -->
-                          <button
-                            type="button"
-                            class="btn btn-link edit-south-item px-1 py-0"
-                            [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
-                            (click)="editItem(item)"
-                          >
-                            <span class="fa fa-pencil"></span>
-                          </button>
-                          <!-- View Last Value button -->
-                          <button
-                            type="button"
-                            class="btn btn-link view-item-last-value px-1 py-0"
-                            [ngbTooltip]="'south.items.view-last-value' | translate"
-                            (click)="viewItemLastValue(item)"
-                          >
-                            <span class="fa fa-search"></span>
-                          </button>
-                          <!-- Duplicate button -->
-                          <button
-                            type="button"
-                            class="btn btn-link duplicate-south-item px-1 py-0"
-                            [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
-                            (click)="duplicateItem(item)"
-                          >
-                            <span class="fa fa-copy"></span>
-                          </button>
-                          <!-- Delete button -->
-                          <button
-                            type="button"
-                            class="btn btn-link delete-south-item px-1 py-0"
-                            [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
-                            (click)="deleteItem(item)"
-                          >
-                            <span class="fa fa-trash"></span>
-                          </button>
-                          <!-- Audit history button -->
-                          <button
-                            type="button"
-                            class="btn btn-link show-audit-item px-1 py-0"
-                            [ngbTooltip]="'south.items.tooltips.audit' | translate"
-                            (click)="showAudit('south_item', item.id)"
-                          >
-                            <span class="fa fa-history"></span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                    </div>
                   }
-                </tbody>
-              </table>
-            } @else {
-              @if (southConnector.items.length !== 0) {
-                <div class="oib-grey-container" translate="south.items.none-match"></div>
+                </ng-template>
+
+                <table class="mb-2 table table-sm table-hover oib-table">
+                  <thead class="light">
+                    <tr>
+                      <th></th>
+                      <th style="width: 6rem; text-align: center">
+                        <button
+                          type="button"
+                          style="background: none; border: none; font-weight: bold; white-space: nowrap"
+                          (click)="toggleColumnSort('enabled')"
+                        >
+                          <span translate="south.items.status" class="me-2"></span>
+                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.enabled] }}"></span>
+                        </button>
+                      </th>
+                      <th>
+                        <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
+                          <span translate="south.items.name" class="me-2"></span>
+                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+                        </button>
+                      </th>
+                      <th style="width: 14rem">
+                        <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('group')">
+                          <span translate="south.items.group-and-schedule" class="me-2"></span>
+                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.group] }}"></span>
+                        </button>
+                      </th>
+                      <th style="width: 10rem">
+                        <button
+                          type="button"
+                          style="background: none; border: none; font-weight: bold"
+                          (click)="toggleColumnSort('createdAt')"
+                        >
+                          <span translate="south.items.created-at" class="me-2"></span>
+                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.createdAt] }}"></span>
+                        </button>
+                      </th>
+                      <th style="width: 10rem">
+                        <button
+                          type="button"
+                          style="background: none; border: none; font-weight: bold"
+                          (click)="toggleColumnSort('updatedAt')"
+                        >
+                          <span translate="south.items.updated-at" class="me-2"></span>
+                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.updatedAt] }}"></span>
+                        </button>
+                      </th>
+                      <th style="width: 8rem"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of displayedItems().content; track item.name) {
+                      <tr class="south-item" (mouseenter)="tooltipItem = item">
+                        <td style="text-align: center">
+                          <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="selectedItems().has(item.name!)"
+                            (change)="toggleItemSelection(item)"
+                            style="width: 16px; height: 16px; cursor: pointer"
+                          />
+                        </td>
+                        <td class="text-center">
+                          @if (item.enabled) {
+                            <span translate="south.items.enabled-label"></span>
+                          } @else {
+                            <span translate="south.items.disabled-label"></span>
+                          }
+                        </td>
+                        <td>{{ item.name }}</td>
+                        <td>
+                          <!-- Flex row so a long schedule label truncates on its own while the warning
+                               icons stay pinned and visible rather than being clipped with it. -->
+                          <span
+                            class="d-flex align-items-center"
+                            [ngbTooltip]="scheduleTooltip"
+                            container="body"
+                            tooltipClass="schedule-tooltip"
+                          >
+                            @if (!item.group) {
+                              <span class="text-truncate oib-schedule-label">
+                                <span translate="south.items.group-none"></span>
+                                <span class="text-muted ms-1"
+                                  >({{
+                                    item.scanMode?.id === 'subscription'
+                                      ? ('scan-mode.subscription' | translate)
+                                      : item.scanMode?.name || ''
+                                  }})</span
+                                >
+                              </span>
+                              @if (isWindowExpired(item.scanMode)) {
+                                <i class="fa fa-warning text-warning ms-1 flex-shrink-0 scan-mode-window-expired" aria-hidden="true"></i>
+                              }
+                            } @else {
+                              <span class="text-truncate oib-schedule-label">
+                                {{ item.group.standardSettings.name }}
+                                <span class="text-muted">({{ item.group.standardSettings.scanMode.name }})</span>
+                              </span>
+                              @if (!item.syncWithGroup) {
+                                <i class="fa fa-warning text-warning ms-1 flex-shrink-0" aria-hidden="true"></i>
+                              }
+                              @if (isWindowExpired(item.group.standardSettings.scanMode)) {
+                                <i class="fa fa-warning text-warning ms-1 flex-shrink-0 scan-mode-window-expired" aria-hidden="true"></i>
+                              }
+                            }
+                          </span>
+                        </td>
+                        <td>{{ item.createdAt | datetime: 'ff' }}</td>
+                        <td>{{ item.updatedAt | datetime: 'ff' }}</td>
+                        <td class="text-nowrap action-buttons">
+                          <div class="pull-right">
+                            <!-- Edit button -->
+                            <button
+                              type="button"
+                              class="btn btn-link edit-south-item px-1 py-0"
+                              [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
+                              (click)="editItem(item)"
+                            >
+                              <span class="fa fa-pencil"></span>
+                            </button>
+                            <!-- View Last Value button -->
+                            <button
+                              type="button"
+                              class="btn btn-link view-item-last-value px-1 py-0"
+                              [ngbTooltip]="'south.items.view-last-value' | translate"
+                              (click)="viewItemLastValue(item)"
+                            >
+                              <span class="fa fa-search"></span>
+                            </button>
+                            <!-- Duplicate button -->
+                            <button
+                              type="button"
+                              class="btn btn-link duplicate-south-item px-1 py-0"
+                              [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
+                              (click)="duplicateItem(item)"
+                            >
+                              <span class="fa fa-copy"></span>
+                            </button>
+                            <!-- Delete button -->
+                            <button
+                              type="button"
+                              class="btn btn-link delete-south-item px-1 py-0"
+                              [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
+                              (click)="deleteItem(item)"
+                            >
+                              <span class="fa fa-trash"></span>
+                            </button>
+                            <!-- Audit history button -->
+                            <button
+                              type="button"
+                              class="btn btn-link show-audit-item px-1 py-0"
+                              [ngbTooltip]="'south.items.tooltips.audit' | translate"
+                              (click)="showAudit('south_item', item.id)"
+                            >
+                              <span class="fa fa-history"></span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               } @else {
-                <div class="oib-grey-container" translate="south.items.none"></div>
+                @if (southConnector.items.length !== 0) {
+                  <div class="oib-grey-container" translate="south.items.none-match"></div>
+                } @else {
+                  <div class="oib-grey-container" translate="south.items.none"></div>
+                }
               }
-            }
-            @if (displayedItems.totalElements) {
-              <div class="d-flex flex-row-reverse">
-                <div [class]="displayedItems.totalPages > 1 ? 'ms-2' : ''">
-                  <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)" />
+              @let itemsPage = displayedItems();
+              @if (itemsPage.totalElements) {
+                <div class="d-flex flex-row-reverse">
+                  <div [class]="itemsPage.totalPages > 1 ? 'ms-2' : ''">
+                    <oib-pagination [page]="itemsPage" (pageChanged)="changePage($event)" />
+                  </div>
+                </div>
+              }
+            </div>
+          </oib-box>
+
+          <!-- Logs -->
+          <oib-box>
+            <ng-template oibBoxTitle>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span id="logs-title" translate="logs.title"></span>
                 </div>
               </div>
-            }
-          </div>
-        </oib-box>
-
-        <!-- Logs -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span id="logs-title" translate="logs.title"></span>
-              </div>
-            </div>
-          </ng-template>
-        </oib-box>
-        <oib-logs [scopeId]="southConnector.id" scopeType="south" [embedded]="true" />
+            </ng-template>
+          </oib-box>
+          <oib-logs [scopeId]="southConnector.id" scopeType="south" [embedded]="true" />
+        </div>
       </div>
     </div>
-  </div>
+  }
 }

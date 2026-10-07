@@ -1,4 +1,14 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, forwardRef, inject, Input, OnDestroy, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  forwardRef,
+  inject,
+  Input,
+  OnDestroy,
+  OnInit
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -38,6 +48,7 @@ export interface PredefinedRange {
 export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDestroy, ControlValueAccessor {
   private fb = inject(NonNullableFormBuilder);
   private translate = inject(TranslateService);
+  private changeDetectorRef = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
 
   @Input() startLabel = 'history-query.start';
@@ -98,6 +109,8 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
     // only run after this component's own ngOnInit, so `onChange` isn't wired up yet in ngOnInit.
     this.internalForm.controls.rangeType.setValue(this.defaultRange, { emitEvent: false });
     this.emitValue();
+    // the template reads the internal form, changed here without any event: notify Angular
+    this.changeDetectorRef.markForCheck();
   }
 
   ngOnDestroy() {
@@ -116,6 +129,8 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
         },
         { emitEvent: false }
       );
+      // the template reads the internal form, which can be written outside of any event (e.g. after an HTTP response)
+      this.changeDetectorRef.markForCheck();
     }
   }
 

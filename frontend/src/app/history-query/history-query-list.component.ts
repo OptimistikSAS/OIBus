@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -63,9 +63,9 @@ export class HistoryQueryListComponent {
   private historyQueryService = inject(HistoryQueryService);
   private router = inject(Router);
 
-  allHistoryQueries: Array<HistoryQueryLightDTO> | null = null;
+  readonly allHistoryQueries = signal<Array<HistoryQueryLightDTO> | null>(null);
   filteredHistoryQueries: Array<HistoryQueryLightDTO> = [];
-  displayedHistoryQueries: Page<HistoryQueryLightDTO> = emptyPage();
+  readonly displayedHistoryQueries = signal<Page<HistoryQueryLightDTO>>(emptyPage());
   states = new Map<string, ObservableState>();
   sortField: HistorySortField = 'updatedAt';
   sortDirection: SortDirection = 'desc';
@@ -91,33 +91,29 @@ export class HistoryQueryListComponent {
 
   constructor() {
     this.historyQueryService.list().subscribe(queries => {
-      this.allHistoryQueries = queries;
+      this.allHistoryQueries.set(queries);
       this.states.clear();
-      this.allHistoryQueries.forEach(historyQuery => {
+      queries.forEach(historyQuery => {
         this.states.set(historyQuery.id, new ObservableState());
       });
       this.updateList(0);
     });
 
     this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
-      if (this.allHistoryQueries) {
+      if (this.allHistoryQueries()) {
         this.updateList(0);
       }
     });
   }
 
   /** Distinct South connector types among the currently loaded history queries, used to build the filter chips. */
-  get southTypes(): Array<OIBusSouthType> {
-    return this.distinctTypes(query => query.southType);
-  }
+  readonly southTypes = computed<Array<OIBusSouthType>>(() => this.distinctTypes(query => query.southType));
 
   /** Distinct North connector types among the currently loaded history queries, used to build the filter chips. */
-  get northTypes(): Array<OIBusNorthType> {
-    return this.distinctTypes(query => query.northType);
-  }
+  readonly northTypes = computed<Array<OIBusNorthType>>(() => this.distinctTypes(query => query.northType));
 
   private distinctTypes<T extends string>(getType: (query: HistoryQueryLightDTO) => T): Array<T> {
-    const types = new Set((this.allHistoryQueries ?? []).map(getType));
+    const types = new Set((this.allHistoryQueries() ?? []).map(getType));
     return Array.from(types).sort((a, b) => a.localeCompare(b));
   }
 
@@ -135,11 +131,11 @@ export class HistoryQueryListComponent {
       .subscribe(() => {
         this.historyQueryService
           .list()
-          .pipe(tap(() => (this.allHistoryQueries = null)))
+          .pipe(tap(() => this.allHistoryQueries.set(null)))
           .subscribe(queries => {
-            this.allHistoryQueries = queries;
+            this.allHistoryQueries.set(queries);
             this.states.clear();
-            this.allHistoryQueries.forEach(historyQuery => {
+            queries.forEach(historyQuery => {
               this.states.set(historyQuery.id, new ObservableState());
             });
             this.updateList(0);
@@ -186,7 +182,7 @@ export class HistoryQueryListComponent {
   }
 
   changePage(pageNumber: number) {
-    this.displayedHistoryQueries = this.createPage(pageNumber);
+    this.displayedHistoryQueries.set(this.createPage(pageNumber));
   }
 
   private createPage(pageNumber: number): Page<HistoryQueryLightDTO> {
@@ -194,7 +190,7 @@ export class HistoryQueryListComponent {
   }
 
   private updateList(pageNumber: number) {
-    this.filteredHistoryQueries = this.filter(this.allHistoryQueries ?? []);
+    this.filteredHistoryQueries = this.filter(this.allHistoryQueries() ?? []);
     this.sortHistoryQueries();
     this.changePage(pageNumber);
   }
@@ -257,8 +253,8 @@ export class HistoryQueryListComponent {
           })
         )
         .subscribe(queries => {
-          this.allHistoryQueries = queries;
-          this.updateList(this.displayedHistoryQueries.number);
+          this.allHistoryQueries.set(queries);
+          this.updateList(this.displayedHistoryQueries().number);
           this.notificationService.success('history-query.started', { name: query.name });
         });
     } else {
@@ -271,8 +267,8 @@ export class HistoryQueryListComponent {
           })
         )
         .subscribe(queries => {
-          this.allHistoryQueries = queries;
-          this.updateList(this.displayedHistoryQueries.number);
+          this.allHistoryQueries.set(queries);
+          this.updateList(this.displayedHistoryQueries().number);
           this.notificationService.success('history-query.paused', { name: query.name });
         });
     }

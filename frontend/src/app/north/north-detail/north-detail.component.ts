@@ -1,5 +1,5 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -66,19 +66,18 @@ export class NorthDetailComponent {
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private route = inject(ActivatedRoute);
-  private cd = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
 
-  northConnector: NorthConnectorDTO | null = null;
-  displayedSettings: Array<{ key: string; value: string }> = [];
-  scanModes: Array<ScanModeDTO> = [];
-  certificates: Array<CertificateDTO> = [];
-  transformers: Array<TransformerDTO> = [];
-  manifest: NorthConnectorManifest | null = null;
+  readonly northConnector = signal<NorthConnectorDTO | null>(null);
+  readonly displayedSettings = signal<Array<{ key: string; value: string }>>([]);
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly certificates = signal<Array<CertificateDTO>>([]);
+  readonly transformers = signal<Array<TransformerDTO>>([]);
+  readonly manifest = signal<NorthConnectorManifest | null>(null);
   private metricsSubscription: Subscription | null = null;
-  connectorMetrics: NorthConnectorMetrics | null = null;
-  oibusInfo: OIBusInfo | null = null;
-  northId: string | null = null;
+  readonly connectorMetrics = signal<NorthConnectorMetrics | null>(null);
+  readonly oibusInfo = signal<OIBusInfo | null>(null);
+  readonly northId = signal<string | null>(null);
 
   constructor() {
     combineLatest([
@@ -87,18 +86,19 @@ export class NorthDetailComponent {
       this.transformerService.list(),
       this.engineService.info$
     ]).subscribe(([scanModes, certificates, transformers, engineInfo]) => {
-      this.certificates = certificates;
-      this.transformers = transformers;
-      this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-      this.oibusInfo = engineInfo;
+      this.certificates.set(certificates);
+      this.transformers.set(transformers);
+      this.scanModes.set(scanModes.filter(scanMode => scanMode.id !== 'subscription'));
+      this.oibusInfo.set(engineInfo);
     });
     const routeSub = this.route.paramMap
       .pipe(
         switchMap(params => {
-          this.northId = params.get('northId');
+          const northId = params.get('northId');
+          this.northId.set(northId);
 
-          if (this.northId) {
-            return this.northConnectorService.findById(this.northId);
+          if (northId) {
+            return this.northConnectorService.findById(northId);
           }
           return of(null);
         }),
@@ -106,39 +106,41 @@ export class NorthDetailComponent {
           if (!northConnector) {
             return of(null);
           }
-          this.northConnector = northConnector;
-          return this.northConnectorService.getNorthManifest(this.northConnector!.type);
+          this.northConnector.set(northConnector);
+          return this.northConnectorService.getNorthManifest(northConnector.type);
         })
       )
       .subscribe(manifest => {
         if (!manifest) {
           return;
         }
-        this.startMetricsPolling(this.northConnector!.id);
-        const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(this.northConnector!.settings));
-        this.displayedSettings = manifest.settings.attributes
-          .filter(setting => isDisplayableAttribute(setting))
-          .filter(setting => {
-            const condition = manifest.settings.enablingConditions.find(
-              enablingCondition => enablingCondition.targetPathFromRoot === setting.key
-            );
-            return (
-              !condition ||
-              (condition &&
-                northSettings[condition.referralPathFromRoot] &&
-                condition.values.includes(northSettings[condition.referralPathFromRoot]))
-            );
-          })
-          .map(setting => {
-            return {
-              key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
-              value:
-                setting.type === 'string-select'
-                  ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
-                  : northSettings[setting.key]
-            };
-          });
-        this.manifest = manifest;
+        this.startMetricsPolling(this.northConnector()!.id);
+        const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(this.northConnector()!.settings));
+        this.displayedSettings.set(
+          manifest.settings.attributes
+            .filter(setting => isDisplayableAttribute(setting))
+            .filter(setting => {
+              const condition = manifest.settings.enablingConditions.find(
+                enablingCondition => enablingCondition.targetPathFromRoot === setting.key
+              );
+              return (
+                !condition ||
+                (condition &&
+                  northSettings[condition.referralPathFromRoot] &&
+                  condition.values.includes(northSettings[condition.referralPathFromRoot]))
+              );
+            })
+            .map(setting => {
+              return {
+                key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
+                value:
+                  setting.type === 'string-select'
+                    ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
+                    : northSettings[setting.key]
+              };
+            })
+        );
+        this.manifest.set(manifest);
       });
     this.destroyRef.onDestroy(() => {
       routeSub.unsubscribe();
@@ -147,49 +149,50 @@ export class NorthDetailComponent {
   }
 
   updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
-    this.northConnectorService.findById(this.northConnector!.id).subscribe(northConnector => {
-      this.northConnector = northConnector;
+    this.northConnectorService.findById(this.northConnector()!.id).subscribe(northConnector => {
+      this.northConnector.set(northConnector);
     });
   }
 
   getScanMode(scanModeId: string) {
-    return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
+    return this.scanModes().find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
   }
 
   testConnection() {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runTest('north', this.northConnector!.id, this.northConnector!.settings, this.northConnector!.type);
+    const northConnector = this.northConnector()!;
+    component.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
   }
 
   toggleConnector(value: boolean) {
     if (value) {
       this.northConnectorService
-        .start(this.northConnector!.id)
+        .start(this.northConnector()!.id)
         .pipe(
           tap(() => {
-            this.notificationService.success('north.started', { name: this.northConnector!.name });
+            this.notificationService.success('north.started', { name: this.northConnector()!.name });
           }),
           switchMap(() => {
-            return this.northConnectorService.findById(this.northConnector!.id);
+            return this.northConnectorService.findById(this.northConnector()!.id);
           })
         )
         .subscribe(northConnector => {
-          this.northConnector = northConnector;
+          this.northConnector.set(northConnector);
         });
     } else {
       this.northConnectorService
-        .stop(this.northConnector!.id)
+        .stop(this.northConnector()!.id)
         .pipe(
           tap(() => {
-            this.notificationService.success('north.stopped', { name: this.northConnector!.name });
+            this.notificationService.success('north.stopped', { name: this.northConnector()!.name });
           }),
           switchMap(() => {
-            return this.northConnectorService.findById(this.northConnector!.id);
+            return this.northConnectorService.findById(this.northConnector()!.id);
           })
         )
         .subscribe(northConnector => {
-          this.northConnector = northConnector;
+          this.northConnector.set(northConnector);
         });
     }
   }
@@ -197,8 +200,7 @@ export class NorthDetailComponent {
   startMetricsPolling(northId: string): void {
     this.metricsSubscription?.unsubscribe();
     this.metricsSubscription = pollMetrics(() => this.northConnectorService.getMetrics(northId)).subscribe(metrics => {
-      this.connectorMetrics = metrics;
-      this.cd.detectChanges();
+      this.connectorMetrics.set(metrics);
     });
   }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -80,10 +80,12 @@ export default class ManageWorkflowsModalComponent {
   scanModes: Array<ScanModeDTO> = [];
   groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
   manifest!: SouthConnectorManifest;
+  // mutated in place (and shared by reference with edit-south in in-memory mode): displayedWorkflows is always set to a
+  // new array afterwards, which re-renders the template (including workflows.length)
   workflows: Array<ConfigurationWorkflowCommandDTO> = [];
-  displayedWorkflows: Array<ConfigurationWorkflowCommandDTO> = [];
-  loading = true;
-  runningWorkflowId: string | null = null;
+  readonly displayedWorkflows = signal<Array<ConfigurationWorkflowCommandDTO>>([]);
+  readonly loading = signal(true);
+  readonly runningWorkflowId = signal<string | null>(null);
 
   private addOrEditGroup!: AddOrEditGroup;
   private deleteGroup!: DeleteGroup;
@@ -119,10 +121,10 @@ export default class ManageWorkflowsModalComponent {
     this.addOrEditGroup = addOrEditGroup;
     this.deleteGroup = deleteGroup;
     this.onWorkflowRun = onWorkflowRun;
-    this.loading = true;
+    this.loading.set(true);
     this.configurationWorkflowService.list(this.southId).subscribe(workflows => {
       this.workflows = workflows.map(workflow => toConfigurationWorkflowCommand(workflow));
-      this.loading = false;
+      this.loading.set(false);
       this.refreshDisplayed();
     });
   }
@@ -152,13 +154,13 @@ export default class ManageWorkflowsModalComponent {
     this.addOrEditGroup = addOrEditGroup;
     this.deleteGroup = deleteGroup;
     this.onWorkflowRun = undefined;
-    this.loading = false;
+    this.loading.set(false);
     this.refreshDisplayed();
   }
 
   private refreshDisplayed() {
     const searchText = (this.searchControl.value || '').toLowerCase();
-    this.displayedWorkflows = this.workflows.filter(workflow => !searchText || workflow.name.toLowerCase().includes(searchText));
+    this.displayedWorkflows.set(this.workflows.filter(workflow => !searchText || workflow.name.toLowerCase().includes(searchText)));
   }
 
   close() {
@@ -291,17 +293,17 @@ export default class ManageWorkflowsModalComponent {
     if (!this.directSave) {
       return;
     }
-    this.runningWorkflowId = workflow.id;
+    this.runningWorkflowId.set(workflow.id);
     this.configurationWorkflowService.runNow(this.southId, workflow.id!).subscribe({
       next: () => {
-        this.runningWorkflowId = null;
+        this.runningWorkflowId.set(null);
         this.notificationService.success('south.workflows.run-now-success');
         // A manual run may have created/updated items directly on the connector - refresh the display
         // page behind this modal so they show up without needing to close and reopen anything.
         this.onWorkflowRun?.();
       },
       error: error => {
-        this.runningWorkflowId = null;
+        this.runningWorkflowId.set(null);
         this.notificationService.error('south.workflows.run-now-error', { error: extractErrorMessage(error) });
       }
     });

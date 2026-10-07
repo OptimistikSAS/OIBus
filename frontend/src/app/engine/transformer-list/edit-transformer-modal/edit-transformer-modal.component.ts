@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, ViewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -50,10 +50,10 @@ export class EditTransformerModalComponent {
   private fb = inject(NonNullableFormBuilder);
 
   @ViewChild(OibCodeBlockComponent) editor: OibCodeBlockComponent | null = null;
-  mode: 'create' | 'edit' = 'create';
+  readonly mode = signal<'create' | 'edit'>('create');
   state = new ObservableState();
 
-  customTransformer: CustomTransformerDTO | null = null;
+  readonly customTransformer = signal<CustomTransformerDTO | null>(null);
 
   inputTypes = INPUT_TYPES;
   outputTypes = OUTPUT_TYPES;
@@ -75,7 +75,7 @@ export class EditTransformerModalComponent {
 
   constructor() {
     this.form.controls.language.valueChanges.subscribe(() => {
-      if (this.mode === 'create') {
+      if (this.mode() === 'create') {
         this.generateCodeTemplate();
       }
     });
@@ -83,7 +83,7 @@ export class EditTransformerModalComponent {
 
   readonly transformerCommand = computed<CustomTransformerCommandDTO | null>(() => {
     if (this.formValid() !== 'VALID') return null;
-    if (this.mode === 'edit' && !this.customTransformer) return null;
+    if (this.mode() === 'edit' && !this.customTransformer()) return null;
     const formValue = this.formValue()!;
     return {
       type: 'custom',
@@ -110,7 +110,7 @@ export class EditTransformerModalComponent {
   });
 
   prepareForCreation() {
-    this.mode = 'create';
+    this.mode.set('create');
     this.generateCodeTemplate();
   }
 
@@ -171,8 +171,8 @@ function transform(inputData, source, filename, options) {
   }
 
   prepareForEdition(transformer: CustomTransformerDTO) {
-    this.mode = 'edit';
-    this.customTransformer = transformer;
+    this.mode.set('edit');
+    this.customTransformer.set(transformer);
     this.form.patchValue({
       name: transformer.name,
       description: transformer.description,
@@ -201,17 +201,18 @@ function transform(inputData, source, filename, options) {
     if (!command) return;
 
     let obs: Observable<TransformerDTO>;
-    if (this.mode === 'create') {
+    const customTransformer = this.customTransformer();
+    if (this.mode() === 'create') {
       obs = this.transformerService.create(command);
     } else {
       obs = this.confirmationService
         .confirm({
           messageKey: 'configuration.oibus.manifest.transformers.confirm-edit',
-          interpolateParams: { name: this.customTransformer!.name }
+          interpolateParams: { name: customTransformer!.name }
         })
         .pipe(
-          switchMap(() => this.transformerService.update(this.customTransformer!.id, command)),
-          switchMap(() => this.transformerService.findById(this.customTransformer!.id))
+          switchMap(() => this.transformerService.update(customTransformer!.id, command)),
+          switchMap(() => this.transformerService.findById(customTransformer!.id))
         );
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(transformer => {

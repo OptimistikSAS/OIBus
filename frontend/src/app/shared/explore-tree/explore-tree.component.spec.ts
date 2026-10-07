@@ -57,7 +57,7 @@ describe('ExploreTreeComponent', () => {
 
     expect(southConnectorService.startExplore).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
     expect(tester.component.sessionId).toBe('sessionId');
-    expect(tester.component.nodes.length).toBe(1);
+    expect(tester.component.nodes().length).toBe(1);
     await expect.element(tester.tree).toBeInTheDocument();
   });
 
@@ -91,10 +91,10 @@ describe('ExploreTreeComponent', () => {
     southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
-    tester.component.toggle(tester.component.nodes[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
 
-    expect(tester.component.nodes[0].entry.metadata['type']).toBe('Variable');
-    expect(tester.component.nodes[0].entry.hasChildren).toBe(false);
+    expect(tester.component.nodes()[0].entry.metadata['type']).toBe('Variable');
+    expect(tester.component.nodes()[0].entry.hasChildren).toBe(false);
   });
 
   test('should format a metadata field tagged "size" with the file-size pipe', async () => {
@@ -192,11 +192,11 @@ describe('ExploreTreeComponent', () => {
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
-    tester.component.toggle(tester.component.nodes[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
 
     expect(southConnectorService.browseExplore).toHaveBeenCalledWith(southConnector.id, 'sessionId', 'parent');
-    expect(tester.component.nodes[0].expanded).toBe(true);
-    expect(tester.component.nodes[0].children.length).toBe(1);
+    expect(tester.component.nodes()[0].expanded).toBe(true);
+    expect(tester.component.nodes()[0].children.length).toBe(1);
   });
 
   test('should collapse an already expanded node', () => {
@@ -208,10 +208,10 @@ describe('ExploreTreeComponent', () => {
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
-    tester.component.toggle(tester.component.nodes[0]);
-    tester.component.toggle(tester.component.nodes[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
 
-    expect(tester.component.nodes[0].expanded).toBe(false);
+    expect(tester.component.nodes()[0].expanded).toBe(false);
     // browse only called once — the children were cached
     expect(southConnectorService.browseExplore).toHaveBeenCalledTimes(1);
   });
@@ -225,11 +225,11 @@ describe('ExploreTreeComponent', () => {
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
-    tester.component.toggle(tester.component.nodes[0]);
-    tester.component.toggle(tester.component.nodes[0]);
-    tester.component.toggle(tester.component.nodes[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
 
-    expect(tester.component.nodes[0].expanded).toBe(true);
+    expect(tester.component.nodes()[0].expanded).toBe(true);
     expect(southConnectorService.browseExplore).toHaveBeenCalledTimes(1);
   });
 
@@ -239,7 +239,7 @@ describe('ExploreTreeComponent', () => {
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
-    tester.component.toggle(tester.component.nodes[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
 
     expect(southConnectorService.browseExplore).not.toHaveBeenCalled();
   });
@@ -251,10 +251,10 @@ describe('ExploreTreeComponent', () => {
     southConnectorService.browseExplore.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'nope' } })));
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
-    tester.component.toggle(tester.component.nodes[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
 
-    expect(tester.component.nodes[0].error).toBe('nope');
-    expect(tester.component.nodes[0].expanded).toBe(false);
+    expect(tester.component.nodes()[0].error).toBe('nope');
+    expect(tester.component.nodes()[0].expanded).toBe(false);
   });
 
   test('should drop the caret when an expanded node has no children', () => {
@@ -264,9 +264,9 @@ describe('ExploreTreeComponent', () => {
     southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
-    tester.component.toggle(tester.component.nodes[0]);
+    tester.component.toggle(tester.component.nodes()[0]);
 
-    expect(tester.component.nodes[0].entry.hasChildren).toBe(false);
+    expect(tester.component.nodes()[0].entry.hasChildren).toBe(false);
   });
 
   test('should close the session when the component is destroyed', () => {
@@ -335,7 +335,7 @@ describe('ExploreTreeComponent', () => {
 
     let selected: unknown;
     tester.component.nodeSelected.subscribe(entry => (selected = entry));
-    tester.component.select(tester.component.nodes[0]);
+    tester.component.select(tester.component.nodes()[0]);
 
     expect(selected).toEqual({ id: 'parent', name: 'Parent', metadata: { type: 'Object' }, hasChildren: true });
   });

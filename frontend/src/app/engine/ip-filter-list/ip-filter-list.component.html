@@ -3,12 +3,12 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="engine.ip-filter.list" id="title"></span>
-        @if (allIpFilters.length) {
-          <span class="mx-1">({{ allIpFilters.length }})</span>
+        @if (allIpFilters().length) {
+          <span class="mx-1">({{ allIpFilters().length }})</span>
         }
       </div>
       <div>
-        @if (!ignoreIpFilters) {
+        @if (!ignoreIpFilters()) {
           <button
             type="button"
             id="add-ip-filter"
@@ -27,12 +27,13 @@
 </oib-box>
 
 <!-- the IP filter list -->
-@if (ignoreIpFilters) {
+@let displayed = displayedIpFilters();
+@if (ignoreIpFilters()) {
   <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert" id="ip-filter-disabled">
     <span class="icon-info-circle fs-5" aria-hidden="true"></span>
     <span translate="engine.ip-filter.disabled"></span>
   </div>
-} @else if (displayedIpFilters.content.length !== 0) {
+} @else if (displayed.content.length !== 0) {
   <div>
     <table class="mb-2 table table-sm table-hover oib-table">
       <thead class="light">
@@ -58,7 +59,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (ipFilter of displayedIpFilters.content; track ipFilter.id) {
+        @for (ipFilter of displayed.content; track ipFilter.id) {
           <tr>
             <td>{{ ipFilter.address }}</td>
             <td>{{ ipFilter.description }}</td>
@@ -105,8 +106,8 @@
         }
       </tbody>
     </table>
-    @if (displayedIpFilters.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedIpFilters" (pageChanged)="changePage($event)" />
+    @if (displayed.totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayed" (pageChanged)="changePage($event)" />
     }
   </div>
 } @else {

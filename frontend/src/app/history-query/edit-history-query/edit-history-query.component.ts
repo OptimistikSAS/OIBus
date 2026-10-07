@@ -111,7 +111,7 @@ export interface TableData {
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
-      useFactory: (component: EditHistoryQueryComponent) => () => component.mode,
+      useFactory: (component: EditHistoryQueryComponent) => () => component.mode(),
       deps: [forwardRef(() => EditHistoryQueryComponent)]
     }
   ]
@@ -138,28 +138,28 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
 
   get northTypeHelpUrl(): string {
-    return this.docsUrlService.resolve('guide/north-connectors/' + this.northType);
+    return this.docsUrlService.resolve('guide/north-connectors/' + this.northType());
   }
 
   get southTypeHelpUrl(): string {
-    return this.docsUrlService.resolve('guide/south-connectors/' + this.southType);
+    return this.docsUrlService.resolve('guide/south-connectors/' + this.southType());
   }
 
-  mode: 'create' | 'edit' = 'create';
+  readonly mode = signal<'create' | 'edit'>('create');
   historyId!: string;
-  historyQuery: HistoryQueryDTO | null = null;
-  southType: OIBusSouthType | null = null;
-  northType: OIBusNorthType | null = null;
+  readonly historyQuery = signal<HistoryQueryDTO | null>(null);
+  readonly southType = signal<OIBusSouthType | null>(null);
+  readonly northType = signal<OIBusNorthType | null>(null);
   duplicateId = '';
   fromSouthId = '';
   fromNorthId = '';
   state = new ObservableState();
   loading = true;
-  scanModes: Array<ScanModeDTO> = [];
-  transformers: Array<TransformerDTO> = [];
-  certificates: Array<CertificateDTO> = [];
-  northManifest: NorthConnectorManifest | null = null;
-  southManifest: SouthConnectorManifest | null = null;
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly transformers = signal<Array<TransformerDTO>>([]);
+  readonly certificates = signal<Array<CertificateDTO>>([]);
+  readonly northManifest = signal<NorthConnectorManifest | null>(null);
+  readonly southManifest = signal<SouthConnectorManifest | null>(null);
   existingHistoryQueries: Array<HistoryQueryLightDTO> = [];
 
   form: FormGroup<{
@@ -193,7 +193,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     }>;
     northSettings: FormGroup;
     southSettings: FormGroup;
-  }> | null = null;
+  }> | null = null; // built along with the manifests signals, which notify change detection
 
   readonly inMemoryTransformersWithOptions = signal<Array<HistoryTransformerDTOWithOptions>>([]);
   scanModeAttribute: OIBusScanModeAttribute = {
@@ -241,9 +241,9 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     ])
       .pipe(
         switchMap(([scanModes, certificates, transformers, historyQueries, params, queryParams]) => {
-          this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-          this.certificates = certificates;
-          this.transformers = transformers;
+          this.scanModes.set(scanModes.filter(scanMode => scanMode.id !== 'subscription'));
+          this.certificates.set(certificates);
+          this.transformers.set(transformers);
           this.existingHistoryQueries = historyQueries;
 
           const paramHistoryQueryId = params.get('historyQueryId');
@@ -257,11 +257,11 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
           // if there is a History ID, we are editing a History Query
           if (paramHistoryQueryId) {
-            this.mode = 'edit';
+            this.mode.set('edit');
             this.historyId = paramHistoryQueryId;
             historyQueryObs = this.historyQueryService.findById(paramHistoryQueryId);
           } else {
-            this.mode = 'create';
+            this.mode.set('create');
             this.historyId = 'create';
             if (paramDuplicateHistoryQueryId) {
               this.duplicateId = paramDuplicateHistoryQueryId;
@@ -270,27 +270,27 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
               if (southId) {
                 southObs = this.southConnectorService.findById(southId);
               } else {
-                this.southType = (queryParams.get('southType') as OIBusSouthType) || null;
+                this.southType.set((queryParams.get('southType') as OIBusSouthType) || null);
               }
               if (northId) {
                 northObs = this.northConnectorService.findById(northId);
               } else {
-                this.northType = (queryParams.get('northType') as OIBusNorthType) || null;
+                this.northType.set((queryParams.get('northType') as OIBusNorthType) || null);
               }
             }
           }
           return combineLatest([historyQueryObs, northObs, southObs]);
         }),
         switchMap(([historyQuery, northConnector, southConnector]) => {
-          this.historyQuery = historyQuery;
+          this.historyQuery.set(historyQuery);
 
           // creating/duplicating a history query
           if (historyQuery) {
             if (this.duplicateId) {
-              this.historyQuery!.name = `${historyQuery.name}-copy`;
+              historyQuery.name = `${historyQuery.name}-copy`;
             }
-            this.southType = historyQuery.southType;
-            this.northType = historyQuery.northType;
+            this.southType.set(historyQuery.southType);
+            this.northType.set(historyQuery.northType);
             this.inMemoryItems = historyQuery.items.map(
               item =>
                 ({
@@ -315,7 +315,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
           // creating new from an existing south and north connector
           else {
             if (southConnector) {
-              this.southType = southConnector.type;
+              this.southType.set(southConnector.type);
               this.fromSouthId = southConnector.id;
               this.inMemoryItems = southConnector.items.map(
                 item =>
@@ -328,7 +328,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
               );
             }
             if (northConnector) {
-              this.northType = northConnector.type;
+              this.northType.set(northConnector.type);
               this.fromNorthId = northConnector.id;
               this.inMemoryTransformersWithOptions.set(
                 northConnector.transformers
@@ -347,8 +347,8 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
             }
           }
           return combineLatest([
-            this.northConnectorService.getNorthManifest(this.northType!),
-            this.southConnectorService.getSouthManifest(this.southType!),
+            this.northConnectorService.getNorthManifest(this.northType()!),
+            this.southConnectorService.getSouthManifest(this.southType()!),
             of(southConnector),
             of(northConnector)
           ]);
@@ -358,8 +358,8 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         if (!northManifest || !southManifest) {
           return;
         }
-        this.northManifest = northManifest;
-        this.southManifest = southManifest;
+        this.northManifest.set(northManifest);
+        this.southManifest.set(southManifest);
         this.buildForm(northConnector, southConnector);
         this.resetPage();
       });
@@ -377,8 +377,9 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         return null;
       }
 
+      const editedHistoryQuery = this.historyQuery();
       const isDuplicate = this.existingHistoryQueries.some(historyQuery => {
-        if (this.historyQuery && historyQuery.id === this.historyQuery.id) {
+        if (editedHistoryQuery && historyQuery.id === editedHistoryQuery.id) {
           return false;
         }
         return historyQuery.name.trim().toLowerCase() === value;
@@ -429,31 +430,32 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       northSettings: this.fb.group({}),
       southSettings: this.fb.group({})
     });
-    for (const attribute of this.northManifest!.settings.attributes) {
+    const northManifest = this.northManifest()!;
+    for (const attribute of northManifest.settings.attributes) {
       addAttributeToForm(this.fb, this.form.controls.northSettings, attribute);
     }
-    addEnablingConditions(this.form.controls.northSettings, this.northManifest!.settings.enablingConditions);
+    addEnablingConditions(this.form.controls.northSettings, northManifest.settings.enablingConditions);
 
-    for (const attribute of this.southManifest!.settings.attributes) {
+    const southManifest = this.southManifest()!;
+    for (const attribute of southManifest.settings.attributes) {
       addAttributeToForm(this.fb, this.form.controls.southSettings, attribute);
     }
-    addEnablingConditions(this.form.controls.southSettings, this.southManifest!.settings.enablingConditions);
+    addEnablingConditions(this.form.controls.southSettings, southManifest.settings.enablingConditions);
 
     // if we have a history query, we initialize the values
-    if (this.historyQuery) {
+    const historyQuery = this.historyQuery();
+    if (historyQuery) {
       // used to have the same ref
-      this.historyQuery.caching.trigger.scanMode = this.scanModes.find(
-        element => element.id === this.historyQuery!.caching.trigger.scanMode.id
-      )!;
+      historyQuery.caching.trigger.scanMode = this.scanModes().find(element => element.id === historyQuery.caching.trigger.scanMode.id)!;
       this.form.patchValue({
-        ...this.historyQuery,
+        ...historyQuery,
         queryTimeRange: {
           dateRange: {
-            startTime: this.historyQuery.queryTimeRange.startTime,
-            endTime: this.historyQuery.queryTimeRange.endTime
+            startTime: historyQuery.queryTimeRange.startTime,
+            endTime: historyQuery.queryTimeRange.endTime
           },
-          maxReadInterval: this.historyQuery.queryTimeRange.maxReadInterval,
-          readDelay: this.historyQuery.queryTimeRange.readDelay
+          maxReadInterval: historyQuery.queryTimeRange.maxReadInterval,
+          readDelay: historyQuery.queryTimeRange.readDelay
         }
       });
     } else {
@@ -462,7 +464,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       }
       if (northConnector) {
         // used to have the same ref
-        northConnector.caching.trigger.scanMode = this.scanModes.find(
+        northConnector.caching.trigger.scanMode = this.scanModes().find(
           element => element.id === northConnector.caching.trigger.scanMode.id
         )!;
         this.form.patchValue({ northSettings: northConnector.settings, caching: northConnector.caching });
@@ -484,15 +486,16 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   createOrUpdateHistoryQuery(command: HistoryQueryCommandDTO, resetCache: boolean): void {
     let createOrUpdate: Observable<HistoryQueryDTO>;
     // if we are editing
-    if (this.mode === 'edit') {
-      createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, resetCache).pipe(
+    if (this.mode() === 'edit') {
+      const historyQueryId = this.historyQuery()!.id;
+      createOrUpdate = this.historyQueryService.update(historyQueryId, command, resetCache).pipe(
         tap(() => {
           this.notificationService.success('history-query.updated', {
             name: command.name
           });
           this.form?.markAsPristine();
         }),
-        switchMap(() => this.historyQueryService.findById(this.historyQuery!.id))
+        switchMap(() => this.historyQueryService.findById(historyQueryId))
       );
     } else {
       createOrUpdate = this.historyQueryService.create(command, this.fromSouthId, this.fromNorthId, this.duplicateId).pipe(
@@ -524,9 +527,9 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         maxReadInterval: formValue.queryTimeRange!.maxReadInterval!,
         readDelay: formValue.queryTimeRange!.readDelay!
       },
-      southType: this.southType as OIBusSouthType,
+      southType: this.southType() as OIBusSouthType,
       southSettings: formValue.southSettings,
-      northType: this.northType as OIBusNorthType,
+      northType: this.northType() as OIBusNorthType,
       northSettings: formValue.northSettings,
       caching: {
         trigger: {
@@ -563,7 +566,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       }))
     } as HistoryQueryCommandDTO;
 
-    if (this.mode === 'edit') {
+    if (this.mode() === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);
       modalRef.result.subscribe(resetCache => {
         this.createOrUpdateHistoryQuery(command, resetCache);
@@ -578,8 +581,8 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       this.inMemoryTransformersWithOptions.set(transformersWithOptions);
     } else {
       // When child signals backend update, refresh current connector view and in-memory cache
-      this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
-        this.historyQuery = JSON.parse(JSON.stringify(historyQuery));
+      this.historyQueryService.findById(this.historyQuery()!.id).subscribe(historyQuery => {
+        this.historyQuery.set(JSON.parse(JSON.stringify(historyQuery)));
         this.inMemoryTransformersWithOptions.set([...historyQuery.northTransformers]);
       });
     }
@@ -595,7 +598,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       if (!this.form?.controls.northSettings.valid) return;
     }
 
-    const historyQueryId = this.historyQuery?.id ?? null;
+    const historyQueryId = this.historyQuery()?.id ?? null;
     let command: SouthConnectorCommandDTO | NorthConnectorCommandDTO;
     let fromConnectorId;
 
@@ -619,7 +622,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       return;
     }
 
-    const historyQueryId = this.historyQuery?.id ?? null;
+    const historyQueryId = this.historyQuery()?.id ?? null;
     const fromSouthId = this.fromSouthId || null;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
@@ -633,7 +636,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   get southConnectorCommand() {
     const formValue = this.form!.value;
     return {
-      type: this.southManifest!.id,
+      type: this.southManifest()!.id,
       settings: formValue.southSettings,
       items: this.inMemoryItems
     } as SouthConnectorCommandDTO;
@@ -643,7 +646,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const formValue = this.form!.value;
 
     return {
-      type: this.northManifest!.id,
+      type: this.northManifest()!.id,
       settings: formValue.northSettings,
       caching: formValue.caching
     } as NorthConnectorCommandDTO;
@@ -661,7 +664,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.directSave = false;
     component.inMemoryTransformers = this.inMemoryTransformersWithOptions();
-    component.prepareForCreation(this.inMemoryItems, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
+    component.prepareForCreation(this.inMemoryItems, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest()!);
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
       this.inMemoryItems = [...this.inMemoryItems, command];
       this.filteredItems = this.filter();
@@ -674,7 +677,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.directSave = false;
     component.inMemoryTransformers = this.inMemoryTransformersWithOptions();
-    component.prepareForCopy(this.inMemoryItems, item, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
+    component.prepareForCopy(this.inMemoryItems, item, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest()!);
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
       this.inMemoryItems = [...this.inMemoryItems, command];
       this.filteredItems = this.filter();
@@ -701,7 +704,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       this.historyId,
       this.fromSouthId,
       this.southConnectorCommand,
-      this.southManifest!,
+      this.southManifest()!,
       tableIndex
     );
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
@@ -729,12 +732,14 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
   exportItems() {
     const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
-    const filename = `${this.historyQuery?.name || 'items'}`;
+    const filename = `${this.historyQuery()?.name || 'items'}`;
     modalRef.componentInstance.prepare(filename);
     modalRef.result.subscribe(response => {
       if (!response) return;
       if (this.historyId === 'create') {
-        this.historyQueryService.itemsToCsv(this.southManifest!.id, this.inMemoryItems, response.filename, response.delimiter).subscribe();
+        this.historyQueryService
+          .itemsToCsv(this.southManifest()!.id, this.inMemoryItems, response.filename, response.delimiter)
+          .subscribe();
       } else {
         this.historyQueryService.exportItems(this.historyId, response.filename, response.delimiter).subscribe();
       }
@@ -745,7 +750,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled'];
     const optionalHeaders: Array<string> = ['scanMode'];
-    const settingsAttribute = this.southManifest!.items.rootAttribute.attributes.find(
+    const settingsAttribute = this.southManifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     settingsAttribute.attributes.forEach(setting => {
@@ -757,9 +762,9 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     });
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
-      this.historyQueryService.checkImportItems(this.southManifest!.id, this.inMemoryItems, file, delimiter, deleteItemsNotPresent);
+      this.historyQueryService.checkImportItems(this.southManifest()!.id, this.inMemoryItems, file, delimiter, deleteItemsNotPresent);
 
-    modalRef.componentInstance.prepare(this.southManifest!, expectedHeaders, optionalHeaders, true, checkFn);
+    modalRef.componentInstance.prepare(this.southManifest()!, expectedHeaders, optionalHeaders, true, checkFn);
     modalRef.result.subscribe((response: { items: Array<HistoryQueryItemCommandDTO>; eraseExisting: boolean } | undefined) => {
       if (!response) return;
       this.inMemoryItems = response.eraseExisting ? [...response.items] : [...this.inMemoryItems, ...response.items];
@@ -768,7 +773,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   }
 
   getFieldValue(element: any, field: string): string {
-    const settingsAttribute = this.southManifest!.items.rootAttribute.attributes.find(
+    const settingsAttribute = this.southManifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
@@ -51,6 +51,7 @@ export class OIBusArrayFormControlComponent {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
   private downloadService = inject(DownloadService);
+  private changeDetectorRef = inject(ChangeDetectorRef);
 
   scanModes = input.required<Array<ScanModeDTO>>();
   certificates = input.required<Array<CertificateDTO>>();
@@ -81,6 +82,8 @@ export class OIBusArrayFormControlComponent {
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
       this.paginatedValues().gotoPage(0);
+      // the template reads the control value, which does not notify Angular
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -97,6 +100,7 @@ export class OIBusArrayFormControlComponent {
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
       this.paginatedValues().gotoPage(0);
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -117,6 +121,7 @@ export class OIBusArrayFormControlComponent {
 
       this.control().setValue(newArray);
       this.paginatedValues().gotoPage(0);
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -181,6 +186,7 @@ export class OIBusArrayFormControlComponent {
       const existing = eraseExisting ? [] : this.control().value || [];
       this.control().setValue([...existing, ...importedElements]);
       this.paginatedValues().gotoPage(0);
+      this.changeDetectorRef.markForCheck();
     });
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -52,15 +52,15 @@ export class ScanModeListComponent {
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/scan-modes');
 
-  allScanModes: Array<ScanModeDTO> = [];
+  readonly allScanModes = signal<Array<ScanModeDTO>>([]);
   private filteredScanModes: Array<ScanModeDTO> = [];
-  displayedScanModes: Page<ScanModeDTO> = emptyPage();
-  sortField: ScanModeSortField = null;
-  sortDirection: SortDirection = 'asc';
+  readonly displayedScanModes = signal<Page<ScanModeDTO>>(emptyPage());
+  readonly sortField = signal<ScanModeSortField>(null);
+  readonly sortDirection = signal<SortDirection>('asc');
 
   constructor() {
     this.scanModeService.list().subscribe(scanModes => {
-      this.allScanModes = this.excludeSubscriptionScanModes(scanModes);
+      this.allScanModes.set(this.excludeSubscriptionScanModes(scanModes));
       this.updateList(0);
     });
   }
@@ -147,39 +147,40 @@ export class ScanModeListComponent {
 
   toggleSort(field: ScanModeSortField) {
     if (!field) return;
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    if (this.sortField() === field) {
+      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
     } else {
-      this.sortField = field;
-      this.sortDirection = 'asc';
+      this.sortField.set(field);
+      this.sortDirection.set('asc');
     }
     this.updateList(0);
   }
 
   getSortIcon(field: ScanModeSortField): string {
-    if (this.sortField !== field) return 'fa-sort';
-    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    if (this.sortField() !== field) return 'fa-sort';
+    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
   }
 
   changePage(pageNumber: number) {
-    this.displayedScanModes = createPageFromArray(this.filteredScanModes, PAGE_SIZE, pageNumber);
+    this.displayedScanModes.set(createPageFromArray(this.filteredScanModes, PAGE_SIZE, pageNumber));
   }
 
   private updateList(pageNumber: number) {
-    this.filteredScanModes = [...this.allScanModes];
+    this.filteredScanModes = [...this.allScanModes()];
     this.sortList();
     this.changePage(pageNumber);
   }
 
   private sortList() {
-    if (!this.sortField) return;
-    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    const field = this.sortField();
+    if (!field) return;
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
     this.filteredScanModes = [...this.filteredScanModes].sort((a, b) => {
-      if (this.sortField === 'name') {
+      if (field === 'name') {
         return a.name.localeCompare(b.name) * direction;
       }
-      const aVal = this.sortField === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
-      const bVal = this.sortField === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
+      const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
+      const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
       return aVal.localeCompare(bVal) * direction;
     });
   }

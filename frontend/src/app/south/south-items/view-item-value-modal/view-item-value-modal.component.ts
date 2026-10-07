@@ -1,5 +1,5 @@
 import { DatePipe, JsonPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -20,14 +20,14 @@ export class ViewItemValueModalComponent {
   private modal = inject(NgbActiveModal);
 
   /** The item's own last cached value/instant, or null when nothing has been cached yet for it. */
-  itemLastValue: SouthItemLastValue | null = null;
+  readonly itemLastValue = signal<SouthItemLastValue | null>(null);
   /** The group's last tracked value/instant when the item belongs to a group, otherwise null. */
-  groupLastValue: SouthItemLastValue | null = null;
-  itemName = '';
-  groupName = '';
+  readonly groupLastValue = signal<SouthItemLastValue | null>(null);
+  readonly itemName = signal('');
+  readonly groupName = signal('');
   southType: OIBusSouthType | null = null;
-  loading = true;
-  error: string | null = null;
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
 
   /**
    * Call immediately after opening the modal (before the HTTP response).
@@ -35,47 +35,45 @@ export class ViewItemValueModalComponent {
    */
   prepare(southType: OIBusSouthType, itemName: string, groupName: string): void {
     this.southType = southType;
-    this.itemName = itemName;
-    this.groupName = groupName;
+    this.itemName.set(itemName);
+    this.groupName.set(groupName);
   }
 
   /** Call when the HTTP response arrives. Clears the spinner and displays the value. */
   setData(response: SouthItemLastValueResponse): void {
-    this.itemLastValue = response.itemLastValue;
-    this.groupLastValue = response.groupLastValue;
-    this.loading = false;
+    this.itemLastValue.set(response.itemLastValue);
+    this.groupLastValue.set(response.groupLastValue);
+    this.loading.set(false);
   }
 
   /** Call when the HTTP request fails. Shows an inline error message instead of closing. */
   setError(message: string): void {
-    this.error = message;
-    this.loading = false;
+    this.error.set(message);
+    this.loading.set(false);
   }
 
   close() {
     this.modal.dismiss();
   }
 
-  get hasValue(): boolean {
-    return this.itemLastValue !== null && this.itemLastValue.value !== null;
-  }
+  readonly hasValue = computed(() => {
+    const itemLastValue = this.itemLastValue();
+    return itemLastValue !== null && itemLastValue.value !== null;
+  });
 
-  get groupHasValue(): boolean {
-    return this.groupLastValue !== null && this.groupLastValue.value !== null;
-  }
+  readonly groupHasValue = computed(() => {
+    const groupLastValue = this.groupLastValue();
+    return groupLastValue !== null && groupLastValue.value !== null;
+  });
 
-  get isFileArray(): boolean {
-    if (!this.hasValue) return false;
-    return (
-      Array.isArray(this.itemLastValue!.value) &&
-      this.itemLastValue!.value.length > 0 &&
-      typeof this.itemLastValue!.value[0] === 'object' &&
-      'filename' in this.itemLastValue!.value[0]
-    );
-  }
+  readonly isFileArray = computed(() => {
+    if (!this.hasValue()) return false;
+    const value = this.itemLastValue()!.value;
+    return Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && 'filename' in value[0];
+  });
 
-  get fileArray(): Array<{ filename: string; modifiedTime: number }> {
-    if (!this.isFileArray) return [];
-    return this.itemLastValue!.value as Array<{ filename: string; modifiedTime: number }>;
-  }
+  readonly fileArray = computed(() => {
+    if (!this.isFileArray()) return [];
+    return this.itemLastValue()!.value as Array<{ filename: string; modifiedTime: number }>;
+  });
 }

@@ -6,10 +6,10 @@
         translate="south.test-item.test-button"
         id="test-item"
         class="btn btn-secondary btn-sm oib-box-btn m-0"
-        [disabled]="isTestRunning"
+        [disabled]="isTestRunning()"
         (click)="testItem()"
       >
-        @if (isTestRunning) {
+        @if (isTestRunning()) {
           <span class="fa fa-spinner fa-spin ms-2"></span>
         } @else {
           <span class="fa fa-check ms-2"></span>
@@ -19,21 +19,21 @@
         translate="south.test-item.cancel-button"
         id="cancel-test-item"
         class="btn btn-danger btn-sm oib-box-btn ms-2"
-        [disabled]="!isTestRunning"
+        [disabled]="!isTestRunning()"
         (click)="cancelTesting()"
       ></button>
     </div>
   </div>
 
   <div class="testing-item-body">
-    @if (form) {
+    @if (form(); as form) {
       <form [formGroup]="form" id="testing-settings-form">
-        @if (settingsCollapsed) {
+        @if (settingsCollapsed()) {
           <button
             type="button"
             id="expand-settings"
             class="btn btn-link btn-sm p-0 settings-summary-chip"
-            (click)="settingsCollapsed = false"
+            (click)="settingsCollapsed.set(false)"
           >
             <span class="fa fa-sliders me-1"></span>
             <span>{{ settingsSummary }}</span>
@@ -41,7 +41,7 @@
           </button>
         }
 
-        <div [class.d-none]="settingsCollapsed">
+        <div [class.d-none]="settingsCollapsed()">
           @if (supportsHistorySettings) {
             <div class="form-group" formGroupName="history" id="history">
               <oib-date-range-selector
@@ -66,7 +66,7 @@
                 <label class="form-label" for="north-select" translate="south.test-item.north"></label>
                 <select id="north-select" class="form-select" formControlName="northId">
                   <option [ngValue]="null" translate="south.test-item.transformer-raw"></option>
-                  @for (north of norths; track north.id) {
+                  @for (north of norths(); track north.id) {
                     <option [ngValue]="north.id">{{ north.name }}</option>
                   }
                 </select>
@@ -79,7 +79,7 @@
                 <label class="form-label" for="transformer-select" translate="south.test-item.transformer"></label>
                 <select id="transformer-select" class="form-select" formControlName="transformerId">
                   <option [ngValue]="null" translate="south.test-item.transformer-raw"></option>
-                  @for (choice of transformerChoices; track choice.transformerId) {
+                  @for (choice of transformerChoices(); track choice.transformerId) {
                     <option [ngValue]="choice.transformerId">
                       @if (choice.transformer.type === 'standard') {
                         {{ 'configuration.oibus.manifest.transformers.standard.' + choice.transformer.functionName | translate }}
@@ -93,9 +93,9 @@
             }
           </div>
 
-          @if (testResult) {
+          @if (testResult()) {
             <div class="text-end mt-1">
-              <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed = true">
+              <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed.set(true)">
                 <span translate="south.test-item.hide-settings"></span>
                 <span class="fa fa-chevron-up ms-1"></span>
               </button>
@@ -105,7 +105,7 @@
 
         <!-- Selected transformer + its options: shown as soon as a transformer is picked, independent of
              whether the settings above are collapsed or a test has even run yet. -->
-        @if (selectedTransformer; as selected) {
+        @if (selectedTransformer(); as selected) {
           <div class="pipeline-transformer mt-2">
             <div class="d-flex justify-content-between align-items-start">
               <div class="fw-bold">
@@ -119,21 +119,21 @@
                   {{ selected.name }}
                 }
               </div>
-              @if (!optionsEditMode) {
+              @if (!optionsEditMode()) {
                 <button
                   type="button"
                   id="edit-transformer-options"
                   class="btn btn-link btn-sm p-0 ms-2"
                   [attr.aria-label]="'south.test-item.edit-options' | translate"
                   [title]="'south.test-item.edit-options' | translate"
-                  (click)="optionsEditMode = true"
+                  (click)="optionsEditMode.set(true)"
                 >
                   <span class="fa fa-pencil"></span>
                 </button>
               }
             </div>
 
-            @if (optionsEditMode) {
+            @if (optionsEditMode()) {
               <div class="mt-2" formGroupName="options">
                 <oib-oibus-object-form-control
                   [scanModes]="[]"
@@ -156,11 +156,11 @@
       </form>
     }
 
-    @if (infoMessage) {
+    @if (infoMessage(); as infoMessage) {
       <div class="alert alert-primary mt-2 mb-0">{{ infoMessage }}</div>
-    } @else if (errorMessage) {
+    } @else if (errorMessage(); as errorMessage) {
       <div class="alert alert-danger mt-2 mb-0">{{ errorMessage }}</div>
-    } @else if (testResult) {
+    } @else if (testResult(); as testResult) {
       <div class="small text-muted mt-2 mb-1">
         {{ 'south.test-item.connection-duration' | translate: { duration: testResult.connectionDuration } }}
         &middot;
@@ -169,7 +169,7 @@
       <oib-transformer-test-result
         class="d-block mt-2"
         [raw]="testResult.raw"
-        [hasTransformer]="!!selectedTransformer"
+        [hasTransformer]="!!selectedTransformer()"
         [output]="testResult.transformed"
       />
     }

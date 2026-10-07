@@ -7,10 +7,10 @@
           type="button"
           id="run-transformer-test"
           class="btn btn-secondary btn-sm oib-box-btn m-0"
-          [disabled]="isTestRunning"
+          [disabled]="isTestRunning()"
           (click)="runTest()"
         >
-          @if (isTestRunning) {
+          @if (isTestRunning()) {
             <span class="fa fa-spinner fa-spin ms-2"></span>
           } @else {
             <span class="fa fa-check ms-2"></span>
@@ -21,7 +21,7 @@
           type="button"
           id="cancel-transformer-test"
           class="btn btn-danger btn-sm oib-box-btn ms-2"
-          [disabled]="!isTestRunning"
+          [disabled]="!isTestRunning()"
           (click)="cancelTest()"
           translate="common.cancel"
         ></button>
@@ -29,12 +29,12 @@
     </div>
 
     <div class="testing-item-body" [formGroup]="form">
-      @if (settingsCollapsed) {
+      @if (settingsCollapsed()) {
         <button
           type="button"
           id="expand-settings"
           class="btn btn-link btn-sm p-0 settings-summary-chip"
-          (click)="settingsCollapsed = false"
+          (click)="settingsCollapsed.set(false)"
         >
           <span class="fa fa-sliders me-1"></span>
           <span>{{ settingsSummary }}</span>
@@ -42,14 +42,14 @@
         </button>
       }
 
-      <div [class.d-none]="settingsCollapsed">
+      <div [class.d-none]="settingsCollapsed()">
         <!-- input source -->
         <div class="d-flex gap-3 mb-2">
           <div class="form-check">
             <input class="form-check-input" type="radio" id="sourcePaste" formControlName="inputSource" value="paste" />
             <label class="form-check-label" for="sourcePaste" translate="north.transformers.test.source-paste"></label>
           </div>
-          @if (canUseItemSource) {
+          @if (canUseItemSource()) {
             <div class="form-check">
               <input class="form-check-input" type="radio" id="sourceItem" formControlName="inputSource" value="item" />
               <label class="form-check-label" for="sourceItem" translate="north.transformers.test.source-item"></label>
@@ -65,12 +65,12 @@
             <label class="form-label" for="test-item-select" translate="north.transformers.test.item"></label>
             <select id="test-item-select" class="form-select" formControlName="itemId">
               <option [ngValue]="null"></option>
-              @for (item of availableItems; track item.id) {
+              @for (item of availableItems(); track item.id) {
                 <option [ngValue]="item.id">{{ item.name }}</option>
               }
             </select>
           </div>
-          @if (supportsHistory) {
+          @if (supportsHistory()) {
             <div class="form-group mt-2">
               <oib-date-range-selector
                 #dateRangeSelector
@@ -83,9 +83,9 @@
           }
         }
 
-        @if (testResult) {
+        @if (testResult()) {
           <div class="text-end mt-1">
-            <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed = true">
+            <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed.set(true)">
               <span translate="south.test-item.hide-settings"></span>
               <span class="fa fa-chevron-up ms-1"></span>
             </button>
@@ -93,9 +93,9 @@
         }
       </div>
 
-      @if (errorMessage) {
+      @if (errorMessage(); as errorMessage) {
         <div class="alert alert-danger mt-2 mb-0">{{ errorMessage }}</div>
-      } @else if (testResult) {
+      } @else if (testResult(); as testResult) {
         <oib-transformer-test-result
           class="d-block mt-2"
           [raw]="testResult.raw"

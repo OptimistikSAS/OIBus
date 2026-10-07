@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inject, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -69,6 +69,13 @@ export interface TableData {
   enabled: boolean;
 }
 
+type SouthConnectorForm = FormGroup<{
+  name: FormControl<string>;
+  description: FormControl<string>;
+  enabled: FormControl<boolean>;
+  settings: FormGroup;
+}>;
+
 @Component({
   selector: 'oib-edit-south',
   imports: [
@@ -95,7 +102,7 @@ export interface TableData {
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
-      useFactory: (component: EditSouthComponent) => () => component.mode,
+      useFactory: (component: EditSouthComponent) => () => component.mode(),
       deps: [forwardRef(() => EditSouthComponent)]
     }
   ]
@@ -114,33 +121,33 @@ export class EditSouthComponent implements CanComponentDeactivate {
   private route = inject(ActivatedRoute);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private docsUrlService = inject(DocsUrlService);
+  private changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings');
   readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
 
   get southTypeHelpUrl(): string {
-    return this.docsUrlService.resolve('guide/south-connectors/' + this.southType);
+    return this.docsUrlService.resolve('guide/south-connectors/' + this.southType());
   }
 
-  mode: 'create' | 'edit' = 'create';
-  southConnector: SouthConnectorDTO | null = null;
-  southType: OIBusSouthType | null = null;
+  readonly mode = signal<'create' | 'edit'>('create');
+  readonly southConnector = signal<SouthConnectorDTO | null>(null);
+  readonly southType = signal<OIBusSouthType | null>(null);
   duplicateId = '';
 
   state = new ObservableState();
-  scanModes: Array<ScanModeDTO> = [];
-  certificates: Array<CertificateDTO> = [];
-  manifest: SouthConnectorManifest | null = null;
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly certificates = signal<Array<CertificateDTO>>([]);
+  readonly manifest = signal<SouthConnectorManifest | null>(null);
   existingSouthConnectors: Array<SouthConnectorLightDTO> = [];
-  form: FormGroup<{
-    name: FormControl<string>;
-    description: FormControl<string>;
-    enabled: FormControl<boolean>;
-    settings: FormGroup;
-  }> | null = null;
+  readonly form = signal<SouthConnectorForm | null>(null);
 
+  /**
+   * Shared by reference with the item modals and mutated in place by the import: every asynchronous change ends with
+   * `resetPage()`/`changePage()`, which notifies change detection (see `displayedItems`).
+   */
   inMemoryItems: Array<SouthConnectorItemCommandDTO> = [];
-  filteredItems: Array<SouthConnectorItemCommandDTO> = [];
+  readonly filteredItems = signal<Array<SouthConnectorItemCommandDTO>>([]);
   /**
    * The displayed page of items. Every asynchronous update of the page state (data loading, modal results, confirmations)
    * ends with `changePage()`, so this signal is also what notifies change detection about it.
@@ -151,16 +158,20 @@ export class EditSouthComponent implements CanComponentDeactivate {
   scanModeFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
   statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
 
+  /** Shared by reference with the group/workflow modals, which mutate it in place: call `markForCheck()` after async changes. */
   inMemoryGroups: Array<SouthItemGroupCommandDTO> = [];
 
-  /** The connector's Configuration Workflows, edited in memory and saved along with the connector. */
+  /**
+   * The connector's Configuration Workflows, edited in memory and saved along with the connector. Shared by reference with
+   * ManageWorkflowsModalComponent, which mutates it in place: call `markForCheck()` after async changes.
+   */
   inMemoryWorkflows: Array<ConfigurationWorkflowCommandDTO> = [];
 
   /** The item currently hovered in the list — drives the schedule details tooltip. */
   tooltipItem: SouthConnectorItemCommandDTO | null = null;
 
   // Mass action properties
-  selectedItems = new Map<string, SouthConnectorItemCommandDTO>();
+  readonly selectedItems = signal(new Map<string, SouthConnectorItemCommandDTO>());
   isAllSelected = false;
   isIndeterminate = false;
 
@@ -183,19 +194,19 @@ export class EditSouthComponent implements CanComponentDeactivate {
     ])
       .pipe(
         switchMap(([scanModes, certificates, southConnectors, params, queryParams]) => {
-          this.scanModes = scanModes;
-          this.certificates = certificates;
+          this.scanModes.set(scanModes);
+          this.certificates.set(certificates);
           this.existingSouthConnectors = southConnectors;
 
           const paramSouthId = params.get('southId');
           const duplicateSouthId = queryParams.get('duplicate');
-          this.southType = (queryParams.get('type') as OIBusSouthType) || null;
+          this.southType.set((queryParams.get('type') as OIBusSouthType) || null);
 
           if (paramSouthId) {
-            this.mode = 'edit';
+            this.mode.set('edit');
             return this.southConnectorService.findById(paramSouthId).pipe(this.state.pendingUntilFinalization());
           } else {
-            this.mode = 'create';
+            this.mode.set('create');
             if (duplicateSouthId) {
               this.duplicateId = duplicateSouthId;
               return this.southConnectorService.findById(duplicateSouthId).pipe(this.state.pendingUntilFinalization());
@@ -206,14 +217,14 @@ export class EditSouthComponent implements CanComponentDeactivate {
           }
         }),
         switchMap(southConnector => {
-          this.southConnector = southConnector;
+          this.southConnector.set(southConnector);
           let workflows$: Observable<Array<ConfigurationWorkflowCommandDTO>> = of([]);
           if (southConnector) {
-            this.southType = southConnector.type;
+            this.southType.set(southConnector.type);
             // When duplicating, groups must be recreated rather than pointing at the source
             // connector's groups, so give each one a fresh temp id (same convention used when
             // a group is created from the UI) and remap items to the new ids.
-            const isDuplicate = this.mode === 'create' && !!this.duplicateId;
+            const isDuplicate = this.mode() === 'create' && !!this.duplicateId;
             const groupIdMap = new Map<string, string>();
             if (isDuplicate) {
               southConnector.groups.forEach((group, index) => {
@@ -270,7 +281,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 )
               );
           }
-          return combineLatest([this.southConnectorService.getSouthManifest(this.southType!), workflows$]);
+          return combineLatest([this.southConnectorService.getSouthManifest(this.southType()!), workflows$]);
         })
       )
       .subscribe(([manifest, workflows]) => {
@@ -278,7 +289,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
           return;
         }
         this.inMemoryWorkflows = workflows;
-        this.manifest = manifest;
+        this.manifest.set(manifest);
         this.resetPage();
         this.buildForm();
       });
@@ -295,7 +306,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   }
 
   canDeactivate(): Observable<boolean> | boolean {
-    if (this.form?.dirty) {
+    if (this.form()?.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -303,19 +314,19 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   createOrUpdateSouthConnector(command: SouthConnectorCommandDTO): void {
     let createOrUpdate: Observable<SouthConnectorDTO>;
-    if (this.mode === 'edit') {
-      createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command).pipe(
+    if (this.mode() === 'edit') {
+      createOrUpdate = this.southConnectorService.update(this.southConnector()!.id, command).pipe(
         tap(() => {
           this.notificationService.success('south.updated', { name: command.name });
-          this.form?.markAsPristine();
+          this.form()?.markAsPristine();
         }),
-        switchMap(() => this.southConnectorService.findById(this.southConnector!.id))
+        switchMap(() => this.southConnectorService.findById(this.southConnector()!.id))
       );
     } else {
       createOrUpdate = this.southConnectorService.create(command, this.duplicateId).pipe(
         tap(() => {
           this.notificationService.success('south.created', { name: command.name });
-          this.form?.markAsPristine();
+          this.form()?.markAsPristine();
         })
       );
     }
@@ -326,7 +337,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   submit(value: 'save' | 'test') {
     if (value === 'save') {
-      if (!this.form!.valid) {
+      if (!this.form()!.valid) {
         return;
       }
       this.createOrUpdateSouthConnector(this.formSouthConnectorCommand);
@@ -334,24 +345,29 @@ export class EditSouthComponent implements CanComponentDeactivate {
     }
 
     // Test: only validate the settings section
-    this.form!.controls.settings.markAllAsTouched();
-    if (!this.form!.controls.settings.valid) {
+    this.form()!.controls.settings.markAllAsTouched();
+    if (!this.form()!.controls.settings.valid) {
       return;
     }
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runTest('south', this.southConnector?.id || null, this.formSouthConnectorCommand.settings, this.southType as OIBusSouthType);
+    component.runTest(
+      'south',
+      this.southConnector()?.id || null,
+      this.formSouthConnectorCommand.settings,
+      this.southType() as OIBusSouthType
+    );
   }
 
   explore() {
     // Explore: only validate the settings section, like the test connection button
-    this.form!.controls.settings.markAllAsTouched();
-    if (!this.form!.controls.settings.valid) {
+    this.form()!.controls.settings.markAllAsTouched();
+    if (!this.form()!.controls.settings.valid) {
       return;
     }
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector?.id || null, this.formSouthConnectorCommand.settings, this.southType as OIBusSouthType);
+    component.prepare(this.southConnector()?.id || null, this.formSouthConnectorCommand.settings, this.southType() as OIBusSouthType);
   }
 
   addItem() {
@@ -367,18 +383,18 @@ export class EditSouthComponent implements CanComponentDeactivate {
     component.directSave = false;
     component.prepareForCreation(
       this.inMemoryItems,
-      this.scanModes,
-      this.certificates,
+      this.scanModes(),
+      this.certificates(),
       this.inMemoryGroups,
-      this.manifest!,
-      this.southConnector?.id || 'create',
+      this.manifest()!,
+      this.southConnector()?.id || 'create',
       this.formSouthConnectorCommand,
       this.addOrEditGroup.bind(this),
       this.deleteGroup.bind(this)
     );
     modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => {
       this.inMemoryItems.push(command);
-      this.filteredItems = this.filter();
+      this.filteredItems.set(this.filter());
       this.changePage(this.displayedItems().number);
     });
   }
@@ -389,19 +405,19 @@ export class EditSouthComponent implements CanComponentDeactivate {
     component.directSave = false;
     component.prepareForCopy(
       this.inMemoryItems,
-      this.scanModes,
-      this.certificates,
+      this.scanModes(),
+      this.certificates(),
       this.inMemoryGroups,
-      this.manifest!,
+      this.manifest()!,
       item,
-      this.southConnector?.id || 'create',
+      this.southConnector()?.id || 'create',
       this.formSouthConnectorCommand,
       this.addOrEditGroup.bind(this),
       this.deleteGroup.bind(this)
     );
     modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => {
       this.inMemoryItems.push(command);
-      this.filteredItems = this.filter();
+      this.filteredItems.set(this.filter());
       this.changePage(this.displayedItems().number);
     });
   }
@@ -421,12 +437,12 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const tableIndex = findItemIndex(this.inMemoryItems, southItem);
     component.prepareForEdition(
       this.inMemoryItems,
-      this.scanModes,
-      this.certificates,
+      this.scanModes(),
+      this.certificates(),
       this.inMemoryGroups,
-      this.manifest!,
+      this.manifest()!,
       southItem,
-      this.southConnector?.id || 'create',
+      this.southConnector()?.id || 'create',
       this.formSouthConnectorCommand,
       tableIndex,
       this.addOrEditGroup.bind(this),
@@ -434,7 +450,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     );
     modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => {
       this.inMemoryItems[tableIndex] = command;
-      this.filteredItems = this.filter();
+      this.filteredItems.set(this.filter());
       this.changePage(this.displayedItems().number);
     });
   }
@@ -446,7 +462,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       })
       .subscribe(() => {
         this.inMemoryItems = this.inMemoryItems.filter(element => element.name !== item.name);
-        this.filteredItems = this.filter();
+        this.filteredItems.set(this.filter());
         this.changePage(this.displayedItems().number);
       });
   }
@@ -464,16 +480,17 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   exportItems() {
     const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
-    const filename = `${this.southConnector?.name || 'items'}`;
+    const southConnector = this.southConnector();
+    const filename = `${southConnector?.name || 'items'}`;
     modalRef.componentInstance.prepare(filename);
     modalRef.result.subscribe(response => {
       if (response) {
-        if (!this.southConnector?.id) {
+        if (!southConnector?.id) {
           // create mode
-          this.southConnectorService.itemsToCsv(this.manifest!.id, this.inMemoryItems, response.filename, response.delimiter).subscribe();
+          this.southConnectorService.itemsToCsv(this.manifest()!.id, this.inMemoryItems, response.filename, response.delimiter).subscribe();
         } else {
           // edit mode
-          this.southConnectorService.exportItems(this.southConnector.id, response.filename, response.delimiter).subscribe();
+          this.southConnectorService.exportItems(southConnector.id, response.filename, response.delimiter).subscribe();
         }
       }
     });
@@ -491,7 +508,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       'recoveryStrategy',
       'syncWithGroup'
     ];
-    const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
+    const settingsAttribute = this.manifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     settingsAttribute.attributes.forEach(setting => {
@@ -503,7 +520,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     });
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
-      this.southConnectorService.checkImportItems(this.manifest!.id, this.inMemoryItems, file, delimiter, deleteItemsNotPresent).pipe(
+      this.southConnectorService.checkImportItems(this.manifest()!.id, this.inMemoryItems, file, delimiter, deleteItemsNotPresent).pipe(
         map(result => ({
           items: result.items.map(
             item =>
@@ -534,9 +551,9 @@ export class EditSouthComponent implements CanComponentDeactivate {
         }))
       );
 
-    if (this.manifest!.id === 'mqtt') {
+    if (this.manifest()!.id === 'mqtt') {
       modal.componentInstance.prepare(
-        this.manifest!,
+        this.manifest()!,
         expectedHeaders,
         optionalHeaders,
         this.inMemoryItems.map(item => (item.settings as any)?.topic).filter(topic => topic && typeof topic === 'string' && topic.trim()),
@@ -545,7 +562,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
         checkFn
       );
     } else {
-      modal.componentInstance.prepare(this.manifest!, expectedHeaders, optionalHeaders, [], false, true, checkFn);
+      modal.componentInstance.prepare(this.manifest()!, expectedHeaders, optionalHeaders, [], false, true, checkFn);
     }
 
     modal.result.subscribe((response: { items: Array<SouthConnectorItemCommandDTO>; eraseExisting: boolean } | undefined) => {
@@ -590,7 +607,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
         tap(() => {
           const groupScanModeId =
             (group as SouthItemGroupCommandDTO).standardSettings.scanModeId || (group as SouthItemGroupDTO).standardSettings.scanMode?.id;
-          const applyHistorySettings = this.manifest?.modes.history ?? false;
+          const applyHistorySettings = this.manifest()?.modes.history ?? false;
 
           this.inMemoryItems = this.inMemoryItems.map(item => {
             if (item.groupId !== group.id) {
@@ -625,6 +642,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
             }
           });
           this.resetPage();
+          this.changeDetectorRef.markForCheck();
         }),
         map(() => undefined)
       );
@@ -635,8 +653,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const component: ManageGroupsModalComponent = modalRef.componentInstance;
     component.prepare(
       this.inMemoryGroups,
-      this.scanModes,
-      this.manifest!,
+      this.scanModes(),
+      this.manifest()!,
       false,
       groupId => this.inMemoryItems.filter(item => item.groupId === groupId).length,
       this.addOrEditGroup.bind(this),
@@ -644,6 +662,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
     );
     modalRef.result.subscribe(() => {
       this.resetPage();
+      // inMemoryGroups was mutated in place by the modal
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -674,10 +694,10 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const component: ManageWorkflowsModalComponent = modalRef.componentInstance;
     component.prepareForInMemory(
       this.inMemoryWorkflows,
-      this.southConnector?.id || 'create',
+      this.southConnector()?.id || 'create',
       this.formSouthConnectorCommand.settings,
-      this.scanModes,
-      this.manifest!,
+      this.scanModes(),
+      this.manifest()!,
       this.inMemoryGroups,
       this.addOrEditGroup.bind(this),
       this.deleteGroup.bind(this)
@@ -685,6 +705,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
     modalRef.result.subscribe(() => {
       // A group may have been created/deleted from a workflow's group mapping field
       this.resetPage();
+      // inMemoryWorkflows and inMemoryGroups were mutated in place by the modal
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -695,8 +717,9 @@ export class EditSouthComponent implements CanComponentDeactivate {
         return null;
       }
 
+      const southConnector = this.southConnector();
       const isDuplicate = this.existingSouthConnectors.some(south => {
-        if (this.southConnector && south.id === this.southConnector.id) {
+        if (southConnector && south.id === southConnector.id) {
           return false;
         }
         return south.name.trim().toLowerCase() === value;
@@ -707,7 +730,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   }
 
   buildForm() {
-    this.form = this.fb.group({
+    const form: SouthConnectorForm = this.fb.group({
       name: this.fb.control('', {
         validators: [Validators.required, this.checkUniqueness()]
       }),
@@ -715,26 +738,28 @@ export class EditSouthComponent implements CanComponentDeactivate {
       enabled: true as boolean,
       settings: this.fb.group({})
     });
-    for (const attribute of this.manifest!.settings.attributes) {
-      addAttributeToForm(this.fb, this.form.controls.settings, attribute);
+    for (const attribute of this.manifest()!.settings.attributes) {
+      addAttributeToForm(this.fb, form.controls.settings, attribute);
     }
-    addEnablingConditions(this.form.controls.settings, this.manifest!.settings.enablingConditions);
+    addEnablingConditions(form.controls.settings, this.manifest()!.settings.enablingConditions);
     // if we have a south connector, we initialize the values
-    if (this.southConnector) {
-      this.form.patchValue(this.southConnector);
+    const southConnector = this.southConnector();
+    if (southConnector) {
+      form.patchValue(southConnector);
     } else {
       // we should provoke all value changes to make sure fields are properly hidden and disabled
-      this.form.setValue(this.form.getRawValue());
+      form.setValue(form.getRawValue());
     }
 
-    this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    this.form.set(form);
   }
 
   get formSouthConnectorCommand(): SouthConnectorCommandDTO {
-    const formValue = this.form!.value;
+    const formValue = this.form()!.value;
     return {
       name: formValue.name!,
-      type: this.southType!,
+      type: this.southType()!,
       description: formValue.description!,
       enabled: formValue.enabled!,
       settings: extractFormValue(formValue.settings)!,
@@ -745,13 +770,13 @@ export class EditSouthComponent implements CanComponentDeactivate {
   }
 
   resetPage() {
-    this.filteredItems = this.filter();
+    this.filteredItems.set(this.filter());
     this.changePage(0);
   }
 
   changePage(pageNumber: number) {
     this.sortTable();
-    this.displayedItems.set(createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber));
+    this.displayedItems.set(createPageFromArray(this.filteredItems(), PAGE_SIZE, pageNumber));
   }
 
   filter(): Array<SouthConnectorItemCommandDTO> {
@@ -776,7 +801,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   }
 
   getFieldValue(element: any, field: string): string {
-    const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
+    const settingsAttribute = this.manifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
 
@@ -802,27 +827,28 @@ export class EditSouthComponent implements CanComponentDeactivate {
   private sortTable() {
     if (this.currentColumnSort && this.columnSortStates[this.currentColumnSort] !== ColumnSortState.INDETERMINATE) {
       const ascending = this.columnSortStates[this.currentColumnSort] === ColumnSortState.ASCENDING;
+      const filteredItems = this.filteredItems();
 
       switch (this.currentColumnSort) {
         case 'name':
-          this.filteredItems.sort((a, b) => (ascending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)));
+          filteredItems.sort((a, b) => (ascending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)));
           break;
         case 'scanMode':
-          this.filteredItems.sort((a, b) =>
+          filteredItems.sort((a, b) =>
             ascending
               ? (a.scanModeName || '').localeCompare(b.scanModeName || '')
               : (b.scanModeName || '').localeCompare(a.scanModeName || '')
           );
           break;
         case 'group':
-          this.filteredItems.sort((a, b) => {
+          filteredItems.sort((a, b) => {
             const aGroup = a.groupName || '';
             const bGroup = b.groupName || '';
             return ascending ? aGroup.localeCompare(bGroup) : bGroup.localeCompare(aGroup);
           });
           break;
         case 'enabled':
-          this.filteredItems.sort((a, b) => {
+          filteredItems.sort((a, b) => {
             const aVal = a.enabled ? 1 : 0;
             const bVal = b.enabled ? 1 : 0;
             return ascending ? aVal - bVal : bVal - aVal;
@@ -834,60 +860,64 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   // Mass action methods
   toggleItemSelection(item: SouthConnectorItemCommandDTO) {
-    if (this.selectedItems.has(item.name)) {
-      this.selectedItems.delete(item.name);
+    const selectedItems = new Map(this.selectedItems());
+    if (selectedItems.has(item.name)) {
+      selectedItems.delete(item.name);
     } else {
-      this.selectedItems.set(item.name, item);
+      selectedItems.set(item.name, item);
     }
+    this.selectedItems.set(selectedItems);
     this.updateSelectionState();
   }
 
   selectAll() {
-    this.filteredItems.forEach(item => {
-      this.selectedItems.set(item.name, item);
+    const selectedItems = new Map(this.selectedItems());
+    this.filteredItems().forEach(item => {
+      selectedItems.set(item.name, item);
     });
+    this.selectedItems.set(selectedItems);
     this.updateSelectionState();
   }
 
   unselectAll() {
-    this.selectedItems.clear();
+    this.selectedItems.set(new Map());
     this.updateSelectionState();
   }
 
   updateSelectionState() {
-    const totalItems = this.filteredItems.length;
-    const selectedCount = this.selectedItems.size;
+    const totalItems = this.filteredItems().length;
+    const selectedCount = this.selectedItems().size;
     this.isAllSelected = selectedCount === totalItems && totalItems > 0;
     this.isIndeterminate = selectedCount > 0 && selectedCount < totalItems;
   }
 
   getSelectedItemsCount(): number {
-    return this.selectedItems.size;
+    return this.selectedItems().size;
   }
 
   enableSelectedItems() {
     this.inMemoryItems = this.inMemoryItems.map(item => {
-      if (this.selectedItems.has(item.name)) {
+      if (this.selectedItems().has(item.name)) {
         return { ...item, enabled: true };
       }
       return item;
     });
-    this.selectedItems.clear();
+    this.selectedItems.set(new Map());
     this.updateSelectionState();
-    this.filteredItems = this.filter();
+    this.filteredItems.set(this.filter());
     this.changePage(this.displayedItems().number);
   }
 
   disableSelectedItems() {
     this.inMemoryItems = this.inMemoryItems.map(item => {
-      if (this.selectedItems.has(item.name)) {
+      if (this.selectedItems().has(item.name)) {
         return { ...item, enabled: false };
       }
       return item;
     });
-    this.selectedItems.clear();
+    this.selectedItems.set(new Map());
     this.updateSelectionState();
-    this.filteredItems = this.filter();
+    this.filteredItems.set(this.filter());
     this.changePage(this.displayedItems().number);
   }
 
@@ -895,38 +925,40 @@ export class EditSouthComponent implements CanComponentDeactivate {
     this.confirmationService
       .confirm({
         messageKey: 'south.items.delete-multiple-message',
-        interpolateParams: { count: this.selectedItems.size.toString() }
+        interpolateParams: { count: this.selectedItems().size.toString() }
       })
       .subscribe(() => {
-        this.inMemoryItems = this.inMemoryItems.filter(item => !this.selectedItems.has(item.name));
-        this.selectedItems.clear();
+        this.inMemoryItems = this.inMemoryItems.filter(item => !this.selectedItems().has(item.name));
+        this.selectedItems.set(new Map());
         this.updateSelectionState();
-        this.filteredItems = this.filter();
+        this.filteredItems.set(this.filter());
         this.changePage(this.displayedItems().number);
       });
   }
 
   moveSelectedItemsToGroup() {
-    const itemIds = Array.from(this.selectedItems.values(), item => item.id!);
+    const itemIds = Array.from(this.selectedItems().values(), item => item.id!);
     if (itemIds.length === 0) return;
 
     const modalRef = this.modalService.open(SelectGroupModalComponent, { backdrop: 'static' });
     const component: SelectGroupModalComponent = modalRef.componentInstance;
-    component.prepare(this.inMemoryGroups, this.scanModes, this.manifest!, command => this.addOrEditGroup(command));
+    component.prepare(this.inMemoryGroups, this.scanModes(), this.manifest()!, command => this.addOrEditGroup(command));
 
     modalRef.result.subscribe((groupId: string) => {
       // Update groups list from the modal in case a new one was created
       const group = this.inMemoryGroups.find(element => element.id === groupId);
       this.inMemoryItems = this.inMemoryItems.map(item => {
-        if (this.selectedItems.has(item.name)) {
+        if (this.selectedItems().has(item.name)) {
           return { ...item, groupId: group?.id || null, groupName: group?.standardSettings.name || null };
         }
         return item;
       });
-      this.selectedItems.clear();
+      this.selectedItems.set(new Map());
       this.updateSelectionState();
-      this.filteredItems = this.filter();
+      this.filteredItems.set(this.filter());
       this.changePage(this.displayedItems().number);
+      // A group may have been created (and pushed into inMemoryGroups) by the modal
+      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -952,7 +984,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     if (item.groupId) {
       const group = this.inMemoryGroups.find(g => g.id === item.groupId);
       if (group) {
-        return this.scanModes.find(s => s.id === group.standardSettings.scanModeId)?.name ?? item.scanModeName ?? '';
+        return this.scanModes().find(s => s.id === group.standardSettings.scanModeId)?.name ?? item.scanModeName ?? '';
       }
     }
     return item.scanModeName ?? '';
