@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { Page } from '@oibus/shared/common/types';
 import { OIBusCommandDTO } from '@oibus/shared/oia/command.model';
 
-import { toPage } from '../shared/test-utils';
+import { toPage } from '../shared/utils/page.utils';
 import { OibusCommandService } from './oibus-command.service';
 
 describe('OibusCommandService', () => {

@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
   test: {
     restoreMocks: true,
     // `browser.api` was deprecated in Vitest 5 in favor of the top-level `api` option.

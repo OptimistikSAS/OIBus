@@ -9,7 +9,7 @@ import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
-import { toPage } from '../shared/test-utils';
+import { toPage } from '../shared/utils/page.utils';
 import { ConfigurationWorkflowService } from './configuration-workflow.service';
 
 const SOUTH_ID = 'southId1';

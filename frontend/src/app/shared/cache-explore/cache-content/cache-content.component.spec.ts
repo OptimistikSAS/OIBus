@@ -9,7 +9,7 @@ import { CacheOperation } from '@oibus/shared/api/engine.model';
 import { CacheMetadata, DataFolderType } from '@oibus/shared/domain/engine.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { provideCurrentUser } from '../../current-user-testing-vitest';
+import { provideCurrentUser } from '../../current-user-testing';
 import { ObservableState } from '../../save-button/save-button.component';
 import { CacheContentComponent } from './cache-content.component';
 

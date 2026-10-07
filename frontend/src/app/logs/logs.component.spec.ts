@@ -17,7 +17,7 @@ import { LogService } from '../services/log.service';
 import { provideNgbConfigTesting } from '../shared/form/oi-ngb-testing';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 import { PageLoader } from '../shared/page-loader.service';
-import { emptyPage, toPage } from '../shared/test-utils';
+import { emptyPage, toPage } from '../shared/utils/page.utils';
 import { LogsComponent } from './logs.component';
 
 class LogsComponentTester {

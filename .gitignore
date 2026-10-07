@@ -19,6 +19,9 @@
 npm-debug.log
 yarn-error.log
 
+# Angular
+.angular/*
+
 # Visual Studio Code
 .vscode/*
 !.vscode/settings.json

@@ -17,7 +17,7 @@ import { OibusCommandService } from '../../services/oibus-command.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
-import { emptyPage } from '../../shared/test-utils';
+import { emptyPage } from '../../shared/utils/page.utils';
 import { OIARegistrationComponent } from './oia-registration.component';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 

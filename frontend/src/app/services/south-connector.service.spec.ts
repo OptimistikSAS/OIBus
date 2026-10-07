@@ -9,7 +9,7 @@ import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south
 import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-settings.model';
 
 import testData from '../../test/test-data';
-import { toPage } from '../shared/test-utils';
+import { toPage } from '../shared/utils/page.utils';
 import { DownloadService } from './download.service';
 import { SouthConnectorService } from './south-connector.service';
 

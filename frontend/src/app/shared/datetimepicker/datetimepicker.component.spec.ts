@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { provideCurrentUser } from '../current-user-testing-vitest';
+import { provideCurrentUser } from '../current-user-testing';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
 import { provideNgbConfigTesting } from '../form/oi-ngb-testing';
 import { DatetimepickerComponent } from './datetimepicker.component';

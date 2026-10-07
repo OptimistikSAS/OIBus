@@ -47,7 +47,7 @@ import { pollMetrics } from '../../shared/polling';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
-import { emptyPage } from '../../shared/test-utils';
+import { emptyPage } from '../../shared/utils/page.utils';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';

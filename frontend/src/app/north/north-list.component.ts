@@ -21,7 +21,7 @@ import { NotificationService } from '../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { emptyPage } from '../shared/test-utils';
+import { emptyPage } from '../shared/utils/page.utils';
 import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
 
 type NorthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
