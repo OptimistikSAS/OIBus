@@ -1,127 +1,113 @@
 import { Routes } from '@angular/router';
 
-import { AboutComponent } from './about/about.component';
-import { AuditListComponent } from './audit/audit-list.component';
 import { authenticationGuard } from './auth/authentication.guard';
-import { LoginComponent } from './auth/login/login.component';
-import { EngineDetailComponent } from './engine/engine-detail.component';
-import { OIARegistrationComponent } from './engine/oia-registration/oia-registration.component';
-import { EditHistoryQueryComponent } from './history-query/edit-history-query/edit-history-query.component';
-import { ExploreHistoryCacheComponent } from './history-query/explore-history-cache/explore-history-cache.component';
-import { HistoryQueryDetailComponent } from './history-query/history-query-detail/history-query-detail.component';
-import { HistoryQueryListComponent } from './history-query/history-query-list.component';
-import { HomeComponent } from './home/home.component';
-import { LogsComponent } from './logs/logs.component';
-import { EditNorthComponent } from './north/edit-north/edit-north.component';
-import { ExploreNorthCacheComponent } from './north/explore-north-cache/explore-north-cache.component';
-import { NorthDetailComponent } from './north/north-detail/north-detail.component';
-import { NorthListComponent } from './north/north-list.component';
 import { UnsavedChangesGuard } from './shared/unsaved-changes.guard';
-import { EditSouthComponent } from './south/edit-south/edit-south.component';
-import { SouthDetailComponent } from './south/south-detail/south-detail.component';
-import { SouthListComponent } from './south/south-list.component';
-import { WorkflowRunHistoryComponent } from './south/south-workflows/workflow-run-history/workflow-run-history.component';
-import { EditUserSettingsComponent } from './user-settings/edit-user-settings/edit-user-settings.component';
 
 export const ROUTES: Routes = [
-  { path: 'login', component: LoginComponent },
+  { path: 'login', loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent) },
   {
     path: '',
     canActivateChild: [authenticationGuard],
     children: [
       {
         path: '',
-        component: HomeComponent
+        loadComponent: () => import('./home/home.component').then(m => m.HomeComponent)
       },
       {
         path: 'engine',
-        component: EngineDetailComponent
+        loadComponent: () => import('./engine/engine-detail.component').then(m => m.EngineDetailComponent)
       },
       {
         path: 'engine/oianalytics',
-        component: OIARegistrationComponent
+        loadComponent: () => import('./engine/oia-registration/oia-registration.component').then(m => m.OIARegistrationComponent)
       },
       {
         path: 'north',
-        component: NorthListComponent
+        loadComponent: () => import('./north/north-list.component').then(m => m.NorthListComponent)
       },
       {
         path: 'north/create',
-        component: EditNorthComponent,
+        loadComponent: () => import('./north/edit-north/edit-north.component').then(m => m.EditNorthComponent),
         canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'north/:northId/edit',
-        component: EditNorthComponent,
+        loadComponent: () => import('./north/edit-north/edit-north.component').then(m => m.EditNorthComponent),
         canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'north/:northId/cache',
-        component: ExploreNorthCacheComponent
+        loadComponent: () => import('./north/explore-north-cache/explore-north-cache.component').then(m => m.ExploreNorthCacheComponent)
       },
       {
         path: 'north/:northId',
-        component: NorthDetailComponent
+        loadComponent: () => import('./north/north-detail/north-detail.component').then(m => m.NorthDetailComponent)
       },
       {
         path: 'south',
-        component: SouthListComponent
+        loadComponent: () => import('./south/south-list.component').then(m => m.SouthListComponent)
       },
       {
         path: 'south/create',
-        component: EditSouthComponent,
+        loadComponent: () => import('./south/edit-south/edit-south.component').then(m => m.EditSouthComponent),
         canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'south/:southId/edit',
-        component: EditSouthComponent,
+        loadComponent: () => import('./south/edit-south/edit-south.component').then(m => m.EditSouthComponent),
         canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'south/:southId/workflows/:workflowId/history',
-        component: WorkflowRunHistoryComponent
+        loadComponent: () =>
+          import('./south/south-workflows/workflow-run-history/workflow-run-history.component').then(m => m.WorkflowRunHistoryComponent)
       },
       {
         path: 'south/:southId',
-        component: SouthDetailComponent
+        loadComponent: () => import('./south/south-detail/south-detail.component').then(m => m.SouthDetailComponent)
       },
       {
         path: 'history-queries',
-        component: HistoryQueryListComponent
+        loadComponent: () => import('./history-query/history-query-list.component').then(m => m.HistoryQueryListComponent)
       },
       {
         path: 'history-queries/create',
-        component: EditHistoryQueryComponent,
+        loadComponent: () =>
+          import('./history-query/edit-history-query/edit-history-query.component').then(m => m.EditHistoryQueryComponent),
         canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'history-queries/:historyQueryId/edit',
-        component: EditHistoryQueryComponent,
+        loadComponent: () =>
+          import('./history-query/edit-history-query/edit-history-query.component').then(m => m.EditHistoryQueryComponent),
         canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'history-queries/:historyQueryId/cache',
-        component: ExploreHistoryCacheComponent
+        loadComponent: () =>
+          import('./history-query/explore-history-cache/explore-history-cache.component').then(m => m.ExploreHistoryCacheComponent)
       },
       {
         path: 'history-queries/:historyQueryId',
-        component: HistoryQueryDetailComponent
+        loadComponent: () =>
+          import('./history-query/history-query-detail/history-query-detail.component').then(m => m.HistoryQueryDetailComponent)
       },
       {
         path: 'logs',
-        component: LogsComponent
+        loadComponent: () => import('./logs/logs.component').then(m => m.LogsComponent)
       },
       {
         path: 'audit',
-        component: AuditListComponent
+        loadComponent: () => import('./audit/audit-list.component').then(m => m.AuditListComponent)
       },
       {
         path: 'about',
-        component: AboutComponent
+        loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
       },
       {
         path: 'user-settings',
-        component: EditUserSettingsComponent,
+        loadComponent: () =>
+          import('./user-settings/edit-user-settings/edit-user-settings.component').then(m => m.EditUserSettingsComponent),
         canDeactivate: [UnsavedChangesGuard]
       }
     ]

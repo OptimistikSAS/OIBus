@@ -3,7 +3,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "strictNullChecks": true,
     "outDir": "./out-tsc/spec",
     "types": [
       "@angular/localize"

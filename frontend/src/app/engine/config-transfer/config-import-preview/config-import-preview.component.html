@@ -144,21 +144,19 @@
                   />
                   @if (isExpanded(southKey + ':groups')) {
                     <div class="preview-content">
-                      @if (south.settings.groups.length > 0) {
-                        @for (group of south.settings.groups; track $index) {
-                          <ng-container
-                            *ngTemplateOutlet="
-                              entry;
-                              context: {
-                                key: southKey + ':group:' + group.id,
-                                title: group.standardSettings.name,
-                                subtitle: scanModeName(group.standardSettings.scanModeId),
-                                value: group
-                              }
-                            "
-                          />
-                        }
-                      } @else {
+                      @for (group of south.settings.groups; track $index) {
+                        <ng-container
+                          *ngTemplateOutlet="
+                            entry;
+                            context: {
+                              key: southKey + ':group:' + group.id,
+                              title: group.standardSettings.name,
+                              subtitle: scanModeName(group.standardSettings.scanModeId),
+                              value: group
+                            }
+                          "
+                        />
+                      } @empty {
                         <ng-container *ngTemplateOutlet="empty" />
                       }
                     </div>
@@ -275,21 +273,19 @@
                   />
                   @if (isExpanded(northKey + ':transformers')) {
                     <div class="preview-content">
-                      @if (north.settings.transformers.length > 0) {
-                        @for (transformer of north.settings.transformers; track $index) {
-                          <ng-container
-                            *ngTemplateOutlet="
-                              entry;
-                              context: {
-                                key: northKey + ':transformer:' + $index,
-                                title: transformerName(transformer.transformerId),
-                                subtitle: transformerSource(transformer.source),
-                                value: transformer.options
-                              }
-                            "
-                          />
-                        }
-                      } @else {
+                      @for (transformer of north.settings.transformers; track $index) {
+                        <ng-container
+                          *ngTemplateOutlet="
+                            entry;
+                            context: {
+                              key: northKey + ':transformer:' + $index,
+                              title: transformerName(transformer.transformerId),
+                              subtitle: transformerSource(transformer.source),
+                              value: transformer.options
+                            }
+                          "
+                        />
+                      } @empty {
                         <ng-container *ngTemplateOutlet="empty" />
                       }
                     </div>
@@ -432,21 +428,19 @@
                   />
                   @if (isExpanded(historyKey + ':transformers')) {
                     <div class="preview-content">
-                      @if (history.settings.northTransformers.length > 0) {
-                        @for (transformer of history.settings.northTransformers; track $index) {
-                          <ng-container
-                            *ngTemplateOutlet="
-                              entry;
-                              context: {
-                                key: historyKey + ':transformer:' + $index,
-                                title: transformerName(transformer.transformerId),
-                                subtitle: historyTransformerItems(transformer.items),
-                                value: transformer.options
-                              }
-                            "
-                          />
-                        }
-                      } @else {
+                      @for (transformer of history.settings.northTransformers; track $index) {
+                        <ng-container
+                          *ngTemplateOutlet="
+                            entry;
+                            context: {
+                              key: historyKey + ':transformer:' + $index,
+                              title: transformerName(transformer.transformerId),
+                              subtitle: historyTransformerItems(transformer.items),
+                              value: transformer.options
+                            }
+                          "
+                        />
+                      } @empty {
                         <ng-container *ngTemplateOutlet="empty" />
                       }
                     </div>
