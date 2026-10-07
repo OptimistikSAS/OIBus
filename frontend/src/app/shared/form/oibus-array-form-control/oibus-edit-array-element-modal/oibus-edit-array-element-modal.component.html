@@ -1,15 +1,15 @@
 <div class="modal-header">
-  @if (elementManifest) {
-    <h3 class="modal-title" [translate]="'configuration.oibus.edit-array-element-modal.title.' + mode"></h3>
+  @if (elementManifest()) {
+    <h3 class="modal-title" [translate]="'configuration.oibus.edit-array-element-modal.title.' + mode()"></h3>
   }
 </div>
 <div class="modal-body">
-  @if (elementManifest) {
+  @if (elementManifest(); as elementManifest) {
     <form [id]="'edit-array-element-form-' + elementManifest.key" [formGroup]="form">
       <ng-container [formGroupName]="elementManifest.key">
         <oib-oibus-object-form-control
-          [scanModes]="scanModes"
-          [certificates]="certificates"
+          [scanModes]="scanModes()"
+          [certificates]="certificates()"
           [group]="asFormGroup(form.controls[elementManifest.key])"
           [objectAttribute]="elementManifest"
         />
@@ -19,7 +19,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group pull-right">
-    @if (elementManifest) {
+    @if (elementManifest()) {
       <button type="button" class="btn btn-primary" (click)="submit()" translate="common.ok" id="save-button"></button>
     }
     <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.close" id="cancel-button"></button>

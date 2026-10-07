@@ -11,6 +11,7 @@ import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { EngineService } from '../../../services/engine.service';
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -37,9 +38,13 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
     northConnectorService.list.mockReturnValue(of([]));
     historyQueryService.list.mockReturnValue(of([]));
 
+    const engineService = createMock(EngineService);
+    engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
+
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        { provide: EngineService, useValue: engineService },
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: TransformerService, useValue: transformerService },
         { provide: SouthConnectorService, useValue: southConnectorService },
