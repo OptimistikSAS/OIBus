@@ -16,6 +16,7 @@
             "outputPath": "../backend/dist/frontend",
             "browser": "src/main.ts",
             "polyfills": ["@angular/localize/init"],
+            "allowedCommonJsDependencies": ["papaparse"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
