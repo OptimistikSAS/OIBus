@@ -29,6 +29,8 @@ Configuration worth knowing (`vitest-base.config.ts`):
 - `restoreMocks: true`: spies created with `vi.spyOn` are restored after each test, no need to call `mockRestore()`.
 - `testTimeout` / `hookTimeout` are 5 s.
 - `resolve.tsconfigPaths`: lets Vite resolve the `@oibus/shared/*` alias (used when collecting coverage).
+- `browser.viewport` is a desktop size (1280×800): some elements (e.g. the list search forms, `d-none d-lg-block`) are
+  hidden on small screens.
 
 ## Test helpers
 
@@ -39,6 +41,7 @@ Configuration worth knowing (`vitest-base.config.ts`):
 | `createMock(Type)` / `MockObject<T>`                        | `src/test/vitest-create-mock.ts`                                        | Mock where every method of the class is a `vi.fn()`             |
 | `stubRoute({ params, queryParams })`                        | `src/test/vitest-create-mock.ts`                                        | Stub `ActivatedRoute` (observables and snapshot)                |
 | `testData`                                                  | `src/test/test-data.ts`                                                 | Fixtures typed with the API DTOs                                |
+| `EmptyRouteComponent`                                       | `src/test/empty-route.component.ts`                                     | Route destination whose content is irrelevant                   |
 | `provideI18nTesting()`                                      | `src/i18n/mock-i18n.ts`                                                 | Real English translations; a missing key throws                 |
 | `provideCurrentUser(user?)`                                 | `src/app/shared/current-user-testing.ts`                                | Mocked `CurrentUserService` (default timezone if no user given) |
 | `provideModalTesting()` / `MockModalService`                | `src/app/shared/mock-modal.service.testing.ts`                          | Replace `ModalService` and simulate a closed / dismissed modal  |
@@ -127,20 +130,40 @@ Avoid synchronous DOM reads (`locator.element().textContent`, `querySelector`, `
 
 ### Change detection
 
-Like the application, the tests load zone.js (see the `vitest` build configuration in `angular.json`), and fixtures
-do **not** detect changes automatically: until `fixture.detectChanges()` is called, the component is not rendered,
-and state changes (even signal changes, even after `await expect.element()`) are not reflected in the DOM.
+The tests are **zoneless**: the `vitest` build configuration in `angular.json` does not load zone.js (the application
+still does). Fixtures detect changes automatically, the same way a zoneless application does: after a template event
+(click, input…), after a signal used by a template changes, or after `markForCheck()`.
 
-So either:
+So in tests:
 
-- call `fixture.detectChanges()` after creating the component and after each change of its state, or
-- call `fixture.autoDetectChanges()` once after creating the component: change detection then runs after every event
-  and every signal change, like in the application, and the manual calls become unnecessary.
+- don't call `fixture.detectChanges()`: create the component, call its setup method if any (e.g. a modal's
+  `prepareForCreation()`), then interact and assert with locators. `await expect.element()` retries until the
+  component is rendered. Use `await fixture.whenStable()` when a non-DOM assertion needs rendering to be done.
+- don't change component state from the test (setting a field, calling a method that changes plain fields) once the
+  component is rendered: Angular is not notified, and `detectChanges()` fails with `NG0100:
+ExpressionChangedAfterItHasBeenCheckedError`. Drive the component through its template instead.
+
+And in components:
+
+- keep state rendered by the template in signals, especially state changed asynchronously (HTTP responses, modal
+  results, `await`): a plain field changed in a `subscribe()` callback or after an `await` is not rendered without
+  zone.js. When a signal is not practical (e.g. an array shared with a modal and mutated in place), call
+  `ChangeDetectorRef.markForCheck()` after the change.
+- a template event already notifies Angular, so plain fields changed synchronously by an event handler are fine.
 
 ### Routed components
 
 Use `RouterTestingHarness` when the component reads the router state, and `stubRoute()` when it only needs an
-`ActivatedRoute`:
+`ActivatedRoute`. When the component navigates, declare the destination with `EmptyRouteComponent`
+(`src/test/empty-route.component.ts`) so that the navigation succeeds and can be asserted:
+
+```typescript
+provideRouter([{ path: 'south/:southId', component: EmptyRouteComponent }]);
+// ...
+await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/south/southId1'));
+```
+
+`stubRoute()` example:
 
 ```typescript
 { provide: ActivatedRoute, useValue: stubRoute({ params: { southId: 'southId1' } }) }

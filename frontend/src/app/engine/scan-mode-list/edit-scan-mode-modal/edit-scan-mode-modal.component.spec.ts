@@ -27,7 +27,15 @@ class EditScanModeModalComponentTester {
   readonly activationWindowSection = this.root.getByCss('#activation-window-section');
   readonly overnightBadge = this.root.getByCss('#overnight-badge');
   readonly summary = this.root.getByCss('#activation-window-summary');
+  readonly restrictActivationWindow = this.root.getByLabelText('Restrict activation window');
+  readonly timeStart = this.root.getByLabelText('Start', { exact: true });
+  readonly timeEnd = this.root.getByLabelText('End', { exact: true });
+  readonly saveButton = page.getByRole('button', { name: 'Save' });
   readonly cancelButton = page.getByCss('#cancel-button');
+
+  day(label: string) {
+    return this.root.getByRole('button', { name: label, exact: true });
+  }
 }
 
 const scanMode: ScanModeDTO = {
@@ -207,39 +215,36 @@ describe('EditScanModeModalComponent', () => {
   });
 
   describe('activation window', () => {
-    function windowTester() {
+    async function windowTester() {
       const tester = new EditScanModeModalComponentTester();
       tester.fixture.componentInstance.prepareForCreation();
-      tester.fixture.componentInstance.form.controls.activationWindowEnabled.setValue(true);
-      tester.fixture.componentInstance.onActivationWindowToggle();
-      tester.fixture.detectChanges();
+      await tester.name.fill('my window');
+      await tester.cron.fill('* * * * * *');
+      await tester.restrictActivationWindow.click();
       return tester;
     }
 
-    test('should send null when the window is disabled', () => {
+    test('should send null when the window is disabled', async () => {
       scanModeService.create.mockReturnValue(of(scanMode));
       const tester = new EditScanModeModalComponentTester();
       tester.fixture.componentInstance.prepareForCreation();
-      tester.fixture.componentInstance.form.controls.name.setValue('no-window');
-      tester.fixture.componentInstance.form.controls.cron.setValue('* * * * * *');
+      await tester.name.fill('no-window');
+      await tester.cron.fill('* * * * * *');
 
-      tester.fixture.componentInstance.save();
+      await tester.saveButton.click();
 
       expect(scanModeService.create).toHaveBeenCalledWith(expect.objectContaining({ activationWindow: null }));
     });
 
-    test('should stamp the current timezone into the recurring rule at save time', () => {
+    test('should stamp the current timezone into the recurring rule at save time', async () => {
       scanModeService.create.mockReturnValue(of(scanMode));
-      const tester = windowTester();
-      tester.fixture.componentInstance.form.controls.name.setValue('weekend');
-      tester.fixture.componentInstance.form.controls.cron.setValue('* * * * * *');
-      tester.fixture.componentInstance.form.controls.activationWindow.patchValue({
-        daysOfWeek: [6, 0],
-        timeStart: '22:00',
-        timeEnd: '02:00'
-      });
+      const tester = await windowTester();
+      await tester.day('Sat').click();
+      await tester.day('Sun').click();
+      await tester.timeStart.fill('22:00');
+      await tester.timeEnd.fill('02:00');
 
-      tester.fixture.componentInstance.save();
+      await tester.saveButton.click();
 
       const command = scanModeService.create.mock.calls[0][0];
       expect(command.activationWindow!.dateRange).toBeNull();
@@ -248,75 +253,76 @@ describe('EditScanModeModalComponent', () => {
       expect(command.activationWindow!.recurring!.timezone).toBeTruthy();
     });
 
-    test('should persist all seven days as "every day"', () => {
+    test('should persist all seven days as "every day"', async () => {
       scanModeService.create.mockReturnValue(of(scanMode));
-      const tester = windowTester();
-      tester.fixture.componentInstance.form.controls.name.setValue('all-days');
-      tester.fixture.componentInstance.form.controls.cron.setValue('* * * * * *');
-      tester.fixture.componentInstance.form.controls.activationWindow.patchValue({
-        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-        timeStart: '08:00',
-        timeEnd: '18:00'
-      });
+      const tester = await windowTester();
+      for (const day of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) {
+        await tester.day(day).click();
+      }
+      await tester.timeStart.fill('08:00');
+      await tester.timeEnd.fill('18:00');
 
-      tester.fixture.componentInstance.save();
+      await tester.saveButton.click();
 
       expect(scanModeService.create.mock.calls[0][0].activationWindow!.recurring!.daysOfWeek).toBeNull();
     });
 
-    test('should reject a half-filled time of day', () => {
-      const tester = windowTester();
-      tester.fixture.componentInstance.form.controls.activationWindow.patchValue({ timeStart: '08:00', timeEnd: null });
+    test('should reject a half-filled time of day', async () => {
+      const tester = await windowTester();
 
-      expect(tester.fixture.componentInstance.form.controls.activationWindow.hasError('timeOfDayIncomplete')).toBe(true);
+      await tester.timeStart.fill('08:00');
+      await tester.timeEnd.click();
+
+      await expect.element(tester.root.getByText('Both the start and end times must be set, or neither')).toBeInTheDocument();
     });
 
-    test('should reject a zero-length time of day', () => {
-      const tester = windowTester();
-      tester.fixture.componentInstance.form.controls.activationWindow.patchValue({ timeStart: '08:00', timeEnd: '08:00' });
+    test('should reject a zero-length time of day', async () => {
+      const tester = await windowTester();
 
-      expect(tester.fixture.componentInstance.form.controls.activationWindow.hasError('timeOfDayEmpty')).toBe(true);
+      await tester.timeStart.fill('08:00');
+      await tester.timeEnd.fill('08:00');
+
+      await expect.element(tester.root.getByText('The start and end times must be different')).toBeInTheDocument();
     });
 
-    test('should flag an overnight window with a +1 badge', () => {
-      const tester = windowTester();
-      tester.fixture.componentInstance.form.controls.activationWindow.patchValue({ timeStart: '22:00', timeEnd: '02:00' });
-      tester.fixture.detectChanges();
+    test('should flag an overnight window with a +1 badge', async () => {
+      const tester = await windowTester();
 
-      expect(tester.fixture.componentInstance.isOvernight).toBe(true);
-      expect(tester.overnightBadge.query()).toBeTruthy();
+      await tester.timeStart.fill('22:00');
+      await tester.timeEnd.fill('02:00');
+
+      await expect.element(tester.overnightBadge).toHaveTextContent('+1');
     });
 
-    test('should not flag a same-day window', () => {
-      const tester = windowTester();
-      tester.fixture.componentInstance.form.controls.activationWindow.patchValue({ timeStart: '08:00', timeEnd: '18:00' });
-      tester.fixture.detectChanges();
+    test('should not flag a same-day window', async () => {
+      const tester = await windowTester();
 
-      expect(tester.fixture.componentInstance.isOvernight).toBe(false);
-      expect(tester.overnightBadge.query()).toBeFalsy();
+      await tester.timeStart.fill('08:00');
+      await tester.timeEnd.fill('18:00');
+
+      await expect.element(tester.summary).toMatchTextContent('between 08:00 and 18:00');
+      await expect.element(tester.overnightBadge).not.toBeInTheDocument();
     });
 
-    test('should summarise the combined rule', () => {
-      const tester = windowTester();
-      tester.fixture.componentInstance.form.controls.activationWindow.patchValue({
-        daysOfWeek: [5, 6],
-        timeStart: '22:00',
-        timeEnd: '02:00'
-      });
-      tester.fixture.detectChanges();
+    test('should summarise the combined rule', async () => {
+      const tester = await windowTester();
 
-      const summary = tester.fixture.componentInstance.activationWindowSummary;
-      expect(summary).toContain('Fri, Sat');
-      expect(summary).toContain('between 22:00 and 02:00 (+1 day)');
+      await tester.day('Fri').click();
+      await tester.day('Sat').click();
+      await tester.timeStart.fill('22:00');
+      await tester.timeEnd.fill('02:00');
+
+      await expect.element(tester.summary).toMatchTextContent('on Fri, Sat');
+      await expect.element(tester.summary).toMatchTextContent('between 22:00 and 02:00 (+1 day)');
     });
 
-    test('should summarise an unrestricted window as active all day', () => {
-      const tester = windowTester();
+    test('should summarise an unrestricted window as active all day', async () => {
+      const tester = await windowTester();
 
-      expect(tester.fixture.componentInstance.activationWindowSummary).toBe('Active, all day');
+      await expect.element(tester.summary).toHaveTextContent('Active, all day');
     });
 
-    test('should round-trip an existing window through edition', () => {
+    test('should round-trip an existing window through edition', async () => {
       const windowed = {
         ...scanMode,
         activationWindow: {
@@ -329,23 +335,19 @@ describe('EditScanModeModalComponent', () => {
 
       const tester = new EditScanModeModalComponentTester();
       tester.fixture.componentInstance.prepareForEdition(windowed);
-      tester.fixture.detectChanges();
 
-      expect(tester.fixture.componentInstance.form.controls.activationWindowEnabled.value).toBe(true);
-      expect(tester.fixture.componentInstance.form.controls.activationWindow.getRawValue()).toEqual({
-        start: '2026-08-01T00:00:00.000Z',
-        end: null,
-        daysOfWeek: [1, 2],
-        timeStart: '08:00',
-        timeEnd: '18:00'
-      });
+      await expect.element(tester.restrictActivationWindow).toBeChecked();
+      await expect.element(tester.day('Mon')).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.day('Tue')).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.day('Wed')).toHaveAttribute('aria-pressed', 'false');
+      await expect.element(tester.timeStart).toHaveValue('08:00');
+      await expect.element(tester.timeEnd).toHaveValue('18:00');
 
-      tester.fixture.componentInstance.save();
+      await tester.saveButton.click();
 
-      expect(scanModeService.update.mock.calls[0][1].activationWindow!.dateRange).toEqual({
-        start: '2026-08-01T00:00:00.000Z',
-        end: null
-      });
+      const command = scanModeService.update.mock.calls[0][1];
+      expect(command.activationWindow!.dateRange).toEqual({ start: '2026-08-01T00:00:00.000Z', end: null });
+      expect(command.activationWindow!.recurring!.timeOfDay).toEqual({ start: '08:00', end: '18:00' });
     });
   });
 });

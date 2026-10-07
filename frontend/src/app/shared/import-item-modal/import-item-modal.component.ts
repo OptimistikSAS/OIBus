@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -13,7 +13,7 @@ import { convertCsvDelimiter } from '../utils/csv.utils';
   selector: 'oib-import-item-modal',
   templateUrl: './import-item-modal.component.html',
   styleUrl: './import-item-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, ReactiveFormsModule]
 })
 export class ImportItemModalComponent {
@@ -24,13 +24,13 @@ export class ImportItemModalComponent {
   optionalHeaders: Array<string> = [];
   existingMqttTopics: Array<string> = [];
   isMqttConnector = false;
-  showEraseOption = false;
+  readonly showEraseOption = signal(false);
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
-  selectedFile: File = this.initializeFile;
-  validationError: CsvValidationError | null = null;
-  mqttValidationError: MqttTopicValidationError | null = null;
+  readonly selectedFile = signal<File>(this.initializeFile);
+  readonly validationError = signal<CsvValidationError | null>(null);
+  readonly mqttValidationError = signal<MqttTopicValidationError | null>(null);
 
   form = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
@@ -48,39 +48,40 @@ export class ImportItemModalComponent {
     this.optionalHeaders = optionalHeaders;
     this.existingMqttTopics = existingMqttTopics;
     this.isMqttConnector = isMqttConnector;
-    this.showEraseOption = showEraseOption;
+    this.showEraseOption.set(showEraseOption);
   }
 
   get canSave(): boolean {
-    return this.selectedFile !== this.initializeFile && !this.validationError && !this.mqttValidationError && this.form.valid;
+    return this.selectedFile() !== this.initializeFile && !this.validationError() && !this.mqttValidationError() && this.form.valid;
   }
 
   public async onFileSelected(file: File): Promise<void> {
-    this.selectedFile = file;
-    this.validationError = null;
-    this.mqttValidationError = null;
+    this.selectedFile.set(file);
+    this.validationError.set(null);
+    this.mqttValidationError.set(null);
 
     if (file !== this.initializeFile) {
       const delimiter = convertCsvDelimiter(this.form.get('delimiter')?.value as CsvCharacter);
 
-      this.validationError = await validateCsvHeaders(file, delimiter, this.expectedHeaders, this.optionalHeaders);
+      this.validationError.set(await validateCsvHeaders(file, delimiter, this.expectedHeaders, this.optionalHeaders));
 
-      if (!this.validationError && this.isMqttConnector) {
-        this.mqttValidationError = await validateCsvMqttTopics(file, delimiter, this.existingMqttTopics);
+      if (!this.validationError() && this.isMqttConnector) {
+        this.mqttValidationError.set(await validateCsvMqttTopics(file, delimiter, this.existingMqttTopics));
       }
     }
   }
 
   async onDelimiterChange(): Promise<void> {
-    if (this.selectedFile !== this.initializeFile) {
+    const selectedFile = this.selectedFile();
+    if (selectedFile !== this.initializeFile) {
       const delimiter = convertCsvDelimiter(this.form.get('delimiter')?.value as CsvCharacter);
 
-      this.validationError = await validateCsvHeaders(this.selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders);
+      this.validationError.set(await validateCsvHeaders(selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders));
 
-      if (!this.validationError && this.isMqttConnector) {
-        this.mqttValidationError = await validateCsvMqttTopics(this.selectedFile, delimiter, this.existingMqttTopics);
+      if (!this.validationError() && this.isMqttConnector) {
+        this.mqttValidationError.set(await validateCsvMqttTopics(selectedFile, delimiter, this.existingMqttTopics));
       } else {
-        this.mqttValidationError = null;
+        this.mqttValidationError.set(null);
       }
     }
   }
@@ -94,7 +95,7 @@ export class ImportItemModalComponent {
 
     this.modal.close({
       delimiter: convertCsvDelimiter(formValue.delimiter!),
-      file: this.selectedFile,
+      file: this.selectedFile(),
       eraseExisting: formValue.eraseExisting ?? false
     });
   }

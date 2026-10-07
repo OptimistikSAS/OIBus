@@ -11,6 +11,8 @@ export default defineConfig({
       host: '127.0.0.1'
     },
     browser: {
+      // OIBus is a desktop application: use a desktop viewport, as some elements are hidden on small screens
+      viewport: { width: 1280, height: 800 },
       screenshotFailures: false,
       server: {
         host: '127.0.0.1'

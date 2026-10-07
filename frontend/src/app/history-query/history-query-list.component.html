@@ -41,13 +41,13 @@
             [class.inactive]="activeStatuses.length > 0 && !activeStatuses.includes(entry.status)"
             (click)="toggleStatus(entry.status)"
           >
-            <span [class]="entry.class"></span>
+            <span [class]="entry.class" aria-hidden="true"></span>
             <span class="filter-chip-label" [translate]="entry.label"></span>
           </button>
         }
         @if (activeStatuses.length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-statuses-button" (click)="clearStatuses()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa fa-times me-1" aria-hidden="true"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -68,7 +68,7 @@
         }
         @if (activeSouthTypes.length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-south-types-button" (click)="clearSouthTypes()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa fa-times me-1" aria-hidden="true"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -89,7 +89,7 @@
         }
         @if (activeNorthTypes.length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-north-types-button" (click)="clearNorthTypes()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa fa-times me-1" aria-hidden="true"></span>
             <span translate="common.clear"></span>
           </button>
         }

@@ -37,7 +37,7 @@
             (drop)="onDrop('certificateFile', $event)"
             (dragover)="onDragOver($event)"
           >
-            <span>{{ certificateFile.name }}</span>
+            <span>{{ certificateFile().name }}</span>
           </button>
         </div>
       </div>
@@ -53,7 +53,7 @@
             (drop)="onDrop('privateKeyFile', $event)"
             (dragover)="onDragOver($event)"
           >
-            <span>{{ privateKeyFile.name }}</span>
+            <span>{{ privateKeyFile().name }}</span>
           </button>
         </div>
       </div>
@@ -85,7 +85,7 @@
             (drop)="onDrop('certificateChainFile', $event)"
             (dragover)="onDragOver($event)"
           >
-            <span>{{ certificateChainFile.name }}</span>
+            <span>{{ certificateChainFile().name }}</span>
           </button>
         </div>
       </div>

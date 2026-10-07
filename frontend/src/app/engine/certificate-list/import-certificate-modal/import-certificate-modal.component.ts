@@ -20,7 +20,7 @@ type FileField = 'certificateFile' | 'privateKeyFile' | 'certificateChainFile';
   selector: 'oib-import-certificate-modal',
   templateUrl: './import-certificate-modal.component.html',
   styleUrl: './import-certificate-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, NgbCollapse]
 })
 export class ImportCertificateModalComponent {
@@ -33,9 +33,9 @@ export class ImportCertificateModalComponent {
   fileError = signal<string | null>(null);
 
   readonly initializeFile = new File([''], 'Choose a file');
-  certificateFile: File = this.initializeFile;
-  privateKeyFile: File = this.initializeFile;
-  certificateChainFile: File = this.initializeFile;
+  readonly certificateFile = signal<File>(this.initializeFile);
+  readonly privateKeyFile = signal<File>(this.initializeFile);
+  readonly certificateChainFile = signal<File>(this.initializeFile);
 
   form = inject(NonNullableFormBuilder).group({
     name: ['', Validators.required],
@@ -44,7 +44,7 @@ export class ImportCertificateModalComponent {
   });
 
   get canSave(): boolean {
-    return this.form.valid && this.certificateFile !== this.initializeFile && this.privateKeyFile !== this.initializeFile;
+    return this.form.valid && this.certificateFile() !== this.initializeFile && this.privateKeyFile() !== this.initializeFile;
   }
 
   onFileSelected(field: FileField, file: File) {
@@ -53,7 +53,7 @@ export class ImportCertificateModalComponent {
       return;
     }
     this.fileError.set(null);
-    this[field] = file;
+    this[field].set(file);
   }
 
   onDragOver(e: Event) {
@@ -79,9 +79,9 @@ export class ImportCertificateModalComponent {
 
   canDismiss(): Observable<boolean> | boolean {
     const hasFile =
-      this.certificateFile !== this.initializeFile ||
-      this.privateKeyFile !== this.initializeFile ||
-      this.certificateChainFile !== this.initializeFile;
+      this.certificateFile() !== this.initializeFile ||
+      this.privateKeyFile() !== this.initializeFile ||
+      this.certificateChainFile() !== this.initializeFile;
     if (this.form.dirty || hasFile) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
@@ -107,9 +107,9 @@ export class ImportCertificateModalComponent {
           privateKeyPassphrase: formValue.privateKeyPassphrase ? formValue.privateKeyPassphrase : null
         },
         {
-          certificate: this.certificateFile,
-          privateKey: this.privateKeyFile,
-          certificateChain: this.certificateChainFile !== this.initializeFile ? this.certificateChainFile : null
+          certificate: this.certificateFile(),
+          privateKey: this.privateKeyFile(),
+          certificateChain: this.certificateChainFile() !== this.initializeFile ? this.certificateChainFile() : null
         }
       )
       .pipe(this.state.pendingUntilFinalization())

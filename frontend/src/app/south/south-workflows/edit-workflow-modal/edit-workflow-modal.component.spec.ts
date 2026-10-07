@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { Locator, page } from 'vitest/browser';
 
 import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
@@ -116,6 +116,11 @@ const existingWorkflow: ConfigurationWorkflowCommandDTO = {
 const notRegistered: RegistrationSettingsDTO = { status: 'NOT_REGISTERED' } as unknown as RegistrationSettingsDTO;
 const registered: RegistrationSettingsDTO = { status: 'REGISTERED' } as unknown as RegistrationSettingsDTO;
 
+async function selectGroup(root: Locator, groupName: string) {
+  await root.getByCss('#item-field-mapping-field-groupId').click();
+  await root.getByRole('button', { name: groupName, exact: true }).click();
+}
+
 describe('EditWorkflowModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let modalService: MockObject<ModalService>;
@@ -163,7 +168,7 @@ describe('EditWorkflowModalComponent', () => {
     await expect.element(root.getByCss('#item-field-mapping-field-name')).toHaveValue('{{name}}');
     expect(fixture.componentInstance.form!.controls.pushToOIAnalytics.value).toBe(false);
     // discoveryScope.rootNodeId is read back for the node picker (manifest is tree-based: explore: true).
-    expect(fixture.componentInstance.discoveryRootNodeId).toBe('ns=1;s=Root');
+    expect(fixture.componentInstance.discoveryRootNodeId()).toBe('ns=1;s=Root');
     await expect.element(root.getByCss('#discovery-root-node-id')).toMatchTextContent('ns=1;s=Root');
   });
 
@@ -178,7 +183,7 @@ describe('EditWorkflowModalComponent', () => {
     await expect.element(root.getByCss('#workflow-name')).toHaveValue('Reactor discovery-copy');
     await expect.element(root.getByCss('#identity-key-fields-list')).toMatchTextContent('nodeId');
     await expect.element(root.getByCss('#item-field-mapping-field-name')).toHaveValue('{{name}}');
-    expect(fixture.componentInstance.discoveryRootNodeId).toBe('ns=1;s=Root');
+    expect(fixture.componentInstance.discoveryRootNodeId()).toBe('ns=1;s=Root');
 
     // The clone's blanked id means the uniqueness check excludes nothing - the original workflow's own
     // name (not the "-copy" suffixed default) is still reported as taken if renamed back onto it.
@@ -264,18 +269,18 @@ describe('EditWorkflowModalComponent', () => {
 
     expect(modalService.open).toHaveBeenCalledWith(SouthExploreModalComponent, expect.anything());
     expect(exploreModalInstance.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, undefined, true);
-    expect(fixture.componentInstance.discoveryRootNodeId).toBe('ns=1;s=Reactor');
+    expect(fixture.componentInstance.discoveryRootNodeId()).toBe('ns=1;s=Reactor');
   });
 
   test('should clear a picked root node back to "browse from the true root"', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
-    fixture.componentInstance.discoveryRootNodeId = 'ns=1;s=Reactor';
+    fixture.componentInstance.discoveryRootNodeId.set('ns=1;s=Reactor');
 
     fixture.componentInstance.clearRootNodeId();
 
-    expect(fixture.componentInstance.discoveryRootNodeId).toBeNull();
+    expect(fixture.componentInstance.discoveryRootNodeId()).toBeNull();
   });
 
   test('should show a query-only editor, with no reference tree, for a SQL-family connector without explore()', async () => {
@@ -335,9 +340,9 @@ describe('EditWorkflowModalComponent', () => {
       southSettings,
       'SELECT name, unit FROM metadata'
     );
-    expect(fixture.componentInstance.queryTestRunning).toBe(false);
-    expect(fixture.componentInstance.queryTestError).toBeNull();
-    expect(fixture.componentInstance.queryTestResult).toEqual({ type: 'record-list', content: [{ name: 'sensor1', unit: 'C' }] });
+    expect(fixture.componentInstance.queryTestRunning()).toBe(false);
+    expect(fixture.componentInstance.queryTestError()).toBeNull();
+    expect(fixture.componentInstance.queryTestResult()).toEqual({ type: 'record-list', content: [{ name: 'sensor1', unit: 'C' }] });
   });
 
   test('should show an error when the discovery query test fails', () => {
@@ -349,9 +354,9 @@ describe('EditWorkflowModalComponent', () => {
 
     fixture.componentInstance.testDiscoveryQuery();
 
-    expect(fixture.componentInstance.queryTestRunning).toBe(false);
-    expect(fixture.componentInstance.queryTestError).toBe('no such table: nope');
-    expect(fixture.componentInstance.queryTestResult).toBeNull();
+    expect(fixture.componentInstance.queryTestRunning()).toBe(false);
+    expect(fixture.componentInstance.queryTestError()).toBe('no such table: nope');
+    expect(fixture.componentInstance.queryTestResult()).toBeNull();
   });
 
   test('should not test a blank discovery query', () => {
@@ -397,7 +402,7 @@ describe('EditWorkflowModalComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.discoveryQuery).toBe('SELECT 1');
-    expect(fixture.componentInstance.discoveryRootNodeId).toBeNull();
+    expect(fixture.componentInstance.discoveryRootNodeId()).toBeNull();
   });
 
   test('should list every field the manifest exposes for item field mapping, not just the mapped ones', () => {
@@ -573,22 +578,20 @@ describe('EditWorkflowModalComponent', () => {
   test('should hide a field gated by an enablingCondition until the referral constant matches, then show it', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, [], enablingManifest, southId, southSettings);
-    fixture.detectChanges();
-
-    const targetSelector = '[id="item-field-mapping-field-settings.haMode.aggregate"]';
     const root = page.elementLocator(fixture.nativeElement);
-    const modeField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'settings.mode')!;
+    const modeField = root.getByCss('[id="item-field-mapping-field-settings.mode"]');
+    const gatedField = root.getByCss('[id="item-field-mapping-field-settings.haMode.aggregate"]');
+
     // settings.mode isn't mapped to anything yet, so the field it gates stays hidden - matching the real
     // manifest form, where an unmet enabling condition disables (hides) its target.
-    expect(fixture.nativeElement.querySelector('[id="item-field-mapping-field-settings.haMode.aggregate"]')).toBeNull();
+    await expect.element(modeField).toBeInTheDocument();
+    await expect.element(gatedField).not.toBeInTheDocument();
 
-    fixture.componentInstance.onSelectChange(fixture.componentInstance.itemFieldMappingValues, modeField, 'da');
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[id="item-field-mapping-field-settings.haMode.aggregate"]')).toBeNull();
+    await modeField.selectOptions('da');
+    await expect.element(gatedField).not.toBeInTheDocument();
 
-    fixture.componentInstance.onSelectChange(fixture.componentInstance.itemFieldMappingValues, modeField, 'ha');
-    fixture.detectChanges();
-    await expect.element(root.getByCss(targetSelector)).toBeInTheDocument();
+    await modeField.selectOptions('ha');
+    await expect.element(gatedField).toBeInTheDocument();
   });
 
   test('should reject saving when a field that gates other fields is mapped to a {{ }} expression', () => {
@@ -709,60 +712,42 @@ describe('EditWorkflowModalComponent', () => {
   test('should still show the item-owned historian fields once grouped, as long as the item is not synced with the group', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
-    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
 
-    fixture.componentInstance.onSelectGroup('group1');
-    fixture.detectChanges();
+    await selectGroup(root, 'Group 1');
 
     // Being in a group alone doesn't hide these - the item still owns its settings until it's synced.
-    const byPath = (path: string) => fixture.componentInstance.itemMappableFields.find(field => field.path === path)!;
-    for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
-      expect(fixture.componentInstance.isItemFieldVisible(byPath(path))).toBe(true);
+    await expect.element(root.getByCss('#item-field-mapping-field-groupId')).toHaveTextContent('Group 1');
+    for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy', 'syncWithGroup']) {
+      await expect.element(root.getByCss(`#item-field-mapping-field-${path}`)).toBeInTheDocument();
     }
-    expect(fixture.componentInstance.isItemFieldVisible(byPath('syncWithGroup'))).toBe(true);
-
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#item-field-mapping-field-maxReadInterval')).toBeInTheDocument();
-    await expect.element(root.getByCss('#item-field-mapping-field-syncWithGroup')).toBeInTheDocument();
   });
 
-  test('should hide the item-owned historian fields once the item is actually synced with its group', () => {
+  test('should hide the item-owned historian fields once the item is actually synced with its group', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
-    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
 
-    fixture.componentInstance.onSelectGroup('group1');
-    const syncWithGroupField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'syncWithGroup')!;
-    fixture.componentInstance.onSelectChange(fixture.componentInstance.itemFieldMappingValues, syncWithGroupField, 'true');
-    fixture.detectChanges();
+    await selectGroup(root, 'Group 1');
+    await root.getByCss('#item-field-mapping-field-syncWithGroup').selectOptions('true');
 
-    const byPath = (path: string) => fixture.componentInstance.itemMappableFields.find(field => field.path === path)!;
     for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
-      expect(fixture.componentInstance.isItemFieldVisible(byPath(path))).toBe(false);
+      await expect.element(root.getByCss(`#item-field-mapping-field-${path}`)).not.toBeInTheDocument();
     }
-
-    expect(fixture.nativeElement.querySelector('#item-field-mapping-field-maxReadInterval')).toBeNull();
   });
 
   test('should switch a select-type field into variable mode and expose an expression input when the sentinel is chosen', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
-    fixture.detectChanges();
-
-    const enabledField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'enabled')!;
-    expect(fixture.componentInstance.isVariableMode(fixture.componentInstance.itemFieldMappingValues, enabledField)).toBe(false);
-
-    fixture.componentInstance.onSelectChange(
-      fixture.componentInstance.itemFieldMappingValues,
-      enabledField,
-      fixture.componentInstance.variableSentinel
-    );
-    fixture.detectChanges();
-
-    expect(fixture.componentInstance.itemFieldMappingValues['enabled']).toBe('{{}}');
-    expect(fixture.componentInstance.isVariableMode(fixture.componentInstance.itemFieldMappingValues, enabledField)).toBe(true);
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#item-field-mapping-field-enabled-expression')).toBeInTheDocument();
+    const expression = root.getByCss('#item-field-mapping-field-enabled-expression');
+    await expect.element(root.getByCss('#item-field-mapping-field-enabled')).toBeInTheDocument();
+    await expect.element(expression).not.toBeInTheDocument();
+
+    await root.getByCss('#item-field-mapping-field-enabled').selectOptions(fixture.componentInstance.variableSentinel);
+
+    await expect.element(expression).toBeInTheDocument();
+    expect(fixture.componentInstance.itemFieldMappingValues['enabled']).toBe('{{}}');
   });
 
   test('should treat an existing {{...}} value on a select-type field as already in variable mode when editing', async () => {
@@ -796,7 +781,7 @@ describe('EditWorkflowModalComponent', () => {
     fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.isRegistered).toBe(true);
+    expect(fixture.componentInstance.isRegistered()).toBe(true);
   });
 
   test('should allow picking the remote radio while OIBus is not registered, and show a warning instead of blocking it', async () => {
@@ -873,26 +858,26 @@ describe('EditWorkflowModalComponent', () => {
   test('should edit an eligibility condition in place', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
-    fixture.detectChanges();
-    fixture.componentInstance.eligibilityFilter = [{ field: 'type', operator: 'equals', value: 'Variable' }];
-    fixture.detectChanges();
-
-    fixture.componentInstance.startEditEligibilityCondition(0);
-    fixture.detectChanges();
-    expect(fixture.componentInstance.editingEligibilityField).toBe('type');
-    expect(fixture.componentInstance.editingEligibilityOperator).toBe('equals');
-    expect(fixture.componentInstance.editingEligibilityValue).toBe('Variable');
-
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.save-eligibility-condition')).toBeInTheDocument();
+    await root.getByCss('#new-eligibility-field').fill('type');
+    await root.getByCss('#new-eligibility-value').fill('Variable');
+    await root.getByCss('#add-eligibility-condition').click();
 
-    fixture.componentInstance.editingEligibilityField = 'kind';
-    fixture.componentInstance.editingEligibilityOperator = 'contains';
-    fixture.componentInstance.editingEligibilityValue = 'Sensor';
-    fixture.componentInstance.saveEligibilityCondition();
+    await root.getByCss('.edit-eligibility-condition').click();
+    const editedRow = root.getByCss('tbody tr:has(.save-eligibility-condition)');
+    const inputs = editedRow.getByRole('textbox');
+    await expect.element(inputs.nth(0)).toHaveValue('type');
+    await expect.element(editedRow.getByRole('combobox')).toHaveDisplayValue('equals');
+    await expect.element(inputs.nth(1)).toHaveValue('Variable');
+
+    await inputs.nth(0).fill('kind');
+    await editedRow.getByRole('combobox').selectOptions('contains');
+    await inputs.nth(1).fill('Sensor');
+    await editedRow.getByCss('.save-eligibility-condition').click();
 
     expect(fixture.componentInstance.eligibilityFilter).toEqual([{ field: 'kind', operator: 'contains', value: 'Sensor' }]);
-    expect(fixture.componentInstance.editingEligibilityIndex).toBeNull();
+    await expect.element(root.getByCss('.save-eligibility-condition')).not.toBeInTheDocument();
+    await expect.element(root.getByRole('cell', { name: 'Sensor', exact: true })).toBeInTheDocument();
   });
 
   test('should not save an eligibility edit with a blank field, and should clear the value when switching to "exists"', () => {
@@ -991,7 +976,7 @@ describe('EditWorkflowModalComponent', () => {
     fixture.detectChanges();
 
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
-    fixture.componentInstance.discoveryRootNodeId = 'ns=1;s=Root';
+    fixture.componentInstance.discoveryRootNodeId.set('ns=1;s=Root');
     fixture.componentInstance.form!.controls.scanModeId.setValue(scanModes[0].id);
     fixture.componentInstance.identityKeyFields = ['nodeId'];
     fixture.componentInstance.itemFieldMappingValues['name'] = '{{name}}';
