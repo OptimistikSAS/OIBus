@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -30,10 +30,10 @@ export type { SouthExploreApi } from '../explore-tree/explore-tree.component';
 export class SouthExploreModalComponent implements AfterViewInit {
   private modal = inject(NgbActiveModal);
 
-  @ViewChild(ExploreTreeComponent) private tree!: ExploreTreeComponent;
+  private readonly tree = viewChild(ExploreTreeComponent);
   // A caller (matching every other "prepare"-style modal in this app) calls prepare() right after
   // opening the modal, before Angular has necessarily run its first change detection pass - i.e.
-  // possibly before @ViewChild is resolved. Buffered here and flushed in ngAfterViewInit so prepare()
+  // possibly before the view child is resolved. Buffered here and flushed in ngAfterViewInit so prepare()
   // works regardless of that timing, rather than requiring every caller to know or care about it.
   private pendingPrepare: (() => void) | null = null;
 
@@ -57,8 +57,8 @@ export class SouthExploreModalComponent implements AfterViewInit {
     api?: SouthExploreApi,
     selectable = false
   ) {
-    const apply = () => this.tree.prepare(connectorId, settingsToExplore, southType, api, selectable);
-    if (this.tree) {
+    const apply = () => this.tree()!.prepare(connectorId, settingsToExplore, southType, api, selectable);
+    if (this.tree()) {
       apply();
     } else {
       this.pendingPrepare = apply;

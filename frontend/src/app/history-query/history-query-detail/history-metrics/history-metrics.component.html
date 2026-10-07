@@ -124,9 +124,8 @@
               </td>
             </tr>
           }
-        }
-        <!-- per-item progress, only for connectors that query items one at a time -->
-        @if (hasItemProgress()) {
+        } @else {
+          <!-- per-item progress, only for connectors that query items one at a time -->
           <tr>
             <td translate="history-query.monitoring.south.item-progress"></td>
             <td>

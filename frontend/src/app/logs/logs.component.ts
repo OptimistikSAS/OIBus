@@ -1,5 +1,5 @@
 import { NgOptimizedImage } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -42,6 +42,9 @@ import { emptyPage } from '../shared/utils/page.utils';
 
 @Component({
   selector: 'oib-logs',
+  host: {
+    '(document:keydown.escape)': 'closeContextMenu()'
+  },
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
@@ -388,8 +391,6 @@ export class LogsComponent implements OnInit, OnDestroy {
     event.preventDefault();
     this.contextMenu.set({ x: event.clientX, y: event.clientY, timestamp });
   }
-
-  @HostListener('document:keydown.escape')
   closeContextMenu() {
     this.contextMenu.set(null);
   }

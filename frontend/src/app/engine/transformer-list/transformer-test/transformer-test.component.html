@@ -105,7 +105,11 @@
                     class="form-label mb-0 small fw-semibold"
                     translate="configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter"
                   ></label>
-                  <select class="form-select form-select-sm w-auto" (change)="changeCsvDelimiter($any($event.target).value)">
+                  <select
+                    #csvDelimiterSelect
+                    class="form-select form-select-sm w-auto"
+                    (change)="changeCsvDelimiter(csvDelimiterSelect.value)"
+                  >
                     <option value="." [selected]="csvDelimiter() === '.'">
                       {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-dot' | translate }}
                     </option>
