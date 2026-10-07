@@ -1,6 +1,6 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -11,6 +11,7 @@ import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { EmptyRouteComponent } from '../../../test/empty-route.component';
 import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
@@ -112,7 +113,7 @@ describe('EditSouthComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'south/:southId', component: EmptyRouteComponent }]),
         provideHttpClientTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
@@ -336,16 +337,17 @@ describe('EditSouthComponent', () => {
     const savedItems = [...component.inMemoryItems];
     const firstUnsaved = { ...savedItems[0], id: '', name: 'unsaved-1' };
     const secondUnsaved = { ...savedItems[0], id: '', name: 'unsaved-2' };
-    component.inMemoryItems.push(firstUnsaved, secondUnsaved);
-    component.filteredItems = component.filter();
-    component.changePage(0);
-    fixture.detectChanges();
+    for (const unsaved of [firstUnsaved, secondUnsaved]) {
+      modalService.open.mockReturnValueOnce({ componentInstance: { prepareForCreation: vi.fn() }, result: of(unsaved) } as any);
+      component.addItem();
+    }
 
     const editedCommand = { ...secondUnsaved, name: 'unsaved-2-edited' };
     const prepareForEdition = vi.fn();
     modalService.open.mockReturnValue({ componentInstance: { prepareForEdition }, result: of(editedCommand) } as any);
 
     const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('.edit-south-item')).toHaveLength(savedItems.length + 2);
     await root
       .getByCss('.edit-south-item')
       .nth(savedItems.length + 1)
@@ -398,7 +400,7 @@ describe('EditSouthComponent', () => {
       await expect.element(root.getByCss('#manage-workflows-button')).toMatchTextContent(/Manage sync configuration\s*2/);
     });
 
-    test('should send the in-memory workflows along with the connector on save', () => {
+    test('should send the in-memory workflows along with the connector on save', async () => {
       southConnectorService.findById.mockReturnValue(of(southConnector as any));
       southConnectorService.update.mockReturnValue(of(undefined) as any);
       configurationWorkflowService.list.mockReturnValue(of([buildWorkflow('workflow1', 'Alpha')]));
@@ -415,6 +417,7 @@ describe('EditSouthComponent', () => {
           configurationWorkflows: [expect.objectContaining({ id: 'workflow1' }), expect.objectContaining({ id: 'temp_1', name: 'New' })]
         })
       );
+      await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe(`/south/${southConnector.id}`));
     });
 
     test("duplicate mode should load the source's workflows with fresh temp ids, remapping a mapped group to its copy", () => {

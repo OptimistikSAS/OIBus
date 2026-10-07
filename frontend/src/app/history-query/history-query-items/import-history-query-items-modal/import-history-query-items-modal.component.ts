@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -28,7 +28,7 @@ export interface HistoryQueryItemsCheckResult {
   selector: 'oib-import-history-query-items-modal',
   templateUrl: './import-history-query-items-modal.component.html',
   styleUrl: './import-history-query-items-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
 export class ImportHistoryQueryItemsModalComponent {
@@ -40,10 +40,10 @@ export class ImportHistoryQueryItemsModalComponent {
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
-  selectedFile: File = this.initializeFile;
-  validationError: CsvValidationError | null = null;
-  checking = false;
-  checkError: string | null = null;
+  readonly selectedFile = signal<File>(this.initializeFile);
+  readonly validationError = signal<CsvValidationError | null>(null);
+  readonly checking = signal(false);
+  readonly checkError = signal<string | null>(null);
 
   form = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
@@ -52,14 +52,14 @@ export class ImportHistoryQueryItemsModalComponent {
 
   expectedHeaders: Array<string> = [];
   optionalHeaders: Array<string> = [];
-  showEraseOption = false;
+  readonly showEraseOption = signal(false);
   private checkFn!: (file: File, delimiter: string, deleteItemsNotPresent: boolean) => Observable<HistoryQueryItemsCheckResult>;
 
   displaySettings: Array<OIBusAttribute> = [];
-  newItemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = [];
-  errorList: Array<{ item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO; error: string }> = [];
-  displayedItemsNew: Page<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = emptyPage();
-  displayedItemsError: Page<{ item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO; error: string }> = emptyPage();
+  readonly newItemList = signal<Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>>([]);
+  readonly errorList = signal<Array<{ item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO; error: string }>>([]);
+  readonly displayedItemsNew = signal<Page<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>>(emptyPage());
+  readonly displayedItemsError = signal<Page<{ item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO; error: string }>>(emptyPage());
 
   prepare(
     manifest: SouthConnectorManifest,
@@ -70,7 +70,7 @@ export class ImportHistoryQueryItemsModalComponent {
   ) {
     this.expectedHeaders = expectedHeaders;
     this.optionalHeaders = optionalHeaders;
-    this.showEraseOption = showEraseOption;
+    this.showEraseOption.set(showEraseOption);
     this.checkFn = checkFn;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       element => element.key === 'settings'
@@ -79,11 +79,11 @@ export class ImportHistoryQueryItemsModalComponent {
   }
 
   get canImport(): boolean {
-    return this.selectedFile !== this.initializeFile && !this.validationError && !this.checking && this.newItemList.length > 0;
+    return this.selectedFile() !== this.initializeFile && !this.validationError() && !this.checking() && this.newItemList().length > 0;
   }
 
   async onFileSelected(file: File): Promise<void> {
-    this.selectedFile = file;
+    this.selectedFile.set(file);
     await this.revalidateAndCheck();
   }
 
@@ -101,7 +101,7 @@ export class ImportHistoryQueryItemsModalComponent {
 
   submit() {
     this.modal.close({
-      items: this.newItemList,
+      items: this.newItemList(),
       eraseExisting: this.form.controls.eraseExisting.value
     });
   }
@@ -115,11 +115,11 @@ export class ImportHistoryQueryItemsModalComponent {
   }
 
   changePageNew(pageNumber: number) {
-    this.displayedItemsNew = createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
+    this.displayedItemsNew.set(createPageFromArray(this.newItemList(), PAGE_SIZE, pageNumber));
   }
 
   changePageError(pageNumber: number) {
-    this.displayedItemsError = createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
+    this.displayedItemsError.set(createPageFromArray(this.errorList(), PAGE_SIZE, pageNumber));
   }
 
   onImportDragOver(e: Event) {
@@ -144,49 +144,51 @@ export class ImportHistoryQueryItemsModalComponent {
   }
 
   private async revalidateAndCheck(): Promise<void> {
-    this.validationError = null;
-    this.checkError = null;
+    this.validationError.set(null);
+    this.checkError.set(null);
     this.resetResults();
 
-    if (this.selectedFile === this.initializeFile) {
+    const selectedFile = this.selectedFile();
+    if (selectedFile === this.initializeFile) {
       return;
     }
 
     const delimiter = convertCsvDelimiter(this.form.controls.delimiter.value);
-    this.validationError = await validateCsvHeaders(this.selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders);
+    this.validationError.set(await validateCsvHeaders(selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders));
 
-    if (!this.validationError) {
+    if (!this.validationError()) {
       await this.runCheck();
     }
   }
 
   private async runCheck(): Promise<void> {
-    if (this.selectedFile === this.initializeFile || this.validationError) {
+    const selectedFile = this.selectedFile();
+    if (selectedFile === this.initializeFile || this.validationError()) {
       return;
     }
 
     const delimiter = convertCsvDelimiter(this.form.controls.delimiter.value);
     const eraseExisting = this.form.controls.eraseExisting.value;
-    this.checking = true;
-    this.checkError = null;
+    this.checking.set(true);
+    this.checkError.set(null);
     try {
-      const result = await firstValueFrom(this.checkFn(this.selectedFile, delimiter, eraseExisting));
-      this.newItemList = result.items;
-      this.errorList = result.errors;
+      const result = await firstValueFrom(this.checkFn(selectedFile, delimiter, eraseExisting));
+      this.newItemList.set(result.items);
+      this.errorList.set(result.errors);
       this.changePageNew(0);
       this.changePageError(0);
     } catch (error: unknown) {
-      this.checkError = (error as { error?: { message?: string }; message?: string }).error?.message || 'Unknown error';
+      this.checkError.set((error as { error?: { message?: string }; message?: string }).error?.message || 'Unknown error');
       this.resetResults();
     } finally {
-      this.checking = false;
+      this.checking.set(false);
     }
   }
 
   private resetResults(): void {
-    this.newItemList = [];
-    this.errorList = [];
-    this.displayedItemsNew = emptyPage();
-    this.displayedItemsError = emptyPage();
+    this.newItemList.set([]);
+    this.errorList.set([]);
+    this.displayedItemsNew.set(emptyPage());
+    this.displayedItemsError.set(emptyPage());
   }
 }

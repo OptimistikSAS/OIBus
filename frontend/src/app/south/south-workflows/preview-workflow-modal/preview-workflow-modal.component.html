@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'south.workflows.' + context + '-title'" [translateParams]="{ name: workflowName }"></h4>
+  <h4 class="modal-title" [translate]="'south.workflows.' + context() + '-title'" [translateParams]="{ name: workflowName() }"></h4>
 </div>
 <div class="modal-body">
   @if (loading()) {
@@ -7,7 +7,7 @@
       <oib-loading-spinner />
       <div translate="south.workflows.preview-loading"></div>
     </div>
-  } @else if (result) {
+  } @else if (result(); as result) {
     <div class="text-muted mb-2" id="preview-counts">
       {{ 'south.workflows.preview-discovered' | translate: { discovered: result.discoveredCount, eligible: result.eligibleCount } }}
     </div>
@@ -25,7 +25,7 @@
         }}
       </div>
     }
-    @if (paginatedEntries; as entries) {
+    @if (paginatedEntries(); as entries) {
       <!-- Local (item-creating) workflow: each entry classified against the previous run. Status and
            identity key lead (leftmost) since they're what every row is scanned for, followed by one column
            per discovered field. A "missing" entry shows the previous run's snapshot, dimmed; a "changed"
@@ -36,7 +36,7 @@
             <tr>
               <th translate="south.workflows.preview-status-column"></th>
               <th translate="south.workflows.preview-key-column"></th>
-              @for (column of columns; track column) {
+              @for (column of columns(); track column) {
                 <th>{{ column }}</th>
               }
             </tr>
@@ -56,7 +56,7 @@
                   </span>
                 </td>
                 <td class="preview-key">{{ displayKey(row.entry.key) }}</td>
-                @for (column of columns; track column) {
+                @for (column of columns(); track column) {
                   @if (isChangedCell(row, column)) {
                     <td
                       class="preview-changed-cell"
@@ -74,13 +74,13 @@
         </table>
       </div>
       <oib-pagination class="d-flex justify-content-end" [page]="entries" (pageChanged)="entries.gotoPage($event)" />
-    } @else if (paginatedRecords; as records) {
+    } @else if (paginatedRecords(); as records) {
       <!-- Remote (push-to-OIAnalytics) workflow: no diffing at all - just the raw records that would be sent. -->
       <div class="table-responsive preview-table-container">
         <table class="table table-sm table-hover oib-table preview-table" id="preview-records-table">
           <thead class="light">
             <tr>
-              @for (column of columns; track column) {
+              @for (column of columns(); track column) {
                 <th>{{ column }}</th>
               }
             </tr>
@@ -88,7 +88,7 @@
           <tbody>
             @for (record of records.content; track $index) {
               <tr>
-                @for (column of columns; track column) {
+                @for (column of columns(); track column) {
                   <td>{{ record[column] }}</td>
                 }
               </tr>
@@ -98,7 +98,7 @@
       </div>
       <oib-pagination class="d-flex justify-content-end" [page]="records" (pageChanged)="records.gotoPage($event)" />
     } @else {
-      <div class="oib-grey-container" id="preview-none" [translate]="'south.workflows.' + context + '-none'"></div>
+      <div class="oib-grey-container" id="preview-none" [translate]="'south.workflows.' + context() + '-none'"></div>
     }
   }
 </div>

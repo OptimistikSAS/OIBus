@@ -213,7 +213,7 @@
               [historyQuery]="historyQuery"
               [transformers]="transformers"
               [southType]="southType!"
-              [transformersFromNorth]="inMemoryTransformersWithOptions"
+              [transformersFromNorth]="inMemoryTransformersWithOptions()"
               [items]="inMemoryItems"
               (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
             />
@@ -349,7 +349,7 @@
                 </select>
               </div>
 
-              @if (displayedItems.content.length > 0) {
+              @if (displayedItems().content.length > 0) {
                 <!-- Selection Controls -->
                 <div class="d-flex justify-content-between align-items-center my-2">
                   <div class="d-flex align-items-center selection-controls">
@@ -423,7 +423,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (item of displayedItems.content; track item.name) {
+                    @for (item of displayedItems().content; track item.name) {
                       <tr class="south-item">
                         <td style="text-align: center">
                           <input
@@ -481,10 +481,11 @@
                   <div class="oib-grey-container" translate="south.items.none"></div>
                 }
               }
-              @if (displayedItems.totalElements) {
+              @let itemsPage = displayedItems();
+              @if (itemsPage.totalElements) {
                 <div class="d-flex flex-row-reverse">
-                  <div [class]="displayedItems.totalPages > 1 ? 'ms-2' : ''">
-                    <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)" />
+                  <div [class]="itemsPage.totalPages > 1 ? 'ms-2' : ''">
+                    <oib-pagination [page]="itemsPage" (pageChanged)="changePage($event)" />
                   </div>
                 </div>
               }

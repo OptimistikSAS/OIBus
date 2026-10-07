@@ -81,55 +81,53 @@ describe('HistoryQueryListComponent', () => {
 
   test('should filter the list by toggling a status filter', async () => {
     const fixture = TestBed.createComponent(HistoryQueryListComponent);
-    fixture.detectChanges();
-
-    fixture.componentInstance.toggleStatus(fixture.componentInstance.LEGEND[0].status);
-    fixture.detectChanges();
-
-    expect(fixture.componentInstance.activeStatuses.length).toBe(1);
     const root = page.elementLocator(fixture.nativeElement);
     const rows = root.getByCss('tbody tr');
+
+    await root.getByRole('button', { name: 'Running' }).click();
+
     await expect.element(rows).toHaveLength(1);
+    await expect.element(rows.nth(0)).toMatchTextContent('my first History Query');
   });
 
-  test('should clear the status filter', () => {
+  test('should clear the status filter', async () => {
     const fixture = TestBed.createComponent(HistoryQueryListComponent);
-    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
+    const rows = root.getByCss('tbody tr');
 
-    fixture.componentInstance.toggleStatus('RUNNING');
-    fixture.detectChanges();
-    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(1);
+    await root.getByRole('button', { name: 'Running' }).click();
+    await expect.element(rows).toHaveLength(1);
 
-    fixture.componentInstance.clearStatuses();
-    fixture.detectChanges();
-    expect(fixture.componentInstance.activeStatuses.length).toBe(0);
-    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(testData.historyQueries.listLight.length);
+    await root.getByRole('button', { name: 'Clear' }).click();
+
+    await expect.element(rows).toHaveLength(testData.historyQueries.listLight.length);
+    await expect.element(root.getByRole('button', { name: 'Clear' })).not.toBeInTheDocument();
   });
 
-  test('should filter the list by north type', () => {
+  test('should filter the list by north type', async () => {
     const fixture = TestBed.createComponent(HistoryQueryListComponent);
-    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
+    const rows = root.getByCss('tbody tr');
 
-    fixture.componentInstance.toggleNorthType('file-writer');
-    fixture.detectChanges();
+    await root.getByRole('button', { name: 'File writer' }).click();
 
-    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(1);
-    expect(fixture.componentInstance.filteredHistoryQueries[0].northType).toBe('file-writer');
+    await expect.element(rows).toHaveLength(1);
+    await expect.element(rows.nth(0)).toMatchTextContent('My second History Query');
   });
 
-  test('should filter the list by south type', () => {
+  test('should filter the list by south type', async () => {
     const fixture = TestBed.createComponent(HistoryQueryListComponent);
-    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
+    const rows = root.getByCss('tbody tr');
 
-    fixture.componentInstance.toggleSouthType('mssql');
-    fixture.detectChanges();
+    await root.getByRole('button', { name: 'Microsoft SQL Server™' }).click();
+    await expect.element(rows).toHaveLength(testData.historyQueries.listLight.length);
 
-    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(testData.historyQueries.listLight.length);
+    await root.getByRole('button', { name: 'Clear' }).click();
+    await root.getByRole('button', { name: 'OIAnalytics®' }).click();
 
-    fixture.componentInstance.clearSouthTypes();
-    fixture.componentInstance.toggleNorthType('oianalytics');
-    fixture.detectChanges();
-    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(1);
+    await expect.element(rows).toHaveLength(1);
+    await expect.element(rows.nth(0)).toMatchTextContent('my first History Query');
   });
 
   test('should display the item progress indicator when numberOfItems is set', async () => {

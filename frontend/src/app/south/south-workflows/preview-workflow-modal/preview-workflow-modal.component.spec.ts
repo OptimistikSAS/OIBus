@@ -108,17 +108,14 @@ describe('PreviewWorkflowModalComponent', () => {
     configurationWorkflowService.preview.mockReturnValue(of(result));
     const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
     fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
+    const rows = root.getByCss('tbody tr');
+    await expect.element(rows).toHaveLength(20);
 
-    expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(20);
-    await expect.element(page.elementLocator(fixture.nativeElement).getByCss('ngb-pagination')).toBeInTheDocument();
+    await root.getByRole('link', { name: '2' }).click();
 
-    fixture.componentInstance.paginatedEntries!.gotoPage(1);
-    fixture.detectChanges();
-
-    const rows = fixture.nativeElement.querySelectorAll('tbody tr');
-    expect(rows.length).toBe(5);
-    expect(rows[0].textContent).toContain('nodeId=20');
+    await expect.element(rows).toHaveLength(5);
+    await expect.element(rows.nth(0)).toMatchTextContent('nodeId=20');
   });
 
   test('should not show pagination controls when everything fits on one page', () => {
@@ -227,7 +224,7 @@ describe('PreviewWorkflowModalComponent', () => {
     fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.columns).toEqual(['nodeId', 'type', 'unit']);
+    expect(fixture.componentInstance.columns()).toEqual(['nodeId', 'type', 'unit']);
     const rows = fixture.nativeElement.querySelectorAll('#preview-records-table tbody tr');
     expect(Array.from(rows[1].querySelectorAll('td') as NodeListOf<HTMLElement>).map(cell => cell.textContent!.trim())).toEqual([
       'b',
@@ -272,7 +269,7 @@ describe('PreviewWorkflowModalComponent', () => {
 
     expect(configurationWorkflowService.previewCommand).toHaveBeenCalledWith('create', 'opcua', southSettings, null, command);
     expect(configurationWorkflowService.preview).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.context).toBe('preview');
+    expect(fixture.componentInstance.context()).toBe('preview');
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Preview: Unsaved discovery');
     await expect.element(root.getByCss('#preview-counts')).toMatchTextContent('1 discovered, 1 eligible');
@@ -410,11 +407,11 @@ describe('PreviewWorkflowModalComponent', () => {
     configurationWorkflowService.preview.mockReturnValue(of(result));
     const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
     fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
-    fixture.componentInstance.paginatedEntries!.gotoPage(1);
-    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
+    await root.getByRole('link', { name: '2' }).click();
+    await expect.element(root.getByCss('tbody tr')).toHaveLength(2);
 
-    fixture.componentInstance.exportCsv();
+    await root.getByRole('button', { name: 'Export CSV' }).click();
 
     const file = downloadService.downloadFile.mock.calls[0][0] as { blob: Blob; name: string };
     const content = await file.blob.text();
