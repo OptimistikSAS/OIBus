@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'configuration.oibus.manifest.transformers.edit-transformer-modal.' + mode + '-title'"></h4>
+  <h4 class="modal-title" [translate]="'configuration.oibus.manifest.transformers.edit-transformer-modal.' + mode() + '-title'"></h4>
 </div>
 @if (form) {
   <div class="modal-body">
@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      @if (mode === 'create') {
+      @if (mode() === 'create') {
         <div class="row">
           <!-- Input type -->
           <div class="col">
@@ -104,7 +104,8 @@
           class="form-label"
           translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-code"
         ></label>
-        @if (!customTransformer && !form.controls.language.value) {
+        @let customTransformerValue = customTransformer();
+        @if (!customTransformerValue && !form.controls.language.value) {
           <span
             id="language-disclaimer"
             translate="configuration.oibus.manifest.transformers.edit-transformer-modal.select-language"
@@ -113,7 +114,7 @@
           <oib-code-block
             id="custom-code"
             formControlName="customCode"
-            [language]="customTransformer ? customTransformer.language : form.controls.language.value!"
+            [language]="customTransformerValue ? customTransformerValue.language : form.controls.language.value!"
           />
         }
         <val-errors controlName="customCode" />

@@ -1,4 +1,4 @@
-@if (historyQuery && southManifest && northManifest) {
+@if (southManifest() && northManifest() && historyQuery(); as historyQuery) {
   <div class="oib-padded-container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
@@ -97,18 +97,18 @@
                 class="fa fa-copy"
                 role="button"
                 [ngbTooltip]="'history-query.tooltips.copy-cache-path' | translate"
-                [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
+                [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
                 (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
               ></i>
             </span>
           </div>
         </div>
-        @if (historyMetrics) {
+        @if (historyMetrics(); as historyMetrics) {
           <oib-history-metrics
             [historyMetrics]="historyMetrics"
             [historyQuery]="historyQuery"
-            [northManifest]="northManifest"
-            [southManifest]="southManifest"
+            [northManifest]="northManifest()!"
+            [southManifest]="southManifest()!"
           />
         }
         <!-- Cache-->
@@ -181,10 +181,10 @@
         <oib-history-query-transformers
           [southType]="historyQuery.southType"
           [historyQuery]="historyQuery"
-          [scanModes]="scanModes"
-          [certificates]="certificates"
-          [northManifest]="northManifest"
-          [transformers]="transformers"
+          [scanModes]="scanModes()"
+          [certificates]="certificates()"
+          [northManifest]="northManifest()!"
+          [transformers]="transformers()"
           [saveChangesDirectly]="true"
           (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
         />
@@ -194,7 +194,7 @@
             <div class="d-flex justify-content-between align-items-center">
               <span
                 translate="history-query.north.specific-settings"
-                [translateParams]="{ type: northManifest.id | oIBusNorthTypeEnum }"
+                [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
                 id="north-specific-settings-title"
               ></span>
               <button
@@ -208,7 +208,7 @@
           </ng-template>
           <table class="table table-sm table-hover oib-table">
             <tbody class="north-settings">
-              @for (setting of northDisplayedSettings; track setting) {
+              @for (setting of northDisplayedSettings(); track setting) {
                 <tr>
                   <td style="width: 33%">{{ setting.key | translate }}</td>
                   <td>{{ setting.value }}</td>
@@ -223,11 +223,11 @@
             <div class="d-flex justify-content-between align-items-center">
               <span
                 translate="history-query.south.specific-settings"
-                [translateParams]="{ type: southManifest.id | oIBusSouthTypeEnum }"
+                [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
                 id="south-specific-settings-title"
               ></span>
               <div>
-                @if (southManifest.explore) {
+                @if (southManifest()!.explore) {
                   <button
                     type="button"
                     class="btn btn-secondary btn-sm oib-box-btn ms-3"
@@ -240,7 +240,7 @@
                   translate="south.test-connection.button"
                   type="button"
                   class="btn btn-secondary btn-sm oib-box-btn"
-                  [class.ms-3]="!southManifest.explore"
+                  [class.ms-3]="!southManifest()!.explore"
                   id="test-connection-south"
                   (click)="test('south')"
                 ></button>
@@ -249,7 +249,7 @@
           </ng-template>
           <table class="table table-sm table-hover oib-table">
             <tbody class="south-settings">
-              @for (setting of southDisplayedSettings; track setting) {
+              @for (setting of southDisplayedSettings(); track setting) {
                 <tr>
                   <td style="width: 33%">{{ setting.key | translate }}</td>
                   <td>{{ setting.value }}</td>
@@ -317,7 +317,7 @@
               </select>
             </div>
 
-            @if (displayedItems.content.length > 0) {
+            @if (displayedItems().content.length > 0) {
               <!-- Selection Controls -->
               <div class="d-flex justify-content-between align-items-center my-2">
                 <div class="d-flex align-items-center selection-controls">
@@ -387,7 +387,7 @@
                         <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
                       </button>
                     </th>
-                    @for (setting of displaySettings; track setting) {
+                    @for (setting of displaySettings(); track setting) {
                       @if (setting.type === 'string-select') {
                         <th>{{ setting.translationKey + '.title' | translate }}</th>
                       } @else {
@@ -418,7 +418,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (item of displayedItems.content; track item.name) {
+                  @for (item of displayedItems().content; track item.name) {
                     <tr class="south-item">
                       <td style="text-align: center">
                         <input
@@ -437,7 +437,7 @@
                         }
                       </td>
                       <td>{{ item.name }}</td>
-                      @for (setting of displaySettings; track setting) {
+                      @for (setting of displaySettings(); track setting) {
                         <td>{{ getFieldValue(item.settings, setting.key) }}</td>
                       }
                       <td>{{ item.createdAt | datetime: 'ff' }}</td>
@@ -490,10 +490,11 @@
                 <div class="oib-grey-container" translate="south.items.none"></div>
               }
             }
-            @if (displayedItems.totalElements) {
+            @let itemsPage = displayedItems();
+            @if (itemsPage.totalElements) {
               <div class="d-flex flex-row-reverse">
-                <div [class]="displayedItems.totalPages > 1 ? 'ms-2' : ''">
-                  <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)" />
+                <div [class]="itemsPage.totalPages > 1 ? 'ms-2' : ''">
+                  <oib-pagination [page]="itemsPage" (pageChanged)="changePage($event)" />
                 </div>
               </div>
             }
@@ -509,7 +510,7 @@
             </div>
           </ng-template>
         </oib-box>
-        <oib-logs [scopeId]="historyQueryId" scopeType="history-query" [embedded]="true" />
+        <oib-logs [scopeId]="historyQueryId()" scopeType="history-query" [embedded]="true" />
       </div>
     </div>
   </div>

@@ -42,11 +42,11 @@ export class ImportConfigModalComponent {
   result = signal<ConfigImportResponseDTO | null>(null);
 
   readonly initializeFile = new File([''], 'Choose a file');
-  file: File = this.initializeFile;
+  readonly file = signal<File>(this.initializeFile);
 
   /** Only a file whose preview succeeded can be imported: the user must have seen what it contains. */
   get canImport(): boolean {
-    return this.file !== this.initializeFile && this.preview() !== null;
+    return this.file() !== this.initializeFile && this.preview() !== null;
   }
 
   onFileSelected(file: File) {
@@ -55,7 +55,7 @@ export class ImportConfigModalComponent {
       return;
     }
     this.fileError.set(null);
-    this.file = file;
+    this.file.set(file);
     this.loadPreview();
   }
 
@@ -70,7 +70,7 @@ export class ImportConfigModalComponent {
     this.error.set(null);
     this.validationErrors.set([]);
     this.previewSubscription = this.configTransferService
-      .preview(this.file)
+      .preview(this.file())
       .pipe(this.previewState.pendingUntilFinalization(), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (preview: ConfigImportPreviewDTO) => this.preview.set(preview),
@@ -131,7 +131,7 @@ export class ImportConfigModalComponent {
       .confirm({
         messageKey: 'engine.config-transfer.import.confirm-message'
       })
-      .pipe(switchMap(() => this.configTransferService.import(this.file).pipe(this.state.pendingUntilFinalization())))
+      .pipe(switchMap(() => this.configTransferService.import(this.file()).pipe(this.state.pendingUntilFinalization())))
       .subscribe({
         next: (response: ConfigImportResponseDTO) => this.result.set(response),
         error: (err: ConfigImportFailure | string) => this.showFailure(err)

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -26,11 +26,11 @@ export class TestConnectionResultModalComponent {
   private northConnectorService = inject(NorthConnectorService);
   protected historyQueryService = inject(HistoryQueryService);
 
-  type: 'north' | 'south' | null = null;
-  loading = false;
-  success = false;
-  error: string | null = null;
-  testResult: OIBusConnectionTestResult | null = null;
+  readonly type = signal<'north' | 'south' | null>(null);
+  readonly loading = signal(false);
+  readonly success = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly testResult = signal<OIBusConnectionTestResult | null>(null);
 
   /**
    * Prepares the component for connector testing.
@@ -41,8 +41,8 @@ export class TestConnectionResultModalComponent {
     settingsToTest: SouthSettings | NorthSettings,
     connectorType: OIBusSouthType | OIBusNorthType
   ) {
-    this.type = type;
-    this.loading = true;
+    this.type.set(type);
+    this.loading.set(true);
     let obs;
     if (type === 'south') {
       obs = this.southConnectorService.testConnection(
@@ -59,13 +59,13 @@ export class TestConnectionResultModalComponent {
     }
     obs.subscribe({
       error: httpError => {
-        this.error = httpError.error.message;
-        this.loading = false;
+        this.error.set(httpError.error.message);
+        this.loading.set(false);
       },
       next: (result: OIBusConnectionTestResult) => {
-        this.testResult = result;
-        this.success = true;
-        this.loading = false;
+        this.testResult.set(result);
+        this.success.set(true);
+        this.loading.set(false);
       }
     });
   }
@@ -80,8 +80,8 @@ export class TestConnectionResultModalComponent {
     connectorType: OIBusSouthType | OIBusNorthType,
     fromConnectorId: string | null = null
   ) {
-    this.type = type;
-    this.loading = true;
+    this.type.set(type);
+    this.loading.set(true);
     let obs;
     if (type === 'south') {
       obs = this.historyQueryService.testSouthConnection(
@@ -100,13 +100,13 @@ export class TestConnectionResultModalComponent {
     }
     obs.subscribe({
       error: (httpError: any) => {
-        this.error = httpError.error.message;
-        this.loading = false;
+        this.error.set(httpError.error.message);
+        this.loading.set(false);
       },
       next: (result: OIBusConnectionTestResult) => {
-        this.testResult = result;
-        this.success = true;
-        this.loading = false;
+        this.testResult.set(result);
+        this.success.set(true);
+        this.loading.set(false);
       }
     });
   }

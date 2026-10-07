@@ -1,5 +1,15 @@
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnDestroy, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  inject,
+  Input,
+  OnDestroy,
+  Output,
+  signal
+} from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
@@ -57,6 +67,7 @@ export interface SouthExploreApi {
 })
 export class ExploreTreeComponent implements OnDestroy {
   private southConnectorService = inject(SouthConnectorService);
+  private changeDetectorRef = inject(ChangeDetectorRef);
 
   @Output() nodeSelected = new EventEmitter<SouthConnectorExploreEntry>();
 
@@ -69,11 +80,11 @@ export class ExploreTreeComponent implements OnDestroy {
   @Input() maxHeight = '50vh';
 
   private api: SouthExploreApi | null = null;
-  selectable = false;
-  loading = false;
-  error: string | null = null;
+  readonly selectable = signal(false);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
   sessionId: string | null = null;
-  nodes: Array<ExploreTreeNode> = [];
+  readonly nodes = signal<Array<ExploreTreeNode>>([]);
 
   /**
    * Start the explore session and load the root-level entries.
@@ -95,18 +106,18 @@ export class ExploreTreeComponent implements OnDestroy {
     api?: SouthExploreApi,
     selectable = false
   ) {
-    this.selectable = selectable;
+    this.selectable.set(selectable);
     this.api = api ?? this.defaultApi(connectorId || 'create');
-    this.loading = true;
+    this.loading.set(true);
     this.api.start(settingsToExplore, southType).subscribe({
       error: httpError => {
-        this.error = httpError.error?.message ?? httpError.message;
-        this.loading = false;
+        this.error.set(httpError.error?.message ?? httpError.message);
+        this.loading.set(false);
       },
       next: result => {
         this.sessionId = result.sessionId;
-        this.nodes = result.entries.map(entry => this.createNode(entry, 0));
-        this.loading = false;
+        this.nodes.set(result.entries.map(entry => this.createNode(entry, 0)));
+        this.loading.set(false);
       }
     });
   }
@@ -143,6 +154,8 @@ export class ExploreTreeComponent implements OnDestroy {
       error: httpError => {
         node.error = httpError.error?.message ?? httpError.message;
         node.loading = false;
+        // nodes are mutated in place: notify Angular
+        this.changeDetectorRef.markForCheck();
       },
       next: result => {
         node.children = result.entries.map(entry => this.createNode(entry, node.depth + 1));
@@ -153,6 +166,7 @@ export class ExploreTreeComponent implements OnDestroy {
         if (result.entries.length === 0) {
           node.entry.hasChildren = false;
         }
+        this.changeDetectorRef.markForCheck();
       }
     });
   }

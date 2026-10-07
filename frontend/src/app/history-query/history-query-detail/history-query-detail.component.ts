@@ -1,6 +1,6 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -122,32 +122,36 @@ export class HistoryQueryDetailComponent {
 
   readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
 
-  historyQuery: HistoryQueryDTO | null = null;
-  northDisplayedSettings: Array<{ key: string; value: string }> = [];
-  southDisplayedSettings: Array<{ key: string; value: string }> = [];
+  readonly historyQuery = signal<HistoryQueryDTO | null>(null);
+  readonly northDisplayedSettings = signal<Array<{ key: string; value: string }>>([]);
+  readonly southDisplayedSettings = signal<Array<{ key: string; value: string }>>([]);
 
-  scanModes: Array<ScanModeDTO> = [];
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
 
   /** Whether a scan mode's activation window can never fire again. */
   isWindowExpired(scanMode: ScanModeDTO | null | undefined): boolean {
     return isScanModeWindowExpired(scanMode);
   }
 
-  certificates: Array<CertificateDTO> = [];
-  transformers: Array<TransformerDTO> = [];
-  northManifest: NorthConnectorManifest | null = null;
-  southManifest: SouthConnectorManifest | null = null;
+  readonly certificates = signal<Array<CertificateDTO>>([]);
+  readonly transformers = signal<Array<TransformerDTO>>([]);
+  readonly northManifest = signal<NorthConnectorManifest | null>(null);
+  readonly southManifest = signal<SouthConnectorManifest | null>(null);
 
-  historyMetrics: HistoryQueryMetrics | null = null;
+  readonly historyMetrics = signal<HistoryQueryMetrics | null>(null);
   private metricsSubscription: Subscription | null = null;
   state = new ObservableState();
-  oibusInfo: OIBusInfo | null = null;
-  historyQueryId: string | null = null;
+  readonly oibusInfo = signal<OIBusInfo | null>(null);
+  readonly historyQueryId = signal<string | null>(null);
 
   // Item management properties
   filteredItems: Array<HistoryQueryItemDTO> = [];
-  displayedItems: Page<HistoryQueryItemDTO> = emptyPage();
-  displaySettings: Array<OIBusAttribute> = [];
+  /**
+   * The displayed page of items. Every asynchronous update of the page state (data loading, refreshes)
+   * ends with `changePage()`, so this signal is also what notifies change detection about it.
+   */
+  readonly displayedItems = signal<Page<HistoryQueryItemDTO>>(emptyPage());
+  readonly displaySettings = signal<Array<OIBusAttribute>>([]);
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
   statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
 
@@ -170,19 +174,20 @@ export class HistoryQueryDetailComponent {
       this.transformerService.list(),
       this.engineService.info$
     ]).subscribe(([scanModes, certificates, transformers, engineInfo]) => {
-      this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-      this.certificates = certificates;
-      this.transformers = transformers;
-      this.oibusInfo = engineInfo;
+      this.scanModes.set(scanModes.filter(scanMode => scanMode.id !== 'subscription'));
+      this.certificates.set(certificates);
+      this.transformers.set(transformers);
+      this.oibusInfo.set(engineInfo);
     });
 
     const routeSub = this.route.paramMap
       .pipe(
         switchMap(params => {
-          this.historyQueryId = params.get('historyQueryId') || '';
+          const historyQueryId = params.get('historyQueryId') || '';
+          this.historyQueryId.set(historyQueryId);
 
-          if (this.historyQueryId) {
-            return this.historyQueryService.findById(this.historyQueryId);
+          if (historyQueryId) {
+            return this.historyQueryService.findById(historyQueryId);
           }
           return of(null);
         }),
@@ -190,7 +195,7 @@ export class HistoryQueryDetailComponent {
           if (!historyQuery) {
             return combineLatest([of(null), of(null), of(null)]);
           }
-          this.historyQuery = historyQuery;
+          this.historyQuery.set(historyQuery);
           return combineLatest([
             this.northConnectorService.getNorthManifest(historyQuery.northType),
             this.southConnectorService.getSouthManifest(historyQuery.southType)
@@ -201,63 +206,67 @@ export class HistoryQueryDetailComponent {
         if (!northManifest || !southManifest) {
           return;
         }
-        this.northManifest = northManifest;
-        this.southManifest = southManifest;
+        this.northManifest.set(northManifest);
+        this.southManifest.set(southManifest);
         this.startMetricsPolling();
 
         // Initialize display settings for items
         const settingsAttribute = southManifest.items.rootAttribute.attributes.find(
           attribute => attribute.key === 'settings'
         )! as OIBusObjectAttribute;
-        this.displaySettings = settingsAttribute.attributes.filter(setting => isDisplayableAttribute(setting));
+        this.displaySettings.set(settingsAttribute.attributes.filter(setting => isDisplayableAttribute(setting)));
 
-        const northSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery!.northSettings));
-        this.northDisplayedSettings = northManifest.settings.attributes
-          .filter(setting => isDisplayableAttribute(setting))
-          .filter(setting => {
-            const condition = northManifest.settings.enablingConditions.find(
-              enablingCondition => enablingCondition.targetPathFromRoot === setting.key
-            );
-            return (
-              !condition ||
-              (condition &&
-                northSettings[condition.referralPathFromRoot] &&
-                condition.values.includes(northSettings[condition.referralPathFromRoot]))
-            );
-          })
-          .map(setting => {
-            return {
-              key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
-              value:
-                setting.type === 'string-select'
-                  ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
-                  : northSettings[setting.key]
-            };
-          });
+        const northSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery()!.northSettings));
+        this.northDisplayedSettings.set(
+          northManifest.settings.attributes
+            .filter(setting => isDisplayableAttribute(setting))
+            .filter(setting => {
+              const condition = northManifest.settings.enablingConditions.find(
+                enablingCondition => enablingCondition.targetPathFromRoot === setting.key
+              );
+              return (
+                !condition ||
+                (condition &&
+                  northSettings[condition.referralPathFromRoot] &&
+                  condition.values.includes(northSettings[condition.referralPathFromRoot]))
+              );
+            })
+            .map(setting => {
+              return {
+                key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
+                value:
+                  setting.type === 'string-select'
+                    ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
+                    : northSettings[setting.key]
+              };
+            })
+        );
 
-        const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery!.southSettings));
-        this.southDisplayedSettings = southManifest.settings.attributes
-          .filter(setting => isDisplayableAttribute(setting))
-          .filter(setting => {
-            const condition = southManifest.settings.enablingConditions.find(
-              enablingCondition => enablingCondition.targetPathFromRoot === setting.key
-            );
-            return (
-              !condition ||
-              (condition &&
-                southSettings[condition.referralPathFromRoot] &&
-                condition.values.includes(southSettings[condition.referralPathFromRoot]))
-            );
-          })
-          .map(setting => {
-            return {
-              key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
-              value:
-                setting.type === 'string-select'
-                  ? this.translateService.instant(setting.translationKey + '.' + southSettings[setting.key])
-                  : southSettings[setting.key]
-            };
-          });
+        const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery()!.southSettings));
+        this.southDisplayedSettings.set(
+          southManifest.settings.attributes
+            .filter(setting => isDisplayableAttribute(setting))
+            .filter(setting => {
+              const condition = southManifest.settings.enablingConditions.find(
+                enablingCondition => enablingCondition.targetPathFromRoot === setting.key
+              );
+              return (
+                !condition ||
+                (condition &&
+                  southSettings[condition.referralPathFromRoot] &&
+                  condition.values.includes(southSettings[condition.referralPathFromRoot]))
+              );
+            })
+            .map(setting => {
+              return {
+                key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
+                value:
+                  setting.type === 'string-select'
+                    ? this.translateService.instant(setting.translationKey + '.' + southSettings[setting.key])
+                    : southSettings[setting.key]
+              };
+            })
+        );
 
         this.resetPage();
       });
@@ -278,21 +287,21 @@ export class HistoryQueryDetailComponent {
   }
 
   private refreshHistoryQuery() {
-    this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
-      this.historyQuery = JSON.parse(JSON.stringify(historyQuery));
+    this.historyQueryService.findById(this.historyQuery()!.id).subscribe(historyQuery => {
+      this.historyQuery.set(JSON.parse(JSON.stringify(historyQuery)));
       this.resetPage();
     });
   }
 
   startMetricsPolling(): void {
     this.stopMetricsPolling();
-    const historyId = this.historyQuery!.id;
+    const historyId = this.historyQuery()!.id;
     this.metricsSubscription = pollMetrics(() => this.historyQueryService.getMetrics(historyId)).subscribe(metrics => {
-      this.historyMetrics = metrics;
-      this.cd.detectChanges();
+      this.historyMetrics.set(metrics);
 
-      if (this.historyQuery && this.historyQueryFinishedByMetrics) {
-        this.historyQuery.status = 'FINISHED';
+      const historyQuery = this.historyQuery();
+      if (historyQuery && historyQuery.status !== 'FINISHED' && this.historyQueryFinishedByMetrics) {
+        this.historyQuery.set({ ...historyQuery, status: 'FINISHED' });
       }
     });
   }
@@ -305,30 +314,30 @@ export class HistoryQueryDetailComponent {
   toggleHistoryQuery(newStatus: HistoryQueryStatus) {
     if (newStatus === 'RUNNING') {
       this.historyQueryService
-        .start(this.historyQuery!.id)
+        .start(this.historyQuery()!.id)
         .pipe(
           this.state.pendingUntilFinalization(),
           switchMap(() => {
-            return this.historyQueryService.findById(this.historyQuery!.id);
+            return this.historyQueryService.findById(this.historyQuery()!.id);
           })
         )
         .subscribe(updatedHistoryQuery => {
-          this.historyQuery = updatedHistoryQuery;
-          this.notificationService.success('history-query.started', { name: this.historyQuery!.name });
+          this.historyQuery.set(updatedHistoryQuery);
+          this.notificationService.success('history-query.started', { name: updatedHistoryQuery.name });
           this.startMetricsPolling();
         });
     } else {
       this.historyQueryService
-        .pause(this.historyQuery!.id)
+        .pause(this.historyQuery()!.id)
         .pipe(
           this.state.pendingUntilFinalization(),
           switchMap(() => {
-            return this.historyQueryService.findById(this.historyQuery!.id);
+            return this.historyQueryService.findById(this.historyQuery()!.id);
           })
         )
         .subscribe(updatedHistoryQuery => {
-          this.historyQuery = updatedHistoryQuery;
-          this.notificationService.success('history-query.paused', { name: this.historyQuery!.name });
+          this.historyQuery.set(updatedHistoryQuery);
+          this.notificationService.success('history-query.paused', { name: updatedHistoryQuery.name });
           this.stopMetricsPolling();
         });
     }
@@ -347,33 +356,34 @@ export class HistoryQueryDetailComponent {
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runHistoryQueryTest(
       type,
-      this.historyQuery!.id,
-      type === 'south' ? this.historyQuery!.southSettings : this.historyQuery!.northSettings,
-      type === 'south' ? this.historyQuery!.southType : this.historyQuery!.northType
+      this.historyQuery()!.id,
+      type === 'south' ? this.historyQuery()!.southSettings : this.historyQuery()!.northSettings,
+      type === 'south' ? this.historyQuery()!.southType : this.historyQuery()!.northType
     );
   }
 
   explore() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.historyQuery!.id, this.historyQuery!.southSettings, this.historyQuery!.southType, {
-      start: (settings, type) => this.historyQueryService.startExplore(this.historyQuery!.id, settings, type),
-      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(this.historyQuery!.id, sessionId, parentId),
-      close: sessionId => this.historyQueryService.closeExplore(this.historyQuery!.id, sessionId)
+    component.prepare(this.historyQuery()!.id, this.historyQuery()!.southSettings, this.historyQuery()!.southType, {
+      start: (settings, type) => this.historyQueryService.startExplore(this.historyQuery()!.id, settings, type),
+      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(this.historyQuery()!.id, sessionId, parentId),
+      close: sessionId => this.historyQueryService.closeExplore(this.historyQuery()!.id, sessionId)
     });
   }
 
   get historyQueryFinishedByMetrics() {
-    if (!this.historyMetrics || this.historyMetrics.historyMetrics.intervalProgress !== 1) {
+    const historyMetrics = this.historyMetrics();
+    if (!historyMetrics || historyMetrics.historyMetrics.intervalProgress !== 1) {
       return false;
     }
-    return this.historyMetrics.north.currentCacheSize === 0;
+    return historyMetrics.north.currentCacheSize === 0;
   }
 
   get southConnectorCommand() {
     return {
-      type: this.southManifest!.id,
-      settings: this.historyQuery!.southSettings
+      type: this.southManifest()!.id,
+      settings: this.historyQuery()!.southSettings
     } as SouthConnectorCommandDTO;
   }
 
@@ -389,11 +399,17 @@ export class HistoryQueryDetailComponent {
       }
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.historyQuery!.items, this.historyQuery!.id, null, this.southConnectorCommand, this.southManifest!);
+    component.prepareForCreation(
+      this.historyQuery()!.items,
+      this.historyQuery()!.id,
+      null,
+      this.southConnectorCommand,
+      this.southManifest()!
+    );
     modalRef.result
       .pipe(
         switchMap((command: HistoryQueryItemCommandDTO) => {
-          return this.historyQueryService.createItem(this.historyQuery!.id, command);
+          return this.historyQueryService.createItem(this.historyQuery()!.id, command);
         })
       )
       .subscribe(() => {
@@ -412,20 +428,20 @@ export class HistoryQueryDetailComponent {
       }
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    const tableIndex = findItemIndex(this.historyQuery!.items, historyQueryItem);
+    const tableIndex = findItemIndex(this.historyQuery()!.items, historyQueryItem);
     component.prepareForEdition(
-      this.historyQuery!.items,
+      this.historyQuery()!.items,
       historyQueryItem,
-      this.historyQuery!.id,
+      this.historyQuery()!.id,
       null,
       this.southConnectorCommand,
-      this.southManifest!,
+      this.southManifest()!,
       tableIndex
     );
     modalRef.result
       .pipe(
         switchMap((command: HistoryQueryItemCommandDTO) => {
-          return this.historyQueryService.updateItem(this.historyQuery!.id, command.id!, command);
+          return this.historyQueryService.updateItem(this.historyQuery()!.id, command.id!, command);
         })
       )
       .subscribe(() => {
@@ -437,11 +453,18 @@ export class HistoryQueryDetailComponent {
   duplicateItem(item: HistoryQueryItemDTO) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.historyQuery!.items, item, this.historyQuery!.id, null, this.southConnectorCommand, this.southManifest!);
+    component.prepareForCopy(
+      this.historyQuery()!.items,
+      item,
+      this.historyQuery()!.id,
+      null,
+      this.southConnectorCommand,
+      this.southManifest()!
+    );
     modalRef.result
       .pipe(
         switchMap((command: HistoryQueryItemCommandDTO) => {
-          return this.historyQueryService.createItem(this.historyQuery!.id, command);
+          return this.historyQueryService.createItem(this.historyQuery()!.id, command);
         })
       )
       .subscribe(() => {
@@ -457,7 +480,7 @@ export class HistoryQueryDetailComponent {
       })
       .pipe(
         switchMap(() => {
-          return this.historyQueryService.deleteItem(this.historyQuery!.id, item.id!);
+          return this.historyQueryService.deleteItem(this.historyQuery()!.id, item.id!);
         })
       )
       .subscribe(() => {
@@ -473,7 +496,7 @@ export class HistoryQueryDetailComponent {
       })
       .pipe(
         switchMap(() => {
-          return this.historyQueryService.deleteAllItems(this.historyQuery!.id);
+          return this.historyQueryService.deleteAllItems(this.historyQuery()!.id);
         })
       )
       .subscribe(() => {
@@ -484,11 +507,11 @@ export class HistoryQueryDetailComponent {
 
   exportItems() {
     const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
-    const filename = `${this.historyQuery?.name || 'items'}`;
+    const filename = `${this.historyQuery()?.name || 'items'}`;
     modalRef.componentInstance.prepare(filename);
     modalRef.result.subscribe(response => {
       if (response) {
-        this.historyQueryService.exportItems(this.historyQuery!.id, response.filename, response.delimiter).subscribe();
+        this.historyQueryService.exportItems(this.historyQuery()!.id, response.filename, response.delimiter).subscribe();
       }
     });
   }
@@ -498,7 +521,7 @@ export class HistoryQueryDetailComponent {
     const expectedHeaders = ['name', 'enabled'];
     const optionalHeaders: Array<string> = ['scanMode'];
 
-    const settingsAttribute = this.southManifest!.items.rootAttribute.attributes.find(
+    const settingsAttribute = this.southManifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     settingsAttribute.attributes.forEach(setting => {
@@ -510,12 +533,18 @@ export class HistoryQueryDetailComponent {
     });
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
-      this.historyQueryService.checkImportItems(this.southManifest!.id, this.historyQuery!.items, file, delimiter, deleteItemsNotPresent);
+      this.historyQueryService.checkImportItems(
+        this.southManifest()!.id,
+        this.historyQuery()!.items,
+        file,
+        delimiter,
+        deleteItemsNotPresent
+      );
 
-    modalRef.componentInstance.prepare(this.southManifest!, expectedHeaders, optionalHeaders, true, checkFn);
+    modalRef.componentInstance.prepare(this.southManifest()!, expectedHeaders, optionalHeaders, true, checkFn);
     modalRef.result.subscribe((response: { items: Array<HistoryQueryItemCommandDTO>; eraseExisting: boolean } | undefined) => {
       if (!response) return;
-      this.historyQueryService.importItems(this.historyQuery!.id, response.items, response.eraseExisting).subscribe(() => {
+      this.historyQueryService.importItems(this.historyQuery()!.id, response.items, response.eraseExisting).subscribe(() => {
         this.notificationService.success('history-query.items.imported');
         this.refreshHistoryQuery();
       });
@@ -523,7 +552,7 @@ export class HistoryQueryDetailComponent {
   }
 
   getFieldValue(element: any, field: string): string {
-    const settingsAttribute = this.southManifest!.items.rootAttribute.attributes.find(
+    const settingsAttribute = this.southManifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
 
@@ -543,15 +572,16 @@ export class HistoryQueryDetailComponent {
 
   changePage(pageNumber: number) {
     this.sortTable();
-    this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
+    this.displayedItems.set(createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber));
   }
 
   filter(): Array<HistoryQueryItemDTO> {
-    if (!this.historyQuery) return [];
+    const historyQuery = this.historyQuery();
+    if (!historyQuery) return [];
     const searchText = this.searchControl.value || '';
     const statusFilter = this.statusFilterControl.value;
 
-    return this.historyQuery.items.filter(item => {
+    return historyQuery.items.filter(item => {
       if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
       if (statusFilter === 'enabled' && !item.enabled) return false;
       if (statusFilter === 'disabled' && item.enabled) return false;
@@ -630,6 +660,8 @@ export class HistoryQueryDetailComponent {
 
     this.isAllSelected = selectedCount === totalItems && totalItems > 0;
     this.isIndeterminate = selectedCount > 0 && selectedCount < totalItems;
+    // selectedItems is mutated in place, also after HTTP calls
+    this.cd.markForCheck();
   }
 
   getSelectedItemsCount(): number {
@@ -639,7 +671,7 @@ export class HistoryQueryDetailComponent {
   enableSelectedItems() {
     const itemIds = Array.from(this.selectedItems.values(), item => item.id);
     if (itemIds.length === 0) return;
-    this.historyQueryService.enableItems(this.historyQuery!.id, itemIds).subscribe(() => {
+    this.historyQueryService.enableItems(this.historyQuery()!.id, itemIds).subscribe(() => {
       this.notificationService.success('history-query.items.enabled-multiple', { count: itemIds.length.toString() });
       this.selectedItems.clear();
       this.updateSelectionState();
@@ -650,7 +682,7 @@ export class HistoryQueryDetailComponent {
   disableSelectedItems() {
     const itemIds = Array.from(this.selectedItems.values(), item => item.id);
     if (itemIds.length === 0) return;
-    this.historyQueryService.disableItems(this.historyQuery!.id, itemIds).subscribe(() => {
+    this.historyQueryService.disableItems(this.historyQuery()!.id, itemIds).subscribe(() => {
       this.notificationService.success('history-query.items.disabled-multiple', { count: itemIds.length.toString() });
       this.selectedItems.clear();
       this.updateSelectionState();
@@ -668,7 +700,7 @@ export class HistoryQueryDetailComponent {
       })
       .pipe(
         switchMap(() => {
-          return this.historyQueryService.deleteItems(this.historyQuery!.id, itemIds);
+          return this.historyQueryService.deleteItems(this.historyQuery()!.id, itemIds);
         })
       )
       .subscribe(() => {

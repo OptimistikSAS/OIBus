@@ -67,7 +67,7 @@ export class OIARegistrationComponent {
 
   registration = signal<RegistrationSettingsDTO | null>(null);
   private ignoreRemoteUpdate = false;
-  commands: Page<OIBusCommandDTO> = emptyPage();
+  readonly commands = signal<Page<OIBusCommandDTO>>(emptyPage());
   readonly statusList = OIBUS_COMMAND_STATUS;
   readonly typeList = OIBUS_COMMAND_TYPES;
   registrationSubscription = new Subscription();
@@ -100,7 +100,7 @@ export class OIARegistrationComponent {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(commands => {
-        this.commands = commands;
+        this.commands.set(commands);
       });
     this.destroyRef.onDestroy(() => this.registrationSubscription.unsubscribe());
   }
@@ -198,7 +198,7 @@ export class OIARegistrationComponent {
         })
       )
       .subscribe(commands => {
-        this.commands = commands;
+        this.commands.set(commands);
       });
   }
 }
