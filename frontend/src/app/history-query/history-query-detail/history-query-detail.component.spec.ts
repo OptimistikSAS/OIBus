@@ -136,10 +136,10 @@ describe('HistoryQueryDetailComponent', () => {
 
     await root.getByCss('#show-audit-button').click();
     expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
-    expect(prepare).toHaveBeenCalledWith('history_query', fixture.componentInstance.historyQuery!.id);
+    expect(prepare).toHaveBeenCalledWith('history_query', fixture.componentInstance.historyQuery()!.id);
 
     await root.getByCss('.show-audit-item').first().click();
-    expect(prepare).toHaveBeenLastCalledWith('history_query_item', fixture.componentInstance.displayedItems.content[0].id);
+    expect(prepare).toHaveBeenLastCalledWith('history_query_item', fixture.componentInstance.displayedItems().content[0].id);
   });
 
   test('explore should open the explore modal wired to the history query explore endpoints', () => {
@@ -182,7 +182,7 @@ describe('HistoryQueryDetailComponent', () => {
 
     fixture.componentInstance.startMetricsPolling();
     await vi.waitFor(() => expect(historyQueryService.getMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id));
-    expect(fixture.componentInstance.historyMetrics).toEqual(testData.historyQueries.metrics);
+    expect(fixture.componentInstance.historyMetrics()).toEqual(testData.historyQueries.metrics);
 
     fixture.componentInstance.stopMetricsPolling();
     expect(fixture.componentInstance['metricsSubscription']).toBeNull();

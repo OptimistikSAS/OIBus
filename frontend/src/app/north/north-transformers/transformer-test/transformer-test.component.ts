@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
@@ -57,19 +57,19 @@ export class NorthTransformerTestComponent {
   private fb = inject(NonNullableFormBuilder);
   private testSubscription: Subscription | null = null;
 
-  isTestRunning = false;
-  errorMessage: string | null = null;
+  readonly isTestRunning = signal(false);
+  readonly errorMessage = signal<string | null>(null);
   /** True when the source south supports history queries and therefore needs a query range. */
-  supportsHistory = false;
+  readonly supportsHistory = signal(false);
   /** Items that can be run to produce input values, loaded from the transformer's source. */
-  availableItems: Array<TestItem> = [];
+  readonly availableItems = signal<Array<TestItem>>([]);
   private southSettings: SouthSettings | null = null;
 
   /** Latest test result (raw + transformed) feeding the pipeline view. */
-  testResult: SouthConnectorItemTestResult | null = null;
+  readonly testResult = signal<SouthConnectorItemTestResult | null>(null);
 
   /** Once a test has succeeded, the settings form collapses into a summary chip to leave room for the result. */
-  settingsCollapsed = false;
+  readonly settingsCollapsed = signal(false);
 
   form = this.fb.group({
     inputSource: this.fb.control<'paste' | 'item'>('paste'),
@@ -85,9 +85,9 @@ export class NorthTransformerTestComponent {
       const transformer = this.transformer();
       // A different transformer is being tested: drop the previous one's stale result and reopen
       // the settings, then prefill the paste editor with a sample payload for its input type.
-      this.testResult = null;
-      this.errorMessage = null;
-      this.settingsCollapsed = false;
+      this.testResult.set(null);
+      this.errorMessage.set(null);
+      this.settingsCollapsed.set(false);
       if (transformer) {
         this.transformerService
           .getInputTemplate(transformer.inputType)
@@ -98,18 +98,16 @@ export class NorthTransformerTestComponent {
     effect(() => this.loadItemSource(this.itemSource()));
   }
 
-  get canUseItemSource(): boolean {
-    return this.itemSource().kind !== 'none' && this.availableItems.length > 0;
-  }
+  readonly canUseItemSource = computed(() => this.itemSource().kind !== 'none' && this.availableItems().length > 0);
 
   /** One-line recap of the current input settings, shown on the collapsed summary chip. */
   get settingsSummary(): string {
     if (this.form.controls.inputSource.value === 'paste') {
       return this.translate.instant('north.transformers.test.source-paste');
     }
-    const item = this.availableItems.find(candidate => candidate.id === this.form.controls.itemId.value);
+    const item = this.availableItems().find(candidate => candidate.id === this.form.controls.itemId.value);
     const itemLabel = item?.name ?? this.translate.instant('north.transformers.test.source-item');
-    if (!this.supportsHistory) {
+    if (!this.supportsHistory()) {
       return itemLabel;
     }
     const rangeLabel = this.dateRangeSelector()?.getSummaryLabel() ?? '';
@@ -126,22 +124,22 @@ export class NorthTransformerTestComponent {
       return;
     }
 
-    this.errorMessage = null;
-    this.isTestRunning = true;
+    this.errorMessage.set(null);
+    this.isTestRunning.set(true);
     this.testSubscription = request
       .pipe(
         catchError((error: HttpErrorResponse) => {
           this.finishTest();
-          this.errorMessage = getMessageFromHttpErrorResponse(error);
-          this.testResult = null;
+          this.errorMessage.set(getMessageFromHttpErrorResponse(error));
+          this.testResult.set(null);
           return of(null);
         })
       )
       .subscribe(result => {
         this.finishTest();
         if (result) {
-          this.testResult = result;
-          this.settingsCollapsed = true;
+          this.testResult.set(result);
+          this.settingsCollapsed.set(true);
         }
       });
   }
@@ -152,24 +150,24 @@ export class NorthTransformerTestComponent {
   }
 
   private loadItemSource(source: TransformerTestItemSource) {
-    this.availableItems = [];
+    this.availableItems.set([]);
     this.southSettings = null;
-    this.supportsHistory = false;
+    this.supportsHistory.set(false);
     if (source.kind === 'none') {
       return;
     }
 
-    this.southConnectorService.getSouthManifest(source.southType).subscribe(manifest => (this.supportsHistory = manifest.modes.history));
+    this.southConnectorService.getSouthManifest(source.southType).subscribe(manifest => this.supportsHistory.set(manifest.modes.history));
 
     if (source.kind === 'south') {
       this.southConnectorService.findById(source.id).subscribe(south => (this.southSettings = south.settings));
       this.southConnectorService.searchItems(source.id, { page: 0 }).subscribe(page => {
-        this.availableItems = page.content.map(item => ({ id: item.id, name: item.name, settings: item.settings }));
+        this.availableItems.set(page.content.map(item => ({ id: item.id, name: item.name, settings: item.settings })));
       });
     } else {
       this.historyQueryService.findById(source.id).subscribe(historyQuery => {
         this.southSettings = historyQuery.southSettings;
-        this.availableItems = historyQuery.items.map(item => ({ id: item.id, name: item.name, settings: item.settings }));
+        this.availableItems.set(historyQuery.items.map(item => ({ id: item.id, name: item.name, settings: item.settings })));
       });
     }
   }
@@ -183,13 +181,13 @@ export class NorthTransformerTestComponent {
     }
 
     const source = this.itemSource();
-    const item = this.availableItems.find(candidate => candidate.id === this.form.controls.itemId.value);
+    const item = this.availableItems().find(candidate => candidate.id === this.form.controls.itemId.value);
     if (source.kind === 'none' || !item || !this.southSettings) {
       return null;
     }
 
     const testingSettings: SouthConnectorItemTestingSettings = {
-      history: this.supportsHistory ? this.currentRange() : undefined,
+      history: this.supportsHistory() ? this.currentRange() : undefined,
       transformer: { transformerId: transformer.id, options: this.options() }
     };
 
@@ -227,7 +225,7 @@ export class NorthTransformerTestComponent {
   }
 
   private finishTest() {
-    this.isTestRunning = false;
+    this.isTestRunning.set(false);
     this.testSubscription = null;
   }
 }

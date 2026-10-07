@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -24,20 +24,11 @@ export class ChooseNorthConnectorTypeModalComponent {
   private northConnectorService = inject(NorthConnectorService);
   private router = inject(Router);
 
-  northTypes: Array<NorthType> = [];
-  groupedNorthTypes: Array<{ category: string; types: Array<NorthType> }> = [];
-
-  constructor() {
-    this.northConnectorService.getNorthTypes().subscribe(types => {
-      this.northTypes = types;
-      this.groupNorthTypes();
-    });
-  }
-
-  groupNorthTypes() {
+  readonly northTypes = signal<Array<NorthType>>([]);
+  readonly groupedNorthTypes = computed<Array<{ category: string; types: Array<NorthType> }>>(() => {
     const groupedTypes: Record<string, Array<NorthType>> = {};
 
-    for (const northType of this.northTypes) {
+    for (const northType of this.northTypes()) {
       if (groupedTypes[northType.category]) {
         groupedTypes[northType.category].push(northType);
       } else {
@@ -45,10 +36,16 @@ export class ChooseNorthConnectorTypeModalComponent {
       }
     }
 
-    this.groupedNorthTypes = Object.keys(groupedTypes).map(category => ({
+    return Object.keys(groupedTypes).map(category => ({
       category,
       types: groupedTypes[category]
     }));
+  });
+
+  constructor() {
+    this.northConnectorService.getNorthTypes().subscribe(types => {
+      this.northTypes.set(types);
+    });
   }
 
   selectType(type: string) {

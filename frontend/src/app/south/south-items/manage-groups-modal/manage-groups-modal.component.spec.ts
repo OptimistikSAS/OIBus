@@ -84,7 +84,7 @@ describe('ManageGroupsModalComponent', () => {
 
     fixture.componentInstance.searchControl.setValue('alp');
 
-    expect(fixture.componentInstance.displayedGroups.map(group => group.standardSettings.name)).toEqual(['Alpha']);
+    expect(fixture.componentInstance.displayedGroups().map(group => group.standardSettings.name)).toEqual(['Alpha']);
   });
 
   test('should filter groups by schedule', () => {
@@ -92,17 +92,17 @@ describe('ManageGroupsModalComponent', () => {
 
     fixture.componentInstance.scheduleFilterControl.setValue(scanModes[1].id);
 
-    expect(fixture.componentInstance.displayedGroups.map(group => group.standardSettings.name)).toEqual(['Beta']);
+    expect(fixture.componentInstance.displayedGroups().map(group => group.standardSettings.name)).toEqual(['Beta']);
   });
 
   test('should sort groups by name ascending then descending', () => {
     const fixture = createComponent();
 
     fixture.componentInstance.toggleColumnSort('name');
-    expect(fixture.componentInstance.displayedGroups.map(group => group.standardSettings.name)).toEqual(['Alpha', 'Beta']);
+    expect(fixture.componentInstance.displayedGroups().map(group => group.standardSettings.name)).toEqual(['Alpha', 'Beta']);
 
     fixture.componentInstance.toggleColumnSort('name');
-    expect(fixture.componentInstance.displayedGroups.map(group => group.standardSettings.name)).toEqual(['Beta', 'Alpha']);
+    expect(fixture.componentInstance.displayedGroups().map(group => group.standardSettings.name)).toEqual(['Beta', 'Alpha']);
   });
 
   test('should sort groups by item count', () => {
@@ -110,10 +110,10 @@ describe('ManageGroupsModalComponent', () => {
     const fixture = createComponent();
 
     fixture.componentInstance.toggleColumnSort('itemCount');
-    expect(fixture.componentInstance.displayedGroups.map(group => group.id)).toEqual(['group1', 'group2']);
+    expect(fixture.componentInstance.displayedGroups().map(group => group.id)).toEqual(['group1', 'group2']);
 
     fixture.componentInstance.toggleColumnSort('itemCount');
-    expect(fixture.componentInstance.displayedGroups.map(group => group.id)).toEqual(['group2', 'group1']);
+    expect(fixture.componentInstance.displayedGroups().map(group => group.id)).toEqual(['group2', 'group1']);
   });
 
   test('should open the create group modal and append the created group', () => {
@@ -178,7 +178,7 @@ describe('ManageGroupsModalComponent', () => {
 
     expect(deleteGroup).toHaveBeenCalledWith(groupToDelete);
     expect(fixture.componentInstance.groups.find(group => group.id === 'group1')).toBeUndefined();
-    expect(fixture.componentInstance.displayedGroups.find(group => group.id === 'group1')).toBeUndefined();
+    expect(fixture.componentInstance.displayedGroups().find(group => group.id === 'group1')).toBeUndefined();
   });
 
   test('should close the modal', () => {
@@ -227,8 +227,8 @@ describe('ManageGroupsModalComponent', () => {
         }
       }
     });
-    expect(fixture.componentInstance.importSuccessCount).toBe(1);
-    expect(fixture.componentInstance.importErrors).toEqual([]);
+    expect(fixture.componentInstance.importSuccessCount()).toBe(1);
+    expect(fixture.componentInstance.importErrors()).toEqual([]);
     expect(fixture.componentInstance.groups.some(group => group.id === 'imported1')).toBe(true);
   });
 
@@ -245,7 +245,7 @@ describe('ManageGroupsModalComponent', () => {
     await fixture.componentInstance.onImportFileSelected({ target: { files: [file], value: '' } } as unknown as Event);
 
     expect(addOrEditGroup).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.importErrors).toHaveLength(3);
-    expect(fixture.componentInstance.importSuccessCount).toBeNull();
+    expect(fixture.componentInstance.importErrors()).toHaveLength(3);
+    expect(fixture.componentInstance.importSuccessCount()).toBeNull();
   });
 });

@@ -50,8 +50,8 @@ export class ItemTestResultComponent {
   /** Compact mode shrinks the result box (used when several are stacked, e.g. the test pipeline). */
   readonly compact = input<boolean>(false);
 
-  message: { type: `${'item' | 'display-result'}-error` | 'info'; value: string } | null = null;
-  isLoading = false;
+  readonly message = signal<{ type: `${'item' | 'display-result'}-error` | 'info'; value: string } | null>(null);
+  readonly isLoading = signal(false);
 
   readonly currentDisplayMode = output<ContentDisplayMode | null>();
   readonly displayMode = signal<ContentDisplayMode | null>(null);
@@ -62,10 +62,10 @@ export class ItemTestResultComponent {
   readonly displayModeIcons: Record<ContentDisplayMode, string> = { table: 'fa-table', any: 'fa-file-text', json: 'fa-code' };
 
   // --- Table state ---
-  tableType: 'time-values' | 'generic' = 'generic';
-  tableView: Page<OIBusTimeValue> = emptyPage();
-  genericTableView: Page<Array<string>> = emptyPage();
-  headers: Array<string> | null = null;
+  readonly tableType = signal<'time-values' | 'generic'>('generic');
+  readonly tableView = signal<Page<OIBusTimeValue>>(emptyPage());
+  readonly genericTableView = signal<Page<Array<string>>>(emptyPage());
+  readonly headers = signal<Array<string> | null>(null);
 
   // --- Codeblock state ---
   readonly editorContainer = viewChild<ElementRef<HTMLDivElement>>('editor');
@@ -122,8 +122,8 @@ export class ItemTestResultComponent {
   }
 
   displayResult(result: OIBusContent | undefined = undefined) {
-    this.message = null;
-    this.isLoading = false;
+    this.message.set(null);
+    this.isLoading.set(false);
     if (result) {
       this._result.set(result);
       // A fresh result may support different display modes than the previous one
@@ -145,7 +145,7 @@ export class ItemTestResultComponent {
   }
 
   displayError(message: string, type: `${'item' | 'display-result'}-error` = 'item-error') {
-    this.isLoading = false;
+    this.isLoading.set(false);
 
     if (type === 'item-error') {
       this._result.set(null);
@@ -153,21 +153,21 @@ export class ItemTestResultComponent {
       this.changeDisplayMode(null);
     }
 
-    this.message = { value: message, type };
+    this.message.set({ value: message, type });
   }
 
   displayInfo(message: string) {
     this._result.set(null);
-    this.isLoading = false;
+    this.isLoading.set(false);
     this.changeAvailableDisplayModes([]);
     this.changeDisplayMode(null);
-    this.message = { value: message, type: 'info' };
+    this.message.set({ value: message, type: 'info' });
   }
 
   displayLoading() {
     this._result.set(null);
-    this.message = null;
-    this.isLoading = true;
+    this.message.set(null);
+    this.isLoading.set(true);
   }
 
   changeDisplayMode(newMode: ContentDisplayMode | null) {
@@ -175,17 +175,15 @@ export class ItemTestResultComponent {
     this.currentDisplayMode.emit(newMode);
   }
 
-  get activePage(): Page<any> {
-    return this.tableType === 'time-values' ? this.tableView : this.genericTableView;
-  }
+  readonly activePage = computed<Page<any>>(() => (this.tableType() === 'time-values' ? this.tableView() : this.genericTableView()));
 
-  get isContentEmpty(): boolean {
+  readonly isContentEmpty = computed(() => {
     const content = this._result();
     if (!content) return false;
     if (content.type === 'time-values' || content.type === 'record-list') return content.content.length === 0;
     if (content.type === 'any' || content.type === 'any-content') return !content.content;
     return false;
-  }
+  });
 
   convertDataToString(data: OIBusTimeValue['data']) {
     const { value, ...rest } = data;
@@ -194,7 +192,7 @@ export class ItemTestResultComponent {
 
   resetPage() {
     try {
-      this.tableType = this._result()?.type === 'time-values' ? 'time-values' : 'generic';
+      this.tableType.set(this._result()?.type === 'time-values' ? 'time-values' : 'generic');
       this.changePage(0);
     } catch (error: any) {
       this.displayError(error.message, 'display-result-error');
@@ -207,23 +205,24 @@ export class ItemTestResultComponent {
 
     switch (content.type) {
       case 'time-values':
-        this.tableView = createPageFromArray(content.content, PAGE_SIZE, pageNumber);
+        this.tableView.set(createPageFromArray(content.content, PAGE_SIZE, pageNumber));
         break;
       case 'any': {
         const contentString = content.content;
         if (!contentString) {
-          this.genericTableView = emptyPage();
+          this.genericTableView.set(emptyPage());
           break;
         }
         const rows = Papa.parse<Array<string>>(contentString).data;
-        this.headers = rows.shift()!;
-        this.genericTableView = createPageFromArray(rows, PAGE_SIZE, pageNumber);
+        this.headers.set(rows.shift()!);
+        this.genericTableView.set(createPageFromArray(rows, PAGE_SIZE, pageNumber));
         break;
       }
       case 'record-list': {
-        this.headers = Object.keys(content.content[0] ?? {});
-        const rows = content.content.map(record => this.headers!.map(header => (record[header] == null ? '' : String(record[header]))));
-        this.genericTableView = createPageFromArray(rows, PAGE_SIZE, pageNumber);
+        const headers = Object.keys(content.content[0] ?? {});
+        this.headers.set(headers);
+        const rows = content.content.map(record => headers.map(header => (record[header] == null ? '' : String(record[header]))));
+        this.genericTableView.set(createPageFromArray(rows, PAGE_SIZE, pageNumber));
         break;
       }
     }

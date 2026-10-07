@@ -1,18 +1,18 @@
-@if (loading) {
+@if (loading()) {
   <div class="text-center">
     <div class="spinner-border" id="spinner" role="status"></div>
   </div>
-} @else if (error) {
+} @else if (error()) {
   <div class="alert alert-danger" id="explore-error">
     <div translate="south.explore.error"></div>
     <hr />
-    <div style="overflow-wrap: break-word">{{ error }}</div>
+    <div style="overflow-wrap: break-word">{{ error() }}</div>
   </div>
-} @else if (nodes.length === 0) {
+} @else if (nodes().length === 0) {
   <div class="alert alert-info" id="explore-empty" translate="south.explore.empty"></div>
 } @else {
   <div class="explore-tree" id="explore-tree" [style.max-height]="maxHeight">
-    @for (node of nodes; track node.entry.id) {
+    @for (node of nodes(); track node.entry.id) {
       <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: node }" />
     }
   </div>
@@ -34,7 +34,7 @@
         <span class="explore-name me-1">{{ node.entry.name }}</span>
         <ng-container *ngTemplateOutlet="metadataList; context: { $implicit: node.entry }" />
       </button>
-      @if (selectable) {
+      @if (selectable()) {
         <button
           type="button"
           class="btn btn-link btn-sm py-0 explore-select"

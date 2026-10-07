@@ -1,4 +1,4 @@
-@if (historyQuery) {
+@if (historyQuery(); as historyQuery) {
   <div class="oib-padded-container">
     <div class="row justify-content-center align-items-center">
       <div class="col-md-10 col-lg-8">
@@ -63,7 +63,7 @@
             </div>
           </div>
         </form>
-        @if (cacheContent) {
+        @if (cacheContent(); as cacheContent) {
           <oib-cache-explore
             [cacheContent]="cacheContent"
             [entity]="{ id: historyQuery.id, type: 'history' }"

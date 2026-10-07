@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterContentInit, ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
+import { AfterContentInit, ChangeDetectionStrategy, Component, effect, inject, input, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -34,6 +34,13 @@ interface TransformerChoice {
   transformer: TransformerDTO;
   options: Record<string, unknown>;
 }
+
+type TestingSettingsForm = FormGroup<{
+  history?: FormGroup<{ dateRange: FormControl<DateRange | null> }>;
+  northId: FormControl<string | null>;
+  transformerId: FormControl<string | null>;
+  options: FormGroup;
+}>;
 
 /**
  * Test panel for a South/History item. The user optionally selects a North (south context only) and
@@ -83,32 +90,27 @@ class SouthItemTestComponent implements AfterContentInit {
   private fb = inject(NonNullableFormBuilder);
   private testSubscription: Subscription | null = null;
 
-  isTestRunning = false;
-  infoMessage: string | null = null;
-  errorMessage: string | null = null;
+  readonly isTestRunning = signal(false);
+  readonly infoMessage = signal<string | null>(null);
+  readonly errorMessage = signal<string | null>(null);
 
   /** Norths available to pick from (south context only). */
-  norths: Array<NorthConnectorLightDTO> = [];
+  readonly norths = signal<Array<NorthConnectorLightDTO>>([]);
   /** Transformers of the currently selected north (south) or of the history query (history). */
-  transformerChoices: Array<TransformerChoice> = [];
+  readonly transformerChoices = signal<Array<TransformerChoice>>([]);
   /** The transformer currently selected (drives the options form + pipeline display). */
-  selectedTransformer: TransformerDTO | null = null;
+  readonly selectedTransformer = signal<TransformerDTO | null>(null);
 
   /** Latest test result (raw + optional transformed) feeding the pipeline view. */
-  testResult: SouthConnectorItemTestResult | null = null;
+  readonly testResult = signal<SouthConnectorItemTestResult | null>(null);
 
   /** User-toggled: collapses the settings form into a summary chip to leave room for the result. */
-  settingsCollapsed = false;
+  readonly settingsCollapsed = signal(false);
 
   /** Transformer options default to a read-only summary; the edit icon reveals the editable form. */
-  optionsEditMode = false;
+  readonly optionsEditMode = signal(false);
 
-  form: FormGroup<{
-    history?: FormGroup<{ dateRange: FormControl<DateRange | null> }>;
-    northId: FormControl<string | null>;
-    transformerId: FormControl<string | null>;
-    options: FormGroup;
-  }> | null = null;
+  readonly form = signal<TestingSettingsForm | null>(null);
 
   constructor() {
     effect(() => this.manifest() && this.initForm());
@@ -116,7 +118,7 @@ class SouthItemTestComponent implements AfterContentInit {
   }
 
   ngAfterContentInit(): void {
-    this.infoMessage = this.translate.instant('south.test-item.status-message.initial');
+    this.infoMessage.set(this.translate.instant('south.test-item.status-message.initial'));
   }
 
   get supportsHistorySettings(): boolean {
@@ -129,7 +131,7 @@ class SouthItemTestComponent implements AfterContentInit {
 
   /** Options currently entered for the test. */
   get currentOptions(): Record<string, unknown> {
-    return (this.form?.controls.options.value as Record<string, unknown>) ?? {};
+    return (this.form()?.controls.options.value as Record<string, unknown>) ?? {};
   }
 
   /** Current options, flattened for the read-only summary shown when not editing. */
@@ -145,7 +147,7 @@ class SouthItemTestComponent implements AfterContentInit {
     if (this.isHistory) {
       return null;
     }
-    return this.norths.find(n => n.id === this.form?.controls.northId.value)?.name ?? null;
+    return this.norths().find(n => n.id === this.form()?.controls.northId.value)?.name ?? null;
   }
 
   /** One-line recap of the current settings, shown on the collapsed summary chip. */
@@ -158,11 +160,10 @@ class SouthItemTestComponent implements AfterContentInit {
     if (!this.isHistory) {
       parts.push(this.selectedNorthName ?? this.translate.instant('south.test-item.transformer-raw'));
     }
-    if (this.isHistory || this.form?.controls.northId.value) {
+    if (this.isHistory || this.form()?.controls.northId.value) {
+      const selectedTransformer = this.selectedTransformer();
       parts.push(
-        this.selectedTransformer
-          ? this.transformerLabel(this.selectedTransformer)
-          : this.translate.instant('south.test-item.transformer-raw')
+        selectedTransformer ? this.transformerLabel(selectedTransformer) : this.translate.instant('south.test-item.transformer-raw')
       );
     }
     return parts.join(' · ');
@@ -175,8 +176,8 @@ class SouthItemTestComponent implements AfterContentInit {
   }
 
   private initForm() {
-    this.settingsCollapsed = false;
-    this.form = this.fb.group({
+    this.settingsCollapsed.set(false);
+    const form: TestingSettingsForm = this.fb.group({
       northId: this.fb.control<string | null>(null),
       transformerId: this.fb.control<string | null>(null),
       options: this.fb.group({})
@@ -185,11 +186,12 @@ class SouthItemTestComponent implements AfterContentInit {
     if (this.supportsHistorySettings) {
       // No initial value here: <oib-date-range-selector> seeds itself from its `defaultRange`
       // input (last 10 minutes) and pushes the computed value up as soon as it initializes.
-      this.form.addControl('history', this.fb.group({ dateRange: this.fb.control<DateRange | null>(null, Validators.required) }));
+      form.addControl('history', this.fb.group({ dateRange: this.fb.control<DateRange | null>(null, Validators.required) }));
     }
 
-    this.form.controls.northId.valueChanges.subscribe(northId => this.onNorthChange(northId));
-    this.form.controls.transformerId.valueChanges.subscribe(transformerId => this.onTransformerChange(transformerId));
+    form.controls.northId.valueChanges.subscribe(northId => this.onNorthChange(northId));
+    form.controls.transformerId.valueChanges.subscribe(transformerId => this.onTransformerChange(transformerId));
+    this.form.set(form);
   }
 
   /** Load norths (south) or the history query's transformers (history) once inputs are known. */
@@ -201,11 +203,13 @@ class SouthItemTestComponent implements AfterContentInit {
       // the last-saved state — a fetch would either 404 (create) or return stale data (edit).
       const inMemory = this.inMemoryTransformers();
       if (inMemory) {
-        this.transformerChoices = inMemory.map(t => ({
-          transformerId: t.transformer.id,
-          transformer: t.transformer,
-          options: t.options
-        }));
+        this.transformerChoices.set(
+          inMemory.map(t => ({
+            transformerId: t.transformer.id,
+            transformer: t.transformer,
+            options: t.options
+          }))
+        );
         return;
       }
       if (entityId === 'create') {
@@ -215,11 +219,13 @@ class SouthItemTestComponent implements AfterContentInit {
         .findById(entityId)
         .pipe(catchError(() => of(null)))
         .subscribe(historyQuery => {
-          this.transformerChoices = (historyQuery?.northTransformers ?? []).map(t => ({
-            transformerId: t.transformer.id,
-            transformer: t.transformer,
-            options: t.options
-          }));
+          this.transformerChoices.set(
+            (historyQuery?.northTransformers ?? []).map(t => ({
+              transformerId: t.transformer.id,
+              transformer: t.transformer,
+              options: t.options
+            }))
+          );
         });
       return;
     }
@@ -229,12 +235,12 @@ class SouthItemTestComponent implements AfterContentInit {
     this.northConnectorService
       .list()
       .pipe(catchError(() => of([])))
-      .subscribe(norths => (this.norths = norths));
+      .subscribe(norths => this.norths.set(norths));
   }
 
   private onNorthChange(northId: string | null) {
-    this.form?.controls.transformerId.setValue(null);
-    this.transformerChoices = [];
+    this.form()?.controls.transformerId.setValue(null);
+    this.transformerChoices.set([]);
     if (!northId) {
       return;
     }
@@ -242,18 +248,20 @@ class SouthItemTestComponent implements AfterContentInit {
       .findById(northId)
       .pipe(catchError(() => of(null)))
       .subscribe(north => {
-        this.transformerChoices = (north?.transformers ?? []).map(t => ({
-          transformerId: t.transformer.id,
-          transformer: t.transformer,
-          options: t.options
-        }));
+        this.transformerChoices.set(
+          (north?.transformers ?? []).map(t => ({
+            transformerId: t.transformer.id,
+            transformer: t.transformer,
+            options: t.options
+          }))
+        );
       });
   }
 
   private onTransformerChange(transformerId: string | null) {
-    const choice = this.transformerChoices.find(c => c.transformerId === transformerId) ?? null;
-    this.selectedTransformer = choice?.transformer ?? null;
-    this.optionsEditMode = false;
+    const choice = this.transformerChoices().find(c => c.transformerId === transformerId) ?? null;
+    this.selectedTransformer.set(choice?.transformer ?? null);
+    this.optionsEditMode.set(false);
     // Rebuild the (editable, test-only) options form from the transformer's manifest, pre-filled
     // with the configured options.
     const optionsForm = this.fb.group({});
@@ -264,14 +272,15 @@ class SouthItemTestComponent implements AfterContentInit {
       addEnablingConditions(optionsForm, choice.transformer.manifest.enablingConditions);
       optionsForm.patchValue(choice.options);
     }
-    this.form?.setControl('options', optionsForm);
+    this.form()?.setControl('options', optionsForm);
   }
 
   private get testingSettings(): SouthConnectorItemTestingSettings {
-    const transformerId = this.form?.controls.transformerId.value ?? null;
+    const form = this.form();
+    const transformerId = form?.controls.transformerId.value ?? null;
     const transformer = transformerId ? { transformerId, options: this.currentOptions } : undefined;
 
-    if (this.supportsHistorySettings && this.form?.controls.history) {
+    if (this.supportsHistorySettings && form?.controls.history) {
       // The date-range selector always pushes a computed value up on init, so the form control
       // is only ever null in the instant before that happens; fall back to "last 10 minutes" just
       // in case a test is somehow triggered in that window.
@@ -279,21 +288,20 @@ class SouthItemTestComponent implements AfterContentInit {
         startTime: DateTime.now().minus({ minutes: 10 }).toUTC().toISO()!,
         endTime: DateTime.now().toUTC().toISO()!
       };
-      const liveRange =
-        this.dateRangeSelector()?.currentDateRange() ?? this.form.controls.history.controls.dateRange.value ?? fallbackRange;
+      const liveRange = this.dateRangeSelector()?.currentDateRange() ?? form.controls.history.controls.dateRange.value ?? fallbackRange;
       return { history: { startTime: liveRange.startTime, endTime: liveRange.endTime }, transformer };
     }
     return { history: undefined, transformer };
   }
 
   testItem() {
-    if (!this.form?.valid) {
+    if (!this.form()?.valid) {
       return;
     }
-    this.errorMessage = null;
-    this.infoMessage = null;
-    this.isTestRunning = true;
-    this.optionsEditMode = false;
+    this.errorMessage.set(null);
+    this.infoMessage.set(null);
+    this.isTestRunning.set(true);
+    this.optionsEditMode.set(false);
 
     const request = this.isHistory
       ? this.historyQueryService.testItem(
@@ -318,15 +326,15 @@ class SouthItemTestComponent implements AfterContentInit {
       .pipe(
         catchError((errorResponse: HttpErrorResponse) => {
           this.finishTest();
-          this.errorMessage = getMessageFromHttpErrorResponse(errorResponse);
-          this.testResult = null;
+          this.errorMessage.set(getMessageFromHttpErrorResponse(errorResponse));
+          this.testResult.set(null);
           return of(null);
         })
       )
       .subscribe(result => {
         this.finishTest();
         if (result) {
-          this.testResult = result;
+          this.testResult.set(result);
         }
       });
   }
@@ -334,11 +342,11 @@ class SouthItemTestComponent implements AfterContentInit {
   cancelTesting() {
     this.testSubscription?.unsubscribe();
     this.finishTest();
-    this.infoMessage = this.translate.instant('south.test-item.status-message.cancel');
+    this.infoMessage.set(this.translate.instant('south.test-item.status-message.cancel'));
   }
 
   private finishTest() {
-    this.isTestRunning = false;
+    this.isTestRunning.set(false);
     this.testSubscription = null;
   }
 }

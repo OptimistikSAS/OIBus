@@ -1,5 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, inject, input, linkedSignal, NgZone } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, linkedSignal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -23,7 +23,6 @@ import { NotificationService } from '../../../shared/notification.service';
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, NgbTooltip, TranslatePipe]
 })
 export class SouthMetricsComponent {
-  private zone = inject(NgZone);
   private router = inject(Router);
   private southService = inject(SouthConnectorService);
   private notificationService = inject(NotificationService);
@@ -45,16 +44,12 @@ export class SouthMetricsComponent {
   }
 
   resetMetrics() {
-    this.zone.run(() => {
-      this.southService.resetMetrics(this.southConnector().id).subscribe(() => {
-        this.notificationService.success('south.monitoring.metrics-reset');
-      });
+    this.southService.resetMetrics(this.southConnector().id).subscribe(() => {
+      this.notificationService.success('south.monitoring.metrics-reset');
     });
   }
 
   navigateToDisplay() {
-    this.zone.run(() => {
-      this.router.navigate(['/south', this.southConnector().id]);
-    });
+    this.router.navigate(['/south', this.southConnector().id]);
   }
 }

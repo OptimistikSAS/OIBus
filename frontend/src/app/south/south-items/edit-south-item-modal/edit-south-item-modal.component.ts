@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -65,6 +65,7 @@ class EditSouthItemModalComponent {
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
 
   mode: 'create' | 'edit' | 'copy' = 'create';
   /** True when opened from south-detail (saves directly to API); false when opened from edit-south (changes are applied in-memory). */
@@ -531,6 +532,8 @@ class EditSouthItemModalComponent {
         this.form!.controls.groupId.setValue(groupResult.id);
         this.previousGroupId = groupResult.id;
         this.applySyncLogicWhenSelectingGroup(groupResult, wasUnassigned);
+        // groups is shared by reference with the opener, so it is mutated in place
+        this.cdr.markForCheck();
       });
   }
 
@@ -559,6 +562,7 @@ class EditSouthItemModalComponent {
           // values without touching the item's current sync-with-group setting.
           this.applySyncLogicWhenSelectingGroup(groupResult, false);
         }
+        this.cdr.markForCheck();
       });
   }
 
@@ -569,6 +573,7 @@ class EditSouthItemModalComponent {
       if (this.form!.controls.groupId.value === group.id) {
         this.form!.controls.groupId.setValue(null);
       }
+      this.cdr.markForCheck();
     });
   }
 
