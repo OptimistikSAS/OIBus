@@ -33,6 +33,10 @@ const LEVEL_FORMAT: Record<string, 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'
   '50': 'ERROR'
 };
 const LOGS_OIANALYTICS_ENDPOINT = '/api/oianalytics/oibus/logs';
+const SEND_TIMEOUT_MS = 30_000;
+// thread-stream gives the worker 10s to close (and blocks the main thread meanwhile) before failing with
+// "end() took too long": the last send must give up well before that when OIAnalytics is unreachable
+const FINAL_SEND_TIMEOUT_MS = 5_000;
 
 const SCOPE_TYPE_FORMAT: Record<ScopeType, 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL'> = {
   south: 'SOUTH',
@@ -79,7 +83,7 @@ class OianalyticsTransport {
   /**
    * Method used to send the log to OIAnalytics
    */
-  sendOIALogs = async (): Promise<void> => {
+  sendOIALogs = async (timeout = SEND_TIMEOUT_MS): Promise<void> => {
     const url = getUrl(LOGS_OIANALYTICS_ENDPOINT, this.options.registrationSettings.host, {
       useApiGateway: this.options.registrationSettings.useApiGateway,
       apiGatewayBaseEndpoint: this.options.registrationSettings.apiGatewayBaseEndpoint
@@ -87,7 +91,7 @@ class OianalyticsTransport {
     const dataBuffer = JSON.stringify(this.batchLogs);
     this.batchLogs = [];
 
-    const httpOptions = await buildHttpOptions('POST', true, this.options.registrationSettings, null, 30000, null);
+    const httpOptions = await buildHttpOptions('POST', true, this.options.registrationSettings, null, timeout, null);
     httpOptions.body = dataBuffer;
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
 
@@ -153,7 +157,8 @@ class OianalyticsTransport {
       clearInterval(this.sendOIALogsInterval);
       this.sendOIALogsInterval = null;
     }
-    await this.sendOIALogs();
+    if (this.batchLogs.length === 0) return;
+    await this.sendOIALogs(FINAL_SEND_TIMEOUT_MS);
   };
 }
 
