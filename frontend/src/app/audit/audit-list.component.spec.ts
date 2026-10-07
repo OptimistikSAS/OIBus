@@ -87,6 +87,7 @@ describe('AuditListComponent', () => {
 
   beforeEach(() => {
     auditService = createMock(AuditService);
+    auditService.search.mockReturnValue(of(emptyAuditPage));
     modalService = createMock(ModalService);
     pageLoader = createMock(PageLoader);
     pageLoads$ = new BehaviorSubject<number>(0);

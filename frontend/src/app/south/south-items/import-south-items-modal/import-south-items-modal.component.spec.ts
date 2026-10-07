@@ -1,149 +1,145 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { Observable, of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { ImportSouthItemsModalComponent } from './import-south-items-modal.component';
+import { ImportSouthItemsModalComponent, SouthItemsCheckResult } from './import-south-items-modal.component';
 
-const manifest = testData.south.manifest;
+type CheckFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) => Observable<SouthItemsCheckResult>;
 
 class ImportSouthItemsModalComponentTester {
   readonly fixture = TestBed.createComponent(ImportSouthItemsModalComponent);
-  readonly component = this.fixture.componentInstance;
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly saveButton = this.root.getByCss('#save-button');
-  readonly cancelButton = this.root.getByCss('#cancel-button');
+  readonly importButton = this.root.getByRole('button', { name: 'Import' });
+  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
+  readonly fileInput = this.root.getByCss('#file');
+  readonly delimiter = this.root.getByLabelText('Delimiter');
+  readonly eraseExisting = this.root.getByLabelText('Erase existing elements');
+  readonly formatError = this.root.getByRole('alert').filter({ hasText: 'CSV Format Error' });
+  readonly checkError = this.root.getByRole('alert').filter({ hasText: 'Error checking file' });
+  readonly validItems = this.root.getByCss('table').filter({ hasText: 'Group' }).getByCss('tbody tr');
+  readonly invalidItems = this.root.getByCss('table').filter({ hasText: 'Error' }).getByCss('tbody tr');
+
+  constructor(checkFn: CheckFn, options: { expectedHeaders?: Array<string>; showEraseOption?: boolean } = {}) {
+    this.fixture.componentInstance.prepare(
+      testData.south.manifest,
+      options.expectedHeaders ?? [],
+      [],
+      [],
+      false,
+      options.showEraseOption ?? true,
+      checkFn
+    );
+  }
 }
 
-const createZonedFile = (content: string, filename = 'test.csv'): File => {
-  const blob = new Blob([content], { type: 'text/csv' });
-  const file = new File([blob], filename, { type: 'text/csv' });
-  vi.spyOn(file, 'text').mockResolvedValue(content);
-  return file;
-};
+const csvFile = (content: string): File => new File([content], 'test.csv', { type: 'text/csv' });
+const validCsv = csvFile('name,enabled\ntest,true');
 
 describe('ImportSouthItemsModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
-  let tester: ImportSouthItemsModalComponentTester;
+  let checkFn: Mock<CheckFn>;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
+    checkFn = vi.fn<CheckFn>().mockReturnValue(of({ items: [testData.south.itemCommand], errors: [] }));
 
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: activeModal }]
     });
-    tester = new ImportSouthItemsModalComponentTester();
   });
 
-  test('should render after prepare', async () => {
-    tester.component.prepare(manifest, [], [], [], false, true, () => of({ items: [], errors: [] }));
-    tester.fixture.detectChanges();
-
-    await expect.element(tester.root.getByCss('form, .modal-body')).toBeInTheDocument();
-  });
-
-  test('should cancel', async () => {
-    tester.component.prepare(manifest, [], [], [], false, true, () => of({ items: [], errors: [] }));
-    tester.fixture.detectChanges();
+  test('should dismiss on cancel', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn);
 
     await tester.cancelButton.click();
 
     expect(activeModal.dismiss).toHaveBeenCalled();
   });
 
-  test('should automatically run the check when a valid file is selected', async () => {
-    const checkResult = {
-      items: [{ name: 'item1', settings: {} } as any],
-      errors: []
-    };
-    const checkFn = vi.fn().mockReturnValue(of(checkResult));
-    tester.component.prepare(manifest, [], [], [], false, true, checkFn);
-    tester.fixture.detectChanges();
+  test('should check the selected file and list the items to create', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn);
+    await expect.element(tester.importButton).toBeDisabled();
 
-    const file = createZonedFile('name,enabled\ntest,true');
-    await tester.component.onFileSelected(file);
-    tester.fixture.detectChanges();
+    await tester.fileInput.upload(validCsv);
 
-    expect(checkFn).toHaveBeenCalledWith(file, ',', false);
-    expect(tester.component.newItemList).toEqual(checkResult.items);
+    await expect.element(tester.validItems).toHaveLength(1);
+    await expect.element(tester.validItems.nth(0)).toMatchTextContent(testData.south.itemCommand.name);
+    await expect.element(tester.importButton).toBeEnabled();
+    expect(checkFn).toHaveBeenCalledWith(expect.objectContaining({ name: 'test.csv' }), ',', false);
   });
 
-  test('should disable import until the check found at least one valid item', async () => {
-    const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [{ item: { name: 'bad' }, error: 'nope' }] }));
-    tester.component.prepare(manifest, [], [], [], false, true, checkFn);
-    tester.fixture.detectChanges();
+  test('should list the invalid items and disable import when no item is valid', async () => {
+    checkFn.mockReturnValue(of({ items: [], errors: [{ item: { name: 'bad item' }, error: 'invalid scan mode' }] }));
+    const tester = new ImportSouthItemsModalComponentTester(checkFn);
 
-    const file = createZonedFile('name,enabled\ntest,true');
-    await tester.component.onFileSelected(file);
-    tester.fixture.detectChanges();
+    await tester.fileInput.upload(validCsv);
 
-    expect(tester.component.canImport).toBe(false);
-    await expect.element(tester.saveButton).toBeDisabled();
+    await expect.element(tester.invalidItems).toHaveLength(1);
+    await expect.element(tester.invalidItems.nth(0)).toMatchTextContent('bad item invalid scan mode');
+    await expect.element(tester.importButton).toBeDisabled();
   });
 
-  test('should enable import once the check returns valid items', async () => {
-    const checkFn = vi.fn().mockReturnValue(of({ items: [{ name: 'item1', settings: {} } as any], errors: [] }));
-    tester.component.prepare(manifest, [], [], [], false, true, checkFn);
-    tester.fixture.detectChanges();
+  test('should show an error from the backend check', async () => {
+    checkFn.mockReturnValue(throwError(() => ({ error: { message: 'server error' } })));
+    const tester = new ImportSouthItemsModalComponentTester(checkFn);
 
-    const file = createZonedFile('name,enabled\ntest,true');
-    await tester.component.onFileSelected(file);
-    tester.fixture.detectChanges();
+    await tester.fileInput.upload(validCsv);
 
-    expect(tester.component.canImport).toBe(true);
-    await expect.element(tester.saveButton).not.toBeDisabled();
+    await expect.element(tester.checkError).toMatchTextContent('Error checking file: server error');
+    await expect.element(tester.validItems).not.toBeInTheDocument();
+    await expect.element(tester.importButton).toBeDisabled();
   });
 
-  test('should surface an error from the backend check', async () => {
-    const checkFn = vi.fn().mockReturnValue(throwError(() => ({ error: { message: 'server error' } })));
-    tester.component.prepare(manifest, [], [], [], false, true, checkFn);
-    tester.fixture.detectChanges();
+  test('should not call the backend when the file headers are invalid', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn, { expectedHeaders: ['name', 'enabled', 'settings_regex'] });
 
-    const file = createZonedFile('name,enabled\ntest,true');
-    await tester.component.onFileSelected(file);
-    tester.fixture.detectChanges();
+    await tester.fileInput.upload(validCsv);
 
-    expect(tester.component.checkError).toBe('server error');
-    expect(tester.component.newItemList).toEqual([]);
+    await expect.element(tester.formatError).toBeInTheDocument();
+    expect(checkFn).not.toHaveBeenCalled();
   });
 
-  test('should re-run the check when the erase existing toggle changes', async () => {
-    const checkFn = vi.fn().mockReturnValue(of({ items: [{ name: 'item1', settings: {} } as any], errors: [] }));
-    tester.component.prepare(manifest, [], [], [], false, true, checkFn);
-    tester.fixture.detectChanges();
+  test('should check the file again with the selected delimiter', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn);
+    await tester.fileInput.upload(validCsv);
+    await expect.element(tester.validItems).toHaveLength(1);
 
-    const file = createZonedFile('name,enabled\ntest,true');
-    await tester.component.onFileSelected(file);
-    tester.component.form.controls.eraseExisting.setValue(true);
-    await tester.component.onEraseExistingChange();
+    await tester.delimiter.selectOptions('Semi colon ;');
 
-    expect(checkFn).toHaveBeenLastCalledWith(file, ',', true);
+    await vi.waitFor(() => expect(checkFn).toHaveBeenLastCalledWith(expect.any(File), ';', false));
   });
 
-  test('should close with the checked items and erase flag on submit', async () => {
-    const checkResult = { items: [{ name: 'item1', settings: {} } as any], errors: [] };
-    tester.component.prepare(manifest, [], [], [], false, true, () => of(checkResult));
-    tester.fixture.detectChanges();
+  test('should check the file again when the erase existing toggle changes', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn);
+    await tester.fileInput.upload(validCsv);
+    await expect.element(tester.validItems).toHaveLength(1);
 
-    const file = createZonedFile('name,enabled\ntest,true');
-    await tester.component.onFileSelected(file);
-    tester.component.form.controls.eraseExisting.setValue(true);
-    tester.fixture.detectChanges();
+    await tester.eraseExisting.click();
 
-    await tester.saveButton.click();
-
-    expect(activeModal.close).toHaveBeenCalledWith({ items: checkResult.items, eraseExisting: true });
+    await vi.waitFor(() => expect(checkFn).toHaveBeenLastCalledWith(expect.any(File), ',', true));
   });
 
-  test('should hide the erase existing toggle when showEraseOption is false', async () => {
-    tester.component.prepare(manifest, [], [], [], false, false, () => of({ items: [], errors: [] }));
-    tester.fixture.detectChanges();
+  test('should close with the checked items and the erase flag on import', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn);
+    await tester.fileInput.upload(validCsv);
+    await tester.eraseExisting.click();
+    await expect.element(tester.importButton).toBeEnabled();
 
-    await expect.element(tester.root.getByCss('#erase-existing')).not.toBeInTheDocument();
+    await tester.importButton.click();
+
+    expect(activeModal.close).toHaveBeenCalledWith({ items: [testData.south.itemCommand], eraseExisting: true });
+  });
+
+  test('should hide the erase existing toggle when the option is disabled', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn, { showEraseOption: false });
+
+    await expect.element(tester.delimiter).toBeInTheDocument();
+    await expect.element(tester.eraseExisting).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'engine.scan-mode.title-' + mode"></h4>
+  <h4 class="modal-title" [translate]="'engine.scan-mode.title-' + mode()"></h4>
 </div>
 <div class="modal-body">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
@@ -48,7 +48,7 @@
         <label class="form-label" for="cron" translate="engine.scan-mode.cron"></label>
         <input formControlName="cron" id="cron" class="form-control font-monospace" />
         <val-errors controlName="cron" />
-        @if (cronValidationResponse) {
+        @if (cronValidationResponse()) {
           <div class="mt-1">
             <label translate="engine.scan-mode.cron-meaning"></label>
             <div>{{ humanReadableCron }}</div>
@@ -178,12 +178,12 @@
           <val-errors [control]="form.controls.activationWindow" />
         </div>
 
-        @if (persistedTimezone && persistedTimezone !== timezone) {
+        @if (persistedTimezone() && persistedTimezone() !== timezone) {
           <div
             class="alert alert-warning py-2 px-3 mb-3"
             id="timezone-changed-warning"
             translate="engine.scan-mode.timezone-changed-warning"
-            [translateParams]="{ persisted: persistedTimezone, current: timezone }"
+            [translateParams]="{ persisted: persistedTimezone(), current: timezone }"
           ></div>
         }
 
