@@ -36,6 +36,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { findItemIndex } from '../../shared/find-item-index';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -411,7 +412,7 @@ export class HistoryQueryDetailComponent {
       }
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    const tableIndex = this.historyQuery!.items.findIndex(i => i.id === historyQueryItem.id || i.name === historyQueryItem.name);
+    const tableIndex = findItemIndex(this.historyQuery!.items, historyQueryItem);
     component.prepareForEdition(
       this.historyQuery!.items,
       historyQueryItem,

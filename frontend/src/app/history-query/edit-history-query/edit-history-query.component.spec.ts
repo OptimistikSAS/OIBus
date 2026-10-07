@@ -105,6 +105,41 @@ describe('EditHistoryQueryComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  test('editItem should target the clicked row when several unsaved items share an empty id', async () => {
+    const { historyQueryService, modalService } = configure({
+      paramMap: of({ get: (k: string) => (k === 'historyQueryId' ? 'id1' : null) }),
+      queryParamMap: of({ get: () => null, getAll: () => [] }),
+      snapshot: { queryParamMap: { get: () => null, getAll: () => [] } }
+    });
+    historyQueryService.findById.mockReturnValue(of(cloneHistoryQuery()));
+
+    const fixture = TestBed.createComponent(EditHistoryQueryComponent);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    const savedItems = [...component.inMemoryItems];
+    const firstUnsaved = { ...savedItems[0], id: '', name: 'unsaved-1' };
+    const secondUnsaved = { ...savedItems[0], id: '', name: 'unsaved-2' };
+    component.inMemoryItems = [...savedItems, firstUnsaved, secondUnsaved];
+    component.filteredItems = component.filter();
+    component.changePage(0);
+    fixture.detectChanges();
+
+    const editedCommand = { ...secondUnsaved, name: 'unsaved-2-edited' };
+    const prepareForEdition = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepareForEdition }, result: of(editedCommand) } as any);
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await root
+      .getByCss('.edit-south-item')
+      .nth(savedItems.length + 1)
+      .click();
+
+    expect(prepareForEdition.mock.calls[0][1]).toBe(secondUnsaved);
+    expect(prepareForEdition.mock.calls[0][6]).toBe(savedItems.length + 1);
+    expect(component.inMemoryItems.map(item => item.name)).toEqual([...savedItems.map(item => item.name), 'unsaved-1', 'unsaved-2-edited']);
+  });
+
   test('should show the explore button when the south manifest supports exploration', async () => {
     const { historyQueryService } = configure({
       paramMap: of({ get: (k: string) => (k === 'historyQueryId' ? 'id1' : null) }),

@@ -44,6 +44,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { findItemIndex } from '../../shared/find-item-index';
 import { addAttributeToForm, addEnablingConditions } from '../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
@@ -685,7 +686,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.directSave = false;
     component.inMemoryTransformers = this.inMemoryTransformersWithOptions;
-    const tableIndex = this.inMemoryItems.findIndex(i => i.id === item.id || i.name === item.name);
+    const tableIndex = findItemIndex(this.inMemoryItems, item);
     component.prepareForEdition(
       this.inMemoryItems,
       item,
