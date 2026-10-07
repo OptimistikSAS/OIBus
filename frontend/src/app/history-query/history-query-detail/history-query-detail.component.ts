@@ -49,7 +49,7 @@ import { ObservableState } from '../../shared/save-button/save-button.component'
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
-import { emptyPage } from '../../shared/test-utils';
+import { emptyPage } from '../../shared/utils/page.utils';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';

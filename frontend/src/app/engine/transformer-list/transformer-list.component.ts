@@ -17,7 +17,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { emptyPage } from '../../shared/test-utils';
+import { emptyPage } from '../../shared/utils/page.utils';
 import { EditTransformerModalComponent } from './edit-transformer-modal/edit-transformer-modal.component';
 
 type TransformerSortField = 'name' | 'createdAt' | 'updatedAt' | null;

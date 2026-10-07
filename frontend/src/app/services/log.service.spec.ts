@@ -7,7 +7,7 @@ import { LogDTO } from '@oibus/shared/api/logs.model';
 import { Page } from '@oibus/shared/common/types';
 import { Group, Item, Scope } from '@oibus/shared/domain/logs.model';
 
-import { toPage } from '../shared/test-utils';
+import { toPage } from '../shared/utils/page.utils';
 import { LogService } from './log.service';
 
 describe('LogService', () => {
