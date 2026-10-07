@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal, viewChild } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -178,7 +178,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   // The inline, read-only explore tree shown alongside the SQL query editor (SQLite only, for now -
   // see showSqlExploreTree) - undefined until that branch of the template actually renders it.
-  @ViewChild(ExploreTreeComponent) private inlineExploreTree?: ExploreTreeComponent;
+  private readonly inlineExploreTree = viewChild(ExploreTreeComponent);
 
   mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
@@ -674,7 +674,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     if (this.showSqlExploreTree) {
-      this.inlineExploreTree?.prepare(this.southId, this.southSettings, this.currentManifest.id);
+      this.inlineExploreTree()?.prepare(this.southId, this.southSettings, this.currentManifest.id);
     }
   }
 

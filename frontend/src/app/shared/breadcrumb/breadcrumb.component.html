@@ -1,9 +1,9 @@
 @if (breadcrumbs().length > 0) {
   <nav class="oib-breadcrumb" aria-label="breadcrumb">
     <ol class="breadcrumb">
-      @for (breadcrumb of breadcrumbs(); track breadcrumb; let last = $last) {
-        <li class="breadcrumb-item" [class.active]="last">
-          @if (breadcrumb.route && !last) {
+      @for (breadcrumb of breadcrumbs(); track breadcrumb) {
+        <li class="breadcrumb-item" [class.active]="$last">
+          @if (breadcrumb.route && !$last) {
             <a [routerLink]="breadcrumb.route">
               @if (breadcrumb.translateKey) {
                 <span [translate]="breadcrumb.label"></span>

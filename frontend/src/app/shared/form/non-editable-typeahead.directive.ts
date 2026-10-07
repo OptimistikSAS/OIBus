@@ -1,6 +1,6 @@
 /* eslint-disable @angular-eslint/directive-selector */
 
-import { Directive, ElementRef, HostListener, inject } from '@angular/core';
+import { Directive, ElementRef, inject } from '@angular/core';
 import { NgControl } from '@angular/forms';
 
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -11,14 +11,15 @@ import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
  * a valid value).
  */
 @Directive({
-  selector: '[ngbTypeahead]'
+  selector: '[ngbTypeahead]',
+  host: {
+    '(blur)': 'onBlur()'
+  }
 })
 export class NonEditableTypeaheadDirective {
   private ngControl = inject(NgControl);
   private elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
   private typeahead = inject(NgbTypeahead);
-
-  @HostListener('blur')
   onBlur() {
     if (!this.ngControl.value && !this.typeahead.editable) {
       this.elementRef.nativeElement.value = '';
