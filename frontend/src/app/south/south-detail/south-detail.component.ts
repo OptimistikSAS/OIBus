@@ -36,6 +36,7 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { findItemIndex } from '../../shared/find-item-index';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -358,7 +359,7 @@ export class SouthDetailComponent {
     });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
 
-    const tableIndex = this.southConnector!.items.findIndex(i => i.id === item.id || i.name === item.name);
+    const tableIndex = findItemIndex(this.southConnector!.items, item);
     component.prepareForEdition(
       this.southConnector!.items,
       this.scanModes,
