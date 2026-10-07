@@ -239,6 +239,8 @@ class LoggerService {
 
     // Separate transport reference so stop() can flush and end the workers cleanly.
     const transport = pino.transport({ targets });
+    // Without a listener, a worker failure (e.g. end() timing out on stop) is an unhandled 'error' event that kills OIBus
+    transport.on('error', (error: Error) => console.error(`Logger transport error: ${error.message}`));
     this._transport = transport;
     this._rawLogger = pino(
       {
