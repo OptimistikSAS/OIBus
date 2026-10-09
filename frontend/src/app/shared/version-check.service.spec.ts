@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { OIBusInfo } from '@oibus/shared/api/engine.model';
@@ -42,10 +42,6 @@ describe('VersionCheckService', () => {
     vi.useRealTimers();
   });
 
-  test('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-
   test('should fetch initial version on start monitoring', () => {
     vi.useFakeTimers();
     engineService.getInfo.mockReturnValue(of(mockOIBusInfo));
@@ -54,16 +50,10 @@ describe('VersionCheckService', () => {
     expect(engineService.getInfo).toHaveBeenCalled();
   });
 
-  test('should detect version change', () => {
+  test('should detect version change', async () => {
     vi.useFakeTimers();
     engineService.getInfo.mockReturnValue(of(mockOIBusInfo));
-
-    let versionChangeDetected = false;
-    service.versionChange$.subscribe(change => {
-      expect(change.oldVersion).toBe('1.0.0');
-      expect(change.newVersion).toBe('2.0.0');
-      versionChangeDetected = true;
-    });
+    const versionChange = firstValueFrom(service.versionChange$);
 
     service.startMonitoring();
     vi.advanceTimersByTime(0);
@@ -71,7 +61,22 @@ describe('VersionCheckService', () => {
     engineService.fetchInfo.mockReturnValue(of({ ...mockOIBusInfo, version: '2.0.0' }));
     vi.advanceTimersByTime(10000);
 
-    expect(versionChangeDetected).toBe(true);
+    await expect(versionChange).resolves.toEqual({ oldVersion: '1.0.0', newVersion: '2.0.0' });
+  });
+
+  test('should ignore failed version checks', async () => {
+    vi.useFakeTimers();
+    engineService.getInfo.mockReturnValue(of(mockOIBusInfo));
+    const versionChange = firstValueFrom(service.versionChange$);
+    service.startMonitoring();
+
+    engineService.fetchInfo.mockReturnValue(throwError(() => new Error('offline')));
+    vi.advanceTimersByTime(10000);
+    engineService.fetchInfo.mockReturnValue(of({ ...mockOIBusInfo, version: '2.0.0' }));
+    vi.advanceTimersByTime(10000);
+
+    await expect(versionChange).resolves.toEqual({ oldVersion: '1.0.0', newVersion: '2.0.0' });
+    expect(engineService.fetchInfo).toHaveBeenCalledTimes(2);
   });
 
   test('should not emit if version has not changed', () => {
@@ -124,7 +129,7 @@ describe('VersionCheckService', () => {
   test('should not poll while the page is hidden', () => {
     vi.useFakeTimers();
     let visibilityState: DocumentVisibilityState = 'visible';
-    const visibilitySpy = vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibilityState);
+    vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibilityState);
     engineService.getInfo.mockReturnValue(of(mockOIBusInfo));
     engineService.fetchInfo.mockReturnValue(of(mockOIBusInfo));
     service.startMonitoring();
@@ -138,7 +143,6 @@ describe('VersionCheckService', () => {
     document.dispatchEvent(new Event('visibilitychange'));
     vi.advanceTimersByTime(10_000);
     expect(engineService.fetchInfo).toHaveBeenCalledTimes(1);
-    visibilitySpy.mockRestore();
   });
 
   test('should not start monitoring twice', () => {

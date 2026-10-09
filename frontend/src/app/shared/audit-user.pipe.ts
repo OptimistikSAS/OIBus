@@ -16,7 +16,7 @@ const TRANSLATED_USER_IDS = ['oianalytics', 'system'];
   pure: false
 })
 export class AuditUserPipe implements PipeTransform {
-  private translateService = inject(TranslateService);
+  private readonly translateService = inject(TranslateService);
 
   transform(user: UserInfo | null | undefined): string {
     if (!user) {

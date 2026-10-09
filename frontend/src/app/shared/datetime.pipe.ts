@@ -74,8 +74,8 @@ export function formatDateTime(
   name: 'datetime'
 })
 export class DatetimePipe implements PipeTransform {
-  private locale = inject(LOCALE_ID);
-  private currentUserService = inject(CurrentUserService);
+  private readonly locale = inject(LOCALE_ID);
+  private readonly currentUserService = inject(CurrentUserService);
 
   transform(value: string | Date | number | DateTime, format: FriendlyFormat | string = 'mediumDate', timezone?: Timezone): string | null {
     return formatDateTime(value, this.locale, timezone ?? this.currentUserService.getTimezone(), format);

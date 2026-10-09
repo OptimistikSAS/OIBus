@@ -76,3 +76,19 @@ td:first-child {
   justify-content: center;
   min-width: fit-content;
 }
+
+.select-column {
+  width: 50px;
+}
+
+.sort-button {
+  background: none;
+  border: none;
+  font-weight: bold;
+}
+
+.file-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}

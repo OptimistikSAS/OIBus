@@ -16,8 +16,8 @@ import { TranslateService } from '@ngx-translate/core';
   name: 'duration'
 })
 export class DurationPipe implements PipeTransform {
-  private translateService = inject(TranslateService);
-  private locale = inject(LOCALE_ID);
+  private readonly translateService = inject(TranslateService);
+  private readonly locale = inject(LOCALE_ID);
 
   transform(value: number, style: 'long' | 'short' = 'long', type?: undefined | 'hourMinute'): string {
     if (value == null) {

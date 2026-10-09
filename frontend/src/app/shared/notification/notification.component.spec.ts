@@ -10,7 +10,7 @@ import { NotificationComponent } from './notification.component';
 class NotificationComponentTester {
   readonly fixture = TestBed.createComponent(NotificationComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly toasts = this.root.getByCss('ngb-toast');
+  readonly toasts = this.root.getByRole('alert');
 }
 
 describe('NotificationComponent', () => {
@@ -18,10 +18,10 @@ describe('NotificationComponent', () => {
   let notificationService: NotificationService;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     TestBed.configureTestingModule({ providers: [provideI18nTesting()] });
     tester = new NotificationComponentTester();
     notificationService = TestBed.inject(NotificationService);
-    tester.fixture.detectChanges();
   });
 
   afterEach(() => {
@@ -33,67 +33,50 @@ describe('NotificationComponent', () => {
   });
 
   test('should display an i18ned success message and hide it after some seconds', async () => {
-    vi.useFakeTimers();
-
     notificationService.success('common.save');
-    tester.fixture.detectChanges();
     await vi.advanceTimersByTimeAsync(2500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-success');
-    await expect.element(tester.toasts.nth(0)).toMatchTextContent('Save');
+    await expect.element(tester.toasts.nth(0)).toHaveTextContent('Save');
 
     notificationService.success('common.cancel');
-    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(2);
 
     await vi.advanceTimersByTimeAsync(3000);
-    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(1);
+    await expect.element(tester.toasts.nth(0)).toHaveTextContent('Cancel');
 
     await vi.advanceTimersByTimeAsync(5000);
-    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
   });
 
   test('should display an i18ned error message and hide it after some seconds', async () => {
-    vi.useFakeTimers();
-
     notificationService.error('common.save');
-    tester.fixture.detectChanges();
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-danger');
-    await expect.element(tester.toasts.nth(0)).toMatchTextContent('Save');
+    await expect.element(tester.toasts.nth(0)).toHaveTextContent('Save');
+
     await vi.advanceTimersByTimeAsync(5000);
-    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
   });
 
   test('should display a non-i18ned error message and hide it after some seconds', async () => {
-    vi.useFakeTimers();
-
     notificationService.errorMessage('common.save');
-    tester.fixture.detectChanges();
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-danger');
-    await expect.element(tester.toasts.nth(0)).toMatchTextContent('common.save');
+    await expect.element(tester.toasts.nth(0)).toHaveTextContent('common.save');
+
     await vi.advanceTimersByTimeAsync(5000);
-    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
   });
 
   test('should display a success message with parameters', async () => {
-    vi.useFakeTimers();
-
-    notificationService.success('engine.updated');
-    tester.fixture.detectChanges();
+    notificationService.success('common.forbidden', { url: '/south' });
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-success');
-    await expect.element(tester.toasts.nth(0)).toMatchTextContent('Engine settings updated');
-    await vi.advanceTimersByTimeAsync(5000);
-    tester.fixture.detectChanges();
-    await expect.element(tester.toasts).toHaveLength(0);
+    await expect.element(tester.toasts.nth(0)).toHaveTextContent(`You don't have the access rights for this entity. /south`);
   });
 });

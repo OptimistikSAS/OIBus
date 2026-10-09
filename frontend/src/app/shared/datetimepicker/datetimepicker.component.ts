@@ -8,11 +8,12 @@ import {
   forwardRef,
   inject,
   input,
-  OnInit,
   TemplateRef
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ControlValueAccessor,
+  FormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   NonNullableFormBuilder,
@@ -29,6 +30,13 @@ import { Instant, LocalDate, LocalTime } from '@oibus/shared/common/types';
 
 import { CurrentUserService } from '../current-user.service';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
+
+let nextId = 0;
+
+/** The context of the custom date and time templates: the form control bound to the date or time picker */
+interface PickerTemplateContext {
+  $implicit: FormControl<string | null>;
+}
 
 /**
  * Component combining a ng-bootstrap input date picker and a ng-bootstrap time picker, which can be used
@@ -76,33 +84,49 @@ import { DatepickerContainerComponent } from '../datepicker-container/datepicker
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => DatetimepickerComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => DatetimepickerComponent), multi: true }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgTemplateOutlet, DatepickerContainerComponent, NgbInputDatepicker, ReactiveFormsModule, NgbTimepicker, TranslateDirective]
 })
-export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
-  private fb = inject(NonNullableFormBuilder);
-  private element = inject<ElementRef<HTMLElement>>(ElementRef);
-  private currentUserService = inject(CurrentUserService);
+export class DatetimepickerComponent implements AfterViewInit, ControlValueAccessor, Validator {
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly currentUserService = inject(CurrentUserService);
 
-  readonly dateTemplate = contentChild<TemplateRef<any>>('date');
+  readonly dateTemplate = contentChild<TemplateRef<PickerTemplateContext>>('date');
 
-  readonly timeTemplate = contentChild<TemplateRef<any>>('time');
+  readonly timeTemplate = contentChild<TemplateRef<PickerTemplateContext>>('time');
 
-  label = input('');
-  displaySeconds = input(false);
-  timezone = input(this.currentUserService.getTimezone());
+  readonly label = input('');
+  readonly displaySeconds = input(false);
+  readonly timezone = input(this.currentUserService.getTimezone());
 
-  dateCtrl = this.fb.control<string | null>(null);
-  timeCtrl = this.fb.control<string | null>(null);
+  /** id of the default date input, labelled by the label */
+  readonly dateInputId = `oib-datetimepicker-date-${nextId++}`;
 
-  private onChange: (value: any) => void = () => {};
+  readonly dateCtrl = this.fb.control<string | null>(null);
+  readonly timeCtrl = this.fb.control<string | null>(null);
+
+  private onChange: (value: Instant | null) => void = () => {};
   private onTouched: () => void = () => {};
 
-  registerOnChange(fn: any): void {
+  constructor() {
+    combineLatest([this.dateCtrl.valueChanges, this.timeCtrl.valueChanges])
+      .pipe(takeUntilDestroyed())
+      .subscribe(([date, time]: [LocalDate | null, LocalTime | null]) => {
+        if (this.dateCtrl.valid && this.timeCtrl.valid && date && time) {
+          const local = DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss', { zone: this.timezone() });
+          this.onChange(local.toUTC().toISO());
+        } else {
+          this.onChange(null);
+        }
+      });
+  }
+
+  registerOnChange(fn: (value: Instant | null) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 
@@ -141,19 +165,6 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
       }
     }
     return null;
-  }
-
-  ngOnInit() {
-    combineLatest([this.dateCtrl.valueChanges, this.timeCtrl.valueChanges]).subscribe(
-      ([date, time]: [LocalDate | null, LocalTime | null]) => {
-        if (this.dateCtrl.valid && this.timeCtrl.valid && date && time) {
-          const local = DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss', { zone: this.timezone() });
-          this.onChange(local.toUTC().toISO());
-        } else {
-          this.onChange(null);
-        }
-      }
-    );
   }
 
   ngAfterViewInit(): void {

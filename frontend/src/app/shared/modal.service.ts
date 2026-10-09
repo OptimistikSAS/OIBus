@@ -13,10 +13,10 @@ export interface ModalOptions extends NgbModalOptions {
 }
 
 export class Modal<T> {
-  private options: ModalOptions;
+  private readonly options: ModalOptions;
 
   constructor(
-    private ngbModalRef: NgbModalRef,
+    private readonly ngbModalRef: NgbModalRef,
     options?: ModalOptions
   ) {
     this.options = { errorOnClose: false, ...options };
@@ -39,7 +39,7 @@ export class Modal<T> {
 
 @Service()
 export class ModalService {
-  private ngbModal = inject(NgbModal);
+  private readonly ngbModal = inject(NgbModal);
 
   /**
    * Opens a modal containing an instance of the given component, and returns a `Modal` instance,

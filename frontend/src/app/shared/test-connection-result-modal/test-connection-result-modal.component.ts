@@ -1,7 +1,9 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
 
 import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
@@ -17,14 +19,14 @@ import { SouthConnectorService } from '../../services/south-connector.service';
   selector: 'oib-test-connection-result-modal',
   templateUrl: './test-connection-result-modal.component.html',
   styleUrl: './test-connection-result-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective]
 })
 export class TestConnectionResultModalComponent {
-  private modal = inject(NgbActiveModal);
-  private southConnectorService = inject(SouthConnectorService);
-  private northConnectorService = inject(NorthConnectorService);
-  protected historyQueryService = inject(HistoryQueryService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly historyQueryService = inject(HistoryQueryService);
 
   readonly type = signal<'north' | 'south' | null>(null);
   readonly loading = signal(false);
@@ -41,33 +43,20 @@ export class TestConnectionResultModalComponent {
     settingsToTest: SouthSettings | NorthSettings,
     connectorType: OIBusSouthType | OIBusNorthType
   ) {
-    this.type.set(type);
-    this.loading.set(true);
-    let obs;
-    if (type === 'south') {
-      obs = this.southConnectorService.testConnection(
-        connectorId || 'create',
-        settingsToTest as SouthSettings,
-        connectorType as OIBusSouthType
-      );
-    } else {
-      obs = this.northConnectorService.testConnection(
-        connectorId || 'create',
-        settingsToTest as NorthSettings,
-        connectorType as OIBusNorthType
-      );
-    }
-    obs.subscribe({
-      error: httpError => {
-        this.error.set(httpError.error.message);
-        this.loading.set(false);
-      },
-      next: (result: OIBusConnectionTestResult) => {
-        this.testResult.set(result);
-        this.success.set(true);
-        this.loading.set(false);
-      }
-    });
+    this.run(
+      type,
+      type === 'south'
+        ? this.southConnectorService.testConnection(
+            connectorId || 'create',
+            settingsToTest as SouthSettings,
+            connectorType as OIBusSouthType
+          )
+        : this.northConnectorService.testConnection(
+            connectorId || 'create',
+            settingsToTest as NorthSettings,
+            connectorType as OIBusNorthType
+          )
+    );
   }
 
   /**
@@ -80,30 +69,33 @@ export class TestConnectionResultModalComponent {
     connectorType: OIBusSouthType | OIBusNorthType,
     fromConnectorId: string | null = null
   ) {
+    this.run(
+      type,
+      type === 'south'
+        ? this.historyQueryService.testSouthConnection(
+            historyQueryId || 'create',
+            settingsToTest as SouthSettings,
+            connectorType as OIBusSouthType,
+            fromConnectorId
+          )
+        : this.historyQueryService.testNorthConnection(
+            historyQueryId || 'create',
+            settingsToTest as NorthSettings,
+            connectorType as OIBusNorthType,
+            fromConnectorId
+          )
+    );
+  }
+
+  private run(type: 'south' | 'north', test$: Observable<OIBusConnectionTestResult>) {
     this.type.set(type);
     this.loading.set(true);
-    let obs;
-    if (type === 'south') {
-      obs = this.historyQueryService.testSouthConnection(
-        historyQueryId || 'create',
-        settingsToTest as SouthSettings,
-        connectorType as OIBusSouthType,
-        fromConnectorId
-      );
-    } else {
-      obs = this.historyQueryService.testNorthConnection(
-        historyQueryId || 'create',
-        settingsToTest as NorthSettings,
-        connectorType as OIBusNorthType,
-        fromConnectorId
-      );
-    }
-    obs.subscribe({
-      error: (httpError: any) => {
+    test$.subscribe({
+      error: (httpError: HttpErrorResponse) => {
         this.error.set(httpError.error.message);
         this.loading.set(false);
       },
-      next: (result: OIBusConnectionTestResult) => {
+      next: result => {
         this.testResult.set(result);
         this.success.set(true);
         this.loading.set(false);

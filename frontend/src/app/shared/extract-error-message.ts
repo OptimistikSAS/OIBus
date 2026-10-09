@@ -5,6 +5,14 @@
  * generic HttpErrorResponse message.
  */
 export function extractErrorMessage(error: unknown): string {
-  const httpError = error as { error?: { message?: string; error?: string }; message?: string };
-  return httpError.error?.message || httpError.error?.error || httpError.message || 'Unknown error';
+  const body = isObject(error) ? error['error'] : null;
+  return stringProperty(body, 'message') || stringProperty(body, 'error') || stringProperty(error, 'message') || 'Unknown error';
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function stringProperty(value: unknown, key: string): string | null {
+  return isObject(value) && typeof value[key] === 'string' ? value[key] : null;
 }

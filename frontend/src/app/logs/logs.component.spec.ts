@@ -93,10 +93,8 @@ describe('LogsComponent', () => {
   beforeEach(() => {
     logService = createMock(LogService);
     logService.search.mockReturnValue(of(emptyLogPage));
-    pageLoader = createMock(PageLoader);
     pageLoads$ = new BehaviorSubject<number>(0);
-
-    pageLoader.pageLoads$ = pageLoads$.asObservable();
+    pageLoader = createMock(PageLoader, { pageLoads$: pageLoads$.asObservable() });
 
     TestBed.configureTestingModule({
       providers: [

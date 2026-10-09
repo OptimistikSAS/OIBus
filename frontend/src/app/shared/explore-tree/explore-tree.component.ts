@@ -1,5 +1,6 @@
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, input, OnDestroy, output, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, inject, input, OnDestroy, output, signal } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
@@ -14,13 +15,18 @@ import { DatetimePipe } from '../datetime.pipe';
 import { FileSizePipe } from '../file-size.pipe';
 
 interface ExploreTreeNode {
-  entry: SouthConnectorExploreEntry;
-  depth: number;
-  expanded: boolean;
-  loading: boolean;
-  loaded: boolean;
-  error: string | null;
-  children: Array<ExploreTreeNode>;
+  readonly entry: SouthConnectorExploreEntry;
+  /** ids of the entries from the root down to this node's entry */
+  readonly path: ReadonlyArray<string>;
+  readonly expanded: boolean;
+  readonly loading: boolean;
+  readonly loaded: boolean;
+  readonly error: string | null;
+  readonly children: ReadonlyArray<ExploreTreeNode>;
+}
+
+function errorMessage(httpError: HttpErrorResponse): string {
+  return httpError.error?.message ?? httpError.message;
 }
 
 /**
@@ -52,12 +58,14 @@ export interface SouthExploreApi {
   selector: 'oib-explore-tree',
   templateUrl: './explore-tree.component.html',
   styleUrl: './explore-tree.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '[style.--explore-tree-max-height]': 'maxHeight()'
+  },
   imports: [NgTemplateOutlet, KeyValuePipe, DatetimePipe, FileSizePipe, TranslateDirective]
 })
 export class ExploreTreeComponent implements OnDestroy {
-  private southConnectorService = inject(SouthConnectorService);
-  private changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly southConnectorService = inject(SouthConnectorService);
 
   readonly nodeSelected = output<SouthConnectorExploreEntry>();
 
@@ -73,8 +81,9 @@ export class ExploreTreeComponent implements OnDestroy {
   readonly selectable = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  sessionId: string | null = null;
-  readonly nodes = signal<Array<ExploreTreeNode>>([]);
+  private sessionId: string | null = null;
+  /** The tree is immutable: a node change replaces the node and its ancestors */
+  readonly nodes = signal<ReadonlyArray<ExploreTreeNode>>([]);
 
   /**
    * Start the explore session and load the root-level entries.
@@ -100,13 +109,13 @@ export class ExploreTreeComponent implements OnDestroy {
     this.api = api ?? this.defaultApi(connectorId || 'create');
     this.loading.set(true);
     this.api.start(settingsToExplore, southType).subscribe({
-      error: httpError => {
-        this.error.set(httpError.error?.message ?? httpError.message);
+      error: (httpError: HttpErrorResponse) => {
+        this.error.set(errorMessage(httpError));
         this.loading.set(false);
       },
       next: result => {
         this.sessionId = result.sessionId;
-        this.nodes.set(result.entries.map(entry => this.createNode(entry, 0)));
+        this.nodes.set(result.entries.map(entry => this.createNode(entry, [])));
         this.loading.set(false);
       }
     });
@@ -128,35 +137,31 @@ export class ExploreTreeComponent implements OnDestroy {
       return;
     }
     if (node.expanded) {
-      node.expanded = false;
+      this.updateNode(node.path, current => ({ ...current, expanded: false }));
       return;
     }
     if (node.loaded) {
-      node.expanded = true;
+      this.updateNode(node.path, current => ({ ...current, expanded: true }));
       return;
     }
     if (!this.sessionId) {
       return;
     }
-    node.loading = true;
-    node.error = null;
+    this.updateNode(node.path, current => ({ ...current, loading: true, error: null }));
     this.api!.browse(this.sessionId, node.entry.id).subscribe({
-      error: httpError => {
-        node.error = httpError.error?.message ?? httpError.message;
-        node.loading = false;
-        // nodes are mutated in place: notify Angular
-        this.changeDetectorRef.markForCheck();
+      error: (httpError: HttpErrorResponse) => {
+        this.updateNode(node.path, current => ({ ...current, error: errorMessage(httpError), loading: false }));
       },
       next: result => {
-        node.children = result.entries.map(entry => this.createNode(entry, node.depth + 1));
-        node.loaded = true;
-        node.expanded = true;
-        node.loading = false;
-        // The entry was optimistically marked expandable; if it has no children, drop the caret.
-        if (result.entries.length === 0) {
-          node.entry.hasChildren = false;
-        }
-        this.changeDetectorRef.markForCheck();
+        this.updateNode(node.path, current => ({
+          ...current,
+          children: result.entries.map(entry => this.createNode(entry, current.path)),
+          loaded: true,
+          expanded: true,
+          loading: false,
+          // The entry was optimistically marked expandable; if it has no children, drop the caret.
+          entry: result.entries.length === 0 ? { ...current.entry, hasChildren: false } : current.entry
+        }));
       }
     });
   }
@@ -166,8 +171,28 @@ export class ExploreTreeComponent implements OnDestroy {
     this.nodeSelected.emit(node.entry);
   }
 
-  private createNode(entry: SouthConnectorExploreEntry, depth: number): ExploreTreeNode {
-    return { entry, depth, expanded: false, loading: false, loaded: false, error: null, children: [] };
+  private createNode(entry: SouthConnectorExploreEntry, parentPath: ReadonlyArray<string>): ExploreTreeNode {
+    return {
+      entry,
+      path: [...parentPath, entry.id],
+      expanded: false,
+      loading: false,
+      loaded: false,
+      error: null,
+      children: []
+    };
+  }
+
+  /** Replaces the node at the given path by its updated version */
+  private updateNode(path: ReadonlyArray<string>, update: (node: ExploreTreeNode) => ExploreTreeNode) {
+    const replace = (nodes: ReadonlyArray<ExploreTreeNode>, depth: number): ReadonlyArray<ExploreTreeNode> =>
+      nodes.map(node => {
+        if (node.entry.id !== path[depth]) {
+          return node;
+        }
+        return depth === path.length - 1 ? update(node) : { ...node, children: replace(node.children, depth + 1) };
+      });
+    this.nodes.update(nodes => replace(nodes, 0));
   }
 
   /**

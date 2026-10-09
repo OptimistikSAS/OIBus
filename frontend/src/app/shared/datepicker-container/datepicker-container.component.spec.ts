@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test } from 'vitest';
@@ -14,21 +14,21 @@ import { DatepickerContainerComponent } from './datepicker-container.component';
   selector: 'oib-test-datepicker-container-component',
   template: `
     <oib-datepicker-container class="foo">
-      <input class="form-control" [formControl]="dateCtrl" ngbDatepicker />
+      <input class="form-control" [formControl]="dateCtrl" ngbDatepicker aria-label="Date" />
     </oib-datepicker-container>
   `,
   imports: [DatepickerContainerComponent, ReactiveFormsModule, NgbInputDatepicker],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
-  dateCtrl = new UntypedFormControl();
+  readonly dateCtrl = new FormControl<string | null>(null);
 }
 
 class TestComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly toggle = this.root.getByCss('.datepicker-toggle');
-  readonly inputDatepicker = this.root.getByCss('input[ngbdatepicker]');
+  readonly toggle = this.root.getByRole('button', { name: 'Open calendar' });
+  readonly input = this.root.getByLabelText('Date');
   readonly datepicker = page.getByCss('ngb-datepicker');
   readonly container = this.root.getByCss('oib-datepicker-container');
 }
@@ -45,8 +45,7 @@ describe('DatepickerContainerComponent', () => {
   });
 
   test('should display an input, a toggle button, and toggle the datepicker', async () => {
-    await expect.element(tester.toggle).toBeInTheDocument();
-    await expect.element(tester.inputDatepicker).toBeInTheDocument();
+    await expect.element(tester.input).toBeVisible();
     await expect.element(tester.datepicker).not.toBeInTheDocument();
 
     await tester.toggle.click();

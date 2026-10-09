@@ -1,8 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { switchMap } from 'rxjs';
 
 import { CacheOperation } from '@oibus/shared/api/engine.model';
 import { createPageFromArray } from '@oibus/shared/common/types';
@@ -26,7 +27,7 @@ const enum ColumnSortState {
   selector: 'oib-cache-content',
   templateUrl: './cache-content.component.html',
   styleUrl: './cache-content.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TranslateDirective,
     BoxComponent,
@@ -35,8 +36,7 @@ const enum ColumnSortState {
     NgbTooltipModule,
     TranslatePipe,
     DatetimePipe,
-    PaginationComponent,
-    AsyncPipe
+    PaginationComponent
   ]
 })
 export class CacheContentComponent {
@@ -45,6 +45,8 @@ export class CacheContentComponent {
   readonly size = input.required<number>();
   readonly state = input.required<ObservableState>();
   readonly operation = output<CacheOperation>();
+
+  protected readonly isPending = toSignal(toObservable(this.state).pipe(switchMap(state => state.isPending)), { initialValue: false });
 
   // --- Table State ---
   readonly currentPage = signal(0);

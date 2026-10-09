@@ -1,80 +1,73 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { firstValueFrom } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 
 import { ModalService } from './modal.service';
+import { noAnimation } from './test-utils';
 
 @Component({ selector: 'oib-test-modal-component', template: 'Hello', changeDetection: ChangeDetectionStrategy.OnPush })
-export class TestModalComponent {}
+class TestModalComponent {
+  readonly activeModal = inject(NgbActiveModal);
+}
 
 describe('ModalService', () => {
   let ngbModal: NgbModal;
   let modalService: ModalService;
-  const fakeModalComponent = new TestModalComponent();
+  const dialog = page.getByRole('dialog');
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({ providers: [noAnimation] });
     ngbModal = TestBed.inject(NgbModal);
     modalService = TestBed.inject(ModalService);
   });
 
-  test('should create a modal instance', () => {
-    vi.spyOn(ngbModal, 'open').mockReturnValue({
-      componentInstance: fakeModalComponent,
-      result: Promise.resolve()
-    } as NgbModalRef);
+  afterEach(() => ngbModal.dismissAll());
+
+  test('should open a modal with the given component and options', async () => {
+    vi.spyOn(ngbModal, 'open');
 
     const modal = modalService.open(TestModalComponent, { size: 'lg' });
 
     expect(ngbModal.open).toHaveBeenCalledWith(TestModalComponent, { size: 'lg' });
-    expect(modal.componentInstance).toBe(fakeModalComponent);
+    expect(modal.componentInstance).toBeInstanceOf(TestModalComponent);
+    await expect.element(dialog).toHaveTextContent('Hello');
   });
 
-  test('should emit on close', async () => {
-    vi.spyOn(ngbModal, 'open').mockReturnValue({
-      componentInstance: fakeModalComponent,
-      result: Promise.resolve()
-    } as NgbModalRef);
-
+  test('should emit the result on close', async () => {
     const modal = modalService.open(TestModalComponent);
-    let closed = false;
-    modal.result.subscribe(() => (closed = true));
 
-    await Promise.resolve();
-    expect(closed).toBe(true);
+    modal.componentInstance.activeModal.close('result');
+
+    await expect(firstValueFrom(modal.result)).resolves.toBe('result');
+    await expect.element(dialog).not.toBeInTheDocument();
   });
 
-  test('should emit EMPTY on cancel', async () => {
-    vi.spyOn(ngbModal, 'open').mockReturnValue({
-      componentInstance: fakeModalComponent,
-      result: Promise.reject()
-    } as NgbModalRef);
-
+  test('should complete without emitting on cancel', async () => {
     const modal = modalService.open(TestModalComponent);
-    let closed = false;
-    modal.result.subscribe(() => (closed = true));
 
-    await Promise.resolve();
-    expect(closed).toBe(false);
+    modal.componentInstance.activeModal.dismiss('cancel');
+
+    await expect(firstValueFrom(modal.result, { defaultValue: 'completed' })).resolves.toBe('completed');
   });
 
-  test('should throw error on cancel if options says so', async () => {
-    vi.spyOn(ngbModal, 'open').mockReturnValue({
-      componentInstance: fakeModalComponent,
-      result: Promise.reject()
-    } as NgbModalRef);
-
+  test('should throw the dismiss reason on cancel if options says so', async () => {
     const modal = modalService.open(TestModalComponent, { errorOnClose: true });
 
-    expect(ngbModal.open).toHaveBeenCalledWith(TestModalComponent, { errorOnClose: true } as any);
-    expect(modal.componentInstance).toBe(fakeModalComponent);
+    modal.componentInstance.activeModal.dismiss('cancel');
 
-    let hasError = false;
-    modal.result.subscribe({ error: () => (hasError = true) });
+    await expect(firstValueFrom(modal.result)).rejects.toBe('cancel');
+  });
 
-    await Promise.resolve();
-    expect(hasError).toBe(true);
+  test('should throw a default error on cancel without reason if options says so', async () => {
+    const modal = modalService.open(TestModalComponent, { errorOnClose: true });
+
+    modal.dismiss();
+
+    await expect(firstValueFrom(modal.result)).rejects.toBe('not confirmed');
+    await expect.element(dialog).not.toBeInTheDocument();
   });
 });

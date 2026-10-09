@@ -9,7 +9,8 @@ import { NavigationService } from './navigation.service';
   }
 })
 export class BackNavigationDirective {
-  private navigation = inject(NavigationService);
+  private readonly navigation = inject(NavigationService);
+
   onClick(): void {
     this.navigation.back();
   }

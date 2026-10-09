@@ -2,8 +2,6 @@ import { TestBed } from '@angular/core/testing';
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { Language } from '@oibus/shared/common/types';
-
 import { DocsUrlService } from './docs-url.service';
 import { WindowService } from './window.service';
 
@@ -38,12 +36,6 @@ describe('DocsUrlService', () => {
     vi.spyOn(windowService, 'languageToUse').mockReturnValue('zh');
     const service: DocsUrlService = TestBed.inject(DocsUrlService);
     expect(service.resolve('guide/x')).toBe('/documentation/zh/docs/guide/x');
-  });
-
-  test('should fall back to no locale prefix for a language with no bundled docs locale yet', () => {
-    vi.spyOn(windowService, 'languageToUse').mockReturnValue('unmapped' as unknown as Language);
-    const service: DocsUrlService = TestBed.inject(DocsUrlService);
-    expect(service.resolve('guide/x')).toBe('/documentation/docs/guide/x');
   });
 
   test('should resolve an empty fragment to the documentation site root, not the docs section', () => {

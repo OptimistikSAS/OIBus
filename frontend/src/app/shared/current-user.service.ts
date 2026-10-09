@@ -15,8 +15,8 @@ interface Token {
 
 @Service()
 export class CurrentUserService {
-  private http = inject(HttpClient);
-  private windowService = inject(WindowService);
+  private readonly http = inject(HttpClient);
+  private readonly windowService = inject(WindowService);
 
   private currentUser$: Observable<UserDTO | null>;
 
@@ -25,7 +25,7 @@ export class CurrentUserService {
    * Europe/Paris if not present in local storage. And at load time, in the app component, if the actual current user timezone
    * is different from the used one, the actual current user timezone is stored in local storage and the app is reloaded.
    */
-  private timezone: Timezone;
+  private readonly timezone: Timezone;
 
   constructor() {
     const storedToken = this.windowService.getStorageItem('oibus-token');
@@ -63,8 +63,8 @@ export class CurrentUserService {
   }
 
   loginWithPassword(login: string, password: string): Observable<UserDTO | null> {
-    const test = window.btoa(`${login}:${password}`);
-    const headers = { authorization: `Basic ${test}` };
+    const credentials = window.btoa(`${login}:${password}`);
+    const headers = { authorization: `Basic ${credentials}` };
     const context = ignoreErrorIfStatusIs(HttpStatusCode.Forbidden, HttpStatusCode.Unauthorized);
     return this.http.post<Token>('/api/users/authentication', null, { headers, context }).pipe(
       switchMap(token => {

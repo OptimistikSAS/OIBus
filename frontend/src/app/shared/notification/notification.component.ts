@@ -1,9 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { map, merge, Observable, scan, Subject } from 'rxjs';
+import { map, merge, scan, Subject } from 'rxjs';
 
 import { Notification, NotificationService } from '../notification.service';
 
@@ -17,21 +17,17 @@ interface Action {
   templateUrl: './notification.component.html',
   styleUrl: './notification.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgbToastModule, TranslateDirective, AsyncPipe]
+  imports: [NgbToastModule, TranslateDirective]
 })
 export class NotificationComponent {
-  private notificationService = inject(NotificationService);
+  private readonly notificationService = inject(NotificationService);
 
-  notifications$: Observable<Array<Notification>>;
-  private close$ = new Subject<Notification>();
-
-  constructor() {
-    const additions$: Observable<Action> = this.notificationService.notificationChanges.pipe(
-      map(notification => ({ type: 'addition', notification }))
-    );
-    const removals$: Observable<Action> = this.close$.pipe(map(notification => ({ type: 'removal', notification })));
-
-    this.notifications$ = merge(additions$, removals$).pipe(
+  private readonly close$ = new Subject<Notification>();
+  readonly notifications = toSignal(
+    merge(
+      this.notificationService.notificationChanges.pipe(map((notification): Action => ({ type: 'addition', notification }))),
+      this.close$.pipe(map((notification): Action => ({ type: 'removal', notification })))
+    ).pipe(
       scan((notifications, action) => {
         switch (action.type) {
           case 'addition':
@@ -40,8 +36,9 @@ export class NotificationComponent {
             return notifications.filter(n => n != action.notification);
         }
       }, [] as Array<Notification>)
-    );
-  }
+    ),
+    { initialValue: [] }
+  );
 
   close(notification: Notification) {
     this.close$.next(notification);

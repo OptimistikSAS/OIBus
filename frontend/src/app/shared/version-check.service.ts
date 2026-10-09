@@ -11,10 +11,10 @@ import { visibleTimer } from './polling';
  */
 @Service()
 export class VersionCheckService {
-  private engineService = inject(EngineService);
+  private readonly engineService = inject(EngineService);
   private initialVersion: string | null = null;
   private monitoringSubscription: Subscription | null = null;
-  private versionChangeSubject = new Subject<{ oldVersion: string; newVersion: string }>();
+  private readonly versionChangeSubject = new Subject<{ oldVersion: string; newVersion: string }>();
 
   /**
    * Observable that emits when a version change is detected

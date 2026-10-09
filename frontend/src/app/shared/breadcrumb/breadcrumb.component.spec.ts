@@ -1,166 +1,88 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter, Router, RouterEvent } from '@angular/router';
+import { provideRouter, Router, RouterOutlet, Routes } from '@angular/router';
 
-import { of, Subject, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
-import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
-import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
-import { SouthConnectorDTO } from '@oibus/shared/api/south-connector.model';
-import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
-
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
+import { buildWorkflow } from '../../../test/builders';
+import { EmptyRouteComponent } from '../../../test/empty-route.component';
+import testData from '../../../test/test-data';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { BreadcrumbComponent } from './breadcrumb.component';
 
-class BreadcrumbComponentTester {
-  readonly fixture = TestBed.createComponent(BreadcrumbComponent);
-  readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly breadcrumbItems = this.root.getByCss('.breadcrumb-item');
-  readonly breadcrumbLinks = this.root.getByCss('.breadcrumb-item a');
+/** The breadcrumb is displayed by the root component, above the router outlet */
+@Component({
+  template: `<oib-breadcrumb /><router-outlet />`,
+  imports: [BreadcrumbComponent, RouterOutlet],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+class TestComponent {}
 
-  item(index: number) {
-    return this.breadcrumbItems.nth(index);
-  }
+const routes: Routes = [
+  '',
+  'north',
+  'north/create',
+  'north/:northId',
+  'north/:northId/edit',
+  'north/:northId/cache',
+  'south',
+  'south/create',
+  'south/:southId',
+  'south/:southId/edit',
+  'south/:southId/workflows/:workflowId/history',
+  'history-queries',
+  'history-queries/create',
+  'history-queries/:historyQueryId',
+  'history-queries/:historyQueryId/edit',
+  'history-queries/:historyQueryId/cache',
+  'engine',
+  'engine/edit',
+  'engine/oianalytics',
+  'logs',
+  'about',
+  'user-settings'
+].map(path => ({ path, component: EmptyRouteComponent }));
+
+class BreadcrumbComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly breadcrumbItems = this.root.getByRole('listitem');
+  readonly breadcrumbLinks = this.root.getByRole('link');
 }
 
 describe('BreadcrumbComponent', () => {
   let tester: BreadcrumbComponentTester;
-  let router: MockObject<Router>;
   let northConnectorService: MockObject<NorthConnectorService>;
   let southConnectorService: MockObject<SouthConnectorService>;
   let historyQueryService: MockObject<HistoryQueryService>;
   let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
-  let routerEvents: Subject<RouterEvent>;
-  let currentUrl: string;
-
-  const mockNorthConnector: NorthConnectorDTO = {
-    id: 'north-1',
-    name: 'console-test',
-    type: 'console',
-    enabled: true,
-    description: '',
-    settings: {},
-    caching: {
-      trigger: {
-        scanMode: { id: 'scan-mode-1', name: 'scan-mode-1' },
-        numberOfElements: 10,
-        numberOfFiles: 5
-      },
-      throttling: {
-        runMinDelay: 1000,
-        maxSize: 100,
-        maxNumberOfElements: 1000
-      },
-      error: {
-        retryInterval: 5000,
-        retryCount: 3,
-        retentionDuration: 24
-      },
-      archive: {
-        enabled: false,
-        retentionDuration: 48
-      }
-    }
-  } as NorthConnectorDTO;
-
-  const mockNorthManifest = {
-    id: 'console'
-  } as NorthConnectorManifest;
-
-  const mockSouthConnector: SouthConnectorDTO = {
-    id: 'south-1',
-    name: 'test-south',
-    type: 'mqtt',
-    enabled: true,
-    description: '',
-    settings: {}
-  } as SouthConnectorDTO;
-
-  const mockHistoryQuery: HistoryQueryDTO = {
-    id: 'history-1',
-    name: 'test-history',
-    status: 'PENDING',
-    northType: 'console',
-    southType: 'mqtt',
-    northSettings: {},
-    southSettings: {},
-    queryTimeRange: {
-      startTime: '2024-01-01T00:00:00Z',
-      endTime: '2024-01-02T00:00:00Z',
-      maxReadInterval: 3600,
-      readDelay: 200
-    },
-    caching: {
-      trigger: {
-        scanMode: { id: 'scan-mode-1', name: 'scan-mode-1' },
-        numberOfElements: 10,
-        numberOfFiles: 5
-      },
-      throttling: {
-        runMinDelay: 1000,
-        maxSize: 100,
-        maxNumberOfElements: 1000
-      },
-      error: {
-        retryInterval: 5000,
-        retryCount: 3,
-        retentionDuration: 24
-      },
-      archive: {
-        enabled: false,
-        retentionDuration: 48
-      }
-    }
-  } as HistoryQueryDTO;
-
-  const mockWorkflow: ConfigurationWorkflowDTO = {
-    id: 'workflow-1',
-    name: 'Reactor discovery',
-    southId: 'south-1',
-    discoveryScope: {},
-    identityKeyFields: ['nodeId'],
-    eligibilityFilter: [],
-    itemFieldMapping: { name: '{{name}}' },
-    pushToOIAnalytics: false,
-    scanMode: null,
-    enabled: true,
-    createdAt: '',
-    updatedAt: '',
-    createdBy: { id: '', friendlyName: '' },
-    updatedBy: { id: '', friendlyName: '' }
-  };
+  const north = testData.north.list[0];
+  const south = testData.south.list[0];
+  const historyQuery = testData.historyQueries.list[0];
+  const workflow = buildWorkflow('workflow-1', 'Reactor discovery');
 
   beforeEach(() => {
-    currentUrl = '/';
-    routerEvents = new Subject<RouterEvent>();
-    router = createMock(Router);
-    Object.defineProperty(router, 'url', {
-      get: () => currentUrl,
-      configurable: true
-    });
-    Object.defineProperty(router, 'events', {
-      get: () => routerEvents.asObservable(),
-      configurable: true
-    });
-
     northConnectorService = createMock(NorthConnectorService);
     southConnectorService = createMock(SouthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
+    northConnectorService.findById.mockReturnValue(of(north));
+    northConnectorService.getNorthManifest.mockReturnValue(of(testData.north.manifest));
+    southConnectorService.findById.mockReturnValue(of(south));
+    historyQueryService.findById.mockReturnValue(of(historyQuery));
+    configurationWorkflowService.get.mockReturnValue(of(workflow));
 
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([]),
+        provideRouter(routes),
         provideI18nTesting(),
-        { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: stubRoute() },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
@@ -169,375 +91,135 @@ describe('BreadcrumbComponent', () => {
     });
   });
 
+  /** Navigates before creating the component, so that the breadcrumb is built from the current route */
+  async function createAt(url: string) {
+    await TestBed.inject(Router).navigateByUrl(url);
+    tester = new BreadcrumbComponentTester();
+  }
+
   async function expectBreadcrumbTexts(texts: Array<string>) {
     await expect.element(tester.breadcrumbItems).toHaveLength(texts.length);
-    await Promise.all(texts.map((text, index) => expect.element(tester.item(index)).toMatchTextContent(text)));
+    for (const [index, text] of texts.entries()) {
+      await expect.element(tester.breadcrumbItems.nth(index)).toHaveTextContent(text);
+    }
   }
 
   test('should not show breadcrumbs on home page', async () => {
-    currentUrl = '/';
-    TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-    tester = new BreadcrumbComponentTester();
+    await createAt('/');
 
-    tester.fixture.detectChanges();
+    await expect.element(tester.root.getByRole('navigation')).not.toBeInTheDocument();
+  });
 
+  test.each([
+    { url: '/north', expected: ['North'] },
+    { url: '/north/create', expected: ['North', 'Create'] },
+    { url: `/north/${north.id}`, expected: ['North', `${north.name} (console)`] },
+    { url: `/north/${north.id}/edit`, expected: ['North', `${north.name} (console)`, 'Edit'] },
+    { url: `/north/${north.id}/cache`, expected: ['North', `${north.name} (console)`, 'Cache'] },
+    { url: '/south', expected: ['South'] },
+    { url: '/south/create', expected: ['South', 'Create'] },
+    { url: `/south/${south.id}`, expected: ['South', `${south.name} (${south.type})`] },
+    { url: `/south/${south.id}/edit`, expected: ['South', `${south.name} (${south.type})`, 'Edit'] },
+    {
+      url: `/south/${south.id}/workflows/workflow-1/history`,
+      expected: ['South', `${south.name} (${south.type})`, 'Reactor discovery', 'Run history']
+    },
+    { url: '/history-queries', expected: ['History'] },
+    { url: '/history-queries/create', expected: ['History', 'Create'] },
+    { url: `/history-queries/${historyQuery.id}`, expected: ['History', historyQuery.name] },
+    { url: `/history-queries/${historyQuery.id}/edit`, expected: ['History', historyQuery.name, 'Edit'] },
+    { url: `/history-queries/${historyQuery.id}/cache`, expected: ['History', historyQuery.name, 'Cache'] },
+    { url: '/engine', expected: ['Engine'] },
+    { url: '/engine/edit', expected: ['Engine', 'Edit engine settings'] },
+    { url: '/engine/oianalytics', expected: ['Engine', 'OIAnalytics registration'] },
+    { url: '/logs', expected: ['Logs'] },
+    { url: '/about', expected: ['About'] },
+    { url: '/user-settings', expected: ['Settings'] }
+  ])('should show the breadcrumb of $url', async ({ url, expected }) => {
+    await createAt(url);
+
+    await expectBreadcrumbTexts(expected);
+  });
+
+  test('should load the entities displayed in the breadcrumb', async () => {
+    await createAt(`/north/${north.id}`);
+    await expectBreadcrumbTexts(['North', `${north.name} (console)`]);
+    expect(northConnectorService.findById).toHaveBeenCalledWith(north.id);
+    expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith(north.type);
+
+    await TestBed.inject(Router).navigateByUrl(`/south/${south.id}/workflows/workflow-1/history`);
+    await expectBreadcrumbTexts(['South', `${south.name} (${south.type})`, 'Reactor discovery', 'Run history']);
+    expect(southConnectorService.findById).toHaveBeenCalledWith(south.id);
+    expect(configurationWorkflowService.get).toHaveBeenCalledWith(south.id, 'workflow-1');
+
+    await TestBed.inject(Router).navigateByUrl(`/history-queries/${historyQuery.id}`);
+    await expectBreadcrumbTexts(['History', historyQuery.name]);
+    expect(historyQueryService.findById).toHaveBeenCalledWith(historyQuery.id);
+  });
+
+  test('should update breadcrumbs on navigation', async () => {
+    await createAt('/north');
+    await expectBreadcrumbTexts(['North']);
+
+    await TestBed.inject(Router).navigateByUrl('/south/create');
+    await expectBreadcrumbTexts(['South', 'Create']);
+
+    await TestBed.inject(Router).navigateByUrl('/');
     await expect.element(tester.breadcrumbItems).toHaveLength(0);
   });
 
-  describe('North routes', () => {
-    test('should show breadcrumb for north list', async () => {
-      currentUrl = '/north';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
+  test.each([
+    {
+      url: '/north/north-1',
+      setup: () => northConnectorService.findById.mockReturnValue(throwError(() => new Error())),
+      expected: ['North', 'north-1']
+    },
+    {
+      url: '/south/south-1',
+      setup: () => southConnectorService.findById.mockReturnValue(throwError(() => new Error())),
+      expected: ['South', 'south-1']
+    },
+    {
+      url: '/history-queries/history-1',
+      setup: () => historyQueryService.findById.mockReturnValue(throwError(() => new Error())),
+      expected: ['History', 'history-1']
+    },
+    {
+      url: `/south/${south.id}/workflows/workflow-1/history`,
+      setup: () => configurationWorkflowService.get.mockReturnValue(throwError(() => new Error())),
+      expected: ['South', `${south.name} (${south.type})`, 'workflow-1', 'Run history']
+    }
+  ])('should display the id when an entity of $url cannot be loaded', async ({ url, setup, expected }) => {
+    setup();
+    await createAt(url);
 
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['North']);
-    });
-
-    test('should show breadcrumb for north create', async () => {
-      currentUrl = '/north/create';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['North', 'Create']);
-    });
-
-    test('should show breadcrumb for north detail', async () => {
-      currentUrl = '/north/north-1';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'north-1' } }) });
-      northConnectorService.findById.mockReturnValue(of(mockNorthConnector));
-      northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['North', 'console-test (console)']);
-      expect(northConnectorService.findById).toHaveBeenCalledWith('north-1');
-    });
-
-    test('should show breadcrumb for north edit', async () => {
-      currentUrl = '/north/north-1/edit';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'north-1' } }) });
-      northConnectorService.findById.mockReturnValue(of(mockNorthConnector));
-      northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['North', 'console-test (console)', 'Edit']);
-    });
-
-    test('should show breadcrumb for north cache', async () => {
-      currentUrl = '/north/north-1/cache';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'north-1' } }) });
-      northConnectorService.findById.mockReturnValue(of(mockNorthConnector));
-      northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['North', 'console-test (console)', 'Cache']);
-    });
-
-    test('should handle error when loading north connector', async () => {
-      currentUrl = '/north/north-1';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'north-1' } }) });
-      northConnectorService.findById.mockReturnValue(throwError(() => new Error('Not found')));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['North', 'north-1']);
-    });
+    await expectBreadcrumbTexts(expected);
   });
 
-  describe('South routes', () => {
-    test('should show breadcrumb for south list', async () => {
-      currentUrl = '/south';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
+  test('should make breadcrumb items clickable except the last one', async () => {
+    await createAt(`/north/${north.id}`);
 
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['South']);
-    });
-
-    test('should show breadcrumb for south create', async () => {
-      currentUrl = '/south/create';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['South', 'Create']);
-    });
-
-    test('should show breadcrumb for south detail', async () => {
-      currentUrl = '/south/south-1';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1' } }) });
-      southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['South', 'test-south (mqtt)']);
-      expect(southConnectorService.findById).toHaveBeenCalledWith('south-1');
-    });
-
-    test('should show breadcrumb for south edit', async () => {
-      currentUrl = '/south/south-1/edit';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1' } }) });
-      southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['South', 'test-south (mqtt)', 'Edit']);
-    });
-
-    test('should handle error when loading south connector', async () => {
-      currentUrl = '/south/south-1';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1' } }) });
-      southConnectorService.findById.mockReturnValue(throwError(() => new Error('Not found')));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['South', 'south-1']);
-    });
-
-    test('should show breadcrumb for a workflow run history page, with the south connector name and workflow name', async () => {
-      currentUrl = '/south/south-1/workflows/workflow-1/history';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1', workflowId: 'workflow-1' } }) });
-      southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
-      configurationWorkflowService.get.mockReturnValue(of(mockWorkflow));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['South', 'test-south (mqtt)', 'Reactor discovery', 'Run history']);
-      expect(configurationWorkflowService.get).toHaveBeenCalledWith('south-1', 'workflow-1');
-    });
-
-    test('should fall back to the workflow id when it cannot be loaded for the run history breadcrumb', async () => {
-      currentUrl = '/south/south-1/workflows/workflow-1/history';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1', workflowId: 'workflow-1' } }) });
-      southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
-      configurationWorkflowService.get.mockReturnValue(throwError(() => new Error('Not found')));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['South', 'test-south (mqtt)', 'workflow-1', 'Run history']);
-    });
-
-    test('should make the south connector name clickable (linked to its detail page) on the run history breadcrumb', async () => {
-      currentUrl = '/south/south-1/workflows/workflow-1/history';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1', workflowId: 'workflow-1' } }) });
-      southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
-      configurationWorkflowService.get.mockReturnValue(of(mockWorkflow));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expect.element(tester.breadcrumbLinks).toHaveLength(2);
-      await expect.element(tester.item(1).getByCss('a')).toMatchTextContent('test-south (mqtt)');
-      await expect.element(tester.item(3).getByCss('a')).toHaveLength(0);
-    });
+    await expectBreadcrumbTexts(['North', `${north.name} (console)`]);
+    await expect.element(tester.breadcrumbLinks).toHaveLength(1);
+    await expect.element(tester.breadcrumbLinks.nth(0)).toHaveTextContent('North');
+    await expect.element(tester.breadcrumbLinks.nth(0)).toHaveAttribute('href', '/north');
   });
 
-  describe('History query routes', () => {
-    test('should show breadcrumb for history queries list', async () => {
-      currentUrl = '/history-queries';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
+  test('should link the south connector name on the run history breadcrumb', async () => {
+    await createAt(`/south/${south.id}/workflows/workflow-1/history`);
 
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['History']);
-    });
-
-    test('should show breadcrumb for history query create', async () => {
-      currentUrl = '/history-queries/create';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['History', 'Create']);
-    });
-
-    test('should show breadcrumb for history query detail', async () => {
-      currentUrl = '/history-queries/history-1';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { historyQueryId: 'history-1' } }) });
-      historyQueryService.findById.mockReturnValue(of(mockHistoryQuery));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['History', 'test-history']);
-      expect(historyQueryService.findById).toHaveBeenCalledWith('history-1');
-    });
-
-    test('should show breadcrumb for history query edit', async () => {
-      currentUrl = '/history-queries/history-1/edit';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { historyQueryId: 'history-1' } }) });
-      historyQueryService.findById.mockReturnValue(of(mockHistoryQuery));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['History', 'test-history', 'Edit']);
-    });
-
-    test('should show breadcrumb for history query cache', async () => {
-      currentUrl = '/history-queries/history-1/cache';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { historyQueryId: 'history-1' } }) });
-      historyQueryService.findById.mockReturnValue(of(mockHistoryQuery));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['History', 'test-history', 'Cache']);
-    });
-
-    test('should handle error when loading history query', async () => {
-      currentUrl = '/history-queries/history-1';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { historyQueryId: 'history-1' } }) });
-      historyQueryService.findById.mockReturnValue(throwError(() => new Error('Not found')));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['History', 'history-1']);
-    });
+    await expect.element(tester.breadcrumbItems).toHaveLength(4);
+    await expect.element(tester.breadcrumbLinks).toHaveLength(2);
+    await expect.element(tester.breadcrumbLinks.nth(1)).toHaveTextContent(`${south.name} (${south.type})`);
+    await expect.element(tester.breadcrumbLinks.nth(1)).toHaveAttribute('href', `/south/${south.id}`);
   });
 
-  describe('Engine routes', () => {
-    test('should show breadcrumb for engine', async () => {
-      currentUrl = '/engine';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
+  test('should link the breadcrumb to the list', async () => {
+    await createAt('/north/create');
 
-      tester.fixture.detectChanges();
+    await tester.breadcrumbLinks.nth(0).click();
 
-      await expectBreadcrumbTexts(['Engine']);
-    });
-
-    test('should show breadcrumb for engine edit', async () => {
-      currentUrl = '/engine/edit';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['Engine', 'Edit engine settings']);
-    });
-
-    test('should show breadcrumb for engine oianalytics', async () => {
-      currentUrl = '/engine/oianalytics';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['Engine', 'OIAnalytics registration']);
-    });
-  });
-
-  describe('Other routes', () => {
-    test('should show breadcrumb for logs', async () => {
-      currentUrl = '/logs';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['Logs']);
-    });
-
-    test('should show breadcrumb for about', async () => {
-      currentUrl = '/about';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['About']);
-    });
-
-    test('should show breadcrumb for user settings', async () => {
-      currentUrl = '/user-settings';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['Settings']);
-    });
-  });
-
-  describe('Navigation events', () => {
-    test('should update breadcrumbs on navigation', async () => {
-      currentUrl = '/north';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-      await expectBreadcrumbTexts(['North']);
-
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [
-          provideRouter([]),
-          provideI18nTesting(),
-          { provide: Router, useValue: router },
-          { provide: ActivatedRoute, useValue: stubRoute() },
-          { provide: NorthConnectorService, useValue: northConnectorService },
-          { provide: SouthConnectorService, useValue: southConnectorService },
-          { provide: HistoryQueryService, useValue: historyQueryService },
-          { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService }
-        ]
-      });
-
-      currentUrl = '/south';
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-      await expectBreadcrumbTexts(['South']);
-    });
-  });
-
-  describe('Breadcrumb links', () => {
-    test('should make breadcrumb items clickable except the last one', async () => {
-      currentUrl = '/north/north-1';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'north-1' } }) });
-      northConnectorService.findById.mockReturnValue(of(mockNorthConnector));
-      northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expectBreadcrumbTexts(['North', 'console-test (console)']);
-      await expect.element(tester.breadcrumbLinks).toHaveLength(1);
-      await expect.element(tester.breadcrumbLinks.nth(0)).toMatchTextContent('North');
-      await expect.element(tester.item(1).getByCss('a')).toHaveLength(0);
-    });
-
-    test('should not make the last breadcrumb item a link', async () => {
-      currentUrl = '/north/north-1/cache';
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'north-1' } }) });
-      northConnectorService.findById.mockReturnValue(of(mockNorthConnector));
-      northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
-      tester = new BreadcrumbComponentTester();
-
-      tester.fixture.detectChanges();
-
-      await expect.element(tester.item(2).getByCss('a')).toHaveLength(0);
-      await expect.element(tester.item(2)).toMatchTextContent('Cache');
-    });
+    await expectBreadcrumbTexts(['North']);
+    expect(TestBed.inject(Router).url).toBe('/north');
   });
 });

@@ -1,15 +1,19 @@
-import { HttpClient, HttpContext, HttpStatusCode, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpErrorResponse, HttpStatusCode, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { firstValueFrom } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { CurrentUserService } from './current-user.service';
 import {
   errorInterceptor,
+  getMessageFromHttpErrorResponse,
   ignoreErrorIfStatusIs,
   ignoreErrorUnlessStatusIs,
+  messageFromBody,
+  rethrowServerMessage,
   SHOULD_IGNORE_ERROR_PREDICATE
 } from './error-interceptor.service';
 import { NotificationService } from './notification.service';
@@ -51,7 +55,10 @@ describe('ErrorInterceptorService', () => {
   test('should redirect to login after logging out when 401 error', () => {
     httpClient.get('/test').subscribe({ error: noop });
     http.expectOne('/test').flush(null, { status: 401, statusText: 'Unauthorized' });
+    expect(currentUserService.logout).toHaveBeenCalled();
     expect(windowService.redirectTo).toHaveBeenCalledWith('/login?error=401');
+    expect(notificationService.error).not.toHaveBeenCalled();
+    expect(notificationService.errorMessage).not.toHaveBeenCalled();
   });
 
   test('should emit a custom message with a 403 error', () => {
@@ -132,5 +139,40 @@ describe('ErrorInterceptorService', () => {
     http.expectOne('/test').flush(null, { status: 401, statusText: 'Unauthorized' });
     expect(currentUserService.logout).toHaveBeenCalled();
     expect(windowService.redirectTo).toHaveBeenCalledWith('/login?error=401');
+  });
+});
+
+describe('error helpers', () => {
+  const errorResponse = (error: unknown) => new HttpErrorResponse({ error, status: 400, statusText: 'Bad Request', url: '/api/x' });
+  const fallback = '400 - Http failure response for /api/x: 400 Bad Request';
+
+  test.each([
+    { body: null, expected: undefined },
+    { body: 'text', expected: undefined },
+    { body: { message: 'Invalid' }, expected: 'Invalid' },
+    { body: { error: 'Not found' }, expected: 'Not found' },
+    { body: { message: { name: 'required' }, error: 'Validation' }, expected: 'Validation' },
+    { body: { message: { name: 'required' } }, expected: undefined }
+  ])('messageFromBody($body) should be $expected', ({ body, expected }) => {
+    expect(messageFromBody(body)).toBe(expected);
+  });
+
+  test('getMessageFromHttpErrorResponse should add the message of the body', () => {
+    expect(getMessageFromHttpErrorResponse(errorResponse(null))).toBe(fallback);
+    expect(getMessageFromHttpErrorResponse(errorResponse({ message: 'Invalid' }))).toBe(`${fallback} - Invalid`);
+  });
+
+  test.each([
+    { name: 'the message of a JSON body', error: { message: 'Invalid' }, expected: 'Invalid' },
+    { name: 'the fallback for a body without message', error: { other: 'x' }, expected: fallback },
+    {
+      name: 'the message of a JSON blob body',
+      error: new Blob([JSON.stringify({ error: 'Not found' })], { type: 'application/json' }),
+      expected: 'Not found'
+    },
+    { name: 'the fallback for a non-JSON blob body', error: new Blob(['<html>oops</html>']), expected: fallback },
+    { name: 'the fallback for a JSON blob body without message', error: new Blob(['{}']), expected: fallback }
+  ])('rethrowServerMessage should throw $name', async ({ error, expected }) => {
+    await expect(firstValueFrom(rethrowServerMessage(errorResponse(error)))).rejects.toBe(expected);
   });
 });

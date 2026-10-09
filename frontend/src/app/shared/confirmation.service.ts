@@ -28,8 +28,8 @@ export interface ConfirmationOptions {
 
 @Service()
 export class ConfirmationService {
-  private modalService = inject(ModalService);
-  private translateService = inject(TranslateService);
+  private readonly modalService = inject(ModalService);
+  private readonly translateService = inject(TranslateService);
 
   /**
    * Opens a confirmation modal, and returns an observable, which emits and completes if the user clicks "Yes".

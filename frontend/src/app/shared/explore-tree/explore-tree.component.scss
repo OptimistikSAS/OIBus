@@ -1,8 +1,9 @@
 @import '../../../common';
 
 .explore-tree {
-  // max-height is set inline (see the component's maxHeight @Input) - the one scroll region this
+  // max-height is set by the host through the component's maxHeight input - the one scroll region this
   // component owns, sized per host. Never wrap this component in a second overflow:auto container.
+  max-height: var(--explore-tree-max-height);
   overflow: auto;
 }
 
@@ -96,4 +97,9 @@
   background-color: $veryLightGrey;
   color: $darkGrey;
   font-weight: 400;
+}
+
+// one per level of depth, to indent the node
+.explore-indent {
+  flex: 0 0 16px;
 }

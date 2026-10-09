@@ -20,7 +20,7 @@ import { OibHelpComponent } from '../oib-help/oib-help.component';
   selector: 'ng-template[oibBoxTitle]'
 })
 export class BoxTitleDirective {
-  templateRef = inject<TemplateRef<void>>(TemplateRef);
+  readonly templateRef = inject<TemplateRef<void>>(TemplateRef);
 }
 
 /**

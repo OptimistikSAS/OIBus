@@ -14,9 +14,10 @@
         type="button"
         class="btn btn-link py-0 my-0 px-1 text-white"
         [ngbTooltip]="'common.tooltips.remove' | translate"
+        [attr.aria-label]="'common.tooltips.remove' | translate"
         (click)="remove()"
       >
-        <span class="fa-solid fa-xmark"></span>
+        <span class="fa-solid fa-xmark" aria-hidden="true"></span>
       </button>
     }
   </div>

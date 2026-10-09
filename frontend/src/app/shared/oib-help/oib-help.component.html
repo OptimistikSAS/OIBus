@@ -1,3 +1,9 @@
-<a class="help-icon" target="_blank" [href]="url()" [ngbTooltip]="'common.tooltips.help' | translate">
-  <span class="fa-solid fa-question-circle mx-1 text-white"></span>
+<a
+  class="help-icon"
+  target="_blank"
+  [href]="url()"
+  [ngbTooltip]="'common.tooltips.help' | translate"
+  [attr.aria-label]="'common.tooltips.help' | translate"
+>
+  <span class="fa-solid fa-question-circle mx-1 text-white" aria-hidden="true"></span>
 </a>

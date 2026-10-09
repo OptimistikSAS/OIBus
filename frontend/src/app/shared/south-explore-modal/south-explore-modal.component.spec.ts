@@ -17,6 +17,7 @@ class SouthExploreModalComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly cancel = this.root.getByRole('button', { name: 'Close' });
   readonly tree = this.root.getByCss('#explore-tree');
+  readonly title = this.root.getByRole('heading');
 }
 
 describe('SouthExploreModalComponent', () => {
@@ -46,18 +47,38 @@ describe('SouthExploreModalComponent', () => {
   });
 
   test('should forward prepare() to the embedded explore tree, even when called before the view is first checked', async () => {
-    // Mirrors every real caller: prepare() is invoked immediately after modalService.open(), before
-    // this fixture's own detectChanges() (and so @ViewChild resolution) has run.
+    // Mirrors every real caller: prepare() is invoked immediately after modalService.open(), before the view child is resolved
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
-    tester.fixture.detectChanges();
 
-    expect(southConnectorService.startExplore).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
     await expect.element(tester.tree).toBeInTheDocument();
+    expect(southConnectorService.startExplore).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
+    await expect.element(tester.title).toHaveTextContent('Explore data source');
+  });
+
+  test('should forward prepare() to the embedded explore tree when the view is already checked', async () => {
+    await tester.fixture.whenStable();
+
+    tester.component.prepare(null, southConnector.settings, southConnector.type);
+
+    await expect.element(tester.tree).toBeInTheDocument();
+    expect(southConnectorService.startExplore).toHaveBeenCalledWith('create', southConnector.settings, southConnector.type);
+  });
+
+  test('should close with the selected node', async () => {
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, true);
+
+    await tester.root.getByRole('button', { name: 'Select' }).click();
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({
+      id: 'ns=0;i=85',
+      name: 'Objects',
+      metadata: { type: 'Object' },
+      hasChildren: true
+    });
   });
 
   test('should dismiss on cancel', async () => {
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
-    tester.fixture.detectChanges();
 
     await tester.cancel.click();
 

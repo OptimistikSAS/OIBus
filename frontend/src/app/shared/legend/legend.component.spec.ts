@@ -25,14 +25,13 @@ describe('LegendComponent', () => {
       { label: 'north.disabled', class: 'grey-dot' },
       { label: 'north.enabled', class: 'green-dot' }
     ]);
-    tester.fixture.detectChanges();
   });
 
   test('should display a legend list', async () => {
     await expect.element(tester.legendItems).toHaveLength(2);
     await expect.element(tester.legendItems.nth(0).getByCss('div')).toHaveClass('grey-dot');
     await expect.element(tester.legendItems.nth(1).getByCss('div')).toHaveClass('green-dot');
-    await expect.element(tester.legendItems.nth(0).getByCss('span')).toMatchTextContent('Disabled');
-    await expect.element(tester.legendItems.nth(1).getByCss('span')).toMatchTextContent('Enabled');
+    await expect.element(tester.legendItems.nth(0).getByCss('span')).toHaveTextContent('Disabled');
+    await expect.element(tester.legendItems.nth(1).getByCss('span')).toHaveTextContent('Enabled');
   });
 });

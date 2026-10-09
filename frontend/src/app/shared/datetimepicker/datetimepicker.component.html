@@ -1,7 +1,7 @@
 <div class="d-flex" [class.align-items-start]="label()">
   <div class="me-2 flex-grow-1">
     @if (label()) {
-      <label class="form-label mb-1" [translate]="label()"></label>
+      <label class="form-label mb-1" [for]="dateInputId" [translate]="label()"></label>
     }
     <ng-template [ngTemplateOutlet]="dateTemplate() || defaultDateTemplate" [ngTemplateOutletContext]="{ $implicit: dateCtrl }" />
   </div>
@@ -12,6 +12,7 @@
 <ng-template #defaultDateTemplate let-formControl>
   <oib-datepicker-container #container>
     <input
+      [id]="dateInputId"
       [formControl]="formControl"
       class="form-control"
       ngbDatepicker

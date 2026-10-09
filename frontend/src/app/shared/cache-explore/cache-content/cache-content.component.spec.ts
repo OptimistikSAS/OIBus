@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { BehaviorSubject } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -13,6 +12,11 @@ import { provideCurrentUser } from '../../current-user-testing';
 import { ObservableState } from '../../save-button/save-button.component';
 import { CacheContentComponent } from './cache-content.component';
 
+interface CacheFile {
+  filename: string;
+  metadata: CacheMetadata;
+}
+
 @Component({
   selector: 'oib-test-cache-content-component',
   template: `
@@ -20,246 +24,252 @@ import { CacheContentComponent } from './cache-content.component';
       [cacheType]="cacheType()"
       [cacheContentFiles]="files()"
       [size]="size()"
-      (operation)="lastOperation.set($event)"
-      #component
-      [state]="state()"
+      (operation)="operations.set([...operations(), $event])"
+      [state]="state"
     />
   `,
   imports: [CacheContentComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
-  readonly component = viewChild.required<CacheContentComponent>('component');
-
   readonly cacheType = signal<DataFolderType>('cache');
-  readonly files = signal<Array<{ filename: string; metadata: CacheMetadata }>>([]);
+  readonly files = signal<Array<CacheFile>>([]);
   readonly size = signal(0);
-  state = signal<ObservableState>({ isPending: new BehaviorSubject(false), pendingUntilFinalization: () => source => source });
-
-  readonly lastOperation = signal<CacheOperation | undefined>(undefined);
+  readonly state = new ObservableState();
+  readonly operations = signal<Array<CacheOperation>>([]);
 }
 
 class CacheContentComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
-  readonly component = this.fixture.componentInstance;
+  readonly host = this.fixture.componentInstance;
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly tableRows = this.root.getByCss('tbody tr');
+  readonly title = this.root.getByCss('.oib-box-title');
+  readonly rows = this.root.getByCss('tbody tr');
+  readonly filenames = this.root.getByCss('tbody td.filename');
   readonly emptyContainer = this.root.getByCss('.oib-grey-container');
-  readonly selectAllBtn = this.root.getByCss('#select-all-button');
-  readonly unselectAllBtn = this.root.getByCss('#unselect-all-button');
-  readonly removeSelectedBtn = this.root.getByCss('#remove-selected-files');
-  readonly moveToErrorBtn = this.root.getByCss('#error-selected-content');
-  readonly moveToArchiveBtn = this.root.getByCss('#archive-selected-content');
-  readonly retrySelectedBtn = this.root.getByCss('#retry-selected-error-content');
-  readonly sortDateBtn = this.root.getByCss('.sort-by-modification-date');
+  readonly selectAllButton = this.root.getByRole('button', { name: 'Select all' });
+  readonly unselectAllButton = this.root.getByRole('button', { name: 'Unselect all' });
+  readonly selectedCounter = this.root.getByCss('.counter-badge');
+  readonly removeSelectedButton = this.root.getByRole('button', { name: 'Remove selected content' });
+  readonly sortByDate = this.root.getByRole('button', { name: 'Creation date' });
+  readonly sortByName = this.root.getByRole('button', { name: 'Filename' });
+  readonly sortBySize = this.root.getByRole('button', { name: 'Size' });
+  readonly pages = this.root.getByRole('navigation');
 
-  setFiles(files: Array<{ filename: string; metadata: CacheMetadata }>) {
-    this.component.files.set(files);
-    this.fixture.detectChanges();
+  checkbox(filename: string) {
+    return this.root.getByRole('checkbox', { name: filename });
   }
 
-  setCacheType(cacheType: DataFolderType) {
-    this.component.cacheType.set(cacheType);
-    this.fixture.detectChanges();
+  rowAction(rowIndex: number, name: string) {
+    return this.rows.nth(rowIndex).getByRole('button', { name });
   }
 
-  checkbox(rowIndex: number) {
-    return this.root.getByCss(`tbody tr:nth-child(${rowIndex + 1}) input[type="checkbox"]`);
-  }
-
-  rowAction(rowIndex: number, iconClass: string) {
-    return this.root.getByCss(`tbody tr:nth-child(${rowIndex + 1}) .action-buttons .fa-${iconClass}`);
-  }
-
-  get selectedFileCount() {
-    return this.component.component().selectedFileCount();
+  async expectFilenames(filenames: Array<string>) {
+    await expect.element(this.filenames).toHaveLength(filenames.length);
+    expect(this.filenames.elements().map(cell => cell.textContent?.trim())).toEqual(filenames);
   }
 }
 
+function cacheFile(index: number, contentFile: string, contentSize: number, createdAt: string): CacheFile {
+  return {
+    filename: `file-${index}.json`,
+    metadata: { contentFile, contentSize, numberOfElement: 1, createdAt, contentType: 'any' }
+  };
+}
+
+const files: Array<CacheFile> = [
+  cacheFile(1, 'b.csv', 300, '2024-01-01T10:00:00.000Z'),
+  cacheFile(2, 'c.csv', 100, '2024-01-03T10:00:00.000Z'),
+  cacheFile(3, 'a.csv', 200, '2024-01-02T10:00:00.000Z')
+];
+
 describe('CacheContentComponent', () => {
   let tester: CacheContentComponentTester;
-
-  const sampleFiles = [
-    {
-      filename: 'file1',
-      metadata: {
-        contentFile: 'file-A.txt',
-        contentSize: 100,
-        numberOfElement: 1,
-        createdAt: '2023-01-01T10:00:00.000Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
-      }
-    },
-    {
-      filename: 'file2',
-      metadata: {
-        contentFile: 'file-B.txt',
-        contentSize: 200,
-        numberOfElement: 1,
-        createdAt: '2023-01-02T10:00:00.000Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
-      }
-    }
-  ];
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), provideCurrentUser()]
     });
-
     tester = new CacheContentComponentTester();
-    tester.fixture.detectChanges();
   });
 
-  test('should display empty state message when no files', async () => {
-    tester.setFiles([]);
+  test.each([
+    { cacheType: 'cache' as const, title: 'Cache folder', empty: 'No file in cache folder' },
+    { cacheType: 'error' as const, title: 'Error folder', empty: 'No file in error folder' },
+    { cacheType: 'archive' as const, title: 'Archive folder', empty: 'No file in archive folder' }
+  ])('should display an empty $cacheType folder', async ({ cacheType, title, empty }) => {
+    tester.host.cacheType.set(cacheType);
 
-    await expect.element(tester.tableRows).toHaveLength(0);
-    await expect.element(tester.emptyContainer).toBeInTheDocument();
+    await expect.element(tester.title).toMatchTextContent(new RegExp(`^${title}0 B`));
+    await expect.element(tester.emptyContainer).toHaveTextContent(empty);
+    await expect.element(tester.rows).toHaveLength(0);
+    await expect.element(tester.removeSelectedButton).not.toBeInTheDocument();
   });
 
-  test('should display list of files', async () => {
-    tester.setFiles(sampleFiles);
+  test('should display the files, the most recent first', async () => {
+    tester.host.files.set(files);
+    tester.host.size.set(600);
 
-    await expect.element(tester.tableRows).toHaveLength(2);
-    await expect.element(tester.tableRows.nth(0)).toMatchTextContent('file-B.txt');
-    await expect.element(tester.tableRows.nth(1)).toMatchTextContent('file-A.txt');
+    await expect.element(tester.title).toMatchTextContent(/^Cache folder600 B/);
+    await tester.expectFilenames(['c.csv', 'a.csv', 'b.csv']);
+    await expect.element(tester.rows.nth(0)).toMatchTextContent(/100 B/);
+    await expect.element(tester.pages).not.toBeInTheDocument();
   });
 
-  describe('Selection Logic', () => {
-    beforeEach(() => {
-      tester.setFiles(sampleFiles);
-    });
+  test('should paginate the files', async () => {
+    tester.host.files.set(
+      Array.from({ length: 20 }, (_, i) => cacheFile(i, `file-${i}.csv`, i, `2024-01-01T10:${String(i).padStart(2, '0')}:00.000Z`))
+    );
 
-    test('should select individual files', async () => {
-      await expect.element(tester.removeSelectedBtn).toBeDisabled();
+    await expect.element(tester.rows).toHaveLength(15);
+    await expect.element(tester.filenames.nth(0)).toHaveTextContent('file-19.csv');
 
-      await tester.checkbox(0).click();
-      tester.fixture.detectChanges();
+    await tester.pages.getByRole('link', { name: '2' }).click();
 
-      expect(tester.selectedFileCount).toBe(1);
-      await expect.element(tester.removeSelectedBtn).not.toBeDisabled();
-    });
-
-    test('should select all files', async () => {
-      await tester.selectAllBtn.click();
-      tester.fixture.detectChanges();
-
-      expect(tester.selectedFileCount).toBe(2);
-      await expect.element(tester.checkbox(0)).toBeChecked();
-      await expect.element(tester.checkbox(1)).toBeChecked();
-      await expect.element(tester.selectAllBtn).toBeDisabled();
-    });
-
-    test('should unselect all files', async () => {
-      await tester.selectAllBtn.click();
-      tester.fixture.detectChanges();
-      expect(tester.selectedFileCount).toBe(2);
-
-      await tester.unselectAllBtn.click();
-      tester.fixture.detectChanges();
-      expect(tester.selectedFileCount).toBe(0);
-      await expect.element(tester.checkbox(0)).not.toBeChecked();
-    });
-  });
-
-  describe('Bulk Actions', () => {
-    beforeEach(async () => {
-      tester.setFiles(sampleFiles);
-      await tester.selectAllBtn.click();
-      tester.fixture.detectChanges();
-    });
-
-    test('should emit remove operation', async () => {
-      await tester.removeSelectedBtn.click();
-
-      const op = tester.component.lastOperation();
-      expect(op).toEqual({
-        action: 'remove',
-        folder: 'cache',
-        filenames: expect.arrayContaining(['file1', 'file2'])
-      });
-    });
-
-    test('should emit move to error operation (when type is cache)', async () => {
-      await tester.moveToErrorBtn.click();
-
-      const op = tester.component.lastOperation();
-      expect(op).toEqual({
-        action: 'move',
-        source: 'cache',
-        destination: 'error',
-        filenames: expect.arrayContaining(['file1', 'file2'])
-      });
-    });
-
-    test('should show different buttons for error folder', async () => {
-      tester.setCacheType('error');
-
-      await expect.element(tester.retrySelectedBtn).toBeInTheDocument();
-      await expect.element(tester.moveToErrorBtn).not.toBeInTheDocument();
-
-      await tester.retrySelectedBtn.click();
-
-      const op = tester.component.lastOperation();
-      expect(op).toEqual({
-        action: 'move',
-        source: 'error',
-        destination: 'cache',
-        filenames: expect.arrayContaining(['file1', 'file2'])
-      });
-    });
-  });
-
-  describe('Single Item Actions', () => {
-    beforeEach(() => {
-      tester.setFiles(sampleFiles);
-    });
-
-    test('should emit remove operation for single item', async () => {
-      const trashBtn = tester.rowAction(0, 'trash');
-      await trashBtn.click();
-
-      const op = tester.component.lastOperation();
-      expect(op).toEqual({
-        action: 'remove',
-        folder: 'cache',
-        filenames: ['file2']
-      });
-    });
-
-    test('should emit archive operation for single item', async () => {
-      const archiveBtn = tester.rowAction(0, 'archive');
-      await archiveBtn.click();
-
-      const op = tester.component.lastOperation();
-      expect(op).toEqual({
-        action: 'move',
-        source: 'cache',
-        destination: 'archive',
-        filenames: ['file2']
-      });
-    });
+    await expect.element(tester.rows).toHaveLength(5);
+    await expect.element(tester.filenames.nth(0)).toHaveTextContent('file-4.csv');
   });
 
   describe('Sorting', () => {
-    test('should sort by date', async () => {
-      tester.setFiles(sampleFiles);
+    beforeEach(() => tester.host.files.set(files));
 
-      await expect.element(tester.tableRows.nth(0)).toMatchTextContent('file-B.txt');
+    test('should sort by date: descending, unsorted, ascending', async () => {
+      await tester.expectFilenames(['c.csv', 'a.csv', 'b.csv']);
+      await expect.element(tester.sortByDate.getByCss('.fa-sort-down')).toBeInTheDocument();
 
-      await tester.sortDateBtn.click();
-      tester.fixture.detectChanges();
-      await expect.element(tester.tableRows.nth(0)).toMatchTextContent('file-A.txt');
+      await tester.sortByDate.click();
+      await tester.expectFilenames(['b.csv', 'c.csv', 'a.csv']);
+      await expect.element(tester.sortByDate.getByCss('.fa-sort')).toBeInTheDocument();
 
-      await tester.sortDateBtn.click();
-      await tester.sortDateBtn.click();
-      tester.fixture.detectChanges();
-      await expect.element(tester.tableRows.nth(0)).toMatchTextContent('file-B.txt');
+      await tester.sortByDate.click();
+      await tester.expectFilenames(['b.csv', 'a.csv', 'c.csv']);
+      await expect.element(tester.sortByDate.getByCss('.fa-sort-up')).toBeInTheDocument();
     });
+
+    test('should sort by name', async () => {
+      await tester.sortByName.click();
+      await tester.expectFilenames(['c.csv', 'b.csv', 'a.csv']);
+
+      await tester.sortByName.click();
+      await tester.sortByName.click();
+      await tester.expectFilenames(['a.csv', 'b.csv', 'c.csv']);
+    });
+
+    test('should sort by size', async () => {
+      await tester.sortBySize.click();
+      await tester.expectFilenames(['b.csv', 'a.csv', 'c.csv']);
+
+      await tester.sortBySize.click();
+      await tester.sortBySize.click();
+      await tester.expectFilenames(['c.csv', 'a.csv', 'b.csv']);
+    });
+  });
+
+  describe('Selection', () => {
+    beforeEach(() => tester.host.files.set(files));
+
+    test('should select individual files', async () => {
+      await expect.element(tester.removeSelectedButton).toBeDisabled();
+      await expect.element(tester.unselectAllButton).toBeDisabled();
+
+      await tester.checkbox('a.csv').click();
+
+      await expect.element(tester.checkbox('a.csv')).toBeChecked();
+      await expect.element(tester.selectedCounter).toHaveTextContent('1 selected');
+      await expect.element(tester.removeSelectedButton).toBeEnabled();
+
+      await tester.checkbox('a.csv').click();
+      await expect.element(tester.selectedCounter).not.toBeInTheDocument();
+      await expect.element(tester.removeSelectedButton).toBeDisabled();
+    });
+
+    test('should select and unselect all files', async () => {
+      await tester.selectAllButton.click();
+
+      await expect.element(tester.selectedCounter).toHaveTextContent('3 selected');
+      await expect.element(tester.checkbox('b.csv')).toBeChecked();
+      await expect.element(tester.selectAllButton).toBeDisabled();
+
+      await tester.unselectAllButton.click();
+
+      await expect.element(tester.selectedCounter).not.toBeInTheDocument();
+      await expect.element(tester.checkbox('b.csv')).not.toBeChecked();
+    });
+
+    test('should reset the selection when the files change', async () => {
+      await tester.selectAllButton.click();
+      await expect.element(tester.selectedCounter).toHaveTextContent('3 selected');
+
+      tester.host.files.set(files.slice(1));
+
+      await expect.element(tester.rows).toHaveLength(2);
+      await expect.element(tester.selectedCounter).not.toBeInTheDocument();
+    });
+  });
+
+  test.each([
+    { cacheType: 'cache' as const, button: 'Error selected content', operation: { action: 'move', source: 'cache', destination: 'error' } },
+    {
+      cacheType: 'cache' as const,
+      button: 'Archive selected content',
+      operation: { action: 'move', source: 'cache', destination: 'archive' }
+    },
+    { cacheType: 'cache' as const, button: 'Remove selected content', operation: { action: 'remove', folder: 'cache' } },
+    { cacheType: 'error' as const, button: 'Retry selected content', operation: { action: 'move', source: 'error', destination: 'cache' } },
+    {
+      cacheType: 'error' as const,
+      button: 'Archive selected content',
+      operation: { action: 'move', source: 'error', destination: 'archive' }
+    },
+    {
+      cacheType: 'archive' as const,
+      button: 'Replay selected content',
+      operation: { action: 'move', source: 'archive', destination: 'cache' }
+    },
+    { cacheType: 'archive' as const, button: 'Remove selected content', operation: { action: 'remove', folder: 'archive' } }
+  ])('should emit the operation of "$button" on the selected files of the $cacheType folder', async ({ cacheType, button, operation }) => {
+    tester.host.cacheType.set(cacheType);
+    tester.host.files.set(files);
+    await tester.checkbox('a.csv').click();
+    await tester.checkbox('b.csv').click();
+
+    await tester.root.getByRole('button', { name: button, exact: true }).click();
+
+    expect(tester.host.operations()).toEqual([{ ...operation, filenames: ['file-3.json', 'file-1.json'] }]);
+  });
+
+  test.each([
+    { cacheType: 'cache' as const, button: 'Error content', operation: { action: 'move', source: 'cache', destination: 'error' } },
+    { cacheType: 'cache' as const, button: 'Archive content', operation: { action: 'move', source: 'cache', destination: 'archive' } },
+    { cacheType: 'error' as const, button: 'Retry content', operation: { action: 'move', source: 'error', destination: 'cache' } },
+    { cacheType: 'error' as const, button: 'Archive content', operation: { action: 'move', source: 'error', destination: 'archive' } },
+    { cacheType: 'archive' as const, button: 'Replay content', operation: { action: 'move', source: 'archive', destination: 'cache' } },
+    { cacheType: 'archive' as const, button: 'Remove content', operation: { action: 'remove', folder: 'archive' } }
+  ])('should emit the operation of "$button" on a file of the $cacheType folder', async ({ cacheType, button, operation }) => {
+    tester.host.cacheType.set(cacheType);
+    tester.host.files.set(files);
+
+    await tester.rowAction(0, button).click();
+
+    expect(tester.host.operations()).toEqual([{ ...operation, filenames: ['file-2.json'] }]);
+  });
+
+  test('should emit a view operation', async () => {
+    tester.host.cacheType.set('error');
+    tester.host.files.set(files);
+
+    await tester.rowAction(1, 'View content').click();
+
+    expect(tester.host.operations()).toEqual([{ action: 'view', folder: 'error', filename: 'file-3.json' }]);
+  });
+
+  test('should disable the file actions while an operation is pending', async () => {
+    tester.host.files.set(files);
+    await expect.element(tester.rowAction(0, 'Remove content')).toBeEnabled();
+
+    tester.host.state.isPending.next(true);
+
+    await expect.element(tester.rowAction(0, 'Remove content')).toBeDisabled();
+    await expect.element(tester.rowAction(0, 'View content')).toBeDisabled();
   });
 });
