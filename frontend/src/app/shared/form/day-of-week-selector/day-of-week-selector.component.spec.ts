@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
@@ -10,94 +10,86 @@ import { DayOfWeekSelectorComponent } from './day-of-week-selector.component';
 
 @Component({
   template: `<oib-day-of-week-selector [formControl]="control" />`,
-  imports: [DayOfWeekSelectorComponent, ReactiveFormsModule]
+  imports: [DayOfWeekSelectorComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
-  control = new FormControl<Array<number>>([]);
+  readonly control = new FormControl<Array<number>>([]);
 }
 
 class Tester {
   readonly fixture = TestBed.createComponent(TestComponent);
+  readonly control = this.fixture.componentInstance.control;
   readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly days = this.root.getByRole('button');
+  readonly pressedDays = this.root.getByRole('button', { pressed: true });
 
-  day(value: number) {
-    return this.root.getByCss(`[data-day="${value}"]`);
+  day(label: string) {
+    return this.root.getByRole('button', { name: label });
   }
 
-  get pressed(): Array<string> {
-    return Array.from(this.fixture.nativeElement.querySelectorAll('[aria-pressed="true"]')).map(element =>
-      (element as HTMLElement).textContent!.trim()
-    );
+  async expectPressed(labels: Array<string>) {
+    await expect.element(this.pressedDays).toHaveLength(labels.length);
+    expect(this.pressedDays.elements().map(element => element.textContent!.trim())).toEqual(labels);
   }
 }
 
 describe('DayOfWeekSelectorComponent', () => {
+  let tester: Tester;
+
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideI18nTesting()] });
+    tester = new Tester();
   });
 
-  test('should render the seven days Monday first', () => {
-    const tester = new Tester();
-    tester.fixture.detectChanges();
-
-    const labels = Array.from(tester.fixture.nativeElement.querySelectorAll('[data-day]')).map(element =>
-      (element as HTMLElement).textContent!.trim()
-    );
-    expect(labels).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+  test('should render the seven days Monday first', async () => {
+    await expect.element(tester.days).toHaveLength(7);
+    expect(tester.days.elements().map(element => element.textContent!.trim())).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+    await tester.expectPressed([]);
   });
 
-  test('should toggle a day and emit a sorted array', async () => {
-    const tester = new Tester();
-    tester.fixture.detectChanges();
+  test('should toggle days and emit a sorted array', async () => {
+    // Saturday is 6, Sunday is 0: emitted ascending regardless of the click order
+    await tester.day('Sat').click();
+    await tester.day('Sun').click();
 
-    // Saturday is 6, Sunday is 0 — emitted ascending regardless of click order.
-    await tester.day(6).click();
-    await tester.day(0).click();
-    tester.fixture.detectChanges();
-
-    expect(tester.fixture.componentInstance.control.value).toEqual([0, 6]);
-    expect(tester.pressed).toEqual(['Sat', 'Sun']);
+    expect(tester.control.value).toEqual([0, 6]);
+    expect(tester.control.touched).toBe(true);
+    await tester.expectPressed(['Sat', 'Sun']);
   });
 
   test('should deselect a selected day', async () => {
-    const tester = new Tester();
-    tester.fixture.componentInstance.control.setValue([1]);
-    tester.fixture.detectChanges();
+    tester.control.setValue([1]);
+    await tester.expectPressed(['Mon']);
 
-    await tester.day(1).click();
+    await tester.day('Mon').click();
 
-    expect(tester.fixture.componentInstance.control.value).toEqual([]);
+    expect(tester.control.value).toEqual([]);
+    await tester.expectPressed([]);
   });
 
-  test('should render the days written to it', () => {
-    const tester = new Tester();
-    tester.fixture.componentInstance.control.setValue([0, 1]);
-    tester.fixture.detectChanges();
+  test('should render the days written to it', async () => {
+    tester.control.setValue([1, 0]);
 
-    expect(tester.pressed).toEqual(['Mon', 'Sun']);
+    await tester.expectPressed(['Mon', 'Sun']);
   });
 
-  test('should ignore clicks when disabled', async () => {
-    const tester = new Tester();
-    tester.fixture.componentInstance.control.disable();
-    tester.fixture.detectChanges();
+  test('should be disabled with its control', async () => {
+    tester.control.disable();
 
-    await tester
-      .day(1)
-      .click({ force: true })
-      .catch(() => undefined);
-
-    expect(tester.fixture.componentInstance.control.value).toEqual([]);
+    await expect.element(tester.day('Mon')).toBeDisabled();
+    await tester.day('Mon').click({ force: true });
+    expect(tester.control.value).toEqual([]);
   });
 
   test('should not mutate the array it was given, so form resets keep working', async () => {
-    const tester = new Tester();
     const initial: Array<number> = [1];
-    tester.fixture.componentInstance.control.setValue(initial);
-    tester.fixture.detectChanges();
+    tester.control.setValue(initial);
+    await tester.expectPressed(['Mon']);
 
-    await tester.day(2).click();
+    await tester.day('Tue').click();
 
     expect(initial).toEqual([1]);
+    expect(tester.control.value).toEqual([1, 2]);
   });
 });

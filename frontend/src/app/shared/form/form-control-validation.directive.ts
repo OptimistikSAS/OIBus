@@ -1,6 +1,6 @@
 /* eslint-disable @angular-eslint/directive-selector */
 import { Directive, inject } from '@angular/core';
-import { NgControl } from '@angular/forms';
+import { FormControlName, NgControl, NgModel } from '@angular/forms';
 
 import { ValdemortConfig } from 'ngx-valdemort';
 
@@ -17,14 +17,16 @@ import { ValdemortConfig } from 'ngx-valdemort';
   }
 })
 export class FormControlValidationDirective {
-  private ngControl = inject(NgControl, { optional: true });
-  private config = inject(ValdemortConfig);
+  private readonly ngControl = inject(NgControl, { optional: true });
+  private readonly config = inject(ValdemortConfig);
 
   get isInvalid() {
-    return (
-      this.ngControl &&
-      this.ngControl.invalid &&
-      this.config.shouldDisplayErrors(this.ngControl.control!, (this.ngControl as any).formDirective)
-    );
+    if (!this.ngControl?.control || !this.ngControl.invalid) {
+      return false;
+    }
+    // only the directives bound to a control of a form know their form (used to display the errors once submitted)
+    const formDirective =
+      this.ngControl instanceof FormControlName || this.ngControl instanceof NgModel ? this.ngControl.formDirective : null;
+    return this.config.shouldDisplayErrors(this.ngControl.control, formDirective ?? undefined);
   }
 }

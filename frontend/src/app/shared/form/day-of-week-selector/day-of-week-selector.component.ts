@@ -26,7 +26,7 @@ interface DayOption {
   selector: 'oib-day-of-week-selector',
   templateUrl: './day-of-week-selector.component.html',
   styleUrl: './day-of-week-selector.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -36,7 +36,7 @@ interface DayOption {
   ]
 })
 export class DayOfWeekSelectorComponent implements ControlValueAccessor {
-  private locale = inject(LOCALE_ID);
+  private readonly locale = inject(LOCALE_ID);
 
   readonly disabled = signal(false);
   readonly selected = signal<ReadonlyArray<number>>([]);

@@ -12,7 +12,7 @@ import { Directive, ElementRef, inject, OnDestroy } from '@angular/core';
   selector: 'val-errors'
 })
 export class ValErrorDelayDirective implements OnDestroy {
-  observer: MutationObserver | null = null;
+  private readonly observer: MutationObserver;
 
   constructor() {
     const element = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -34,6 +34,6 @@ export class ValErrorDelayDirective implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.observer?.disconnect();
+    this.observer.disconnect();
   }
 }

@@ -18,14 +18,14 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class OIBusScanModeFormControlComponent {
-  scanModeAttribute = input.required<OIBusScanModeAttribute>();
-  allScanModes = input.required<Array<ScanModeDTO>>();
+  readonly scanModeAttribute = input.required<OIBusScanModeAttribute>();
+  readonly allScanModes = input.required<Array<ScanModeDTO>>();
 
-  scanModes = computed(() => {
+  readonly scanModes = computed(() => {
     if (this.scanModeAttribute().acceptableType === 'SUBSCRIPTION') {
       return this.allScanModes().filter(scanMode => scanMode.id === 'subscription');
     } else if (this.scanModeAttribute().acceptableType === 'POLL') {
