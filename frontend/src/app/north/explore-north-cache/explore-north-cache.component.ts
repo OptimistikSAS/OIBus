@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
@@ -8,7 +9,6 @@ import { DateTime } from 'luxon';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { of, switchMap, tap } from 'rxjs';
 
-import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { Instant } from '@oibus/shared/common/types';
 import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/domain/engine.model';
 
@@ -27,7 +27,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
   selector: 'oib-explore-north-cache',
   templateUrl: './explore-north-cache.component.html',
   styleUrl: './explore-north-cache.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TranslateDirective,
     NgbTooltip,
@@ -42,33 +42,30 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
   ]
 })
 export class ExploreNorthCacheComponent {
-  private route = inject(ActivatedRoute);
-  private northConnectorService = inject(NorthConnectorService);
-  private notificationService = inject(NotificationService);
-  private translateService = inject(TranslateService);
-  private modalService = inject(ModalService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly translateService = inject(TranslateService);
+  private readonly modalService = inject(ModalService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  readonly northConnector = signal<NorthConnectorDTO | null>(null);
+  readonly northConnector = toSignal(
+    this.route.paramMap.pipe(
+      switchMap(params => {
+        const paramNorthId = params.get('northId');
+        if (paramNorthId) {
+          return this.northConnectorService.findById(paramNorthId);
+        }
+        return of(null);
+      })
+    ),
+    { initialValue: null }
+  );
   readonly cacheContent = signal<CacheSearchResult | null>(null);
-  state = new ObservableState();
+  readonly state = new ObservableState();
+  readonly fullTitle = computed(() => this.translateService.instant('explore-cache.title', { name: this.northConnector()?.name }));
 
-  constructor() {
-    this.route.paramMap
-      .pipe(
-        switchMap(params => {
-          const paramNorthId = params.get('northId');
-          if (paramNorthId) {
-            return this.northConnectorService.findById(paramNorthId);
-          }
-          return of(null);
-        })
-      )
-      .subscribe(northConnector => {
-        this.northConnector.set(northConnector);
-      });
-  }
-
-  form = inject(NonNullableFormBuilder).group(
+  readonly form = this.fb.group(
     {
       start: [DateTime.now().minus({ hour: 1 }).set({ second: 0, millisecond: 0 }).toUTC().toISO() as Instant, Validators.required],
       end: [DateTime.now().set({ second: 0, millisecond: 0 }).toUTC().toISO() as Instant, Validators.required],
@@ -94,10 +91,6 @@ export class ExploreNorthCacheComponent {
       })
       .pipe(this.state.pendingUntilFinalization())
       .subscribe(result => this.cacheContent.set(result));
-  }
-
-  getFullTitle(): string {
-    return this.translateService.instant('explore-cache.title', { name: this.northConnector()!.name });
   }
 
   viewCacheContent(viewCommand: {
