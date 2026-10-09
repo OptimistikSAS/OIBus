@@ -11,7 +11,7 @@
           </div>
           <div>
             <a class="btn btn-primary me-2" id="oianalytics-module" routerLink="oianalytics">
-              <span class="fa fa-gear me-1" role="status" aria-hidden="true"></span>
+              <span class="fa-solid fa-gear me-1" role="status" aria-hidden="true"></span>
               <span translate="engine.oianalytics"></span>
             </a>
             <button
@@ -25,12 +25,12 @@
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
               }
               @if ((exporting.isPending | async) === false) {
-                <span class="fa fa-download me-1" role="status" aria-hidden="true"></span>
+                <span class="fa-solid fa-download me-1" role="status" aria-hidden="true"></span>
               }
               <span translate="engine.config-transfer.export"></span>
             </button>
             <button (click)="openImportConfigModal()" type="button" class="btn btn-secondary me-2" id="import-config">
-              <span class="fa fa-upload me-1" role="status" aria-hidden="true"></span>
+              <span class="fa-solid fa-upload me-1" role="status" aria-hidden="true"></span>
               <span translate="engine.config-transfer.import.button"></span>
             </button>
             <button (click)="restart()" type="button" [disabled]="restarting.isPending | async" class="btn btn-danger" id="restart">
@@ -38,7 +38,7 @@
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
               }
               @if ((restarting.isPending | async) === false) {
-                <span class="fa fa-rotate-right me-1" role="status" aria-hidden="true"></span>
+                <span class="fa-solid fa-arrow-rotate-right me-1" role="status" aria-hidden="true"></span>
               }
               <span translate="engine.restart"></span>
             </button>
@@ -62,7 +62,7 @@
                   (click)="openNameModal()"
                   [ngbTooltip]="'engine.tooltips.edit' | translate"
                 >
-                  <i class="fa fa-pencil"></i>
+                  <i class="fa-solid fa-pencil"></i>
                 </button>
                 <button
                   type="button"
@@ -71,7 +71,7 @@
                   (click)="showAudit('engine_general')"
                   [ngbTooltip]="'engine.tooltips.audit' | translate"
                 >
-                  <i class="fa fa-history"></i>
+                  <i class="fa-solid fa-history"></i>
                 </button>
               </div>
             </div>
@@ -99,7 +99,7 @@
                   (click)="openWebServerModal()"
                   [ngbTooltip]="'engine.tooltips.edit' | translate"
                 >
-                  <i class="fa fa-pencil"></i>
+                  <i class="fa-solid fa-pencil"></i>
                 </button>
                 <button
                   type="button"
@@ -108,7 +108,7 @@
                   (click)="showAudit('engine_web_server')"
                   [ngbTooltip]="'engine.tooltips.audit' | translate"
                 >
-                  <i class="fa fa-history"></i>
+                  <i class="fa-solid fa-history"></i>
                 </button>
               </div>
             </div>
@@ -140,7 +140,7 @@
                   (click)="openProxyModal()"
                   [ngbTooltip]="'engine.tooltips.edit' | translate"
                 >
-                  <i class="fa fa-pencil"></i>
+                  <i class="fa-solid fa-pencil"></i>
                 </button>
                 <button
                   type="button"
@@ -149,7 +149,7 @@
                   (click)="showAudit('engine_proxy_server')"
                   [ngbTooltip]="'engine.tooltips.audit' | translate"
                 >
-                  <i class="fa fa-history"></i>
+                  <i class="fa-solid fa-history"></i>
                 </button>
               </div>
             </div>
@@ -185,7 +185,7 @@
                   (click)="openLoggerModal()"
                   [ngbTooltip]="'engine.tooltips.edit' | translate"
                 >
-                  <i class="fa fa-pencil"></i>
+                  <i class="fa-solid fa-pencil"></i>
                 </button>
                 <button
                   type="button"
@@ -194,7 +194,7 @@
                   (click)="showAudit('engine_logging')"
                   [ngbTooltip]="'engine.tooltips.audit' | translate"
                 >
-                  <i class="fa fa-history"></i>
+                  <i class="fa-solid fa-history"></i>
                 </button>
               </div>
             </div>
@@ -246,7 +246,7 @@
             @if (dumpingMemory.isPending | async) {
               <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             } @else {
-              <span class="fa fa-download me-1" aria-hidden="true"></span>
+              <span class="fa-solid fa-download me-1" aria-hidden="true"></span>
             }
             <span translate="engine.memory-dump"></span>
           </button>

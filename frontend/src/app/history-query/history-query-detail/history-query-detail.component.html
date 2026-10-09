@@ -7,7 +7,7 @@
             <span>{{ 'history-query.title' | translate: { name: historyQuery.name } }}</span>
             <span class="ms-2">
               <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'history-query.tooltips.edit' | translate">
-                <i class="fa fa-pencil"></i>
+                <i class="fa-solid fa-pencil"></i>
               </button>
               <button
                 type="button"
@@ -16,7 +16,7 @@
                 [ngbTooltip]="'history-query.tooltips.audit' | translate"
                 (click)="showAudit('history_query', historyQuery.id)"
               >
-                <i class="fa fa-history"></i>
+                <i class="fa-solid fa-history"></i>
               </button>
               @if (historyQuery.status === 'PENDING') {
                 <button
@@ -27,10 +27,10 @@
                   [disabled]="state.isPending | async"
                 >
                   @if (state.isPending | async) {
-                    <span class="fa fa-spinner fa-spin" role="status"></span>
+                    <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                   }
                   @if ((state.isPending | async) === false) {
-                    <span class="fa fa-play" role="status"></span>
+                    <span class="fa-solid fa-play" role="status"></span>
                   }
                 </button>
               }
@@ -43,10 +43,10 @@
                   [disabled]="state.isPending | async"
                 >
                   @if (state.isPending | async) {
-                    <span class="fa fa-spinner fa-spin" role="status"></span>
+                    <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                   }
                   @if ((state.isPending | async) === false) {
-                    <span class="fa fa-pause" role="status"></span>
+                    <span class="fa-solid fa-pause" role="status"></span>
                   }
                 </button>
               }
@@ -59,10 +59,10 @@
                   [disabled]="state.isPending | async"
                 >
                   @if (state.isPending | async) {
-                    <span class="fa fa-spinner fa-spin" role="status"></span>
+                    <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                   }
                   @if ((state.isPending | async) === false) {
-                    <span class="fa fa-play" role="status"></span>
+                    <span class="fa-solid fa-play" role="status"></span>
                   }
                 </button>
               }
@@ -75,10 +75,10 @@
                   [disabled]="state.isPending | async"
                 >
                   @if (state.isPending | async) {
-                    <span class="fa fa-spinner fa-spin" role="status"></span>
+                    <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                   }
                   @if ((state.isPending | async) === false) {
-                    <span class="fa fa-repeat" role="status"></span>
+                    <span class="fa-solid fa-arrow-rotate-right" role="status"></span>
                   }
                 </button>
               }
@@ -86,15 +86,15 @@
           </h1>
           <div class="d-flex justify-content-between align-items-center">
             <span class="d-flex align-items-center text-muted small">
-              <i class="fa fa-calendar me-1"></i>
+              <i class="fa-solid fa-calendar-days me-1"></i>
               {{ historyQuery.queryTimeRange.startTime | datetime: 'mediumWithSeconds' }}
-              <i class="fa fa-arrow-right oib-fa-arrow"></i>
+              <i class="fa-solid fa-arrow-right oib-fa-arrow"></i>
               {{ historyQuery.queryTimeRange.endTime | datetime: 'mediumWithSeconds' }}
             </span>
             <span class="text-disabled me-2">
               {{ historyQuery.id }}
               <i
-                class="fa fa-copy"
+                class="fa-solid fa-copy"
                 role="button"
                 [ngbTooltip]="'history-query.tooltips.copy-cache-path' | translate"
                 [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
@@ -117,7 +117,7 @@
             <div class="d-flex justify-content-between">
               <span translate="north.caching.title"></span>
               <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/history-queries', historyQuery.id, 'cache']"
-                ><span class="fa fa-search"></span><span class="mx-1" translate="north.caching.explore-cache"></span
+                ><span class="fa-solid fa-search"></span><span class="mx-1" translate="north.caching.explore-cache"></span
               ></a>
             </div>
           </ng-template>
@@ -136,7 +136,7 @@
                   ></span>
                   @if (isWindowExpired(historyQuery.caching.trigger.scanMode)) {
                     <i
-                      class="fa fa-warning text-warning ms-1 scan-mode-window-expired"
+                      class="fa-solid fa-triangle-exclamation text-warning ms-1 scan-mode-window-expired"
                       aria-hidden="true"
                       [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
                     ></i>
@@ -275,7 +275,7 @@
                   [ngbTooltip]="'history-query.items.tooltips.add' | translate"
                   (click)="addItem()"
                 >
-                  <span class="fa fa-plus"></span>
+                  <span class="fa-solid fa-plus"></span>
                 </button>
                 <button
                   type="button"
@@ -328,7 +328,7 @@
                     [disabled]="getSelectedItemsCount() === filteredItems.length"
                     id="select-all-button"
                   >
-                    <span class="fa fa-check-square me-1"></span>
+                    <span class="fa-solid fa-check-square me-1"></span>
                     <span translate="history-query.items.select-all"></span>
                   </button>
                   <button
@@ -338,27 +338,27 @@
                     [disabled]="getSelectedItemsCount() === 0"
                     id="unselect-all-button"
                   >
-                    <span class="fa fa-square-o me-1"></span>
+                    <span class="fa-solid fa-square me-1"></span>
                     <span translate="history-query.items.unselect-all"></span>
                   </button>
                   @if (getSelectedItemsCount() > 0) {
                     <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
                       <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
                         <span translate="history-query.items.mass-actions" [translateParams]="{ count: selectedItems.size }"></span>
-                        <span class="fa fa-caret-down ms-1"></span>
+                        <span class="fa-solid fa-caret-down ms-1"></span>
                       </button>
                       <div ngbDropdownMenu>
                         <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
-                          <span class="fa fa-check me-2"></span>
+                          <span class="fa-solid fa-check me-2"></span>
                           <span translate="history-query.items.enable"></span>
                         </button>
                         <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
-                          <span class="fa fa-times me-2"></span>
+                          <span class="fa-solid fa-times me-2"></span>
                           <span translate="history-query.items.disable"></span>
                         </button>
                         <div class="dropdown-divider"></div>
                         <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
-                          <span class="fa fa-trash me-2"></span>
+                          <span class="fa-solid fa-trash-can me-2"></span>
                           <span translate="history-query.items.delete"></span>
                         </button>
                       </div>
@@ -378,13 +378,13 @@
                         (click)="toggleColumnSort('enabled')"
                       >
                         <span translate="history-query.items.status" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.enabled] }}"></span>
+                        <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.enabled] }}"></span>
                       </button>
                     </th>
                     <th>
                       <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
                         <span translate="history-query.items.name" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+                        <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.name] }}"></span>
                       </button>
                     </th>
                     @for (setting of displaySettings(); track setting) {
@@ -401,7 +401,7 @@
                         (click)="toggleColumnSort('createdAt')"
                       >
                         <span translate="history-query.items.created-at" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.createdAt] }}"></span>
+                        <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.createdAt] }}"></span>
                       </button>
                     </th>
                     <th style="width: 10rem">
@@ -411,7 +411,7 @@
                         (click)="toggleColumnSort('updatedAt')"
                       >
                         <span translate="history-query.items.updated-at" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.updatedAt] }}"></span>
+                        <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.updatedAt] }}"></span>
                       </button>
                     </th>
                     <th></th>
@@ -450,7 +450,7 @@
                             [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
                             (click)="editItem(item)"
                           >
-                            <span class="fa fa-pencil"></span>
+                            <span class="fa-solid fa-pencil"></span>
                           </button>
                           <button
                             type="button"
@@ -458,7 +458,7 @@
                             [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
                             (click)="duplicateItem(item)"
                           >
-                            <span class="fa fa-copy"></span>
+                            <span class="fa-solid fa-copy"></span>
                           </button>
                           <button
                             type="button"
@@ -466,7 +466,7 @@
                             [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
                             (click)="deleteItem(item)"
                           >
-                            <span class="fa fa-trash"></span>
+                            <span class="fa-solid fa-trash-can"></span>
                           </button>
                           <!-- Audit history button -->
                           <button
@@ -475,7 +475,7 @@
                             [ngbTooltip]="'history-query.items.tooltips.audit' | translate"
                             (click)="showAudit('history_query_item', item.id)"
                           >
-                            <span class="fa fa-history"></span>
+                            <span class="fa-solid fa-history"></span>
                           </button>
                         </div>
                       </td>

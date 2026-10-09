@@ -82,11 +82,11 @@ export class HistoryQueryListComponent {
   // Each status pairs a distinct icon shape with its color, so meaning does not rely on color alone
   // (e.g. colorblind users can still tell ERRORED from RUNNING even when red and green look the same).
   readonly LEGEND: Array<{ label: string; status: HistoryQueryStatus; class: string }> = [
-    { label: 'enums.status.PENDING', status: 'PENDING', class: 'fa fa-hourglass-half status-grey' },
-    { label: 'enums.status.RUNNING', status: 'RUNNING', class: 'fa fa-spinner fa-spin status-green' },
-    { label: 'enums.status.PAUSED', status: 'PAUSED', class: 'fa fa-pause-circle status-yellow' },
-    { label: 'enums.status.FINISHED', status: 'FINISHED', class: 'fa fa-check-circle status-blue' },
-    { label: 'enums.status.ERRORED', status: 'ERRORED', class: 'fa fa-times-circle status-red' }
+    { label: 'enums.status.PENDING', status: 'PENDING', class: 'fa-solid fa-hourglass-half status-grey' },
+    { label: 'enums.status.RUNNING', status: 'RUNNING', class: 'fa-solid fa-spinner fa-spin status-green' },
+    { label: 'enums.status.PAUSED', status: 'PAUSED', class: 'fa-solid fa-pause-circle status-yellow' },
+    { label: 'enums.status.FINISHED', status: 'FINISHED', class: 'fa-solid fa-check-circle status-blue' },
+    { label: 'enums.status.ERRORED', status: 'ERRORED', class: 'fa-solid fa-times-circle status-red' }
   ];
 
   constructor() {
@@ -178,7 +178,7 @@ export class HistoryQueryListComponent {
     if (this.sortField !== field) {
       return 'fa-sort';
     }
-    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {
@@ -279,7 +279,7 @@ export class HistoryQueryListComponent {
     if (foundElement) {
       return foundElement.class;
     }
-    return 'fa fa-times-circle status-red';
+    return 'fa-solid fa-times-circle status-red';
   }
 
   getStatusLabel(status: HistoryQueryStatus): string {

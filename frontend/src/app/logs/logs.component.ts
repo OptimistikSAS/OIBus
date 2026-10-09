@@ -102,11 +102,11 @@ export class LogsComponent implements OnInit, OnDestroy {
   // Each level pairs a distinct icon shape with its color, so meaning does not rely on color alone
   // (e.g. colorblind users can still tell ERROR from INFO even when red and green look the same).
   readonly LEGEND: Array<{ label: LogLevel; class: string }> = [
-    { label: 'error', class: 'fa fa-times-circle level-red' },
-    { label: 'warn', class: 'fa fa-exclamation-triangle level-yellow' },
-    { label: 'info', class: 'fa fa-info-circle level-green' },
-    { label: 'debug', class: 'fa fa-bug level-blue' },
-    { label: 'trace', class: 'fa fa-search level-grey' }
+    { label: 'error', class: 'fa-solid fa-times-circle level-red' },
+    { label: 'warn', class: 'fa-solid fa-exclamation-triangle level-yellow' },
+    { label: 'info', class: 'fa-solid fa-info-circle level-green' },
+    { label: 'debug', class: 'fa-solid fa-bug level-blue' },
+    { label: 'trace', class: 'fa-solid fa-search level-grey' }
   ];
 
   readonly levels = LOG_LEVELS.filter(level => level !== 'silent');
@@ -352,7 +352,7 @@ export class LogsComponent implements OnInit, OnDestroy {
     if (foundElement) {
       return foundElement.class;
     }
-    return 'fa fa-times-circle level-red';
+    return 'fa-solid fa-times-circle level-red';
   }
 
   /**
