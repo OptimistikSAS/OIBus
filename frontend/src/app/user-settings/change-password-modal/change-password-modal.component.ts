@@ -27,17 +27,18 @@ function samePasswordValidator(newPasswordForm: AbstractControl): ValidationErro
   selector: 'oib-change-password-modal',
   templateUrl: './change-password-modal.component.html',
   styleUrl: './change-password-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, NgbCollapse, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class ChangePasswordModalComponent {
   private modal = inject(NgbActiveModal);
   private notificationService = inject(NotificationService);
   private userSettingsService = inject(UserSettingsService);
+  private fb = inject(NonNullableFormBuilder);
 
-  form = inject(NonNullableFormBuilder).group({
+  readonly form = this.fb.group({
     currentPassword: ['', Validators.required],
-    newPasswordForm: inject(NonNullableFormBuilder).group(
+    newPasswordForm: this.fb.group(
       {
         newPassword: ['', Validators.required],
         newPasswordConfirmation: ['', Validators.required]
@@ -45,7 +46,7 @@ export class ChangePasswordModalComponent {
       { validators: samePasswordValidator }
     )
   });
-  error = signal(false);
+  readonly error = signal(false);
 
   save() {
     if (!this.form.valid) {
