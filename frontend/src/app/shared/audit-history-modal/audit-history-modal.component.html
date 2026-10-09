@@ -6,13 +6,13 @@
     <div class="d-flex justify-content-end mb-2">
       <div ngbDropdown class="d-inline-block">
         <button type="button" class="btn btn-outline-secondary btn-sm" ngbDropdownToggle>
-          <span class="fa-solid {{ modeIcons[mode()] }}"></span>
+          <span class="fa-solid {{ modeIcons[mode()] }}" aria-hidden="true"></span>
           <span class="ms-1">{{ 'audit.history-modal.modes.' + mode() | translate }}</span>
         </button>
         <div ngbDropdownMenu>
           @for (m of modes; track m) {
-            <button ngbDropdownItem [class.active]="mode() === m" (click)="changeMode(m)">
-              <span class="fa-solid {{ modeIcons[m] }}"></span>
+            <button type="button" ngbDropdownItem [class.active]="mode() === m" (click)="changeMode(m)">
+              <span class="fa-solid {{ modeIcons[m] }}" aria-hidden="true"></span>
               <span class="ms-1">{{ 'audit.history-modal.modes.' + m | translate }}</span>
             </button>
           }
@@ -50,12 +50,15 @@
               [ngbTooltip]="
                 (expandedRowId() === row.id ? 'audit.history-modal.tooltips.collapse' : 'audit.history-modal.tooltips.expand') | translate
               "
+              [attr.aria-label]="
+                (expandedRowId() === row.id ? 'audit.history-modal.tooltips.collapse' : 'audit.history-modal.tooltips.expand') | translate
+              "
               (click)="toggleRow(row.id)"
             >
               @if (expandedRowId() === row.id) {
-                <span class="fa-solid fa-chevron-up"></span>
+                <span class="fa-solid fa-chevron-up" aria-hidden="true"></span>
               } @else {
-                <span class="fa-solid fa-chevron-down"></span>
+                <span class="fa-solid fa-chevron-down" aria-hidden="true"></span>
               }
             </button>
           </div>

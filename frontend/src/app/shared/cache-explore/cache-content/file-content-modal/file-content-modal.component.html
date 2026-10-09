@@ -2,12 +2,12 @@
   <h4 class="modal-title">
     <span
       translate="explore-cache.view-content.title"
-      [translateParams]="{ filename: filename, contentFilename: fileCacheContent?.contentFilename }"
+      [translateParams]="{ filename: filename(), contentFilename: fileCacheContent()?.contentFilename }"
     ></span>
   </h4>
 </div>
 <div class="modal-body">
-  @if (fileCacheContent) {
+  @if (fileCacheContent(); as fileCacheContent) {
     <div class="mb-2">
       @if (fileCacheContent.truncated) {
         <div>
@@ -38,7 +38,7 @@
       }
     </div>
   }
-  <oib-code-block style="max-height: 80vh" #codeBlock />
+  <oib-code-block class="file-content" #codeBlock />
 </div>
 <div class="modal-footer">
   <div class="btn-group">

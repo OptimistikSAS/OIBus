@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Params, Router, RouterLink } from '@angular/router';
 
 import { TranslateDirective } from '@ngx-translate/core';
-import { catchError, filter, map, of, switchMap } from 'rxjs';
+import { catchError, filter, map, Observable, of, startWith, switchMap } from 'rxjs';
 
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
 import { HistoryQueryService } from '../../services/history-query.service';
@@ -19,45 +20,28 @@ interface BreadcrumbItem {
   selector: 'oib-breadcrumb',
   imports: [RouterLink, TranslateDirective],
   templateUrl: './breadcrumb.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './breadcrumb.component.scss'
 })
-export class BreadcrumbComponent implements OnInit {
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private northConnectorService = inject(NorthConnectorService);
-  private southConnectorService = inject(SouthConnectorService);
-  private historyQueryService = inject(HistoryQueryService);
-  private configurationWorkflowService = inject(ConfigurationWorkflowService);
+export class BreadcrumbComponent {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly historyQueryService = inject(HistoryQueryService);
+  private readonly configurationWorkflowService = inject(ConfigurationWorkflowService);
 
-  readonly breadcrumbs = signal<Array<BreadcrumbItem>>([]);
-
-  ngOnInit() {
-    // Update breadcrumbs on navigation
-    this.router.events
-      .pipe(
-        filter(event => event instanceof NavigationEnd),
-        map(() => this.getActivatedRoute()),
-        switchMap(route => route.params),
-        switchMap(params => {
-          return this.buildBreadcrumbs(this.router.url, params);
-        })
-      )
-      .subscribe(breadcrumbs => {
-        this.breadcrumbs.set(breadcrumbs);
-      });
-
-    // Initial breadcrumb load
-    this.getActivatedRoute()
-      .params.pipe(
-        switchMap(params => {
-          return this.buildBreadcrumbs(this.router.url, params);
-        })
-      )
-      .subscribe(breadcrumbs => {
-        this.breadcrumbs.set(breadcrumbs);
-      });
-  }
+  // built for the current route, then rebuilt on every navigation
+  readonly breadcrumbs = toSignal(
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      startWith(null),
+      map(() => this.getActivatedRoute()),
+      switchMap(route => route.params),
+      switchMap(params => this.buildBreadcrumbs(this.router.url, params))
+    ),
+    { initialValue: [] }
+  );
 
   private getActivatedRoute(): ActivatedRoute {
     let route = this.route;
@@ -67,7 +51,7 @@ export class BreadcrumbComponent implements OnInit {
     return route;
   }
 
-  private buildBreadcrumbs(url: string, params: any) {
+  private buildBreadcrumbs(url: string, params: Params): Observable<Array<BreadcrumbItem>> {
     const breadcrumbs: Array<BreadcrumbItem> = [];
 
     // Don't show breadcrumbs on home page

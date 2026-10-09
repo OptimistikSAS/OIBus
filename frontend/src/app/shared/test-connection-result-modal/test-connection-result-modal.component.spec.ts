@@ -2,12 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { NEVER, of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { NEVER, Observable, of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, Mock, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { NorthConnectorCommandDTO, NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
-import { SouthConnectorCommandDTO } from '@oibus/shared/api/south-connector.model';
+import { OIBusConnectionTestResult } from '@oibus/shared/domain/engine.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../test/test-data';
@@ -21,11 +20,24 @@ class TestConnectionResultModalComponentTester {
   readonly fixture = TestBed.createComponent(TestConnectionResultModalComponent);
   readonly component = this.fixture.componentInstance;
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly spinner = this.root.getByCss('#spinner');
+  readonly title = this.root.getByRole('heading');
+  readonly spinner = this.root.getByRole('status');
   readonly error = this.root.getByCss('#connection-error');
   readonly success = this.root.getByCss('#success');
   readonly cancel = this.root.getByRole('button', { name: 'Close' });
-  readonly table = this.root.getByCss('table');
+  readonly resultRows = this.root.getByRole('row');
+}
+
+type TestConnectionMock = Mock<(...args: Array<never>) => Observable<OIBusConnectionTestResult>>;
+
+interface TestCase {
+  name: string;
+  /** runs the test with the given id (null when creating) */
+  run: (component: TestConnectionResultModalComponent, id: string | null) => void;
+  /** the mocked service method called by the modal */
+  serviceMethod: () => TestConnectionMock;
+  /** the arguments the service method should be called with, for the given id */
+  expectedArguments: (id: string) => Array<unknown>;
 }
 
 describe('TestConnectionResultModalComponent', () => {
@@ -34,6 +46,8 @@ describe('TestConnectionResultModalComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let northConnectorService: MockObject<NorthConnectorService>;
   let historyQueryService: MockObject<HistoryQueryService>;
+  const south = testData.south.list[0];
+  const north = testData.north.list[0];
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -54,296 +68,93 @@ describe('TestConnectionResultModalComponent', () => {
     tester = new TestConnectionResultModalComponentTester();
   });
 
-  describe('South type', () => {
-    const southConnector = testData.south.list[0];
+  const testCases: Array<TestCase> = [
+    {
+      name: 'south connector',
+      run: (component, id) => component.runTest('south', id, south.settings, south.type),
+      serviceMethod: () => southConnectorService.testConnection,
+      expectedArguments: id => [id, south.settings, south.type]
+    },
+    {
+      name: 'north connector',
+      run: (component, id) => component.runTest('north', id, north.settings, north.type),
+      serviceMethod: () => northConnectorService.testConnection,
+      expectedArguments: id => [id, north.settings, north.type]
+    },
+    {
+      name: 'history query south',
+      run: (component, id) => component.runHistoryQueryTest('south', id, south.settings, south.type, 'southId1'),
+      serviceMethod: () => historyQueryService.testSouthConnection,
+      expectedArguments: id => [id, south.settings, south.type, 'southId1']
+    },
+    {
+      name: 'history query north',
+      run: (component, id) => component.runHistoryQueryTest('north', id, north.settings, north.type),
+      serviceMethod: () => historyQueryService.testNorthConnection,
+      expectedArguments: id => [id, north.settings, north.type, null]
+    }
+  ];
 
-    beforeEach(() => {
-      southConnectorService.testConnection.mockReturnValue(of({ items: [] }));
-    });
-
+  describe.each(testCases)('$name', ({ run, serviceMethod, expectedArguments }) => {
     test('should be loading', async () => {
-      southConnectorService.testConnection.mockReturnValue(NEVER);
-      tester.component.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
-      tester.fixture.detectChanges();
+      serviceMethod().mockReturnValue(NEVER);
+
+      run(tester.component, 'id1');
+
+      await expect.element(tester.title).toHaveTextContent('Testing settings');
       await expect.element(tester.spinner).toBeInTheDocument();
+      await expect.element(tester.success).not.toBeInTheDocument();
     });
 
     test('should display success', async () => {
-      tester.component.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
-      tester.fixture.detectChanges();
+      serviceMethod().mockReturnValue(of({ items: [] }));
 
-      expect(southConnectorService.testConnection).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
+      run(tester.component, 'id1');
+
+      expect(serviceMethod()).toHaveBeenCalledWith(...expectedArguments('id1'));
+      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
-      expect(tester.component.testResult()).toEqual({ items: [] });
-      await expect.element(tester.table).not.toBeInTheDocument();
+      await expect.element(tester.resultRows).toHaveLength(0);
     });
 
     test('should display success with result items', async () => {
-      southConnectorService.testConnection.mockReturnValue(of({ items: [{ key: 'Version', value: '1.2.3' }] }));
-      tester.component.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
-      tester.fixture.detectChanges();
+      serviceMethod().mockReturnValue(of({ items: [{ key: 'Version', value: '1.2.3' }] }));
 
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      expect(tester.component.testResult()).toEqual({ items: [{ key: 'Version', value: '1.2.3' }] });
-      await expect.element(tester.table).toBeInTheDocument();
+      run(tester.component, 'id1');
+
+      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.resultRows).toHaveLength(1);
+      await expect.element(tester.resultRows.nth(0).getByRole('rowheader')).toHaveTextContent('Version');
+      await expect.element(tester.resultRows.nth(0).getByRole('cell')).toHaveTextContent('1.2.3');
     });
 
-    test('should display success without south', async () => {
-      tester.component.runTest('south', null, southConnector.settings, southConnector.type);
-      tester.fixture.detectChanges();
+    test('should test the settings of an entity being created', async () => {
+      serviceMethod().mockReturnValue(of({ items: [] }));
 
-      expect(southConnectorService.testConnection).toHaveBeenCalledWith('create', southConnector.settings, southConnector.type);
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
+      run(tester.component, null);
+
+      expect(serviceMethod()).toHaveBeenCalledWith(...expectedArguments('create'));
+      await expect.element(tester.success).toBeInTheDocument();
     });
 
     test('should display error', async () => {
-      southConnectorService.testConnection.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
-      tester.component.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
+      serviceMethod().mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
 
-      tester.fixture.detectChanges();
-      await expect.element(tester.error).toMatchTextContent('failure');
+      run(tester.component, 'id1');
+
+      await expect.element(tester.error).toMatchTextContent(/^Error when testing settings\s*failure$/);
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.success).not.toBeInTheDocument();
-    });
-
-    test('should cancel', async () => {
-      tester.component.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
-      tester.fixture.detectChanges();
-      await tester.cancel.click();
-      expect(fakeActiveModal.dismiss).toHaveBeenCalled();
     });
   });
 
-  describe('North type', () => {
-    const northConnector: NorthConnectorDTO = {
-      id: 'id1',
-      type: 'file-writer',
-      name: 'My South Connector 1',
-      description: 'My South connector description',
-      enabled: true,
-      settings: {}
-    } as NorthConnectorDTO;
+  test('should cancel', async () => {
+    southConnectorService.testConnection.mockReturnValue(NEVER);
+    tester.component.runTest('south', south.id, south.settings, south.type);
 
-    beforeEach(() => {
-      northConnectorService.testConnection.mockReturnValue(of({ items: [] }));
-    });
+    await tester.cancel.click();
 
-    test('should be loading', async () => {
-      northConnectorService.testConnection.mockReturnValue(NEVER);
-      tester.component.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
-      tester.fixture.detectChanges();
-      await expect.element(tester.spinner).toBeInTheDocument();
-    });
-
-    test('should display success', async () => {
-      tester.component.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
-      tester.fixture.detectChanges();
-
-      expect(northConnectorService.testConnection).toHaveBeenCalledWith(northConnector.id, northConnector.settings, northConnector.type);
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-    });
-
-    test('should display success without north', async () => {
-      tester.component.runTest('north', null, northConnector.settings, northConnector.type);
-      tester.fixture.detectChanges();
-
-      expect(northConnectorService.testConnection).toHaveBeenCalledWith('create', northConnector.settings, northConnector.type);
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-    });
-
-    test('should display error', async () => {
-      northConnectorService.testConnection.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
-      tester.component.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
-
-      tester.fixture.detectChanges();
-      await expect.element(tester.error).toMatchTextContent('failure');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.success).not.toBeInTheDocument();
-    });
-
-    test('should cancel', async () => {
-      tester.component.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
-      tester.fixture.detectChanges();
-      await tester.cancel.click();
-      expect(fakeActiveModal.dismiss).toHaveBeenCalled();
-    });
-  });
-
-  describe('History query north', () => {
-    const northCommand: NorthConnectorCommandDTO = {
-      name: 'test',
-      settings: {}
-    } as NorthConnectorCommandDTO;
-
-    beforeEach(() => {
-      historyQueryService.testNorthConnection.mockReturnValue(of({ items: [] }));
-    });
-
-    test('should be loading', async () => {
-      historyQueryService.testNorthConnection.mockReturnValue(NEVER);
-      tester.component.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
-      tester.fixture.detectChanges();
-      await expect.element(tester.spinner).toBeInTheDocument();
-
-      tester.component.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type, 'fromNorthId');
-      tester.fixture.detectChanges();
-      await expect.element(tester.spinner).toBeInTheDocument();
-    });
-
-    test('should display success', async () => {
-      tester.component.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
-      tester.fixture.detectChanges();
-
-      expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith('historyId', northCommand.settings, northCommand.type, null);
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-
-      tester.component.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type, 'fromNorthId');
-      tester.fixture.detectChanges();
-
-      expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith(
-        'historyId',
-        northCommand.settings,
-        northCommand.type,
-        'fromNorthId'
-      );
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-    });
-
-    test('should display success without history id', async () => {
-      tester.component.runHistoryQueryTest('north', null, northCommand.settings, northCommand.type);
-      tester.fixture.detectChanges();
-
-      expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith('create', northCommand.settings, northCommand.type, null);
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-
-      tester.component.runHistoryQueryTest('north', null, northCommand.settings, northCommand.type, 'fromNorthId');
-      tester.fixture.detectChanges();
-
-      expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith(
-        'create',
-        northCommand.settings,
-        northCommand.type,
-        'fromNorthId'
-      );
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-    });
-
-    test('should display error', async () => {
-      historyQueryService.testNorthConnection.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
-      tester.component.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
-
-      tester.fixture.detectChanges();
-      await expect.element(tester.error).toMatchTextContent('failure');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.success).not.toBeInTheDocument();
-    });
-
-    test('should cancel', async () => {
-      tester.component.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
-      tester.fixture.detectChanges();
-      await tester.cancel.click();
-      expect(fakeActiveModal.dismiss).toHaveBeenCalled();
-    });
-  });
-
-  describe('History query south', () => {
-    const southCommand: SouthConnectorCommandDTO = {
-      name: 'test',
-      settings: {}
-    } as SouthConnectorCommandDTO;
-
-    beforeEach(() => {
-      historyQueryService.testSouthConnection.mockReturnValue(of({ items: [] }));
-    });
-
-    test('should be loading', async () => {
-      historyQueryService.testSouthConnection.mockReturnValue(NEVER);
-      tester.component.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
-      tester.fixture.detectChanges();
-      await expect.element(tester.spinner).toBeInTheDocument();
-
-      tester.component.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type, 'fromSouthId');
-      tester.fixture.detectChanges();
-      await expect.element(tester.spinner).toBeInTheDocument();
-    });
-
-    test('should display success', async () => {
-      tester.component.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
-      tester.fixture.detectChanges();
-
-      expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith('historyId', southCommand.settings, southCommand.type, null);
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-
-      tester.component.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type, 'fromSouthId');
-      tester.fixture.detectChanges();
-
-      expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith(
-        'historyId',
-        southCommand.settings,
-        southCommand.type,
-        'fromSouthId'
-      );
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-    });
-
-    test('should display success without history id', async () => {
-      tester.component.runHistoryQueryTest('south', null, southCommand.settings, southCommand.type);
-      tester.fixture.detectChanges();
-
-      expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith('create', southCommand.settings, southCommand.type, null);
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-
-      tester.component.runHistoryQueryTest('south', null, southCommand.settings, southCommand.type, 'fromSouthId');
-      tester.fixture.detectChanges();
-
-      expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith(
-        'create',
-        southCommand.settings,
-        southCommand.type,
-        'fromSouthId'
-      );
-      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.error).not.toBeInTheDocument();
-    });
-
-    test('should display error', async () => {
-      historyQueryService.testSouthConnection.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'failure' } })));
-      tester.component.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
-
-      tester.fixture.detectChanges();
-      await expect.element(tester.error).toMatchTextContent('failure');
-      await expect.element(tester.spinner).not.toBeInTheDocument();
-      await expect.element(tester.success).not.toBeInTheDocument();
-    });
-
-    test('should cancel', async () => {
-      tester.component.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
-      tester.fixture.detectChanges();
-      await tester.cancel.click();
-      expect(fakeActiveModal.dismiss).toHaveBeenCalled();
-    });
+    expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
 });

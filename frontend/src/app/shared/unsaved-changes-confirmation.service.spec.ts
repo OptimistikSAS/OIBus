@@ -1,49 +1,30 @@
 import { TestBed } from '@angular/core/testing';
 
-import { of } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { firstValueFrom } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createMock, MockObject } from '../../test/vitest-create-mock';
+import { createMock } from '../../test/vitest-create-mock';
 import { UnsavedChangesConfirmationModalComponent } from './form/unsaved-changes-confirmation-modal.component';
-import { ModalService } from './modal.service';
+import { MockModalService, provideModalTesting } from './mock-modal.service.testing';
 import { UnsavedChangesConfirmationService } from './unsaved-changes-confirmation.service';
 
 describe('UnsavedChangesConfirmationService', () => {
   let service: UnsavedChangesConfirmationService;
-  let modalService: MockObject<ModalService>;
+  let modalService: MockModalService<UnsavedChangesConfirmationModalComponent>;
 
   beforeEach(() => {
-    modalService = createMock(ModalService);
-
-    TestBed.configureTestingModule({
-      providers: [UnsavedChangesConfirmationService, { provide: ModalService, useValue: modalService }]
-    });
+    TestBed.configureTestingModule({ providers: [provideModalTesting()] });
+    modalService = TestBed.inject(MockModalService);
     service = TestBed.inject(UnsavedChangesConfirmationService);
   });
 
-  test('should be created', () => {
-    expect(service).toBeTruthy();
-  });
+  test.each([true, false])('should open a static modal and return its result (%s)', async leave => {
+    modalService.mockClosedModal(createMock(UnsavedChangesConfirmationModalComponent), leave);
+    vi.spyOn(modalService, 'open');
 
-  test('should open unsaved changes confirmation modal', () => {
-    const mockModalRef = { result: of(true) };
-    modalService.open.mockReturnValue(mockModalRef as any);
-
-    const result = service.confirmUnsavedChanges();
+    const result = await firstValueFrom(service.confirmUnsavedChanges());
 
     expect(modalService.open).toHaveBeenCalledWith(UnsavedChangesConfirmationModalComponent, { backdrop: 'static' });
-    expect(result).toBe(mockModalRef.result);
-  });
-
-  test('should return modal result observable', () => {
-    return new Promise<void>(resolve => {
-      const mockModalRef = { result: of(false) };
-      modalService.open.mockReturnValue(mockModalRef as any);
-
-      service.confirmUnsavedChanges().subscribe(result => {
-        expect(result).toBe(false);
-        resolve();
-      });
-    });
+    expect(result).toBe(leave);
   });
 });

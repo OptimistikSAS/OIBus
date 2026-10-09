@@ -89,9 +89,8 @@ describe('AuditListComponent', () => {
     auditService = createMock(AuditService);
     auditService.search.mockReturnValue(of(emptyAuditPage));
     modalService = createMock(ModalService);
-    pageLoader = createMock(PageLoader);
     pageLoads$ = new BehaviorSubject<number>(0);
-    pageLoader.pageLoads$ = pageLoads$.asObservable();
+    pageLoader = createMock(PageLoader, { pageLoads$: pageLoads$.asObservable() });
 
     TestBed.configureTestingModule({
       providers: [

@@ -62,8 +62,7 @@ export class AppComponent implements OnInit, OnDestroy {
         backdrop: 'static',
         keyboard: false
       });
-      modalRef.componentInstance.oldVersion = info.oldVersion;
-      modalRef.componentInstance.newVersion = info.newVersion;
+      modalRef.componentInstance.initialize(info.oldVersion, info.newVersion);
     });
   }
 

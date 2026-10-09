@@ -1,460 +1,243 @@
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, Directive, Input, Pipe, PipeTransform } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { By } from '@angular/platform-browser';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { provideTranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
+import { provideCurrentUser } from '../current-user-testing';
+import { provideNgbConfigTesting } from '../form/oi-ngb-testing';
 import { DateRange, DateRangeSelectorComponent } from './date-range-selector.component';
-
-@Pipe({ name: 'translate', standalone: true })
-class MockTranslatePipe implements PipeTransform {
-  transform(value: string): string {
-    return value;
-  }
-}
-
-@Directive({ selector: '[oibTranslate]', standalone: true })
-class MockTranslateDirective {
-  @Input() translate = '';
-}
 
 @Component({
   selector: 'oib-test-date-range-selector-host-component',
   template: `
     <form [formGroup]="testForm">
-      <oib-date-range-selector formControlName="dateRange" [startLabel]="startLabel" [endLabel]="endLabel" [defaultRange]="defaultRange" />
+      <oib-date-range-selector
+        formControlName="dateRange"
+        [startLabel]="startLabel()"
+        [endLabel]="endLabel()"
+        [defaultRange]="defaultRange()"
+      />
     </form>
   `,
-  standalone: true,
   imports: [ReactiveFormsModule, DateRangeSelectorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestHostComponent {
-  testForm = TestBed.inject(FormBuilder).group({
+  readonly testForm = inject(NonNullableFormBuilder).group({
     dateRange: new FormControl<DateRange | null>(null, Validators.required)
   });
-  startLabel = 'custom.start';
-  endLabel = 'custom.end';
-  defaultRange = 'last-hour';
+  readonly startLabel = signal('south.test-item.query-start');
+  readonly endLabel = signal('south.test-item.query-end');
+  readonly defaultRange = signal('last-hour');
+  readonly selector = viewChild.required(DateRangeSelectorComponent);
+}
+
+class DateRangeSelectorComponentTester {
+  readonly fixture = TestBed.createComponent(TestHostComponent);
+  readonly host = this.fixture.componentInstance;
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly rangeType = this.root.getByLabelText('Date Range');
+  readonly options = this.rangeType.getByRole('option');
+  readonly summary = this.root.getByCss('.range-summary');
+  readonly datetimepickers = this.root.getByCss('oib-datetimepicker');
+  readonly start = this.datetimepickers.nth(0);
+  readonly end = this.datetimepickers.nth(1);
+
+  get value() {
+    return this.host.testForm.controls.dateRange.value;
+  }
+}
+
+const NOW = '2024-01-01T12:00:00.000Z';
+
+function formatRange(startTime: string, endTime: string) {
+  const format = (instant: string) => DateTime.fromISO(instant).toLocaleString(DateTime.DATETIME_SHORT);
+  return `${format(startTime)} - ${format(endTime)}`;
 }
 
 describe('DateRangeSelectorComponent', () => {
-  let component: DateRangeSelectorComponent;
-  let fixture: ComponentFixture<DateRangeSelectorComponent>;
-  let hostComponent: TestHostComponent;
-  let hostFixture: ComponentFixture<TestHostComponent>;
+  let tester: DateRangeSelectorComponentTester;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, DateRangeSelectorComponent, TestHostComponent, MockTranslatePipe, MockTranslateDirective],
-      providers: [provideHttpClientTesting(), provideTranslateService()],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    })
-      .overrideComponent(DateRangeSelectorComponent, {
-        remove: {
-          imports: [TranslateDirective, TranslatePipe]
-        },
-        add: {
-          imports: [MockTranslateDirective, MockTranslatePipe]
-        }
-      })
-      .compileComponents();
-
-    fixture = TestBed.createComponent(DateRangeSelectorComponent);
-    component = fixture.componentInstance;
-
-    hostFixture = TestBed.createComponent(TestHostComponent);
-    hostComponent = hostFixture.componentInstance;
-  });
-
-  describe('Component Initialization', () => {
-    test('should create', () => {
-      expect(component).toBeTruthy();
-    });
-
-    test('should initialize with default values', () => {
-      expect(component.startLabel()).toBe('history-query.start');
-      expect(component.endLabel()).toBe('history-query.end');
-      expect(component.defaultRange()).toBe('last-day');
-    });
-
-    test('should initialize predefined ranges', () => {
-      expect(component.predefinedRanges).toHaveLength(4);
-      expect(component.predefinedRanges[0].key).toBe('last-minute');
-      expect(component.predefinedRanges[1].key).toBe('last-10-minutes');
-      expect(component.predefinedRanges[2].key).toBe('last-hour');
-      expect(component.predefinedRanges[3].key).toBe('last-day');
-    });
-
-    test('should initialize internal form with default range', () => {
-      expect(component.internalForm.controls.rangeType.value).toBe('last-day');
-      expect(component.internalForm.controls.startTime.value).toBeTruthy();
-      expect(component.internalForm.controls.endTime.value).toBeTruthy();
-    });
-
-    test('should setup form validation on init', () => {
-      const startTimeControl = component.internalForm.controls.startTime;
-      const endTimeControl = component.internalForm.controls.endTime;
-
-      const spy = vi.spyOn(endTimeControl, 'updateValueAndValidity');
-
-      component.ngOnInit();
-
-      startTimeControl.setValue(DateTime.now().toISO()!);
-
-      expect(spy).toHaveBeenCalledWith({
-        emitEvent: false
-      });
+  beforeEach(() => {
+    // only the clock is faked, so that the predefined ranges are predictable
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+    TestBed.configureTestingModule({
+      providers: [provideI18nTesting(), provideNgbConfigTesting(), provideCurrentUser({ ...testData.users.list[0], timezone: 'UTC' })]
     });
   });
 
-  describe('Input Properties', () => {
-    test('should accept custom start and end labels', () => {
-      fixture.componentRef.setInput('startLabel', 'custom.start.label');
-      fixture.componentRef.setInput('endLabel', 'custom.end.label');
+  afterEach(() => vi.useRealTimers());
 
-      expect(component.startLabel()).toBe('custom.start.label');
-      expect(component.endLabel()).toBe('custom.end.label');
+  test('should select the default range and send it to the parent form without interaction', async () => {
+    tester = new DateRangeSelectorComponentTester();
+
+    await expect.element(tester.rangeType).toHaveValue('last-hour');
+    await expect.element(tester.summary).toHaveTextContent(formatRange('2024-01-01T11:00:00.000Z', NOW));
+    await expect.element(tester.datetimepickers).toHaveLength(0);
+    expect(tester.value).toEqual({ startTime: '2024-01-01T11:00:00.000Z', endTime: NOW });
+    expect(tester.host.testForm.valid).toBe(true);
+  });
+
+  test('should propose the predefined ranges and a custom one', async () => {
+    tester = new DateRangeSelectorComponentTester();
+
+    await expect.element(tester.options).toHaveLength(5);
+    expect(tester.options.elements().map(option => option.textContent?.trim())).toEqual([
+      'Last minute',
+      'Last 10 minutes',
+      'Last hour',
+      'Last day',
+      'Custom'
+    ]);
+  });
+
+  test.each([
+    { label: 'Last minute', startTime: '2024-01-01T11:59:00.000Z' },
+    { label: 'Last 10 minutes', startTime: '2024-01-01T11:50:00.000Z' },
+    { label: 'Last hour', startTime: '2024-01-01T11:00:00.000Z' },
+    { label: 'Last day', startTime: '2023-12-31T12:00:00.000Z' }
+  ])('should send the range "$label" to the parent form when selected', async ({ label, startTime }) => {
+    tester = new DateRangeSelectorComponentTester();
+    tester.host.defaultRange.set('last-day');
+    await expect.element(tester.rangeType).toBeVisible();
+
+    await tester.rangeType.selectOptions(label === 'Last day' ? 'Last minute' : 'Last day');
+    await tester.rangeType.selectOptions(label);
+
+    expect(tester.value).toEqual({ startTime, endTime: NOW });
+    await expect.element(tester.summary).toHaveTextContent(formatRange(startTime, NOW));
+  });
+
+  test('should display the date time pickers for a custom range, and send the entered range', async () => {
+    tester = new DateRangeSelectorComponentTester();
+    await expect.element(tester.rangeType).toHaveValue('last-hour');
+
+    await tester.rangeType.selectOptions('Custom');
+
+    await expect.element(tester.datetimepickers).toHaveLength(2);
+    await expect.element(tester.summary).not.toBeInTheDocument();
+    await expect.element(tester.root.getByText('Query data from')).toBeVisible();
+    await expect.element(tester.root.getByText('Query data until')).toBeVisible();
+    // the custom range starts from the last selected range
+    await expect.element(tester.start).toHaveDisplayedDate('01/01/2024 11:00');
+    await expect.element(tester.end).toHaveDisplayedDate('01/01/2024 12:00');
+    expect(tester.value).toEqual({ startTime: '2024-01-01T11:00:00.000Z', endTime: NOW });
+
+    await tester.start.fillWithDate('25/12/2023', '08', '30');
+
+    await vi.waitFor(() => expect(tester.value).toEqual({ startTime: '2023-12-25T08:30:00.000Z', endTime: NOW }));
+  });
+
+  test('should not send an invalid custom range', async () => {
+    tester = new DateRangeSelectorComponentTester();
+    await tester.rangeType.selectOptions('Custom');
+    await expect.element(tester.datetimepickers).toHaveLength(2);
+
+    await tester.start.fillWithDate('01/02/2024', '08', '30');
+
+    expect(tester.value).toEqual({ startTime: '2024-01-01T11:00:00.000Z', endTime: NOW });
+  });
+
+  test('should use the default labels', async () => {
+    tester = new DateRangeSelectorComponentTester();
+    tester.host.startLabel.set('history-query.query-time-range.start');
+    tester.host.endLabel.set('history-query.query-time-range.end');
+
+    await tester.rangeType.selectOptions('Custom');
+
+    await expect.element(tester.root.getByText('Start', { exact: true })).toBeVisible();
+    await expect.element(tester.root.getByText('End', { exact: true })).toBeVisible();
+  });
+
+  test('should display a range written by the parent form as a custom range', async () => {
+    tester = new DateRangeSelectorComponentTester();
+    await expect.element(tester.rangeType).toHaveValue('last-hour');
+
+    tester.host.testForm.setValue({ dateRange: { startTime: '2020-01-01T00:00:00.000Z', endTime: '2020-06-01T00:00:00.000Z' } });
+
+    await expect.element(tester.rangeType).toHaveValue('custom');
+    await expect.element(tester.start).toHaveDisplayedDate('01/01/2020 00:00');
+    await expect.element(tester.end).toHaveDisplayedDate('01/06/2020 00:00');
+  });
+
+  test('should keep a range written by the parent form before the view is initialized', async () => {
+    const fixture = TestBed.createComponent(TestHostComponent);
+    fixture.componentInstance.testForm.setValue({
+      dateRange: { startTime: '2020-01-01T00:00:00.000Z', endTime: '2020-06-01T00:00:00.000Z' }
     });
+    const root = page.elementLocator(fixture.nativeElement);
 
-    test('should accept custom default range', () => {
-      fixture.componentRef.setInput('defaultRange', 'last-hour');
-
-      expect(component.defaultRange()).toBe('last-hour');
+    await expect.element(root.getByLabelText('Date Range')).toHaveValue('custom');
+    expect(fixture.componentInstance.testForm.controls.dateRange.value).toEqual({
+      startTime: '2020-01-01T00:00:00.000Z',
+      endTime: '2020-06-01T00:00:00.000Z'
     });
   });
 
-  describe('Template Rendering', () => {
-    beforeEach(() => {
-      fixture.detectChanges();
-    });
+  test('should send the predefined range when switching from a custom range with past dates', async () => {
+    tester = new DateRangeSelectorComponentTester();
+    tester.host.testForm.setValue({ dateRange: { startTime: '2020-01-01T00:00:00.000Z', endTime: '2020-06-01T00:00:00.000Z' } });
+    await expect.element(tester.rangeType).toHaveValue('custom');
 
-    test('should render range type select with all options', () => {
-      const select = fixture.debugElement.query(By.css('#range-type-select'));
-      expect(select).toBeTruthy();
+    await tester.rangeType.selectOptions('Last 10 minutes');
 
-      const options = select.queryAll(By.css('option'));
-      expect(options).toHaveLength(5);
-    });
-
-    test('should show predefined range info when not custom', () => {
-      component.internalForm.controls.rangeType.setValue('last-hour');
-      fixture.detectChanges();
-
-      const summary = fixture.debugElement.query(By.css('.range-summary'));
-      expect(summary).toBeTruthy();
-
-      const datetimePickers = fixture.debugElement.queryAll(By.css('oib-datetimepicker'));
-      expect(datetimePickers).toHaveLength(0);
-    });
-
-    test('should show datetime pickers when custom is selected', () => {
-      component.internalForm.controls.rangeType.setValue('custom');
-      fixture.detectChanges();
-
-      const datetimePickers = fixture.debugElement.queryAll(By.css('oib-datetimepicker'));
-      expect(datetimePickers).toHaveLength(2);
-
-      const summary = fixture.debugElement.query(By.css('.range-summary'));
-      expect(summary).toBeFalsy();
-    });
+    expect(tester.value).toEqual({ startTime: '2024-01-01T11:50:00.000Z', endTime: NOW });
+    await expect.element(tester.datetimepickers).toHaveLength(0);
   });
 
-  describe('Predefined Range Calculations', () => {
-    beforeEach(() => {
-      vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.utc(2024, 1, 1, 12, 0, 0) as DateTime<true>);
-    });
+  test('should be disabled with the parent control', async () => {
+    tester = new DateRangeSelectorComponentTester();
+    await expect.element(tester.rangeType).toBeEnabled();
 
-    test('should calculate last minute range correctly', () => {
-      const range = component.predefinedRanges[0];
-      const result = range.calculate();
+    tester.host.testForm.controls.dateRange.disable();
+    await expect.element(tester.rangeType).toBeDisabled();
 
-      expect(result.startTime).toBe('2024-01-01T11:59:00.000Z');
-      expect(result.endTime).toBe('2024-01-01T12:00:00.000Z');
-    });
-
-    test('should calculate last 10 minutes range correctly', () => {
-      const range = component.predefinedRanges[1];
-      const result = range.calculate();
-
-      expect(result.startTime).toBe('2024-01-01T11:50:00.000Z');
-      expect(result.endTime).toBe('2024-01-01T12:00:00.000Z');
-    });
-
-    test('should calculate last hour range correctly', () => {
-      const range = component.predefinedRanges[2];
-      const result = range.calculate();
-
-      expect(result.startTime).toBe('2024-01-01T11:00:00.000Z');
-      expect(result.endTime).toBe('2024-01-01T12:00:00.000Z');
-    });
-
-    test('should calculate last day range correctly', () => {
-      const range = component.predefinedRanges[3];
-      const result = range.calculate();
-
-      expect(result.startTime).toBe('2023-12-31T12:00:00.000Z');
-      expect(result.endTime).toBe('2024-01-01T12:00:00.000Z');
-    });
+    tester.host.testForm.controls.dateRange.enable();
+    await expect.element(tester.rangeType).toBeEnabled();
   });
 
-  describe('getCurrentRangeDescription', () => {
-    beforeEach(() => {
-      vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.utc(2024, 1, 1, 12, 0, 0) as DateTime<true>);
-    });
+  describe('API used by the parents', () => {
+    test('should compute a predefined range when asked', async () => {
+      tester = new DateRangeSelectorComponentTester();
+      await expect.element(tester.rangeType).toHaveValue('last-hour');
 
-    test('should return formatted range for predefined ranges', () => {
-      component.internalForm.controls.rangeType.setValue('last-hour');
+      vi.setSystemTime('2024-01-01T13:00:00.000Z');
 
-      const description = component.getCurrentRangeDescription();
-
-      expect(description).toBeTruthy();
-      expect(description).toContain(' - ');
-    });
-
-    test('should return custom range description when rangeType is custom', () => {
-      component.internalForm.controls.rangeType.setValue('custom');
-      component.internalForm.controls.startTime.setValue('2024-01-01T10:00:00.000Z');
-      component.internalForm.controls.endTime.setValue('2024-01-01T11:00:00.000Z');
-
-      const description = component.getCurrentRangeDescription();
-
-      expect(description).toBeTruthy();
-      expect(description).toContain(' - ');
-    });
-
-    test('should return empty string for custom range without dates', () => {
-      component.internalForm.controls.rangeType.setValue('custom');
-      component.internalForm.controls.startTime.setValue('');
-      component.internalForm.controls.endTime.setValue('');
-
-      const description = component.getCurrentRangeDescription();
-
-      expect(description).toBe('');
-    });
-
-    test('should return empty string for unknown range type', () => {
-      component.internalForm.controls.rangeType.setValue('unknown-range');
-
-      const description = component.getCurrentRangeDescription();
-
-      expect(description).toBe('');
-    });
-  });
-
-  describe('ControlValueAccessor Implementation', () => {
-    let onChangeSpy: ReturnType<typeof vi.fn>;
-    let onTouchedSpy: ReturnType<typeof vi.fn>;
-
-    beforeEach(() => {
-      onChangeSpy = vi.fn();
-      onTouchedSpy = vi.fn();
-
-      component.registerOnChange(onChangeSpy as unknown as (value: DateRange) => void);
-      component.registerOnTouched(onTouchedSpy as unknown as () => void);
-      component.ngOnInit();
-    });
-
-    describe('writeValue', () => {
-      test('should update form with provided date range', () => {
-        const dateRange: DateRange = {
-          startTime: '2024-01-01T10:00:00.000Z',
-          endTime: '2024-01-01T11:00:00.000Z'
-        };
-
-        component.writeValue(dateRange);
-
-        expect(component.internalForm.controls.rangeType.value).toBe('custom');
-        expect(component.internalForm.controls.startTime.value).toBe(dateRange.startTime);
-        expect(component.internalForm.controls.endTime.value).toBe(dateRange.endTime);
+      expect(tester.host.selector().currentDateRange()).toEqual({
+        startTime: '2024-01-01T12:00:00.000Z',
+        endTime: '2024-01-01T13:00:00.000Z'
       });
+      expect(tester.host.selector().getSummaryLabel()).toBe('Last hour');
+      expect(tester.host.selector().getCurrentRangeDescription()).toBe(formatRange('2024-01-01T12:00:00.000Z', '2024-01-01T13:00:00.000Z'));
+    });
 
-      test('should handle null value', () => {
-        const initialRangeType = component.internalForm.controls.rangeType.value;
+    test('should return the custom range when asked', async () => {
+      tester = new DateRangeSelectorComponentTester();
+      tester.host.testForm.setValue({ dateRange: { startTime: '2020-01-01T00:00:00.000Z', endTime: '2020-06-01T00:00:00.000Z' } });
+      await expect.element(tester.rangeType).toHaveValue('custom');
 
-        component.writeValue(null);
-
-        expect(component.internalForm.controls.rangeType.value).toBe(initialRangeType);
+      expect(tester.host.selector().currentDateRange()).toEqual({
+        startTime: '2020-01-01T00:00:00.000Z',
+        endTime: '2020-06-01T00:00:00.000Z'
       });
+      expect(tester.host.selector().getSummaryLabel()).toBe(formatRange('2020-01-01T00:00:00.000Z', '2020-06-01T00:00:00.000Z'));
     });
 
-    describe('setDisabledState', () => {
-      test('should disable form when disabled is true', () => {
-        component.setDisabledState(true);
+    test('should return no custom range when a date is missing', async () => {
+      tester = new DateRangeSelectorComponentTester();
+      await tester.rangeType.selectOptions('Custom');
+      await expect.element(tester.datetimepickers).toHaveLength(2);
 
-        expect(component.internalForm.disabled).toBe(true);
-      });
+      await tester.start.getByCss('input').nth(0).fill('');
 
-      test('should enable form when disabled is false', () => {
-        component.setDisabledState(false);
-
-        expect(component.internalForm.disabled).toBe(false);
-      });
-    });
-
-    describe('Form Changes', () => {
-      beforeEach(() => {
-        vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.utc(2024, 1, 1, 12, 0, 0) as DateTime<true>);
-      });
-
-      test('should emit value when predefined range is selected', () => {
-        component.internalForm.controls.rangeType.setValue('last-hour');
-
-        expect(onChangeSpy).toHaveBeenCalledWith({
-          startTime: '2024-01-01T11:00:00.000Z',
-          endTime: '2024-01-01T12:00:00.000Z'
-        });
-        expect(onTouchedSpy).toHaveBeenCalled();
-      });
-
-      test('should emit the predefined range even when switching from custom mode with past dates', () => {
-        component.writeValue({ startTime: '2020-01-01T00:00:00.000Z', endTime: '2020-06-01T00:00:00.000Z' });
-
-        onChangeSpy.mockReset();
-        onTouchedSpy.mockReset();
-
-        component.internalForm.controls.rangeType.setValue('last-hour');
-
-        expect(onChangeSpy).toHaveBeenCalledWith({
-          startTime: '2024-01-01T11:00:00.000Z',
-          endTime: '2024-01-01T12:00:00.000Z'
-        });
-        expect(onTouchedSpy).toHaveBeenCalled();
-      });
-
-      test('should emit value when custom dates are changed', () => {
-        const dateRange: DateRange = {
-          startTime: '2024-01-01T10:00:00.000Z',
-          endTime: '2024-01-01T11:00:00.000Z'
-        };
-
-        component.internalForm.patchValue({
-          rangeType: 'custom',
-          startTime: dateRange.startTime,
-          endTime: dateRange.endTime
-        });
-
-        expect(onChangeSpy).toHaveBeenCalledWith(dateRange);
-        expect(onTouchedSpy).toHaveBeenCalled();
-      });
-
-      test('should not emit when form is invalid', () => {
-        component.internalForm.controls.rangeType.setErrors({ required: true });
-        onChangeSpy.mockReset();
-        onTouchedSpy.mockReset();
-
-        component.internalForm.controls.startTime.setValue('2024-01-01T10:00:00.000Z');
-
-        expect(onChangeSpy).not.toHaveBeenCalled();
-        expect(onTouchedSpy).not.toHaveBeenCalled();
-      });
-
-      test('should update internal form controls when predefined range is selected', () => {
-        component.internalForm.controls.rangeType.setValue('last-minute');
-
-        expect(component.internalForm.controls.startTime.value).toBe('2024-01-01T11:59:00.000Z');
-        expect(component.internalForm.controls.endTime.value).toBe('2024-01-01T12:00:00.000Z');
-      });
-    });
-  });
-
-  describe('Integration with TestHost', () => {
-    beforeEach(() => {
-      hostFixture.detectChanges();
-    });
-
-    test('should work as a form control', () => {
-      const dateRangeSelector = hostFixture.debugElement.query(By.directive(DateRangeSelectorComponent));
-      expect(dateRangeSelector).toBeTruthy();
-
-      const componentInstance = dateRangeSelector.componentInstance;
-      expect(componentInstance).toBeInstanceOf(DateRangeSelectorComponent);
-    });
-
-    test('should respect input properties from host', () => {
-      const dateRangeSelector = hostFixture.debugElement.query(By.directive(DateRangeSelectorComponent)).componentInstance;
-
-      expect(dateRangeSelector.startLabel()).toBe('custom.start');
-      expect(dateRangeSelector.endLabel()).toBe('custom.end');
-      expect(dateRangeSelector.defaultRange()).toBe('last-hour');
-    });
-
-    test('should update parent form when value changes', () => {
-      const dateRangeSelector = hostFixture.debugElement.query(By.directive(DateRangeSelectorComponent)).componentInstance;
-
-      dateRangeSelector.internalForm.controls.rangeType.setValue('last-hour');
-
-      expect(hostComponent.testForm.controls.dateRange.value).toBeTruthy();
-    });
-
-    test('should default to the bound `defaultRange` preset (not "custom") and sync it to the parent form without any interaction', () => {
-      // Host starts with a null dateRange and defaultRange = 'last-hour' (see TestHostComponent above).
-      const dateRangeSelector = hostFixture.debugElement.query(By.directive(DateRangeSelectorComponent)).componentInstance;
-
-      expect(dateRangeSelector.internalForm.controls.rangeType.value).toBe('last-hour');
-      expect(hostComponent.testForm.controls.dateRange.value).toBeTruthy();
-      expect(hostComponent.testForm.valid).toBe(true);
-    });
-  });
-
-  describe('Component Destruction', () => {
-    test('should complete destroy subject on ngOnDestroy', () => {
-      const destroySpy = vi.spyOn((component as any)['destroy$'], 'complete');
-
-      component.ngOnDestroy();
-
-      expect(destroySpy).toHaveBeenCalled();
-    });
-
-    test('should unsubscribe from observables on destroy', () => {
-      const nextSpy = vi.spyOn((component as any)['destroy$'], 'next');
-
-      component.ngOnDestroy();
-
-      expect(nextSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe('Edge Cases', () => {
-    test('should handle invalid predefined range key', () => {
-      component.internalForm.controls.rangeType.setValue('invalid-range');
-
-      expect(() => component.getCurrentRangeDescription()).not.toThrow();
-    });
-
-    test('should handle empty predefined ranges array', () => {
-      component.predefinedRanges = [];
-
-      const description = component.getCurrentRangeDescription();
-      expect(description).toBe('');
-    });
-  });
-
-  describe('Validation Cross-References', () => {
-    beforeEach(() => {
-      component.ngOnInit();
-    });
-
-    test('should trigger end time validation when start time changes', () => {
-      const endTimeControl = component.internalForm.controls.endTime;
-      const spy = vi.spyOn(endTimeControl, 'updateValueAndValidity');
-
-      component.internalForm.controls.startTime.setValue('2024-01-01T10:00:00.000Z');
-
-      expect(spy).toHaveBeenCalledWith({ emitEvent: false });
-    });
-
-    test('should trigger start time validation when end time changes', () => {
-      const startTimeControl = component.internalForm.controls.startTime;
-      const spy = vi.spyOn(startTimeControl, 'updateValueAndValidity');
-
-      component.internalForm.controls.endTime.setValue('2024-01-01T11:00:00.000Z');
-
-      expect(spy).toHaveBeenCalledWith({ emitEvent: false });
+      await vi.waitFor(() => expect(tester.host.selector().currentDateRange()).toBeNull());
+      expect(tester.host.selector().getSummaryLabel()).toBe('');
     });
   });
 });

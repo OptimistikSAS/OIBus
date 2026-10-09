@@ -7,7 +7,7 @@
       <div class="alert alert-danger" id="connection-error">
         <div [translate]="type() + '.test-connection.error'"></div>
         <hr />
-        <div style="overflow-wrap: break-word">{{ error() }}</div>
+        <div class="text-break">{{ error() }}</div>
       </div>
     } @else {
       @if (success()) {

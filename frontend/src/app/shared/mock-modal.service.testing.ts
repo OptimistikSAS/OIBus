@@ -1,8 +1,30 @@
 import { Service, Type } from '@angular/core';
 
-import { of, throwError } from 'rxjs';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Observable, of, throwError } from 'rxjs';
 
+import { createMock } from '../../test/vitest-create-mock';
 import { Modal, ModalOptions, ModalService } from './modal.service';
+
+/**
+ * A modal whose component instance and result are given, instead of being produced by ng-bootstrap.
+ */
+class FakeModal<T> extends Modal<T> {
+  constructor(
+    private readonly fakeComponentInstance: T,
+    private readonly fakeResult: Observable<unknown>
+  ) {
+    super(createMock(NgbModalRef));
+  }
+
+  override get componentInstance(): T {
+    return this.fakeComponentInstance;
+  }
+
+  override get result() {
+    return this.fakeResult;
+  }
+}
 
 /**
  * Mock service to emulate a closed or dismissed modal.
@@ -21,25 +43,19 @@ import { Modal, ModalOptions, ModalService } from './modal.service';
 export class MockModalService<T> {
   private modal: Modal<T> | null = null;
 
-  mockClosedModal(componentInstance: T, value: any = '') {
-    this.modal = {
-      componentInstance,
-      result: of(value)
-    } as unknown as Modal<T>;
+  mockClosedModal(componentInstance: T, value: unknown = '') {
+    this.modal = new FakeModal(componentInstance, of(value));
   }
 
   mockDismissedModal(componentInstance: T) {
-    this.modal = {
-      componentInstance,
-      result: of()
-    } as unknown as Modal<T>;
+    this.modal = new FakeModal(componentInstance, of());
   }
 
   mockDismissedWithErrorModal(componentInstance: T) {
-    this.modal = {
+    this.modal = new FakeModal(
       componentInstance,
-      result: throwError(() => 'not-confirmed')
-    } as unknown as Modal<T>;
+      throwError(() => 'not-confirmed')
+    );
   }
 
   open(_modalComponent: Type<T>, _options?: ModalOptions): Modal<T> {
@@ -60,3 +76,13 @@ export class MockModalService<T> {
  * It will replace the `ModalService` with the mock one, that you can manually control.
  */
 export const provideModalTesting = () => [MockModalService, { provide: ModalService, useExisting: MockModalService }];
+
+/**
+ * A real `Modal` wrapping a fake ng-bootstrap modal, for tests where an opener opens several modals in a row
+ * (which `MockModalService` cannot express).
+ * @param componentInstance the (usually mocked) modal component
+ * @param result the value the modal closes with; by default the modal stays open
+ */
+export function fakeModal<T>(componentInstance: T, result = new Promise<unknown>(() => undefined)): Modal<T> {
+  return new Modal<T>(createMock(NgbModalRef, { componentInstance, result }));
+}

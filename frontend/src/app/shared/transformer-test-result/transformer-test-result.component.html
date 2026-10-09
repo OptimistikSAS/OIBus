@@ -9,13 +9,13 @@
         @if (rawMode(); as rawMode) {
           <div ngbDropdown class="d-inline-block">
             <button type="button" class="btn btn-link oib-box-btn m-0" ngbDropdownToggle>
-              <span class="fa-solid {{ rawView.currentDisplayModeIcon }}"></span>
+              <span class="fa-solid {{ rawView.currentDisplayModeIcon }}" aria-hidden="true"></span>
               <span class="ms-1">{{ 'south.test-item.view.' + rawMode | translate }}</span>
             </button>
             <div ngbDropdownMenu>
               @for (mode of rawModes(); track $index) {
-                <button ngbDropdownItem [class.active]="rawMode === mode" (click)="changeRawMode(mode)">
-                  <span class="fa-solid {{ rawView.displayModeIcons[mode] }}"></span>
+                <button type="button" ngbDropdownItem [class.active]="rawMode === mode" (click)="changeRawMode(mode)">
+                  <span class="fa-solid {{ rawView.displayModeIcons[mode] }}" aria-hidden="true"></span>
                   <span class="ms-1">{{ 'south.test-item.view.' + mode | translate }}</span>
                 </button>
               }
@@ -39,13 +39,13 @@
           @if (outputMode(); as outputMode) {
             <div ngbDropdown class="d-inline-block">
               <button type="button" class="btn btn-link oib-box-btn m-0" ngbDropdownToggle>
-                <span class="fa-solid {{ outputView.currentDisplayModeIcon }}"></span>
+                <span class="fa-solid {{ outputView.currentDisplayModeIcon }}" aria-hidden="true"></span>
                 <span class="ms-1">{{ 'south.test-item.view.' + outputMode | translate }}</span>
               </button>
               <div ngbDropdownMenu>
                 @for (mode of outputModes(); track $index) {
-                  <button ngbDropdownItem [class.active]="outputMode === mode" (click)="changeOutputMode(mode)">
-                    <span class="fa-solid {{ outputView.displayModeIcons[mode] }}"></span>
+                  <button type="button" ngbDropdownItem [class.active]="outputMode === mode" (click)="changeOutputMode(mode)">
+                    <span class="fa-solid {{ outputView.displayModeIcons[mode] }}" aria-hidden="true"></span>
                     <span class="ms-1">{{ 'south.test-item.view.' + mode | translate }}</span>
                   </button>
                 }

@@ -9,14 +9,14 @@ import { Page } from '@oibus/shared/common/types';
   selector: 'oib-pagination',
   templateUrl: './pagination.component.html',
   styleUrl: './pagination.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgbPaginationModule]
 })
 export class PaginationComponent {
-  private router = inject(Router, { optional: true });
-  private route = inject(ActivatedRoute, { optional: true });
+  private readonly router = inject(Router, { optional: true });
+  private readonly route = inject(ActivatedRoute, { optional: true });
 
-  readonly page = input<Page<any> | null>(null);
+  readonly page = input<Page<unknown> | null>(null);
   readonly pageChanged = output<number>();
 
   readonly navigate = input(false);

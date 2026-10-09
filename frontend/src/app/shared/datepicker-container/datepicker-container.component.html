@@ -4,6 +4,7 @@
   type="button"
   class="btn datepicker-toggle"
   [ngbTooltip]="'datepicker.tooltips.open-calendar' | translate"
+  [attr.aria-label]="'datepicker.tooltips.open-calendar' | translate"
   (click)="toggle()"
 >
   <span class="fa-solid fa-calendar-days" aria-hidden="true"></span>
