@@ -1,0 +1,8 @@
+// Skips past the label row, then centers the arrow inside exactly one form-control height
+.range-arrow {
+  align-self: start;
+  padding-top: 1.75rem;
+  height: calc(1.5em + 0.75rem + 2px);
+  display: flex;
+  align-items: center;
+}

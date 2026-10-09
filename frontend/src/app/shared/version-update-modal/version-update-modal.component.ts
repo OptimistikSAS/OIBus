@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { NgbActiveModal, NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+import { interval } from 'rxjs';
 
 import { WindowService } from '../window.service';
 
@@ -12,35 +14,24 @@ const UPDATE_INTERVAL_MS = 100; // Update every 100ms for smooth progress bar
   selector: 'oib-version-update-modal',
   imports: [NgbProgressbarModule, TranslateDirective],
   templateUrl: './version-update-modal.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './version-update-modal.component.scss'
 })
-export class VersionUpdateModalComponent implements OnInit, OnDestroy {
+export class VersionUpdateModalComponent {
   readonly activeModal = inject(NgbActiveModal);
-  private windowService = inject(WindowService);
+  private readonly windowService = inject(WindowService);
 
   readonly remainingSeconds = signal(COUNTDOWN_SECONDS);
   readonly progress = signal(1); // Progress from 1 (full) to 0 (empty)
-  oldVersion = '';
-  newVersion = '';
+  readonly oldVersion = signal('');
+  readonly newVersion = signal('');
 
-  private intervalId: number | null = null;
-  private startTime = 0;
-
-  ngOnInit(): void {
-    this.startTime = Date.now();
-    this.startCountdown();
-  }
-
-  ngOnDestroy(): void {
-    this.clearInterval();
-  }
-
-  private startCountdown(): void {
-    this.intervalId = window.setInterval(() => {
+  private readonly startTime = Date.now();
+  private readonly countdown = interval(UPDATE_INTERVAL_MS)
+    .pipe(takeUntilDestroyed())
+    .subscribe(() => {
       const elapsedMs = Date.now() - this.startTime;
-      const elapsedSeconds = elapsedMs / 1000;
-      const remaining = Math.max(0, COUNTDOWN_SECONDS - elapsedSeconds);
+      const remaining = Math.max(0, COUNTDOWN_SECONDS - elapsedMs / 1000);
 
       this.remainingSeconds.set(Math.ceil(remaining));
       this.progress.set(remaining / COUNTDOWN_SECONDS);
@@ -48,18 +39,15 @@ export class VersionUpdateModalComponent implements OnInit, OnDestroy {
       if (remaining <= 0) {
         this.reload();
       }
-    }, UPDATE_INTERVAL_MS);
-  }
+    });
 
-  private clearInterval(): void {
-    if (this.intervalId !== null) {
-      window.clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+  initialize(oldVersion: string, newVersion: string) {
+    this.oldVersion.set(oldVersion);
+    this.newVersion.set(newVersion);
   }
 
   reload(): void {
-    this.clearInterval();
+    this.countdown.unsubscribe();
     this.activeModal.close();
     this.windowService.reload();
   }
