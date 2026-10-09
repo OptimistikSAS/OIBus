@@ -14,7 +14,7 @@
         </div>
       </div>
     </div>
-    @if (form.controls.proxyEnabled.value) {
+    @if (proxyEnabled()) {
       <!-- Row 2: port + server auth -->
       <div class="row mt-2">
         <div class="col-2">
@@ -50,7 +50,7 @@
           </div>
         </div>
       </div>
-      @if (form.controls.forwardProxyEnabled.value) {
+      @if (forwardProxyEnabled()) {
         <div class="row mt-2">
           <div class="col-6">
             <div class="form-group">

@@ -14,9 +14,10 @@
             id="add-ip-filter"
             class="btn btn-primary btn-sm oib-box-btn"
             [ngbTooltip]="'engine.ip-filter.tooltips.add' | translate"
+            [attr.aria-label]="'engine.ip-filter.tooltips.add' | translate"
             (click)="addIpFilter()"
           >
-            <span class="fa-solid fa-plus"></span>
+            <span class="fa-solid fa-plus" aria-hidden="true"></span>
           </button>
         }
 
@@ -39,20 +40,16 @@
       <thead class="light">
         <tr>
           <th>
-            <button type="button" style="background: none; border: none; font-weight: bold; color: inherit" (click)="toggleSort('address')">
+            <button type="button" class="sort-button" (click)="toggleSort('address')">
               <span translate="engine.ip-filter.address" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('address') }}"></span>
+              <span class="fa-solid {{ getSortIcon('address') }}" aria-hidden="true"></span>
             </button>
           </th>
           <th translate="engine.ip-filter.description"></th>
           <th>
-            <button
-              type="button"
-              style="background: none; border: none; font-weight: bold; color: inherit"
-              (click)="toggleSort('updatedAt')"
-            >
+            <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
               <span translate="engine.ip-filter.updated-at" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('updatedAt') }}"></span>
+              <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
             </button>
           </th>
           <th></th>
@@ -78,27 +75,30 @@
                   type="button"
                   class="btn btn-link edit-ip-filter px-1 py-0"
                   [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
+                  [attr.aria-label]="'engine.ip-filter.tooltips.edit' | translate"
                   (click)="editIpFilter(ipFilter)"
                 >
-                  <span class="fa-solid fa-pencil"></span>
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                 </button>
                 <!-- Delete button -->
                 <button
                   type="button"
                   class="btn btn-link delete-ip-filter px-1 py-0"
                   [ngbTooltip]="'engine.ip-filter.tooltips.delete' | translate"
+                  [attr.aria-label]="'engine.ip-filter.tooltips.delete' | translate"
                   (click)="deleteIpFilter(ipFilter)"
                 >
-                  <span class="fa-solid fa-trash-can"></span>
+                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                 </button>
                 <!-- Audit history button -->
                 <button
                   type="button"
                   class="btn btn-link show-audit-ip-filter px-1 py-0"
                   [ngbTooltip]="'engine.ip-filter.tooltips.audit' | translate"
+                  [attr.aria-label]="'engine.ip-filter.tooltips.audit' | translate"
                   (click)="showAudit(ipFilter)"
                 >
-                  <span class="fa-solid fa-history"></span>
+                  <span class="fa-solid fa-history" aria-hidden="true"></span>
                 </button>
               </div>
             </td>

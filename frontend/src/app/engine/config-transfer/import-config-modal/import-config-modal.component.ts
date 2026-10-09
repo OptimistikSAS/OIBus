@@ -1,10 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { Observable, Subscription, switchMap } from 'rxjs';
+import { catchError, EMPTY, Observable, Subject, switchMap } from 'rxjs';
 
 import {
   ConfigImportEntityValidationError,
@@ -23,30 +23,46 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
   selector: 'oib-import-config-modal',
   templateUrl: './import-config-modal.component.html',
   styleUrl: './import-config-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, SaveButtonComponent, AsyncPipe, ConfigImportPreviewComponent]
 })
 export class ImportConfigModalComponent {
-  private modal = inject(NgbActiveModal);
-  private configTransferService = inject(ConfigTransferService);
-  private confirmationService = inject(ConfirmationService);
-  private destroyRef = inject(DestroyRef);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly configTransferService = inject(ConfigTransferService);
+  private readonly confirmationService = inject(ConfirmationService);
 
-  state = new ObservableState();
-  previewState = new ObservableState();
-  preview = signal<ConfigImportPreviewDTO | null>(null);
-  private previewSubscription: Subscription | null = null;
-  error = signal<string | null>(null);
-  validationErrors = signal<Array<ConfigImportEntityValidationError>>([]);
-  fileError = signal<string | null>(null);
-  result = signal<ConfigImportResponseDTO | null>(null);
+  readonly state = new ObservableState();
+  readonly previewState = new ObservableState();
+  readonly preview = signal<ConfigImportPreviewDTO | null>(null);
+  readonly error = signal<string | null>(null);
+  readonly validationErrors = signal<Array<ConfigImportEntityValidationError>>([]);
+  readonly fileError = signal<string | null>(null);
+  readonly result = signal<ConfigImportResponseDTO | null>(null);
 
   readonly initializeFile = new File([''], 'Choose a file');
   readonly file = signal<File>(this.initializeFile);
 
   /** Only a file whose preview succeeded can be imported: the user must have seen what it contains. */
-  get canImport(): boolean {
-    return this.file() !== this.initializeFile && this.preview() !== null;
+  readonly canImport = computed(() => this.file() !== this.initializeFile && this.preview() !== null);
+
+  /** The files to preview: a newer selection cancels the preview of the previous one */
+  private readonly filesToPreview = new Subject<File>();
+
+  constructor() {
+    this.filesToPreview
+      .pipe(
+        switchMap(file =>
+          this.configTransferService.preview(file).pipe(
+            this.previewState.pendingUntilFinalization(),
+            catchError((err: ConfigImportFailure | string) => {
+              this.showFailure(err);
+              return EMPTY;
+            })
+          )
+        ),
+        takeUntilDestroyed()
+      )
+      .subscribe(preview => this.preview.set(preview));
   }
 
   onFileSelected(file: File) {
@@ -56,26 +72,18 @@ export class ImportConfigModalComponent {
     }
     this.fileError.set(null);
     this.file.set(file);
-    this.loadPreview();
+    this.loadPreview(file);
   }
 
   /**
    * Upgrades and validates the selected file on the backend without importing it, so every entity it
-   * would write can be reviewed (and any validation error shown) before the import is confirmed. A
-   * newer selection cancels the preview of the previous one.
+   * would write can be reviewed (and any validation error shown) before the import is confirmed.
    */
-  private loadPreview() {
-    this.previewSubscription?.unsubscribe();
+  private loadPreview(file: File) {
     this.preview.set(null);
     this.error.set(null);
     this.validationErrors.set([]);
-    this.previewSubscription = this.configTransferService
-      .preview(this.file())
-      .pipe(this.previewState.pendingUntilFinalization(), takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (preview: ConfigImportPreviewDTO) => this.preview.set(preview),
-        error: (err: ConfigImportFailure | string) => this.showFailure(err)
-      });
+    this.filesToPreview.next(file);
   }
 
   private showFailure(err: ConfigImportFailure | string) {
@@ -121,7 +129,7 @@ export class ImportConfigModalComponent {
   }
 
   import() {
-    if (!this.canImport) {
+    if (!this.canImport()) {
       return;
     }
 
