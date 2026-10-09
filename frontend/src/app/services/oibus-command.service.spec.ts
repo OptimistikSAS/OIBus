@@ -3,9 +3,8 @@ import { TestBed } from '@angular/core/testing';
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { Page } from '@oibus/shared/common/types';
-import { OIBusCommandDTO } from '@oibus/shared/oia/command.model';
-
+import { expectHttp } from '../../test/http-testing';
+import testData from '../../test/test-data';
 import { toPage } from '../shared/utils/page.utils';
 import { OibusCommandService } from './oibus-command.service';
 
@@ -23,36 +22,42 @@ describe('OibusCommandService', () => {
 
   afterEach(() => http.verify());
 
-  test('should search Commands', () => {
-    let expectedCommands: Page<OIBusCommandDTO> | null = null;
-    const commands = toPage<OIBusCommandDTO>([{ id: '1' }] as Array<OIBusCommandDTO>);
+  const commands = toPage(testData.oIAnalytics.commands.oIBusList);
 
-    service
-      .search({
-        page: 0,
+  test('should search commands by type and status', async () => {
+    const result = await expectHttp(
+      http,
+      service.search({
+        page: 1,
         types: ['update-version'],
         status: ['COMPLETED', 'CANCELLED'],
         ack: undefined,
         start: undefined,
         end: undefined
-      })
-      .subscribe(c => (expectedCommands = c));
+      }),
+      { method: 'GET', url: '/api/oianalytics/commands/search?page=1&types=update-version&status=COMPLETED&status=CANCELLED' },
+      { response: commands }
+    );
 
-    http
-      .expectOne({
-        method: 'GET',
-        url: '/api/oianalytics/commands/search?page=0&types=update-version&status=COMPLETED&status=CANCELLED'
-      })
-      .flush(commands);
-
-    expect(expectedCommands!).toEqual(commands);
+    expect(result).toEqual(commands);
   });
 
-  test('should delete a command', () => {
-    let done = false;
-    service.delete({ id: 'id1' } as OIBusCommandDTO).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/oianalytics/commands/id1' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
+  test('should search commands without filter', async () => {
+    const result = await expectHttp(
+      http,
+      service.search({ page: 0, types: [], status: [], ack: undefined, start: undefined, end: undefined }),
+      { method: 'GET', url: '/api/oianalytics/commands/search?page=0' },
+      { response: commands }
+    );
+
+    expect(result).toEqual(commands);
+  });
+
+  test('should delete a command', async () => {
+    const command = testData.oIAnalytics.commands.oIBusList[0];
+
+    const result = await expectHttp(http, service.delete(command), { method: 'DELETE', url: `/api/oianalytics/commands/${command.id}` });
+
+    expect(result).toBeNull();
   });
 });

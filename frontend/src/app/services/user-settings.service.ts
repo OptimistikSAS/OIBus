@@ -7,7 +7,7 @@ import { ChangePasswordCommand, UserCommandDTO, UserDTO } from '@oibus/shared/ap
 
 @Service()
 export class UserSettingsService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   // we do not use the current user service here, to make sure we get the actual data from the server and not the cached data
   currentUser(): Observable<UserDTO> {
