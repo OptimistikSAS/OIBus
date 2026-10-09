@@ -1,11 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
-import { of, startWith, switchMap } from 'rxjs';
+import { of, switchMap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
@@ -20,9 +19,13 @@ import { ArrayPage } from '../../pagination/array-page';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { exportArrayElements, validateArrayElementsImport } from '../../utils/csv.utils';
 import { FormUtils } from '../form-utils';
+import { trackControl } from '../tracked-control';
 import { ValErrorDelayDirective } from '../val-error-delay.directive';
 import { ImportArrayValidationModalComponent } from './import-array-validation-modal/import-array-validation-modal.component';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
+
+/** An element of an array attribute value, whose fields are described by the root attribute of the array */
+export type ArrayElement = Record<string, unknown>;
 
 @Component({
   selector: 'oib-oibus-array-form-control',
@@ -34,7 +37,7 @@ import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     TranslatePipe,
@@ -48,26 +51,30 @@ import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-
   ]
 })
 export class OIBusArrayFormControlComponent {
-  private modalService = inject(ModalService);
-  private translateService = inject(TranslateService);
-  private downloadService = inject(DownloadService);
-  private changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly modalService = inject(ModalService);
+  private readonly translateService = inject(TranslateService);
+  private readonly downloadService = inject(DownloadService);
 
-  scanModes = input.required<Array<ScanModeDTO>>();
-  certificates = input.required<Array<CertificateDTO>>();
-  parentGroup = input.required<FormGroup>();
-  control = input.required<FormControl<Array<any>>>();
-  arrayAttribute = input.required<OIBusArrayAttribute>();
-  southId = input<string>();
+  readonly scanModes = input.required<Array<ScanModeDTO>>();
+  readonly certificates = input.required<Array<CertificateDTO>>();
+  readonly parentGroup = input.required<FormGroup>();
+  readonly control = input.required<FormControl<Array<ArrayElement>>>();
+  readonly arrayAttribute = input.required<OIBusArrayAttribute>();
+  readonly southId = input<string>();
 
-  private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
+  /** The control is tracked so that this OnPush component renders its changes made from outside (value patched, touched...) */
+  protected readonly trackedControl = trackControl(() => this.control());
+  readonly controlValue = computed(() => this.trackedControl()!.value);
   readonly columns = computed(() => FormUtils.buildColumn(this.arrayAttribute().rootAttribute.attributes, []));
+  /** Back to the first page when the value changes */
+  readonly pageNumber = linkedSignal({ source: this.controlValue, computation: () => 0 });
   readonly paginatedValues = computed(() => {
-    if (this.arrayAttribute().paginate) {
-      return new ArrayPage(this.controlValue()!, this.arrayAttribute().numberOfElementPerPage);
+    if (!this.arrayAttribute().paginate) {
+      return new ArrayPage<ArrayElement>([], 1);
     }
-    return new ArrayPage([], 1);
+    return new ArrayPage(this.controlValue(), this.arrayAttribute().numberOfElementPerPage, this.pageNumber());
   });
+  readonly displayedElements = computed(() => (this.arrayAttribute().paginate ? this.paginatedValues().content : this.controlValue()));
 
   addElement(event: Event) {
     event.preventDefault();
@@ -79,15 +86,10 @@ export class OIBusArrayFormControlComponent {
       this.arrayAttribute().rootAttribute
     );
 
-    modal.result.subscribe(arrayElement => {
-      this.control().setValue([...this.control().value, arrayElement]);
-      this.paginatedValues().gotoPage(0);
-      // the template reads the control value, which does not notify Angular
-      this.changeDetectorRef.markForCheck();
-    });
+    modal.result.subscribe(arrayElement => this.control().setValue([...this.control().value, arrayElement]));
   }
 
-  copyElement(element: any) {
+  copyElement(element: ArrayElement) {
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForCopy(
       this.scanModes(),
@@ -97,14 +99,10 @@ export class OIBusArrayFormControlComponent {
       this.arrayAttribute().rootAttribute
     );
 
-    modal.result.subscribe(arrayElement => {
-      this.control().setValue([...this.control().value, arrayElement]);
-      this.paginatedValues().gotoPage(0);
-      this.changeDetectorRef.markForCheck();
-    });
+    modal.result.subscribe(arrayElement => this.control().setValue([...this.control().value, arrayElement]));
   }
 
-  editElement(element: any) {
+  editElement(element: ArrayElement) {
     const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
     modal.componentInstance.prepareForEdition(
       this.scanModes(),
@@ -117,23 +115,18 @@ export class OIBusArrayFormControlComponent {
     modal.result.subscribe(arrayElement => {
       const newArray = [...this.control().value];
       const index = this.control().value.indexOf(element);
-      newArray[index] = { ...arrayElement, id: element.id };
-
+      newArray[index] = { ...arrayElement, id: element['id'] };
       this.control().setValue(newArray);
-      this.paginatedValues().gotoPage(0);
-      this.changeDetectorRef.markForCheck();
     });
   }
 
-  deleteElement(element: any) {
+  deleteElement(element: ArrayElement) {
     const newArray = [...this.control().value];
-    const index = this.control().value.indexOf(element);
-    newArray.splice(index, 1);
+    newArray.splice(this.control().value.indexOf(element), 1);
     this.control().setValue(newArray);
-    this.paginatedValues().gotoPage(0);
   }
 
-  formatValue(element: any, path: Array<string>, type: OIBusAttributeType, translationKey: string) {
+  formatValue(element: ArrayElement, path: Array<string>, type: OIBusAttributeType, translationKey: string) {
     return FormUtils.formatValue(element, path, type, translationKey, this.translateService, this.scanModes());
   }
 
@@ -143,7 +136,7 @@ export class OIBusArrayFormControlComponent {
 
     modal.result.subscribe(result => {
       if (result) {
-        const elements = this.control().value!;
+        const elements = this.control().value;
         const blob = exportArrayElements(this.arrayAttribute(), elements, result.delimiter);
         this.downloadService.downloadFile({ blob, name: result.filename });
       }
@@ -182,11 +175,9 @@ export class OIBusArrayFormControlComponent {
     const { elements, errors } = await validateArrayElementsImport(file, delimiter, this.arrayAttribute(), existingElements);
     const modalRef = this.modalService.open(ImportArrayValidationModalComponent, { size: 'xl', backdrop: 'static' });
     modalRef.componentInstance.prepare(this.arrayAttribute(), elements, errors);
-    modalRef.result.subscribe((importedElements: Array<Record<string, unknown>>) => {
+    modalRef.result.subscribe(importedElements => {
       const existing = eraseExisting ? [] : this.control().value || [];
       this.control().setValue([...existing, ...importedElements]);
-      this.paginatedValues().gotoPage(0);
-      this.changeDetectorRef.markForCheck();
     });
   }
 }

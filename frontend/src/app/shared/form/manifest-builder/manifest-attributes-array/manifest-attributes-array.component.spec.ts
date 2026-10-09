@@ -1,524 +1,161 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
-import { EMPTY, of } from 'rxjs';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { OIBusArrayAttribute } from '@oibus/shared/connector/form.model';
+import { OIBusAttribute } from '@oibus/shared/connector/form.model';
 
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
-import { ModalService } from '../../../modal.service';
+import { createMock, MockObject } from '../../../../../test/vitest-create-mock';
+import { MockModalService, provideModalTesting } from '../../../mock-modal.service.testing';
+import { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
 import { ManifestAttributesArrayComponent } from './manifest-attributes-array.component';
 
+const attribute = (key: string, type: 'string' | 'number' = 'string'): OIBusAttribute =>
+  type === 'string'
+    ? {
+        type,
+        key,
+        translationKey: key,
+        validators: [],
+        defaultValue: null,
+        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+      }
+    : {
+        type,
+        key,
+        translationKey: key,
+        validators: [],
+        defaultValue: null,
+        unit: null,
+        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+      };
+
 @Component({
-  template: ` <oib-manifest-attributes-array [label]="arrayAttribute.translationKey" [control]="attributesControl" /> `,
-  imports: [ManifestAttributesArrayComponent, ReactiveFormsModule],
+  template: `<oib-manifest-attributes-array
+    label="Attributes"
+    [control]="control"
+    [contextPath]="['root']"
+    (nestedChange)="changes = changes + 1"
+  />`,
+  imports: [ManifestAttributesArrayComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
-  attributesControl = new FormControl<Array<any>>([]) as FormControl<Array<any>>;
-
-  arrayAttribute: OIBusArrayAttribute = {
-    type: 'array',
-    key: 'attributes',
-    translationKey: 'configuration.oibus.manifest.transformers.attributes.attributes',
-    paginate: false,
-    numberOfElementPerPage: 20,
-    validators: [],
-    rootAttribute: {
-      type: 'object',
-      key: 'attribute',
-      translationKey: 'configuration.oibus.manifest.transformers.attributes.attribute',
-      attributes: [
-        {
-          type: 'string',
-          key: 'type',
-          translationKey: 'configuration.oibus.manifest.transformers.attributes.type',
-          defaultValue: 'string',
-          validators: [],
-          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-        },
-        {
-          type: 'string',
-          key: 'key',
-          translationKey: 'configuration.oibus.manifest.transformers.attributes.key',
-          defaultValue: '',
-          validators: [],
-          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-        },
-        {
-          type: 'string',
-          key: 'translationKey',
-          translationKey: 'configuration.oibus.manifest.transformers.attributes.translation-key',
-          defaultValue: '',
-          validators: [],
-          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-        }
-      ],
-      validators: [],
-      displayProperties: { visible: true, wrapInBox: false },
-      enablingConditions: []
-    }
-  };
+  readonly control = new FormControl<Array<OIBusAttribute>>([attribute('name'), attribute('port', 'number')], { nonNullable: true });
+  changes = 0;
 }
 
 class TestComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
-  readonly component = this.fixture.componentInstance;
+  readonly host = this.fixture.componentInstance;
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly addButton = this.root.getByCss('#manifest-attributes-add-button');
-  readonly attributesTable = this.root.getByCss('table');
-  readonly tableRows = this.root.getByCss('tbody tr');
-  readonly editButtons = this.root.getByCss('.edit-button');
-  readonly copyButtons = this.root.getByCss('.copy-button');
-  readonly deleteButtons = this.root.getByCss('.delete-button');
-  readonly emptyState = this.root.getByCss('.oi-details');
-  readonly pagination = this.root.getByCss('oib-pagination');
-  readonly box = this.root.getByCss('oib-box');
-  readonly validationErrors = this.root.getByCss('val-errors');
+  readonly rows = this.root.getByCss('tbody tr');
+  readonly addButton = this.root.getByRole('button', { name: 'Add an element' });
 
-  setAttributes(attributes: Array<unknown>) {
-    this.component.attributesControl.setValue(attributes);
-    this.fixture.detectChanges();
+  row(index: number) {
+    return this.rows.nth(index);
+  }
+
+  async expectRow(index: number, key: string, type: string) {
+    const cells = this.row(index).getByRole('cell');
+    await expect.element(cells.nth(0)).toHaveTextContent(key);
+    await expect.element(cells.nth(1)).toHaveTextContent(type);
   }
 }
 
-const flushPromises = () => new Promise<void>(resolve => setTimeout(resolve, 0));
-
 describe('ManifestAttributesArrayComponent', () => {
   let tester: TestComponentTester;
-  let mockModalService: { open: ReturnType<typeof vi.fn> };
-  let openAttributeEditorSpy: ReturnType<typeof vi.fn>;
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  let modalService: MockModalService<unknown>;
+  let fakeEditor: MockObject<ManifestAttributeEditorModalComponent>;
 
   beforeEach(() => {
-    mockModalService = { open: vi.fn() };
-
-    const createModalInstance = (resultValue?: any) => ({
-      result: resultValue !== undefined ? of(resultValue) : EMPTY,
-      componentInstance: {
-        setContextPath: vi.fn(),
-        prepareForCreation: vi.fn(),
-        prepareForEdition: vi.fn()
-      }
-    });
-
-    mockModalService.open.mockReturnValue(createModalInstance());
-
-    openAttributeEditorSpy = vi
-      .spyOn(ManifestAttributesArrayComponent.prototype as any, 'openAttributeEditor')
-      .mockImplementation(function (initialise = true) {
-        const DummyComponent = function () {} as any;
-        const modal = (mockModalService.open as unknown as (...args: Array<unknown>) => any)(DummyComponent);
-
-        (modal.componentInstance as any).setContextPath();
-        if (initialise) {
-          (modal.componentInstance as any).prepareForCreation();
-        }
-        return Promise.resolve(modal);
-      });
-
-    TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), { provide: ModalService, useValue: mockModalService }]
-    });
-
+    TestBed.configureTestingModule({ providers: [provideI18nTesting(), provideModalTesting()] });
+    modalService = TestBed.inject(MockModalService);
+    fakeEditor = createMock(ManifestAttributeEditorModalComponent);
     tester = new TestComponentTester();
-    tester.fixture.detectChanges();
   });
 
-  describe('Component Initialization', () => {
-    test('should create the component', () => {
-      expect(tester.component).toBeDefined();
-    });
-
-    test('should display the add button', async () => {
-      await expect.element(tester.addButton).toBeInTheDocument();
-      await expect.element(tester.addButton.getByCss('span.fa.fa-plus')).toBeInTheDocument();
-    });
-
-    test('should show empty state when no attributes', async () => {
-      await expect.element(tester.attributesTable).not.toBeInTheDocument();
-      await expect.element(tester.emptyState).toMatchTextContent('No attributes defined');
-    });
-
-    test('should display box', async () => {
-      await expect.element(tester.box).toBeInTheDocument();
-    });
+  test('should display the attributes by key and type', async () => {
+    await expect.element(tester.root.getByText('Attributes')).toBeInTheDocument();
+    await expect.element(tester.rows).toHaveLength(2);
+    const headers = tester.root.getByCss('thead th');
+    expect(headers.elements().map(header => header.textContent!.trim())).toEqual(['Key', 'Type', '']);
+    await tester.expectRow(0, 'name', 'String');
+    await tester.expectRow(1, 'port', 'Number');
   });
 
-  describe('Column Building', () => {
-    test('should build columns from root attribute', () => {
-      const component = tester.component;
-      const displayableAttributes = component.arrayAttribute.rootAttribute.attributes.filter(
-        attr => (attr as any).displayProperties?.displayInViewMode
-      );
+  test('should display the attributes set from outside', async () => {
+    tester.host.control.setValue([]);
 
-      expect(displayableAttributes.length).toBe(3); // type, key, translationKey
-    });
-
-    test('should filter out non-displayable attributes', () => {
-      const component = tester.component;
-      const displayableAttributes = component.arrayAttribute.rootAttribute.attributes.filter(
-        attr => (attr as any).displayProperties?.displayInViewMode
-      );
-
-      expect(displayableAttributes.length).toBe(3); // type, key, translationKey
-    });
+    await expect.element(tester.rows).toHaveLength(0);
+    await expect.element(tester.root.getByText('No attributes defined')).toBeInTheDocument();
   });
 
-  describe('Add Item Functionality', () => {
-    test('should open modal when add button is clicked', async () => {
-      await tester.addButton.click();
-      await flushPromises();
-      expect(openAttributeEditorSpy).toHaveBeenCalled();
-    });
+  test('should add an attribute', async () => {
+    modalService.mockClosedModal(fakeEditor, attribute('added'));
 
-    test('should prepare modal for creation', async () => {
-      await tester.addButton.click();
-      await flushPromises();
-      expect(openAttributeEditorSpy).toHaveBeenCalled();
-      const modal = mockModalService.open.mock.results.at(-1)?.value as { componentInstance: any };
-      expect(modal.componentInstance.prepareForCreation).toHaveBeenCalled();
-    });
+    await tester.addButton.click();
 
-    test('should add new item when modal returns result', async () => {
-      const newAttribute = {
-        type: 'string',
-        key: 'newKey',
-        translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-        defaultValue: 'new value'
-      };
-
-      mockModalService.open.mockReturnValue({
-        result: of(newAttribute),
-        componentInstance: {
-          setContextPath: vi.fn(),
-          prepareForCreation: vi.fn(),
-          prepareForEdition: vi.fn()
-        }
-      });
-
-      await tester.addButton.click();
-      await flushPromises();
-      tester.fixture.detectChanges();
-
-      expect(tester.component.attributesControl.value).toContain(newAttribute);
-    });
+    await expect.element(tester.rows).toHaveLength(3);
+    expect(fakeEditor.prepareForCreation).toHaveBeenCalledWith(['root'], 1);
+    expect(tester.host.control.value[2]).toEqual(attribute('added'));
+    expect(tester.host.control.dirty).toBe(true);
+    expect(tester.host.changes).toBe(1);
   });
 
-  describe('Edit Item Functionality', () => {
-    beforeEach(() => {
-      const testAttributes = [
-        {
-          type: 'string',
-          key: 'testKey1',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 'test value 1'
-        },
-        {
-          type: 'number',
-          key: 'testKey2',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 42
-        }
-      ];
-      tester.setAttributes(testAttributes);
-    });
+  test('should copy an attribute', async () => {
+    modalService.mockClosedModal(fakeEditor, attribute('name_copy'));
 
-    test('should display table when attributes exist', async () => {
-      await expect.element(tester.attributesTable).toBeInTheDocument();
-      await expect.element(tester.tableRows).toHaveLength(2);
-    });
+    await tester.row(0).getByRole('button', { name: 'Copy element' }).click();
 
-    test('should show edit buttons for each row', async () => {
-      await expect.element(tester.editButtons).toHaveLength(2);
-    });
-
-    test('should open modal when edit button is clicked', async () => {
-      await tester.editButtons.nth(0).click();
-      await flushPromises();
-      expect(openAttributeEditorSpy).toHaveBeenCalled();
-    });
-
-    test('should update item when modal returns result', async () => {
-      const updatedAttribute = {
-        type: 'string',
-        key: 'updatedKey',
-        translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-        defaultValue: 'updated value'
-      };
-
-      mockModalService.open.mockReturnValue({
-        result: of(updatedAttribute),
-        componentInstance: {
-          setContextPath: vi.fn(),
-          prepareForCreation: vi.fn(),
-          prepareForEdition: vi.fn()
-        }
-      });
-
-      await tester.editButtons.nth(0).click();
-      await flushPromises();
-      tester.fixture.detectChanges();
-
-      const currentValue = tester.component.attributesControl.value;
-      expect(currentValue?.[0]).toEqual(expect.objectContaining(updatedAttribute));
-    });
+    await expect.element(tester.rows).toHaveLength(3);
+    expect(fakeEditor.prepareForEdition).toHaveBeenCalledWith({ ...attribute('name'), key: 'name_copy' }, ['root'], 1);
+    expect(tester.host.control.value.map(element => element.key)).toEqual(['name', 'port', 'name_copy']);
+    expect(tester.host.changes).toBe(1);
   });
 
-  describe('Copy Item Functionality', () => {
-    beforeEach(() => {
-      const testAttributes = [
-        {
-          type: 'string',
-          key: 'testKey',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 'test value'
-        }
-      ];
-      tester.setAttributes(testAttributes);
-    });
+  test('should edit an attribute', async () => {
+    modalService.mockClosedModal(fakeEditor, attribute('renamed', 'number'));
 
-    test('should show copy buttons for each row', async () => {
-      await expect.element(tester.copyButtons).toHaveLength(1);
-    });
+    await tester.row(0).getByRole('button', { name: 'Edit element' }).click();
 
-    test('should open modal when copy button is clicked', async () => {
-      await tester.copyButtons.nth(0).click();
-      await flushPromises();
-      expect(openAttributeEditorSpy).toHaveBeenCalled();
-    });
-
-    test('should add copied item when modal returns result', async () => {
-      const copiedAttribute = {
-        type: 'string',
-        key: 'testKey_copy',
-        translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-        defaultValue: 'test value'
-      };
-
-      mockModalService.open.mockReturnValue({
-        result: of(copiedAttribute),
-        componentInstance: {
-          setContextPath: vi.fn(),
-          prepareForCreation: vi.fn(),
-          prepareForEdition: vi.fn()
-        }
-      });
-
-      await tester.copyButtons.nth(0).click();
-      await flushPromises();
-      tester.fixture.detectChanges();
-
-      const currentValue = tester.component.attributesControl.value;
-      expect(currentValue?.length).toBe(2);
-      expect(currentValue?.[1]).toEqual(copiedAttribute);
-    });
+    await tester.expectRow(0, 'renamed', 'Number');
+    expect(fakeEditor.prepareForEdition).toHaveBeenCalledWith(attribute('name'), ['root'], 1);
+    expect(tester.host.control.value).toEqual([attribute('renamed', 'number'), attribute('port', 'number')]);
+    expect(tester.host.control.dirty).toBe(true);
+    expect(tester.host.changes).toBe(1);
   });
 
-  describe('Delete Item Functionality', () => {
-    beforeEach(() => {
-      const testAttributes = [
-        {
-          type: 'string',
-          key: 'testKey1',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 'test value 1'
-        },
-        {
-          type: 'number',
-          key: 'testKey2',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 42
-        }
-      ];
-      tester.setAttributes(testAttributes);
-    });
+  test('should not change the attributes when the edition is cancelled', async () => {
+    modalService.mockDismissedModal(fakeEditor);
 
-    test('should show delete buttons for each row', async () => {
-      await expect.element(tester.deleteButtons).toHaveLength(2);
-    });
+    await tester.row(0).getByRole('button', { name: 'Edit element' }).click();
 
-    test('should remove item when delete button is clicked', async () => {
-      const initialLength = tester.component.attributesControl.value?.length || 0;
-      await tester.deleteButtons.nth(0).click();
-
-      expect(tester.component.attributesControl.value?.length).toBe(initialLength - 1);
-    });
-
-    test('should show empty state when all items are deleted', async () => {
-      await tester.deleteButtons.nth(0).click();
-      tester.fixture.detectChanges();
-      await tester.deleteButtons.nth(0).click();
-      tester.fixture.detectChanges();
-
-      await expect.element(tester.attributesTable).not.toBeInTheDocument();
-      await expect.element(tester.emptyState).toMatchTextContent('No attributes defined');
-    });
+    await vi.waitFor(() => expect(fakeEditor.prepareForEdition).toHaveBeenCalled());
+    expect(tester.host.control.value.length).toBe(2);
+    expect(tester.host.control.dirty).toBe(false);
+    expect(tester.host.changes).toBe(0);
   });
 
-  describe('Value Formatting', () => {
-    beforeEach(() => {
-      const testAttributes = [
-        {
-          type: 'string',
-          key: 'stringKey',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 'string value'
-        },
-        {
-          type: 'number',
-          key: 'numberKey',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 42
-        },
-        {
-          type: 'boolean',
-          key: 'booleanKey',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: true
-        }
-      ];
-      tester.setAttributes(testAttributes);
-    });
+  test('should delete an attribute', async () => {
+    await tester.row(0).getByRole('button', { name: 'Delete element' }).click();
 
-    test('should format string values correctly', async () => {
-      // Check that the table displays the data
-      await expect.element(tester.attributesTable).toBeInTheDocument();
-      await expect.element(tester.tableRows).toHaveLength(3);
-    });
-
-    test('should format number values correctly', async () => {
-      // Check that the table displays the data
-      await expect.element(tester.attributesTable).toBeInTheDocument();
-      await expect.element(tester.tableRows).toHaveLength(3);
-    });
-
-    test('should format boolean values correctly', async () => {
-      // Boolean values are translated, so we check for the presence of the cell
-      await expect.element(tester.tableRows.nth(2)).toMatchTextContent('booleanKey');
-    });
+    await expect.element(tester.rows).toHaveLength(1);
+    expect(tester.host.control.value).toEqual([attribute('port', 'number')]);
+    expect(tester.host.control.dirty).toBe(true);
+    expect(tester.host.changes).toBe(1);
   });
 
-  describe('Pagination', () => {
-    beforeEach(() => {
-      // Set up paginated array attribute
-      tester.component.arrayAttribute = {
-        ...tester.component.arrayAttribute,
-        paginate: true,
-        numberOfElementPerPage: 2
-      };
-      tester.fixture.detectChanges();
-    });
+  test('should paginate the attributes', async () => {
+    tester.host.control.setValue(Array.from({ length: 25 }, (_, index) => attribute(`attribute${index + 1}`)));
 
-    test('should not show pagination when paginate is disabled', async () => {
-      tester.component.arrayAttribute = {
-        ...tester.component.arrayAttribute,
-        paginate: false
-      };
-      tester.fixture.detectChanges();
+    await expect.element(tester.rows).toHaveLength(20);
+    await tester.root.getByRole('link', { name: '2' }).click();
 
-      // With pagination disabled, it should not be visible
-      await expect.element(tester.pagination).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Input Properties', () => {
-    test('should accept control input', () => {
-      expect(tester.component.attributesControl).toBeDefined();
-    });
-
-    test('should accept arrayAttribute input', () => {
-      expect(tester.component.arrayAttribute).toBeDefined();
-      expect(tester.component.arrayAttribute.type).toBe('array');
-    });
-  });
-
-  describe('Error Handling', () => {
-    test('should handle empty control value', async () => {
-      tester.setAttributes([]);
-
-      await expect.element(tester.emptyState).toMatchTextContent('No attributes defined');
-    });
-
-    test('should handle modal service errors gracefully', async () => {
-      // Make openAttributeEditor return a never-resolving promise so addItem() suspends
-      // without rejecting — avoids an unhandled rejection since the component has no try/catch
-      openAttributeEditorSpy.mockImplementationOnce(() => new Promise(() => {}));
-
-      // The component should handle the error gracefully
-      // We just test that the button click doesn't crash the component
-      await expect(tester.addButton.click()).resolves.toBeUndefined();
-    });
-  });
-
-  describe('Integration with Form Control', () => {
-    test('should update form control when items are added', async () => {
-      const newAttribute = {
-        type: 'string',
-        key: 'newKey',
-        translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-        defaultValue: 'new value'
-      };
-
-      mockModalService.open.mockReturnValue({
-        result: of(newAttribute),
-        componentInstance: {
-          setContextPath: vi.fn(),
-          prepareForCreation: vi.fn(),
-          prepareForEdition: vi.fn()
-        }
-      });
-
-      await tester.addButton.click();
-      await flushPromises();
-      tester.fixture.detectChanges();
-
-      expect(tester.component.attributesControl.value).toContain(newAttribute);
-    });
-
-    test('should update form control when items are edited', async () => {
-      const testAttributes = [
-        {
-          type: 'string',
-          key: 'testKey',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 'test value'
-        }
-      ];
-      tester.setAttributes(testAttributes);
-
-      // Just test that the edit button exists and can be clicked
-      await expect.element(tester.editButtons).toHaveLength(1);
-      await expect.element(tester.editButtons.nth(0)).toBeInTheDocument();
-    });
-
-    test('should update form control when items are deleted', async () => {
-      const testAttributes = [
-        {
-          type: 'string',
-          key: 'testKey1',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 'test value 1'
-        },
-        {
-          type: 'string',
-          key: 'testKey2',
-          translationKey: 'configuration.oibus.edit-array-element-modal.tooltips.edit',
-          defaultValue: 'test value 2'
-        }
-      ];
-      tester.setAttributes(testAttributes);
-
-      await tester.deleteButtons.nth(0).click();
-
-      expect(tester.component.attributesControl.value?.length).toBe(1);
-      expect(tester.component.attributesControl.value?.[0].key).toBe('testKey2');
-    });
+    await expect.element(tester.rows).toHaveLength(5);
+    await tester.expectRow(0, 'attribute21', 'String');
   });
 });

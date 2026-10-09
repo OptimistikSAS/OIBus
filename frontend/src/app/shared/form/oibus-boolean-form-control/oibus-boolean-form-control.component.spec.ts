@@ -1,66 +1,50 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
 import { beforeEach, describe, expect, test } from 'vitest';
-import { page } from 'vitest/browser';
 
 import { OIBusBooleanAttribute } from '@oibus/shared/connector/form.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { OIBusFormControlTester, renderOIBusFormControl } from '../oibus-form-control.testing';
 import { OIBusBooleanFormControlComponent } from './oibus-boolean-form-control.component';
 
-@Component({
-  selector: 'oib-test-oibus-boolean-form-control-component',
-  template: `
-    <form [formGroup]="formGroup">
-      <ng-container formGroupName="testGroup">
-        <oib-oibus-boolean-form-control [booleanAttribute]="booleanAttribute" />
-      </ng-container>
-    </form>
-  `,
-  imports: [ReactiveFormsModule, OIBusBooleanFormControlComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-class TestComponent {
-  booleanAttribute: OIBusBooleanAttribute = {
-    type: 'boolean',
-    key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name'
-  } as OIBusBooleanAttribute;
-
-  formGroup = new FormGroup({
-    testGroup: new FormGroup({
-      testKey: new FormControl(false)
-    })
-  });
-}
-
-class TestComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly label = this.root.getByText('Field name');
-  readonly field = this.root.getByCss('input');
-}
-
 describe('OIBusBooleanFormControlComponent', () => {
-  let tester: TestComponentTester;
+  const booleanAttribute: OIBusBooleanAttribute = {
+    type: 'boolean',
+    key: 'fieldName',
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name',
+    defaultValue: false,
+    validators: [],
+    displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+  };
+  let control: FormControl<boolean>;
+  let tester: OIBusFormControlTester<OIBusBooleanFormControlComponent>;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [provideI18nTesting()]
-    });
-
-    tester = new TestComponentTester();
-    tester.fixture.detectChanges();
+  beforeEach(async () => {
+    TestBed.configureTestingModule({ providers: [provideI18nTesting()] });
+    control = new FormControl<boolean>(true, { nonNullable: true });
+    tester = await renderOIBusFormControl(OIBusBooleanFormControlComponent, { booleanAttribute }, 'fieldName', control);
   });
 
-  test('should display a label with the correct translation key', async () => {
-    await expect.element(tester.label).toBeInTheDocument();
+  test('should display the value of the control and update it', async () => {
+    const checkbox = tester.root.getByLabelText('Field name');
+    await expect.element(checkbox).toBeChecked();
+
+    await checkbox.click();
+
+    expect(control.value).toBe(false);
   });
 
-  test('should display an input with the correct form control name', async () => {
-    await tester.field.click();
-    await expect.element(tester.field).toBeChecked();
+  test('should display a value patched from outside', async () => {
+    control.setValue(false);
+
+    await expect.element(tester.root.getByLabelText('Field name')).not.toBeChecked();
+  });
+
+  test('should be disabled with its control', async () => {
+    control.disable();
+
+    await expect.element(tester.root.getByLabelText('Field name')).toBeDisabled();
   });
 });

@@ -3,9 +3,7 @@
   <select [id]="stringSelectAttribute().key" class="form-select" [formControlName]="stringSelectAttribute().key">
     <option [ngValue]="null"></option>
     @for (value of stringSelectAttribute().selectableValues; track value) {
-      <option [value]="value">
-        {{ stringSelectAttribute().translationKey + '.' + value | translate }}
-      </option>
+      <option [value]="value">{{ stringSelectAttribute().translationKey + '.' + value | translate }}</option>
     }
   </select>
   <val-errors [controlName]="stringSelectAttribute().key" />

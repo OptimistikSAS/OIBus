@@ -4,12 +4,14 @@
       <div>{{ label() }}</div>
       <div>
         <button
+          type="button"
           class="btn btn-sm btn-warning"
           id="manifest-attributes-add-button"
           [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.add' | translate"
+          [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.add' | translate"
           (click)="addItem($event)"
         >
-          <span class="fa-solid fa-plus"></span>
+          <span class="fa-solid fa-plus" aria-hidden="true"></span>
         </button>
       </div>
     </div>
@@ -17,11 +19,11 @@
 
   @if (paginatedValues().totalPages > 1) {
     <div>
-      <oib-pagination class="d-flex justify-content-end" [page]="paginatedValues()" (pageChanged)="paginatedValues().gotoPage($event)" />
+      <oib-pagination class="d-flex justify-content-end" [page]="paginatedValues()" (pageChanged)="pageNumber.set($event)" />
     </div>
   }
   @if (paginatedValues().content.length > 0) {
-    <table style="table-layout: fixed" class="table table-sm table-hover oib-table">
+    <table class="table table-sm table-hover oib-table table-fixed">
       <thead class="light">
         <tr>
           <th translate="configuration.oibus.manifest.transformers.attributes.key"></th>
@@ -32,36 +34,35 @@
       <tbody>
         @for (element of paginatedValues().content; track element) {
           <tr>
-            <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
-              {{ 'configuration.oibus.manifest.transformers.attributes.type.' + element.type | translate }}
-            </td>
-            <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
-              {{ element.key }}
-            </td>
+            <td class="text-truncate">{{ element.key }}</td>
+            <td class="text-truncate">{{ 'configuration.oibus.manifest.transformers.attributes.type.' + element.type | translate }}</td>
             <td class="text-nowrap text-end">
               <button
                 type="button"
                 class="btn btn-link edit-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
+                [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
                 (click)="editItem(element)"
               >
-                <span class="fa-solid fa-pencil"></span>
+                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
               </button>
               <button
                 type="button"
                 class="btn btn-link copy-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
+                [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
                 (click)="copyItem(element)"
               >
-                <span class="fa-solid fa-copy"></span>
+                <span class="fa-solid fa-copy" aria-hidden="true"></span>
               </button>
               <button
                 type="button"
                 class="btn btn-link delete-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
+                [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
                 (click)="deleteItem(element)"
               >
-                <span class="fa-solid fa-trash-can"></span>
+                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
               </button>
             </td>
           </tr>

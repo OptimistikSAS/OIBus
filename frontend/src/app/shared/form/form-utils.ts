@@ -40,7 +40,7 @@ export class FormUtils {
   }
 
   static formatValue(
-    element: any,
+    element: Record<string, unknown>,
     path: Array<string>,
     type: OIBusAttributeType,
     translationKey: string,
@@ -70,7 +70,7 @@ export class FormUtils {
     }
   }
 
-  static getValueByPath(obj: any, path: Array<string>) {
-    return path.reduce((acc, key) => acc && acc[key], obj);
+  static getValueByPath(obj: unknown, path: Array<string>): unknown {
+    return path.reduce<unknown>((acc, key) => acc && (acc as Record<string, unknown>)[key], obj);
   }
 }

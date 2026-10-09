@@ -18,9 +18,9 @@ import { OibCodeBlockComponent } from '../oib-code-block/oib-code-block.componen
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, OibCodeBlockComponent]
 })
 export class OIBusCodeFormControlComponent {
-  codeAttribute = input.required<OIBusCodeAttribute>();
+  readonly codeAttribute = input.required<OIBusCodeAttribute>();
 }
