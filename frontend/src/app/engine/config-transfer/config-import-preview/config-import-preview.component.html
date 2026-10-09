@@ -1,6 +1,6 @@
 <ng-template #header let-key="key" let-title="title" let-subtitle="subtitle" let-count="count">
   <button type="button" class="preview-toggle" [attr.data-section]="key" [attr.aria-expanded]="isExpanded(key)" (click)="toggle(key)">
-    <span class="fa fa-fw toggle-icon" [class.fa-chevron-right]="!isExpanded(key)" [class.fa-chevron-down]="isExpanded(key)"></span>
+    <span class="fa-solid fa-fw toggle-icon" [class.fa-chevron-right]="!isExpanded(key)" [class.fa-chevron-down]="isExpanded(key)"></span>
     <span class="preview-title">{{ title }}</span>
     @if (subtitle) {
       <span class="text-muted preview-subtitle">{{ subtitle }}</span>

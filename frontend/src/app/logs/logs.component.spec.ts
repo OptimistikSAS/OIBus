@@ -198,12 +198,12 @@ describe('LogsComponent', () => {
 
   test('should return correct class for known log level', () => {
     const result = tester.component.getLevelClass('error');
-    expect(result).toBe('fa fa-times-circle level-red');
+    expect(result).toBe('fa-solid fa-times-circle level-red');
   });
 
   test('should fallback to red icon for unknown log level', () => {
     const result = tester.component.getLevelClass('unknown' as any);
-    expect(result).toBe('fa fa-times-circle level-red');
+    expect(result).toBe('fa-solid fa-times-circle level-red');
   });
 
   test('should build search params from route', () => {
@@ -693,12 +693,12 @@ describe('LogsComponent', () => {
 
     test('getLevelClass should return correct class or fallback', () => {
       const cmp = tester.component;
-      expect(cmp.getLevelClass('error')).toBe('fa fa-times-circle level-red');
-      expect(cmp.getLevelClass('warn')).toBe('fa fa-exclamation-triangle level-yellow');
-      expect(cmp.getLevelClass('info')).toBe('fa fa-info-circle level-green');
-      expect(cmp.getLevelClass('debug')).toBe('fa fa-bug level-blue');
-      expect(cmp.getLevelClass('trace')).toBe('fa fa-search level-grey');
-      expect(cmp.getLevelClass('nonsense' as any)).toBe('fa fa-times-circle level-red');
+      expect(cmp.getLevelClass('error')).toBe('fa-solid fa-times-circle level-red');
+      expect(cmp.getLevelClass('warn')).toBe('fa-solid fa-exclamation-triangle level-yellow');
+      expect(cmp.getLevelClass('info')).toBe('fa-solid fa-info-circle level-green');
+      expect(cmp.getLevelClass('debug')).toBe('fa-solid fa-bug level-blue');
+      expect(cmp.getLevelClass('trace')).toBe('fa-solid fa-search level-grey');
+      expect(cmp.getLevelClass('nonsense' as any)).toBe('fa-solid fa-times-circle level-red');
     });
   });
 });

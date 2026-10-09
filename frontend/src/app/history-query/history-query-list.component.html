@@ -13,7 +13,7 @@
             [ngbTooltip]="'history-query.tooltips.add' | translate"
             (click)="createHistoryQuery()"
           >
-            <span class="fa fa-plus"></span>
+            <span class="fa-solid fa-plus"></span>
           </button>
         </span>
       </h1>
@@ -22,7 +22,7 @@
 
   <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm">
     <div class="row gx-2 py-3">
-      <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
+      <label class="col-auto col-form-label"><i class="fa-solid fa-search fa-lg"></i></label>
       <label for="name" class="col-auto col-form-label" translate="history-query.search-by-name"></label>
       <div class="col-2">
         <input type="text" class="form-control" id="name" formControlName="name" />
@@ -47,7 +47,7 @@
         }
         @if (activeStatuses.length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-statuses-button" (click)="clearStatuses()">
-            <span class="fa fa-times me-1" aria-hidden="true"></span>
+            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -68,7 +68,7 @@
         }
         @if (activeSouthTypes.length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-south-types-button" (click)="clearSouthTypes()">
-            <span class="fa fa-times me-1" aria-hidden="true"></span>
+            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -89,7 +89,7 @@
         }
         @if (activeNorthTypes.length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-north-types-button" (click)="clearNorthTypes()">
-            <span class="fa fa-times me-1" aria-hidden="true"></span>
+            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -122,7 +122,7 @@
                   (click)="toggleSort('name')"
                 >
                   <span translate="history-query.name" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('name') }}"></span>
+                  <span class="fa-solid {{ getSortIcon('name') }}"></span>
                 </button>
               </th>
               <th style="width: 22rem">
@@ -132,7 +132,7 @@
                   (click)="toggleSort('interval')"
                 >
                   <span translate="history-query.interval" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('interval') }}"></span>
+                  <span class="fa-solid {{ getSortIcon('interval') }}"></span>
                 </button>
               </th>
               <th>
@@ -142,7 +142,7 @@
                   (click)="toggleSort('southType')"
                 >
                   <span translate="history-query.south-type" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('southType') }}"></span>
+                  <span class="fa-solid {{ getSortIcon('southType') }}"></span>
                 </button>
               </th>
               <th>
@@ -152,7 +152,7 @@
                   (click)="toggleSort('northType')"
                 >
                   <span translate="history-query.north-type" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('northType') }}"></span>
+                  <span class="fa-solid {{ getSortIcon('northType') }}"></span>
                 </button>
               </th>
               <th translate="history-query.description"></th>
@@ -163,7 +163,7 @@
                   (click)="toggleSort('updatedAt')"
                 >
                   <span translate="history-query.updated-at" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+                  <span class="fa-solid {{ getSortIcon('updatedAt') }}"></span>
                 </button>
               </th>
               <th></th>
@@ -190,7 +190,7 @@
                 <td>
                   <div>
                     {{ query.startTime | datetime: 'ff' }}
-                    <div class="fa fa-arrow-right oib-fa-arrow"></div>
+                    <div class="fa-solid fa-arrow-right oib-fa-arrow"></div>
                     {{ query.endTime | datetime: 'ff' }}
                   </div>
                 </td>
@@ -216,10 +216,10 @@
                         [disabled]="states.get(query.id)?.isPending | async"
                       >
                         @if (states.get(query.id)?.isPending | async) {
-                          <span class="fa fa-spinner fa-spin" role="status"></span>
+                          <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                         }
                         @if ((states.get(query.id)?.isPending | async) === false) {
-                          <span class="fa fa-play" role="status"></span>
+                          <span class="fa-solid fa-play" role="status"></span>
                         }
                       </button>
                     }
@@ -232,10 +232,10 @@
                         [disabled]="states.get(query.id)?.isPending | async"
                       >
                         @if (states.get(query.id)?.isPending | async) {
-                          <span class="fa fa-spinner fa-spin" role="status"></span>
+                          <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                         }
                         @if ((states.get(query.id)?.isPending | async) === false) {
-                          <span class="fa fa-pause" role="status"></span>
+                          <span class="fa-solid fa-pause" role="status"></span>
                         }
                       </button>
                     }
@@ -248,10 +248,10 @@
                         [disabled]="states.get(query.id)?.isPending | async"
                       >
                         @if (states.get(query.id)?.isPending | async) {
-                          <span class="fa fa-spinner fa-spin" role="status"></span>
+                          <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                         }
                         @if ((states.get(query.id)?.isPending | async) === false) {
-                          <span class="fa fa-play" role="status"></span>
+                          <span class="fa-solid fa-play" role="status"></span>
                         }
                       </button>
                     }
@@ -264,10 +264,10 @@
                         [disabled]="states.get(query.id)?.isPending | async"
                       >
                         @if (states.get(query.id)?.isPending | async) {
-                          <span class="fa fa-spinner fa-spin" role="status"></span>
+                          <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                         }
                         @if ((states.get(query.id)?.isPending | async) === false) {
-                          <span class="fa fa-repeat" role="status"></span>
+                          <span class="fa-solid fa-arrow-rotate-right" role="status"></span>
                         }
                       </button>
                     }
@@ -278,7 +278,7 @@
                       [ngbTooltip]="'history-query.tooltips.view' | translate"
                       [routerLink]="[query.id]"
                     >
-                      <span class="fa fa-search"></span>
+                      <span class="fa-solid fa-search"></span>
                     </a>
                     <!-- Edit button -->
                     <a
@@ -287,7 +287,7 @@
                       [ngbTooltip]="'history-query.tooltips.edit' | translate"
                       [routerLink]="[query.id, 'edit']"
                     >
-                      <span class="fa fa-pencil"></span>
+                      <span class="fa-solid fa-pencil"></span>
                     </a>
                     <!-- Duplicate button -->
                     <a
@@ -296,7 +296,7 @@
                       routerLink="create"
                       [queryParams]="{ duplicate: query.id }"
                     >
-                      <span class="fa fa-copy"></span>
+                      <span class="fa-solid fa-copy"></span>
                     </a>
                     <!-- Delete button -->
                     <button
@@ -305,7 +305,7 @@
                       [ngbTooltip]="'history-query.tooltips.delete' | translate"
                       (click)="delete(query)"
                     >
-                      <span class="fa fa-trash"></span>
+                      <span class="fa-solid fa-trash-can"></span>
                     </button>
                     <!-- Audit history button -->
                     <button
@@ -314,7 +314,7 @@
                       [ngbTooltip]="'history-query.tooltips.audit' | translate"
                       (click)="showAudit(query)"
                     >
-                      <span class="fa fa-history"></span>
+                      <span class="fa-solid fa-history"></span>
                     </button>
                   </div>
                 </td>

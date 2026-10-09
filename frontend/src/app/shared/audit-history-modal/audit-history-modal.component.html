@@ -6,13 +6,13 @@
     <div class="d-flex justify-content-end mb-2">
       <div ngbDropdown class="d-inline-block">
         <button type="button" class="btn btn-outline-secondary btn-sm" ngbDropdownToggle>
-          <span class="fa {{ modeIcons[mode()] }}"></span>
+          <span class="fa-solid {{ modeIcons[mode()] }}"></span>
           <span class="ms-1">{{ 'audit.history-modal.modes.' + mode() | translate }}</span>
         </button>
         <div ngbDropdownMenu>
           @for (m of modes; track m) {
             <button ngbDropdownItem [class.active]="mode() === m" (click)="changeMode(m)">
-              <span class="fa {{ modeIcons[m] }}"></span>
+              <span class="fa-solid {{ modeIcons[m] }}"></span>
               <span class="ms-1">{{ 'audit.history-modal.modes.' + m | translate }}</span>
             </button>
           }
@@ -53,9 +53,9 @@
               (click)="toggleRow(row.id)"
             >
               @if (expandedRowId() === row.id) {
-                <span class="fa fa-chevron-up"></span>
+                <span class="fa-solid fa-chevron-up"></span>
               } @else {
-                <span class="fa fa-chevron-down"></span>
+                <span class="fa-solid fa-chevron-down"></span>
               }
             </button>
           </div>

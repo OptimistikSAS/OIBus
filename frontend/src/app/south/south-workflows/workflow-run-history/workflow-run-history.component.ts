@@ -216,11 +216,11 @@ export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
   getStatusIconClass(status: WorkflowRunStatus): string {
     switch (status) {
       case 'RUNNING':
-        return 'fa fa-spinner text-primary';
+        return 'fa-solid fa-spinner text-primary';
       case 'COMPLETED':
-        return 'fa fa-check-circle text-success';
+        return 'fa-solid fa-check-circle text-success';
       case 'ERRORED':
-        return 'fa fa-times-circle text-danger';
+        return 'fa-solid fa-times-circle text-danger';
     }
   }
 
