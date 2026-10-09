@@ -296,8 +296,8 @@
               <div class="d-flex justify-content-between align-items-center">
                 <div>
                   <span translate="south.items.title"></span>
-                  @if (filteredItems().length) {
-                    <span class="mx-1">({{ filteredItems().length }})</span>
+                  @if (itemTable.filteredItems().length) {
+                    <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
                   }
                 </div>
                 <div class="ms-3">
@@ -335,165 +335,46 @@
             </ng-template>
 
             <div class="mb-3">
-              <!-- Filter row -->
-              <div class="d-flex align-items-center gap-2 my-2">
-                <input
-                  class="form-control form-control-sm flex-grow-1"
-                  [formControl]="searchControl"
-                  [placeholder]="'south.items.search-placeholder' | translate"
-                  [attr.aria-label]="'south.items.search-placeholder' | translate"
-                  type="text"
-                />
-                <select
-                  class="form-select form-select-sm w-auto"
-                  [formControl]="statusFilterControl"
-                  [attr.aria-label]="'history-query.items.status' | translate"
-                >
-                  <option [ngValue]="null" translate="history-query.items.all-statuses"></option>
-                  <option value="enabled" translate="history-query.items.enabled-label"></option>
-                  <option value="disabled" translate="history-query.items.disabled-label"></option>
-                </select>
-              </div>
-
-              @if (displayedItems().content.length > 0) {
-                <!-- Selection Controls -->
-                <div class="d-flex justify-content-between align-items-center my-2">
-                  <div class="d-flex align-items-center selection-controls">
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      (click)="selectAll()"
-                      [disabled]="selectedItems().size === filteredItems().length"
-                      id="select-all-button"
-                    >
-                      <span class="fa-solid fa-check-square me-1" aria-hidden="true"></span>
-                      <span translate="history-query.items.select-all"></span>
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      (click)="unselectAll()"
-                      [disabled]="selectedItems().size === 0"
-                      id="unselect-all-button"
-                    >
-                      <span class="fa-solid fa-square me-1" aria-hidden="true"></span>
-                      <span translate="history-query.items.unselect-all"></span>
-                    </button>
-                    @if (selectedItems().size > 0) {
-                      <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
-                        <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
-                          <span translate="history-query.items.mass-actions" [translateParams]="{ count: selectedItems().size }"></span>
-                          <span class="fa-solid fa-caret-down ms-1" aria-hidden="true"></span>
-                        </button>
-                        <div ngbDropdownMenu>
-                          <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
-                            <span class="fa-solid fa-check me-2" aria-hidden="true"></span>
-                            <span translate="history-query.items.enable"></span>
-                          </button>
-                          <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
-                            <span class="fa-solid fa-times me-2" aria-hidden="true"></span>
-                            <span translate="history-query.items.disable"></span>
-                          </button>
-                          <div class="dropdown-divider"></div>
-                          <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
-                            <span class="fa-solid fa-trash-can me-2" aria-hidden="true"></span>
-                            <span translate="history-query.items.delete"></span>
-                          </button>
-                        </div>
-                      </div>
-                    }
-                  </div>
-                </div>
-
-                <table class="table table-sm table-hover oib-table">
-                  <thead class="light">
-                    <tr>
-                      <th class="selection-column"></th>
-                      <th class="status-column">
-                        <button type="button" class="sort-button text-nowrap" (click)="toggleColumnSort('enabled')">
-                          <span translate="history-query.items.status" class="me-2"></span>
-                          <span class="fa-solid {{ sortIcon('enabled') }}" aria-hidden="true"></span>
-                        </button>
-                      </th>
-                      <th>
-                        <button type="button" class="sort-button" (click)="toggleColumnSort('name')">
-                          <span translate="history-query.items.name" class="me-2"></span>
-                          <span class="fa-solid {{ sortIcon('name') }}" aria-hidden="true"></span>
-                        </button>
-                      </th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of displayedItems().content; track item.name) {
-                      <tr class="south-item">
-                        <td class="text-center">
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                            [checked]="selectedItems().has(item.name)"
-                            (change)="toggleItemSelection(item)"
-                            [attr.aria-label]="item.name"
-                          />
-                        </td>
-                        <td class="text-center">
-                          @if (item.enabled) {
-                            <span translate="history-query.items.enabled-label"></span>
-                          } @else {
-                            <span translate="history-query.items.disabled-label"></span>
-                          }
-                        </td>
-                        <td>{{ item.name }}</td>
-                        <td class="text-nowrap action-buttons">
-                          <div class="pull-right">
-                            <button
-                              type="button"
-                              class="btn btn-link edit-south-item px-1 py-0"
-                              [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
-                              [attr.aria-label]="'history-query.items.tooltips.edit' | translate"
-                              (click)="editItem(item)"
-                            >
-                              <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                            </button>
-                            <button
-                              type="button"
-                              class="btn btn-link duplicate-south-item px-1 py-0"
-                              [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
-                              [attr.aria-label]="'history-query.items.tooltips.duplicate' | translate"
-                              (click)="duplicateItem(item)"
-                            >
-                              <span class="fa-solid fa-copy" aria-hidden="true"></span>
-                            </button>
-                            <button
-                              type="button"
-                              class="btn btn-link delete-south-item px-1 py-0"
-                              [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
-                              [attr.aria-label]="'history-query.items.tooltips.delete' | translate"
-                              (click)="deleteItem(item)"
-                            >
-                              <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              } @else {
-                @if (inMemoryItems().length !== 0) {
-                  <div class="oib-grey-container" translate="history-query.items.none-match"></div>
-                } @else {
-                  <div class="oib-grey-container" translate="south.items.none"></div>
-                }
-              }
-              @let itemsPage = displayedItems();
-              @if (itemsPage.totalElements) {
-                <div class="d-flex flex-row-reverse">
-                  <div [class]="itemsPage.totalPages > 1 ? 'ms-2' : ''">
-                    <oib-pagination [page]="itemsPage" (pageChanged)="changePage($event)" />
-                  </div>
-                </div>
-              }
+              <oib-item-table
+                #itemTable
+                [items]="inMemoryItems()"
+                translationPrefix="history-query.items"
+                [showDates]="false"
+                [(selection)]="selectedItems"
+                (enableSelected)="enableSelectedItems()"
+                (disableSelected)="disableSelectedItems()"
+                (deleteSelected)="deleteSelectedItems()"
+              >
+                <ng-template [oibItemTableActions]="inMemoryItems()" let-item>
+                  <button
+                    type="button"
+                    class="btn btn-link edit-south-item px-1 py-0"
+                    [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
+                    [attr.aria-label]="'history-query.items.tooltips.edit' | translate"
+                    (click)="editItem(item)"
+                  >
+                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link duplicate-south-item px-1 py-0"
+                    [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
+                    [attr.aria-label]="'history-query.items.tooltips.duplicate' | translate"
+                    (click)="duplicateItem(item)"
+                  >
+                    <span class="fa-solid fa-copy" aria-hidden="true"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link delete-south-item px-1 py-0"
+                    [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
+                    [attr.aria-label]="'history-query.items.tooltips.delete' | translate"
+                    (click)="deleteItem(item)"
+                  >
+                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                  </button>
+                </ng-template>
+              </oib-item-table>
             </div>
           </oib-box>
         </form>

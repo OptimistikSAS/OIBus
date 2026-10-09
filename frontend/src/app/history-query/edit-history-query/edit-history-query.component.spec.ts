@@ -51,7 +51,7 @@ class EditHistoryQueryComponentTester {
   readonly exportButton = this.root.getByRole('button', { name: 'Export' });
   readonly importButton = this.root.getByRole('button', { name: 'Import', exact: true });
   readonly deleteAllButton = this.root.getByRole('button', { name: 'Delete all' });
-  readonly searchItems = this.root.getByRole('textbox', { name: 'Enter text to filter items' });
+  readonly searchItems = this.root.getByCss('oib-item-table').getByRole('textbox', { name: 'Search' });
   readonly statusFilter = this.root.getByRole('combobox', { name: 'Status' });
   readonly selectAllButton = this.root.getByRole('button', { name: 'Select all' });
   readonly massActions = this.root.getByRole('button', { name: /Mass actions/ });
@@ -320,7 +320,7 @@ describe('EditHistoryQueryComponent', () => {
       await tester.deleteAllButton.click();
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.items.confirm-delete-all' });
       await expect.element(tester.items).not.toBeInTheDocument();
-      await expect.element(tester.root.getByText('No items has been defined on this connector yet')).toBeInTheDocument();
+      await expect.element(tester.root.getByText('No History query items')).toBeInTheDocument();
       await expect.element(tester.deleteAllButton).toBeDisabled();
     });
 
