@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -16,43 +15,34 @@ import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal
   selector: 'oib-select-group-modal',
   templateUrl: './select-group-modal.component.html',
   styleUrl: './select-group-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [ReactiveFormsModule, TranslateDirective, NgbDropdownModule]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateDirective, NgbDropdownModule]
 })
 export class SelectGroupModalComponent {
   private modal = inject(NgbActiveModal);
-  private fb = inject(NonNullableFormBuilder);
   private modalService = inject(ModalService);
-  private cdr = inject(ChangeDetectorRef);
 
-  groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  scanModes: Array<ScanModeDTO> = [];
-  manifest!: SouthConnectorManifest;
+  /**
+   * The opener's own group list, shared by reference: a group created from this modal is pushed into it, which is how
+   * the opener (edit-south, south-detail) gets it back. The template renders the `groups` snapshot instead.
+   */
+  private sharedGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  readonly groups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
+  readonly selectedGroupId = signal<string | null>(null);
+  /** Name of the selected group (only used when a group is selected: the template translates "None" itself). */
+  readonly selectedGroupName = computed(
+    () => this.groups().find(group => group.id === this.selectedGroupId())?.standardSettings.name ?? ''
+  );
+
+  private scanModes: Array<ScanModeDTO> = [];
+  private manifest!: SouthConnectorManifest;
   private addOrEditGroupFn!: (command: {
     mode: 'create' | 'edit';
     group: SouthItemGroupCommandDTO;
   }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
 
-  form: FormGroup<{
-    groupId: FormControl<string | null>;
-  }> = this.fb.group({
-    groupId: [null as string | null]
-  });
-
-  get selectedGroupId(): string | null {
-    return this.form.controls.groupId.value;
-  }
-
-  getSelectedGroupName(): string {
-    const groupId = this.form.controls.groupId.value;
-    if (!groupId) {
-      return 'south.items.group-none'; // Will be translated in template
-    }
-    return this.groups.find(g => g.id === groupId)?.standardSettings.name || '';
-  }
-
   selectGroup(groupId: string | null) {
-    this.form.controls.groupId.setValue(groupId);
+    this.selectedGroupId.set(groupId);
   }
 
   prepare(
@@ -64,7 +54,8 @@ export class SelectGroupModalComponent {
       group: SouthItemGroupCommandDTO;
     }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>
   ) {
-    this.groups = groups;
+    this.sharedGroups = groups;
+    this.groups.set([...groups]);
     this.scanModes = scanModes;
     this.manifest = manifest;
     this.addOrEditGroupFn = addOrEditGroup;
@@ -73,7 +64,7 @@ export class SelectGroupModalComponent {
   onCreateNewGroup() {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.scanModes, this.groups, this.manifest);
+    component.prepareForCreation(this.scanModes, this.sharedGroups, this.manifest);
 
     modalRef.result
       .pipe(
@@ -83,12 +74,11 @@ export class SelectGroupModalComponent {
       )
       .subscribe({
         next: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => {
-          if (!this.groups.find(g => g.id === group.id)) {
-            this.groups.push(group);
+          if (!this.sharedGroups.find(g => g.id === group.id)) {
+            this.sharedGroups.push(group);
           }
-          this.form.controls.groupId.setValue(group.id);
-          // groups is shared by reference with the opener, so it is mutated in place
-          this.cdr.markForCheck();
+          this.groups.set([...this.sharedGroups]);
+          this.selectedGroupId.set(group.id);
         },
         error: () => {}
       });
@@ -99,6 +89,6 @@ export class SelectGroupModalComponent {
   }
 
   confirm() {
-    this.modal.close(this.form.value.groupId);
+    this.modal.close(this.selectedGroupId());
   }
 }

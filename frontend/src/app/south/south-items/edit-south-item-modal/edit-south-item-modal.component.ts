@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -11,7 +12,7 @@ import {
 } from '@angular/forms';
 
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable, switchMap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
@@ -37,12 +38,19 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
+type AddOrEditGroup = (command: {
+  mode: 'create' | 'edit';
+  group: SouthItemGroupCommandDTO;
+}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
+type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
+
 @Component({
   selector: 'oib-edit-south-item-modal',
   templateUrl: './edit-south-item-modal.component.html',
   styleUrl: './edit-south-item-modal.component.scss',
   imports: [
     TranslateDirective,
+    TranslatePipe,
     SaveButtonComponent,
     SouthItemTestComponent,
     ReactiveFormsModule,
@@ -50,11 +58,11 @@ import SouthItemTestComponent from '../south-item-test/south-item-test.component
     OIBusObjectFormControlComponent,
     NgbDropdownModule
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
-      useFactory: (component: EditSouthItemModalComponent) => () => (component.mode === 'edit' ? 'edit' : 'create'),
+      useFactory: (component: EditSouthItemModalComponent) => () => (component.mode() === 'edit' ? 'edit' : 'create'),
       deps: [forwardRef(() => EditSouthItemModalComponent)]
     }
   ]
@@ -64,33 +72,37 @@ class EditSouthItemModalComponent {
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
-  private translateService = inject(TranslateService);
-  private cdr = inject(ChangeDetectorRef);
 
-  mode: 'create' | 'edit' | 'copy' = 'create';
-  /** True when opened from south-detail (saves directly to API); false when opened from edit-south (changes are applied in-memory). */
+  readonly mode = signal<'create' | 'edit' | 'copy'>('create');
+  /**
+   * True when opened from south-detail (saves directly to API); false when opened from edit-south (changes are applied in-memory).
+   * Set by the opener right after opening the modal, before its first change detection.
+   */
   directSave = true;
-  state = new ObservableState();
-  scanModes: Array<ScanModeDTO> = [];
-  certificates: Array<CertificateDTO> = [];
-  southId!: string;
-  southConnectorCommand!: SouthConnectorCommandDTO;
-  manifest!: SouthConnectorManifest;
-  item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO | null = null;
-  itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO> = [];
-  groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  addOrEditGroup!: (command: {
-    mode: 'create' | 'edit';
-    group: SouthItemGroupCommandDTO;
-  }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-  deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
+  readonly state = new ObservableState();
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly certificates = signal<Array<CertificateDTO>>([]);
+  readonly southId = signal('');
+  readonly southConnectorCommand = signal<SouthConnectorCommandDTO | null>(null);
+  readonly manifest = signal<SouthConnectorManifest | null>(null);
+  private item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO | null = null;
+  private itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO> = [];
+  /**
+   * The opener's own group list, shared by reference and mutated in place (created groups are pushed, deleted ones
+   * spliced): edit-south keeps its in-memory groups in it. The template renders the `groups` snapshot instead, refreshed
+   * after every change.
+   */
+  private sharedGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  readonly groups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
+  private addOrEditGroup!: AddOrEditGroup;
+  private deleteGroup!: DeleteGroup;
   private previousGroupId: string | null = null;
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
    * This ensures that we have a backup identifier for the currently edited item.
    * In 'copy' and 'create' cases, we always check all items' names
    */
-  tableIndex: number | null = null;
+  private tableIndex: number | null = null;
 
   readonly recoveryStrategies: Array<{ value: SouthHistoryRecoveryStrategy; labelKey: string }> = [
     { value: 'newest', labelKey: 'south.items.recovery-strategy-newest' },
@@ -108,7 +120,8 @@ class EditSouthItemModalComponent {
     { value: 'percentage', labelKey: 'south.items.threshold-type-percentage' }
   ];
 
-  form: FormGroup<{
+  /** The item settings controls are added when the modal is prepared, from the connector manifest. */
+  readonly form: FormGroup<{
     name: FormControl<string>;
     groupId: FormControl<string | null>;
     scanModeId: FormControl<string | null>;
@@ -126,54 +139,101 @@ class EditSouthItemModalComponent {
     rangeHigh: FormControl<number | null>;
     maxCachingInterval: FormControl<number | null>;
     settings: FormGroup;
-  }> | null = null;
+  }> = this.fb.group({
+    name: ['', [Validators.required, this.checkUniqueness()]],
+    groupId: [null as string | null],
+    enabled: [true, Validators.required],
+    scanModeId: [null as string | null, Validators.required],
+    syncWithGroup: [false], // Default to false; will be set to true when group is selected
+    maxReadInterval: [3600 as number | null, [Validators.min(0)]],
+    readDelay: [200 as number | null, [Validators.min(0)]],
+    startTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
+    endTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
+    recoveryStrategy: ['oldest' as SouthHistoryRecoveryStrategy | null],
+    cachingStrategy: ['allValues' as SouthCachingStrategy | null],
+    thresholdType: [null as SouthCachingThresholdType | null],
+    threshold: [null as number | null],
+    rangeLow: [null as number | null],
+    rangeHigh: [null as number | null],
+    maxCachingInterval: [null as number | null, [Validators.min(0)]],
+    settings: this.fb.group({})
+  });
 
-  get hasHistorianCapabilities(): boolean {
-    return this.manifest?.modes?.history;
-  }
+  /**
+   * Emits on every change of the form (value, status...), including the programmatic ones (e.g. after a group modal
+   * closes): the computed signals below read the form through it, so that they are re-evaluated on each change.
+   */
+  private readonly formEvents = toSignal(this.form.events);
+  readonly groupId = computed(() => {
+    this.formEvents();
+    return this.form.controls.groupId.value;
+  });
+  readonly scanModeEnabled = computed(() => {
+    this.formEvents();
+    return this.form.controls.scanModeId.enabled;
+  });
+  readonly cachingStrategy = computed(() => {
+    this.formEvents();
+    return this.form.controls.cachingStrategy.value;
+  });
+  readonly thresholdType = computed(() => {
+    this.formEvents();
+    return this.form.controls.thresholdType.value;
+  });
+  /** Name of the selected group, null when the item has no group. */
+  readonly selectedGroupName = computed(() => {
+    const groupId = this.groupId();
+    return groupId ? (this.groups().find(group => group.id === groupId)?.standardSettings.name ?? null) : null;
+  });
+  /** The item as currently edited, sent on save and used to test the item. */
+  readonly formItem = computed(() => {
+    this.formEvents();
+    return this.buildFormItem();
+  });
+
+  readonly hasHistorianCapabilities = computed(() => this.manifest()?.modes.history ?? false);
 
   /**
    * True for the six "IoT family" south types (OPC UA, Modbus, ADS, OPC classic, S7, MQTT). There is no
    * manifest capability flag for this family, so it's checked directly against the connector type string.
    */
-  get isIotFamilySouthType(): boolean {
-    return IOT_FAMILY_SOUTH_TYPES.includes(this.manifest?.id as (typeof IOT_FAMILY_SOUTH_TYPES)[number]);
-  }
+  readonly isIotFamilySouthType = computed(() => {
+    const manifest = this.manifest();
+    return !!manifest && IOT_FAMILY_SOUTH_TYPES.includes(manifest.id);
+  });
 
   /**
    * True for IoT-family types minus MQTT, which does not support the 'threshold' caching strategy (MQTT
    * payloads aren't guaranteed numeric).
    */
-  get isThresholdAvailable(): boolean {
-    return this.isIotFamilySouthType && this.manifest?.id !== 'mqtt';
+  readonly isThresholdAvailable = computed(() => this.isIotFamilySouthType() && this.manifest()?.id !== 'mqtt');
+
+  constructor() {
+    // threshold/rangeLow/rangeHigh are only meaningful (and only shown, see the template) once
+    // 'threshold' / 'percentage' is selected, but they still need real validators for those cases —
+    // otherwise a user can save a 'threshold' strategy with a null threshold, or a 'percentage'
+    // threshold type with rangeLow/rangeHigh both null, which silently degrades the percentage-span
+    // comparison to `diff > 0` (span defaults to 0) instead of surfacing a validation error.
+    this.form.controls.cachingStrategy.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.updateThresholdValidators());
+    this.form.controls.thresholdType.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.updateThresholdValidators());
   }
 
   private getExistingMqttTopics(): Array<string> {
-    let existingTopics: Array<string> = [];
-
-    switch (this.mode) {
+    let otherItems: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>;
+    switch (this.mode()) {
       case 'copy':
       case 'create':
-        existingTopics = this.itemList
-          .map(item => (item.settings as any)?.topic)
-          .filter(topic => topic && typeof topic === 'string' && topic.trim());
+        otherItems = this.itemList;
         break;
       case 'edit':
-        if (this.item?.id) {
-          existingTopics = this.itemList
-            .filter(item => item.id && item.id !== this.item?.id)
-            .map(item => (item.settings as any)?.topic)
-            .filter(topic => topic && typeof topic === 'string' && topic.trim());
-        } else {
-          existingTopics = this.itemList
-            .filter((_, index) => index !== this.tableIndex)
-            .map(item => (item.settings as any)?.topic)
-            .filter(topic => topic && typeof topic === 'string' && topic.trim());
-        }
+        otherItems = this.item?.id
+          ? this.itemList.filter(item => item.id && item.id !== this.item?.id)
+          : this.itemList.filter((_, index) => index !== this.tableIndex);
         break;
     }
-
-    return existingTopics;
+    return otherItems
+      .map(item => ('topic' in item.settings ? item.settings.topic : null))
+      .filter((topic): topic is string => typeof topic === 'string' && !!topic.trim());
   }
 
   prepareForCreation(
@@ -184,23 +244,23 @@ class EditSouthItemModalComponent {
     manifest: SouthConnectorManifest,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
-    addOrEditGroup: (command: {
-      mode: 'create' | 'edit';
-      group: SouthItemGroupCommandDTO;
-    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+    addOrEditGroup: AddOrEditGroup,
+    deleteGroup: DeleteGroup
   ) {
-    this.mode = 'create';
-    this.itemList = itemList;
-    this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute(manifest));
-    this.certificates = certificates;
-    this.groups = groups;
-    this.manifest = manifest;
-    this.southId = southId;
-    this.southConnectorCommand = southConnectorCommand;
-    this.addOrEditGroup = addOrEditGroup;
-    this.deleteGroup = deleteGroup;
-    this.buildForm();
+    this.prepare(
+      'create',
+      itemList,
+      scanModes,
+      certificates,
+      groups,
+      manifest,
+      null,
+      southId,
+      southConnectorCommand,
+      null,
+      addOrEditGroup,
+      deleteGroup
+    );
   }
 
   prepareForCopy(
@@ -212,26 +272,24 @@ class EditSouthItemModalComponent {
     item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
-    addOrEditGroup: (command: {
-      mode: 'create' | 'edit';
-      group: SouthItemGroupCommandDTO;
-    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+    addOrEditGroup: AddOrEditGroup,
+    deleteGroup: DeleteGroup
   ) {
-    this.mode = 'copy';
-    this.itemList = itemList;
-    this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute(manifest));
-    this.certificates = certificates;
-    this.groups = groups;
-    this.manifest = manifest;
-    this.item = JSON.parse(JSON.stringify(item)) as SouthConnectorItemDTO;
-    this.item.name = `${item.name}-copy`;
-    this.item.id = '';
-    this.southId = southId;
-    this.southConnectorCommand = southConnectorCommand;
-    this.addOrEditGroup = addOrEditGroup;
-    this.deleteGroup = deleteGroup;
-    this.buildForm();
+    const copy = { ...structuredClone(item), name: `${item.name}-copy`, id: '' };
+    this.prepare(
+      'copy',
+      itemList,
+      scanModes,
+      certificates,
+      groups,
+      manifest,
+      copy,
+      southId,
+      southConnectorCommand,
+      null,
+      addOrEditGroup,
+      deleteGroup
+    );
   }
 
   /**
@@ -247,25 +305,58 @@ class EditSouthItemModalComponent {
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
     tableIndex: number,
-    addOrEditGroup: (command: {
-      mode: 'create' | 'edit';
-      group: SouthItemGroupCommandDTO;
-    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+    addOrEditGroup: AddOrEditGroup,
+    deleteGroup: DeleteGroup
   ) {
-    this.mode = 'edit';
+    this.prepare(
+      'edit',
+      itemList,
+      scanModes,
+      certificates,
+      groups,
+      manifest,
+      item,
+      southId,
+      southConnectorCommand,
+      tableIndex,
+      addOrEditGroup,
+      deleteGroup
+    );
+  }
+
+  private prepare(
+    mode: 'create' | 'edit' | 'copy',
+    itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>,
+    scanModes: Array<ScanModeDTO>,
+    certificates: Array<CertificateDTO>,
+    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    manifest: SouthConnectorManifest,
+    item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO | null,
+    southId: string,
+    southConnectorCommand: SouthConnectorCommandDTO,
+    tableIndex: number | null,
+    addOrEditGroup: AddOrEditGroup,
+    deleteGroup: DeleteGroup
+  ) {
+    this.mode.set(mode);
     this.itemList = itemList;
-    this.scanModes = this.setScanModes(scanModes, this.getScanModeAttribute(manifest));
-    this.certificates = certificates;
-    this.groups = groups;
-    this.manifest = manifest;
+    this.scanModes.set(this.setScanModes(scanModes, this.getScanModeAttribute(manifest)));
+    this.certificates.set(certificates);
+    this.sharedGroups = groups;
+    this.refreshGroups();
+    this.manifest.set(manifest);
     this.item = item;
-    this.southId = southId;
-    this.southConnectorCommand = southConnectorCommand;
+    this.southId.set(southId);
+    this.southConnectorCommand.set(southConnectorCommand);
     this.tableIndex = tableIndex;
     this.addOrEditGroup = addOrEditGroup;
     this.deleteGroup = deleteGroup;
-    this.buildForm();
+    this.initForm(manifest);
+  }
+
+  /** Re-renders the opener's group list after it was changed in place. */
+  private refreshGroups() {
+    this.groups.set([...this.sharedGroups]);
   }
 
   canDismiss(): Observable<boolean> | boolean {
@@ -280,27 +371,27 @@ class EditSouthItemModalComponent {
   }
 
   save() {
-    if (!this.form!.valid) {
+    if (!this.form.valid) {
       return;
     }
-    this.modal.close(this.formItem);
+    this.modal.close(this.formItem());
   }
 
-  get formItem(): SouthConnectorItemCommandDTO {
-    const formValue = this.form!.value;
+  private buildFormItem(): SouthConnectorItemCommandDTO {
+    const formValue = this.form.value;
     // Get raw values for historian fields to include disabled controls
     const rawHistorianValues = {
-      maxReadInterval: this.form!.controls.maxReadInterval.value,
-      readDelay: this.form!.controls.readDelay.value,
-      startTimeOffset: this.form!.controls.startTimeOffset.value,
-      endTimeOffset: this.form!.controls.endTimeOffset.value,
-      recoveryStrategy: this.form!.controls.recoveryStrategy.value,
-      syncWithGroup: this.form!.controls.syncWithGroup.value
+      maxReadInterval: this.form.controls.maxReadInterval.value,
+      readDelay: this.form.controls.readDelay.value,
+      startTimeOffset: this.form.controls.startTimeOffset.value,
+      endTimeOffset: this.form.controls.endTimeOffset.value,
+      recoveryStrategy: this.form.controls.recoveryStrategy.value,
+      syncWithGroup: this.form.controls.syncWithGroup.value
     };
     // Caching strategy params (thresholdType/threshold/rangeLow/rangeHigh/maxCachingInterval) are always
     // item-local, so their raw values are read separately below and never nulled/disabled by group sync.
 
-    const scanModeAttribute = this.getScanModeAttribute(this.manifest!);
+    const scanModeAttribute = this.getScanModeAttribute(this.manifest()!);
 
     // When synced with group, use null values to inherit from group
     const syncWithGroup = rawHistorianValues.syncWithGroup && formValue.groupId !== null;
@@ -313,10 +404,10 @@ class EditSouthItemModalComponent {
       scanModeName:
         !formValue.scanModeId || scanModeAttribute.acceptableType === 'SUBSCRIPTION'
           ? ''
-          : this.scanModes.find(scanMode => scanMode.id === formValue.scanModeId!)!.name,
+          : this.scanModes().find(scanMode => scanMode.id === formValue.scanModeId!)!.name,
       settings: extractFormValue(formValue.settings)!,
       groupId: formValue.groupId!,
-      groupName: formValue.groupId! ? this.groups.find(group => group.id === formValue.groupId!)!.standardSettings.name : null,
+      groupName: formValue.groupId! ? this.groups().find(group => group.id === formValue.groupId!)!.standardSettings.name : null,
       syncWithGroup,
       maxReadInterval: syncWithGroup ? null : (rawHistorianValues.maxReadInterval ?? null),
       readDelay: syncWithGroup ? null : (rawHistorianValues.readDelay ?? null),
@@ -324,15 +415,15 @@ class EditSouthItemModalComponent {
       endTimeOffset: syncWithGroup ? null : (rawHistorianValues.endTimeOffset ?? null),
       recoveryStrategy: syncWithGroup ? null : (rawHistorianValues.recoveryStrategy ?? null),
       // cachingStrategy follows the same inherit-from-group-when-synced rule as the other historian fields.
-      cachingStrategy: syncWithGroup ? null : (this.form!.controls.cachingStrategy.value ?? null),
+      cachingStrategy: syncWithGroup ? null : (this.form.controls.cachingStrategy.value ?? null),
       // Deliberate deviation: unlike the historian fields above, the caching-strategy params are never
       // group-shareable (there is no group source for them), so they are always sent from the form's own
       // current value regardless of syncWithGroup, and are never nulled out or disabled by group sync.
-      thresholdType: this.form!.controls.thresholdType.value,
-      threshold: this.form!.controls.threshold.value,
-      rangeLow: this.form!.controls.rangeLow.value,
-      rangeHigh: this.form!.controls.rangeHigh.value,
-      maxCachingInterval: this.form!.controls.maxCachingInterval.value
+      thresholdType: this.form.controls.thresholdType.value,
+      threshold: this.form.controls.threshold.value,
+      rangeLow: this.form.controls.rangeLow.value,
+      rangeHigh: this.form.controls.rangeHigh.value,
+      maxCachingInterval: this.form.controls.maxCachingInterval.value
     };
   }
 
@@ -357,7 +448,6 @@ class EditSouthItemModalComponent {
    * form can be saved with a 'threshold' strategy that has no actual threshold configured.
    */
   private updateThresholdValidators(): void {
-    if (!this.form) return;
     const strategy = this.form.controls.cachingStrategy.value;
     const thresholdType = this.form.controls.thresholdType.value;
 
@@ -384,7 +474,7 @@ class EditSouthItemModalComponent {
     return (control: AbstractControl): ValidationErrors | null => {
       let names!: Array<string>;
 
-      switch (this.mode) {
+      switch (this.mode()) {
         case 'copy':
         case 'create':
           names = this.itemList.map(item => item.name);
@@ -403,52 +493,21 @@ class EditSouthItemModalComponent {
     };
   }
 
-  // Groups are now passed from parent component
-
-  private buildForm() {
-    this.form = this.fb.group({
-      name: ['', [Validators.required, this.checkUniqueness()]],
-      groupId: [null as string | null],
-      enabled: [true, Validators.required],
-      scanModeId: [null as string | null, Validators.required],
-      syncWithGroup: [false], // Default to false; will be set to true when group is selected
-      maxReadInterval: [3600 as number | null, [Validators.min(0)]],
-      readDelay: [200 as number | null, [Validators.min(0)]],
-      startTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
-      endTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
-      recoveryStrategy: ['oldest' as SouthHistoryRecoveryStrategy | null],
-      cachingStrategy: ['allValues' as SouthCachingStrategy | null],
-      thresholdType: [null as SouthCachingThresholdType | null],
-      threshold: [null as number | null],
-      rangeLow: [null as number | null],
-      rangeHigh: [null as number | null],
-      maxCachingInterval: [null as number | null, [Validators.min(0)]],
-      settings: this.fb.group({})
-    });
+  private initForm(manifest: SouthConnectorManifest) {
     this.previousGroupId = null;
 
-    const settingsAttribute = this.manifest.items.rootAttribute.attributes.find(
-      element => element.key === 'settings'
-    )! as OIBusObjectAttribute;
+    const settingsAttribute = this.getItemSettingsAttribute(manifest);
     for (const attribute of settingsAttribute.attributes) {
       addAttributeToForm(this.fb, this.form.controls.settings, attribute);
     }
-    if (this.manifest.id === 'mqtt') {
+    if (manifest.id === 'mqtt') {
       createMqttValidator(this.form.controls.settings, this.getExistingMqttTopics());
       // Defense in depth alongside hiding the 'threshold' option in the template for MQTT items.
       this.form.controls.cachingStrategy.addValidators(this.mqttCachingStrategyValidator());
     }
-
-    // threshold/rangeLow/rangeHigh are only meaningful (and only shown, see the template) once
-    // 'threshold' / 'percentage' is selected, but they still need real validators for those cases —
-    // otherwise a user can save a 'threshold' strategy with a null threshold, or a 'percentage'
-    // threshold type with rangeLow/rangeHigh both null, which silently degrades the percentage-span
-    // comparison to `diff > 0` (span defaults to 0) instead of surfacing a validation error.
-    this.form.controls.cachingStrategy.valueChanges.subscribe(() => this.updateThresholdValidators());
-    this.form.controls.thresholdType.valueChanges.subscribe(() => this.updateThresholdValidators());
     this.updateThresholdValidators();
 
-    const scanModeAttribute = this.getScanModeAttribute(this.manifest!);
+    const scanModeAttribute = this.getScanModeAttribute(manifest);
     if (scanModeAttribute.acceptableType === 'SUBSCRIPTION') {
       this.form.controls.scanModeId.disable();
     } else {
@@ -497,20 +556,20 @@ class EditSouthItemModalComponent {
 
   onSelectGroup(groupId: string | null) {
     const wasUnassigned = this.previousGroupId === null;
-    this.form!.controls.groupId.setValue(groupId);
+    this.form.controls.groupId.setValue(groupId);
     this.previousGroupId = groupId;
 
     if (groupId === null) {
       // When deselecting group, enable historian fields and set sync to false
-      this.form!.controls.syncWithGroup.setValue(false);
-      this.form!.controls.maxReadInterval.enable();
-      this.form!.controls.readDelay.enable();
-      this.form!.controls.startTimeOffset.enable();
-      this.form!.controls.endTimeOffset.enable();
-      this.form!.controls.recoveryStrategy.enable();
-      this.form!.controls.cachingStrategy.enable();
+      this.form.controls.syncWithGroup.setValue(false);
+      this.form.controls.maxReadInterval.enable();
+      this.form.controls.readDelay.enable();
+      this.form.controls.startTimeOffset.enable();
+      this.form.controls.endTimeOffset.enable();
+      this.form.controls.recoveryStrategy.enable();
+      this.form.controls.cachingStrategy.enable();
     } else {
-      const selectedGroup = this.groups.find(g => g.id === groupId)!;
+      const selectedGroup = this.sharedGroups.find(g => g.id === groupId)!;
       this.applySyncLogicWhenSelectingGroup(selectedGroup, wasUnassigned);
     }
   }
@@ -519,7 +578,7 @@ class EditSouthItemModalComponent {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
     component.directSave = this.directSave;
-    component.prepareForCreation(this.scanModes, this.groups, this.manifest);
+    component.prepareForCreation(this.scanModes(), this.sharedGroups, this.manifest()!);
     modalRef.result
       .pipe(
         switchMap(result => {
@@ -528,12 +587,11 @@ class EditSouthItemModalComponent {
       )
       .subscribe((groupResult: SouthItemGroupDTO | SouthItemGroupCommandDTO) => {
         const wasUnassigned = this.previousGroupId === null;
-        this.groups.push(groupResult);
-        this.form!.controls.groupId.setValue(groupResult.id);
+        this.sharedGroups.push(groupResult);
+        this.refreshGroups();
+        this.form.controls.groupId.setValue(groupResult.id);
         this.previousGroupId = groupResult.id;
         this.applySyncLogicWhenSelectingGroup(groupResult, wasUnassigned);
-        // groups is shared by reference with the opener, so it is mutated in place
-        this.cdr.markForCheck();
       });
   }
 
@@ -542,7 +600,7 @@ class EditSouthItemModalComponent {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
     component.directSave = this.directSave;
-    component.prepareForEdition(this.scanModes, this.groups, this.manifest, group);
+    component.prepareForEdition(this.scanModes(), this.sharedGroups, this.manifest()!, group);
 
     modalRef.result
       .pipe(
@@ -551,29 +609,34 @@ class EditSouthItemModalComponent {
         })
       )
       .subscribe((groupResult: SouthItemGroupDTO | SouthItemGroupCommandDTO) => {
-        const index = this.groups.findIndex(g => g.id === groupResult.id);
+        const index = this.sharedGroups.findIndex(g => g.id === groupResult.id);
         if (index >= 0) {
-          this.groups[index] = groupResult;
+          this.sharedGroups[index] = groupResult;
         } else {
-          this.groups.push(groupResult);
+          this.sharedGroups.push(groupResult);
         }
-        if (this.form!.controls.groupId.value === groupResult.id) {
+        this.refreshGroups();
+        if (this.form.controls.groupId.value === groupResult.id) {
           // The group itself was edited (not reselected) — reflect its new scan mode / historian
           // values without touching the item's current sync-with-group setting.
           this.applySyncLogicWhenSelectingGroup(groupResult, false);
         }
-        this.cdr.markForCheck();
       });
   }
 
   onDeleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, event: Event) {
     event.stopPropagation();
     this.deleteGroup(group).subscribe(() => {
-      this.groups = this.groups.filter(g => g.id !== group.id);
-      if (this.form!.controls.groupId.value === group.id) {
-        this.form!.controls.groupId.setValue(null);
+      // Removed in place: in edit-south, the shared list is the page's own in-memory groups
+      const index = this.sharedGroups.findIndex(g => g.id === group.id);
+      if (index >= 0) {
+        this.sharedGroups.splice(index, 1);
       }
-      this.cdr.markForCheck();
+      this.refreshGroups();
+      if (this.form.controls.groupId.value === group.id) {
+        // the item no longer has a group: its own historian settings apply again
+        this.onSelectGroup(null);
+      }
     });
   }
 
@@ -584,33 +647,33 @@ class EditSouthItemModalComponent {
    * sync-with-group setting the item already had.
    */
   private applySyncLogicWhenSelectingGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, wasUnassigned: boolean) {
-    const groupScanMode = this.scanModes.find(
+    const groupScanMode = this.scanModes().find(
       s =>
         s.id ===
         ((group as SouthItemGroupCommandDTO).standardSettings.scanModeId || (group as SouthItemGroupDTO).standardSettings.scanMode.id)
     );
     if (groupScanMode) {
-      this.form!.controls.scanModeId.setValue(groupScanMode.id);
+      this.form.controls.scanModeId.setValue(groupScanMode.id);
     }
 
     if (wasUnassigned) {
-      this.form!.controls.syncWithGroup.setValue(true);
+      this.form.controls.syncWithGroup.setValue(true);
     }
     this.onSyncWithGroupChange();
   }
 
   onSyncWithGroupChange() {
-    const syncWithGroup = this.form!.controls.syncWithGroup.value;
-    const groupId = this.form!.controls.groupId.value;
+    const syncWithGroup = this.form.controls.syncWithGroup.value;
+    const groupId = this.form.controls.groupId.value;
 
     if (!groupId) {
       // No group selected, enable all fields
-      this.form!.controls.maxReadInterval.enable();
-      this.form!.controls.readDelay.enable();
-      this.form!.controls.startTimeOffset.enable();
-      this.form!.controls.endTimeOffset.enable();
-      this.form!.controls.recoveryStrategy.enable();
-      this.form!.controls.cachingStrategy.enable();
+      this.form.controls.maxReadInterval.enable();
+      this.form.controls.readDelay.enable();
+      this.form.controls.startTimeOffset.enable();
+      this.form.controls.endTimeOffset.enable();
+      this.form.controls.recoveryStrategy.enable();
+      this.form.controls.cachingStrategy.enable();
       return;
     }
 
@@ -621,13 +684,13 @@ class EditSouthItemModalComponent {
       // counterpart, so they are deliberately left enabled and user-editable at all times, even while
       // cachingStrategy itself is synced with the group.
       const groupValues = this.getSelectedGroupValues();
-      this.form!.controls.maxReadInterval.disable();
-      this.form!.controls.readDelay.disable();
-      this.form!.controls.startTimeOffset.disable();
-      this.form!.controls.endTimeOffset.disable();
-      this.form!.controls.recoveryStrategy.disable();
-      this.form!.controls.cachingStrategy.disable();
-      this.form!.patchValue(
+      this.form.controls.maxReadInterval.disable();
+      this.form.controls.readDelay.disable();
+      this.form.controls.startTimeOffset.disable();
+      this.form.controls.endTimeOffset.disable();
+      this.form.controls.recoveryStrategy.disable();
+      this.form.controls.cachingStrategy.disable();
+      this.form.patchValue(
         {
           maxReadInterval: groupValues.maxReadInterval,
           readDelay: groupValues.readDelay,
@@ -640,12 +703,12 @@ class EditSouthItemModalComponent {
       );
     } else {
       // Sync disabled: enable fields for manual override
-      this.form!.controls.maxReadInterval.enable();
-      this.form!.controls.readDelay.enable();
-      this.form!.controls.startTimeOffset.enable();
-      this.form!.controls.endTimeOffset.enable();
-      this.form!.controls.recoveryStrategy.enable();
-      this.form!.controls.cachingStrategy.enable();
+      this.form.controls.maxReadInterval.enable();
+      this.form.controls.readDelay.enable();
+      this.form.controls.startTimeOffset.enable();
+      this.form.controls.endTimeOffset.enable();
+      this.form.controls.recoveryStrategy.enable();
+      this.form.controls.cachingStrategy.enable();
       // Don't patch values here - keep user's values
     }
   }
@@ -658,8 +721,8 @@ class EditSouthItemModalComponent {
     recoveryStrategy: SouthHistoryRecoveryStrategy | null;
     cachingStrategy: SouthCachingStrategy | null;
   } {
-    const groupId = this.form?.controls.groupId.value;
-    const group = groupId ? this.groups.find(g => g.id === groupId) : null;
+    const groupId = this.form.controls.groupId.value;
+    const group = groupId ? this.sharedGroups.find(g => g.id === groupId) : null;
     return {
       maxReadInterval: group?.historySettings.maxReadInterval ?? 3600,
       readDelay: group?.historySettings.readDelay ?? 200,
@@ -669,12 +732,6 @@ class EditSouthItemModalComponent {
       // No group source for the caching-strategy params: only cachingStrategy itself is group-fallback.
       cachingStrategy: group?.historySettings.cachingStrategy ?? 'allValues'
     };
-  }
-
-  getSelectedGroupName(): string {
-    const groupId = this.form?.controls.groupId.value;
-    if (!groupId) return this.translateService.instant('south.items.group-none');
-    return this.groups.find(g => g.id === groupId)!.standardSettings.name;
   }
 
   getScanModeAttribute(manifest: SouthConnectorManifest): OIBusScanModeAttribute {

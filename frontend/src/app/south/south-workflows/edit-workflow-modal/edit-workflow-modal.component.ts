@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -31,6 +31,7 @@ import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
+import { trackControl } from '../../../shared/form/tracked-control';
 import { ModalService } from '../../../shared/modal.service';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
@@ -88,6 +89,12 @@ interface MappableField {
    *  the set of valid group ids is dynamic). Unset for every field outside this historian group. */
   visibleWhenGrouped?: boolean;
 }
+
+type AddOrEditGroup = (command: {
+  mode: 'create' | 'edit';
+  group: SouthItemGroupCommandDTO;
+}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
+type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 /** Sentinel select-option value meaning "map this to a {{field}} expression instead of a fixed value". */
 const VARIABLE_SENTINEL = '__variable__';
@@ -153,7 +160,7 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
   selector: 'oib-edit-workflow-modal',
   templateUrl: './edit-workflow-modal.component.html',
   styleUrl: './edit-workflow-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     FormsModule,
@@ -169,7 +176,6 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
 })
 export default class EditWorkflowModalComponent implements AfterViewInit {
   private modal = inject(NgbActiveModal);
-  private changeDetectorRef = inject(ChangeDetectorRef);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
@@ -180,18 +186,25 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   // see showSqlExploreTree) - undefined until that branch of the template actually renders it.
   private readonly inlineExploreTree = viewChild(ExploreTreeComponent);
 
-  mode: 'create' | 'edit' | 'copy' = 'create';
-  state = new ObservableState();
+  readonly mode = signal<'create' | 'edit' | 'copy'>('create');
+  readonly state = new ObservableState();
   /** True when opened from south-detail (the caller saves the workflow straight to the API); false when
    *  opened from edit-south (the caller keeps it in memory until the connector itself is saved) - only
-   *  changes the confirm button's wording/icon, like EditSouthItemModalComponent's own directSave. */
+   *  changes the confirm button's wording/icon, like EditSouthItemModalComponent's own directSave.
+   *  Set by the opener right after opening the modal, before its first change detection. */
   directSave = true;
-  scanModes: Array<ScanModeDTO> = [];
-  groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  workflow: ConfigurationWorkflowCommandDTO | null = null;
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  /**
+   * The page's own group list, shared by reference and mutated in place (created groups are pushed, deleted ones
+   * spliced): edit-south keeps its in-memory groups in it. The template renders the `groups` snapshot instead, refreshed
+   * after every change.
+   */
+  private sharedGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  readonly groups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
+  private workflow: ConfigurationWorkflowCommandDTO | null = null;
   /** Every other workflow of the connector, for the name uniqueness check. */
-  existingWorkflows: Array<{ id: string | null; name: string }> = [];
-  private currentManifest!: SouthConnectorManifest;
+  private existingWorkflows: Array<{ id: string | null; name: string }> = [];
+  private readonly currentManifest = signal<SouthConnectorManifest | null>(null);
   private southId!: string;
   private southSettings!: SouthSettings;
 
@@ -199,7 +212,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    *  null means "browse from the data source's true root". */
   readonly discoveryRootNodeId = signal<string | null>(null);
   /** The dedicated metadata query, as typed by the user (SQL-family connectors only). */
-  discoveryQuery = '';
+  readonly discoveryQuery = signal('');
 
   /** "Test query" state - runs discoveryQuery as currently typed, independent of Save. */
   readonly queryTestRunning = signal(false);
@@ -213,41 +226,74 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   // Saves through the page's own group callbacks, exactly like EditSouthItemModalComponent's own group
   // dropdown - bound from south-detail.component.ts (direct) or edit-south.component.ts (in memory) and
   // passed down through prepare().
-  private addOrEditGroup!: (command: {
-    mode: 'create' | 'edit';
-    group: SouthItemGroupCommandDTO;
-  }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-  private deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
+  private addOrEditGroup!: AddOrEditGroup;
+  private deleteGroup!: DeleteGroup;
 
   readonly operators: ReadonlyArray<RecordFilterOperator> = RECORD_FILTER_OPERATORS;
   readonly variableSentinel = VARIABLE_SENTINEL;
 
   /** Every field the connector's manifest (+ the historian fields it adds outside the manifest, when supported) exposes on an item. */
-  itemMappableFields: Array<MappableField> = [];
+  readonly itemMappableFields = signal<Array<MappableField>>([]);
   /** One expression string per itemMappableFields entry, keyed by its path - blank means "not mapped". */
-  itemFieldMappingValues: Record<string, string> = {};
+  readonly itemFieldMappingValues = signal<Record<string, string>>({});
 
-  identityKeyFields: Array<string> = [];
-  eligibilityFilter: Array<RecordFilterCondition> = [];
+  readonly identityKeyFields = signal<Array<string>>([]);
+  readonly eligibilityFilter = signal<Array<RecordFilterCondition>>([]);
 
-  formError: string | null = null;
+  readonly formError = signal<string | null>(null);
 
-  newIdentityKeyField = '';
-  newEligibilityField = '';
-  newEligibilityOperator: RecordFilterOperator = 'equals';
-  newEligibilityValue = '';
+  readonly newIdentityKeyField = signal('');
+  readonly newEligibilityField = signal('');
+  readonly newEligibilityOperator = signal<RecordFilterOperator>('equals');
+  readonly newEligibilityValue = signal('');
   /** Index of the eligibilityFilter row currently being edited inline, or null when none is. */
-  editingEligibilityIndex: number | null = null;
-  editingEligibilityField = '';
-  editingEligibilityOperator: RecordFilterOperator = 'equals';
-  editingEligibilityValue = '';
+  readonly editingEligibilityIndex = signal<number | null>(null);
+  readonly editingEligibilityField = signal('');
+  readonly editingEligibilityOperator = signal<RecordFilterOperator>('equals');
+  readonly editingEligibilityValue = signal('');
 
-  form: FormGroup<{
+  readonly form: FormGroup<{
     name: FormControl<string>;
     scanModeId: FormControl<string | null>;
     pushToOIAnalytics: FormControl<boolean>;
     enabled: FormControl<boolean>;
-  }> | null = null;
+  }> = this.fb.group({
+    name: ['', [Validators.required, this.checkUniqueness()]],
+    scanModeId: this.fb.control<string | null>(null),
+    pushToOIAnalytics: this.fb.control<boolean>(false),
+    enabled: this.fb.control<boolean>(true)
+  });
+  private readonly pushToOIAnalyticsControl = trackControl(() => this.form.controls.pushToOIAnalytics);
+  /** Whether the workflow pushes the discovered records to OIAnalytics (remote mode) rather than creating items. */
+  readonly pushToOIAnalytics = computed(() => this.pushToOIAnalyticsControl()?.value ?? false);
+
+  /** Tree-shaped discovery scope (a root node to browse) - OPC-UA, Folder Scanner. Checked before
+   *  isSqlFamily since a manifest could in principle declare both (none do today). */
+  readonly isTreeBased = computed(() => this.currentManifest()?.explore === true && !this.isSqlFamily());
+
+  /** Query-shaped discovery scope (a dedicated metadata query) - the SQL-family connectors that have
+   *  a `discover()` implementation today (see SQL_FAMILY_SOUTH_TYPES's own doc comment for why ODBC/
+   *  OLEDB aren't included). */
+  readonly isSqlFamily = computed(() => {
+    const manifest = this.currentManifest();
+    return !!manifest && SQL_FAMILY_SOUTH_TYPES.includes(manifest.id);
+  });
+
+  /** Whether to show the read-only explore tree above the SQL query editor, for reference while
+   *  writing the query - only SQLite has an `explore()` implementation among the SQL-family connectors
+   *  today, so this is the same condition as isSqlFamily for now, but stated independently since it's
+   *  conceptually a separate capability (a future SQL connector could get discover() without explore(),
+   *  or vice versa). */
+  readonly showSqlExploreTree = computed(() => this.isSqlFamily() && this.currentManifest()?.explore === true);
+
+  /** Name of the group currently mapped as a constant for the 'groupId' field, or '' when none is. */
+  readonly selectedGroupName = computed(() => {
+    const groupId = this.itemFieldMappingValues()['groupId'];
+    if (!groupId) {
+      return '';
+    }
+    return this.groups().find(group => group.id === groupId)?.standardSettings.name ?? groupId;
+  });
 
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
@@ -256,30 +302,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     southId: string,
     southSettings: SouthSettings,
     groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
-    addOrEditGroup?: (command: {
-      mode: 'create' | 'edit';
-      group: SouthItemGroupCommandDTO;
-    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+    addOrEditGroup?: AddOrEditGroup,
+    deleteGroup?: DeleteGroup
   ) {
-    this.mode = 'create';
-    this.scanModes = scanModes;
-    this.groups = groups;
-    this.addOrEditGroup = addOrEditGroup!;
-    this.deleteGroup = deleteGroup!;
-    this.existingWorkflows = existingWorkflows;
-    this.workflow = null;
-    this.currentManifest = manifest;
-    this.southId = southId;
-    this.southSettings = southSettings;
-    this.discoveryRootNodeId.set(null);
-    this.discoveryQuery = '';
-    this.itemMappableFields = buildItemMappableFields(manifest);
-    this.itemFieldMappingValues = {};
-    this.identityKeyFields = [];
-    this.eligibilityFilter = [];
-    this.refreshRegistrationStatus();
-    this.buildForm();
+    this.prepare('create', scanModes, existingWorkflows, manifest, null, southId, southSettings, groups, addOrEditGroup, deleteGroup);
   }
 
   prepareForEdition(
@@ -290,37 +316,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     southId: string,
     southSettings: SouthSettings,
     groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
-    addOrEditGroup?: (command: {
-      mode: 'create' | 'edit';
-      group: SouthItemGroupCommandDTO;
-    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+    addOrEditGroup?: AddOrEditGroup,
+    deleteGroup?: DeleteGroup
   ) {
-    this.mode = 'edit';
-    this.scanModes = scanModes;
-    this.groups = groups;
-    this.addOrEditGroup = addOrEditGroup!;
-    this.deleteGroup = deleteGroup!;
-    this.existingWorkflows = existingWorkflows;
-    this.workflow = workflow;
-    this.currentManifest = manifest;
-    this.southId = southId;
-    this.southSettings = southSettings;
-    this.itemMappableFields = buildItemMappableFields(manifest);
-
-    const scope = (workflow.discoveryScope ?? {}) as Record<string, unknown>;
-    this.discoveryRootNodeId.set(typeof scope['rootNodeId'] === 'string' ? scope['rootNodeId'] : null);
-    this.discoveryQuery = typeof scope['query'] === 'string' ? scope['query'] : '';
-
-    this.itemFieldMappingValues = {};
-    for (const [key, value] of Object.entries(workflow.itemFieldMapping ?? {})) {
-      this.itemFieldMappingValues[key] = value;
-    }
-
-    this.identityKeyFields = [...workflow.identityKeyFields];
-    this.eligibilityFilter = workflow.eligibilityFilter.map(condition => ({ ...condition }));
-    this.refreshRegistrationStatus();
-    this.buildForm();
+    this.prepare('edit', scanModes, existingWorkflows, manifest, workflow, southId, southSettings, groups, addOrEditGroup, deleteGroup);
   }
 
   /**
@@ -337,15 +336,51 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     southId: string,
     southSettings: SouthSettings,
     groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
-    addOrEditGroup?: (command: {
-      mode: 'create' | 'edit';
-      group: SouthItemGroupCommandDTO;
-    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+    addOrEditGroup?: AddOrEditGroup,
+    deleteGroup?: DeleteGroup
   ) {
-    const clone: ConfigurationWorkflowCommandDTO = { ...JSON.parse(JSON.stringify(workflow)), id: null, name: `${workflow.name}-copy` };
-    this.prepareForEdition(scanModes, existingWorkflows, manifest, clone, southId, southSettings, groups, addOrEditGroup, deleteGroup);
-    this.mode = 'copy';
+    const clone: ConfigurationWorkflowCommandDTO = { ...structuredClone(workflow), id: null, name: `${workflow.name}-copy` };
+    this.prepare('copy', scanModes, existingWorkflows, manifest, clone, southId, southSettings, groups, addOrEditGroup, deleteGroup);
+  }
+
+  private prepare(
+    mode: 'create' | 'edit' | 'copy',
+    scanModes: Array<ScanModeDTO>,
+    existingWorkflows: Array<{ id: string | null; name: string }>,
+    manifest: SouthConnectorManifest,
+    workflow: ConfigurationWorkflowCommandDTO | null,
+    southId: string,
+    southSettings: SouthSettings,
+    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    addOrEditGroup: AddOrEditGroup | undefined,
+    deleteGroup: DeleteGroup | undefined
+  ) {
+    this.mode.set(mode);
+    this.scanModes.set(scanModes);
+    this.sharedGroups = groups;
+    this.refreshGroups();
+    this.addOrEditGroup = addOrEditGroup!;
+    this.deleteGroup = deleteGroup!;
+    this.existingWorkflows = existingWorkflows;
+    this.workflow = workflow;
+    this.currentManifest.set(manifest);
+    this.southId = southId;
+    this.southSettings = southSettings;
+    this.itemMappableFields.set(buildItemMappableFields(manifest));
+
+    const scope: Record<string, unknown> = workflow?.discoveryScope ?? {};
+    this.discoveryRootNodeId.set(typeof scope['rootNodeId'] === 'string' ? scope['rootNodeId'] : null);
+    this.discoveryQuery.set(typeof scope['query'] === 'string' ? scope['query'] : '');
+    this.itemFieldMappingValues.set({ ...(workflow?.itemFieldMapping ?? {}) });
+    this.identityKeyFields.set(workflow ? [...workflow.identityKeyFields] : []);
+    this.eligibilityFilter.set(workflow ? workflow.eligibilityFilter.map(condition => ({ ...condition })) : []);
+    this.refreshRegistrationStatus();
+    this.initForm();
+  }
+
+  /** Re-renders the page's group list after it was changed in place. */
+  private refreshGroups() {
+    this.groups.set([...this.sharedGroups]);
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -354,7 +389,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
         return null;
       }
       // Only an edited workflow excludes itself - a copy's (or a new one's) name must differ from every other.
-      const ownId = this.mode === 'edit' ? this.workflow?.id : undefined;
+      const ownId = this.mode() === 'edit' ? this.workflow?.id : undefined;
       const isDuplicate = this.existingWorkflows.some(
         workflow => workflow.name.toLowerCase() === control.value.toLowerCase() && (ownId == null || workflow.id !== ownId)
       );
@@ -373,49 +408,54 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     });
   }
 
-  private buildForm() {
+  private initForm() {
     // SQL-family connectors are query-based (one item = one free-form query, item != point) - a
     // workflow there can only ever push the raw discovered records to OIAnalytics, never create/update
     // items itself (see isSqlFamily's own doc comment). pushToOIAnalytics is forced true and the mode
     // choice is hidden from the template for these.
-    this.form = this.fb.group({
-      name: [this.workflow?.name ?? '', [Validators.required, this.checkUniqueness()]],
-      scanModeId: this.fb.control<string | null>(this.workflow?.scanModeId ?? null),
-      pushToOIAnalytics: this.fb.control<boolean>(this.isSqlFamily ? true : (this.workflow?.pushToOIAnalytics ?? false)),
-      enabled: this.fb.control<boolean>(this.workflow?.enabled ?? true)
+    this.form.reset({
+      name: this.workflow?.name ?? '',
+      scanModeId: this.workflow?.scanModeId ?? null,
+      pushToOIAnalytics: this.isSqlFamily() ? true : (this.workflow?.pushToOIAnalytics ?? false),
+      enabled: this.workflow?.enabled ?? true
     });
   }
 
+  /** Maps (or unmaps, with a blank value) an item field. */
+  setMappingValue(path: string, value: string) {
+    this.itemFieldMappingValues.update(values => ({ ...values, [path]: value }));
+  }
+
   addIdentityKeyField() {
-    const field = this.newIdentityKeyField.trim();
-    if (!field || this.identityKeyFields.includes(field)) {
+    const field = this.newIdentityKeyField().trim();
+    if (!field || this.identityKeyFields().includes(field)) {
       return;
     }
-    this.identityKeyFields.push(field);
-    this.newIdentityKeyField = '';
+    this.identityKeyFields.update(fields => [...fields, field]);
+    this.newIdentityKeyField.set('');
   }
 
   removeIdentityKeyField(field: string) {
-    this.identityKeyFields = this.identityKeyFields.filter(existing => existing !== field);
+    this.identityKeyFields.update(fields => fields.filter(existing => existing !== field));
   }
 
   addEligibilityCondition() {
-    const field = this.newEligibilityField.trim();
+    const field = this.newEligibilityField().trim();
     if (!field) {
       return;
     }
-    const condition: RecordFilterCondition = { field, operator: this.newEligibilityOperator };
-    if (this.newEligibilityOperator !== 'exists') {
-      condition.value = this.newEligibilityValue;
+    const condition: RecordFilterCondition = { field, operator: this.newEligibilityOperator() };
+    if (this.newEligibilityOperator() !== 'exists') {
+      condition.value = this.newEligibilityValue();
     }
-    this.eligibilityFilter.push(condition);
-    this.newEligibilityField = '';
-    this.newEligibilityOperator = 'equals';
-    this.newEligibilityValue = '';
+    this.eligibilityFilter.update(conditions => [...conditions, condition]);
+    this.newEligibilityField.set('');
+    this.newEligibilityOperator.set('equals');
+    this.newEligibilityValue.set('');
   }
 
   removeEligibilityCondition(index: number) {
-    this.eligibilityFilter.splice(index, 1);
+    this.eligibilityFilter.update(conditions => conditions.filter((_, conditionIndex) => conditionIndex !== index));
     // Indices shift on removal - an in-progress edit elsewhere in the list can no longer be trusted
     // to point at the right row, so drop it rather than risk silently editing the wrong condition.
     this.cancelEditEligibilityCondition();
@@ -423,36 +463,37 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   /** Enter inline edit mode for one eligibility condition, seeding the edit fields from its current value. */
   startEditEligibilityCondition(index: number) {
-    const condition = this.eligibilityFilter[index];
-    this.editingEligibilityIndex = index;
-    this.editingEligibilityField = condition.field;
-    this.editingEligibilityOperator = condition.operator;
-    this.editingEligibilityValue = condition.value ?? '';
+    const condition = this.eligibilityFilter()[index];
+    this.editingEligibilityIndex.set(index);
+    this.editingEligibilityField.set(condition.field);
+    this.editingEligibilityOperator.set(condition.operator);
+    this.editingEligibilityValue.set(condition.value ?? '');
   }
 
   /** Commit the currently inline-edited condition in place of the original at the same index. */
   saveEligibilityCondition() {
-    if (this.editingEligibilityIndex === null) {
+    const editingIndex = this.editingEligibilityIndex();
+    if (editingIndex === null) {
       return;
     }
-    const field = this.editingEligibilityField.trim();
+    const field = this.editingEligibilityField().trim();
     if (!field) {
       return;
     }
-    const condition: RecordFilterCondition = { field, operator: this.editingEligibilityOperator };
-    if (this.editingEligibilityOperator !== 'exists') {
-      condition.value = this.editingEligibilityValue;
+    const condition: RecordFilterCondition = { field, operator: this.editingEligibilityOperator() };
+    if (this.editingEligibilityOperator() !== 'exists') {
+      condition.value = this.editingEligibilityValue();
     }
-    this.eligibilityFilter[this.editingEligibilityIndex] = condition;
+    this.eligibilityFilter.update(conditions => conditions.map((existing, index) => (index === editingIndex ? condition : existing)));
     this.cancelEditEligibilityCondition();
   }
 
   /** Leave inline edit mode without saving any change. */
   cancelEditEligibilityCondition() {
-    this.editingEligibilityIndex = null;
-    this.editingEligibilityField = '';
-    this.editingEligibilityOperator = 'equals';
-    this.editingEligibilityValue = '';
+    this.editingEligibilityIndex.set(null);
+    this.editingEligibilityField.set('');
+    this.editingEligibilityOperator.set('equals');
+    this.editingEligibilityValue.set('');
   }
 
   /** Whether this field's constant value should be picked from a fixed list (checkbox/select) rather than typed freely. */
@@ -479,16 +520,18 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   /** The fixed set of valid constant values for a select-type field - used both to render its options and to tell a
    *  constant value apart from a {{...}} expression (anything not in this list is treated as a variable). */
-  fieldConcreteValues(field: MappableField): Array<string> {
+  private fieldConcreteValues(field: MappableField): Array<string> {
     switch (field.attributeType) {
       case 'boolean':
         return ['true', 'false'];
       case 'string-select':
         return field.selectableValues ?? [];
       case 'scan-mode':
-        return this.scanModes.map(scanMode => scanMode.id);
+        return this.scanModes().map(scanMode => scanMode.id);
       case 'group-select':
-        return this.groups.map(group => group.id).filter((id): id is string => id != null);
+        return this.groups()
+          .map(group => group.id)
+          .filter((id): id is string => id != null);
       default:
         return [];
     }
@@ -507,8 +550,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   }
 
   /** True once the field's mapped value is set but isn't one of its fixed constant options - i.e. it's a {{...}} expression. */
-  isVariableMode(values: Record<string, string>, field: MappableField): boolean {
-    const value = values[field.path] ?? '';
+  isVariableMode(field: MappableField): boolean {
+    const value = this.itemFieldMappingValues()[field.path] ?? '';
     if (!value) {
       return false;
     }
@@ -516,14 +559,14 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   }
 
   /** What the <select> itself should show: the sentinel option while in variable mode, the raw constant value otherwise. */
-  selectDisplayValue(values: Record<string, string>, field: MappableField): string {
-    return this.isVariableMode(values, field) ? VARIABLE_SENTINEL : (values[field.path] ?? '');
+  selectDisplayValue(field: MappableField): string {
+    return this.isVariableMode(field) ? VARIABLE_SENTINEL : (this.itemFieldMappingValues()[field.path] ?? '');
   }
 
   /** Handles a change on a select-type field's constant dropdown - switches into variable mode with a starter
    *  expression when the sentinel is chosen, otherwise stores the picked constant value directly. */
-  onSelectChange(values: Record<string, string>, field: MappableField, newValue: string) {
-    values[field.path] = newValue === VARIABLE_SENTINEL ? '{{}}' : newValue;
+  onSelectChange(field: MappableField, newValue: string) {
+    this.setMappingValue(field.path, newValue === VARIABLE_SENTINEL ? '{{}}' : newValue);
   }
 
   /** Whether this field can be mapped to a {{ }} expression at all. False for a field other fields depend
@@ -549,17 +592,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       : 'south.workflows.mapping-constant-placeholder';
   }
 
-  /** Name of the group currently mapped as a constant for the 'groupId' field, or the "no group" label. */
-  getSelectedGroupName(): string {
-    const groupId = this.itemFieldMappingValues['groupId'];
-    if (!groupId) {
-      return '';
-    }
-    return this.groups.find(group => group.id === groupId)?.standardSettings.name ?? groupId;
-  }
-
   onSelectGroup(groupId: string | null) {
-    this.itemFieldMappingValues['groupId'] = groupId ?? '';
+    this.setMappingValue('groupId', groupId ?? '');
   }
 
   /** Mirrors EditSouthItemModalComponent's own onAddGroup - opens the same group modal, saves it via the
@@ -569,11 +603,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
     component.directSave = this.directSave;
-    component.prepareForCreation(this.scanModes, this.groups, this.currentManifest);
+    component.prepareForCreation(this.scanModes(), this.sharedGroups, this.currentManifest()!);
     modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
-      this.groups.push(groupResult);
+      this.sharedGroups.push(groupResult);
+      this.refreshGroups();
       this.onSelectGroup(groupResult.id!);
-      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -582,15 +616,15 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
     component.directSave = this.directSave;
-    component.prepareForEdition(this.scanModes, this.groups, this.currentManifest, group);
+    component.prepareForEdition(this.scanModes(), this.sharedGroups, this.currentManifest()!, group);
     modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
-      const index = this.groups.findIndex(existing => existing.id === groupResult.id);
+      const index = this.sharedGroups.findIndex(existing => existing.id === groupResult.id);
       if (index >= 0) {
-        this.groups[index] = groupResult;
+        this.sharedGroups[index] = groupResult;
       } else {
-        this.groups.push(groupResult);
+        this.sharedGroups.push(groupResult);
       }
-      this.changeDetectorRef.markForCheck();
+      this.refreshGroups();
     });
   }
 
@@ -599,14 +633,14 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.deleteGroup(group).subscribe(() => {
       // Removed in place - `groups` is the page's own list (edit-south's in-memory groups), which must
       // lose the deleted group too.
-      const index = this.groups.findIndex(existing => existing.id === group.id);
+      const index = this.sharedGroups.findIndex(existing => existing.id === group.id);
       if (index >= 0) {
-        this.groups.splice(index, 1);
+        this.sharedGroups.splice(index, 1);
       }
-      if (this.itemFieldMappingValues['groupId'] === group.id) {
+      this.refreshGroups();
+      if (this.itemFieldMappingValues()['groupId'] === group.id) {
         this.onSelectGroup(null);
       }
-      this.changeDetectorRef.markForCheck();
     });
   }
 
@@ -614,13 +648,14 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    *  inherited from an enclosing settings object) must currently pass against itemFieldMappingValues,
    *  and a group-dependent historian field must agree with whether 'groupId' is currently mapped. */
   isItemFieldVisible(field: MappableField): boolean {
+    const values = this.itemFieldMappingValues();
     if (field.visibleWhenGrouped !== undefined) {
-      const isGrouped = !!this.itemFieldMappingValues['groupId'];
+      const isGrouped = !!values['groupId'];
       if (field.visibleWhenGrouped !== isGrouped) {
         return false;
       }
     }
-    return (field.enablingRules ?? []).every(rule => this.evaluatesTrue(rule));
+    return (field.enablingRules ?? []).every(rule => evaluatesTrue(rule, values));
   }
 
   /** Whether a mandatory, currently-visible field is missing a mapped value - checked at save time.
@@ -632,49 +667,16 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     if (!field.mandatory || field.hasUsableDefault) {
       return false;
     }
-    if (field.path === 'scanModeId' && !!this.itemFieldMappingValues['groupId']?.trim()) {
+    const values = this.itemFieldMappingValues();
+    if (field.path === 'scanModeId' && !!values['groupId']?.trim()) {
       return false;
     }
-    return !(this.itemFieldMappingValues[field.path] ?? '').trim();
-  }
-
-  private evaluatesTrue(rule: FieldEnablingRule): boolean {
-    const referralValue = this.itemFieldMappingValues[rule.referralPath] ?? '';
-    const matchesAnyValue = rule.values.some(value => String(value) === referralValue);
-    if (rule.operator === 'CONTAINS') {
-      return rule.values.some(value => referralValue.includes(String(value)));
-    }
-    if (rule.operator === 'NOT_EQUAL') {
-      return !matchesAnyValue;
-    }
-    return matchesAnyValue;
-  }
-
-  /** Tree-shaped discovery scope (a root node to browse) - OPC-UA, Folder Scanner. Checked before
-   *  isSqlFamily since a manifest could in principle declare both (none do today). */
-  get isTreeBased(): boolean {
-    return this.currentManifest.explore === true && !this.isSqlFamily;
-  }
-
-  /** Query-shaped discovery scope (a dedicated metadata query) - the SQL-family connectors that have
-   *  a `discover()` implementation today (see SQL_FAMILY_SOUTH_TYPES's own doc comment for why ODBC/
-   *  OLEDB aren't included). */
-  get isSqlFamily(): boolean {
-    return SQL_FAMILY_SOUTH_TYPES.includes(this.currentManifest.id);
-  }
-
-  /** Whether to show the read-only explore tree above the SQL query editor, for reference while
-   *  writing the query - only SQLite has an `explore()` implementation among the SQL-family connectors
-   *  today, so this is the same condition as isSqlFamily for now, but stated independently since it's
-   *  conceptually a separate capability (a future SQL connector could get discover() without explore(),
-   *  or vice versa). */
-  get showSqlExploreTree(): boolean {
-    return this.isSqlFamily && this.currentManifest.explore === true;
+    return !(values[field.path] ?? '').trim();
   }
 
   ngAfterViewInit() {
-    if (this.showSqlExploreTree) {
-      this.inlineExploreTree()?.prepare(this.southId, this.southSettings, this.currentManifest.id);
+    if (this.showSqlExploreTree()) {
+      this.inlineExploreTree()?.prepare(this.southId, this.southSettings, this.currentManifest()!.id);
     }
   }
 
@@ -682,7 +684,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   openNodePicker() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southId, this.southSettings, this.currentManifest.id, undefined, true);
+    component.prepare(this.southId, this.southSettings, this.currentManifest()!.id, undefined, true);
     modalRef.result.subscribe((entry: SouthConnectorExploreEntry) => {
       this.discoveryRootNodeId.set(entry.id);
     });
@@ -698,14 +700,14 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    * own "test item") and show its raw rows - lets the user check it works before saving the workflow.
    */
   testDiscoveryQuery() {
-    const query = this.discoveryQuery.trim();
+    const query = this.discoveryQuery().trim();
     if (!query) {
       return;
     }
     this.queryTestRunning.set(true);
     this.queryTestError.set(null);
     this.queryTestResult.set(null);
-    this.southConnectorService.testDiscoveryQuery(this.southId, this.currentManifest.id, this.southSettings, query).subscribe({
+    this.southConnectorService.testDiscoveryQuery(this.southId, this.currentManifest()!.id, this.southSettings, query).subscribe({
       next: rows => {
         this.queryTestRunning.set(false);
         this.queryTestResult.set({ type: 'record-list', content: rows });
@@ -718,7 +720,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   }
 
   canDismiss(): Observable<boolean> | boolean {
-    if (this.form?.dirty) {
+    if (this.form.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -729,23 +731,23 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   }
 
   save() {
-    this.formError = null;
-    if (!this.form || !this.form.valid) {
+    this.formError.set(null);
+    if (!this.form.valid) {
       return;
     }
     const formValue = this.form.getRawValue();
-    // SQL-family connectors can never create/update items (see buildForm()'s own comment) - re-clamped
+    // SQL-family connectors can never create/update items (see initForm()'s own comment) - re-clamped
     // here too, defensively, not just via the mode choice being hidden from the template.
-    const pushToOIAnalytics = this.isSqlFamily ? true : formValue.pushToOIAnalytics;
+    const pushToOIAnalytics = this.isSqlFamily() ? true : formValue.pushToOIAnalytics;
 
     let discoveryScope: Record<string, unknown>;
-    if (this.isSqlFamily) {
-      if (!this.discoveryQuery.trim()) {
-        this.formError = 'south.workflows.discovery-scope-query-required';
+    if (this.isSqlFamily()) {
+      if (!this.discoveryQuery().trim()) {
+        this.formError.set('south.workflows.discovery-scope-query-required');
         return;
       }
-      discoveryScope = { query: this.discoveryQuery.trim() };
-    } else if (this.isTreeBased) {
+      discoveryScope = { query: this.discoveryQuery().trim() };
+    } else if (this.isTreeBased()) {
       // No rootNodeId at all means "browse from the data source's true root" - a deliberate, valid choice.
       const rootNodeId = this.discoveryRootNodeId();
       discoveryScope = rootNodeId ? { rootNodeId } : {};
@@ -761,39 +763,44 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     let itemFieldMapping: Record<string, string> | null = null;
     if (!pushToOIAnalytics) {
       // Identity keys only drive the local diff against the previous run - a remote workflow has none.
-      if (this.identityKeyFields.length === 0) {
-        this.formError = 'south.workflows.identity-key-fields-none';
+      if (this.identityKeyFields().length === 0) {
+        this.formError.set('south.workflows.identity-key-fields-none');
         return;
       }
 
+      const mappingValues = this.itemFieldMappingValues();
       // A field other fields depend on for their own visibility, plus the schedule/group fields, must be
       // knowable while editing (or reference something real) rather than resolved per-record at run time -
       // a select-type one of these can't even reach this state through the UI (its {{ }} option is
       // omitted), but a free-text one still could.
-      const hasConstantOnlyViolation = this.itemMappableFields.some(
-        field => !this.allowsVariable(field) && (this.itemFieldMappingValues[field.path] ?? '').includes('{{')
+      const hasConstantOnlyViolation = this.itemMappableFields().some(
+        field => !this.allowsVariable(field) && (mappingValues[field.path] ?? '').includes('{{')
       );
       if (hasConstantOnlyViolation) {
-        this.formError = 'south.workflows.mapping-constant-only';
+        this.formError.set('south.workflows.mapping-constant-only');
         return;
       }
 
       // Every visible, manifest-REQUIRED field must be mapped to something - otherwise a workflow can be
       // saved in a state item creation would only reject later, at run time (see isMandatoryFieldMissing).
-      const hasMissingMandatoryField = this.itemMappableFields.some(
+      const hasMissingMandatoryField = this.itemMappableFields().some(
         field => this.isItemFieldVisible(field) && this.isMandatoryFieldMissing(field)
       );
       if (hasMissingMandatoryField) {
-        this.formError = 'south.workflows.mapping-mandatory-missing';
+        this.formError.set('south.workflows.mapping-mandatory-missing');
         return;
       }
 
       // A field hidden by an unmet enabling condition keeps whatever value it had while editing (so
       // toggling the referral back and forth doesn't lose data), but is stripped here at save time - it
       // isn't actually part of the item this mapping would produce.
-      const visibleItemPaths = new Set(this.itemMappableFields.filter(field => this.isItemFieldVisible(field)).map(field => field.path));
+      const visibleItemPaths = new Set(
+        this.itemMappableFields()
+          .filter(field => this.isItemFieldVisible(field))
+          .map(field => field.path)
+      );
       const itemFieldMappingValuesToSave: Record<string, string> = {};
-      for (const [path, value] of Object.entries(this.itemFieldMappingValues)) {
+      for (const [path, value] of Object.entries(mappingValues)) {
         if (visibleItemPaths.has(path)) {
           itemFieldMappingValuesToSave[path] = value;
         }
@@ -804,11 +811,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     const command: ConfigurationWorkflowCommandDTO = {
       // The edited workflow keeps its own id (real, or a caller-minted temp_ one for a not-yet-saved
       // workflow) - a new one or a copy has none yet, the caller decides what to give it.
-      id: this.mode === 'edit' ? (this.workflow?.id ?? null) : null,
+      id: this.mode() === 'edit' ? (this.workflow?.id ?? null) : null,
       name: formValue.name,
       discoveryScope,
-      identityKeyFields: pushToOIAnalytics ? [] : this.identityKeyFields,
-      eligibilityFilter: this.eligibilityFilter,
+      identityKeyFields: pushToOIAnalytics ? [] : this.identityKeyFields(),
+      eligibilityFilter: this.eligibilityFilter(),
       itemFieldMapping,
       pushToOIAnalytics,
       scanModeId: formValue.scanModeId || null,
@@ -816,6 +823,19 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     };
     this.modal.close(command);
   }
+}
+
+/** Whether one enabling rule passes against the referral field's current mapped value. */
+function evaluatesTrue(rule: FieldEnablingRule, values: Record<string, string>): boolean {
+  const referralValue = values[rule.referralPath] ?? '';
+  const matchesAnyValue = rule.values.some(value => String(value) === referralValue);
+  if (rule.operator === 'CONTAINS') {
+    return rule.values.some(value => referralValue.includes(String(value)));
+  }
+  if (rule.operator === 'NOT_EQUAL') {
+    return !matchesAnyValue;
+  }
+  return matchesAnyValue;
 }
 
 /** Builds a MappableField from a manifest attribute, capturing its type (and selectableValues, for 'string-select')

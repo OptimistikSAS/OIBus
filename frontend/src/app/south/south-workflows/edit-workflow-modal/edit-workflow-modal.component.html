@@ -1,421 +1,453 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'south.workflows.' + mode + '-title'"></h4>
+  <h4 class="modal-title" [translate]="'south.workflows.' + mode() + '-title'"></h4>
 </div>
-@if (form) {
-  <div class="modal-body">
-    <form [formGroup]="form" (ngSubmit)="save()" id="workflow-form">
-      @if (formError) {
-        <div class="alert alert-danger py-1 px-2" id="form-error" [translate]="formError"></div>
-      }
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="save()" id="workflow-form">
+    @if (formError(); as formError) {
+      <div class="alert alert-danger py-1 px-2" id="form-error" role="alert" [translate]="formError"></div>
+    }
 
-      <div class="row">
-        <!-- Name -->
-        <div class="col-8">
-          <div class="form-group">
-            <label class="form-label" for="workflow-name" translate="south.workflows.name"></label>
-            <input formControlName="name" id="workflow-name" class="form-control" />
-            <val-errors controlName="name" />
-          </div>
+    <div class="row">
+      <!-- Name -->
+      <div class="col-8">
+        <div class="form-group">
+          <label class="form-label" for="workflow-name" translate="south.workflows.name"></label>
+          <input formControlName="name" id="workflow-name" class="form-control" />
+          <val-errors controlName="name" />
         </div>
-        <div class="col">
-          <!-- Enabled -->
-          <div class="form-group">
-            <div class="form-check form-switch padded">
-              <input formControlName="enabled" id="workflow-enabled" type="checkbox" class="form-check-input" />
-              <label class="form-check-label" for="workflow-enabled" translate="south.workflows.enabled"></label>
-            </div>
+      </div>
+      <div class="col">
+        <!-- Enabled -->
+        <div class="form-group">
+          <div class="form-check form-switch padded">
+            <input formControlName="enabled" id="workflow-enabled" type="checkbox" class="form-check-input" />
+            <label class="form-check-label" for="workflow-enabled" translate="south.workflows.enabled"></label>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Discovery scope -->
-      <div class="form-group">
-        <label class="form-label" translate="south.workflows.discovery-scope"></label>
-        @if (isTreeBased) {
-          <div class="form-text" translate="south.workflows.discovery-scope-node-hint"></div>
-          <div class="d-flex align-items-center gap-2">
-            <span class="form-control form-control-sm text-truncate" id="discovery-root-node-id">
-              {{ discoveryRootNodeId() || ('south.workflows.discovery-scope-node-none' | translate) }}
-            </span>
+    <!-- Discovery scope -->
+    <div class="form-group">
+      <div class="form-label" translate="south.workflows.discovery-scope"></div>
+      @if (isTreeBased()) {
+        <div class="form-text" translate="south.workflows.discovery-scope-node-hint"></div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="form-control form-control-sm text-truncate" id="discovery-root-node-id">
+            {{ discoveryRootNodeId() || ('south.workflows.discovery-scope-node-none' | translate) }}
+          </span>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm text-nowrap"
+            id="browse-root-node"
+            (click)="openNodePicker()"
+            translate="south.explore.button"
+          ></button>
+          @if (discoveryRootNodeId()) {
             <button
               type="button"
-              class="btn btn-secondary btn-sm text-nowrap"
-              id="browse-root-node"
-              (click)="openNodePicker()"
-              translate="south.explore.button"
+              class="btn btn-link btn-sm text-nowrap"
+              id="clear-root-node"
+              (click)="clearRootNodeId()"
+              translate="south.workflows.discovery-scope-node-clear"
             ></button>
-            @if (discoveryRootNodeId()) {
+          }
+        </div>
+      } @else if (isSqlFamily()) {
+        <div class="form-text" translate="south.workflows.discovery-scope-query-hint"></div>
+        @if (showSqlExploreTree()) {
+          <div class="border rounded p-2 mb-2" id="discovery-explore-tree">
+            <oib-explore-tree maxHeight="12rem" />
+          </div>
+        }
+        <oib-code-block
+          id="discovery-query"
+          language="sql"
+          height="10rem"
+          [(ngModel)]="discoveryQuery"
+          [ngModelOptions]="{ standalone: true }"
+        />
+        <div class="d-flex align-items-center gap-2 mt-2">
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            id="test-discovery-query"
+            [disabled]="!discoveryQuery().trim() || queryTestRunning()"
+            (click)="testDiscoveryQuery()"
+          >
+            @if (queryTestRunning()) {
+              <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+            }
+            <span translate="south.workflows.discovery-scope-query-test"></span>
+          </button>
+        </div>
+        @if (queryTestError(); as queryTestError) {
+          <div class="alert alert-danger mt-2 mb-0" id="discovery-query-test-error">{{ queryTestError }}</div>
+        } @else if (queryTestResult(); as queryTestResult) {
+          <oib-transformer-test-result class="d-block mt-2" id="discovery-query-test-result" [raw]="queryTestResult" />
+        }
+      } @else {
+        <div class="text-muted small" id="discovery-scope-unsupported" translate="south.workflows.discovery-scope-unsupported"></div>
+      }
+    </div>
+
+    <!-- Scan mode -->
+    <div class="form-group">
+      <label class="form-label" for="workflow-scan-mode" translate="south.workflows.scan-mode"></label>
+      <select class="form-select" id="workflow-scan-mode" formControlName="scanModeId">
+        <option [ngValue]="null" translate="south.workflows.scan-mode-manual-only"></option>
+        @for (scanMode of scanModes(); track scanMode.id) {
+          <option [value]="scanMode.id">{{ scanMode.name }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Mode: local (create/update items) vs remote (push to OIAnalytics) -->
+    <div class="form-group">
+      <div class="form-label" translate="south.workflows.mode"></div>
+      @if (isSqlFamily()) {
+        <div class="form-text" translate="south.workflows.mode-sql-fixed"></div>
+      } @else {
+        <div class="form-check">
+          <input class="form-check-input" type="radio" id="mode-local" formControlName="pushToOIAnalytics" [value]="false" />
+          <label class="form-check-label" for="mode-local" translate="south.workflows.mode-local"></label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" id="mode-remote" formControlName="pushToOIAnalytics" [value]="true" />
+          <label class="form-check-label" for="mode-remote" translate="south.workflows.mode-remote"></label>
+        </div>
+      }
+      @if (pushToOIAnalytics() && !isRegistered()) {
+        <div
+          class="alert alert-warning py-1 px-2 mt-1"
+          id="mode-remote-not-registered"
+          translate="south.workflows.mode-remote-not-registered"
+        ></div>
+      }
+    </div>
+
+    <!-- Identity key fields - local mode only: they key the new/changed/unchanged/missing diff against the
+           previous run, which a remote workflow never performs (it forwards every eligible record as-is). -->
+    @if (!pushToOIAnalytics()) {
+      <div class="form-group">
+        <label class="form-label" for="new-identity-key-field" translate="south.workflows.identity-key-fields"></label>
+        <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
+        <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
+          @for (field of identityKeyFields(); track field) {
+            <span class="badge bg-secondary d-flex align-items-center">
+              {{ field }}
               <button
                 type="button"
-                class="btn btn-link btn-sm text-nowrap"
-                id="clear-root-node"
-                (click)="clearRootNodeId()"
-                translate="south.workflows.discovery-scope-node-clear"
+                class="btn-close btn-close-white ms-1 remove-identity-key-field"
+                [attr.aria-label]="'common.delete' | translate"
+                (click)="removeIdentityKeyField(field)"
               ></button>
-            }
-          </div>
-        } @else if (isSqlFamily) {
-          <div class="form-text" translate="south.workflows.discovery-scope-query-hint"></div>
-          @if (showSqlExploreTree) {
-            <div class="border rounded p-2 mb-2" id="discovery-explore-tree">
-              <oib-explore-tree maxHeight="12rem" />
-            </div>
+            </span>
           }
-          <oib-code-block
-            id="discovery-query"
-            language="sql"
-            height="10rem"
-            [(ngModel)]="discoveryQuery"
-            [ngModelOptions]="{ standalone: true }"
-          />
-          <div class="d-flex align-items-center gap-2 mt-2">
-            <button
-              type="button"
-              class="btn btn-secondary btn-sm"
-              id="test-discovery-query"
-              [disabled]="!discoveryQuery.trim() || queryTestRunning()"
-              (click)="testDiscoveryQuery()"
-            >
-              @if (queryTestRunning()) {
-                <span class="spinner-border spinner-border-sm me-1"></span>
-              }
-              <span translate="south.workflows.discovery-scope-query-test"></span>
-            </button>
-          </div>
-          @if (queryTestError(); as queryTestError) {
-            <div class="alert alert-danger mt-2 mb-0" id="discovery-query-test-error">{{ queryTestError }}</div>
-          } @else if (queryTestResult(); as queryTestResult) {
-            <oib-transformer-test-result class="d-block mt-2" id="discovery-query-test-result" [raw]="queryTestResult" />
-          }
-        } @else {
-          <div class="text-muted small" id="discovery-scope-unsupported" translate="south.workflows.discovery-scope-unsupported"></div>
-        }
-      </div>
-
-      <!-- Scan mode -->
-      <div class="form-group">
-        <label class="form-label" for="workflow-scan-mode" translate="south.workflows.scan-mode"></label>
-        <select class="form-select" id="workflow-scan-mode" formControlName="scanModeId">
-          <option [ngValue]="null" translate="south.workflows.scan-mode-manual-only"></option>
-          @for (scanMode of scanModes; track scanMode.id) {
-            <option [value]="scanMode.id">{{ scanMode.name }}</option>
-          }
-        </select>
-      </div>
-
-      <!-- Mode: local (create/update items) vs remote (push to OIAnalytics) -->
-      <div class="form-group">
-        <label class="form-label" translate="south.workflows.mode"></label>
-        @if (isSqlFamily) {
-          <div class="form-text" translate="south.workflows.mode-sql-fixed"></div>
-        } @else {
-          <div class="form-check">
-            <input class="form-check-input" type="radio" id="mode-local" formControlName="pushToOIAnalytics" [value]="false" />
-            <label class="form-check-label" for="mode-local" translate="south.workflows.mode-local"></label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" id="mode-remote" formControlName="pushToOIAnalytics" [value]="true" />
-            <label class="form-check-label" for="mode-remote" translate="south.workflows.mode-remote"></label>
-          </div>
-        }
-        @if (form.controls.pushToOIAnalytics.value && !isRegistered()) {
-          <div
-            class="alert alert-warning py-1 px-2 mt-1"
-            id="mode-remote-not-registered"
-            translate="south.workflows.mode-remote-not-registered"
-          ></div>
-        }
-      </div>
-
-      <!-- Identity key fields - local mode only: they key the new/changed/unchanged/missing diff against the
-           previous run, which a remote workflow never performs (it forwards every eligible record as-is). -->
-      @if (!form.controls.pushToOIAnalytics.value) {
-        <div class="form-group">
-          <label class="form-label" translate="south.workflows.identity-key-fields"></label>
-          <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
-          <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
-            @for (field of identityKeyFields; track field) {
-              <span class="badge bg-secondary d-flex align-items-center">
-                {{ field }}
-                <button
-                  type="button"
-                  class="btn-close btn-close-white ms-1"
-                  style="font-size: 0.6rem"
-                  (click)="removeIdentityKeyField(field)"
-                ></button>
-              </span>
-            }
-          </div>
-          <div class="input-group input-group-sm" style="max-width: 20rem">
-            <input
-              class="form-control"
-              id="new-identity-key-field"
-              [(ngModel)]="newIdentityKeyField"
-              [ngModelOptions]="{ standalone: true }"
-              [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
-              (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
-            />
-            <button type="button" class="btn btn-secondary" id="add-identity-key-field" (click)="addIdentityKeyField()">
-              <span class="fa-solid fa-plus"></span>
-            </button>
-          </div>
         </div>
-      }
-
-      <!-- Eligibility filter -->
-      <div class="form-group">
-        <label class="form-label" translate="south.workflows.eligibility-filter"></label>
-        <div class="form-text" translate="south.workflows.eligibility-filter-hint"></div>
-        @if (eligibilityFilter.length === 0) {
-          <div class="text-muted small mb-2" translate="south.workflows.eligibility-filter-none"></div>
-        } @else {
-          <table class="table table-sm" id="eligibility-filter-table">
-            <thead>
-              <tr>
-                <th translate="south.workflows.eligibility-filter-field"></th>
-                <th translate="south.workflows.eligibility-filter-operator"></th>
-                <th translate="south.workflows.eligibility-filter-value"></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (condition of eligibilityFilter; track $index) {
-                <tr>
-                  @if (editingEligibilityIndex === $index) {
-                    <td>
-                      <input
-                        class="form-control form-control-sm"
-                        [(ngModel)]="editingEligibilityField"
-                        [ngModelOptions]="{ standalone: true }"
-                      />
-                    </td>
-                    <td>
-                      <select
-                        class="form-select form-select-sm"
-                        [(ngModel)]="editingEligibilityOperator"
-                        [ngModelOptions]="{ standalone: true }"
-                      >
-                        @for (operator of operators; track operator) {
-                          <option [value]="operator">{{ 'south.workflows.operator.' + operator | translate }}</option>
-                        }
-                      </select>
-                    </td>
-                    <td>
-                      @if (editingEligibilityOperator !== 'exists') {
-                        <input
-                          class="form-control form-control-sm"
-                          [(ngModel)]="editingEligibilityValue"
-                          [ngModelOptions]="{ standalone: true }"
-                        />
-                      }
-                    </td>
-                    <td>
-                      <div class="text-nowrap pull-right">
-                        <button
-                          type="button"
-                          class="btn btn-link px-1 py-0 save-eligibility-condition"
-                          (click)="saveEligibilityCondition()"
-                        >
-                          <span class="fa-solid fa-check"></span>
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn-link px-1 py-0 cancel-eligibility-condition"
-                          (click)="cancelEditEligibilityCondition()"
-                        >
-                          <span class="fa-solid fa-times"></span>
-                        </button>
-                      </div>
-                    </td>
-                  } @else {
-                    <td>{{ condition.field }}</td>
-                    <td>{{ 'south.workflows.operator.' + condition.operator | translate }}</td>
-                    <td>{{ condition.value }}</td>
-                    <td>
-                      <div class="text-nowrap pull-right">
-                        <button
-                          type="button"
-                          class="btn btn-link px-1 py-0 edit-eligibility-condition"
-                          (click)="startEditEligibilityCondition($index)"
-                        >
-                          <span class="fa-solid fa-pencil"></span>
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn-link px-1 py-0 remove-eligibility-condition"
-                          (click)="removeEligibilityCondition($index)"
-                        >
-                          <span class="fa-solid fa-trash-can"></span>
-                        </button>
-                      </div>
-                    </td>
-                  }
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-        <div class="d-flex gap-1 align-items-center">
+        <div class="input-group input-group-sm identity-key-field-input">
           <input
-            class="form-control form-control-sm"
-            id="new-eligibility-field"
-            [(ngModel)]="newEligibilityField"
+            class="form-control"
+            id="new-identity-key-field"
+            [(ngModel)]="newIdentityKeyField"
             [ngModelOptions]="{ standalone: true }"
-            [placeholder]="'south.workflows.eligibility-filter-field' | translate"
+            [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
+            (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
           />
-          <select
-            class="form-select form-select-sm"
-            id="new-eligibility-operator"
-            [(ngModel)]="newEligibilityOperator"
-            [ngModelOptions]="{ standalone: true }"
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="add-identity-key-field"
+            [attr.aria-label]="'common.create' | translate"
+            (click)="addIdentityKeyField()"
           >
-            @for (operator of operators; track operator) {
-              <option [value]="operator">{{ 'south.workflows.operator.' + operator | translate }}</option>
-            }
-          </select>
-          @if (newEligibilityOperator !== 'exists') {
-            <input
-              class="form-control form-control-sm"
-              id="new-eligibility-value"
-              [(ngModel)]="newEligibilityValue"
-              [ngModelOptions]="{ standalone: true }"
-              [placeholder]="'south.workflows.eligibility-filter-value' | translate"
-            />
-          }
-          <button type="button" class="btn btn-secondary btn-sm" id="add-eligibility-condition" (click)="addEligibilityCondition()">
-            <span class="fa-solid fa-plus"></span>
+            <span class="fa-solid fa-plus" aria-hidden="true"></span>
           </button>
         </div>
       </div>
+    }
 
-      <!-- Item field mapping - local mode only. Never rendered for a SQL-family connector (always
+    <!-- Eligibility filter -->
+    <div class="form-group">
+      <div class="form-label" translate="south.workflows.eligibility-filter"></div>
+      <div class="form-text" translate="south.workflows.eligibility-filter-hint"></div>
+      @if (eligibilityFilter().length === 0) {
+        <div class="text-muted small mb-2" translate="south.workflows.eligibility-filter-none"></div>
+      } @else {
+        <table class="table table-sm" id="eligibility-filter-table">
+          <thead>
+            <tr>
+              <th translate="south.workflows.eligibility-filter-field"></th>
+              <th translate="south.workflows.eligibility-filter-operator"></th>
+              <th translate="south.workflows.eligibility-filter-value"></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (condition of eligibilityFilter(); track $index) {
+              <tr>
+                @if (editingEligibilityIndex() === $index) {
+                  <td>
+                    <input
+                      class="form-control form-control-sm"
+                      [attr.aria-label]="'south.workflows.eligibility-filter-field' | translate"
+                      [(ngModel)]="editingEligibilityField"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </td>
+                  <td>
+                    <select
+                      class="form-select form-select-sm"
+                      [attr.aria-label]="'south.workflows.eligibility-filter-operator' | translate"
+                      [(ngModel)]="editingEligibilityOperator"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      @for (operator of operators; track operator) {
+                        <option [value]="operator">{{ 'south.workflows.operator.' + operator | translate }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    @if (editingEligibilityOperator() !== 'exists') {
+                      <input
+                        class="form-control form-control-sm"
+                        [attr.aria-label]="'south.workflows.eligibility-filter-value' | translate"
+                        [(ngModel)]="editingEligibilityValue"
+                        [ngModelOptions]="{ standalone: true }"
+                      />
+                    }
+                  </td>
+                  <td>
+                    <div class="text-nowrap pull-right">
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0 save-eligibility-condition"
+                        [attr.aria-label]="'common.save' | translate"
+                        (click)="saveEligibilityCondition()"
+                      >
+                        <span class="fa-solid fa-check" aria-hidden="true"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0 cancel-eligibility-condition"
+                        [attr.aria-label]="'common.cancel' | translate"
+                        (click)="cancelEditEligibilityCondition()"
+                      >
+                        <span class="fa-solid fa-times" aria-hidden="true"></span>
+                      </button>
+                    </div>
+                  </td>
+                } @else {
+                  <td>{{ condition.field }}</td>
+                  <td>{{ 'south.workflows.operator.' + condition.operator | translate }}</td>
+                  <td>{{ condition.value }}</td>
+                  <td>
+                    <div class="text-nowrap pull-right">
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0 edit-eligibility-condition"
+                        [attr.aria-label]="'common.edit' | translate"
+                        (click)="startEditEligibilityCondition($index)"
+                      >
+                        <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0 remove-eligibility-condition"
+                        [attr.aria-label]="'common.delete' | translate"
+                        (click)="removeEligibilityCondition($index)"
+                      >
+                        <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                      </button>
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <div class="d-flex gap-1 align-items-center">
+        <input
+          class="form-control form-control-sm"
+          id="new-eligibility-field"
+          [(ngModel)]="newEligibilityField"
+          [ngModelOptions]="{ standalone: true }"
+          [placeholder]="'south.workflows.eligibility-filter-field' | translate"
+        />
+        <select
+          class="form-select form-select-sm"
+          id="new-eligibility-operator"
+          [attr.aria-label]="'south.workflows.eligibility-filter-operator' | translate"
+          [(ngModel)]="newEligibilityOperator"
+          [ngModelOptions]="{ standalone: true }"
+        >
+          @for (operator of operators; track operator) {
+            <option [value]="operator">{{ 'south.workflows.operator.' + operator | translate }}</option>
+          }
+        </select>
+        @if (newEligibilityOperator() !== 'exists') {
+          <input
+            class="form-control form-control-sm"
+            id="new-eligibility-value"
+            [(ngModel)]="newEligibilityValue"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'south.workflows.eligibility-filter-value' | translate"
+          />
+        }
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          id="add-eligibility-condition"
+          [attr.aria-label]="'common.create' | translate"
+          (click)="addEligibilityCondition()"
+        >
+          <span class="fa-solid fa-plus" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Item field mapping - local mode only. Never rendered for a SQL-family connector (always
            remote, see buildForm()'s own comment) or while "Push to OIAnalytics" is picked - that mode is
            already explained by the mode section above, so nothing needs to be shown here in that case. -->
-      @if (!form.controls.pushToOIAnalytics.value) {
-        <div class="form-group">
-          <label class="form-label" translate="south.workflows.item-field-mapping"></label>
-          <div class="form-text" translate="south.workflows.item-field-mapping-hint"></div>
-          <table class="table table-sm" id="item-field-mapping-table">
-            <tbody>
-              @for (field of itemMappableFields; track field.path) {
-                @if (isItemFieldVisible(field)) {
-                  <tr>
-                    <td class="align-middle">
-                      @if (field.ancestorLabelKeys && field.ancestorLabelKeys.length > 0) {
-                        <div class="text-muted small">
-                          @for (ancestorKey of field.ancestorLabelKeys; track ancestorKey; let last = $last) {
-                            <span [translate]="ancestorKey"></span>
-                            @if (!last) {
-                              <span> / </span>
-                            }
+    @if (!pushToOIAnalytics()) {
+      <div class="form-group">
+        <div class="form-label" translate="south.workflows.item-field-mapping"></div>
+        <div class="form-text" translate="south.workflows.item-field-mapping-hint"></div>
+        <table class="table table-sm" id="item-field-mapping-table">
+          <tbody>
+            @for (field of itemMappableFields(); track field.path) {
+              @if (isItemFieldVisible(field)) {
+                <tr>
+                  <td class="align-middle">
+                    @if (field.ancestorLabelKeys && field.ancestorLabelKeys.length > 0) {
+                      <div class="text-muted small">
+                        @for (ancestorKey of field.ancestorLabelKeys; track ancestorKey; let last = $last) {
+                          <span [translate]="ancestorKey"></span>
+                          @if (!last) {
+                            <span> / </span>
                           }
-                        </div>
-                      }
-                      <span [translate]="fieldLabelKey(field)"></span>
-                      @if (field.isEnablingReferral) {
-                        <span
-                          class="badge bg-secondary bg-opacity-25 text-secondary ms-1"
-                          translate="south.workflows.enabling-referral-badge"
-                        ></span>
-                      }
-                      @if (isMandatoryFieldMissing(field)) {
-                        <span class="badge bg-danger bg-opacity-25 text-danger ms-1" translate="south.workflows.mandatory-badge"></span>
-                      }
-                    </td>
-                    <td>
-                      @if (field.path === 'groupId') {
-                        <div ngbDropdown class="d-inline-block w-100">
-                          <button
-                            type="button"
-                            class="form-select form-select-sm w-100 d-flex justify-content-between align-items-center text-start"
-                            [attr.id]="'item-field-mapping-field-' + field.path"
-                            ngbDropdownToggle
-                          >
-                            <span class="text-truncate">{{ getSelectedGroupName() || ('south.items.group-none' | translate) }}</span>
-                          </button>
-                          <div ngbDropdownMenu class="w-100">
-                            <button type="button" ngbDropdownItem (click)="onSelectGroup(null)" translate="south.items.group-none"></button>
-                            @for (group of groups; track group.id) {
-                              <div class="d-flex align-items-center justify-content-between px-2 group-row">
-                                <button type="button" ngbDropdownItem (click)="onSelectGroup(group.id)" class="flex-grow-1 text-start ps-2">
-                                  {{ group.standardSettings.name }}
-                                </button>
-                                <div class="d-flex gap-1 pe-2">
-                                  <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
-                                    <i class="fa-solid fa-pencil"></i>
-                                  </button>
-                                  <button type="button" class="btn btn-sm btn-link p-0 text-danger" (click)="onDeleteGroup(group, $event)">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                  </button>
-                                </div>
-                              </div>
-                            }
-                            <div class="dropdown-divider"></div>
-                            <button type="button" ngbDropdownItem (click)="onAddGroup()" translate="south.items.create-new-group"></button>
-                          </div>
-                        </div>
-                      } @else if (isSelectType(field)) {
-                        <select
-                          class="form-select form-select-sm"
-                          [attr.id]="'item-field-mapping-field-' + field.path"
-                          [ngModel]="selectDisplayValue(itemFieldMappingValues, field)"
-                          (ngModelChange)="onSelectChange(itemFieldMappingValues, field, $event)"
-                          [ngModelOptions]="{ standalone: true }"
-                        >
-                          <option value="" translate="south.workflows.mapping-not-mapped"></option>
-                          @switch (field.attributeType) {
-                            @case ('boolean') {
-                              <option value="true" translate="enums.boolean.true"></option>
-                              <option value="false" translate="enums.boolean.false"></option>
-                            }
-                            @case ('string-select') {
-                              @for (value of field.selectableValues ?? []; track value) {
-                                <option [value]="value">{{ stringSelectOptionLabel(field, value) | translate }}</option>
-                              }
-                            }
-                            @case ('scan-mode') {
-                              @for (scanMode of scanModes; track scanMode.id) {
-                                <option [value]="scanMode.id">{{ scanMode.name }}</option>
-                              }
-                            }
-                            @default {}
-                          }
-                          @if (allowsVariable(field)) {
-                            <option [value]="variableSentinel" translate="south.workflows.mapping-use-variable"></option>
-                          }
-                        </select>
-                        @if (isVariableMode(itemFieldMappingValues, field)) {
-                          <input
-                            class="form-control form-control-sm mt-1"
-                            [attr.id]="'item-field-mapping-field-' + field.path + '-expression'"
-                            [(ngModel)]="itemFieldMappingValues[field.path]"
-                            [ngModelOptions]="{ standalone: true }"
-                            [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
-                          />
                         }
-                      } @else {
-                        <input
-                          class="form-control form-control-sm"
+                      </div>
+                    }
+                    <label [attr.for]="'item-field-mapping-field-' + field.path" [translate]="fieldLabelKey(field)"></label>
+                    @if (field.isEnablingReferral) {
+                      <span
+                        class="badge bg-secondary bg-opacity-25 text-secondary ms-1"
+                        translate="south.workflows.enabling-referral-badge"
+                      ></span>
+                    }
+                    @if (isMandatoryFieldMissing(field)) {
+                      <span class="badge bg-danger bg-opacity-25 text-danger ms-1" translate="south.workflows.mandatory-badge"></span>
+                    }
+                  </td>
+                  <td>
+                    @if (field.path === 'groupId') {
+                      <div ngbDropdown class="d-inline-block w-100">
+                        <button
+                          type="button"
+                          class="form-select form-select-sm w-100 d-flex justify-content-between align-items-center text-start"
                           [attr.id]="'item-field-mapping-field-' + field.path"
-                          [(ngModel)]="itemFieldMappingValues[field.path]"
+                          ngbDropdownToggle
+                        >
+                          <span class="text-truncate">{{ selectedGroupName() || ('south.items.group-none' | translate) }}</span>
+                        </button>
+                        <div ngbDropdownMenu class="w-100">
+                          <button type="button" ngbDropdownItem (click)="onSelectGroup(null)" translate="south.items.group-none"></button>
+                          @for (group of groups(); track group.id) {
+                            <div class="d-flex align-items-center justify-content-between px-2 group-row">
+                              <button type="button" ngbDropdownItem (click)="onSelectGroup(group.id)" class="flex-grow-1 text-start ps-2">
+                                {{ group.standardSettings.name }}
+                              </button>
+                              <div class="d-flex gap-1 pe-2">
+                                <button
+                                  type="button"
+                                  class="btn btn-sm btn-link p-0 text-primary"
+                                  [attr.aria-label]="'south.groups.edit-title' | translate"
+                                  (click)="onEditGroup(group, $event)"
+                                >
+                                  <i class="fa-solid fa-pencil" aria-hidden="true"></i>
+                                </button>
+                                <button
+                                  type="button"
+                                  class="btn btn-sm btn-link p-0 text-danger"
+                                  [attr.aria-label]="'common.delete' | translate"
+                                  (click)="onDeleteGroup(group, $event)"
+                                >
+                                  <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                                </button>
+                              </div>
+                            </div>
+                          }
+                          <div class="dropdown-divider"></div>
+                          <button type="button" ngbDropdownItem (click)="onAddGroup()" translate="south.items.create-new-group"></button>
+                        </div>
+                      </div>
+                    } @else if (isSelectType(field)) {
+                      <select
+                        class="form-select form-select-sm"
+                        [attr.id]="'item-field-mapping-field-' + field.path"
+                        [ngModel]="selectDisplayValue(field)"
+                        (ngModelChange)="onSelectChange(field, $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                      >
+                        <option value="" translate="south.workflows.mapping-not-mapped"></option>
+                        @switch (field.attributeType) {
+                          @case ('boolean') {
+                            <option value="true" translate="enums.boolean.true"></option>
+                            <option value="false" translate="enums.boolean.false"></option>
+                          }
+                          @case ('string-select') {
+                            @for (value of field.selectableValues ?? []; track value) {
+                              <option [value]="value">{{ stringSelectOptionLabel(field, value) | translate }}</option>
+                            }
+                          }
+                          @case ('scan-mode') {
+                            @for (scanMode of scanModes(); track scanMode.id) {
+                              <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                            }
+                          }
+                          @default {}
+                        }
+                        @if (allowsVariable(field)) {
+                          <option [value]="variableSentinel" translate="south.workflows.mapping-use-variable"></option>
+                        }
+                      </select>
+                      @if (isVariableMode(field)) {
+                        <input
+                          class="form-control form-control-sm mt-1"
+                          [attr.id]="'item-field-mapping-field-' + field.path + '-expression'"
+                          [attr.aria-label]="fieldLabelKey(field) | translate"
+                          [ngModel]="itemFieldMappingValues()[field.path]"
+                          (ngModelChange)="setMappingValue(field.path, $event)"
                           [ngModelOptions]="{ standalone: true }"
-                          [placeholder]="itemFieldPlaceholderKey(field) | translate"
+                          [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
                         />
                       }
-                    </td>
-                  </tr>
-                }
+                    } @else {
+                      <input
+                        class="form-control form-control-sm"
+                        [attr.id]="'item-field-mapping-field-' + field.path"
+                        [ngModel]="itemFieldMappingValues()[field.path]"
+                        (ngModelChange)="setMappingValue(field.path, $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                        [placeholder]="itemFieldPlaceholderKey(field) | translate"
+                      />
+                    }
+                  </td>
+                </tr>
               }
-            </tbody>
-          </table>
-        </div>
-      }
-    </form>
-  </div>
-}
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </form>
+</div>
 <div class="modal-footer">
   <div class="btn-group">
     <button
+      type="submit"
       [oib-save-button]="state"
       form="workflow-form"
       [translationKey]="directSave ? 'common.save' : 'common.ok'"

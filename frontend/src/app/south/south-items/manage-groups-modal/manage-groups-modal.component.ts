@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -12,6 +13,7 @@ import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/s
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
 
+import { DownloadService } from '../../../services/download.service';
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 
@@ -28,11 +30,17 @@ const enum ColumnSortState {
 
 type SortableColumn = 'name' | 'schedule' | 'itemCount';
 
+const SORT_ICONS: Record<ColumnSortState, string> = {
+  [ColumnSortState.INDETERMINATE]: 'fa-sort',
+  [ColumnSortState.ASCENDING]: 'fa-sort-up',
+  [ColumnSortState.DESCENDING]: 'fa-sort-down'
+};
+
 @Component({
   selector: 'oib-manage-groups-modal',
   templateUrl: './manage-groups-modal.component.html',
   styleUrl: './manage-groups-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
 export default class ManageGroupsModalComponent {
@@ -40,94 +48,47 @@ export default class ManageGroupsModalComponent {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
   private fb = inject(NonNullableFormBuilder);
+  private downloadService = inject(DownloadService);
 
-  directSave = true;
-  // shared by reference with the opener and mutated in place: displayedGroups is always set to a new array afterwards,
-  // which re-renders the template (including groups.length)
-  groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  readonly displayedGroups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
-  scanModes: Array<ScanModeDTO> = [];
-  manifest!: SouthConnectorManifest;
-  getItemCount!: (groupId: string) => number;
-  addOrEditGroup!: (command: {
+  readonly directSave = signal(true);
+  /**
+   * The opener's own group list, shared by reference and mutated in place (created groups are pushed, deleted ones
+   * spliced): edit-south keeps its in-memory groups in it. The template renders the `groups` snapshot instead, refreshed
+   * after every change.
+   */
+  private sharedGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  readonly groups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  private readonly manifest = signal<SouthConnectorManifest | null>(null);
+  private getItemCountFn: (groupId: string) => number = () => 0;
+  private addOrEditGroup!: (command: {
     mode: 'create' | 'edit';
     group: SouthItemGroupCommandDTO;
   }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-  deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
+  private deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
   readonly importing = signal(false);
   readonly importErrors = signal<Array<GroupImportError>>([]);
   readonly importSuccessCount = signal<number | null>(null);
 
-  searchControl = this.fb.control(null as string | null);
-  scheduleFilterControl = this.fb.control(null as string | null);
+  readonly searchControl = this.fb.control(null as string | null);
+  readonly scheduleFilterControl = this.fb.control(null as string | null);
+  private readonly searchText = toSignal(this.searchControl.valueChanges, { initialValue: this.searchControl.value });
+  private readonly scheduleFilter = toSignal(this.scheduleFilterControl.valueChanges, { initialValue: this.scheduleFilterControl.value });
 
-  columnSortStates: Record<SortableColumn, ColumnSortState> = {
-    name: ColumnSortState.INDETERMINATE,
-    schedule: ColumnSortState.INDETERMINATE,
-    itemCount: ColumnSortState.INDETERMINATE
-  };
-  currentColumnSort: SortableColumn | null = null;
+  /** The column the groups are sorted by, and in which order. */
+  private readonly columnSort = signal<{ column: SortableColumn | null; state: ColumnSortState }>({
+    column: null,
+    state: ColumnSortState.INDETERMINATE
+  });
 
-  constructor() {
-    this.searchControl.valueChanges.subscribe(() => this.refreshDisplayedGroups());
-    this.scheduleFilterControl.valueChanges.subscribe(() => this.refreshDisplayedGroups());
-  }
+  readonly hasHistorianCapabilities = computed(() => this.manifest()?.modes.history ?? false);
 
-  get hasHistorianCapabilities(): boolean {
-    return this.manifest?.modes?.history;
-  }
+  readonly displayedGroups = computed(() => {
+    const searchText = (this.searchText() || '').toLowerCase();
+    const scheduleFilter = this.scheduleFilter();
 
-  prepare(
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    scanModes: Array<ScanModeDTO>,
-    manifest: SouthConnectorManifest,
-    directSave: boolean,
-    getItemCount: (groupId: string) => number,
-    addOrEditGroup: (command: {
-      mode: 'create' | 'edit';
-      group: SouthItemGroupCommandDTO;
-    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
-  ) {
-    this.groups = groups;
-    this.scanModes = scanModes;
-    this.manifest = manifest;
-    this.directSave = directSave;
-    this.getItemCount = getItemCount;
-    this.addOrEditGroup = addOrEditGroup;
-    this.deleteGroup = deleteGroup;
-    this.refreshDisplayedGroups();
-  }
-
-  close() {
-    this.modal.close();
-  }
-
-  getScanModeName(group: SouthItemGroupDTO | SouthItemGroupCommandDTO): string {
-    const scanModeId =
-      (group as SouthItemGroupDTO).standardSettings.scanMode?.id || (group as SouthItemGroupCommandDTO).standardSettings.scanModeId;
-    return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || '';
-  }
-
-  toggleColumnSort(columnName: SortableColumn) {
-    this.currentColumnSort = columnName;
-    this.columnSortStates[this.currentColumnSort] = ((this.columnSortStates[this.currentColumnSort] + 1) % 3) as ColumnSortState;
-
-    Object.keys(this.columnSortStates).forEach(key => {
-      if (this.currentColumnSort !== key) {
-        this.columnSortStates[key as SortableColumn] = ColumnSortState.INDETERMINATE;
-      }
-    });
-
-    this.refreshDisplayedGroups();
-  }
-
-  private refreshDisplayedGroups() {
-    const searchText = (this.searchControl.value || '').toLowerCase();
-    const scheduleFilter = this.scheduleFilterControl.value;
-
-    let result = this.groups.filter(group => {
+    let result = this.groups().filter(group => {
       if (searchText && !group.standardSettings.name.toLowerCase().includes(searchText)) {
         return false;
       }
@@ -141,10 +102,11 @@ export default class ManageGroupsModalComponent {
       return true;
     });
 
-    if (this.currentColumnSort && this.columnSortStates[this.currentColumnSort] !== ColumnSortState.INDETERMINATE) {
-      const ascending = this.columnSortStates[this.currentColumnSort] === ColumnSortState.ASCENDING;
+    const { column, state } = this.columnSort();
+    if (column && state !== ColumnSortState.INDETERMINATE) {
+      const ascending = state === ColumnSortState.ASCENDING;
       result = [...result].sort((a, b) => {
-        switch (this.currentColumnSort) {
+        switch (column) {
           case 'name':
             return ascending
               ? a.standardSettings.name.localeCompare(b.standardSettings.name)
@@ -157,54 +119,107 @@ export default class ManageGroupsModalComponent {
             const diff = this.getItemCount(a.id!) - this.getItemCount(b.id!);
             return ascending ? diff : -diff;
           }
-          default:
-            return 0;
         }
       });
     }
 
-    this.displayedGroups.set(result);
+    return result;
+  });
+
+  prepare(
+    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    scanModes: Array<ScanModeDTO>,
+    manifest: SouthConnectorManifest,
+    directSave: boolean,
+    getItemCount: (groupId: string) => number,
+    addOrEditGroup: (command: {
+      mode: 'create' | 'edit';
+      group: SouthItemGroupCommandDTO;
+    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    deleteGroup: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+  ) {
+    this.sharedGroups = groups;
+    this.scanModes.set(scanModes);
+    this.manifest.set(manifest);
+    this.directSave.set(directSave);
+    this.getItemCountFn = getItemCount;
+    this.addOrEditGroup = addOrEditGroup;
+    this.deleteGroup = deleteGroup;
+    this.refreshGroups();
+  }
+
+  close() {
+    this.modal.close();
+  }
+
+  getItemCount(groupId: string): number {
+    return this.getItemCountFn(groupId);
+  }
+
+  getScanModeName(group: SouthItemGroupDTO | SouthItemGroupCommandDTO): string {
+    const scanModeId =
+      (group as SouthItemGroupDTO).standardSettings.scanMode?.id || (group as SouthItemGroupCommandDTO).standardSettings.scanModeId;
+    return this.scanModes().find(scanMode => scanMode.id === scanModeId)?.name || '';
+  }
+
+  /** The Font Awesome icon showing how the groups are sorted by this column. */
+  sortIcon(column: SortableColumn): string {
+    const { column: sortedColumn, state } = this.columnSort();
+    return SORT_ICONS[sortedColumn === column ? state : ColumnSortState.INDETERMINATE];
+  }
+
+  toggleColumnSort(column: SortableColumn) {
+    // a newly sorted column starts from INDETERMINATE (the other columns are reset), then cycles ascending, descending
+    this.columnSort.update(sort => ({
+      column,
+      state: (((sort.column === column ? sort.state : ColumnSortState.INDETERMINATE) + 1) % 3) as ColumnSortState
+    }));
+  }
+
+  /** Re-renders the opener's group list after it was changed in place. */
+  private refreshGroups() {
+    this.groups.set([...this.sharedGroups]);
   }
 
   onAddGroup() {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave;
-    component.prepareForCreation(this.scanModes, this.groups, this.manifest);
+    component.directSave = this.directSave();
+    component.prepareForCreation(this.scanModes(), this.sharedGroups, this.manifest()!);
     modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
-      this.groups.push(groupResult);
-      this.refreshDisplayedGroups();
+      this.sharedGroups.push(groupResult);
+      this.refreshGroups();
     });
   }
 
   onEditGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO) {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave;
-    component.prepareForEdition(this.scanModes, this.groups, this.manifest, group);
+    component.directSave = this.directSave();
+    component.prepareForEdition(this.scanModes(), this.sharedGroups, this.manifest()!, group);
     modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
-      const index = this.groups.findIndex(g => g.id === groupResult.id);
+      const index = this.sharedGroups.findIndex(g => g.id === groupResult.id);
       if (index >= 0) {
-        this.groups[index] = groupResult;
+        this.sharedGroups[index] = groupResult;
       } else {
-        this.groups.push(groupResult);
+        this.sharedGroups.push(groupResult);
       }
-      this.refreshDisplayedGroups();
+      this.refreshGroups();
     });
   }
 
   onDeleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO) {
     this.deleteGroup(group).subscribe(() => {
-      const index = this.groups.findIndex(g => g.id === group.id);
+      const index = this.sharedGroups.findIndex(g => g.id === group.id);
       if (index >= 0) {
-        this.groups.splice(index, 1);
+        this.sharedGroups.splice(index, 1);
       }
-      this.refreshDisplayedGroups();
+      this.refreshGroups();
     });
   }
 
   exportGroups() {
-    const rows = this.groups.map(group => ({
+    const rows = this.sharedGroups.map(group => ({
       name: group.standardSettings.name,
       scanMode: this.getScanModeName(group),
       startTimeOffset: group.historySettings.startTimeOffset,
@@ -215,12 +230,7 @@ export default class ManageGroupsModalComponent {
     }));
     const content = csv.unparse(rows, { header: true, delimiter: ',' });
     const blob = new Blob([content], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `groups_${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    this.downloadService.downloadFile({ blob, name: `groups_${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv` });
   }
 
   async onImportFileSelected(event: Event) {
@@ -234,14 +244,14 @@ export default class ManageGroupsModalComponent {
     this.importSuccessCount.set(null);
 
     const content = await file.text();
-    const parsed = csv.parse(content, { header: true, skipEmptyLines: true });
+    const parsed = csv.parse<Record<string, string>>(content, { header: true, skipEmptyLines: true });
 
-    const existingNames = new Set(this.groups.map(group => group.standardSettings.name.toLowerCase()));
+    const existingNames = new Set(this.sharedGroups.map(group => group.standardSettings.name.toLowerCase()));
     const seenNames = new Set<string>();
     const commands: Array<SouthItemGroupCommandDTO> = [];
     const errors: Array<GroupImportError> = [];
 
-    (parsed.data as Array<Record<string, string>>).forEach((row, index) => {
+    parsed.data.forEach((row, index) => {
       const rowNumber = index + 1;
       const name = (row['name'] || '').trim();
       const scanModeName = (row['scanMode'] || '').trim();
@@ -254,7 +264,7 @@ export default class ManageGroupsModalComponent {
         errors.push({ row: rowNumber, message: this.translateService.instant('south.groups.import.errors.duplicate-name', { name }) });
         return;
       }
-      const scanMode = this.scanModes.find(sm => sm.name.toLowerCase() === scanModeName.toLowerCase());
+      const scanMode = this.scanModes().find(sm => sm.name.toLowerCase() === scanModeName.toLowerCase());
       if (!scanMode) {
         errors.push({
           row: rowNumber,
@@ -276,7 +286,7 @@ export default class ManageGroupsModalComponent {
           recoveryStrategy,
           cachingStrategy: null
         }
-      } as SouthItemGroupCommandDTO);
+      });
     });
 
     this.importErrors.set(errors);
@@ -292,10 +302,10 @@ export default class ManageGroupsModalComponent {
         toArray()
       )
       .subscribe(results => {
-        results.forEach(result => this.groups.push(result));
+        results.forEach(result => this.sharedGroups.push(result));
         this.importing.set(false);
         this.importSuccessCount.set(results.length);
-        this.refreshDisplayedGroups();
+        this.refreshGroups();
       });
   }
 }

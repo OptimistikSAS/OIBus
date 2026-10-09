@@ -38,14 +38,12 @@ function emptyPage<T>(): Page<T> {
   selector: 'oib-item-test-result',
   templateUrl: './item-test-result.component.html',
   styleUrl: './item-test-result.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [LoadingSpinnerComponent, TranslatePipe, PaginationComponent, ProgressbarComponent]
 })
 export class ItemTestResultComponent {
   private readonly _result = signal<OIBusContent | null>(null);
-  get result() {
-    return this._result();
-  }
+  readonly result = this._result.asReadonly();
 
   /** Compact mode shrinks the result box (used when several are stacked, e.g. the test pipeline). */
   readonly compact = input<boolean>(false);
@@ -116,6 +114,7 @@ export class ItemTestResultComponent {
     });
   }
 
+  // kept as a getter (it reads a signal, so it is reactive) because the parent template reads it through a template reference
   get currentDisplayModeIcon() {
     const mode = this.displayMode();
     return mode ? this.displayModeIcons[mode] : '';
@@ -137,7 +136,7 @@ export class ItemTestResultComponent {
       }
     }
 
-    if (!this.result) return;
+    if (!this._result()) return;
 
     if (this.displayMode() === 'table') {
       this.resetPage();
@@ -175,7 +174,9 @@ export class ItemTestResultComponent {
     this.currentDisplayMode.emit(newMode);
   }
 
-  readonly activePage = computed<Page<any>>(() => (this.tableType() === 'time-values' ? this.tableView() : this.genericTableView()));
+  readonly activePage = computed<Page<OIBusTimeValue> | Page<Array<string>>>(() =>
+    this.tableType() === 'time-values' ? this.tableView() : this.genericTableView()
+  );
 
   readonly isContentEmpty = computed(() => {
     const content = this._result();
@@ -194,8 +195,8 @@ export class ItemTestResultComponent {
     try {
       this.tableType.set(this._result()?.type === 'time-values' ? 'time-values' : 'generic');
       this.changePage(0);
-    } catch (error: any) {
-      this.displayError(error.message, 'display-result-error');
+    } catch (error: unknown) {
+      this.displayError(error instanceof Error ? error.message : String(error), 'display-result-error');
     }
   }
 
