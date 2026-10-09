@@ -8,7 +8,7 @@ import { CommandSearchParam, OIBusCommandDTO } from '@oibus/shared/oia/command.m
 
 @Service()
 export class OibusCommandService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   search(searchParams: CommandSearchParam): Observable<Page<OIBusCommandDTO>> {
     const params: Record<string, string | Array<string>> = {

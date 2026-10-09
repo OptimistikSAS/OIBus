@@ -1,12 +1,23 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/api/scan-mode.model';
+import { ValidatedCronExpression } from '@oibus/shared/api/scan-mode.model';
 
+import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { ScanModeService } from './scan-mode.service';
+
+interface HttpCase {
+  name: string;
+  call: (service: ScanModeService) => Observable<unknown>;
+  method: string;
+  url: string;
+  body: unknown;
+  response: unknown;
+}
 
 describe('ScanModeService', () => {
   let http: HttpTestingController;
@@ -22,82 +33,67 @@ describe('ScanModeService', () => {
 
   afterEach(() => http.verify());
 
-  test('should get all scan modes', () => {
-    let expectedScanModes: Array<ScanModeDTO> = [];
-    service.list().subscribe(scanModes => (expectedScanModes = scanModes));
+  const command = testData.scanMode.command;
+  const scanMode = testData.scanMode.list[0];
+  const validatedCronExpression: ValidatedCronExpression = {
+    isValid: true,
+    errorMessage: '',
+    nextExecutions: ['2020-03-15T00:00:00.000Z'],
+    humanReadableForm: 'Every second'
+  };
 
-    http.expectOne('/api/scan-modes').flush([{ name: 'Scan Mode 1' }, { name: 'Scan Mode 2' }]);
+  test.each<HttpCase>([
+    {
+      name: 'list the scan modes',
+      call: s => s.list(),
+      method: 'GET',
+      url: '/api/scan-modes',
+      body: null,
+      response: testData.scanMode.list
+    },
+    { name: 'get a scan mode', call: s => s.findById('id1'), method: 'GET', url: '/api/scan-modes/id1', body: null, response: scanMode },
+    { name: 'create a scan mode', call: s => s.create(command), method: 'POST', url: '/api/scan-modes', body: command, response: scanMode },
+    {
+      name: 'update a scan mode',
+      call: s => s.update('id1', command),
+      method: 'PUT',
+      url: '/api/scan-modes/id1',
+      body: command,
+      response: null
+    },
+    { name: 'delete a scan mode', call: s => s.delete('id1'), method: 'DELETE', url: '/api/scan-modes/id1', body: null, response: null },
+    {
+      name: 'verify a cron expression',
+      call: s => s.verifyCron('* * * * * *'),
+      method: 'POST',
+      url: '/api/scan-modes/verify',
+      body: { cron: '* * * * * *' },
+      response: validatedCronExpression
+    }
+  ])('should $name', async ({ call, method, url, body, response }) => {
+    const result = await expectHttp(http, call(service), { method, url }, { body, response });
 
-    expect(expectedScanModes.length).toBe(2);
+    expect(result).toEqual(response);
   });
 
-  test('should get a scan mode', () => {
-    let expectedScanMode: ScanModeDTO | null = null;
-    const scanMode = { id: 'id1' } as ScanModeDTO;
+  test('should share the scan mode list between subscribers', async () => {
+    const list = await expectHttp(http, service.list(), { method: 'GET', url: '/api/scan-modes' }, { response: testData.scanMode.list });
 
-    service.findById('id1').subscribe(c => (expectedScanMode = c));
-
-    http.expectOne({ url: '/api/scan-modes/id1', method: 'GET' }).flush(scanMode);
-    expect(expectedScanMode!).toEqual(scanMode);
+    // no new request: http.verify() fails if one is made
+    await expect(firstValueFrom(service.list())).resolves.toEqual(list);
   });
 
-  test('should create a scan mode', () => {
-    let done = false;
-    const command = testData.scanMode.command;
+  test.each<Omit<HttpCase, 'body' | 'response'>>([
+    { name: 'create', call: s => s.create(command), method: 'POST', url: '/api/scan-modes' },
+    { name: 'update', call: s => s.update('id1', command), method: 'PUT', url: '/api/scan-modes/id1' },
+    { name: 'delete', call: s => s.delete('id1'), method: 'DELETE', url: '/api/scan-modes/id1' }
+  ])('should reload the scan mode list after a $name', async ({ call, method, url }) => {
+    await expectHttp(http, service.list(), { method: 'GET', url: '/api/scan-modes' }, { response: testData.scanMode.list });
 
-    service.create(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/scan-modes' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
+    await expectHttp(http, call(service), { method, url });
 
-  test('should update a scan mode', () => {
-    let done = false;
-    const command = testData.scanMode.command;
-
-    service.update('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/scan-modes/id1' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should delete a scan mode', () => {
-    let done = false;
-    service.delete('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/scan-modes/id1' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should verify a cron expression', () => {
-    let expectedValidatedCronExpression: ValidatedCronExpression | null = null;
-    const validatedCronExpression: ValidatedCronExpression = {
-      isValid: true,
-      errorMessage: '',
-      nextExecutions: [],
-      humanReadableForm: ''
-    };
-
-    service.verifyCron('* * * * * *').subscribe(c => (expectedValidatedCronExpression = c));
-
-    http.expectOne({ url: '/api/scan-modes/verify', method: 'POST' }).flush(validatedCronExpression);
-    expect(expectedValidatedCronExpression!).toEqual(validatedCronExpression);
-  });
-
-  test('should return invalid result when cron expression is not valid', () => {
-    let expectedValidatedCronExpression: ValidatedCronExpression | null = null;
-    const validatedCronExpression: ValidatedCronExpression = {
-      isValid: false,
-      errorMessage: 'Invalid cron expression',
-      nextExecutions: [],
-      humanReadableForm: ''
-    };
-
-    service.verifyCron('not-a-cron').subscribe(c => (expectedValidatedCronExpression = c));
-
-    http.expectOne({ url: '/api/scan-modes/verify', method: 'POST' }).flush(validatedCronExpression);
-    expect(expectedValidatedCronExpression!).toEqual(validatedCronExpression);
+    const reloadedList = [scanMode];
+    http.expectOne({ method: 'GET', url: '/api/scan-modes' }).flush(reloadedList);
+    await expect(firstValueFrom(service.list())).resolves.toEqual(reloadedList);
   });
 });

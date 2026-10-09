@@ -26,7 +26,7 @@ import { ignoreErrorUnlessStatusIs } from '../shared/error-interceptor.service';
  */
 @Service()
 export class EngineService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   /**
    * Get the engine settings
