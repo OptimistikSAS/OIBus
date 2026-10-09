@@ -296,7 +296,7 @@ export const extractDiscoveryQuery = (scope: Record<string, unknown>): string =>
 export const convertDelimiter = (delimiter: CsvCharacter): string => {
   switch (delimiter) {
     case 'NON_BREAKING_SPACE':
-      return ' ';
+      return '\u00a0';
     case 'COLON':
       return ':';
     case 'COMMA':
@@ -310,7 +310,7 @@ export const convertDelimiter = (delimiter: CsvCharacter): string => {
     case 'SEMI_COLON':
       return ';';
     case 'TAB':
-      return ' ';
+      return '\t';
   }
 };
 
