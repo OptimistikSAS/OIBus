@@ -18,10 +18,10 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class OibusCertificateFormControlComponent {
-  certificateAttribute = input.required<OIBusCertificateAttribute>();
-  certificates = input.required<Array<CertificateDTO>>();
+  readonly certificateAttribute = input.required<OIBusCertificateAttribute>();
+  readonly certificates = input.required<Array<CertificateDTO>>();
 }

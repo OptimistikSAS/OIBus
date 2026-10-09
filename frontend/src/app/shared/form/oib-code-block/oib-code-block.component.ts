@@ -22,7 +22,11 @@ import { basicSetup } from 'codemirror';
   selector: 'oib-code-block',
   templateUrl: './oib-code-block.component.html',
   styleUrl: './oib-code-block.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    // height of the editor container
+    '[style.--oib-code-block-height]': 'height()'
+  },
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -38,7 +42,6 @@ export class OibCodeBlockComponent implements OnDestroy, ControlValueAccessor {
   readonly height = input('30rem');
   readonly readOnly = input(false);
   readonly disabled = signal(false);
-  readonly chunkedValueProgress = signal(0);
 
   private editorView: EditorView | null = null;
   private pendingValue: string | null = null;

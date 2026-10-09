@@ -17,9 +17,9 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslatePipe, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class OIBusStringSelectFormControlComponent {
-  stringSelectAttribute = input.required<OIBusStringSelectAttribute>();
+  readonly stringSelectAttribute = input.required<OIBusStringSelectAttribute>();
 }

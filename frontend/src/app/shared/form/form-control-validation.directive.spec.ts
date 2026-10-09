@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { beforeEach, describe, expect, test } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import { FormControlValidationDirective } from './form-control-validation.directive';
 
@@ -14,7 +14,7 @@ import { FormControlValidationDirective } from './form-control-validation.direct
       <div class="form-group">
         <input class="form-control" id="lastName" formControlName="lastName" />
       </div>
-      <button id="save">Save</button>
+      <button type="submit" id="save">Save</button>
     </form>
   `,
   imports: [ReactiveFormsModule, FormControlValidationDirective],
@@ -42,14 +42,13 @@ describe('FormControlValidationDirective', () => {
     TestBed.configureTestingModule({});
 
     tester = new FormComponentTester();
-    tester.fixture.detectChanges();
   });
 
   test('should add the is-invalid CSS class when touched', async () => {
     await expect.element(tester.lastName).not.toHaveClass('is-invalid');
 
-    tester.lastName.element().dispatchEvent(new Event('blur'));
-    tester.fixture.detectChanges();
+    await tester.lastName.click();
+    await userEvent.tab();
 
     await expect.element(tester.lastName).toHaveClass('is-invalid');
   });
@@ -58,7 +57,6 @@ describe('FormControlValidationDirective', () => {
     await expect.element(tester.lastName).not.toHaveClass('is-invalid');
 
     await tester.save.click();
-    tester.fixture.detectChanges();
 
     await expect.element(tester.lastName).toHaveClass('is-invalid');
   });

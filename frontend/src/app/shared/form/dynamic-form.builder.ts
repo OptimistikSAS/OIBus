@@ -1,5 +1,7 @@
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
 
+import { Subscription } from 'rxjs';
+
 import { Instant } from '@oibus/shared/common/types';
 import {
   isEnabledOnPlatform,
@@ -17,7 +19,7 @@ export function addAttributeToForm(fb: NonNullableFormBuilder, formGroup: FormGr
   switch (attribute.type) {
     case 'object':
       {
-        const subGroup = fb.group<any>({});
+        const subGroup = fb.group<Record<string, AbstractControl>>({});
         attribute.attributes.forEach(attribute => {
           addAttributeToForm(fb, subGroup, attribute);
         });
@@ -67,12 +69,14 @@ export function createControl(fb: NonNullableFormBuilder, attribute: OIBusContro
  * `canEnableTarget` is an optional lazy guard (read at evaluation time, not setup time): when it returns false for a
  * target, the target is kept disabled even if its condition is met. Used to let platform restrictions win over
  * enabling conditions without re-subscribing when the platform loads.
+ * Returns the subscription to the value changes of the referenced controls, to unsubscribe when the form outlives the caller.
  */
 export function addEnablingConditions(
   form: FormGroup,
   enablingConditions: Array<OIBusEnablingCondition>,
   canEnableTarget?: (targetPathFromRoot: string) => boolean
-) {
+): Subscription {
+  const subscription = new Subscription();
   enablingConditions.forEach(condition => {
     const referenceControl = form.get(condition.referralPathFromRoot);
     const targetControl = form.get(condition.targetPathFromRoot);
@@ -81,7 +85,7 @@ export function addEnablingConditions(
       throw new Error('wrong configuration in manifest');
     }
 
-    const applyCondition = (value: any) => {
+    const applyCondition = (value: unknown) => {
       if (checkCondition(value, condition) && (!canEnableTarget || canEnableTarget(condition.targetPathFromRoot))) {
         targetControl.enable();
       } else {
@@ -90,8 +94,9 @@ export function addEnablingConditions(
     };
 
     applyCondition(referenceControl.value);
-    referenceControl.valueChanges.subscribe(applyCondition);
+    subscription.add(referenceControl.valueChanges.subscribe(applyCondition));
   });
+  return subscription;
 }
 
 /**
@@ -106,7 +111,7 @@ export function applyPlatformConditions(group: FormGroup, objectAttribute: OIBus
   });
 }
 
-const checkCondition = (value: any, condition: OIBusEnablingCondition): boolean => {
+const checkCondition = (value: unknown, condition: OIBusEnablingCondition): boolean => {
   const operator = condition.operator || 'EQUALS';
   if (operator === 'CONTAINS') {
     // For CONTAINS, check if the reference value (string) contains any of the condition values
@@ -115,10 +120,10 @@ const checkCondition = (value: any, condition: OIBusEnablingCondition): boolean 
     }
     return false;
   } else if (operator === 'NOT_EQUAL') {
-    return !condition.values.includes(value);
+    return !condition.values.some(conditionValue => conditionValue === value);
   } else {
     // Default EQUALS behavior
-    return condition.values.includes(value);
+    return condition.values.some(conditionValue => conditionValue === value);
   }
 };
 
@@ -228,7 +233,7 @@ export function asFormGroup(abstractControl: AbstractControl): FormGroup {
  */
 export function extractFormValue<T>(value: T): T | undefined {
   if (value === null || value === undefined) return value;
-  if (Array.isArray(value)) return value.map(item => extractFormValue(item)) as unknown as T;
+  if (Array.isArray(value)) return value.map(item => extractFormValue(item)) as T;
   if (typeof value === 'object') {
     if (Object.keys(value as object).length === 0) return undefined;
     return Object.fromEntries(Object.entries(value as object).map(([k, v]) => [k, extractFormValue(v)])) as T;

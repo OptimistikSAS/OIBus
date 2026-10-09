@@ -1,7 +1,6 @@
-import Papa from 'papaparse';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
-import { OIBusArrayAttribute } from '@oibus/shared/connector/form.model';
+import { OIBusArrayAttribute, OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 
 import {
   convertCsvDelimiter,
@@ -12,380 +11,209 @@ import {
   validateArrayElementsImport
 } from './csv.utils';
 
+const displayProperties = { row: 0, columns: 4, displayInViewMode: true };
+
+const stringAttr = (key: string): OIBusAttribute => ({
+  type: 'string',
+  key,
+  translationKey: key,
+  defaultValue: null,
+  validators: [],
+  displayProperties
+});
+const numberAttr = (key: string): OIBusAttribute => ({
+  type: 'number',
+  key,
+  translationKey: key,
+  defaultValue: null,
+  unit: null,
+  validators: [],
+  displayProperties
+});
+const booleanAttr = (key: string): OIBusAttribute => ({
+  type: 'boolean',
+  key,
+  translationKey: key,
+  defaultValue: false,
+  validators: [],
+  displayProperties
+});
+const objectAttr = (key: string, attributes: Array<OIBusAttribute>): OIBusObjectAttribute => ({
+  type: 'object',
+  key,
+  translationKey: key,
+  validators: [],
+  attributes,
+  enablingConditions: [],
+  displayProperties: { visible: true, wrapInBox: false }
+});
+const arrayAttr = (key: string, attributes: Array<OIBusAttribute>): OIBusArrayAttribute => ({
+  type: 'array',
+  key,
+  translationKey: key,
+  validators: [],
+  paginate: false,
+  numberOfElementPerPage: 20,
+  rootAttribute: objectAttr('item', attributes)
+});
+
+const csvFile = (content: string): File => new File([content], 'test.csv', { type: 'text/csv' });
+
 describe('csv.utils', () => {
-  const mockArrayAttribute = {
-    type: 'array' as const,
-    key: 'items',
-    translationKey: 'test.items',
-    validators: [],
-    rootAttribute: {
-      type: 'object' as const,
-      key: 'item',
-      translationKey: 'test.item',
-      validators: [],
-      attributes: [
-        {
-          type: 'string' as const,
-          key: 'name',
-          translationKey: 'test.name',
-          validators: [],
-          defaultValue: null,
-          displayProperties: { row: 0, columns: 12, displayInViewMode: true }
-        },
-        {
-          type: 'number' as const,
-          key: 'value',
-          translationKey: 'test.value',
-          validators: [],
-          defaultValue: null,
-          displayProperties: { row: 0, columns: 12, displayInViewMode: true },
-          unit: ''
-        }
-      ],
-      enablingConditions: [],
-      displayProperties: { visible: true, wrapInBox: false }
-    },
-    paginate: false,
-    numberOfElementPerPage: 25
-  };
+  const arrayAttribute = arrayAttr('items', [stringAttr('name'), numberAttr('value'), booleanAttr('enabled')]);
 
   describe('convertCsvDelimiter', () => {
-    test('should convert CSV characters to their delimiter counterpart', () => {
-      expect(convertCsvDelimiter('DOT')).toBe('.');
-      expect(convertCsvDelimiter('SEMI_COLON')).toBe(';');
-      expect(convertCsvDelimiter('COLON')).toBe(':');
-      expect(convertCsvDelimiter('COMMA')).toBe(',');
-      expect(convertCsvDelimiter('NON_BREAKING_SPACE')).toBe(' ');
-      expect(convertCsvDelimiter('SLASH')).toBe('/');
-      expect(convertCsvDelimiter('TAB')).toBe('  ');
-      expect(convertCsvDelimiter('PIPE')).toBe('|');
+    test.each([
+      { delimiter: 'DOT', expected: '.' },
+      { delimiter: 'SEMI_COLON', expected: ';' },
+      { delimiter: 'COLON', expected: ':' },
+      { delimiter: 'COMMA', expected: ',' },
+      { delimiter: 'NON_BREAKING_SPACE', expected: ' ' },
+      { delimiter: 'SLASH', expected: '/' },
+      { delimiter: 'TAB', expected: '\t' },
+      { delimiter: 'PIPE', expected: '|' }
+    ] as const)('should convert $delimiter', ({ delimiter, expected }) => {
+      expect(convertCsvDelimiter(delimiter)).toBe(expected);
     });
   });
 
   describe('exportArrayElements', () => {
-    let unparseSpy: ReturnType<typeof vi.spyOn>;
+    test('should export the fields of the elements described by the attribute', async () => {
+      const blob = exportArrayElements(
+        arrayAttribute,
+        [
+          { name: 'test1', value: 100, enabled: true, unknown: 'ignored' },
+          { name: 'test2', value: null }
+        ],
+        ';'
+      );
 
-    beforeEach(() => {
-      unparseSpy = vi.spyOn(Papa, 'unparse').mockReturnValue('csv-content');
+      expect(blob.type).toBe('text/csv');
+      expect(await blob.text()).toBe('name;value;enabled\r\ntest1;100;true\r\ntest2;;');
     });
 
-    test('should flatten elements and return a Blob', () => {
-      const arrayItems = [
-        { name: 'test1', value: 100 },
-        { name: 'test2', value: 200 }
-      ];
-      const delimiter = ',';
-
-      const result = exportArrayElements(mockArrayAttribute as unknown as OIBusArrayAttribute, arrayItems, delimiter);
-
-      expect(result instanceof Blob).toBe(true);
-      expect(result.type).toBe('text/csv');
-
-      expect(unparseSpy).toHaveBeenCalled();
-      const lastCall = unparseSpy.mock.calls[unparseSpy.mock.calls.length - 1];
-      const [data, config] = lastCall;
-      expect(config).toEqual({ columns: expect.arrayContaining(['name', 'value']), delimiter });
-      expect(data).toEqual([
-        { name: 'test1', value: 100 },
-        { name: 'test2', value: 200 }
+    test('should stringify the objects, the arrays and the object values', async () => {
+      const attribute = arrayAttr('items', [
+        objectAttr('nested', [objectAttr('level1', [stringAttr('level2')])]),
+        arrayAttr('list', []),
+        stringAttr('json'),
+        objectAttr('scalar', [])
       ]);
-    });
 
-    test('should flatten nested objects', () => {
-      const arrayAttributeWithNested = {
-        ...mockArrayAttribute,
-        rootAttribute: {
-          ...mockArrayAttribute.rootAttribute,
-          attributes: [
-            {
-              type: 'object' as const,
-              key: 'nested',
-              attributes: [{ type: 'string' as const, key: 'prop' }]
-            }
-          ]
-        }
-      };
+      const blob = exportArrayElements(
+        attribute,
+        [{ nested: { level1: { level2: 'final' } }, list: [1, 2], json: { a: 1 }, scalar: 'text' }],
+        ','
+      );
 
-      const arrayItems = [{ nested: { prop: 'val' } }];
-      const delimiter = ';';
-
-      exportArrayElements(arrayAttributeWithNested as unknown as OIBusArrayAttribute, arrayItems, delimiter);
-
-      const lastCall = unparseSpy.mock.calls[unparseSpy.mock.calls.length - 1];
-      const [data, config] = lastCall;
-      expect(config.delimiter).toBe(';');
-      expect(data[0]['nested']).toBe(JSON.stringify({ prop: 'val' }));
-    });
-
-    test('should stringify arrays and objects within special fields', () => {
-      const arrayAttributeWithComplex = {
-        ...mockArrayAttribute,
-        rootAttribute: {
-          ...mockArrayAttribute.rootAttribute,
-          attributes: [
-            { type: 'array' as const, key: 'list' },
-            { type: 'object' as const, key: 'obj_field' }
-          ]
-        }
-      };
-
-      const arrayItems = [{ list: [1, 2], obj_field: { a: 1 } }];
-
-      exportArrayElements(arrayAttributeWithComplex as unknown as OIBusArrayAttribute, arrayItems, ',');
-
-      const lastCall = unparseSpy.mock.calls[unparseSpy.mock.calls.length - 1];
-      const [data] = lastCall;
-      expect(data[0]['list']).toBe('[1,2]');
-    });
-
-    test('should handle recursion for nested objects', () => {
-      const attribute = {
-        ...mockArrayAttribute,
-        rootAttribute: {
-          type: 'object',
-          attributes: [
-            {
-              type: 'object',
-              key: 'level1',
-              attributes: [{ type: 'string', key: 'level2' }]
-            }
-          ]
-        }
-      };
-
-      const items = [{ level1: { level2: 'final' } }];
-      exportArrayElements(attribute as unknown as OIBusArrayAttribute, items, ',');
-
-      const lastCall = unparseSpy.mock.calls[unparseSpy.mock.calls.length - 1];
-      const [data] = lastCall;
-      expect(data[0]['level1']).toBe(JSON.stringify({ level2: 'final' }));
+      expect(await blob.text()).toBe('nested,list,json,scalar\r\n"{""level1"":{""level2"":""final""}}","[1,2]","{""a"":1}",text');
     });
   });
 
   describe('validateArrayElementsImport', () => {
-    let parseSpy: ReturnType<typeof vi.spyOn>;
+    test('should import the elements of the file, converting their values', async () => {
+      const file = csvFile('name,value,enabled\ntest1,100,true\ntest2,,0\n\ntest3,3,TRUE');
 
-    beforeEach(() => {
-      parseSpy = vi.spyOn(Papa, 'parse').mockReturnValue({
-        data: [],
-        meta: { delimiter: ',' }
-      } as any);
-    });
+      const result = await validateArrayElementsImport(file, ',', arrayAttribute);
 
-    const createMockFile = (content: string) => new File([content], 'test.csv', { type: 'text/csv' });
-
-    test('should validate and import CSV content', async () => {
-      const csvContent = 'name,value\ntest1,100';
-      const file = createMockFile(csvContent);
-      parseSpy.mockReturnValue({
-        data: [{ name: 'test1', value: '100' }],
-        meta: { delimiter: ',' }
-      } as any);
-
-      const result = await validateArrayElementsImport(file, ',', mockArrayAttribute as unknown as OIBusArrayAttribute);
-
-      expect(result.elements.length).toBe(1);
-      expect(result.elements[0]).toEqual({ name: 'test1', value: 100 });
-      expect(result.errors.length).toBe(0);
-    });
-
-    test('should detect duplicate names in CSV', async () => {
-      const file = createMockFile('');
-      parseSpy.mockReturnValue({
-        data: [
-          { name: 'dup', value: '1' },
-          { name: 'dup', value: '2' }
+      expect(result).toEqual({
+        elements: [
+          { name: 'test1', value: 100, enabled: true },
+          { name: 'test2', enabled: false },
+          { name: 'test3', value: 3, enabled: true }
         ],
-        meta: { delimiter: ',' }
-      } as any);
-
-      const result = await validateArrayElementsImport(file, ',', mockArrayAttribute as unknown as OIBusArrayAttribute);
-
-      expect(result.elements.length).toBe(1);
-      expect(result.errors.length).toBe(1);
-      expect(result.errors[0].error).toContain('Duplicate element name "dup"');
+        errors: []
+      });
     });
 
-    test('should detect names existing in current list', async () => {
-      const file = createMockFile('');
-      parseSpy.mockReturnValue({
-        data: [{ name: 'existing' }],
-        meta: { delimiter: ',' }
-      } as any);
+    test('should report the duplicated names, the existing names and the invalid values', async () => {
+      const file = csvFile('name,value\ndup,1\ndup,2\nexisting,3\nbad,not-a-number');
 
-      const existing = [{ name: 'existing' }];
-      const result = await validateArrayElementsImport(file, ',', mockArrayAttribute as unknown as OIBusArrayAttribute, existing);
+      const result = await validateArrayElementsImport(file, ',', arrayAttribute, [{ name: 'existing' }]);
 
-      expect(result.elements.length).toBe(0);
-      expect(result.errors.length).toBe(1);
-      expect(result.errors[0].error).toContain('Element name "existing" already exists');
+      expect(result.elements).toEqual([{ name: 'dup', value: 1 }]);
+      expect(result.errors).toEqual([
+        { element: { name: 'dup', value: '2' }, error: 'Row 2: Duplicate element name "dup" found in CSV file' },
+        { element: { name: 'existing', value: '3' }, error: 'Row 3: Element name "existing" already exists in the array' },
+        { element: { name: 'bad', value: 'not-a-number' }, error: 'Row 4: Invalid number value "not-a-number" for "value"' }
+      ]);
     });
 
-    test('should throw validation error if delimiter mismatches', async () => {
-      const file = createMockFile('');
-      parseSpy.mockReturnValue({
-        data: [],
-        meta: { delimiter: ';' }
-      } as any);
+    test('should parse the objects and arrays from JSON', async () => {
+      const attribute = arrayAttr('items', [
+        stringAttr('name'),
+        objectAttr('parent', [stringAttr('child')]),
+        arrayAttr('list', []),
+        arrayAttr('empty', [])
+      ]);
+      const file = csvFile('name;parent;list;empty\nitem;{"child":"nested-value"};[1,2,3];\nbad;;not-an-array;\nbad2;;{"a":1};');
 
-      await expect(validateArrayElementsImport(file, ',', mockArrayAttribute as unknown as OIBusArrayAttribute)).rejects.toThrow(
-        /does not correspond to the file delimiter/
+      const result = await validateArrayElementsImport(file, ';', attribute);
+
+      expect(result.elements).toEqual([{ name: 'item', parent: { child: 'nested-value' }, list: [1, 2, 3], empty: [] }]);
+      expect(result.errors.map(error => error.error)).toEqual([
+        'Row 2: Invalid array value for "list": not-an-array',
+        'Row 3: Invalid array value for "list": {"a":1}'
+      ]);
+    });
+
+    test('should throw when the delimiter cannot be used for the file', async () => {
+      // papaparse guesses the delimiter of the file when the given one cannot be a delimiter
+      await expect(validateArrayElementsImport(csvFile('name;value\na;1'), '"', arrayAttribute)).rejects.toThrow(
+        /^The entered delimiter """ does not correspond to the file delimiter/
       );
-    });
-
-    test('should handle unflattening of nested objects', async () => {
-      const attribute = {
-        ...mockArrayAttribute,
-        rootAttribute: {
-          type: 'object',
-          attributes: [
-            {
-              type: 'object',
-              key: 'parent',
-              attributes: [{ type: 'string', key: 'child' }]
-            }
-          ]
-        }
-      };
-
-      const file = createMockFile('');
-      parseSpy.mockReturnValue({
-        data: [{ parent: JSON.stringify({ child: 'nested-value' }) }],
-        meta: { delimiter: ',' }
-      } as any);
-
-      const result = await validateArrayElementsImport(file, ',', attribute as unknown as OIBusArrayAttribute);
-
-      expect(result.elements[0]).toEqual({ parent: { child: 'nested-value' } });
-    });
-
-    test('should parse arrays from JSON strings', async () => {
-      const attribute = {
-        ...mockArrayAttribute,
-        rootAttribute: {
-          type: 'object',
-          attributes: [{ type: 'array', key: 'list' }]
-        }
-      };
-
-      const file = createMockFile('');
-      parseSpy.mockReturnValue({
-        data: [{ list: '[1,2,3]' }],
-        meta: { delimiter: ',' }
-      } as any);
-
-      const result = await validateArrayElementsImport(file, ',', attribute as unknown as OIBusArrayAttribute);
-
-      expect(result.elements[0]).toEqual({ list: [1, 2, 3] });
-    });
-
-    test('should report errors for invalid types (e.g. bad number)', async () => {
-      const file = createMockFile('');
-      parseSpy.mockReturnValue({
-        data: [{ value: 'not-a-number' }],
-        meta: { delimiter: ',' }
-      } as any);
-
-      const result = await validateArrayElementsImport(file, ',', mockArrayAttribute as unknown as OIBusArrayAttribute);
-
-      expect(result.errors.length).toBe(1);
-      expect(result.errors[0].error).toContain('Invalid number value');
     });
   });
 
   describe('flattenPlainObject', () => {
-    test('should keep scalar leaves as-is (stringified)', () => {
-      expect(flattenPlainObject({ name: 'a', value: 42, active: true })).toEqual({ name: 'a', value: '42', active: 'true' });
-    });
-
-    test('should underscore-join nested object keys, at any depth', () => {
-      expect(flattenPlainObject({ a: { b: { c: 1 } } })).toEqual({ a_b_c: '1' });
-    });
-
-    test('should stringify arrays instead of expanding them into columns', () => {
-      expect(flattenPlainObject({ list: [1, 2, 3] })).toEqual({ list: '[1,2,3]' });
-    });
-
-    test('should turn null/undefined leaves into an empty string', () => {
-      expect(flattenPlainObject({ a: null, b: undefined })).toEqual({ a: '', b: '' });
-    });
-
-    test('should turn an empty nested object into an empty string rather than dropping the column', () => {
-      expect(flattenPlainObject({ a: {} })).toEqual({ a: '' });
-    });
-
-    test('should support a custom prefix for the whole value', () => {
-      expect(flattenPlainObject({ b: 1 }, 'a')).toEqual({ a_b: '1' });
+    test.each([
+      {
+        label: 'keep scalar leaves as strings',
+        value: { name: 'a', value: 42, active: true },
+        prefix: '',
+        expected: { name: 'a', value: '42', active: 'true' }
+      },
+      { label: 'underscore-join nested keys at any depth', value: { a: { b: { c: 1 } } }, prefix: '', expected: { a_b_c: '1' } },
+      { label: 'stringify arrays', value: { list: [1, 2, 3] }, prefix: '', expected: { list: '[1,2,3]' } },
+      { label: 'turn null and undefined into empty strings', value: { a: null, b: undefined }, prefix: '', expected: { a: '', b: '' } },
+      { label: 'keep a column for an empty object', value: { a: {} }, prefix: '', expected: { a: '' } },
+      { label: 'prefix the keys', value: { b: 1 }, prefix: 'a', expected: { a_b: '1' } }
+    ])('should $label', ({ value, prefix, expected }) => {
+      expect(flattenPlainObject(value, prefix)).toEqual(expected);
     });
   });
 
   describe('getElementName', () => {
-    test('should return name if present', () => {
-      expect(getElementName({ name: 'myName' })).toBe('myName');
-    });
-
-    test('should prioritize name over id', () => {
-      expect(getElementName({ name: 'myName', id: 'myId' })).toBe('myName');
-    });
-
-    test('should return id if name missing', () => {
-      expect(getElementName({ id: 'myId' })).toBe('myId');
-    });
-
-    test('should return key if name/id missing', () => {
-      expect(getElementName({ key: 'myKey' })).toBe('myKey');
-    });
-
-    test('should return title if name/id/key missing', () => {
-      expect(getElementName({ title: 'myTitle' })).toBe('myTitle');
-    });
-
-    test('should return fieldName if others missing', () => {
-      expect(getElementName({ fieldName: 'myField' })).toBe('myField');
-    });
-
-    test('should fallback to first non-empty string value', () => {
-      expect(getElementName({ other: 'fallback' })).toBe('fallback');
-    });
-
-    test('should return empty string if no suitable string found', () => {
-      expect(getElementName({ val: 123 })).toBe('');
-      expect(getElementName({})).toBe('');
+    test.each([
+      { label: 'the name', element: { name: 'myName', id: 'myId' }, expected: 'myName' },
+      { label: 'the id', element: { id: 'myId', key: 'myKey' }, expected: 'myId' },
+      { label: 'the key', element: { key: 'myKey', title: 'myTitle' }, expected: 'myKey' },
+      { label: 'the title', element: { title: 'myTitle', fieldName: 'myField' }, expected: 'myTitle' },
+      { label: 'the field name', element: { fieldName: 'myField', other: 'other' }, expected: 'myField' },
+      { label: 'the first non-empty string', element: { name: 1, empty: ' ', other: 'fallback' }, expected: 'fallback' },
+      { label: 'an empty string without string value', element: { val: 123 }, expected: '' },
+      { label: 'an empty string for an empty element', element: {}, expected: '' }
+    ])('should return $label', ({ element, expected }) => {
+      expect(getElementName(element)).toBe(expected);
     });
   });
 
   describe('findArrayAttributeInAttributes', () => {
-    test('should find attribute at root level', () => {
-      const attributes = [
-        { type: 'string', key: 'other' },
-        { type: 'array', key: 'target' }
-      ];
-      const result = findArrayAttributeInAttributes('target', attributes as any);
-      expect(result).not.toBeNull();
-      expect(result?.key).toBe('target');
+    const target = arrayAttr('target', []);
+
+    test.each([
+      { label: 'at root level', attributes: [stringAttr('other'), target] },
+      { label: 'in a nested object', attributes: [objectAttr('wrapper', [objectAttr('deeper', [target])])] }
+    ])('should find the array attribute $label', ({ attributes }) => {
+      expect(findArrayAttributeInAttributes('target', attributes)).toBe(target);
     });
 
-    test('should find attribute in nested object', () => {
-      const attributes = [
-        {
-          type: 'object',
-          key: 'wrapper',
-          attributes: [{ type: 'array', key: 'target' }]
-        }
-      ];
-      const result = findArrayAttributeInAttributes('target', attributes as any);
-      expect(result).not.toBeNull();
-      expect(result?.key).toBe('target');
+    test('should throw when the attribute is not an array', () => {
+      expect(() => findArrayAttributeInAttributes('target', [stringAttr('target')])).toThrow('Field "target" is not an array');
     });
 
-    test('should throw if key found but type is not array', () => {
-      const attributes = [{ type: 'string', key: 'target' }];
-      expect(() => findArrayAttributeInAttributes('target', attributes as any)).toThrow('Field "target" is not an array');
-    });
-
-    test('should return null if not found', () => {
-      const attributes = [{ type: 'string', key: 'other' }];
-      expect(findArrayAttributeInAttributes('missing', attributes as any)).toBeNull();
+    test('should return null when the attribute is not found', () => {
+      expect(findArrayAttributeInAttributes('missing', [stringAttr('other'), objectAttr('wrapper', [])])).toBeNull();
     });
   });
 });
