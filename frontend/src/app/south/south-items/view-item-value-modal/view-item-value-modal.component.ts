@@ -2,7 +2,7 @@ import { DatePipe, JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 import { SouthItemLastValueResponse } from '@oibus/shared/api/south-connector.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
@@ -12,12 +12,11 @@ import { SouthItemLastValue } from '@oibus/shared/domain/south-connector.model';
   selector: 'oib-view-item-value-modal',
   templateUrl: './view-item-value-modal.component.html',
   styleUrl: './view-item-value-modal.component.scss',
-  imports: [TranslateDirective, DatePipe, JsonPipe],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: true
+  imports: [TranslateDirective, TranslatePipe, DatePipe, JsonPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ViewItemValueModalComponent {
-  private modal = inject(NgbActiveModal);
+  private readonly modal = inject(NgbActiveModal);
 
   /** The item's own last cached value/instant, or null when nothing has been cached yet for it. */
   readonly itemLastValue = signal<SouthItemLastValue | null>(null);

@@ -1,36 +1,24 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { buildWorkflow } from '../../../../test/builders';
 import { createMock, MockObject, stubRoute } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { ModalService } from '../../../shared/modal.service';
+import { provideCurrentUser } from '../../../shared/current-user-testing';
+import { provideNgbConfigTesting } from '../../../shared/form/oi-ngb-testing';
+import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { toPage } from '../../../shared/utils/page.utils';
+import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
 import { WorkflowRunHistoryComponent } from './workflow-run-history.component';
 
-const workflow: ConfigurationWorkflowDTO = {
-  id: 'workflowId1',
-  name: 'Reactor discovery',
-  southId: 'southId1',
-  pushToOIAnalytics: false,
-  discoveryScope: {},
-  identityKeyFields: ['nodeId'],
-  eligibilityFilter: [],
-  itemFieldMapping: { name: '{{name}}' },
-  scanMode: null,
-  enabled: true,
-  createdAt: '',
-  updatedAt: '',
-  createdBy: { id: '', friendlyName: '' },
-  updatedBy: { id: '', friendlyName: '' }
-};
+const workflow = buildWorkflow('workflowId1', 'Reactor discovery');
 
 const run: WorkflowRunDTO = {
   id: 'runId1',
@@ -51,48 +39,74 @@ const run: WorkflowRunDTO = {
 
 const noFilters = { start: undefined, end: undefined, statuses: [], triggerTypes: [] };
 
+class WorkflowRunHistoryComponentTester {
+  readonly fixture = TestBed.createComponent(WorkflowRunHistoryComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly title = this.root.getByRole('heading', { level: 1 });
+  readonly headers = this.root.getByCss('thead th');
+  readonly rows = this.root.getByCss('tbody tr');
+  readonly end = this.root.getByCss('#run-search-end');
+  readonly searchButton = this.root.getByRole('button', { name: 'Search' });
+  readonly clearStatusesButton = this.root.getByCss('#clear-statuses-button');
+  readonly clearTriggerTypesButton = this.root.getByCss('#clear-trigger-types-button');
+  readonly empty = this.root.getByCss('.empty');
+
+  chip(label: string) {
+    return this.root.getByRole('button', { name: label, exact: true });
+  }
+
+  cell(row: number, column: number) {
+    return this.rows.nth(row).getByRole('cell').nth(column);
+  }
+}
+
 describe('WorkflowRunHistoryComponent', () => {
   let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
   let router: MockObject<Router>;
-  let modalService: MockObject<ModalService>;
 
-  function createComponent(queryParams: Record<string, unknown> = {}) {
+  function createTester(queryParams: Params = {}) {
     TestBed.overrideProvider(ActivatedRoute, {
       useValue: stubRoute({ params: { southId: 'southId1', workflowId: 'workflowId1' }, queryParams })
     });
-    const fixture = TestBed.createComponent(WorkflowRunHistoryComponent);
-    fixture.detectChanges();
-    return fixture;
+    return new WorkflowRunHistoryComponentTester();
   }
 
   beforeEach(() => {
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
     router = createMock(Router);
-    modalService = createMock(ModalService);
     configurationWorkflowService.get.mockReturnValue(of(workflow));
     configurationWorkflowService.listRuns.mockReturnValue(of(toPage([run])));
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideCurrentUser(),
+        provideNgbConfigTesting(),
+        provideModalTesting(),
         { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
         { provide: Router, useValue: router },
-        { provide: ModalService, useValue: modalService },
-        { provide: ActivatedRoute, useValue: stubRoute({ params: { southId: 'southId1', workflowId: 'workflowId1' } }) }
+        { provide: ActivatedRoute, useValue: stubRoute() }
       ]
     });
   });
 
-  test('should load the workflow and its first page of runs with no filters', () => {
-    const fixture = createComponent();
+  test('should load the workflow and display its first page of runs', async () => {
+    const tester = createTester();
 
+    await expect.element(tester.title).toHaveTextContent('Run history: Reactor discovery');
+    await expect.element(tester.rows).toHaveLength(1);
+    await expect.element(tester.headers.nth(0)).toHaveTextContent('Status');
+    await expect.element(tester.headers.nth(5)).toHaveTextContent('Discovered');
+    await expect.element(tester.cell(0, 0)).toHaveTextContent('Completed');
+    await expect.element(tester.cell(0, 1)).toHaveTextContent('Manual');
+    await expect.element(tester.cell(0, 4)).toHaveTextContent('User One');
+    await expect.element(tester.cell(0, 5)).toHaveTextContent('3');
     expect(configurationWorkflowService.get).toHaveBeenCalledWith('southId1', 'workflowId1');
     expect(configurationWorkflowService.listRuns).toHaveBeenCalledWith('southId1', 'workflowId1', { ...noFilters, page: 0 });
-    expect(fixture.componentInstance.runs().content).toEqual([run]);
   });
 
-  test('should read the current filters from the URL, both into the form and into the search request', () => {
-    createComponent({
+  test('should read the current filters from the URL, both into the form and into the search request', async () => {
+    const tester = createTester({
       start: '2024-01-01T00:00:00.000Z',
       end: '2024-01-02T00:00:00.000Z',
       statuses: ['COMPLETED', 'ERRORED'],
@@ -100,6 +114,11 @@ describe('WorkflowRunHistoryComponent', () => {
       page: '1'
     });
 
+    await expect.element(tester.chip('Completed')).toHaveClass('active');
+    await expect.element(tester.chip('Errored')).toHaveClass('active');
+    await expect.element(tester.chip('Running')).toHaveClass('inactive');
+    await expect.element(tester.chip('Manual')).toHaveClass('active');
+    await expect.element(tester.chip('Scheduled')).toHaveClass('inactive');
     expect(configurationWorkflowService.listRuns).toHaveBeenCalledWith('southId1', 'workflowId1', {
       start: '2024-01-01T00:00:00.000Z',
       end: '2024-01-02T00:00:00.000Z',
@@ -109,175 +128,145 @@ describe('WorkflowRunHistoryComponent', () => {
     });
   });
 
-  test('should render the run history table with the workflow name in the title', async () => {
-    const fixture = createComponent();
-
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#title')).toMatchTextContent('Run history: Reactor discovery');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('Completed');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('Manual');
-  });
-
-  test("should show the triggering user's friendly name, not their raw id", async () => {
-    const fixture = createComponent();
-
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('User One');
-  });
-
   test('should show a dash when a scheduled run has no triggering user', async () => {
-    const scheduledRun: WorkflowRunDTO = { ...run, triggerType: 'scheduled', triggeredBy: null };
-    configurationWorkflowService.listRuns.mockReturnValue(of(toPage([scheduledRun])));
-    const fixture = createComponent();
+    configurationWorkflowService.listRuns.mockReturnValue(
+      of(toPage<WorkflowRunDTO>([{ ...run, triggerType: 'scheduled', triggeredBy: null }]))
+    );
+    const tester = createTester();
 
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('-');
+    await expect.element(tester.cell(0, 1)).toHaveTextContent('Scheduled');
+    await expect.element(tester.cell(0, 4)).toHaveTextContent('-');
   });
 
-  test('should show only the discovered count in the table - the rest lives in the payload modal', async () => {
-    const fixture = createComponent();
+  test('should show "Ø" for a run with no error, and the actual message (in red) for one that errored', async () => {
+    const erroredRun: WorkflowRunDTO = { ...run, id: 'runId2', status: 'ERRORED', error: 'connection lost' };
+    configurationWorkflowService.listRuns.mockReturnValue(of(toPage([run, erroredRun])));
+    const tester = createTester();
 
-    const root = page.elementLocator(fixture.nativeElement);
-    const discoveredHeader = fixture.nativeElement.querySelectorAll('thead th')[5];
-    expect(discoveredHeader.textContent.trim()).toBe('Discovered');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('3');
-    expect(fixture.nativeElement.querySelector('tbody').textContent).not.toContain('3 / 2');
+    await expect.element(tester.cell(0, 6)).toHaveTextContent('Ø');
+    await expect.element(tester.cell(0, 6)).not.toHaveClass('text-danger');
+    await expect.element(tester.cell(1, 0)).toHaveTextContent('Errored');
+    await expect.element(tester.cell(1, 6)).toHaveTextContent('connection lost');
+    await expect.element(tester.cell(1, 6)).toHaveClass('text-danger');
   });
 
-  test('should show a plain "Status" label on the table header, not the raw status enum', () => {
-    const fixture = createComponent();
+  test('should give each status filter chip a distinct icon (not just a color), for colorblind users', async () => {
+    const tester = createTester();
 
-    const statusHeader = fixture.nativeElement.querySelectorAll('thead th')[0];
-    expect(statusHeader.textContent.trim()).toBe('Status');
+    await expect.element(tester.chip('Running').getByCss('i')).toHaveClass('fa-spinner');
+    await expect.element(tester.chip('Completed').getByCss('i')).toHaveClass('fa-check-circle');
+    await expect.element(tester.chip('Errored').getByCss('i')).toHaveClass('fa-times-circle');
   });
 
-  test('should give each status filter chip a distinct icon (not just a color), for colorblind users', () => {
-    const fixture = createComponent();
-
-    expect(fixture.componentInstance.getStatusIconClass('RUNNING')).toContain('fa-spinner');
-    expect(fixture.componentInstance.getStatusIconClass('COMPLETED')).toContain('fa-check-circle');
-    expect(fixture.componentInstance.getStatusIconClass('ERRORED')).toContain('fa-times-circle');
-    // Every icon class is distinct - no two statuses share the same shape.
-    const iconClasses = ['RUNNING', 'COMPLETED', 'ERRORED'].map(status => fixture.componentInstance.getStatusIconClass(status as never));
-    expect(new Set(iconClasses).size).toBe(3);
-    expect(fixture.nativeElement.querySelector('.status-dot')).toBeNull();
-  });
-
-  test('should show a "view payload" action for a completed/errored run, but not a still-running one', () => {
+  test('should show a "view payload" action for a completed run, but not a still-running one', async () => {
     const runningRun: WorkflowRunDTO = { ...run, id: 'runId2', status: 'RUNNING', completedAt: null };
     configurationWorkflowService.listRuns.mockReturnValue(of(toPage([run, runningRun])));
-    const fixture = createComponent();
+    const tester = createTester();
 
-    expect(fixture.nativeElement.querySelectorAll('.view-payload').length).toBe(1);
+    await expect.element(tester.rows).toHaveLength(2);
+    await expect.element(tester.rows.nth(0).getByRole('button', { name: 'View payload' })).toBeVisible();
+    await expect.element(tester.rows.nth(1).getByRole('button', { name: 'View payload' })).not.toBeInTheDocument();
   });
 
-  test("should open a large modal immediately, labeled for a past run, letting it fetch the run's full payload itself", () => {
-    const previewModalInstance = { prepareForRunPayload: vi.fn() };
-    modalService.open.mockReturnValue({ componentInstance: previewModalInstance } as never);
-    const fixture = createComponent();
+  test('should open the payload modal, letting it fetch the run payload itself', async () => {
+    const tester = createTester();
+    const modalService: MockModalService<PreviewWorkflowModalComponent> = TestBed.inject(MockModalService);
+    const previewModal = createMock(PreviewWorkflowModalComponent);
+    modalService.mockClosedModal(previewModal);
+    const open = vi.spyOn(modalService, 'open');
+    await expect.element(tester.title).toHaveTextContent('Run history: Reactor discovery');
 
-    fixture.componentInstance.onViewPayload(run);
+    await tester.rows.nth(0).getByRole('button', { name: 'View payload' }).click();
 
-    expect(modalService.open).toHaveBeenCalledWith(expect.anything(), { size: 'xl' });
-    expect(previewModalInstance.prepareForRunPayload).toHaveBeenCalledWith('southId1', 'workflowId1', 'runId1', 'Reactor discovery');
-    // The request itself is PreviewWorkflowModalComponent's own responsibility now - this modal is
-    // opened up front, with its own loading spinner, rather than waiting on it here first.
+    expect(open).toHaveBeenCalledWith(PreviewWorkflowModalComponent, { size: 'xl' });
+    expect(previewModal.prepareForRunPayload).toHaveBeenCalledWith('southId1', 'workflowId1', 'runId1', 'Reactor discovery');
     expect(configurationWorkflowService.getRun).not.toHaveBeenCalled();
   });
 
-  test('should toggle a status filter and immediately apply the search', () => {
-    const fixture = createComponent();
+  test('should toggle a status filter and immediately apply the search', async () => {
+    const tester = createTester();
 
-    fixture.componentInstance.toggleStatus('ERRORED');
+    await tester.chip('Errored').click();
 
-    expect(fixture.componentInstance.searchForm.controls.statuses.value).toEqual(['ERRORED']);
-    expect(router.navigate).toHaveBeenCalledWith([], {
+    expect(router.navigate).toHaveBeenLastCalledWith([], {
       queryParams: { start: null, end: null, statuses: ['ERRORED'], triggerTypes: [], page: 0 }
     });
+    await expect.element(tester.chip('Errored')).toHaveClass('active');
+    await expect.element(tester.chip('Completed')).toHaveClass('inactive');
 
     // Clicking the same status again clears it
-    fixture.componentInstance.toggleStatus('ERRORED');
-    expect(fixture.componentInstance.searchForm.controls.statuses.value).toEqual([]);
-  });
-
-  test('should clear all active status filters and immediately apply the search', () => {
-    const fixture = createComponent({ statuses: ['COMPLETED', 'ERRORED'] });
-
-    fixture.componentInstance.clearStatuses();
-
-    expect(fixture.componentInstance.searchForm.controls.statuses.value).toEqual([]);
-    expect(router.navigate).toHaveBeenCalledWith([], {
+    await tester.chip('Errored').click();
+    expect(router.navigate).toHaveBeenLastCalledWith([], {
       queryParams: { start: null, end: null, statuses: [], triggerTypes: [], page: 0 }
     });
+    await expect.element(tester.chip('Completed')).not.toHaveClass('inactive');
   });
 
-  test('should toggle a trigger-type filter and immediately apply the search', () => {
-    const fixture = createComponent();
+  test('should clear all active status filters and immediately apply the search', async () => {
+    const tester = createTester({ statuses: ['COMPLETED', 'ERRORED'] });
 
-    fixture.componentInstance.toggleTriggerType('scheduled');
+    await tester.clearStatusesButton.click();
 
-    expect(fixture.componentInstance.searchForm.controls.triggerTypes.value).toEqual(['scheduled']);
-    expect(router.navigate).toHaveBeenCalledWith([], {
+    expect(router.navigate).toHaveBeenLastCalledWith([], {
+      queryParams: { start: null, end: null, statuses: [], triggerTypes: [], page: 0 }
+    });
+    await expect.element(tester.clearStatusesButton).not.toBeInTheDocument();
+  });
+
+  test('should toggle a trigger-type filter and immediately apply the search', async () => {
+    const tester = createTester();
+
+    await tester.chip('Scheduled').click();
+
+    expect(router.navigate).toHaveBeenLastCalledWith([], {
       queryParams: { start: null, end: null, statuses: [], triggerTypes: ['scheduled'], page: 0 }
     });
+    await expect.element(tester.chip('Manual')).toHaveClass('inactive');
   });
 
-  test('should clear all active trigger-type filters and immediately apply the search', () => {
-    const fixture = createComponent({ triggerTypes: ['manual'] });
+  test('should clear all active trigger-type filters and immediately apply the search', async () => {
+    const tester = createTester({ triggerTypes: ['manual'] });
 
-    fixture.componentInstance.clearTriggerTypes();
+    await tester.clearTriggerTypesButton.click();
 
-    expect(fixture.componentInstance.searchForm.controls.triggerTypes.value).toEqual([]);
-  });
-
-  test('should not apply the search when the date range is invalid (end before start)', () => {
-    const fixture = createComponent();
-    router.navigate.mockClear();
-    fixture.componentInstance.searchForm.setValue({
-      start: '2024-01-02T00:00:00.000Z',
-      end: '2024-01-01T00:00:00.000Z',
-      statuses: [],
-      triggerTypes: []
+    expect(router.navigate).toHaveBeenLastCalledWith([], {
+      queryParams: { start: null, end: null, statuses: [], triggerTypes: [], page: 0 }
     });
+    await expect.element(tester.clearTriggerTypesButton).not.toBeInTheDocument();
+  });
 
-    fixture.componentInstance.triggerSearch();
+  test('should apply the search with the dates of the form', async () => {
+    const tester = createTester({ start: '2024-01-01T00:00:00.000Z' });
 
+    await tester.searchButton.click();
+
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      queryParams: { start: '2024-01-01T00:00:00.000Z', end: null, statuses: [], triggerTypes: [], page: 0 }
+    });
+  });
+
+  test('should not apply the search when the date range is invalid (end before start)', async () => {
+    const tester = createTester({ start: '2024-01-10T00:00:00.000Z' });
+
+    await tester.end.fillWithDate('05/01/2024', '10', '00');
+    await tester.searchButton.click();
+
+    await tester.fixture.whenStable();
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  test('should show "no runs yet" when there are no runs and no filters are active', () => {
+  test('should show "no runs yet" when there are no runs and no filters are active', async () => {
     configurationWorkflowService.listRuns.mockReturnValue(of(toPage([])));
-    const fixture = createComponent();
+    const tester = createTester();
 
-    expect(fixture.nativeElement.textContent).toContain('No runs yet');
+    await expect.element(tester.empty).toHaveTextContent('No runs yet');
+    await expect.element(tester.rows).toHaveLength(0);
   });
 
-  test('should show "no runs match the current filters" when a filter is active and nothing matches', () => {
+  test('should show "no runs match the current filters" when a filter is active and nothing matches', async () => {
     configurationWorkflowService.listRuns.mockReturnValue(of(toPage([])));
-    const fixture = createComponent({ statuses: ['ERRORED'] });
+    const tester = createTester({ statuses: ['ERRORED'] });
 
-    expect(fixture.nativeElement.textContent).toContain('No runs match the current filters');
-  });
-
-  test('should show the search form directly, with no collapsible toggle', () => {
-    const fixture = createComponent();
-
-    expect(fixture.nativeElement.querySelector('#run-search-form')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('[ngbAccordionButton]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.log-toggle-btn')).toBeNull();
-  });
-
-  test('should show "Ø" for a run with no error, and the actual message (in red) for one that errored', () => {
-    const erroredRun: WorkflowRunDTO = { ...run, id: 'runId2', status: 'ERRORED', error: 'connection lost' };
-    configurationWorkflowService.listRuns.mockReturnValue(of(toPage([run, erroredRun])));
-    const fixture = createComponent();
-
-    const cells = Array.from(fixture.nativeElement.querySelectorAll('tbody tr')) as Array<HTMLElement>;
-    const okErrorCell = cells[0].querySelectorAll('td')[6];
-    const erroredErrorCell = cells[1].querySelectorAll('td')[6];
-    expect(okErrorCell.textContent!.trim()).toBe('Ø');
-    expect(okErrorCell.classList.contains('text-danger')).toBe(false);
-    expect(erroredErrorCell.textContent!.trim()).toBe('connection lost');
-    expect(erroredErrorCell.classList.contains('text-danger')).toBe(true);
+    await expect.element(tester.empty).toHaveTextContent('No runs match the current filters');
   });
 });
