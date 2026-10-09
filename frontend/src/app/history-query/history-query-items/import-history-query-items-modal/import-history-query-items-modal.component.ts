@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -32,34 +32,38 @@ export interface HistoryQueryItemsCheckResult {
   imports: [TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
 export class ImportHistoryQueryItemsModalComponent {
-  private modal = inject(NgbActiveModal);
-  private translateService = inject(TranslateService);
-  private fb = inject(NonNullableFormBuilder);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly translateService = inject(TranslateService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  state = new ObservableState();
+  readonly state = new ObservableState();
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
-  initializeFile = new File([''], 'Choose a file');
+  private readonly initializeFile = new File([''], 'Choose a file');
   readonly selectedFile = signal<File>(this.initializeFile);
   readonly validationError = signal<CsvValidationError | null>(null);
   readonly checking = signal(false);
   readonly checkError = signal<string | null>(null);
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
     eraseExisting: [false]
   });
 
-  expectedHeaders: Array<string> = [];
-  optionalHeaders: Array<string> = [];
+  private expectedHeaders: Array<string> = [];
+  private optionalHeaders: Array<string> = [];
   readonly showEraseOption = signal(false);
   private checkFn!: (file: File, delimiter: string, deleteItemsNotPresent: boolean) => Observable<HistoryQueryItemsCheckResult>;
 
-  displaySettings: Array<OIBusAttribute> = [];
+  readonly displaySettings = signal<Array<OIBusAttribute>>([]);
   readonly newItemList = signal<Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>>([]);
   readonly errorList = signal<Array<{ item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO; error: string }>>([]);
   readonly displayedItemsNew = signal<Page<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>>(emptyPage());
   readonly displayedItemsError = signal<Page<{ item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO; error: string }>>(emptyPage());
+
+  readonly canImport = computed(
+    () => this.selectedFile() !== this.initializeFile && !this.validationError() && !this.checking() && this.newItemList().length > 0
+  );
 
   prepare(
     manifest: SouthConnectorManifest,
@@ -75,11 +79,7 @@ export class ImportHistoryQueryItemsModalComponent {
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       element => element.key === 'settings'
     )! as OIBusObjectAttribute;
-    this.displaySettings = itemSettingsManifest.attributes.filter(setting => isDisplayableAttribute(setting));
-  }
-
-  get canImport(): boolean {
-    return this.selectedFile() !== this.initializeFile && !this.validationError() && !this.checking() && this.newItemList().length > 0;
+    this.displaySettings.set(itemSettingsManifest.attributes.filter(setting => isDisplayableAttribute(setting)));
   }
 
   async onFileSelected(file: File): Promise<void> {
@@ -106,12 +106,13 @@ export class ImportHistoryQueryItemsModalComponent {
     });
   }
 
-  getFieldValue(element: any, field: string): string {
-    const foundFormControl = this.displaySettings.find(formControl => formControl.key === field);
-    if (foundFormControl && element[field] && foundFormControl.type === 'string-select') {
-      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
+  getFieldValue(settings: object, field: string): string {
+    const value: unknown = (settings as Record<string, unknown>)[field];
+    const foundFormControl = this.displaySettings().find(formControl => formControl.key === field);
+    if (foundFormControl && value && foundFormControl.type === 'string-select') {
+      return this.translateService.instant(`${foundFormControl.translationKey}.${value}`);
     }
-    return element[field];
+    return value == null ? '' : String(value);
   }
 
   changePageNew(pageNumber: number) {

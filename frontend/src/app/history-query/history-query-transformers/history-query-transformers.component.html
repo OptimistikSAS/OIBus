@@ -6,6 +6,7 @@
       </div>
       <div>
         <button
+          type="button"
           class="btn btn-primary btn-sm oib-box-btn"
           (click)="addTransformer($event)"
           translate="history-query.transformers.add"
@@ -52,17 +53,19 @@
                     type="button"
                     class="btn btn-link edit-transformer px-1 py-0"
                     [ngbTooltip]="'history-query.transformers.tooltips.edit' | translate"
+                    [attr.aria-label]="'history-query.transformers.tooltips.edit' | translate"
                     (click)="editTransformer(transformerWithOptions)"
                   >
-                    <span class="fa-solid fa-pencil"></span>
+                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                   </button>
                   <button
                     type="button"
                     class="btn btn-link delete-transformer px-1 py-0"
                     [ngbTooltip]="'history-query.transformers.tooltips.delete' | translate"
+                    [attr.aria-label]="'history-query.transformers.tooltips.delete' | translate"
                     (click)="deleteTransformer(transformerWithOptions)"
                   >
-                    <span class="fa-solid fa-trash-can"></span>
+                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                   </button>
                   <!-- Audit history button: only for saved transformers (the edit page works on unsaved ones) -->
                   @if (saveChangesDirectly()) {
@@ -70,9 +73,10 @@
                       type="button"
                       class="btn btn-link show-audit-transformer px-1 py-0"
                       [ngbTooltip]="'history-query.transformers.tooltips.audit' | translate"
+                      [attr.aria-label]="'history-query.transformers.tooltips.audit' | translate"
                       (click)="showAudit(transformerWithOptions)"
                     >
-                      <span class="fa-solid fa-history"></span>
+                      <span class="fa-solid fa-history" aria-hidden="true"></span>
                     </button>
                   }
                 </div>
