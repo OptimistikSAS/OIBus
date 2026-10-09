@@ -31,8 +31,8 @@ import { DownloadService } from './download.service';
  */
 @Service()
 export class SouthConnectorService {
-  private http = inject(HttpClient);
-  private downloadService = inject(DownloadService);
+  private readonly http = inject(HttpClient);
+  private readonly downloadService = inject(DownloadService);
 
   /**
    * Get South connectors manifests

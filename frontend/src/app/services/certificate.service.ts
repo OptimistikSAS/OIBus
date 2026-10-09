@@ -16,11 +16,11 @@ const ENDPOINT = '/api/certificates';
  */
 @Service()
 export class CertificateService {
-  private http = inject(HttpClient);
-  private downloadService = inject(DownloadService);
+  private readonly http = inject(HttpClient);
+  private readonly downloadService = inject(DownloadService);
 
-  private listTrigger$ = new BehaviorSubject<void>(undefined);
-  private list$ = this.listTrigger$.pipe(
+  private readonly listTrigger$ = new BehaviorSubject<void>(undefined);
+  private readonly list$ = this.listTrigger$.pipe(
     switchMap(() => this.http.get<Array<CertificateDTO>>(ENDPOINT)),
     shareReplay(1)
   );

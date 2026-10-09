@@ -1,15 +1,82 @@
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
-import { TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
-import { NorthConnectorManifest, NorthType } from '@oibus/shared/connector/north-manifest.model';
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '@oibus/shared/domain/engine.model';
+import { NorthType } from '@oibus/shared/connector/north-manifest.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchResult,
+  FileCacheContent,
+  OIBusConnectionTestResult
+} from '@oibus/shared/domain/engine.model';
 
+import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
+import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { NorthConnectorService } from './north-connector.service';
+
+interface HttpCase {
+  name: string;
+  call: (service: NorthConnectorService) => Observable<unknown>;
+  method: string;
+  url: string;
+  body: unknown;
+  response: unknown;
+}
+
+/** Background requests and inline-displayed errors must not be notified globally, except an expired session */
+function expectErrorsIgnoredUnlessUnauthorized(request: TestRequest) {
+  const shouldIgnore = request.request.context.get(SHOULD_IGNORE_ERROR_PREDICATE);
+  expect(shouldIgnore(new HttpErrorResponse({ status: 500 }))).toBe(true);
+  expect(shouldIgnore(new HttpErrorResponse({ status: 400 }))).toBe(true);
+  expect(shouldIgnore(new HttpErrorResponse({ status: 401 }))).toBe(false);
+}
+
+const northTypes: Array<NorthType> = [
+  { id: 'console', category: 'debug', types: ['any'] },
+  { id: 'mqtt', category: 'iot', types: ['time-values'] }
+];
+const cacheSearchResult: CacheSearchResult = {
+  searchDate: testData.constants.dates.DATE_1,
+  metrics: {
+    lastConnection: null,
+    lastRunStart: null,
+    lastRunDuration: null,
+    currentCacheSize: 10,
+    currentErrorSize: 0,
+    currentArchiveSize: 0
+  },
+  cache: [
+    {
+      filename: 'file1',
+      metadata: {
+        contentFile: 'file1.json',
+        contentSize: 10,
+        numberOfElement: 1,
+        createdAt: testData.constants.dates.DATE_1,
+        contentType: 'time-values'
+      }
+    }
+  ],
+  error: [],
+  archive: []
+};
+const fileCacheContent: FileCacheContent = {
+  content: '{}',
+  contentFilename: 'file1.json',
+  contentType: 'json',
+  truncated: false,
+  totalSize: 2
+};
+const updateCommand: CacheContentUpdateCommand = {
+  cache: { remove: ['file1'], move: [{ filename: 'file2', to: 'archive' }] },
+  error: { remove: [], move: [] },
+  archive: { remove: [], move: [] }
+};
+const connectionTestResult: OIBusConnectionTestResult = { items: [{ key: 'Connected', value: 'true' }] };
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -25,185 +92,142 @@ describe('NorthConnectorService', () => {
 
   afterEach(() => http.verify());
 
-  test('should get all North connector manifests', () => {
-    let expectedNorthConnectorTypes: Array<NorthType> = [];
-    service.getNorthTypes().subscribe(types => (expectedNorthConnectorTypes = types));
+  const command = testData.north.command;
+  const north = testData.north.list[0];
+  const transformer = north.transformers[0];
 
-    http.expectOne('/api/north/types').flush([
-      { category: 'Database', type: 'SQL', description: 'SQL description' },
-      { category: 'IoT', type: 'MQTT', description: 'MQTT description' }
-    ]);
-
-    expect(expectedNorthConnectorTypes.length).toBe(2);
-  });
-
-  test('should get a North connector manifest', () => {
-    let expectedManifest: NorthConnectorManifest | null = null;
-    service.getNorthManifest('console').subscribe(manifest => (expectedManifest = manifest));
-
-    http.expectOne('/api/north/manifests/console').flush(testData.north.manifest);
-
-    expect(expectedManifest!).toEqual(testData.north.manifest);
-  });
-
-  test('should get all North connectors', () => {
-    let expectedNorthConnectors: Array<NorthConnectorLightDTO> = [];
-    service.list().subscribe(northConnectors => (expectedNorthConnectors = northConnectors));
-
-    http.expectOne('/api/north').flush([{ name: 'North connector 1' }, { name: 'North connector 2' }]);
-
-    expect(expectedNorthConnectors.length).toBe(2);
-  });
-
-  test('should get a North connector', () => {
-    let expectedNorthConnector: NorthConnectorDTO | null = null;
-    const northConnector = { id: 'id1' } as NorthConnectorDTO;
-
-    service.findById('id1').subscribe(c => (expectedNorthConnector = c));
-
-    http.expectOne({ url: '/api/north/id1', method: 'GET' }).flush(northConnector);
-    expect(expectedNorthConnector!).toEqual(northConnector);
-  });
-
-  test('should create a North connector', () => {
-    let done = false;
-    const command = testData.north.command;
-
-    service.create(command, '').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should update a North connector', () => {
-    let done = false;
-    const command = testData.north.command;
-
-    service.update('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should delete a North connector', () => {
-    let done = false;
-    service.delete('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should add or edit a North connector transformer with options', () => {
-    let done = false;
-    service.addOrEditTransformer('id1', {} as TransformerDTOWithOptions).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/transformers' });
-    testRequest.flush({});
-    expect(done).toBe(true);
-  });
-
-  test('should remove a North connector transformer', () => {
-    let done = false;
-    service.removeTransformer('id1', 'transformerId').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/transformers/transformerId' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should search cache content', () => {
-    let result: CacheSearchResult | null = null;
-    const northCacheFiles: CacheSearchResult = {} as CacheSearchResult;
-
-    service
-      .searchCacheContent('id1', {
-        start: '2020-01-01T00:00:00.000Z',
-        end: '2021-01-01T00:00:00.000Z',
-        nameContains: 'file',
-        maxNumberOfFilesReturned: 1000
-      })
-      .subscribe(c => (result = c));
-
-    http
-      .expectOne({
-        url: '/api/north/id1/cache/search?maxNumberOfFilesReturned=1000&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
-        method: 'GET'
-      })
-      .flush(northCacheFiles);
-    expect(result!).toEqual(northCacheFiles);
-  });
-
-  test('should get cache file content', () => {
-    let result: FileCacheContent | null = null;
-    const northCacheFileContent: FileCacheContent = {} as FileCacheContent;
-    service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (result = c));
-
-    http
-      .expectOne({
-        url: '/api/north/id1/cache/content/file1?folder=cache',
-        method: 'GET'
-      })
-      .flush(northCacheFileContent);
-    expect(result!).toEqual(northCacheFileContent);
-  });
-
-  test('should update cache', () => {
-    let done = false;
-    const updateCommand = {} as CacheContentUpdateCommand;
-    service.updateCacheContent('id1', updateCommand).subscribe(() => (done = true));
-    const testRequest = http.expectOne({
+  test.each<HttpCase>([
+    { name: 'get the North types', call: s => s.getNorthTypes(), method: 'GET', url: '/api/north/types', body: null, response: northTypes },
+    {
+      name: 'get a North manifest',
+      call: s => s.getNorthManifest('console'),
+      method: 'GET',
+      url: '/api/north/manifests/console',
+      body: null,
+      response: testData.north.manifest
+    },
+    {
+      name: 'list the North connectors',
+      call: s => s.list(),
+      method: 'GET',
+      url: '/api/north',
+      body: null,
+      response: testData.north.listLight
+    },
+    { name: 'get a North connector', call: s => s.findById('id1'), method: 'GET', url: '/api/north/id1', body: null, response: north },
+    {
+      name: 'create a North connector',
+      call: s => s.create(command, ''),
       method: 'POST',
-      url: '/api/north/id1/cache/update'
-    });
-    testRequest.flush(updateCommand);
-    expect(done).toBe(true);
+      url: '/api/north',
+      body: command,
+      response: north
+    },
+    {
+      name: 'create a North connector duplicated from another one',
+      call: s => s.create(command, 'northId2'),
+      method: 'POST',
+      url: '/api/north?duplicate=northId2',
+      body: command,
+      response: north
+    },
+    {
+      name: 'update a North connector',
+      call: s => s.update('id1', command),
+      method: 'PUT',
+      url: '/api/north/id1',
+      body: command,
+      response: null
+    },
+    { name: 'delete a North connector', call: s => s.delete('id1'), method: 'DELETE', url: '/api/north/id1', body: null, response: null },
+    { name: 'start a North connector', call: s => s.start('id1'), method: 'POST', url: '/api/north/id1/start', body: null, response: null },
+    { name: 'stop a North connector', call: s => s.stop('id1'), method: 'POST', url: '/api/north/id1/stop', body: null, response: null },
+    {
+      name: 'reset the North metrics',
+      call: s => s.resetMetrics('id1'),
+      method: 'POST',
+      url: '/api/north/id1/metrics/reset',
+      body: null,
+      response: null
+    },
+    {
+      name: 'add or edit a North transformer',
+      call: s => s.addOrEditTransformer('id1', transformer),
+      method: 'POST',
+      url: '/api/north/id1/transformers',
+      body: transformer,
+      response: transformer
+    },
+    {
+      name: 'remove a North transformer',
+      call: s => s.removeTransformer('id1', 'transformerId'),
+      method: 'DELETE',
+      url: '/api/north/id1/transformers/transformerId',
+      body: null,
+      response: null
+    },
+    {
+      name: 'search the cache content with every filter',
+      call: s =>
+        s.searchCacheContent('id1', {
+          start: '2020-01-01T00:00:00.000Z',
+          end: '2021-01-01T00:00:00.000Z',
+          nameContains: 'file',
+          maxNumberOfFilesReturned: 1000
+        }),
+      method: 'GET',
+      url: '/api/north/id1/cache/search?maxNumberOfFilesReturned=1000&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
+      body: null,
+      response: cacheSearchResult
+    },
+    {
+      name: 'search the cache content without optional filters',
+      call: s => s.searchCacheContent('id1', { start: undefined, end: undefined, nameContains: undefined, maxNumberOfFilesReturned: 0 }),
+      method: 'GET',
+      url: '/api/north/id1/cache/search?maxNumberOfFilesReturned=0',
+      body: null,
+      response: cacheSearchResult
+    },
+    {
+      name: 'get a cache file content',
+      call: s => s.getCacheFileContent('id1', 'cache', 'file1'),
+      method: 'GET',
+      url: '/api/north/id1/cache/content/file1?folder=cache',
+      body: null,
+      response: fileCacheContent
+    },
+    {
+      name: 'update the cache content',
+      call: s => s.updateCacheContent('id1', updateCommand),
+      method: 'POST',
+      url: '/api/north/id1/cache/update',
+      body: updateCommand,
+      response: null
+    }
+  ])('should $name', async ({ call, method, url, body, response }) => {
+    const result = await expectHttp(http, call(service), { method, url }, { body, response });
+
+    expect(result).toEqual(response);
   });
 
-  test('should reset North metrics', () => {
-    let done = false;
+  test('should get the North metrics and only notify an expired session', async () => {
+    const result = firstValueFrom(service.getMetrics('id1'));
 
-    service.resetMetrics('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/metrics/reset' });
-    expect(testRequest.request.body).toBeNull();
-    testRequest.flush(null);
-    expect(done).toBe(true);
+    const request = http.expectOne({ method: 'GET', url: '/api/north/id1/metrics' });
+    expectErrorsIgnoredUnlessUnauthorized(request);
+    request.flush(testData.north.metrics);
+
+    await expect(result).resolves.toEqual(testData.north.metrics);
   });
 
-  test('should get North metrics', () => {
-    let result: unknown = null;
-    service.getMetrics('id1').subscribe(metrics => (result = metrics));
-    http.expectOne({ method: 'GET', url: '/api/north/id1/metrics' }).flush(testData.north.metrics);
-    expect(result).toEqual(testData.north.metrics);
-  });
+  test('should test a North connection and leave the error display to the caller', async () => {
+    const result = firstValueFrom(service.testConnection('id1', command.settings, command.type));
 
-  test('should test a North connector connection', () => {
-    let done = false;
-    const command = testData.north.command;
+    const request = http.expectOne({ method: 'POST', url: '/api/north/id1/test/connection?northType=file-writer' });
+    expect(request.request.body).toEqual(command.settings);
+    expectErrorsIgnoredUnlessUnauthorized(request);
+    request.flush(connectionTestResult);
 
-    service.testConnection('id1', command.settings, command.type).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/test/connection?northType=file-writer' });
-    expect(testRequest.request.body).toEqual(command.settings);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should start a North', () => {
-    let done = false;
-
-    service.start('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/start' });
-    expect(testRequest.request.body).toEqual(null);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should stop a North', () => {
-    let done = false;
-
-    service.stop('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/stop' });
-    expect(testRequest.request.body).toEqual(null);
-    testRequest.flush(null);
-    expect(done).toBe(true);
+    await expect(result).resolves.toEqual(connectionTestResult);
   });
 });

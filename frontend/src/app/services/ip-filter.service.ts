@@ -10,7 +10,7 @@ import { IPFilterCommandDTO, IPFilterDTO } from '@oibus/shared/api/ip-filter.mod
  */
 @Service()
 export class IpFilterService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   /**
    * Get the IP filters

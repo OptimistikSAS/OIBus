@@ -12,7 +12,7 @@ import { Group, Item, LogSearchParam, Scope } from '@oibus/shared/domain/logs.mo
  */
 @Service()
 export class LogService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   /**
    * Retrieve the Logs from search params

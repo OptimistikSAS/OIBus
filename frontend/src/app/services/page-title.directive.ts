@@ -9,7 +9,7 @@ import { Title } from '@angular/platform-browser';
   selector: 'oib-page-title'
 })
 export class PageTitleDirective implements OnChanges {
-  private titleService = inject(Title);
+  private readonly titleService = inject(Title);
 
   /**
    * The mandatory i18n key to use for the title, for example `<oib-page-title />`

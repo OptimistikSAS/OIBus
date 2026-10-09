@@ -18,10 +18,10 @@ import {
  */
 @Service()
 export class TransformerService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private listTrigger$ = new BehaviorSubject<void>(undefined);
-  private list$ = this.listTrigger$.pipe(
+  private readonly listTrigger$ = new BehaviorSubject<void>(undefined);
+  private readonly list$ = this.listTrigger$.pipe(
     switchMap(() => this.http.get<Array<TransformerDTO>>(`/api/transformers/list`)),
     shareReplay(1)
   );
