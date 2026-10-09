@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, exhaustMap, map, startWith, Subject, switchMap, takeWhile, tap } from 'rxjs';
 
 import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
 import { Page } from '@oibus/shared/common/types';
@@ -52,34 +52,50 @@ const REGISTRATION_CHECK_DURATION = 3000;
   ],
   templateUrl: './oia-registration.component.html',
   styleUrl: './oia-registration.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [PageLoader]
 })
 export class OIARegistrationComponent {
-  private oibusService = inject(EngineService);
-  private oibusCommandService = inject(OibusCommandService);
-  private notificationService = inject(NotificationService);
-  private confirmationService = inject(ConfirmationService);
-  private modalService = inject(ModalService);
-  private router = inject(Router);
-  private pageLoader = inject(PageLoader);
-  private destroyRef = inject(DestroyRef);
+  private readonly oibusService = inject(EngineService);
+  private readonly oibusCommandService = inject(OibusCommandService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly modalService = inject(ModalService);
+  private readonly router = inject(Router);
+  private readonly pageLoader = inject(PageLoader);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  registration = signal<RegistrationSettingsDTO | null>(null);
-  private ignoreRemoteUpdate = false;
+  readonly registration = signal<RegistrationSettingsDTO | null>(null);
+  private readonly ignoreRemoteUpdate = toSignal(this.oibusService.getInfo().pipe(map(info => info.ignoreRemoteUpdate)), {
+    initialValue: false
+  });
   readonly commands = signal<Page<OIBusCommandDTO>>(emptyPage());
   readonly statusList = OIBUS_COMMAND_STATUS;
   readonly typeList = OIBUS_COMMAND_TYPES;
-  registrationSubscription = new Subscription();
-  route = inject(ActivatedRoute);
-  readonly searchForm = inject(NonNullableFormBuilder).group({
-    types: this.route.snapshot.queryParamMap.getAll('types'),
-    status: this.route.snapshot.queryParamMap.getAll('status')
+  // true to (re)start checking the registration until it is no longer pending, false to stop checking it
+  private readonly registrationCheck = new Subject<boolean>();
+  readonly searchForm = this.fb.group({
+    // wrapped in a control: an array given to group() would be read as [value, validators]
+    types: this.fb.control(this.route.snapshot.queryParamMap.getAll('types') as Array<OIBusCommandType>),
+    status: this.fb.control(this.route.snapshot.queryParamMap.getAll('status') as Array<OIBusCommandStatus>)
   });
 
   constructor() {
-    this.oibusService.getInfo().subscribe(info => (this.ignoreRemoteUpdate = info.ignoreRemoteUpdate));
-    this.createRegistrationSubscription();
+    this.registrationCheck
+      .pipe(
+        startWith(true),
+        switchMap(check =>
+          check
+            ? visibleTimer(REGISTRATION_CHECK_DURATION).pipe(
+                exhaustMap(() => this.oibusService.getRegistrationSettings()),
+                takeWhile(registration => registration.status === 'PENDING', true)
+              )
+            : EMPTY
+        ),
+        takeUntilDestroyed()
+      )
+      .subscribe(registration => this.registration.set(registration));
     this.pageLoader.pageLoads$
       .pipe(
         switchMap(page => {
@@ -97,46 +113,26 @@ export class OIARegistrationComponent {
             .search({ page, types, status, start: undefined, end: undefined, ack: undefined })
             .pipe(catchError(() => EMPTY));
         }),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed()
       )
       .subscribe(commands => {
         this.commands.set(commands);
       });
-    this.destroyRef.onDestroy(() => this.registrationSubscription.unsubscribe());
   }
 
   register(): void {
     const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
-    modalRef.componentInstance.prepare(this.registration()!, 'register', this.ignoreRemoteUpdate);
+    modalRef.componentInstance.prepare(this.registration()!, 'register', this.ignoreRemoteUpdate());
 
     modalRef.result.pipe(tap(() => this.notificationService.success('oia-module.registration.saved'))).subscribe(() => {
-      this.createRegistrationSubscription();
+      this.registrationCheck.next(true);
     });
   }
 
   editRegister(): void {
     const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
-    modalRef.componentInstance.prepare(this.registration()!, 'edit', this.ignoreRemoteUpdate);
+    modalRef.componentInstance.prepare(this.registration()!, 'edit', this.ignoreRemoteUpdate());
     this.refreshAfterModalClosed(modalRef);
-  }
-
-  createRegistrationSubscription(): void {
-    this.registrationSubscription.unsubscribe();
-    this.registrationSubscription = new Subscription();
-    this.registrationSubscription.add(
-      visibleTimer(REGISTRATION_CHECK_DURATION)
-        .pipe(
-          exhaustMap(() => {
-            return this.oibusService.getRegistrationSettings();
-          })
-        )
-        .subscribe(registration => {
-          this.registration.set(registration);
-          if (this.registration()!.status !== 'PENDING') {
-            this.registrationSubscription.unsubscribe();
-          }
-        })
-    );
   }
 
   unregister() {
@@ -150,8 +146,8 @@ export class OIARegistrationComponent {
         switchMap(() => this.oibusService.getRegistrationSettings())
       )
       .subscribe(registration => {
+        this.registrationCheck.next(false);
         this.registration.set(registration);
-        this.registrationSubscription.unsubscribe();
       });
   }
 
@@ -170,7 +166,7 @@ export class OIARegistrationComponent {
     modal.componentInstance.prepare(command);
   }
 
-  private refreshAfterModalClosed(modalRef: Modal<any>) {
+  private refreshAfterModalClosed(modalRef: Modal<RegisterOibusModalComponent>) {
     modalRef.result
       .pipe(switchMap(() => this.oibusService.getRegistrationSettings()))
       .subscribe((registration: RegistrationSettingsDTO) => {
