@@ -5,7 +5,7 @@
   @if (validationError(); as validationError) {
     <div class="alert alert-danger" role="alert">
       <h6>
-        <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+        <i class="fa-solid fa-exclamation-triangle me-2"></i>
         <span translate="south.items.import.format-error-title"></span>
       </h6>
       <p translate="south.items.import.format-error-description"></p>
@@ -37,7 +37,7 @@
   }
   @if (checkError(); as checkError) {
     <div class="alert alert-danger" role="alert">
-      <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+      <i class="fa-solid fa-exclamation-triangle me-2"></i>
       <span translate="south.items.import.check-error" [translateParams]="{ error: checkError }"></span>
     </div>
   }
@@ -95,7 +95,7 @@
   @if (itemsError.totalElements > 0) {
     <div>
       <h6>
-        <i class="fa fa-solid fa-times me-2" style="color: red"></i>
+        <i class="fa-solid fa-times me-2" style="color: red"></i>
         <span translate="south.items.import.error-title"></span>
       </h6>
       <table class="mb-2 table table-sm table-hover oib-simple-table">
@@ -129,7 +129,7 @@
   @if (itemsNew.totalElements > 0) {
     <div>
       <h6>
-        <i class="fa fa-solid fa-check me-2" style="color: green"></i>
+        <i class="fa-solid fa-check me-2" style="color: green"></i>
         <span translate="south.items.import.valid-title"></span>
       </h6>
       <div class="table-responsive">

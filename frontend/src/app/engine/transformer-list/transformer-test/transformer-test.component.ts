@@ -73,7 +73,7 @@ export class TransformerTestComponent implements OnChanges {
 
   readonly displayModeIcons: Record<ContentDisplayMode, string> = {
     table: 'fa-table',
-    any: 'fa-file-text',
+    any: 'fa-file-lines',
     json: 'fa-code'
   };
 

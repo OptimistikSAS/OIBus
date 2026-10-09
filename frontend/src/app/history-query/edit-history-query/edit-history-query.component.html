@@ -307,7 +307,7 @@
                     [ngbTooltip]="'history-query.items.tooltips.add' | translate"
                     (click)="addItem()"
                   >
-                    <span class="fa fa-plus"></span>
+                    <span class="fa-solid fa-plus"></span>
                   </button>
                   <button
                     type="button"
@@ -360,7 +360,7 @@
                       [disabled]="getSelectedItemsCount() === filteredItems.length"
                       id="select-all-button"
                     >
-                      <span class="fa fa-check-square me-1"></span>
+                      <span class="fa-solid fa-check-square me-1"></span>
                       <span translate="history-query.items.select-all"></span>
                     </button>
                     <button
@@ -370,27 +370,27 @@
                       [disabled]="getSelectedItemsCount() === 0"
                       id="unselect-all-button"
                     >
-                      <span class="fa fa-square-o me-1"></span>
+                      <span class="fa-solid fa-square me-1"></span>
                       <span translate="history-query.items.unselect-all"></span>
                     </button>
                     @if (getSelectedItemsCount() > 0) {
                       <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
                         <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
                           <span translate="history-query.items.mass-actions" [translateParams]="{ count: selectedItems.size }"></span>
-                          <span class="fa fa-caret-down ms-1"></span>
+                          <span class="fa-solid fa-caret-down ms-1"></span>
                         </button>
                         <div ngbDropdownMenu>
                           <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
-                            <span class="fa fa-check me-2"></span>
+                            <span class="fa-solid fa-check me-2"></span>
                             <span translate="history-query.items.enable"></span>
                           </button>
                           <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
-                            <span class="fa fa-times me-2"></span>
+                            <span class="fa-solid fa-times me-2"></span>
                             <span translate="history-query.items.disable"></span>
                           </button>
                           <div class="dropdown-divider"></div>
                           <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
-                            <span class="fa fa-trash me-2"></span>
+                            <span class="fa-solid fa-trash-can me-2"></span>
                             <span translate="history-query.items.delete"></span>
                           </button>
                         </div>
@@ -410,13 +410,13 @@
                           (click)="toggleColumnSort('enabled')"
                         >
                           <span translate="history-query.items.status" class="me-2"></span>
-                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.enabled] }}"></span>
+                          <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.enabled] }}"></span>
                         </button>
                       </th>
                       <th>
                         <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
                           <span translate="history-query.items.name" class="me-2"></span>
-                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+                          <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.name] }}"></span>
                         </button>
                       </th>
                       <th></th>
@@ -450,7 +450,7 @@
                               [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
                               (click)="editItem(item)"
                             >
-                              <span class="fa fa-pencil"></span>
+                              <span class="fa-solid fa-pencil"></span>
                             </button>
                             <button
                               type="button"
@@ -458,7 +458,7 @@
                               [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
                               (click)="duplicateItem(item)"
                             >
-                              <span class="fa fa-copy"></span>
+                              <span class="fa-solid fa-copy"></span>
                             </button>
                             <button
                               type="button"
@@ -466,7 +466,7 @@
                               [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
                               (click)="deleteItem(item)"
                             >
-                              <span class="fa fa-trash"></span>
+                              <span class="fa-solid fa-trash-can"></span>
                             </button>
                           </div>
                         </td>

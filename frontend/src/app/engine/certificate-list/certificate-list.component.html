@@ -17,7 +17,7 @@
           [ngbTooltip]="'engine.certificate.tooltips.add' | translate"
           (click)="addCertificate()"
         >
-          <span class="fa fa-plus"></span>
+          <span class="fa-solid fa-plus"></span>
         </button>
         <button
           type="button"
@@ -53,7 +53,7 @@
               (click)="toggleSort('updatedAt')"
             >
               <span translate="engine.certificate.updated-at" class="me-2"></span>
-              <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+              <span class="fa-solid {{ getSortIcon('updatedAt') }}"></span>
             </button>
           </th>
           <th class="last-column"></th>
@@ -72,7 +72,7 @@
                 [ngbTooltip]="'engine.certificate.tooltips.copy-public-key' | translate"
                 oibClipboardCopy
               >
-                <span class="fa fa-copy"></span>
+                <span class="fa-solid fa-copy"></span>
               </button>
             </td>
             <td>{{ certificate.certificate }}</td>
@@ -84,14 +84,14 @@
                   [ngbTooltip]="'engine.certificate.tooltips.copy-certificate' | translate"
                   oibClipboardCopy
                 >
-                  <span class="fa fa-copy"></span>
+                  <span class="fa-solid fa-copy"></span>
                 </button>
                 <button
                   class="btn btn-link px-1 py-0 export-certificate"
                   [ngbTooltip]="'engine.certificate.tooltips.export' | translate"
                   (click)="exportCertificate(certificate)"
                 >
-                  <span class="fa fa-download"></span>
+                  <span class="fa-solid fa-download"></span>
                 </button>
               </div>
             </td>
@@ -113,7 +113,7 @@
                   [ngbTooltip]="'engine.certificate.tooltips.edit' | translate"
                   (click)="editCertificate(certificate)"
                 >
-                  <span class="fa fa-pencil"></span>
+                  <span class="fa-solid fa-pencil"></span>
                 </button>
                 <!-- Delete button -->
                 <button
@@ -122,7 +122,7 @@
                   [ngbTooltip]="'engine.certificate.tooltips.delete' | translate"
                   (click)="deleteCertificate(certificate)"
                 >
-                  <span class="fa fa-trash"></span>
+                  <span class="fa-solid fa-trash-can"></span>
                 </button>
                 <!-- Audit history button -->
                 <button
@@ -131,7 +131,7 @@
                   [ngbTooltip]="'engine.certificate.tooltips.audit' | translate"
                   (click)="showAudit(certificate)"
                 >
-                  <span class="fa fa-history"></span>
+                  <span class="fa-solid fa-history"></span>
                 </button>
               </div>
             </td>

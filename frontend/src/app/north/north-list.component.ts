@@ -72,8 +72,8 @@ export class NorthListComponent {
   // (e.g. colorblind users can still tell enabled from disabled even when green and grey look the same).
   // Avoids fa-play/fa-pause/fa-toggle-* shapes, which could be mistaken for the row's own action control.
   readonly LEGEND: Array<{ label: string; enabled: boolean; class: string }> = [
-    { label: 'north.disabled', enabled: false, class: 'fa fa-minus-circle status-grey' },
-    { label: 'north.enabled', enabled: true, class: 'fa fa-check-circle status-green' }
+    { label: 'north.disabled', enabled: false, class: 'fa-solid fa-minus-circle status-grey' },
+    { label: 'north.enabled', enabled: true, class: 'fa-solid fa-check-circle status-green' }
   ];
 
   constructor() {
@@ -164,7 +164,7 @@ export class NorthListComponent {
     if (this.sortField() !== field) {
       return 'fa-sort';
     }
-    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {

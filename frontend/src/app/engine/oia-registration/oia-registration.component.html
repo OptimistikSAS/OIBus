@@ -76,7 +76,7 @@
           }
           <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm" (ngSubmit)="searchCommands()">
             <div class="row gx-2 py-3">
-              <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
+              <label class="col-auto col-form-label"><i class="fa-solid fa-search fa-lg"></i></label>
               <label for="status" class="col-auto col-form-label" translate="oia-module.commands.status"></label>
               <div class="col-2">
                 <oib-multi-select formControlName="status" id="status">
@@ -129,12 +129,12 @@
                             <!-- Details button -->
                             @if (['COMPLETED', 'ERRORED'].includes(command.status)) {
                               <button type="button" class="btn btn-link details-button px-1 py-0" (click)="openCommandDetails(command)">
-                                <span class="fa fa-search" [ngbTooltip]="'oia-module.commands.details-tooltip' | translate"></span>
+                                <span class="fa-solid fa-search" [ngbTooltip]="'oia-module.commands.details-tooltip' | translate"></span>
                               </button>
                             }
                             <!-- Delete button -->
                             <button type="button" class="btn btn-link delete-command px-1 py-0" (click)="deleteCommand(command)">
-                              <span class="fa fa-trash" [ngbTooltip]="'oia-module.commands.delete-tooltip' | translate"></span>
+                              <span class="fa-solid fa-trash-can" [ngbTooltip]="'oia-module.commands.delete-tooltip' | translate"></span>
                             </button>
                           </div>
                         </td>

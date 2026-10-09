@@ -164,7 +164,7 @@
                       <div class="flex-grow-1 me-3">{{ item.name }}</div>
                       <div class="fa-fw">
                         @if (isItemSelected(item)) {
-                          <span class="fa fa-check"></span>
+                          <span class="fa-solid fa-check"></span>
                         }
                       </div>
                     </div>
@@ -219,7 +219,7 @@
       [oib-save-button]="state"
       form="choose-transformer-form"
       [translationKey]="directSave ? 'common.save' : 'common.ok'"
-      [iconClass]="directSave ? 'fa-save' : 'fa-check'"
+      [iconClass]="directSave ? 'fa-floppy-disk' : 'fa-check'"
     ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>

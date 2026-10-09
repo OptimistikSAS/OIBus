@@ -35,7 +35,7 @@ class TestComponentTester {
   readonly hour = this.datetimepicker.getByCss('input').nth(1);
   readonly minute = this.datetimepicker.getByCss('input').nth(2);
   readonly second = this.datetimepicker.getByCss('input').nth(3);
-  readonly toggler = page.getByCss('.fa-calendar');
+  readonly toggler = page.getByCss('.fa-calendar-days');
   readonly firstWeekDay = page.getByCss('.ngb-dp-weekday').nth(0);
 
   get datetimepickerComponent() {

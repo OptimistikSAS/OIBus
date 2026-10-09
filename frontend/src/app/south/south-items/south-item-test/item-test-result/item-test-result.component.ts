@@ -59,7 +59,7 @@ export class ItemTestResultComponent {
   readonly availableDisplayModes = output<Array<ContentDisplayMode>>();
   private _availableDisplayModes: Array<ContentDisplayMode> = [];
 
-  readonly displayModeIcons: Record<ContentDisplayMode, string> = { table: 'fa-table', any: 'fa-file-text', json: 'fa-code' };
+  readonly displayModeIcons: Record<ContentDisplayMode, string> = { table: 'fa-table', any: 'fa-file-lines', json: 'fa-code' };
 
   // --- Table state ---
   readonly tableType = signal<'time-values' | 'generic'>('generic');

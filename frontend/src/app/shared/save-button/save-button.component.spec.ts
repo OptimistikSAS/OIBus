@@ -38,7 +38,7 @@ class TestComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly spinner = this.root.getByCss('.fa.fa-spinner');
-  readonly saveIcon = this.root.getByCss('.fa.fa-save');
+  readonly saveIcon = this.root.getByCss('.fa.fa-floppy-disk');
 }
 
 describe('SaveButton', () => {

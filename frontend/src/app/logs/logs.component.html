@@ -21,10 +21,10 @@
               {{ embedded() ? 'log-toggle-embedded' : '' }}"
             >
               <div>
-                <i class="fa fa-search fa-lg me-3"></i>
+                <i class="fa-solid fa-search fa-lg me-3"></i>
                 <span translate="common.search"></span>
               </div>
-              <i class="fa {{ searchArea.collapsed ? 'fa-angle-down' : 'fa-angle-up' }}  fa-2x"></i>
+              <i class="fa-solid {{ searchArea.collapsed ? 'fa-angle-down' : 'fa-angle-up' }}  fa-2x"></i>
             </button>
           </div>
           <div ngbAccordionCollapse>
@@ -110,15 +110,15 @@
                         [ngbTooltip]="(paused() ? 'logs.tooltips.resume-auto-reload' : 'logs.tooltips.pause-auto-reload') | translate"
                       >
                         @if (paused()) {
-                          <i class="fa fa-play" aria-hidden="true"></i>
+                          <i class="fa-solid fa-play" aria-hidden="true"></i>
                         } @else {
-                          <i class="fa fa-pause" aria-hidden="true"></i>
+                          <i class="fa-solid fa-pause" aria-hidden="true"></i>
                         }
                       </button>
 
                       <button class="btn btn-primary" id="search-button" [disabled]="loading()">
                         @if (loading()) {
-                          <span class="fa fa-spin fa-spinner"></span>
+                          <span class="fa-solid fa-spin fa-spinner"></span>
                         } @else {
                           <span translate="common.search"></span>
                         }
@@ -143,7 +143,7 @@
                     }
                     @if (hasActiveLevels()) {
                       <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-levels-button" (click)="clearLevels()">
-                        <span class="fa fa-times me-1"></span>
+                        <span class="fa-solid fa-times me-1"></span>
                         <span translate="common.clear"></span>
                       </button>
                     }
@@ -170,7 +170,7 @@
                           id="clear-scope-types-button"
                           (click)="clearScopeTypes()"
                         >
-                          <span class="fa fa-times me-1"></span>
+                          <span class="fa-solid fa-times me-1"></span>
                           <span translate="common.clear"></span>
                         </button>
                       }
@@ -185,7 +185,7 @@
                             (click)="removeScope(scope)"
                           >
                             <span class="filter-chip-label">{{ scope.scopeName }}</span>
-                            <span class="fa fa-times ms-1 small text-muted"></span>
+                            <span class="fa-solid fa-times ms-1 small text-muted"></span>
                           </button>
                         }
                       }
@@ -208,7 +208,7 @@
                             (click)="removeItem(item)"
                           >
                             <span class="filter-chip-label">{{ item.itemName }}</span>
-                            <span class="fa fa-times ms-1 small text-muted"></span>
+                            <span class="fa-solid fa-times ms-1 small text-muted"></span>
                           </button>
                         }
                       }
@@ -228,7 +228,7 @@
                             (click)="removeGroup(group)"
                           >
                             <span class="filter-chip-label">{{ group.groupName }}</span>
-                            <span class="fa fa-times ms-1 small text-muted"></span>
+                            <span class="fa-solid fa-times ms-1 small text-muted"></span>
                           </button>
                         }
                       }

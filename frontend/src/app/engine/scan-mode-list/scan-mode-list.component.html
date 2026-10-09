@@ -15,7 +15,7 @@
           (click)="addScanMode()"
           id="add-scan-mode"
         >
-          <span class="fa fa-plus"></span>
+          <span class="fa-solid fa-plus"></span>
         </button>
         <oib-help [url]="helpUrl" />
       </div>
@@ -33,7 +33,7 @@
           <th class="first-column">
             <button type="button" style="background: none; border: none; font-weight: bold; color: inherit" (click)="toggleSort('name')">
               <span translate="engine.scan-mode.name" class="me-2"></span>
-              <span class="fa {{ getSortIcon('name') }}"></span>
+              <span class="fa-solid {{ getSortIcon('name') }}"></span>
             </button>
           </th>
           <th translate="engine.scan-mode.description"></th>
@@ -45,7 +45,7 @@
               (click)="toggleSort('updatedAt')"
             >
               <span translate="engine.scan-mode.updated-at" class="me-2"></span>
-              <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+              <span class="fa-solid {{ getSortIcon('updatedAt') }}"></span>
             </button>
           </th>
           <th class="last-column"></th>
@@ -60,7 +60,7 @@
               <span>{{ scanMode | scanModeSchedule }}</span>
               @if (isWindowExpired(scanMode)) {
                 <i
-                  class="fa fa-warning text-warning ms-1 window-expired-warning"
+                  class="fa-solid fa-triangle-exclamation text-warning ms-1 window-expired-warning"
                   aria-hidden="true"
                   [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
                 ></i>
@@ -86,7 +86,7 @@
                   [ngbTooltip]="'engine.scan-mode.tooltips.edit' | translate"
                   (click)="editScanMode(scanMode)"
                 >
-                  <span class="fa fa-pencil"></span>
+                  <span class="fa-solid fa-pencil"></span>
                 </button>
                 <!-- Delete button -->
                 <button
@@ -95,7 +95,7 @@
                   [ngbTooltip]="'engine.scan-mode.tooltips.delete' | translate"
                   (click)="deleteScanMode(scanMode)"
                 >
-                  <span class="fa fa-trash"></span>
+                  <span class="fa-solid fa-trash-can"></span>
                 </button>
                 <!-- Audit history button -->
                 <button
@@ -104,7 +104,7 @@
                   [ngbTooltip]="'engine.scan-mode.tooltips.audit' | translate"
                   (click)="showAudit(scanMode)"
                 >
-                  <span class="fa fa-history"></span>
+                  <span class="fa-solid fa-history"></span>
                 </button>
               </div>
             </td>

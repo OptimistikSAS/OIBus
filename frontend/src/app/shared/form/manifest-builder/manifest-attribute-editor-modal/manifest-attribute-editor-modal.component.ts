@@ -442,7 +442,7 @@ export class ManifestAttributeEditorModalComponent {
     const segments = this.nestedAttributesContext.filter(segment => !!segment);
     if (segments.length === 0) return null;
 
-    return segments.map(segment => `<span>${segment}</span>`).join(' <i class="fa fa-solid fa-angle-right path-separator"></i> ');
+    return segments.map(segment => `<span>${segment}</span>`).join(' <i class="fa-solid fa-angle-right path-separator"></i> ');
   }
 
   get uniqueFormId(): string {

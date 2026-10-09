@@ -102,7 +102,7 @@
                       [ngbTooltip]="'south.groups.manage-button' | translate"
                       (click)="manageGroups()"
                     >
-                      <span class="fa fa-folder me-1"></span>
+                      <span class="fa-solid fa-folder me-1"></span>
                       <span translate="south.groups.manage-button"></span>
                       <span class="badge bg-secondary ms-1">{{ inMemoryGroups.length }}</span>
                     </button>
@@ -113,7 +113,7 @@
                       [ngbTooltip]="'south.workflows.manage-button' | translate"
                       (click)="manageWorkflows()"
                     >
-                      <span class="fa fa-sync me-1"></span>
+                      <span class="fa-solid fa-sync me-1"></span>
                       <span translate="south.workflows.manage-button"></span>
                       <span class="badge bg-secondary ms-1">{{ inMemoryWorkflows.length }}</span>
                     </button>
@@ -125,7 +125,7 @@
                       [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.create' | translate"
                       (click)="addItem()"
                     >
-                      <span class="fa fa-plus"></span>
+                      <span class="fa-solid fa-plus"></span>
                     </button>
                     <button
                       type="button"
@@ -190,7 +190,7 @@
                         [disabled]="getSelectedItemsCount() === filteredItems().length"
                         id="select-all-button"
                       >
-                        <span class="fa fa-check-square me-1"></span>
+                        <span class="fa-solid fa-check-square me-1"></span>
                         <span translate="south.items.select-all"></span>
                       </button>
                       <button
@@ -200,7 +200,7 @@
                         [disabled]="getSelectedItemsCount() === 0"
                         id="unselect-all-button"
                       >
-                        <span class="fa fa-square-o me-1"></span>
+                        <span class="fa-solid fa-square me-1"></span>
                         <span translate="south.items.unselect-all"></span>
                       </button>
                       @if (getSelectedItemsCount() > 0) {
@@ -212,24 +212,24 @@
                             id="mass-actions-dropdown"
                           >
                             <span translate="south.items.mass-actions" [translateParams]="{ count: selectedItems().size }"></span>
-                            <span class="fa fa-caret-down ms-1"></span>
+                            <span class="fa-solid fa-caret-down ms-1"></span>
                           </button>
                           <div ngbDropdownMenu>
                             <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
-                              <span class="fa fa-check me-2"></span>
+                              <span class="fa-solid fa-check me-2"></span>
                               <span translate="south.items.enable"></span>
                             </button>
                             <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
-                              <span class="fa fa-times me-2"></span>
+                              <span class="fa-solid fa-times me-2"></span>
                               <span translate="south.items.disable"></span>
                             </button>
                             <button type="button" ngbDropdownItem (click)="moveSelectedItemsToGroup()">
-                              <span class="fa fa-folder me-2"></span>
+                              <span class="fa-solid fa-folder me-2"></span>
                               <span translate="south.items.move-to-group"></span>
                             </button>
                             <div class="dropdown-divider"></div>
                             <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
-                              <span class="fa fa-trash me-2"></span>
+                              <span class="fa-solid fa-trash-can me-2"></span>
                               <span translate="south.items.delete"></span>
                             </button>
                           </div>
@@ -324,7 +324,7 @@
                             (click)="toggleColumnSort('enabled')"
                           >
                             <span translate="south.items.status" class="me-2"></span>
-                            <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.enabled] }}"></span>
+                            <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.enabled] }}"></span>
                           </button>
                         </th>
                         <th>
@@ -334,7 +334,7 @@
                             (click)="toggleColumnSort('name')"
                           >
                             <span translate="south.items.name" class="me-2"></span>
-                            <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+                            <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.name] }}"></span>
                           </button>
                         </th>
                         <th style="width: 14rem">
@@ -344,7 +344,7 @@
                             (click)="toggleColumnSort('group')"
                           >
                             <span translate="south.items.group-and-schedule" class="me-2"></span>
-                            <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.group] }}"></span>
+                            <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.group] }}"></span>
                           </button>
                         </th>
                         <th style="width: 8rem"></th>
@@ -383,7 +383,7 @@
                                 {{ item.groupName }}
                                 <span class="text-muted">({{ getEffectiveScanModeName(item) }})</span>
                                 @if (!item.syncWithGroup) {
-                                  <i class="fa fa-warning text-warning ms-1" aria-hidden="true"></i>
+                                  <i class="fa-solid fa-triangle-exclamation text-warning ms-1" aria-hidden="true"></i>
                                 }
                               }
                             </span>
@@ -397,7 +397,7 @@
                                 [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
                                 (click)="editItem(item)"
                               >
-                                <span class="fa fa-pencil"></span>
+                                <span class="fa-solid fa-pencil"></span>
                               </button>
                               <!-- Duplicate button -->
                               <button
@@ -406,7 +406,7 @@
                                 [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
                                 (click)="duplicateItem(item)"
                               >
-                                <span class="fa fa-copy"></span>
+                                <span class="fa-solid fa-copy"></span>
                               </button>
                               <!-- Delete button -->
                               <button
@@ -415,7 +415,7 @@
                                 [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
                                 (click)="deleteItem(item)"
                               >
-                                <span class="fa fa-trash"></span>
+                                <span class="fa-solid fa-trash-can"></span>
                               </button>
                             </div>
                           </td>

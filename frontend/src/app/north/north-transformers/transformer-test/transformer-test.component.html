@@ -11,9 +11,9 @@
           (click)="runTest()"
         >
           @if (isTestRunning()) {
-            <span class="fa fa-spinner fa-spin ms-2"></span>
+            <span class="fa-solid fa-spinner fa-spin ms-2"></span>
           } @else {
-            <span class="fa fa-check ms-2"></span>
+            <span class="fa-solid fa-check ms-2"></span>
           }
           <span translate="north.transformers.test.run"></span>
         </button>
@@ -36,9 +36,9 @@
           class="btn btn-link btn-sm p-0 settings-summary-chip"
           (click)="settingsCollapsed.set(false)"
         >
-          <span class="fa fa-sliders me-1"></span>
+          <span class="fa-solid fa-sliders me-1"></span>
           <span>{{ settingsSummary }}</span>
-          <span class="fa fa-chevron-down ms-2"></span>
+          <span class="fa-solid fa-chevron-down ms-2"></span>
         </button>
       }
 
@@ -87,7 +87,7 @@
           <div class="text-end mt-1">
             <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed.set(true)">
               <span translate="south.test-item.hide-settings"></span>
-              <span class="fa fa-chevron-up ms-1"></span>
+              <span class="fa-solid fa-chevron-up ms-1"></span>
             </button>
           </div>
         }
