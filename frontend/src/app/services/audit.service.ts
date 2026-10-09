@@ -21,7 +21,7 @@ export interface AuditSearchParam {
  */
 @Service()
 export class AuditService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   /**
    * Retrieve the Audit logs from search params
