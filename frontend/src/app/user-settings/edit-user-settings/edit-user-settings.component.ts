@@ -32,8 +32,8 @@ declare namespace Intl {
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
   styleUrl: './edit-user-settings.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [TranslateDirective, NgbTypeahead, SaveButtonComponent, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateDirective, NgbTypeahead, SaveButtonComponent, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditUserSettingsComponent implements CanComponentDeactivate {
   private modalService = inject(ModalService);
@@ -44,15 +44,15 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
   private currentUserService = inject(CurrentUserService);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
-  form = inject(NonNullableFormBuilder).group({
+  readonly form = inject(NonNullableFormBuilder).group({
     firstName: [null as string | null, [Validators.maxLength(50)]],
     lastName: [null as string | null, [Validators.maxLength(50)]],
     timezone: ['' as Timezone, Validators.required],
     language: ['' as Language, Validators.required]
   });
-  editedUserSettings = signal<UserDTO | null>(null);
+  readonly editedUserSettings = signal<UserDTO | null>(null);
 
-  state = new ObservableState();
+  readonly state = new ObservableState();
 
   readonly languages: ReadonlyArray<Language> = LANGUAGES;
 
@@ -62,8 +62,8 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
     zh: '中文'
   };
 
-  private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
-  timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
+  private readonly timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
+  readonly timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
     () => ['UTC', ...this.timezones],
     timezone => timezone
   );
@@ -73,7 +73,7 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
   }
 
   canDeactivate(): Observable<boolean> | boolean {
-    if (this.form?.dirty) {
+    if (this.form.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
