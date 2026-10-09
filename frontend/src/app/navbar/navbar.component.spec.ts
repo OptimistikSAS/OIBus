@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 
-import { of } from 'rxjs';
+import { NEVER, Observable, of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -9,71 +10,102 @@ import { OIBusInfo } from '@oibus/shared/api/engine.model';
 import { UserDTO } from '@oibus/shared/api/user.model';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { EngineService } from '../services/engine.service';
 import { CurrentUserService } from '../shared/current-user.service';
 import { NavbarComponent } from './navbar.component';
 
-const currentUser = { login: 'admin', language: 'en', timezone: 'Asia/Tokyo' } as UserDTO;
+const currentUser: UserDTO = testData.users.list[0];
 
 class NavbarComponentTester {
   readonly fixture = TestBed.createComponent(NavbarComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly navItems = this.root.getByCss('.nav-item');
-  readonly version = this.root.getByCss('#navbar-version');
+  readonly version = this.root.getByText(/^Version:/);
+  readonly userLogin = this.root.getByText(currentUser.login, { exact: true });
+  readonly accountMenu = this.root.getByRole('button', { name: 'Account' });
+  readonly logoutButton = this.root.getByRole('button', { name: 'Logout' });
+  readonly documentationLink = this.root.getByRole('link', { name: 'Documentation' });
 }
 
 describe('NavbarComponent', () => {
   let currentUserService: MockObject<CurrentUserService>;
-  let engineService: MockObject<EngineService>;
 
-  beforeEach(() => {
+  function setup(user: UserDTO | null, info$: Observable<OIBusInfo> = of(testData.engine.oIBusInfo)) {
     currentUserService = createMock(CurrentUserService);
-    engineService = createMock(EngineService);
-    (engineService as any).info$ = of({ version: '3.0' } as OIBusInfo);
+    currentUserService.get.mockReturnValue(of(user));
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         provideI18nTesting(),
         { provide: CurrentUserService, useValue: currentUserService },
-        { provide: EngineService, useValue: engineService }
+        { provide: EngineService, useValue: createMock(EngineService, { info$ }) }
       ]
+    });
+    return new NavbarComponentTester();
+  }
+
+  describe('without user', () => {
+    let tester: NavbarComponentTester;
+
+    beforeEach(() => {
+      tester = setup(null);
+    });
+
+    test('should not display menu items, version nor login', async () => {
+      await expect.element(tester.root.getByRole('img', { name: 'logo' })).toBeVisible();
+      await expect.element(tester.navItems).not.toBeInTheDocument();
+      await expect.element(tester.version).not.toBeInTheDocument();
+    });
+
+    test('should set the default page title', async () => {
+      await tester.fixture.whenStable();
+      expect(TestBed.inject(Title).getTitle()).toBe('OIBus');
     });
   });
 
-  test('should not display menu items when there is no user', async () => {
-    currentUserService.get.mockReturnValue(of(null));
-    const tester = new NavbarComponentTester();
-    tester.fixture.detectChanges();
-    await expect.element(tester.navItems).not.toBeInTheDocument();
+  describe('with user', () => {
+    let tester: NavbarComponentTester;
+
+    beforeEach(() => {
+      tester = setup(currentUser);
+    });
+
+    test('should display the nav items', async () => {
+      await expect.element(tester.navItems).toHaveLength(11);
+      await expect.element(tester.navItems.nth(0)).toHaveTextContent('Engine');
+      await expect.element(tester.navItems.nth(1)).toHaveTextContent('North');
+      await expect.element(tester.navItems.nth(2)).toHaveTextContent('South');
+      await expect.element(tester.navItems.nth(3)).toHaveTextContent('History');
+      await expect.element(tester.navItems.nth(4)).toHaveTextContent('Logs');
+      await expect.element(tester.navItems.nth(5)).toHaveTextContent('About');
+      await expect.element(tester.documentationLink).toBeVisible();
+    });
+
+    test('should display the version and the user login', async () => {
+      await expect.element(tester.version).toHaveTextContent(`Version: ${testData.engine.oIBusInfo.version}`);
+      await expect.element(tester.userLogin).toBeVisible();
+    });
+
+    test('should set the page title with the OIBus name', async () => {
+      await expect.element(tester.version).toBeVisible();
+      expect(TestBed.inject(Title).getTitle()).toBe(`OIBus - ${testData.engine.oIBusInfo.oibusName}`);
+    });
+
+    test('should logout when clicking on logout', async () => {
+      await tester.accountMenu.click();
+      await tester.logoutButton.click();
+
+      expect(currentUserService.logout).toHaveBeenCalledTimes(1);
+    });
   });
 
-  test('should have a navbar with nav items', async () => {
-    currentUserService.get.mockReturnValue(of(currentUser));
-    const tester = new NavbarComponentTester();
-    tester.fixture.detectChanges();
-    await expect.element(tester.navItems).toHaveLength(11);
-    await expect.element(tester.navItems.nth(0)).toMatchTextContent('Engine');
-    await expect.element(tester.navItems.nth(1)).toMatchTextContent('North');
-    await expect.element(tester.navItems.nth(2)).toMatchTextContent('South');
-    await expect.element(tester.navItems.nth(3)).toMatchTextContent('History');
-    await expect.element(tester.navItems.nth(4)).toMatchTextContent('Logs');
-    await expect.element(tester.navItems.nth(5)).toMatchTextContent('About');
-  });
+  test('should not display the version when the info is not available', async () => {
+    const tester = setup(currentUser, NEVER);
 
-  test('should display version when it is available and there is a user', async () => {
-    currentUserService.get.mockReturnValue(of(currentUser));
-    const tester = new NavbarComponentTester();
-    tester.fixture.detectChanges();
-    await expect.element(tester.version).toMatchTextContent('Version: 3.0');
-  });
-
-  test('should logout when logout is called', () => {
-    currentUserService.get.mockReturnValue(of(currentUser));
-    const tester = new NavbarComponentTester();
-    tester.fixture.detectChanges();
-    tester.fixture.componentInstance.logout();
-    expect(currentUserService.logout).toHaveBeenCalled();
+    await expect.element(tester.userLogin).toBeVisible();
+    await expect.element(tester.version).not.toBeInTheDocument();
   });
 });

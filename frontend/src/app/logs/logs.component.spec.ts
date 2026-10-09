@@ -1,702 +1,583 @@
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { DateTime } from 'luxon';
-import { BehaviorSubject, of, Subscription } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import { LogDTO } from '@oibus/shared/api/logs.model';
-import { DEFAULT_TZ, Page } from '@oibus/shared/common/types';
-import { Group, Item, Scope } from '@oibus/shared/domain/logs.model';
+import { Page } from '@oibus/shared/common/types';
+import { Group, Item, LogLevel, LogSearchParam, Scope, ScopeType } from '@oibus/shared/domain/logs.model';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { createMock, MockObject, stubRoute } from '../../test/vitest-create-mock';
+import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { LogService } from '../services/log.service';
+import { DefaultValidationErrorsComponent } from '../shared/default-validation-errors/default-validation-errors.component';
 import { provideNgbConfigTesting } from '../shared/form/oi-ngb-testing';
-import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
-import { PageLoader } from '../shared/page-loader.service';
 import { emptyPage, toPage } from '../shared/utils/page.utils';
 import { LogsComponent } from './logs.component';
 
 class LogsComponentTester {
   readonly fixture = TestBed.createComponent(LogsComponent);
-  readonly component = this.fixture.componentInstance;
-  readonly root = page.getByCss(`#${this.fixture.nativeElement.id}`);
-  readonly emptyContainer = this.root.getByCss('.empty');
-  readonly logs = this.root.getByCss('tbody tr');
-  readonly autoReloadButton = this.root.getByCss('#auto-reload-toggle');
-  readonly searchButton = this.root.getByCss('#search-button');
-  readonly pauseIcon = this.root.getByCss('#auto-reload-toggle .fa-pause');
-  readonly playIcon = this.root.getByCss('#auto-reload-toggle .fa-play');
-  readonly buttonContainer = this.root.getByCss('.search-buttons');
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly title = this.root.getByRole('heading', { level: 1 });
+  readonly searchAreaToggle = this.root.getByCss('.accordion-button');
+  readonly form = this.root.getByCss('form');
+  readonly searchButton = this.form.getByRole('button', { name: 'Search', exact: true });
+  readonly autoReloadButton = this.root.getByRole('button', { name: /auto-reload/ });
+  readonly messageContent = this.root.getByLabelText('Log contains');
+  readonly scopeInput = this.root.getByLabelText('Scopes');
+  readonly itemInput = this.root.getByLabelText('Items');
+  readonly groupInput = this.root.getByLabelText('Groups');
+  readonly startDate = this.root.getByCss('#start');
   readonly clearLevelsButton = this.root.getByCss('#clear-levels-button');
   readonly clearScopeTypesButton = this.root.getByCss('#clear-scope-types-button');
-  readonly filterChips = this.root.getByCss('.filter-chip');
+  readonly emptyMessage = this.root.getByText('No log found');
+  readonly headers = this.root.getByCss('thead th');
+  readonly rows = this.root.getByCss('tbody tr');
+  readonly pagination = this.root.getByCss('ngb-pagination');
+  readonly contextMenu = this.root.getByCss('.context-menu');
   readonly contextMenuBackdrop = this.root.getByCss('.context-menu-backdrop');
-  readonly contextMenuItems = this.root.getByCss('.context-menu .dropdown-item');
 
-  setEmbedded(embedded: boolean) {
-    this.fixture.componentRef.setInput('embedded', embedded);
-    this.fixture.detectChanges();
+  /** A filter chip (level, scope type, or selected scope/item/group) of the search form */
+  chip(name: string) {
+    return this.form.getByRole('button', { name, exact: true });
   }
 
   cells(rowIndex: number) {
-    return this.logs.nth(rowIndex).getByCss('td');
+    return this.rows.nth(rowIndex).getByRole('cell');
+  }
+
+  contextMenuItem(name: string) {
+    return this.contextMenu.getByRole('button', { name });
   }
 }
 
+const START = '2022-12-31T23:00:00.000Z';
+const END = '2023-02-28T23:00:00.000Z';
+const SEARCH_URL = `/?start=${START}&end=${END}&levels=info&levels=error&page=2`;
+/** The criteria of SEARCH_URL */
+const URL_CRITERIA: LogSearchParam = {
+  messageContent: undefined,
+  scopeTypes: [],
+  scopeIds: [],
+  itemIds: [],
+  groupIds: [],
+  start: START,
+  end: END,
+  levels: ['info', 'error'],
+  page: 2
+};
+
+const scope: Scope = { scopeId: 's1', scopeName: 'My South' };
+const item: Item = { itemId: 'i1', itemName: 'Temperature', scopeId: 's1', scopeName: 'My South' };
+const group: Group = { groupId: 'g1', groupName: 'Sensors', scopeId: 's1', scopeName: 'My South' };
+
+function buildLog(overrides: Partial<LogDTO> = {}): LogDTO {
+  return {
+    timestamp: '2023-01-01T00:00:00.000Z',
+    level: 'error',
+    scopeType: 'internal',
+    scopeId: null,
+    scopeName: null,
+    itemId: null,
+    itemName: null,
+    groupId: null,
+    groupName: null,
+    message: 'my log 1',
+    ...overrides
+  };
+}
+
+const logs: Array<LogDTO> = [
+  buildLog(),
+  buildLog({ timestamp: '2023-01-02T00:00:00.000Z', level: 'warn', scopeId: 'engine', message: 'my log 2' }),
+  buildLog({
+    timestamp: '2023-01-03T00:00:00.000Z',
+    level: 'info',
+    scopeType: 'south',
+    scopeId: 's1',
+    scopeName: 'My South',
+    itemId: 'i1',
+    itemName: 'Temperature',
+    groupId: 'g1',
+    groupName: 'Sensors',
+    message: 'my log 3'
+  })
+];
+const logPage: Page<LogDTO> = toPage(logs);
+
 describe('LogsComponent', () => {
-  let tester: LogsComponentTester;
   let logService: MockObject<LogService>;
-  let pageLoader: MockObject<PageLoader>;
-  let pageLoads$: BehaviorSubject<number>;
 
-  const emptyLogPage: Page<LogDTO> = emptyPage();
-  const logPage: Page<LogDTO> = toPage([
-    {
-      timestamp: '2023-01-01T00:00:00.000Z',
-      level: 'error',
-      scopeType: 'internal',
-      scopeName: null,
-      scopeId: null,
-      itemId: null,
-      itemName: null,
-      groupId: null,
-      groupName: null,
-      message: 'my log 1'
-    },
-    {
-      timestamp: '2023-01-02T00:00:00.000Z',
-      level: 'error',
-      scopeType: 'south',
-      scopeId: 'southId',
-      scopeName: 'My South',
-      itemId: null,
-      itemName: null,
-      groupId: null,
-      groupName: null,
-      message: 'my log 2'
+  /** Navigates to the given URL (the query params are the search criteria), then creates the component with the given inputs */
+  async function createTester(
+    url = SEARCH_URL,
+    inputs: { scopeId?: string; scopeType?: ScopeType; embedded?: boolean } = {}
+  ): Promise<LogsComponentTester> {
+    await TestBed.inject(Router).navigateByUrl(url);
+    const tester = new LogsComponentTester();
+    for (const [name, value] of Object.entries(inputs)) {
+      tester.fixture.componentRef.setInput(name, value);
     }
-  ]);
+    return tester;
+  }
 
-  const route = stubRoute({
-    queryParams: {
-      start: DateTime.fromISO('2023-01-01T00:00', { zone: DEFAULT_TZ }).toUTC().toISO({ includeOffset: true }),
-      end: DateTime.fromISO('2023-03-01T00:00', { zone: DEFAULT_TZ }).toUTC().toISO({ includeOffset: true }),
-      levels: ['info', 'error'],
-      page: '2'
-    }
-  });
+  /** Waits for a new search and returns its criteria */
+  async function lastSearch(expectedCalls: number): Promise<LogSearchParam> {
+    await vi.waitFor(() => expect(logService.search).toHaveBeenCalledTimes(expectedCalls));
+    return logService.search.mock.lastCall![0];
+  }
 
   beforeEach(() => {
     logService = createMock(LogService);
-    logService.search.mockReturnValue(of(emptyLogPage));
-    pageLoads$ = new BehaviorSubject<number>(0);
-    pageLoader = createMock(PageLoader, { pageLoads$: pageLoads$.asObservable() });
+    logService.search.mockReturnValue(of(logPage));
 
     TestBed.configureTestingModule({
-      providers: [
-        provideI18nTesting(),
-        provideRouter([]),
-        provideHttpClientTesting(),
-        provideNgbConfigTesting(),
-        { provide: LogService, useValue: logService },
-        { provide: PageLoader, useValue: pageLoader },
-        { provide: ActivatedRoute, useValue: route }
-      ]
+      providers: [provideI18nTesting(), provideRouter([]), provideNgbConfigTesting(), { provide: LogService, useValue: logService }]
+    });
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  describe('standalone logs page', () => {
+    test('should display a message when no log is found', async () => {
+      logService.search.mockReturnValue(of(emptyPage<LogDTO>()));
+      const tester = await createTester();
+
+      await expect.element(tester.title).toHaveTextContent('Logs');
+      await expect.element(tester.emptyMessage).toBeInTheDocument();
+      await expect.element(tester.rows).not.toBeInTheDocument();
     });
 
-    tester = new LogsComponentTester();
+    test('should search the logs with the criteria of the URL and display them', async () => {
+      const tester = await createTester();
+
+      await expect.element(tester.rows).toHaveLength(3);
+      expect(logService.search).toHaveBeenCalledExactlyOnceWith(URL_CRITERIA);
+      await expect.element(tester.emptyMessage).not.toBeInTheDocument();
+      await expect.element(tester.headers).toHaveLength(7);
+      await expect.element(tester.headers.nth(0)).toHaveTextContent('Level');
+
+      await expect.element(tester.cells(0)).toHaveLength(7);
+      await expect.element(tester.cells(0).nth(0).getByRole('img', { name: 'Error' })).toBeInTheDocument();
+      await expect.element(tester.cells(0).nth(1)).toHaveTextContent('1 Jan 2023, 01:00:00.000');
+      await expect.element(tester.cells(0).nth(2)).toHaveTextContent('Internal');
+      await expect.element(tester.cells(0).nth(3)).toHaveTextContent('');
+      await expect.element(tester.cells(0).nth(4)).toHaveTextContent('');
+      await expect.element(tester.cells(0).nth(5)).toHaveTextContent('');
+      await expect.element(tester.cells(0).nth(6)).toHaveTextContent('my log 1');
+
+      // internal scopes are translated
+      await expect.element(tester.cells(1).nth(0).getByRole('img', { name: 'Warning' })).toBeInTheDocument();
+      await expect.element(tester.cells(1).nth(2)).toHaveTextContent('Internal');
+      await expect.element(tester.cells(1).nth(3)).toHaveTextContent('Engine');
+
+      await expect.element(tester.cells(2).nth(1)).toHaveTextContent('3 Jan 2023, 01:00:00.000');
+      await expect.element(tester.cells(2).nth(2)).toHaveTextContent('South');
+      await expect.element(tester.cells(2).nth(3)).toHaveTextContent('My South');
+      await expect.element(tester.cells(2).nth(4)).toHaveTextContent('Temperature');
+      await expect.element(tester.cells(2).nth(5)).toHaveTextContent('Sensors');
+      await expect.element(tester.cells(2).nth(6)).toHaveTextContent('my log 3');
+    });
+
+    test.each<[LogLevel, string, string]>([
+      ['error', 'Error', 'fa-times-circle'],
+      ['warn', 'Warning', 'fa-exclamation-triangle'],
+      ['info', 'Info', 'fa-info-circle'],
+      ['debug', 'Debug', 'fa-bug'],
+      ['trace', 'Trace', 'fa-search'],
+      // no dedicated icon: falls back to the error one
+      ['silent', 'Silent', 'fa-times-circle']
+    ])('should display the %s level with its own icon', async (level, label, icon) => {
+      logService.search.mockReturnValue(of(toPage([buildLog({ level })])));
+      const tester = await createTester();
+
+      await expect.element(tester.cells(0).nth(0).getByRole('img', { name: label })).toHaveClass(icon);
+    });
+
+    test('should search the last 24 hours by default', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2024-05-10T10:20:30.000Z'));
+      await createTester('/');
+
+      const criteria = await lastSearch(1);
+      expect(criteria).toEqual({ ...URL_CRITERIA, start: expect.any(String), end: undefined, levels: [], page: 0 });
+      expect(DateTime.fromISO(criteria.start!).toUTC().toISO()).toBe('2024-05-09T10:20:59.999Z');
+    });
+
+    test('should restore the scope, item and group filters of the URL', async () => {
+      logService.getScopeById.mockImplementation(id => (id === 's1' ? of(scope) : throwError(() => new Error('not found'))));
+      logService.getItemById.mockReturnValue(of(item));
+      logService.getGroupById.mockReturnValue(of(group));
+      const tester = await createTester(`${SEARCH_URL}&scopeIds=s1&scopeIds=deleted&itemIds=i1&groupIds=g1`);
+
+      await expect.element(tester.chip('My South')).toBeInTheDocument();
+      await expect.element(tester.chip('Temperature')).toBeInTheDocument();
+      await expect.element(tester.chip('Sensors')).toBeInTheDocument();
+      // the selected items and groups are prefixed with the name of their connector
+      await expect.element(tester.form.getByText('My South:')).toHaveLength(2);
+      expect(logService.getScopeById).toHaveBeenCalledWith('deleted');
+      expect(await lastSearch(1)).toEqual({ ...URL_CRITERIA, scopeIds: ['s1', 'deleted'], itemIds: ['i1'], groupIds: ['g1'] });
+
+      // the scope which could not be loaded is dropped from the next search
+      await tester.chip('Warning').click();
+      expect(await lastSearch(2)).toEqual({
+        ...URL_CRITERIA,
+        levels: ['info', 'error', 'warn'],
+        scopeIds: ['s1'],
+        itemIds: ['i1'],
+        groupIds: ['g1'],
+        page: 0
+      });
+    });
+
+    test('should search with the criteria of the form', async () => {
+      const tester = await createTester();
+      await expect.element(tester.rows).toHaveLength(3);
+
+      await tester.messageContent.fill('boom');
+      await tester.searchButton.click();
+
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, messageContent: 'boom', page: 0 });
+      expect(TestBed.inject(Router).url).toContain('messageContent=boom');
+    });
+
+    test('should not search when the start date is after the end date', async () => {
+      TestBed.createComponent(DefaultValidationErrorsComponent);
+      const tester = await createTester();
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+      await expect.element(tester.rows).toHaveLength(3);
+
+      await tester.startDate.fillWithDate('2023-06-01');
+      await expect.element(tester.root.getByText('The end date must be after the start date')).toBeInTheDocument();
+      await tester.searchButton.click();
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(logService.search).toHaveBeenCalledTimes(1);
+    });
+
+    test('should disable the search button while searching', async () => {
+      logService.search.mockReturnValue(NEVER);
+      const tester = await createTester();
+
+      await expect.element(tester.searchButton).toBeDisabled();
+    });
+
+    test('should display no log and allow a new search when the search fails', async () => {
+      logService.search.mockReturnValue(throwError(() => new Error('search failed')));
+      const tester = await createTester();
+
+      await expect.element(tester.emptyMessage).toBeInTheDocument();
+      await expect.element(tester.searchButton).toBeEnabled();
+
+      logService.search.mockReturnValue(of(logPage));
+      await tester.searchButton.click();
+      await expect.element(tester.rows).toHaveLength(3);
+    });
+
+    test('should load the page clicked in the pagination', async () => {
+      logService.search.mockReturnValue(of(toPage(logs, 100, 2, 20)));
+      const tester = await createTester();
+
+      await tester.pagination.getByRole('link', { name: '4', exact: true }).click();
+
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, page: 3 });
+    });
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
+  describe('level and scope type filters', () => {
+    test('should toggle a level when clicking its chip and search immediately', async () => {
+      const tester = await createTester();
+      // levels of the URL
+      await expect.element(tester.chip('Error')).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.chip('Info')).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.chip('Warning')).toHaveAttribute('aria-pressed', 'false');
+
+      await tester.chip('Warning').click();
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, levels: ['info', 'error', 'warn'], page: 0 });
+      await expect.element(tester.chip('Warning')).toHaveAttribute('aria-pressed', 'true');
+
+      await tester.chip('Info').click();
+      expect(await lastSearch(3)).toEqual({ ...URL_CRITERIA, levels: ['error', 'warn'], page: 0 });
+      await expect.element(tester.chip('Info')).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    test('should clear the levels', async () => {
+      const tester = await createTester();
+
+      await tester.clearLevelsButton.click();
+
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, levels: [], page: 0 });
+      await expect.element(tester.chip('Error')).toHaveAttribute('aria-pressed', 'false');
+      await expect.element(tester.clearLevelsButton).not.toBeInTheDocument();
+    });
+
+    test('should toggle a scope type when clicking its chip and search immediately', async () => {
+      const tester = await createTester();
+      await expect.element(tester.clearScopeTypesButton).not.toBeInTheDocument();
+
+      await tester.chip('South').click();
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, scopeTypes: ['south'], page: 0 });
+      await expect.element(tester.chip('South')).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.chip('North')).toHaveAttribute('aria-pressed', 'false');
+
+      await tester.chip('South').click();
+      expect(await lastSearch(3)).toEqual({ ...URL_CRITERIA, scopeTypes: [], page: 0 });
+      await expect.element(tester.chip('South')).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    test('should clear the scope types', async () => {
+      const tester = await createTester(`${SEARCH_URL}&scopeTypes=north&scopeTypes=internal`);
+      await expect.element(tester.chip('North')).toHaveAttribute('aria-pressed', 'true');
+
+      await tester.clearScopeTypesButton.click();
+
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, scopeTypes: [], page: 0 });
+      await expect.element(tester.chip('North')).toHaveAttribute('aria-pressed', 'false');
+      await expect.element(tester.clearScopeTypesButton).not.toBeInTheDocument();
+    });
   });
 
-  test('should have empty page', async () => {
-    logService.search.mockReturnValue(of(emptyLogPage));
-    tester.fixture.detectChanges();
+  describe('scope, item and group filters', () => {
+    test('should add a scope chosen in the suggestions, and remove it', async () => {
+      logService.suggestScopes.mockReturnValue(of([scope]));
+      const tester = await createTester();
 
-    await expect.element(tester.emptyContainer).toMatchTextContent('No log found');
+      await tester.scopeInput.fill('My');
+      await page.getByRole('option', { name: 'My South' }).click();
+
+      expect(logService.suggestScopes).toHaveBeenCalledWith('My');
+      await expect.element(tester.scopeInput).toHaveValue('');
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, scopeIds: ['s1'], page: 0 });
+
+      await tester.chip('My South').click();
+
+      expect(await lastSearch(3)).toEqual({ ...URL_CRITERIA, page: 0 });
+      await expect.element(tester.chip('My South')).not.toBeInTheDocument();
+    });
+
+    test('should add an item chosen in the suggestions, and remove it', async () => {
+      logService.suggestItems.mockReturnValue(of([item]));
+      const tester = await createTester();
+
+      await tester.itemInput.fill('Temp');
+      // the connector name tells apart items of different connectors
+      await page.getByRole('option', { name: 'Temperature (My South)' }).click();
+
+      expect(logService.suggestItems).toHaveBeenCalledWith('Temp', undefined);
+      await expect.element(tester.itemInput).toHaveValue('');
+      await expect.element(tester.form.getByText('My South:')).toBeInTheDocument();
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, itemIds: ['i1'], page: 0 });
+
+      await tester.chip('Temperature').click();
+
+      expect(await lastSearch(3)).toEqual({ ...URL_CRITERIA, page: 0 });
+      await expect.element(tester.chip('Temperature')).not.toBeInTheDocument();
+    });
+
+    test('should add a group chosen in the suggestions, and remove it', async () => {
+      logService.suggestGroups.mockReturnValue(of([group]));
+      const tester = await createTester();
+
+      await tester.groupInput.fill('Sens');
+      await page.getByRole('option', { name: 'Sensors (My South)' }).click();
+
+      expect(logService.suggestGroups).toHaveBeenCalledWith('Sens', undefined);
+      await expect.element(tester.groupInput).toHaveValue('');
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, groupIds: ['g1'], page: 0 });
+
+      await tester.chip('Sensors').click();
+
+      expect(await lastSearch(3)).toEqual({ ...URL_CRITERIA, page: 0 });
+      await expect.element(tester.chip('Sensors')).not.toBeInTheDocument();
+    });
   });
 
-  test('should have log page', async () => {
-    logService.search.mockReturnValue(of(logPage));
-    tester.fixture.detectChanges();
+  describe('auto-reload', () => {
+    // rxjs timers (polling, debounce) use setInterval: fake it only, so that Angular keeps rendering
+    beforeEach(() => vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] }));
 
-    await vi.waitFor(() => {
-      expect(logService.search).toHaveBeenCalledWith({
+    test('should refresh the logs every 10 seconds, except when paused', async () => {
+      const tester = await createTester();
+      await expect.element(tester.autoReloadButton).toHaveAccessibleName('Pause auto-reload');
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(logService.search).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(logService.search).toHaveBeenCalledTimes(2);
+
+      await tester.autoReloadButton.click();
+      await expect.element(tester.autoReloadButton).toHaveAccessibleName('Resume auto-reload');
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(logService.search).toHaveBeenCalledTimes(2);
+
+      await tester.autoReloadButton.click();
+      await expect.element(tester.autoReloadButton).toHaveAccessibleName('Pause auto-reload');
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(logService.search).toHaveBeenCalledTimes(3);
+      expect(logService.search).toHaveBeenLastCalledWith(URL_CRITERIA);
+    });
+
+    test('should not refresh the logs while the page is hidden', async () => {
+      let visibilityState: DocumentVisibilityState = 'visible';
+      vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibilityState);
+      const tester = await createTester();
+      await expect.element(tester.autoReloadButton).toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(logService.search).toHaveBeenCalledTimes(1);
+
+      visibilityState = 'hidden';
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(logService.search).toHaveBeenCalledTimes(1);
+
+      // Back to the tab: immediate refresh
+      visibilityState = 'visible';
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(logService.search).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('log row context menu', () => {
+    async function openContextMenu(): Promise<LogsComponentTester> {
+      const tester = await createTester();
+      await expect.element(tester.rows).toHaveLength(3);
+      await tester.rows.nth(0).click({ button: 'right' });
+      await expect.element(tester.contextMenu).toBeInTheDocument();
+      return tester;
+    }
+
+    test('should open on right-click instead of the native menu', async () => {
+      let nativeMenuPrevented = false;
+      document.addEventListener('contextmenu', event => (nativeMenuPrevented = event.defaultPrevented), { once: true });
+
+      const tester = await openContextMenu();
+
+      expect(nativeMenuPrevented).toBe(true);
+      await expect.element(tester.contextMenu.getByText('Search around this log')).toBeInTheDocument();
+      await expect.element(tester.contextMenu.getByRole('button')).toHaveLength(5);
+    });
+
+    test('should close on escape', async () => {
+      const tester = await openContextMenu();
+
+      await userEvent.keyboard('{Escape}');
+
+      await expect.element(tester.contextMenu).not.toBeInTheDocument();
+    });
+
+    test.each<'left' | 'right'>(['left', 'right'])('should close on a %s click outside of the menu', async button => {
+      const tester = await openContextMenu();
+
+      await tester.contextMenuBackdrop.click({ button, position: { x: 5, y: 5 } });
+
+      await expect.element(tester.contextMenu).not.toBeInTheDocument();
+      expect(logService.search).toHaveBeenCalledTimes(1);
+    });
+
+    test('should search around the timestamp of the log and clear every other filter', async () => {
+      logService.getScopeById.mockReturnValue(of(scope));
+      const tester = await createTester(`${SEARCH_URL}&scopeIds=s1&messageContent=boom`);
+      await expect.element(tester.chip('My South')).toBeInTheDocument();
+      await tester.rows.nth(0).click({ button: 'right' });
+
+      await tester.contextMenuItem('± 5 minutes').click();
+
+      expect(await lastSearch(2)).toEqual({
         messageContent: undefined,
+        start: '2022-12-31T23:55:00.000Z',
+        end: '2023-01-01T00:05:00.000Z',
+        levels: [],
         scopeTypes: [],
         scopeIds: [],
         itemIds: [],
         groupIds: [],
-        start: '2022-12-31T23:00:00.000Z',
-        end: '2023-02-28T23:00:00.000Z',
-        levels: ['info', 'error'],
-        page: 2
-      });
-    });
-    tester.fixture.detectChanges();
-    await expect.element(tester.logs).toHaveLength(2);
-
-    await expect.element(tester.cells(0)).toHaveLength(7);
-    await expect.element(tester.cells(0).nth(1)).toMatchTextContent('1 Jan 2023, 01:00:00');
-    await expect.element(tester.cells(0).nth(2)).toMatchTextContent('Internal');
-    expect(tester.cells(0).nth(3).element().textContent?.trim()).toBe('');
-    expect(tester.cells(0).nth(4).element().textContent?.trim()).toBe('');
-    expect(tester.cells(0).nth(5).element().textContent?.trim()).toBe('');
-    await expect.element(tester.cells(0).nth(6)).toMatchTextContent('my log 1');
-
-    await expect.element(tester.cells(1).nth(1)).toMatchTextContent('2 Jan 2023, 01:00:00');
-    await expect.element(tester.cells(1).nth(2)).toMatchTextContent('South');
-    await expect.element(tester.cells(1).nth(3)).toMatchTextContent('My South');
-    expect(tester.cells(1).nth(4).element().textContent?.trim()).toBe('');
-    expect(tester.cells(1).nth(5).element().textContent?.trim()).toBe('');
-    await expect.element(tester.cells(1).nth(6)).toMatchTextContent('my log 2');
-  });
-
-  test('should add selected scope and clear input on typeahead selection', () => {
-    const scope: Scope = { scopeId: 'testId', scopeName: 'Test Scope' };
-
-    const event = {
-      item: scope,
-      preventDefault: vi.fn()
-    } as any;
-
-    const router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-    const form = tester.component.searchForm;
-    form.controls.scopeIds.setValue('someValue');
-
-    tester.component.selectScope(event);
-
-    expect(tester.component.selectedScopes()).toContain(scope);
-    expect(form.controls.scopeIds.value).toBe('');
-    expect(event.preventDefault).toHaveBeenCalled();
-  });
-
-  test('should remove selected scope', () => {
-    const scopes: Array<Scope> = [
-      { scopeId: '1', scopeName: 'A' },
-      { scopeId: '2', scopeName: 'B' }
-    ];
-    tester.component.selectedScopes.set(scopes);
-
-    const router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-    tester.component.removeScope(scopes[0]);
-
-    expect(tester.component.selectedScopes()).toEqual([scopes[1]]);
-  });
-
-  test('should return correct class for known log level', () => {
-    const result = tester.component.getLevelClass('error');
-    expect(result).toBe('fa-solid fa-times-circle level-red');
-  });
-
-  test('should fallback to red icon for unknown log level', () => {
-    const result = tester.component.getLevelClass('unknown' as any);
-    expect(result).toBe('fa-solid fa-times-circle level-red');
-  });
-
-  test('should build search params from route', () => {
-    const params = tester.component.toSearchParams(route as any);
-    expect(params.messageContent).toBeUndefined();
-    expect(params.scopeTypes).toEqual([]);
-    expect(params.levels).toEqual(['info', 'error']);
-    expect(params.page).toBe(2);
-  });
-
-  test('should refresh the logs every 10 seconds regardless of page or end date, but not when paused', async () => {
-    vi.useFakeTimers();
-    logService.search.mockReturnValue(of(logPage));
-
-    tester.fixture.detectChanges();
-    await vi.advanceTimersByTimeAsync(0);
-    tester.fixture.detectChanges();
-
-    expect(logService.search).toHaveBeenCalledTimes(1);
-
-    // Advance 10s → second refresh
-    await vi.advanceTimersByTimeAsync(10_000);
-    tester.fixture.detectChanges();
-    expect(logService.search).toHaveBeenCalledTimes(2);
-
-    // Pause → next 10s tick should be suppressed
-    tester.component.paused.set(true);
-    await vi.advanceTimersByTimeAsync(10_000);
-    tester.fixture.detectChanges();
-    expect(logService.search).toHaveBeenCalledTimes(2);
-
-    // Unpause → next 10s tick fires again
-    tester.component.paused.set(false);
-    await vi.advanceTimersByTimeAsync(10_000);
-    tester.fixture.detectChanges();
-    expect(logService.search).toHaveBeenCalledTimes(3);
-  });
-
-  test('should not refresh the logs while the page is hidden', async () => {
-    vi.useFakeTimers();
-    let visibilityState: DocumentVisibilityState = 'visible';
-    const visibilitySpy = vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibilityState);
-    logService.search.mockReturnValue(of(logPage));
-
-    tester.fixture.detectChanges();
-    await vi.advanceTimersByTimeAsync(0);
-    expect(logService.search).toHaveBeenCalledTimes(1);
-
-    visibilityState = 'hidden';
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(60_000);
-    expect(logService.search).toHaveBeenCalledTimes(1);
-
-    // Back to the tab: immediate refresh
-    visibilityState = 'visible';
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    expect(logService.search).toHaveBeenCalledTimes(2);
-    visibilitySpy.mockRestore();
-  });
-
-  describe('Pause/resume functionality', () => {
-    beforeEach(() => {
-      logService.search.mockReturnValue(of(logPage));
-    });
-
-    test('should initially have auto-reload enabled', async () => {
-      vi.useFakeTimers();
-      tester.setEmbedded(false);
-      vi.advanceTimersByTime(100);
-
-      expect(tester.component.paused()).toBe(false);
-      await expect.element(tester.pauseIcon).toBeInTheDocument();
-      await expect.element(tester.playIcon).not.toBeInTheDocument();
-    });
-
-    test('should display pause icon when auto-reload is active', async () => {
-      vi.useFakeTimers();
-      tester.setEmbedded(false);
-      vi.advanceTimersByTime(100);
-
-      await expect.element(tester.pauseIcon).toBeInTheDocument();
-      await expect.element(tester.playIcon).not.toBeInTheDocument();
-    });
-
-    test('should display play icon when auto-reload is paused', async () => {
-      vi.useFakeTimers();
-      tester.component.paused.set(true);
-      tester.setEmbedded(false);
-      vi.advanceTimersByTime(100);
-
-      await expect.element(tester.autoReloadButton).toBeInTheDocument();
-      await expect.element(tester.pauseIcon).not.toBeInTheDocument();
-      await expect.element(tester.playIcon).toBeInTheDocument();
-    });
-
-    test('should toggle auto-reload state when button is clicked', async () => {
-      vi.useFakeTimers();
-      tester.setEmbedded(false);
-      vi.advanceTimersByTime(100);
-
-      expect(tester.component.paused()).toBe(false);
-      await expect.element(tester.pauseIcon).toBeInTheDocument();
-
-      await tester.autoReloadButton.click();
-      vi.advanceTimersByTime(100);
-      tester.fixture.detectChanges();
-
-      expect(tester.component.paused()).toBe(true);
-      await expect.element(tester.playIcon).toBeInTheDocument();
-      await expect.element(tester.pauseIcon).not.toBeInTheDocument();
-
-      await tester.autoReloadButton.click();
-      vi.advanceTimersByTime(100);
-      tester.fixture.detectChanges();
-
-      expect(tester.component.paused()).toBe(false);
-      await expect.element(tester.pauseIcon).toBeInTheDocument();
-      await expect.element(tester.playIcon).not.toBeInTheDocument();
-    });
-
-    test('should have both pause/resume and search buttons in the same container', async () => {
-      vi.useFakeTimers();
-      tester.setEmbedded(false);
-      vi.advanceTimersByTime(100);
-
-      await expect.element(tester.buttonContainer).toBeInTheDocument();
-      expect(tester.buttonContainer.element().children.length).toBe(2);
-      await expect.element(tester.autoReloadButton).toBeInTheDocument();
-      await expect.element(tester.searchButton).toBeInTheDocument();
-    });
-
-    test('should use correct button classes', async () => {
-      vi.useFakeTimers();
-      tester.setEmbedded(false);
-      vi.advanceTimersByTime(100);
-
-      await expect.element(tester.autoReloadButton).toBeInTheDocument();
-      expect(tester.autoReloadButton.element().classList).toContain('btn');
-      expect(tester.autoReloadButton.element().classList).toContain('btn-primary');
-      await expect.element(tester.searchButton).toBeInTheDocument();
-      expect(tester.searchButton.element().classList).toContain('btn');
-      expect(tester.searchButton.element().classList).toContain('btn-primary');
-    });
-  });
-
-  describe('Clickable level and scope-type filter chips', () => {
-    beforeEach(() => {
-      logService.search.mockReturnValue(of(logPage));
-    });
-
-    test('should display a clickable chip for every level and scope type', async () => {
-      tester.fixture.detectChanges();
-
-      // 5 levels + 4 scope types
-      await expect.element(tester.filterChips).toHaveLength(9);
-    });
-
-    test('should toggle a level filter when clicking a chip and immediately search', () => {
-      const router = TestBed.inject(Router);
-      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-      tester.fixture.detectChanges();
-
-      // Route already has levels: ['info', 'error'] — add 'warn' via the method
-      tester.component.toggleLevel('warn');
-
-      expect(navigateSpy).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ levels: ['info', 'error', 'warn'] }) })
-      );
-
-      // Remove 'info' (already active)
-      navigateSpy.mockClear();
-      tester.component.toggleLevel('info');
-
-      expect(navigateSpy).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ levels: ['error', 'warn'] }) })
-      );
-    });
-
-    test('should clear all level filters when clicking the level clear button', async () => {
-      const router = TestBed.inject(Router);
-      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-      tester.fixture.detectChanges();
-
-      // The route has levels: ['info', 'error'], so the clear button should be visible
-      await expect.element(tester.clearLevelsButton).toBeInTheDocument();
-      await tester.clearLevelsButton.click();
-
-      expect(navigateSpy).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ levels: [] }) }));
-    });
-
-    test('should toggle a scope-type filter when clicking a chip and immediately search', () => {
-      const router = TestBed.inject(Router);
-      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-      tester.fixture.detectChanges();
-
-      tester.component.toggleScopeType('south');
-
-      expect(navigateSpy).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ scopeTypes: ['south'] }) })
-      );
-
-      navigateSpy.mockClear();
-      tester.component.toggleScopeType('south');
-
-      expect(navigateSpy).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ scopeTypes: [] }) }));
-    });
-
-    test('should clear all scope-type filters when clicking the scope-type clear button', async () => {
-      const router = TestBed.inject(Router);
-      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-      tester.fixture.detectChanges();
-      tester.component.searchForm.controls.scopeTypes.setValue(['south']);
-      tester.fixture.detectChanges();
-
-      await expect.element(tester.clearScopeTypesButton).toBeInTheDocument();
-      await tester.clearScopeTypesButton.click();
-
-      expect(navigateSpy).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ scopeTypes: [] }) }));
-    });
-  });
-
-  describe('Contextual time search on row context menu', () => {
-    beforeEach(() => {
-      logService.search.mockReturnValue(of(logPage));
-    });
-
-    test('should open a context menu with 5 time-window options on right-click, suppressing the native menu', async () => {
-      tester.fixture.detectChanges();
-
-      const preventDefault = vi.fn();
-      tester.component.openContextMenu({ preventDefault, clientX: 120, clientY: 340 } as unknown as MouseEvent, '2023-01-01T00:00:00.000Z');
-      tester.fixture.detectChanges();
-
-      expect(preventDefault).toHaveBeenCalled();
-      expect(tester.component.contextMenu()).toEqual({ x: 120, y: 340, timestamp: '2023-01-01T00:00:00.000Z' });
-      await expect.element(tester.contextMenuBackdrop).toBeInTheDocument();
-      await expect.element(tester.contextMenuItems).toHaveLength(5);
-    });
-
-    test('should close the context menu on escape', () => {
-      tester.fixture.detectChanges();
-      tester.component.openContextMenu(
-        { preventDefault: vi.fn(), clientX: 0, clientY: 0 } as unknown as MouseEvent,
-        '2023-01-01T00:00:00.000Z'
-      );
-
-      expect(tester.component.contextMenu()).not.toBeNull();
-
-      tester.component.closeContextMenu();
-
-      expect(tester.component.contextMenu()).toBeNull();
-    });
-
-    test('should close the context menu when clicking the backdrop', async () => {
-      tester.fixture.detectChanges();
-      tester.component.openContextMenu(
-        { preventDefault: vi.fn(), clientX: 0, clientY: 0 } as unknown as MouseEvent,
-        '2023-01-01T00:00:00.000Z'
-      );
-      tester.fixture.detectChanges();
-
-      await tester.contextMenuBackdrop.click();
-
-      expect(tester.component.contextMenu()).toBeNull();
-    });
-
-    test('should search a window around the timestamp and clear every other filter', () => {
-      const router = TestBed.inject(Router);
-      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-      tester.fixture.detectChanges();
-      tester.component.selectedScopes.set([{ scopeId: '1', scopeName: 'A' }]);
-
-      tester.component.searchAroundTimestamp('2020-01-01T12:00:00.000Z', 5);
-
-      expect(navigateSpy).toHaveBeenCalledWith([], {
-        queryParams: {
-          start: '2020-01-01T11:55:00.000Z',
-          end: '2020-01-01T12:05:00.000Z',
-          messageContent: null,
-          levels: [],
-          scopeTypes: [],
-          scopeIds: [],
-          itemIds: [],
-          groupIds: [],
-          page: 0
-        }
-      });
-      expect(tester.component.contextMenu()).toBeNull();
-      expect(tester.component.selectedScopes()).toEqual([]);
-    });
-  });
-
-  describe('other utility methods and streams', () => {
-    test('scopeTypeahead should call service and set noLogMatchingWarning', () => {
-      vi.useFakeTimers();
-      const scopes1: Array<Scope> = [{ scopeId: '1', scopeName: 'A' }];
-      logService.suggestScopes.mockReturnValue(of(scopes1));
-      let result: Array<Scope> | undefined;
-      tester.component.scopeTypeahead(of('foo')).subscribe(r => (result = r));
-      vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
-      expect(logService.suggestScopes).toHaveBeenCalledWith('foo');
-      expect(result).toBe(scopes1);
-      expect(tester.component.noLogMatchingWarning()).toBe(false);
-
-      const scopes2: Array<Scope> = [];
-      logService.suggestScopes.mockReturnValue(of(scopes2));
-      tester.component.scopeTypeahead(of('bar')).subscribe(r => (result = r));
-      vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
-      expect(logService.suggestScopes).toHaveBeenCalledWith('bar');
-      expect(result).toBe(scopes2);
-      expect(tester.component.noLogMatchingWarning()).toBe(true);
-    });
-
-    test('triggerSearch should navigate with correct queryParams', () => {
-      const router = TestBed.inject(Router);
-      vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-      tester.component.searchForm.patchValue({
-        start: 'AAA',
-        end: 'BBB',
-        messageContent: 'MSG',
-        levels: ['info'],
-        scopeTypes: ['south'],
-        scopeIds: null,
         page: 0
       });
-      const sc: Scope = { scopeId: 'X', scopeName: 'NX' };
-      tester.component.selectedScopes.set([sc]);
+      await expect.element(tester.contextMenu).not.toBeInTheDocument();
+      await expect.element(tester.chip('My South')).not.toBeInTheDocument();
+      await expect.element(tester.chip('Error')).toHaveAttribute('aria-pressed', 'false');
+      await expect.element(tester.messageContent).toHaveValue('');
+    });
+  });
 
-      tester.component.triggerSearch();
-      expect(router.navigate).toHaveBeenCalledWith([], {
-        queryParams: {
-          start: 'AAA',
-          end: 'BBB',
-          messageContent: 'MSG',
-          levels: ['info'],
-          scopeTypes: ['south'],
-          scopeIds: ['X'],
-          itemIds: [],
-          groupIds: [],
-          page: 0
-        }
+  describe('embedded in a connector or history query page', () => {
+    test('should only search the logs of a north connector', async () => {
+      logService.getScopeById.mockReturnValue(of({ scopeId: 'other', scopeName: 'Other' }));
+      // the scope filters of the URL do not apply
+      const tester = await createTester(`${SEARCH_URL}&scopeTypes=south&scopeIds=other`, {
+        scopeId: 'north1',
+        scopeType: 'north',
+        embedded: true
+      });
+
+      await expect.element(tester.rows).toHaveLength(3);
+      expect(logService.search).toHaveBeenCalledExactlyOnceWith({ ...URL_CRITERIA, scopeTypes: ['north'], scopeIds: ['north1'] });
+      await expect.element(tester.title).not.toBeInTheDocument();
+      // no scope column
+      await expect.element(tester.headers).toHaveLength(5);
+      await expect.element(tester.cells(0)).toHaveLength(5);
+      // the search area is collapsed
+      await expect.element(tester.form).not.toBeInTheDocument();
+
+      await tester.searchAreaToggle.click();
+
+      await expect.element(tester.form).toBeInTheDocument();
+      await expect.element(tester.scopeInput).not.toBeInTheDocument();
+      await expect.element(tester.itemInput).not.toBeInTheDocument();
+      await expect.element(tester.groupInput).not.toBeInTheDocument();
+      await expect.element(tester.chip('South')).not.toBeInTheDocument();
+
+      await tester.chip('Warning').click();
+      expect(await lastSearch(2)).toEqual({
+        ...URL_CRITERIA,
+        levels: ['info', 'error', 'warn'],
+        scopeTypes: ['north'],
+        scopeIds: ['north1'],
+        page: 0
       });
     });
 
-    test('ngOnDestroy should unsubscribe the subscription', () => {
-      const sub: Subscription = tester.component.subscription;
-      expect(sub.closed).toBe(false);
-      tester.component.ngOnDestroy();
-      expect(sub.closed).toBe(true);
+    test('should search the items and groups of a south connector only', async () => {
+      logService.suggestItems.mockReturnValue(of([item]));
+      logService.suggestGroups.mockReturnValue(of([group]));
+      const tester = await createTester(SEARCH_URL, { scopeId: 's1', scopeType: 'south', embedded: true });
+      await tester.searchAreaToggle.click();
+      await expect.element(tester.scopeInput).not.toBeInTheDocument();
+
+      await tester.itemInput.fill('Temp');
+      // no need to tell apart the connector of the items
+      await page.getByRole('option', { name: 'Temperature', exact: true }).click();
+      expect(logService.suggestItems).toHaveBeenCalledWith('Temp', 's1');
+      await expect.element(tester.chip('Temperature')).toBeInTheDocument();
+
+      await tester.groupInput.fill('Sens');
+      await page.getByRole('option', { name: 'Sensors', exact: true }).click();
+      expect(logService.suggestGroups).toHaveBeenCalledWith('Sens', 's1');
+      await expect.element(tester.chip('Sensors')).toBeInTheDocument();
+
+      await expect.element(tester.form.getByText('My South:')).not.toBeInTheDocument();
+      expect(await lastSearch(3)).toEqual({
+        ...URL_CRITERIA,
+        scopeTypes: ['south'],
+        scopeIds: ['s1'],
+        itemIds: ['i1'],
+        groupIds: ['g1'],
+        page: 0
+      });
     });
 
-    test('selectScope should add a scope, clear input and preventDefault', () => {
-      const scope: Scope = { scopeId: '1', scopeName: 'N' };
-      const ev: any = { item: scope, preventDefault: vi.fn() };
-      const router = TestBed.inject(Router);
-      vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+    test('should search the items, but not the groups, of a history query', async () => {
+      const tester = await createTester(SEARCH_URL, { scopeId: 'h1', scopeType: 'history-query', embedded: true });
+      await tester.searchAreaToggle.click();
 
-      tester.component.selectScope(ev);
-      expect(tester.component.selectedScopes()).toEqual([scope]);
-      expect(tester.component.searchForm.controls.scopeIds.value).toBe('');
-      expect(ev.preventDefault).toHaveBeenCalled();
-    });
-
-    test('removeScope should remove the given scope', () => {
-      const a: Scope = { scopeId: 'A', scopeName: 'A' };
-      const b: Scope = { scopeId: 'B', scopeName: 'B' };
-      const router = TestBed.inject(Router);
-      vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-      tester.component.selectedScopes.set([a, b]);
-      tester.component.removeScope(a);
-      expect(tester.component.selectedScopes()).toEqual([b]);
-    });
-
-    test('itemFormatter should append the owning connector/history name in parenthesis', () => {
-      const item: Item = { itemId: '1', itemName: 'Temperature', scopeId: 's1', scopeName: 'My South' };
-      expect(tester.component.itemFormatter(item)).toBe('Temperature (My South)');
-    });
-
-    test('itemFormatter should pass the raw input string through unchanged (e.g. when the field is reset to empty)', () => {
-      expect(tester.component.itemFormatter('')).toBe('');
-      expect(tester.component.itemFormatter('some typed text')).toBe('some typed text');
-    });
-
-    test('itemFormatter should omit the redundant connector/history name when already locked to a single scope', () => {
-      tester.fixture.componentRef.setInput('scopeId', 's1');
-      const item: Item = { itemId: '1', itemName: 'Temperature', scopeId: 's1', scopeName: 'My South' };
-      expect(tester.component.itemFormatter(item)).toBe('Temperature');
-    });
-
-    test('groupFormatter should append the owning connector/history name in parenthesis', () => {
-      const group: Group = { groupId: '1', groupName: 'Sensors', scopeId: 's1', scopeName: 'My South' };
-      expect(tester.component.groupFormatter(group)).toBe('Sensors (My South)');
-    });
-
-    test('groupFormatter should omit the redundant connector name when already locked to a single scope', () => {
-      tester.fixture.componentRef.setInput('scopeId', 's1');
-      const group: Group = { groupId: '1', groupName: 'Sensors', scopeId: 's1', scopeName: 'My South' };
-      expect(tester.component.groupFormatter(group)).toBe('Sensors');
-    });
-
-    test('groupFormatter should pass the raw input string through unchanged (e.g. when the field is reset to empty)', () => {
-      expect(tester.component.groupFormatter('')).toBe('');
-      expect(tester.component.groupFormatter('some typed text')).toBe('some typed text');
-    });
-
-    test('scopeFormatter should pass the raw input string through unchanged (e.g. when the field is reset to empty)', () => {
-      expect(tester.component.scopeFormatter('')).toBe('');
-      expect(tester.component.scopeFormatter('some typed text')).toBe('some typed text');
-    });
-
-    test('selectedItemsByScope should group selected items by their owning scope, preserving first-seen order', () => {
-      const a: Item = { itemId: 'a', itemName: 'A', scopeId: 's1', scopeName: 'South 1' };
-      const b: Item = { itemId: 'b', itemName: 'B', scopeId: 's2', scopeName: 'South 2' };
-      const c: Item = { itemId: 'c', itemName: 'C', scopeId: 's1', scopeName: 'South 1' };
-      tester.component.selectedItems.set([a, b, c]);
-
-      expect(tester.component.selectedItemsByScope()).toEqual([
-        { scopeId: 's1', scopeName: 'South 1', entries: [a, c] },
-        { scopeId: 's2', scopeName: 'South 2', entries: [b] }
-      ]);
-    });
-
-    test('selectedGroupsByScope should group selected groups by their owning scope, preserving first-seen order', () => {
-      const a: Group = { groupId: 'a', groupName: 'A', scopeId: 's1', scopeName: 'South 1' };
-      const b: Group = { groupId: 'b', groupName: 'B', scopeId: 's2', scopeName: 'South 2' };
-      tester.component.selectedGroups.set([a, b]);
-
-      expect(tester.component.selectedGroupsByScope()).toEqual([
-        { scopeId: 's1', scopeName: 'South 1', entries: [a] },
-        { scopeId: 's2', scopeName: 'South 2', entries: [b] }
-      ]);
-    });
-
-    test('showItemSearch should be true unless embedded on a north connector page', () => {
-      expect(tester.component.showItemSearch()).toBe(true); // standalone logs page (no scope lock)
-
-      tester.fixture.componentRef.setInput('scopeType', 'south');
-      expect(tester.component.showItemSearch()).toBe(true);
-
-      tester.fixture.componentRef.setInput('scopeType', 'history-query');
-      expect(tester.component.showItemSearch()).toBe(true);
-
-      tester.fixture.componentRef.setInput('scopeType', 'north');
-      expect(tester.component.showItemSearch()).toBe(false);
-    });
-
-    test('showGroupSearch should be true only on the standalone page or embedded on a south connector page', () => {
-      expect(tester.component.showGroupSearch()).toBe(true); // standalone logs page (no scope lock)
-
-      tester.fixture.componentRef.setInput('scopeType', 'south');
-      expect(tester.component.showGroupSearch()).toBe(true);
-
-      tester.fixture.componentRef.setInput('scopeType', 'history-query');
-      expect(tester.component.showGroupSearch()).toBe(false);
-
-      tester.fixture.componentRef.setInput('scopeType', 'north');
-      expect(tester.component.showGroupSearch()).toBe(false);
-    });
-
-    test('itemTypeahead should restrict suggestions to the current scope when embedded', () => {
-      vi.useFakeTimers();
-      tester.fixture.componentRef.setInput('scopeId', 'south1');
-      logService.suggestItems.mockReturnValue(of([]));
-
-      tester.component.itemTypeahead(of('foo')).subscribe();
-      vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
-
-      expect(logService.suggestItems).toHaveBeenCalledWith('foo', 'south1');
-    });
-
-    test('groupTypeahead should restrict suggestions to the current scope when embedded', () => {
-      vi.useFakeTimers();
-      tester.fixture.componentRef.setInput('scopeId', 'south1');
-      logService.suggestGroups.mockReturnValue(of([]));
-
-      tester.component.groupTypeahead(of('foo')).subscribe();
-      vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
-
-      expect(logService.suggestGroups).toHaveBeenCalledWith('foo', 'south1');
-    });
-
-    test('getLevelClass should return correct class or fallback', () => {
-      const cmp = tester.component;
-      expect(cmp.getLevelClass('error')).toBe('fa-solid fa-times-circle level-red');
-      expect(cmp.getLevelClass('warn')).toBe('fa-solid fa-exclamation-triangle level-yellow');
-      expect(cmp.getLevelClass('info')).toBe('fa-solid fa-info-circle level-green');
-      expect(cmp.getLevelClass('debug')).toBe('fa-solid fa-bug level-blue');
-      expect(cmp.getLevelClass('trace')).toBe('fa-solid fa-search level-grey');
-      expect(cmp.getLevelClass('nonsense' as any)).toBe('fa-solid fa-times-circle level-red');
+      await expect.element(tester.itemInput).toBeInTheDocument();
+      await expect.element(tester.groupInput).not.toBeInTheDocument();
+      await expect.element(tester.scopeInput).not.toBeInTheDocument();
     });
   });
 });
