@@ -1,6 +1,6 @@
 import { NgOptimizedImage } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, OnInit, signal, WritableSignal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -15,12 +15,11 @@ import {
   EMPTY,
   exhaustMap,
   filter,
+  finalize,
   map,
   Observable,
   of,
-  Subscription,
-  switchMap,
-  tap
+  switchMap
 } from 'rxjs';
 
 import { LogDTO } from '@oibus/shared/api/logs.model';
@@ -62,18 +61,23 @@ import { emptyPage } from '../shared/utils/page.utils';
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [PageLoader]
 })
-export class LogsComponent implements OnInit, OnDestroy {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private pageLoader = inject(PageLoader);
-  private logService = inject(LogService);
+export class LogsComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly pageLoader = inject(PageLoader);
+  private readonly logService = inject(LogService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly formBuilder = inject(NonNullableFormBuilder);
 
   readonly scopeId = input<string | null>(null);
   readonly scopeType = input<ScopeType | null>(null);
   readonly embedded = input(false);
+
+  /** True on the standalone logs page, i.e. when the search is not locked to a connector or history query. */
+  readonly standalone = computed(() => !this.scopeId() && !this.scopeType());
 
   // On the standalone logs page (no scope lock), items and groups from every connector are searchable.
   // Embedded on a south connector's page, both are searchable but restricted to that connector. Embedded
@@ -84,7 +88,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   );
   readonly showGroupSearch = computed(() => this.scopeType() === null || this.scopeType() === 'south');
 
-  readonly searchForm = inject(NonNullableFormBuilder).group(
+  readonly searchForm = this.formBuilder.group(
     {
       messageContent: null as string | null,
       start: null as Instant | null,
@@ -101,7 +105,7 @@ export class LogsComponent implements OnInit, OnDestroy {
 
   // Each level pairs a distinct icon shape with its color, so meaning does not rely on color alone
   // (e.g. colorblind users can still tell ERROR from INFO even when red and green look the same).
-  readonly LEGEND: Array<{ label: LogLevel; class: string }> = [
+  readonly LEGEND: ReadonlyArray<{ label: LogLevel; class: string }> = [
     { label: 'error', class: 'fa-solid fa-times-circle level-red' },
     { label: 'warn', class: 'fa-solid fa-exclamation-triangle level-yellow' },
     { label: 'info', class: 'fa-solid fa-info-circle level-green' },
@@ -111,15 +115,12 @@ export class LogsComponent implements OnInit, OnDestroy {
 
   readonly levels = LOG_LEVELS.filter(level => level !== 'silent');
   readonly scopeTypes = SCOPE_TYPES;
-  selectedScopes = signal<Array<Scope>>([]);
-  selectedItems = signal<Array<Item>>([]);
-  selectedGroups = signal<Array<Group>>([]);
-  loading = signal(false);
-  // subscription to reload the page periodically
-  subscription = new Subscription();
-  logs = signal<Page<LogDTO>>(emptyPage());
-  noLogMatchingWarning = signal(false);
-  paused = signal(false);
+  readonly selectedScopes = signal<Array<Scope>>([]);
+  readonly selectedItems = signal<Array<Item>>([]);
+  readonly selectedGroups = signal<Array<Group>>([]);
+  readonly loading = signal(false);
+  readonly logs = signal<Page<LogDTO>>(emptyPage());
+  readonly paused = signal(false);
 
   /** Windows offered in the log row context menu, as minutes before/after the clicked timestamp. */
   readonly CONTEXT_MENU_WINDOWS: ReadonlyArray<{ minutes: number; labelKey: string }> = [
@@ -133,20 +134,17 @@ export class LogsComponent implements OnInit, OnDestroy {
   /** Position and target timestamp of the currently open log row context menu, or null when closed. */
   readonly contextMenu = signal<{ x: number; y: number; timestamp: Instant } | null>(null);
 
-  scopeTypeahead = (text$: Observable<string>) =>
+  readonly scopeTypeahead = (text$: Observable<string>) =>
     text$.pipe(
       debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
       distinctUntilChanged(),
-      switchMap(text => this.logService.suggestScopes(text)),
-      tap(scopes => {
-        this.noLogMatchingWarning.set(scopes.length === 0);
-      })
+      switchMap(text => this.logService.suggestScopes(text))
     );
   // ngbTypeahead also calls this formatter with the raw (typed or reset-to-empty) input string, not
   // just with a selected Scope, so it must be able to pass that string straight through unchanged.
-  scopeFormatter = (scope: Scope | string) => (typeof scope === 'string' ? scope : scope.scopeName);
+  readonly scopeFormatter = (scope: Scope | string) => (typeof scope === 'string' ? scope : scope.scopeName);
 
-  itemTypeahead = (text$: Observable<string>) =>
+  readonly itemTypeahead = (text$: Observable<string>) =>
     text$.pipe(
       debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
       distinctUntilChanged(),
@@ -158,19 +156,19 @@ export class LogsComponent implements OnInit, OnDestroy {
   // every suggestion shares the same scope and the suffix would just be noise. ngbTypeahead also calls
   // this formatter with the raw (typed or reset-to-empty) input string, not just a selected Item, so
   // that case must be passed through unchanged rather than interpolated as "undefined (undefined)".
-  itemFormatter = (item: Item | string) => {
+  readonly itemFormatter = (item: Item | string) => {
     if (typeof item === 'string') return item;
     return this.scopeId() ? item.itemName : `${item.itemName} (${item.scopeName})`;
   };
 
-  groupTypeahead = (text$: Observable<string>) =>
+  readonly groupTypeahead = (text$: Observable<string>) =>
     text$.pipe(
       debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
       distinctUntilChanged(),
       switchMap(text => this.logService.suggestGroups(text, this.scopeId() ?? undefined))
     );
   // Same rationale and same raw-string caveat as itemFormatter above.
-  groupFormatter = (group: Group | string) => {
+  readonly groupFormatter = (group: Group | string) => {
     if (typeof group === 'string') return group;
     return this.scopeId() ? group.groupName : `${group.groupName} (${group.scopeName})`;
   };
@@ -181,7 +179,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   });
 
   /** True when at least one level is selected (i.e. the filter is active). */
-  readonly hasActiveLevels = computed(() => this.activeLevels()!.length > 0);
+  readonly hasActiveLevels = computed(() => this.activeLevels().length > 0);
 
   /** Signal version of the current selected scope types, kept in sync with the form control. */
   readonly activeScopeTypes = toSignal(this.searchForm.controls.scopeTypes.valueChanges, {
@@ -189,7 +187,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   });
 
   /** True when at least one scope type is selected (i.e. the filter is active). */
-  readonly hasActiveScopeTypes = computed(() => this.activeScopeTypes()!.length > 0);
+  readonly hasActiveScopeTypes = computed(() => this.activeScopeTypes().length > 0);
 
   /** Selected items grouped by their owning connector/history query, for the pills display. */
   readonly selectedItemsByScope = computed(() => groupByScope(this.selectedItems()));
@@ -198,7 +196,8 @@ export class LogsComponent implements OnInit, OnDestroy {
   readonly selectedGroupsByScope = computed(() => groupByScope(this.selectedGroups()));
 
   ngOnInit(): void {
-    const searchParams = this.toSearchParams(this.route);
+    // The inputs (scope lock) are only available from here, hence the initialization in ngOnInit
+    const searchParams = this.toSearchParams();
     this.searchForm.setValue({
       messageContent: searchParams.messageContent || null,
       start: searchParams.start || null,
@@ -214,57 +213,38 @@ export class LogsComponent implements OnInit, OnDestroy {
       this.searchForm.controls.scopeTypes.disable();
       this.searchForm.controls.scopeIds.disable();
     }
-    const queryScopeIds = this.route.snapshot.queryParamMap.getAll('scopeIds');
-    if (queryScopeIds.length > 0) {
-      combineLatest(queryScopeIds.map(scopeId => this.logService.getScopeById(scopeId).pipe(catchError(() => of(null))))).subscribe(
-        selectedScopes => {
-          this.selectedScopes.set(selectedScopes.filter(scope => !!scope) as Array<Scope>);
-        }
-      );
-    }
-    const queryItemIds = this.route.snapshot.queryParamMap.getAll('itemIds');
-    if (queryItemIds.length > 0) {
-      combineLatest(queryItemIds.map(itemId => this.logService.getItemById(itemId).pipe(catchError(() => of(null))))).subscribe(
-        selectedItems => {
-          this.selectedItems.set(selectedItems.filter(item => !!item) as Array<Item>);
-        }
-      );
-    }
-    const queryGroupIds = this.route.snapshot.queryParamMap.getAll('groupIds');
-    if (queryGroupIds.length > 0) {
-      combineLatest(queryGroupIds.map(groupId => this.logService.getGroupById(groupId).pipe(catchError(() => of(null))))).subscribe(
-        selectedGroups => {
-          this.selectedGroups.set(selectedGroups.filter(group => !!group) as Array<Group>);
-        }
-      );
-    }
-    this.subscription.add(
-      this.pageLoader.pageLoads$
-        .pipe(
-          switchMap(page =>
-            // Refresh while the page is visible only, so a forgotten tab does not keep querying OIBus
-            visibleTimer(10_000).pipe(
-              // Always fire the initial tick; subsequent ticks respect the paused state.
-              filter((_, index) => index === 0 || !this.paused()),
-              map(() => page)
-            )
-          ),
-          exhaustMap(page => {
-            this.loading.set(true);
-            const criteria: LogSearchParam = { ...this.toSearchParams(this.route), page };
-            return this.logService.search(criteria).pipe(catchError(() => EMPTY));
-          })
-        )
-        .subscribe(logs => {
-          this.logs.set(logs);
-          this.loading.set(false);
-        })
-    );
+    const queryParamMap = this.route.snapshot.queryParamMap;
+    loadSelection(queryParamMap.getAll('scopeIds'), id => this.logService.getScopeById(id), this.selectedScopes);
+    loadSelection(queryParamMap.getAll('itemIds'), id => this.logService.getItemById(id), this.selectedItems);
+    loadSelection(queryParamMap.getAll('groupIds'), id => this.logService.getGroupById(id), this.selectedGroups);
+
+    this.pageLoader.pageLoads$
+      .pipe(
+        switchMap(page =>
+          // Refresh while the page is visible only, so a forgotten tab does not keep querying OIBus
+          visibleTimer(10_000).pipe(
+            // Always fire the initial tick; subsequent ticks respect the paused state.
+            filter((_, index) => index === 0 || !this.paused()),
+            map(() => page)
+          )
+        ),
+        exhaustMap(page => {
+          this.loading.set(true);
+          const criteria: LogSearchParam = { ...this.toSearchParams(), page };
+          return this.logService.search(criteria).pipe(
+            catchError(() => EMPTY),
+            // also on error, so that a failed search does not leave the search button disabled
+            finalize(() => this.loading.set(false))
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(logs => this.logs.set(logs));
   }
 
-  toSearchParams(route: ActivatedRoute): LogSearchParam {
+  private toSearchParams(): LogSearchParam {
     const now = DateTime.now().endOf('minute');
-    const queryParamMap = route.snapshot.queryParamMap;
+    const queryParamMap = this.route.snapshot.queryParamMap;
     const messageContent = queryParamMap.get('messageContent') || undefined;
     let scopeTypes: Array<ScopeType>;
     let scopeIds: Array<string>;
@@ -299,7 +279,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       messageContent: formValue.messageContent!,
       levels: formValue.levels!,
       scopeTypes: scopeType ? [scopeType] : formValue.scopeTypes!,
-      scopeIds: scopeId ? [scopeId] : this.selectedScopes()!.map(scope => scope.scopeId),
+      scopeIds: scopeId ? [scopeId] : this.selectedScopes().map(scope => scope.scopeId),
       itemIds: this.selectedItems().map(item => item.itemId),
       groupIds: this.selectedGroups().map(group => group.groupId),
       page: 0
@@ -307,8 +287,8 @@ export class LogsComponent implements OnInit, OnDestroy {
     this.router.navigate([], { queryParams: criteria });
   }
 
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+  toggleAutoReload() {
+    this.paused.update(paused => !paused);
   }
 
   selectScope(event: NgbTypeaheadSelectItemEvent<Scope>) {
@@ -391,6 +371,7 @@ export class LogsComponent implements OnInit, OnDestroy {
     event.preventDefault();
     this.contextMenu.set({ x: event.clientX, y: event.clientY, timestamp });
   }
+
   closeContextMenu() {
     this.contextMenu.set(null);
   }
@@ -417,6 +398,19 @@ export class LogsComponent implements OnInit, OnDestroy {
     this.closeContextMenu();
     this.triggerSearch();
   }
+}
+
+/**
+ * Loads the entries (scopes, items or groups) whose ids are given (from the query params) into the given selection.
+ * An entry that cannot be loaded (e.g. deleted since) is ignored.
+ */
+function loadSelection<T>(ids: Array<string>, load: (id: string) => Observable<T | null>, selection: WritableSignal<Array<T>>) {
+  if (ids.length === 0) {
+    return;
+  }
+  combineLatest(ids.map(id => load(id).pipe(catchError(() => of(null))))).subscribe(entries =>
+    selection.set(entries.filter((entry): entry is T => !!entry))
+  );
 }
 
 /** A group of scope-owned entries (items or groups) sharing the same owning connector/history query. */

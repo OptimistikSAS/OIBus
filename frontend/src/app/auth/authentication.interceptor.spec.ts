@@ -2,6 +2,7 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { firstValueFrom } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { createMock, MockObject } from '../../test/vitest-create-mock';
@@ -30,16 +31,26 @@ describe('authenticationInterceptor', () => {
 
   afterEach(() => http.verify());
 
-  test('should send the request as is if no token', () => {
-    httpClient.get('/api/foo').subscribe();
+  test('should send the request as is if no token', async () => {
+    windowService.getStorageItem.mockReturnValue(null);
+    const result = firstValueFrom(httpClient.get('/api/foo'));
+
     const testRequest = http.expectOne('/api/foo');
-    expect(testRequest.request.headers.get('Authorization')).toBeFalsy();
+    expect(testRequest.request.headers.has('Authorization')).toBe(false);
+    testRequest.flush({ foo: 'bar' });
+
+    await expect(result).resolves.toEqual({ foo: 'bar' });
   });
 
-  test('should send the token if present', () => {
+  test('should send the token if present', async () => {
     windowService.getStorageItem.mockReturnValue('fake.token');
-    httpClient.get('/api/foo').subscribe();
+    const result = firstValueFrom(httpClient.get('/api/foo'));
+
     const testRequest = http.expectOne('/api/foo');
+    expect(windowService.getStorageItem).toHaveBeenCalledWith('oibus-token');
     expect(testRequest.request.headers.get('Authorization')).toBe('Bearer fake.token');
+    testRequest.flush({ foo: 'bar' });
+
+    await expect(result).resolves.toEqual({ foo: 'bar' });
   });
 });

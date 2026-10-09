@@ -42,7 +42,7 @@
         </div>
 
         <div class="search-buttons ms-auto d-flex gap-2 align-items-center flex-shrink-0">
-          <button class="btn btn-primary" id="search-button" [disabled]="loading()">
+          <button type="submit" class="btn btn-primary" id="search-button" [disabled]="loading()">
             @if (loading()) {
               <span class="fa-solid fa-spin fa-spinner"></span>
             } @else {
@@ -110,11 +110,11 @@
                   <button
                     type="button"
                     class="btn btn-link"
-                    id="view-details-button"
                     [ngbTooltip]="'audit.tooltips.view' | translate"
+                    [attr.aria-label]="'audit.tooltips.view' | translate"
                     (click)="showHistory(entry)"
                   >
-                    <span class="fa-solid fa-search"></span>
+                    <span class="fa-solid fa-search" aria-hidden="true"></span>
                   </button>
                 </td>
               </tr>

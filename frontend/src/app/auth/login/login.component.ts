@@ -17,7 +17,7 @@ import { RequestedUrlService } from '../authentication.guard';
   selector: 'oib-login',
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, NgbCollapse, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class LoginComponent {
@@ -25,9 +25,10 @@ export class LoginComponent {
   private router = inject(Router);
   private requestedUrlService = inject(RequestedUrlService);
   private windowService = inject(WindowService);
+  private fb = inject(NonNullableFormBuilder);
 
   readonly loginError = signal(false);
-  form = inject(NonNullableFormBuilder).group({
+  readonly form = this.fb.group({
     login: ['', Validators.required],
     password: ['', Validators.required]
   });

@@ -122,6 +122,18 @@
     th:last-child {
       border-top-right-radius: 1rem;
     }
+    // column widths (declared after th:first-child, which has the same specificity, to override its width)
+    th.level-column {
+      width: 1%;
+    }
+    th.scope-type-column,
+    th.item-column,
+    th.group-column {
+      width: 8%;
+    }
+    th.scope-column {
+      width: 4%;
+    }
     // alternative case if oib-box-title is on top of table
     .light {
       background-color: $white;
