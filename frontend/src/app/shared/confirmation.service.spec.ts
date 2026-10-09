@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { firstValueFrom } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
@@ -24,67 +25,62 @@ describe('ConfirmationService', () => {
     confirmationModalComponent = TestBed.runInInjectionContext(() => new ConfirmationModalComponent());
   });
 
-  test('should create a modal instance with title, message, yes and no', () => {
+  test('should create a modal instance with title, message, yes and no', async () => {
     mockModalService.mockClosedModal(confirmationModalComponent);
 
-    let closed = false;
-    confirmationService.confirm({ ...commonOptions, yes: 'Yep', no: 'Nope' }).subscribe(() => (closed = true));
+    const result = firstValueFrom(confirmationService.confirm({ ...commonOptions, yes: 'Yep', no: 'Nope' }));
 
     expect(confirmationModalComponent.title()).toBe('Hello');
     expect(confirmationModalComponent.message()).toBe('world');
     expect(confirmationModalComponent.yes()).toBe('Yep');
     expect(confirmationModalComponent.no()).toBe('Nope');
-    expect(closed).toBe(true);
+    await expect(result).resolves.toBe('');
   });
 
-  test('should create a modal instance with i18n title, message, yes and no', () => {
+  test('should create a modal instance with i18n title, message, yes and no', async () => {
     mockModalService.mockClosedModal(confirmationModalComponent);
 
-    let closed = false;
     const options: ConfirmationOptions = {
       titleKey: 'common.save',
-      messageKey: 'common.close',
+      messageKey: 'common.forbidden',
+      interpolateParams: { url: '/south' },
       yesKey: 'common.cancel',
       noKey: 'common.delete'
     };
-    confirmationService.confirm(options).subscribe(() => (closed = true));
+    const result = firstValueFrom(confirmationService.confirm(options));
 
     expect(confirmationModalComponent.title()).toBe('Save');
-    expect(confirmationModalComponent.message()).toBe('Close');
+    expect(confirmationModalComponent.message()).toBe(`You don't have the access rights for this entity.\n/south`);
     expect(confirmationModalComponent.yes()).toBe('Cancel');
     expect(confirmationModalComponent.no()).toBe('Delete');
-    expect(closed).toBe(true);
+    await expect(result).resolves.toBe('');
   });
 
-  test('should use default title, yes and no keys', () => {
+  test('should use default title, yes and no keys', async () => {
     mockModalService.mockClosedModal(confirmationModalComponent);
 
-    let closed = false;
-    confirmationService.confirm({ message: 'Hello' }).subscribe(() => (closed = true));
+    const result = firstValueFrom(confirmationService.confirm({ message: 'Hello' }));
 
     expect(confirmationModalComponent.title()).toBe('Confirmation');
     expect(confirmationModalComponent.message()).toBe('Hello');
     expect(confirmationModalComponent.yes()).toBe('Yes');
     expect(confirmationModalComponent.no()).toBe('No');
-    expect(closed).toBe(true);
+    await expect(result).resolves.toBe('');
   });
 
-  test('should do nothing on No', () => {
+  test('should complete without emitting on No', async () => {
     mockModalService.mockDismissedModal(confirmationModalComponent);
 
-    let closed = false;
-    confirmationService.confirm(commonOptions).subscribe(() => (closed = true));
+    const result = firstValueFrom(confirmationService.confirm(commonOptions), { defaultValue: 'completed' });
 
-    expect(closed).toBe(false);
+    await expect(result).resolves.toBe('completed');
   });
 
-  test('should emit an error if on No if options says so', () => {
+  test('should emit an error on No if options says so', async () => {
     mockModalService.mockDismissedWithErrorModal(confirmationModalComponent);
 
-    let hasErrored = false;
     const options: ConfirmationOptions = { ...commonOptions, errorOnClose: true };
-    confirmationService.confirm(options).subscribe({ error: () => (hasErrored = true) });
 
-    expect(hasErrored).toBe(true);
+    await expect(firstValueFrom(confirmationService.confirm(options))).rejects.toBe('not-confirmed');
   });
 });

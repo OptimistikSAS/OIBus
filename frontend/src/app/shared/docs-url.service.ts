@@ -15,16 +15,14 @@ const DOCUMENTATION_BASE_PATH = '/documentation';
  * Docusaurus doesn't prefix the default locale in its generated URLs. 'fr' and 'zh' docs are both
  * bundled (documentation/docusaurus.config.js's i18n.locales includes both, with translated
  * content under documentation/i18n/fr/ and documentation/i18n/zh/), so French and Chinese UI
- * users get docs in their own language. Any future UI language without a bundled docs locale
- * here falls back to the default (no prefix) segment below until its docs are bundled the same
- * way.
+ * users get docs in their own language. A future UI language without a bundled docs locale must be
+ * mapped to the default (empty, no prefix) segment until its docs are bundled the same way.
  */
-const LOCALE_SEGMENTS: Partial<Record<Language, string>> = {
+const LOCALE_SEGMENTS: Record<Language, string> = {
   en: '',
   fr: 'fr',
   zh: 'zh'
 };
-const DEFAULT_LOCALE_SEGMENT = '';
 
 /**
  * Resolves in-app help links to the locally embedded documentation, instead of the public
@@ -32,7 +30,7 @@ const DEFAULT_LOCALE_SEGMENT = '';
  */
 @Service()
 export class DocsUrlService {
-  private windowService = inject(WindowService);
+  private readonly windowService = inject(WindowService);
 
   /**
    * Builds a URL to the embedded documentation for the given fragment (e.g.
@@ -46,7 +44,7 @@ export class DocsUrlService {
    * fragment needs the 'docs' segment inserted between the locale segment and the fragment.
    */
   resolve(fragment: string): string {
-    const localeSegment = LOCALE_SEGMENTS[this.windowService.languageToUse()] ?? DEFAULT_LOCALE_SEGMENT;
+    const localeSegment = LOCALE_SEGMENTS[this.windowService.languageToUse()];
     const trimmedFragment = fragment.replace(/^\/+/, '');
     const docsSegment = trimmedFragment.length > 0 ? 'docs' : '';
 

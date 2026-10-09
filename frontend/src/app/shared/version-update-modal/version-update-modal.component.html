@@ -3,7 +3,7 @@
 </div>
 <div class="modal-body">
   <p [translate]="'version-update.message'" [translateParams]="{ seconds: remainingSeconds() }"></p>
-  <p>{{ oldVersion }} <i class="fa-solid fa-arrow-right"></i> {{ newVersion }}</p>
+  <p>{{ oldVersion() }} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> {{ newVersion() }}</p>
   <div class="version-update-progress-container">
     <ngb-progressbar [value]="progress()" [max]="1" [striped]="false" [animated]="false" type="secondary" />
     <span class="progress-text">{{ remainingSeconds() }}s</span>

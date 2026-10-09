@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -16,7 +16,11 @@ class AuditHistoryModalComponentTester {
   readonly fixture = TestBed.createComponent(AuditHistoryModalComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly rows = this.root.getByCss('.list-group-item');
-  readonly closeButton = page.getByCss('#close-button');
+  readonly closeButton = this.root.getByRole('button', { name: 'Close' });
+  readonly modeDropdown = this.root.getByCss('[ngbDropdownToggle]');
+  readonly expandButtons = this.root.getByRole('button', { name: 'Show details' });
+  readonly collapseButton = this.root.getByRole('button', { name: 'Hide details' });
+  readonly jsonDiff = this.root.getByCss('oib-audit-json-diff');
 }
 
 describe('AuditHistoryModalComponent', () => {
@@ -63,75 +67,81 @@ describe('AuditHistoryModalComponent', () => {
     tester = new AuditHistoryModalComponentTester();
   });
 
+  test('should display a loading message until the history is loaded', async () => {
+    auditService.getHistory.mockReturnValue(NEVER);
+    tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
+
+    await expect.element(tester.root.getByText('Loading audit history…')).toBeVisible();
+  });
+
   test('should load and display the history rows', async () => {
     auditService.getHistory.mockReturnValue(of(history));
     tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
-    tester.fixture.detectChanges();
 
     expect(auditService.getHistory).toHaveBeenCalledWith('south_connector', 'entityId1');
-    await expect.element(tester.rows.nth(0)).toBeInTheDocument();
-    await expect.element(tester.rows.nth(1)).toBeInTheDocument();
+    await expect.element(tester.rows).toHaveLength(2);
+    await expect.element(tester.rows.nth(0).getByText('Update')).toHaveClass('bg-primary');
     await expect.element(tester.rows.nth(0).getByCss('.text-muted')).toHaveTextContent('OIAnalytics');
+    await expect.element(tester.rows.nth(1).getByText('Create')).toHaveClass('bg-success');
   });
 
-  test('should display an empty state message when there is no history', async () => {
+  test('should display an empty state message without mode dropdown when there is no history', async () => {
     auditService.getHistory.mockReturnValue(of([]));
     tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
-    tester.fixture.detectChanges();
 
-    await expect.element(tester.root.getByCss('.empty')).toBeInTheDocument();
+    await expect.element(tester.root.getByText('No history found')).toBeVisible();
+    await expect.element(tester.modeDropdown).not.toBeInTheDocument();
   });
 
-  test('should expand and collapse the diff view when a row is toggled', async () => {
+  test('should expand and collapse the diff view when the row button is clicked', async () => {
     auditService.getHistory.mockReturnValue(of(history));
     tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
-    tester.fixture.detectChanges();
+    await expect.element(tester.expandButtons).toHaveLength(2);
+    await expect.element(tester.jsonDiff).not.toBeInTheDocument();
 
-    expect(tester.fixture.componentInstance.expandedRowId()).toEqual(null);
+    await tester.expandButtons.nth(1).click();
 
-    tester.fixture.componentInstance.toggleRow('id1');
-    tester.fixture.detectChanges();
-    expect(tester.fixture.componentInstance.expandedRowId()).toEqual('id1');
-    await expect.element(tester.root.getByCss('oib-audit-json-diff')).toBeInTheDocument();
+    await expect.element(tester.rows.nth(1).getByCss('oib-audit-json-diff')).toBeInTheDocument();
+    await expect.element(tester.collapseButton).toHaveAttribute('aria-expanded', 'true');
 
-    tester.fixture.componentInstance.toggleRow('id1');
-    tester.fixture.detectChanges();
-    expect(tester.fixture.componentInstance.expandedRowId()).toEqual(null);
+    // expanding another row collapses the first one
+    await tester.expandButtons.nth(0).click();
+    await expect.element(tester.rows.nth(0).getByCss('oib-audit-json-diff')).toBeInTheDocument();
+    await expect.element(tester.jsonDiff).toHaveLength(1);
+
+    await tester.collapseButton.click();
+    await expect.element(tester.jsonDiff).not.toBeInTheDocument();
   });
 
   test('should switch the diff view mode when a mode is selected from the dropdown', async () => {
     auditService.getHistory.mockReturnValue(of(history));
     tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
-    tester.fixture.detectChanges();
+    await tester.expandButtons.nth(1).click();
 
-    tester.fixture.componentInstance.toggleRow('id1');
-    tester.fixture.detectChanges();
     // JSON diff is the default mode
-    await expect.element(tester.root.getByCss('oib-audit-json-diff')).toBeInTheDocument();
+    await expect.element(tester.modeDropdown).toHaveTextContent('JSON diff');
+    await expect.element(tester.jsonDiff).toBeInTheDocument();
 
-    tester.fixture.componentInstance.changeMode('table');
-    tester.fixture.detectChanges();
+    await tester.modeDropdown.click();
+    await tester.root.getByRole('button', { name: 'Table' }).click();
     await expect.element(tester.root.getByCss('oib-audit-diff')).toBeInTheDocument();
+    await expect.element(tester.modeDropdown).toHaveTextContent('Table');
 
-    tester.fixture.componentInstance.changeMode('json-side-by-side');
-    tester.fixture.detectChanges();
+    await tester.modeDropdown.click();
+    await tester.root.getByRole('button', { name: 'JSON side by side' }).click();
     await expect.element(tester.root.getByCss('oib-audit-json-side-by-side')).toBeInTheDocument();
-  });
 
-  test('should not show the mode dropdown when there is no history', async () => {
-    auditService.getHistory.mockReturnValue(of([]));
-    tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
-    tester.fixture.detectChanges();
-
-    await expect.element(tester.root.getByCss('[ngbDropdown]')).not.toBeInTheDocument();
+    await tester.modeDropdown.click();
+    await tester.root.getByRole('button', { name: 'JSON diff' }).click();
+    await expect.element(tester.jsonDiff).toBeInTheDocument();
   });
 
   test('should close the modal', async () => {
     auditService.getHistory.mockReturnValue(of([]));
     tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
-    tester.fixture.detectChanges();
 
     await tester.closeButton.click();
+
     expect(fakeActiveModal.close).toHaveBeenCalled();
   });
 });
