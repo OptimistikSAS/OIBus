@@ -4,10 +4,11 @@
       <h1>{{ editedUser.login }}</h1>
       <div class="d-flex">
         <div class="me-4 text-center">
-          <div class="mb-2 fa fa-user-circle-o" style="font-size: 8rem"></div>
+          <div class="mb-2 fa-regular fa-circle-user user-avatar" aria-hidden="true"></div>
           <div class="lead mb-2" translate="user-settings.edit-user-settings.login" [translateParams]="{ login: editedUser.login }"></div>
           <div>
             <button
+              type="button"
               class="btn btn-outline-secondary"
               id="open-change-password-modal-button"
               (click)="openChangePasswordModal()"
@@ -43,7 +44,7 @@
             </div>
           </form>
           <div class="form-group text-end">
-            <button [oib-save-button]="state" form="form"></button>
+            <button type="submit" [oib-save-button]="state" form="form"></button>
           </div>
         </div>
       </div>

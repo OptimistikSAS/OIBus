@@ -1,12 +1,18 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'south.workflows.manage-title'" [translateParams]="{ count: workflows.length }"></h4>
+  <h4 class="modal-title" [translate]="'south.workflows.manage-title'" [translateParams]="{ count: workflows().length }"></h4>
 </div>
 <div class="modal-body">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div></div>
     <div class="ms-3">
-      <button type="button" class="btn btn-primary btn-sm oib-box-btn" id="add-workflow" (click)="onAdd()">
-        <span class="fa fa-plus"></span>
+      <button
+        type="button"
+        class="btn btn-primary btn-sm oib-box-btn"
+        id="add-workflow"
+        [attr.aria-label]="'south.workflows.create-title' | translate"
+        (click)="onAdd()"
+      >
+        <span class="fa-solid fa-plus" aria-hidden="true"></span>
       </button>
     </div>
   </div>
@@ -15,7 +21,7 @@
     <div class="text-center">
       <div class="spinner-border" id="spinner" role="status"></div>
     </div>
-  } @else if (workflows.length === 0) {
+  } @else if (workflows().length === 0) {
     <div class="oib-grey-container" translate="south.workflows.none"></div>
   } @else {
     <div class="d-flex align-items-center gap-2 my-2">
@@ -23,6 +29,7 @@
         class="form-control form-control-sm flex-grow-1"
         [formControl]="searchControl"
         [placeholder]="'south.workflows.search-placeholder' | translate"
+        [attr.aria-label]="'common.search' | translate"
         type="text"
       />
     </div>
@@ -38,7 +45,7 @@
             <th translate="south.workflows.scan-mode"></th>
             <th translate="south.workflows.mode"></th>
             <th translate="south.workflows.enabled"></th>
-            <th style="width: 12rem"></th>
+            <th class="actions-column"></th>
           </tr>
         </thead>
         <tbody>
@@ -54,23 +61,30 @@
               </td>
               <td [translate]="getModeKey(workflow)"></td>
               <td>
-                <span class="fa" [class.fa-check]="workflow.enabled" [class.fa-times]="!workflow.enabled"></span>
+                <span
+                  class="fa-solid"
+                  role="img"
+                  [class.fa-check]="workflow.enabled"
+                  [class.fa-times]="!workflow.enabled"
+                  [attr.aria-label]="(workflow.enabled ? 'enums.boolean.true' : 'enums.boolean.false') | translate"
+                ></span>
               </td>
               <td class="text-nowrap action-buttons">
                 <div class="pull-right">
                   <!-- Run now/run history only exist for a persisted workflow of a persisted connector (direct mode) -->
-                  @if (directSave) {
+                  @if (directSave()) {
                     <button
                       type="button"
                       class="btn btn-link run-workflow px-1 py-0"
                       [disabled]="runningWorkflowId() === workflow.id"
                       [ngbTooltip]="'south.workflows.run-now' | translate"
+                      [attr.aria-label]="'south.workflows.run-now' | translate"
                       (click)="onRunNow(workflow)"
                     >
                       @if (runningWorkflowId() === workflow.id) {
-                        <span class="spinner-border spinner-border-sm"></span>
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                       } @else {
-                        <span class="fa fa-play"></span>
+                        <span class="fa-solid fa-play" aria-hidden="true"></span>
                       }
                     </button>
                   }
@@ -78,43 +92,48 @@
                     type="button"
                     class="btn btn-link preview-workflow px-1 py-0"
                     [ngbTooltip]="'south.workflows.preview' | translate"
+                    [attr.aria-label]="'south.workflows.preview' | translate"
                     (click)="onPreview(workflow)"
                   >
-                    <span class="fa fa-eye"></span>
+                    <span class="fa-regular fa-eye" aria-hidden="true"></span>
                   </button>
-                  @if (directSave) {
+                  @if (directSave()) {
                     <button
                       type="button"
                       class="btn btn-link history-workflow px-1 py-0"
                       [ngbTooltip]="'south.workflows.run-history' | translate"
+                      [attr.aria-label]="'south.workflows.run-history' | translate"
                       (click)="onViewHistory(workflow)"
                     >
-                      <span class="fa fa-history"></span>
+                      <span class="fa-solid fa-history" aria-hidden="true"></span>
                     </button>
                   }
                   <button
                     type="button"
                     class="btn btn-link edit-workflow px-1 py-0"
                     [ngbTooltip]="'south.workflows.edit-title' | translate"
+                    [attr.aria-label]="'south.workflows.edit-title' | translate"
                     (click)="onEdit(workflow)"
                   >
-                    <span class="fa fa-pencil"></span>
+                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                   </button>
                   <button
                     type="button"
                     class="btn btn-link duplicate-workflow px-1 py-0"
                     [ngbTooltip]="'south.workflows.duplicate' | translate"
+                    [attr.aria-label]="'south.workflows.duplicate' | translate"
                     (click)="onDuplicate(workflow)"
                   >
-                    <span class="fa fa-copy"></span>
+                    <span class="fa-solid fa-copy" aria-hidden="true"></span>
                   </button>
                   <button
                     type="button"
                     class="btn btn-link delete-workflow px-1 py-0"
                     [ngbTooltip]="'south.workflows.confirm-deletion' | translate: { name: workflow.name }"
+                    [attr.aria-label]="'common.delete' | translate"
                     (click)="onDelete(workflow)"
                   >
-                    <span class="fa fa-trash"></span>
+                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                   </button>
                 </div>
               </td>

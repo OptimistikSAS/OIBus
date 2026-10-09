@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
   pure: false
 })
 export class FileSizePipe implements PipeTransform {
-  private translateService = inject(TranslateService);
+  private readonly translateService = inject(TranslateService);
 
   // Accepts a string as well as a number so callers with a loosely-typed source (e.g. explore
   // metadata, which is a generic string | number bag) don't need to cast before piping.

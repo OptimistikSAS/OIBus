@@ -1,49 +1,53 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { buildEngineSettings } from '../../../test/builders';
+import { catchUnhandledErrors } from '../../../test/unhandled-errors';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { NotificationService } from '../../shared/notification.service';
 import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal.component';
 
-const engineSettings = {
-  proxyServer: {
-    enabled: false,
-    port: null,
-    username: null,
-    password: null,
-    forward: {
-      enabled: false,
-      url: null,
-      username: null,
-      password: null
-    }
-  }
-} as EngineSettingsDTO;
+const disabledProxy: EngineSettingsDTO['proxyServer'] = {
+  enabled: false,
+  port: null,
+  username: null,
+  password: null,
+  forward: { enabled: false, url: null, username: null, password: null }
+};
+
+const forwardingProxy: EngineSettingsDTO['proxyServer'] = {
+  enabled: true,
+  port: 3128,
+  username: 'proxy-user',
+  password: 'proxy-password',
+  forward: { enabled: true, url: 'http://upstream:3128', username: 'forward-user', password: 'forward-password' }
+};
 
 class EditEngineProxyModalTester {
   readonly fixture = TestBed.createComponent(EditEngineProxyModalComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly proxyEnabledCheckbox = this.root.getByCss('#proxy-enabled');
-  readonly proxyUsername = this.root.getByCss('#proxy-username');
-  readonly proxyPassword = this.root.getByCss('#proxy-password');
-  readonly forwardProxyEnabled = this.root.getByCss('#forward-proxy-enabled');
-  readonly forwardProxyUrl = this.root.getByCss('#forward-proxy-url');
-  readonly forwardProxyUsername = this.root.getByCss('#forward-proxy-username');
-  readonly forwardProxyPassword = this.root.getByCss('#forward-proxy-password');
-  readonly saveButton = this.root.getByCss('#save-proxy-button');
-  readonly cancelButton = this.root.getByCss('#cancel-proxy-button');
+  readonly proxyEnabled = this.root.getByLabelText('Enabled');
+  readonly port = this.root.getByLabelText('Port');
+  readonly username = this.root.getByCss('#proxy-username');
+  readonly password = this.root.getByCss('#proxy-password');
+  readonly forwardEnabled = this.root.getByLabelText('Forward to upstream proxy');
+  readonly forwardUrl = this.root.getByLabelText('URL');
+  readonly forwardUsername = this.root.getByCss('#forward-proxy-username');
+  readonly forwardPassword = this.root.getByCss('#forward-proxy-password');
+  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
+  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
 
-  get componentInstance() {
-    return this.fixture.componentInstance;
+  constructor(proxyServer: EngineSettingsDTO['proxyServer']) {
+    this.fixture.componentInstance.initialize(buildEngineSettings({ proxyServer }));
   }
 }
 
@@ -56,6 +60,7 @@ describe('EditEngineProxyModalComponent', () => {
     activeModal = createMock(NgbActiveModal);
     engineService = createMock(EngineService);
     notificationService = createMock(NotificationService);
+    engineService.updateEngineProxy.mockReturnValue(of(undefined));
 
     TestBed.configureTestingModule({
       providers: [
@@ -69,115 +74,148 @@ describe('EditEngineProxyModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
   });
 
-  test('should initialize the form with proxy settings', async () => {
-    const tester = new EditEngineProxyModalTester();
-    tester.fixture.componentInstance.initialize(engineSettings);
-    tester.fixture.detectChanges();
-    await expect.element(tester.proxyEnabledCheckbox).not.toBeChecked();
-    await expect.element(tester.forwardProxyEnabled).not.toBeInTheDocument();
-    await expect.element(tester.forwardProxyUrl).not.toBeInTheDocument();
-    await expect.element(tester.forwardProxyUsername).not.toBeInTheDocument();
-    await expect.element(tester.forwardProxyPassword).not.toBeInTheDocument();
+  test('should only display the toggle when the proxy is disabled', async () => {
+    const tester = new EditEngineProxyModalTester(disabledProxy);
+
+    await expect.element(tester.proxyEnabled).not.toBeChecked();
+    await expect.element(tester.port).not.toBeInTheDocument();
+    await expect.element(tester.forwardEnabled).not.toBeInTheDocument();
+    await expect.element(tester.forwardUrl).not.toBeInTheDocument();
   });
 
-  test('should save proxy settings and close modal', async () => {
-    engineService.updateEngineProxy.mockReturnValue(of(undefined));
-    const tester = new EditEngineProxyModalTester();
-    tester.fixture.componentInstance.initialize({
-      ...engineSettings,
-      proxyServer: { ...engineSettings.proxyServer, enabled: false, port: null }
-    });
-    tester.fixture.detectChanges();
+  test('should save a disabled proxy and close the modal', async () => {
+    const tester = new EditEngineProxyModalTester(disabledProxy);
+
     await tester.saveButton.click();
+
     expect(engineService.updateEngineProxy).toHaveBeenCalledWith({
       enabled: false,
       port: null,
       username: null,
       password: null,
-      forward: {
-        enabled: false,
-        url: undefined,
-        username: null,
-        password: null
-      }
+      forward: { enabled: false, url: undefined, username: null, password: null }
     });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
   });
 
-  test('should display forward proxy fields when forward is enabled from init', async () => {
-    const tester = new EditEngineProxyModalTester();
-    tester.fixture.componentInstance.initialize({
-      ...engineSettings,
-      proxyServer: {
-        ...engineSettings.proxyServer,
-        enabled: true,
-        port: 3128,
-        forward: { enabled: true, url: null, username: null, password: null }
-      }
-    });
-    tester.fixture.detectChanges();
-    await expect.element(tester.forwardProxyUrl).toBeInTheDocument();
+  test('should display every field of a forwarding proxy', async () => {
+    const tester = new EditEngineProxyModalTester(forwardingProxy);
+
+    await expect.element(tester.proxyEnabled).toBeChecked();
+    await expect.element(tester.port).toHaveValue(3128);
+    await expect.element(tester.username).toHaveValue('proxy-user');
+    await expect.element(tester.password).toHaveValue('proxy-password');
+    await expect.element(tester.forwardEnabled).toBeChecked();
+    await expect.element(tester.forwardUrl).toHaveValue('http://upstream:3128');
+    await expect.element(tester.forwardUsername).toHaveValue('forward-user');
+    await expect.element(tester.forwardPassword).toHaveValue('forward-password');
   });
 
-  test('should display forward proxy fields only when forward is enabled', async () => {
-    const tester = new EditEngineProxyModalTester();
-    tester.fixture.componentInstance.initialize({
-      ...engineSettings,
-      proxyServer: { ...engineSettings.proxyServer, enabled: true, port: 3128 }
+  test('should enable the proxy and save its own credentials', async () => {
+    const tester = new EditEngineProxyModalTester(disabledProxy);
+
+    await tester.proxyEnabled.click();
+    await expect.element(tester.forwardEnabled).not.toBeChecked();
+    await expect.element(tester.forwardUrl).not.toBeInTheDocument();
+
+    await tester.saveButton.click();
+    await expect.element(tester.root.getByText('This field is required')).toBeInTheDocument();
+    expect(engineService.updateEngineProxy).not.toHaveBeenCalled();
+
+    await tester.port.fill('3128');
+    await tester.username.fill('proxy-user');
+    await tester.password.fill('proxy-password');
+    await tester.saveButton.click();
+
+    expect(engineService.updateEngineProxy).toHaveBeenCalledWith({
+      enabled: true,
+      port: 3128,
+      username: 'proxy-user',
+      password: 'proxy-password',
+      forward: { enabled: false, url: undefined, username: null, password: null }
     });
-    tester.fixture.detectChanges();
-
-    await expect.element(tester.forwardProxyUrl).not.toBeInTheDocument();
-    await expect.element(tester.forwardProxyUsername).not.toBeInTheDocument();
-    await expect.element(tester.forwardProxyPassword).not.toBeInTheDocument();
-
-    await tester.forwardProxyEnabled.click();
-    tester.fixture.detectChanges();
-
-    await expect.element(tester.forwardProxyUrl).toBeInTheDocument();
-    await expect.element(tester.forwardProxyUsername).toBeInTheDocument();
-    await expect.element(tester.forwardProxyPassword).toBeInTheDocument();
   });
 
-  test('should save its own forward proxy credentials, separate from the proxy server ones', () => {
-    engineService.updateEngineProxy.mockReturnValue(of(undefined));
-    const tester = new EditEngineProxyModalTester();
-    tester.fixture.componentInstance.initialize({
-      ...engineSettings,
-      proxyServer: { ...engineSettings.proxyServer, enabled: true, port: 3128 }
+  test('should save the forward proxy credentials, separate from the proxy server ones', async () => {
+    const tester = new EditEngineProxyModalTester({ ...disabledProxy, enabled: true, port: 3128 });
+
+    await tester.forwardEnabled.click();
+    await tester.saveButton.click();
+    await expect.element(tester.root.getByText('This field is required')).toBeInTheDocument();
+    expect(engineService.updateEngineProxy).not.toHaveBeenCalled();
+
+    await tester.username.fill('proxy-user');
+    await tester.forwardUrl.fill('http://upstream:3128');
+    await tester.forwardUsername.fill('forward-user');
+    await tester.forwardPassword.fill('forward-password');
+    await tester.saveButton.click();
+
+    expect(engineService.updateEngineProxy).toHaveBeenCalledWith({
+      enabled: true,
+      port: 3128,
+      username: 'proxy-user',
+      password: null,
+      forward: { enabled: true, url: 'http://upstream:3128', username: 'forward-user', password: 'forward-password' }
     });
-    tester.fixture.detectChanges();
-
-    const controls = tester.componentInstance.form.controls;
-    controls.proxyUsername.setValue('proxyuser');
-    controls.proxyPassword.setValue('proxypass');
-    controls.forwardProxyEnabled.setValue(true);
-    controls.forwardProxyUrl.setValue('http://upstream.proxy:3128');
-    controls.forwardProxyUsername.setValue('forwarduser');
-    controls.forwardProxyPassword.setValue('forwardpass');
-
-    tester.componentInstance.save();
-
-    expect(engineService.updateEngineProxy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        enabled: true,
-        username: 'proxyuser',
-        password: 'proxypass',
-        forward: {
-          enabled: true,
-          url: 'http://upstream.proxy:3128',
-          username: 'forwarduser',
-          password: 'forwardpass'
-        }
-      })
-    );
   });
 
-  test('should dismiss modal on cancel', async () => {
-    const tester = new EditEngineProxyModalTester();
-    tester.fixture.detectChanges();
+  test('should clear the forward proxy when it is disabled', async () => {
+    const tester = new EditEngineProxyModalTester(forwardingProxy);
+
+    await tester.forwardEnabled.click();
+    await expect.element(tester.forwardUrl).not.toBeInTheDocument();
+    await tester.saveButton.click();
+
+    expect(engineService.updateEngineProxy).toHaveBeenCalledWith({
+      enabled: true,
+      port: 3128,
+      username: 'proxy-user',
+      password: 'proxy-password',
+      forward: { enabled: false, url: undefined, username: null, password: null }
+    });
+  });
+
+  test('should clear every setting when the proxy is disabled', async () => {
+    const tester = new EditEngineProxyModalTester(forwardingProxy);
+
+    await tester.proxyEnabled.click();
+    await expect.element(tester.port).not.toBeInTheDocument();
+    await expect.element(tester.forwardEnabled).not.toBeInTheDocument();
+
+    await tester.proxyEnabled.click();
+    await expect.element(tester.port).toHaveValue(null);
+    await expect.element(tester.username).toHaveValue('');
+    await expect.element(tester.forwardEnabled).not.toBeChecked();
+    await tester.proxyEnabled.click();
+    await tester.saveButton.click();
+
+    expect(engineService.updateEngineProxy).toHaveBeenCalledWith({
+      enabled: false,
+      port: null,
+      username: null,
+      password: null,
+      forward: { enabled: false, url: undefined, username: null, password: null }
+    });
+  });
+
+  test('should keep the modal open when the save fails', async () => {
+    const unhandledError = catchUnhandledErrors();
+    engineService.updateEngineProxy.mockReturnValue(throwError(() => new Error('boom')));
+    const tester = new EditEngineProxyModalTester(disabledProxy);
+
+    await tester.saveButton.click();
+
+    await vi.waitFor(() => expect(unhandledError).toHaveBeenCalledWith(new Error('boom')));
+    expect(notificationService.success).not.toHaveBeenCalled();
+    expect(activeModal.close).not.toHaveBeenCalled();
+  });
+
+  test('should dismiss the modal on cancel', async () => {
+    const tester = new EditEngineProxyModalTester(disabledProxy);
+
     await tester.cancelButton.click();
+
     expect(engineService.updateEngineProxy).not.toHaveBeenCalled();
     expect(activeModal.dismiss).toHaveBeenCalled();
   });

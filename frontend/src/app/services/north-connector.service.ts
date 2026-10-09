@@ -24,7 +24,7 @@ import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../sha
  */
 @Service()
 export class NorthConnectorService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   /**
    * Get North connectors types

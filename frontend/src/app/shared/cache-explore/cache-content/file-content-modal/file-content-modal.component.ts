@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -12,22 +12,22 @@ import { OibCodeBlockComponent } from '../../../form/oib-code-block/oib-code-blo
   selector: 'oib-file-content-modal',
   imports: [TranslateDirective, OibCodeBlockComponent, FileSizePipe],
   templateUrl: './file-content-modal.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './file-content-modal.component.scss'
 })
 export class FileContentModalComponent {
-  private modal = inject(NgbActiveModal);
+  private readonly modal = inject(NgbActiveModal);
 
   readonly codeBlock = viewChild.required<OibCodeBlockComponent>('codeBlock');
-  filename = '';
-  fileCacheContent: FileCacheContent | null = null;
+  readonly filename = signal('');
+  readonly fileCacheContent = signal<FileCacheContent | null>(null);
 
   prepare(filename: string, fileCacheContent: FileCacheContent) {
-    this.filename = filename;
-    this.fileCacheContent = fileCacheContent;
+    this.filename.set(filename);
+    this.fileCacheContent.set(fileCacheContent);
 
-    this.codeBlock().changeLanguage(this.fileCacheContent.truncated ? 'raw' : this.fileCacheContent.contentType);
-    this.codeBlock().writeValue(this.fileCacheContent.content);
+    this.codeBlock().changeLanguage(fileCacheContent.truncated ? 'raw' : fileCacheContent.contentType);
+    this.codeBlock().writeValue(fileCacheContent.content);
   }
 
   dismiss() {

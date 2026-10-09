@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -62,7 +63,7 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
@@ -72,36 +73,34 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
   ]
 })
 export class EditNorthComponent implements CanComponentDeactivate {
-  private northConnectorService = inject(NorthConnectorService);
-  private fb = inject(NonNullableFormBuilder);
-  private notificationService = inject(NotificationService);
-  private scanModeService = inject(ScanModeService);
-  private certificateService = inject(CertificateService);
-  private transformerService = inject(TransformerService);
-  private modalService = inject(ModalService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
-  private docsUrlService = inject(DocsUrlService);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly notificationService = inject(NotificationService);
+  private readonly scanModeService = inject(ScanModeService);
+  private readonly certificateService = inject(CertificateService);
+  private readonly transformerService = inject(TransformerService);
+  private readonly modalService = inject(ModalService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly docsUrlService = inject(DocsUrlService);
 
   readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings');
   readonly cachingHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#caching');
 
   readonly mode = signal<'create' | 'edit'>('create');
-  northId!: string;
   readonly northConnector = signal<NorthConnectorDTO | null>(null);
   readonly northType = signal<OIBusNorthType | null>(null);
-  duplicateId = '';
-  state = new ObservableState();
-  loading = true;
+  private duplicateId = '';
+  readonly state = new ObservableState();
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly transformers = signal<Array<TransformerDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
   readonly manifest = signal<NorthConnectorManifest | null>(null);
-  existingNorthConnectors: Array<NorthConnectorLightDTO> = [];
+  private existingNorthConnectors: Array<NorthConnectorLightDTO> = [];
 
-  // built once, right before `manifest` is set (which triggers the rendering)
-  form: FormGroup<{
+  // built once, right before `manifest` is set
+  readonly form = signal<FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
     enabled: FormControl<boolean>;
@@ -127,10 +126,10 @@ export class EditNorthComponent implements CanComponentDeactivate {
       }>;
     }>;
     settings: FormGroup;
-  }> | null = null;
+  }> | null>(null);
 
-  inMemoryTransformersWithOptions: Array<TransformerDTOWithOptions> = [];
-  scanModeAttribute: OIBusScanModeAttribute = {
+  private inMemoryTransformersWithOptions: Array<TransformerDTOWithOptions> = [];
+  readonly scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
     key: 'scanMode',
     translationKey: 'north.caching.trigger.schedule',
@@ -165,20 +164,17 @@ export class EditNorthComponent implements CanComponentDeactivate {
           // if there is a North ID, we are editing a North connector
           if (paramNorthId) {
             this.mode.set('edit');
-            this.northId = paramNorthId;
             return this.northConnectorService.findById(paramNorthId).pipe(this.state.pendingUntilFinalization());
           }
           // fetch the North connector in case of duplicate
           else if (duplicateNorthId) {
             this.mode.set('create');
-            this.northId = 'create';
             this.duplicateId = duplicateNorthId;
             return this.northConnectorService.findById(duplicateNorthId).pipe(this.state.pendingUntilFinalization());
           }
           // otherwise, we are creating one
           else {
             this.mode.set('create');
-            this.northId = 'create';
             return of(null);
           }
         }),
@@ -188,16 +184,15 @@ export class EditNorthComponent implements CanComponentDeactivate {
             this.northType.set(northConnector.type);
           }
           return this.northConnectorService.getNorthManifest(this.northType()!);
-        })
+        }),
+        takeUntilDestroyed()
       )
       .subscribe(manifest => {
         if (!manifest) {
-          this.loading = false;
           return;
         }
         this.buildForm(manifest);
         this.manifest.set(manifest);
-        this.loading = false;
       });
   }
 
@@ -222,8 +217,8 @@ export class EditNorthComponent implements CanComponentDeactivate {
     };
   }
 
-  buildForm(manifest: NorthConnectorManifest) {
-    this.form = this.fb.group({
+  private buildForm(manifest: NorthConnectorManifest) {
+    const form = this.fb.group({
       name: this.fb.control('', {
         validators: [Validators.required, this.checkUniqueness()]
       }),
@@ -253,29 +248,34 @@ export class EditNorthComponent implements CanComponentDeactivate {
       })
     });
     for (const attribute of manifest.settings.attributes) {
-      addAttributeToForm(this.fb, this.form.controls.settings, attribute);
+      addAttributeToForm(this.fb, form.controls.settings, attribute);
     }
-    addEnablingConditions(this.form.controls.settings, manifest.settings.enablingConditions);
-    // if we have a south connector, we initialize the values
+    addEnablingConditions(form.controls.settings, manifest.settings.enablingConditions);
+    // if we have a north connector, we initialize the values
     const northConnector = this.northConnector();
     if (northConnector) {
-      // used to have the same ref
-      northConnector.caching.trigger.scanMode = this.scanModes().find(
-        element => element.id === northConnector.caching.trigger.scanMode.id
-      )!;
-      this.form.patchValue(northConnector);
+      const trigger = northConnector.caching.trigger;
+      form.patchValue({
+        ...northConnector,
+        caching: {
+          ...northConnector.caching,
+          // use the scan mode of the list, to have the same ref (the fetched connector is not mutated)
+          trigger: { ...trigger, scanMode: this.scanModes().find(element => element.id === trigger.scanMode.id)! }
+        }
+      });
       // Initialize in-memory transformers for edit mode to allow deferring persistence
       this.inMemoryTransformersWithOptions = [...northConnector.transformers];
     } else {
       // we should provoke all value changes to make sure fields are properly hidden and disabled
-      this.form.setValue(this.form.getRawValue());
+      form.setValue(form.getRawValue());
     }
 
-    this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    this.form.set(form);
   }
 
   canDeactivate(): Observable<boolean> | boolean {
-    if (this.form?.dirty) {
+    if (this.form()?.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -287,7 +287,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
       createOrUpdate = this.northConnectorService.update(this.northConnector()!.id, command).pipe(
         tap(() => {
           this.notificationService.success('north.updated', { name: command.name });
-          this.form?.markAsPristine();
+          this.form()?.markAsPristine();
         }),
         switchMap(() => this.northConnectorService.findById(this.northConnector()!.id))
       );
@@ -295,7 +295,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
       createOrUpdate = this.northConnectorService.create(command, this.duplicateId).pipe(
         tap(() => {
           this.notificationService.success('north.created', { name: command.name });
-          this.form?.markAsPristine();
+          this.form()?.markAsPristine();
         })
       );
     }
@@ -306,7 +306,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
 
   submit(value: 'save' | 'test') {
     if (value === 'save') {
-      if (!this.form!.valid) {
+      if (!this.form()!.valid) {
         return;
       }
       this.createOrUpdateNorthConnector(this.formNorthConnectorCommand);
@@ -314,8 +314,9 @@ export class EditNorthComponent implements CanComponentDeactivate {
     }
 
     // Test: only validate the settings subsection
-    this.form!.controls.settings.markAllAsTouched();
-    if (!this.form!.controls.settings.valid) {
+    const settings = this.form()!.controls.settings;
+    settings.markAllAsTouched();
+    if (!settings.valid) {
       return;
     }
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
@@ -323,7 +324,8 @@ export class EditNorthComponent implements CanComponentDeactivate {
     component.runTest(
       'north',
       this.northConnector()?.id || null,
-      this.formNorthConnectorCommand.settings,
+      // only the settings are needed (the rest of the form, e.g. the scan mode, may not be filled yet)
+      extractFormValue(settings.value)!,
       this.northType() as OIBusNorthType
     );
   }
@@ -341,7 +343,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
   }
 
   get formNorthConnectorCommand(): NorthConnectorCommandDTO {
-    const formValue = this.form!.value;
+    const formValue = this.form()!.value;
     return {
       name: formValue.name!,
       type: this.northType() as OIBusNorthType,

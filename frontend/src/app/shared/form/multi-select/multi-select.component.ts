@@ -33,7 +33,7 @@ import { MultiSelectOptionDirective } from './multi-select-option.directive';
       multi: true
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem]
 })
 export class MultiSelectComponent<T> implements ControlValueAccessor {
@@ -65,14 +65,14 @@ export class MultiSelectComponent<T> implements ControlValueAccessor {
   });
 
   private readonly selectedValues = signal<Array<T>>([]);
-  private onChange: (selectedValues: Array<any>) => void = () => {};
+  private onChange: (selectedValues: Array<T>) => void = () => {};
   private onTouched = () => {};
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (selectedValues: Array<T>) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 
@@ -80,7 +80,7 @@ export class MultiSelectComponent<T> implements ControlValueAccessor {
     this.disabled.set(isDisabled);
   }
 
-  writeValue(selectedValues: Array<any>): void {
+  writeValue(selectedValues: Array<T> | null): void {
     this.selectedValues.set([...(selectedValues ?? [])]);
   }
 

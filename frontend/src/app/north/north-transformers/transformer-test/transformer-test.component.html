@@ -11,9 +11,9 @@
           (click)="runTest()"
         >
           @if (isTestRunning()) {
-            <span class="fa fa-spinner fa-spin ms-2"></span>
+            <span class="fa-solid fa-spinner fa-spin ms-2" aria-hidden="true"></span>
           } @else {
-            <span class="fa fa-check ms-2"></span>
+            <span class="fa-solid fa-check ms-2" aria-hidden="true"></span>
           }
           <span translate="north.transformers.test.run"></span>
         </button>
@@ -36,9 +36,9 @@
           class="btn btn-link btn-sm p-0 settings-summary-chip"
           (click)="settingsCollapsed.set(false)"
         >
-          <span class="fa fa-sliders me-1"></span>
-          <span>{{ settingsSummary }}</span>
-          <span class="fa fa-chevron-down ms-2"></span>
+          <span class="fa-solid fa-sliders me-1" aria-hidden="true"></span>
+          <span>{{ settingsSummary() }}</span>
+          <span class="fa-solid fa-chevron-down ms-2" aria-hidden="true"></span>
         </button>
       }
 
@@ -57,9 +57,19 @@
           }
         </div>
 
-        @if (form.controls.inputSource.value === 'paste') {
-          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"></label>
-          <oib-code-block formControlName="inputData" [language]="'json'" [readOnly]="false" height="15rem" />
+        @if (inputSource() === 'paste') {
+          <label
+            class="form-label"
+            for="transformer-test-input-data"
+            translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"
+          ></label>
+          <oib-code-block
+            id="transformer-test-input-data"
+            formControlName="inputData"
+            [language]="'json'"
+            [readOnly]="false"
+            height="15rem"
+          />
         } @else {
           <div class="form-group">
             <label class="form-label" for="test-item-select" translate="north.transformers.test.item"></label>
@@ -87,7 +97,7 @@
           <div class="text-end mt-1">
             <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed.set(true)">
               <span translate="south.test-item.hide-settings"></span>
-              <span class="fa fa-chevron-up ms-1"></span>
+              <span class="fa-solid fa-chevron-up ms-1" aria-hidden="true"></span>
             </button>
           </div>
         }

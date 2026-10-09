@@ -34,19 +34,24 @@ Configuration worth knowing (`vitest-base.config.ts`):
 
 ## Test helpers
 
-| Helper                                                      | Location                                                                | Purpose                                                         |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `getByCss(selector)`                                        | `src/test/test.ts`                                                      | Locator extension to query by CSS selector                      |
-| `fillWithDate(date, h, m, s)` / `toHaveDisplayedDate(text)` | `src/test/test.ts`                                                      | Fill / assert an `oib-datetimepicker`                           |
-| `createMock(Type)` / `MockObject<T>`                        | `src/test/vitest-create-mock.ts`                                        | Mock where every method of the class is a `vi.fn()`             |
-| `stubRoute({ params, queryParams })`                        | `src/test/vitest-create-mock.ts`                                        | Stub `ActivatedRoute` (observables and snapshot)                |
-| `testData`                                                  | `src/test/test-data.ts`                                                 | Fixtures typed with the API DTOs                                |
-| `EmptyRouteComponent`                                       | `src/test/empty-route.component.ts`                                     | Route destination whose content is irrelevant                   |
-| `provideI18nTesting()`                                      | `src/i18n/mock-i18n.ts`                                                 | Real English translations; a missing key throws                 |
-| `provideCurrentUser(user?)`                                 | `src/app/shared/current-user-testing.ts`                                | Mocked `CurrentUserService` (default timezone if no user given) |
-| `provideModalTesting()` / `MockModalService`                | `src/app/shared/mock-modal.service.testing.ts`                          | Replace `ModalService` and simulate a closed / dismissed modal  |
-| `provideNgbConfigTesting()` / `noAnimation`                 | `src/app/shared/form/oi-ngb-testing.ts`, `src/app/shared/test-utils.ts` | ng-bootstrap config without animations                          |
-| `byIdComparisonFn`                                          | `src/app/shared/test-utils.ts`                                          | `compareWith` function for selects of `{ id }` objects          |
+| Helper                                                         | Location                                                                | Purpose                                                         |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `getByCss(selector)`                                           | `src/test/test.ts`                                                      | Locator extension to query by CSS selector                      |
+| `fillWithDate(date, h, m, s)` / `toHaveDisplayedDate(text)`    | `src/test/test.ts`                                                      | Fill / assert an `oib-datetimepicker`                           |
+| `createMock(Type, overrides?)` / `MockObject<T>`               | `src/test/vitest-create-mock.ts`                                        | Mock where every method is a `vi.fn()`; overrides set fields    |
+| `stubRoute({ params, queryParams })`                           | `src/test/vitest-create-mock.ts`                                        | Stub `ActivatedRoute` (observables and snapshot)                |
+| `testData`                                                     | `src/test/test-data.ts`                                                 | Fixtures typed with the API DTOs                                |
+| `buildSouthItemGroup`, `buildWorkflow`, `buildEngineSettings`… | `src/test/builders.ts`                                                  | Fixtures needed in several variants (new object on each call)   |
+| `expectHttp(http, call, match, { body, params, response })`    | `src/test/http-testing.ts`                                              | Check and flush the request made by a service call              |
+| `catchUnhandledErrors()`                                       | `src/test/unhandled-errors.ts`                                          | Capture the RxJS unhandled error of a failing one-shot call     |
+| `EmptyRouteComponent`                                          | `src/test/empty-route.component.ts`                                     | Route destination whose content is irrelevant                   |
+| `provideI18nTesting()`                                         | `src/i18n/mock-i18n.ts`                                                 | Real English translations; a missing key throws                 |
+| `provideCurrentUser(user?)`                                    | `src/app/shared/current-user-testing.ts`                                | Mocked `CurrentUserService` (default timezone if no user given) |
+| `provideModalTesting()` / `MockModalService`                   | `src/app/shared/mock-modal.service.testing.ts`                          | Replace `ModalService` and simulate a closed / dismissed modal  |
+| `fakeModal(component, result?)`                                | `src/app/shared/mock-modal.service.testing.ts`                          | A `Modal` for an opener that opens several modals in a row      |
+| `oibus-form-control.testing.ts` host                           | `src/app/shared/form/`                                                  | Host component for the `oibus-*-form-control` specs             |
+| `provideNgbConfigTesting()` / `noAnimation`                    | `src/app/shared/form/oi-ngb-testing.ts`, `src/app/shared/test-utils.ts` | ng-bootstrap config without animations                          |
+| `byIdComparisonFn`                                             | `src/app/shared/test-utils.ts`                                          | `compareWith` function for selects of `{ id }` objects          |
 
 `toPage()` / `emptyPage()` are production helpers (`src/app/shared/utils/page.utils.ts`) and are handy to build `Page`
 responses in tests too.
@@ -143,12 +148,16 @@ So in tests:
   component is rendered: Angular is not notified, and `detectChanges()` fails with `NG0100:
 ExpressionChangedAfterItHasBeenCheckedError`. Drive the component through its template instead.
 
-And in components:
+And in components (enforced by ESLint):
 
-- keep state rendered by the template in signals, especially state changed asynchronously (HTTP responses, modal
-  results, `await`, timers): a plain field changed in a `subscribe()` callback or after an `await` is not rendered. When a signal is not practical (e.g. an array shared with a modal and mutated in place), call
-  `ChangeDetectorRef.markForCheck()` after the change.
-- a template event already notifies Angular, so plain fields changed synchronously by an event handler are fine.
+- every component is `OnPush`: it is refreshed only when one of its signals or inputs changes, or when an event fires
+  in its template. Keep the state rendered by the template in signals (`computed()` for derived state), and load data
+  with `toSignal()` / `rxResource()`; long-lived subscriptions use `takeUntilDestroyed()`.
+- reactive forms already expose their status as signals: a template binding a control with `formControlName` is
+  refreshed when it changes. A template that reads control state directly (`control.value`, `control.enabled`…)
+  changed from outside the component (a sibling control, a parent patching the form) reads it through
+  `trackControl()` (`src/app/shared/form/tracked-control.ts`).
+- an object passed to an `OnPush` child (e.g. a page given to `oib-pagination`) must be replaced, not mutated.
 
 ### Routed components
 
@@ -215,17 +224,23 @@ beforeEach(() => {
 afterEach(() => http.verify());
 
 test('should update an IP filter', async () => {
-  const result = firstValueFrom(service.update('id1', command));
+  await expectHttp(http, service.update('id1', command), { method: 'PUT', url: '/api/ip-filters/id1' }, { body: command });
+});
 
-  const request = http.expectOne({ method: 'PUT', url: '/api/ip-filters/id1' });
-  expect(request.request.body).toEqual(command);
-  request.flush(null);
+test('should get an IP filter', async () => {
+  const ipFilter = await expectHttp(
+    http,
+    service.findById('id1'),
+    { method: 'GET', url: '/api/ip-filters/id1' },
+    { response: testData.ipFilters.list[0] }
+  );
 
-  await expect(result).resolves.toBeNull();
+  expect(ipFilter).toEqual(testData.ipFilters.list[0]);
 });
 ```
 
-Check the request body and parameters, not only the URL. Await observables with `firstValueFrom` / `lastValueFrom`
+`expectHttp` (`src/test/http-testing.ts`) subscribes to the call, checks the request and flushes the response. Check the
+request body and parameters, not only the URL; group similar calls in a `test.each` table. Await observables with `firstValueFrom` / `lastValueFrom`
 rather than asserting inside `subscribe()`, which silently passes if nothing is emitted.
 
 ## Time

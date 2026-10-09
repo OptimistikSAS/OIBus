@@ -1,20 +1,10 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  forwardRef,
-  inject,
-  input,
-  OnDestroy,
-  OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, forwardRef, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
-import { Subject, takeUntil } from 'rxjs';
 
 import { Instant } from '@oibus/shared/common/types';
 
@@ -35,8 +25,9 @@ export interface PredefinedRange {
 @Component({
   selector: 'oib-date-range-selector',
   templateUrl: './date-range-selector.component.html',
+  styleUrl: './date-range-selector.component.scss',
   imports: [TranslateDirective, TranslatePipe, DatetimepickerComponent, ValidationErrorsComponent, ReactiveFormsModule],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -45,17 +36,15 @@ export interface PredefinedRange {
     }
   ]
 })
-export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDestroy, ControlValueAccessor {
-  private fb = inject(NonNullableFormBuilder);
-  private translate = inject(TranslateService);
-  private changeDetectorRef = inject(ChangeDetectorRef);
-  private destroy$ = new Subject<void>();
+export class DateRangeSelectorComponent implements AfterViewInit, ControlValueAccessor {
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly translate = inject(TranslateService);
 
-  readonly startLabel = input('history-query.start');
-  readonly endLabel = input('history-query.end');
+  readonly startLabel = input('history-query.query-time-range.start');
+  readonly endLabel = input('history-query.query-time-range.end');
   readonly defaultRange = input('last-day');
 
-  predefinedRanges: Array<PredefinedRange> = [
+  readonly predefinedRanges: ReadonlyArray<PredefinedRange> = [
     {
       key: 'last-minute',
       translationKey: 'date-range.last-minute',
@@ -78,11 +67,17 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
     }
   ];
 
-  internalForm = this.fb.group({
+  readonly internalForm = this.fb.group({
     rangeType: [this.defaultRange() as string, Validators.required],
     startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
     endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]]
   });
+
+  /**
+   * The selected range type, displayed by the template. The range type control is also written without event
+   * (default range, value written by the parent form), so it is mirrored in a signal.
+   */
+  readonly rangeType = signal(this.internalForm.controls.rangeType.value);
 
   // ControlValueAccessor implementation
   private onChange: (value: DateRange) => void = () => {};
@@ -92,7 +87,7 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
   // ngOnInit default below, which would otherwise clobber that value with `defaultRange`.
   private hasExternalValue = false;
 
-  ngOnInit() {
+  constructor() {
     this.setupFormValidation();
     this.watchFormChanges();
   }
@@ -108,14 +103,8 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
     // until ngAfterViewInit: writeValue()/registerOnChange() (called by the host FormControlName)
     // only run after this component's own ngOnInit, so `onChange` isn't wired up yet in ngOnInit.
     this.internalForm.controls.rangeType.setValue(this.defaultRange(), { emitEvent: false });
+    this.rangeType.set(this.defaultRange());
     this.emitValue();
-    // the template reads the internal form, changed here without any event: notify Angular
-    this.changeDetectorRef.markForCheck();
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   writeValue(value: DateRange | null): void {
@@ -129,8 +118,7 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
         },
         { emitEvent: false }
       );
-      // the template reads the internal form, which can be written outside of any event (e.g. after an HTTP response)
-      this.changeDetectorRef.markForCheck();
+      this.rangeType.set('custom');
     }
   }
 
@@ -206,13 +194,13 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
 
   private setupFormValidation(): void {
     // Setup cross-validation for custom date inputs
-    this.internalForm.controls.startTime.valueChanges.subscribe(() => {
+    this.internalForm.controls.startTime.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.internalForm.controls.endTime.updateValueAndValidity({
         emitEvent: false
       });
     });
 
-    this.internalForm.controls.endTime.valueChanges.subscribe(() => {
+    this.internalForm.controls.endTime.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.internalForm.controls.startTime.updateValueAndValidity({
         emitEvent: false
       });
@@ -220,7 +208,8 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
   }
 
   private watchFormChanges(): void {
-    this.internalForm.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+    this.internalForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.rangeType.set(this.internalForm.controls.rangeType.value);
       this.emitValue();
     });
   }

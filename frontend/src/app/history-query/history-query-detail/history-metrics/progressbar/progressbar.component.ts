@@ -7,7 +7,7 @@ import { NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
   selector: 'oib-progressbar',
   imports: [NgbProgressbarModule, PercentPipe],
   templateUrl: './progressbar.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './progressbar.component.scss'
 })
 export class ProgressbarComponent {

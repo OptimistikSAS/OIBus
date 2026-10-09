@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -18,7 +19,6 @@ import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { isScanModeWindowExpired, ScanModeSchedulePipe } from '../../shared/scan-mode-schedule.pipe';
-import { emptyPage } from '../../shared/utils/page.utils';
 import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
 
 type ScanModeSortField = 'name' | 'createdAt' | 'updatedAt' | null;
@@ -40,30 +40,31 @@ const PAGE_SIZE = 20;
     ScanModeSchedulePipe
   ],
   templateUrl: './scan-mode-list.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './scan-mode-list.component.scss'
 })
 export class ScanModeListComponent {
-  private confirmationService = inject(ConfirmationService);
-  private modalService = inject(ModalService);
-  private notificationService = inject(NotificationService);
-  private scanModeService = inject(ScanModeService);
-  private docsUrlService = inject(DocsUrlService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly modalService = inject(ModalService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly scanModeService = inject(ScanModeService);
+  private readonly docsUrlService = inject(DocsUrlService);
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/scan-modes');
 
-  readonly allScanModes = signal<Array<ScanModeDTO>>([]);
-  private filteredScanModes: Array<ScanModeDTO> = [];
-  readonly displayedScanModes = signal<Page<ScanModeDTO>>(emptyPage());
+  /** The service emits the scan modes again after each creation, update or deletion */
+  private readonly scanModes = toSignal(this.scanModeService.list(), { initialValue: [] });
+  readonly allScanModes = computed(() => this.scanModes().filter(scanMode => scanMode.id !== 'subscription'));
   readonly sortField = signal<ScanModeSortField>(null);
   readonly sortDirection = signal<SortDirection>('asc');
-
-  constructor() {
-    this.scanModeService.list().subscribe(scanModes => {
-      this.allScanModes.set(this.excludeSubscriptionScanModes(scanModes));
-      this.updateList(0);
-    });
-  }
+  /** Back to the first page when the scan modes or their order change */
+  private readonly pageNumber = linkedSignal({
+    source: () => ({ scanModes: this.allScanModes(), sortField: this.sortField(), sortDirection: this.sortDirection() }),
+    computation: () => 0
+  });
+  readonly displayedScanModes = computed<Page<ScanModeDTO>>(() =>
+    createPageFromArray(sortScanModes(this.allScanModes(), this.sortField(), this.sortDirection()), PAGE_SIZE, this.pageNumber())
+  );
 
   /**
    * Open a modal to edit a scan mode
@@ -97,10 +98,10 @@ export class ScanModeListComponent {
     this.refreshAfterEditScanModeModalClosed(modalRef, 'created');
   }
 
-  private refreshAfterEditScanModeModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
+  private refreshAfterEditScanModeModalClosed(modalRef: Modal<EditScanModeModalComponent>, mode: 'created' | 'updated') {
     modalRef.result
       .pipe(
-        tap(scanMode =>
+        tap((scanMode: ScanModeDTO) =>
           this.notificationService.success(`engine.scan-mode.${mode}`, {
             name: scanMode.name
           })
@@ -141,10 +142,6 @@ export class ScanModeListComponent {
     return isScanModeWindowExpired(scanMode);
   }
 
-  excludeSubscriptionScanModes(scanModes: Array<ScanModeDTO>): Array<ScanModeDTO> {
-    return scanModes.filter(scanMode => scanMode.id !== 'subscription');
-  }
-
   toggleSort(field: ScanModeSortField) {
     if (!field) return;
     if (this.sortField() === field) {
@@ -153,35 +150,29 @@ export class ScanModeListComponent {
       this.sortField.set(field);
       this.sortDirection.set('asc');
     }
-    this.updateList(0);
   }
 
   getSortIcon(field: ScanModeSortField): string {
     if (this.sortField() !== field) return 'fa-sort';
-    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {
-    this.displayedScanModes.set(createPageFromArray(this.filteredScanModes, PAGE_SIZE, pageNumber));
+    this.pageNumber.set(pageNumber);
   }
+}
 
-  private updateList(pageNumber: number) {
-    this.filteredScanModes = [...this.allScanModes()];
-    this.sortList();
-    this.changePage(pageNumber);
+function sortScanModes(scanModes: Array<ScanModeDTO>, field: ScanModeSortField, direction: SortDirection): Array<ScanModeDTO> {
+  if (!field) {
+    return scanModes;
   }
-
-  private sortList() {
-    const field = this.sortField();
-    if (!field) return;
-    const direction = this.sortDirection() === 'asc' ? 1 : -1;
-    this.filteredScanModes = [...this.filteredScanModes].sort((a, b) => {
-      if (field === 'name') {
-        return a.name.localeCompare(b.name) * direction;
-      }
-      const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
-      const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
-      return aVal.localeCompare(bVal) * direction;
-    });
-  }
+  const factor = direction === 'asc' ? 1 : -1;
+  return [...scanModes].sort((a, b) => {
+    if (field === 'name') {
+      return a.name.localeCompare(b.name) * factor;
+    }
+    const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
+    const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
+    return aVal.localeCompare(bVal) * factor;
+  });
 }

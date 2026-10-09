@@ -1,5 +1,6 @@
 import { JsonPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, inject, input, linkedSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -19,29 +20,26 @@ import { NotificationService } from '../../../shared/notification.service';
   selector: 'oib-south-metrics',
   templateUrl: './south-metrics.component.html',
   styleUrl: './south-metrics.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, NgbTooltip, TranslatePipe]
 })
 export class SouthMetricsComponent {
-  private router = inject(Router);
-  private southService = inject(SouthConnectorService);
-  private notificationService = inject(NotificationService);
+  private readonly router = inject(Router);
+  private readonly southService = inject(SouthConnectorService);
+  private readonly notificationService = inject(NotificationService);
 
   readonly southConnector = input.required<SouthConnectorLightDTO>();
   readonly manifest = input<SouthConnectorManifest | null>(null);
-  readonly manifestOrSouthConnectorTypeManifest = linkedSignal(() => this.manifest());
   readonly displayButton = input(false);
   readonly connectorMetrics = input.required<SouthConnectorMetrics>();
-
-  constructor() {
-    effect(() => {
-      if (!this.manifest()) {
-        this.southService.getSouthManifest(this.southConnector().type).subscribe(manifest => {
-          this.manifestOrSouthConnectorTypeManifest.set(manifest);
-        });
-      }
-    });
-  }
+  /** The type manifest, fetched only when the parent does not give it. */
+  private readonly typeManifest = rxResource({
+    params: () => (this.manifest() ? undefined : this.southConnector().type),
+    stream: ({ params }) => this.southService.getSouthManifest(params)
+  });
+  readonly manifestOrSouthConnectorTypeManifest = computed(
+    () => this.manifest() ?? (this.typeManifest.hasValue() ? this.typeManifest.value() : null)
+  );
 
   resetMetrics() {
     this.southService.resetMetrics(this.southConnector().id).subscribe(() => {

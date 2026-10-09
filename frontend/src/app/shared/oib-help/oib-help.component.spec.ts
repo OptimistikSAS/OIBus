@@ -9,19 +9,16 @@ import { OibHelpComponent } from './oib-help.component';
 
 @Component({
   selector: 'oib-test-oib-help-component',
-  template: `<oib-help [url]="url" />`,
+  template: `<oib-help url="/documentation/guide/x" />`,
   imports: [OibHelpComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-class TestComponent {
-  url = '/documentation/guide/x' as const;
-}
+class TestComponent {}
 
 class TestComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly helpLink = this.root.getByCss('a.help-icon');
-  readonly infoCircle = this.helpLink.getByCss('.fa-question-circle');
+  readonly helpLink = this.root.getByRole('link', { name: 'Help' });
 }
 
 describe('OibHelpComponent', () => {
@@ -32,11 +29,15 @@ describe('OibHelpComponent', () => {
       providers: [provideI18nTesting()]
     });
     tester = new TestComponentTester();
-    tester.fixture.detectChanges();
   });
 
-  test('should display a info circle', async () => {
+  test('should display a help link opening in a new tab', async () => {
     await expect.element(tester.helpLink).toHaveAttribute('href', '/documentation/guide/x');
-    await expect.element(tester.infoCircle).toBeInTheDocument();
+    await expect.element(tester.helpLink).toHaveAttribute('target', '_blank');
+  });
+
+  test('should display a tooltip on hover', async () => {
+    await tester.helpLink.hover();
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Help');
   });
 });

@@ -35,11 +35,11 @@ export type AuditDiffMode = 'table' | 'json-diff' | 'json-side-by-side';
     NgbDropdownModule,
     AuditUserPipe
   ],
-  changeDetection: ChangeDetectionStrategy.Eager
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuditHistoryModalComponent {
-  private modal = inject(NgbActiveModal);
-  private auditService = inject(AuditService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly auditService = inject(AuditService);
 
   readonly history = signal<Array<AuditLogDTO>>([]);
   readonly loading = signal(true);

@@ -17,9 +17,10 @@ import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
   }
 })
 export class NonEditableTypeaheadDirective {
-  private ngControl = inject(NgControl);
-  private elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
-  private typeahead = inject(NgbTypeahead);
+  private readonly ngControl = inject(NgControl);
+  private readonly elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
+  private readonly typeahead = inject(NgbTypeahead);
+
   onBlur() {
     if (!this.ngControl.value && !this.typeahead.editable) {
       this.elementRef.nativeElement.value = '';

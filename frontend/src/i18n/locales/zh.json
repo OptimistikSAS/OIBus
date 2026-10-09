@@ -1898,7 +1898,8 @@
         "filename": "文件名",
         "modified-time": "修改时间",
         "group-section-title": "组的最新跟踪值",
-        "error-title": "无法获取最新缓存值"
+        "error-title": "无法获取最新缓存值",
+        "files-tracked": "已跟踪 {{ count }} 个文件"
       },
       "all-deleted": "South 连接器项已删除",
       "delete-all": "全部删除",
@@ -2315,7 +2316,7 @@
         "warning": "这将替换此实例上的所有连接器、历史查询、扫描模式、IP 过滤器、转换器、证书、用户和引擎设置，且无法撤销。",
         "confirm-message": "这将替换此实例上的所有连接器、历史查询、扫描模式、IP 过滤器、转换器、证书、用户和引擎设置，且无法撤销。确定要继续吗？",
         "file": "配置文件",
-        "file-too-large": "所选文件过大。最大大小为 10 MB",
+        "file-too-large": "所选文件过大。最大大小为 {{ maxSize }} MB",
         "success": "配置已成功导入。",
         "applied-upgrades": "已应用的升级",
         "upgraded-versions": "配置已从 OIBus {{fromVersion}} 升级到 {{toVersion}}。",
@@ -2808,7 +2809,8 @@
       "delete": "删除历史查询",
       "copy-cache-path": "复制缓存路径到剪贴板",
       "audit": "查看历史查询审计历史"
-    }
+    },
+    "reset-cache-confirmation": "是否要重置历史查询缓存？"
   },
   "explore-cache": {
     "title": "{{ name }} 的缓存",
@@ -3096,7 +3098,8 @@
       "remote-update-disabled": "此 OIBus 已禁用远程更新（以 --ignoreRemoteUpdate 启动），因此无法启用 upgrade-version 命令。",
       "test-connection": "测试连接",
       "test-connection-success": "连接成功",
-      "test-connection-error": "测试连接时出错"
+      "test-connection-error": "测试连接时出错",
+      "edit": "编辑注册"
     },
     "commands": {
       "title": "命令列表",
@@ -3357,11 +3360,13 @@
     "account": {
       "logout": "注销",
       "settings": "设置",
-      "audit": "审计"
+      "audit": "审计",
+      "title": "账户"
     },
     "tooltips": {
       "documentation": "文档"
-    }
+    },
+    "menu": "菜单"
   },
   "login": {
     "title": "登录",

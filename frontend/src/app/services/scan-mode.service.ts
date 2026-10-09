@@ -11,10 +11,10 @@ import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '@oibus
  */
 @Service()
 export class ScanModeService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private listTrigger$ = new BehaviorSubject<void>(undefined);
-  private list$ = this.listTrigger$.pipe(
+  private readonly listTrigger$ = new BehaviorSubject<void>(undefined);
+  private readonly list$ = this.listTrigger$.pipe(
     switchMap(() => this.http.get<Array<ScanModeDTO>>(`/api/scan-modes`)),
     shareReplay(1)
   );

@@ -2,216 +2,248 @@ import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of } from 'rxjs';
-import { beforeEach, describe, expect, MockedFunction, test, vi } from 'vitest';
+import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../../../test/builders';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { ModalService } from '../../../shared/modal.service';
+import { DownloadService } from '../../../services/download.service';
+import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
+import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import ManageGroupsModalComponent from './manage-groups-modal.component';
+
+type AddOrEditGroup = (command: {
+  mode: 'create' | 'edit';
+  group: SouthItemGroupCommandDTO;
+}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
+type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 const manifest = testData.south.manifest;
 const scanModes = testData.scanMode.list;
 
-const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemGroupDTO => ({
-  id,
-  createdAt: '',
-  updatedAt: '',
-  createdBy: { id: '', friendlyName: '' },
-  updatedBy: { id: '', friendlyName: '' },
-  standardSettings: { name, scanMode },
-  historySettings: {
-    startTimeOffset: 0,
-    endTimeOffset: 0,
-    maxReadInterval: 3600,
-    readDelay: 200,
-    recoveryStrategy: null,
-    cachingStrategy: null
+class ManageGroupsModalComponentTester {
+  readonly fixture = TestBed.createComponent(ManageGroupsModalComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly title = this.root.getByRole('heading', { level: 4 });
+  readonly addButton = this.root.getByRole('button', { name: 'Create a new group' });
+  readonly exportButton = this.root.getByRole('button', { name: 'Export' });
+  readonly importInput = this.root.getByLabelText('Import');
+  readonly closeButton = this.root.getByRole('button', { name: 'Close' });
+  readonly search = this.root.getByPlaceholder('Search groups by name');
+  readonly scheduleFilter = this.root.getByRole('combobox', { name: 'Schedule' });
+  readonly nameHeader = this.root.getByRole('button', { name: 'Group name' });
+  readonly scheduleHeader = this.root.getByRole('button', { name: 'Schedule' });
+  readonly itemCountHeader = this.root.getByRole('button', { name: 'Items' });
+  readonly rows = this.root.getByCss('tbody tr');
+  readonly noGroup = this.root.getByText('No groups configured');
+  readonly noMatch = this.root.getByText('No groups match the current filters');
+
+  row(index: number) {
+    return this.rows.nth(index);
   }
-});
+}
 
 describe('ManageGroupsModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
-  let modalService: MockObject<ModalService>;
-  let groups: Array<SouthItemGroupDTO>;
-  let addOrEditGroup: MockedFunction<
-    (command: { mode: 'create' | 'edit'; group: SouthItemGroupCommandDTO }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>
-  >;
-  let deleteGroup: MockedFunction<(group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>>;
-  let getItemCount: MockedFunction<(groupId: string) => number>;
+  let downloadService: MockObject<DownloadService>;
+  let groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
+  let addOrEditGroup: Mock<AddOrEditGroup>;
+  let deleteGroup: Mock<DeleteGroup>;
+  let getItemCount: Mock<(groupId: string) => number>;
+  let tester: ManageGroupsModalComponentTester;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
-    modalService = createMock(ModalService);
-    groups = [buildGroup('group1', 'Alpha', scanModes[0]), buildGroup('group2', 'Beta', scanModes[1])];
-    addOrEditGroup = vi.fn();
-    deleteGroup = vi.fn();
-    getItemCount = vi.fn().mockReturnValue(0);
+    downloadService = createMock(DownloadService);
+    groups = [buildSouthItemGroup('group1', 'Alpha', scanModes[1]), buildSouthItemGroup('group2', 'Beta', scanModes[0])];
+    addOrEditGroup = vi.fn<AddOrEditGroup>();
+    deleteGroup = vi.fn<DeleteGroup>();
+    getItemCount = vi.fn((groupId: string) => (groupId === 'group1' ? 5 : 1));
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideModalTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
-        { provide: ModalService, useValue: modalService }
+        { provide: DownloadService, useValue: downloadService }
       ]
     });
+
+    tester = new ManageGroupsModalComponentTester();
   });
 
-  function createComponent() {
-    const fixture = TestBed.createComponent(ManageGroupsModalComponent);
-    fixture.componentInstance.prepare(groups, scanModes, manifest, true, getItemCount, addOrEditGroup, deleteGroup);
-    fixture.detectChanges();
-    return fixture;
+  function prepare(directSave = true) {
+    tester.fixture.componentInstance.prepare(groups, scanModes, manifest, directSave, getItemCount, addOrEditGroup, deleteGroup);
   }
 
-  test('should render all groups with their item count', async () => {
-    getItemCount.mockImplementation((groupId: string) => (groupId === 'group1' ? 3 : 0));
-    const fixture = createComponent();
+  test('should render every group with its schedule, history settings and item count', async () => {
+    prepare();
 
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Groups (2)');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('Alpha');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('Beta');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('3');
+    await expect.element(tester.title).toHaveTextContent('Groups (2)');
+    await expect.element(tester.rows).toHaveLength(2);
+    const alpha = tester.row(0);
+    await expect.element(alpha.getByRole('cell').nth(0)).toHaveTextContent('Alpha');
+    await expect.element(alpha.getByRole('cell').nth(1)).toHaveTextContent(scanModes[1].name);
+    await expect.element(alpha.getByRole('cell').nth(4)).toHaveTextContent('3600s');
+    await expect.element(alpha.getByRole('cell').nth(5)).toHaveTextContent('200ms');
+    await expect.element(alpha.getByRole('cell').nth(6)).toHaveTextContent('From oldest to newest');
+    await expect.element(alpha.getByRole('cell').nth(7)).toHaveTextContent('5');
+    await expect.element(tester.row(1).getByRole('cell').nth(7)).toHaveTextContent('1');
   });
 
-  test('should filter groups by search text', () => {
-    const fixture = createComponent();
+  test('should show a message when there is no group', async () => {
+    groups = [];
+    prepare();
 
-    fixture.componentInstance.searchControl.setValue('alp');
-
-    expect(fixture.componentInstance.displayedGroups().map(group => group.standardSettings.name)).toEqual(['Alpha']);
+    await expect.element(tester.noGroup).toBeInTheDocument();
+    await expect.element(tester.exportButton).toBeDisabled();
   });
 
-  test('should filter groups by schedule', () => {
-    const fixture = createComponent();
+  test('should filter groups by name', async () => {
+    prepare();
 
-    fixture.componentInstance.scheduleFilterControl.setValue(scanModes[1].id);
+    await tester.search.fill('alp');
+    await expect.element(tester.rows).toHaveLength(1);
+    await expect.element(tester.row(0)).toMatchTextContent('Alpha');
 
-    expect(fixture.componentInstance.displayedGroups().map(group => group.standardSettings.name)).toEqual(['Beta']);
+    await tester.search.fill('nothing');
+    await expect.element(tester.noMatch).toBeInTheDocument();
   });
 
-  test('should sort groups by name ascending then descending', () => {
-    const fixture = createComponent();
+  test('should filter groups by schedule', async () => {
+    prepare();
 
-    fixture.componentInstance.toggleColumnSort('name');
-    expect(fixture.componentInstance.displayedGroups().map(group => group.standardSettings.name)).toEqual(['Alpha', 'Beta']);
+    await tester.scheduleFilter.selectOptions(scanModes[0].name);
 
-    fixture.componentInstance.toggleColumnSort('name');
-    expect(fixture.componentInstance.displayedGroups().map(group => group.standardSettings.name)).toEqual(['Beta', 'Alpha']);
+    await expect.element(tester.rows).toHaveLength(1);
+    await expect.element(tester.row(0)).toMatchTextContent('Beta');
   });
 
-  test('should sort groups by item count', () => {
-    getItemCount.mockImplementation((groupId: string) => (groupId === 'group1' ? 1 : 5));
-    const fixture = createComponent();
+  test('should sort groups by name, ascending then descending', async () => {
+    prepare();
 
-    fixture.componentInstance.toggleColumnSort('itemCount');
-    expect(fixture.componentInstance.displayedGroups().map(group => group.id)).toEqual(['group1', 'group2']);
+    await tester.nameHeader.click();
+    await expect.element(tester.row(0)).toMatchTextContent('Alpha');
 
-    fixture.componentInstance.toggleColumnSort('itemCount');
-    expect(fixture.componentInstance.displayedGroups().map(group => group.id)).toEqual(['group2', 'group1']);
+    await tester.nameHeader.click();
+    await expect.element(tester.row(0)).toMatchTextContent('Beta');
   });
 
-  test('should open the create group modal and append the created group', () => {
-    const createdGroup: SouthItemGroupCommandDTO = {
-      id: 'group3',
-      standardSettings: { name: 'Gamma', scanModeId: scanModes[0].id },
-      historySettings: {
-        startTimeOffset: 0,
-        endTimeOffset: 0,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      }
-    };
-    const fakeModal = {
-      componentInstance: { directSave: false, prepareForCreation: vi.fn() },
-      result: of({ mode: 'create', group: createdGroup })
-    };
-    modalService.open.mockReturnValue(fakeModal as any);
+  test('should sort groups by schedule name', async () => {
+    prepare();
+
+    await tester.scheduleHeader.click();
+    await expect.element(tester.row(0)).toMatchTextContent('Beta');
+
+    await tester.scheduleHeader.click();
+    await expect.element(tester.row(0)).toMatchTextContent('Alpha');
+  });
+
+  test('should sort groups by item count, then go back to the original order', async () => {
+    prepare();
+
+    await tester.itemCountHeader.click();
+    await expect.element(tester.row(0)).toMatchTextContent('Beta');
+
+    await tester.itemCountHeader.click();
+    await expect.element(tester.row(0)).toMatchTextContent('Alpha');
+
+    // a third click resets the sort, a click on another column starts sorting it ascending
+    await tester.itemCountHeader.click();
+    await expect.element(tester.row(0)).toMatchTextContent('Alpha');
+    await tester.nameHeader.click();
+    await tester.itemCountHeader.click();
+    await expect.element(tester.row(0)).toMatchTextContent('Beta');
+  });
+
+  test('should create a group and add it to the shared list', async () => {
+    prepare(false);
+    const command = buildSouthItemGroupCommand(null, 'Gamma');
+    const createdGroup = buildSouthItemGroupCommand('group3', 'Gamma');
+    const groupModal = createMock(EditSouthItemGroupModalComponent);
+    TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'create', group: command });
     addOrEditGroup.mockReturnValue(of(createdGroup));
-    const fixture = createComponent();
 
-    fixture.componentInstance.onAddGroup();
+    await tester.addButton.click();
 
-    expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'create', group: createdGroup });
-    expect(fixture.componentInstance.groups).toContain(createdGroup);
+    expect(groupModal.directSave).toBe(false);
+    expect(groupModal.prepareForCreation).toHaveBeenCalledWith(scanModes, groups, manifest);
+    expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'create', group: command });
+    expect(groups).toContain(createdGroup);
+    await expect.element(tester.title).toHaveTextContent('Groups (3)');
+    await expect.element(tester.rows).toHaveLength(3);
+    await expect.element(tester.row(2)).toMatchTextContent('Gamma');
   });
 
-  test('should open the edit group modal and replace the edited group', () => {
-    const updatedGroup: SouthItemGroupCommandDTO = {
-      id: 'group1',
-      standardSettings: { name: 'Alpha renamed', scanModeId: scanModes[0].id },
-      historySettings: {
-        startTimeOffset: 0,
-        endTimeOffset: 0,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      }
-    };
-    const fakeModal = {
-      componentInstance: { directSave: false, prepareForEdition: vi.fn() },
-      result: of({ mode: 'edit', group: updatedGroup })
-    };
-    modalService.open.mockReturnValue(fakeModal as any);
+  test('should edit a group and replace it in the shared list', async () => {
+    prepare();
+    const command = buildSouthItemGroupCommand('group1', 'Alpha renamed');
+    const updatedGroup = buildSouthItemGroup('group1', 'Alpha renamed', scanModes[1]);
+    const groupModal = createMock(EditSouthItemGroupModalComponent);
+    TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'edit', group: command });
     addOrEditGroup.mockReturnValue(of(updatedGroup));
-    const fixture = createComponent();
+    const editedGroup = groups[0];
 
-    fixture.componentInstance.onEditGroup(groups[0]);
+    await tester.row(0).getByRole('button', { name: 'Edit group' }).click();
 
-    expect(fixture.componentInstance.groups.find(group => group.id === 'group1')).toBe(updatedGroup);
+    expect(groupModal.directSave).toBe(true);
+    expect(groupModal.prepareForEdition).toHaveBeenCalledWith(scanModes, groups, manifest, editedGroup);
+    expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'edit', group: command });
+    expect(groups[0]).toBe(updatedGroup);
+    await expect.element(tester.row(0)).toMatchTextContent('Alpha renamed');
+    await expect.element(tester.rows).toHaveLength(2);
   });
 
-  test('should delete a group and remove it from the list', () => {
+  test('should delete a group and remove it from the shared list', async () => {
+    prepare();
     deleteGroup.mockReturnValue(of(undefined));
-    const fixture = createComponent();
-    const groupToDelete = groups[0];
+    const deletedGroup = groups[0];
 
-    fixture.componentInstance.onDeleteGroup(groupToDelete);
+    await tester.row(0).getByRole('button', { name: 'Delete' }).click();
 
-    expect(deleteGroup).toHaveBeenCalledWith(groupToDelete);
-    expect(fixture.componentInstance.groups.find(group => group.id === 'group1')).toBeUndefined();
-    expect(fixture.componentInstance.displayedGroups().find(group => group.id === 'group1')).toBeUndefined();
+    expect(deleteGroup).toHaveBeenCalledWith(deletedGroup);
+    expect(groups.map(group => group.id)).toEqual(['group2']);
+    await expect.element(tester.rows).toHaveLength(1);
+    await expect.element(tester.title).toHaveTextContent('Groups (1)');
   });
 
-  test('should close the modal', () => {
-    const fixture = createComponent();
+  test('should close the modal', async () => {
+    prepare();
 
-    fixture.componentInstance.close();
+    await tester.closeButton.click();
 
     expect(activeModal.close).toHaveBeenCalled();
   });
 
-  test('should export groups as a CSV file', () => {
-    const fixture = createComponent();
-    const linkSpy = { click: vi.fn(), href: '', download: '' };
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('mock-url');
-    vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
-    vi.spyOn(document, 'createElement').mockReturnValue(linkSpy as unknown as HTMLElement);
+  test('should export the groups as a CSV file', async () => {
+    prepare();
 
-    fixture.componentInstance.exportGroups();
+    await tester.exportButton.click();
 
-    expect(URL.createObjectURL).toHaveBeenCalled();
-    expect(linkSpy.href).toBe('mock-url');
-    expect(linkSpy.download).toMatch(/^groups_.*\.csv$/);
-    expect(linkSpy.click).toHaveBeenCalled();
+    expect(downloadService.downloadFile).toHaveBeenCalledWith({ blob: expect.any(Blob), name: expect.stringMatching(/^groups_.*\.csv$/) });
+    const content = await downloadService.downloadFile.mock.lastCall![0].blob.text();
+    expect(content.split('\r\n')).toEqual([
+      'name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay,recoveryStrategy',
+      `Alpha,${scanModes[1].name},0,0,3600,200,oldest`,
+      `Beta,${scanModes[0].name},0,0,3600,200,oldest`
+    ]);
   });
 
-  test('should import valid groups from a CSV file and report the created count', async () => {
+  test('should import the valid groups of a CSV file and report the created count', async () => {
+    prepare();
     addOrEditGroup.mockImplementation(command => of({ ...command.group, id: 'imported1' }));
-    const fixture = createComponent();
+    const csvContent = [
+      'name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay,recoveryStrategy',
+      `Gamma,${scanModes[0].name},-1000,0,3600,200,newest`
+    ].join('\n');
 
-    const csvContent = `name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay,recoveryStrategy\nGamma,${scanModes[0].name},-1000,0,3600,200,newest`;
-    const file = new File([csvContent], 'groups.csv', { type: 'text/csv' });
-    await fixture.componentInstance.onImportFileSelected({ target: { files: [file], value: '' } } as unknown as Event);
+    await tester.importInput.upload(new File([csvContent], 'groups.csv', { type: 'text/csv' }));
 
+    await expect.element(tester.root.getByText('1 group(s) imported')).toBeInTheDocument();
     expect(addOrEditGroup).toHaveBeenCalledWith({
       mode: 'create',
       group: {
@@ -227,25 +259,27 @@ describe('ManageGroupsModalComponent', () => {
         }
       }
     });
-    expect(fixture.componentInstance.importSuccessCount()).toBe(1);
-    expect(fixture.componentInstance.importErrors()).toEqual([]);
-    expect(fixture.componentInstance.groups.some(group => group.id === 'imported1')).toBe(true);
+    expect(groups.map(group => group.id)).toEqual(['group1', 'group2', 'imported1']);
+    await expect.element(tester.rows).toHaveLength(3);
   });
 
-  test('should report errors for invalid rows without importing them', async () => {
-    const fixture = createComponent();
-
+  test('should report the invalid rows of a CSV file without importing them', async () => {
+    prepare();
     const csvContent = [
       'name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay',
       `,${scanModes[0].name},0,0,3600,200`,
-      `Alpha,${scanModes[0].name},0,0,3600,200`,
+      `alpha,${scanModes[0].name},0,0,3600,200`,
       'Delta,unknown-scan-mode,0,0,3600,200'
     ].join('\n');
-    const file = new File([csvContent], 'groups.csv', { type: 'text/csv' });
-    await fixture.componentInstance.onImportFileSelected({ target: { files: [file], value: '' } } as unknown as Event);
 
+    await tester.importInput.upload(new File([csvContent], 'groups.csv', { type: 'text/csv' }));
+
+    const errors = tester.root.getByRole('alert');
+    await expect.element(errors).toMatchTextContent('3 row(s) could not be imported');
+    await expect.element(errors).toMatchTextContent('Row 1: Group name is required');
+    await expect.element(errors).toMatchTextContent('Row 2: A group named "alpha" already exists');
+    await expect.element(errors).toMatchTextContent('Row 3: Scan mode "unknown-scan-mode" was not found');
     expect(addOrEditGroup).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.importErrors()).toHaveLength(3);
-    expect(fixture.componentInstance.importSuccessCount()).toBeNull();
+    await expect.element(tester.rows).toHaveLength(2);
   });
 });

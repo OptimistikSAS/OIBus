@@ -1,5 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -44,19 +45,21 @@ const PAGE_SIZE = 15;
     AuditInfoComponent
   ],
   templateUrl: './north-list.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './north-list.component.scss'
 })
 export class NorthListComponent {
-  private confirmationService = inject(ConfirmationService);
-  private notificationService = inject(NotificationService);
-  private modalService = inject(ModalService);
-  private northConnectorService = inject(NorthConnectorService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly modalService = inject(ModalService);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly allNorths = signal<Array<NorthConnectorLightDTO> | null>(null);
-  filteredNorths: Array<NorthConnectorLightDTO> = [];
+  private filteredNorths: Array<NorthConnectorLightDTO> = [];
   readonly displayedNorths = signal<Page<NorthConnectorLightDTO>>(emptyPage());
-  states = new Map<string, ObservableState>();
+  // one pending state per connector, rendered through the async pipe
+  readonly states = new Map<string, ObservableState>();
   readonly sortField = signal<NorthSortField>('name');
   readonly sortDirection = signal<SortDirection>('asc');
 
@@ -64,7 +67,7 @@ export class NorthListComponent {
   readonly activeEnabledStates = signal<Array<boolean>>([]);
   readonly activeTypes = signal<Array<OIBusNorthType>>([]);
 
-  searchForm = inject(NonNullableFormBuilder).group({
+  readonly searchForm = this.fb.group({
     name: [null as string | null]
   });
 
@@ -72,11 +75,21 @@ export class NorthListComponent {
   // (e.g. colorblind users can still tell enabled from disabled even when green and grey look the same).
   // Avoids fa-play/fa-pause/fa-toggle-* shapes, which could be mistaken for the row's own action control.
   readonly LEGEND: Array<{ label: string; enabled: boolean; class: string }> = [
-    { label: 'north.disabled', enabled: false, class: 'fa fa-minus-circle status-grey' },
-    { label: 'north.enabled', enabled: true, class: 'fa fa-check-circle status-green' }
+    { label: 'north.disabled', enabled: false, class: 'fa-solid fa-minus-circle status-grey' },
+    { label: 'north.enabled', enabled: true, class: 'fa-solid fa-check-circle status-green' }
   ];
 
   constructor() {
+    this.loadNorths();
+
+    this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed()).subscribe(() => {
+      if (this.allNorths()) {
+        this.updateList(0);
+      }
+    });
+  }
+
+  private loadNorths() {
     this.northConnectorService.list().subscribe(norths => {
       this.states.clear();
       norths.forEach(north => {
@@ -84,12 +97,6 @@ export class NorthListComponent {
       });
       this.allNorths.set(norths);
       this.updateList(0);
-    });
-
-    this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
-      if (this.allNorths()) {
-        this.updateList(0);
-      }
     });
   }
 
@@ -114,17 +121,7 @@ export class NorthListComponent {
         })
       )
       .subscribe(() => {
-        this.northConnectorService
-          .list()
-          .pipe(tap(() => this.allNorths.set(null)))
-          .subscribe(norths => {
-            this.states.clear();
-            norths.forEach(north => {
-              this.states.set(north.id, new ObservableState());
-            });
-            this.allNorths.set(norths);
-            this.updateList(0);
-          });
+        this.loadNorths();
         this.notificationService.success('north.deleted', {
           name: north.name
         });
@@ -164,7 +161,7 @@ export class NorthListComponent {
     if (this.sortField() !== field) {
       return 'fa-sort';
     }
-    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {

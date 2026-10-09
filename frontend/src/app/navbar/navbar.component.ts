@@ -15,7 +15,7 @@ import { DocsUrlService } from '../shared/docs-url.service';
   selector: 'oib-navbar',
   imports: [RouterLink, TranslateDirective, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, PageTitleDirective, NgbTooltip, TranslatePipe],
   templateUrl: './navbar.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {

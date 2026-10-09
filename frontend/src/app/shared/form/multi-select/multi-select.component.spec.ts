@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page, userEvent } from 'vitest/browser';
 
 import { byIdComparisonFn } from '../../test-utils';
 import { MultiSelectComponent } from './multi-select.component';
@@ -14,12 +14,23 @@ interface User {
   name: string;
 }
 
+const users: Array<User> = [
+  { id: 1, name: 'Cedric' },
+  { id: 2, name: 'JB' },
+  { id: 3, name: 'Marouane' }
+];
+
 @Component({
   selector: 'oib-test-multi-select-component',
   template: `
     <form [formGroup]="form">
-      <oib-multi-select [placeholder]="placeholder" formControlName="users" (selectionChange)="changeEvent = $event">
-        @for (user of users; track user) {
+      <oib-multi-select
+        [placeholder]="placeholder()"
+        [isSmall]="isSmall()"
+        formControlName="users"
+        (selectionChange)="changeEvents.push($event)"
+      >
+        @for (user of users; track user.id) {
           <oib-multi-select-option [value]="user.id" [label]="user.name" />
         }
       </oib-multi-select>
@@ -29,234 +40,166 @@ interface User {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
-  private fb = inject(FormBuilder);
-
-  users: Array<User> = [
-    {
-      id: 1,
-      name: 'Cedric'
-    },
-    {
-      id: 2,
-      name: 'JB'
-    },
-    {
-      id: 3,
-      name: 'Marouane'
-    }
-  ];
-
-  form = this.fb.group({
-    users: [[] as Array<number | User>]
-  });
-  placeholder = '';
-
-  changeEvent: Array<number> = [];
-
-  byId = byIdComparisonFn;
+  readonly users = users;
+  readonly form = new FormGroup({ users: new FormControl<Array<number>>([], { nonNullable: true }) });
+  readonly placeholder = signal('');
+  readonly isSmall = signal(false);
+  readonly changeEvents: Array<Array<number>> = [];
 }
 
-class TestComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  readonly component = this.fixture.componentInstance;
-  readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly multiSelect = this.root.getByCss('[ngbDropdownToggle]');
-  readonly options = page.getByCss('body > .dropdown [ngbDropdownItem]');
-
-  get usersCtrl() {
-    return this.component.form.get('users')!;
-  }
-
-  async toggle() {
-    await this.multiSelect.click();
-  }
-
-  option(index: number) {
-    return this.options.nth(index);
-  }
-
-  clickOption(index: number) {
-    (this.option(index).element() as HTMLElement).click();
-    this.fixture.detectChanges();
-  }
+@Component({
+  selector: 'oib-test-multi-select-compare-with-component',
+  template: `
+    <oib-multi-select [formControl]="control" [compareWith]="byId">
+      @for (user of users; track user.id) {
+        <oib-multi-select-option [value]="user" [label]="user.name" />
+      }
+    </oib-multi-select>
+  `,
+  imports: [MultiSelectComponent, MultiSelectOptionDirective, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+class CompareWithTestComponent {
+  readonly users = users;
+  readonly control = new FormControl<Array<User>>([], { nonNullable: true });
+  readonly byId = byIdComparisonFn;
 }
+
+/** The options are displayed in a dropdown attached to the body */
+const options = page.getByCss('body > .dropdown [ngbDropdownItem]');
+const option = (index: number) => options.nth(index);
 
 describe('MultiSelectComponent', () => {
-  let tester: TestComponentTester;
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   describe('without compareWith', () => {
+    let host: TestComponent;
+    let toggle: ReturnType<typeof page.elementLocator>;
+
     beforeEach(() => {
       TestBed.configureTestingModule({});
-
-      tester = new TestComponentTester();
+      const testFixture = TestBed.createComponent(TestComponent);
+      host = testFixture.componentInstance;
+      toggle = page.elementLocator(testFixture.nativeElement).getByRole('button');
     });
 
-    test('should display nothing if no placeholder and no selection', () => {
-      tester.fixture.detectChanges();
-      expect(tester.multiSelect.element().textContent?.trim()).toBe('');
+    test('should display nothing without placeholder nor selection', async () => {
+      await expect.element(toggle).toHaveTextContent('');
+      await expect.element(toggle).toHaveClass('form-select');
+      await expect.element(toggle).not.toHaveClass('form-select-sm');
     });
 
-    test('should display placeholder if placeholder and no selection', async () => {
-      tester.component.placeholder = 'Choose a user';
-      tester.fixture.detectChanges();
-      await expect.element(tester.multiSelect).toMatchTextContent('Choose a user');
+    test('should display the placeholder without selection', async () => {
+      host.placeholder.set('Choose a user');
+
+      await expect.element(toggle).toHaveTextContent('Choose a user');
     });
 
-    test('should display the selection, ordered the same way as the options', async () => {
-      tester.usersCtrl.setValue([tester.component.users[2].id, tester.component.users[0].id]);
-      tester.fixture.detectChanges();
-      await expect.element(tester.multiSelect).toMatchTextContent('Cedric, Marouane');
+    test('should be small', async () => {
+      host.isSmall.set(true);
+
+      await expect.element(toggle).toHaveClass('form-select-sm');
     });
 
-    test('should be pristine and not touched initially', () => {
-      tester.fixture.detectChanges();
-      expect(tester.component.form.pristine).toBe(true);
-      expect(tester.component.form.touched).toBe(false);
+    test('should display the selection, ordered as the options, and keep the unknown values', async () => {
+      host.form.controls.users.setValue([3, 1, 42]);
+
+      await expect.element(toggle).toHaveTextContent('Cedric, Marouane');
+      expect(host.form.controls.users.value).toEqual([3, 1, 42]);
+      expect(host.form.pristine).toBe(true);
+      expect(host.form.touched).toBe(false);
     });
 
-    test('should be pristine and not touched initially, even if pre-populated', () => {
-      tester.usersCtrl.setValue([tester.component.users[2].id, tester.component.users[0].id]);
-      tester.fixture.detectChanges();
+    test('should become touched when losing focus', async () => {
+      // opening and closing the dropdown gives the focus back to the toggle
+      await toggle.click();
+      await toggle.click();
+      await expect.element(toggle).toHaveFocus();
+      expect(host.form.touched).toBe(false);
 
-      expect(tester.usersCtrl.pristine).toBe(true);
-      expect(tester.usersCtrl.touched).toBe(false);
-      expect(tester.usersCtrl.value!.sort()).toEqual([1, 3]);
+      await userEvent.tab();
+
+      expect(host.form.touched).toBe(true);
     });
 
-    test('should be keep phantom selected values', () => {
-      tester.usersCtrl.setValue([tester.component.users[2].id, tester.component.users[0].id, 42]);
-      tester.fixture.detectChanges();
+    test('should select and deselect values by clicking options', async () => {
+      await toggle.click();
+      await expect.element(option(0)).toHaveTextContent('Cedric');
+      await expect.element(option(0)).not.toHaveClass('selected');
 
-      expect(tester.usersCtrl.value!.sort()).toEqual([1, 3, 42]);
+      await option(0).click();
+      await option(1).click();
+
+      await expect.element(option(0)).toHaveClass('selected');
+      await expect.element(option(0).getByCss('.fa-check')).toBeInTheDocument();
+      await expect.element(option(1)).toHaveClass('selected');
+      await expect.element(toggle).toHaveTextContent('Cedric, JB');
+      expect(host.form.controls.users.value).toEqual([1, 2]);
+
+      await option(0).click();
+
+      await expect.element(option(0)).not.toHaveClass('selected');
+      await expect.element(option(0).getByCss('.fa-check')).not.toBeInTheDocument();
+      expect(host.form.controls.users.value).toEqual([2]);
+      expect(host.changeEvents).toEqual([[1], [1, 2], [2]]);
+      expect(host.form.dirty).toBe(true);
     });
 
-    test('should become touched when losing focus', () => {
-      tester.fixture.detectChanges();
-      tester.multiSelect.element().focus();
-      tester.multiSelect.element().dispatchEvent(new Event('blur'));
-      expect(tester.usersCtrl.touched).toBe(true);
+    test('should display the selected options', async () => {
+      host.form.controls.users.setValue([3, 1]);
+
+      await toggle.click();
+
+      await expect.element(option(0)).toHaveClass('selected');
+      await expect.element(option(1)).not.toHaveClass('selected');
+      await expect.element(option(2)).toHaveClass('selected');
     });
 
-    test('should select and de-select values by clicking options', async () => {
-      tester.fixture.detectChanges();
-      await tester.toggle();
-      await expect.element(tester.option(0)).toMatchTextContent('Cedric');
-      await expect.element(tester.option(0)).not.toHaveClass('selected');
-      await expect.element(tester.option(0).getByCss('.fa-check')).not.toBeInTheDocument();
+    test('should focus the toggle when closed', async () => {
+      await toggle.click();
+      await expect.element(option(0)).toBeVisible();
 
-      tester.clickOption(0);
-      tester.clickOption(1);
+      await toggle.click();
 
-      await expect.element(tester.option(0)).toHaveClass('selected');
-      await expect.element(tester.option(0).getByCss('.fa-check')).toBeInTheDocument();
-      await expect.element(tester.option(1)).toHaveClass('selected');
-      expect(tester.usersCtrl.value!.sort()).toEqual([1, 2]);
-      await expect.element(tester.multiSelect).toMatchTextContent('Cedric, JB');
-
-      tester.clickOption(0);
-      await expect.element(tester.option(0)).not.toHaveClass('selected');
-      await expect.element(tester.option(0).getByCss('.fa-check')).not.toBeInTheDocument();
-      expect(tester.usersCtrl.value!.sort()).toEqual([2]);
+      await expect.element(option(0)).not.toBeInTheDocument();
+      await expect.element(toggle).toHaveFocus();
     });
 
-    test('should have pre-selected options', async () => {
-      tester.usersCtrl.setValue([tester.component.users[2].id, tester.component.users[0].id]);
+    test('should be disabled with its control', async () => {
+      host.form.controls.users.disable();
 
-      tester.fixture.detectChanges();
-      await tester.toggle();
-      await expect.element(tester.option(0)).toHaveClass('selected');
-      await expect.element(tester.option(1)).not.toHaveClass('selected');
-      await expect.element(tester.option(2)).toHaveClass('selected');
-    });
-
-    test('should focus the main button when closed', async () => {
-      vi.useFakeTimers();
-      tester.fixture.detectChanges();
-      await tester.toggle();
-      await vi.advanceTimersByTimeAsync(0);
-
-      await tester.toggle();
-      await vi.advanceTimersByTimeAsync(0);
-      expect(document.activeElement).toBe(tester.multiSelect.element());
-    });
-
-    test('should emit a change event when the user changes the selection', async () => {
-      tester.fixture.detectChanges();
-      await tester.toggle();
-
-      tester.clickOption(0);
-      expect(tester.component.changeEvent).toEqual([1]);
-      tester.clickOption(1);
-      expect(tester.component.changeEvent).toEqual([1, 2]);
-      tester.clickOption(0);
-      expect(tester.component.changeEvent).toEqual([2]);
+      await expect.element(toggle).toBeDisabled();
     });
   });
 
   describe('with compareWith', () => {
+    let control: FormControl<Array<User>>;
+    let toggle: ReturnType<typeof page.elementLocator>;
+
     beforeEach(() => {
-      TestBed.overrideTemplate(
-        TestComponent,
-        `
-        <form [formGroup]="form">
-          <oib-multi-select [placeholder]="placeholder" formControlName="users" (selectionChange)="changeEvent = $event" [compareWith]="byId">
-            @for (user of users; track user) {
-              <oib-multi-select-option [value]="user" [label]="user.name"></oib-multi-select-option>
-            }
-          </oib-multi-select>
-        </form>
-      `
-      );
-
       TestBed.configureTestingModule({});
-
-      tester = new TestComponentTester();
+      const fixture = TestBed.createComponent(CompareWithTestComponent);
+      control = fixture.componentInstance.control;
+      toggle = page.elementLocator(fixture.nativeElement).getByRole('button');
     });
 
-    test('should display nothing if no placeholder and no selection', () => {
-      tester.fixture.detectChanges();
-      expect(tester.multiSelect.element().textContent?.trim()).toBe('');
+    test('should display the selection and the selected options', async () => {
+      control.setValue([{ ...users[2] }, { ...users[0] }]);
+
+      await expect.element(toggle).toHaveTextContent('Cedric, Marouane');
+      await toggle.click();
+      await expect.element(option(0)).toHaveClass('selected');
+      await expect.element(option(1)).not.toHaveClass('selected');
+      await expect.element(option(2)).toHaveClass('selected');
     });
 
-    test('should display the selection, ordered the same way as the options', async () => {
-      tester.usersCtrl.setValue([{ ...tester.component.users[2] }, { ...tester.component.users[0] }]);
-      tester.fixture.detectChanges();
-      await expect.element(tester.multiSelect).toMatchTextContent('Cedric, Marouane');
-    });
+    test('should select and deselect values by clicking options', async () => {
+      control.setValue([{ ...users[0] }]);
+      await toggle.click();
 
-    test('should select and de-select values by clicking options', async () => {
-      tester.fixture.detectChanges();
-      await tester.toggle();
-      await expect.element(tester.option(0)).toMatchTextContent('Cedric');
-      await expect.element(tester.option(0)).not.toHaveClass('selected');
-      await expect.element(tester.option(0).getByCss('.fa-check')).not.toBeInTheDocument();
+      await option(1).click();
+      await option(0).click();
 
-      tester.clickOption(0);
-      tester.clickOption(1);
-
-      await expect.element(tester.option(0)).toHaveClass('selected');
-      await expect.element(tester.option(0).getByCss('.fa-check')).toBeInTheDocument();
-      await expect.element(tester.option(1)).toHaveClass('selected');
-      await expect.element(tester.multiSelect).toMatchTextContent('Cedric, JB');
-
-      tester.clickOption(0);
-      await expect.element(tester.option(0)).not.toHaveClass('selected');
-      await expect.element(tester.option(0).getByCss('.fa-check')).not.toBeInTheDocument();
-      expect(tester.usersCtrl.value).toEqual([{ id: 2, name: 'JB' }]);
-    });
-
-    test('should have pre-selected options', async () => {
-      tester.usersCtrl.setValue([{ ...tester.component.users[2] }, { ...tester.component.users[0] }]);
-
-      tester.fixture.detectChanges();
-      await tester.toggle();
-      await expect.element(tester.option(0)).toHaveClass('selected');
-      await expect.element(tester.option(1)).not.toHaveClass('selected');
-      await expect.element(tester.option(2)).toHaveClass('selected');
+      await expect.element(toggle).toHaveTextContent('JB');
+      expect(control.value).toEqual([users[1]]);
     });
   });
 });

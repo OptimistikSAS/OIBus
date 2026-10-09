@@ -1,6 +1,7 @@
 /* eslint-disable @angular-eslint/directive-selector */
 
 import { Directive, ElementRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl } from '@angular/forms';
 
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +26,7 @@ import { TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
   }
 })
 export class OpenTypeaheadOnFocusDirective {
-  private focused$ = new Subject<boolean>();
+  private readonly focused$ = new Subject<boolean>();
 
   constructor() {
     const ngControl = inject(NgControl);
@@ -39,7 +40,8 @@ export class OpenTypeaheadOnFocusDirective {
         // - there is no value selected
         // - the last is event is a focus (and not a blur)
         // - the popup is not already opened
-        filter(focused => !ngControl.value && focused && !ngbTypeahead.isPopupOpen())
+        filter(focused => !ngControl.value && focused && !ngbTypeahead.isPopupOpen()),
+        takeUntilDestroyed()
       )
       .subscribe(() => element.nativeElement.dispatchEvent(new Event('input')));
   }

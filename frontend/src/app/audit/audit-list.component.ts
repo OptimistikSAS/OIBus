@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
+import { catchError, EMPTY, switchMap } from 'rxjs';
 
 import { AuditLogDTO } from '@oibus/shared/api/audit.model';
 import { Instant, Page } from '@oibus/shared/common/types';
@@ -89,22 +90,24 @@ export function auditEntityLink(entry: AuditLogDTO): Array<string> | null {
   ],
   templateUrl: './audit-list.component.html',
   styleUrl: './audit-list.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [PageLoader]
 })
-export class AuditListComponent implements OnInit, OnDestroy {
+export class AuditListComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private pageLoader = inject(PageLoader);
   private auditService = inject(AuditService);
   private modalService = inject(ModalService);
+  private destroyRef = inject(DestroyRef);
+  private fb = inject(NonNullableFormBuilder);
 
   // Kept in sync with AuditEntityType in backend/shared/model/audit.model.ts
   readonly entityTypes: ReadonlyArray<AuditEntityType> = AUDIT_ENTITY_TYPES;
   readonly actions: ReadonlyArray<AuditAction> = AUDIT_ACTIONS;
   readonly entityLink = auditEntityLink;
 
-  readonly searchForm = inject(NonNullableFormBuilder).group(
+  readonly searchForm = this.fb.group(
     {
       entityType: null as AuditEntityType | null,
       action: null as AuditAction | null,
@@ -115,9 +118,8 @@ export class AuditListComponent implements OnInit, OnDestroy {
     { validators: [ascendingDates] }
   );
 
-  loading = signal(false);
-  entries = signal<Page<AuditLogDTO>>(emptyPage());
-  subscription = new Subscription();
+  readonly loading = signal(false);
+  readonly entries = signal<Page<AuditLogDTO>>(emptyPage());
 
   ngOnInit(): void {
     const searchParams = this.toSearchParams(this.route);
@@ -129,24 +131,24 @@ export class AuditListComponent implements OnInit, OnDestroy {
       page: searchParams.page ?? null
     });
 
-    this.subscription.add(
-      this.pageLoader.pageLoads$
-        .pipe(
-          switchMap(page => {
-            this.loading.set(true);
-            const criteria: AuditSearchParam = { ...this.toSearchParams(this.route), page };
-            return this.auditService.search(criteria).pipe(catchError(() => EMPTY));
-          })
-        )
-        .subscribe(entries => {
-          this.entries.set(entries);
-          this.loading.set(false);
-        })
-    );
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    this.pageLoader.pageLoads$
+      .pipe(
+        switchMap(page => {
+          this.loading.set(true);
+          const criteria: AuditSearchParam = { ...this.toSearchParams(this.route), page };
+          return this.auditService.search(criteria).pipe(
+            catchError(() => {
+              this.loading.set(false);
+              return EMPTY;
+            })
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(entries => {
+        this.entries.set(entries);
+        this.loading.set(false);
+      });
   }
 
   toSearchParams(route: ActivatedRoute): AuditSearchParam {

@@ -5,13 +5,13 @@
       <div class="d-flex align-items-center gap-2">
         @switch (currentCacheType) {
           @case ('cache') {
-            <span class="fa fa-database text-primary"></span>
+            <span class="fa-solid fa-database text-primary" aria-hidden="true"></span>
           }
           @case ('error') {
-            <span class="fa fa-exclamation-triangle text-danger"></span>
+            <span class="fa-solid fa-exclamation-triangle text-danger" aria-hidden="true"></span>
           }
           @case ('archive') {
-            <span class="fa fa-archive text-secondary"></span>
+            <span class="fa-solid fa-archive text-secondary" aria-hidden="true"></span>
           }
           @default never;
         }
@@ -93,11 +93,11 @@
             [disabled]="selectedFileCount() === cacheContentFiles().length"
             id="select-all-button"
           >
-            <span class="fa fa-check-square me-1"></span>
+            <span class="fa-solid fa-check-square me-1" aria-hidden="true"></span>
             <span translate="explore-cache.select-all"></span>
           </button>
           <button type="button" class="btn btn-sm" (click)="unselectAll()" [disabled]="selectedFileCount() === 0" id="unselect-all-button">
-            <span class="fa fa-square-o me-1"></span>
+            <span class="fa-solid fa-square me-1" aria-hidden="true"></span>
             <span translate="explore-cache.unselect-all"></span>
           </button>
           @if (selectedFileCount() > 0) {
@@ -115,49 +115,40 @@
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            <th style="width: 50px"></th>
+            <th class="select-column"></th>
             <th>
-              <button
-                class="py-1 px-0 sort-by-modification-date"
-                style="background: none; border: none; font-weight: bold"
-                (click)="toggleColumnSort('createdAt')"
-              >
+              <button type="button" class="py-1 px-0 sort-button sort-by-modification-date" (click)="toggleColumnSort('createdAt')">
                 <span translate="explore-cache.file-date" class="me-2"></span>
                 <span
-                  class="fa"
+                  class="fa-solid"
+                  aria-hidden="true"
                   [class.fa-sort]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 0"
-                  [class.fa-sort-asc]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 1"
-                  [class.fa-sort-desc]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 2"
+                  [class.fa-sort-up]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 1"
+                  [class.fa-sort-down]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 2"
                 ></span>
               </button>
             </th>
             <th>
-              <button
-                class="py-1 px-0 sort-by-filename"
-                style="background: none; border: none; font-weight: bold"
-                (click)="toggleColumnSort('contentFile')"
-              >
+              <button type="button" class="py-1 px-0 sort-button sort-by-filename" (click)="toggleColumnSort('contentFile')">
                 <span translate="explore-cache.filename" class="me-2"></span>
                 <span
-                  class="fa"
+                  class="fa-solid"
+                  aria-hidden="true"
                   [class.fa-sort]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 0"
-                  [class.fa-sort-asc]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 1"
-                  [class.fa-sort-desc]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 2"
+                  [class.fa-sort-up]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 1"
+                  [class.fa-sort-down]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 2"
                 ></span>
               </button>
             </th>
             <th>
-              <button
-                class="py-1 px-0 sort-by-size"
-                style="background: none; border: none; font-weight: bold"
-                (click)="toggleColumnSort('contentSize')"
-              >
+              <button type="button" class="py-1 px-0 sort-button sort-by-size" (click)="toggleColumnSort('contentSize')">
                 <span translate="explore-cache.file-size" class="me-2"></span>
                 <span
-                  class="fa"
+                  class="fa-solid"
+                  aria-hidden="true"
                   [class.fa-sort]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 0"
-                  [class.fa-sort-asc]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 1"
-                  [class.fa-sort-desc]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 2"
+                  [class.fa-sort-up]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 1"
+                  [class.fa-sort-down]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 2"
                 ></span>
               </button>
             </th>
@@ -173,9 +164,9 @@
                   (change)="onFileCheckboxClick(checkbox.checked, file.filename)"
                   #checkbox
                   [checked]="selectedFilenames().has(file.filename)"
-                  class="form-check-input"
+                  class="form-check-input file-checkbox"
                   [id]="'file-' + file.filename"
-                  style="width: 16px; height: 16px; cursor: pointer"
+                  [attr.aria-label]="file.metadata.contentFile"
                 />
               </td>
               <td class="modification-date">{{ file.metadata.createdAt | datetime: 'mediumWithSeconds' }}</td>
@@ -189,23 +180,25 @@
                         type="button"
                         class="btn btn-link px-1 py-0"
                         (click)="onItemAction('error', file)"
-                        [disabled]="state().isPending | async"
+                        [disabled]="isPending()"
                         triggers="hover"
                         placement="top"
                         [ngbTooltip]="'explore-cache.error-content-action' | translate"
+                        [attr.aria-label]="'explore-cache.error-content-action' | translate"
                       >
-                        <span class="fa fa-bolt"></span>
+                        <span class="fa-solid fa-bolt" aria-hidden="true"></span>
                       </button>
                       <button
                         type="button"
                         class="btn btn-link px-1 py-0"
                         (click)="onItemAction('archive', file)"
-                        [disabled]="state().isPending | async"
+                        [disabled]="isPending()"
                         triggers="hover"
                         placement="top"
                         [ngbTooltip]="'explore-cache.archive-content-action' | translate"
+                        [attr.aria-label]="'explore-cache.archive-content-action' | translate"
                       >
-                        <span class="fa fa-archive"></span>
+                        <span class="fa-solid fa-archive" aria-hidden="true"></span>
                       </button>
                     }
                     @case ('error') {
@@ -213,23 +206,25 @@
                         type="button"
                         class="btn btn-link px-1 py-0"
                         (click)="onItemAction('retry', file)"
-                        [disabled]="state().isPending | async"
+                        [disabled]="isPending()"
                         triggers="hover"
                         placement="top"
                         [ngbTooltip]="'explore-cache.retry-content-action' | translate"
+                        [attr.aria-label]="'explore-cache.retry-content-action' | translate"
                       >
-                        <span class="fa fa-refresh"></span>
+                        <span class="fa-solid fa-arrows-rotate" aria-hidden="true"></span>
                       </button>
                       <button
                         type="button"
                         class="btn btn-link px-1 py-0"
                         (click)="onItemAction('archive', file)"
-                        [disabled]="state().isPending | async"
+                        [disabled]="isPending()"
                         triggers="hover"
                         placement="top"
                         [ngbTooltip]="'explore-cache.archive-content-action' | translate"
+                        [attr.aria-label]="'explore-cache.archive-content-action' | translate"
                       >
-                        <span class="fa fa-archive"></span>
+                        <span class="fa-solid fa-archive" aria-hidden="true"></span>
                       </button>
                     }
                     @case ('archive') {
@@ -239,10 +234,11 @@
                         (click)="onItemAction('retry', file)"
                         triggers="hover"
                         placement="top"
-                        [disabled]="state().isPending | async"
+                        [disabled]="isPending()"
                         [ngbTooltip]="'explore-cache.replay-content-action' | translate"
+                        [attr.aria-label]="'explore-cache.replay-content-action' | translate"
                       >
-                        <span class="fa fa-refresh"></span>
+                        <span class="fa-solid fa-arrows-rotate" aria-hidden="true"></span>
                       </button>
                     }
                     @default never;
@@ -253,21 +249,23 @@
                     (click)="onItemAction('view', file)"
                     triggers="hover"
                     placement="top"
-                    [disabled]="state().isPending | async"
+                    [disabled]="isPending()"
                     [ngbTooltip]="'explore-cache.view-content-action' | translate"
+                    [attr.aria-label]="'explore-cache.view-content-action' | translate"
                   >
-                    <span class="fa fa-search"></span>
+                    <span class="fa-solid fa-search" aria-hidden="true"></span>
                   </button>
                   <button
                     type="button"
                     class="btn btn-link px-1 py-0"
                     (click)="onItemAction('remove', file)"
-                    [disabled]="state().isPending | async"
+                    [disabled]="isPending()"
                     triggers="hover"
                     placement="top"
                     [ngbTooltip]="'explore-cache.remove-content-action' | translate"
+                    [attr.aria-label]="'explore-cache.remove-content-action' | translate"
                   >
-                    <span class="fa fa-trash"></span>
+                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                   </button>
                 </div>
               </td>

@@ -21,14 +21,14 @@ import { OI_TYPEAHEAD_DIRECTIVES } from '../typeahead-directives';
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, OI_TYPEAHEAD_DIRECTIVES]
 })
 export class OIBusTimezoneFormControlComponent {
-  timezoneAttribute = input.required<OIBusTimezoneAttribute>();
+  readonly timezoneAttribute = input.required<OIBusTimezoneAttribute>();
 
-  private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
-  timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
+  private readonly timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
+  readonly timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
     () => ['UTC', ...this.timezones],
     timezone => timezone
   );

@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { firstValueFrom, switchMap, tap } from 'rxjs';
+import { firstValueFrom, map, Observable, switchMap, tap } from 'rxjs';
 
-import { CustomTransformerDTO } from '@oibus/shared/api/transformer.model';
+import { CustomTransformerDTO, TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
 
 import { TransformerService } from '../../services/transformer.service';
@@ -38,15 +38,15 @@ const PAGE_SIZE = 20;
     AuditInfoComponent
   ],
   templateUrl: './transformer-list.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './transformer-list.component.scss'
 })
 export class TransformerListComponent {
-  private confirmationService = inject(ConfirmationService);
-  private modalService = inject(ModalService);
-  private notificationService = inject(NotificationService);
-  private transformerService = inject(TransformerService);
-  private docsUrlService = inject(DocsUrlService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly modalService = inject(ModalService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly transformerService = inject(TransformerService);
+  private readonly docsUrlService = inject(DocsUrlService);
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/transformers');
 
@@ -57,10 +57,17 @@ export class TransformerListComponent {
   readonly sortDirection = signal<SortDirection>('asc');
 
   constructor() {
-    this.transformerService.list().subscribe(transformers => {
-      this.allTransformers.set(transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>);
-      this.updateList(0);
-    });
+    this.loadTransformers().subscribe();
+  }
+
+  private loadTransformers(): Observable<Array<CustomTransformerDTO>> {
+    return this.transformerService.list().pipe(
+      map(transformers => transformers.filter((element): element is CustomTransformerDTO => element.type === 'custom')),
+      tap(transformers => {
+        this.allTransformers.set(transformers);
+        this.updateList(0);
+      })
+    );
   }
 
   editTransformer(transformer: CustomTransformerDTO) {
@@ -91,20 +98,17 @@ export class TransformerListComponent {
     this.refreshAfterEditTransformerModalClosed(modalRef, 'created');
   }
 
-  private refreshAfterEditTransformerModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
+  private refreshAfterEditTransformerModalClosed(modalRef: Modal<EditTransformerModalComponent>, mode: 'created' | 'updated') {
     modalRef.result
       .pipe(
-        tap(transformer =>
+        tap((transformer: TransformerDTO) =>
           this.notificationService.success(`configuration.oibus.manifest.transformers.${mode}`, {
-            name: transformer.name
+            name: transformer.type === 'custom' ? transformer.name : transformer.functionName
           })
         ),
-        switchMap(() => this.transformerService.list())
+        switchMap(() => this.loadTransformers())
       )
-      .subscribe(transformers => {
-        this.allTransformers.set(transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>);
-        this.updateList(0);
-      });
+      .subscribe();
   }
 
   /**
@@ -127,10 +131,7 @@ export class TransformerListComponent {
         })
       )
       .subscribe(() => {
-        this.transformerService.list().subscribe(transformers => {
-          this.allTransformers.set(transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>);
-          this.updateList(0);
-        });
+        this.loadTransformers().subscribe();
         this.notificationService.success('configuration.oibus.manifest.transformers.deleted', {
           name: transformer.name
         });
@@ -150,7 +151,7 @@ export class TransformerListComponent {
 
   getSortIcon(field: TransformerSortField): string {
     if (this.sortField() !== field) return 'fa-sort';
-    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {

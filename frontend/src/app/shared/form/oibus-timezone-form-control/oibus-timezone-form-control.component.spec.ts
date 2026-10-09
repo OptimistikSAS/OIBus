@@ -1,94 +1,56 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { OIBusTimezoneAttribute } from '@oibus/shared/connector/form.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { OIBusFormControlTester, renderOIBusFormControl } from '../oibus-form-control.testing';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../typeahead';
 import { OIBusTimezoneFormControlComponent } from './oibus-timezone-form-control.component';
 
-@Component({
-  selector: 'oib-test-oibus-timezone-form-control-component',
-  template: `
-    <form [formGroup]="formGroup">
-      <ng-container formGroupName="testGroup">
-        <oib-oibus-timezone-form-control [timezoneAttribute]="timezoneAttribute" />
-      </ng-container>
-    </form>
-  `,
-  imports: [ReactiveFormsModule, OIBusTimezoneFormControlComponent, NgbTypeaheadModule],
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-class TestComponent {
-  timezoneAttribute: OIBusTimezoneAttribute = {
-    type: 'timezone',
-    key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.date-time-input.timezone'
-  } as OIBusTimezoneAttribute;
-
-  formGroup = new FormGroup({
-    testGroup: new FormGroup({
-      testKey: new FormControl('')
-    })
-  });
-}
-
-class TestComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly label = this.root.getByText('Timezone');
-  readonly field = this.root.getByCss('input');
-  readonly suggestions = page.getByCss('ngb-typeahead-window.dropdown-menu button.dropdown-item');
-
-  get suggestionLabels() {
-    return this.suggestions.elements().map(s => s.textContent?.trim() ?? '');
-  }
-
-  async fillWith(text: string) {
-    const input = this.field.element() as HTMLInputElement;
-    input.value = text;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(2 * TYPEAHEAD_DEBOUNCE_TIME);
-  }
-}
-
 describe('OIBusTimezoneFormControlComponent', () => {
-  let tester: TestComponentTester;
+  const timezoneAttribute: OIBusTimezoneAttribute = {
+    type: 'timezone',
+    key: 'timezone',
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.date-time-input.timezone',
+    defaultValue: null,
+    validators: [],
+    displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+  };
+  const suggestions = page.getByCss('ngb-typeahead-window').getByRole('option');
+  let control: FormControl<string | null>;
+  let tester: OIBusFormControlTester<OIBusTimezoneFormControlComponent>;
 
-  afterEach(() => {
-    vi.useRealTimers();
+  beforeEach(async () => {
+    TestBed.configureTestingModule({ providers: [provideI18nTesting()] });
+    control = new FormControl<string | null>(null);
+    tester = await renderOIBusFormControl(OIBusTimezoneFormControlComponent, { timezoneAttribute }, 'timezone', control);
   });
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [provideI18nTesting()]
-    });
+  afterEach(() => vi.useRealTimers());
 
-    tester = new TestComponentTester();
-    tester.fixture.detectChanges();
-  });
-
-  test('should display a label with the correct translation key', async () => {
-    await expect.element(tester.label).toBeInTheDocument();
-  });
-
-  test('should have typeahead functionality', async () => {
+  test('should suggest the matching timezones and select one', async () => {
+    const field = tester.root.getByLabelText('Timezone');
+    await expect.element(field).toHaveValue('');
     vi.useFakeTimers();
-    await expect.element(tester.field).toHaveValue('');
 
-    await tester.fillWith('Par');
-    tester.fixture.detectChanges();
-
-    expect(tester.suggestionLabels).toEqual(['America/Paramaribo', 'Europe/Paris']);
-
-    await tester.suggestions.nth(1).click();
+    await field.fill('Par');
     await vi.advanceTimersByTimeAsync(TYPEAHEAD_DEBOUNCE_TIME);
 
-    await expect.element(tester.field).toHaveValue('Europe/Paris');
+    await expect.element(suggestions).toHaveLength(2);
+    expect(suggestions.elements().map(suggestion => suggestion.textContent!.trim())).toEqual(['America/Paramaribo', 'Europe/Paris']);
+    await suggestions.nth(1).click();
+
+    expect(control.value).toBe('Europe/Paris');
+    await expect.element(field).toHaveValue('Europe/Paris');
+  });
+
+  test('should display a value patched from outside', async () => {
+    control.setValue('Europe/Paris');
+
+    await expect.element(tester.root.getByLabelText('Timezone')).toHaveValue('Europe/Paris');
   });
 });

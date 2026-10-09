@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
@@ -28,12 +29,12 @@ interface SelectableAttachment {
   templateUrl: './select-existing-transformer.component.html',
   styleUrl: './select-existing-transformer.component.scss',
   imports: [FormsModule, TranslateDirective],
-  changeDetection: ChangeDetectionStrategy.Eager
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SelectExistingTransformerComponent {
-  private northConnectorService = inject(NorthConnectorService);
-  private historyQueryService = inject(HistoryQueryService);
-  private translateService = inject(TranslateService);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly historyQueryService = inject(HistoryQueryService);
+  private readonly translateService = inject(TranslateService);
 
   /** Whether to browse north connectors or history queries. */
   readonly sourceKind = input.required<'north' | 'history-query'>();
@@ -42,8 +43,8 @@ export class SelectExistingTransformerComponent {
 
   readonly transformerPicked = output<{ transformer: TransformerDTO; options: Record<string, unknown> }>();
 
-  readonly norths = signal<Array<NorthConnectorLightDTO>>([]);
-  readonly historyQueries = signal<Array<HistoryQueryLightDTO>>([]);
+  readonly norths = toSignal(this.northConnectorService.list(), { initialValue: [] as Array<NorthConnectorLightDTO> });
+  readonly historyQueries = toSignal(this.historyQueryService.list(), { initialValue: [] as Array<HistoryQueryLightDTO> });
 
   readonly selectedSourceId = signal<string | null>(null);
   readonly selectedAttachmentId = signal<string | null>(null);
@@ -51,12 +52,6 @@ export class SelectExistingTransformerComponent {
   readonly loading = signal(false);
 
   constructor() {
-    this.northConnectorService.list().subscribe(norths => {
-      this.norths.set(norths);
-    });
-    this.historyQueryService.list().subscribe(historyQueries => {
-      this.historyQueries.set(historyQueries);
-    });
     // Reset the selection whenever the caller switches between north connectors and history queries.
     effect(() => {
       this.sourceKind();

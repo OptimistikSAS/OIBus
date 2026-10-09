@@ -17,9 +17,9 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class OIBusBooleanFormControlComponent {
-  booleanAttribute = input.required<OIBusBooleanAttribute>();
+  readonly booleanAttribute = input.required<OIBusBooleanAttribute>();
 }

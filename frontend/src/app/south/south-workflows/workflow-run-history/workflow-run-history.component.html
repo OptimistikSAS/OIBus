@@ -23,9 +23,15 @@
         </div>
 
         <div class="search-buttons ms-auto d-flex gap-2 align-items-center flex-shrink-0">
-          <button class="btn btn-primary" id="run-search-button" [disabled]="loading()">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            id="run-search-button"
+            [attr.aria-label]="'common.search' | translate"
+            [disabled]="loading()"
+          >
             @if (loading()) {
-              <span class="fa fa-spin fa-spinner"></span>
+              <span class="fa-solid fa-spin fa-spinner" aria-hidden="true"></span>
             } @else {
               <span translate="common.search"></span>
             }
@@ -40,17 +46,17 @@
           <button
             type="button"
             class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
-            [class.active]="activeStatuses()!.includes(status)"
-            [class.inactive]="hasActiveStatuses() && !activeStatuses()!.includes(status)"
+            [class.active]="activeStatuses().includes(status)"
+            [class.inactive]="hasActiveStatuses() && !activeStatuses().includes(status)"
             (click)="toggleStatus(status)"
           >
-            <i [class]="getStatusIconClass(status)"></i>
+            <i [class]="getStatusIconClass(status)" aria-hidden="true"></i>
             <span class="filter-chip-label">{{ 'south.workflows.run-status.' + status | translate }}</span>
           </button>
         }
         @if (hasActiveStatuses()) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-statuses-button" (click)="clearStatuses()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -62,8 +68,8 @@
           <button
             type="button"
             class="filter-chip d-flex align-items-center px-2 py-1"
-            [class.active]="activeTriggerTypes()!.includes(triggerType)"
-            [class.inactive]="hasActiveTriggerTypes() && !activeTriggerTypes()!.includes(triggerType)"
+            [class.active]="activeTriggerTypes().includes(triggerType)"
+            [class.inactive]="hasActiveTriggerTypes() && !activeTriggerTypes().includes(triggerType)"
             (click)="toggleTriggerType(triggerType)"
           >
             <span class="filter-chip-label">{{ 'south.workflows.run-trigger.' + triggerType | translate }}</span>
@@ -71,7 +77,7 @@
         }
         @if (hasActiveTriggerTypes()) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-trigger-types-button" (click)="clearTriggerTypes()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -118,9 +124,10 @@
                       type="button"
                       class="btn btn-link view-payload px-1 py-0"
                       [ngbTooltip]="'south.workflows.run-payload' | translate"
+                      [attr.aria-label]="'south.workflows.run-payload' | translate"
                       (click)="onViewPayload(run)"
                     >
-                      <span class="fa fa-eye"></span>
+                      <span class="fa-regular fa-eye" aria-hidden="true"></span>
                     </button>
                   }
                 </td>

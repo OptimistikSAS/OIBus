@@ -1,43 +1,52 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, CanActivateChildFn, provideRouter, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
-import { firstValueFrom, Observable } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 
+import { EmptyRouteComponent } from '../../test/empty-route.component';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { WindowService } from '../shared/window.service';
 import { authenticationGuard, RequestedUrlService } from './authentication.guard';
 
 describe('authenticationGuard', () => {
-  let guard: CanActivateChildFn;
   let windowService: MockObject<WindowService>;
+  let router: Router;
 
   beforeEach(() => {
     windowService = createMock(WindowService);
 
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: WindowService, useValue: windowService }]
+      providers: [
+        provideRouter([
+          { path: 'login', component: EmptyRouteComponent },
+          {
+            path: '',
+            canActivateChild: [authenticationGuard],
+            children: [{ path: 'dashboards/:id', component: EmptyRouteComponent }]
+          }
+        ]),
+        { provide: WindowService, useValue: windowService }
+      ]
     });
-    guard = (...guardParameters) => TestBed.runInInjectionContext(() => authenticationGuard(...guardParameters));
+    router = TestBed.inject(Router);
   });
 
-  test('should redirect and store requested url if no token present in canActivateChild', async () => {
-    const route = {} as ActivatedRouteSnapshot;
-    const state = { url: '/dashboards/42' } as RouterStateSnapshot;
-    const result = await firstValueFrom(guard(route, state) as Observable<boolean | UrlTree>);
+  test('should redirect to the login page and store the requested url if no token is present', async () => {
+    windowService.getStorageItem.mockReturnValue(null);
 
-    expect(`${result}`).toBe('/login?auto=true');
+    await router.navigateByUrl('/dashboards/42');
+
+    expect(windowService.getStorageItem).toHaveBeenCalledWith('oibus-token');
+    expect(router.url).toBe('/login?auto=true');
     expect(TestBed.inject(RequestedUrlService).getRequestedUrl()).toBe('/dashboards/42');
   });
 
-  test('should emit true if token present in canActivateChild', async () => {
+  test('should allow the navigation if a token is present', async () => {
     windowService.getStorageItem.mockReturnValue('fake.token');
 
-    const route = {} as ActivatedRouteSnapshot;
-    const state = { url: '/dashboards/42' } as RouterStateSnapshot;
-    const result = await firstValueFrom(guard(route, state) as Observable<boolean | UrlTree>);
+    await router.navigateByUrl('/dashboards/42');
 
-    expect(result).toBe(true);
+    expect(router.url).toBe('/dashboards/42');
     expect(TestBed.inject(RequestedUrlService).getRequestedUrl()).toBe('/');
   });
 });

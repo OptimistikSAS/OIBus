@@ -12,7 +12,7 @@
               <select formControlName="source" class="form-select mb-2 mr-sm-2" id="source" [compareWith]="compareSource">
                 <option [ngValue]="{ dataSourceType: null, south: null }"></option>
 
-                @for (southConnector of southConnectors; track southConnector.id) {
+                @for (southConnector of southConnectors(); track southConnector.id) {
                   <option [ngValue]="{ dataSourceType: 'south', south: southConnector }">
                     {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }}){{
                       !southConnector.enabled ? ' — ' + ('disabled' | translate) : ''
@@ -157,7 +157,7 @@
           <div class="col-12">
             <oib-select-existing-transformer
               [sourceKind]="creationMode() === 'from-north' ? 'north' : 'history-query'"
-              [supportedOutputTypes]="supportedOutputTypes"
+              [supportedOutputTypes]="supportedOutputTypes()"
               (transformerPicked)="applyExistingTransformer($event)"
             />
           </div>
@@ -166,7 +166,7 @@
       @if (form.controls.source.value.south) {
         <div class="row">
           <div class="col">
-            <label class="col-auto col-form-label" translate="configuration.oibus.manifest.transformers.items"></label>
+            <span class="col-auto col-form-label d-inline-block" translate="configuration.oibus.manifest.transformers.items"></span>
             <div class="d-flex gap-3 mb-2">
               <div class="form-check">
                 <input
@@ -263,6 +263,7 @@
                   id="items"
                   class="form-control"
                   placeholder="{{ 'configuration.oibus.manifest.transformers.search-items' | translate }}"
+                  [attr.aria-label]="'configuration.oibus.manifest.transformers.search-items' | translate"
                   [(ngModel)]="itemSearchText"
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="filterItems()"
@@ -277,7 +278,7 @@
                         <div class="flex-grow-1 me-3">{{ item.name }}</div>
                         <div class="fa-fw">
                           @if (isItemSelected(item)) {
-                            <span class="fa fa-check"></span>
+                            <span class="fa-solid fa-check" aria-hidden="true"></span>
                           }
                         </div>
                       </div>
@@ -289,7 +290,7 @@
                 </div>
               </div>
               @if (selectedItems().length > 0) {
-                <div [style.margin-top.rem]="selectedItems().length ? 0.5 : 0">
+                <div class="mt-2">
                   @for (item of selectedItems(); track item.id) {
                     <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)">
                       <div class="d-inline-flex align-items-center">
@@ -307,8 +308,8 @@
       @if (manifest(); as manifest) {
         <div class="row mt-2" formGroupName="options">
           <oib-oibus-object-form-control
-            [scanModes]="scanModes"
-            [certificates]="certificates"
+            [scanModes]="scanModes()"
+            [certificates]="certificates()"
             [group]="form.controls.options"
             [objectAttribute]="manifest"
           />
@@ -328,10 +329,11 @@
 <div class="modal-footer">
   <div class="btn-group">
     <button
+      type="submit"
       [oib-save-button]="state"
       form="choose-transformer-form"
-      [translationKey]="directSave ? 'common.save' : 'common.ok'"
-      [iconClass]="directSave ? 'fa-save' : 'fa-check'"
+      [translationKey]="directSave() ? 'common.save' : 'common.ok'"
+      [iconClass]="directSave() ? 'fa-floppy-disk' : 'fa-check'"
     ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>

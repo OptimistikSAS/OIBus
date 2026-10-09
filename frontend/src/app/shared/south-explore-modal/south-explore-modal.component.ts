@@ -24,11 +24,11 @@ export type { SouthExploreApi } from '../explore-tree/explore-tree.component';
 @Component({
   selector: 'oib-south-explore-modal',
   templateUrl: './south-explore-modal.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, ExploreTreeComponent]
 })
 export class SouthExploreModalComponent implements AfterViewInit {
-  private modal = inject(NgbActiveModal);
+  private readonly modal = inject(NgbActiveModal);
 
   private readonly tree = viewChild(ExploreTreeComponent);
   // A caller (matching every other "prepare"-style modal in this app) calls prepare() right after

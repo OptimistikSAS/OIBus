@@ -1,19 +1,14 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { combineLatest, of, Subscription, switchMap, tap } from 'rxjs';
+import { map, of, switchMap, tap } from 'rxjs';
 
-import { CertificateDTO } from '@oibus/shared/api/certificate.model';
-import { OIBusInfo } from '@oibus/shared/api/engine.model';
-import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
-import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
-import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { AuditEntityType } from '@oibus/shared/domain/audit.model';
-import { NorthConnectorMetrics } from '@oibus/shared/domain/engine.model';
 
 import { LogsComponent } from '../../logs/logs.component';
 import { CertificateService } from '../../services/certificate.service';
@@ -53,104 +48,85 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [PageLoader, BooleanEnumPipe]
 })
 export class NorthDetailComponent {
-  private destroyRef = inject(DestroyRef);
-  private northConnectorService = inject(NorthConnectorService);
-  private scanModeService = inject(ScanModeService);
-  private certificateService = inject(CertificateService);
-  private transformerService = inject(TransformerService);
-  private engineService = inject(EngineService);
-  private notificationService = inject(NotificationService);
-  private modalService = inject(ModalService);
-  private route = inject(ActivatedRoute);
-  private translateService = inject(TranslateService);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly scanModeService = inject(ScanModeService);
+  private readonly certificateService = inject(CertificateService);
+  private readonly transformerService = inject(TransformerService);
+  private readonly engineService = inject(EngineService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly modalService = inject(ModalService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly translateService = inject(TranslateService);
 
-  readonly northConnector = signal<NorthConnectorDTO | null>(null);
-  readonly displayedSettings = signal<Array<{ key: string; value: string }>>([]);
-  readonly scanModes = signal<Array<ScanModeDTO>>([]);
-  readonly certificates = signal<Array<CertificateDTO>>([]);
-  readonly transformers = signal<Array<TransformerDTO>>([]);
-  readonly manifest = signal<NorthConnectorManifest | null>(null);
-  private metricsSubscription: Subscription | null = null;
-  readonly connectorMetrics = signal<NorthConnectorMetrics | null>(null);
-  readonly oibusInfo = signal<OIBusInfo | null>(null);
-  readonly northId = signal<string | null>(null);
+  readonly scanModes = toSignal(
+    this.scanModeService.list().pipe(map(scanModes => scanModes.filter(scanMode => scanMode.id !== 'subscription'))),
+    {
+      initialValue: []
+    }
+  );
+  readonly certificates = toSignal(this.certificateService.list(), { initialValue: [] });
+  readonly transformers = toSignal(this.transformerService.list(), { initialValue: [] });
+  readonly oibusInfo = toSignal(this.engineService.info$, { initialValue: null });
 
-  constructor() {
-    combineLatest([
-      this.scanModeService.list(),
-      this.certificateService.list(),
-      this.transformerService.list(),
-      this.engineService.info$
-    ]).subscribe(([scanModes, certificates, transformers, engineInfo]) => {
-      this.certificates.set(certificates);
-      this.transformers.set(transformers);
-      this.scanModes.set(scanModes.filter(scanMode => scanMode.id !== 'subscription'));
-      this.oibusInfo.set(engineInfo);
-    });
-    const routeSub = this.route.paramMap
-      .pipe(
-        switchMap(params => {
-          const northId = params.get('northId');
-          this.northId.set(northId);
+  readonly northId = toSignal(this.route.paramMap.pipe(map(params => params.get('northId'))), { initialValue: null });
+  private readonly northConnectorResource = rxResource({
+    params: () => this.northId() ?? undefined,
+    stream: ({ params: northId }) => this.northConnectorService.findById(northId)
+  });
+  readonly northConnector = computed(() => (this.northConnectorResource.hasValue() ? this.northConnectorResource.value() : null));
+  private readonly manifestResource = rxResource({
+    params: () => this.northConnector()?.type,
+    stream: ({ params: type }) => this.northConnectorService.getNorthManifest(type)
+  });
+  readonly manifest = computed(() => (this.manifestResource.hasValue() ? this.manifestResource.value() : null));
 
-          if (northId) {
-            return this.northConnectorService.findById(northId);
-          }
-          return of(null);
-        }),
-        switchMap(northConnector => {
-          if (!northConnector) {
-            return of(null);
-          }
-          this.northConnector.set(northConnector);
-          return this.northConnectorService.getNorthManifest(northConnector.type);
-        })
-      )
-      .subscribe(manifest => {
-        if (!manifest) {
-          return;
-        }
-        this.startMetricsPolling(this.northConnector()!.id);
-        const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(this.northConnector()!.settings));
-        this.displayedSettings.set(
-          manifest.settings.attributes
-            .filter(setting => isDisplayableAttribute(setting))
-            .filter(setting => {
-              const condition = manifest.settings.enablingConditions.find(
-                enablingCondition => enablingCondition.targetPathFromRoot === setting.key
-              );
-              return (
-                !condition ||
-                (condition &&
-                  northSettings[condition.referralPathFromRoot] &&
-                  condition.values.includes(northSettings[condition.referralPathFromRoot]))
-              );
-            })
-            .map(setting => {
-              return {
-                key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
-                value:
-                  setting.type === 'string-select'
-                    ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
-                    : northSettings[setting.key]
-              };
-            })
+  readonly displayedSettings = computed<Array<{ key: string; value: string }>>(() => {
+    const manifest = this.manifest();
+    const northConnector = this.northConnector();
+    if (!manifest || !northConnector) {
+      return [];
+    }
+    const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(northConnector.settings));
+    return manifest.settings.attributes
+      .filter(setting => isDisplayableAttribute(setting))
+      .filter(setting => {
+        const condition = manifest.settings.enablingConditions.find(
+          enablingCondition => enablingCondition.targetPathFromRoot === setting.key
         );
-        this.manifest.set(manifest);
+        return (
+          !condition ||
+          (condition &&
+            northSettings[condition.referralPathFromRoot] &&
+            condition.values.includes(northSettings[condition.referralPathFromRoot]))
+        );
+      })
+      .map(setting => {
+        return {
+          key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
+          value:
+            setting.type === 'string-select'
+              ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
+              : northSettings[setting.key]
+        };
       });
-    this.destroyRef.onDestroy(() => {
-      routeSub.unsubscribe();
-      this.metricsSubscription?.unsubscribe();
-    });
-  }
+  });
+
+  // the metrics are polled once the connector and its manifest are loaded
+  private readonly metricsNorthId = computed(() => (this.manifest() ? (this.northConnector()?.id ?? null) : null));
+  readonly connectorMetrics = toSignal(
+    toObservable(this.metricsNorthId).pipe(
+      switchMap(northId => (northId ? pollMetrics(() => this.northConnectorService.getMetrics(northId)) : of(null)))
+    ),
+    { initialValue: null }
+  );
 
   updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
     this.northConnectorService.findById(this.northConnector()!.id).subscribe(northConnector => {
-      this.northConnector.set(northConnector);
+      this.northConnectorResource.set(northConnector);
     });
   }
 
@@ -178,7 +154,7 @@ export class NorthDetailComponent {
           })
         )
         .subscribe(northConnector => {
-          this.northConnector.set(northConnector);
+          this.northConnectorResource.set(northConnector);
         });
     } else {
       this.northConnectorService
@@ -192,16 +168,9 @@ export class NorthDetailComponent {
           })
         )
         .subscribe(northConnector => {
-          this.northConnector.set(northConnector);
+          this.northConnectorResource.set(northConnector);
         });
     }
-  }
-
-  startMetricsPolling(northId: string): void {
-    this.metricsSubscription?.unsubscribe();
-    this.metricsSubscription = pollMetrics(() => this.northConnectorService.getMetrics(northId)).subscribe(metrics => {
-      this.connectorMetrics.set(metrics);
-    });
   }
 
   onClipboardCopy(result: boolean) {

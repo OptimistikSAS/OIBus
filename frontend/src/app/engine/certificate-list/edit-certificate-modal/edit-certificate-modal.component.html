@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'engine.certificate.title-' + mode"></h4>
+  <h4 class="modal-title" [translate]="'engine.certificate.title-' + mode()"></h4>
 </div>
 <div class="modal-body">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
@@ -16,7 +16,7 @@
     </div>
 
     <!-- Regenerate certificate -->
-    @if (mode === 'edit') {
+    @if (mode() === 'edit') {
       <div class="form-group">
         <div class="form-check form-switch padded">
           <label class="form-check-label" for="regenerate-certificate" translate="engine.certificate.regenerate-certificate"></label>
@@ -25,7 +25,7 @@
       </div>
     }
 
-    @if (form.value.regenerateCertificate) {
+    @if (regenerateCertificate()) {
       <ng-container formGroupName="certificateOptions">
         <div class="row">
           <!-- Common name -->
@@ -95,7 +95,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <button [oib-save-button]="state" form="form"></button>
+    <button type="submit" [oib-save-button]="state" form="form"></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

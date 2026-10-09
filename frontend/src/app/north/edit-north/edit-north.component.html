@@ -1,5 +1,6 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
+    @let form = this.form();
     @if (form && manifest(); as manifest) {
       <div class="col-md-10 col-lg-8">
         <div class="d-flex">
@@ -57,7 +58,7 @@
                       type="button"
                       class="btn btn-secondary btn-sm oib-box-btn ms-3"
                       id="test-connection"
-                      (click)="form!.controls.settings.markAllAsTouched(); submit('test')"
+                      (click)="form.controls.settings.markAllAsTouched(); submit('test')"
                       translate="north.test-connection.button"
                     ></button>
                     <oib-help [url]="northTypeHelpUrl()" />
@@ -213,8 +214,8 @@
         </form>
         <div id="actions" class="mt-2 mb-3 d-flex justify-content-end">
           <div class="btn-group">
-            <button [oib-save-button]="state" form="north-form"></button>
-            <button class="btn btn-cancel" translate="common.cancel" id="cancel-button" oibBackButton></button>
+            <button type="submit" [oib-save-button]="state" form="north-form"></button>
+            <button type="button" class="btn btn-cancel" translate="common.cancel" id="cancel-button" oibBackButton></button>
           </div>
         </div>
       </div>

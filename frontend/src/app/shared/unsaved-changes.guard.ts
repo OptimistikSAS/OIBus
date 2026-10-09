@@ -9,7 +9,7 @@ export interface CanComponentDeactivate {
 
 @Service()
 export class UnsavedChangesGuard implements CanDeactivate<CanComponentDeactivate> {
-  canDeactivate(component: CanComponentDeactivate): Observable<boolean> | boolean {
+  canDeactivate(component: Partial<CanComponentDeactivate>): Observable<boolean> | boolean {
     return component.canDeactivate ? component.canDeactivate() : true;
   }
 }

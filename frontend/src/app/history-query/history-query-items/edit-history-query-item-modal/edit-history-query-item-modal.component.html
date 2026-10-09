@@ -1,7 +1,7 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode + '-title'"></h4>
+  <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode() + '-title'"></h4>
 </div>
-@if (form) {
+@if (form(); as form) {
   <div class="modal-body">
     <form [formGroup]="form" (ngSubmit)="save()" id="form">
       <div class="row">
@@ -28,28 +28,29 @@
           [scanModes]="[]"
           [certificates]="[]"
           [group]="form.controls.settings"
-          [objectAttribute]="getItemSettingsAttribute()"
+          [objectAttribute]="itemSettingsAttribute()!"
         />
       </ng-container>
     </form>
     <oib-south-item-test
       type="history-south"
-      [entityId]="historyId"
-      [fromSouth]="fromSouth"
-      [item]="formItem"
-      [connectorCommand]="southConnectorCommand"
-      [manifest]="manifest"
-      [inMemoryTransformers]="inMemoryTransformers"
+      [entityId]="historyId()"
+      [fromSouth]="fromSouth()"
+      [item]="formItem()!"
+      [connectorCommand]="southConnectorCommand()!"
+      [manifest]="manifest()!"
+      [inMemoryTransformers]="inMemoryTransformers()"
     />
   </div>
 }
 <div class="modal-footer">
   <div class="btn-group">
     <button
+      type="submit"
       [oib-save-button]="state"
       form="form"
-      [translationKey]="directSave ? 'common.save' : 'common.ok'"
-      [iconClass]="directSave ? 'fa-save' : 'fa-check'"
+      [translationKey]="directSave() ? 'common.save' : 'common.ok'"
+      [iconClass]="directSave() ? 'fa-floppy-disk' : 'fa-check'"
     ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>

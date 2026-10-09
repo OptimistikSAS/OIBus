@@ -12,10 +12,11 @@
           type="button"
           class="btn btn-primary btn-sm oib-box-btn"
           [ngbTooltip]="'engine.scan-mode.tooltips.add' | translate"
+          [attr.aria-label]="'engine.scan-mode.tooltips.add' | translate"
           (click)="addScanMode()"
           id="add-scan-mode"
         >
-          <span class="fa fa-plus"></span>
+          <span class="fa-solid fa-plus" aria-hidden="true"></span>
         </button>
         <oib-help [url]="helpUrl" />
       </div>
@@ -31,21 +32,17 @@
       <thead class="light">
         <tr>
           <th class="first-column">
-            <button type="button" style="background: none; border: none; font-weight: bold; color: inherit" (click)="toggleSort('name')">
+            <button type="button" class="sort-button" (click)="toggleSort('name')">
               <span translate="engine.scan-mode.name" class="me-2"></span>
-              <span class="fa {{ getSortIcon('name') }}"></span>
+              <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
             </button>
           </th>
           <th translate="engine.scan-mode.description"></th>
           <th translate="engine.scan-mode.schedule"></th>
           <th>
-            <button
-              type="button"
-              style="background: none; border: none; font-weight: bold; color: inherit"
-              (click)="toggleSort('updatedAt')"
-            >
+            <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
               <span translate="engine.scan-mode.updated-at" class="me-2"></span>
-              <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+              <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
             </button>
           </th>
           <th class="last-column"></th>
@@ -60,8 +57,9 @@
               <span>{{ scanMode | scanModeSchedule }}</span>
               @if (isWindowExpired(scanMode)) {
                 <i
-                  class="fa fa-warning text-warning ms-1 window-expired-warning"
-                  aria-hidden="true"
+                  class="fa-solid fa-triangle-exclamation text-warning ms-1 window-expired-warning"
+                  role="img"
+                  [attr.aria-label]="'engine.scan-mode.window-never-fires' | translate"
                   [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
                 ></i>
               }
@@ -84,27 +82,30 @@
                   type="button"
                   class="btn btn-link edit-scan-mode px-1 py-0"
                   [ngbTooltip]="'engine.scan-mode.tooltips.edit' | translate"
+                  [attr.aria-label]="'engine.scan-mode.tooltips.edit' | translate"
                   (click)="editScanMode(scanMode)"
                 >
-                  <span class="fa fa-pencil"></span>
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                 </button>
                 <!-- Delete button -->
                 <button
                   type="button"
                   class="btn btn-link delete-scan-mode px-1 py-0"
                   [ngbTooltip]="'engine.scan-mode.tooltips.delete' | translate"
+                  [attr.aria-label]="'engine.scan-mode.tooltips.delete' | translate"
                   (click)="deleteScanMode(scanMode)"
                 >
-                  <span class="fa fa-trash"></span>
+                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                 </button>
                 <!-- Audit history button -->
                 <button
                   type="button"
                   class="btn btn-link show-audit-scan-mode px-1 py-0"
                   [ngbTooltip]="'engine.scan-mode.tooltips.audit' | translate"
+                  [attr.aria-label]="'engine.scan-mode.tooltips.audit' | translate"
                   (click)="showAudit(scanMode)"
                 >
-                  <span class="fa fa-history"></span>
+                  <span class="fa-solid fa-history" aria-hidden="true"></span>
                 </button>
               </div>
             </td>

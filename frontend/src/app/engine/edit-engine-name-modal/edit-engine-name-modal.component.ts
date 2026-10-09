@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -14,14 +14,15 @@ import { NotificationService } from '../../shared/notification.service';
   selector: 'oib-edit-engine-name-modal',
   templateUrl: './edit-engine-name-modal.component.html',
   styleUrl: './edit-engine-name-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditEngineNameModalComponent {
-  private modal = inject(NgbActiveModal);
-  private engineService = inject(EngineService);
-  private notificationService = inject(NotificationService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly engineService = inject(EngineService);
+  private readonly notificationService = inject(NotificationService);
 
-  form = inject(NonNullableFormBuilder).group({
+  readonly form = inject(NonNullableFormBuilder).group({
     name: ['', Validators.required]
   });
 

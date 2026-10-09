@@ -3,6 +3,7 @@
     <span translate="south.test-item.title"></span>
     <div>
       <button
+        type="button"
         translate="south.test-item.test-button"
         id="test-item"
         class="btn btn-secondary btn-sm oib-box-btn m-0"
@@ -10,12 +11,13 @@
         (click)="testItem()"
       >
         @if (isTestRunning()) {
-          <span class="fa fa-spinner fa-spin ms-2"></span>
+          <span class="fa-solid fa-spinner fa-spin ms-2" aria-hidden="true"></span>
         } @else {
-          <span class="fa fa-check ms-2"></span>
+          <span class="fa-solid fa-check ms-2" aria-hidden="true"></span>
         }
       </button>
       <button
+        type="button"
         translate="south.test-item.cancel-button"
         id="cancel-test-item"
         class="btn btn-danger btn-sm oib-box-btn ms-2"
@@ -35,14 +37,14 @@
             class="btn btn-link btn-sm p-0 settings-summary-chip"
             (click)="settingsCollapsed.set(false)"
           >
-            <span class="fa fa-sliders me-1"></span>
-            <span>{{ settingsSummary }}</span>
-            <span class="fa fa-chevron-down ms-2"></span>
+            <span class="fa-solid fa-sliders me-1" aria-hidden="true"></span>
+            <span>{{ settingsSummary() }}</span>
+            <span class="fa-solid fa-chevron-down ms-2" aria-hidden="true"></span>
           </button>
         }
 
         <div [class.d-none]="settingsCollapsed()">
-          @if (supportsHistorySettings) {
+          @if (supportsHistorySettings()) {
             <div class="form-group" formGroupName="history" id="history">
               <oib-date-range-selector
                 #dateRangeSelector
@@ -55,13 +57,13 @@
             </div>
           }
 
-          @if (supportsHistorySettings) {
+          @if (supportsHistorySettings()) {
             <hr class="my-2" />
           }
 
           <div class="row">
             <!-- North selection (south context only) -->
-            @if (!isHistory) {
+            @if (!isHistory()) {
               <div class="col-6 form-group">
                 <label class="form-label" for="north-select" translate="south.test-item.north"></label>
                 <select id="north-select" class="form-select" formControlName="northId">
@@ -74,7 +76,7 @@
             }
 
             <!-- Transformer selection -->
-            @if (isHistory || form.controls.northId.value) {
+            @if (isHistory() || northId()) {
               <div class="col-6 form-group">
                 <label class="form-label" for="transformer-select" translate="south.test-item.transformer"></label>
                 <select id="transformer-select" class="form-select" formControlName="transformerId">
@@ -97,7 +99,7 @@
             <div class="text-end mt-1">
               <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed.set(true)">
                 <span translate="south.test-item.hide-settings"></span>
-                <span class="fa fa-chevron-up ms-1"></span>
+                <span class="fa-solid fa-chevron-up ms-1" aria-hidden="true"></span>
               </button>
             </div>
           }
@@ -109,8 +111,8 @@
           <div class="pipeline-transformer mt-2">
             <div class="d-flex justify-content-between align-items-start">
               <div class="fw-bold">
-                <span class="fa fa-shuffle me-1"></span>
-                @if (selectedNorthName; as north) {
+                <span class="fa-solid fa-shuffle me-1" aria-hidden="true"></span>
+                @if (selectedNorthName(); as north) {
                   <span>{{ north }} · </span>
                 }
                 @if (selected.type === 'standard') {
@@ -128,7 +130,7 @@
                   [title]="'south.test-item.edit-options' | translate"
                   (click)="optionsEditMode.set(true)"
                 >
-                  <span class="fa fa-pencil"></span>
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                 </button>
               }
             </div>
@@ -142,9 +144,9 @@
                   [objectAttribute]="selected.manifest"
                 />
               </div>
-            } @else if (currentOptionEntries.length > 0) {
+            } @else if (currentOptionEntries().length > 0) {
               <div class="pipeline-options small text-muted">
-                @for (entry of currentOptionEntries; track entry.key) {
+                @for (entry of currentOptionEntries(); track entry.key) {
                   <span class="me-3"
                     ><span class="fw-semibold">{{ entry.key }}:</span> {{ entry.value }}</span
                   >

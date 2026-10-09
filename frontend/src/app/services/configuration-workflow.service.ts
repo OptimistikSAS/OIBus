@@ -21,7 +21,7 @@ import { ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
  */
 @Service()
 export class ConfigurationWorkflowService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   /**
    * Get all configuration workflows for a south connector

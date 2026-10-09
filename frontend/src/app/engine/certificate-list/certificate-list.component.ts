@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { firstValueFrom, startWith, Subject, switchMap } from 'rxjs';
+import { firstValueFrom, switchMap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
@@ -45,38 +45,36 @@ const PAGE_SIZE = 20;
     AuditInfoComponent
   ],
   templateUrl: './certificate-list.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './certificate-list.component.scss'
 })
 export class CertificateListComponent {
-  private confirmationService = inject(ConfirmationService);
-  private modalService = inject(ModalService);
-  private notificationService = inject(NotificationService);
-  private certificateService = inject(CertificateService);
-  private docsUrlService = inject(DocsUrlService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly modalService = inject(ModalService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly certificateService = inject(CertificateService);
+  private readonly docsUrlService = inject(DocsUrlService);
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/engine-settings');
 
-  private refreshTrigger = new Subject<void>();
-  readonly certificates = toSignal(
-    this.refreshTrigger.pipe(
-      startWith(undefined),
-      switchMap(() => this.certificateService.list())
-    )
-  );
+  private readonly certificatesResource = rxResource({ stream: () => this.certificateService.list() });
+  /** All the certificates, kept while they are reloaded */
+  readonly certificates = computed(() => (this.certificatesResource.hasValue() ? this.certificatesResource.value() : undefined));
 
   readonly sortField = signal<CertificateSortField>(null);
   readonly sortDirection = signal<SortDirection>('asc');
-  readonly displayedCertificates = signal<Page<CertificateDTO>>(emptyPage());
-
-  constructor() {
-    effect(() => {
-      const certs = this.certificates();
-      if (certs) {
-        untracked(() => this.updateList(certs, 0));
-      }
-    });
-  }
+  /** Back to the first page when the certificates or their order change */
+  private readonly pageNumber = linkedSignal({
+    source: () => ({ certificates: this.certificates(), sortField: this.sortField(), sortDirection: this.sortDirection() }),
+    computation: () => 0
+  });
+  readonly displayedCertificates = computed<Page<CertificateDTO>>(() => {
+    const certificates = this.certificates();
+    if (!certificates) {
+      return emptyPage();
+    }
+    return createPageFromArray(sortCertificates(certificates, this.sortField(), this.sortDirection()), PAGE_SIZE, this.pageNumber());
+  });
 
   /**
    * Open a modal to edit a certificate
@@ -143,9 +141,12 @@ export class CertificateListComponent {
     component.prepare(certificate);
   }
 
-  private refreshAfterEditCertificateModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated' | 'imported') {
+  private refreshAfterEditCertificateModalClosed(
+    modalRef: Modal<EditCertificateModalComponent | ImportCertificateModalComponent>,
+    mode: 'created' | 'updated' | 'imported'
+  ) {
     modalRef.result.subscribe((certificate: CertificateDTO) => {
-      this.refreshTrigger.next();
+      this.certificatesResource.reload();
       this.notificationService.success(`engine.certificate.${mode}`, {
         name: certificate.name
       });
@@ -168,7 +169,7 @@ export class CertificateListComponent {
       })
       .pipe(switchMap(() => this.certificateService.delete(certificate.id)))
       .subscribe(() => {
-        this.refreshTrigger.next();
+        this.certificatesResource.reload();
         this.notificationService.success('engine.certificate.deleted', {
           name: certificate.name
         });
@@ -183,35 +184,30 @@ export class CertificateListComponent {
       this.sortField.set(field);
       this.sortDirection.set('asc');
     }
-    const certs = this.certificates();
-    if (certs) {
-      this.updateList(certs, 0);
-    }
   }
 
   getSortIcon(field: CertificateSortField): string {
     if (this.sortField() !== field) return 'fa-sort';
-    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {
-    const certs = this.certificates();
-    if (certs) {
-      this.updateList(certs, pageNumber);
-    }
+    this.pageNumber.set(pageNumber);
   }
+}
 
-  private updateList(allCerts: Array<CertificateDTO>, pageNumber: number) {
-    let sorted = [...allCerts];
-    const field = this.sortField();
-    if (field) {
-      const direction = this.sortDirection() === 'asc' ? 1 : -1;
-      sorted = sorted.sort((a, b) => {
-        const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
-        const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
-        return aVal.localeCompare(bVal) * direction;
-      });
-    }
-    this.displayedCertificates.set(createPageFromArray(sorted, PAGE_SIZE, pageNumber));
+function sortCertificates(
+  certificates: Array<CertificateDTO>,
+  field: CertificateSortField,
+  direction: SortDirection
+): Array<CertificateDTO> {
+  if (!field) {
+    return certificates;
   }
+  const factor = direction === 'asc' ? 1 : -1;
+  return [...certificates].sort((a, b) => {
+    const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
+    const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
+    return aVal.localeCompare(bVal) * factor;
+  });
 }

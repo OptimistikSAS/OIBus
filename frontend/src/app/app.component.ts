@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
-
-import { Subscription } from 'rxjs';
 
 import { UserDTO } from '@oibus/shared/api/user.model';
 
@@ -20,7 +19,7 @@ import { WindowService } from './shared/window.service';
   selector: 'oib-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterOutlet, NavbarComponent, NotificationComponent, DefaultValidationErrorsComponent, BreadcrumbComponent]
 })
 export class AppComponent implements OnInit, OnDestroy {
@@ -29,41 +28,37 @@ export class AppComponent implements OnInit, OnDestroy {
   private navigationService = inject(NavigationService);
   private versionCheckService = inject(VersionCheckService);
   private modalService = inject(ModalService);
-
-  private versionChangeSubscription: Subscription | null = null;
-
-  title = 'OIBus';
+  private destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.navigationService.init();
-    this.currentUserService.get().subscribe(user => {
-      this.reloadIfLanguageOrTimezoneNeedsChange(user);
+    this.currentUserService
+      .get()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(user => {
+        this.reloadIfLanguageOrTimezoneNeedsChange(user);
 
-      // Start version monitoring when user is authenticated
-      if (user) {
-        this.startVersionMonitoring();
-      }
-    });
+        // Start version monitoring when user is authenticated
+        if (user) {
+          this.startVersionMonitoring();
+        }
+      });
   }
 
   ngOnDestroy(): void {
     this.versionCheckService.stopMonitoring();
-    if (this.versionChangeSubscription) {
-      this.versionChangeSubscription.unsubscribe();
-    }
   }
 
   private startVersionMonitoring(): void {
     this.versionCheckService.startMonitoring();
 
-    this.versionChangeSubscription = this.versionCheckService.versionChange$.subscribe(info => {
+    this.versionCheckService.versionChange$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(info => {
       // Open non-dismissible modal when version changes
       const modalRef = this.modalService.open(VersionUpdateModalComponent, {
         backdrop: 'static',
         keyboard: false
       });
-      modalRef.componentInstance.oldVersion = info.oldVersion;
-      modalRef.componentInstance.newVersion = info.newVersion;
+      modalRef.componentInstance.initialize(info.oldVersion, info.newVersion);
     });
   }
 

@@ -1,10 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal, viewChild } from '@angular/core';
+import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { catchError, Observable, of, Subscription } from 'rxjs';
+import { catchError, EMPTY, forkJoin, map, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 
 import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
 import { TransformerDTO } from '@oibus/shared/api/transformer.model';
@@ -40,30 +41,60 @@ interface TestItem {
 @Component({
   selector: 'oib-north-transformer-test',
   templateUrl: './transformer-test.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OibCodeBlockComponent, TransformerTestResultComponent, DateRangeSelectorComponent]
 })
 export class NorthTransformerTestComponent {
+  private readonly translate = inject(TranslateService);
+  private readonly transformerService = inject(TransformerService);
+  private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly historyQueryService = inject(HistoryQueryService);
+  private readonly fb = inject(NonNullableFormBuilder);
+
   readonly transformer = input<TransformerDTO | null>(null);
   readonly options = input<Record<string, unknown>>({});
   readonly itemSource = input<TransformerTestItemSource>({ kind: 'none' });
 
   readonly dateRangeSelector = viewChild<DateRangeSelectorComponent>('dateRangeSelector');
 
-  private translate = inject(TranslateService);
-  private transformerService = inject(TransformerService);
-  private southConnectorService = inject(SouthConnectorService);
-  private historyQueryService = inject(HistoryQueryService);
-  private fb = inject(NonNullableFormBuilder);
   private testSubscription: Subscription | null = null;
 
   readonly isTestRunning = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  /** True when the source south supports history queries and therefore needs a query range. */
-  readonly supportsHistory = signal(false);
-  /** Items that can be run to produce input values, loaded from the transformer's source. */
-  readonly availableItems = signal<Array<TestItem>>([]);
-  private southSettings: SouthSettings | null = null;
+
+  /** Whether the source south supports history queries and therefore needs a query range. */
+  private readonly sourceManifest = rxResource({
+    params: () => {
+      const source = this.itemSource();
+      return source.kind === 'none' ? undefined : source.southType;
+    },
+    stream: ({ params: southType }) => this.southConnectorService.getSouthManifest(southType)
+  });
+  readonly supportsHistory = computed(() => (this.sourceManifest.hasValue() ? this.sourceManifest.value().modes.history : false));
+
+  /** Items that can be run to produce input values, loaded from the transformer's source, with the source settings. */
+  private readonly sourceItems = rxResource({
+    params: () => {
+      const source = this.itemSource();
+      return source.kind === 'none' ? undefined : source;
+    },
+    stream: ({ params: source }): Observable<{ southSettings: SouthSettings; items: Array<TestItem> }> =>
+      source.kind === 'south'
+        ? forkJoin([this.southConnectorService.findById(source.id), this.southConnectorService.searchItems(source.id, { page: 0 })]).pipe(
+            map(([south, page]) => ({
+              southSettings: south.settings,
+              items: page.content.map(item => ({ id: item.id, name: item.name, settings: item.settings }))
+            }))
+          )
+        : this.historyQueryService.findById(source.id).pipe(
+            map(historyQuery => ({
+              southSettings: historyQuery.southSettings,
+              items: historyQuery.items.map(item => ({ id: item.id, name: item.name, settings: item.settings }))
+            }))
+          )
+  });
+  readonly availableItems = computed(() => (this.sourceItems.hasValue() ? this.sourceItems.value().items : []));
+  private readonly southSettings = computed(() => (this.sourceItems.hasValue() ? this.sourceItems.value().southSettings : null));
 
   /** Latest test result (raw + transformed) feeding the pipeline view. */
   readonly testResult = signal<SouthConnectorItemTestResult | null>(null);
@@ -71,7 +102,7 @@ export class NorthTransformerTestComponent {
   /** Once a test has succeeded, the settings form collapses into a summary chip to leave room for the result. */
   readonly settingsCollapsed = signal(false);
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     inputSource: this.fb.control<'paste' | 'item'>('paste'),
     inputData: this.fb.control<string>(''),
     itemId: this.fb.control<string | null>(null),
@@ -79,40 +110,44 @@ export class NorthTransformerTestComponent {
     // (last 10 minutes) and pushes the computed value up as soon as it initializes.
     dateRange: this.fb.control<DateRange | null>(null)
   });
+  readonly inputSource = toSignal(this.form.controls.inputSource.valueChanges, { initialValue: this.form.controls.inputSource.value });
+  private readonly itemId = toSignal(this.form.controls.itemId.valueChanges, { initialValue: this.form.controls.itemId.value });
+  private readonly dateRange = toSignal(this.form.controls.dateRange.valueChanges, { initialValue: this.form.controls.dateRange.value });
 
   constructor() {
-    effect(() => {
-      const transformer = this.transformer();
-      // A different transformer is being tested: drop the previous one's stale result and reopen
-      // the settings, then prefill the paste editor with a sample payload for its input type.
-      this.testResult.set(null);
-      this.errorMessage.set(null);
-      this.settingsCollapsed.set(false);
-      if (transformer) {
-        this.transformerService
-          .getInputTemplate(transformer.inputType)
-          .subscribe(template => this.form.controls.inputData.setValue(template.data));
-      }
-    });
-    // Load the source's items + settings and whether it supports history, so an item can be run.
-    effect(() => this.loadItemSource(this.itemSource()));
+    // A different transformer is being tested: drop the previous one's stale result and reopen
+    // the settings, then prefill the paste editor with a sample payload for its input type.
+    toObservable(this.transformer)
+      .pipe(
+        tap(() => {
+          this.testResult.set(null);
+          this.errorMessage.set(null);
+          this.settingsCollapsed.set(false);
+        }),
+        switchMap(transformer => (transformer ? this.transformerService.getInputTemplate(transformer.inputType) : EMPTY)),
+        takeUntilDestroyed()
+      )
+      .subscribe(template => this.form.controls.inputData.setValue(template.data));
   }
 
   readonly canUseItemSource = computed(() => this.itemSource().kind !== 'none' && this.availableItems().length > 0);
 
   /** One-line recap of the current input settings, shown on the collapsed summary chip. */
-  get settingsSummary(): string {
-    if (this.form.controls.inputSource.value === 'paste') {
+  readonly settingsSummary = computed(() => {
+    if (this.inputSource() === 'paste') {
       return this.translate.instant('north.transformers.test.source-paste');
     }
-    const item = this.availableItems().find(candidate => candidate.id === this.form.controls.itemId.value);
+    const itemId = this.itemId();
+    const item = this.availableItems().find(candidate => candidate.id === itemId);
     const itemLabel = item?.name ?? this.translate.instant('north.transformers.test.source-item');
     if (!this.supportsHistory()) {
       return itemLabel;
     }
+    // read to recompute the label when the range changes
+    this.dateRange();
     const rangeLabel = this.dateRangeSelector()?.getSummaryLabel() ?? '';
     return rangeLabel ? `${itemLabel} · ${rangeLabel}` : itemLabel;
-  }
+  });
 
   runTest() {
     const transformer = this.transformer();
@@ -149,29 +184,6 @@ export class NorthTransformerTestComponent {
     this.finishTest();
   }
 
-  private loadItemSource(source: TransformerTestItemSource) {
-    this.availableItems.set([]);
-    this.southSettings = null;
-    this.supportsHistory.set(false);
-    if (source.kind === 'none') {
-      return;
-    }
-
-    this.southConnectorService.getSouthManifest(source.southType).subscribe(manifest => this.supportsHistory.set(manifest.modes.history));
-
-    if (source.kind === 'south') {
-      this.southConnectorService.findById(source.id).subscribe(south => (this.southSettings = south.settings));
-      this.southConnectorService.searchItems(source.id, { page: 0 }).subscribe(page => {
-        this.availableItems.set(page.content.map(item => ({ id: item.id, name: item.name, settings: item.settings })));
-      });
-    } else {
-      this.historyQueryService.findById(source.id).subscribe(historyQuery => {
-        this.southSettings = historyQuery.southSettings;
-        this.availableItems.set(historyQuery.items.map(item => ({ id: item.id, name: item.name, settings: item.settings })));
-      });
-    }
-  }
-
   private buildRequest(transformer: TransformerDTO): Observable<SouthConnectorItemTestResult> | null {
     if (this.form.controls.inputSource.value === 'paste') {
       return this.transformerService.testTransformer(transformer.id, {
@@ -182,7 +194,8 @@ export class NorthTransformerTestComponent {
 
     const source = this.itemSource();
     const item = this.availableItems().find(candidate => candidate.id === this.form.controls.itemId.value);
-    if (source.kind === 'none' || !item || !this.southSettings) {
+    const southSettings = this.southSettings();
+    if (source.kind === 'none' || !item || !southSettings) {
       return null;
     }
 
@@ -192,24 +205,9 @@ export class NorthTransformerTestComponent {
     };
 
     if (source.kind === 'south') {
-      return this.southConnectorService.testItem(
-        source.id,
-        source.southType,
-        item.name,
-        this.southSettings,
-        item.settings,
-        testingSettings
-      );
+      return this.southConnectorService.testItem(source.id, source.southType, item.name, southSettings, item.settings, testingSettings);
     }
-    return this.historyQueryService.testItem(
-      source.id,
-      null,
-      source.southType,
-      item.name,
-      this.southSettings,
-      item.settings,
-      testingSettings
-    );
+    return this.historyQueryService.testItem(source.id, null, source.southType, item.name, southSettings, item.settings, testingSettings);
   }
 
   private currentRange(): { startTime: string; endTime: string } {

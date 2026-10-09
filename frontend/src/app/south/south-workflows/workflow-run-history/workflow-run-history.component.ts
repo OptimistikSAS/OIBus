@@ -1,13 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
+import { catchError, EMPTY, switchMap } from 'rxjs';
 
-import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
 import { Instant, Page } from '@oibus/shared/common/types';
 import {
@@ -50,23 +49,22 @@ import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-wor
   ],
   templateUrl: './workflow-run-history.component.html',
   styleUrl: './workflow-run-history.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [PageLoader]
 })
-export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private pageLoader = inject(PageLoader);
-  private configurationWorkflowService = inject(ConfigurationWorkflowService);
-  private modalService = inject(ModalService);
-  private fb = inject(NonNullableFormBuilder);
+export class WorkflowRunHistoryComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly pageLoader = inject(PageLoader);
+  private readonly configurationWorkflowService = inject(ConfigurationWorkflowService);
+  private readonly modalService = inject(ModalService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  southId!: string;
-  workflowId!: string;
-  workflow = signal<ConfigurationWorkflowDTO | null>(null);
-  loading = signal(false);
-  runs = signal<Page<WorkflowRunDTO>>(emptyPage());
-  subscription = new Subscription();
+  private readonly southId = this.route.snapshot.paramMap.get('southId')!;
+  private readonly workflowId = this.route.snapshot.paramMap.get('workflowId')!;
+  readonly workflow = toSignal(this.configurationWorkflowService.get(this.southId, this.workflowId), { initialValue: null });
+  readonly loading = signal(false);
+  readonly runs = signal<Page<WorkflowRunDTO>>(emptyPage());
 
   readonly statuses = WORKFLOW_RUN_STATUSES;
   readonly triggerTypes = WORKFLOW_RUN_TRIGGER_TYPES;
@@ -87,7 +85,7 @@ export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
   });
 
   /** True when at least one status is selected (i.e. the filter is active). */
-  readonly hasActiveStatuses = computed(() => this.activeStatuses()!.length > 0);
+  readonly hasActiveStatuses = computed(() => this.activeStatuses().length > 0);
 
   /** Signal version of the current selected trigger types, kept in sync with the form control. */
   readonly activeTriggerTypes = toSignal(this.searchForm.controls.triggerTypes.valueChanges, {
@@ -95,7 +93,7 @@ export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
   });
 
   /** True when at least one trigger type is selected (i.e. the filter is active). */
-  readonly hasActiveTriggerTypes = computed(() => this.activeTriggerTypes()!.length > 0);
+  readonly hasActiveTriggerTypes = computed(() => this.activeTriggerTypes().length > 0);
 
   /** Signal version of the route's own query params - the single source of truth for what's actually
    *  applied right now (as opposed to the search form's own live, not-yet-submitted buffer). */
@@ -107,12 +105,7 @@ export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
     return !!(map.get('start') || map.get('end') || map.getAll('statuses').length > 0 || map.getAll('triggerTypes').length > 0);
   });
 
-  ngOnInit(): void {
-    this.southId = this.route.snapshot.paramMap.get('southId')!;
-    this.workflowId = this.route.snapshot.paramMap.get('workflowId')!;
-
-    this.configurationWorkflowService.get(this.southId, this.workflowId).subscribe(workflow => this.workflow.set(workflow));
-
+  constructor() {
     const searchParams = this.toSearchParams();
     this.searchForm.setValue({
       start: searchParams.start || null,
@@ -121,28 +114,23 @@ export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
       triggerTypes: searchParams.triggerTypes
     });
 
-    this.subscription.add(
-      this.pageLoader.pageLoads$
-        .pipe(
-          switchMap(page => {
-            this.loading.set(true);
-            const criteria: WorkflowRunSearchParam = { ...this.toSearchParams(), page };
-            return this.configurationWorkflowService.listRuns(this.southId, this.workflowId, criteria).pipe(catchError(() => EMPTY));
-          })
-        )
-        .subscribe(runs => {
-          this.runs.set(runs);
-          this.loading.set(false);
-        })
-    );
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    this.pageLoader.pageLoads$
+      .pipe(
+        switchMap(page => {
+          this.loading.set(true);
+          const criteria: WorkflowRunSearchParam = { ...this.toSearchParams(), page };
+          return this.configurationWorkflowService.listRuns(this.southId, this.workflowId, criteria).pipe(catchError(() => EMPTY));
+        }),
+        takeUntilDestroyed()
+      )
+      .subscribe(runs => {
+        this.runs.set(runs);
+        this.loading.set(false);
+      });
   }
 
   /** Reads the current filters straight from the URL - the single source of truth a bookmark/reload restores. */
-  toSearchParams(): WorkflowRunSearchParam {
+  private toSearchParams(): WorkflowRunSearchParam {
     const queryParamMap = this.route.snapshot.queryParamMap;
     const start = queryParamMap.get('start') || undefined;
     const end = queryParamMap.get('end') || undefined;
@@ -216,11 +204,11 @@ export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
   getStatusIconClass(status: WorkflowRunStatus): string {
     switch (status) {
       case 'RUNNING':
-        return 'fa fa-spinner text-primary';
+        return 'fa-solid fa-spinner text-primary';
       case 'COMPLETED':
-        return 'fa fa-check-circle text-success';
+        return 'fa-solid fa-check-circle text-success';
       case 'ERRORED':
-        return 'fa fa-times-circle text-danger';
+        return 'fa-solid fa-times-circle text-danger';
     }
   }
 

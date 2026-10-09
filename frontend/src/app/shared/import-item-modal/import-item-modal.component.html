@@ -5,7 +5,7 @@
   @if (validationError(); as validationError) {
     <div class="alert alert-danger" role="alert">
       <h6>
-        <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+        <i class="fa-solid fa-exclamation-triangle me-2" aria-hidden="true"></i>
         <span translate="south.items.import.format-error-title"></span>
       </h6>
       <p translate="south.items.import.format-error-description"></p>
@@ -38,7 +38,7 @@
   @if (mqttValidationError(); as mqttValidationError) {
     <div class="alert alert-danger" role="alert">
       <h6>
-        <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+        <i class="fa-solid fa-exclamation-triangle me-2" aria-hidden="true"></i>
         <span translate="south.items.import.mqtt-topic-overlap-title"></span>
       </h6>
       <p translate="south.items.import.mqtt-topic-overlap-description"></p>
@@ -91,7 +91,14 @@
 <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
 <div class="modal-footer">
   <div class="btn-group">
-    <button type="button" class="btn btn-primary" (click)="save()" [disabled]="!canSave" translate="common.save" id="save-button"></button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="save()"
+      [disabled]="!canSave()"
+      translate="common.save"
+      id="save-button"
+    ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

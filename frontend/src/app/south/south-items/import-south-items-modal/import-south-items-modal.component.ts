@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -13,7 +13,6 @@ import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.m
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
 import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, validateCsvMqttTopics } from '../../../shared/form/validators';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { ObservableState } from '../../../shared/save-button/save-button.component';
 import { convertCsvDelimiter } from '../../../shared/utils/csv.utils';
 import { emptyPage } from '../../../shared/utils/page.utils';
 
@@ -36,29 +35,27 @@ export class ImportSouthItemsModalComponent {
   private translateService = inject(TranslateService);
   private fb = inject(NonNullableFormBuilder);
 
-  state = new ObservableState();
-
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
-  initializeFile = new File([''], 'Choose a file');
+  private readonly initializeFile = new File([''], 'Choose a file');
   readonly selectedFile = signal<File>(this.initializeFile);
   readonly validationError = signal<CsvValidationError | null>(null);
   readonly mqttValidationError = signal<MqttTopicValidationError | null>(null);
   readonly checking = signal(false);
   readonly checkError = signal<string | null>(null);
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
     eraseExisting: [false]
   });
 
-  expectedHeaders: Array<string> = [];
-  optionalHeaders: Array<string> = [];
-  existingMqttTopics: Array<string> = [];
-  isMqttConnector = false;
+  private expectedHeaders: Array<string> = [];
+  private optionalHeaders: Array<string> = [];
+  private existingMqttTopics: Array<string> = [];
+  private isMqttConnector = false;
   readonly showEraseOption = signal(false);
   private checkFn!: (file: File, delimiter: string, deleteItemsNotPresent: boolean) => Observable<SouthItemsCheckResult>;
 
-  displaySettings: Array<OIBusAttribute> = [];
+  readonly displaySettings = signal<Array<OIBusAttribute>>([]);
   readonly newItemList = signal<Array<SouthConnectorItemCommandDTO>>([]);
   readonly errorList = signal<Array<{ item: Record<string, string>; error: string }>>([]);
   readonly displayedItemsNew = signal<Page<SouthConnectorItemCommandDTO>>(emptyPage());
@@ -82,18 +79,17 @@ export class ImportSouthItemsModalComponent {
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
-    this.displaySettings = itemSettingsManifest.attributes.filter(setting => isDisplayableAttribute(setting));
+    this.displaySettings.set(itemSettingsManifest.attributes.filter(setting => isDisplayableAttribute(setting)));
   }
 
-  get canImport(): boolean {
-    return (
+  readonly canImport = computed(
+    () =>
       this.selectedFile() !== this.initializeFile &&
       !this.validationError() &&
       !this.mqttValidationError() &&
       !this.checking() &&
       this.newItemList().length > 0
-    );
-  }
+  );
 
   async onFileSelected(file: File): Promise<void> {
     this.selectedFile.set(file);
@@ -119,12 +115,13 @@ export class ImportSouthItemsModalComponent {
     });
   }
 
-  getFieldValue(element: any, field: string): string {
-    const foundFormControl = this.displaySettings.find(formControl => formControl.key === field);
-    if (foundFormControl && element[field] && foundFormControl.type === 'string-select') {
-      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
+  getFieldValue(settings: object, field: string): string {
+    const value = (settings as Record<string, unknown>)[field];
+    const foundFormControl = this.displaySettings().find(formControl => formControl.key === field);
+    if (foundFormControl && value && foundFormControl.type === 'string-select') {
+      return this.translateService.instant(`${foundFormControl.translationKey}.${value}`);
     }
-    return element[field] || '';
+    return value ? String(value) : '';
   }
 
   getGroupNoneText(): string {

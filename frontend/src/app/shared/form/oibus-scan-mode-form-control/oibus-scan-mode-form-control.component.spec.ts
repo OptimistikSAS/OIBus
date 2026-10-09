@@ -1,77 +1,60 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
 import { beforeEach, describe, expect, test } from 'vitest';
-import { page } from 'vitest/browser';
 
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
+import { renderOIBusFormControl } from '../oibus-form-control.testing';
 import { OIBusScanModeFormControlComponent } from './oibus-scan-mode-form-control.component';
 
-@Component({
-  selector: 'oib-test-oibus-scan-mode-form-control-component',
-  template: `
-    <form [formGroup]="formGroup">
-      <ng-container formGroupName="testGroup">
-        <oib-oibus-scan-mode-form-control [allScanModes]="allScanModes" [scanModeAttribute]="scanModeAttribute" />
-      </ng-container>
-    </form>
-  `,
-  imports: [ReactiveFormsModule, OIBusScanModeFormControlComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-class TestComponent {
-  scanModeAttribute: OIBusScanModeAttribute = {
-    type: 'scan-mode',
-    key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name',
-    acceptableType: 'SUBSCRIPTION_AND_POLL'
-  } as OIBusScanModeAttribute;
-
-  allScanModes = testData.scanMode.list;
-  formGroup = new FormGroup({
-    testGroup: new FormGroup({
-      testKey: new FormControl('')
-    })
-  });
-}
-
-class TestComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly label = this.root.getByText('Field name');
-  readonly field = this.root.getByCss('select');
-  readonly options = this.root.getByCss('option');
-}
-
 describe('OIBusScanModeFormControlComponent', () => {
-  let tester: TestComponentTester;
+  const scanModeAttribute: OIBusScanModeAttribute = {
+    type: 'scan-mode',
+    key: 'fieldName',
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name',
+    acceptableType: 'SUBSCRIPTION_AND_POLL',
+    validators: [],
+    displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+  };
+  const allScanModes = testData.scanMode.list;
+  let control: FormControl<ScanModeDTO | null>;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [provideI18nTesting()]
-    });
-
-    tester = new TestComponentTester();
-    tester.fixture.detectChanges();
+    TestBed.configureTestingModule({ providers: [provideI18nTesting()] });
+    control = new FormControl<ScanModeDTO | null>(null);
   });
 
-  test('should display a label with the correct translation key', async () => {
-    await expect.element(tester.label).toBeInTheDocument();
+  test.each([
+    { acceptableType: 'SUBSCRIPTION_AND_POLL', expected: ['', 'scanMode1', 'scanMode2', 'Subscription'] },
+    { acceptableType: 'POLL', expected: ['', 'scanMode1', 'scanMode2'] },
+    { acceptableType: 'SUBSCRIPTION', expected: ['', 'Subscription'] }
+  ] as const)('should display the scan modes accepting $acceptableType', async ({ acceptableType, expected }) => {
+    const tester = await renderOIBusFormControl(
+      OIBusScanModeFormControlComponent,
+      { scanModeAttribute: { ...scanModeAttribute, acceptableType }, allScanModes },
+      'fieldName',
+      control
+    );
+
+    const options = tester.root.getByRole('option');
+    await expect.element(options).toHaveLength(expected.length);
+    expect(options.elements().map(option => option.textContent!.trim())).toEqual(expected);
   });
 
-  test('should display a select with the correct form control name', async () => {
-    await tester.field.selectOptions('Subscription');
-    await expect.element(tester.field).toHaveValue('3: Object');
-  });
+  test('should update the control with the selected scan mode', async () => {
+    const tester = await renderOIBusFormControl(
+      OIBusScanModeFormControlComponent,
+      { scanModeAttribute, allScanModes },
+      'fieldName',
+      control
+    );
 
-  test('should display options for each selectable value', async () => {
-    await expect.element(tester.options).toHaveLength(4); // One for the null option and one for each value
-    await expect.element(tester.options.nth(1)).toMatchTextContent('scanMode1');
-    await expect.element(tester.options.nth(2)).toMatchTextContent('scanMode2');
-    await expect.element(tester.options.nth(3)).toMatchTextContent('Subscription');
+    await tester.root.getByLabelText('Field name').selectOptions('Subscription');
+
+    expect(control.value).toEqual(allScanModes.find(scanMode => scanMode.id === 'subscription'));
   });
 });

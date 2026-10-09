@@ -6,23 +6,23 @@
   @if (elementsError.totalElements > 0) {
     <div>
       <h6>
-        <i class="fa fa-solid fa-times me-2" style="color: red"></i>
+        <i class="fa-solid fa-times me-2 error-icon" aria-hidden="true"></i>
         <span translate="south.items.import.error-title"></span>
       </h6>
       <table class="mb-2 table table-sm table-hover oib-simple-table">
         <thead class="light">
           <tr>
-            <th style="width: 200px" translate="south.items.name"></th>
+            <th class="name-column" translate="south.items.name"></th>
             <th translate="south.items.import.error"></th>
           </tr>
         </thead>
         <tbody>
           @for (error of elementsError.content; track error) {
             <tr class="south-item">
-              <td class="text-truncate" style="max-width: 200px" [title]="getElementName(error.element)">
+              <td class="text-truncate name-column" [title]="getElementName(error.element)">
                 {{ getElementName(error.element) }}
               </td>
-              <td class="text-truncate" style="max-width: 400px" [title]="error.error">
+              <td class="text-truncate error-column" [title]="error.error">
                 {{ error.error }}
               </td>
             </tr>
@@ -40,16 +40,16 @@
   @if (elementsNew.totalElements > 0) {
     <div>
       <h6>
-        <i class="fa fa-solid fa-check me-2" style="color: green"></i>
+        <i class="fa-solid fa-check me-2 valid-icon" aria-hidden="true"></i>
         <span translate="south.items.import.valid-title"></span>
       </h6>
       <div class="table-responsive">
         <table class="table table-sm table-hover oib-simple-table">
           <thead class="light">
             <tr>
-              <th style="width: 200px" translate="south.items.name"></th>
+              <th class="name-column" translate="south.items.name"></th>
               @for (column of columns(); track column) {
-                <th style="min-width: 150px; max-width: 250px">
+                <th class="field-column">
                   {{ column }}
                 </th>
               }
@@ -58,11 +58,11 @@
           <tbody>
             @for (element of elementsNew.content; track element) {
               <tr class="south-item">
-                <td class="text-truncate" style="max-width: 200px">
+                <td class="text-truncate name-column">
                   <span [ngbTooltip]="getElementName(element)">{{ getElementName(element) }}</span>
                 </td>
                 @for (column of columns(); track column) {
-                  <td class="text-truncate" style="max-width: 250px">
+                  <td class="text-truncate field-cell">
                     <span [ngbTooltip]="getFieldValue(element, column)">
                       {{ getFieldValue(element, column) }}
                     </span>

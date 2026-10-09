@@ -1,30 +1,40 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 
-import { beforeEach, describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import { PageTitleDirective } from './page-title.directive';
 
 @Component({
   selector: 'oib-test',
-  template: '<oib-page-title title="OIBus name" />',
+  template: '<oib-page-title [title]="title()" />',
   imports: [PageTitleDirective],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-class TestComponent {}
+class TestComponent {
+  readonly title = signal<string | undefined>('OIBus name');
+}
 
 describe('PageTitleDirective', () => {
-  let titleService: Title;
+  test('should set the page title and update it when the title changes', async () => {
+    const titleService = TestBed.inject(Title);
+    const fixture = TestBed.createComponent(TestComponent);
+    await fixture.whenStable();
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
+    expect(titleService.getTitle()).toBe('OIBus - OIBus name');
 
-    titleService = TestBed.inject(Title);
-    TestBed.createComponent(TestComponent).detectChanges();
+    fixture.componentInstance.title.set('Engine');
+    await fixture.whenStable();
+    expect(titleService.getTitle()).toBe('OIBus - Engine');
   });
 
-  test('should set the page title', () => {
-    expect(titleService.getTitle()).toBe('OIBus - OIBus name');
+  test('should only display OIBus when there is no title', async () => {
+    const titleService = TestBed.inject(Title);
+    const fixture = TestBed.createComponent(TestComponent);
+    fixture.componentInstance.title.set(undefined);
+    await fixture.whenStable();
+
+    expect(titleService.getTitle()).toBe('OIBus');
   });
 });

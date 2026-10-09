@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, forwardRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
@@ -27,6 +28,11 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 import { getAssociatedInputType } from '../../../shared/utils/utils';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
 
+interface TransformerSourceOption {
+  dataSourceType: DataSourceType | null;
+  south: SouthConnectorLightDTO | null;
+}
+
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
@@ -50,7 +56,7 @@ import { NorthTransformerTestComponent, TransformerTestItemSource } from '../tra
     NorthTransformerTestComponent,
     SelectExistingTransformerComponent
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
@@ -60,32 +66,27 @@ import { NorthTransformerTestComponent, TransformerTestItemSource } from '../tra
   ]
 })
 export class EditNorthTransformerModalComponent {
-  private modal = inject(NgbActiveModal);
-  private fb = inject(NonNullableFormBuilder);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
-  private southConnectorService = inject(SouthConnectorService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  state = new ObservableState();
+  readonly state = new ObservableState();
   readonly mode = signal<'create' | 'edit'>('create');
   /** Whether the transformer is configured from scratch or copied from an existing North/History attachment (create mode only). */
   readonly creationMode = signal<'new' | 'from-north' | 'from-history'>('new');
   /** Stable source descriptor for the embedded transformer-test panel (updated on source change). */
   readonly transformerTestSource = signal<TransformerTestItemSource>({ kind: 'none' });
   /** True when opened from north-detail (saves directly to API); false when opened from edit-north (changes are applied in-memory). */
-  directSave = true;
-  form: FormGroup<{
-    source: FormControl<{
-      dataSourceType: DataSourceType | null;
-      south: SouthConnectorLightDTO | null;
-    }>;
+  readonly directSave = signal(true);
+  readonly form: FormGroup<{
+    source: FormControl<TransformerSourceOption>;
     apiDataSourceId: FormControl<string | null>;
     transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;
   }> = this.fb.group({
-    source: this.fb.control<{
-      dataSourceType: DataSourceType | null;
-      south: SouthConnectorLightDTO | null;
-    }>(
+    source: this.fb.control<TransformerSourceOption>(
       {
         dataSourceType: null,
         south: null
@@ -96,14 +97,14 @@ export class EditNorthTransformerModalComponent {
     transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
     options: this.fb.group({})
   });
-  allTransformers: Array<TransformerDTO> = [];
+  private allTransformers: Array<TransformerDTO> = [];
   readonly selectableOutputs = signal<Array<TransformerDTO>>([]);
-  supportedOutputTypes: Array<string> = [];
+  readonly supportedOutputTypes = signal<Array<string>>([]);
   readonly manifest = signal<OIBusObjectAttribute | null>(null);
-  scanModes: Array<ScanModeDTO> = [];
-  certificates: Array<CertificateDTO> = [];
-  southConnectors: Array<SouthConnectorLightDTO> = [];
-  existingTransformerWithOptions: TransformerDTOWithOptions | null = null;
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly certificates = signal<Array<CertificateDTO>>([]);
+  readonly southConnectors = signal<Array<SouthConnectorLightDTO>>([]);
+  private existingTransformerWithOptions: TransformerDTOWithOptions | null = null;
 
   readonly selectedItems = signal<Array<ItemLightDTO>>([]);
   readonly selectionType = signal<'all' | 'group' | 'items'>('all');
@@ -117,22 +118,14 @@ export class EditNorthTransformerModalComponent {
 
   filterItems() {
     const southId = this.form.controls.source.value.south?.id;
-    if (!southId || !this.southConnectorService) {
+    if (!southId) {
       this.filteredItems.set([]);
       this.searchResults.set([]);
       this.totalSearchResults.set(0);
       return;
     }
 
-    const result = this.southConnectorService.searchItems(southId, { name: this.itemSearchText(), page: 0 });
-    if (!result) {
-      this.filteredItems.set([]);
-      this.searchResults.set([]);
-      this.totalSearchResults.set(0);
-      return;
-    }
-
-    result.subscribe(items => {
+    this.southConnectorService.searchItems(southId, { name: this.itemSearchText(), page: 0 }).subscribe(items => {
       const allItems = items.content;
       const selectedItems = this.selectedItems();
       const searchResults = allItems.filter(item => !selectedItems.some(element => element.id === item.id));
@@ -159,11 +152,11 @@ export class EditNorthTransformerModalComponent {
     supportedOutputTypes: Array<string>
   ) {
     this.mode.set('create');
-    this.southConnectors = southConnectors;
-    this.scanModes = scanModes;
-    this.certificates = certificates;
+    this.southConnectors.set(southConnectors);
+    this.scanModes.set(scanModes);
+    this.certificates.set(certificates);
     this.allTransformers = transformers;
-    this.supportedOutputTypes = supportedOutputTypes;
+    this.supportedOutputTypes.set(supportedOutputTypes);
     this.buildForm();
   }
 
@@ -176,11 +169,11 @@ export class EditNorthTransformerModalComponent {
     transformerWithOptionsToEdit: TransformerDTOWithOptions
   ) {
     this.mode.set('edit');
-    this.southConnectors = southConnectors;
-    this.scanModes = scanModes;
-    this.certificates = certificates;
+    this.southConnectors.set(southConnectors);
+    this.scanModes.set(scanModes);
+    this.certificates.set(certificates);
     this.allTransformers = transformers;
-    this.supportedOutputTypes = supportedOutputTypes;
+    this.supportedOutputTypes.set(supportedOutputTypes);
     this.existingTransformerWithOptions = transformerWithOptionsToEdit;
     this.selectedItems.set([]);
     if (transformerWithOptionsToEdit.source.type === 'south') {
@@ -222,7 +215,7 @@ export class EditNorthTransformerModalComponent {
   }
 
   buildForm() {
-    this.form.controls.source.valueChanges.subscribe(source => {
+    this.form.controls.source.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(source => {
       // In 'from-north'/'from-history' mode the transformer/options come from the copy-picker, not from the Output
       // select below, so changing the source shouldn't wipe them out.
       if (this.creationMode() === 'new') {
@@ -247,7 +240,7 @@ export class EditNorthTransformerModalComponent {
       }
     });
 
-    this.form.controls.transformer.valueChanges.subscribe(newTransformer => {
+    this.form.controls.transformer.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(newTransformer => {
       if (newTransformer) {
         this.createOptionsForm(newTransformer);
       } else {
@@ -338,14 +331,12 @@ export class EditNorthTransformerModalComponent {
     });
   }
 
-  compareSource(o1: any, o2: any): boolean {
+  compareSource(o1: TransformerSourceOption | null, o2: TransformerSourceOption | null): boolean {
     if (!o1 || !o2) return o1 === o2;
     // Compare Input Types
     if (o1.dataSourceType !== o2.dataSourceType) return false;
     // Compare South Connectors (handle objects or nulls)
-    const southId1 = o1.south?.id || o1.south; // handle if south is just ID or full object
-    const southId2 = o2.south?.id || o2.south;
-    return southId1 === southId2;
+    return (o1.south?.id ?? null) === (o2.south?.id ?? null);
   }
 
   compareTransformers(t1: TransformerDTO | null, t2: TransformerDTO | null): boolean {
@@ -356,18 +347,18 @@ export class EditNorthTransformerModalComponent {
     return g1 && g2 ? g1.id === g2.id : g1 === g2;
   }
 
-  private updateSelectableOutput(source: { dataSourceType: DataSourceType | null; south: SouthConnectorLightDTO | null }) {
+  private updateSelectableOutput(source: TransformerSourceOption) {
     // Keep the embedded test panel's source in sync (only south sources can run an item).
     this.transformerTestSource.set(source.south ? { kind: 'south', id: source.south.id, southType: source.south.type } : { kind: 'none' });
 
     this.selectableOutputs.set(
       this.allTransformers.filter(element => {
-        if (!this.supportedOutputTypes.includes(element.outputType)) {
+        if (!this.supportedOutputTypes().includes(element.outputType)) {
           return false;
         }
 
         if (element.type === 'standard' && element.functionName === 'ignore') return true;
-        if (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes.includes(element.inputType))
+        if (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes().includes(element.inputType))
           return true;
 
         if (source.dataSourceType === 'oianalytics-setpoint') {

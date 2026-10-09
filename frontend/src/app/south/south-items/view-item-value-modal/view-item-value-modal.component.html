@@ -1,6 +1,6 @@
 <div class="modal-header">
   <h4 class="modal-title" translate="south.items.last-value-modal.title"></h4>
-  <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+  <button type="button" class="btn-close" [attr.aria-label]="'common.close' | translate" (click)="close()"></button>
 </div>
 
 <div class="modal-body">
@@ -12,7 +12,7 @@
     <div class="alert alert-danger" role="alert">
       <strong translate="south.items.last-value-modal.error-title"></strong>
       <hr />
-      <div style="overflow-wrap: break-word">{{ errorMessage }}</div>
+      <div class="error-message">{{ errorMessage }}</div>
     </div>
   } @else {
     <div class="container-fluid">
@@ -74,7 +74,9 @@
                   }
                 </tbody>
               </table>
-              <div class="text-muted small">{{ fileArray().length }} file(s) tracked</div>
+              <div class="text-muted small">
+                {{ 'south.items.last-value-modal.files-tracked' | translate: { count: fileArray().length } }}
+              </div>
             </div>
           }
 

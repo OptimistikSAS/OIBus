@@ -13,16 +13,19 @@
             <a
               class="btn btn-link display-north px-1 py-0"
               id="display-link"
+              role="button"
               tabindex="0"
               [ngbTooltip]="'north.tooltips.view-metrics' | translate"
+              [attr.aria-label]="'north.tooltips.view-metrics' | translate"
               (click)="navigateToDisplay()"
               (keyup.enter)="navigateToDisplay()"
             >
-              <span class="fa fa-search"></span>
+              <span class="fa-solid fa-search" aria-hidden="true"></span>
             </a>
           } @else {
             <!-- Reset button -->
             <button
+              type="button"
               class="ms-3 btn btn-danger btn-sm oib-box-btn"
               (click)="resetMetrics()"
               translate="north.monitoring.reset-metrics"

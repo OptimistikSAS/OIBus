@@ -1,7 +1,7 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode + '-title'"></h4>
+  <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode() + '-title'"></h4>
 </div>
-@if (form) {
+@if (manifest(); as manifest) {
   <div class="modal-body">
     <form [formGroup]="form" (ngSubmit)="save()" id="form">
       <div class="row">
@@ -24,21 +24,31 @@
                 id="group"
                 ngbDropdownToggle
               >
-                <span class="text-truncate">{{ getSelectedGroupName() }}</span>
+                <span class="text-truncate">{{ selectedGroupName() ?? ('south.items.group-none' | translate) }}</span>
               </button>
               <div ngbDropdownMenu aria-labelledby="group" class="w-100">
                 <button type="button" ngbDropdownItem (click)="onSelectGroup(null)" translate="south.items.group-none"></button>
-                @for (group of groups; track group.id) {
+                @for (group of groups(); track group.id) {
                   <div class="d-flex align-items-center justify-content-between px-2 group-row">
                     <button type="button" ngbDropdownItem (click)="onSelectGroup(group.id)" class="flex-grow-1 text-start ps-2">
                       {{ group.standardSettings.name }}
                     </button>
                     <div class="d-flex gap-1 pe-2">
-                      <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
-                        <i class="fa fa-pencil"></i>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-link p-0 text-primary"
+                        [attr.aria-label]="'south.groups.edit-title' | translate"
+                        (click)="onEditGroup(group, $event)"
+                      >
+                        <i class="fa-solid fa-pencil" aria-hidden="true"></i>
                       </button>
-                      <button type="button" class="btn btn-sm btn-link p-0 text-danger" (click)="onDeleteGroup(group, $event)">
-                        <i class="fa fa-trash"></i>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-link p-0 text-danger"
+                        [attr.aria-label]="'common.delete' | translate"
+                        (click)="onDeleteGroup(group, $event)"
+                      >
+                        <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
                       </button>
                     </div>
                   </div>
@@ -52,13 +62,13 @@
           </div>
         </div>
         <!-- Scan mode (only shown when item has no group) -->
-        @if (form.controls.scanModeId.enabled && form.controls.groupId.value === null) {
+        @if (scanModeEnabled() && groupId() === null) {
           <div class="col-3">
             <div class="form-group">
               <label for="scan-mode" class="form-label" translate="configuration.oibus.manifest.south.items.scan-mode"></label>
               <select class="form-select" id="scan-mode" formControlName="scanModeId">
                 <option [ngValue]="null" disabled translate="south.items.select-scan-mode"></option>
-                @for (scanMode of scanModes; track scanMode.id) {
+                @for (scanMode of scanModes(); track scanMode.id) {
                   <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>
                 }
               </select>
@@ -78,10 +88,10 @@
       </div>
 
       <!-- Historian fields (for historian connectors) -->
-      @if (hasHistorianCapabilities) {
+      @if (hasHistorianCapabilities()) {
         <div class="row">
           <!-- Sync with group toggle (only when item is in a group) -->
-          @if (form.controls.groupId.value !== null) {
+          @if (groupId() !== null) {
             <div class="col-2">
               <div class="form-group">
                 <div class="form-check form-switch padded">
@@ -156,7 +166,7 @@
             </div>
           </div>
           <!-- Recovery Strategy -->
-          <div [class]="form.controls.groupId.value !== null ? 'col-2' : 'col-4'">
+          <div [class]="groupId() !== null ? 'col-2' : 'col-4'">
             <div class="form-group">
               <label class="form-label" for="recovery-strategy" translate="south.items.recovery-strategy"></label>
               <select class="form-select" id="recovery-strategy" formControlName="recoveryStrategy">
@@ -170,7 +180,7 @@
       }
 
       <!-- Caching strategy fields (for IoT-family connectors: OPC UA, Modbus, ADS, OPC classic, S7, MQTT) -->
-      @if (isIotFamilySouthType) {
+      @if (isIotFamilySouthType()) {
         <div class="row">
           <!-- Caching Strategy -->
           <div class="col-2">
@@ -178,7 +188,7 @@
               <label class="form-label" for="caching-strategy" translate="south.items.caching-strategy"></label>
               <select class="form-select" id="caching-strategy" formControlName="cachingStrategy">
                 @for (strategy of cachingStrategies; track strategy.value) {
-                  @if (strategy.value !== 'threshold' || isThresholdAvailable) {
+                  @if (strategy.value !== 'threshold' || isThresholdAvailable()) {
                     <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
                   }
                 }
@@ -187,7 +197,7 @@
             </div>
           </div>
 
-          @if (form.controls.cachingStrategy.value === 'threshold') {
+          @if (cachingStrategy() === 'threshold') {
             <!-- Threshold Type -->
             <div class="col-2">
               <div class="form-group">
@@ -208,7 +218,7 @@
                 <val-errors controlName="threshold" />
               </div>
             </div>
-            @if (form.controls.thresholdType.value === 'percentage') {
+            @if (thresholdType() === 'percentage') {
               <!-- Range Low -->
               <div class="col-2">
                 <div class="form-group">
@@ -228,7 +238,7 @@
             }
           }
 
-          @if (form.controls.cachingStrategy.value !== 'allValues') {
+          @if (cachingStrategy() !== 'allValues') {
             <!-- Max Caching Interval -->
             <div class="col-2">
               <div class="form-group">
@@ -246,19 +256,19 @@
 
       <ng-container formGroupName="settings">
         <oib-oibus-object-form-control
-          [scanModes]="scanModes"
-          [certificates]="certificates"
+          [scanModes]="scanModes()"
+          [certificates]="certificates()"
           [group]="form.controls.settings"
           [objectAttribute]="getItemSettingsAttribute(manifest)"
-          [southId]="southId"
+          [southId]="southId()"
         />
       </ng-container>
     </form>
     <oib-south-item-test
       type="south"
-      [entityId]="southId"
-      [item]="formItem"
-      [connectorCommand]="southConnectorCommand"
+      [entityId]="southId()"
+      [item]="formItem()"
+      [connectorCommand]="southConnectorCommand()!"
       [manifest]="manifest"
     />
   </div>
@@ -266,10 +276,11 @@
 <div class="modal-footer">
   <div class="btn-group">
     <button
+      type="submit"
       [oib-save-button]="state"
       form="form"
       [translationKey]="directSave ? 'common.save' : 'common.ok'"
-      [iconClass]="directSave ? 'fa-save' : 'fa-check'"
+      [iconClass]="directSave ? 'fa-floppy-disk' : 'fa-check'"
     ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>

@@ -7,37 +7,50 @@
             <h1 id="title">
               <span>{{ 'north.title' | translate: { name: northConnector.name, type: manifest.id | oIBusNorthTypeEnum } }}</span>
               <span class="ms-3">
-                <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'north.tooltips.edit' | translate">
-                  <i class="fa fa-pencil"></i>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  id="edit-link"
+                  routerLink="edit"
+                  [ngbTooltip]="'north.tooltips.edit' | translate"
+                  [attr.aria-label]="'north.tooltips.edit' | translate"
+                >
+                  <i class="fa-solid fa-pencil" aria-hidden="true"></i>
                 </button>
                 <button
                   type="button"
                   class="btn btn-primary ms-1"
                   id="show-audit-button"
                   [ngbTooltip]="'north.tooltips.audit' | translate"
+                  [attr.aria-label]="'north.tooltips.audit' | translate"
                   (click)="showAudit('north_connector', northConnector.id)"
                 >
-                  <i class="fa fa-history"></i>
+                  <i class="fa-solid fa-history" aria-hidden="true"></i>
                 </button>
               </span>
               <button
+                type="button"
                 class="btn btn-primary pull-right me-2"
                 id="north-enabled"
                 [ngbTooltip]="(northConnector.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
-                (click)="toggleConnector(!northConnector!.enabled)"
+                [attr.aria-label]="(northConnector.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
+                (click)="toggleConnector(!northConnector.enabled)"
               >
-                <i [class]="northConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
+                <i [class]="northConnector.enabled ? 'fa-solid fa-pause' : 'fa-solid fa-play'" aria-hidden="true"></i>
               </button>
             </h1>
             <span class="text-disabled pull-right me-2">
               <span translate="north.copy-cache-path" [translateParams]="{ id: northConnector.id }"></span>
-              <i
-                class="fa fa-copy ms-1"
-                role="button"
-                [ngbTooltip]="'north.tooltips.copy-cache-path' | translate"
-                [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/data-stream/north-' + northConnector.id"
-                (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
-              ></i>
+              @if (oibusInfo(); as oibusInfo) {
+                <i
+                  class="fa-solid fa-copy ms-1"
+                  role="button"
+                  [ngbTooltip]="'north.tooltips.copy-cache-path' | translate"
+                  [attr.aria-label]="'north.tooltips.copy-cache-path' | translate"
+                  [cdkCopyToClipboard]="oibusInfo.dataDirectory + '/cache/data-stream/north-' + northConnector.id"
+                  (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+                ></i>
+              }
             </span>
           </div>
           <!-- North metrics -->
@@ -72,7 +85,7 @@
                   <td translate="north.status"></td>
                   <td>{{ northConnector.enabled | enabled }}</td>
                 </tr>
-                @for (setting of displayedSettings(); track setting) {
+                @for (setting of displayedSettings(); track setting.key) {
                   <tr>
                     <td>{{ setting.key | translate }}</td>
                     <td>{{ setting.value }}</td>
@@ -86,14 +99,15 @@
               <div class="d-flex justify-content-between align-items-center">
                 <span translate="north.caching.title"></span>
                 <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/north', northConnector.id, 'cache']"
-                  ><span class="fa fa-search"></span><span class="mx-1" translate="north.caching.explore-cache"></span
+                  ><span class="fa-solid fa-search" aria-hidden="true"></span
+                  ><span class="mx-1" translate="north.caching.explore-cache"></span
                 ></a>
               </div>
             </ng-template>
             <table class="table table-sm table-hover oib-table mb-3">
               <tbody>
                 <tr>
-                  <td translate="north.caching.trigger.title" style="width: 33%"></td>
+                  <td translate="north.caching.trigger.title" class="caching-title-column"></td>
                   <td
                     translate="north.caching.trigger.value"
                     [translateParams]="{

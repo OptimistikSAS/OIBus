@@ -398,11 +398,13 @@
     "account": {
       "logout": "Logout",
       "settings": "Settings",
-      "audit": "Audit"
+      "audit": "Audit",
+      "title": "Account"
     },
     "tooltips": {
       "documentation": "Documentation"
-    }
+    },
+    "menu": "Menu"
   },
   "login": {
     "title": "Sign in",
@@ -479,7 +481,8 @@
       "remote-update-disabled": "Remote update is disabled on this OIBus (started with --ignoreRemoteUpdate), so the upgrade-version command cannot be enabled.",
       "test-connection": "Test connection",
       "test-connection-success": "Connection successful",
-      "test-connection-error": "Error when testing connection"
+      "test-connection-error": "Error when testing connection",
+      "edit": "Edit registration"
     },
     "commands": {
       "title": "Command list",
@@ -839,7 +842,7 @@
         "warning": "This replaces all connectors, history queries, scan modes, ip filters, transformers, certificates, users and engine settings on this instance and cannot be undone.",
         "confirm-message": "This replaces all connectors, history queries, scan modes, ip filters, transformers, certificates, users and engine settings on this instance and cannot be undone. Are you sure you want to continue?",
         "file": "Configuration file",
-        "file-too-large": "The selected file is too large. Maximum size is 10 MB",
+        "file-too-large": "The selected file is too large. Maximum size is {{ maxSize }} MB",
         "success": "Configuration successfully imported.",
         "applied-upgrades": "Applied upgrades",
         "upgraded-versions": "The configuration was upgraded from OIBus {{fromVersion}} to {{toVersion}}.",
@@ -2807,7 +2810,8 @@
         "filename": "Filename",
         "modified-time": "Modified Time",
         "group-section-title": "Group last tracked value",
-        "error-title": "Could not retrieve the last cached value"
+        "error-title": "Could not retrieve the last cached value",
+        "files-tracked": "{{ count }} file(s) tracked"
       },
       "all-deleted": "South connector items deleted",
       "delete-all": "Delete all",
@@ -3453,7 +3457,8 @@
       "delete": "Delete history query",
       "copy-cache-path": "Copy cache path to clipboard",
       "audit": "View history query audit history"
-    }
+    },
+    "reset-cache-confirmation": "Do you want to reset the history query cache?"
   },
   "explore-cache": {
     "title": "Cache of {{ name }}",

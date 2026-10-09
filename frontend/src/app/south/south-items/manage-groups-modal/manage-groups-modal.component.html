@@ -1,19 +1,25 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'south.groups.manage-title'" [translateParams]="{ count: groups.length }"></h4>
+  <h4 class="modal-title" [translate]="'south.groups.manage-title'" [translateParams]="{ count: groups().length }"></h4>
 </div>
 <div class="modal-body">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div></div>
     <div class="ms-3">
-      <button type="button" class="btn btn-primary btn-sm oib-box-btn me-2" id="add-group" (click)="onAddGroup()">
-        <span class="fa fa-plus"></span>
+      <button
+        type="button"
+        class="btn btn-primary btn-sm oib-box-btn me-2"
+        id="add-group"
+        [attr.aria-label]="'south.groups.create-title' | translate"
+        (click)="onAddGroup()"
+      >
+        <span class="fa-solid fa-plus" aria-hidden="true"></span>
       </button>
       <button
         type="button"
         class="btn btn-secondary btn-sm oib-box-btn me-2"
         id="export-groups"
         (click)="exportGroups()"
-        [disabled]="groups.length === 0"
+        [disabled]="groups().length === 0"
       >
         <span translate="south.groups.export.button"></span>
       </button>
@@ -33,7 +39,7 @@
   }
   @let errors = importErrors();
   @if (errors.length > 0) {
-    <div class="alert alert-danger py-1 px-2">
+    <div class="alert alert-danger py-1 px-2" role="alert">
       <div translate="south.groups.import.errors-title" [translateParams]="{ count: errors.length }"></div>
       <ul class="mb-0">
         @for (error of errors; track $index) {
@@ -43,7 +49,7 @@
     </div>
   }
 
-  @if (groups.length === 0) {
+  @if (groups().length === 0) {
     <div class="oib-grey-container" translate="south.groups.none"></div>
   } @else {
     <div class="d-flex align-items-center gap-2 my-2">
@@ -51,11 +57,16 @@
         class="form-control form-control-sm flex-grow-1"
         [formControl]="searchControl"
         [placeholder]="'south.groups.search-placeholder' | translate"
+        [attr.aria-label]="'common.search' | translate"
         type="text"
       />
-      <select class="form-select form-select-sm w-auto" [formControl]="scheduleFilterControl">
+      <select
+        class="form-select form-select-sm w-auto"
+        [formControl]="scheduleFilterControl"
+        [attr.aria-label]="'south.items.scan-mode' | translate"
+      >
         <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
-        @for (scanMode of scanModes; track scanMode.id) {
+        @for (scanMode of scanModes(); track scanMode.id) {
           <option [value]="scanMode.id">{{ scanMode.name }}</option>
         }
       </select>
@@ -69,18 +80,18 @@
         <thead class="light">
           <tr>
             <th>
-              <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
+              <button type="button" class="sort-button" (click)="toggleColumnSort('name')">
                 <span translate="south.groups.name" class="me-2"></span>
-                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+                <span class="fa-solid {{ sortIcon('name') }}" aria-hidden="true"></span>
               </button>
             </th>
             <th>
-              <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('schedule')">
+              <button type="button" class="sort-button" (click)="toggleColumnSort('schedule')">
                 <span translate="south.items.scan-mode" class="me-2"></span>
-                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.schedule] }}"></span>
+                <span class="fa-solid {{ sortIcon('schedule') }}" aria-hidden="true"></span>
               </button>
             </th>
-            @if (hasHistorianCapabilities) {
+            @if (hasHistorianCapabilities()) {
               <th translate="south.groups.start-time-offset"></th>
               <th translate="south.groups.end-time-offset"></th>
               <th translate="south.groups.max-read-interval"></th>
@@ -88,12 +99,12 @@
               <th translate="south.groups.recovery-strategy"></th>
             }
             <th>
-              <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('itemCount')">
+              <button type="button" class="sort-button" (click)="toggleColumnSort('itemCount')">
                 <span translate="south.groups.item-count" class="me-2"></span>
-                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.itemCount] }}"></span>
+                <span class="fa-solid {{ sortIcon('itemCount') }}" aria-hidden="true"></span>
               </button>
             </th>
-            <th style="width: 6rem"></th>
+            <th class="actions-column"></th>
           </tr>
         </thead>
         <tbody>
@@ -101,7 +112,7 @@
             <tr>
               <td>{{ group.standardSettings.name }}</td>
               <td>{{ getScanModeName(group) }}</td>
-              @if (hasHistorianCapabilities) {
+              @if (hasHistorianCapabilities()) {
                 <td>{{ group.historySettings.startTimeOffset }}ms</td>
                 <td>{{ group.historySettings.endTimeOffset }}ms</td>
                 <td>{{ group.historySettings.maxReadInterval }}s</td>
@@ -119,17 +130,19 @@
                     type="button"
                     class="btn btn-link edit-group px-1 py-0"
                     [ngbTooltip]="'south.groups.edit-title' | translate"
+                    [attr.aria-label]="'south.groups.edit-title' | translate"
                     (click)="onEditGroup(group)"
                   >
-                    <span class="fa fa-pencil"></span>
+                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                   </button>
                   <button
                     type="button"
                     class="btn btn-link delete-group px-1 py-0"
                     [ngbTooltip]="'south.groups.confirm-deletion' | translate: { name: group.standardSettings.name }"
+                    [attr.aria-label]="'common.delete' | translate"
                     (click)="onDeleteGroup(group)"
                   >
-                    <span class="fa fa-trash"></span>
+                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                   </button>
                 </div>
               </td>

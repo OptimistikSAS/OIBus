@@ -1,4 +1,4 @@
-<div class="modal-header" xmlns="http://www.w3.org/1999/html">
+<div class="modal-header">
   <h4 class="modal-title" translate="history-query.modal.title"></h4>
 </div>
 <div class="modal-body">
@@ -17,9 +17,14 @@
             <label class="form-check-label" for="from-existing-south" translate="history-query.from-existing-south"></label>
           </div>
         </div>
-        @if (!createForm.controls.fromExistingSouth.value) {
+        @if (!fromExistingSouth()) {
           <div class="form-group">
-            <select [formControl]="createForm.controls.southType" id="south-type" class="form-select mb-2 mr-sm-2">
+            <select
+              [formControl]="createForm.controls.southType"
+              id="south-type"
+              class="form-select mb-2 mr-sm-2"
+              [attr.aria-label]="'history-query.south-type' | translate"
+            >
               @for (southType of southTypes(); track southType) {
                 <option [ngValue]="southType.id">{{ southType.id | oIBusSouthTypeEnum }}</option>
               }
@@ -28,7 +33,12 @@
           </div>
         } @else {
           <div class="form-group">
-            <select [formControl]="createForm.controls.southId" id="south-connector" class="form-select mb-2 mr-sm-2">
+            <select
+              [formControl]="createForm.controls.southId"
+              id="south-connector"
+              class="form-select mb-2 mr-sm-2"
+              [attr.aria-label]="'history-query.from-existing-south' | translate"
+            >
               @for (connector of southList(); track connector.id) {
                 <option [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
               }
@@ -49,9 +59,14 @@
             <label for="from-existing-north" class="form-check-label" translate="history-query.from-existing-north"></label>
           </div>
         </div>
-        @if (!createForm.controls.fromExistingNorth.value) {
+        @if (!fromExistingNorth()) {
           <div class="form-group">
-            <select [formControl]="createForm.controls.northType" id="north-type" class="form-select mb-2 mr-sm-2">
+            <select
+              [formControl]="createForm.controls.northType"
+              id="north-type"
+              class="form-select mb-2 mr-sm-2"
+              [attr.aria-label]="'history-query.north-type' | translate"
+            >
               @for (northType of northTypes(); track northType.id) {
                 <option [ngValue]="northType.id">{{ northType.id | oIBusNorthTypeEnum }}</option>
               }
@@ -60,8 +75,13 @@
           </div>
         } @else {
           <div class="form-group">
-            <select [formControl]="createForm.controls.northId" id="north-connector" class="form-select mb-2 mr-sm-2">
-              @for (connector of northList(); track connector) {
+            <select
+              [formControl]="createForm.controls.northId"
+              id="north-connector"
+              class="form-select mb-2 mr-sm-2"
+              [attr.aria-label]="'history-query.from-existing-north' | translate"
+            >
+              @for (connector of northList(); track connector.id) {
                 <option [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
               }
             </select>
@@ -74,7 +94,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <button [oib-save-button]="state" form="form"></button>
+    <button type="submit" [oib-save-button]="state" form="form"></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

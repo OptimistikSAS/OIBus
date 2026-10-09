@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { combineLatest, firstValueFrom, switchMap } from 'rxjs';
+import { firstValueFrom, switchMap } from 'rxjs';
 
 import { IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
@@ -18,7 +19,6 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { emptyPage } from '../../shared/utils/page.utils';
 import { EditIpFilterModalComponent } from './edit-ip-filter-modal/edit-ip-filter-modal.component';
 
 type IpFilterSortField = 'address' | 'createdAt' | 'updatedAt' | null;
@@ -39,33 +39,34 @@ const PAGE_SIZE = 20;
     AuditInfoComponent
   ],
   templateUrl: './ip-filter-list.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './ip-filter-list.component.scss'
 })
 export class IpFilterListComponent {
-  private confirmationService = inject(ConfirmationService);
-  private modalService = inject(ModalService);
-  private notificationService = inject(NotificationService);
-  private ipFilterService = inject(IpFilterService);
-  private engineService = inject(EngineService);
-  private docsUrlService = inject(DocsUrlService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly modalService = inject(ModalService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly ipFilterService = inject(IpFilterService);
+  private readonly engineService = inject(EngineService);
+  private readonly docsUrlService = inject(DocsUrlService);
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/ip-filters');
 
-  readonly allIpFilters = signal<Array<IPFilterDTO>>([]);
-  private filteredIpFilters: Array<IPFilterDTO> = [];
-  readonly displayedIpFilters = signal<Page<IPFilterDTO>>(emptyPage());
+  private readonly info = toSignal(this.engineService.getInfo());
+  private readonly ipFiltersResource = rxResource({ stream: () => this.ipFilterService.list() });
+  /** All the IP filters, displayed once the engine info is known too (kept while they are reloaded) */
+  readonly allIpFilters = computed(() => (this.info() && this.ipFiltersResource.hasValue() ? this.ipFiltersResource.value() : []));
+  readonly ignoreIpFilters = computed(() => this.info()?.ignoreIpFilters ?? false);
   readonly sortField = signal<IpFilterSortField>(null);
   readonly sortDirection = signal<SortDirection>('asc');
-  readonly ignoreIpFilters = signal(false);
-
-  constructor() {
-    combineLatest([this.engineService.getInfo(), this.ipFilterService.list()]).subscribe(([info, ipFilterList]) => {
-      this.ignoreIpFilters.set(info.ignoreIpFilters);
-      this.allIpFilters.set(ipFilterList);
-      this.updateList(0);
-    });
-  }
+  /** Back to the first page when the IP filters or their order change */
+  private readonly pageNumber = linkedSignal({
+    source: () => ({ ipFilters: this.allIpFilters(), sortField: this.sortField(), sortDirection: this.sortDirection() }),
+    computation: () => 0
+  });
+  readonly displayedIpFilters = computed<Page<IPFilterDTO>>(() =>
+    createPageFromArray(sortIpFilters(this.allIpFilters(), this.sortField(), this.sortDirection()), PAGE_SIZE, this.pageNumber())
+  );
 
   /**
    * Open a modal to edit an IP filter
@@ -99,12 +100,9 @@ export class IpFilterListComponent {
     this.refreshAfterEditIpFilterModalClosed(modalRef, 'created');
   }
 
-  private refreshAfterEditIpFilterModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
+  private refreshAfterEditIpFilterModalClosed(modalRef: Modal<EditIpFilterModalComponent>, mode: 'created' | 'updated') {
     modalRef.result.subscribe((ipFilter: IPFilterDTO) => {
-      this.ipFilterService.list().subscribe(ipFilters => {
-        this.allIpFilters.set(ipFilters);
-        this.updateList(0);
-      });
+      this.ipFiltersResource.reload();
       this.notificationService.success(`engine.ip-filter.${mode}`, {
         address: ipFilter.address
       });
@@ -126,10 +124,7 @@ export class IpFilterListComponent {
         })
       )
       .subscribe(() => {
-        this.ipFilterService.list().subscribe(ipFilters => {
-          this.allIpFilters.set(ipFilters);
-          this.updateList(0);
-        });
+        this.ipFiltersResource.reload();
         this.notificationService.success('engine.ip-filter.deleted', {
           address: ipFilter.address
         });
@@ -152,35 +147,29 @@ export class IpFilterListComponent {
       this.sortField.set(field);
       this.sortDirection.set('asc');
     }
-    this.updateList(0);
   }
 
   getSortIcon(field: IpFilterSortField): string {
     if (this.sortField() !== field) return 'fa-sort';
-    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {
-    this.displayedIpFilters.set(createPageFromArray(this.filteredIpFilters, PAGE_SIZE, pageNumber));
+    this.pageNumber.set(pageNumber);
   }
+}
 
-  private updateList(pageNumber: number) {
-    this.filteredIpFilters = [...this.allIpFilters()];
-    this.sortList();
-    this.changePage(pageNumber);
+function sortIpFilters(ipFilters: Array<IPFilterDTO>, field: IpFilterSortField, direction: SortDirection): Array<IPFilterDTO> {
+  if (!field) {
+    return ipFilters;
   }
-
-  private sortList() {
-    const field = this.sortField();
-    if (!field) return;
-    const direction = this.sortDirection() === 'asc' ? 1 : -1;
-    this.filteredIpFilters = [...this.filteredIpFilters].sort((a, b) => {
-      if (field === 'address') {
-        return a.address.localeCompare(b.address) * direction;
-      }
-      const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
-      const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
-      return aVal.localeCompare(bVal) * direction;
-    });
-  }
+  const factor = direction === 'asc' ? 1 : -1;
+  return [...ipFilters].sort((a, b) => {
+    if (field === 'address') {
+      return a.address.localeCompare(b.address) * factor;
+    }
+    const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
+    const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
+    return aVal.localeCompare(bVal) * factor;
+  });
 }

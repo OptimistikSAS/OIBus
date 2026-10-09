@@ -7,16 +7,17 @@
           type="button"
           class="btn btn-primary btn-sm oib-box-btn"
           [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.add' | translate"
+          [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.add' | translate"
           (click)="addElement($event)"
           id="oibus-array-add-element-button"
         >
-          <span class="fa fa-plus"></span>
+          <span class="fa-solid fa-plus" aria-hidden="true"></span>
         </button>
         <button
           type="button"
           class="btn btn-secondary btn-sm oib-box-btn"
           (click)="exportArray()"
-          [disabled]="!control().value.length"
+          [disabled]="!controlValue().length"
           translate="south.items.export.button"
         ></button>
         <button
@@ -31,11 +32,11 @@
 
   @if (arrayAttribute().paginate && paginatedValues().totalPages > 1) {
     <div>
-      <oib-pagination class="d-flex justify-content-end" [page]="paginatedValues()" (pageChanged)="paginatedValues().gotoPage($event)" />
+      <oib-pagination class="d-flex justify-content-end" [page]="paginatedValues()" (pageChanged)="pageNumber.set($event)" />
     </div>
   }
-  @if (control().value.length > 0) {
-    <table style="table-layout: fixed" class="table table-sm table-hover">
+  @if (controlValue().length > 0) {
+    <table class="table table-sm table-hover table-fixed">
       <thead>
         <tr>
           @for (column of columns(); track column.translationKey) {
@@ -49,10 +50,10 @@
         </tr>
       </thead>
       <tbody>
-        @for (element of arrayAttribute().paginate ? paginatedValues().content : control().value; track element) {
+        @for (element of displayedElements(); track element) {
           <tr>
             @for (column of columns(); track column.translationKey) {
-              <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
+              <td class="text-truncate">
                 {{ formatValue(element, column.path, column.type, column.translationKey) }}
               </td>
             }
@@ -61,25 +62,28 @@
                 type="button"
                 class="btn btn-sm btn-link btn-link-bold edit-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
+                [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
                 (click)="editElement(element)"
               >
-                <span class="fa fa-pencil"></span>
+                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
               </button>
               <button
                 type="button"
                 class="btn btn-sm btn-link btn-link-bold copy-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
+                [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
                 (click)="copyElement(element)"
               >
-                <span class="fa fa-copy"></span>
+                <span class="fa-solid fa-copy" aria-hidden="true"></span>
               </button>
               <button
                 type="button"
                 class="btn btn-sm btn-link btn-link-bold delete-button px-1 py-0"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
+                [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
                 (click)="deleteElement(element)"
               >
-                <span class="fa fa-trash"></span>
+                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
               </button>
             </td>
           </tr>
@@ -89,5 +93,5 @@
   } @else {
     <div class="oi-details" translate="configuration.oibus.manifest.south.items.no-items"></div>
   }
-  <val-errors [controlName]="arrayAttribute().key" />
+  <val-errors [control]="trackedControl()" />
 </oib-box>

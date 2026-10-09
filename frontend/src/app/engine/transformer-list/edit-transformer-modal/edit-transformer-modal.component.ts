@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -27,7 +27,7 @@ import { TransformerTestComponent } from '../transformer-test/transformer-test.c
   selector: 'oib-edit-transformer-modal',
   templateUrl: './edit-transformer-modal.component.html',
   styleUrl: './edit-transformer-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
@@ -43,22 +43,22 @@ import { TransformerTestComponent } from '../transformer-test/transformer-test.c
   ]
 })
 export class EditTransformerModalComponent {
-  private modal = inject(NgbActiveModal);
-  private transformerService = inject(TransformerService);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
-  private confirmationService = inject(ConfirmationService);
-  private fb = inject(NonNullableFormBuilder);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly transformerService = inject(TransformerService);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly mode = signal<'create' | 'edit'>('create');
-  state = new ObservableState();
+  readonly state = new ObservableState();
 
   readonly customTransformer = signal<CustomTransformerDTO | null>(null);
 
-  inputTypes = INPUT_TYPES;
-  outputTypes = OUTPUT_TYPES;
-  languages = CUSTOM_TRANSFORMER_LANGUAGES;
+  readonly inputTypes = INPUT_TYPES;
+  readonly outputTypes = OUTPUT_TYPES;
+  readonly languages = CUSTOM_TRANSFORMER_LANGUAGES;
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     name: ['', Validators.required],
     description: '',
     inputType: [null as InputType | null, Validators.required],
@@ -71,9 +71,10 @@ export class EditTransformerModalComponent {
 
   private readonly formValue = toSignal(this.form.valueChanges.pipe(startWith(this.form.value)));
   private readonly formValid = toSignal(this.form.statusChanges.pipe(startWith(this.form.status)));
+  readonly language = toSignal(this.form.controls.language.valueChanges, { initialValue: this.form.controls.language.value });
 
   constructor() {
-    this.form.controls.language.valueChanges.subscribe(() => {
+    this.form.controls.language.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.mode() === 'create') {
         this.generateCodeTemplate();
       }

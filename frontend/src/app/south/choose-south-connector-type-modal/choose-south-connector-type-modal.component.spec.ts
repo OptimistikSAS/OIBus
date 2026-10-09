@@ -1,22 +1,28 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Routes } from '@angular/router';
+import { provideRouter, Router, Routes } from '@angular/router';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { SouthType } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { EmptyRouteComponent } from '../../../test/empty-route.component';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal.component';
 
-@Component({ template: '', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush })
-class DummyComponent {}
-const routes: Routes = [{ path: 'south/create', component: DummyComponent }];
+const routes: Routes = [{ path: 'south/create', component: EmptyRouteComponent }];
+
+class ChooseSouthConnectorTypeModalComponentTester {
+  readonly fixture = TestBed.createComponent(ChooseSouthConnectorTypeModalComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly categories = this.root.getByRole('heading', { level: 1 });
+  readonly types = this.root.getByCss('.category-button');
+  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
+}
 
 const southTypes: Array<SouthType> = [
   {
@@ -52,32 +58,39 @@ describe('ChooseSouthConnectorTypeModalComponent', () => {
     });
   });
 
-  test('should display grouped south types', async () => {
-    const fixture = TestBed.createComponent(ChooseSouthConnectorTypeModalComponent);
-    fixture.detectChanges();
+  test('should display the south types grouped by category', async () => {
+    const tester = new ChooseSouthConnectorTypeModalComponentTester();
 
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.category-button').nth(0)).toBeInTheDocument();
+    await expect.element(tester.categories).toHaveLength(2);
+    await expect.element(tester.categories.nth(0)).toHaveTextContent('File');
+    await expect.element(tester.categories.nth(1)).toHaveTextContent('Database');
+    await expect.element(tester.types).toHaveLength(2);
+    await expect.element(tester.types.nth(0)).toMatchTextContent('Folder scanner');
+    await expect.element(tester.types.nth(0)).toMatchTextContent('Read files from a local or remote folder');
+    await expect.element(tester.types.nth(1)).toMatchTextContent('Query Microsoft SQL Server™ databases');
   });
 
   test('should display a beta badge only for beta south types', async () => {
-    const fixture = TestBed.createComponent(ChooseSouthConnectorTypeModalComponent);
-    fixture.detectChanges();
+    const tester = new ChooseSouthConnectorTypeModalComponentTester();
 
-    const root = page.elementLocator(fixture.nativeElement);
-    const buttons = root.getByCss('.category-button');
-    await expect.element(buttons.nth(0).getByCss('.beta-badge')).not.toBeInTheDocument();
-    await expect.element(buttons.nth(1).getByCss('.beta-badge')).toBeInTheDocument();
-    await expect.element(buttons.nth(1).getByCss('.beta-badge')).toMatchTextContent('Beta');
-    await expect.element(buttons.nth(1).getByCss('.beta-badge')).toHaveClass('bg-secondary');
+    await expect.element(tester.types.nth(0).getByText('Beta')).not.toBeInTheDocument();
+    await expect.element(tester.types.nth(1).getByText('Beta')).toBeVisible();
   });
 
-  test('should close modal on type selection', () => {
-    const fixture = TestBed.createComponent(ChooseSouthConnectorTypeModalComponent);
-    fixture.detectChanges();
+  test('should close the modal and navigate to the creation page on type selection', async () => {
+    const tester = new ChooseSouthConnectorTypeModalComponentTester();
 
-    fixture.componentInstance.selectType('folder-scanner');
+    await tester.types.nth(0).click();
 
     expect(activeModal.close).toHaveBeenCalled();
+    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/south/create?type=folder-scanner'));
+  });
+
+  test('should dismiss the modal on cancel', async () => {
+    const tester = new ChooseSouthConnectorTypeModalComponentTester();
+
+    await tester.cancelButton.click();
+
+    expect(activeModal.dismiss).toHaveBeenCalled();
   });
 });
