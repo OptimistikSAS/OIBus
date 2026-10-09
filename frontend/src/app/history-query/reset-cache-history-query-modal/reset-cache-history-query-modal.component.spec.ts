@@ -11,7 +11,7 @@ import { ResetCacheHistoryQueryModalComponent } from './reset-cache-history-quer
 class ResetCacheHistoryQueryModalComponentTester {
   readonly fixture = TestBed.createComponent(ResetCacheHistoryQueryModalComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly message = this.root.getByText('Do you want to reset the history query cache ?');
+  readonly message = this.root.getByText('Do you want to reset the history query cache?');
   readonly yesButton = this.root.getByRole('button', { name: 'Yes' });
   readonly noButton = this.root.getByRole('button', { name: 'No' });
 }

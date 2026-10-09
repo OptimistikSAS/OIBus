@@ -1898,7 +1898,8 @@
         "filename": "Nom du fichier",
         "modified-time": "Heure de modification",
         "group-section-title": "Dernière valeur suivie du groupe",
-        "error-title": "Impossible de récupérer la dernière valeur mise en cache"
+        "error-title": "Impossible de récupérer la dernière valeur mise en cache",
+        "files-tracked": "{{ count }} fichier(s) suivi(s)"
       },
       "all-deleted": "Éléments du connecteur South supprimés",
       "delete-all": "Tout supprimer",
@@ -2808,7 +2809,8 @@
       "delete": "Supprimer la requête d'historique",
       "copy-cache-path": "Copier le chemin du cache dans le presse-papiers",
       "audit": "Voir l'historique d'audit de la requête d'historique"
-    }
+    },
+    "reset-cache-confirmation": "Voulez-vous réinitialiser le cache de la requête d'historique ?"
   },
   "explore-cache": {
     "title": "Cache de {{ name }}",
@@ -3096,7 +3098,8 @@
       "remote-update-disabled": "La mise à jour à distance est désactivée sur cet OIBus (démarré avec --ignoreRemoteUpdate), la commande de mise à niveau de version ne peut donc pas être activée.",
       "test-connection": "Tester la connexion",
       "test-connection-success": "Connexion réussie",
-      "test-connection-error": "Erreur lors du test de connexion"
+      "test-connection-error": "Erreur lors du test de connexion",
+      "edit": "Modifier l'enregistrement"
     },
     "commands": {
       "title": "Liste des commandes",

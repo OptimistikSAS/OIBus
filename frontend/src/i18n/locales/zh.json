@@ -1898,7 +1898,8 @@
         "filename": "文件名",
         "modified-time": "修改时间",
         "group-section-title": "组的最新跟踪值",
-        "error-title": "无法获取最新缓存值"
+        "error-title": "无法获取最新缓存值",
+        "files-tracked": "已跟踪 {{ count }} 个文件"
       },
       "all-deleted": "South 连接器项已删除",
       "delete-all": "全部删除",
@@ -2808,7 +2809,8 @@
       "delete": "删除历史查询",
       "copy-cache-path": "复制缓存路径到剪贴板",
       "audit": "查看历史查询审计历史"
-    }
+    },
+    "reset-cache-confirmation": "是否要重置历史查询缓存？"
   },
   "explore-cache": {
     "title": "{{ name }} 的缓存",
@@ -3096,7 +3098,8 @@
       "remote-update-disabled": "此 OIBus 已禁用远程更新（以 --ignoreRemoteUpdate 启动），因此无法启用 upgrade-version 命令。",
       "test-connection": "测试连接",
       "test-connection-success": "连接成功",
-      "test-connection-error": "测试连接时出错"
+      "test-connection-error": "测试连接时出错",
+      "edit": "编辑注册"
     },
     "commands": {
       "title": "命令列表",
