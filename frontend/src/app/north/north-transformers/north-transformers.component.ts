@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, output } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -8,7 +9,6 @@ import { firstValueFrom, of, switchMap } from 'rxjs';
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
 import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 
@@ -27,17 +27,17 @@ import { EditNorthTransformerModalComponent } from './edit-north-transformer-mod
   selector: 'oib-north-transformers',
   imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent, NgbTooltip],
   templateUrl: './north-transformers.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './north-transformers.component.scss'
 })
 export class NorthTransformersComponent {
-  private confirmationService = inject(ConfirmationService);
-  private notificationService = inject(NotificationService);
-  private modalService = inject(ModalService);
-  private northConnectorService = inject(NorthConnectorService);
-  private southConnectorService = inject(SouthConnectorService);
-  private translateService = inject(TranslateService);
-  private docsUrlService = inject(DocsUrlService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly modalService = inject(ModalService);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly translateService = inject(TranslateService);
+  private readonly docsUrlService = inject(DocsUrlService);
 
   readonly helpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#transformers');
 
@@ -51,22 +51,12 @@ export class NorthTransformersComponent {
   readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly transformers = input.required<Array<TransformerDTO>>();
 
-  // Array used to store subscription on north connector creation
-  readonly transformersWithOptions = signal<Array<TransformerDTOWithOptions>>([]);
-  southConnectors: Array<SouthConnectorLightDTO> = [];
-
-  constructor() {
-    // Initialize local transformers when editing, and keep them in sync with input
-    effect(() => {
-      const connector = this.northConnector();
-      if (connector) {
-        this.transformersWithOptions.set([...connector.transformers]);
-      }
-    });
-    this.southConnectorService.list().subscribe(southConnectors => {
-      this.southConnectors = southConnectors;
-    });
-  }
+  // Local transformers: initialized from the edited connector and kept in sync with it, then updated in memory
+  readonly transformersWithOptions = linkedSignal<NorthConnectorDTO | null, Array<TransformerDTOWithOptions>>({
+    source: this.northConnector,
+    computation: (connector, previous) => (connector ? [...connector.transformers] : (previous?.value ?? []))
+  });
+  private readonly southConnectors = toSignal(this.southConnectorService.list(), { initialValue: [] });
 
   addTransformer(e: Event) {
     e.preventDefault();
@@ -79,10 +69,10 @@ export class NorthTransformersComponent {
       }
     });
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
-    component.directSave = this.saveChangesDirectly();
+    component.directSave.set(this.saveChangesDirectly());
 
     component.prepareForCreation(
-      this.southConnectors,
+      this.southConnectors(),
       this.scanModes(),
       this.certificates(),
       this.transformers(),
@@ -97,8 +87,11 @@ export class NorthTransformersComponent {
         switchMap((transformer: TransformerDTOWithOptions) => {
           const northConnector = this.northConnector();
           if (northConnector && this.saveChangesDirectly()) {
-            transformer.id = ''; // remove temp_ id when creating directly
-            return this.northConnectorService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
+            // remove temp_ id when creating directly
+            const transformerToCreate = { ...transformer, id: '' };
+            return this.northConnectorService
+              .addOrEditTransformer(northConnector.id, transformerToCreate)
+              .pipe(switchMap(() => of(transformerToCreate)));
           }
           this.transformersWithOptions.update(transformersWithOptions => [...transformersWithOptions, transformer]);
           return of(transformer);
@@ -122,10 +115,10 @@ export class NorthTransformersComponent {
       }
     });
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
-    component.directSave = this.saveChangesDirectly();
+    component.directSave.set(this.saveChangesDirectly());
 
     component.prepareForEdition(
-      this.southConnectors,
+      this.southConnectors(),
       this.scanModes(),
       this.certificates(),
       this.transformers(),

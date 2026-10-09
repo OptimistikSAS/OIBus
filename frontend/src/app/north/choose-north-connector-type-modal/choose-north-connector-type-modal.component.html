@@ -3,13 +3,14 @@
 </div>
 <div class="modal-body">
   <div class="row">
-    @for (group of groupedNorthTypes(); track group) {
+    @for (group of groupedNorthTypes(); track group.category) {
       <div class="col-lg-12 col-md-12">
         <h1 class="mt-2" [translate]="'enums.categories.' + group.category"></h1>
       </div>
       @for (northType of group.types; track northType.id) {
         <div class="col-lg-4 col-md-4 oib-modal-container-list">
           <button
+            type="button"
             class="btn d-flex align-items-center category-button oib-modal-content-list position-relative"
             (click)="selectType(northType.id)"
           >

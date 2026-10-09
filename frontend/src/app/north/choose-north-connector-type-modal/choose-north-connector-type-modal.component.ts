@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -16,15 +17,15 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
   selector: 'oib-choose-north-connector-type-modal',
   templateUrl: './choose-north-connector-type-modal.component.html',
   styleUrl: './choose-north-connector-type-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OIBusNorthTypeEnumPipe, OIBusNorthTypeDescriptionEnumPipe, OIBusNorthCategoryEnumPipe]
 })
 export class ChooseNorthConnectorTypeModalComponent {
-  private modal = inject(NgbActiveModal);
-  private northConnectorService = inject(NorthConnectorService);
-  private router = inject(Router);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly router = inject(Router);
 
-  readonly northTypes = signal<Array<NorthType>>([]);
+  readonly northTypes = toSignal(this.northConnectorService.getNorthTypes(), { initialValue: [] });
   readonly groupedNorthTypes = computed<Array<{ category: string; types: Array<NorthType> }>>(() => {
     const groupedTypes: Record<string, Array<NorthType>> = {};
 
@@ -41,12 +42,6 @@ export class ChooseNorthConnectorTypeModalComponent {
       types: groupedTypes[category]
     }));
   });
-
-  constructor() {
-    this.northConnectorService.getNorthTypes().subscribe(types => {
-      this.northTypes.set(types);
-    });
-  }
 
   selectType(type: string) {
     this.modal.close();
