@@ -841,7 +841,7 @@
         "warning": "This replaces all connectors, history queries, scan modes, ip filters, transformers, certificates, users and engine settings on this instance and cannot be undone.",
         "confirm-message": "This replaces all connectors, history queries, scan modes, ip filters, transformers, certificates, users and engine settings on this instance and cannot be undone. Are you sure you want to continue?",
         "file": "Configuration file",
-        "file-too-large": "The selected file is too large. Maximum size is 10 MB",
+        "file-too-large": "The selected file is too large. Maximum size is {{ maxSize }} MB",
         "success": "Configuration successfully imported.",
         "applied-upgrades": "Applied upgrades",
         "upgraded-versions": "The configuration was upgraded from OIBus {{fromVersion}} to {{toVersion}}.",
