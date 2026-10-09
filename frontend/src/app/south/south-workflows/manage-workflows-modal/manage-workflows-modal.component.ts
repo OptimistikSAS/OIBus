@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -60,7 +61,7 @@ export function toConfigurationWorkflowCommand(workflow: ConfigurationWorkflowDT
   selector: 'oib-manage-workflows-modal',
   templateUrl: './manage-workflows-modal.component.html',
   styleUrl: './manage-workflows-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
 export default class ManageWorkflowsModalComponent {
@@ -72,18 +73,20 @@ export default class ManageWorkflowsModalComponent {
   private router = inject(Router);
   private fb = inject(NonNullableFormBuilder);
 
-  directSave = true;
+  readonly directSave = signal(true);
   /** The connector id - or `create` for a connector being created (in-memory mode only). */
-  southId!: string;
-  southType!: OIBusSouthType;
-  southSettings!: SouthSettings;
-  scanModes: Array<ScanModeDTO> = [];
-  groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  manifest!: SouthConnectorManifest;
-  // mutated in place (and shared by reference with edit-south in in-memory mode): displayedWorkflows is always set to a
-  // new array afterwards, which re-renders the template (including workflows.length)
-  workflows: Array<ConfigurationWorkflowCommandDTO> = [];
-  readonly displayedWorkflows = signal<Array<ConfigurationWorkflowCommandDTO>>([]);
+  private southId!: string;
+  private southType!: OIBusSouthType;
+  private southSettings!: SouthSettings;
+  private readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  private groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  private manifest!: SouthConnectorManifest;
+  /**
+   * The workflows, mutated in place - in in-memory mode, this is edit-south's own array (shared by reference), which is
+   * how the page gets the changes back. The template renders the `workflows` snapshot instead, refreshed after every change.
+   */
+  private sharedWorkflows: Array<ConfigurationWorkflowCommandDTO> = [];
+  readonly workflows = signal<Array<ConfigurationWorkflowCommandDTO>>([]);
   readonly loading = signal(true);
   readonly runningWorkflowId = signal<string | null>(null);
 
@@ -94,11 +97,12 @@ export default class ManageWorkflowsModalComponent {
   // this modal (which only has its own point-in-time snapshot of the connector) needing to know how.
   private onWorkflowRun?: () => void;
 
-  searchControl = this.fb.control(null as string | null);
-
-  constructor() {
-    this.searchControl.valueChanges.subscribe(() => this.refreshDisplayed());
-  }
+  readonly searchControl = this.fb.control(null as string | null);
+  private readonly searchText = toSignal(this.searchControl.valueChanges, { initialValue: this.searchControl.value });
+  readonly displayedWorkflows = computed(() => {
+    const searchText = (this.searchText() || '').toLowerCase();
+    return this.workflows().filter(workflow => !searchText || workflow.name.toLowerCase().includes(searchText));
+  });
 
   /** Direct mode: workflows are loaded from, and every change saved to, the REST endpoints. */
   prepareForDirectSave(
@@ -111,11 +115,11 @@ export default class ManageWorkflowsModalComponent {
     deleteGroup: DeleteGroup,
     onWorkflowRun?: () => void
   ) {
-    this.directSave = true;
+    this.directSave.set(true);
     this.southId = southId;
     this.southType = manifest.id;
     this.southSettings = southSettings;
-    this.scanModes = scanModes;
+    this.scanModes.set(scanModes);
     this.manifest = manifest;
     this.groups = groups;
     this.addOrEditGroup = addOrEditGroup;
@@ -123,9 +127,9 @@ export default class ManageWorkflowsModalComponent {
     this.onWorkflowRun = onWorkflowRun;
     this.loading.set(true);
     this.configurationWorkflowService.list(this.southId).subscribe(workflows => {
-      this.workflows = workflows.map(workflow => toConfigurationWorkflowCommand(workflow));
+      this.sharedWorkflows = workflows.map(workflow => toConfigurationWorkflowCommand(workflow));
       this.loading.set(false);
-      this.refreshDisplayed();
+      this.refreshWorkflows();
     });
   }
 
@@ -143,24 +147,24 @@ export default class ManageWorkflowsModalComponent {
     addOrEditGroup: AddOrEditGroup,
     deleteGroup: DeleteGroup
   ) {
-    this.directSave = false;
-    this.workflows = workflows;
+    this.directSave.set(false);
+    this.sharedWorkflows = workflows;
     this.southId = southId;
     this.southType = manifest.id;
     this.southSettings = southSettings;
-    this.scanModes = scanModes;
+    this.scanModes.set(scanModes);
     this.manifest = manifest;
     this.groups = groups;
     this.addOrEditGroup = addOrEditGroup;
     this.deleteGroup = deleteGroup;
     this.onWorkflowRun = undefined;
     this.loading.set(false);
-    this.refreshDisplayed();
+    this.refreshWorkflows();
   }
 
-  private refreshDisplayed() {
-    const searchText = (this.searchControl.value || '').toLowerCase();
-    this.displayedWorkflows.set(this.workflows.filter(workflow => !searchText || workflow.name.toLowerCase().includes(searchText)));
+  /** Re-renders the workflow list after it was changed in place. */
+  private refreshWorkflows() {
+    this.workflows.set([...this.sharedWorkflows]);
   }
 
   close() {
@@ -171,7 +175,7 @@ export default class ManageWorkflowsModalComponent {
     if (!workflow.scanModeId) {
       return null;
     }
-    return this.scanModes.find(scanMode => scanMode.id === workflow.scanModeId)?.name ?? null;
+    return this.scanModes().find(scanMode => scanMode.id === workflow.scanModeId)?.name ?? null;
   }
 
   /** Translation key for this workflow's mode badge - local (create/update items) or remote (push to OIAnalytics). */
@@ -182,15 +186,15 @@ export default class ManageWorkflowsModalComponent {
   private openEditModal(): { component: EditWorkflowModalComponent; result: Observable<ConfigurationWorkflowCommandDTO> } {
     const modalRef = this.modalService.open(EditWorkflowModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditWorkflowModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave;
+    component.directSave = this.directSave();
     return { component, result: modalRef.result };
   }
 
   onAdd() {
     const { component, result } = this.openEditModal();
     component.prepareForCreation(
-      this.scanModes,
-      this.workflows,
+      this.scanModes(),
+      this.sharedWorkflows,
       this.manifest,
       this.southId,
       this.southSettings,
@@ -204,8 +208,8 @@ export default class ManageWorkflowsModalComponent {
   onEdit(workflow: ConfigurationWorkflowCommandDTO) {
     const { component, result } = this.openEditModal();
     component.prepareForEdition(
-      this.scanModes,
-      this.workflows,
+      this.scanModes(),
+      this.sharedWorkflows,
       this.manifest,
       workflow,
       this.southId,
@@ -215,18 +219,18 @@ export default class ManageWorkflowsModalComponent {
       this.deleteGroup
     );
     result.subscribe(command => {
-      const save$: Observable<ConfigurationWorkflowCommandDTO> = this.directSave
+      const save$: Observable<ConfigurationWorkflowCommandDTO> = this.directSave()
         ? this.configurationWorkflowService
             .update(this.southId, workflow.id!, command)
             .pipe(map(updated => toConfigurationWorkflowCommand(updated)))
         : of({ ...command, id: workflow.id });
       save$.subscribe(updated => {
-        const index = this.workflows.findIndex(w => w.id === workflow.id);
+        const index = this.sharedWorkflows.findIndex(w => w.id === workflow.id);
         if (index >= 0) {
-          this.workflows[index] = updated;
+          this.sharedWorkflows[index] = updated;
         }
-        this.refreshDisplayed();
-        if (this.directSave) {
+        this.refreshWorkflows();
+        if (this.directSave()) {
           this.notificationService.success('south.workflows.updated');
         }
       });
@@ -236,8 +240,8 @@ export default class ManageWorkflowsModalComponent {
   onDuplicate(workflow: ConfigurationWorkflowCommandDTO) {
     const { component, result } = this.openEditModal();
     component.prepareForCopy(
-      this.scanModes,
-      this.workflows,
+      this.scanModes(),
+      this.sharedWorkflows,
       this.manifest,
       workflow,
       this.southId,
@@ -250,14 +254,14 @@ export default class ManageWorkflowsModalComponent {
   }
 
   private createWorkflow(command: ConfigurationWorkflowCommandDTO) {
-    if (!this.directSave) {
-      this.workflows.push({ ...command, id: `${TEMP_ID_PREFIX}${Date.now()}` });
-      this.refreshDisplayed();
+    if (!this.directSave()) {
+      this.sharedWorkflows.push({ ...command, id: `${TEMP_ID_PREFIX}${Date.now()}` });
+      this.refreshWorkflows();
       return;
     }
     this.configurationWorkflowService.create(this.southId, command).subscribe(created => {
-      this.workflows.push(toConfigurationWorkflowCommand(created));
-      this.refreshDisplayed();
+      this.sharedWorkflows.push(toConfigurationWorkflowCommand(created));
+      this.refreshWorkflows();
       this.notificationService.success('south.workflows.created');
     });
   }
@@ -268,13 +272,13 @@ export default class ManageWorkflowsModalComponent {
       interpolateParams: { name: workflow.name }
     });
     const removeFromList = () => {
-      const index = this.workflows.findIndex(w => w.id === workflow.id);
+      const index = this.sharedWorkflows.findIndex(w => w.id === workflow.id);
       if (index >= 0) {
-        this.workflows.splice(index, 1);
+        this.sharedWorkflows.splice(index, 1);
       }
-      this.refreshDisplayed();
+      this.refreshWorkflows();
     };
-    if (!this.directSave) {
+    if (!this.directSave()) {
       confirmation$.subscribe(() => removeFromList());
       return;
     }
@@ -290,7 +294,7 @@ export default class ManageWorkflowsModalComponent {
   }
 
   onRunNow(workflow: ConfigurationWorkflowCommandDTO) {
-    if (!this.directSave) {
+    if (!this.directSave()) {
       return;
     }
     this.runningWorkflowId.set(workflow.id);
@@ -314,7 +318,7 @@ export default class ManageWorkflowsModalComponent {
     // resolve first - see PreviewWorkflowModalComponent.prepareForPreview, which makes the request itself.
     const modalRef = this.modalService.open(PreviewWorkflowModalComponent, { size: 'xl' });
     const component: PreviewWorkflowModalComponent = modalRef.componentInstance;
-    if (this.directSave) {
+    if (this.directSave()) {
       component.prepareForPreview(this.southId, workflow.id!, workflow.name);
       return;
     }
@@ -325,7 +329,7 @@ export default class ManageWorkflowsModalComponent {
   }
 
   onViewHistory(workflow: ConfigurationWorkflowCommandDTO) {
-    if (!this.directSave) {
+    if (!this.directSave()) {
       return;
     }
     this.modal.close();

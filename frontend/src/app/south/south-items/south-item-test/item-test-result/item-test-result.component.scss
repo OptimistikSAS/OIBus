@@ -48,3 +48,11 @@ $containerMinHeight: 30vh;
 .grid-table-row:hover > div {
   background-color: $mediumGrey !important;
 }
+
+.break-word {
+  overflow-wrap: break-word;
+}
+
+.break-anywhere {
+  overflow-wrap: anywhere;
+}

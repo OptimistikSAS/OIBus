@@ -23,3 +23,48 @@
 .modal-dialog {
   max-width: 90vw;
 }
+
+.error-icon {
+  color: red;
+}
+
+.valid-icon {
+  color: green;
+}
+
+.name-column {
+  width: 200px;
+}
+
+.scan-mode-column {
+  width: 120px;
+}
+
+.group-column {
+  width: 150px;
+}
+
+.setting-column {
+  min-width: 150px;
+  max-width: 250px;
+}
+
+.name-cell {
+  max-width: 200px;
+}
+
+.error-cell {
+  max-width: 400px;
+}
+
+.scan-mode-cell {
+  max-width: 120px;
+}
+
+.group-cell {
+  max-width: 150px;
+}
+
+.setting-cell {
+  max-width: 250px;
+}
