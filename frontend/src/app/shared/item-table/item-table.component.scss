@@ -8,13 +8,21 @@
   text-align: center;
 }
 
+.date-column {
+  width: 10rem;
+}
+
+.actions-column {
+  width: 8rem;
+}
+
 .sort-button {
   background: none;
   border: none;
   font-weight: bold;
 }
 
-.south-item input[type='checkbox'] {
+.item-checkbox {
   width: 16px;
   height: 16px;
   cursor: pointer;

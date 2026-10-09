@@ -3392,7 +3392,8 @@
         "duplicate": "Duplicate item",
         "delete": "Delete item",
         "audit": "View item audit history"
-      }
+      },
+      "search-placeholder": "Enter text to filter items"
     },
     "monitoring": {
       "title": "{{ name }} metrics",
