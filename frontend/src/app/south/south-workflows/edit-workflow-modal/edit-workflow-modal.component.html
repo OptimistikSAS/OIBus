@@ -156,7 +156,7 @@
               (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
             />
             <button type="button" class="btn btn-secondary" id="add-identity-key-field" (click)="addIdentityKeyField()">
-              <span class="fa fa-plus"></span>
+              <span class="fa-solid fa-plus"></span>
             </button>
           </div>
         </div>
@@ -216,14 +216,14 @@
                           class="btn btn-link px-1 py-0 save-eligibility-condition"
                           (click)="saveEligibilityCondition()"
                         >
-                          <span class="fa fa-check"></span>
+                          <span class="fa-solid fa-check"></span>
                         </button>
                         <button
                           type="button"
                           class="btn btn-link px-1 py-0 cancel-eligibility-condition"
                           (click)="cancelEditEligibilityCondition()"
                         >
-                          <span class="fa fa-times"></span>
+                          <span class="fa-solid fa-times"></span>
                         </button>
                       </div>
                     </td>
@@ -238,14 +238,14 @@
                           class="btn btn-link px-1 py-0 edit-eligibility-condition"
                           (click)="startEditEligibilityCondition($index)"
                         >
-                          <span class="fa fa-pencil"></span>
+                          <span class="fa-solid fa-pencil"></span>
                         </button>
                         <button
                           type="button"
                           class="btn btn-link px-1 py-0 remove-eligibility-condition"
                           (click)="removeEligibilityCondition($index)"
                         >
-                          <span class="fa fa-trash"></span>
+                          <span class="fa-solid fa-trash-can"></span>
                         </button>
                       </div>
                     </td>
@@ -283,7 +283,7 @@
             />
           }
           <button type="button" class="btn btn-secondary btn-sm" id="add-eligibility-condition" (click)="addEligibilityCondition()">
-            <span class="fa fa-plus"></span>
+            <span class="fa-solid fa-plus"></span>
           </button>
         </div>
       </div>
@@ -342,10 +342,10 @@
                                 </button>
                                 <div class="d-flex gap-1 pe-2">
                                   <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
-                                    <i class="fa fa-pencil"></i>
+                                    <i class="fa-solid fa-pencil"></i>
                                   </button>
                                   <button type="button" class="btn btn-sm btn-link p-0 text-danger" (click)="onDeleteGroup(group, $event)">
-                                    <i class="fa fa-trash"></i>
+                                    <i class="fa-solid fa-trash-can"></i>
                                   </button>
                                 </div>
                               </div>
@@ -419,7 +419,7 @@
       [oib-save-button]="state"
       form="workflow-form"
       [translationKey]="directSave ? 'common.save' : 'common.ok'"
-      [iconClass]="directSave ? 'fa-save' : 'fa-check'"
+      [iconClass]="directSave ? 'fa-floppy-disk' : 'fa-check'"
     ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
