@@ -1,12 +1,24 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
+import { InputTemplate, TransformerTestRequest, TransformerTestResponse } from '@oibus/shared/api/transformer.model';
 
+import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { TransformerService } from './transformer.service';
+
+interface HttpCase {
+  name: string;
+  call: (service: TransformerService) => Observable<unknown>;
+  method: string;
+  url: string;
+  body: unknown;
+  response: unknown;
+}
 
 describe('TransformerService', () => {
   let http: HttpTestingController;
@@ -22,72 +34,120 @@ describe('TransformerService', () => {
 
   afterEach(() => http.verify());
 
-  test('should get all transformers', () => {
-    let expectedTransformers: Array<TransformerDTO> = [];
-    service.list().subscribe(transformers => (expectedTransformers = transformers));
+  const command = testData.transformers.command;
+  const transformer = testData.transformers.customList[0];
+  const testRequest: TransformerTestRequest = { inputData: '{}', options: { precision: 2 } };
+  const testResponse: TransformerTestResponse = {
+    output: '{"value":42}',
+    metadata: { contentType: 'any', contentFile: '', contentSize: 12, createdAt: testData.constants.dates.DATE_1, numberOfElement: 1 }
+  };
+  const itemTestResult: SouthConnectorItemTestResult = {
+    raw: { type: 'any-content', content: 'raw' },
+    transformed: { type: 'any-content', content: 'transformed' },
+    connectionDuration: 1,
+    queryDuration: 2
+  };
+  const inputTemplate: InputTemplate = { type: 'time-values', data: '[]', description: 'Sample' };
 
-    http.expectOne('/api/transformers/list').flush([{ name: 'Transformer 1' }, { name: 'Transformer 2' }]);
+  test.each<HttpCase>([
+    {
+      name: 'list the transformers',
+      call: s => s.list(),
+      method: 'GET',
+      url: '/api/transformers/list',
+      body: null,
+      response: testData.transformers.customList
+    },
+    {
+      name: 'get a transformer',
+      call: s => s.findById('id1'),
+      method: 'GET',
+      url: '/api/transformers/id1',
+      body: null,
+      response: transformer
+    },
+    {
+      name: 'create a transformer',
+      call: s => s.create(command),
+      method: 'POST',
+      url: '/api/transformers',
+      body: command,
+      response: transformer
+    },
+    {
+      name: 'update a transformer',
+      call: s => s.update('id1', command),
+      method: 'PUT',
+      url: '/api/transformers/id1',
+      body: command,
+      response: null
+    },
+    {
+      name: 'delete a transformer',
+      call: s => s.delete('id1'),
+      method: 'DELETE',
+      url: '/api/transformers/id1',
+      body: null,
+      response: null
+    },
+    {
+      name: 'test a custom transformer',
+      call: s => s.test(command, testRequest),
+      method: 'POST',
+      url: '/api/transformers/test',
+      body: { transformer: command, testRequest },
+      response: testResponse
+    },
+    {
+      name: 'test a configured transformer',
+      call: s => s.testTransformer('id1', testRequest),
+      method: 'POST',
+      url: '/api/transformers/id1/test',
+      body: testRequest,
+      response: itemTestResult
+    },
+    {
+      name: 'get an input template',
+      call: s => s.getInputTemplate('time-values'),
+      method: 'GET',
+      url: '/api/transformers/template/time-values',
+      body: null,
+      response: inputTemplate
+    }
+  ])('should $name', async ({ call, method, url, body, response }) => {
+    const result = await expectHttp(http, call(service), { method, url }, { body, response });
 
-    expect(expectedTransformers.length).toBe(2);
+    expect(result).toEqual(response);
   });
 
-  test('should get a transformer', () => {
-    let expectedTransformer: TransformerDTO | null = null;
-    const transformer = { id: 'id1' } as TransformerDTO;
+  test('should share the transformer list between subscribers', async () => {
+    const list = await expectHttp(
+      http,
+      service.list(),
+      { method: 'GET', url: '/api/transformers/list' },
+      { response: testData.transformers.customList }
+    );
 
-    service.findById('id1').subscribe(c => (expectedTransformer = c));
-
-    http.expectOne({ url: '/api/transformers/id1', method: 'GET' }).flush(transformer);
-    expect(expectedTransformer!).toEqual(transformer);
+    // no new request: http.verify() fails if one is made
+    await expect(firstValueFrom(service.list())).resolves.toEqual(list);
   });
 
-  test('should create a transformer', () => {
-    let done = false;
-    const command = testData.transformers.command;
+  test.each<Omit<HttpCase, 'body' | 'response'>>([
+    { name: 'create', call: s => s.create(command), method: 'POST', url: '/api/transformers' },
+    { name: 'update', call: s => s.update('id1', command), method: 'PUT', url: '/api/transformers/id1' },
+    { name: 'delete', call: s => s.delete('id1'), method: 'DELETE', url: '/api/transformers/id1' }
+  ])('should reload the transformer list after a $name', async ({ call, method, url }) => {
+    await expectHttp(
+      http,
+      service.list(),
+      { method: 'GET', url: '/api/transformers/list' },
+      { response: testData.transformers.customList }
+    );
 
-    service.create(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/transformers' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
+    await expectHttp(http, call(service), { method, url });
 
-  test('should update a transformer', () => {
-    let done = false;
-    const command = testData.transformers.command;
-
-    service.update('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/transformers/id1' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should delete a transformer', () => {
-    let done = false;
-    service.delete('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/transformers/id1' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should test a transformer', () => {
-    let done = false;
-    const command = testData.transformers.command;
-    const testRequest = { inputData: '{}', options: {} };
-
-    service.test(command, testRequest).subscribe(() => (done = true));
-    const testReq = http.expectOne({ method: 'POST', url: '/api/transformers/test' });
-    expect(testReq.request.body).toEqual({ transformer: command, testRequest });
-    testReq.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should get input template', () => {
-    let result: { type: string; data: string; description: string } | null = null;
-    const expected = { type: 'time-values', data: '[]', description: 'Sample' };
-    service.getInputTemplate('time-values').subscribe(t => (result = t));
-    http.expectOne({ url: '/api/transformers/template/time-values', method: 'GET' }).flush(expected);
-    expect(result).toEqual(expected);
+    const reloadedList = [transformer];
+    http.expectOne({ method: 'GET', url: '/api/transformers/list' }).flush(reloadedList);
+    await expect(firstValueFrom(service.list())).resolves.toEqual(reloadedList);
   });
 });

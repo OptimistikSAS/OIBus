@@ -3,8 +3,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { ChangePasswordCommand, UserDTO } from '@oibus/shared/api/user.model';
+import { ChangePasswordCommand } from '@oibus/shared/api/user.model';
 
+import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { UserSettingsService } from './user-settings.service';
 
@@ -22,37 +23,32 @@ describe('UserSettingsService', () => {
 
   afterEach(() => http.verify());
 
-  test('should get user settings', () => {
-    let actualSettings: UserDTO | null = null;
-    service.currentUser().subscribe(settings => (actualSettings = settings));
+  test('should get the current user from the server', async () => {
+    const user = testData.users.list[0];
 
-    const expectedSettings = { id: 'id1', login: 'admin' } as UserDTO;
-    http.expectOne({ method: 'GET', url: '/api/users/current-user' }).flush(expectedSettings);
+    const result = await expectHttp(http, service.currentUser(), { method: 'GET', url: '/api/users/current-user' }, { response: user });
 
-    expect(actualSettings!).toEqual(expectedSettings);
+    expect(result).toEqual(user);
   });
 
-  test('should update user settings', () => {
-    let done = false;
+  test('should update the user settings', async () => {
     const command = testData.users.command;
-    service.update('id1', command).subscribe(() => (done = true));
 
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/users/id1' });
-    expect(testRequest.request.body).toBe(command);
-    testRequest.flush(null);
+    const result = await expectHttp(http, service.update('id1', command), { method: 'PUT', url: '/api/users/id1' }, { body: command });
 
-    expect(done).toBe(true);
+    expect(result).toBeNull();
   });
 
-  test('should change password', () => {
-    let done = false;
+  test('should change the password', async () => {
     const command: ChangePasswordCommand = { currentPassword: 'current-password', newPassword: 'new-password' };
-    service.updatePassword('id1', command).subscribe(() => (done = true));
 
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/users/id1/password' });
-    expect(testRequest.request.body).toBe(command);
-    testRequest.flush(null);
+    const result = await expectHttp(
+      http,
+      service.updatePassword('id1', command),
+      { method: 'POST', url: '/api/users/id1/password' },
+      { body: command }
+    );
 
-    expect(done).toBe(true);
+    expect(result).toBeNull();
   });
 });

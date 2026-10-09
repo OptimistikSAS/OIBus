@@ -1,20 +1,67 @@
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import {
-  EngineLoggerCommandDTO,
-  EngineMemoryDumpDTO,
-  EngineNameCommandDTO,
-  EngineProxyCommandDTO,
-  EngineSettingsDTO,
-  EngineWebServerCommandDTO,
-  OIBusInfo
-} from '@oibus/shared/api/engine.model';
+import { EngineSettingsDTO, HomeMetrics } from '@oibus/shared/api/engine.model';
 
+import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
+import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { EngineService } from './engine.service';
+
+interface HttpCase {
+  name: string;
+  call: (service: EngineService) => Observable<unknown>;
+  method: string;
+  url: string;
+  body: unknown;
+  response: unknown;
+}
+
+/** Background requests must not notify every failure, only an expired session */
+function expectErrorsIgnoredUnlessUnauthorized(request: TestRequest) {
+  const shouldIgnore = request.request.context.get(SHOULD_IGNORE_ERROR_PREDICATE);
+  expect(shouldIgnore(new HttpErrorResponse({ status: 500 }))).toBe(true);
+  expect(shouldIgnore(new HttpErrorResponse({ status: 0 }))).toBe(true);
+  expect(shouldIgnore(new HttpErrorResponse({ status: 401 }))).toBe(false);
+}
+
+const engineCommand = testData.engine.command;
+const engineSettings: EngineSettingsDTO = {
+  id: 'engineId1',
+  createdBy: { id: 'userId1', friendlyName: 'User 1' },
+  updatedBy: { id: 'userId1', friendlyName: 'User 1' },
+  createdAt: testData.constants.dates.DATE_1,
+  updatedAt: testData.constants.dates.DATE_2,
+  version: '3.4.9',
+  launcherVersion: '3.4.9',
+  auditRetentionDuration: null,
+  general: engineCommand.general,
+  webServer: engineCommand.webServer,
+  proxyServer: {
+    enabled: true,
+    port: 9000,
+    forward: { enabled: false, url: null, username: null, password: null },
+    username: null,
+    password: null
+  },
+  logger: {
+    console: { level: 'silent' },
+    file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
+    database: { level: 'info', maxNumberOfLogs: 100000 },
+    loki: { level: 'silent', interval: 60, address: '', username: '', password: '' },
+    oia: { level: 'silent', interval: 10 },
+    syslog: { level: 'silent', host: '', port: 514, protocol: 'udp4' }
+  }
+};
+const homeMetrics: HomeMetrics = {
+  norths: { northId1: testData.north.metrics },
+  engine: testData.engine.metrics,
+  souths: { southId1: testData.south.metrics }
+};
 
 describe('EngineService', () => {
   let http: HttpTestingController;
@@ -30,158 +77,149 @@ describe('EngineService', () => {
 
   afterEach(() => http.verify());
 
-  test('should get engine settings', () => {
-    let expectedSettings: EngineSettingsDTO | null = null;
-    const engine = { id: 'id1' } as EngineSettingsDTO;
+  const registrationCommand = testData.oIAnalytics.registration.command;
 
-    service.getEngineSettings().subscribe(c => (expectedSettings = c));
+  test.each<HttpCase>([
+    {
+      name: 'get the engine settings',
+      call: s => s.getEngineSettings(),
+      method: 'GET',
+      url: '/api/engine',
+      body: null,
+      response: engineSettings
+    },
+    {
+      name: 'update the engine settings',
+      call: s => s.updateEngineSettings(engineCommand),
+      method: 'PUT',
+      url: '/api/engine',
+      body: engineCommand,
+      response: { needsRedirect: false, newPort: null }
+    },
+    {
+      name: 'update the engine name',
+      call: s => s.updateEngineName(testData.engine.nameCommand),
+      method: 'PUT',
+      url: '/api/engine/name',
+      body: testData.engine.nameCommand,
+      response: null
+    },
+    {
+      name: 'update the engine web server settings and return the redirect info',
+      call: s => s.updateEngineWebServer(testData.engine.webServerCommand),
+      method: 'PUT',
+      url: '/api/engine/web-server',
+      body: testData.engine.webServerCommand,
+      response: { needsRedirect: true, newPort: 3333 }
+    },
+    {
+      name: 'update the engine proxy settings',
+      call: s => s.updateEngineProxy(testData.engine.proxyCommand),
+      method: 'PUT',
+      url: '/api/engine/proxy',
+      body: testData.engine.proxyCommand,
+      response: null
+    },
+    {
+      name: 'update the engine logger settings',
+      call: s => s.updateEngineLogger(testData.engine.loggerCommand),
+      method: 'PUT',
+      url: '/api/engine/logger',
+      body: testData.engine.loggerCommand,
+      response: null
+    },
+    {
+      name: 'reset the engine metrics',
+      call: s => s.resetEngineMetrics(),
+      method: 'POST',
+      url: '/api/engine/metrics/reset',
+      body: null,
+      response: null
+    },
+    { name: 'restart the engine', call: s => s.restart(), method: 'POST', url: '/api/engine/restart', body: null, response: null },
+    {
+      name: 'dump the memory',
+      call: s => s.dumpMemory(),
+      method: 'POST',
+      url: '/api/engine/memory-dump',
+      body: null,
+      response: { filename: 'oibus-memory-dump.heapsnapshot' }
+    },
+    {
+      name: 'fetch the info',
+      call: s => s.fetchInfo(),
+      method: 'GET',
+      url: '/api/engine/info',
+      body: null,
+      response: testData.engine.oIBusInfo
+    },
+    {
+      name: 'get the registration settings',
+      call: s => s.getRegistrationSettings(),
+      method: 'GET',
+      url: '/api/oianalytics/registration',
+      body: null,
+      response: testData.oIAnalytics.registration.completed
+    },
+    {
+      name: 'register',
+      call: s => s.register(registrationCommand),
+      method: 'POST',
+      url: '/api/oianalytics/register',
+      body: registrationCommand,
+      response: null
+    },
+    {
+      name: 'edit the registration settings',
+      call: s => s.editRegistrationSettings(registrationCommand),
+      method: 'PUT',
+      url: '/api/oianalytics/registration',
+      body: registrationCommand,
+      response: null
+    },
+    {
+      name: 'test the OIAnalytics connection',
+      call: s => s.testOIAnalyticsConnection(registrationCommand),
+      method: 'POST',
+      url: '/api/oianalytics/registration/test-connection',
+      body: registrationCommand,
+      response: null
+    },
+    { name: 'unregister', call: s => s.unregister(), method: 'POST', url: '/api/oianalytics/unregister', body: null, response: null }
+  ])('should $name', async ({ call, method, url, body, response }) => {
+    const result = await expectHttp(http, call(service), { method, url }, { body, response });
 
-    http.expectOne({ url: '/api/engine', method: 'GET' }).flush(engine);
-    expect(expectedSettings!).toEqual(engine);
+    expect(result).toEqual(response);
   });
 
-  test('should update engine settings', () => {
-    let done = false;
-    const command = testData.engine.command;
+  test('should get the info once and share it between subscribers', async () => {
+    const info = await expectHttp(
+      http,
+      service.getInfo(),
+      { method: 'GET', url: '/api/engine/info' },
+      { response: testData.engine.oIBusInfo }
+    );
+    expect(info).toEqual(testData.engine.oIBusInfo);
 
-    service.updateEngineSettings(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
+    // no new request: http.verify() fails if one is made
+    await expect(firstValueFrom(service.getInfo())).resolves.toEqual(testData.engine.oIBusInfo);
   });
 
-  test('should update engine name', () => {
-    let done = false;
-    const command: EngineNameCommandDTO = testData.engine.nameCommand;
-
-    service.updateEngineName(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/name' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
+  test('should fetch fresh info each time', async () => {
+    await expectHttp(http, service.fetchInfo(), { method: 'GET', url: '/api/engine/info' }, { response: testData.engine.oIBusInfo });
+    await expectHttp(http, service.fetchInfo(), { method: 'GET', url: '/api/engine/info' }, { response: testData.engine.oIBusInfo });
   });
 
-  test('should update engine web server settings', () => {
-    let done = false;
-    const command: EngineWebServerCommandDTO = testData.engine.webServerCommand;
+  test.each<Omit<HttpCase, 'method' | 'body'>>([
+    { name: 'engine metrics', call: s => s.getEngineMetrics(), url: '/api/engine/metrics', response: testData.engine.metrics },
+    { name: 'home metrics', call: s => s.getHomeMetrics(), url: '/api/engine/home-metrics', response: homeMetrics }
+  ])('should get the $name and only notify an expired session', async ({ call, url, response }) => {
+    const result = firstValueFrom(call(service));
 
-    service.updateEngineWebServer(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/web-server' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush({ needsRedirect: false, newPort: null });
-    expect(done).toBe(true);
-  });
+    const request = http.expectOne({ method: 'GET', url });
+    expectErrorsIgnoredUnlessUnauthorized(request);
+    request.flush(response as object);
 
-  test('should return redirect info when port changes', () => {
-    let result: { needsRedirect: boolean; newPort: number | null } | null = null;
-    const command: EngineWebServerCommandDTO = testData.engine.webServerCommand;
-
-    service.updateEngineWebServer(command).subscribe(r => (result = r));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/web-server' });
-    testRequest.flush({ needsRedirect: true, newPort: 3333 });
-    expect(result).toEqual({ needsRedirect: true, newPort: 3333 });
-  });
-
-  test('should update engine proxy settings', () => {
-    let done = false;
-    const command: EngineProxyCommandDTO = testData.engine.proxyCommand;
-
-    service.updateEngineProxy(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/proxy' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should update engine logger settings', () => {
-    let done = false;
-    const command: EngineLoggerCommandDTO = testData.engine.loggerCommand;
-
-    service.updateEngineLogger(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/logger' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should get info', () => {
-    let expectedInfo: OIBusInfo | null = null;
-    const engineInfo = testData.engine.oIBusInfo;
-
-    service.getInfo().subscribe(c => (expectedInfo = c));
-
-    http.expectOne({ url: '/api/engine/info', method: 'GET' }).flush(engineInfo);
-    expect(expectedInfo!).toEqual(engineInfo);
-  });
-
-  test('should restart', () => {
-    let done = false;
-
-    service.restart().subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/engine/restart' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should dump memory', () => {
-    let result: EngineMemoryDumpDTO | null = null;
-
-    service.dumpMemory().subscribe(dump => (result = dump));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/engine/memory-dump' });
-    expect(testRequest.request.body).toBeNull();
-    testRequest.flush({ filename: 'oibus-memory-dump.heapsnapshot' });
-    expect(result).toEqual({ filename: 'oibus-memory-dump.heapsnapshot' });
-  });
-
-  test('should reset metrics', () => {
-    let done = false;
-
-    service.resetEngineMetrics().subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/engine/metrics/reset' });
-    expect(testRequest.request.body).toBeNull();
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should get engine metrics', () => {
-    let result: unknown = null;
-    service.getEngineMetrics().subscribe(metrics => (result = metrics));
-    http.expectOne({ method: 'GET', url: '/api/engine/metrics' }).flush(testData.engine.metrics);
-    expect(result).toEqual(testData.engine.metrics);
-  });
-
-  test('should get home metrics', () => {
-    let result: unknown = null;
-    service.getHomeMetrics().subscribe(metrics => (result = metrics));
-    http.expectOne({ method: 'GET', url: '/api/engine/home-metrics' }).flush({ norths: {}, engine: testData.engine.metrics, souths: {} });
-    expect(result).toEqual({ norths: {}, engine: testData.engine.metrics, souths: {} });
-  });
-
-  test('should register', () => {
-    let done = false;
-    const command = testData.oIAnalytics.registration.command;
-    service.register(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/oianalytics/register' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should edit registration', () => {
-    let done = false;
-    const command = testData.oIAnalytics.registration.command;
-    service.editRegistrationSettings(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/oianalytics/registration' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should test registration connection', () => {
-    let done = false;
-    const command = testData.oIAnalytics.registration.command;
-    service.testOIAnalyticsConnection(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/oianalytics/registration/test-connection' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
+    await expect(result).resolves.toEqual(response);
   });
 });

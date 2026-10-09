@@ -1,12 +1,21 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
-
+import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { IpFilterService } from './ip-filter.service';
+
+interface HttpCase {
+  name: string;
+  call: (service: IpFilterService) => Observable<unknown>;
+  method: string;
+  url: string;
+  body: unknown;
+  response: unknown;
+}
 
 describe('IpFilterService', () => {
   let http: HttpTestingController;
@@ -22,52 +31,39 @@ describe('IpFilterService', () => {
 
   afterEach(() => http.verify());
 
-  test('should get all IP filters', () => {
-    let expectedIpFilters: Array<IPFilterDTO> = [];
-    service.list().subscribe(ipFilters => (expectedIpFilters = ipFilters));
+  const command = testData.ipFilters.command;
+  const ipFilter = testData.ipFilters.list[0];
 
-    http.expectOne('/api/ip-filters').flush([{ name: 'IP filter 1' }, { name: 'IP filter 2' }]);
+  test.each<HttpCase>([
+    {
+      name: 'list the IP filters',
+      call: s => s.list(),
+      method: 'GET',
+      url: '/api/ip-filters',
+      body: null,
+      response: testData.ipFilters.list
+    },
+    { name: 'get an IP filter', call: s => s.findById('id1'), method: 'GET', url: '/api/ip-filters/id1', body: null, response: ipFilter },
+    {
+      name: 'create an IP filter',
+      call: s => s.create(command),
+      method: 'POST',
+      url: '/api/ip-filters',
+      body: command,
+      response: ipFilter
+    },
+    {
+      name: 'update an IP filter',
+      call: s => s.update('id1', command),
+      method: 'PUT',
+      url: '/api/ip-filters/id1',
+      body: command,
+      response: null
+    },
+    { name: 'delete an IP filter', call: s => s.delete('id1'), method: 'DELETE', url: '/api/ip-filters/id1', body: null, response: null }
+  ])('should $name', async ({ call, method, url, body, response }) => {
+    const result = await expectHttp(http, call(service), { method, url }, { body, response });
 
-    expect(expectedIpFilters.length).toBe(2);
-  });
-
-  test('should get an IP filter', () => {
-    let expectedIpFilter: IPFilterDTO | null = null;
-    const ipFilter = { id: 'id1' } as IPFilterDTO;
-
-    service.findById('id1').subscribe(c => (expectedIpFilter = c));
-
-    http.expectOne({ url: '/api/ip-filters/id1', method: 'GET' }).flush(ipFilter);
-    expect(expectedIpFilter!).toEqual(ipFilter);
-  });
-
-  test('should create an IP filter', () => {
-    let done = false;
-    const command = testData.ipFilters.command;
-
-    service.create(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/ip-filters' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should update an IP filter', () => {
-    let done = false;
-    const command = testData.ipFilters.command;
-
-    service.update('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/ip-filters/id1' });
-    expect(testRequest.request.body).toEqual(command);
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  test('should delete an IP filter', () => {
-    let done = false;
-    service.delete('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/ip-filters/id1' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
+    expect(result).toEqual(response);
   });
 });
