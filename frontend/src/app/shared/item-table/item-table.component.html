@@ -1,0 +1,162 @@
+<!-- Filter row -->
+<div class="d-flex align-items-center gap-2 my-2">
+  <input
+    class="form-control form-control-sm flex-grow-1"
+    [attr.aria-label]="'common.search' | translate"
+    [formControl]="searchControl"
+    [placeholder]="label('search-placeholder') | translate"
+    type="text"
+  />
+  @if (filtersTemplate(); as filters) {
+    <ng-container *ngTemplateOutlet="filters" />
+  }
+  <select class="form-select form-select-sm w-auto" [attr.aria-label]="label('status') | translate" [formControl]="statusFilterControl">
+    <option [ngValue]="null" [translate]="label('all-statuses')"></option>
+    <option value="enabled" [translate]="label('enabled-label')"></option>
+    <option value="disabled" [translate]="label('disabled-label')"></option>
+  </select>
+</div>
+
+@let itemsPage = page();
+@if (itemsPage.content.length > 0) {
+  <!-- Selection controls -->
+  <div class="d-flex justify-content-between align-items-center my-2">
+    <div class="d-flex align-items-center selection-controls">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        (click)="selectAll()"
+        [disabled]="selectedCount() === filteredItems().length"
+        id="select-all-button"
+      >
+        <span class="fa-solid fa-check-square me-1" aria-hidden="true"></span>
+        <span [translate]="label('select-all')"></span>
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        (click)="unselectAll()"
+        [disabled]="selectedCount() === 0"
+        id="unselect-all-button"
+      >
+        <span class="fa-solid fa-square me-1" aria-hidden="true"></span>
+        <span [translate]="label('unselect-all')"></span>
+      </button>
+      @if (selectedCount() > 0) {
+        <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
+          <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
+            <span [translate]="label('mass-actions')" [translateParams]="{ count: selectedCount() }"></span>
+            <span class="fa-solid fa-caret-down ms-1" aria-hidden="true"></span>
+          </button>
+          <div ngbDropdownMenu>
+            <button type="button" ngbDropdownItem (click)="enableSelected.emit()">
+              <span class="fa-solid fa-check me-2" aria-hidden="true"></span>
+              <span [translate]="label('enable')"></span>
+            </button>
+            <button type="button" ngbDropdownItem (click)="disableSelected.emit()">
+              <span class="fa-solid fa-times me-2" aria-hidden="true"></span>
+              <span [translate]="label('disable')"></span>
+            </button>
+            @if (massActionsTemplate(); as massActions) {
+              <ng-container *ngTemplateOutlet="massActions" />
+            }
+            <div class="dropdown-divider"></div>
+            <button type="button" ngbDropdownItem (click)="deleteSelected.emit()" class="text-danger">
+              <span class="fa-solid fa-trash-can me-2" aria-hidden="true"></span>
+              <span [translate]="label('delete')"></span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <table class="mb-2 table table-sm table-hover oib-table">
+    <thead class="light">
+      <tr>
+        <th class="selection-column"></th>
+        <th class="status-column">
+          <button type="button" class="sort-button text-nowrap" (click)="toggleSort('enabled')">
+            <span [translate]="label('status')" class="me-2"></span>
+            <span class="fa-solid {{ sortIcon('enabled') }}" aria-hidden="true"></span>
+          </button>
+        </th>
+        <th>
+          <button type="button" class="sort-button" (click)="toggleSort('name')">
+            <span [translate]="label('name')" class="me-2"></span>
+            <span class="fa-solid {{ sortIcon('name') }}" aria-hidden="true"></span>
+          </button>
+        </th>
+        @if (headersTemplate(); as headers) {
+          <ng-container *ngTemplateOutlet="headers; context: headerContext" />
+        }
+        @if (showDates()) {
+          <th class="date-column">
+            <button type="button" class="sort-button" (click)="toggleSort('createdAt')">
+              <span [translate]="label('created-at')" class="me-2"></span>
+              <span class="fa-solid {{ sortIcon('createdAt') }}" aria-hidden="true"></span>
+            </button>
+          </th>
+          <th class="date-column">
+            <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
+              <span [translate]="label('updated-at')" class="me-2"></span>
+              <span class="fa-solid {{ sortIcon('updatedAt') }}" aria-hidden="true"></span>
+            </button>
+          </th>
+        }
+        <th class="actions-column"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of itemsPage.content; track item.name) {
+        <tr class="south-item" (mouseenter)="itemHover.emit(item)">
+          <td class="text-center">
+            <input
+              type="checkbox"
+              class="form-check-input item-checkbox"
+              [attr.aria-label]="item.name"
+              [checked]="selection().has(item.name)"
+              (change)="toggleItem(item)"
+            />
+          </td>
+          <td class="text-center">
+            <span [translate]="label(item.enabled ? 'enabled-label' : 'disabled-label')"></span>
+          </td>
+          <td>{{ item.name }}</td>
+          @if (cellsTemplate(); as cells) {
+            <ng-container *ngTemplateOutlet="cells; context: { $implicit: item }" />
+          }
+          @if (showDates()) {
+            <td>
+              @if (item.createdAt) {
+                {{ item.createdAt | datetime: 'ff' }}
+              }
+            </td>
+            <td>
+              @if (item.updatedAt) {
+                {{ item.updatedAt | datetime: 'ff' }}
+              }
+            </td>
+          }
+          <td class="text-nowrap action-buttons">
+            @if (actionsTemplate(); as actions) {
+              <div class="pull-right">
+                <ng-container *ngTemplateOutlet="actions; context: { $implicit: item }" />
+              </div>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+} @else {
+  <div class="oib-grey-container" [translate]="label(items().length !== 0 ? 'none-match' : 'none')"></div>
+}
+
+@if (itemsPage.totalElements) {
+  <div class="d-flex flex-row-reverse">
+    <div [class]="itemsPage.totalPages > 1 ? 'ms-2' : ''">
+      <oib-pagination [page]="itemsPage" (pageChanged)="changePage($event)" />
+    </div>
+  </div>
+}

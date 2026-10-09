@@ -1,10 +1,10 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownItem, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
 
@@ -17,7 +17,6 @@ import {
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '@oibus/shared/api/south-connector.model';
-import { createPageFromArray } from '@oibus/shared/common/types';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { AuditEntityType } from '@oibus/shared/domain/audit.model';
 
@@ -29,7 +28,6 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
-import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
@@ -40,22 +38,10 @@ import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { PageLoader } from '../../shared/page-loader.service';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { pollMetrics } from '../../shared/polling';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
-import {
-  nextSouthItemSort,
-  NO_SOUTH_ITEM_SORT,
-  selectSouthItems,
-  sortSouthItems,
-  SouthItemSelection,
-  SouthItemSort,
-  SouthItemSortColumn,
-  southItemSortIcon,
-  toggleSouthItemSelection
-} from '../south-item-table';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
@@ -64,24 +50,14 @@ import { ViewItemValueModalComponent } from '../south-items/view-item-value-moda
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
 
-const PAGE_SIZE = 20;
-
-function sortValue(item: SouthConnectorItemDTO, column: SouthItemSortColumn): string | number {
-  switch (column) {
-    case 'name':
-      return item.name;
-    case 'scanMode':
-      return item.scanMode?.name || '';
-    case 'group':
-      return item.group?.standardSettings.name || '';
-    case 'enabled':
-      return item.enabled ? 1 : 0;
-    case 'createdAt':
-      return item.createdAt || '';
-    case 'updatedAt':
-      return item.updatedAt || '';
-  }
+/** The group column is added by the page: the other columns are sorted by the item table. */
+function sortValue(item: SouthConnectorItemDTO, column: string): string | number {
+  return column === 'group' ? item.group?.standardSettings.name || '' : builtInSortValue(item, column);
 }
+
+import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
+import { ItemTableComponent } from '../../shared/item-table/item-table.component';
+import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 
 @Component({
   selector: 'oib-south-detail',
@@ -98,14 +74,11 @@ function sortValue(item: SouthConnectorItemDTO, column: SouthItemSortColumn): st
     TranslatePipe,
     NgbTooltip,
     FormsModule,
-    NgbDropdown,
-    NgbDropdownMenu,
-    NgbDropdownToggle,
     OibHelpComponent,
-    PaginationComponent,
     ReactiveFormsModule,
     NgbDropdownItem,
-    DatetimePipe
+    ItemTableComponent,
+    ...ITEM_TABLE_TEMPLATES
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
@@ -181,28 +154,28 @@ export class SouthDetailComponent {
     { initialValue: null }
   );
 
-  // --- Items table ---
-  readonly searchControl = this.fb.control(null as string | null);
+  // --- Items table: the group and scan mode filters are added to the name and status filters of the table ---
   readonly groupFilterControl = this.fb.control(null as string | null);
   readonly scanModeFilterControl = this.fb.control(null as string | null);
-  readonly statusFilterControl = this.fb.control(null as string | null);
-  private readonly searchText = toSignal(this.searchControl.valueChanges, { initialValue: null });
   private readonly groupFilter = toSignal(this.groupFilterControl.valueChanges, { initialValue: null });
   private readonly scanModeFilter = toSignal(this.scanModeFilterControl.valueChanges, { initialValue: null });
-  private readonly statusFilter = toSignal(this.statusFilterControl.valueChanges, { initialValue: null });
-  readonly sort = signal<SouthItemSort>(NO_SOUTH_ITEM_SORT);
-
-  readonly filteredItems = computed(() => sortSouthItems(this.filter(this.southConnector()?.items ?? []), this.sort(), sortValue));
-  /** The displayed page, back to the first one whenever the filters or the sort change. */
-  private readonly pageNumber = linkedSignal({
-    source: () => [this.searchText(), this.groupFilter(), this.scanModeFilter(), this.statusFilter(), this.sort()],
-    computation: () => 0
+  readonly itemFilter = computed(() => {
+    const groupFilter = this.groupFilter();
+    const scanModeFilter = this.scanModeFilter();
+    return (item: SouthConnectorItemDTO) => {
+      if (groupFilter === 'none' && item.group) return false;
+      if (groupFilter && groupFilter !== 'none' && item.group?.id !== groupFilter) return false;
+      const effectiveScanModeId = item.group ? item.group.standardSettings.scanMode.id : item.scanMode?.id;
+      return !scanModeFilter || effectiveScanModeId === scanModeFilter;
+    };
   });
-  readonly displayedItems = computed(() => createPageFromArray(this.filteredItems(), PAGE_SIZE, this.pageNumber()));
+  /** The items of the connector, as an array of the item union type (the DTO is typed by connector type) */
+  readonly items = computed<Array<SouthConnectorItemDTO>>(() => this.southConnector()?.items ?? []);
+  protected readonly itemSortValue = sortValue;
+  private readonly itemTable = viewChild(ItemTableComponent);
 
   // Mass action properties
-  readonly selectedItems = signal<SouthItemSelection<SouthConnectorItemDTO>>(new Map());
-  readonly selectedCount = computed(() => this.selectedItems().size);
+  readonly selectedItems = signal<ItemSelection<SouthConnectorItemDTO>>(new Map());
 
   /** The item currently hovered in the list — drives the schedule details tooltip. */
   readonly tooltipItem = signal<SouthConnectorItemDTO | null>(null);
@@ -210,10 +183,6 @@ export class SouthDetailComponent {
   /** Whether the scan mode driving an item has an activation window that can never fire again. */
   isWindowExpired(scanMode: ScanModeDTO | null | undefined): boolean {
     return isScanModeWindowExpired(scanMode);
-  }
-
-  sortIcon(column: SouthItemSortColumn): string {
-    return southItemSortIcon(this.sort(), column);
   }
 
   /** Displays the connector reloaded after a change. */
@@ -424,7 +393,7 @@ export class SouthDetailComponent {
       )
       .subscribe(southConnector => {
         this.refresh(southConnector);
-        this.pageNumber.set(0);
+        this.itemTable()?.goToFirstPage();
         this.notificationService.success('south.items.all-deleted');
       });
   }
@@ -524,7 +493,7 @@ export class SouthDetailComponent {
         )
         .subscribe(southConnector => {
           this.refresh(southConnector);
-          this.pageNumber.set(0);
+          this.itemTable()?.goToFirstPage();
           this.notificationService.success(`south.items.import.imported`);
         });
     });
@@ -589,42 +558,7 @@ export class SouthDetailComponent {
       );
   }
 
-  changePage(pageNumber: number) {
-    this.pageNumber.set(pageNumber);
-  }
-
-  private filter(items: Array<SouthConnectorItemDTO>): Array<SouthConnectorItemDTO> {
-    const searchText = this.searchText() || '';
-    const groupFilter = this.groupFilter();
-    const scanModeFilter = this.scanModeFilter();
-    const statusFilter = this.statusFilter();
-
-    return items.filter(item => {
-      if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
-      if (groupFilter === 'none' && item.group) return false;
-      if (groupFilter && groupFilter !== 'none' && item.group?.id !== groupFilter) return false;
-      if (scanModeFilter) {
-        const effectiveScanModeId = item.group ? item.group.standardSettings.scanMode.id : item.scanMode?.id;
-        if (effectiveScanModeId !== scanModeFilter) return false;
-      }
-      if (statusFilter === 'enabled' && !item.enabled) return false;
-      return !(statusFilter === 'disabled' && item.enabled);
-    });
-  }
-
-  toggleColumnSort(column: SouthItemSortColumn) {
-    this.sort.update(sort => nextSouthItemSort(sort, column));
-  }
-
   // Mass action methods
-  toggleItemSelection(item: SouthConnectorItemDTO) {
-    this.selectedItems.update(selection => toggleSouthItemSelection(selection, item));
-  }
-
-  selectAll() {
-    this.selectedItems.update(selection => selectSouthItems(selection, this.filteredItems()));
-  }
-
   unselectAll() {
     this.selectedItems.set(new Map());
   }

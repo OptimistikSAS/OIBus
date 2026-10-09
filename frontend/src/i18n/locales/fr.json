@@ -2744,7 +2744,8 @@
         "duplicate": "Dupliquer l'élément",
         "delete": "Supprimer l'élément",
         "audit": "Voir l'historique d'audit de l'élément"
-      }
+      },
+      "search-placeholder": "Saisir du texte pour filtrer les éléments"
     },
     "monitoring": {
       "title": "Métriques de {{ name }}",

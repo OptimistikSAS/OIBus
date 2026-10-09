@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownItem, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, finalize, firstValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
 
@@ -18,7 +18,6 @@ import {
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '@oibus/shared/api/south-connector.model';
-import { createPageFromArray } from '@oibus/shared/common/types';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
@@ -40,23 +39,11 @@ import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
-import {
-  nextSouthItemSort,
-  NO_SOUTH_ITEM_SORT,
-  selectSouthItems,
-  sortSouthItems,
-  SouthItemSelection,
-  SouthItemSort,
-  SouthItemSortColumn,
-  southItemSortIcon,
-  toggleSouthItemSelection
-} from '../south-item-table';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
@@ -65,22 +52,9 @@ import ManageWorkflowsModalComponent, {
   toConfigurationWorkflowCommand
 } from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 
-const PAGE_SIZE = 20;
-
-function sortValue(item: SouthConnectorItemCommandDTO, column: SouthItemSortColumn): string | number {
-  switch (column) {
-    case 'name':
-      return item.name;
-    case 'scanMode':
-      return item.scanModeName || '';
-    case 'group':
-      return item.groupName || '';
-    case 'enabled':
-      return item.enabled ? 1 : 0;
-    case 'createdAt':
-    case 'updatedAt':
-      return '';
-  }
+/** The group column is added by the page: the other columns are sorted by the item table. */
+function sortValue(item: SouthConnectorItemCommandDTO, column: string): string | number {
+  return column === 'group' ? item.groupName || '' : builtInSortValue(item, column);
 }
 
 type SouthConnectorForm = FormGroup<{
@@ -89,6 +63,10 @@ type SouthConnectorForm = FormGroup<{
   enabled: FormControl<boolean>;
   settings: FormGroup;
 }>;
+
+import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
+import { ItemTableComponent } from '../../shared/item-table/item-table.component';
+import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 
 @Component({
   selector: 'oib-edit-south',
@@ -102,13 +80,11 @@ type SouthConnectorForm = FormGroup<{
     OibHelpComponent,
     OIBusSouthTypeEnumPipe,
     OIBusObjectFormControlComponent,
-    NgbDropdown,
-    NgbDropdownMenu,
-    NgbDropdownToggle,
-    PaginationComponent,
     TranslatePipe,
     NgbTooltip,
-    NgbDropdownItem
+    NgbDropdownItem,
+    ItemTableComponent,
+    ...ITEM_TABLE_TEMPLATES
   ],
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss',
@@ -165,31 +141,31 @@ export class EditSouthComponent implements CanComponentDeactivate {
   readonly inMemoryGroups = signal<Array<SouthItemGroupCommandDTO>>([]);
   readonly inMemoryWorkflows = signal<Array<ConfigurationWorkflowCommandDTO>>([]);
 
-  // --- Items table ---
-  readonly searchControl = this.fb.control(null as string | null);
+  // --- Items table: the group and scan mode filters are added to the name and status filters of the table ---
   readonly groupFilterControl = this.fb.control(null as string | null);
   readonly scanModeFilterControl = this.fb.control(null as string | null);
-  readonly statusFilterControl = this.fb.control(null as string | null);
-  private readonly searchText = toSignal(this.searchControl.valueChanges, { initialValue: null });
   private readonly groupFilter = toSignal(this.groupFilterControl.valueChanges, { initialValue: null });
   private readonly scanModeFilter = toSignal(this.scanModeFilterControl.valueChanges, { initialValue: null });
-  private readonly statusFilter = toSignal(this.statusFilterControl.valueChanges, { initialValue: null });
-  readonly sort = signal<SouthItemSort>(NO_SOUTH_ITEM_SORT);
-
-  readonly filteredItems = computed(() => sortSouthItems(this.filter(this.inMemoryItems()), this.sort(), sortValue));
-  /** The displayed page, back to the first one whenever the filters or the sort change. */
-  private readonly pageNumber = linkedSignal({
-    source: () => [this.searchText(), this.groupFilter(), this.scanModeFilter(), this.statusFilter(), this.sort()],
-    computation: () => 0
+  readonly itemFilter = computed(() => {
+    const groupFilter = this.groupFilter();
+    const scanModeFilter = this.scanModeFilter();
+    const groups = this.inMemoryGroups();
+    return (item: SouthConnectorItemCommandDTO) => {
+      if (groupFilter === 'none' && item.groupId) return false;
+      if (groupFilter && groupFilter !== 'none' && item.groupId !== groupFilter) return false;
+      const group = item.groupId ? groups.find(g => g.id === item.groupId) : null;
+      const effectiveScanModeId = group ? group.standardSettings.scanModeId : item.scanModeId;
+      return !scanModeFilter || effectiveScanModeId === scanModeFilter;
+    };
   });
-  readonly displayedItems = computed(() => createPageFromArray(this.filteredItems(), PAGE_SIZE, this.pageNumber()));
+  protected readonly itemSortValue = sortValue;
+  private readonly itemTable = viewChild(ItemTableComponent);
 
   /** The item currently hovered in the list — drives the schedule details tooltip. */
   readonly tooltipItem = signal<SouthConnectorItemCommandDTO | null>(null);
 
   // Mass action properties
-  readonly selectedItems = signal<SouthItemSelection<SouthConnectorItemCommandDTO>>(new Map());
-  readonly selectedCount = computed(() => this.selectedItems().size);
+  readonly selectedItems = signal<ItemSelection<SouthConnectorItemCommandDTO>>(new Map());
 
   constructor() {
     // get the generator ID
@@ -475,7 +451,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       })
       .subscribe(() => {
         this.inMemoryItems.set([]);
-        this.pageNumber.set(0);
+        this.itemTable()?.goToFirstPage();
       });
   }
 
@@ -573,7 +549,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     modal.result.subscribe((response: { items: Array<SouthConnectorItemCommandDTO>; eraseExisting: boolean } | undefined) => {
       if (!response) return;
       this.inMemoryItems.update(items => [...(response.eraseExisting ? [] : items), ...response.items]);
-      this.pageNumber.set(0);
+      this.itemTable()?.goToFirstPage();
     });
   }
 
@@ -648,7 +624,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
               this.workflows[index] = { ...workflow, itemFieldMapping };
             }
           });
-          this.pageNumber.set(0);
+          this.itemTable()?.goToFirstPage();
           this.syncSharedArrays();
         }),
         map(() => undefined)
@@ -668,7 +644,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.deleteGroup.bind(this)
     );
     // the groups are changed in place by the modal
-    modalRef.result.pipe(finalize(() => this.syncSharedArrays())).subscribe(() => this.pageNumber.set(0));
+    modalRef.result.pipe(finalize(() => this.syncSharedArrays())).subscribe(() => this.itemTable()?.goToFirstPage());
   }
 
   /**
@@ -707,7 +683,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.deleteGroup.bind(this)
     );
     // the workflows, and the groups (from a workflow's group mapping field), are changed in place by the modal
-    modalRef.result.pipe(finalize(() => this.syncSharedArrays())).subscribe(() => this.pageNumber.set(0));
+    modalRef.result.pipe(finalize(() => this.syncSharedArrays())).subscribe(() => this.itemTable()?.goToFirstPage());
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -769,49 +745,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     } as SouthConnectorCommandDTO;
   }
 
-  changePage(pageNumber: number) {
-    this.pageNumber.set(pageNumber);
-  }
-
-  private filter(items: Array<SouthConnectorItemCommandDTO>): Array<SouthConnectorItemCommandDTO> {
-    const searchText = this.searchText() || '';
-    const groupFilter = this.groupFilter();
-    const scanModeFilter = this.scanModeFilter();
-    const statusFilter = this.statusFilter();
-    const groups = this.inMemoryGroups();
-
-    return items.filter(item => {
-      if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
-      if (groupFilter === 'none' && item.groupId) return false;
-      if (groupFilter && groupFilter !== 'none' && item.groupId !== groupFilter) return false;
-      if (scanModeFilter) {
-        const group = item.groupId ? groups.find(g => g.id === item.groupId) : null;
-        const effectiveScanModeId = group ? group.standardSettings.scanModeId : item.scanModeId;
-        if (effectiveScanModeId !== scanModeFilter) return false;
-      }
-      if (statusFilter === 'enabled' && !item.enabled) return false;
-      if (statusFilter === 'disabled' && item.enabled) return false;
-      return true;
-    });
-  }
-
-  toggleColumnSort(column: SouthItemSortColumn) {
-    this.sort.update(sort => nextSouthItemSort(sort, column));
-  }
-
-  sortIcon(column: SouthItemSortColumn): string {
-    return southItemSortIcon(this.sort(), column);
-  }
-
   // Mass action methods
-  toggleItemSelection(item: SouthConnectorItemCommandDTO) {
-    this.selectedItems.update(selection => toggleSouthItemSelection(selection, item));
-  }
-
-  selectAll() {
-    this.selectedItems.update(selection => selectSouthItems(selection, this.filteredItems()));
-  }
-
   unselectAll() {
     this.selectedItems.set(new Map());
   }

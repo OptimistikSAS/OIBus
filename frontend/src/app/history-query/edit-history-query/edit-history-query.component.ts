@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, linkedSignal, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -12,7 +12,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { combineLatest, firstValueFrom, Observable, of, switchMap, tap } from 'rxjs';
@@ -28,7 +28,6 @@ import { NorthConnectorCommandDTO, NorthConnectorDTO } from '@oibus/shared/api/n
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '@oibus/shared/api/south-connector.model';
 import { HistoryTransformerDTOWithOptions, SourceOriginSouthDTO, TransformerDTO } from '@oibus/shared/api/transformer.model';
-import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { NorthConnectorManifest, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
@@ -56,29 +55,15 @@ import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
-import {
-  filterItems,
-  ItemSort,
-  ItemSortColumn,
-  itemSortIcon,
-  nextItemSort,
-  NO_ITEM_SORT,
-  selectItems,
-  sortItems,
-  toggleItemSelection
-} from '../history-query-items/history-query-item-table';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
-
-const PAGE_SIZE = 20;
 
 type HistoryQueryForm = FormGroup<{
   name: FormControl<string>;
@@ -113,6 +98,9 @@ type HistoryQueryForm = FormGroup<{
   southSettings: FormGroup;
 }>;
 
+import { ItemTableComponent } from '../../shared/item-table/item-table.component';
+import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
+
 @Component({
   selector: 'oib-edit-history-query',
   imports: [
@@ -132,14 +120,10 @@ type HistoryQueryForm = FormGroup<{
     HistoryQueryTransformersComponent,
     TranslatePipe,
     NgbTooltip,
-    NgbDropdown,
-    NgbDropdownMenu,
-    NgbDropdownToggle,
-    NgbDropdownItem,
-    PaginationComponent
+    ItemTableComponent,
+    ...ITEM_TABLE_TEMPLATES
   ],
   templateUrl: './edit-history-query.component.html',
-  styleUrl: './edit-history-query.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     {
@@ -206,22 +190,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
   /** The items of the history query, saved with it */
   readonly inMemoryItems = signal<Array<HistoryQueryItemCommandDTO>>([]);
-  readonly searchControl = this.fb.control(null as string | null);
-  readonly statusFilterControl = this.fb.control(null as string | null);
-  private readonly searchText = toSignal(this.searchControl.valueChanges, { initialValue: this.searchControl.value });
-  private readonly statusFilter = toSignal(this.statusFilterControl.valueChanges, { initialValue: this.statusFilterControl.value });
-  readonly itemSort = signal<ItemSort>(NO_ITEM_SORT);
-  readonly filteredItems = computed(() =>
-    sortItems(filterItems(this.inMemoryItems(), { name: this.searchText(), status: this.statusFilter() }), this.itemSort())
-  );
-  /** Back to the first page when the filters or the sort change (the page is kept when the items change) */
-  private readonly itemsPageNumber = linkedSignal({
-    source: () => [this.searchText(), this.statusFilter(), this.itemSort()],
-    computation: () => 0
-  });
-  readonly displayedItems = computed<Page<HistoryQueryItemCommandDTO>>(() =>
-    createPageFromArray(this.filteredItems(), PAGE_SIZE, this.itemsPageNumber())
-  );
+  private readonly itemTable = viewChild(ItemTableComponent);
   /** The selected items, by name */
   readonly selectedItems = signal<ReadonlyMap<string, HistoryQueryItemCommandDTO>>(new Map());
 
@@ -720,7 +689,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   deleteAllItems() {
     this.confirmationService.confirm({ messageKey: 'history-query.items.confirm-delete-all' }).subscribe(() => {
       this.inMemoryItems.set([]);
-      this.itemsPageNumber.set(0);
+      this.itemTable()?.goToFirstPage();
     });
   }
 
@@ -762,31 +731,11 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     modalRef.result.subscribe((response: { items: Array<HistoryQueryItemCommandDTO>; eraseExisting: boolean } | undefined) => {
       if (!response) return;
       this.inMemoryItems.update(items => (response.eraseExisting ? [...response.items] : [...items, ...response.items]));
-      this.itemsPageNumber.set(0);
+      this.itemTable()?.goToFirstPage();
     });
   }
 
-  changePage(pageNumber: number) {
-    this.itemsPageNumber.set(pageNumber);
-  }
-
-  toggleColumnSort(column: ItemSortColumn) {
-    this.itemSort.update(sort => nextItemSort(sort, column));
-  }
-
-  sortIcon(column: ItemSortColumn): string {
-    return itemSortIcon(this.itemSort(), column);
-  }
-
   // Mass action methods
-  toggleItemSelection(item: HistoryQueryItemCommandDTO) {
-    this.selectedItems.update(selectedItems => toggleItemSelection(selectedItems, item));
-  }
-
-  selectAll() {
-    this.selectedItems.update(selectedItems => selectItems(selectedItems, this.filteredItems()));
-  }
-
   unselectAll() {
     this.selectedItems.set(new Map());
   }
