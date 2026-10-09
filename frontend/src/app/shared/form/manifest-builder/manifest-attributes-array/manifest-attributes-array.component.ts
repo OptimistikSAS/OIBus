@@ -1,16 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, output } from '@angular/core';
 import { ControlContainer, FormControl, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { startWith, switchMap } from 'rxjs';
+
+import { OIBusAttribute } from '@oibus/shared/connector/form.model';
 
 import { BoxComponent, BoxTitleDirective } from '../../../box/box.component';
 import type { Modal } from '../../../modal.service';
 import { ModalService } from '../../../modal.service';
 import { ArrayPage } from '../../../pagination/array-page';
 import { PaginationComponent } from '../../../pagination/pagination.component';
+import { trackControl } from '../../tracked-control';
 import type { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
 
 @Component({
@@ -23,24 +24,26 @@ import type { ManifestAttributeEditorModalComponent } from '../manifest-attribut
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslatePipe, TranslateDirective, BoxComponent, BoxTitleDirective, PaginationComponent, NgbTooltip]
 })
 export class ManifestAttributesArrayComponent {
-  private modalService = inject(ModalService);
+  private readonly modalService = inject(ModalService);
 
-  NUMBER_OF_ELEMENT_PER_PAGE = 20;
-  control = input.required<FormControl<Array<any>>>();
-  label = input.required<string>();
-  contextPath = input<Array<string>>([]);
+  readonly NUMBER_OF_ELEMENT_PER_PAGE = 20;
+  readonly control = input.required<FormControl<Array<OIBusAttribute>>>();
+  readonly label = input.required<string>();
+  readonly contextPath = input<Array<string>>([]);
 
   // Emit when nested data changes (for parent modals to react)
   readonly nestedChange = output<void>();
 
-  private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
-  readonly paginatedValues = computed(() => {
-    return new ArrayPage(this.controlValue()!, this.NUMBER_OF_ELEMENT_PER_PAGE);
-  });
+  /** The control is tracked so that this OnPush component renders the value set from outside (e.g. by the parent editor) */
+  private readonly trackedControl = trackControl(() => this.control());
+  private readonly controlValue = computed(() => this.trackedControl()!.value);
+  // back to the first page when the value changes
+  readonly pageNumber = linkedSignal({ source: this.controlValue, computation: () => 0 });
+  readonly paginatedValues = computed(() => new ArrayPage(this.controlValue(), this.NUMBER_OF_ELEMENT_PER_PAGE, this.pageNumber()));
 
   async addItem(event: Event) {
     event.preventDefault();
@@ -51,13 +54,12 @@ export class ManifestAttributesArrayComponent {
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
-      this.paginatedValues().gotoPage(0);
       this.control().markAsDirty();
       this.nestedChange.emit();
     });
   }
 
-  async copyItem(element: any) {
+  async copyItem(element: OIBusAttribute) {
     const modal = await this.openAttributeEditor();
     const depth = this.contextPath().length;
 
@@ -65,13 +67,12 @@ export class ManifestAttributesArrayComponent {
 
     modal.result.subscribe(arrayElement => {
       this.control().setValue([...this.control().value, arrayElement]);
-      this.paginatedValues().gotoPage(0);
       this.control().markAsDirty();
       this.nestedChange.emit();
     });
   }
 
-  async editItem(element: any) {
+  async editItem(element: OIBusAttribute) {
     const modal = await this.openAttributeEditor();
     const depth = this.contextPath().length;
 
@@ -80,21 +81,19 @@ export class ManifestAttributesArrayComponent {
     modal.result.subscribe(arrayElement => {
       const newArray = [...this.control().value];
       const index = this.control().value.indexOf(element);
-      newArray[index] = { ...arrayElement, id: element.id };
+      newArray[index] = arrayElement;
 
       this.control().setValue(newArray);
-      this.paginatedValues().gotoPage(0);
       this.control().markAsDirty();
       this.nestedChange.emit();
     });
   }
 
-  deleteItem(element: any) {
+  deleteItem(element: OIBusAttribute) {
     const newArray = [...this.control().value];
     const index = this.control().value.indexOf(element);
     newArray.splice(index, 1);
     this.control().setValue(newArray);
-    this.paginatedValues().gotoPage(0);
     this.control().markAsDirty();
     this.nestedChange.emit();
   }

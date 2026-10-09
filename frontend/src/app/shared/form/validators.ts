@@ -150,7 +150,7 @@ export function uniqueFieldNamesValidator(fieldKey: string): ValidatorFn {
       return null;
     }
 
-    const fieldNames = control.value.map((item: any) => item[fieldKey]).filter(Boolean);
+    const fieldNames = (control.value as Array<Record<string, unknown>>).map(item => item[fieldKey]).filter(Boolean);
     const uniqueFieldNames = new Set(fieldNames);
 
     if (fieldNames.length !== uniqueFieldNames.size) {
@@ -173,7 +173,7 @@ export function singleTrueValidator(fieldKey: string): ValidatorFn {
       return null;
     }
 
-    const trueCount = control.value.filter((item: any) => item[fieldKey] === true).length;
+    const trueCount = (control.value as Array<Record<string, unknown>>).filter(item => item[fieldKey] === true).length;
 
     if (trueCount > 1) {
       return { onlyOneReference: true };
@@ -270,7 +270,8 @@ function mqttTopicMatches(topic: string, pattern: string): boolean {
     const hashIndex = pattern.indexOf('#');
     const prefix = pattern.substring(0, hashIndex);
 
-    if (hashIndex === pattern.length - 1) {
+    // a prefix with a single-level wildcard (e.g. a/+/#) is matched level by level below
+    if (hashIndex === pattern.length - 1 && !prefix.includes('+')) {
       if (hashIndex === 0 || pattern.charAt(hashIndex - 1) === '/') {
         return topic.startsWith(prefix);
       }

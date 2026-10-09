@@ -1,23 +1,24 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { ExportItemModalComponent } from './export-item-modal.component';
 
-class ExportSouthItemModalComponentTester {
+class ExportItemModalComponentTester {
   readonly fixture = TestBed.createComponent(ExportItemModalComponent);
-  readonly saveButton = page.getByCss('#save-button');
-  readonly cancelButton = page.getByCss('#cancel-button');
-  readonly delimiter = page.getByCss('#delimiter');
-  readonly filename = page.getByCss('#filename');
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
+  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
+  readonly delimiter = this.root.getByLabelText('Delimiter');
+  readonly filename = this.root.getByLabelText('Filename');
 }
 
-describe('ExportSouthItemModalComponent', () => {
-  let tester: ExportSouthItemModalComponentTester;
+describe('ExportItemModalComponent', () => {
+  let tester: ExportItemModalComponentTester;
   let fakeActiveModal: MockObject<NgbActiveModal>;
 
   beforeEach(() => {
@@ -25,19 +26,42 @@ describe('ExportSouthItemModalComponent', () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
-    tester = new ExportSouthItemModalComponentTester();
-    tester.fixture.detectChanges();
+    tester = new ExportItemModalComponentTester();
   });
 
-  test('should send a delimiter', async () => {
-    await tester.delimiter.selectOptions('Comma ,');
-    await tester.filename.fill('south-item');
+  afterEach(() => vi.useRealTimers());
+
+  test('should prepare a timestamped file name', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2024-03-04T05:06:07.089Z'));
+
+    tester.fixture.componentInstance.prepare('south-items');
+
+    await expect.element(tester.filename).toHaveValue('south-items_2024_03_04_05_06_07_089.csv');
+    await expect.element(tester.delimiter).toHaveDisplayValue('Comma ,');
+  });
+
+  test('should close with the delimiter and the file name', async () => {
+    tester.fixture.componentInstance.prepare('south-items');
+
+    await tester.delimiter.selectOptions('Semi colon ;');
+    await tester.filename.fill('export.csv');
     await tester.saveButton.click();
-    expect(fakeActiveModal.close).toHaveBeenCalledWith({ delimiter: ',', filename: 'south-item' });
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({ delimiter: ';', filename: 'export.csv' });
+  });
+
+  test('should not close without file name', async () => {
+    await expect.element(tester.filename).toHaveValue('');
+
+    await tester.saveButton.click();
+
+    expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
   test('should cancel', async () => {
     await tester.cancelButton.click();
-    expect(fakeActiveModal.close).toHaveBeenCalled();
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith();
   });
 });

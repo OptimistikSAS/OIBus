@@ -18,9 +18,9 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, DatetimepickerComponent]
 })
 export class OIBusInstantFormControlComponent {
-  instantAttribute = input.required<OIBusInstantAttribute>();
+  readonly instantAttribute = input.required<OIBusInstantAttribute>();
 }
