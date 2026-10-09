@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -12,7 +13,7 @@ import {
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { Observable, startWith } from 'rxjs';
 
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/api/history-query.model';
 import { SouthConnectorCommandDTO } from '@oibus/shared/api/south-connector.model';
@@ -28,6 +29,12 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
+type ItemForm = FormGroup<{
+  name: FormControl<string>;
+  enabled: FormControl<boolean>;
+  settings: FormGroup;
+}>;
+
 @Component({
   selector: 'oib-edit-history-query-item-modal',
   templateUrl: './edit-history-query-item-modal.component.html',
@@ -38,51 +45,67 @@ import SouthItemTestComponent from '../../../south/south-items/south-item-test/s
     SouthItemTestComponent,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
-    SaveButtonComponent,
-    SouthItemTestComponent
+    SaveButtonComponent
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
-      useFactory: (component: EditHistoryQueryItemModalComponent) => () => (component.mode === 'edit' ? 'edit' : 'create'),
+      useFactory: (component: EditHistoryQueryItemModalComponent) => () => (component.mode() === 'edit' ? 'edit' : 'create'),
       deps: [forwardRef(() => EditHistoryQueryItemModalComponent)]
     }
   ]
 })
 export class EditHistoryQueryItemModalComponent {
-  private modal = inject(NgbActiveModal);
-  private fb = inject(NonNullableFormBuilder);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  mode: 'create' | 'edit' | 'copy' = 'create';
+  readonly mode = signal<'create' | 'edit' | 'copy'>('create');
   /** True when opened from history-query-detail (saves directly to API); false when opened from edit-history-query (changes are applied in-memory). */
-  directSave = true;
+  readonly directSave = signal(true);
   /**
    * Set by edit-history-query (in-memory editing) to the history query's current, possibly-unsaved
    * transformer list, so the item-test panel offers them instead of fetching the last-saved state.
    * Left null when opened from history-query-detail, where a fetch is already accurate.
    */
-  inMemoryTransformers: Array<HistoryTransformerDTOWithOptions> | null = null;
-  state = new ObservableState();
-  historyId!: string;
-  fromSouth: string | null = null;
-  southConnectorCommand!: SouthConnectorCommandDTO;
-  manifest!: SouthConnectorManifest;
-  item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO | null = null;
-  itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = [];
+  readonly inMemoryTransformers = signal<Array<HistoryTransformerDTOWithOptions> | null>(null);
+  readonly state = new ObservableState();
+  readonly historyId = signal('');
+  readonly fromSouth = signal<string | null>(null);
+  readonly southConnectorCommand = signal<SouthConnectorCommandDTO | null>(null);
+  readonly manifest = signal<SouthConnectorManifest | null>(null);
+  private item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO | null = null;
+  private itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = [];
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
    * This ensures that we have a backup identifier for the currently edited item.
    * In 'copy' and 'create' cases, we always check all items' names
    */
-  tableIndex: number | null = null;
+  private tableIndex: number | null = null;
 
-  form: FormGroup<{
-    name: FormControl<string>;
-    enabled: FormControl<boolean>;
-    settings: FormGroup;
-  }> | null = null;
+  readonly form = signal<ItemForm | null>(null);
+  private readonly formValue = signal<ItemForm['value'] | null>(null);
+
+  /** The item built from the form, tested by the item-test panel and returned when saving. */
+  readonly formItem = computed<HistoryQueryItemCommandDTO | null>(() => {
+    const formValue = this.formValue();
+    if (!formValue) {
+      return null;
+    }
+    return {
+      id: this.item?.id ?? `temp_${Date.now()}`,
+      enabled: formValue.enabled!,
+      name: formValue.name!,
+      settings: extractFormValue(formValue.settings)
+    };
+  });
+
+  readonly itemSettingsAttribute = computed(() => {
+    const manifest = this.manifest();
+    return manifest ? (manifest.items.rootAttribute.attributes.find(element => element.key === 'settings') as OIBusObjectAttribute) : null;
+  });
 
   /**
    * Prepares the component for creation.
@@ -94,11 +117,11 @@ export class EditHistoryQueryItemModalComponent {
     southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest
   ) {
-    this.mode = 'create';
-    this.manifest = manifest;
-    this.historyId = historyId;
-    this.fromSouth = fromSouth;
-    this.southConnectorCommand = southConnectorCommand;
+    this.mode.set('create');
+    this.manifest.set(manifest);
+    this.historyId.set(historyId);
+    this.fromSouth.set(fromSouth);
+    this.southConnectorCommand.set(southConnectorCommand);
     this.itemList = itemList;
     this.buildForm();
   }
@@ -112,11 +135,11 @@ export class EditHistoryQueryItemModalComponent {
     manifest: SouthConnectorManifest,
     tableIndex: number
   ) {
-    this.mode = 'edit';
-    this.manifest = manifest;
-    this.historyId = historyId;
-    this.fromSouth = fromSouth;
-    this.southConnectorCommand = southConnectorCommand;
+    this.mode.set('edit');
+    this.manifest.set(manifest);
+    this.historyId.set(historyId);
+    this.fromSouth.set(fromSouth);
+    this.southConnectorCommand.set(southConnectorCommand);
     this.itemList = itemList;
     this.item = historyQueryItem; // used to check uniqueness
     this.tableIndex = tableIndex;
@@ -131,21 +154,19 @@ export class EditHistoryQueryItemModalComponent {
     southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest
   ) {
-    this.mode = 'copy';
-    this.manifest = manifest;
-    this.historyId = historyId;
-    this.fromSouth = fromSouth;
-    this.southConnectorCommand = southConnectorCommand;
+    this.mode.set('copy');
+    this.manifest.set(manifest);
+    this.historyId.set(historyId);
+    this.fromSouth.set(fromSouth);
+    this.southConnectorCommand.set(southConnectorCommand);
     this.itemList = itemList;
     // used to check uniqueness
-    this.item = JSON.parse(JSON.stringify(item)) as HistoryQueryItemDTO;
-    this.item.name = `${item.name}-copy`;
-    this.item.id = '';
+    this.item = { ...structuredClone(item), name: `${item.name}-copy`, id: '' };
     this.buildForm();
   }
 
   canDismiss(): Observable<boolean> | boolean {
-    if (this.form?.dirty) {
+    if (this.form()?.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -156,27 +177,17 @@ export class EditHistoryQueryItemModalComponent {
   }
 
   save() {
-    if (!this.form!.valid) {
+    if (!this.form()!.valid) {
       return;
     }
-    this.modal.close(this.formItem);
-  }
-
-  get formItem(): HistoryQueryItemCommandDTO {
-    const formValue = this.form!.value;
-    return {
-      id: this.item?.id ?? `temp_${Date.now()}`,
-      enabled: formValue.enabled!,
-      name: formValue.name!,
-      settings: extractFormValue(formValue.settings)!
-    };
+    this.modal.close(this.formItem());
   }
 
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       let names!: Array<string>;
 
-      switch (this.mode) {
+      switch (this.mode()) {
         case 'copy':
         case 'create':
           names = this.itemList.map(item => item.name);
@@ -196,27 +207,27 @@ export class EditHistoryQueryItemModalComponent {
   }
 
   private buildForm() {
-    this.form = this.fb.group({
+    const form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       enabled: [true, Validators.required],
       settings: this.fb.group({})
     });
 
-    const settingsAttribute = this.getItemSettingsAttribute();
+    const settingsAttribute = this.itemSettingsAttribute()!;
     for (const attribute of settingsAttribute.attributes) {
-      addAttributeToForm(this.fb, this.form.controls.settings, attribute);
+      addAttributeToForm(this.fb, form.controls.settings, attribute);
     }
-    addEnablingConditions(this.form.controls.settings, settingsAttribute.enablingConditions);
+    addEnablingConditions(form.controls.settings, settingsAttribute.enablingConditions);
 
     // if we have an item, we initialize the values
     if (this.item) {
-      this.form.patchValue(this.item);
+      form.patchValue(this.item);
     } else {
-      this.form.setValue(this.form.getRawValue());
+      form.setValue(form.getRawValue());
     }
-  }
-
-  getItemSettingsAttribute(): OIBusObjectAttribute {
-    return this.manifest.items.rootAttribute.attributes.find(element => element.key === 'settings')! as OIBusObjectAttribute;
+    form.valueChanges
+      .pipe(startWith(form.value), takeUntilDestroyed(this.destroyRef))
+      .subscribe(formValue => this.formValue.set(formValue));
+    this.form.set(form);
   }
 }

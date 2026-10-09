@@ -1,0 +1,21 @@
+.selection-column {
+  width: 50px;
+  text-align: center;
+}
+
+.status-column {
+  width: 6rem;
+  text-align: center;
+}
+
+.sort-button {
+  background: none;
+  border: none;
+  font-weight: bold;
+}
+
+.south-item input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
