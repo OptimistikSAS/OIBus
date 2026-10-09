@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 
@@ -18,7 +17,7 @@ import { BehaviorSubject, defer, finalize, Observable, switchMap } from 'rxjs';
  * to know when the button should be disabled and display a spinner.
  */
 export class ObservableState {
-  isPending = new BehaviorSubject(false);
+  readonly isPending = new BehaviorSubject(false);
 
   pendingUntilFinalization<T>() {
     return (source: Observable<T>) => {
@@ -42,7 +41,7 @@ export class ObservableState {
     '[attr.id]': 'id()',
     '[disabled]': 'isDisabled()'
   },
-  imports: [TranslateDirective, AsyncPipe]
+  imports: [TranslateDirective]
 })
 export class SaveButtonComponent {
   readonly form = input<string>();
@@ -50,7 +49,7 @@ export class SaveButtonComponent {
   readonly iconClass = input('fa-floppy-disk');
   readonly id = input('save-button');
   readonly state = input.required<ObservableState>({ alias: 'oib-save-button' });
-  private readonly isPending = toSignal(toObservable(this.state).pipe(switchMap(state => state.isPending)));
+  protected readonly isPending = toSignal(toObservable(this.state).pipe(switchMap(state => state.isPending)));
   readonly forceDisabled = input(false);
 
   readonly isDisabled = computed(() => {

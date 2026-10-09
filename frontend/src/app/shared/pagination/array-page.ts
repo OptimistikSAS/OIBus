@@ -1,41 +1,28 @@
-/**
- * A Page implementation backed by an array.
- */
 import { Page } from '@oibus/shared/common/types';
 
+/**
+ * An immutable Page implementation backed by an array.
+ * Changing the page creates a new page, so that a component displaying it (e.g. an OnPush `oib-pagination`) is refreshed.
+ */
 export class ArrayPage<T> implements Page<T> {
-  private _content: Array<T> = [];
-  private _number: number | null = null;
-  private _totalPages: number;
+  readonly content: Array<T>;
+  readonly totalElements: number;
+  readonly totalPages: number;
 
   constructor(
-    private array: Array<T>,
-    public readonly size: number
+    private readonly array: Array<T>,
+    readonly size: number,
+    readonly number = 0
   ) {
-    this._totalPages = Math.ceil(array.length / size);
-    this.gotoPage(0);
+    this.content = array.slice(number * size, Math.min(array.length, (number + 1) * size));
+    this.totalElements = array.length;
+    this.totalPages = Math.ceil(array.length / size);
   }
 
-  get content(): Array<T> {
-    return this._content;
-  }
-
-  get totalElements(): number {
-    return this.array.length;
-  }
-
-  get number() {
-    return this._number as number;
-  }
-
-  get totalPages(): number {
-    return this._totalPages;
-  }
-
-  gotoPage(pageNumber: number) {
-    if (this._number !== pageNumber) {
-      this._number = pageNumber;
-      this._content = this.array.slice(pageNumber * this.size, Math.min(this.array.length, (pageNumber + 1) * this.size));
-    }
+  /**
+   * Returns the page of the given number, backed by the same array.
+   */
+  gotoPage(pageNumber: number): ArrayPage<T> {
+    return pageNumber === this.number ? this : new ArrayPage(this.array, this.size, pageNumber);
   }
 }

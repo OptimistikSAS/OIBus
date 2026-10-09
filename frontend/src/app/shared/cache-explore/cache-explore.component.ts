@@ -1,7 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 
 import { TranslateDirective } from '@ngx-translate/core';
+import { switchMap } from 'rxjs';
 
 import { CacheOperation } from '@oibus/shared/api/engine.model';
 import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/domain/engine.model';
@@ -14,8 +15,8 @@ import { CacheContentComponent } from './cache-content/cache-content.component';
   selector: 'oib-cache-explore',
   templateUrl: './cache-explore.component.html',
   styleUrl: './cache-explore.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [TranslateDirective, CacheContentComponent, AsyncPipe, DatetimePipe]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateDirective, CacheContentComponent, DatetimePipe]
 })
 export class CacheExploreComponent {
   readonly entity = input.required<{ id: string; type: 'north' | 'history' }>();
@@ -34,6 +35,8 @@ export class CacheExploreComponent {
     id: string;
     updateCommand: CacheContentUpdateCommand;
   }>();
+
+  protected readonly isPending = toSignal(toObservable(this.state).pipe(switchMap(state => state.isPending)), { initialValue: false });
 
   readonly localResult = linkedSignal<CacheSearchResult>(() => this.cacheContent());
 

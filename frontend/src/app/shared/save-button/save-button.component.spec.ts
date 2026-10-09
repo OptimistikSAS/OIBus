@@ -13,20 +13,20 @@ import { ObservableState, SaveButtonComponent } from './save-button.component';
   selector: 'oib-test-save-button-component',
   template: `
     <form [formGroup]="form" id="test-form" (ngSubmit)="save()">
-      <button [oib-save-button]="state" form="test-form" [forceDisabled]="forceDisabled()"></button>
+      <button type="submit" [oib-save-button]="state" form="test-form" [forceDisabled]="forceDisabled()"></button>
     </form>
   `,
   imports: [ReactiveFormsModule, SaveButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
-  private fb = inject(FormBuilder);
+  private readonly fb = inject(FormBuilder);
 
-  state = new ObservableState();
-  save$ = of(null).pipe(delay(500), this.state.pendingUntilFinalization());
-  form = this.fb.group({ name: '' });
+  readonly state = new ObservableState();
+  readonly save$ = of(null).pipe(delay(500), this.state.pendingUntilFinalization());
+  readonly form = this.fb.group({ name: '' });
 
-  forceDisabled = signal(false);
+  readonly forceDisabled = signal(false);
 
   save() {
     this.save$.subscribe();
@@ -37,8 +37,8 @@ class TestComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
-  readonly spinner = this.root.getByCss('.fa.fa-spinner');
-  readonly saveIcon = this.root.getByCss('.fa.fa-floppy-disk');
+  readonly spinner = this.root.getByCss('.fa-spinner');
+  readonly saveIcon = this.root.getByCss('.fa-floppy-disk');
 }
 
 describe('SaveButton', () => {
@@ -50,18 +50,15 @@ describe('SaveButton', () => {
     });
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  afterEach(() => vi.useRealTimers());
 
   describe('with form attribute and without id attribute', () => {
     beforeEach(() => {
       tester = new TestComponentTester();
-      tester.fixture.detectChanges();
     });
 
     test('should display the button by default', async () => {
-      await expect.element(tester.saveButton).toMatchTextContent('Save');
+      await expect.element(tester.saveButton).toHaveTextContent('Save');
       await expect.element(tester.saveButton).toHaveClass('btn');
       await expect.element(tester.saveButton).toHaveClass('btn-primary');
       await expect.element(tester.saveButton).toHaveAttribute('form', 'test-form');
@@ -74,30 +71,26 @@ describe('SaveButton', () => {
     test('should disable the button and display the spinner when saving', async () => {
       vi.useFakeTimers();
       await tester.saveButton.click();
-      tester.fixture.detectChanges();
 
-      await expect.element(tester.saveButton).toMatchTextContent('Save');
+      await expect.element(tester.saveButton).toHaveTextContent('Save');
       await expect.element(tester.saveButton).toBeDisabled();
       await expect.element(tester.spinner).toBeInTheDocument();
       await expect.element(tester.saveIcon).not.toBeInTheDocument();
 
       await vi.advanceTimersByTimeAsync(500);
-      tester.fixture.detectChanges();
       await expect.element(tester.saveButton).not.toBeDisabled();
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.saveIcon).toBeInTheDocument();
 
       // save again
       await tester.saveButton.click();
-      tester.fixture.detectChanges();
 
-      await expect.element(tester.saveButton).toMatchTextContent('Save');
+      await expect.element(tester.saveButton).toHaveTextContent('Save');
       await expect.element(tester.saveButton).toBeDisabled();
       await expect.element(tester.spinner).toBeInTheDocument();
       await expect.element(tester.saveIcon).not.toBeInTheDocument();
 
       await vi.advanceTimersByTimeAsync(500);
-      tester.fixture.detectChanges();
       await expect.element(tester.saveButton).not.toBeDisabled();
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.saveIcon).toBeInTheDocument();
@@ -105,12 +98,10 @@ describe('SaveButton', () => {
 
     test('should disable the button when forceDisabled', async () => {
       tester.fixture.componentInstance.forceDisabled.set(true);
-      tester.fixture.detectChanges();
 
       await expect.element(tester.saveButton).toBeDisabled();
 
       tester.fixture.componentInstance.forceDisabled.set(false);
-      tester.fixture.detectChanges();
 
       await expect.element(tester.saveButton).not.toBeDisabled();
     });
@@ -122,17 +113,16 @@ describe('SaveButton', () => {
         TestComponent,
         `
         <form [formGroup]="form" (ngSubmit)="save()">
-            <button [oib-save-button]="state" id="foo"></button>
+            <button type="submit" [oib-save-button]="state" id="foo"></button>
         </form>
       `
       );
 
       tester = new TestComponentTester();
-      tester.fixture.detectChanges();
     });
 
     test('should have no form attribute and the specified id the button by default', async () => {
-      await expect.element(tester.saveButton).toMatchTextContent('Save');
+      await expect.element(tester.saveButton).toHaveTextContent('Save');
       await expect.element(tester.saveButton).not.toHaveAttribute('form');
       await expect.element(tester.saveButton).toHaveAttribute('id', 'foo');
     });

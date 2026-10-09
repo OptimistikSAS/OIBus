@@ -12,7 +12,7 @@ import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
   name: 'scanModeSchedule'
 })
 export class ScanModeSchedulePipe implements PipeTransform {
-  private translateService = inject(TranslateService);
+  private readonly translateService = inject(TranslateService);
 
   transform(scanMode: ScanModeDTO | null | undefined): string {
     if (!scanMode) {
