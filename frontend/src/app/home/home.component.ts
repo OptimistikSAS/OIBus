@@ -28,16 +28,16 @@ function toRows<T>(items: Array<T>): Array<Array<T>> {
   selector: 'oib-home',
   imports: [TranslateDirective, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent],
   templateUrl: './home.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
+  private readonly engineService = inject(EngineService);
   private readonly souths = toSignal(inject(SouthConnectorService).list(), { initialValue: [] as Array<SouthConnectorLightDTO> });
   private readonly norths = toSignal(inject(NorthConnectorService).list(), { initialValue: [] as Array<NorthConnectorLightDTO> });
 
   readonly southRows = computed(() => toRows(this.souths().filter(s => s.enabled)));
   readonly northRows = computed(() => toRows(this.norths().filter(n => n.enabled)));
-  private readonly engineService = inject(EngineService);
   readonly homeMetrics = toSignal(
     pollMetrics(() => this.engineService.getHomeMetrics()),
     { initialValue: null }
