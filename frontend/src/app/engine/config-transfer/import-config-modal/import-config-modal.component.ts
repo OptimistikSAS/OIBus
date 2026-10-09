@@ -17,7 +17,8 @@ import { ConfirmationService } from '../../../shared/confirmation.service';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { ConfigImportPreviewComponent } from '../config-import-preview/config-import-preview.component';
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 @Component({
   selector: 'oib-import-config-modal',
@@ -31,6 +32,7 @@ export class ImportConfigModalComponent {
   private readonly configTransferService = inject(ConfigTransferService);
   private readonly confirmationService = inject(ConfirmationService);
 
+  protected readonly maxFileSizeMb = MAX_FILE_SIZE_MB;
   readonly state = new ObservableState();
   readonly previewState = new ObservableState();
   readonly preview = signal<ConfigImportPreviewDTO | null>(null);
