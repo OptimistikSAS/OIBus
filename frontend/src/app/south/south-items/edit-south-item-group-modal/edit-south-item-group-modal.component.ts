@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -27,7 +27,7 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
   selector: 'oib-edit-south-item-group-modal',
   templateUrl: './edit-south-item-group-modal.component.html',
   styleUrl: './edit-south-item-group-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
 })
 export class EditSouthItemGroupModalComponent {
@@ -35,14 +35,17 @@ export class EditSouthItemGroupModalComponent {
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
-  mode: 'create' | 'edit' = 'create';
-  /** True when opened from south-detail (saves directly to API); false when opened from edit-south (changes are applied in-memory). */
+  readonly mode = signal<'create' | 'edit'>('create');
+  /**
+   * True when opened from south-detail (saves directly to API); false when opened from edit-south (changes are applied in-memory).
+   * Set by the opener right after opening the modal, before its first change detection.
+   */
   directSave = true;
-  state = new ObservableState();
-  scanModes: Array<ScanModeDTO> = [];
-  manifest!: SouthConnectorManifest;
-  group: SouthItemGroupDTO | SouthItemGroupCommandDTO | null = null;
-  existingGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  readonly state = new ObservableState();
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly manifest = signal<SouthConnectorManifest | null>(null);
+  private group: SouthItemGroupDTO | SouthItemGroupCommandDTO | null = null;
+  private existingGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
 
   readonly recoveryStrategies: Array<{ value: SouthHistoryRecoveryStrategy; labelKey: string }> = [
     { value: 'oldest', labelKey: 'south.groups.recovery-strategy-oldest' },
@@ -55,7 +58,7 @@ export class EditSouthItemGroupModalComponent {
     { value: 'threshold', labelKey: 'south.groups.caching-strategy-threshold' }
   ];
 
-  form: FormGroup<{
+  readonly form: FormGroup<{
     name: FormControl<string>;
     scanModeId: FormControl<string | null>;
     startTimeOffset: FormControl<number | null>;
@@ -64,40 +67,46 @@ export class EditSouthItemGroupModalComponent {
     readDelay: FormControl<number>;
     recoveryStrategy: FormControl<SouthHistoryRecoveryStrategy>;
     cachingStrategy: FormControl<SouthCachingStrategy>;
-  }> | null = null;
+  }> = this.fb.group({
+    name: ['', [Validators.required, this.checkUniqueness()]],
+    scanModeId: this.fb.control<string | null>(null, [Validators.required]),
+    startTimeOffset: this.fb.control<number | null>(0, [Validators.min(-2147483648), Validators.max(2147483647)]),
+    endTimeOffset: this.fb.control<number | null>(0, [Validators.min(-2147483648), Validators.max(2147483647)]),
+    maxReadInterval: [3600, [Validators.min(0)]],
+    readDelay: [200, [Validators.required, Validators.min(0)]],
+    recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest'),
+    cachingStrategy: this.fb.control<SouthCachingStrategy>('allValues')
+  });
 
-  get hasHistorianCapabilities(): boolean {
-    return this.manifest?.modes?.history;
-  }
+  readonly hasHistorianCapabilities = computed(() => this.manifest()?.modes.history ?? false);
 
   /**
    * True for the six "IoT family" south types (OPC UA, Modbus, ADS, OPC classic, S7, MQTT). There is no
    * manifest capability flag for this family, so it's checked directly against the connector type string.
    */
-  get isIotFamilySouthType(): boolean {
-    return IOT_FAMILY_SOUTH_TYPES.includes(this.manifest?.id as (typeof IOT_FAMILY_SOUTH_TYPES)[number]);
-  }
+  readonly isIotFamilySouthType = computed(() => {
+    const manifest = this.manifest();
+    return !!manifest && IOT_FAMILY_SOUTH_TYPES.includes(manifest.id);
+  });
 
   /**
    * True for IoT-family types minus MQTT, which does not support the 'threshold' caching strategy (MQTT
    * payloads aren't guaranteed numeric). Mirrors the item modal's `isThresholdAvailable` — a group's
    * cachingStrategy is inherited by every synced item, so MQTT groups must not offer it either.
    */
-  get isThresholdAvailable(): boolean {
-    return this.isIotFamilySouthType && this.manifest?.id !== 'mqtt';
-  }
+  readonly isThresholdAvailable = computed(() => this.isIotFamilySouthType() && this.manifest()?.id !== 'mqtt');
 
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
     existingGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
     manifest: SouthConnectorManifest
   ) {
-    this.mode = 'create';
-    this.scanModes = scanModes;
-    this.manifest = manifest;
+    this.mode.set('create');
+    this.scanModes.set(scanModes);
+    this.manifest.set(manifest);
     this.existingGroups = existingGroups;
     this.group = null;
-    this.buildForm();
+    this.initForm(manifest);
   }
 
   prepareForEdition(
@@ -106,17 +115,17 @@ export class EditSouthItemGroupModalComponent {
     manifest: SouthConnectorManifest,
     group: SouthItemGroupDTO | SouthItemGroupCommandDTO
   ) {
-    this.mode = 'edit';
-    this.scanModes = scanModes;
+    this.mode.set('edit');
+    this.scanModes.set(scanModes);
     this.existingGroups = existingGroups;
-    this.manifest = manifest;
+    this.manifest.set(manifest);
     this.group = group;
-    this.buildForm();
+    this.initForm(manifest);
   }
 
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      if (!control.value || !this.existingGroups) {
+      if (!control.value) {
         return null;
       }
       const isDuplicate = this.existingGroups.some(
@@ -126,24 +135,14 @@ export class EditSouthItemGroupModalComponent {
     };
   }
 
-  private buildForm() {
-    this.form = this.fb.group({
-      name: ['', [Validators.required, this.checkUniqueness()]],
-      scanModeId: this.fb.control<string | null>(null, [Validators.required]),
-      startTimeOffset: this.fb.control<number | null>(0, [Validators.min(-2147483648), Validators.max(2147483647)]),
-      endTimeOffset: this.fb.control<number | null>(0, [Validators.min(-2147483648), Validators.max(2147483647)]),
-      maxReadInterval: [3600, [Validators.min(0)]],
-      readDelay: [200, [Validators.required, Validators.min(0)]],
-      recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest'),
-      cachingStrategy: this.fb.control<SouthCachingStrategy>('allValues')
-    });
-
-    if (this.manifest?.id === 'mqtt') {
+  private initForm(manifest: SouthConnectorManifest) {
+    if (manifest.id === 'mqtt') {
       // Defense in depth alongside hiding the 'threshold' option in the template for MQTT groups —
       // matches the item modal's mqttCachingStrategyValidator.
       this.form.controls.cachingStrategy.addValidators(control =>
         control.value === 'threshold' ? { mqttThresholdNotAvailable: true } : null
       );
+      this.form.controls.cachingStrategy.updateValueAndValidity();
     }
 
     if (this.group) {
@@ -163,7 +162,7 @@ export class EditSouthItemGroupModalComponent {
   }
 
   canDismiss(): Observable<boolean> | boolean {
-    if (this.form?.dirty) {
+    if (this.form.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -174,7 +173,7 @@ export class EditSouthItemGroupModalComponent {
   }
 
   save() {
-    if (!this.form || !this.form.valid) {
+    if (!this.form.valid) {
       return;
     }
 
@@ -194,6 +193,6 @@ export class EditSouthItemGroupModalComponent {
         cachingStrategy: formValue.cachingStrategy! ?? null
       }
     };
-    this.modal.close({ mode: this.mode, group: command });
+    this.modal.close({ mode: this.mode(), group: command });
   }
 }
