@@ -25,7 +25,7 @@
         <div class="search-buttons ms-auto d-flex gap-2 align-items-center flex-shrink-0">
           <button class="btn btn-primary" id="run-search-button" [disabled]="loading()">
             @if (loading()) {
-              <span class="fa fa-spin fa-spinner"></span>
+              <span class="fa-solid fa-spin fa-spinner"></span>
             } @else {
               <span translate="common.search"></span>
             }
@@ -50,7 +50,7 @@
         }
         @if (hasActiveStatuses()) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-statuses-button" (click)="clearStatuses()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa-solid fa-times me-1"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -71,7 +71,7 @@
         }
         @if (hasActiveTriggerTypes()) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-trigger-types-button" (click)="clearTriggerTypes()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa-solid fa-times me-1"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -120,7 +120,7 @@
                       [ngbTooltip]="'south.workflows.run-payload' | translate"
                       (click)="onViewPayload(run)"
                     >
-                      <span class="fa fa-eye"></span>
+                      <span class="fa-regular fa-eye"></span>
                     </button>
                   }
                 </td>

@@ -47,7 +47,7 @@ export class ObservableState {
 export class SaveButtonComponent {
   readonly form = input<string>();
   readonly translationKey = input('common.save');
-  readonly iconClass = input('fa-save');
+  readonly iconClass = input('fa-floppy-disk');
   readonly id = input('save-button');
   readonly state = input.required<ObservableState>({ alias: 'oib-save-button' });
   private readonly isPending = toSignal(toObservable(this.state).pipe(switchMap(state => state.isPending)));

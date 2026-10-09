@@ -17,7 +17,7 @@
         @if (isLoading()) {
           <span class="spinner-border spinner-border-sm me-2" role="status"></span>
         } @else {
-          <span class="fa fa-check me-2"></span>
+          <span class="fa-solid fa-check me-2"></span>
         }
         <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.test"></span>
       </button>
@@ -85,13 +85,13 @@
               @if (displayMode(); as mode) {
                 <div ngbDropdown class="d-inline-block">
                   <button type="button" class="btn btn-link m-0 p-0" id="view-dropdown" ngbDropdownToggle>
-                    <span class="fa {{ displayModeIcons[mode] }}"></span>
+                    <span class="fa-solid {{ displayModeIcons[mode] }}"></span>
                     <span style="margin-left: 5px">{{ 'south.test-item.view.' + mode | translate }}</span>
                   </button>
                   <div ngbDropdownMenu aria-labelledby="view-dropdown">
                     @for (availableMode of availableDisplayModes(); track $index) {
                       <button ngbDropdownItem [class.active]="mode === availableMode" (click)="changeDisplayMode(availableMode)">
-                        <span class="fa {{ displayModeIcons[availableMode] }}"></span>
+                        <span class="fa-solid {{ displayModeIcons[availableMode] }}"></span>
                         <span style="margin-left: 5px">{{ 'south.test-item.view.' + availableMode | translate }}</span>
                       </button>
                     }
@@ -170,7 +170,7 @@
           } @else if (!error()) {
             <!-- Placeholder shown before the first test run -->
             <div class="result-placeholder d-flex align-items-center justify-content-center text-muted">
-              <span class="fa fa-flask me-2"></span>
+              <span class="fa-solid fa-flask me-2"></span>
               <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.test"></span>
             </div>
           }

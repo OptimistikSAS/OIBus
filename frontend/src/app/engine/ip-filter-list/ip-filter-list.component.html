@@ -16,7 +16,7 @@
             [ngbTooltip]="'engine.ip-filter.tooltips.add' | translate"
             (click)="addIpFilter()"
           >
-            <span class="fa fa-plus"></span>
+            <span class="fa-solid fa-plus"></span>
           </button>
         }
 
@@ -41,7 +41,7 @@
           <th>
             <button type="button" style="background: none; border: none; font-weight: bold; color: inherit" (click)="toggleSort('address')">
               <span translate="engine.ip-filter.address" class="me-2"></span>
-              <span class="fa {{ getSortIcon('address') }}"></span>
+              <span class="fa-solid {{ getSortIcon('address') }}"></span>
             </button>
           </th>
           <th translate="engine.ip-filter.description"></th>
@@ -52,7 +52,7 @@
               (click)="toggleSort('updatedAt')"
             >
               <span translate="engine.ip-filter.updated-at" class="me-2"></span>
-              <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+              <span class="fa-solid {{ getSortIcon('updatedAt') }}"></span>
             </button>
           </th>
           <th></th>
@@ -80,7 +80,7 @@
                   [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
                   (click)="editIpFilter(ipFilter)"
                 >
-                  <span class="fa fa-pencil"></span>
+                  <span class="fa-solid fa-pencil"></span>
                 </button>
                 <!-- Delete button -->
                 <button
@@ -89,7 +89,7 @@
                   [ngbTooltip]="'engine.ip-filter.tooltips.delete' | translate"
                   (click)="deleteIpFilter(ipFilter)"
                 >
-                  <span class="fa fa-trash"></span>
+                  <span class="fa-solid fa-trash-can"></span>
                 </button>
                 <!-- Audit history button -->
                 <button
@@ -98,7 +98,7 @@
                   [ngbTooltip]="'engine.ip-filter.tooltips.audit' | translate"
                   (click)="showAudit(ipFilter)"
                 >
-                  <span class="fa fa-history"></span>
+                  <span class="fa-solid fa-history"></span>
                 </button>
               </div>
             </td>

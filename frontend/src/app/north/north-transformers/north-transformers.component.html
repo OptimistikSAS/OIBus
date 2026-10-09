@@ -53,7 +53,7 @@
                     [ngbTooltip]="'north.transformers.tooltips.edit' | translate"
                     (click)="editTransformer(transformerWithOptions)"
                   >
-                    <span class="fa fa-pencil"></span>
+                    <span class="fa-solid fa-pencil"></span>
                   </button>
                   <button
                     type="button"
@@ -61,7 +61,7 @@
                     [ngbTooltip]="'north.transformers.tooltips.delete' | translate"
                     (click)="deleteTransformer(transformerWithOptions)"
                   >
-                    <span class="fa fa-trash"></span>
+                    <span class="fa-solid fa-trash-can"></span>
                   </button>
                   <!-- Audit history button: only for saved transformers (the edit page works on unsaved ones) -->
                   @if (saveChangesDirectly()) {
@@ -71,7 +71,7 @@
                       [ngbTooltip]="'north.transformers.tooltips.audit' | translate"
                       (click)="showAudit(transformerWithOptions)"
                     >
-                      <span class="fa fa-history"></span>
+                      <span class="fa-solid fa-history"></span>
                     </button>
                   }
                 </div>

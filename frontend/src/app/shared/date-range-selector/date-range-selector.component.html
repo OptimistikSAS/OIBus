@@ -4,7 +4,7 @@
       <div class="d-flex align-items-center flex-wrap column-gap-2">
         <label class="form-label mb-0" translate="date-range.range-type"></label>
         @if (internalForm.controls.rangeType.value !== 'custom') {
-          <small class="text-muted range-summary"><i class="fa fa-clock-o me-1"></i>{{ getCurrentRangeDescription() }}</small>
+          <small class="text-muted range-summary"><i class="fa-solid fa-clock me-1"></i>{{ getCurrentRangeDescription() }}</small>
         }
       </div>
       <select formControlName="rangeType" class="form-select" id="range-type-select">
@@ -30,7 +30,7 @@
         </div>
         <!-- Wrapper skips past the label row, then centers the icon inside exactly one form-control height -->
         <div style="align-self: start; padding-top: 1.75rem; height: calc(1.5em + 0.75rem + 2px); display: flex; align-items: center">
-          <i class="fa fa-arrow-right oib-fa-arrow"></i>
+          <i class="fa-solid fa-arrow-right oib-fa-arrow"></i>
         </div>
         <div class="flex-grow-1">
           <oib-datetimepicker formControlName="endTime" [label]="endLabel()" />

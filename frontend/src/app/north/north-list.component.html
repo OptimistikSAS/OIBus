@@ -11,7 +11,7 @@
         <span translate="north.list"></span>
         <span class="ms-4">
           <button class="btn btn-primary" id="create-modal" [ngbTooltip]="'north.tooltips.add' | translate" (click)="createNorth()">
-            <span class="fa fa-plus"></span>
+            <span class="fa-solid fa-plus"></span>
           </button>
         </span>
       </h1>
@@ -20,7 +20,7 @@
 
   <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm">
     <div class="row gx-2 py-3">
-      <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
+      <label class="col-auto col-form-label"><i class="fa-solid fa-search fa-lg"></i></label>
       <label for="name" class="col-auto col-form-label" translate="north.search-by-name"></label>
       <div class="col-2">
         <input type="text" class="form-control" id="name" formControlName="name" />
@@ -45,7 +45,7 @@
         }
         @if (activeEnabledStates().length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-enabled-states-button" (click)="clearEnabledStates()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa-solid fa-times me-1"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -66,7 +66,7 @@
         }
         @if (activeTypes().length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-types-button" (click)="clearTypes()">
-            <span class="fa fa-times me-1"></span>
+            <span class="fa-solid fa-times me-1"></span>
             <span translate="common.clear"></span>
           </button>
         }
@@ -99,7 +99,7 @@
                   (click)="toggleSort('name')"
                 >
                   <span translate="north.name" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('name') }}"></span>
+                  <span class="fa-solid {{ getSortIcon('name') }}"></span>
                 </button>
               </th>
               <th style="width: 9rem">
@@ -109,7 +109,7 @@
                   (click)="toggleSort('type')"
                 >
                   <span translate="north.type" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('type') }}"></span>
+                  <span class="fa-solid {{ getSortIcon('type') }}"></span>
                 </button>
               </th>
               <th translate="north.description"></th>
@@ -120,7 +120,7 @@
                   (click)="toggleSort('updatedAt')"
                 >
                   <span translate="north.updated-at" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+                  <span class="fa-solid {{ getSortIcon('updatedAt') }}"></span>
                 </button>
               </th>
               <th></th>
@@ -131,11 +131,11 @@
               <tr>
                 @if (!north.enabled) {
                   <td>
-                    <span [ngbTooltip]="'north.disabled' | translate" class="fa fa-minus-circle status-grey"></span>
+                    <span [ngbTooltip]="'north.disabled' | translate" class="fa-solid fa-minus-circle status-grey"></span>
                   </td>
                 } @else {
                   <td>
-                    <span [ngbTooltip]="'north.enabled' | translate" class="fa fa-check-circle status-green"></span>
+                    <span [ngbTooltip]="'north.enabled' | translate" class="fa-solid fa-check-circle status-green"></span>
                   </td>
                 }
                 <td>
@@ -161,13 +161,13 @@
                       [disabled]="states.get(north.id)?.isPending | async"
                     >
                       @if (states.get(north.id)?.isPending | async) {
-                        <span class="fa fa-spinner fa-spin" role="status"></span>
+                        <span class="fa-solid fa-spinner fa-spin" role="status"></span>
                       }
                       @if (north.enabled && (states.get(north.id)?.isPending | async) === false) {
-                        <span class="fa fa-pause" role="status"></span>
+                        <span class="fa-solid fa-pause" role="status"></span>
                       }
                       @if (!north.enabled && (states.get(north.id)?.isPending | async) === false) {
-                        <span class="fa fa-play" role="status"></span>
+                        <span class="fa-solid fa-play" role="status"></span>
                       }
                     </button>
                     <!-- Display button -->
@@ -177,7 +177,7 @@
                       [ngbTooltip]="'north.tooltips.view' | translate"
                       [routerLink]="[north.id]"
                     >
-                      <span class="fa fa-search"></span>
+                      <span class="fa-solid fa-search"></span>
                     </a>
                     <!-- Edit button -->
                     <a
@@ -186,7 +186,7 @@
                       [ngbTooltip]="'north.tooltips.edit' | translate"
                       [routerLink]="[north.id, 'edit']"
                     >
-                      <span class="fa fa-pencil"></span>
+                      <span class="fa-solid fa-pencil"></span>
                     </a>
                     <!-- Duplicate button -->
                     <a
@@ -195,7 +195,7 @@
                       routerLink="create"
                       [queryParams]="{ duplicate: north.id }"
                     >
-                      <span class="fa fa-copy"></span>
+                      <span class="fa-solid fa-copy"></span>
                     </a>
                     <!-- Delete button -->
                     <button
@@ -204,7 +204,7 @@
                       [ngbTooltip]="'north.tooltips.delete' | translate"
                       (click)="deleteNorth(north)"
                     >
-                      <span class="fa fa-trash"></span>
+                      <span class="fa-solid fa-trash-can"></span>
                     </button>
                     <!-- Audit history button -->
                     <button
@@ -213,7 +213,7 @@
                       [ngbTooltip]="'north.tooltips.audit' | translate"
                       (click)="showAudit(north)"
                     >
-                      <span class="fa fa-history"></span>
+                      <span class="fa-solid fa-history"></span>
                     </button>
                   </div>
                 </td>

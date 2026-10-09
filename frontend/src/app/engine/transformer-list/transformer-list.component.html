@@ -15,7 +15,7 @@
           [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.add' | translate"
           (click)="addTransformer()"
         >
-          <span class="fa fa-plus"></span>
+          <span class="fa-solid fa-plus"></span>
         </button>
 
         <oib-help [url]="helpUrl" />
@@ -33,7 +33,7 @@
           <th>
             <button type="button" style="background: none; border: none; font-weight: bold; color: inherit" (click)="toggleSort('name')">
               <span translate="configuration.oibus.manifest.transformers.edit-transformer-modal.name" class="me-2"></span>
-              <span class="fa {{ getSortIcon('name') }}"></span>
+              <span class="fa-solid {{ getSortIcon('name') }}"></span>
             </button>
           </th>
           <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.description"></th>
@@ -46,7 +46,7 @@
               (click)="toggleSort('updatedAt')"
             >
               <span translate="engine.transformer.updated-at" class="me-2"></span>
-              <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+              <span class="fa-solid {{ getSortIcon('updatedAt') }}"></span>
             </button>
           </th>
           <th></th>
@@ -76,7 +76,7 @@
                   [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.edit' | translate"
                   (click)="editTransformer(transformer)"
                 >
-                  <span class="fa fa-pencil"></span>
+                  <span class="fa-solid fa-pencil"></span>
                 </button>
                 <!-- Delete button -->
                 <button
@@ -85,7 +85,7 @@
                   [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.delete' | translate"
                   (click)="deleteTransformer(transformer)"
                 >
-                  <span class="fa fa-trash"></span>
+                  <span class="fa-solid fa-trash-can"></span>
                 </button>
                 <!-- Audit history button -->
                 <button
@@ -94,7 +94,7 @@
                   [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.audit' | translate"
                   (click)="showAudit(transformer)"
                 >
-                  <span class="fa fa-history"></span>
+                  <span class="fa-solid fa-history"></span>
                 </button>
               </div>
             </td>

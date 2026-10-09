@@ -6,7 +6,7 @@
     <div></div>
     <div class="ms-3">
       <button type="button" class="btn btn-primary btn-sm oib-box-btn me-2" id="add-group" (click)="onAddGroup()">
-        <span class="fa fa-plus"></span>
+        <span class="fa-solid fa-plus"></span>
       </button>
       <button
         type="button"
@@ -71,13 +71,13 @@
             <th>
               <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
                 <span translate="south.groups.name" class="me-2"></span>
-                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+                <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.name] }}"></span>
               </button>
             </th>
             <th>
               <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('schedule')">
                 <span translate="south.items.scan-mode" class="me-2"></span>
-                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.schedule] }}"></span>
+                <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.schedule] }}"></span>
               </button>
             </th>
             @if (hasHistorianCapabilities) {
@@ -90,7 +90,7 @@
             <th>
               <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('itemCount')">
                 <span translate="south.groups.item-count" class="me-2"></span>
-                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.itemCount] }}"></span>
+                <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.itemCount] }}"></span>
               </button>
             </th>
             <th style="width: 6rem"></th>
@@ -121,7 +121,7 @@
                     [ngbTooltip]="'south.groups.edit-title' | translate"
                     (click)="onEditGroup(group)"
                   >
-                    <span class="fa fa-pencil"></span>
+                    <span class="fa-solid fa-pencil"></span>
                   </button>
                   <button
                     type="button"
@@ -129,7 +129,7 @@
                     [ngbTooltip]="'south.groups.confirm-deletion' | translate: { name: group.standardSettings.name }"
                     (click)="onDeleteGroup(group)"
                   >
-                    <span class="fa fa-trash"></span>
+                    <span class="fa-solid fa-trash-can"></span>
                   </button>
                 </div>
               </td>

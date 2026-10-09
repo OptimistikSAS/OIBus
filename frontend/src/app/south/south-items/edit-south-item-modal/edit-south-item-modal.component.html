@@ -35,10 +35,10 @@
                     </button>
                     <div class="d-flex gap-1 pe-2">
                       <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
-                        <i class="fa fa-pencil"></i>
+                        <i class="fa-solid fa-pencil"></i>
                       </button>
                       <button type="button" class="btn btn-sm btn-link p-0 text-danger" (click)="onDeleteGroup(group, $event)">
-                        <i class="fa fa-trash"></i>
+                        <i class="fa-solid fa-trash-can"></i>
                       </button>
                     </div>
                   </div>
@@ -269,7 +269,7 @@
       [oib-save-button]="state"
       form="form"
       [translationKey]="directSave ? 'common.save' : 'common.ok'"
-      [iconClass]="directSave ? 'fa-save' : 'fa-check'"
+      [iconClass]="directSave ? 'fa-floppy-disk' : 'fa-check'"
     ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>

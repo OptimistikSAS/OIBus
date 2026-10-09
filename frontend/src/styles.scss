@@ -4,13 +4,10 @@ html {
   font-size: 12px;
 }
 
-// TODO use the SCSS import when the unit tests use the esbuild builder
-// as they currently use the webpack builder,
-// the $fa-font-path variable needs to be different from the one that the esbuild builder uses
-// $fa-font-path: '../fonts';
-// @import 'font-awesome/scss/font-awesome';
-
-@import 'font-awesome/css/font-awesome';
+// Font Awesome: only the solid and regular icon families are used
+@import '@fortawesome/fontawesome-free/css/fontawesome.css';
+@import '@fortawesome/fontawesome-free/css/solid.css';
+@import '@fortawesome/fontawesome-free/css/regular.css';
 @import './custom-bootstrap';
 
 :root {
