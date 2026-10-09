@@ -19,7 +19,7 @@ import {
   selector: 'oib-transformer-test-result',
   templateUrl: './transformer-test-result.component.html',
   styleUrl: './transformer-test-result.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslatePipe, NgbDropdownModule, ItemTestResultComponent]
 })
 export class TransformerTestResultComponent {

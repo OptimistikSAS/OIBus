@@ -22,7 +22,7 @@ export interface Notification {
  */
 @Service()
 export class NotificationService {
-  private messages$ = new Subject<Notification>();
+  private readonly messages$ = new Subject<Notification>();
 
   get notificationChanges(): Observable<Notification> {
     return this.messages$.asObservable();

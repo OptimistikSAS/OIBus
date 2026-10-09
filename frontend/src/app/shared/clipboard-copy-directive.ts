@@ -8,10 +8,11 @@ import { Directive, inject, input } from '@angular/core';
   }
 })
 export class ClipboardCopyDirective {
-  private clipboard = inject(Clipboard);
+  private readonly clipboard = inject(Clipboard);
 
   readonly string = input.required<string | null | undefined>();
-  public onClick(): void {
-    this.clipboard.copy(this.string()!);
+
+  onClick(): void {
+    this.clipboard.copy(this.string() ?? '');
   }
 }

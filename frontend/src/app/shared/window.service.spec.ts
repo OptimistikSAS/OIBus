@@ -1,32 +1,44 @@
 import { TestBed } from '@angular/core/testing';
 
-import { beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { WindowService } from './window.service';
 
 describe('WindowService', () => {
-  beforeEach(() => TestBed.configureTestingModule({}));
+  let service: WindowService;
+  let initialHistoryState: unknown;
 
-  test('should get and remove item from local storage', () => {
-    const service: WindowService = TestBed.inject(WindowService);
-    window.localStorage.setItem('randomKey', 'randomValue');
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(WindowService);
+    initialHistoryState = window.history.state;
+  });
+
+  afterEach(() => {
+    window.localStorage.removeItem('randomKey');
+    window.history.replaceState(initialHistoryState, '');
+  });
+
+  test('should set, get and remove item from local storage', () => {
+    service.setStorageItem('randomKey', 'randomValue');
+    expect(window.localStorage.getItem('randomKey')).toBe('randomValue');
     expect(service.getStorageItem('randomKey')).toBe('randomValue');
+
     service.removeStorageItem('randomKey');
     expect(service.getStorageItem('randomKey')).toBeNull();
   });
 
   test('should get history state key', () => {
-    const service: WindowService = TestBed.inject(WindowService);
-    window.history.pushState({}, 'title');
-    window.history.state.randomKey = 'randomValue';
+    window.history.replaceState({ randomKey: 'randomValue' }, '');
+
     expect(service.getHistoryState<string>('randomKey')).toBe('randomValue');
     expect(service.getHistoryState<string>('unknown')).toBeNull();
   });
 
   test('should get history state', () => {
-    const service: WindowService = TestBed.inject(WindowService);
     const state = { foo: 'bar' };
-    window.history.pushState(state, 'title');
+    window.history.replaceState(state, '');
+
     expect(service.getHistoryState()).toEqual(state);
   });
 });

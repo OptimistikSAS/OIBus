@@ -20,7 +20,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   host: {
     class: 'input-group'
   },
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgbTooltip, TranslatePipe]
 })
 export class DatepickerContainerComponent {
