@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+import { map } from 'rxjs';
 
 import { SouthType } from '@oibus/shared/connector/south-manifest.model';
 
@@ -16,42 +17,17 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
   selector: 'oib-choose-south-connector-type-modal',
   templateUrl: './choose-south-connector-type-modal.component.html',
   styleUrl: './choose-south-connector-type-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [ReactiveFormsModule, TranslateDirective, OIBusSouthCategoryEnumPipe, OIBusSouthTypeEnumPipe, OIBusSouthTypeDescriptionEnumPipe]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateDirective, OIBusSouthCategoryEnumPipe, OIBusSouthTypeEnumPipe, OIBusSouthTypeDescriptionEnumPipe]
 })
 export class ChooseSouthConnectorTypeModalComponent {
-  private modal = inject(NgbActiveModal);
-  private southConnectorService = inject(SouthConnectorService);
-  private router = inject(Router);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly router = inject(Router);
 
-  southTypes: Array<SouthType> = [];
-  readonly groupedSouthTypes = signal<Array<{ category: string; types: Array<SouthType> }>>([]);
-
-  constructor() {
-    this.southConnectorService.getSouthTypes().subscribe(types => {
-      this.southTypes = types;
-      this.groupSouthTypes();
-    });
-  }
-
-  groupSouthTypes() {
-    const groupedTypes: Record<string, Array<SouthType>> = {};
-
-    for (const southType of this.southTypes) {
-      if (groupedTypes[southType.category]) {
-        groupedTypes[southType.category].push(southType);
-      } else {
-        groupedTypes[southType.category] = [southType];
-      }
-    }
-
-    this.groupedSouthTypes.set(
-      Object.keys(groupedTypes).map(category => ({
-        category,
-        types: groupedTypes[category]
-      }))
-    );
-  }
+  readonly groupedSouthTypes = toSignal(this.southConnectorService.getSouthTypes().pipe(map(types => groupSouthTypes(types))), {
+    initialValue: []
+  });
 
   selectType(type: string) {
     this.modal.close();
@@ -61,4 +37,16 @@ export class ChooseSouthConnectorTypeModalComponent {
   cancel() {
     this.modal.dismiss();
   }
+}
+
+function groupSouthTypes(southTypes: Array<SouthType>): Array<{ category: string; types: Array<SouthType> }> {
+  const groupedTypes: Record<string, Array<SouthType>> = {};
+  for (const southType of southTypes) {
+    if (groupedTypes[southType.category]) {
+      groupedTypes[southType.category].push(southType);
+    } else {
+      groupedTypes[southType.category] = [southType];
+    }
+  }
+  return Object.keys(groupedTypes).map(category => ({ category, types: groupedTypes[category] }));
 }

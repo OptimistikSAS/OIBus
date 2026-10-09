@@ -11,18 +11,19 @@
             ></span>
           }
           @if (displayButton()) {
-            <a
+            <button
+              type="button"
               class="btn btn-link display-south px-1 py-0"
               id="display-link"
-              tabindex="0"
               [ngbTooltip]="'south.tooltips.view-metrics' | translate"
+              [attr.aria-label]="'south.tooltips.view-metrics' | translate"
               (click)="navigateToDisplay()"
-              (keyup.enter)="navigateToDisplay()"
             >
-              <span class="fa-solid fa-search"></span>
-            </a>
+              <span class="fa-solid fa-search" aria-hidden="true"></span>
+            </button>
           } @else {
             <button
+              type="button"
               class="ms-3 btn btn-danger btn-sm oib-box-btn"
               (click)="resetMetrics()"
               translate="south.monitoring.reset-metrics"
