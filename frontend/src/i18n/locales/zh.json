@@ -3357,11 +3357,13 @@
     "account": {
       "logout": "注销",
       "settings": "设置",
-      "audit": "审计"
+      "audit": "审计",
+      "title": "账户"
     },
     "tooltips": {
       "documentation": "文档"
-    }
+    },
+    "menu": "菜单"
   },
   "login": {
     "title": "登录",
