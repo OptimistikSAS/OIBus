@@ -6,11 +6,11 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
   selector: 'oib-reset-cache-history-query-modal',
   templateUrl: './reset-cache-history-query-modal.component.html',
   styleUrl: './reset-cache-history-query-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: []
 })
 export class ResetCacheHistoryQueryModalComponent {
-  private modal = inject(NgbActiveModal);
+  private readonly modal = inject(NgbActiveModal);
 
   submit(resetCache: boolean) {
     this.modal.close(resetCache);

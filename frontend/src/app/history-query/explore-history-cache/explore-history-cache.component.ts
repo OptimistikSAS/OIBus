@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
@@ -7,7 +8,6 @@ import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { of, switchMap, tap } from 'rxjs';
 
-import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
 import { Instant } from '@oibus/shared/common/types';
 import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/domain/engine.model';
 
@@ -25,7 +25,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
   selector: 'oib-explore-history-cache',
   templateUrl: './explore-history-cache.component.html',
   styleUrl: './explore-history-cache.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TranslateDirective,
     ReactiveFormsModule,
@@ -37,33 +37,30 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
   ]
 })
 export class ExploreHistoryCacheComponent {
-  private route = inject(ActivatedRoute);
-  private historyQueryService = inject(HistoryQueryService);
-  private notificationService = inject(NotificationService);
-  private translateService = inject(TranslateService);
-  private modalService = inject(ModalService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly historyQueryService = inject(HistoryQueryService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly translateService = inject(TranslateService);
+  private readonly modalService = inject(ModalService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  readonly historyQuery = signal<HistoryQueryDTO | null>(null);
+  readonly historyQuery = toSignal(
+    this.route.paramMap.pipe(
+      switchMap(params => {
+        const paramHistoryQueryId = params.get('historyQueryId');
+        if (paramHistoryQueryId) {
+          return this.historyQueryService.findById(paramHistoryQueryId);
+        }
+        return of(null);
+      })
+    ),
+    { initialValue: null }
+  );
   readonly cacheContent = signal<CacheSearchResult | null>(null);
-  state = new ObservableState();
+  readonly state = new ObservableState();
+  readonly fullTitle = computed(() => this.translateService.instant('explore-cache.title', { name: this.historyQuery()?.name }));
 
-  constructor() {
-    this.route.paramMap
-      .pipe(
-        switchMap(params => {
-          const paramHistoryQueryId = params.get('historyQueryId');
-          if (paramHistoryQueryId) {
-            return this.historyQueryService.findById(paramHistoryQueryId);
-          }
-          return of(null);
-        })
-      )
-      .subscribe(historyQuery => {
-        this.historyQuery.set(historyQuery);
-      });
-  }
-
-  form = inject(NonNullableFormBuilder).group(
+  readonly form = this.fb.group(
     {
       start: [DateTime.now().minus({ hour: 1 }).set({ second: 0, millisecond: 0 }).toUTC().toISO() as Instant, Validators.required],
       end: [DateTime.now().set({ second: 0, millisecond: 0 }).toUTC().toISO() as Instant, Validators.required],
@@ -89,10 +86,6 @@ export class ExploreHistoryCacheComponent {
       })
       .pipe(this.state.pendingUntilFinalization())
       .subscribe(result => this.cacheContent.set(result));
-  }
-
-  getFullTitle(): string {
-    return this.translateService.instant('explore-cache.title', { name: this.historyQuery()!.name });
   }
 
   viewCacheContent(viewCommand: {
