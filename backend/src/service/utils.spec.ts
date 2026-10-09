@@ -850,14 +850,14 @@ describe('Service utils', () => {
 
   describe('convertDelimiter', () => {
     it('should convert to csv delimiter', () => {
-      assert.deepStrictEqual(utils.convertDelimiter('NON_BREAKING_SPACE'), ' ');
+      assert.deepStrictEqual(utils.convertDelimiter('NON_BREAKING_SPACE'), '\u00a0');
       assert.deepStrictEqual(utils.convertDelimiter('COLON'), ':');
       assert.deepStrictEqual(utils.convertDelimiter('COMMA'), ',');
       assert.deepStrictEqual(utils.convertDelimiter('DOT'), '.');
       assert.deepStrictEqual(utils.convertDelimiter('SLASH'), '/');
       assert.deepStrictEqual(utils.convertDelimiter('PIPE'), '|');
       assert.deepStrictEqual(utils.convertDelimiter('SEMI_COLON'), ';');
-      assert.deepStrictEqual(utils.convertDelimiter('TAB'), ' ');
+      assert.deepStrictEqual(utils.convertDelimiter('TAB'), '\t');
     });
   });
 
