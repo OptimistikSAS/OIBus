@@ -71,7 +71,7 @@
                         (click)="form!.controls.settings.markAllAsTouched(); submit('test')"
                         translate="south.test-connection.button"
                       ></button>
-                      <oib-help [url]="southTypeHelpUrl" />
+                      <oib-help [url]="southTypeHelpUrl()" />
                     </div>
                   </div>
                 </ng-template>
@@ -102,9 +102,9 @@
                       [ngbTooltip]="'south.groups.manage-button' | translate"
                       (click)="manageGroups()"
                     >
-                      <span class="fa-solid fa-folder me-1"></span>
+                      <span class="fa-solid fa-folder me-1" aria-hidden="true"></span>
                       <span translate="south.groups.manage-button"></span>
-                      <span class="badge bg-secondary ms-1">{{ inMemoryGroups.length }}</span>
+                      <span class="badge bg-secondary ms-1">{{ inMemoryGroups().length }}</span>
                     </button>
                     <button
                       type="button"
@@ -113,9 +113,9 @@
                       [ngbTooltip]="'south.workflows.manage-button' | translate"
                       (click)="manageWorkflows()"
                     >
-                      <span class="fa-solid fa-sync me-1"></span>
+                      <span class="fa-solid fa-sync me-1" aria-hidden="true"></span>
                       <span translate="south.workflows.manage-button"></span>
-                      <span class="badge bg-secondary ms-1">{{ inMemoryWorkflows.length }}</span>
+                      <span class="badge bg-secondary ms-1">{{ inMemoryWorkflows().length }}</span>
                     </button>
                   </div>
                   <div class="ms-3">
@@ -123,9 +123,10 @@
                       type="button"
                       class="btn btn-primary btn-sm oib-box-btn"
                       [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.create' | translate"
+                      [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.create' | translate"
                       (click)="addItem()"
                     >
-                      <span class="fa-solid fa-plus"></span>
+                      <span class="fa-solid fa-plus" aria-hidden="true"></span>
                     </button>
                     <button
                       type="button"
@@ -141,7 +142,7 @@
                       type="button"
                       class="btn btn-danger btn-sm oib-box-btn"
                       (click)="deleteAllItems()"
-                      [disabled]="inMemoryItems.length === 0"
+                      [disabled]="inMemoryItems().length === 0"
                       translate="south.items.delete-all"
                       id="delete-all"
                     ></button>
@@ -155,24 +156,37 @@
                 <div class="d-flex align-items-center gap-2 my-2">
                   <input
                     class="form-control form-control-sm flex-grow-1"
+                    [attr.aria-label]="'common.search' | translate"
                     [formControl]="searchControl"
                     [placeholder]="'south.items.search-placeholder' | translate"
                     type="text"
                   />
-                  <select class="form-select form-select-sm w-auto" [formControl]="groupFilterControl">
+                  <select
+                    class="form-select form-select-sm w-auto"
+                    [attr.aria-label]="'south.items.group' | translate"
+                    [formControl]="groupFilterControl"
+                  >
                     <option [ngValue]="null" translate="south.items.all-groups"></option>
                     <option value="none" translate="south.items.group-none"></option>
-                    @for (group of inMemoryGroups; track group.id) {
+                    @for (group of inMemoryGroups(); track group.id) {
                       <option [value]="group.id">{{ group.standardSettings.name }}</option>
                     }
                   </select>
-                  <select class="form-select form-select-sm w-auto" [formControl]="scanModeFilterControl">
+                  <select
+                    class="form-select form-select-sm w-auto"
+                    [attr.aria-label]="'south.items.scan-mode' | translate"
+                    [formControl]="scanModeFilterControl"
+                  >
                     <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
                     @for (scanMode of scanModes(); track scanMode.id) {
                       <option [value]="scanMode.id">{{ scanMode.name }}</option>
                     }
                   </select>
-                  <select class="form-select form-select-sm w-auto" [formControl]="statusFilterControl">
+                  <select
+                    class="form-select form-select-sm w-auto"
+                    [attr.aria-label]="'south.items.status' | translate"
+                    [formControl]="statusFilterControl"
+                  >
                     <option [ngValue]="null" translate="south.items.all-statuses"></option>
                     <option value="enabled" translate="south.items.enabled-label"></option>
                     <option value="disabled" translate="south.items.disabled-label"></option>
@@ -187,23 +201,23 @@
                         type="button"
                         class="btn btn-secondary btn-sm"
                         (click)="selectAll()"
-                        [disabled]="getSelectedItemsCount() === filteredItems().length"
+                        [disabled]="selectedCount() === filteredItems().length"
                         id="select-all-button"
                       >
-                        <span class="fa-solid fa-check-square me-1"></span>
+                        <span class="fa-solid fa-check-square me-1" aria-hidden="true"></span>
                         <span translate="south.items.select-all"></span>
                       </button>
                       <button
                         type="button"
                         class="btn btn-secondary btn-sm"
                         (click)="unselectAll()"
-                        [disabled]="getSelectedItemsCount() === 0"
+                        [disabled]="selectedCount() === 0"
                         id="unselect-all-button"
                       >
-                        <span class="fa-solid fa-square me-1"></span>
+                        <span class="fa-solid fa-square me-1" aria-hidden="true"></span>
                         <span translate="south.items.unselect-all"></span>
                       </button>
-                      @if (getSelectedItemsCount() > 0) {
+                      @if (selectedCount() > 0) {
                         <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
                           <button
                             type="button"
@@ -212,24 +226,24 @@
                             id="mass-actions-dropdown"
                           >
                             <span translate="south.items.mass-actions" [translateParams]="{ count: selectedItems().size }"></span>
-                            <span class="fa-solid fa-caret-down ms-1"></span>
+                            <span class="fa-solid fa-caret-down ms-1" aria-hidden="true"></span>
                           </button>
                           <div ngbDropdownMenu>
                             <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
-                              <span class="fa-solid fa-check me-2"></span>
+                              <span class="fa-solid fa-check me-2" aria-hidden="true"></span>
                               <span translate="south.items.enable"></span>
                             </button>
                             <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
-                              <span class="fa-solid fa-times me-2"></span>
+                              <span class="fa-solid fa-times me-2" aria-hidden="true"></span>
                               <span translate="south.items.disable"></span>
                             </button>
                             <button type="button" ngbDropdownItem (click)="moveSelectedItemsToGroup()">
-                              <span class="fa-solid fa-folder me-2"></span>
+                              <span class="fa-solid fa-folder me-2" aria-hidden="true"></span>
                               <span translate="south.items.move-to-group"></span>
                             </button>
                             <div class="dropdown-divider"></div>
                             <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
-                              <span class="fa-solid fa-trash-can me-2"></span>
+                              <span class="fa-solid fa-trash-can me-2" aria-hidden="true"></span>
                               <span translate="south.items.delete"></span>
                             </button>
                           </div>
@@ -240,7 +254,7 @@
 
                   <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
                   <ng-template #scheduleTooltip>
-                    @if (tooltipItem) {
+                    @if (tooltipItem(); as tooltipItem) {
                       @let group = getTooltipGroup(tooltipItem);
                       <div class="text-start schedule-tooltip-content">
                         @if (group) {
@@ -316,50 +330,38 @@
                   <table class="mb-2 table table-sm table-hover oib-table">
                     <thead class="light">
                       <tr>
-                        <th style="width: 50px; text-align: center"></th>
-                        <th style="width: 6rem; text-align: center">
-                          <button
-                            type="button"
-                            style="background: none; border: none; font-weight: bold; white-space: nowrap"
-                            (click)="toggleColumnSort('enabled')"
-                          >
+                        <th class="checkbox-column"></th>
+                        <th class="status-column">
+                          <button type="button" class="sort-button text-nowrap" (click)="toggleColumnSort('enabled')">
                             <span translate="south.items.status" class="me-2"></span>
-                            <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.enabled] }}"></span>
+                            <span class="fa-solid {{ sortIcon('enabled') }}" aria-hidden="true"></span>
                           </button>
                         </th>
                         <th>
-                          <button
-                            type="button"
-                            style="background: none; border: none; font-weight: bold"
-                            (click)="toggleColumnSort('name')"
-                          >
+                          <button type="button" class="sort-button" (click)="toggleColumnSort('name')">
                             <span translate="south.items.name" class="me-2"></span>
-                            <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.name] }}"></span>
+                            <span class="fa-solid {{ sortIcon('name') }}" aria-hidden="true"></span>
                           </button>
                         </th>
-                        <th style="width: 14rem">
-                          <button
-                            type="button"
-                            style="background: none; border: none; font-weight: bold"
-                            (click)="toggleColumnSort('group')"
-                          >
+                        <th class="group-column">
+                          <button type="button" class="sort-button" (click)="toggleColumnSort('group')">
                             <span translate="south.items.group-and-schedule" class="me-2"></span>
-                            <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.group] }}"></span>
+                            <span class="fa-solid {{ sortIcon('group') }}" aria-hidden="true"></span>
                           </button>
                         </th>
-                        <th style="width: 8rem"></th>
+                        <th class="actions-column"></th>
                       </tr>
                     </thead>
                     <tbody>
                       @for (item of displayedItems().content; track item.name) {
-                        <tr class="south-item" (mouseenter)="tooltipItem = item">
-                          <td style="text-align: center">
+                        <tr class="south-item" (mouseenter)="tooltipItem.set(item)">
+                          <td class="text-center">
                             <input
                               type="checkbox"
-                              class="form-check-input"
-                              [checked]="selectedItems().has(item.name!)"
+                              class="form-check-input item-checkbox"
+                              [attr.aria-label]="item.name"
+                              [checked]="selectedItems().has(item.name)"
                               (change)="toggleItemSelection(item)"
-                              style="width: 16px; height: 16px; cursor: pointer"
                             />
                           </td>
                           <td class="text-center">
@@ -395,27 +397,30 @@
                                 type="button"
                                 class="btn btn-link edit-south-item px-1 py-0"
                                 [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
+                                [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
                                 (click)="editItem(item)"
                               >
-                                <span class="fa-solid fa-pencil"></span>
+                                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                               </button>
                               <!-- Duplicate button -->
                               <button
                                 type="button"
                                 class="btn btn-link duplicate-south-item px-1 py-0"
                                 [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
+                                [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
                                 (click)="duplicateItem(item)"
                               >
-                                <span class="fa-solid fa-copy"></span>
+                                <span class="fa-solid fa-copy" aria-hidden="true"></span>
                               </button>
                               <!-- Delete button -->
                               <button
                                 type="button"
                                 class="btn btn-link delete-south-item px-1 py-0"
                                 [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
+                                [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
                                 (click)="deleteItem(item)"
                               >
-                                <span class="fa-solid fa-trash-can"></span>
+                                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                               </button>
                             </div>
                           </td>
@@ -424,7 +429,7 @@
                     </tbody>
                   </table>
                 } @else {
-                  @if (inMemoryItems.length !== 0) {
+                  @if (inMemoryItems().length !== 0) {
                     <div class="oib-grey-container" translate="south.items.none-match"></div>
                   } @else {
                     <div class="oib-grey-container" translate="south.items.none"></div>
@@ -443,8 +448,8 @@
           </form>
           <div id="actions" class="mt-2 mb-3 d-flex justify-content-end">
             <div class="btn-group">
-              <button [oib-save-button]="state" form="south-form"></button>
-              <button class="btn btn-cancel" translate="common.cancel" id="cancel-button" oibBackButton></button>
+              <button type="submit" [oib-save-button]="state" form="south-form"></button>
+              <button type="button" class="btn btn-cancel" translate="common.cancel" id="cancel-button" oibBackButton></button>
             </div>
           </div>
         </div>
