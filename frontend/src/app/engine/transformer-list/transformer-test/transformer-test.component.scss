@@ -35,3 +35,15 @@
   border-radius: 4px;
   gap: 0.5rem;
 }
+
+.view-mode-label {
+  margin-left: 5px;
+}
+
+.grid-table-cell {
+  overflow-wrap: anywhere;
+}
+
+.grid-table-empty {
+  grid-column: 1/-1;
+}
