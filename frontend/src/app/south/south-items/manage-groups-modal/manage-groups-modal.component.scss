@@ -1,0 +1,10 @@
+.sort-button {
+  background: none;
+  border: none;
+  font-weight: bold;
+}
+
+// more specific than the global `.oib-table thead th:last-child` width
+.oib-table th.actions-column {
+  width: 6rem;
+}
