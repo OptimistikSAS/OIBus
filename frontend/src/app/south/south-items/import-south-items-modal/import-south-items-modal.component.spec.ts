@@ -25,13 +25,19 @@ class ImportSouthItemsModalComponentTester {
   readonly validItems = this.root.getByCss('table').filter({ hasText: 'Group' }).getByCss('tbody tr');
   readonly invalidItems = this.root.getByCss('table').filter({ hasText: 'Error' }).getByCss('tbody tr');
 
-  constructor(checkFn: CheckFn, options: { expectedHeaders?: Array<string>; showEraseOption?: boolean } = {}) {
+  readonly mqttError = this.root.getByRole('alert').filter({ hasText: 'MQTT Topic Overlap Error' });
+  readonly fileButton = this.root.getByRole('button', { name: 'test.csv' });
+
+  constructor(
+    checkFn: CheckFn,
+    options: { expectedHeaders?: Array<string>; showEraseOption?: boolean; existingMqttTopics?: Array<string> } = {}
+  ) {
     this.fixture.componentInstance.prepare(
       testData.south.manifest,
       options.expectedHeaders ?? [],
-      [],
-      [],
-      false,
+      options.existingMqttTopics ? ['settings_topic'] : [],
+      options.existingMqttTopics ?? [],
+      !!options.existingMqttTopics,
       options.showEraseOption ?? true,
       checkFn
     );
@@ -141,5 +147,29 @@ describe('ImportSouthItemsModalComponent', () => {
 
     await expect.element(tester.delimiter).toBeInTheDocument();
     await expect.element(tester.eraseExisting).not.toBeInTheDocument();
+  });
+
+  test('should not call the backend when the MQTT topics overlap existing subscriptions', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn, { expectedHeaders: ['name'], existingMqttTopics: ['factory/#'] });
+
+    await tester.fileInput.upload(csvFile('name,settings_topic\nitem,factory/line1'));
+
+    await expect.element(tester.mqttError).toMatchTextContent('Conflicting topics: factory/line1');
+    await expect.element(tester.importButton).toBeDisabled();
+    expect(checkFn).not.toHaveBeenCalled();
+  });
+
+  test('should check a file dropped on the file button', async () => {
+    const tester = new ImportSouthItemsModalComponentTester(checkFn);
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(validCsv);
+
+    tester.root
+      .getByCss('#import-button')
+      .element()
+      .dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true }));
+
+    await expect.element(tester.validItems).toHaveLength(1);
+    await expect.element(tester.fileButton).toBeInTheDocument();
   });
 });

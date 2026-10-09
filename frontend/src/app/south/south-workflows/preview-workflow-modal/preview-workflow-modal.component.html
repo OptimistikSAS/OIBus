@@ -11,7 +11,7 @@
     <div class="text-muted mb-2" id="preview-counts">
       {{ 'south.workflows.preview-discovered' | translate: { discovered: result.discoveredCount, eligible: result.eligibleCount } }}
     </div>
-    @if (runCounts; as counts) {
+    @if (runCounts(); as counts) {
       <div class="text-muted mb-2" id="run-payload-counts">
         {{
           'south.workflows.run-payload-counts'
@@ -73,7 +73,7 @@
           </tbody>
         </table>
       </div>
-      <oib-pagination class="d-flex justify-content-end" [page]="entries" (pageChanged)="entries.gotoPage($event)" />
+      <oib-pagination class="d-flex justify-content-end" [page]="entries" (pageChanged)="changeEntriesPage($event)" />
     } @else if (paginatedRecords(); as records) {
       <!-- Remote (push-to-OIAnalytics) workflow: no diffing at all - just the raw records that would be sent. -->
       <div class="table-responsive preview-table-container">
@@ -96,7 +96,7 @@
           </tbody>
         </table>
       </div>
-      <oib-pagination class="d-flex justify-content-end" [page]="records" (pageChanged)="records.gotoPage($event)" />
+      <oib-pagination class="d-flex justify-content-end" [page]="records" (pageChanged)="changeRecordsPage($event)" />
     } @else {
       <div class="oib-grey-container" id="preview-none" [translate]="'south.workflows.' + context() + '-none'"></div>
     }
@@ -108,7 +108,7 @@
       type="button"
       class="btn btn-secondary"
       id="export-csv-button"
-      [disabled]="!hasExportableRows"
+      [disabled]="!hasExportableRows()"
       (click)="exportCsv()"
       translate="south.workflows.preview-export"
     ></button>

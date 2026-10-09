@@ -10,11 +10,11 @@
         <div>{{ 'south.test-item.status-message.' + message.type | translate }}</div>
         <hr />
       }
-      <div style="overflow-wrap: break-word">{{ message.value }}</div>
+      <div class="break-word">{{ message.value }}</div>
     </div>
   }
 
-  @if (!isLoading() && !message() && result) {
+  @if (!isLoading() && !message() && result()) {
     @if (displayMode() === 'table') {
       @let page = activePage();
       @if (page.totalElements) {
@@ -44,7 +44,7 @@
                 <div class="grid-table-row">
                   <div class="align-items-center d-flex h-100 p-2">{{ item.timestamp }}</div>
                   <div class="align-items-center d-flex h-100 p-2">{{ item.pointId }}</div>
-                  <div class="align-items-center d-flex h-100 p-2" style="overflow-wrap: anywhere">{{ data.value }}</div>
+                  <div class="align-items-center d-flex h-100 p-2 break-anywhere">{{ data.value }}</div>
                   <div class="align-items-center d-flex h-100 p-2">
                     <code class="json-content">{{ data.other }}</code>
                   </div>
@@ -63,7 +63,7 @@
             <div
               id="tableView"
               class="mb-2 grid-table"
-              [style]="'grid-template-columns: repeat(' + headerNames?.length + ', minmax(0, 1fr))'"
+              [style.grid-template-columns]="'repeat(' + headerNames?.length + ', minmax(0, 1fr))'"
             >
               <div class="grid-table-header fw-bold">
                 @for (header of headerNames; track $index) {
@@ -73,7 +73,7 @@
               @for (items of genericPage.content; track $index) {
                 <div class="grid-table-row">
                   @for (item of items; track $index) {
-                    <div class="align-items-center d-flex h-100 p-2" style="overflow-wrap: anywhere">{{ item }}</div>
+                    <div class="align-items-center d-flex h-100 p-2 break-anywhere">{{ item }}</div>
                   }
                 </div>
               }

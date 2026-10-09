@@ -5,16 +5,55 @@ import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { WorkflowPreviewEntryDTO, WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { WorkflowRunDetailDTO } from '@oibus/shared/api/workflow-run.model';
-import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { buildWorkflowCommand } from '../../../../test/builders';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { DownloadService } from '../../../services/download.service';
 import { NotificationService } from '../../../shared/notification.service';
 import PreviewWorkflowModalComponent from './preview-workflow-modal.component';
+
+class PreviewWorkflowModalComponentTester {
+  readonly fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly title = this.root.getByRole('heading', { level: 4 });
+  readonly spinner = this.root.getByCss('oib-loading-spinner');
+  readonly counts = this.root.getByCss('#preview-counts');
+  readonly runCounts = this.root.getByCss('#run-payload-counts');
+  readonly none = this.root.getByCss('#preview-none');
+  readonly entriesTable = this.root.getByCss('#preview-entries-table');
+  readonly recordsTable = this.root.getByCss('#preview-records-table');
+  readonly headers = this.root.getByCss('thead th');
+  readonly rows = this.root.getByCss('tbody tr');
+  readonly changedCells = this.root.getByCss('.preview-changed-cell');
+  readonly pagination = this.root.getByCss('ngb-pagination');
+  readonly exportButton = this.root.getByRole('button', { name: 'Export CSV' });
+  readonly closeButton = this.root.getByRole('button', { name: 'Close' });
+
+  cell(row: number, column: number) {
+    return this.rows.nth(row).getByRole('cell').nth(column);
+  }
+}
+
+const entry = (key: string, overrides: Partial<WorkflowPreviewEntryDTO> = {}): WorkflowPreviewEntryDTO => ({
+  key,
+  status: 'new',
+  record: { nodeId: key },
+  previousMetadata: null,
+  ...overrides
+});
+
+const result = (overrides: Partial<WorkflowPreviewResultDTO> = {}): WorkflowPreviewResultDTO => ({
+  discoveredCount: 3,
+  eligibleCount: 0,
+  entries: [],
+  records: [],
+  ...overrides
+});
 
 describe('PreviewWorkflowModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
@@ -39,269 +78,192 @@ describe('PreviewWorkflowModalComponent', () => {
     });
   });
 
+  function preview(previewResult: WorkflowPreviewResultDTO) {
+    configurationWorkflowService.preview.mockReturnValue(of(previewResult));
+    const tester = new PreviewWorkflowModalComponentTester();
+    tester.fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
+    return tester;
+  }
+
+  function exportedContent(): Promise<string> {
+    return downloadService.downloadFile.mock.lastCall![0].blob.text();
+  }
+
   test('should show a loading spinner while the preview request is in flight, then the result once it resolves', async () => {
     const subject = new Subject<WorkflowPreviewResultDTO>();
     configurationWorkflowService.preview.mockReturnValue(subject.asObservable());
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+    const tester = new PreviewWorkflowModalComponentTester();
+    tester.fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
 
-    // A fresh page.elementLocator() is taken at each step rather than reused across the loading/loaded
-    // states - its locator strategy snapshots the element's text at creation time, which the "Loading…"
-    // -> result swap invalidates.
-    await expect.element(page.elementLocator(fixture.nativeElement).getByCss('oib-loading-spinner')).toBeInTheDocument();
-    expect(fixture.nativeElement.querySelector('#preview-counts')).toBeNull();
+    await expect.element(tester.spinner).toBeInTheDocument();
+    await expect.element(tester.counts).not.toBeInTheDocument();
+    await expect.element(tester.exportButton).not.toBeInTheDocument();
 
-    subject.next({ discoveredCount: 3, eligibleCount: 0, entries: [], records: [] });
-    fixture.detectChanges();
+    subject.next(result());
 
-    expect(fixture.nativeElement.querySelector('oib-loading-spinner')).toBeNull();
-    await expect
-      .element(page.elementLocator(fixture.nativeElement).getByCss('#preview-counts'))
-      .toMatchTextContent('3 discovered, 0 eligible');
+    await expect.element(tester.spinner).not.toBeInTheDocument();
+    await expect.element(tester.counts).toHaveTextContent('3 discovered, 0 eligible');
   });
 
   test('should show the discovered/eligible counts and a message when there are no entries', async () => {
-    const result: WorkflowPreviewResultDTO = { discoveredCount: 3, eligibleCount: 0, entries: [], records: [] };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+    const tester = preview(result());
 
     expect(configurationWorkflowService.preview).toHaveBeenCalledWith('southId1', 'workflowId1');
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Preview: Reactor discovery');
-    await expect.element(root.getByCss('#preview-counts')).toMatchTextContent('3 discovered, 0 eligible');
-    await expect.element(root.getByCss('#preview-none')).toBeInTheDocument();
+    await expect.element(tester.title).toHaveTextContent('Preview: Reactor discovery');
+    await expect.element(tester.counts).toHaveTextContent('3 discovered, 0 eligible');
+    await expect
+      .element(tester.none)
+      .toHaveTextContent('Nothing new, changed, reactivated, or missing - the next run would have nothing to do');
+    await expect.element(tester.exportButton).toBeDisabled();
   });
 
   test('should render one row per entry with its status badge for a local workflow', async () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 2,
-      eligibleCount: 2,
-      entries: [
-        { key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null },
-        { key: 'nodeId=b', status: 'missing', record: null, previousMetadata: { nodeId: 'b' } }
-      ],
-      records: []
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+    const tester = preview(
+      result({
+        discoveredCount: 2,
+        eligibleCount: 2,
+        entries: [entry('nodeId=a'), entry('nodeId=b', { status: 'missing', record: null, previousMetadata: { nodeId: 'b' } })]
+      })
+    );
 
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('nodeId=a');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('New');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('nodeId=b');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('Missing');
+    await expect.element(tester.rows).toHaveLength(2);
+    await expect.element(tester.cell(0, 0)).toHaveTextContent('New');
+    await expect.element(tester.cell(0, 1)).toHaveTextContent('nodeId=a');
+    await expect.element(tester.cell(1, 0)).toHaveTextContent('Missing');
+    // a missing entry shows the previous run's snapshot, dimmed
+    await expect.element(tester.cell(1, 2)).toHaveTextContent('b');
+    await expect.element(tester.rows.nth(1)).toHaveClass('text-muted');
   });
 
   test('should paginate a large list of entries, 20 per page', async () => {
-    const entries: Array<WorkflowPreviewResultDTO['entries'][number]> = Array.from({ length: 25 }, (_, i) => ({
-      key: `nodeId=${i}`,
-      status: 'new',
-      record: { nodeId: `${i}` },
-      previousMetadata: null
-    }));
-    const result: WorkflowPreviewResultDTO = { discoveredCount: 25, eligibleCount: 25, entries, records: [] };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    const root = page.elementLocator(fixture.nativeElement);
-    const rows = root.getByCss('tbody tr');
-    await expect.element(rows).toHaveLength(20);
+    const tester = preview(
+      result({ discoveredCount: 25, eligibleCount: 25, entries: Array.from({ length: 25 }, (_, i) => entry(`nodeId=${i}`)) })
+    );
+    await expect.element(tester.rows).toHaveLength(20);
 
-    await root.getByRole('link', { name: '2' }).click();
+    await tester.root.getByRole('link', { name: '2' }).click();
 
-    await expect.element(rows).toHaveLength(5);
-    await expect.element(rows.nth(0)).toMatchTextContent('nodeId=20');
+    await expect.element(tester.rows).toHaveLength(5);
+    await expect.element(tester.cell(0, 1)).toHaveTextContent('nodeId=20');
   });
 
-  test('should not show pagination controls when everything fits on one page', () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 1,
-      eligibleCount: 1,
-      entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null }],
-      records: []
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test('should not show pagination controls when everything fits on one page', async () => {
+    const tester = preview(result({ entries: [entry('nodeId=a')] }));
 
-    expect(fixture.nativeElement.querySelector('ngb-pagination')).toBeNull();
+    await expect.element(tester.rows).toHaveLength(1);
+    await expect.element(tester.pagination).not.toBeInTheDocument();
   });
 
-  test('should show the status badge and identity key as the leftmost columns, followed by one column per record field', () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 1,
-      eligibleCount: 1,
-      entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a', unit: 'C' }, previousMetadata: null }],
-      records: []
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test('should show the status badge and identity key as the leftmost columns, followed by one column per record field', async () => {
+    const tester = preview(result({ entries: [entry('nodeId=a', { record: { nodeId: 'a', unit: 'C' } })] }));
 
-    const headers = Array.from(fixture.nativeElement.querySelectorAll('#preview-entries-table thead th') as NodeListOf<HTMLElement>);
-    expect(headers.slice(2).map(header => header.textContent!.trim())).toEqual(['nodeId', 'unit']);
-    const cells = fixture.nativeElement.querySelectorAll('tbody td');
-    expect(cells[0].querySelector('.badge')).not.toBeNull();
-    expect(cells[1].textContent.trim()).toBe('nodeId=a');
-    expect(cells[2].textContent.trim()).toBe('a');
-    expect(cells[3].textContent.trim()).toBe('C');
+    await expect.element(tester.headers).toHaveLength(4);
+    await expect.element(tester.headers.nth(0)).toHaveTextContent('Status');
+    await expect.element(tester.headers.nth(1)).toHaveTextContent('Identity key');
+    await expect.element(tester.headers.nth(2)).toHaveTextContent('nodeId');
+    await expect.element(tester.headers.nth(3)).toHaveTextContent('unit');
+    await expect.element(tester.cell(0, 0).getByCss('.badge')).toHaveTextContent('New');
+    await expect.element(tester.cell(0, 1)).toHaveTextContent('nodeId=a');
+    await expect.element(tester.cell(0, 2)).toHaveTextContent('a');
+    await expect.element(tester.cell(0, 3)).toHaveTextContent('C');
   });
 
-  test('should show a composite identity key with a readable separator', () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 1,
-      eligibleCount: 1,
-      entries: [{ key: `ns=1${String.fromCharCode(1)}tag=a`, status: 'new', record: { ns: '1', tag: 'a' }, previousMetadata: null }],
-      records: []
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test('should show a composite identity key with a readable separator', async () => {
+    const tester = preview(result({ entries: [entry(`ns=1${String.fromCharCode(1)}tag=a`, { record: { ns: '1', tag: 'a' } })] }));
 
-    expect(fixture.nativeElement.querySelector('.preview-key').textContent.trim()).toBe('ns=1, tag=a');
+    await expect.element(tester.cell(0, 1)).toHaveTextContent('ns=1, tag=a');
   });
 
-  test('should highlight only the cells of a changed entry that differ from the previous run', () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 1,
-      eligibleCount: 1,
-      entries: [{ key: 'nodeId=a', status: 'changed', record: { nodeId: 'a', unit: 'F' }, previousMetadata: { nodeId: 'a', unit: 'C' } }],
-      records: []
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test('should highlight only the cells of a changed entry that differ from the previous run', async () => {
+    const tester = preview(
+      result({
+        entries: [
+          entry('nodeId=a', { status: 'changed', record: { nodeId: 'a', unit: 'F' }, previousMetadata: { nodeId: 'a', unit: 'C' } })
+        ]
+      })
+    );
 
-    const changed = fixture.nativeElement.querySelectorAll('.preview-changed-cell');
-    expect(changed.length).toBe(1);
-    expect(changed[0].textContent.trim()).toBe('F');
-    expect(changed[0].getAttribute('title')).toBe('Previous value: C');
+    await expect.element(tester.changedCells).toHaveLength(1);
+    await expect.element(tester.changedCells.first()).toHaveTextContent('F');
+    await expect.element(tester.changedCells.first()).toHaveAttribute('title', 'Previous value: C');
   });
 
-  test('should render the raw records for a remote (push-to-OIAnalytics) workflow', async () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 2,
-      eligibleCount: 2,
-      entries: [],
-      records: [
-        { nodeId: 'a', value: 1 },
-        { nodeId: 'b', value: 2 }
-      ]
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test("should render the raw records for a remote (push-to-OIAnalytics) workflow, with the union of every record's fields", async () => {
+    const tester = preview(
+      result({
+        records: [
+          { nodeId: 'a', type: 'Variable' },
+          { nodeId: 'b', unit: 'C' }
+        ]
+      })
+    );
 
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#preview-records-table thead')).toMatchTextContent('nodeIdvalue');
-    const rows = fixture.nativeElement.querySelectorAll('#preview-records-table tbody tr');
-    expect(rows.length).toBe(2);
-    expect(Array.from(rows[1].querySelectorAll('td') as NodeListOf<HTMLElement>).map(cell => cell.textContent!.trim())).toEqual(['b', '2']);
+    await expect.element(tester.recordsTable).toBeInTheDocument();
+    await expect.element(tester.entriesTable).not.toBeInTheDocument();
+    await expect.element(tester.headers).toHaveLength(3);
+    await expect.element(tester.headers.nth(1)).toHaveTextContent('type');
+    await expect.element(tester.headers.nth(2)).toHaveTextContent('unit');
+    await expect.element(tester.rows).toHaveLength(2);
+    await expect.element(tester.cell(1, 0)).toHaveTextContent('b');
+    await expect.element(tester.cell(1, 1)).toHaveTextContent('');
+    await expect.element(tester.cell(1, 2)).toHaveTextContent('C');
   });
 
-  test("should use the union of every record's fields as columns, and leave missing cells empty", () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 2,
-      eligibleCount: 2,
-      entries: [],
-      records: [
-        { nodeId: 'a', type: 'Variable' },
-        { nodeId: 'b', unit: 'C' }
-      ]
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test('should paginate the raw records', async () => {
+    const tester = preview(result({ records: Array.from({ length: 21 }, (_, i) => ({ nodeId: `${i}` })) }));
+    await expect.element(tester.rows).toHaveLength(20);
 
-    expect(fixture.componentInstance.columns()).toEqual(['nodeId', 'type', 'unit']);
-    const rows = fixture.nativeElement.querySelectorAll('#preview-records-table tbody tr');
-    expect(Array.from(rows[1].querySelectorAll('td') as NodeListOf<HTMLElement>).map(cell => cell.textContent!.trim())).toEqual([
-      'b',
-      '',
-      'C'
-    ]);
+    await tester.root.getByRole('link', { name: '2' }).click();
+
+    await expect.element(tester.rows).toHaveLength(1);
+    await expect.element(tester.cell(0, 0)).toHaveTextContent('20');
   });
 
-  test('should close the modal and notify when the preview request fails', () => {
-    configurationWorkflowService.preview.mockReturnValue(throwError(() => new Error('boom')));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test.each([
+    { error: new Error('boom'), message: 'boom' },
+    { error: { error: { message: 'cannot connect' } }, message: 'cannot connect' }
+  ])('should close the modal and notify when the preview request fails ($message)', ({ error, message }) => {
+    configurationWorkflowService.preview.mockReturnValue(throwError(() => error));
+    const tester = new PreviewWorkflowModalComponentTester();
+    tester.fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
 
-    expect(notificationService.error).toHaveBeenCalledWith('south.workflows.preview-error', { error: expect.any(String) });
+    expect(notificationService.error).toHaveBeenCalledWith('south.workflows.preview-error', { error: message });
     expect(activeModal.close).toHaveBeenCalled();
   });
 
   test('should preview an unsaved workflow command against the given south settings, with the same result display', async () => {
-    const southSettings = { inputFolder: './input' } as unknown as SouthSettings;
-    const command: ConfigurationWorkflowCommandDTO = {
-      id: 'temp_1',
-      name: 'Unsaved discovery',
-      discoveryScope: {},
-      identityKeyFields: ['nodeId'],
-      eligibilityFilter: [],
-      itemFieldMapping: { name: '{{nodeId}}' },
-      pushToOIAnalytics: false,
-      scanModeId: null,
-      enabled: true
-    };
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 1,
-      eligibleCount: 1,
-      entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null }],
-      records: []
-    };
-    configurationWorkflowService.previewCommand.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForCommandPreview('create', 'opcua', southSettings, null, command, 'Unsaved discovery');
-    fixture.detectChanges();
+    const southSettings = testData.south.list[0].settings;
+    const command = buildWorkflowCommand('temp_1', 'Unsaved discovery');
+    configurationWorkflowService.previewCommand.mockReturnValue(
+      of(result({ discoveredCount: 1, eligibleCount: 1, entries: [entry('nodeId=a')] }))
+    );
+    const tester = new PreviewWorkflowModalComponentTester();
+    tester.fixture.componentInstance.prepareForCommandPreview('create', 'opcua', southSettings, null, command, 'Unsaved discovery');
 
     expect(configurationWorkflowService.previewCommand).toHaveBeenCalledWith('create', 'opcua', southSettings, null, command);
     expect(configurationWorkflowService.preview).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.context()).toBe('preview');
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Preview: Unsaved discovery');
-    await expect.element(root.getByCss('#preview-counts')).toMatchTextContent('1 discovered, 1 eligible');
-    await expect.element(root.getByCss('tbody')).toMatchTextContent('nodeId=a');
+    await expect.element(tester.title).toHaveTextContent('Preview: Unsaved discovery');
+    await expect.element(tester.counts).toHaveTextContent('1 discovered, 1 eligible');
+    await expect.element(tester.cell(0, 1)).toHaveTextContent('nodeId=a');
   });
 
   test('should close the modal and notify when an unsaved workflow command preview fails', () => {
     configurationWorkflowService.previewCommand.mockReturnValue(throwError(() => ({ error: { message: 'cannot connect' } })));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForCommandPreview('southId1', 'opcua', {} as SouthSettings, 'workflowId1', {} as never, 'Discovery');
-    fixture.detectChanges();
+    const tester = new PreviewWorkflowModalComponentTester();
+    tester.fixture.componentInstance.prepareForCommandPreview(
+      'southId1',
+      'opcua',
+      testData.south.list[0].settings,
+      'workflowId1',
+      buildWorkflowCommand('workflowId1', 'Discovery'),
+      'Discovery'
+    );
 
     expect(notificationService.error).toHaveBeenCalledWith('south.workflows.preview-error', { error: 'cannot connect' });
     expect(activeModal.close).toHaveBeenCalled();
   });
 
-  test("should use the run-payload title/empty-state wording instead of preview's when shown for a past run", async () => {
-    const result: WorkflowPreviewResultDTO = { discoveredCount: 3, eligibleCount: 0, entries: [], records: [] };
-    configurationWorkflowService.getRun.mockReturnValue(of(result as WorkflowRunDetailDTO));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForRunPayload('southId1', 'workflowId1', 'runId1', 'Reactor discovery');
-    fixture.detectChanges();
-
-    expect(configurationWorkflowService.getRun).toHaveBeenCalledWith('southId1', 'workflowId1', 'runId1');
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Run payload: Reactor discovery');
-    await expect
-      .element(root.getByCss('#preview-none'))
-      .toMatchTextContent('Nothing was created, changed, reactivated, or missing in this run');
-  });
-
-  test("should show the created/updated/disabled/pushed breakdown for a past run's payload", async () => {
+  describe('run payload', () => {
     const detail: WorkflowRunDetailDTO = {
       id: 'runId1',
       workflowId: 'workflowId1',
@@ -317,140 +279,101 @@ describe('PreviewWorkflowModalComponent', () => {
       updatedCount: 1,
       disabledCount: 0,
       pushedCount: 0,
-      entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null }],
+      entries: [],
       records: []
     };
-    configurationWorkflowService.getRun.mockReturnValue(of(detail));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForRunPayload('southId1', 'workflowId1', 'runId1', 'Reactor discovery');
-    fixture.detectChanges();
 
-    const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#run-payload-counts')).toMatchTextContent('1 created, 1 updated, 0 disabled, 0 pushed');
+    function openRunPayload(runDetail: WorkflowRunDetailDTO) {
+      configurationWorkflowService.getRun.mockReturnValue(of(runDetail));
+      const tester = new PreviewWorkflowModalComponentTester();
+      tester.fixture.componentInstance.prepareForRunPayload('southId1', 'workflowId1', 'runId1', 'Reactor discovery');
+      return tester;
+    }
+
+    test("should use the run-payload title/empty-state wording instead of preview's", async () => {
+      const tester = openRunPayload(detail);
+
+      expect(configurationWorkflowService.getRun).toHaveBeenCalledWith('southId1', 'workflowId1', 'runId1');
+      await expect.element(tester.title).toHaveTextContent('Run payload: Reactor discovery');
+      await expect.element(tester.none).toHaveTextContent('Nothing was created, changed, reactivated, or missing in this run');
+    });
+
+    test('should show the created/updated/disabled/pushed breakdown', async () => {
+      const tester = openRunPayload({ ...detail, entries: [entry('nodeId=a')] });
+
+      await expect.element(tester.runCounts).toHaveTextContent('1 created, 1 updated, 0 disabled, 0 pushed');
+      await expect.element(tester.rows).toHaveLength(1);
+    });
+
+    test('should export the run payload with a run-payload file name', async () => {
+      const tester = openRunPayload({ ...detail, entries: [entry('nodeId=a')] });
+
+      await tester.exportButton.click();
+
+      expect(downloadService.downloadFile.mock.lastCall![0].name).toMatch(/^run-payload_Reactor_discovery_.*\.csv$/);
+    });
+
+    test('should close the modal and notify when the run payload request fails', () => {
+      configurationWorkflowService.getRun.mockReturnValue(throwError(() => new Error('boom')));
+      const tester = new PreviewWorkflowModalComponentTester();
+      tester.fixture.componentInstance.prepareForRunPayload('southId1', 'workflowId1', 'runId1', 'Reactor discovery');
+
+      expect(notificationService.error).toHaveBeenCalledWith('south.workflows.run-payload-error', { error: 'boom' });
+      expect(activeModal.close).toHaveBeenCalled();
+    });
   });
 
-  test('should never show the created/updated/disabled/pushed breakdown for a live preview - it never acts on anything', () => {
-    const result: WorkflowPreviewResultDTO = { discoveredCount: 3, eligibleCount: 2, entries: [], records: [] };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test('should never show the created/updated/disabled/pushed breakdown for a live preview - it never acts on anything', async () => {
+    const tester = preview(result({ eligibleCount: 2 }));
 
-    expect(fixture.nativeElement.querySelector('#run-payload-counts')).toBeNull();
-  });
-
-  test('should close the modal and notify when the run payload request fails', () => {
-    configurationWorkflowService.getRun.mockReturnValue(throwError(() => new Error('boom')));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForRunPayload('southId1', 'workflowId1', 'runId1', 'Reactor discovery');
-    fixture.detectChanges();
-
-    expect(notificationService.error).toHaveBeenCalledWith('south.workflows.run-payload-error', { error: expect.any(String) });
-    expect(activeModal.close).toHaveBeenCalled();
-  });
-
-  test('should disable the export button when there is nothing to export', () => {
-    configurationWorkflowService.preview.mockReturnValue(of({ discoveredCount: 0, eligibleCount: 0, entries: [], records: [] }));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
-
-    const button = fixture.nativeElement.querySelector('#export-csv-button');
-    expect(button.disabled).toBe(true);
-  });
-
-  test('should do nothing when exporting before any result has loaded', () => {
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.detectChanges();
-
-    fixture.componentInstance.exportCsv();
-
-    expect(downloadService.downloadFile).not.toHaveBeenCalled();
+    await expect.element(tester.counts).toBeInTheDocument();
+    await expect.element(tester.runCounts).not.toBeInTheDocument();
   });
 
   test('should export a flattened CSV of the entries for a local/diffed workflow', async () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 1,
-      eligibleCount: 1,
-      entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a', unit: 'C' }, previousMetadata: null }],
-      records: []
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
-    const button = fixture.nativeElement.querySelector('#export-csv-button');
-    expect(button.disabled).toBe(false);
+    const tester = preview(result({ entries: [entry('nodeId=a', { record: { nodeId: 'a', unit: 'C' } })] }));
 
-    fixture.componentInstance.exportCsv();
+    await tester.exportButton.click();
 
     expect(downloadService.downloadFile).toHaveBeenCalledTimes(1);
-    const file = downloadService.downloadFile.mock.calls[0][0] as { blob: Blob; name: string };
-    expect(file.name).toMatch(/^preview_Reactor_discovery_\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}_\d{3}\.csv$/);
-    const content = await file.blob.text();
-    expect(content).toContain('key');
-    expect(content).toContain('status');
-    expect(content).toContain('unit');
-    expect(content).toContain('nodeId=a');
-    expect(content).toContain('new');
-    expect(content).toContain('C');
+    expect(downloadService.downloadFile.mock.lastCall![0].name).toMatch(
+      /^preview_Reactor_discovery_\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}_\d{3}\.csv$/
+    );
+    expect((await exportedContent()).split('\r\n')).toEqual(['key,status,nodeId,unit', 'nodeId=a,new,a,C']);
   });
 
   test('should still export the full entries list to CSV even after paginating past the first page', async () => {
-    const entries: Array<WorkflowPreviewResultDTO['entries'][number]> = Array.from({ length: 22 }, (_, i) => ({
-      key: `nodeId=${i}`,
-      status: 'new',
-      record: { nodeId: `${i}` },
-      previousMetadata: null
-    }));
-    const result: WorkflowPreviewResultDTO = { discoveredCount: 22, eligibleCount: 22, entries, records: [] };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    const root = page.elementLocator(fixture.nativeElement);
-    await root.getByRole('link', { name: '2' }).click();
-    await expect.element(root.getByCss('tbody tr')).toHaveLength(2);
+    const tester = preview(result({ entries: Array.from({ length: 22 }, (_, i) => entry(`nodeId=${i}`)) }));
+    await tester.root.getByRole('link', { name: '2' }).click();
+    await expect.element(tester.rows).toHaveLength(2);
 
-    await root.getByRole('button', { name: 'Export CSV' }).click();
+    await tester.exportButton.click();
 
-    const file = downloadService.downloadFile.mock.calls[0][0] as { blob: Blob; name: string };
-    const content = await file.blob.text();
-    expect(content).toContain('nodeId=0');
-    expect(content).toContain('nodeId=21');
+    const lines = (await exportedContent()).split('\r\n');
+    expect(lines).toHaveLength(23);
+    expect(lines[1]).toBe('nodeId=0,new,nodeId=0');
+    expect(lines[22]).toBe('nodeId=21,new,nodeId=21');
   });
 
   test('should export the raw records for a remote (push-to-OIAnalytics) workflow', async () => {
-    const result: WorkflowPreviewResultDTO = {
-      discoveredCount: 2,
-      eligibleCount: 2,
-      entries: [],
-      records: [
-        { nodeId: 'a', value: 1 },
-        { nodeId: 'b', value: 2 }
-      ]
-    };
-    configurationWorkflowService.preview.mockReturnValue(of(result));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+    const tester = preview(
+      result({
+        records: [
+          { nodeId: 'a', value: 1 },
+          { nodeId: 'b', value: 2 }
+        ]
+      })
+    );
 
-    fixture.componentInstance.exportCsv();
+    await tester.exportButton.click();
 
-    const file = downloadService.downloadFile.mock.calls[0][0] as { blob: Blob; name: string };
-    const content = await file.blob.text();
-    expect(content).toContain('nodeId');
-    expect(content).toContain('value');
-    expect(content).toContain('a');
-    expect(content).toContain('b');
+    expect((await exportedContent()).split('\r\n')).toEqual(['nodeId,value', 'a,1', 'b,2']);
   });
 
-  test('should close the modal', () => {
-    configurationWorkflowService.preview.mockReturnValue(of({ discoveredCount: 0, eligibleCount: 0, entries: [], records: [] }));
-    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
-    fixture.detectChanges();
+  test('should close the modal', async () => {
+    const tester = preview(result());
 
-    fixture.componentInstance.close();
+    await tester.closeButton.click();
 
     expect(activeModal.close).toHaveBeenCalled();
   });

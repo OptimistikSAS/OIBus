@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import {
   WorkflowPreviewResultDTO
 } from '@oibus/shared/api/configuration-workflow.model';
 import { WorkflowRunDetailDTO } from '@oibus/shared/api/workflow-run.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
@@ -20,7 +21,6 @@ import { DownloadService } from '../../../services/download.service';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner.component';
 import { NotificationService } from '../../../shared/notification.service';
-import { ArrayPage } from '../../../shared/pagination/array-page';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { flattenPlainObject } from '../../../shared/utils/csv.utils';
 
@@ -55,7 +55,7 @@ export interface PreviewEntryRow {
   selector: 'oib-preview-workflow-modal',
   templateUrl: './preview-workflow-modal.component.html',
   styleUrl: './preview-workflow-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslatePipe, LoadingSpinnerComponent, PaginationComponent]
 })
 export default class PreviewWorkflowModalComponent {
@@ -73,10 +73,9 @@ export default class PreviewWorkflowModalComponent {
 
   // Null when the corresponding list is empty - the template's @if/@else if chain on these (rather
   // than on result.entries/records directly) is what picks which table (or the empty state) to show.
-  // Built once, when `result` is set - never rebuilt afterward, since `result` itself never changes
-  // again for the lifetime of one modal open (see prepareForPreview/prepareForRunPayload).
-  readonly paginatedEntries = signal<ArrayPage<PreviewEntryRow> | null>(null);
-  readonly paginatedRecords = signal<ArrayPage<Record<string, string>> | null>(null);
+  // Built when `result` is set, then replaced by a new page on each page change.
+  readonly paginatedEntries = signal<Page<PreviewEntryRow> | null>(null);
+  readonly paginatedRecords = signal<Page<Record<string, string>> | null>(null);
   /** Union of every row's flattened keys, in first-seen order - rows can have different shapes (e.g.
    *  different node types carry different metadata fields), so every row lines up under one header.
    *  Shared by the table and the CSV export, so both always show the same columns. */
@@ -148,9 +147,17 @@ export default class PreviewWorkflowModalComponent {
     }));
     this.recordRows = result.records.map(record => flattenPlainObject(record));
     this.columns.set(collectColumns(this.entryRows.length > 0 ? this.entryRows.map(row => row.values) : this.recordRows));
-    this.paginatedEntries.set(this.entryRows.length > 0 ? new ArrayPage(this.entryRows, PAGE_SIZE) : null);
-    this.paginatedRecords.set(this.recordRows.length > 0 ? new ArrayPage(this.recordRows, PAGE_SIZE) : null);
+    this.paginatedEntries.set(this.entryRows.length > 0 ? createPageFromArray(this.entryRows, PAGE_SIZE, 0) : null);
+    this.paginatedRecords.set(this.recordRows.length > 0 ? createPageFromArray(this.recordRows, PAGE_SIZE, 0) : null);
     this.loading.set(false);
+  }
+
+  changeEntriesPage(pageNumber: number): void {
+    this.paginatedEntries.set(createPageFromArray(this.entryRows, PAGE_SIZE, pageNumber));
+  }
+
+  changeRecordsPage(pageNumber: number): void {
+    this.paginatedRecords.set(createPageFromArray(this.recordRows, PAGE_SIZE, pageNumber));
   }
 
   /** The identity key as shown in the table - its segments are joined by an invisible control character
@@ -166,16 +173,14 @@ export default class PreviewWorkflowModalComponent {
 
   /** The full created/updated/disabled/pushed breakdown behind a run's summary - only available (and
    *  only ever shown) for a historical run's payload, never for a live preview. */
-  get runCounts(): WorkflowRunDetailDTO | null {
-    return this.context() === 'run-payload' ? (this.result() as WorkflowRunDetailDTO) : null;
-  }
+  readonly runCounts = computed(() => (this.context() === 'run-payload' ? (this.result() as WorkflowRunDetailDTO) : null));
 
   /** True once there is at least one entry or raw record worth exporting - disables the export
    *  button rather than let it produce an empty file. */
-  get hasExportableRows(): boolean {
+  readonly hasExportableRows = computed(() => {
     const result = this.result();
     return !!result && (result.entries.length > 0 || result.records.length > 0);
-  }
+  });
 
   /**
    * Exports the currently shown list as a flattened CSV, one row per entry (local/diffed workflow) or
