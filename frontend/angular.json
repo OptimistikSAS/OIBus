@@ -110,7 +110,8 @@
             "coverage": true,
             "coverageReporters": ["text", "html", "json-summary", "json"],
             "coverageInclude": ["src/app/**/*.ts"],
-            "coverageExclude": ["src/app/**/test-utils.ts", "src/app/**/*-testing.ts", "src/app/**/*.testing.ts"]
+            "coverageExclude": ["src/app/**/test-utils.ts", "src/app/**/*-testing.ts", "src/app/**/*.testing.ts"],
+            "coverageThresholds": { "statements": 94, "branches": 87, "functions": 92, "lines": 95 }
           }
         }
       }
