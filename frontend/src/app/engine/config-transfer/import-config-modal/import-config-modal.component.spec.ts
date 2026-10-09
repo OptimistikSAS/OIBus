@@ -174,7 +174,7 @@ describe('ImportConfigModalComponent', () => {
 
     await tester.dropFile(bigFile);
 
-    await expect.element(tester.fileTooLarge).toMatchTextContent('The selected file is too large');
+    await expect.element(tester.fileTooLarge).toHaveTextContent('The selected file is too large. Maximum size is 100 MB');
     await expect.element(tester.fileButton).toHaveTextContent('Choose a file');
     expect(configTransferService.preview).not.toHaveBeenCalled();
   });

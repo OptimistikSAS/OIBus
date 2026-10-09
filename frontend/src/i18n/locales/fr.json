@@ -2315,7 +2315,7 @@
         "warning": "Cela remplace tous les connecteurs, requêtes d'historique, modes de scan, filtres IP, transformateurs, certificats, utilisateurs et paramètres du moteur de cette instance et ne peut pas être annulé.",
         "confirm-message": "Cela remplace tous les connecteurs, requêtes d'historique, modes de scan, filtres IP, transformateurs, certificats, utilisateurs et paramètres du moteur de cette instance et ne peut pas être annulé. Êtes-vous sûr de vouloir continuer ?",
         "file": "Fichier de configuration",
-        "file-too-large": "Le fichier sélectionné est trop volumineux. La taille maximale est de 10 Mo",
+        "file-too-large": "Le fichier sélectionné est trop volumineux. La taille maximale est de {{ maxSize }} Mo",
         "success": "Configuration importée avec succès.",
         "applied-upgrades": "Mises à niveau appliquées",
         "upgraded-versions": "La configuration a été mise à niveau d'OIBus {{fromVersion}} vers {{toVersion}}.",
