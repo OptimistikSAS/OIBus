@@ -31,7 +31,7 @@
           (drop)="onDrop($event)"
           (dragover)="onDragOver($event)"
         >
-          <span class="fa-solid fa-folder-open me-2"></span>
+          <span class="fa-solid fa-folder-open me-2" aria-hidden="true"></span>
           <span>{{ file().name }}</span>
         </button>
       </div>
@@ -43,7 +43,7 @@
 
     @if (previewState.isPending | async) {
       <div id="preview-loading" class="d-flex align-items-center gap-2 mt-3">
-        <span class="fa-solid fa-spinner fa-spin"></span>
+        <span class="fa-solid fa-spinner fa-spin" aria-hidden="true"></span>
         <span translate="engine.config-transfer.import.preview.loading"></span>
       </div>
     } @else if (preview(); as preview) {
@@ -99,9 +99,10 @@
   @if (!result()) {
     <div class="btn-group">
       <button
+        type="button"
         [oib-save-button]="state"
         id="import-button"
-        [forceDisabled]="!canImport"
+        [forceDisabled]="!canImport()"
         translationKey="engine.config-transfer.import.button"
         iconClass="fa-upload"
         (click)="import()"

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, LOCALE_ID, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, LOCALE_ID, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   AsyncValidatorFn,
@@ -39,7 +40,7 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
   selector: 'oib-edit-scan-mode-modal',
   templateUrl: './edit-scan-mode-modal.component.html',
   styleUrl: './edit-scan-mode-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
@@ -53,17 +54,16 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
   ]
 })
 export class EditScanModeModalComponent {
-  private modal = inject(NgbActiveModal);
-  private scanModeService = inject(ScanModeService);
-  private fb = inject(NonNullableFormBuilder);
-  private currentUserService = inject(CurrentUserService);
-  private translateService = inject(TranslateService);
-  private locale = inject(LOCALE_ID);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
-  private changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly scanModeService = inject(ScanModeService);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly currentUserService = inject(CurrentUserService);
+  private readonly translateService = inject(TranslateService);
+  private readonly locale = inject(LOCALE_ID);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   readonly mode = signal<'create' | 'edit'>('create');
-  state = new ObservableState();
+  readonly state = new ObservableState();
   readonly scanMode = signal<ScanModeDTO | null>(null);
   private existingScanModes: Array<ScanModeDTO> = [];
   private scanModesLoaded = false;
@@ -84,10 +84,8 @@ export class EditScanModeModalComponent {
         next: scanModes => {
           this.existingScanModes = scanModes;
           this.scanModesLoaded = true;
-          // Update validation once loaded - form should be available by now
-          this.form?.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
-          // No event is emitted: refresh the view so that a uniqueness error is displayed
-          this.changeDetectorRef.markForCheck();
+          // Update validation once loaded: the emitted events refresh the view, so that a uniqueness error is displayed
+          this.form.controls.name.updateValueAndValidity();
         },
         error: () => {
           // If list fails, just mark as loaded with empty array to avoid blocking validation
@@ -137,7 +135,7 @@ export class EditScanModeModalComponent {
     };
   }
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     name: this.fb.control('', {
       validators: [Validators.required, this.checkUniqueness()]
     }),
@@ -170,6 +168,15 @@ export class EditScanModeModalComponent {
     )
   });
   readonly cronValidationResponse = signal<ValidatedCronExpression | null>(null);
+
+  /**
+   * The raw value of the form, as a signal refreshed on every form event: the form is also changed by code
+   * (`prepareFor…()`, `selectType()`...) and validated asynchronously (cron, scan modes loading), and the OnPush template
+   * must follow every change, including the validation errors.
+   */
+  readonly formValue = toSignal(this.form.events.pipe(map(() => this.form.getRawValue())), {
+    initialValue: this.form.getRawValue()
+  });
 
   /**
    * Enable only the controls the current type and window toggle actually use. Disabled controls are
@@ -350,32 +357,32 @@ export class EditScanModeModalComponent {
   }
 
   /** The configured interval in milliseconds, or null when incomplete. */
-  get intervalMs(): number | null {
-    const { value, unit } = this.form.controls.interval.getRawValue();
+  readonly intervalMs = computed(() => {
+    const { value, unit } = this.formValue().interval;
     if (value === null || value === undefined || !unit) {
       return null;
     }
     const milliseconds = Number(value) * INTERVAL_UNIT_TO_MS[unit];
     return Number.isFinite(milliseconds) ? milliseconds : null;
-  }
+  });
 
   /**
    * Whether to show the sub-second advisory. Non-blocking: it never invalidates the form. Intervals
    * below the hard minimum are excluded so the advisory does not stack with the validation error.
    */
-  get showSubSecondIntervalWarning(): boolean {
-    const milliseconds = this.intervalMs;
-    return this.form.controls.type.value === 'interval' && milliseconds !== null && milliseconds >= 10 && milliseconds < 1000;
-  }
+  readonly showSubSecondIntervalWarning = computed(() => {
+    const milliseconds = this.intervalMs();
+    return this.formValue().type === 'interval' && milliseconds !== null && milliseconds >= 10 && milliseconds < 1000;
+  });
 
   /**
    * Whether the time-of-day window wraps past midnight. A lexicographic comparison is safe because
    * `<input type="time">` always produces zero-padded "HH:mm".
    */
-  get isOvernight(): boolean {
-    const { timeStart, timeEnd } = this.form.controls.activationWindow.getRawValue();
+  readonly isOvernight = computed(() => {
+    const { timeStart, timeEnd } = this.formValue().activationWindow;
     return !!timeStart && !!timeEnd && timeEnd < timeStart;
-  }
+  });
 
   /**
    * Human-readable rendition of the activation window, assembled from independently translated
@@ -383,11 +390,12 @@ export class EditScanModeModalComponent {
    * it; the clauses themselves are joined with a translatable separator, since which clauses are
    * present varies and ngx-translate cannot express that in a single key.
    */
-  get activationWindowSummary(): string {
-    if (!this.form.controls.activationWindowEnabled.value) {
+  readonly activationWindowSummary = computed(() => {
+    const formValue = this.formValue();
+    if (!formValue.activationWindowEnabled) {
       return '';
     }
-    const value = this.form.controls.activationWindow.getRawValue();
+    const value = formValue.activationWindow;
     const clauses: Array<string> = [];
 
     const formatBound = (instant: Instant) => formatDateTime(instant, this.locale, this.timezone, 'medium')!;
@@ -418,7 +426,7 @@ export class EditScanModeModalComponent {
     if (value.timeStart && value.timeEnd) {
       clauses.push(
         this.translateService.instant(
-          this.isOvernight ? 'engine.scan-mode.summary.between-times-overnight' : 'engine.scan-mode.summary.between-times',
+          this.isOvernight() ? 'engine.scan-mode.summary.between-times-overnight' : 'engine.scan-mode.summary.between-times',
           { start: value.timeStart, end: value.timeEnd, timezone: this.timezone }
         )
       );
@@ -427,7 +435,7 @@ export class EditScanModeModalComponent {
     }
 
     return clauses.join(this.translateService.instant('engine.scan-mode.summary.separator'));
-  }
+  });
 
   /** Locale-aware short day name, where 0 is Sunday and 6 is Saturday. */
   private dayLabel(day: number): string {
@@ -436,17 +444,9 @@ export class EditScanModeModalComponent {
       .toFormat('ccc');
   }
 
-  /**
-   * Returns the human-readable version of the cron expression.
-   */
-  get humanReadableCron() {
-    return this.cronValidationResponse()?.humanReadableForm ?? '';
-  }
+  /** The human-readable version of the cron expression. */
+  readonly humanReadableCron = computed(() => this.cronValidationResponse()?.humanReadableForm ?? '');
 
-  /**
-   * Returns the next 3 cron executions.
-   */
-  get nextCronExecutions() {
-    return this.cronValidationResponse()?.nextExecutions ?? [];
-  }
+  /** The next 3 cron executions. */
+  readonly nextCronExecutions = computed(() => this.cronValidationResponse()?.nextExecutions ?? []);
 }

@@ -1,5 +1,6 @@
-import { Component, inject } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject, Signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -11,22 +12,27 @@ import { EngineService } from '../../services/engine.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { NotificationService } from '../../shared/notification.service';
 
+type LoggerOutput = 'console' | 'file' | 'database' | 'loki' | 'oia' | 'syslog';
+/** The outputs that have settings besides their level */
+const LEVEL_DEPENDENT_OUTPUTS = ['oia', 'database', 'file', 'loki'] as const;
+type LevelDependentOutput = (typeof LEVEL_DEPENDENT_OUTPUTS)[number];
+
 @Component({
   selector: 'oib-edit-engine-logger-modal',
   templateUrl: './edit-engine-logger-modal.component.html',
   styleUrl: './edit-engine-logger-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditEngineLoggerModalComponent {
-  private modal = inject(NgbActiveModal);
-  private engineService = inject(EngineService);
-  private notificationService = inject(NotificationService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly engineService = inject(EngineService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly logLevels = LOG_LEVELS;
 
-  private fb = inject(NonNullableFormBuilder);
-
-  form = this.fb.group({
+  readonly form = this.fb.group({
     auditRetentionDuration: [0 as number | null, [Validators.required, Validators.min(0)]],
     logParameters: this.fb.group({
       console: this.fb.group({
@@ -61,130 +67,83 @@ export class EditEngineLoggerModalComponent {
     })
   });
 
+  /** Level of each logging output, as signals for the template (the form is also patched by `initialize()`) */
+  private readonly levels: Record<LoggerOutput, Signal<LogLevel>> = {
+    console: this.levelSignal('console'),
+    file: this.levelSignal('file'),
+    database: this.levelSignal('database'),
+    loki: this.levelSignal('loki'),
+    oia: this.levelSignal('oia'),
+    syslog: this.levelSignal('syslog')
+  };
+
+  /** Settings only used (and validated) when the level of their output is not silent */
+  private readonly levelDependentControls: Record<
+    LevelDependentOutput,
+    Array<{ control: AbstractControl; validators: Array<ValidatorFn> }>
+  > = {
+    oia: [
+      { control: this.form.controls.logParameters.controls.oia.controls.interval, validators: [Validators.required, Validators.min(10)] }
+    ],
+    database: [
+      {
+        control: this.form.controls.logParameters.controls.database.controls.maxNumberOfLogs,
+        validators: [Validators.required, Validators.min(100_000)]
+      }
+    ],
+    file: [
+      {
+        control: this.form.controls.logParameters.controls.file.controls.maxFileSize,
+        validators: [Validators.required, Validators.min(1), Validators.max(50)]
+      },
+      {
+        control: this.form.controls.logParameters.controls.file.controls.numberOfFiles,
+        validators: [Validators.required, Validators.min(1)]
+      }
+    ],
+    loki: [
+      { control: this.form.controls.logParameters.controls.loki.controls.interval, validators: [Validators.required, Validators.min(10)] },
+      { control: this.form.controls.logParameters.controls.loki.controls.address, validators: [Validators.pattern(/http.*/)] }
+    ]
+  };
+
   constructor() {
-    const logParams = this.form.controls.logParameters;
-
-    logParams.controls.oia.controls.level.valueChanges.subscribe(level => {
-      const intervalControl = logParams.controls.oia.controls.interval;
-      if (level === 'silent') {
-        intervalControl.clearValidators();
-        intervalControl.disable();
-      } else {
-        intervalControl.setValidators([Validators.required, Validators.min(10)]);
-        intervalControl.enable();
-      }
-      intervalControl.updateValueAndValidity();
-    });
-
-    logParams.controls.database.controls.level.valueChanges.subscribe(level => {
-      const maxLogsControl = logParams.controls.database.controls.maxNumberOfLogs;
-      if (level === 'silent') {
-        maxLogsControl.clearValidators();
-        maxLogsControl.disable();
-      } else {
-        maxLogsControl.setValidators([Validators.required, Validators.min(100_000)]);
-        maxLogsControl.enable();
-      }
-      maxLogsControl.updateValueAndValidity();
-    });
-
-    logParams.controls.file.controls.level.valueChanges.subscribe(level => {
-      const maxFileSizeControl = logParams.controls.file.controls.maxFileSize;
-      const numberOfFilesControl = logParams.controls.file.controls.numberOfFiles;
-      if (level === 'silent') {
-        maxFileSizeControl.clearValidators();
-        maxFileSizeControl.disable();
-        numberOfFilesControl.clearValidators();
-        numberOfFilesControl.disable();
-      } else {
-        maxFileSizeControl.setValidators([Validators.required, Validators.min(1), Validators.max(50)]);
-        maxFileSizeControl.enable();
-        numberOfFilesControl.setValidators([Validators.required, Validators.min(1)]);
-        numberOfFilesControl.enable();
-      }
-      maxFileSizeControl.updateValueAndValidity();
-      numberOfFilesControl.updateValueAndValidity();
-    });
-
-    logParams.controls.loki.controls.level.valueChanges.subscribe(level => {
-      const intervalControl = logParams.controls.loki.controls.interval;
-      const addressControl = logParams.controls.loki.controls.address;
-      if (level === 'silent') {
-        intervalControl.clearValidators();
-        intervalControl.disable();
-        addressControl.clearValidators();
-        addressControl.disable();
-      } else {
-        intervalControl.setValidators([Validators.required, Validators.min(10)]);
-        intervalControl.enable();
-        addressControl.setValidators([Validators.pattern(/http.*/)]);
-        addressControl.enable();
-      }
-      intervalControl.updateValueAndValidity();
-      addressControl.updateValueAndValidity();
-    });
+    for (const output of LEVEL_DEPENDENT_OUTPUTS) {
+      this.form.controls.logParameters.controls[output].controls.level.valueChanges
+        .pipe(takeUntilDestroyed())
+        .subscribe(level => this.applyLevel(output, level));
+    }
   }
 
-  isLevelSilent(category: 'console' | 'file' | 'database' | 'loki' | 'oia' | 'syslog'): boolean {
-    return this.form.controls.logParameters.controls[category].controls.level.value === 'silent';
+  private levelSignal(output: LoggerOutput): Signal<LogLevel> {
+    const levelControl = this.form.controls.logParameters.controls[output].controls.level;
+    return toSignal(levelControl.valueChanges, { initialValue: levelControl.value });
+  }
+
+  isLevelSilent(output: LoggerOutput): boolean {
+    return this.levels[output]() === 'silent';
   }
 
   initialize(settings: EngineSettingsDTO) {
     this.form.patchValue({ auditRetentionDuration: settings.auditRetentionDuration ?? 0, logParameters: settings.logger });
-    this.initializeValidators();
+    for (const output of LEVEL_DEPENDENT_OUTPUTS) {
+      this.applyLevel(output, this.form.controls.logParameters.controls[output].controls.level.value);
+    }
   }
 
-  private initializeValidators(): void {
-    const logParams = this.form.controls.logParameters;
-
-    const oiaLevel = logParams.controls.oia.controls.level.value;
-    const oiaInterval = logParams.controls.oia.controls.interval;
-    if (oiaLevel === 'silent') {
-      oiaInterval.clearValidators();
-      oiaInterval.disable();
-    } else {
-      oiaInterval.setValidators([Validators.required, Validators.min(10)]);
-      oiaInterval.enable();
-    }
-
-    const dbLevel = logParams.controls.database.controls.level.value;
-    const maxLogs = logParams.controls.database.controls.maxNumberOfLogs;
-    if (dbLevel === 'silent') {
-      maxLogs.clearValidators();
-      maxLogs.disable();
-    } else {
-      maxLogs.setValidators([Validators.required, Validators.min(100_000)]);
-      maxLogs.enable();
-    }
-
-    const fileLevel = logParams.controls.file.controls.level.value;
-    const maxFileSize = logParams.controls.file.controls.maxFileSize;
-    const numberOfFiles = logParams.controls.file.controls.numberOfFiles;
-    if (fileLevel === 'silent') {
-      maxFileSize.clearValidators();
-      maxFileSize.disable();
-      numberOfFiles.clearValidators();
-      numberOfFiles.disable();
-    } else {
-      maxFileSize.setValidators([Validators.required, Validators.min(1), Validators.max(50)]);
-      maxFileSize.enable();
-      numberOfFiles.setValidators([Validators.required, Validators.min(1)]);
-      numberOfFiles.enable();
-    }
-
-    const lokiLevel = logParams.controls.loki.controls.level.value;
-    const lokiInterval = logParams.controls.loki.controls.interval;
-    const lokiAddress = logParams.controls.loki.controls.address;
-    if (lokiLevel === 'silent') {
-      lokiInterval.clearValidators();
-      lokiInterval.disable();
-      lokiAddress.clearValidators();
-      lokiAddress.disable();
-    } else {
-      lokiInterval.setValidators([Validators.required, Validators.min(10)]);
-      lokiInterval.enable();
-      lokiAddress.setValidators([Validators.pattern(/http.*/)]);
-      lokiAddress.enable();
+  /**
+   * Disables (and stops validating) the settings of an output when its level is silent, enables them otherwise.
+   */
+  private applyLevel(output: LevelDependentOutput, level: LogLevel) {
+    for (const { control, validators } of this.levelDependentControls[output]) {
+      if (level === 'silent') {
+        control.clearValidators();
+        control.disable();
+      } else {
+        control.setValidators(validators);
+        control.enable();
+      }
+      control.updateValueAndValidity();
     }
   }
 

@@ -1,14 +1,15 @@
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal, Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { EMPTY, of, Subject, throwError } from 'rxjs';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
+import { ConfigImportResponseDTO } from '@oibus/shared/oia/config-transfer.model';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import { buildEngineSettings } from '../../test/builders';
 import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { CertificateService } from '../services/certificate.service';
@@ -19,76 +20,77 @@ import { ScanModeService } from '../services/scan-mode.service';
 import { TransformerService } from '../services/transformer.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 import { ConfirmationService } from '../shared/confirmation.service';
-import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
-import { Modal } from '../shared/modal.service';
+import { fakeModal, MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { NotificationService } from '../shared/notification.service';
+import { METRICS_REFRESH_INTERVAL_MS } from '../shared/polling';
 import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
 import { WindowService } from '../shared/window.service';
 import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
+import { EditEngineNameModalComponent } from './edit-engine-name-modal/edit-engine-name-modal.component';
+import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
+import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal/edit-engine-web-server-modal.component';
 import { EngineDetailComponent } from './engine-detail.component';
 
 class EngineDetailComponentTester {
   readonly fixture = TestBed.createComponent(EngineDetailComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly generalSettings = this.root.getByCss('table tr');
-  readonly restartButton = this.root.getByCss('#restart');
+  readonly title = this.root.getByRole('heading', { level: 1 });
+  readonly settingRows = this.root.getByCss('table.mb-3 tr');
+  readonly restartButton = this.root.getByRole('button', { name: 'Restart' });
   readonly exportConfigButton = this.root.getByCss('#export-config');
   readonly importConfigButton = this.root.getByCss('#import-config');
   readonly memoryDumpButton = this.root.getByCss('#memory-dump');
   readonly engineMetrics = this.root.getByCss('oib-engine-metrics');
 }
 
-const engineSettings: EngineSettingsDTO = {
-  id: 'id',
-  general: { name: 'OIBus Test' },
-  webServer: { port: 2223, authTokenDuration: '7d' },
-  logger: {
-    console: { level: 'silent' },
-    file: { level: 'trace' },
-    database: { level: 'silent' },
-    loki: { level: 'error' },
-    syslog: { level: 'silent' },
-    oia: { level: 'silent' }
-  },
-  proxyServer: { enabled: true, port: 8888 }
-} as EngineSettingsDTO;
+type EngineSettingsModal =
+  EditEngineNameModalComponent | EditEngineWebServerModalComponent | EditEngineProxyModalComponent | EditEngineLoggerModalComponent;
+
+const importResponse: ConfigImportResponseDTO = {
+  fromVersion: '3.10.0',
+  toVersion: '3.10.0',
+  appliedUpgrades: [],
+  warnings: [],
+  newPort: null
+};
 
 describe('EngineDetailComponent', () => {
   let engineService: MockObject<EngineService>;
   let windowService: MockObject<WindowService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
-  let scanModeService: MockObject<ScanModeService>;
-  let ipFilterService: MockObject<IpFilterService>;
-  let certificateService: MockObject<CertificateService>;
-  let transformerService: MockObject<TransformerService>;
   let configTransferService: MockObject<ConfigTransferService>;
-  let modalService: MockModalService<ImportConfigModalComponent | AuditHistoryModalComponent>;
+  let modalService: MockModalService<
+    ImportConfigModalComponent | AuditHistoryModalComponent | PortRedirectModalComponent | EngineSettingsModal
+  >;
+  const engineSettings = buildEngineSettings();
 
   beforeEach(() => {
     engineService = createMock(EngineService);
     windowService = createMock(WindowService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
-    scanModeService = createMock(ScanModeService);
-    ipFilterService = createMock(IpFilterService);
-    certificateService = createMock(CertificateService);
-    transformerService = createMock(TransformerService);
     configTransferService = createMock(ConfigTransferService);
+    const scanModeService = createMock(ScanModeService);
+    const ipFilterService = createMock(IpFilterService);
+    const certificateService = createMock(CertificateService);
+    const transformerService = createMock(TransformerService);
 
+    // used by the help links of the lists
+    windowService.languageToUse.mockReturnValue('en');
     engineService.getEngineSettings.mockReturnValue(of(engineSettings));
     engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
+    engineService.getEngineMetrics.mockReturnValue(of(testData.engine.metrics));
     scanModeService.list.mockReturnValue(of([]));
     ipFilterService.list.mockReturnValue(of([]));
     certificateService.list.mockReturnValue(of([]));
     transformerService.list.mockReturnValue(of([]));
-    engineService.getEngineMetrics.mockReturnValue(of(testData.engine.metrics));
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideRouter([]),
-        provideHttpClientTesting(),
         provideModalTesting(),
         { provide: EngineService, useValue: engineService },
         { provide: WindowService, useValue: windowService },
@@ -106,13 +108,56 @@ describe('EngineDetailComponent', () => {
 
   test('should display engine settings', async () => {
     const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
 
-    await expect.element(tester.generalSettings.nth(0)).toMatchTextContent('OIBus Test');
-    await expect.element(tester.generalSettings.nth(1)).toMatchTextContent('2223');
-    await expect.element(tester.generalSettings.nth(2)).toMatchTextContent('7 days');
-    await expect.element(tester.generalSettings.nth(3)).toMatchTextContent('8888');
-    await expect.element(tester.generalSettings.nth(4)).toMatchTextContent('silent');
+    await expect.element(tester.title).toHaveTextContent('Engine');
+    await expect.element(tester.settingRows.nth(0)).toMatchTextContent('NameOIBus Test');
+    await expect.element(tester.settingRows.nth(1)).toMatchTextContent('Port2223');
+    await expect.element(tester.settingRows.nth(2)).toMatchTextContent('7 days');
+    await expect.element(tester.settingRows.nth(3)).toMatchTextContent('Proxy serverEnabled on port 8888');
+    await expect
+      .element(tester.settingRows.nth(4))
+      .toMatchTextContent('Console: silent|File: trace|Database: silent|Loki: error|Syslog: silent|OIAnalytics: silent');
+    await expect.element(tester.settingRows.nth(5)).toMatchTextContent('90 days');
+  });
+
+  test('should display a disabled proxy server and no audit retention duration', async () => {
+    engineService.getEngineSettings.mockReturnValue(
+      of(buildEngineSettings({ auditRetentionDuration: null, proxyServer: { ...engineSettings.proxyServer, enabled: false } }))
+    );
+    const tester = new EngineDetailComponentTester();
+
+    await expect.element(tester.settingRows.nth(3)).toMatchTextContent('Proxy serverDisabled');
+    await expect.element(tester.settingRows.nth(5)).toMatchTextContent('0 days');
+  });
+
+  test.each<[string, Type<EngineSettingsModal>]>([
+    ['#edit-name-button', EditEngineNameModalComponent],
+    ['#edit-web-server-button', EditEngineWebServerModalComponent],
+    ['#edit-proxy-button', EditEngineProxyModalComponent],
+    ['#edit-logger-button', EditEngineLoggerModalComponent]
+  ])('should open the edit modal with %s and refresh the settings once it is closed', async (button, modalComponent) => {
+    const fakeModalComponent = createMock(modalComponent);
+    modalService.mockClosedModal(fakeModalComponent);
+    const openSpy = vi.spyOn(modalService, 'open');
+    const tester = new EngineDetailComponentTester();
+    await expect.element(tester.settingRows.nth(0)).toMatchTextContent('OIBus Test');
+    engineService.getEngineSettings.mockReturnValue(of(buildEngineSettings({ general: { name: 'Renamed' } })));
+
+    await tester.root.getByCss(button).click();
+
+    expect(openSpy.mock.lastCall?.[0]).toBe(modalComponent);
+    expect(fakeModalComponent.initialize).toHaveBeenCalledWith(engineSettings);
+    await expect.element(tester.settingRows.nth(0)).toMatchTextContent('Renamed');
+    expect(engineService.getEngineSettings).toHaveBeenCalledTimes(2);
+  });
+
+  test('should not refresh the settings when an edit modal is dismissed', async () => {
+    modalService.mockDismissedModal(createMock(EditEngineNameModalComponent));
+    const tester = new EngineDetailComponentTester();
+
+    await tester.root.getByCss('#edit-name-button').click();
+
+    expect(engineService.getEngineSettings).toHaveBeenCalledTimes(1);
   });
 
   test.each([
@@ -124,45 +169,71 @@ describe('EngineDetailComponent', () => {
     const fakeAuditComponent = createMock(AuditHistoryModalComponent);
     modalService.mockClosedModal(fakeAuditComponent);
     const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
 
     await tester.root.getByCss(button).click();
 
     expect(fakeAuditComponent.prepare).toHaveBeenCalledWith(section, engineSettings.id);
   });
 
-  test('should display the polled engine metrics', async () => {
-    const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
+  describe('metrics polling', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    });
 
-    // The first poll fires on the next macrotask
-    await vi.waitFor(() => expect(engineService.getEngineMetrics).toHaveBeenCalledTimes(1));
-    tester.fixture.detectChanges();
-    await expect.element(tester.engineMetrics).toBeInTheDocument();
+    afterEach(() => vi.useRealTimers());
+
+    test('should display the engine metrics and refresh them periodically', async () => {
+      engineService.getEngineMetrics.mockReturnValueOnce(of(testData.engine.metrics));
+      engineService.getEngineMetrics.mockReturnValue(of({ ...testData.engine.metrics, processCpuUsageInstant: 0.5 }));
+      const tester = new EngineDetailComponentTester();
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(engineService.getEngineMetrics).toHaveBeenCalledTimes(1);
+      await expect.element(tester.engineMetrics).toMatchTextContent('0.00%');
+
+      await vi.advanceTimersByTimeAsync(METRICS_REFRESH_INTERVAL_MS);
+      expect(engineService.getEngineMetrics).toHaveBeenCalledTimes(2);
+      await expect.element(tester.engineMetrics).toMatchTextContent('50.00%');
+
+      tester.fixture.destroy();
+      await vi.advanceTimersByTimeAsync(METRICS_REFRESH_INTERVAL_MS);
+      expect(engineService.getEngineMetrics).toHaveBeenCalledTimes(2);
+    });
   });
 
-  test('should restart', () => {
+  test('should restart after confirmation', async () => {
     const restartSubject = new Subject<void>();
     engineService.restart.mockReturnValue(restartSubject);
     confirmationService.confirm.mockReturnValue(of(undefined));
-
     const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
 
-    tester.fixture.componentInstance.restart();
+    await tester.restartButton.click();
+
+    expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'engine.confirm-restart' });
+    expect(engineService.restart).toHaveBeenCalled();
+    await expect.element(tester.restartButton).toBeDisabled();
 
     restartSubject.next();
+    restartSubject.complete();
 
-    expect(engineService.restart).toHaveBeenCalled();
     expect(notificationService.success).toHaveBeenCalledWith('engine.restart-complete');
+    await expect.element(tester.restartButton).toBeEnabled();
+  });
+
+  test('should not restart if not confirmed', async () => {
+    confirmationService.confirm.mockReturnValue(EMPTY);
+    const tester = new EngineDetailComponentTester();
+
+    await tester.restartButton.click();
+
+    expect(engineService.restart).not.toHaveBeenCalled();
+    expect(notificationService.success).not.toHaveBeenCalled();
   });
 
   test('should dump memory after confirmation', async () => {
     engineService.dumpMemory.mockReturnValue(of({ filename: 'oibus-memory-dump.heapsnapshot' }));
     confirmationService.confirm.mockReturnValue(of(undefined));
-
     const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
 
     await tester.memoryDumpButton.click();
 
@@ -170,7 +241,6 @@ describe('EngineDetailComponent', () => {
       titleKey: 'engine.confirm-memory-dump-title',
       messageKey: 'engine.confirm-memory-dump'
     });
-    expect(engineService.dumpMemory).toHaveBeenCalled();
     expect(notificationService.success).toHaveBeenCalledWith('engine.memory-dump-complete', {
       filename: 'oibus-memory-dump.heapsnapshot'
     });
@@ -178,9 +248,7 @@ describe('EngineDetailComponent', () => {
 
   test('should not dump memory if not confirmed', async () => {
     confirmationService.confirm.mockReturnValue(EMPTY);
-
     const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
 
     await tester.memoryDumpButton.click();
 
@@ -188,105 +256,96 @@ describe('EngineDetailComponent', () => {
   });
 
   test('should export the configuration', async () => {
-    configTransferService.export.mockReturnValue(of(undefined));
-
+    const exportSubject = new Subject<void>();
+    configTransferService.export.mockReturnValue(exportSubject);
     const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
 
     await tester.exportConfigButton.click();
 
     expect(configTransferService.export).toHaveBeenCalled();
+    await expect.element(tester.exportConfigButton).toBeDisabled();
+    exportSubject.complete();
+    await expect.element(tester.exportConfigButton).toBeEnabled();
   });
 
   test('should show an error notification when the export fails', async () => {
     configTransferService.export.mockReturnValue(throwError(() => 'boom'));
-
     const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
 
     await tester.exportConfigButton.click();
 
     expect(notificationService.errorMessage).toHaveBeenCalledWith('boom');
   });
 
-  test('should open the import config modal and reload the page once it closes with a result', async () => {
-    const fakeImportComponent = createMock(ImportConfigModalComponent);
-    modalService.mockClosedModal(fakeImportComponent, {
-      fromVersion: '3.10.0',
-      toVersion: '3.10.0',
-      appliedUpgrades: [],
-      warnings: [],
-      newPort: null
+  describe('config import', () => {
+    test('should reload the page once the import modal closes with a result', async () => {
+      modalService.mockClosedModal(createMock(ImportConfigModalComponent), importResponse);
+      const tester = new EngineDetailComponentTester();
+
+      await tester.importConfigButton.click();
+
+      expect(windowService.reload).toHaveBeenCalled();
     });
 
-    const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
+    test('should reload the page when the import modal is dismissed (e.g. Escape/backdrop) after a successful import', async () => {
+      const fakeImportComponent = createMock(ImportConfigModalComponent, { result: signal(importResponse) });
+      fakeImportComponent.canDismiss.mockReturnValue(true);
+      // A dismissal (unlike an explicit close) completes the result without a value: only `beforeDismiss` can reload.
+      modalService.mockDismissedModal(fakeImportComponent);
+      const openSpy = vi.spyOn(modalService, 'open');
+      const tester = new EngineDetailComponentTester();
+      await tester.importConfigButton.click();
 
-    await tester.importConfigButton.click();
+      const canDismiss = await openSpy.mock.lastCall![1]!.beforeDismiss!();
 
-    expect(windowService.reload).toHaveBeenCalled();
-  });
-
-  test('should reload the page when the import modal is dismissed (e.g. Escape/backdrop) after a successful import', async () => {
-    const fakeImportComponent = createMock(ImportConfigModalComponent);
-    fakeImportComponent.canDismiss.mockReturnValue(true);
-    // `result` is a signal field, not a prototype method, so createMock (which only mocks prototype
-    // methods) never touches it — stub it by hand the same way the real component's signal getter behaves.
-    (fakeImportComponent as unknown as { result: () => unknown }).result = () => ({
-      fromVersion: '3.10.0',
-      toVersion: '3.10.0',
-      appliedUpgrades: [],
-      warnings: [],
-      newPort: null
+      expect(canDismiss).toBe(true);
+      expect(windowService.reload).toHaveBeenCalled();
     });
-    // A dismissal (unlike an explicit close) resolves with no value, so `modalRef.result.subscribe`'s
-    // next handler never fires — isolating this test to the `beforeDismiss` reload path being added.
-    modalService.mockDismissedModal(fakeImportComponent);
-    const openSpy = vi.spyOn(modalService, 'open');
 
-    const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
-    await tester.importConfigButton.click();
+    test('should not reload the page when the import modal is dismissed before any import has completed', async () => {
+      const fakeImportComponent = createMock(ImportConfigModalComponent, { result: signal(null) });
+      fakeImportComponent.canDismiss.mockReturnValue(true);
+      modalService.mockDismissedModal(fakeImportComponent);
+      const openSpy = vi.spyOn(modalService, 'open');
+      const tester = new EngineDetailComponentTester();
+      await tester.importConfigButton.click();
 
-    const beforeDismiss = openSpy.mock.calls[0][1]?.beforeDismiss as () => Promise<boolean>;
-    const canDismiss = await beforeDismiss();
+      const canDismiss = await openSpy.mock.lastCall![1]!.beforeDismiss!();
 
-    expect(canDismiss).toBe(true);
-    expect(windowService.reload).toHaveBeenCalled();
-  });
+      expect(canDismiss).toBe(true);
+      expect(windowService.reload).not.toHaveBeenCalled();
+    });
 
-  test('should not reload the page when the import modal is dismissed before any import has completed', async () => {
-    const fakeImportComponent = createMock(ImportConfigModalComponent);
-    fakeImportComponent.canDismiss.mockReturnValue(true);
-    (fakeImportComponent as unknown as { result: () => unknown }).result = () => null;
-    modalService.mockDismissedModal(fakeImportComponent);
-    const openSpy = vi.spyOn(modalService, 'open');
+    test('should not reload the page when the dismissal of the import modal is refused', async () => {
+      const fakeImportComponent = createMock(ImportConfigModalComponent, { result: signal(importResponse) });
+      fakeImportComponent.canDismiss.mockReturnValue(of(false));
+      modalService.mockDismissedModal(fakeImportComponent);
+      const openSpy = vi.spyOn(modalService, 'open');
+      const tester = new EngineDetailComponentTester();
+      await tester.importConfigButton.click();
 
-    const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
-    await tester.importConfigButton.click();
+      const canDismiss = await openSpy.mock.lastCall![1]!.beforeDismiss!();
 
-    const beforeDismiss = openSpy.mock.calls[0][1]?.beforeDismiss as () => Promise<boolean>;
-    await beforeDismiss();
+      expect(canDismiss).toBe(false);
+      expect(windowService.reload).not.toHaveBeenCalled();
+    });
 
-    expect(windowService.reload).not.toHaveBeenCalled();
-  });
+    test('should redirect to the new port instead of reloading when the import changed the web server port', async () => {
+      const redirectComponent = createMock(PortRedirectModalComponent);
+      const openSpy = vi
+        .spyOn(modalService, 'open')
+        .mockImplementation(component =>
+          component === PortRedirectModalComponent
+            ? fakeModal(redirectComponent)
+            : fakeModal(createMock(ImportConfigModalComponent), Promise.resolve({ ...importResponse, newPort: 2224 }))
+        );
+      const tester = new EngineDetailComponentTester();
 
-  test('should redirect to the new port instead of reloading when the import changed the web server port', async () => {
-    const fakeImportComponent = createMock(ImportConfigModalComponent);
-    const result = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [], newPort: 2224 };
-    const redirectComponent = { initialize: vi.fn() };
-    const openSpy = vi
-      .spyOn(modalService, 'open')
-      .mockReturnValueOnce({ componentInstance: fakeImportComponent, result: of(result) } as unknown as Modal<ImportConfigModalComponent>)
-      .mockReturnValueOnce({ componentInstance: redirectComponent, result: of() } as unknown as Modal<ImportConfigModalComponent>);
+      await tester.importConfigButton.click();
 
-    const tester = new EngineDetailComponentTester();
-    tester.fixture.detectChanges();
-    await tester.importConfigButton.click();
-
-    expect(openSpy.mock.calls[1][0]).toBe(PortRedirectModalComponent);
-    expect(redirectComponent.initialize).toHaveBeenCalledWith(2224);
-    expect(windowService.reload).not.toHaveBeenCalled();
+      await vi.waitFor(() => expect(redirectComponent.initialize).toHaveBeenCalledWith(2224));
+      expect(openSpy.mock.lastCall?.[1]).toEqual({ backdrop: 'static', keyboard: false });
+      expect(windowService.reload).not.toHaveBeenCalled();
+    });
   });
 });

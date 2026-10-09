@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
@@ -32,20 +33,21 @@ function samePassphraseValidator(passphraseForm: AbstractControl): ValidationErr
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, NgbCollapse]
 })
 export class ExportCertificateModalComponent {
-  private modal = inject(NgbActiveModal);
-  private certificateService = inject(CertificateService);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly certificateService = inject(CertificateService);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly certificate = signal<CertificateDTO | null>(null);
   readonly formats = ALL_CERTIFICATE_EXPORT_FORMATS;
-  state = new ObservableState();
-  error = signal<string | null>(null);
+  readonly state = new ObservableState();
+  readonly error = signal<string | null>(null);
 
-  form = inject(NonNullableFormBuilder).group({
+  readonly form = this.fb.group({
     format: ['PEM' as CertificateExportFormat, Validators.required],
     includeChain: false,
     includePrivateKey: false,
-    passphraseForm: inject(NonNullableFormBuilder).group(
+    passphraseForm: this.fb.group(
       {
         passphrase: ['', [Validators.required, Validators.minLength(8)]],
         passphraseConfirmation: ['', Validators.required]
@@ -57,7 +59,7 @@ export class ExportCertificateModalComponent {
   constructor() {
     this.form.controls.passphraseForm.disable();
 
-    this.form.controls.includePrivateKey.valueChanges.subscribe(includePrivateKey => {
+    this.form.controls.includePrivateKey.valueChanges.pipe(takeUntilDestroyed()).subscribe(includePrivateKey => {
       if (includePrivateKey) {
         this.form.controls.passphraseForm.enable();
       } else {
@@ -65,7 +67,7 @@ export class ExportCertificateModalComponent {
       }
     });
 
-    this.form.controls.format.valueChanges.subscribe(format => {
+    this.form.controls.format.valueChanges.pipe(takeUntilDestroyed()).subscribe(format => {
       if (format === 'DER') {
         this.form.controls.includeChain.setValue(false);
         this.form.controls.includeChain.disable();

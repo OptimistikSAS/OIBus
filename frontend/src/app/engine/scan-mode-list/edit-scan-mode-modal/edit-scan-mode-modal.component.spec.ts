@@ -1,37 +1,46 @@
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { isObservable, of, Subject, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/api/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/api/scan-mode.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
+import { catchUnhandledErrors } from '../../../../test/unhandled-errors';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ScanModeService } from '../../../services/scan-mode.service';
+import { provideCurrentUser } from '../../../shared/current-user-testing';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditScanModeModalComponent } from './edit-scan-mode-modal.component';
 
 class EditScanModeModalComponentTester {
   readonly fixture = TestBed.createComponent(EditScanModeModalComponent);
+  readonly componentInstance = this.fixture.componentInstance;
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly name = this.root.getByCss('#name');
-  readonly cron = this.root.getByCss('#cron');
-  readonly typeCron = this.root.getByCss('#type-cron');
-  readonly typeInterval = this.root.getByCss('#type-interval');
-  readonly intervalSection = this.root.getByCss('#interval-section');
-  readonly subSecondWarning = this.root.getByCss('#sub-second-warning');
-  readonly activationWindowSection = this.root.getByCss('#activation-window-section');
-  readonly overnightBadge = this.root.getByCss('#overnight-badge');
-  readonly summary = this.root.getByCss('#activation-window-summary');
+  readonly title = this.root.getByRole('heading');
+  readonly name = this.root.getByLabelText('Name', { exact: true });
+  readonly description = this.root.getByLabelText('Description');
+  readonly typeCron = this.root.getByRole('button', { name: 'Cron', exact: true });
+  readonly typeInterval = this.root.getByRole('button', { name: 'Interval', exact: true });
+  readonly cron = this.root.getByLabelText('Cron', { exact: true });
+  readonly cronMeaning = this.root.getByText('Cron meaning:');
+  readonly intervalValue = this.root.getByLabelText('Every');
+  readonly intervalUnit = this.root.getByCss('#interval-unit');
+  readonly subSecondWarning = this.root.getByText('Intervals under 1 second may not be achievable', { exact: false });
   readonly restrictActivationWindow = this.root.getByLabelText('Restrict activation window');
+  readonly activationWindowSection = this.root.getByCss('#activation-window-section');
+  readonly clearWindowStart = this.root.getByCss('#clear-window-start');
+  readonly timezoneChangedWarning = this.root.getByCss('#timezone-changed-warning');
   readonly timeStart = this.root.getByLabelText('Start', { exact: true });
   readonly timeEnd = this.root.getByLabelText('End', { exact: true });
-  readonly saveButton = page.getByRole('button', { name: 'Save' });
-  readonly cancelButton = page.getByCss('#cancel-button');
+  readonly overnightBadge = this.root.getByText('+1', { exact: true });
+  readonly summary = this.root.getByCss('#activation-window-summary');
+  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
+  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
 
   day(label: string) {
     return this.root.getByRole('button', { name: label, exact: true });
@@ -39,40 +48,38 @@ class EditScanModeModalComponentTester {
 }
 
 const scanMode: ScanModeDTO = {
+  ...testData.scanMode.list[0],
   id: 'scanModeId1',
   name: 'scanMode1',
   description: 'my scan mode',
-  type: 'cron',
-  cron: '* * * * * *',
-  interval: null,
-  activationWindow: null,
-  activationWindowExpired: false
-} as ScanModeDTO;
+  cron: '* * * * * *'
+};
+
+const validCron: ValidatedCronExpression = {
+  isValid: true,
+  errorMessage: '',
+  nextExecutions: ['2024-01-01T00:00:00.000Z'],
+  humanReadableForm: 'Every second'
+};
 
 describe('EditScanModeModalComponent', () => {
   let scanModeService: MockObject<ScanModeService>;
   let activeModal: MockObject<NgbActiveModal>;
+  let unsavedChangesConfirmationService: MockObject<UnsavedChangesConfirmationService>;
 
   beforeEach(() => {
     scanModeService = createMock(ScanModeService);
     activeModal = createMock(NgbActiveModal);
-    const unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
+    unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
 
-    scanModeService.list.mockReturnValue(of([]));
-    scanModeService.verifyCron.mockReturnValue(
-      of({
-        isValid: true,
-        expression: '* * * * *',
-        errorMessage: '',
-        nextExecutions: [],
-        humanReadableForm: ''
-      } as ValidatedCronExpression)
-    );
+    scanModeService.list.mockReturnValue(of([scanMode]));
+    scanModeService.verifyCron.mockReturnValue(of(validCron));
+    scanModeService.create.mockReturnValue(of(scanMode));
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideHttpClientTesting(),
+        provideCurrentUser(),
         { provide: ScanModeService, useValue: scanModeService },
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
@@ -82,101 +89,205 @@ describe('EditScanModeModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
   });
 
-  test('should create a scan mode', () => {
-    const createdScanMode = { ...scanMode, id: 'new-id' } as ScanModeDTO;
-    scanModeService.create.mockReturnValue(of(createdScanMode));
-
+  function createTester() {
     const tester = new EditScanModeModalComponentTester();
-    tester.fixture.componentInstance.prepareForCreation();
-    tester.fixture.detectChanges();
+    tester.componentInstance.prepareForCreation();
+    return tester;
+  }
 
-    tester.fixture.componentInstance.form.controls.name.setValue('new-scan-mode');
-    tester.fixture.componentInstance.form.controls.cron.setValue('* * * * * *');
-    tester.fixture.componentInstance.form.controls.description.setValue('desc');
-    tester.fixture.componentInstance.save();
+  describe('creation', () => {
+    test('should display an empty cron scan mode', async () => {
+      const tester = createTester();
 
-    expect(scanModeService.create).toHaveBeenCalledWith({
-      name: 'new-scan-mode',
-      description: 'desc',
-      type: 'cron',
-      cron: '* * * * * *',
-      interval: null,
-      activationWindow: null
+      await expect.element(tester.title).toHaveTextContent('Create a scan mode');
+      await expect.element(tester.name).toHaveValue('');
+      await expect.element(tester.typeCron).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.cron).toHaveValue('');
+      await expect.element(tester.intervalValue).not.toBeInTheDocument();
+      await expect.element(tester.activationWindowSection).not.toBeInTheDocument();
     });
-    expect(activeModal.close).toHaveBeenCalledWith(createdScanMode);
+
+    test('should create a cron scan mode', async () => {
+      const tester = createTester();
+
+      await tester.name.fill('new-scan-mode');
+      await tester.description.fill('desc');
+      await tester.cron.fill('* * * * * *');
+      await expect.element(tester.cronMeaning).toBeInTheDocument();
+      await expect.element(tester.root.getByText('Every second')).toBeInTheDocument();
+      await tester.saveButton.click();
+
+      const expectedCommand: ScanModeCommandDTO = {
+        name: 'new-scan-mode',
+        description: 'desc',
+        type: 'cron',
+        cron: '* * * * * *',
+        interval: null,
+        activationWindow: null
+      };
+      expect(scanModeService.verifyCron).toHaveBeenCalledWith('* * * * * *');
+      expect(scanModeService.create).toHaveBeenCalledWith(expectedCommand);
+      expect(activeModal.close).toHaveBeenCalledWith(scanMode);
+    });
+
+    test('should require a name and a cron', async () => {
+      const tester = createTester();
+
+      await tester.saveButton.click();
+
+      await expect.element(tester.root.getByText('This field is required')).toHaveLength(2);
+      expect(scanModeService.create).not.toHaveBeenCalled();
+    });
+
+    test('should reject a name already used by another scan mode', async () => {
+      const tester = createTester();
+
+      await tester.name.fill(' SCANMODE1 ');
+      await tester.cron.fill('* * * * * *');
+      await tester.saveButton.click();
+
+      await expect.element(tester.root.getByText('Must be unique')).toBeInTheDocument();
+      expect(scanModeService.create).not.toHaveBeenCalled();
+    });
+
+    test('should check the uniqueness of the name once the scan modes are loaded', async () => {
+      const scanModes = new Subject<Array<ScanModeDTO>>();
+      scanModeService.list.mockReturnValue(scanModes);
+      const tester = createTester();
+
+      await tester.name.fill('scanMode1');
+      await tester.description.click();
+      await expect.element(tester.root.getByText('Must be unique')).not.toBeInTheDocument();
+
+      scanModes.next([scanMode]);
+
+      await expect.element(tester.root.getByText('Must be unique')).toBeInTheDocument();
+    });
+
+    test('should display the error of an invalid cron once it is verified', async () => {
+      const verification = new Subject<ValidatedCronExpression>();
+      scanModeService.verifyCron.mockReturnValue(verification);
+      const tester = createTester();
+
+      await tester.name.fill('new-scan-mode');
+      await tester.cron.fill('bad cron');
+      await tester.saveButton.click();
+      verification.next({ ...validCron, isValid: false, errorMessage: 'Invalid cron expression' });
+      verification.complete();
+
+      await expect.element(tester.root.getByText('Invalid cron expression')).toBeInTheDocument();
+      await expect.element(tester.cronMeaning).not.toBeInTheDocument();
+      expect(scanModeService.create).not.toHaveBeenCalled();
+    });
+
+    test('should keep the modal open when the creation fails', async () => {
+      const unhandledError = catchUnhandledErrors();
+      scanModeService.create.mockReturnValue(throwError(() => new Error('boom')));
+      const tester = createTester();
+
+      await tester.name.fill('new-scan-mode');
+      await tester.cron.fill('* * * * * *');
+      await tester.saveButton.click();
+
+      await vi.waitFor(() => expect(unhandledError).toHaveBeenCalledWith(new Error('boom')));
+      expect(activeModal.close).not.toHaveBeenCalled();
+      await expect.element(tester.saveButton).toBeEnabled();
+    });
+
+    test('should cancel', async () => {
+      const tester = createTester();
+
+      await tester.cancelButton.click();
+
+      expect(activeModal.dismiss).toHaveBeenCalled();
+    });
+
+    test('should allow dismissal without confirmation when nothing was changed', () => {
+      const tester = createTester();
+
+      expect(tester.componentInstance.canDismiss()).toBe(true);
+    });
+
+    test('should ask for a confirmation before dismissing when the type was changed', async () => {
+      unsavedChangesConfirmationService.confirmUnsavedChanges.mockReturnValue(of(true));
+      const tester = createTester();
+
+      await tester.typeInterval.click();
+
+      expect(isObservable(tester.componentInstance.canDismiss())).toBe(true);
+      expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
+    });
   });
 
-  test('should populate form and update a scan mode', () => {
-    const updatedScanMode = { ...scanMode, name: 'updated-name' } as ScanModeDTO;
-    scanModeService.update.mockReturnValue(of(undefined));
-    scanModeService.findById.mockReturnValue(of(updatedScanMode));
+  describe('edition', () => {
+    test('should populate the form and update the scan mode', async () => {
+      const updatedScanMode: ScanModeDTO = { ...scanMode, name: 'updated-name' };
+      scanModeService.update.mockReturnValue(of(undefined));
+      scanModeService.findById.mockReturnValue(of(updatedScanMode));
+      const tester = new EditScanModeModalComponentTester();
+      tester.componentInstance.prepareForEdition(scanMode);
 
-    const tester = new EditScanModeModalComponentTester();
-    tester.fixture.componentInstance.prepareForEdition(scanMode);
-    tester.fixture.detectChanges();
+      await expect.element(tester.title).toHaveTextContent('Edit scan mode');
+      await expect.element(tester.name).toHaveValue('scanMode1');
+      await expect.element(tester.description).toHaveValue('my scan mode');
+      await expect.element(tester.cron).toHaveValue('* * * * * *');
 
-    expect(tester.fixture.componentInstance.form.controls.name.value).toBe('scanMode1');
-    expect(tester.fixture.componentInstance.form.controls.cron.value).toBe('* * * * * *');
+      // its own name is not a duplicate
+      await tester.name.fill('updated-name');
+      await tester.saveButton.click();
 
-    tester.fixture.componentInstance.form.controls.name.setValue('updated-name');
-    tester.fixture.componentInstance.save();
-
-    expect(scanModeService.update).toHaveBeenCalledWith('scanModeId1', {
-      name: 'updated-name',
-      description: 'my scan mode',
-      type: 'cron',
-      cron: '* * * * * *',
-      interval: null,
-      activationWindow: null
+      expect(scanModeService.update).toHaveBeenCalledWith('scanModeId1', {
+        name: 'updated-name',
+        description: 'my scan mode',
+        type: 'cron',
+        cron: '* * * * * *',
+        interval: null,
+        activationWindow: null
+      });
+      expect(scanModeService.findById).toHaveBeenCalledWith('scanModeId1');
+      expect(activeModal.close).toHaveBeenCalledWith(updatedScanMode);
     });
-    expect(activeModal.close).toHaveBeenCalledWith(updatedScanMode);
-  });
 
-  test('should cancel', async () => {
-    const tester = new EditScanModeModalComponentTester();
-    tester.fixture.componentInstance.prepareForCreation();
-    tester.fixture.detectChanges();
+    test('should display an interval scan mode', async () => {
+      const tester = new EditScanModeModalComponentTester();
+      tester.componentInstance.prepareForEdition({ ...scanMode, type: 'interval', cron: '', interval: { value: 2, unit: 'min' } });
 
-    await tester.cancelButton.click();
-
-    expect(activeModal.dismiss).toHaveBeenCalled();
+      await expect.element(tester.typeInterval).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.cron).not.toBeInTheDocument();
+      await expect.element(tester.intervalValue).toHaveValue(2);
+      await expect.element(tester.intervalUnit).toHaveDisplayValue('minutes');
+    });
   });
 
   describe('interval type', () => {
-    function intervalTester(value: number, unit: 'ms' | 's' | 'min' | 'hour' = 's') {
-      const tester = new EditScanModeModalComponentTester();
-      tester.fixture.componentInstance.prepareForCreation();
-      tester.fixture.componentInstance.selectType('interval');
-      tester.fixture.componentInstance.form.controls.interval.setValue({ value, unit });
-      tester.fixture.detectChanges();
+    async function intervalTester(value: string, unit: string) {
+      const tester = createTester();
+      await tester.name.fill('interval-scan-mode');
+      await tester.typeInterval.click();
+      await tester.intervalValue.fill(value);
+      await tester.intervalUnit.selectOptions(unit);
       return tester;
     }
 
-    test('should swap the cron and interval sections', () => {
-      const tester = intervalTester(30);
+    test('should swap the cron and interval sections', async () => {
+      const tester = await intervalTester('30', 'seconds');
 
-      expect(tester.fixture.componentInstance.form.controls.cron.disabled).toBe(true);
-      expect(tester.fixture.componentInstance.form.controls.interval.enabled).toBe(true);
+      await expect.element(tester.typeInterval).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.cron).not.toBeInTheDocument();
+
+      await tester.typeCron.click();
+      await expect.element(tester.cron).toBeInTheDocument();
+      await expect.element(tester.intervalValue).not.toBeInTheDocument();
     });
 
-    test('should not let an empty cron block saving in interval mode', () => {
-      const tester = intervalTester(30);
-      tester.fixture.componentInstance.form.controls.name.setValue('interval-scan-mode');
+    test('should send the interval and no cron, an empty cron not blocking the save', async () => {
+      const tester = await intervalTester('30', 'seconds');
 
-      expect(tester.fixture.componentInstance.form.valid).toBe(true);
-    });
-
-    test('should send the interval and no cron', () => {
-      scanModeService.create.mockReturnValue(of(scanMode));
-      const tester = intervalTester(30);
-      tester.fixture.componentInstance.form.controls.name.setValue('interval-scan-mode');
-      tester.fixture.componentInstance.form.controls.description.setValue('desc');
-
-      tester.fixture.componentInstance.save();
+      await tester.saveButton.click();
 
       expect(scanModeService.create).toHaveBeenCalledWith({
         name: 'interval-scan-mode',
-        description: 'desc',
+        description: '',
         type: 'interval',
         cron: '',
         interval: { value: 30, unit: 's' },
@@ -184,40 +295,43 @@ describe('EditScanModeModalComponent', () => {
       });
     });
 
-    test('should reject an interval below the 10 ms floor', () => {
-      const tester = intervalTester(5, 'ms');
+    test('should reject an interval below the 10 ms floor', async () => {
+      const tester = await intervalTester('5', 'milliseconds');
 
-      expect(tester.fixture.componentInstance.form.controls.interval.hasError('intervalTooSmall')).toBe(true);
+      await tester.saveButton.click();
+
+      await expect.element(tester.root.getByText('The interval must be at least 10 ms')).toBeInTheDocument();
+      expect(scanModeService.create).not.toHaveBeenCalled();
     });
 
-    test('should accept exactly 10 ms', () => {
-      const tester = intervalTester(10, 'ms');
+    test('should accept exactly 10 ms', async () => {
+      const tester = await intervalTester('10', 'milliseconds');
 
-      expect(tester.fixture.componentInstance.form.controls.interval.hasError('intervalTooSmall')).toBe(false);
+      await tester.saveButton.click();
+
+      expect(scanModeService.create).toHaveBeenCalledWith(expect.objectContaining({ interval: { value: 10, unit: 'ms' } }));
     });
 
-    test('should warn about a sub-second interval without blocking saving', () => {
-      const tester = intervalTester(500, 'ms');
-      tester.fixture.componentInstance.form.controls.name.setValue('fast');
-      tester.fixture.detectChanges();
+    test('should warn about a sub-second interval without blocking saving', async () => {
+      const tester = await intervalTester('500', 'milliseconds');
 
-      expect(tester.fixture.componentInstance.showSubSecondIntervalWarning).toBe(true);
-      expect(tester.subSecondWarning.query()).toBeTruthy();
-      // The advisory is not a validator.
-      expect(tester.fixture.componentInstance.form.valid).toBe(true);
+      await expect.element(tester.subSecondWarning).toBeInTheDocument();
+      await tester.saveButton.click();
+
+      expect(scanModeService.create).toHaveBeenCalledWith(expect.objectContaining({ interval: { value: 500, unit: 'ms' } }));
     });
 
-    test('should not warn at or above one second', () => {
-      const tester = intervalTester(2);
+    test('should not warn at or above one second', async () => {
+      const tester = await intervalTester('2', 'seconds');
 
-      expect(tester.fixture.componentInstance.showSubSecondIntervalWarning).toBe(false);
+      await expect.element(tester.intervalValue).toHaveValue(2);
+      await expect.element(tester.subSecondWarning).not.toBeInTheDocument();
     });
   });
 
   describe('activation window', () => {
     async function windowTester() {
-      const tester = new EditScanModeModalComponentTester();
-      tester.fixture.componentInstance.prepareForCreation();
+      const tester = createTester();
       await tester.name.fill('my window');
       await tester.cron.fill('* * * * * *');
       await tester.restrictActivationWindow.click();
@@ -225,9 +339,7 @@ describe('EditScanModeModalComponent', () => {
     }
 
     test('should send null when the window is disabled', async () => {
-      scanModeService.create.mockReturnValue(of(scanMode));
-      const tester = new EditScanModeModalComponentTester();
-      tester.fixture.componentInstance.prepareForCreation();
+      const tester = createTester();
       await tester.name.fill('no-window');
       await tester.cron.fill('* * * * * *');
 
@@ -236,8 +348,15 @@ describe('EditScanModeModalComponent', () => {
       expect(scanModeService.create).toHaveBeenCalledWith(expect.objectContaining({ activationWindow: null }));
     });
 
+    test('should send null when the window is enabled but left blank', async () => {
+      const tester = await windowTester();
+
+      await tester.saveButton.click();
+
+      expect(scanModeService.create).toHaveBeenCalledWith(expect.objectContaining({ activationWindow: null }));
+    });
+
     test('should stamp the current timezone into the recurring rule at save time', async () => {
-      scanModeService.create.mockReturnValue(of(scanMode));
       const tester = await windowTester();
       await tester.day('Sat').click();
       await tester.day('Sun').click();
@@ -246,15 +365,13 @@ describe('EditScanModeModalComponent', () => {
 
       await tester.saveButton.click();
 
-      const command = scanModeService.create.mock.calls[0][0];
-      expect(command.activationWindow!.dateRange).toBeNull();
-      expect(command.activationWindow!.recurring!.daysOfWeek).toEqual([0, 6]);
-      expect(command.activationWindow!.recurring!.timeOfDay).toEqual({ start: '22:00', end: '02:00' });
-      expect(command.activationWindow!.recurring!.timezone).toBeTruthy();
+      expect(scanModeService.create.mock.lastCall?.[0].activationWindow).toEqual({
+        dateRange: null,
+        recurring: { timezone: 'Europe/Paris', daysOfWeek: [0, 6], timeOfDay: { start: '22:00', end: '02:00' } }
+      });
     });
 
     test('should persist all seven days as "every day"', async () => {
-      scanModeService.create.mockReturnValue(of(scanMode));
       const tester = await windowTester();
       for (const day of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) {
         await tester.day(day).click();
@@ -264,7 +381,7 @@ describe('EditScanModeModalComponent', () => {
 
       await tester.saveButton.click();
 
-      expect(scanModeService.create.mock.calls[0][0].activationWindow!.recurring!.daysOfWeek).toBeNull();
+      expect(scanModeService.create.mock.lastCall?.[0].activationWindow?.recurring?.daysOfWeek).toBeNull();
     });
 
     test('should reject a half-filled time of day', async () => {
@@ -291,7 +408,7 @@ describe('EditScanModeModalComponent', () => {
       await tester.timeStart.fill('22:00');
       await tester.timeEnd.fill('02:00');
 
-      await expect.element(tester.overnightBadge).toHaveTextContent('+1');
+      await expect.element(tester.overnightBadge).toBeInTheDocument();
     });
 
     test('should not flag a same-day window', async () => {
@@ -322,19 +439,18 @@ describe('EditScanModeModalComponent', () => {
       await expect.element(tester.summary).toHaveTextContent('Active, all day');
     });
 
-    test('should round-trip an existing window through edition', async () => {
-      const windowed = {
+    test('should round-trip an existing window through edition, and clear a bound', async () => {
+      const windowed: ScanModeDTO = {
         ...scanMode,
         activationWindow: {
           dateRange: { start: '2026-08-01T00:00:00.000Z', end: null },
           recurring: { timezone: 'Europe/Paris', daysOfWeek: [1, 2], timeOfDay: { start: '08:00', end: '18:00' } }
         }
-      } as ScanModeDTO;
+      };
       scanModeService.update.mockReturnValue(of(undefined));
       scanModeService.findById.mockReturnValue(of(windowed));
-
       const tester = new EditScanModeModalComponentTester();
-      tester.fixture.componentInstance.prepareForEdition(windowed);
+      tester.componentInstance.prepareForEdition(windowed);
 
       await expect.element(tester.restrictActivationWindow).toBeChecked();
       await expect.element(tester.day('Mon')).toHaveAttribute('aria-pressed', 'true');
@@ -342,12 +458,30 @@ describe('EditScanModeModalComponent', () => {
       await expect.element(tester.day('Wed')).toHaveAttribute('aria-pressed', 'false');
       await expect.element(tester.timeStart).toHaveValue('08:00');
       await expect.element(tester.timeEnd).toHaveValue('18:00');
+      await expect.element(tester.summary).toMatchTextContent('from');
+      await expect.element(tester.timezoneChangedWarning).not.toBeInTheDocument();
 
       await tester.saveButton.click();
+      expect(scanModeService.update.mock.lastCall?.[1].activationWindow).toEqual({
+        dateRange: { start: '2026-08-01T00:00:00.000Z', end: null },
+        recurring: { timezone: 'Europe/Paris', daysOfWeek: [1, 2], timeOfDay: { start: '08:00', end: '18:00' } }
+      });
 
-      const command = scanModeService.update.mock.calls[0][1];
-      expect(command.activationWindow!.dateRange).toEqual({ start: '2026-08-01T00:00:00.000Z', end: null });
-      expect(command.activationWindow!.recurring!.timeOfDay).toEqual({ start: '08:00', end: '18:00' });
+      await tester.clearWindowStart.click();
+      await expect.element(tester.clearWindowStart).not.toBeInTheDocument();
+      await tester.saveButton.click();
+      expect(scanModeService.update.mock.lastCall?.[1].activationWindow?.dateRange).toBeNull();
+    });
+
+    test('should warn when the window was saved with another timezone', async () => {
+      const tester = new EditScanModeModalComponentTester();
+      tester.componentInstance.prepareForEdition({
+        ...scanMode,
+        activationWindow: { dateRange: null, recurring: { timezone: 'Asia/Tokyo', daysOfWeek: [1], timeOfDay: null } }
+      });
+
+      await expect.element(tester.timezoneChangedWarning).toMatchTextContent('saved with the timezone Asia/Tokyo');
+      await expect.element(tester.timezoneChangedWarning).toMatchTextContent('current timezone Europe/Paris');
     });
   });
 });
