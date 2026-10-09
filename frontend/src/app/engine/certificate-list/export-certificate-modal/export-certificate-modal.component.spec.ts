@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of, throwError } from 'rxjs';
+import { isObservable, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -17,15 +17,17 @@ import { ExportCertificateModalComponent } from './export-certificate-modal.comp
 class ExportCertificateModalComponentTester {
   readonly fixture = TestBed.createComponent(ExportCertificateModalComponent);
   readonly componentInstance = this.fixture.componentInstance;
-  readonly format = page.getByCss('#format');
-  readonly includeChain = page.getByCss('#include-chain');
-  readonly includePrivateKey = page.getByCss('#include-private-key');
-  readonly passphrase = page.getByCss('#passphrase');
-  readonly passphraseConfirmation = page.getByCss('#passphrase-confirmation');
-  readonly validationErrors = page.getByCss('val-errors div');
-  readonly save = page.getByCss('#save-button');
-  readonly cancel = page.getByCss('#cancel-button');
-  readonly error = page.getByCss('.alert-danger');
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly format = this.root.getByLabelText('Format');
+  readonly includeChain = this.root.getByLabelText('Include CA chain');
+  readonly derHint = this.root.getByText('The CA chain cannot be included when exporting in DER format');
+  readonly includePrivateKey = this.root.getByLabelText('Include private key');
+  readonly passphrase = this.root.getByLabelText('Passphrase', { exact: true });
+  readonly passphraseConfirmation = this.root.getByLabelText('Confirm passphrase');
+  readonly validationErrors = this.root.getByCss('val-errors div');
+  readonly save = this.root.getByRole('button', { name: 'Save' });
+  readonly cancel = this.root.getByRole('button', { name: 'Cancel' });
+  readonly error = this.root.getByCss('.alert-danger');
 }
 
 describe('ExportCertificateModalComponent', () => {
@@ -94,6 +96,28 @@ describe('ExportCertificateModalComponent', () => {
 
     await expect.element(tester.includeChain).not.toBeChecked();
     await expect.element(tester.includeChain).toBeDisabled();
+    await expect.element(tester.derHint).toBeInTheDocument();
+
+    await tester.format.selectOptions('PEM (.pem)');
+    await expect.element(tester.includeChain).toBeEnabled();
+    await expect.element(tester.derHint).not.toBeInTheDocument();
+  });
+
+  test('should not offer to include the chain of a certificate without one', async () => {
+    const tester = new ExportCertificateModalComponentTester();
+    tester.componentInstance.prepare({ ...certificate, certificateChain: null });
+
+    await expect.element(tester.format).toBeInTheDocument();
+    await expect.element(tester.includeChain).not.toBeInTheDocument();
+  });
+
+  test('should export the chain when asked to', async () => {
+    certificateService.exportCertificate.mockReturnValue(of(undefined));
+
+    await tester.includeChain.click();
+    await tester.save.click();
+
+    expect(certificateService.exportCertificate).toHaveBeenCalledWith('id1', 'PEM', true, 'Certificate_1.pem');
   });
 
   test('should show a validation error and not export when passphrases do not match', async () => {
@@ -102,7 +126,7 @@ describe('ExportCertificateModalComponent', () => {
     await tester.passphraseConfirmation.fill('password2');
     await tester.save.click();
 
-    await expect.element(tester.validationErrors).toBeInTheDocument();
+    await expect.element(tester.root.getByText('The passphrases are not identical')).toBeInTheDocument();
     expect(certificateService.exportCertificate).not.toHaveBeenCalled();
     expect(certificateService.exportPrivateKey).not.toHaveBeenCalled();
   });
@@ -146,7 +170,7 @@ describe('ExportCertificateModalComponent', () => {
 
       const result = tester.componentInstance.canDismiss();
 
-      expect(typeof result).not.toBe('boolean');
+      expect(isObservable(result)).toBe(true);
       expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
     });
   });

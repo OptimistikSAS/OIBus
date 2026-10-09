@@ -28,13 +28,13 @@ import { NotificationService } from '../../shared/notification.service';
     TranslatePipe
   ],
   templateUrl: './engine-metrics.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './engine-metrics.component.scss'
 })
 export class EngineMetricsComponent {
-  private engineService = inject(EngineService);
-  private notificationService = inject(NotificationService);
-  private router = inject(Router);
+  private readonly engineService = inject(EngineService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly router = inject(Router);
 
   readonly displayButton = input(false);
   readonly metrics = input.required<EngineMetrics>();
