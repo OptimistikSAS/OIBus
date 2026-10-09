@@ -38,7 +38,12 @@
     </div>
 
     @if (fileError()) {
-      <div class="alert alert-danger" role="alert" translate="engine.config-transfer.import.file-too-large"></div>
+      <div
+        class="alert alert-danger"
+        role="alert"
+        translate="engine.config-transfer.import.file-too-large"
+        [translateParams]="{ maxSize: maxFileSizeMb }"
+      ></div>
     }
 
     @if (previewState.isPending | async) {
