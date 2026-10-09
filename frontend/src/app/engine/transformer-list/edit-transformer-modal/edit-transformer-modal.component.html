@@ -105,7 +105,7 @@
           translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-code"
         ></label>
         @let customTransformerValue = customTransformer();
-        @if (!customTransformerValue && !form.controls.language.value) {
+        @if (!customTransformerValue && !language()) {
           <span
             id="language-disclaimer"
             translate="configuration.oibus.manifest.transformers.edit-transformer-modal.select-language"
@@ -114,7 +114,7 @@
           <oib-code-block
             id="custom-code"
             formControlName="customCode"
-            [language]="customTransformerValue ? customTransformerValue.language : form.controls.language.value!"
+            [language]="customTransformerValue ? customTransformerValue.language : language()!"
           />
         }
         <val-errors controlName="customCode" />
@@ -133,7 +133,7 @@
 
     <div class="d-flex justify-content-end mt-3">
       <div class="btn-group">
-        <button [oib-save-button]="state" form="form"></button>
+        <button type="submit" [oib-save-button]="state" form="form"></button>
         <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
       </div>
     </div>
