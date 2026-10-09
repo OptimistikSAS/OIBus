@@ -74,7 +74,9 @@
                   }
                 </tbody>
               </table>
-              <div class="text-muted small">{{ fileArray().length }} file(s) tracked</div>
+              <div class="text-muted small">
+                {{ 'south.items.last-value-modal.files-tracked' | translate: { count: fileArray().length } }}
+              </div>
             </div>
           }
 
