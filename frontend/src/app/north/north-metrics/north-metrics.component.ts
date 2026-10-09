@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -19,27 +20,27 @@ import { NotificationService } from '../../shared/notification.service';
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrl: './north-metrics.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, FileSizePipe, NgbTooltip, TranslatePipe]
 })
-export class NorthMetricsComponent implements OnInit {
-  private router = inject(Router);
-  private northConnectorService = inject(NorthConnectorService);
-  private notificationService = inject(NotificationService);
+export class NorthMetricsComponent {
+  private readonly router = inject(Router);
+  private readonly northConnectorService = inject(NorthConnectorService);
+  private readonly notificationService = inject(NotificationService);
 
   readonly northConnector = input.required<NorthConnectorLightDTO>();
   readonly manifest = input<NorthConnectorManifest | null>(null);
-  readonly manifestOrNorthConnectorTypeManifest = linkedSignal(() => this.manifest());
   readonly displayButton = input(false);
   readonly connectorMetrics = input.required<NorthConnectorMetrics>();
 
-  ngOnInit(): void {
-    if (!this.manifest()) {
-      this.northConnectorService.getNorthManifest(this.northConnector().type).subscribe(manifest => {
-        this.manifestOrNorthConnectorTypeManifest.set(manifest);
-      });
-    }
-  }
+  // the manifest of the connector type is only fetched when no manifest is given as input
+  private readonly typeManifest = rxResource({
+    params: () => (this.manifest() ? undefined : this.northConnector().type),
+    stream: ({ params: type }) => this.northConnectorService.getNorthManifest(type)
+  });
+  readonly manifestOrNorthConnectorTypeManifest = computed(
+    () => this.manifest() ?? (this.typeManifest.hasValue() ? this.typeManifest.value() : null)
+  );
 
   resetMetrics() {
     this.northConnectorService.resetMetrics(this.northConnector().id).subscribe(() => {
