@@ -6,7 +6,7 @@
     <div></div>
     <div class="ms-3">
       <button type="button" class="btn btn-primary btn-sm oib-box-btn" id="add-workflow" (click)="onAdd()">
-        <span class="fa fa-plus"></span>
+        <span class="fa-solid fa-plus"></span>
       </button>
     </div>
   </div>
@@ -54,7 +54,7 @@
               </td>
               <td [translate]="getModeKey(workflow)"></td>
               <td>
-                <span class="fa" [class.fa-check]="workflow.enabled" [class.fa-times]="!workflow.enabled"></span>
+                <span class="fa-solid" [class.fa-check]="workflow.enabled" [class.fa-times]="!workflow.enabled"></span>
               </td>
               <td class="text-nowrap action-buttons">
                 <div class="pull-right">
@@ -70,7 +70,7 @@
                       @if (runningWorkflowId() === workflow.id) {
                         <span class="spinner-border spinner-border-sm"></span>
                       } @else {
-                        <span class="fa fa-play"></span>
+                        <span class="fa-solid fa-play"></span>
                       }
                     </button>
                   }
@@ -80,7 +80,7 @@
                     [ngbTooltip]="'south.workflows.preview' | translate"
                     (click)="onPreview(workflow)"
                   >
-                    <span class="fa fa-eye"></span>
+                    <span class="fa-regular fa-eye"></span>
                   </button>
                   @if (directSave) {
                     <button
@@ -89,7 +89,7 @@
                       [ngbTooltip]="'south.workflows.run-history' | translate"
                       (click)="onViewHistory(workflow)"
                     >
-                      <span class="fa fa-history"></span>
+                      <span class="fa-solid fa-history"></span>
                     </button>
                   }
                   <button
@@ -98,7 +98,7 @@
                     [ngbTooltip]="'south.workflows.edit-title' | translate"
                     (click)="onEdit(workflow)"
                   >
-                    <span class="fa fa-pencil"></span>
+                    <span class="fa-solid fa-pencil"></span>
                   </button>
                   <button
                     type="button"
@@ -106,7 +106,7 @@
                     [ngbTooltip]="'south.workflows.duplicate' | translate"
                     (click)="onDuplicate(workflow)"
                   >
-                    <span class="fa fa-copy"></span>
+                    <span class="fa-solid fa-copy"></span>
                   </button>
                   <button
                     type="button"
@@ -114,7 +114,7 @@
                     [ngbTooltip]="'south.workflows.confirm-deletion' | translate: { name: workflow.name }"
                     (click)="onDelete(workflow)"
                   >
-                    <span class="fa fa-trash"></span>
+                    <span class="fa-solid fa-trash-can"></span>
                   </button>
                 </div>
               </td>

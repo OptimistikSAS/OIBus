@@ -150,7 +150,7 @@ export class TransformerListComponent {
 
   getSortIcon(field: TransformerSortField): string {
     if (this.sortField() !== field) return 'fa-sort';
-    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {

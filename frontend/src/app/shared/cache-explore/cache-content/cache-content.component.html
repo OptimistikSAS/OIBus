@@ -5,13 +5,13 @@
       <div class="d-flex align-items-center gap-2">
         @switch (currentCacheType) {
           @case ('cache') {
-            <span class="fa fa-database text-primary"></span>
+            <span class="fa-solid fa-database text-primary"></span>
           }
           @case ('error') {
-            <span class="fa fa-exclamation-triangle text-danger"></span>
+            <span class="fa-solid fa-exclamation-triangle text-danger"></span>
           }
           @case ('archive') {
-            <span class="fa fa-archive text-secondary"></span>
+            <span class="fa-solid fa-archive text-secondary"></span>
           }
           @default never;
         }
@@ -93,11 +93,11 @@
             [disabled]="selectedFileCount() === cacheContentFiles().length"
             id="select-all-button"
           >
-            <span class="fa fa-check-square me-1"></span>
+            <span class="fa-solid fa-check-square me-1"></span>
             <span translate="explore-cache.select-all"></span>
           </button>
           <button type="button" class="btn btn-sm" (click)="unselectAll()" [disabled]="selectedFileCount() === 0" id="unselect-all-button">
-            <span class="fa fa-square-o me-1"></span>
+            <span class="fa-solid fa-square me-1"></span>
             <span translate="explore-cache.unselect-all"></span>
           </button>
           @if (selectedFileCount() > 0) {
@@ -124,10 +124,10 @@
               >
                 <span translate="explore-cache.file-date" class="me-2"></span>
                 <span
-                  class="fa"
+                  class="fa-solid"
                   [class.fa-sort]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 0"
-                  [class.fa-sort-asc]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 1"
-                  [class.fa-sort-desc]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 2"
+                  [class.fa-sort-up]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 1"
+                  [class.fa-sort-down]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 2"
                 ></span>
               </button>
             </th>
@@ -139,10 +139,10 @@
               >
                 <span translate="explore-cache.filename" class="me-2"></span>
                 <span
-                  class="fa"
+                  class="fa-solid"
                   [class.fa-sort]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 0"
-                  [class.fa-sort-asc]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 1"
-                  [class.fa-sort-desc]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 2"
+                  [class.fa-sort-up]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 1"
+                  [class.fa-sort-down]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 2"
                 ></span>
               </button>
             </th>
@@ -154,10 +154,10 @@
               >
                 <span translate="explore-cache.file-size" class="me-2"></span>
                 <span
-                  class="fa"
+                  class="fa-solid"
                   [class.fa-sort]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 0"
-                  [class.fa-sort-asc]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 1"
-                  [class.fa-sort-desc]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 2"
+                  [class.fa-sort-up]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 1"
+                  [class.fa-sort-down]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 2"
                 ></span>
               </button>
             </th>
@@ -194,7 +194,7 @@
                         placement="top"
                         [ngbTooltip]="'explore-cache.error-content-action' | translate"
                       >
-                        <span class="fa fa-bolt"></span>
+                        <span class="fa-solid fa-bolt"></span>
                       </button>
                       <button
                         type="button"
@@ -205,7 +205,7 @@
                         placement="top"
                         [ngbTooltip]="'explore-cache.archive-content-action' | translate"
                       >
-                        <span class="fa fa-archive"></span>
+                        <span class="fa-solid fa-archive"></span>
                       </button>
                     }
                     @case ('error') {
@@ -218,7 +218,7 @@
                         placement="top"
                         [ngbTooltip]="'explore-cache.retry-content-action' | translate"
                       >
-                        <span class="fa fa-refresh"></span>
+                        <span class="fa-solid fa-arrows-rotate"></span>
                       </button>
                       <button
                         type="button"
@@ -229,7 +229,7 @@
                         placement="top"
                         [ngbTooltip]="'explore-cache.archive-content-action' | translate"
                       >
-                        <span class="fa fa-archive"></span>
+                        <span class="fa-solid fa-archive"></span>
                       </button>
                     }
                     @case ('archive') {
@@ -242,7 +242,7 @@
                         [disabled]="state().isPending | async"
                         [ngbTooltip]="'explore-cache.replay-content-action' | translate"
                       >
-                        <span class="fa fa-refresh"></span>
+                        <span class="fa-solid fa-arrows-rotate"></span>
                       </button>
                     }
                     @default never;
@@ -256,7 +256,7 @@
                     [disabled]="state().isPending | async"
                     [ngbTooltip]="'explore-cache.view-content-action' | translate"
                   >
-                    <span class="fa fa-search"></span>
+                    <span class="fa-solid fa-search"></span>
                   </button>
                   <button
                     type="button"
@@ -267,7 +267,7 @@
                     placement="top"
                     [ngbTooltip]="'explore-cache.remove-content-action' | translate"
                   >
-                    <span class="fa fa-trash"></span>
+                    <span class="fa-solid fa-trash-can"></span>
                   </button>
                 </div>
               </td>
