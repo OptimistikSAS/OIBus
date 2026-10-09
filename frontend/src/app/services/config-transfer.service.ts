@@ -42,8 +42,8 @@ export class ConfigImportFailure extends Error {
  */
 @Service()
 export class ConfigTransferService {
-  private http = inject(HttpClient);
-  private downloadService = inject(DownloadService);
+  private readonly http = inject(HttpClient);
+  private readonly downloadService = inject(DownloadService);
 
   /**
    * Export the full OIBus configuration as a downloadable, secret-free, version-stamped JSON file

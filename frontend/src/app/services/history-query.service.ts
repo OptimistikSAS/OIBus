@@ -37,8 +37,8 @@ import { DownloadService } from './download.service';
  */
 @Service()
 export class HistoryQueryService {
-  private http = inject(HttpClient);
-  private downloadService = inject(DownloadService);
+  private readonly http = inject(HttpClient);
+  private readonly downloadService = inject(DownloadService);
 
   /**
    * Get History queries
@@ -294,7 +294,7 @@ export class HistoryQueryService {
    * @param itemIds - array of item IDs to delete
    */
   deleteItems(historyId: string, itemIds: Array<string>) {
-    return this.http.post<void>(`/api/history/${historyId}/items/delete`, { body: { itemIds } });
+    return this.http.post<void>(`/api/history/${historyId}/items/delete`, { itemIds });
   }
 
   /**
