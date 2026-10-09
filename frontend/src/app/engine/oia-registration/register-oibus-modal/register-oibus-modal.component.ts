@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -9,6 +10,7 @@ import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '@oibus/
 import { EngineService } from '../../../services/engine.service';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { trackControl } from '../../../shared/form/tracked-control';
 import { NotificationService } from '../../../shared/notification.service';
 import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
@@ -17,7 +19,7 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
   selector: 'oib-register-oibus-modal',
   templateUrl: './register-oibus-modal.component.html',
   styleUrl: './register-oibus-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
@@ -29,18 +31,18 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
   ]
 })
 export class RegisterOibusModalComponent {
-  private modal = inject(NgbActiveModal);
-  private oibusService = inject(EngineService);
-  private fb = inject(NonNullableFormBuilder);
-  private notificationService = inject(NotificationService);
-  state = new ObservableState();
-  testState = new ObservableState();
-  testLoading = signal(false);
-  testSuccess = signal(false);
-  testError = signal<string | null>(null);
-  ignoreRemoteUpdate = signal(false);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly oibusService = inject(EngineService);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly notificationService = inject(NotificationService);
+  readonly state = new ObservableState();
+  readonly testState = new ObservableState();
+  readonly testLoading = signal(false);
+  readonly testSuccess = signal(false);
+  readonly testError = signal<string | null>(null);
+  readonly ignoreRemoteUpdate = signal(false);
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     host: ['', Validators.required],
     useProxy: [false as boolean, Validators.required],
     proxyUrl: '',
@@ -99,8 +101,15 @@ export class RegisterOibusModalComponent {
       testCustomTransformer: [true, Validators.required]
     })
   });
-  mode: 'register' | 'edit' = 'register';
-  host = '';
+  private mode: 'register' | 'edit' = 'register';
+  private host = '';
+  // the permissions are changed by code (prepare, enable/disable all), outside of the template events
+  // patched by prepare(), possibly after the first rendering
+  readonly useProxy = trackControl(() => this.form.controls.useProxy);
+  readonly useApiGateway = trackControl(() => this.form.controls.useApiGateway);
+  private readonly commandPermissions = trackControl(() => this.form.controls.commandPermissions);
+  readonly allPermissionsEnabled = computed(() => Object.values(this.commandPermissions()!.value).every(value => value === true));
+  readonly allPermissionsDisabled = computed(() => Object.values(this.commandPermissions()!.value).every(value => value === false));
 
   /**
    * Prepares the component for edition.
@@ -143,68 +152,7 @@ export class RegisterOibusModalComponent {
       return;
     }
 
-    const formValue = this.form.getRawValue();
-    const commandHost = this.mode === 'edit' ? this.host : formValue.host!;
-
-    const command: RegistrationSettingsCommandDTO = {
-      host: commandHost,
-      acceptUnauthorized: formValue.acceptUnauthorized!,
-      useProxy: formValue.useProxy!,
-      proxyUrl: formValue.proxyUrl!,
-      proxyUsername: formValue.proxyUsername!,
-      proxyPassword: formValue.proxyPassword!,
-      useApiGateway: formValue.useApiGateway!,
-      apiGatewayHeaderKey: formValue.apiGatewayHeaderKey!,
-      apiGatewayHeaderValue: formValue.apiGatewayHeaderValue!,
-      apiGatewayBaseEndpoint: formValue.apiGatewayBaseEndpoint!,
-      commandRefreshInterval: formValue.commandRefreshInterval!,
-      commandRetryInterval: formValue.commandRetryInterval!,
-      messageRetryInterval: formValue.messageRetryInterval!,
-      commandPermissions: {
-        updateVersion: formValue.commandPermissions!.updateVersion!,
-        restartEngine: formValue.commandPermissions!.restartEngine!,
-        regenerateCipherKeys: formValue.commandPermissions!.regenerateCipherKeys!,
-        updateEngineSettings: formValue.commandPermissions!.updateEngineSettings!,
-        updateRegistrationSettings: formValue.commandPermissions!.updateRegistrationSettings!,
-        createScanMode: formValue.commandPermissions!.createScanMode!,
-        updateScanMode: formValue.commandPermissions!.updateScanMode!,
-        deleteScanMode: formValue.commandPermissions!.deleteScanMode!,
-        createIpFilter: formValue.commandPermissions!.createIpFilter!,
-        updateIpFilter: formValue.commandPermissions!.updateIpFilter!,
-        deleteIpFilter: formValue.commandPermissions!.deleteIpFilter!,
-        createCertificate: formValue.commandPermissions!.createCertificate!,
-        updateCertificate: formValue.commandPermissions!.updateCertificate!,
-        deleteCertificate: formValue.commandPermissions!.deleteCertificate!,
-        createHistoryQuery: formValue.commandPermissions!.createHistoryQuery!,
-        updateHistoryQuery: formValue.commandPermissions!.updateHistoryQuery!,
-        deleteHistoryQuery: formValue.commandPermissions!.deleteHistoryQuery!,
-        createOrUpdateHistoryItemsFromCsv: formValue.commandPermissions!.createOrUpdateHistoryItemsFromCsv!,
-        testHistoryNorthConnection: formValue.commandPermissions!.testHistoryNorthConnection!,
-        testHistorySouthConnection: formValue.commandPermissions!.testHistorySouthConnection!,
-        testHistorySouthItem: formValue.commandPermissions!.testHistorySouthItem!,
-        createSouth: formValue.commandPermissions!.createSouth!,
-        updateSouth: formValue.commandPermissions!.updateSouth!,
-        deleteSouth: formValue.commandPermissions!.deleteSouth!,
-        createOrUpdateSouthItemsFromCsv: formValue.commandPermissions!.createOrUpdateSouthItemsFromCsv!,
-        testSouthConnection: formValue.commandPermissions!.testSouthConnection!,
-        testSouthItem: formValue.commandPermissions!.testSouthItem!,
-        createNorth: formValue.commandPermissions!.createNorth!,
-        updateNorth: formValue.commandPermissions!.updateNorth!,
-        deleteNorth: formValue.commandPermissions!.deleteNorth!,
-        testNorthConnection: formValue.commandPermissions!.testNorthConnection!,
-        setpoint: formValue.commandPermissions!.setpoint!,
-        searchNorthCacheContent: formValue.commandPermissions!.searchNorthCacheContent!,
-        getNorthCacheFileContent: formValue.commandPermissions!.getNorthCacheFileContent!,
-        updateNorthCacheContent: formValue.commandPermissions!.updateNorthCacheContent!,
-        searchHistoryCacheContent: formValue.commandPermissions!.searchHistoryCacheContent!,
-        getHistoryCacheFileContent: formValue.commandPermissions!.getHistoryCacheFileContent!,
-        updateHistoryCacheContent: formValue.commandPermissions!.updateHistoryCacheContent!,
-        createCustomTransformer: formValue.commandPermissions!.createCustomTransformer!,
-        updateCustomTransformer: formValue.commandPermissions!.updateCustomTransformer!,
-        deleteCustomTransformer: formValue.commandPermissions!.deleteCustomTransformer!,
-        testCustomTransformer: formValue.commandPermissions!.testCustomTransformer!
-      }
-    };
+    const command = this.buildCommand();
 
     // Reset test state
     this.testLoading.set(true);
@@ -220,7 +168,7 @@ export class RegisterOibusModalComponent {
           this.testLoading.set(false);
           this.notificationService.success('oia-module.registration.test-connection-success');
         },
-        error: (httpError: any) => {
+        error: (httpError: HttpErrorResponse) => {
           this.testError.set(httpError.error?.message || httpError.message || 'Unknown error occurred');
           this.testLoading.set(false);
         }
@@ -232,68 +180,7 @@ export class RegisterOibusModalComponent {
       return;
     }
 
-    const formValue = this.form.getRawValue();
-    const commandHost = this.mode === 'edit' ? this.host : formValue.host!;
-
-    const command: RegistrationSettingsCommandDTO = {
-      host: commandHost,
-      acceptUnauthorized: formValue.acceptUnauthorized!,
-      useProxy: formValue.useProxy!,
-      proxyUrl: formValue.proxyUrl!,
-      proxyUsername: formValue.proxyUsername!,
-      proxyPassword: formValue.proxyPassword!,
-      useApiGateway: formValue.useApiGateway!,
-      apiGatewayHeaderKey: formValue.apiGatewayHeaderKey!,
-      apiGatewayHeaderValue: formValue.apiGatewayHeaderValue!,
-      apiGatewayBaseEndpoint: formValue.apiGatewayBaseEndpoint!,
-      commandRefreshInterval: formValue.commandRefreshInterval!,
-      commandRetryInterval: formValue.commandRetryInterval!,
-      messageRetryInterval: formValue.messageRetryInterval!,
-      commandPermissions: {
-        updateVersion: formValue.commandPermissions!.updateVersion!,
-        restartEngine: formValue.commandPermissions!.restartEngine!,
-        regenerateCipherKeys: formValue.commandPermissions!.regenerateCipherKeys!,
-        updateEngineSettings: formValue.commandPermissions!.updateEngineSettings!,
-        updateRegistrationSettings: formValue.commandPermissions!.updateRegistrationSettings!,
-        createScanMode: formValue.commandPermissions!.createScanMode!,
-        updateScanMode: formValue.commandPermissions!.updateScanMode!,
-        deleteScanMode: formValue.commandPermissions!.deleteScanMode!,
-        createIpFilter: formValue.commandPermissions!.createIpFilter!,
-        updateIpFilter: formValue.commandPermissions!.updateIpFilter!,
-        deleteIpFilter: formValue.commandPermissions!.deleteIpFilter!,
-        createCertificate: formValue.commandPermissions!.createCertificate!,
-        updateCertificate: formValue.commandPermissions!.updateCertificate!,
-        deleteCertificate: formValue.commandPermissions!.deleteCertificate!,
-        createHistoryQuery: formValue.commandPermissions!.createHistoryQuery!,
-        updateHistoryQuery: formValue.commandPermissions!.updateHistoryQuery!,
-        deleteHistoryQuery: formValue.commandPermissions!.deleteHistoryQuery!,
-        createOrUpdateHistoryItemsFromCsv: formValue.commandPermissions!.createOrUpdateHistoryItemsFromCsv!,
-        testHistoryNorthConnection: formValue.commandPermissions!.testHistoryNorthConnection!,
-        testHistorySouthConnection: formValue.commandPermissions!.testHistorySouthConnection!,
-        testHistorySouthItem: formValue.commandPermissions!.testHistorySouthItem!,
-        createSouth: formValue.commandPermissions!.createSouth!,
-        updateSouth: formValue.commandPermissions!.updateSouth!,
-        deleteSouth: formValue.commandPermissions!.deleteSouth!,
-        createOrUpdateSouthItemsFromCsv: formValue.commandPermissions!.createOrUpdateSouthItemsFromCsv!,
-        testSouthConnection: formValue.commandPermissions!.testSouthConnection!,
-        testSouthItem: formValue.commandPermissions!.testSouthItem!,
-        createNorth: formValue.commandPermissions!.createNorth!,
-        updateNorth: formValue.commandPermissions!.updateNorth!,
-        deleteNorth: formValue.commandPermissions!.deleteNorth!,
-        testNorthConnection: formValue.commandPermissions!.testNorthConnection!,
-        setpoint: formValue.commandPermissions!.setpoint!,
-        searchNorthCacheContent: formValue.commandPermissions!.searchNorthCacheContent!,
-        getNorthCacheFileContent: formValue.commandPermissions!.getNorthCacheFileContent!,
-        updateNorthCacheContent: formValue.commandPermissions!.updateNorthCacheContent!,
-        searchHistoryCacheContent: formValue.commandPermissions!.searchHistoryCacheContent!,
-        getHistoryCacheFileContent: formValue.commandPermissions!.getHistoryCacheFileContent!,
-        updateHistoryCacheContent: formValue.commandPermissions!.updateHistoryCacheContent!,
-        createCustomTransformer: formValue.commandPermissions!.createCustomTransformer!,
-        updateCustomTransformer: formValue.commandPermissions!.updateCustomTransformer!,
-        deleteCustomTransformer: formValue.commandPermissions!.deleteCustomTransformer!,
-        testCustomTransformer: formValue.commandPermissions!.testCustomTransformer!
-      }
-    };
+    const command = this.buildCommand();
     if (this.mode === 'register') {
       this.oibusService
         .register(command)
@@ -311,35 +198,39 @@ export class RegisterOibusModalComponent {
     }
   }
 
-  get commandPermissionsFormGroup(): FormGroup {
-    return this.form.controls.commandPermissions as FormGroup;
-  }
-
-  get allPermissionsEnabled(): boolean {
-    const permissions = this.commandPermissionsFormGroup.value;
-    return Object.values(permissions).every(value => value === true);
-  }
-
-  get allPermissionsDisabled(): boolean {
-    const permissions = this.commandPermissionsFormGroup.value;
-    return Object.values(permissions).every(value => value === false);
+  private buildCommand(): RegistrationSettingsCommandDTO {
+    const formValue = this.form.getRawValue();
+    return {
+      host: this.mode === 'edit' ? this.host : formValue.host,
+      acceptUnauthorized: formValue.acceptUnauthorized,
+      useProxy: formValue.useProxy,
+      proxyUrl: formValue.proxyUrl,
+      proxyUsername: formValue.proxyUsername,
+      proxyPassword: formValue.proxyPassword,
+      useApiGateway: formValue.useApiGateway,
+      apiGatewayHeaderKey: formValue.apiGatewayHeaderKey,
+      apiGatewayHeaderValue: formValue.apiGatewayHeaderValue,
+      apiGatewayBaseEndpoint: formValue.apiGatewayBaseEndpoint,
+      commandRefreshInterval: formValue.commandRefreshInterval,
+      commandRetryInterval: formValue.commandRetryInterval,
+      messageRetryInterval: formValue.messageRetryInterval,
+      commandPermissions: { ...formValue.commandPermissions }
+    };
   }
 
   enableAllPermissions() {
-    Object.keys(this.commandPermissionsFormGroup.controls).forEach(key => {
-      const control = this.commandPermissionsFormGroup.get(key);
-      if (control instanceof FormControl && control.enabled) {
-        control.setValue(true);
+    this.setAllPermissions(true);
+  }
+
+  private setAllPermissions(value: boolean) {
+    for (const control of Object.values(this.form.controls.commandPermissions.controls)) {
+      if (control.enabled) {
+        control.setValue(value);
       }
-    });
+    }
   }
 
   disableAllPermissions() {
-    Object.keys(this.commandPermissionsFormGroup.controls).forEach(key => {
-      const control = this.commandPermissionsFormGroup.get(key);
-      if (control instanceof FormControl && control.enabled) {
-        control.setValue(false);
-      }
-    });
+    this.setAllPermissions(false);
   }
 }
