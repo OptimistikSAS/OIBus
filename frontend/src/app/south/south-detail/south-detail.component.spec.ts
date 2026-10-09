@@ -376,6 +376,8 @@ describe('SouthDetailComponent', () => {
     ] as const)('should sort the items by $column', async ({ column, ascending, descending }) => {
       const tester = await createTester();
       await tester.expectItems('item b', 'item a', 'item c');
+      // move the pointer off the rows: the schedule tooltip of a hovered row would cover the header
+      await tester.itemsTitle.hover();
 
       await tester.sortBy(column).click();
       await tester.expectItems(...ascending);

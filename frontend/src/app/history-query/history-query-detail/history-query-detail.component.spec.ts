@@ -53,7 +53,7 @@ class HistoryQueryDetailComponentTester {
   readonly exportButton = this.root.getByRole('button', { name: 'Export' });
   readonly importButton = this.root.getByRole('button', { name: 'Import' });
   readonly deleteAllButton = this.root.getByRole('button', { name: 'Delete all' });
-  readonly searchItems = this.root.getByRole('textbox', { name: 'Enter text to filter items' });
+  readonly searchItems = this.root.getByCss('oib-item-table').getByRole('textbox', { name: 'Search' });
   readonly statusFilter = this.root.getByRole('combobox', { name: 'Status' });
   readonly selectAllButton = this.root.getByRole('button', { name: 'Select all' });
   readonly unselectAllButton = this.root.getByRole('button', { name: 'Unselect all' });

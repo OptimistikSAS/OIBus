@@ -92,8 +92,8 @@
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
                     <span translate="south.items.title"></span>
-                    @if (filteredItems().length) {
-                      <span class="mx-1">({{ filteredItems().length }})</span>
+                    @if (itemTable.filteredItems().length) {
+                      <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
                     }
                     <button
                       type="button"
@@ -152,162 +152,37 @@
               </ng-template>
 
               <div class="mb-3">
-                <!-- Filter row -->
-                <div class="d-flex align-items-center gap-2 my-2">
-                  <input
-                    class="form-control form-control-sm flex-grow-1"
-                    [attr.aria-label]="'common.search' | translate"
-                    [formControl]="searchControl"
-                    [placeholder]="'south.items.search-placeholder' | translate"
-                    type="text"
-                  />
-                  <select
-                    class="form-select form-select-sm w-auto"
-                    [attr.aria-label]="'south.items.group' | translate"
-                    [formControl]="groupFilterControl"
-                  >
-                    <option [ngValue]="null" translate="south.items.all-groups"></option>
-                    <option value="none" translate="south.items.group-none"></option>
-                    @for (group of inMemoryGroups(); track group.id) {
-                      <option [value]="group.id">{{ group.standardSettings.name }}</option>
-                    }
-                  </select>
-                  <select
-                    class="form-select form-select-sm w-auto"
-                    [attr.aria-label]="'south.items.scan-mode' | translate"
-                    [formControl]="scanModeFilterControl"
-                  >
-                    <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
-                    @for (scanMode of scanModes(); track scanMode.id) {
-                      <option [value]="scanMode.id">{{ scanMode.name }}</option>
-                    }
-                  </select>
-                  <select
-                    class="form-select form-select-sm w-auto"
-                    [attr.aria-label]="'south.items.status' | translate"
-                    [formControl]="statusFilterControl"
-                  >
-                    <option [ngValue]="null" translate="south.items.all-statuses"></option>
-                    <option value="enabled" translate="south.items.enabled-label"></option>
-                    <option value="disabled" translate="south.items.disabled-label"></option>
-                  </select>
-                </div>
-
-                @if (displayedItems().content.length > 0) {
-                  <!-- Selection Controls -->
-                  <div class="d-flex justify-content-between align-items-center my-2">
-                    <div class="d-flex align-items-center selection-controls">
-                      <button
-                        type="button"
-                        class="btn btn-secondary btn-sm"
-                        (click)="selectAll()"
-                        [disabled]="selectedCount() === filteredItems().length"
-                        id="select-all-button"
-                      >
-                        <span class="fa-solid fa-check-square me-1" aria-hidden="true"></span>
-                        <span translate="south.items.select-all"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-secondary btn-sm"
-                        (click)="unselectAll()"
-                        [disabled]="selectedCount() === 0"
-                        id="unselect-all-button"
-                      >
-                        <span class="fa-solid fa-square me-1" aria-hidden="true"></span>
-                        <span translate="south.items.unselect-all"></span>
-                      </button>
-                      @if (selectedCount() > 0) {
-                        <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
-                          <button
-                            type="button"
-                            class="badge counter-badge mass-actions-button"
-                            ngbDropdownToggle
-                            id="mass-actions-dropdown"
-                          >
-                            <span translate="south.items.mass-actions" [translateParams]="{ count: selectedItems().size }"></span>
-                            <span class="fa-solid fa-caret-down ms-1" aria-hidden="true"></span>
-                          </button>
-                          <div ngbDropdownMenu>
-                            <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
-                              <span class="fa-solid fa-check me-2" aria-hidden="true"></span>
-                              <span translate="south.items.enable"></span>
-                            </button>
-                            <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
-                              <span class="fa-solid fa-times me-2" aria-hidden="true"></span>
-                              <span translate="south.items.disable"></span>
-                            </button>
-                            <button type="button" ngbDropdownItem (click)="moveSelectedItemsToGroup()">
-                              <span class="fa-solid fa-folder me-2" aria-hidden="true"></span>
-                              <span translate="south.items.move-to-group"></span>
-                            </button>
-                            <div class="dropdown-divider"></div>
-                            <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
-                              <span class="fa-solid fa-trash-can me-2" aria-hidden="true"></span>
-                              <span translate="south.items.delete"></span>
-                            </button>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  </div>
-
-                  <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
-                  <ng-template #scheduleTooltip>
-                    @if (tooltipItem(); as tooltipItem) {
-                      @let group = getTooltipGroup(tooltipItem);
-                      <div class="text-start schedule-tooltip-content">
-                        @if (group) {
-                          <div><strong translate="south.items.group"></strong>: {{ tooltipItem.groupName }}</div>
-                          @if (tooltipItem.syncWithGroup) {
-                            <div><strong translate="south.items.scan-mode"></strong>: {{ getEffectiveScanModeName(tooltipItem) }}</div>
-                            @if (manifest!.modes.history) {
-                              @if (group.historySettings.maxReadInterval !== null) {
-                                <div>
-                                  <strong translate="south.items.max-read-interval"></strong>: {{ group.historySettings.maxReadInterval }}s
-                                </div>
-                              }
-                              @if (group.historySettings.readDelay !== null) {
-                                <div><strong translate="south.items.read-delay"></strong>: {{ group.historySettings.readDelay }}ms</div>
-                              }
-                              @if (group.historySettings.startTimeOffset !== null) {
-                                <div>
-                                  <strong translate="south.items.start-time-offset"></strong>: {{ group.historySettings.startTimeOffset }}ms
-                                </div>
-                              }
-                              @if (group.historySettings.endTimeOffset !== null) {
-                                <div>
-                                  <strong translate="south.items.end-time-offset"></strong>: {{ group.historySettings.endTimeOffset }}ms
-                                </div>
-                              }
+                <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
+                <ng-template #scheduleTooltip>
+                  @if (tooltipItem(); as tooltipItem) {
+                    @let group = getTooltipGroup(tooltipItem);
+                    <div class="text-start schedule-tooltip-content">
+                      @if (group) {
+                        <div><strong translate="south.items.group"></strong>: {{ tooltipItem.groupName }}</div>
+                        @if (tooltipItem.syncWithGroup) {
+                          <div><strong translate="south.items.scan-mode"></strong>: {{ getEffectiveScanModeName(tooltipItem) }}</div>
+                          @if (manifest!.modes.history) {
+                            @if (group.historySettings.maxReadInterval !== null) {
+                              <div>
+                                <strong translate="south.items.max-read-interval"></strong>: {{ group.historySettings.maxReadInterval }}s
+                              </div>
                             }
-                          } @else {
-                            <div><strong translate="south.items.scan-mode"></strong>: {{ getEffectiveScanModeName(tooltipItem) }}</div>
-                            @if (manifest!.modes.history) {
-                              @if (tooltipItem.maxReadInterval !== null) {
-                                <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
-                              }
-                              @if (tooltipItem.readDelay !== null) {
-                                <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
-                              }
-                              @if (tooltipItem.startTimeOffset !== null) {
-                                <div><strong translate="south.items.start-time-offset"></strong>: {{ tooltipItem.startTimeOffset }}ms</div>
-                              }
-                              @if (tooltipItem.endTimeOffset !== null) {
-                                <div><strong translate="south.items.end-time-offset"></strong>: {{ tooltipItem.endTimeOffset }}ms</div>
-                              }
+                            @if (group.historySettings.readDelay !== null) {
+                              <div><strong translate="south.items.read-delay"></strong>: {{ group.historySettings.readDelay }}ms</div>
                             }
-                            <div class="text-warning mt-1">⚠ {{ 'south.items.not-synced-notice' | translate }}</div>
+                            @if (group.historySettings.startTimeOffset !== null) {
+                              <div>
+                                <strong translate="south.items.start-time-offset"></strong>: {{ group.historySettings.startTimeOffset }}ms
+                              </div>
+                            }
+                            @if (group.historySettings.endTimeOffset !== null) {
+                              <div>
+                                <strong translate="south.items.end-time-offset"></strong>: {{ group.historySettings.endTimeOffset }}ms
+                              </div>
+                            }
                           }
                         } @else {
-                          <div>
-                            <strong translate="south.items.scan-mode"></strong>:
-                            {{
-                              tooltipItem.scanModeId === 'subscription'
-                                ? ('scan-mode.subscription' | translate)
-                                : tooltipItem.scanModeName || ''
-                            }}
-                          </div>
+                          <div><strong translate="south.items.scan-mode"></strong>: {{ getEffectiveScanModeName(tooltipItem) }}</div>
                           @if (manifest!.modes.history) {
                             @if (tooltipItem.maxReadInterval !== null) {
                               <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
@@ -322,127 +197,138 @@
                               <div><strong translate="south.items.end-time-offset"></strong>: {{ tooltipItem.endTimeOffset }}ms</div>
                             }
                           }
+                          <div class="text-warning mt-1">⚠ {{ 'south.items.not-synced-notice' | translate }}</div>
                         }
-                      </div>
-                    }
-                  </ng-template>
-
-                  <table class="mb-2 table table-sm table-hover oib-table">
-                    <thead class="light">
-                      <tr>
-                        <th class="checkbox-column"></th>
-                        <th class="status-column">
-                          <button type="button" class="sort-button text-nowrap" (click)="toggleColumnSort('enabled')">
-                            <span translate="south.items.status" class="me-2"></span>
-                            <span class="fa-solid {{ sortIcon('enabled') }}" aria-hidden="true"></span>
-                          </button>
-                        </th>
-                        <th>
-                          <button type="button" class="sort-button" (click)="toggleColumnSort('name')">
-                            <span translate="south.items.name" class="me-2"></span>
-                            <span class="fa-solid {{ sortIcon('name') }}" aria-hidden="true"></span>
-                          </button>
-                        </th>
-                        <th class="group-column">
-                          <button type="button" class="sort-button" (click)="toggleColumnSort('group')">
-                            <span translate="south.items.group-and-schedule" class="me-2"></span>
-                            <span class="fa-solid {{ sortIcon('group') }}" aria-hidden="true"></span>
-                          </button>
-                        </th>
-                        <th class="actions-column"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (item of displayedItems().content; track item.name) {
-                        <tr class="south-item" (mouseenter)="tooltipItem.set(item)">
-                          <td class="text-center">
-                            <input
-                              type="checkbox"
-                              class="form-check-input item-checkbox"
-                              [attr.aria-label]="item.name"
-                              [checked]="selectedItems().has(item.name)"
-                              (change)="toggleItemSelection(item)"
-                            />
-                          </td>
-                          <td class="text-center">
-                            @if (item.enabled) {
-                              <span translate="south.items.enabled-label"></span>
-                            } @else {
-                              <span translate="south.items.disabled-label"></span>
-                            }
-                          </td>
-                          <td>{{ item.name }}</td>
-                          <td>
-                            <span [ngbTooltip]="scheduleTooltip" container="body" tooltipClass="schedule-tooltip">
-                              @if (!item.groupId) {
-                                <span translate="south.items.group-none"></span>
-                                <span class="text-muted ms-1"
-                                  >({{
-                                    item.scanModeId === 'subscription' ? ('scan-mode.subscription' | translate) : item.scanModeName || ''
-                                  }})</span
-                                >
-                              } @else {
-                                {{ item.groupName }}
-                                <span class="text-muted">({{ getEffectiveScanModeName(item) }})</span>
-                                @if (!item.syncWithGroup) {
-                                  <i class="fa-solid fa-triangle-exclamation text-warning ms-1" aria-hidden="true"></i>
-                                }
-                              }
-                            </span>
-                          </td>
-                          <td class="text-nowrap action-buttons">
-                            <div class="pull-right">
-                              <!-- Edit button -->
-                              <button
-                                type="button"
-                                class="btn btn-link edit-south-item px-1 py-0"
-                                [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
-                                [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
-                                (click)="editItem(item)"
-                              >
-                                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                              </button>
-                              <!-- Duplicate button -->
-                              <button
-                                type="button"
-                                class="btn btn-link duplicate-south-item px-1 py-0"
-                                [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
-                                [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
-                                (click)="duplicateItem(item)"
-                              >
-                                <span class="fa-solid fa-copy" aria-hidden="true"></span>
-                              </button>
-                              <!-- Delete button -->
-                              <button
-                                type="button"
-                                class="btn btn-link delete-south-item px-1 py-0"
-                                [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
-                                [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
-                                (click)="deleteItem(item)"
-                              >
-                                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                      } @else {
+                        <div>
+                          <strong translate="south.items.scan-mode"></strong>:
+                          {{
+                            tooltipItem.scanModeId === 'subscription'
+                              ? ('scan-mode.subscription' | translate)
+                              : tooltipItem.scanModeName || ''
+                          }}
+                        </div>
+                        @if (manifest!.modes.history) {
+                          @if (tooltipItem.maxReadInterval !== null) {
+                            <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
+                          }
+                          @if (tooltipItem.readDelay !== null) {
+                            <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
+                          }
+                          @if (tooltipItem.startTimeOffset !== null) {
+                            <div><strong translate="south.items.start-time-offset"></strong>: {{ tooltipItem.startTimeOffset }}ms</div>
+                          }
+                          @if (tooltipItem.endTimeOffset !== null) {
+                            <div><strong translate="south.items.end-time-offset"></strong>: {{ tooltipItem.endTimeOffset }}ms</div>
+                          }
+                        }
                       }
-                    </tbody>
-                  </table>
-                } @else {
-                  @if (inMemoryItems().length !== 0) {
-                    <div class="oib-grey-container" translate="south.items.none-match"></div>
-                  } @else {
-                    <div class="oib-grey-container" translate="south.items.none"></div>
-                  }
-                }
-                @let itemsPage = displayedItems();
-                @if (itemsPage.totalElements) {
-                  <div class="d-flex flex-row-reverse">
-                    <div [class]="itemsPage.totalPages > 1 ? 'ms-2' : ''">
-                      <oib-pagination [page]="itemsPage" (pageChanged)="changePage($event)" />
                     </div>
-                  </div>
-                }
+                  }
+                </ng-template>
+                <oib-item-table
+                  #itemTable
+                  [items]="inMemoryItems()"
+                  translationPrefix="south.items"
+                  [showDates]="false"
+                  [extraFilter]="itemFilter()"
+                  [sortValue]="itemSortValue"
+                  [(selection)]="selectedItems"
+                  (enableSelected)="enableSelectedItems()"
+                  (disableSelected)="disableSelectedItems()"
+                  (deleteSelected)="deleteSelectedItems()"
+                  (itemHover)="tooltipItem.set($event)"
+                >
+                  <ng-template oibItemTableFilters>
+                    <select
+                      class="form-select form-select-sm w-auto"
+                      [attr.aria-label]="'south.items.group' | translate"
+                      [formControl]="groupFilterControl"
+                    >
+                      <option [ngValue]="null" translate="south.items.all-groups"></option>
+                      <option value="none" translate="south.items.group-none"></option>
+                      @for (group of inMemoryGroups(); track group.id) {
+                        <option [value]="group.id">{{ group.standardSettings.name }}</option>
+                      }
+                    </select>
+                    <select
+                      class="form-select form-select-sm w-auto"
+                      [attr.aria-label]="'south.items.scan-mode' | translate"
+                      [formControl]="scanModeFilterControl"
+                    >
+                      <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
+                      @for (scanMode of scanModes(); track scanMode.id) {
+                        <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                      }
+                    </select>
+                  </ng-template>
+                  <ng-template oibItemTableHeaders let-sortIcon="sortIcon" let-toggleSort="toggleSort">
+                    <th class="group-column">
+                      <button type="button" class="sort-button" (click)="toggleSort('group')">
+                        <span translate="south.items.group-and-schedule" class="me-2"></span>
+                        <span class="fa-solid {{ sortIcon('group') }}" aria-hidden="true"></span>
+                      </button>
+                    </th>
+                  </ng-template>
+                  <ng-template [oibItemTableCells]="inMemoryItems()" let-item>
+                    <td>
+                      <span [ngbTooltip]="scheduleTooltip" container="body" tooltipClass="schedule-tooltip">
+                        @if (!item.groupId) {
+                          <span translate="south.items.group-none"></span>
+                          <span class="text-muted ms-1"
+                            >({{
+                              item.scanModeId === 'subscription' ? ('scan-mode.subscription' | translate) : item.scanModeName || ''
+                            }})</span
+                          >
+                        } @else {
+                          {{ item.groupName }}
+                          <span class="text-muted">({{ getEffectiveScanModeName(item) }})</span>
+                          @if (!item.syncWithGroup) {
+                            <i class="fa-solid fa-triangle-exclamation text-warning ms-1" aria-hidden="true"></i>
+                          }
+                        }
+                      </span>
+                    </td>
+                  </ng-template>
+                  <ng-template oibItemTableMassActions>
+                    <button type="button" ngbDropdownItem (click)="moveSelectedItemsToGroup()">
+                      <span class="fa-solid fa-folder me-2" aria-hidden="true"></span>
+                      <span translate="south.items.move-to-group"></span>
+                    </button>
+                  </ng-template>
+                  <ng-template [oibItemTableActions]="inMemoryItems()" let-item>
+                    <!-- Edit button -->
+                    <button
+                      type="button"
+                      class="btn btn-link edit-south-item px-1 py-0"
+                      [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
+                      [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
+                      (click)="editItem(item)"
+                    >
+                      <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                    </button>
+                    <!-- Duplicate button -->
+                    <button
+                      type="button"
+                      class="btn btn-link duplicate-south-item px-1 py-0"
+                      [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
+                      [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
+                      (click)="duplicateItem(item)"
+                    >
+                      <span class="fa-solid fa-copy" aria-hidden="true"></span>
+                    </button>
+                    <!-- Delete button -->
+                    <button
+                      type="button"
+                      class="btn btn-link delete-south-item px-1 py-0"
+                      [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
+                      [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
+                      (click)="deleteItem(item)"
+                    >
+                      <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                    </button>
+                  </ng-template>
+                </oib-item-table>
               </div>
             </oib-box>
           </form>

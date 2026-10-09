@@ -2744,7 +2744,8 @@
         "duplicate": "复制项目",
         "delete": "删除项目",
         "audit": "查看项目审计历史"
-      }
+      },
+      "search-placeholder": "输入文本以筛选项"
     },
     "monitoring": {
       "title": "{{ name }} 指标",
