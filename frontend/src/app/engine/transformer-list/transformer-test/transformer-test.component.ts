@@ -18,6 +18,7 @@ import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { trackControl } from '../../../shared/form/tracked-control';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { ContentDisplayMode } from '../../../south/south-items/south-item-test/item-test-result/item-test-result.component';
 
@@ -27,7 +28,7 @@ const PAGE_SIZE = 10;
   selector: 'oib-transformer-test',
   templateUrl: './transformer-test.component.html',
   styleUrl: './transformer-test.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
@@ -42,8 +43,8 @@ const PAGE_SIZE = 10;
   ]
 })
 export class TransformerTestComponent implements OnChanges {
-  private transformerService = inject(TransformerService);
-  private fb = inject(NonNullableFormBuilder);
+  private readonly transformerService = inject(TransformerService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly transformer = input<CustomTransformerCommandDTO | null>(null);
 
@@ -94,11 +95,14 @@ export class TransformerTestComponent implements OnChanges {
   readonly tableHeaders = signal<Array<string>>([]);
   readonly tablePage = signal<Page<Array<string>>>({ content: [], totalElements: 0, totalPages: 0, size: PAGE_SIZE, number: 0 });
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     inputData: ['', Validators.required],
     options: this.fb.group({})
   });
-  outputControl = this.fb.control('');
+  // the input data is changed by the code editor and by the input template loading, outside of Angular events
+  private readonly trackedForm = trackControl(() => this.form);
+  readonly formValid = computed(() => this.trackedForm()!.valid);
+  readonly outputControl = this.fb.control('');
 
   private prevInputType: string | null = null;
   private prevManifestJson: string | null = null;
