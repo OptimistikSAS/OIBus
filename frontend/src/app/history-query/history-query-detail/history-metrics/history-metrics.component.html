@@ -19,7 +19,7 @@
           <tr>
             <td translate="history-query.monitoring.north.data-sent"></td>
             <td>
-              <oib-progressbar [value]="northProgress" [max]="1" [animated]="northProgressbarAnimated" />
+              <oib-progressbar [value]="northProgress()" [max]="1" [animated]="northProgressbarAnimated()" />
             </td>
           </tr>
         }

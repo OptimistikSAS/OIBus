@@ -18,7 +18,7 @@ import { ProgressbarComponent } from './progressbar/progressbar.component';
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
   styleUrl: './history-metrics.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TranslateDirective,
     DatetimePipe,
@@ -87,11 +87,7 @@ export class HistoryMetricsComponent {
     return (elapsedSeconds / historyMetrics.intervalProgress) * remainingFraction;
   });
 
-  get northProgress() {
-    return this.historyMetrics().north.contentSentSize / this.historyMetrics().north.contentCachedSize;
-  }
+  readonly northProgress = computed(() => this.historyMetrics().north.contentSentSize / this.historyMetrics().north.contentCachedSize);
 
-  get northProgressbarAnimated(): boolean {
-    return this.historyQuery().status === 'RUNNING' && this.northProgress < 1;
-  }
+  readonly northProgressbarAnimated = computed(() => this.historyQuery().status === 'RUNNING' && this.northProgress() < 1);
 }

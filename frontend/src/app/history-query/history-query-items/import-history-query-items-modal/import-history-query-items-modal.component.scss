@@ -13,7 +13,8 @@
   table-layout: fixed;
   width: 100%;
 
-  th, td {
+  th,
+  td {
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
@@ -22,4 +23,33 @@
 // Ensure modal doesn't get too wide
 .modal-dialog {
   max-width: 90vw;
+}
+
+.error-icon {
+  color: red;
+}
+
+.valid-icon {
+  color: green;
+}
+
+.name-column {
+  width: 200px;
+}
+
+.name-cell {
+  max-width: 200px;
+}
+
+.error-cell {
+  max-width: 400px;
+}
+
+.setting-column {
+  min-width: 150px;
+  max-width: 250px;
+}
+
+.setting-cell {
+  max-width: 250px;
 }

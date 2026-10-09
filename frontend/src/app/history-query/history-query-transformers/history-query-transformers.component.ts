@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -27,16 +27,16 @@ import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-
   selector: 'oib-history-query-transformers',
   imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent, NgbTooltip],
   templateUrl: './history-query-transformers.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './history-query-transformers.component.scss'
 })
 export class HistoryQueryTransformersComponent {
-  private confirmationService = inject(ConfirmationService);
-  private notificationService = inject(NotificationService);
-  private modalService = inject(ModalService);
-  private historyQueryService = inject(HistoryQueryService);
-  private translateService = inject(TranslateService);
-  private docsUrlService = inject(DocsUrlService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly modalService = inject(ModalService);
+  private readonly historyQueryService = inject(HistoryQueryService);
+  private readonly translateService = inject(TranslateService);
+  private readonly docsUrlService = inject(DocsUrlService);
 
   readonly helpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#transformers');
 
@@ -53,20 +53,11 @@ export class HistoryQueryTransformersComponent {
   readonly southType = input.required<OIBusSouthType>();
   readonly items = input<Array<HistoryQueryItemCommandDTO>>([]);
 
-  // Array used to store subscription on north connector creation
-  readonly transformersWithOptions = signal<Array<HistoryTransformerDTOWithOptions>>([]);
-
-  constructor() {
-    // Initialize local transformers when editing, and keep them in sync with input
-    effect(() => {
-      const historyQuery = this.historyQuery();
-      if (historyQuery) {
-        this.transformersWithOptions.set([...historyQuery.northTransformers]);
-      } else {
-        this.transformersWithOptions.set([...this.transformersFromNorth()]);
-      }
-    });
-  }
+  // The displayed transformers: those of the history query when editing, kept in sync with the inputs
+  readonly transformersWithOptions = linkedSignal<Array<HistoryTransformerDTOWithOptions>>(() => {
+    const historyQuery = this.historyQuery();
+    return historyQuery ? [...historyQuery.northTransformers] : [...this.transformersFromNorth()];
+  });
 
   addTransformer(e: Event) {
     e.preventDefault();
@@ -79,7 +70,7 @@ export class HistoryQueryTransformersComponent {
       }
     });
     const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
-    component.directSave = this.saveChangesDirectly();
+    component.directSave.set(this.saveChangesDirectly());
 
     component.prepareForCreation(
       this.southType(),
@@ -126,7 +117,7 @@ export class HistoryQueryTransformersComponent {
       }
     });
     const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
-    component.directSave = this.saveChangesDirectly();
+    component.directSave.set(this.saveChangesDirectly());
 
     component.prepareForEdition(
       this.southType(),
