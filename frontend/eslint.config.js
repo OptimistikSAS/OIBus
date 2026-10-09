@@ -64,7 +64,9 @@ export default [
             style: 'camelCase'
           }
         ],
-        '@angular-eslint/prefer-on-push-component-change-detection': 'off',
+        '@angular-eslint/prefer-on-push-component-change-detection': 'error',
+        '@angular-eslint/prefer-signals': 'error',
+        '@angular-eslint/inject-at-top': 'error',
         // signal-based APIs and modern patterns
         '@angular-eslint/computed-must-return': 'error',
         '@angular-eslint/consistent-component-styles': 'error',
@@ -87,7 +89,7 @@ export default [
         ],
         '@typescript-eslint/no-deprecated': 'error',
         '@typescript-eslint/no-empty-function': 'off',
-        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-explicit-any': 'error',
         '@typescript-eslint/no-unused-vars': [
           'error',
           {
@@ -145,6 +147,10 @@ export default [
         '@angular-eslint/template/prefer-control-flow': 'error',
         '@angular-eslint/template/prefer-self-closing-tags': 'error',
         '@angular-eslint/template/no-any': 'error',
+        '@angular-eslint/template/button-has-type': 'error',
+        '@angular-eslint/template/label-has-associated-control': 'error',
+        // dynamic values (e.g. a context menu position, a computed grid layout) can still be bound to a style property
+        '@angular-eslint/template/no-inline-styles': ['error', { allowBindToStyle: true }],
         '@angular-eslint/template/prefer-at-empty': 'error',
         '@angular-eslint/template/prefer-built-in-pipes': 'error',
         '@angular-eslint/template/prefer-class-binding': 'error',
