@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, forwardRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
@@ -46,66 +47,81 @@ import { getAssociatedInputType } from '../../../shared/utils/utils';
     NorthTransformerTestComponent,
     SelectExistingTransformerComponent
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
-      useFactory: (component: EditHistoryQueryTransformerModalComponent) => () => component.mode,
+      useFactory: (component: EditHistoryQueryTransformerModalComponent) => () => component.mode(),
       deps: [forwardRef(() => EditHistoryQueryTransformerModalComponent)]
     }
   ]
 })
 export class EditHistoryQueryTransformerModalComponent {
-  private modal = inject(NgbActiveModal);
-  private fb = inject(NonNullableFormBuilder);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  state = new ObservableState();
-  mode: 'create' | 'edit' = 'create';
+  readonly state = new ObservableState();
+  readonly mode = signal<'create' | 'edit'>('create');
   /** Whether the transformer is configured from scratch or copied from an existing North/History attachment (create mode only). */
-  creationMode: 'new' | 'from-north' | 'from-history' = 'new';
+  readonly creationMode = signal<'new' | 'from-north' | 'from-history'>('new');
   /** True when opened from history-query-detail (saves directly to API); false when opened from edit-history-query (changes are applied in-memory). */
-  directSave = true;
-  form: FormGroup<{
+  readonly directSave = signal(true);
+  readonly form: FormGroup<{
     transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;
   }> = this.fb.group({
     transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
     options: this.fb.group({})
   });
-  allTransformers: Array<TransformerDTO> = [];
-  selectableOutputs: Array<TransformerDTO> = [];
-  supportedOutputTypes: Array<string> = [];
-  manifest: OIBusObjectAttribute | null = null;
-  scanModes: Array<ScanModeDTO> = [];
-  certificates: Array<CertificateDTO> = [];
-  southType: OIBusSouthType | null = null;
-  existingTransformerWithOptions: HistoryTransformerDTOWithOptions | null = null;
+  /** The transformer and options of the form, also changed by code (copy from an existing attachment, options form rebuilt) */
+  readonly selectedTransformer = signal<TransformerDTO | null>(null);
+  readonly selectedOptions = signal<Record<string, unknown>>({});
+  private allTransformers: Array<TransformerDTO> = [];
+  readonly selectableOutputs = signal<Array<TransformerDTO>>([]);
+  readonly supportedOutputTypes = signal<Array<string>>([]);
+  readonly manifest = signal<OIBusObjectAttribute | null>(null);
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly certificates = signal<Array<CertificateDTO>>([]);
+  private southType: OIBusSouthType | null = null;
+  private existingTransformerWithOptions: HistoryTransformerDTOWithOptions | null = null;
   /** History query id (present only when saved); enables the "from item" test input. */
-  historyId: string | null = null;
+  private historyId: string | null = null;
   /** Stable source descriptor for the embedded transformer-test panel. */
-  transformerTestSource: TransformerTestItemSource = { kind: 'none' };
+  readonly transformerTestSource = signal<TransformerTestItemSource>({ kind: 'none' });
 
-  selectableItems: Array<ItemLightDTO> = [];
-  selectedItems: Array<ItemLightDTO> = [];
-  selectionType: 'all' | 'items' = 'all';
-  searchResults: Array<ItemLightDTO> = [];
-  filteredItems: Array<ItemLightDTO> = [];
-  totalSearchResults = 0;
-  itemSearchText = '';
-  searchInteracted = false;
+  private selectableItems: Array<ItemLightDTO> = [];
+  readonly selectedItems = signal<Array<ItemLightDTO>>([]);
+  readonly selectionType = signal<'all' | 'items'>('all');
+  readonly searchResults = signal<Array<ItemLightDTO>>([]);
+  readonly filteredItems = signal<Array<ItemLightDTO>>([]);
+  readonly totalSearchResults = signal(0);
+  readonly itemSearchText = signal('');
+  readonly searchInteracted = signal(false);
+
+  constructor() {
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.syncFormValue());
+  }
 
   filterItems() {
-    const matchingItems = this.selectableItems.filter(item => item.name.toLowerCase().includes(this.itemSearchText.toLowerCase()));
-    this.searchResults = matchingItems.filter(item => !this.selectedItems.some(element => element.id === item.id));
-    this.totalSearchResults = this.searchResults.length;
-    this.filteredItems = matchingItems.slice(0, 10);
+    const searchText = this.itemSearchText().toLowerCase();
+    const matchingItems = this.selectableItems.filter(item => item.name.toLowerCase().includes(searchText));
+    const searchResults = matchingItems.filter(item => !this.selectedItems().some(element => element.id === item.id));
+    this.searchResults.set(searchResults);
+    this.totalSearchResults.set(searchResults.length);
+    this.filteredItems.set(matchingItems.slice(0, 10));
+  }
+
+  onSearchTextChange(searchText: string) {
+    this.itemSearchText.set(searchText);
+    this.filterItems();
   }
 
   onDropdownOpenChange(isOpen: boolean) {
     if (isOpen) {
       // Items should already be pre-loaded, but just in case
-      if (this.filteredItems.length === 0) {
+      if (this.filteredItems().length === 0) {
         this.filterItems();
       }
     }
@@ -120,13 +136,13 @@ export class EditHistoryQueryTransformerModalComponent {
     selectableItems: Array<ItemLightDTO>,
     historyId: string | null = null
   ) {
-    this.mode = 'create';
+    this.mode.set('create');
     this.historyId = historyId;
     this.southType = southType;
-    this.scanModes = scanModes;
-    this.certificates = certificates;
+    this.scanModes.set(scanModes);
+    this.certificates.set(certificates);
     this.allTransformers = transformers;
-    this.supportedOutputTypes = supportedOutputTypes;
+    this.supportedOutputTypes.set(supportedOutputTypes);
     this.selectableItems = selectableItems;
     this.buildForm();
 
@@ -144,39 +160,37 @@ export class EditHistoryQueryTransformerModalComponent {
     transformerWithOptionsToEdit: HistoryTransformerDTOWithOptions,
     historyId: string | null = null
   ) {
-    this.mode = 'edit';
+    this.mode.set('edit');
     this.historyId = historyId;
     this.southType = southType;
-    this.scanModes = scanModes;
-    this.certificates = certificates;
-    this.supportedOutputTypes = supportedOutputTypes;
+    this.scanModes.set(scanModes);
+    this.certificates.set(certificates);
     this.existingTransformerWithOptions = transformerWithOptionsToEdit;
     this.allTransformers = transformers;
-    this.supportedOutputTypes = supportedOutputTypes;
-    this.selectedItems = transformerWithOptionsToEdit.items;
-    if (this.selectedItems.length > 0) {
-      this.selectionType = 'items';
-    } else {
-      this.selectionType = 'all';
-    }
+    this.supportedOutputTypes.set(supportedOutputTypes);
+    // copied, so that the edited transformer is left untouched until the modal is saved
+    this.selectedItems.set([...transformerWithOptionsToEdit.items]);
+    this.selectionType.set(transformerWithOptionsToEdit.items.length > 0 ? 'items' : 'all');
     this.selectableItems = selectableItems;
 
     this.buildForm();
     this.createOptionsForm(transformerWithOptionsToEdit.transformer);
     // trigger rebuild of options form
-    this.form!.patchValue(
+    this.form.patchValue(
       { transformer: transformerWithOptionsToEdit.transformer, options: transformerWithOptionsToEdit.options },
       { emitEvent: false }
     );
+    this.syncFormValue();
 
     // Pre-load items
     this.filterItems();
   }
 
   buildForm() {
-    this.transformerTestSource =
-      this.historyId && this.southType ? { kind: 'history', id: this.historyId, southType: this.southType } : { kind: 'none' };
-    this.form.controls.transformer.valueChanges.subscribe(newTransformer => {
+    this.transformerTestSource.set(
+      this.historyId && this.southType ? { kind: 'history', id: this.historyId, southType: this.southType } : { kind: 'none' }
+    );
+    this.form.controls.transformer.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(newTransformer => {
       if (newTransformer) {
         this.createOptionsForm(newTransformer);
       } else {
@@ -187,16 +201,17 @@ export class EditHistoryQueryTransformerModalComponent {
   }
 
   createOptionsForm(newTransformer: TransformerDTO) {
-    this.manifest = newTransformer.manifest;
-    this.form!.setControl('options', this.fb.group({}));
-    for (const attribute of this.manifest.attributes) {
-      addAttributeToForm(this.fb, this.form!.controls.options, attribute);
+    const manifest = newTransformer.manifest;
+    this.manifest.set(manifest);
+    this.form.setControl('options', this.fb.group({}));
+    for (const attribute of manifest.attributes) {
+      addAttributeToForm(this.fb, this.form.controls.options, attribute);
     }
-    addEnablingConditions(this.form!.controls.options, this.manifest.enablingConditions);
+    addEnablingConditions(this.form.controls.options, manifest.enablingConditions);
   }
 
   setCreationMode(mode: 'new' | 'from-north' | 'from-history') {
-    this.creationMode = mode;
+    this.creationMode.set(mode);
     this.form.patchValue({ transformer: null, options: {} });
   }
 
@@ -204,10 +219,11 @@ export class EditHistoryQueryTransformerModalComponent {
   applyExistingTransformer(selection: { transformer: TransformerDTO; options: Record<string, unknown> }) {
     this.createOptionsForm(selection.transformer);
     this.form.patchValue({ transformer: selection.transformer, options: selection.options }, { emitEvent: false });
+    this.syncFormValue();
   }
 
   canDismiss(): Observable<boolean> | boolean {
-    if (this.form?.dirty) {
+    if (this.form.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -218,18 +234,18 @@ export class EditHistoryQueryTransformerModalComponent {
   }
 
   save() {
-    if (!this.form!.valid) {
+    if (!this.form.valid) {
       return;
     }
 
     const result: HistoryTransformerDTOWithOptions = {
       id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : `temp_${Date.now()}`,
       transformer: this.form.value.transformer!,
-      options: this.form!.value.options,
+      options: this.form.value.options,
       items:
-        this.selectionType === 'all'
+        this.selectionType() === 'all'
           ? []
-          : this.selectedItems.map(item => ({
+          : this.selectedItems().map(item => ({
               id: item.id,
               name: item.name,
               enabled: item.enabled,
@@ -246,67 +262,72 @@ export class EditHistoryQueryTransformerModalComponent {
     return t1 && t2 ? t1.id === t2.id : t1 === t2;
   }
 
+  private syncFormValue() {
+    this.selectedTransformer.set(this.form.controls.transformer.value);
+    this.selectedOptions.set(this.form.controls.options.value);
+  }
+
   private updateSelectableOutput(southType: OIBusSouthType) {
-    this.selectableOutputs = this.allTransformers.filter(element => {
-      if (!this.supportedOutputTypes.includes(element.outputType)) {
-        return false;
-      }
+    const supportedOutputTypes = this.supportedOutputTypes();
+    this.selectableOutputs.set(
+      this.allTransformers.filter(element => {
+        if (!supportedOutputTypes.includes(element.outputType)) {
+          return false;
+        }
 
-      if (element.type === 'standard' && element.functionName === 'ignore') return true;
-      if (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes.includes(element.inputType))
-        return true;
+        if (element.type === 'standard' && element.functionName === 'ignore') return true;
+        if (element.type === 'standard' && element.functionName === 'iso' && supportedOutputTypes.includes(element.inputType)) return true;
 
-      return element.inputType === 'any-content' || element.inputType === 'any' || element.inputType === getAssociatedInputType(southType);
-    });
+        return (
+          element.inputType === 'any-content' || element.inputType === 'any' || element.inputType === getAssociatedInputType(southType)
+        );
+      })
+    );
   }
 
   toggleItem(item: ItemLightDTO) {
-    const index = this.selectedItems.findIndex(i => i.id === item.id);
-    if (index >= 0) {
-      this.selectedItems.splice(index, 1);
-      if (item.name.toLowerCase().includes(this.itemSearchText.toLowerCase())) {
-        this.searchResults.push(item);
+    if (this.isItemSelected(item)) {
+      this.selectedItems.update(selectedItems => selectedItems.filter(i => i.id !== item.id));
+      if (item.name.toLowerCase().includes(this.itemSearchText().toLowerCase())) {
+        this.searchResults.update(searchResults => [...searchResults, item]);
       }
     } else {
-      this.selectedItems.push(item);
-      this.searchResults = this.searchResults.filter(i => i.id !== item.id);
+      this.selectedItems.update(selectedItems => [...selectedItems, item]);
+      this.searchResults.update(searchResults => searchResults.filter(i => i.id !== item.id));
     }
   }
 
   isItemSelected(item: ItemLightDTO): boolean {
-    return this.selectedItems.some(i => i.id === item.id);
+    return this.selectedItems().some(i => i.id === item.id);
   }
 
   removeItem(itemToRemove: ItemLightDTO) {
-    this.selectedItems = this.selectedItems.filter(item => item.id !== itemToRemove.id);
+    this.selectedItems.update(selectedItems => selectedItems.filter(item => item.id !== itemToRemove.id));
   }
 
   setSelectionType(type: 'all' | 'items') {
-    this.selectionType = type;
+    this.selectionType.set(type);
     if (type !== 'items') {
-      this.selectedItems = [];
-      this.searchInteracted = false;
-      this.searchResults = [];
-      this.filteredItems = [];
-      this.totalSearchResults = 0;
+      this.selectedItems.set([]);
+      this.searchInteracted.set(false);
+      this.searchResults.set([]);
+      this.filteredItems.set([]);
+      this.totalSearchResults.set(0);
     } else {
       this.filterItems();
     }
   }
 
   selectAllResults() {
-    for (const item of this.searchResults) {
-      if (!this.selectedItems.some(selected => selected.id === item.id)) {
-        this.selectedItems.push(item);
-      }
-    }
+    const newItems = this.searchResults().filter(item => !this.isItemSelected(item));
+    this.selectedItems.update(selectedItems => [...selectedItems, ...newItems]);
     // Clear search results since all items are now selected
-    this.searchResults = [];
-    this.totalSearchResults = 0;
+    this.searchResults.set([]);
+    this.totalSearchResults.set(0);
   }
 
   removeAllItems() {
-    this.selectedItems = [];
+    this.selectedItems.set([]);
     // Refresh search results to include previously selected items
     this.filterItems();
   }

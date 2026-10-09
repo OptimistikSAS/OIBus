@@ -6,79 +6,95 @@
           <h1 id="title">
             <span>{{ 'history-query.title' | translate: { name: historyQuery.name } }}</span>
             <span class="ms-2">
-              <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'history-query.tooltips.edit' | translate">
-                <i class="fa-solid fa-pencil"></i>
+              <button
+                type="button"
+                class="btn btn-primary"
+                id="edit-link"
+                routerLink="edit"
+                [ngbTooltip]="'history-query.tooltips.edit' | translate"
+                [attr.aria-label]="'history-query.tooltips.edit' | translate"
+              >
+                <i class="fa-solid fa-pencil" aria-hidden="true"></i>
               </button>
               <button
                 type="button"
                 class="btn btn-primary ms-1"
                 id="show-audit-button"
                 [ngbTooltip]="'history-query.tooltips.audit' | translate"
+                [attr.aria-label]="'history-query.tooltips.audit' | translate"
                 (click)="showAudit('history_query', historyQuery.id)"
               >
-                <i class="fa-solid fa-history"></i>
+                <i class="fa-solid fa-history" aria-hidden="true"></i>
               </button>
               @if (historyQuery.status === 'PENDING') {
                 <button
+                  type="button"
                   class="btn btn-primary pull-right me-2"
                   id="history-query-start"
                   [ngbTooltip]="'history-query.tooltips.start' | translate"
+                  [attr.aria-label]="'history-query.tooltips.start' | translate"
                   (click)="toggleHistoryQuery('RUNNING')"
                   [disabled]="state.isPending | async"
                 >
                   @if (state.isPending | async) {
-                    <span class="fa-solid fa-spinner fa-spin" role="status"></span>
+                    <span class="fa-solid fa-spinner fa-spin" role="status" aria-hidden="true"></span>
                   }
                   @if ((state.isPending | async) === false) {
-                    <span class="fa-solid fa-play" role="status"></span>
+                    <span class="fa-solid fa-play" role="status" aria-hidden="true"></span>
                   }
                 </button>
               }
               @if (historyQuery.status === 'RUNNING') {
                 <button
+                  type="button"
                   class="btn btn-primary pull-right me-2"
                   id="history-query-pause"
                   [ngbTooltip]="'history-query.tooltips.pause' | translate"
+                  [attr.aria-label]="'history-query.tooltips.pause' | translate"
                   (click)="toggleHistoryQuery('PAUSED')"
                   [disabled]="state.isPending | async"
                 >
                   @if (state.isPending | async) {
-                    <span class="fa-solid fa-spinner fa-spin" role="status"></span>
+                    <span class="fa-solid fa-spinner fa-spin" role="status" aria-hidden="true"></span>
                   }
                   @if ((state.isPending | async) === false) {
-                    <span class="fa-solid fa-pause" role="status"></span>
+                    <span class="fa-solid fa-pause" role="status" aria-hidden="true"></span>
                   }
                 </button>
               }
               @if (historyQuery.status === 'PAUSED') {
                 <button
+                  type="button"
                   class="btn btn-primary pull-right me-2"
                   id="history-query-unpause"
                   [ngbTooltip]="'history-query.tooltips.resume' | translate"
+                  [attr.aria-label]="'history-query.tooltips.resume' | translate"
                   (click)="toggleHistoryQuery('RUNNING')"
                   [disabled]="state.isPending | async"
                 >
                   @if (state.isPending | async) {
-                    <span class="fa-solid fa-spinner fa-spin" role="status"></span>
+                    <span class="fa-solid fa-spinner fa-spin" role="status" aria-hidden="true"></span>
                   }
                   @if ((state.isPending | async) === false) {
-                    <span class="fa-solid fa-play" role="status"></span>
+                    <span class="fa-solid fa-play" role="status" aria-hidden="true"></span>
                   }
                 </button>
               }
               @if (historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED') {
                 <button
+                  type="button"
                   class="btn btn-primary pull-right me-2"
                   id="history-query-restart"
                   [ngbTooltip]="'history-query.tooltips.restart' | translate"
+                  [attr.aria-label]="'history-query.tooltips.restart' | translate"
                   (click)="toggleHistoryQuery('RUNNING')"
                   [disabled]="state.isPending | async"
                 >
                   @if (state.isPending | async) {
-                    <span class="fa-solid fa-spinner fa-spin" role="status"></span>
+                    <span class="fa-solid fa-spinner fa-spin" role="status" aria-hidden="true"></span>
                   }
                   @if ((state.isPending | async) === false) {
-                    <span class="fa-solid fa-arrow-rotate-right" role="status"></span>
+                    <span class="fa-solid fa-arrow-rotate-right" role="status" aria-hidden="true"></span>
                   }
                 </button>
               }
@@ -86,9 +102,9 @@
           </h1>
           <div class="d-flex justify-content-between align-items-center">
             <span class="d-flex align-items-center text-muted small">
-              <i class="fa-solid fa-calendar-days me-1"></i>
+              <i class="fa-solid fa-calendar-days me-1" aria-hidden="true"></i>
               {{ historyQuery.queryTimeRange.startTime | datetime: 'mediumWithSeconds' }}
-              <i class="fa-solid fa-arrow-right oib-fa-arrow"></i>
+              <i class="fa-solid fa-arrow-right oib-fa-arrow" aria-hidden="true"></i>
               {{ historyQuery.queryTimeRange.endTime | datetime: 'mediumWithSeconds' }}
             </span>
             <span class="text-disabled me-2">
@@ -96,7 +112,9 @@
               <i
                 class="fa-solid fa-copy"
                 role="button"
+                tabindex="0"
                 [ngbTooltip]="'history-query.tooltips.copy-cache-path' | translate"
+                [attr.aria-label]="'history-query.tooltips.copy-cache-path' | translate"
                 [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
                 (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
               ></i>
@@ -117,14 +135,15 @@
             <div class="d-flex justify-content-between">
               <span translate="north.caching.title"></span>
               <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/history-queries', historyQuery.id, 'cache']"
-                ><span class="fa-solid fa-search"></span><span class="mx-1" translate="north.caching.explore-cache"></span
+                ><span class="fa-solid fa-search" aria-hidden="true"></span
+                ><span class="mx-1" translate="north.caching.explore-cache"></span
               ></a>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table">
             <tbody>
               <tr>
-                <td translate="north.caching.trigger.title" style="width: 33%"></td>
+                <td translate="north.caching.trigger.title" class="label-column"></td>
                 <td>
                   <span
                     translate="north.caching.trigger.value"
@@ -210,7 +229,7 @@
             <tbody class="north-settings">
               @for (setting of northDisplayedSettings(); track setting) {
                 <tr>
-                  <td style="width: 33%">{{ setting.key | translate }}</td>
+                  <td class="label-column">{{ setting.key | translate }}</td>
                   <td>{{ setting.value }}</td>
                 </tr>
               }
@@ -251,7 +270,7 @@
             <tbody class="south-settings">
               @for (setting of southDisplayedSettings(); track setting) {
                 <tr>
-                  <td style="width: 33%">{{ setting.key | translate }}</td>
+                  <td class="label-column">{{ setting.key | translate }}</td>
                   <td>{{ setting.value }}</td>
                 </tr>
               }
@@ -264,8 +283,8 @@
             <div class="d-flex justify-content-between align-items-center">
               <div>
                 <span translate="south.items.title"></span>
-                @if (filteredItems.length) {
-                  <span class="mx-1">({{ filteredItems.length }})</span>
+                @if (filteredItems().length) {
+                  <span class="mx-1">({{ filteredItems().length }})</span>
                 }
               </div>
               <div class="ms-3">
@@ -273,9 +292,10 @@
                   type="button"
                   class="btn btn-primary btn-sm oib-box-btn"
                   [ngbTooltip]="'history-query.items.tooltips.add' | translate"
+                  [attr.aria-label]="'history-query.items.tooltips.add' | translate"
                   (click)="addItem()"
                 >
-                  <span class="fa-solid fa-plus"></span>
+                  <span class="fa-solid fa-plus" aria-hidden="true"></span>
                 </button>
                 <button
                   type="button"
@@ -308,9 +328,14 @@
                 class="form-control form-control-sm flex-grow-1"
                 [formControl]="searchControl"
                 [placeholder]="'south.items.search-placeholder' | translate"
+                [attr.aria-label]="'south.items.search-placeholder' | translate"
                 type="text"
               />
-              <select class="form-select form-select-sm w-auto" [formControl]="statusFilterControl">
+              <select
+                class="form-select form-select-sm w-auto"
+                [formControl]="statusFilterControl"
+                [attr.aria-label]="'history-query.items.status' | translate"
+              >
                 <option [ngValue]="null" translate="history-query.items.all-statuses"></option>
                 <option value="enabled" translate="history-query.items.enabled-label"></option>
                 <option value="disabled" translate="history-query.items.disabled-label"></option>
@@ -325,40 +350,40 @@
                     type="button"
                     class="btn btn-secondary btn-sm"
                     (click)="selectAll()"
-                    [disabled]="getSelectedItemsCount() === filteredItems.length"
+                    [disabled]="selectedItems().size === filteredItems().length"
                     id="select-all-button"
                   >
-                    <span class="fa-solid fa-check-square me-1"></span>
+                    <span class="fa-solid fa-check-square me-1" aria-hidden="true"></span>
                     <span translate="history-query.items.select-all"></span>
                   </button>
                   <button
                     type="button"
                     class="btn btn-secondary btn-sm"
                     (click)="unselectAll()"
-                    [disabled]="getSelectedItemsCount() === 0"
+                    [disabled]="selectedItems().size === 0"
                     id="unselect-all-button"
                   >
-                    <span class="fa-solid fa-square me-1"></span>
+                    <span class="fa-solid fa-square me-1" aria-hidden="true"></span>
                     <span translate="history-query.items.unselect-all"></span>
                   </button>
-                  @if (getSelectedItemsCount() > 0) {
+                  @if (selectedItems().size > 0) {
                     <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
                       <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
-                        <span translate="history-query.items.mass-actions" [translateParams]="{ count: selectedItems.size }"></span>
-                        <span class="fa-solid fa-caret-down ms-1"></span>
+                        <span translate="history-query.items.mass-actions" [translateParams]="{ count: selectedItems().size }"></span>
+                        <span class="fa-solid fa-caret-down ms-1" aria-hidden="true"></span>
                       </button>
                       <div ngbDropdownMenu>
                         <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
-                          <span class="fa-solid fa-check me-2"></span>
+                          <span class="fa-solid fa-check me-2" aria-hidden="true"></span>
                           <span translate="history-query.items.enable"></span>
                         </button>
                         <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
-                          <span class="fa-solid fa-times me-2"></span>
+                          <span class="fa-solid fa-times me-2" aria-hidden="true"></span>
                           <span translate="history-query.items.disable"></span>
                         </button>
                         <div class="dropdown-divider"></div>
                         <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
-                          <span class="fa-solid fa-trash-can me-2"></span>
+                          <span class="fa-solid fa-trash-can me-2" aria-hidden="true"></span>
                           <span translate="history-query.items.delete"></span>
                         </button>
                       </div>
@@ -370,21 +395,17 @@
               <table class="table table-sm table-hover oib-table">
                 <thead class="light">
                   <tr>
-                    <th style="width: 50px; text-align: center"></th>
-                    <th style="width: 6rem; text-align: center">
-                      <button
-                        type="button"
-                        style="background: none; border: none; font-weight: bold; white-space: nowrap"
-                        (click)="toggleColumnSort('enabled')"
-                      >
+                    <th class="selection-column"></th>
+                    <th class="status-column">
+                      <button type="button" class="sort-button text-nowrap" (click)="toggleColumnSort('enabled')">
                         <span translate="history-query.items.status" class="me-2"></span>
-                        <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.enabled] }}"></span>
+                        <span class="fa-solid {{ sortIcon('enabled') }}" aria-hidden="true"></span>
                       </button>
                     </th>
                     <th>
-                      <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
+                      <button type="button" class="sort-button" (click)="toggleColumnSort('name')">
                         <span translate="history-query.items.name" class="me-2"></span>
-                        <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.name] }}"></span>
+                        <span class="fa-solid {{ sortIcon('name') }}" aria-hidden="true"></span>
                       </button>
                     </th>
                     @for (setting of displaySettings(); track setting) {
@@ -394,24 +415,16 @@
                         <th>{{ setting.translationKey | translate }}</th>
                       }
                     }
-                    <th style="width: 10rem">
-                      <button
-                        type="button"
-                        style="background: none; border: none; font-weight: bold"
-                        (click)="toggleColumnSort('createdAt')"
-                      >
+                    <th class="date-column">
+                      <button type="button" class="sort-button" (click)="toggleColumnSort('createdAt')">
                         <span translate="history-query.items.created-at" class="me-2"></span>
-                        <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.createdAt] }}"></span>
+                        <span class="fa-solid {{ sortIcon('createdAt') }}" aria-hidden="true"></span>
                       </button>
                     </th>
-                    <th style="width: 10rem">
-                      <button
-                        type="button"
-                        style="background: none; border: none; font-weight: bold"
-                        (click)="toggleColumnSort('updatedAt')"
-                      >
+                    <th class="date-column">
+                      <button type="button" class="sort-button" (click)="toggleColumnSort('updatedAt')">
                         <span translate="history-query.items.updated-at" class="me-2"></span>
-                        <span class="fa-solid {{ ['fa-sort', 'fa-sort-up', 'fa-sort-down'][columnSortStates.updatedAt] }}"></span>
+                        <span class="fa-solid {{ sortIcon('updatedAt') }}" aria-hidden="true"></span>
                       </button>
                     </th>
                     <th></th>
@@ -420,13 +433,13 @@
                 <tbody>
                   @for (item of displayedItems().content; track item.name) {
                     <tr class="south-item">
-                      <td style="text-align: center">
+                      <td class="text-center">
                         <input
                           type="checkbox"
                           class="form-check-input"
-                          [checked]="selectedItems.has(item.name!)"
+                          [checked]="selectedItems().has(item.name)"
                           (change)="toggleItemSelection(item)"
-                          style="width: 16px; height: 16px; cursor: pointer"
+                          [attr.aria-label]="item.name"
                         />
                       </td>
                       <td class="text-center">
@@ -448,34 +461,38 @@
                             type="button"
                             class="btn btn-link edit-south-item px-1 py-0"
                             [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
+                            [attr.aria-label]="'history-query.items.tooltips.edit' | translate"
                             (click)="editItem(item)"
                           >
-                            <span class="fa-solid fa-pencil"></span>
+                            <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                           </button>
                           <button
                             type="button"
                             class="btn btn-link duplicate-south-item px-1 py-0"
                             [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
+                            [attr.aria-label]="'history-query.items.tooltips.duplicate' | translate"
                             (click)="duplicateItem(item)"
                           >
-                            <span class="fa-solid fa-copy"></span>
+                            <span class="fa-solid fa-copy" aria-hidden="true"></span>
                           </button>
                           <button
                             type="button"
                             class="btn btn-link delete-south-item px-1 py-0"
                             [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
+                            [attr.aria-label]="'history-query.items.tooltips.delete' | translate"
                             (click)="deleteItem(item)"
                           >
-                            <span class="fa-solid fa-trash-can"></span>
+                            <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                           </button>
                           <!-- Audit history button -->
                           <button
                             type="button"
                             class="btn btn-link show-audit-item px-1 py-0"
                             [ngbTooltip]="'history-query.items.tooltips.audit' | translate"
+                            [attr.aria-label]="'history-query.items.tooltips.audit' | translate"
                             (click)="showAudit('history_query_item', item.id)"
                           >
-                            <span class="fa-solid fa-history"></span>
+                            <span class="fa-solid fa-history" aria-hidden="true"></span>
                           </button>
                         </div>
                       </td>

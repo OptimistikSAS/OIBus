@@ -6,7 +6,7 @@
           <h1 class="d-flex justify-content-between">
             <div class="title-container me-2">
               <span
-                [ngbTooltip]="getFullTitle()"
+                [ngbTooltip]="fullTitle()"
                 placement="bottom-end"
                 translate="explore-cache.title"
                 [translateParams]="{ name: historyQuery.name }"
@@ -20,13 +20,13 @@
           <div class="row gx-2 pt-1 pb-3">
             <!-- From -->
             <div class="col">
-              <label for="start" class="col-auto col-form-label" translate="explore-cache.search.start"></label>
+              <label for="start-date" class="col-auto col-form-label" translate="explore-cache.search.start"></label>
               <oib-datetimepicker formControlName="start" id="start-date" />
             </div>
 
             <!-- To -->
             <div class="col">
-              <label for="end" class="col-auto col-form-label" translate="explore-cache.search.end"></label>
+              <label for="end-date" class="col-auto col-form-label" translate="explore-cache.search.end"></label>
               <oib-datetimepicker formControlName="end" id="end-date" />
               <val-errors [control]="form" />
             </div>
@@ -52,6 +52,7 @@
             <div class="col">
               <div class="d-flex gap-2 pull-right">
                 <button
+                  type="submit"
                   [oib-save-button]="state"
                   class="btn btn-primary"
                   form="cache-form"
