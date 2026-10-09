@@ -36,7 +36,7 @@ class OIARegistrationComponentTester {
   readonly title = this.root.getByRole('heading', { level: 1 }).first();
   readonly registerButton = this.root.getByRole('button', { name: 'Register' });
   readonly unregisterButton = this.root.getByRole('button', { name: 'Unregister' });
-  readonly editRegisterButton = this.root.getByRole('button', { name: 'Edit register' });
+  readonly editRegisterButton = this.root.getByRole('button', { name: 'Edit registration' });
   readonly activationCode = this.root.getByRole('heading', { name: 'ABC123' });
   readonly hostLink = this.root.getByRole('link', { name: registered.host });
   readonly commandRows = this.root.getByCss('tbody tr');
