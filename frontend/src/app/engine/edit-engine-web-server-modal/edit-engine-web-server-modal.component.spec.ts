@@ -1,114 +1,132 @@
 import { TestBed } from '@angular/core/testing';
 
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
-
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { buildEngineSettings } from '../../../test/builders';
+import { catchUnhandledErrors } from '../../../test/unhandled-errors';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { ModalService } from '../../shared/modal.service';
+import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
+import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/port-redirect-modal.component';
 import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal.component';
-
-const engineSettings = { webServer: { port: 2223, authTokenDuration: '7d' } } as EngineSettingsDTO;
 
 class EditEngineWebServerModalTester {
   readonly fixture = TestBed.createComponent(EditEngineWebServerModalComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly portInput = this.root.getByCss('#port');
-  readonly saveButton = this.root.getByCss('#save-web-server-button');
-  readonly cancelButton = this.root.getByCss('#cancel-web-server-button');
+  readonly port = this.root.getByLabelText('Port');
+  readonly authTokenDuration = this.root.getByLabelText('Authentication duration');
+  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
+  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
+
+  initialize() {
+    this.fixture.componentInstance.initialize(buildEngineSettings({ webServer: { port: 2223, authTokenDuration: '1d' } }));
+  }
 }
 
 describe('EditEngineWebServerModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let engineService: MockObject<EngineService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockObject<ModalService>;
+  let modalService: MockModalService<PortRedirectModalComponent>;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     engineService = createMock(EngineService);
     notificationService = createMock(NotificationService);
-    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideModalTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: EngineService, useValue: engineService },
-        { provide: NotificationService, useValue: notificationService },
-        { provide: ModalService, useValue: modalService },
-        { provide: NgbModal, useValue: createMock(NgbModal) }
+        { provide: NotificationService, useValue: notificationService }
       ]
     });
+    modalService = TestBed.inject(MockModalService);
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
   });
 
-  test('should initialize the form with engine port', async () => {
+  test('should initialize the form with the web server settings', async () => {
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.componentInstance.initialize(engineSettings);
-    tester.fixture.detectChanges();
-    await expect.element(tester.portInput).toHaveValue(engineSettings.webServer.port);
+    tester.initialize();
+
+    await expect.element(tester.port).toHaveValue(2223);
+    await expect.element(tester.authTokenDuration).toHaveDisplayValue('1 day');
   });
 
-  test('should initialize the form with the current auth token duration', () => {
+  test('should default the auth token duration to 7 days on a fresh form', async () => {
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.componentInstance.initialize(engineSettings);
-    tester.fixture.detectChanges();
-    expect(tester.fixture.componentInstance.form.controls.authTokenDuration.value).toBe('7d');
+
+    await expect.element(tester.authTokenDuration).toHaveDisplayValue('7 days');
   });
 
-  test('should default the auth token duration to 7 days on a fresh form', () => {
+  test('should not save when the port is empty', async () => {
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.detectChanges();
-    expect(tester.fixture.componentInstance.form.controls.authTokenDuration.value).toBe('7d');
-  });
+    tester.initialize();
 
-  test('should not save when form is invalid', async () => {
-    const tester = new EditEngineWebServerModalTester();
-    tester.fixture.detectChanges();
-    await tester.portInput.fill('');
+    await tester.port.fill('');
     await tester.saveButton.click();
+
+    await expect.element(tester.root.getByText('This field is required')).toBeInTheDocument();
     expect(engineService.updateEngineWebServer).not.toHaveBeenCalled();
   });
 
-  test('should save and show success when port did not change', async () => {
+  test('should save and show a success when the port did not change', async () => {
     engineService.updateEngineWebServer.mockReturnValue(of({ needsRedirect: false, newPort: null }));
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.componentInstance.initialize(engineSettings);
-    tester.fixture.detectChanges();
+    tester.initialize();
+
+    await tester.authTokenDuration.selectOptions('30 days');
     await tester.saveButton.click();
-    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({
-      port: engineSettings.webServer.port,
-      authTokenDuration: engineSettings.webServer.authTokenDuration
-    });
+
+    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({ port: 2223, authTokenDuration: '30d' });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
   });
 
-  test('should open redirect modal when port changed', async () => {
+  test('should close and open the redirect modal when the port changed', async () => {
     engineService.updateEngineWebServer.mockReturnValue(of({ needsRedirect: true, newPort: 3333 }));
-    const redirectModalRef = { componentInstance: { initialize: () => {} } };
-    modalService.open.mockReturnValue(redirectModalRef as any);
+    const redirectComponent = createMock(PortRedirectModalComponent);
+    modalService.mockDismissedModal(redirectComponent);
+    const openSpy = vi.spyOn(modalService, 'open');
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.componentInstance.initialize(engineSettings);
-    tester.fixture.detectChanges();
+    tester.initialize();
+
+    await tester.port.fill('3333');
     await tester.saveButton.click();
+
+    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({ port: 3333, authTokenDuration: '1d' });
     expect(activeModal.close).toHaveBeenCalled();
-    expect(modalService.open).toHaveBeenCalled();
+    expect(openSpy).toHaveBeenCalledWith(PortRedirectModalComponent, { backdrop: 'static', keyboard: false });
+    expect(redirectComponent.initialize).toHaveBeenCalledWith(3333);
+    expect(notificationService.success).not.toHaveBeenCalled();
   });
 
-  test('should dismiss modal on cancel', async () => {
+  test('should keep the modal open when the save fails', async () => {
+    const unhandledError = catchUnhandledErrors();
+    engineService.updateEngineWebServer.mockReturnValue(throwError(() => new Error('boom')));
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.detectChanges();
+    tester.initialize();
+
+    await tester.saveButton.click();
+
+    await vi.waitFor(() => expect(unhandledError).toHaveBeenCalledWith(new Error('boom')));
+    expect(activeModal.close).not.toHaveBeenCalled();
+  });
+
+  test('should dismiss the modal on cancel', async () => {
+    const tester = new EditEngineWebServerModalTester();
+
     await tester.cancelButton.click();
+
     expect(engineService.updateEngineWebServer).not.toHaveBeenCalled();
     expect(activeModal.dismiss).toHaveBeenCalled();
   });

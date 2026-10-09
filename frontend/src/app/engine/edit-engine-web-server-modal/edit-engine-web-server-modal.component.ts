@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,13 +17,15 @@ import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/por
   selector: 'oib-edit-engine-web-server-modal',
   templateUrl: './edit-engine-web-server-modal.component.html',
   styleUrl: './edit-engine-web-server-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditEngineWebServerModalComponent {
-  private modal = inject(NgbActiveModal);
-  private engineService = inject(EngineService);
-  private notificationService = inject(NotificationService);
-  private modalService = inject(ModalService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly engineService = inject(EngineService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly modalService = inject(ModalService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly authTokenDurationOptions: Array<{ value: AuthTokenDuration; labelKey: string }> = [
     { value: '1h', labelKey: 'engine.web-server-settings.auth-token-duration-options.1h' },
@@ -35,7 +37,7 @@ export class EditEngineWebServerModalComponent {
     { value: '30d', labelKey: 'engine.web-server-settings.auth-token-duration-options.30d' }
   ];
 
-  form = inject(NonNullableFormBuilder).group({
+  readonly form = this.fb.group({
     port: [null as number | null, Validators.required],
     authTokenDuration: ['7d' as AuthTokenDuration, Validators.required]
   });

@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 
@@ -24,28 +25,32 @@ type FileField = 'certificateFile' | 'privateKeyFile' | 'certificateChainFile';
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, NgbCollapse]
 })
 export class ImportCertificateModalComponent {
-  private modal = inject(NgbActiveModal);
-  private certificateService = inject(CertificateService);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly certificateService = inject(CertificateService);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  state = new ObservableState();
-  error = signal<string | null>(null);
-  fileError = signal<string | null>(null);
+  readonly state = new ObservableState();
+  readonly error = signal<string | null>(null);
+  readonly fileError = signal<string | null>(null);
 
   readonly initializeFile = new File([''], 'Choose a file');
   readonly certificateFile = signal<File>(this.initializeFile);
   readonly privateKeyFile = signal<File>(this.initializeFile);
   readonly certificateChainFile = signal<File>(this.initializeFile);
 
-  form = inject(NonNullableFormBuilder).group({
+  readonly form = this.fb.group({
     name: ['', Validators.required],
     description: '',
     privateKeyPassphrase: ''
   });
+  private readonly formValid = toSignal(this.form.statusChanges.pipe(map(status => status === 'VALID')), {
+    initialValue: this.form.valid
+  });
 
-  get canSave(): boolean {
-    return this.form.valid && this.certificateFile() !== this.initializeFile && this.privateKeyFile() !== this.initializeFile;
-  }
+  readonly canSave = computed(
+    () => this.formValid() && this.certificateFile() !== this.initializeFile && this.privateKeyFile() !== this.initializeFile
+  );
 
   onFileSelected(field: FileField, file: File) {
     if (file.size > MAX_FILE_SIZE) {
@@ -93,7 +98,7 @@ export class ImportCertificateModalComponent {
   }
 
   save() {
-    if (!this.canSave) {
+    if (!this.canSave()) {
       return;
     }
 
