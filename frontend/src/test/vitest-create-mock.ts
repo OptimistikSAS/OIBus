@@ -18,7 +18,8 @@ function collectMethodNames(proto: unknown): Array<string> {
   return [...methodNames, ...collectMethodNames(Object.getPrototypeOf(proto))];
 }
 
-// stolen from vitest's own code
+// stolen from vitest's own code (not exported by vitest; `any` is required for any function to be assignable to it)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Procedure = (...args: Array<any>) => any;
 type Methods<T> = keyof { [K in keyof T as T[K] extends Procedure ? K : never]: T[K] };
 // inspired by vitest's MockedObject<T>
@@ -27,16 +28,17 @@ export type MockObject<T> = T & { [K in Methods<T>]: T[K] extends Procedure ? Mo
 /**
  * Creates a mock object for a class where all the methods of the class (and of its superclasses) are mocks.
  * @param type the type to mock (usually a service class)
+ * @param overrides values for non-method members (e.g. an observable field such as `info$`), or method implementations
  */
-export function createMock<T>(type: Type<T>): MockObject<T> {
-  const fakeObject: any = {};
+export function createMock<T>(type: Type<T>, overrides: Partial<T> = {}): MockObject<T> {
+  const fakeObject: Record<string, unknown> = {};
   for (const method of collectMethodNames(type.prototype)) {
     // The type name starts with _, so we slice it off for better readability in the mock names if there is one
     const typeName = type.name.startsWith('_') ? type.name.slice(1) : type.name;
     const mockName = `${typeName}.${method}`;
     fakeObject[method] = vi.fn().mockName(mockName);
   }
-  return fakeObject;
+  return Object.assign(fakeObject, overrides) as MockObject<T>;
 }
 /**
  * Options for creating a stub ActivatedRoute.
