@@ -51,8 +51,8 @@ const LOGGER_OUTPUTS = ['console', 'file', 'database', 'loki', 'oia', 'syslog'] 
   ]
 })
 export class ConfigImportPreviewComponent {
-  private translateService = inject(TranslateService);
-  private transformerService = inject(TransformerService);
+  private readonly translateService = inject(TranslateService);
+  private readonly transformerService = inject(TransformerService);
 
   readonly preview = input.required<ConfigImportPreviewDTO>();
   readonly config = computed(() => this.preview().config);

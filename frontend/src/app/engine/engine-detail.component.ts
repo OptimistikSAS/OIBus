@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { BehaviorSubject, firstValueFrom, switchMap } from 'rxjs';
+import { firstValueFrom, switchMap } from 'rxjs';
 
 import { AuditEntityType } from '@oibus/shared/domain/audit.model';
 import { AuthTokenDuration } from '@oibus/shared/domain/engine.model';
@@ -50,32 +50,32 @@ import { TransformerListComponent } from './transformer-list/transformer-list.co
     TransformerListComponent
   ],
   templateUrl: './engine-detail.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './engine-detail.component.scss'
 })
 export class EngineDetailComponent {
-  private engineService = inject(EngineService);
-  private windowService = inject(WindowService);
-  private notificationService = inject(NotificationService);
-  private confirmationService = inject(ConfirmationService);
-  private modalService = inject(ModalService);
-  private configTransferService = inject(ConfigTransferService);
+  private readonly engineService = inject(EngineService);
+  private readonly windowService = inject(WindowService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly modalService = inject(ModalService);
+  private readonly configTransferService = inject(ConfigTransferService);
 
-  private readonly refresh$ = new BehaviorSubject<void>(undefined);
-
-  readonly engineSettings = toSignal(this.refresh$.pipe(switchMap(() => this.engineService.getEngineSettings())));
+  private readonly engineSettingsResource = rxResource({ stream: () => this.engineService.getEngineSettings() });
+  /** The engine settings, kept while they are reloaded after an edition */
+  readonly engineSettings = computed(() => (this.engineSettingsResource.hasValue() ? this.engineSettingsResource.value() : undefined));
   readonly metrics = toSignal(
     pollMetrics(() => this.engineService.getEngineMetrics()),
     { initialValue: null }
   );
-  restarting = new ObservableState();
-  exporting = new ObservableState();
-  dumpingMemory = new ObservableState();
+  readonly restarting = new ObservableState();
+  readonly exporting = new ObservableState();
+  readonly dumpingMemory = new ObservableState();
 
   openNameModal() {
     const modal = this.modalService.open(EditEngineNameModalComponent);
     modal.componentInstance.initialize(this.engineSettings()!);
-    modal.result.subscribe(() => this.refresh$.next());
+    modal.result.subscribe(() => this.engineSettingsResource.reload());
   }
 
   /**
@@ -93,19 +93,19 @@ export class EngineDetailComponent {
   openWebServerModal() {
     const modal = this.modalService.open(EditEngineWebServerModalComponent);
     modal.componentInstance.initialize(this.engineSettings()!);
-    modal.result.subscribe(() => this.refresh$.next());
+    modal.result.subscribe(() => this.engineSettingsResource.reload());
   }
 
   openProxyModal() {
     const modal = this.modalService.open(EditEngineProxyModalComponent);
     modal.componentInstance.initialize(this.engineSettings()!);
-    modal.result.subscribe(() => this.refresh$.next());
+    modal.result.subscribe(() => this.engineSettingsResource.reload());
   }
 
   openLoggerModal() {
     const modal = this.modalService.open(EditEngineLoggerModalComponent, { size: 'lg' });
     modal.componentInstance.initialize(this.engineSettings()!);
-    modal.result.subscribe(() => this.refresh$.next());
+    modal.result.subscribe(() => this.engineSettingsResource.reload());
   }
 
   restart() {

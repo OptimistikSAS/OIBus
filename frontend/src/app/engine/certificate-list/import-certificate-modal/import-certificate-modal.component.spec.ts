@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of, throwError } from 'rxjs';
+import { isObservable, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { CertificateService } from '../../../services/certificate.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
@@ -17,16 +18,18 @@ import { ImportCertificateModalComponent } from './import-certificate-modal.comp
 class ImportCertificateModalComponentTester {
   readonly fixture = TestBed.createComponent(ImportCertificateModalComponent);
   readonly componentInstance = this.fixture.componentInstance;
-  readonly name = page.getByLabelText('Name');
-  readonly description = page.getByLabelText('Description');
-  readonly privateKeyPassphrase = page.getByLabelText('Private key passphrase');
-  readonly certificateFile = page.getByCss('#certificate-file');
-  readonly certificateFileButton = page.getByCss('#certificate-file-button');
-  readonly privateKeyFile = page.getByCss('#private-key-file');
-  readonly certificateChainFile = page.getByCss('#certificate-chain-file');
-  readonly save = page.getByCss('#save-button');
-  readonly cancel = page.getByRole('button', { name: 'Cancel' });
-  readonly error = page.getByCss('.alert-danger');
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly name = this.root.getByLabelText('Name');
+  readonly description = this.root.getByLabelText('Description');
+  readonly privateKeyPassphrase = this.root.getByLabelText('Private key passphrase');
+  readonly certificateFile = this.root.getByCss('#certificate-file');
+  readonly certificateFileButton = this.root.getByCss('#certificate-file-button');
+  readonly privateKeyFile = this.root.getByCss('#private-key-file');
+  readonly certificateChainFile = this.root.getByCss('#certificate-chain-file');
+  readonly save = this.root.getByRole('button', { name: 'Save' });
+  readonly cancel = this.root.getByRole('button', { name: 'Cancel' });
+  readonly error = this.root.getByCss('.alert-danger');
+  readonly fileError = this.root.getByRole('alert');
 }
 
 const certificateFile = new File(['cert'], 'cert.pem');
@@ -70,7 +73,7 @@ describe('ImportCertificateModalComponent', () => {
   });
 
   test('should save with the right command and files', async () => {
-    const importedCertificate = { id: 'id1', name: 'my cert' } as CertificateDTO;
+    const importedCertificate: CertificateDTO = { ...testData.certificates.list[0], name: 'my cert' };
     certificateService.importCertificate.mockReturnValue(of(importedCertificate));
 
     await tester.name.fill('my cert');
@@ -91,7 +94,7 @@ describe('ImportCertificateModalComponent', () => {
   });
 
   test('should include the certificate chain and passphrase when provided', async () => {
-    certificateService.importCertificate.mockReturnValue(of({ id: 'id1', name: 'my cert' } as CertificateDTO));
+    certificateService.importCertificate.mockReturnValue(of(testData.certificates.list[0]));
 
     await tester.name.fill('my cert');
     await tester.certificateFile.upload(certificateFile);
@@ -125,7 +128,7 @@ describe('ImportCertificateModalComponent', () => {
   test('should reject a file that is too large', async () => {
     await tester.certificateFile.upload(new File([new Uint8Array(1024 * 1024 + 1)], 'big.pem'));
 
-    await expect.element(page.getByRole('alert')).toHaveTextContent('The selected file is too large. Maximum size is 1 MB');
+    await expect.element(tester.fileError).toHaveTextContent('The selected file is too large. Maximum size is 1 MB');
     await expect.element(tester.certificateFileButton).toHaveTextContent('Choose a file');
   });
 
@@ -145,7 +148,7 @@ describe('ImportCertificateModalComponent', () => {
 
       const result = tester.componentInstance.canDismiss();
 
-      expect(typeof result).not.toBe('boolean');
+      expect(isObservable(result)).toBe(true);
       expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
     });
   });

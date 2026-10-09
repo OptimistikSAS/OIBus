@@ -15,9 +15,10 @@
           id="add-certificate"
           class="btn btn-primary btn-sm oib-box-btn"
           [ngbTooltip]="'engine.certificate.tooltips.add' | translate"
+          [attr.aria-label]="'engine.certificate.tooltips.add' | translate"
           (click)="addCertificate()"
         >
-          <span class="fa-solid fa-plus"></span>
+          <span class="fa-solid fa-plus" aria-hidden="true"></span>
         </button>
         <button
           type="button"
@@ -42,18 +43,14 @@
           <th class="first-column" translate="engine.certificate.name"></th>
           <th translate="engine.certificate.description"></th>
           <th translate="engine.certificate.public-key"></th>
-          <th style="width: 3rem"></th>
+          <th class="copy-column"></th>
           <th translate="engine.certificate.certificate"></th>
-          <th style="width: 4rem"></th>
+          <th class="certificate-actions-column"></th>
           <th translate="engine.certificate.expiry"></th>
           <th>
-            <button
-              type="button"
-              style="background: none; border: none; font-weight: bold; color: inherit"
-              (click)="toggleSort('updatedAt')"
-            >
+            <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
               <span translate="engine.certificate.updated-at" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('updatedAt') }}"></span>
+              <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
             </button>
           </th>
           <th class="last-column"></th>
@@ -67,31 +64,37 @@
             <td>{{ certificate.publicKey }}</td>
             <td>
               <button
+                type="button"
                 class="btn btn-link px-1"
                 [string]="certificate.publicKey"
                 [ngbTooltip]="'engine.certificate.tooltips.copy-public-key' | translate"
+                [attr.aria-label]="'engine.certificate.tooltips.copy-public-key' | translate"
                 oibClipboardCopy
               >
-                <span class="fa-solid fa-copy"></span>
+                <span class="fa-solid fa-copy" aria-hidden="true"></span>
               </button>
             </td>
             <td>{{ certificate.certificate }}</td>
             <td>
               <div>
                 <button
+                  type="button"
                   class="btn btn-link px-1 py-0"
                   [string]="certificate.certificate"
                   [ngbTooltip]="'engine.certificate.tooltips.copy-certificate' | translate"
+                  [attr.aria-label]="'engine.certificate.tooltips.copy-certificate' | translate"
                   oibClipboardCopy
                 >
-                  <span class="fa-solid fa-copy"></span>
+                  <span class="fa-solid fa-copy" aria-hidden="true"></span>
                 </button>
                 <button
+                  type="button"
                   class="btn btn-link px-1 py-0 export-certificate"
                   [ngbTooltip]="'engine.certificate.tooltips.export' | translate"
+                  [attr.aria-label]="'engine.certificate.tooltips.export' | translate"
                   (click)="exportCertificate(certificate)"
                 >
-                  <span class="fa-solid fa-download"></span>
+                  <span class="fa-solid fa-download" aria-hidden="true"></span>
                 </button>
               </div>
             </td>
@@ -111,27 +114,30 @@
                   type="button"
                   class="btn btn-link edit-certificate px-1 py-0"
                   [ngbTooltip]="'engine.certificate.tooltips.edit' | translate"
+                  [attr.aria-label]="'engine.certificate.tooltips.edit' | translate"
                   (click)="editCertificate(certificate)"
                 >
-                  <span class="fa-solid fa-pencil"></span>
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                 </button>
                 <!-- Delete button -->
                 <button
                   type="button"
                   class="btn btn-link delete-certificate px-1 py-0"
                   [ngbTooltip]="'engine.certificate.tooltips.delete' | translate"
+                  [attr.aria-label]="'engine.certificate.tooltips.delete' | translate"
                   (click)="deleteCertificate(certificate)"
                 >
-                  <span class="fa-solid fa-trash-can"></span>
+                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
                 </button>
                 <!-- Audit history button -->
                 <button
                   type="button"
                   class="btn btn-link show-audit-certificate px-1 py-0"
                   [ngbTooltip]="'engine.certificate.tooltips.audit' | translate"
+                  [attr.aria-label]="'engine.certificate.tooltips.audit' | translate"
                   (click)="showAudit(certificate)"
                 >
-                  <span class="fa-solid fa-history"></span>
+                  <span class="fa-solid fa-history" aria-hidden="true"></span>
                 </button>
               </div>
             </td>

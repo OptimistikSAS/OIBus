@@ -1,3 +1,4 @@
+@let value = formValue();
 <div class="modal-header">
   <h4 class="modal-title" [translate]="'engine.scan-mode.title-' + mode()"></h4>
 </div>
@@ -17,15 +18,15 @@
 
     <!-- Type -->
     <div class="form-group">
-      <label class="form-label d-block" translate="engine.scan-mode.type"></label>
+      <div class="form-label" translate="engine.scan-mode.type"></div>
       <div class="btn-group" role="group" [attr.aria-label]="'engine.scan-mode.type' | translate">
         <button
           type="button"
           id="type-cron"
           class="btn"
-          [class.btn-primary]="form.controls.type.value === 'cron'"
-          [class.btn-outline-secondary]="form.controls.type.value !== 'cron'"
-          [attr.aria-pressed]="form.controls.type.value === 'cron'"
+          [class.btn-primary]="value.type === 'cron'"
+          [class.btn-outline-secondary]="value.type !== 'cron'"
+          [attr.aria-pressed]="value.type === 'cron'"
           (click)="selectType('cron')"
           translate="engine.scan-mode.type-cron"
         ></button>
@@ -33,9 +34,9 @@
           type="button"
           id="type-interval"
           class="btn"
-          [class.btn-primary]="form.controls.type.value === 'interval'"
-          [class.btn-outline-secondary]="form.controls.type.value !== 'interval'"
-          [attr.aria-pressed]="form.controls.type.value === 'interval'"
+          [class.btn-primary]="value.type === 'interval'"
+          [class.btn-outline-secondary]="value.type !== 'interval'"
+          [attr.aria-pressed]="value.type === 'interval'"
           (click)="selectType('interval')"
           translate="engine.scan-mode.type-interval"
         ></button>
@@ -43,17 +44,17 @@
     </div>
 
     <!-- Cron -->
-    @if (form.controls.type.value === 'cron') {
+    @if (value.type === 'cron') {
       <div class="form-group" id="cron-section">
         <label class="form-label" for="cron" translate="engine.scan-mode.cron"></label>
         <input formControlName="cron" id="cron" class="form-control font-monospace" />
         <val-errors controlName="cron" />
         @if (cronValidationResponse()) {
           <div class="mt-1">
-            <label translate="engine.scan-mode.cron-meaning"></label>
-            <div>{{ humanReadableCron }}</div>
-            <label translate="engine.scan-mode.cron-next-occurrences"></label>
-            @for (date of nextCronExecutions; track date) {
+            <div translate="engine.scan-mode.cron-meaning"></div>
+            <div>{{ humanReadableCron() }}</div>
+            <div translate="engine.scan-mode.cron-next-occurrences"></div>
+            @for (date of nextCronExecutions(); track date) {
               <div>{{ date | datetime: 'mediumWithSecondsLocalized' }}</div>
             }
           </div>
@@ -62,7 +63,7 @@
     }
 
     <!-- Interval -->
-    @if (form.controls.type.value === 'interval') {
+    @if (value.type === 'interval') {
       <div class="form-group" id="interval-section" formGroupName="interval">
         <label class="form-label" for="interval-value" translate="engine.scan-mode.interval"></label>
         <div class="input-group">
@@ -75,7 +76,7 @@
         </div>
         <val-errors controlName="value" />
         <val-errors [control]="form.controls.interval" />
-        @if (showSubSecondIntervalWarning) {
+        @if (showSubSecondIntervalWarning()) {
           <div
             class="alert alert-warning py-2 px-3 mt-2 mb-0"
             id="sub-second-warning"
@@ -103,7 +104,7 @@
       </div>
     </div>
 
-    @if (form.controls.activationWindowEnabled.value) {
+    @if (value.activationWindowEnabled) {
       <div class="oib-grey-container" id="activation-window-section" formGroupName="activationWindow">
         <!-- Date range -->
         <div class="form-group">
@@ -119,7 +120,7 @@
                 label="engine.scan-mode.date-range-from"
                 [timezone]="timezone"
               />
-              @if (form.controls.activationWindow.controls.start.value) {
+              @if (value.activationWindow.start) {
                 <button
                   type="button"
                   class="btn btn-link btn-sm px-0 oib-clear-bound"
@@ -131,7 +132,7 @@
             </div>
             <div class="col">
               <oib-datetimepicker formControlName="end" id="window-end" label="engine.scan-mode.date-range-to" [timezone]="timezone" />
-              @if (form.controls.activationWindow.controls.end.value) {
+              @if (value.activationWindow.end) {
                 <button
                   type="button"
                   class="btn btn-link btn-sm px-0 oib-clear-bound"
@@ -167,7 +168,7 @@
             <div class="col position-relative">
               <label class="form-label" for="time-end" translate="engine.scan-mode.time-end"></label>
               <input type="time" formControlName="timeEnd" id="time-end" class="form-control" />
-              @if (isOvernight) {
+              @if (isOvernight()) {
                 <span class="oib-overnight-badge" id="overnight-badge" [ngbTooltip]="'engine.scan-mode.tooltips.overnight' | translate"
                   >+1</span
                 >
@@ -190,7 +191,7 @@
         <!-- Live summary -->
         <div class="border-top pt-2">
           <div class="text-muted" translate="engine.scan-mode.live-summary"></div>
-          <div class="fw-bold" id="activation-window-summary">{{ activationWindowSummary }}</div>
+          <div class="fw-bold" id="activation-window-summary">{{ activationWindowSummary() }}</div>
         </div>
       </div>
     }
@@ -198,7 +199,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <button [oib-save-button]="state" form="form"></button>
+    <button type="submit" [oib-save-button]="state" form="form"></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

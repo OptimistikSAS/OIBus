@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -16,22 +17,23 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
   selector: 'oib-edit-certificate-modal',
   templateUrl: './edit-certificate-modal.component.html',
   styleUrl: './edit-certificate-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
 })
 export class EditCertificateModalComponent {
-  private modal = inject(NgbActiveModal);
-  private certificateService = inject(CertificateService);
-  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly certificateService = inject(CertificateService);
+  private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  mode: 'create' | 'edit' = 'create';
-  state = new ObservableState();
-  certificate: CertificateDTO | null = null;
-  form = inject(NonNullableFormBuilder).group({
+  readonly mode = signal<'create' | 'edit'>('create');
+  readonly state = new ObservableState();
+  private certificate: CertificateDTO | null = null;
+  readonly form = this.fb.group({
     name: ['', Validators.required],
     description: '',
     regenerateCertificate: true,
-    certificateOptions: inject(NonNullableFormBuilder).group({
+    certificateOptions: this.fb.group({
       commonName: ['', Validators.required],
       countryName: ['', Validators.required],
       stateOrProvinceName: ['', Validators.required],
@@ -42,8 +44,13 @@ export class EditCertificateModalComponent {
     })
   });
 
+  /** Whether the certificate is (re)generated, as a signal for the template (the form is also patched by `prepareForEdition()`) */
+  readonly regenerateCertificate = toSignal(this.form.controls.regenerateCertificate.valueChanges, {
+    initialValue: this.form.controls.regenerateCertificate.value
+  });
+
   constructor() {
-    this.form.controls.regenerateCertificate.valueChanges.subscribe(next => {
+    this.form.controls.regenerateCertificate.valueChanges.pipe(takeUntilDestroyed()).subscribe(next => {
       if (next) {
         this.form.controls.certificateOptions.enable();
       } else {
@@ -53,11 +60,11 @@ export class EditCertificateModalComponent {
   }
 
   prepareForCreation() {
-    this.mode = 'create';
+    this.mode.set('create');
   }
 
   prepareForEdition(certificate: CertificateDTO) {
-    this.mode = 'edit';
+    this.mode.set('edit');
     this.certificate = certificate;
 
     this.form.patchValue({
@@ -104,7 +111,7 @@ export class EditCertificateModalComponent {
     };
 
     let obs: Observable<CertificateDTO>;
-    if (this.mode === 'create') {
+    if (this.mode() === 'create') {
       obs = this.certificateService.create(command);
     } else {
       obs = this.certificateService

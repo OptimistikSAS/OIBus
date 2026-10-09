@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -14,16 +15,16 @@ import { NotificationService } from '../../shared/notification.service';
   selector: 'oib-edit-engine-proxy-modal',
   templateUrl: './edit-engine-proxy-modal.component.html',
   styleUrl: './edit-engine-proxy-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditEngineProxyModalComponent {
-  private modal = inject(NgbActiveModal);
-  private engineService = inject(EngineService);
-  private notificationService = inject(NotificationService);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly engineService = inject(EngineService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  private fb = inject(NonNullableFormBuilder);
-
-  form = this.fb.group({
+  readonly form = this.fb.group({
     proxyEnabled: [false as boolean, Validators.required],
     proxyPort: [null as number | null, Validators.required],
     proxyUsername: [null as string | null],
@@ -34,8 +35,14 @@ export class EditEngineProxyModalComponent {
     forwardProxyPassword: [null as string | null]
   });
 
+  /** Whether the proxy server is enabled, as a signal for the template (the form is also patched by `initialize()`) */
+  readonly proxyEnabled = toSignal(this.form.controls.proxyEnabled.valueChanges, { initialValue: this.form.controls.proxyEnabled.value });
+  readonly forwardProxyEnabled = toSignal(this.form.controls.forwardProxyEnabled.valueChanges, {
+    initialValue: this.form.controls.forwardProxyEnabled.value
+  });
+
   constructor() {
-    this.form.controls.proxyEnabled.valueChanges.subscribe(enabled => {
+    this.form.controls.proxyEnabled.valueChanges.pipe(takeUntilDestroyed()).subscribe(enabled => {
       if (enabled) {
         this.form.controls.proxyPort.enable();
         this.form.controls.proxyUsername.enable();
@@ -59,7 +66,7 @@ export class EditEngineProxyModalComponent {
       }
     });
 
-    this.form.controls.forwardProxyEnabled.valueChanges.subscribe(next => {
+    this.form.controls.forwardProxyEnabled.valueChanges.pipe(takeUntilDestroyed()).subscribe(next => {
       if (next) {
         this.form.controls.forwardProxyUrl.enable();
         this.form.controls.forwardProxyUsername.enable();
