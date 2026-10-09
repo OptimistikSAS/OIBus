@@ -6,11 +6,11 @@ import { TranslatePipe } from '@ngx-translate/core';
 @Component({
   selector: 'oib-unsaved-changes-confirmation-modal',
   templateUrl: './unsaved-changes-confirmation-modal.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslatePipe]
 })
 export class UnsavedChangesConfirmationModalComponent {
-  private activeModal = inject(NgbActiveModal);
+  private readonly activeModal = inject(NgbActiveModal);
 
   leaveWithoutSaving() {
     this.activeModal.close(true);

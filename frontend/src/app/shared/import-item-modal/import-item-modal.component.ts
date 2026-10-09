@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,25 +18,26 @@ import { convertCsvDelimiter } from '../utils/csv.utils';
   imports: [TranslateDirective, ReactiveFormsModule]
 })
 export class ImportItemModalComponent {
-  private modal = inject(NgbActiveModal);
-  private fb = inject(NonNullableFormBuilder);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly fb = inject(NonNullableFormBuilder);
 
-  expectedHeaders: Array<string> = [];
-  optionalHeaders: Array<string> = [];
-  existingMqttTopics: Array<string> = [];
-  isMqttConnector = false;
+  private expectedHeaders: Array<string> = [];
+  private optionalHeaders: Array<string> = [];
+  private existingMqttTopics: Array<string> = [];
+  private isMqttConnector = false;
   readonly showEraseOption = signal(false);
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
-  initializeFile = new File([''], 'Choose a file');
+  private readonly initializeFile = new File([''], 'Choose a file');
   readonly selectedFile = signal<File>(this.initializeFile);
   readonly validationError = signal<CsvValidationError | null>(null);
   readonly mqttValidationError = signal<MqttTopicValidationError | null>(null);
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
     eraseExisting: [false]
   });
+  private readonly formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
 
   prepare(
     expectedHeaders: Array<string>,
@@ -51,9 +53,10 @@ export class ImportItemModalComponent {
     this.showEraseOption.set(showEraseOption);
   }
 
-  get canSave(): boolean {
-    return this.selectedFile() !== this.initializeFile && !this.validationError() && !this.mqttValidationError() && this.form.valid;
-  }
+  readonly canSave = computed(
+    () =>
+      this.selectedFile() !== this.initializeFile && !this.validationError() && !this.mqttValidationError() && this.formStatus() === 'VALID'
+  );
 
   public async onFileSelected(file: File): Promise<void> {
     this.selectedFile.set(file);
@@ -87,7 +90,7 @@ export class ImportItemModalComponent {
   }
 
   save() {
-    if (!this.canSave) {
+    if (!this.canSave()) {
       return;
     }
 

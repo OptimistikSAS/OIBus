@@ -11,6 +11,7 @@ import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { addAttributeToForm, extractFormValue } from '../../dynamic-form.builder';
 import { OIBUS_FORM_MODE } from '../../oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control/oibus-object-form-control.component';
+import type { ArrayElement } from '../oibus-array-form-control.component';
 
 @Component({
   selector: 'oib-oibus-edit-array-element-modal',
@@ -18,7 +19,7 @@ import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control
   styleUrl: './oibus-edit-array-element-modal.component.scss',
   // Remove circular dependencies between OIBusObjectFormControlComponent and OIBusEditArrayElementModalComponent with forwardRef
   imports: [ReactiveFormsModule, TranslateDirective, forwardRef(() => OIBusObjectFormControlComponent)],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
@@ -28,18 +29,17 @@ import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control
   ]
 })
 export class OIBusEditArrayElementModalComponent {
-  private activeModal = inject(NgbActiveModal);
+  private readonly activeModal = inject(NgbActiveModal);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly mode = signal<'create' | 'edit'>('create');
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
-  parentGroup: FormGroup<any> | null = null;
+  parentGroup: FormGroup | null = null;
 
   readonly elementManifest = signal<OIBusObjectAttribute | null>(null);
 
-  private readonly fb = inject(NonNullableFormBuilder);
-
-  form = this.fb.group<any>({});
+  readonly form = this.fb.group<Record<string, AbstractControl>>({});
 
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
@@ -57,8 +57,8 @@ export class OIBusEditArrayElementModalComponent {
   prepareForCopy(
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    parentGroup: FormGroup<any>,
-    value: any,
+    parentGroup: FormGroup,
+    value: ArrayElement,
     elementManifest: OIBusObjectAttribute
   ) {
     this.mode.set('create');
@@ -68,16 +68,14 @@ export class OIBusEditArrayElementModalComponent {
     this.parentGroup = parentGroup;
     this.buildForm();
     // we have to wrap the value into the root attribute
-    const formValue: any = {};
-    formValue[elementManifest.key] = value;
-    this.form.patchValue(formValue);
+    this.form.patchValue({ [elementManifest.key]: value });
   }
 
   prepareForEdition(
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    parentGroup: FormGroup<any>,
-    value: any,
+    parentGroup: FormGroup,
+    value: ArrayElement,
     elementManifest: OIBusObjectAttribute
   ) {
     this.mode.set('edit');
@@ -87,9 +85,7 @@ export class OIBusEditArrayElementModalComponent {
     this.parentGroup = parentGroup;
     this.buildForm();
     // we have to wrap the value into the root attribute
-    const formValue: any = {};
-    formValue[elementManifest.key] = value;
-    this.form.patchValue(formValue);
+    this.form.patchValue({ [elementManifest.key]: value });
   }
 
   buildForm() {

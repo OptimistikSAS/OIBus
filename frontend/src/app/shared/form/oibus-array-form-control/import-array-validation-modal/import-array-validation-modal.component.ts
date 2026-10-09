@@ -19,7 +19,7 @@ const PAGE_SIZE = 20;
   imports: [TranslateDirective, PaginationComponent, NgbTooltip]
 })
 export class ImportArrayValidationModalComponent {
-  private modal = inject(NgbActiveModal);
+  private readonly modal = inject(NgbActiveModal);
 
   readonly newElementList = signal<Array<Record<string, unknown>>>([]);
   readonly errorList = signal<
@@ -81,12 +81,12 @@ export class ImportArrayValidationModalComponent {
     return String(value);
   }
 
-  getValueByPath(obj: any, path: string) {
+  getValueByPath(obj: Record<string, unknown>, path: string): unknown {
     if (obj && path in obj) {
       return obj[path];
     }
     const keys = path.split('_');
-    return keys.reduce((acc, key) => acc && acc[key], obj);
+    return keys.reduce<unknown>((acc, key) => (acc ? (acc as Record<string, unknown>)[key] : acc), obj);
   }
 
   private extractColumns(elements: Array<Record<string, unknown>>): Array<string> {

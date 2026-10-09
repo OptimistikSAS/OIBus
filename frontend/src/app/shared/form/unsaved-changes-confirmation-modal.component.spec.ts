@@ -29,7 +29,6 @@ describe('UnsavedChangesConfirmationModalComponent', () => {
     });
 
     tester = new UnsavedChangesConfirmationModalComponentTester();
-    tester.fixture.detectChanges();
   });
 
   test('should display the modal content', async () => {

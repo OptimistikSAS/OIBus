@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
@@ -23,6 +24,7 @@ import { OIBusSecretFormControlComponent } from '../oibus-secret-form-control/oi
 import { OIBusStringFormControlComponent } from '../oibus-string-form-control/oibus-string-form-control.component';
 import { OIBusStringSelectFormControlComponent } from '../oibus-string-select-form-control/oibus-string-select-form-control.component';
 import { OIBusTimezoneFormControlComponent } from '../oibus-timezone-form-control/oibus-timezone-form-control.component';
+import { trackControl } from '../tracked-control';
 
 interface FormRow {
   columns: Array<FormColumn>;
@@ -44,8 +46,9 @@ interface FormColumn {
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     TranslateDirective,
     BoxComponent,
@@ -60,24 +63,34 @@ interface FormColumn {
     OIBusStringSelectFormControlComponent,
     OIBusTimezoneFormControlComponent,
     OibusCertificateFormControlComponent,
-    OIBusCodeFormControlComponent,
-    OIBusArrayFormControlComponent
+    OIBusCodeFormControlComponent
   ]
 })
 export class OIBusObjectFormControlComponent {
-  scanModes = input.required<Array<ScanModeDTO>>();
-  certificates = input.required<Array<CertificateDTO>>();
-  group = input.required<FormGroup>();
-  objectAttribute = input.required<OIBusObjectAttribute>();
-  southId = input<string>();
-
   private readonly platform = toSignal(
     inject(EngineService)
       .getInfo()
       .pipe(map(info => info.platform))
   );
 
-  formRows = computed(() => {
+  readonly scanModes = input.required<Array<ScanModeDTO>>();
+  readonly certificates = input.required<Array<CertificateDTO>>();
+  readonly group = input.required<FormGroup>();
+  readonly objectAttribute = input.required<OIBusObjectAttribute>();
+  readonly southId = input<string>();
+
+  private readonly trackedGroup = trackControl(() => this.group());
+  /**
+   * The keys of the enabled controls of the group, which are the only ones displayed.
+   * They are enabled and disabled by the enabling conditions (driven by other controls) or by a parent (e.g. when patching the
+   * form): the group is tracked so that this OnPush component renders these changes.
+   */
+  readonly enabledKeys = computed(() => {
+    const group = this.trackedGroup()!;
+    return new Set(Object.keys(group.controls).filter(key => group.controls[key].enabled));
+  });
+
+  readonly formRows = computed(() => {
     const rows: Array<FormRow> = [];
     this.objectAttribute().attributes.forEach(attribute => {
       switch (attribute.type) {
@@ -112,16 +125,17 @@ export class OIBusObjectFormControlComponent {
   });
 
   constructor() {
-    effect(() => {
+    effect(onCleanup => {
       // Platform is read lazily (untracked) so this effect does not re-subscribe when the platform loads;
       // it lets a platform restriction keep an off-platform target disabled even if its enabling condition is met.
-      addEnablingConditions(this.group(), this.objectAttribute().enablingConditions, targetPathFromRoot =>
+      const subscription = addEnablingConditions(this.group(), this.objectAttribute().enablingConditions, targetPathFromRoot =>
         untracked(() => {
           const attribute = this.objectAttribute().attributes.find(candidate => candidate.key === targetPathFromRoot);
           const platform = this.platform();
           return !attribute || !platform || isEnabledOnPlatform(attribute, platform);
         })
       );
+      onCleanup(() => subscription.unsubscribe());
     });
     effect(() => {
       const platform = this.platform();

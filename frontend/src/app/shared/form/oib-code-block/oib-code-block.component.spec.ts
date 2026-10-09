@@ -1,213 +1,113 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page, userEvent } from 'vitest/browser';
 
 import { OibCodeBlockComponent } from './oib-code-block.component';
 
-/** Minimal host that wires the component as a reactive form control. */
 @Component({
-  template: `<oib-code-block [formControl]="control" [language]="language" [readOnly]="readOnly" />`,
+  template: `<oib-code-block [formControl]="control" [language]="language()" [readOnly]="readOnly()" [height]="height()" [key]="key()" />`,
   imports: [OibCodeBlockComponent, ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestHostComponent {
-  control = new FormControl('initial');
-  language = 'json';
-  readOnly = false;
+  readonly control = new FormControl<string | null>('initial');
+  readonly language = signal('json');
+  readonly readOnly = signal(false);
+  readonly height = signal('30rem');
+  readonly key = signal('');
+}
+
+class TestHostComponentTester {
+  readonly fixture = TestBed.createComponent(TestHostComponent);
+  readonly host = this.fixture.componentInstance;
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly editor = this.root.getByRole('textbox');
+  readonly codeBlock = this.root.getByCss('oib-code-block');
+  readonly container = this.root.getByCss('.editor-container');
 }
 
 describe('OibCodeBlockComponent', () => {
-  let component: OibCodeBlockComponent;
-  let fixture: ComponentFixture<OibCodeBlockComponent>;
+  let tester: TestHostComponentTester;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [OibCodeBlockComponent, TestHostComponent]
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(OibCodeBlockComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    tester = new TestHostComponentTester();
   });
 
-  test('should create', () => {
-    expect(component).toBeTruthy();
+  test('should display the value of the control in an editable editor', async () => {
+    await expect.element(tester.editor).toHaveTextContent('initial');
+    await expect.element(tester.editor).toHaveAttribute('contenteditable', 'true');
+    await expect.element(tester.codeBlock).toHaveStyle('--oib-code-block-height: 30rem');
+    await expect.element(tester.container).toHaveAttribute('id', 'oib-code-block-input-');
   });
 
-  describe('Editor initialisation', () => {
-    test('should mount a CodeMirror editor inside the container', () => {
-      expect(fixture.nativeElement.querySelector('.cm-editor')).toBeTruthy();
-    });
+  test('should display a value written from outside, without marking the control as dirty', async () => {
+    tester.host.control.setValue('{"updated": true}');
 
-    test('should apply the default height (30rem) to the container', () => {
-      const container: HTMLElement = fixture.nativeElement.querySelector('.editor-container');
-      expect(container.style.height).toBe('30rem');
-    });
+    await expect.element(tester.editor).toHaveTextContent('{"updated": true}');
+    expect(tester.host.control.dirty).toBe(false);
 
-    test('should apply a custom height when the input changes', () => {
-      fixture.componentRef.setInput('height', '50rem');
-      fixture.detectChanges();
-      const container: HTMLElement = fixture.nativeElement.querySelector('.editor-container');
-      expect(container.style.height).toBe('50rem');
-    });
-
-    test('should set the container id from the key input', () => {
-      fixture.componentRef.setInput('key', 'my-key');
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('#oib-code-block-input-my-key')).toBeTruthy();
-    });
-
-    test('should start with an empty key when the key input is not provided', () => {
-      expect(fixture.nativeElement.querySelector('#oib-code-block-input-')).toBeTruthy();
-    });
+    tester.host.control.setValue(null);
+    await expect.element(tester.editor).toHaveTextContent('');
   });
 
-  describe('ControlValueAccessor', () => {
-    let onChangeSpy: ReturnType<typeof vi.fn>;
-    let onTouchedSpy: ReturnType<typeof vi.fn>;
+  test('should update the control when typing', async () => {
+    await tester.editor.fill('{"typed": 1}');
 
-    beforeEach(() => {
-      onChangeSpy = vi.fn();
-      onTouchedSpy = vi.fn();
-      component.registerOnChange(onChangeSpy as unknown as (value: string) => void);
-      component.registerOnTouched(onTouchedSpy as unknown as () => void);
-    });
-
-    describe('writeValue', () => {
-      test('should set the editor content', () => {
-        component.writeValue('hello world');
-        expect(component['editorView']!.state.doc.toString()).toBe('hello world');
-      });
-
-      test('should replace existing content', () => {
-        component.writeValue('first');
-        component.writeValue('second');
-        expect(component['editorView']!.state.doc.toString()).toBe('second');
-      });
-
-      test('should treat null as an empty string', () => {
-        component.writeValue(null as any);
-        expect(component['editorView']!.state.doc.toString()).toBe('');
-      });
-
-      test('should NOT call onChange — programmatic writes must not feed back into the form', () => {
-        component.writeValue('programmatic content');
-        expect(onChangeSpy).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('pending value (writeValue before the editor is ready)', () => {
-      test('should queue the value and apply it once the editor initialises', () => {
-        const earlyFixture = TestBed.createComponent(OibCodeBlockComponent);
-        const earlyComponent = earlyFixture.componentInstance;
-
-        earlyComponent.writeValue('queued value');
-        expect(earlyComponent['editorView']).toBeNull();
-        expect(earlyComponent['pendingValue']).toBe('queued value');
-
-        earlyFixture.detectChanges();
-        expect(earlyComponent['editorView']!.state.doc.toString()).toBe('queued value');
-        expect(earlyComponent['pendingValue']).toBeNull();
-      });
-
-      test('should clear the pending value after initialisation', () => {
-        const earlyFixture = TestBed.createComponent(OibCodeBlockComponent);
-        const earlyComponent = earlyFixture.componentInstance;
-        earlyComponent.writeValue('something');
-        earlyFixture.detectChanges();
-        expect(earlyComponent['pendingValue']).toBeNull();
-      });
-    });
-
-    describe('setDisabledState', () => {
-      test('should set the disabled signal to true', () => {
-        component.setDisabledState(true);
-        expect(component.disabled()).toBe(true);
-      });
-
-      test('should set the disabled signal back to false', () => {
-        component.setDisabledState(true);
-        component.setDisabledState(false);
-        expect(component.disabled()).toBe(false);
-      });
-    });
+    expect(tester.host.control.value).toBe('{"typed": 1}');
+    expect(tester.host.control.dirty).toBe(true);
   });
 
-  describe('readOnly input', () => {
-    test('should make .cm-content non-editable when readOnly is true', () => {
-      fixture.componentRef.setInput('readOnly', true);
-      fixture.detectChanges();
-      const content: HTMLElement = fixture.nativeElement.querySelector('.cm-content');
-      expect(content.getAttribute('contenteditable')).toBe('false');
-    });
+  test('should mark the control as touched on blur', async () => {
+    await tester.editor.click();
+    expect(tester.host.control.touched).toBe(false);
 
-    test('should keep .cm-content editable when readOnly is false (default)', () => {
-      const content: HTMLElement = fixture.nativeElement.querySelector('.cm-content');
-      expect(content.getAttribute('contenteditable')).toBe('true');
-    });
+    await userEvent.tab();
+
+    expect(tester.host.control.touched).toBe(true);
   });
 
-  describe('changeLanguage', () => {
-    test('should not throw for all supported languages', () => {
-      for (const lang of ['json', 'javascript', 'typescript', 'sql']) {
-        expect(() => component.changeLanguage(lang)).not.toThrow();
-      }
-    });
+  test('should not be editable when disabled', async () => {
+    tester.host.control.disable();
+    await expect.element(tester.editor).toHaveAttribute('contenteditable', 'false');
 
-    test('should not throw for an unsupported / unknown language', () => {
-      expect(() => component.changeLanguage('cobol')).not.toThrow();
-    });
-
-    test('should not throw when called before the editor is initialised', () => {
-      const earlyFixture = TestBed.createComponent(OibCodeBlockComponent);
-      const earlyComponent = earlyFixture.componentInstance;
-      expect(() => earlyComponent.changeLanguage('json')).not.toThrow();
-    });
+    tester.host.control.enable();
+    await expect.element(tester.editor).toHaveAttribute('contenteditable', 'true');
   });
 
-  describe('language input', () => {
-    test('should apply the language when it changes', () => {
-      fixture.componentRef.setInput('language', 'javascript');
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.cm-editor')).toBeTruthy();
-    });
+  test('should not be editable when read only', async () => {
+    tester.host.readOnly.set(true);
+
+    await expect.element(tester.editor).toHaveAttribute('contenteditable', 'false');
   });
 
-  describe('ngOnDestroy', () => {
-    test('should destroy the CodeMirror editor view', () => {
-      const editorView = component['editorView']!;
-      const destroySpy = vi.spyOn(editorView, 'destroy');
-      component.ngOnDestroy();
-      expect(destroySpy).toHaveBeenCalledTimes(1);
-    });
+  test('should apply the height, the key and the language inputs', async () => {
+    tester.host.height.set('10rem');
+    tester.host.key.set('my-key');
+    tester.host.language.set('sql');
+
+    await expect.element(tester.codeBlock).toHaveStyle('--oib-code-block-height: 10rem');
+    await expect.element(tester.container).toHaveAttribute('id', 'oib-code-block-input-my-key');
+    await expect.element(tester.editor).toHaveTextContent('initial');
   });
 
-  describe('Integration with reactive forms (TestHostComponent)', () => {
-    let hostFixture: ComponentFixture<TestHostComponent>;
-    let hostComponent: TestHostComponent;
+  test.each(['javascript', 'typescript', 'sql', 'json', 'cobol'])('should change the language to %s', async language => {
+    await expect.element(tester.editor).toBeInTheDocument();
+    const codeBlock = tester.fixture.debugElement.query(By.directive(OibCodeBlockComponent)).injector.get(OibCodeBlockComponent);
 
-    beforeEach(() => {
-      hostFixture = TestBed.createComponent(TestHostComponent);
-      hostComponent = hostFixture.componentInstance;
-      hostFixture.detectChanges();
-    });
+    expect(() => codeBlock.changeLanguage(language)).not.toThrow();
+    await expect.element(tester.editor).toHaveTextContent('initial');
+  });
 
-    test('should render inside a form without errors', () => {
-      expect(hostFixture.nativeElement.querySelector('.cm-editor')).toBeTruthy();
-    });
+  test('should destroy the editor with the component', async () => {
+    await expect.element(tester.editor).toBeInTheDocument();
 
-    test('should receive the initial form value', () => {
-      const codeBlock: OibCodeBlockComponent = hostFixture.debugElement.children[0].componentInstance;
-      expect(codeBlock['editorView']!.state.doc.toString()).toBe('initial');
-    });
+    tester.fixture.destroy();
 
-    test('should propagate a form control value change into the editor', () => {
-      hostComponent.control.setValue('updated via form');
-      hostFixture.detectChanges();
-      const codeBlock: OibCodeBlockComponent = hostFixture.debugElement.children[0].componentInstance;
-      expect(codeBlock['editorView']!.state.doc.toString()).toBe('updated via form');
-    });
+    await expect.element(tester.root.getByCss('.cm-editor')).not.toBeInTheDocument();
   });
 });

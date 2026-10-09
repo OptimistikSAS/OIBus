@@ -13,16 +13,16 @@ import { convertCsvDelimiter } from '../utils/csv.utils';
   selector: 'oib-export-item-modal',
   templateUrl: './export-item-modal.component.html',
   styleUrl: './export-item-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, ReactiveFormsModule]
 })
 export class ExportItemModalComponent {
-  private modal = inject(NgbActiveModal);
+  private readonly modal = inject(NgbActiveModal);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
 
-  private fb = inject(NonNullableFormBuilder);
-  form = this.fb.group({
+  readonly form = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
     filename: ['' as string, Validators.required]
   });

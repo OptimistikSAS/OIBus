@@ -1,17 +1,21 @@
 <div class="modal-header">
   <h3
     class="modal-title"
-    [translate]="'configuration.oibus.manifest.transformers.attributes.edit-transformer-modal.' + mode + '-title'"
+    [translate]="'configuration.oibus.manifest.transformers.attributes.edit-transformer-modal.' + mode() + '-title'"
   ></h3>
 </div>
 <div class="modal-body">
-  <form [id]="uniqueFormId" [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onGlobalKeydown($event)">
+  <form [id]="uniqueFormId()" [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onGlobalKeydown($event)">
     <!-- Basic Properties -->
     <div class="row">
       <div class="col-md-6">
         <div class="form-group">
-          <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.type.title'"></label>
-          <select class="form-select" formControlName="type" (change)="onTypeChange()">
+          <label
+            class="form-label"
+            [for]="uniqueFormId() + '-type'"
+            [translate]="'configuration.oibus.manifest.transformers.attributes.type.title'"
+          ></label>
+          <select [id]="uniqueFormId() + '-type'" class="form-select" formControlName="type" (change)="onTypeChange()">
             @for (type of availableTypes; track type) {
               <option [value]="type" [translate]="'configuration.oibus.manifest.transformers.attributes.type.' + type"></option>
             }
@@ -21,8 +25,12 @@
       </div>
       <div class="col-md-6">
         <div class="form-group">
-          <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.key'"></label>
-          <input type="text" class="form-control" formControlName="key" />
+          <label
+            class="form-label"
+            [for]="uniqueFormId() + '-key'"
+            [translate]="'configuration.oibus.manifest.transformers.attributes.key'"
+          ></label>
+          <input [id]="uniqueFormId() + '-key'" type="text" class="form-control" formControlName="key" />
           <val-errors controlName="key" />
         </div>
       </div>
@@ -31,8 +39,12 @@
     <div class="row">
       <div class="col-md-12">
         <div class="form-group">
-          <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.translation-key'"></label>
-          <input type="text" class="form-control" formControlName="translationKey" />
+          <label
+            class="form-label"
+            [for]="uniqueFormId() + '-translationKey'"
+            [translate]="'configuration.oibus.manifest.transformers.attributes.translation-key'"
+          ></label>
+          <input [id]="uniqueFormId() + '-translationKey'" type="text" class="form-control" formControlName="translationKey" />
           <val-errors controlName="translationKey" />
         </div>
       </div>
@@ -43,15 +55,23 @@
       <div class="row">
         <div class="col-md-4">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.row'"></label>
-            <input type="number" class="form-control" formControlName="row" min="0" />
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-row'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.row'"
+            ></label>
+            <input [id]="uniqueFormId() + '-row'" type="number" class="form-control" formControlName="row" min="0" />
             <val-errors controlName="row" />
           </div>
         </div>
         <div class="col-md-4">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.columns'"></label>
-            <input type="number" class="form-control" formControlName="columns" min="1" max="12" />
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-columns'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.columns'"
+            ></label>
+            <input [id]="uniqueFormId() + '-columns'" type="number" class="form-control" formControlName="columns" min="1" max="12" />
             <val-errors controlName="columns" />
           </div>
         </div>
@@ -59,10 +79,15 @@
           <div class="form-group">
             <div class="form-label">&nbsp;</div>
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" formControlName="displayInViewMode" id="display-in-view-mode" />
+              <input
+                class="form-check-input"
+                type="checkbox"
+                formControlName="displayInViewMode"
+                [id]="uniqueFormId() + '-displayInViewMode'"
+              />
               <label
                 class="form-check-label"
-                for="display-in-view-mode"
+                [for]="uniqueFormId() + '-displayInViewMode'"
                 [translate]="'configuration.oibus.manifest.transformers.attributes.display-in-view-mode'"
               ></label>
               <val-errors controlName="displayInViewMode" />
@@ -77,8 +102,12 @@
       <div class="row">
         <div class="col-md-12">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
-            <input type="text" class="form-control" formControlName="defaultValue_string" />
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-defaultValue_string'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"
+            ></label>
+            <input [id]="uniqueFormId() + '-defaultValue_string'" type="text" class="form-control" formControlName="defaultValue_string" />
             <val-errors controlName="defaultValue_string" />
           </div>
         </div>
@@ -89,14 +118,27 @@
       <div class="row">
         <div class="col-md-6">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
-            <input type="number" class="form-control" formControlName="defaultValue_number" />
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-defaultValue_number'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"
+            ></label>
+            <input
+              [id]="uniqueFormId() + '-defaultValue_number'"
+              type="number"
+              class="form-control"
+              formControlName="defaultValue_number"
+            />
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.unit'"></label>
-            <input type="text" class="form-control" formControlName="unit" />
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-unit'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.unit'"
+            ></label>
+            <input [id]="uniqueFormId() + '-unit'" type="text" class="form-control" formControlName="unit" />
             <val-errors controlName="unit" />
           </div>
         </div>
@@ -107,10 +149,15 @@
       <div class="row">
         <div class="col-md-12">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
+            <div class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></div>
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" formControlName="defaultValue_boolean" id="default-value-boolean" />
-              <label class="form-check-label" for="default-value-boolean" [translate]="'enums.boolean.true'"></label>
+              <input
+                class="form-check-input"
+                type="checkbox"
+                formControlName="defaultValue_boolean"
+                [id]="uniqueFormId() + '-defaultValue_boolean'"
+              />
+              <label class="form-check-label" [for]="uniqueFormId() + '-defaultValue_boolean'" [translate]="'enums.boolean.true'"></label>
             </div>
           </div>
         </div>
@@ -121,8 +168,12 @@
       <div class="row">
         <div class="col-md-6">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.content-type.title'"></label>
-            <select class="form-select" formControlName="contentType">
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-contentType'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.content-type.title'"
+            ></label>
+            <select [id]="uniqueFormId() + '-contentType'" class="form-select" formControlName="contentType">
               <option value="json" [translate]="'configuration.oibus.manifest.transformers.attributes.content-type.json'"></option>
               <option value="sql" [translate]="'configuration.oibus.manifest.transformers.attributes.content-type.sql'"></option>
             </select>
@@ -131,8 +182,17 @@
         </div>
         <div class="col-md-6">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
-            <textarea class="form-control" formControlName="defaultValue_code" rows="3"></textarea>
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-defaultValue_code'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"
+            ></label>
+            <textarea
+              [id]="uniqueFormId() + '-defaultValue_code'"
+              class="form-control"
+              formControlName="defaultValue_code"
+              rows="3"
+            ></textarea>
             <val-errors controlName="defaultValue_code" />
           </div>
         </div>
@@ -143,8 +203,18 @@
       <div class="row">
         <div class="col-md-6">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.selectable-values'"></label>
-            <input type="text" class="form-control" formControlName="selectableValuesCsv" placeholder="value1,value2,value3" />
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-selectableValuesCsv'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.selectable-values'"
+            ></label>
+            <input
+              [id]="uniqueFormId() + '-selectableValuesCsv'"
+              type="text"
+              class="form-control"
+              formControlName="selectableValuesCsv"
+              placeholder="value1,value2,value3"
+            />
             <small
               class="form-text text-muted"
               [translate]="'configuration.oibus.manifest.transformers.attributes.selectable-values-help'"
@@ -153,8 +223,12 @@
         </div>
         <div class="col-md-6">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
-            <input type="text" class="form-control" formControlName="defaultValue_string" />
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-defaultValue_string'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"
+            ></label>
+            <input [id]="uniqueFormId() + '-defaultValue_string'" type="text" class="form-control" formControlName="defaultValue_string" />
             <val-errors controlName="defaultValue_string" />
           </div>
         </div>
@@ -165,8 +239,18 @@
       <div class="row">
         <div class="col-md-12">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"></label>
-            <input type="text" class="form-control" formControlName="defaultValue_timezone" placeholder="UTC" />
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-defaultValue_timezone'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.default-value'"
+            ></label>
+            <input
+              [id]="uniqueFormId() + '-defaultValue_timezone'"
+              type="text"
+              class="form-control"
+              formControlName="defaultValue_timezone"
+              placeholder="UTC"
+            />
             <val-errors controlName="defaultValue_timezone" />
           </div>
         </div>
@@ -177,8 +261,12 @@
       <div class="row">
         <div class="col-md-12">
           <div class="form-group">
-            <label class="form-label" [translate]="'configuration.oibus.manifest.transformers.attributes.acceptable-type.title'"></label>
-            <select class="form-select" formControlName="acceptableType">
+            <label
+              class="form-label"
+              [for]="uniqueFormId() + '-acceptableType'"
+              [translate]="'configuration.oibus.manifest.transformers.attributes.acceptable-type.title'"
+            ></label>
+            <select [id]="uniqueFormId() + '-acceptableType'" class="form-select" formControlName="acceptableType">
               <option value="POLL" [translate]="'configuration.oibus.manifest.transformers.attributes.acceptable-type.POLL'"></option>
               <option
                 value="SUBSCRIPTION"
@@ -201,10 +289,10 @@
           <div class="form-group">
             <div class="form-label">&nbsp;</div>
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" formControlName="visible" id="object-visible" />
+              <input class="form-check-input" type="checkbox" formControlName="visible" [id]="uniqueFormId() + '-visible'" />
               <label
                 class="form-check-label"
-                for="object-visible"
+                [for]="uniqueFormId() + '-visible'"
                 [translate]="'configuration.oibus.manifest.transformers.attributes.visible'"
               ></label>
             </div>
@@ -214,10 +302,10 @@
           <div class="form-group">
             <div class="form-label">&nbsp;</div>
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" formControlName="wrapInBox" id="object-wrap-in-box" />
+              <input class="form-check-input" type="checkbox" formControlName="wrapInBox" [id]="uniqueFormId() + '-wrapInBox'" />
               <label
                 class="form-check-label"
-                for="object-wrap-in-box"
+                [for]="uniqueFormId() + '-wrapInBox'"
                 [translate]="'configuration.oibus.manifest.transformers.attributes.wrap-in-box'"
               ></label>
             </div>
@@ -228,15 +316,15 @@
       <div class="row">
         <div class="col-md-12">
           <div class="nested-attributes-header">
-            <h5 class="nested-attributes-title">{{ nestedAttributesTitle }}</h5>
-            @if (nestedAttributesPath) {
-              <div class="nested-attributes-path" [innerHTML]="nestedAttributesPath"></div>
+            <h5 class="nested-attributes-title">{{ nestedAttributesTitle() }}</h5>
+            @if (nestedAttributesPath()) {
+              <div class="nested-attributes-path" [innerHTML]="nestedAttributesPath()"></div>
             }
           </div>
           <oib-manifest-attributes-array
-            [label]="attribute?.translationKey || '' | translate"
+            [label]="attribute()?.translationKey || '' | translate"
             [control]="attributesControl"
-            [contextPath]="nestedAttributesContext"
+            [contextPath]="nestedAttributesContext()"
             (nestedChange)="onNestedAttributeChange()"
             (keydown.enter)="onNestedEnter($event)"
           />
@@ -250,10 +338,10 @@
           <div class="form-group">
             <div class="form-label">&nbsp;</div>
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" formControlName="paginate" id="array-paginate" />
+              <input class="form-check-input" type="checkbox" formControlName="paginate" [id]="uniqueFormId() + '-paginate'" />
               <label
                 class="form-check-label"
-                for="array-paginate"
+                [for]="uniqueFormId() + '-paginate'"
                 [translate]="'configuration.oibus.manifest.transformers.attributes.paginate'"
               ></label>
             </div>
@@ -263,9 +351,16 @@
           <div class="form-group">
             <label
               class="form-label"
+              [for]="uniqueFormId() + '-numberOfElementPerPage'"
               [translate]="'configuration.oibus.manifest.transformers.attributes.number-of-elements-per-page'"
             ></label>
-            <input type="number" class="form-control" formControlName="numberOfElementPerPage" min="1" />
+            <input
+              [id]="uniqueFormId() + '-numberOfElementPerPage'"
+              type="number"
+              class="form-control"
+              formControlName="numberOfElementPerPage"
+              min="1"
+            />
             <val-errors controlName="numberOfElementPerPage" />
           </div>
         </div>
@@ -274,15 +369,15 @@
       <div class="row">
         <div class="col-md-12">
           <div class="nested-attributes-header">
-            <h5 class="nested-attributes-title">{{ nestedAttributesTitle }}</h5>
-            @if (nestedAttributesPath) {
-              <div class="nested-attributes-path" [innerHTML]="nestedAttributesPath"></div>
+            <h5 class="nested-attributes-title">{{ nestedAttributesTitle() }}</h5>
+            @if (nestedAttributesPath()) {
+              <div class="nested-attributes-path" [innerHTML]="nestedAttributesPath()"></div>
             }
           </div>
           <oib-manifest-attributes-array
             [control]="attributesControl"
-            [label]="attribute?.translationKey || '' | translate"
-            [contextPath]="nestedAttributesContext"
+            [label]="attribute()?.translationKey || '' | translate"
+            [contextPath]="nestedAttributesContext()"
             (nestedChange)="onNestedAttributeChange()"
             (keydown.enter)="onNestedEnter($event)"
           />
@@ -293,15 +388,15 @@
     <!-- Info for non-displayable types -->
     @if (!isDisplayableType() && !isObjectType() && !isArrayType()) {
       <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        <span [translate]="'configuration.oibus.manifest.transformers.attributes.' + form.controls.type.value + '-info'"></span>
+        <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
+        <span [translate]="infoTranslationKey()"></span>
       </div>
     }
   </form>
 </div>
 <div class="modal-footer d-flex justify-content-end">
   <div class="btn-group">
-    <button [oib-save-button]="state" [form]="uniqueFormId"></button>
+    <button type="submit" [oib-save-button]="state" [form]="uniqueFormId()"></button>
     <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.close" id="cancel-button"></button>
   </div>
 </div>

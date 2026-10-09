@@ -18,13 +18,13 @@ import { OIBUS_FORM_MODE } from '../oibus-form-mode.token';
       useExisting: FormGroupName
     }
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TranslateDirective, TranslatePipe, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class OIBusSecretFormControlComponent {
-  secretAttribute = input.required<OIBusSecretAttribute>();
-
   private readonly formMode = inject(OIBUS_FORM_MODE);
+
+  readonly secretAttribute = input.required<OIBusSecretAttribute>();
 
   isEditMode(): boolean {
     return this.formMode() === 'edit';

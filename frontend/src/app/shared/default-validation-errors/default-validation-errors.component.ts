@@ -8,7 +8,7 @@ import { DisplayMode, ValdemortConfig, ValdemortModule } from 'ngx-valdemort';
   selector: 'oib-default-validation-errors',
   templateUrl: './default-validation-errors.component.html',
   styleUrl: './default-validation-errors.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, ValdemortModule, DecimalPipe, TranslatePipe]
 })
 export class DefaultValidationErrorsComponent {

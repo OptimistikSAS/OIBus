@@ -162,24 +162,34 @@ describe('ImportItemModalComponent', () => {
   });
 
   describe('header validation', () => {
-    test.each([
-      { label: 'an empty file', content: '', missingHeaders: ['name', 'enabled'] },
-      { label: 'a header-only file', content: 'name,enabled', missingHeaders: null },
-      { label: 'headers surrounded by spaces', content: ' name , enabled \ntest,true', missingHeaders: null }
-    ])('should validate $label', async ({ content, missingHeaders }) => {
+    test('should report all the expected headers as missing for an empty file', async () => {
       const tester = new ImportItemModalComponentTester(['name', 'enabled']);
 
-      await tester.componentInstance.onFileSelected(csvFile(content));
+      await tester.fileInput.upload(csvFile(''));
 
-      expect(tester.componentInstance.validationError()?.missingHeaders ?? null).toEqual(missingHeaders);
+      await expect.element(tester.formatError).toMatchTextContent(/Missing columns:\s*name, enabled/);
+      await expect.element(tester.saveButton).toBeDisabled();
+    });
+
+    test.each([
+      { label: 'a header-only file', content: 'name,enabled' },
+      { label: 'headers surrounded by spaces', content: ' name , enabled \ntest,true' }
+    ])('should accept $label', async ({ content }) => {
+      const tester = new ImportItemModalComponentTester(['name', 'enabled']);
+
+      await tester.fileInput.upload(csvFile(content));
+
+      await expect.element(tester.saveButton).toBeEnabled();
+      await expect.element(tester.formatError).not.toBeInTheDocument();
     });
 
     test('should not validate when no header is expected', async () => {
       const tester = new ImportItemModalComponentTester([]);
 
-      await tester.componentInstance.onFileSelected(csvFile('anything,here\ndata,value'));
+      await tester.fileInput.upload(csvFile('anything,here\ndata,value'));
 
-      expect(tester.componentInstance.validationError()).toBeNull();
+      await expect.element(tester.saveButton).toBeEnabled();
+      await expect.element(tester.formatError).not.toBeInTheDocument();
     });
 
     test('should report all the expected headers as missing when the file cannot be read', async () => {

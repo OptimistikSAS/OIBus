@@ -26,7 +26,11 @@ export const convertCsvDelimiter = (delimiter: CsvCharacter): string => {
   }
 };
 
-export const exportArrayElements = (arrayAttribute: OIBusArrayAttribute, elements: Array<Record<string, any>>, delimiter: string): Blob => {
+export const exportArrayElements = (
+  arrayAttribute: OIBusArrayAttribute,
+  elements: Array<Record<string, unknown>>,
+  delimiter: string
+): Blob => {
   const columns: Set<string> = new Set<string>();
   const flattenedElements: Array<Record<string, string | object | boolean>> = [];
   for (const element of elements) {
