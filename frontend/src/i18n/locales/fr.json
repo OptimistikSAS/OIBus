@@ -3357,11 +3357,13 @@
     "account": {
       "logout": "Déconnexion",
       "settings": "Paramètres",
-      "audit": "Audit"
+      "audit": "Audit",
+      "title": "Compte"
     },
     "tooltips": {
       "documentation": "Documentation"
-    }
+    },
+    "menu": "Menu"
   },
   "login": {
     "title": "Connexion",

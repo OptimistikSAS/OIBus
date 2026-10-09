@@ -398,11 +398,13 @@
     "account": {
       "logout": "Logout",
       "settings": "Settings",
-      "audit": "Audit"
+      "audit": "Audit",
+      "title": "Account"
     },
     "tooltips": {
       "documentation": "Documentation"
-    }
+    },
+    "menu": "Menu"
   },
   "login": {
     "title": "Sign in",
