@@ -14,13 +14,13 @@ import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enu
   selector: 'oib-oia-command-details-modal',
   templateUrl: './oia-command-details-modal.component.html',
   styleUrl: './oia-command-details-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, OibusCommandTypeEnumPipe, DatetimePipe, JsonPipe, BooleanEnumPipe]
 })
 export class OiaCommandDetailsModalComponent {
-  private activeModal = inject(NgbActiveModal);
+  private readonly activeModal = inject(NgbActiveModal);
 
-  command = signal<OIBusCommandDTO | null>(null);
+  readonly command = signal<OIBusCommandDTO | null>(null);
 
   prepare(command: OIBusCommandDTO) {
     this.command.set(command);
