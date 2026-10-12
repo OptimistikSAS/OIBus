@@ -12,6 +12,7 @@ import { buildWorkflow } from '../../../../test/builders';
 import { createMock, MockObject, stubRoute } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { provideCurrentUser } from '../../../shared/current-user-testing';
+import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { provideNgbConfigTesting } from '../../../shared/form/oi-ngb-testing';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { toPage } from '../../../shared/utils/page.utils';
@@ -68,6 +69,8 @@ describe('WorkflowRunHistoryComponent', () => {
     TestBed.overrideProvider(ActivatedRoute, {
       useValue: stubRoute({ params: { southId: 'southId1', workflowId: 'workflowId1' }, queryParams })
     });
+    // registers the validation error messages, like the app component does
+    TestBed.createComponent(DefaultValidationErrorsComponent);
     return new WorkflowRunHistoryComponentTester();
   }
 
@@ -245,13 +248,13 @@ describe('WorkflowRunHistoryComponent', () => {
     });
   });
 
-  test('should not apply the search when the date range is invalid (end before start)', async () => {
+  test('should not apply the search and show an error when the date range is invalid (end before start)', async () => {
     const tester = createTester({ start: '2024-01-10T00:00:00.000Z' });
 
     await tester.end.fillWithDate('05/01/2024', '10', '00');
     await tester.searchButton.click();
 
-    await tester.fixture.whenStable();
+    await expect.element(tester.root.getByText('The end date must be after the start date')).toBeVisible();
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
