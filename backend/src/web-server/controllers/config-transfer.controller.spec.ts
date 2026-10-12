@@ -84,7 +84,7 @@ describe('ConfigTransferController', () => {
       };
       mock.method(fs, 'readFile', async () => JSON.stringify(parsedEnvelope));
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
-      configImportService.previewConfiguration = mock.fn(async () => preview);
+      configImportService.previewConfiguration.mock.mockImplementation(async () => preview);
 
       const result = await controller.previewConfiguration(file, mockRequest as CustomExpressRequest);
 
@@ -127,7 +127,7 @@ describe('ConfigTransferController', () => {
       };
       const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify(parsedEnvelope));
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
-      configImportService.importConfiguration = mock.fn(async () => response);
+      configImportService.importConfiguration.mock.mockImplementation(async () => response);
 
       const result = await controller.importConfiguration(file, mockRequest as CustomExpressRequest);
 
@@ -166,7 +166,7 @@ describe('ConfigTransferController', () => {
       mock.method(fs, 'readFile', async () => '{}');
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
       const importError = new ConfigImportError('Unsupported export format version 2', []);
-      configImportService.importConfiguration = mock.fn(async () => {
+      configImportService.importConfiguration.mock.mockImplementation(async () => {
         throw importError;
       });
 
@@ -180,7 +180,7 @@ describe('ConfigTransferController', () => {
       const file = { path: 'importPath' } as Express.Multer.File;
       mock.method(fs, 'readFile', async () => '{}');
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
-      configImportService.importConfiguration = mock.fn(async () => {
+      configImportService.importConfiguration.mock.mockImplementation(async () => {
         throw new Error('unexpected failure');
       });
 
@@ -201,7 +201,7 @@ describe('ConfigTransferController', () => {
         warnings: [],
         newPort: null
       };
-      configImportService.importConfiguration = mock.fn(async () => response);
+      configImportService.importConfiguration.mock.mockImplementation(async () => response);
 
       const result = await controller.importConfiguration(file, mockRequest as CustomExpressRequest);
       assert.deepStrictEqual(result, response);

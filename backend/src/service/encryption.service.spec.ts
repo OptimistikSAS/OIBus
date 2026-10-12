@@ -354,6 +354,7 @@ describe('Encryption Service', () => {
       enabled: true,
       items: [],
       groups: [],
+      configurationWorkflows: [],
       settings: {
         field1: 'not a secret',
         field2: 'secret',
@@ -399,6 +400,7 @@ describe('Encryption Service', () => {
       enabled: true,
       items: [],
       groups: [],
+      configurationWorkflows: [],
       settings: {
         field1: 'not a secret',
         field2: '',
@@ -545,6 +547,7 @@ describe('Encryption Service', () => {
       enabled: true,
       items: [],
       groups: [],
+      configurationWorkflows: [],
       settings: {
         field1: 'not a secret',
         field2: 'secret',

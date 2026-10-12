@@ -44,20 +44,20 @@ describe('Config Import Service', () => {
     const transformerRepository = new TransformerRepositoryMock();
     const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
 
-    engineRepository.get = () => testData.engine.settings;
-    scanModeRepository.findAll = () => testData.scanMode.list;
-    ipFilterRepository.list = () => testData.ipFilters.list;
-    certificateRepository.list = () => testData.certificates.list;
-    userRepository.list = () => testData.users.list;
-    southRepository.findAllSouth = () => testData.south.list;
-    southRepository.findSouthById = (id: string) => testData.south.list.find(element => element.id === id) ?? null;
-    southRepository.findAllSouthFull = () => testData.south.list;
-    northRepository.findAllNorth = () => testData.north.list;
-    northRepository.findAllNorthFull = () => testData.north.list;
-    northRepository.findNorthById = (id: string) => testData.north.list.find(element => element.id === id) ?? null;
-    historyQueryRepository.findAllHistoriesFull = () => testData.historyQueries.list;
-    transformerRepository.list = () => testData.transformers.list;
-    oIAnalyticsRegistrationService.getRegistrationSettings = () => testData.oIAnalytics.registration.completed;
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+    scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
+    ipFilterRepository.list.mock.mockImplementation(() => testData.ipFilters.list);
+    certificateRepository.list.mock.mockImplementation(() => testData.certificates.list);
+    userRepository.list.mock.mockImplementation(() => testData.users.list);
+    southRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southRepository.findSouthById.mock.mockImplementation((id: string) => testData.south.list.find(element => element.id === id) ?? null);
+    southRepository.findAllSouthFull.mock.mockImplementation(() => testData.south.list);
+    northRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
+    northRepository.findAllNorthFull.mock.mockImplementation(() => testData.north.list);
+    northRepository.findNorthById.mock.mockImplementation((id: string) => testData.north.list.find(element => element.id === id) ?? null);
+    historyQueryRepository.findAllHistoriesFull.mock.mockImplementation(() => testData.historyQueries.list);
+    transformerRepository.list.mock.mockImplementation(() => testData.transformers.list);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     // Use the real, pure EncryptionService and JoiValidator (both need no init) so the pipeline is
     // exercised end to end against the same manifests/validation the create/update endpoints use.
