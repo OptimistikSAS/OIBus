@@ -102,6 +102,7 @@
     "import-success": "Import completed successfully",
     "import-error": "Import failed",
     "create": "Create",
+    "add": "Add",
     "edit": "Edit",
     "cache": "Cache"
   },

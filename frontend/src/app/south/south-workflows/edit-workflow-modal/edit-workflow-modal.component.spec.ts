@@ -582,6 +582,7 @@ describe('EditWorkflowModalComponent', () => {
   describe('identity key fields', () => {
     test('should add and remove identity key fields, ignoring duplicates', async () => {
       const tester = create();
+      await expect.element(tester.addIdentityKeyFieldButton).toHaveAccessibleName('Add');
 
       await tester.addIdentityKeyField('nodeId');
       await tester.newIdentityKeyField.fill('unit');
