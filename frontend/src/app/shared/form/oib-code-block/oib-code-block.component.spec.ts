@@ -95,13 +95,31 @@ describe('OibCodeBlockComponent', () => {
     await expect.element(tester.editor).toHaveTextContent('initial');
   });
 
-  test.each(['javascript', 'typescript', 'sql', 'json', 'cobol'])('should change the language to %s', async language => {
-    await expect.element(tester.editor).toBeInTheDocument();
-    const codeBlock = tester.fixture.debugElement.query(By.directive(OibCodeBlockComponent)).injector.get(OibCodeBlockComponent);
+  test.each([
+    { language: 'javascript', applied: 'javascript' },
+    { language: 'typescript', applied: 'typescript' },
+    { language: 'sql', applied: 'sql' },
+    { language: 'json', applied: 'json' }
+  ])('should change the language to $language', async ({ language, applied }) => {
+    await expect.element(tester.editor).toHaveAttribute('data-language', 'json');
 
-    expect(() => codeBlock.changeLanguage(language)).not.toThrow();
+    codeBlock().changeLanguage(language);
+
+    await expect.element(tester.editor).toHaveAttribute('data-language', applied);
     await expect.element(tester.editor).toHaveTextContent('initial');
   });
+
+  test('should display an unknown language as plain text', async () => {
+    await expect.element(tester.editor).toHaveAttribute('data-language', 'json');
+
+    codeBlock().changeLanguage('cobol');
+
+    await expect.element(tester.editor).not.toHaveAttribute('data-language');
+  });
+
+  function codeBlock(): OibCodeBlockComponent {
+    return tester.fixture.debugElement.query(By.directive(OibCodeBlockComponent)).injector.get(OibCodeBlockComponent);
+  }
 
   test('should destroy the editor with the component', async () => {
     await expect.element(tester.editor).toBeInTheDocument();
