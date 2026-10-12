@@ -77,7 +77,6 @@ export class OIBusObjectFormControlComponent {
   readonly certificates = input.required<Array<CertificateDTO>>();
   readonly group = input.required<FormGroup>();
   readonly objectAttribute = input.required<OIBusObjectAttribute>();
-  readonly southId = input<string>();
 
   private readonly trackedGroup = trackControl(() => this.group());
   /**
