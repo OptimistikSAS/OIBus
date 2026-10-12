@@ -158,9 +158,9 @@ describe('csv.utils', () => {
     });
 
     test('should throw when the delimiter cannot be used for the file', async () => {
-      // papaparse guesses the delimiter of the file when the given one cannot be a delimiter
+      // papaparse falls back to another delimiter when the given one cannot be a delimiter
       await expect(validateArrayElementsImport(csvFile('name;value\na;1'), '"', arrayAttribute)).rejects.toThrow(
-        /^The entered delimiter """ does not correspond to the file delimiter/
+        'The entered delimiter """ does not correspond to the file delimiter ";"'
       );
     });
 
