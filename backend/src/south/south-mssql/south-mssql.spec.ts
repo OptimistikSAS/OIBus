@@ -428,7 +428,7 @@ describe('SouthMSSQL', () => {
 
       const result = await south.explore(null);
 
-      assert.ok(query.mock.calls[0].arguments[0].toString().includes('sys.tables'));
+      assert.ok(String(query.mock.calls[0].arguments[0]).includes('sys.tables'));
       // No bind params at the root level - only expanding a table needs @tableSchema/@tableName.
       assert.strictEqual(input.mock.calls.length, 0);
       assert.strictEqual(close.mock.calls.length, 1);

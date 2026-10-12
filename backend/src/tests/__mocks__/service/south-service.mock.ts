@@ -14,7 +14,7 @@ import { OIBusAnyContent, OIBusRecord } from '../../../../shared/model/common/co
 import { Page } from '../../../../shared/model/common/types';
 import { OIBusSouthType, SouthConnectorManifest } from '../../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../../shared/model/connector/south-settings.model';
-import { OIBusConnectionTestResult } from '../../../../shared/model/domain/engine.model';
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../../shared/model/domain/engine.model';
 import { SouthConnectorItemSearchParam } from '../../../../shared/model/domain/south-connector.model';
 
 import {
@@ -50,6 +50,9 @@ export default class SouthServiceMock {
   testSouth = mock.fn(
     async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> =>
       ({ items: [] }) as unknown as OIBusConnectionTestResult
+  );
+  testDiscoveryQuery = mock.fn(
+    async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings, _query: string): Promise<Array<OIBusRecord>> => []
   );
   testItem = mock.fn(async (): Promise<SouthConnectorItemTestResult> => ({
     raw: { type: 'any-content', content: '' } as OIBusAnyContent,

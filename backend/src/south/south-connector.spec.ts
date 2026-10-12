@@ -208,7 +208,7 @@ describe('SouthConnector', () => {
     it('should reject the returned promise when run() rejects', async () => {
       const runError = new Error('discovery failed');
       await assert.rejects(
-        south.enqueueWorkflowRun('workflowId1', () => Promise.reject(runError)),
+        south.enqueueWorkflowRun('workflowId1', () => Promise.reject(runError))!,
         runError
       );
     });
@@ -345,7 +345,7 @@ describe('SouthConnector', () => {
     });
 
     it('should skip an enabled item with no scan mode and no group instead of crashing', () => {
-      const runTaskMock = mock.fn(async () => undefined);
+      const runTaskMock = mock.fn(async (_task: unknown) => undefined);
       south['runTask'] = runTaskMock;
       const badItem = { ...south.connectorConfiguration.items[0], id: 'badItem', name: 'Bad Item', scanMode: null, group: null };
       // Routed through the setter so rebuildItemGroupsByScanMode() runs against this item list.
@@ -355,7 +355,7 @@ describe('SouthConnector', () => {
 
       assert.strictEqual(runTaskMock.mock.calls.length, 1);
       assert.deepStrictEqual(
-        runTaskMock.mock.calls[0].arguments[0].items.find((item: { id: string }) => item.id === 'badItem'),
+        (runTaskMock.mock.calls[0].arguments[0] as { items: Array<{ id: string }> }).items.find(item => item.id === 'badItem'),
         undefined
       );
       assert.strictEqual(
@@ -514,7 +514,7 @@ describe('SouthConnector', () => {
       south.directQuery = directQueryMock;
 
       const items = testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>;
-      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+      await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
       assert.strictEqual(directQueryMock.mock.calls.length, 1);
       assert.deepStrictEqual(directQueryMock.mock.calls[0].arguments, [testData.south.list[0].items]);
       assert.ok(
@@ -523,7 +523,7 @@ describe('SouthConnector', () => {
         )
       );
 
-      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+      await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
@@ -834,7 +834,7 @@ describe('SouthConnector', () => {
       const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
       // Only interval1's save should happen: interval2's lower max must be rejected, not overwrite it
       assert.strictEqual(saveCalls.length, 1);
-      assert.strictEqual(saveCalls[0].arguments[1].trackedInstant, '2020-08-01T00:00:00.000Z');
+      assert.strictEqual((saveCalls[0].arguments[1] as { trackedInstant: string | null }).trackedInstant, '2020-08-01T00:00:00.000Z');
     });
 
     it('should defer cache update to end of run with newest recovery strategy', async () => {
@@ -939,7 +939,7 @@ describe('SouthConnector', () => {
       south.directQuery = directQueryMock;
 
       const items = testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>;
-      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+      await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
       assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 1);
       assert.deepStrictEqual(historyQueryHandlerMock.mock.calls[0].arguments, [
@@ -963,7 +963,7 @@ describe('SouthConnector', () => {
         )
       );
 
-      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+      await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
       assert.deepStrictEqual(historyQueryHandlerMock.mock.calls[1].arguments, [
         testData.south.list[2].items,
@@ -985,7 +985,7 @@ describe('SouthConnector', () => {
       const baseItem = testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>;
       const items = [{ ...baseItem, group: null, syncWithGroup: false, maxReadInterval: null }];
 
-      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+      await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
       assert.deepStrictEqual(historyQueryHandlerMock.mock.calls[0].arguments, [
         items,
@@ -1028,7 +1028,7 @@ describe('SouthConnector', () => {
         { ...baseItem, id: 'groupedItem2', group, syncWithGroup: true, settings: { ...baseItem.settings, mode: 'da' as const } }
       ];
 
-      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+      await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
@@ -1098,7 +1098,7 @@ describe('SouthConnector', () => {
       south['runTask'] = runTaskMock;
       south['stopping'] = true;
 
-      south['taskQueue'].push({ scanModeId: 'scanModeId', items: [] });
+      south['taskQueue'].push({ kind: 'items', scanModeId: 'scanModeId', items: [] });
       south['dispatch']();
 
       assert.strictEqual(runTaskMock.mock.calls.length, 0);
@@ -1480,7 +1480,7 @@ describe('SouthConnector', () => {
         }
       ];
 
-      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+      await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
       assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 1);
       const [, startTime, endTime] = historyQueryHandlerMock.mock.calls[0].arguments as [unknown, string, string];
