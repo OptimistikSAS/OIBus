@@ -262,7 +262,7 @@ describe('migration-service', () => {
 
       try {
         const source = specFilteredMigrationSource(base);
-        const migrations = await source.getMigrations();
+        const migrations = await source.getMigrations([]);
 
         assert.deepStrictEqual(
           migrations.map(m => m.file),
@@ -289,7 +289,7 @@ describe('migration-service', () => {
 
       try {
         const source = specFilteredMigrationSource(base);
-        const migrations = await source.getMigrations();
+        const migrations = await source.getMigrations([]);
 
         assert.deepStrictEqual(
           migrations.map(m => m.file),

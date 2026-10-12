@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
+import { OIBusRecord } from '../../shared/model/common/content.model';
 
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { OIBusValidationError } from '../model/types';
+import { WorkflowRunEntity } from '../model/workflow-run.model';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import ItemPointMetadataRepositoryMock from '../tests/__mocks__/repository/config/item-point-metadata-repository.mock';
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
@@ -51,13 +53,19 @@ const runningItem: SouthConnectorItemEntity<never> = {
   startTimeOffset: null,
   endTimeOffset: null,
   recoveryStrategy: null,
+  cachingStrategy: null,
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
   createdBy: 'userTest',
   updatedBy: 'userTest',
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z'
 };
 
-const startedRun = {
+const startedRun: WorkflowRunEntity = {
   id: 'runId1',
   workflowId: WORKFLOW_ID,
   triggerType: 'manual' as const,
@@ -71,7 +79,9 @@ const startedRun = {
   disabledCount: 0,
   pushedCount: 0,
   error: null,
-  triggeredBy: 'userTest'
+  triggeredBy: 'userTest',
+  entries: [],
+  records: []
 };
 
 let configurationWorkflowService: { findById: ReturnType<typeof mock.fn> };
@@ -92,7 +102,7 @@ describe('Configuration Workflow Run Service', () => {
     itemPointMetadataRepository = new ItemPointMetadataRepositoryMock();
     southConnectorRepository = new SouthConnectorRepositoryMock();
     southService = new SouthServiceMock();
-    engine = new DataStreamEngineMock();
+    engine = new DataStreamEngineMock(null);
     south = new SouthConnectorMock(testData.south.list[0]);
     oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
     oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
@@ -449,7 +459,7 @@ describe('Configuration Workflow Run Service', () => {
 
     it('should never touch items, and queue one message with the raw eligible records', async () => {
       configurationWorkflowService.findById.mock.mockImplementation(() => remoteWorkflow);
-      south.discover.mock.mockImplementation(async () => [
+      south.discover.mock.mockImplementation(async (): Promise<Array<OIBusRecord>> => [
         { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' },
         { nodeId: 'ns=1;s=Folder', name: 'Folder', type: 'Object' } // filtered out by eligibilityFilter
       ]);
@@ -625,8 +635,7 @@ describe('Configuration Workflow Run Service', () => {
         discoveredEntryKey: 'nodeId=unchanged',
         discoveredMetadata: { nodeId: 'unchanged', name: 'Same', type: 'Variable' },
         status: 'active',
-        orphanedAt: null,
-        lastPushedAt: null
+        orphanedAt: null
       };
       const changedPoint: ItemPointMetadataEntity = {
         ...unchangedPoint,
@@ -731,8 +740,7 @@ describe('Configuration Workflow Run Service', () => {
           discoveredEntryKey: 'nodeId=gone',
           discoveredMetadata: { nodeId: 'gone' },
           status: 'active',
-          orphanedAt: null,
-          lastPushedAt: null
+          orphanedAt: null
         }
       ]);
       southService.discover.mock.mockImplementation(async () => []);

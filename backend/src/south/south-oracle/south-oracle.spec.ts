@@ -494,7 +494,7 @@ describe('SouthOracle', () => {
 
     it("should discover a Configuration Workflow's dedicated metadata query, with no @StartTime/@EndTime substitution", async () => {
       const mockClose = mock.fn();
-      const mockExecute = mock.fn(async () => ({ rows: [{ column_name: 'temp', description: 'Temperature' }] }));
+      const mockExecute = mock.fn(async (_sql: string) => ({ rows: [{ column_name: 'temp', description: 'Temperature' }] }));
       oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
 
       const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
