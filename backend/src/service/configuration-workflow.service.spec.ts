@@ -54,7 +54,7 @@ describe('Configuration Workflow Service', () => {
     configurationWorkflowRepository = new ConfigurationWorkflowRepositoryMock();
     southConnectorRepository = new SouthConnectorRepositoryMock();
     scanModeRepository = new ScanModeRepositoryMock();
-    engine = new DataStreamEngineMock();
+    engine = new DataStreamEngineMock(null);
     oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
     service = new ConfigurationWorkflowService(
       configurationWorkflowRepository,

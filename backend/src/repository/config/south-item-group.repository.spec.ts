@@ -294,7 +294,7 @@ describe('South Item Group Repository', () => {
     });
 
     it('should cascade a group scan mode change to its synced member items', () => {
-      const southConnectorRepository = new SouthConnectorRepository(database);
+      const southConnectorRepository = new SouthConnectorRepository(database, auditService);
 
       const group = repository.create(
         {
@@ -304,7 +304,9 @@ describe('South Item Group Repository', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          recoveryStrategy: null,
+          cachingStrategy: null
         },
         'userTest'
       );
@@ -323,7 +325,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
       repository.update(group.id, updateCommand, 'userTest');
 

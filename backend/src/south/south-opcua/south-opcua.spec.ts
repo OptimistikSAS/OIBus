@@ -25,6 +25,7 @@ import {
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
+import { SouthConnectorExploreEntry } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -3298,7 +3299,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('discover should default to browsing from the root when the scope has no rootNodeId', async () => {
-    const browseForDiscovery = mock.fn(async () => []);
+    const browseForDiscovery = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => []);
     south.browseForDiscovery = browseForDiscovery;
 
     await south.discover({});
@@ -3307,7 +3308,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('discover should start from the configured rootNodeId', async () => {
-    const browseForDiscovery = mock.fn(async () => []);
+    const browseForDiscovery = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => []);
     south.browseForDiscovery = browseForDiscovery;
 
     await south.discover({ rootNodeId: 'ns=1;s=CustomRoot' });

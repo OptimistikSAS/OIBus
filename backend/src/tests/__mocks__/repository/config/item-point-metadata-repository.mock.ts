@@ -19,6 +19,5 @@ export default class ItemPointMetadataRepositoryMock extends ItemPointMetadataRe
   override create = mock.fn((_write: ItemPointMetadataWrite): ItemPointMetadataEntity => ({}) as ItemPointMetadataEntity);
   override update = mock.fn((_id: string, _write: Omit<ItemPointMetadataWrite, 'workflowId' | 'southItemId'>): void => undefined);
   override markOrphaned = mock.fn((_id: string): void => undefined);
-  override markPushed = mock.fn((_id: string): void => undefined);
   override delete = mock.fn((_id: string): void => undefined);
 }

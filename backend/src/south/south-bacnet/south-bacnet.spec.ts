@@ -18,17 +18,48 @@ import type SouthBACnetClass from './south-bacnet';
 
 const nodeRequire = createRequire(import.meta.url);
 
+interface BACnetObjectId {
+  type: number;
+  instance: number;
+}
+
 class BACnetClientMock extends EventEmitter {
   whoIs = mock.fn(() => undefined);
   whoIsThroughBBMD = mock.fn(() => undefined);
-  readProperty = mock.fn(async () => ({
-    len: 0,
-    objectId: { type: 0, instance: 0 },
-    property: { id: 85, index: 0xffffffff },
-    values: [{ type: 2, value: 42 }]
-  }));
-  readPropertyMultiple = mock.fn(async () => ({ len: 0, values: [] as Array<unknown> }));
-  subscribeCov = mock.fn(async () => undefined);
+  readProperty = mock.fn(
+    async (
+      _address: { address: string },
+      _objectId: BACnetObjectId,
+      _propertyId: number
+    ): Promise<{
+      len: number;
+      objectId: BACnetObjectId;
+      property: { id: number; index: number };
+      values: Array<{ type: number; value: unknown }>;
+    }> => ({
+      len: 0,
+      objectId: { type: 0, instance: 0 },
+      property: { id: 85, index: 0xffffffff },
+      values: [{ type: 2, value: 42 }]
+    })
+  );
+  readPropertyMultiple = mock.fn(
+    async (
+      _address: { address: string },
+      _specs: Array<{ objectId: BACnetObjectId }>
+    ): Promise<{ len: number; values: Array<unknown> }> => ({ len: 0, values: [] })
+  );
+  subscribeCov = mock.fn(
+    async (
+      _address: { address: string },
+      _objectId: BACnetObjectId,
+      _subscriberProcessId: number,
+      _cancel: boolean,
+      _issueConfirmed: boolean,
+      _lifetime: number,
+      _options: unknown
+    ): Promise<void> => undefined
+  );
   registerForeignDevice = mock.fn(async () => undefined);
   close = mock.fn(() => undefined);
 
@@ -43,7 +74,7 @@ let lastCreatedClient: BACnetClientMock;
 const bacnetExports = {
   ...bacnetJs,
   __esModule: true,
-  default: mock.fn(function BACnetClientCtorMock() {
+  default: mock.fn(function BACnetClientCtorMock(_options: unknown) {
     lastCreatedClient = new BACnetClientMock();
     return lastCreatedClient;
   })
@@ -163,6 +194,7 @@ describe('SouthBACnet', () => {
     enabled: true,
     settings: {
       localInterface: '',
+      discoveryTargetAddress: null,
       port: 47809,
       apduTimeout: 100,
       broadcastAddress: '255.255.255.255',
@@ -412,13 +444,15 @@ describe('SouthBACnet', () => {
       await flushPromises();
       await connectPromise;
       const client = lastCreatedClient;
-      client.readPropertyMultiple = mock.fn(async (_address: unknown, specs: Array<{ objectId: { type: number; instance: number } }>) => ({
-        len: 0,
-        values: specs.map(spec => ({
-          objectId: spec.objectId,
-          values: [{ id: 85, index: 0xffffffff, value: [{ type: 2, value: spec.objectId.instance }] }]
-        }))
-      }));
+      client.readPropertyMultiple.mock.mockImplementation(
+        async (_address: unknown, specs: Array<{ objectId: { type: number; instance: number } }>) => ({
+          len: 0,
+          values: specs.map(spec => ({
+            objectId: spec.objectId,
+            values: [{ id: 85, index: 0xffffffff, value: [{ type: 2, value: spec.objectId.instance }] }]
+          }))
+        })
+      );
 
       await south.directQuery([item1, item2, item3]);
 
@@ -435,7 +469,7 @@ describe('SouthBACnet', () => {
       await flushPromises();
       await connectPromise;
       const client = lastCreatedClient;
-      client.readPropertyMultiple = mock.fn(async (address: { address: string }) => {
+      client.readPropertyMultiple.mock.mockImplementation(async (address: { address: string }) => {
         if (address.address === '192.168.1.10') {
           throw new Error('ERR_TIMEOUT');
         }
@@ -458,7 +492,7 @@ describe('SouthBACnet', () => {
       await flushPromises();
       await connectPromise;
       const client = lastCreatedClient;
-      client.readPropertyMultiple = mock.fn(async () => {
+      client.readPropertyMultiple.mock.mockImplementation(async () => {
         throw new Error('ERR_CLOSED');
       });
       bacnetExports.default.mock.resetCalls();
@@ -480,14 +514,7 @@ describe('SouthBACnet', () => {
       await south.subscribe([subscriptionItem]);
 
       assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
-      const [, , subscriberProcessId, cancel, issueConfirmed, lifetime] = client.subscribeCov.mock.calls[0].arguments as [
-        unknown,
-        unknown,
-        number,
-        boolean,
-        boolean,
-        number
-      ];
+      const [, , subscriberProcessId, cancel, issueConfirmed, lifetime] = client.subscribeCov.mock.calls[0].arguments;
       assert.strictEqual(cancel, false);
       assert.strictEqual(issueConfirmed, false);
       assert.strictEqual(lifetime, 300);
@@ -506,7 +533,7 @@ describe('SouthBACnet', () => {
       const client = lastCreatedClient;
 
       await south.subscribe([subscriptionItem]);
-      const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2] as number;
+      const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2];
 
       client.emit('covNotifyUnconfirmed', {
         payload: {
@@ -534,13 +561,13 @@ describe('SouthBACnet', () => {
       const client = lastCreatedClient;
 
       await south.subscribe([subscriptionItem]);
-      const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2] as number;
+      const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2];
       client.subscribeCov.mock.resetCalls();
 
       await south.unsubscribe([subscriptionItem]);
 
       assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
-      const [, , cancelledProcessId, cancel] = client.subscribeCov.mock.calls[0].arguments as [unknown, unknown, number, boolean];
+      const [, , cancelledProcessId, cancel] = client.subscribeCov.mock.calls[0].arguments;
       assert.strictEqual(cancelledProcessId, subscriberProcessId);
       assert.strictEqual(cancel, true);
 
@@ -571,7 +598,7 @@ describe('SouthBACnet', () => {
       await flushPromises();
       await connectPromise;
       const client = lastCreatedClient;
-      client.readProperty = mock.fn(async () => ({
+      client.readProperty.mock.mockImplementation(async () => ({
         len: 0,
         objectId: { type: 8, instance: 10 },
         property: { id: 76, index: 0xffffffff },
@@ -580,7 +607,7 @@ describe('SouthBACnet', () => {
           { type: 12, value: { type: 3, instance: 2 } }
         ]
       }));
-      client.readPropertyMultiple = mock.fn(async () => {
+      client.readPropertyMultiple.mock.mockImplementation(async () => {
         throw new Error('BacnetAbort - Reason:0');
       });
 

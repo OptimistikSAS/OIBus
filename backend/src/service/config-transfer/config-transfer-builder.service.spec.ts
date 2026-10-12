@@ -54,19 +54,19 @@ describe('Config Transfer Builder Service', () => {
     configurationWorkflowRepository = new ConfigurationWorkflowRepositoryMock();
     encryptionService = new EncryptionServiceMock('', '');
 
-    engineRepository.get = () => testData.engine.settings;
-    scanModeRepository.findAll = () => testData.scanMode.list;
-    ipFilterRepository.list = () => testData.ipFilters.list;
-    certificateRepository.list = () => testData.certificates.list;
-    userRepository.list = () => testData.users.list;
-    southRepository.findAllSouth = () => testData.south.list;
-    southRepository.findSouthById = (id: string) => testData.south.list.find(element => element.id === id) ?? null;
-    southRepository.findAllSouthFull = () => testData.south.list;
-    northRepository.findAllNorth = () => testData.north.list;
-    northRepository.findNorthById = (id: string) => testData.north.list.find(element => element.id === id) ?? null;
-    northRepository.findAllNorthFull = () => testData.north.list;
-    historyQueryRepository.findAllHistoriesFull = () => testData.historyQueries.list;
-    transformerRepository.list = () => [...testData.transformers.list, standardTransformer];
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+    scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
+    ipFilterRepository.list.mock.mockImplementation(() => testData.ipFilters.list);
+    certificateRepository.list.mock.mockImplementation(() => testData.certificates.list);
+    userRepository.list.mock.mockImplementation(() => testData.users.list);
+    southRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southRepository.findSouthById.mock.mockImplementation((id: string) => testData.south.list.find(element => element.id === id) ?? null);
+    southRepository.findAllSouthFull.mock.mockImplementation(() => testData.south.list);
+    northRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
+    northRepository.findNorthById.mock.mockImplementation((id: string) => testData.north.list.find(element => element.id === id) ?? null);
+    northRepository.findAllNorthFull.mock.mockImplementation(() => testData.north.list);
+    historyQueryRepository.findAllHistoriesFull.mock.mockImplementation(() => testData.historyQueries.list);
+    transformerRepository.list.mock.mockImplementation(() => [...testData.transformers.list, standardTransformer]);
 
     service = new ConfigTransferBuilderService(
       engineRepository,
@@ -88,7 +88,7 @@ describe('Config Transfer Builder Service', () => {
   it('should attach each south connector its configuration workflows, and each item the workflow owning it', () => {
     const south = testData.south.list[0];
     const [ownedItem, otherItem] = south.items;
-    southRepository.findAllSouthFull = () => [
+    southRepository.findAllSouthFull.mock.mockImplementation(() => [
       {
         ...south,
         items: [
@@ -96,7 +96,7 @@ describe('Config Transfer Builder Service', () => {
           { ...otherItem, createdByWorkflowId: null, disabledReason: null }
         ]
       }
-    ];
+    ]);
     const baseWorkflow: ConfigurationWorkflowEntity = {
       id: 'workflow1',
       name: 'local workflow',
@@ -145,9 +145,12 @@ describe('Config Transfer Builder Service', () => {
         enabled: true
       }
     ]);
-    const exportedItems = configuration.southConnectors[0].settings.items as Array<
-      Record<string, unknown> & { createdByWorkflowId: string | null; disabledReason: string | null }
-    >;
+    // the exported items also carry the workflow owning them, which the item command does not declare
+    const exportedItems = configuration.southConnectors[0].settings.items as unknown as Array<{
+      id: string | null;
+      createdByWorkflowId: string | null;
+      disabledReason: string | null;
+    }>;
     assert.deepStrictEqual(
       exportedItems.map(item => ({ id: item.id, createdByWorkflowId: item.createdByWorkflowId, disabledReason: item.disabledReason })),
       [
@@ -161,7 +164,7 @@ describe('Config Transfer Builder Service', () => {
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
     assert.strictEqual(configuration.engine.oIBusInternalId, testData.engine.settings.id);
     assert.strictEqual(configuration.engine.settings.proxyServer.password, null);
-    assert.strictEqual(configuration.engine.settings.proxyServer.forward.password, null);
+    assert.strictEqual(configuration.engine.settings.proxyServer.forward?.password, null);
     assert.strictEqual(configuration.engine.settings.logger.loki.password, '');
   });
 
@@ -210,7 +213,7 @@ describe('Config Transfer Builder Service', () => {
       createdAt: testData.constants.dates.DATE_1,
       updatedAt: testData.constants.dates.DATE_2
     };
-    scanModeRepository.findAll = () => [intervalScanMode];
+    scanModeRepository.findAll.mock.mockImplementation(() => [intervalScanMode]);
 
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
 
@@ -255,8 +258,7 @@ describe('Config Transfer Builder Service', () => {
   it('should build the users command without any password field', () => {
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
     for (const user of configuration.users) {
-      const settings = user.settings as Record<string, unknown>;
-      assert.strictEqual(settings['password'], undefined);
+      assert.ok(!('password' in user.settings));
     }
     assert.deepStrictEqual(
       configuration.users.map(user => user.settings),
@@ -302,9 +304,9 @@ describe('Config Transfer Builder Service', () => {
         }
       ]
     };
-    southRepository.findAllSouth = () => [customSouth] as unknown as typeof testData.south.list;
-    southRepository.findSouthById = () => customSouth as unknown as (typeof testData.south.list)[0];
-    southRepository.findAllSouthFull = () => [customSouth] as unknown as typeof testData.south.list;
+    southRepository.findAllSouth.mock.mockImplementation(() => [customSouth] as unknown as typeof testData.south.list);
+    southRepository.findSouthById.mock.mockImplementation(() => customSouth as unknown as (typeof testData.south.list)[0]);
+    southRepository.findAllSouthFull.mock.mockImplementation(() => [customSouth] as unknown as typeof testData.south.list);
 
     const originalNorthSource = testData.north.list[0].transformers[0].source as { south: unknown };
     const customNorth = {
@@ -321,9 +323,9 @@ describe('Config Transfer Builder Service', () => {
         }
       ]
     };
-    northRepository.findAllNorth = () => [customNorth] as unknown as typeof testData.north.list;
-    northRepository.findNorthById = () => customNorth as unknown as (typeof testData.north.list)[0];
-    northRepository.findAllNorthFull = () => [customNorth] as unknown as typeof testData.north.list;
+    northRepository.findAllNorth.mock.mockImplementation(() => [customNorth] as unknown as typeof testData.north.list);
+    northRepository.findNorthById.mock.mockImplementation(() => customNorth as unknown as (typeof testData.north.list)[0]);
+    northRepository.findAllNorthFull.mock.mockImplementation(() => [customNorth] as unknown as typeof testData.north.list);
 
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
 
@@ -346,8 +348,9 @@ describe('Config Transfer Builder Service', () => {
       }
     });
 
-    const northTransformer = configuration.northConnectors[0].settings.transformers[0];
-    assert.strictEqual(northTransformer.source.groupId, 'northGroupId1');
+    const { source } = configuration.northConnectors[0].settings.transformers[0];
+    assert.ok(source.type === 'south');
+    assert.strictEqual(source.groupId, 'northGroupId1');
   });
 
   it('should build the north connectors command', () => {

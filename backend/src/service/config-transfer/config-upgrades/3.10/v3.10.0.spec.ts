@@ -46,7 +46,7 @@ describe('3.10.0 config upgrade', () => {
 
   it('reuses the record-list-to-csv standard transformer the configuration already describes', () => {
     const config = fixtureConfig('3.9.3');
-    const existing = { ...standardTransformers(config, 'iso')[0], oIBusInternalId: 'existingId' };
+    const existing: JsonObject = { ...standardTransformers(config, 'iso')[0], oIBusInternalId: 'existingId' };
     existing.settings = { ...(existing.settings as JsonObject), functionName: 'record-list-to-csv' };
     (config.transformers as Array<JsonObject>).push(existing);
 

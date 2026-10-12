@@ -12,7 +12,6 @@ import type {
 
 import type HistoryQuery from '../../engine/history-query';
 import type { HistoryQueryEntity } from '../../model/histor-query.model';
-import type { ILogger } from '../../model/logger.model';
 import type { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
 import type NorthConnector from '../../north/north-connector';
@@ -28,7 +27,7 @@ import LoggerMock from './service/logger/logger.mock';
  */
 export default class DataStreamEngineMock {
   cacheFolders = mockBaseFolders('');
-  logger: ILogger = new LoggerMock();
+  logger = new LoggerMock();
 
   constructor(_logger: unknown) {
     void _logger;
