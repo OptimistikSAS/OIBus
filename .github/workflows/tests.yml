@@ -87,6 +87,11 @@ jobs:
         working-directory: backend
         run: npm run build
 
+      - name: Type-check backend, specs included
+        shell: bash
+        working-directory: backend
+        run: npm run typecheck
+
       - name: Run backend unit tests
         shell: bash
         working-directory: backend

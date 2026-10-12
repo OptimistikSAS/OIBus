@@ -48,8 +48,11 @@ node --experimental-config-file=test.config.json --test src/path/to/file.spec.ts
 npm run lint
 npm run lint:fix
 
-# TypeScript compile (no output — type-check only via tsc --noEmit)
+# TypeScript compile of the app
 npm run build
+
+# Type-check everything, specs and mocks included (the tests run without type checking)
+npm run typecheck
 
 # Generate OpenAPI spec from tsoa decorators (required after changing controllers)
 npm run generate:openapi

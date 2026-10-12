@@ -31,6 +31,7 @@
     "lint": "eslint src/ shared/model/ --cache && prettier --check \"src/**/*.ts\" \"shared/model/**/*.ts\"",
     "lint:fix": "eslint src/ shared/model/ --cache --fix && prettier --write \"src/**/*.ts\" \"shared/model/**/*.ts\"",
     "build": "tsc --project tsconfig.app.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
     "internal:build:lib": "npm run --prefix node_modules/argon2 install",
     "internal:build:lib-macos-x64": "npm run --prefix node_modules/argon2 install && npm run --prefix node_modules/isolated-vm install",
     "docker:iot": "docker compose -f ../docker-compose.yml --profile iot up -d",
