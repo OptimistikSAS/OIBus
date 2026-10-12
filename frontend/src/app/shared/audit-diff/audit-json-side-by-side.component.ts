@@ -1,9 +1,8 @@
 import { afterRenderEffect, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, input, viewChild } from '@angular/core';
 
-import { json } from '@codemirror/lang-json';
-import { MergeView } from '@codemirror/merge';
-import { EditorView } from '@codemirror/view';
-import { basicSetup } from 'codemirror';
+import type { MergeView } from '@codemirror/merge';
+
+import { loadCodeMirror, loadCodeMirrorMerge, loadOnDemand } from '../code-mirror/code-mirror.loader';
 
 function toPrettyJson(state: Record<string, unknown> | null): string {
   return JSON.stringify(state ?? {}, null, 2);
@@ -24,12 +23,19 @@ export class AuditJsonSideBySideComponent {
   readonly newState = input.required<Record<string, unknown> | null>();
 
   private readonly editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editor');
+  /** The merge view is created once CodeMirror is loaded */
+  private readonly codeMirror = loadOnDemand(() => Promise.all([loadCodeMirror(), loadCodeMirrorMerge()]));
   private mergeView: MergeView | null = null;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.mergeView?.destroy());
 
     afterRenderEffect(() => {
+      const codeMirror = this.codeMirror();
+      if (!codeMirror) {
+        return;
+      }
+      const [{ basicSetup, EditorView, json }, { MergeView }] = codeMirror;
       const container = this.editorContainer().nativeElement;
       const originalText = toPrettyJson(this.previousState());
       const newText = toPrettyJson(this.newState());
