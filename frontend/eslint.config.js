@@ -26,6 +26,10 @@ const SHARED_ALIAS_PATTERN = {
   regex: '/backend/shared/',
   message: 'Import the shared model through the @oibus/shared/* alias.'
 };
+const BACKEND_PATTERN = {
+  regex: '/backend/(?!shared/)',
+  message: 'The frontend may only import backend code from the shared model, through @oibus/shared/*.'
+};
 
 // Export our config array, which is composed together thanks to the defineConfig utility function from eslint
 export default [
@@ -215,11 +219,27 @@ export default [
       'no-restricted-imports': [
         'error',
         {
+          patterns: [SHARED_ALIAS_PATTERN, BACKEND_PATTERN]
+        }
+      ]
+    }
+  },
+  {
+    // CodeMirror is loaded on demand: only its types may be imported statically, outside of the modules it is loaded from
+    // (and of the specs, which are not part of the bundle).
+    files: ['**/*.ts'],
+    ignores: ['**/*.spec.ts', 'src/app/shared/code-mirror/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
           patterns: [
             SHARED_ALIAS_PATTERN,
+            BACKEND_PATTERN,
             {
-              regex: '/backend/(?!shared/)',
-              message: 'The frontend may only import backend code from the shared model, through @oibus/shared/*.'
+              group: ['codemirror', '@codemirror/*'],
+              allowTypeImports: true,
+              message: 'CodeMirror is big: load it on demand with the functions of src/app/shared/code-mirror/code-mirror.loader.ts.'
             }
           ]
         }

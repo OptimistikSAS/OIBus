@@ -12,17 +12,16 @@ import {
   viewChild
 } from '@angular/core';
 
-import { json } from '@codemirror/lang-json';
-import { Compartment, EditorState } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
+import type { Compartment } from '@codemirror/state';
+import type { EditorView } from '@codemirror/view';
 import { TranslatePipe } from '@ngx-translate/core';
-import { basicSetup } from 'codemirror';
 import Papa from 'papaparse';
 
 import { OIBusContent, OIBusTimeValue } from '@oibus/shared/common/content.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
 
 import { ProgressbarComponent } from '../../../../history-query/history-query-detail/history-metrics/progressbar/progressbar.component';
+import { CodeMirror, loadCodeMirror, loadOnDemand } from '../../../../shared/code-mirror/code-mirror.loader';
 import { LoadingSpinnerComponent } from '../../../../shared/loading-spinner/loading-spinner.component';
 import { PaginationComponent } from '../../../../shared/pagination/pagination.component';
 
@@ -67,9 +66,11 @@ export class ItemTestResultComponent {
 
   // --- Codeblock state ---
   readonly editorContainer = viewChild<ElementRef<HTMLDivElement>>('editor');
+  /** The editor is created once CodeMirror is loaded */
+  private readonly codeMirror = loadOnDemand(loadCodeMirror);
   private editorView: EditorView | null = null;
   readonly chunkedValueProgress = signal(0);
-  private readonly languageCompartment = new Compartment();
+  private languageCompartment: Compartment | null = null;
   private currentWriteId = 0;
 
   private readonly isAnyJson = computed(() => {
@@ -88,13 +89,16 @@ export class ItemTestResultComponent {
     inject(DestroyRef).onDestroy(() => this.editorView?.destroy());
     afterRenderEffect(() => {
       const container = this.editorContainer();
-      if (!container) {
+      const codeMirror = this.codeMirror();
+      if (!container || !codeMirror) {
         this.editorView?.destroy();
         this.editorView = null;
         return;
       }
 
-      if (!this.editorView) {
+      if (!this.editorView || !this.languageCompartment) {
+        const { basicSetup, Compartment, EditorState, EditorView } = codeMirror;
+        this.languageCompartment = new Compartment();
         const state = EditorState.create({
           doc: '',
           extensions: [basicSetup, this.languageCompartment.of([]), EditorView.editable.of(false)]
@@ -106,7 +110,7 @@ export class ItemTestResultComponent {
       if (!content) return;
 
       const newContent = this.getDisplayContent(content);
-      this.editorView.dispatch({ effects: this.languageCompartment.reconfigure(this.getLanguageExtension()) });
+      this.editorView.dispatch({ effects: this.languageCompartment.reconfigure(this.getLanguageExtension(codeMirror)) });
 
       if (newContent !== this.editorView.state.doc.toString()) {
         this.writeValueChunked(newContent);
@@ -261,7 +265,7 @@ export class ItemTestResultComponent {
     this.availableDisplayModes.emit(modes);
   }
 
-  private getLanguageExtension() {
+  private getLanguageExtension({ json }: CodeMirror) {
     return this.displayMode() === 'json' || this.isAnyJson() ? json() : [];
   }
 

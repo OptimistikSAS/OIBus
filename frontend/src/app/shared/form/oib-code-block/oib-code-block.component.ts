@@ -5,18 +5,23 @@ import {
   ElementRef,
   forwardRef,
   input,
+  linkedSignal,
   OnDestroy,
   signal,
   viewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-import { javascript } from '@codemirror/lang-javascript';
-import { json } from '@codemirror/lang-json';
-import { sql } from '@codemirror/lang-sql';
-import { Compartment, EditorState } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
-import { basicSetup } from 'codemirror';
+import type { Compartment, Extension } from '@codemirror/state';
+import type { EditorView } from '@codemirror/view';
+
+import {
+  CodeMirror,
+  CodeMirrorLanguages,
+  loadCodeMirror,
+  loadCodeMirrorLanguages,
+  loadOnDemand
+} from '../../code-mirror/code-mirror.loader';
 
 @Component({
   selector: 'oib-code-block',
@@ -42,11 +47,16 @@ export class OibCodeBlockComponent implements OnDestroy, ControlValueAccessor {
   readonly height = input('30rem');
   readonly readOnly = input(false);
   readonly disabled = signal(false);
+  /** The language input, unless changed with `changeLanguage()` */
+  private readonly currentLanguage = linkedSignal(() => this.language());
 
+  /** The editor is created once CodeMirror is loaded */
+  private readonly codeMirror = loadOnDemand(() => Promise.all([loadCodeMirror(), loadCodeMirrorLanguages()]));
   private editorView: EditorView | null = null;
+  /** The value written before the editor is created */
   private pendingValue: string | null = null;
-  private readonly languageCompartment = new Compartment();
-  private readonly editableCompartment = new Compartment();
+  private languageCompartment: Compartment | null = null;
+  private editableCompartment: Compartment | null = null;
   /** Prevents the updateListener from calling onChange during programmatic writes. */
   private suppressOnChange = false;
 
@@ -55,18 +65,26 @@ export class OibCodeBlockComponent implements OnDestroy, ControlValueAccessor {
 
   constructor() {
     afterRenderEffect(() => {
+      const codeMirror = this.codeMirror();
+      if (!codeMirror) {
+        return;
+      }
+      const [core, languages] = codeMirror;
+      const { basicSetup, Compartment, EditorState, EditorView } = core;
       const container = this._editorContainer().nativeElement;
       const isEditable = !this.readOnly() && !this.disabled();
-      const lang = this.language();
+      const languageExtension = this.getLanguageExtension(this.currentLanguage(), core, languages);
 
-      if (!this.editorView) {
+      if (!this.editorView || !this.languageCompartment || !this.editableCompartment) {
+        this.languageCompartment = new Compartment();
+        this.editableCompartment = new Compartment();
         const state = EditorState.create({
           doc: this.pendingValue ?? '',
           extensions: [
             basicSetup,
             // Make the editor fill its container height
             EditorView.theme({ '&': { height: '100%' }, '.cm-scroller': { overflow: 'auto' } }),
-            this.languageCompartment.of(this.getLanguageExtension(lang)),
+            this.languageCompartment.of(languageExtension),
             this.editableCompartment.of(EditorView.editable.of(isEditable)),
             EditorView.updateListener.of(update => {
               if (update.docChanged && !this.suppressOnChange) {
@@ -82,7 +100,7 @@ export class OibCodeBlockComponent implements OnDestroy, ControlValueAccessor {
         // Reactively update language and editable state when their signals change
         this.editorView.dispatch({
           effects: [
-            this.languageCompartment.reconfigure(this.getLanguageExtension(lang)),
+            this.languageCompartment.reconfigure(languageExtension),
             this.editableCompartment.reconfigure(EditorView.editable.of(isEditable))
           ]
         });
@@ -120,9 +138,7 @@ export class OibCodeBlockComponent implements OnDestroy, ControlValueAccessor {
    * bound as an input (e.g. set after an async operation).
    */
   changeLanguage(lang: string): void {
-    this.editorView?.dispatch({
-      effects: this.languageCompartment.reconfigure(this.getLanguageExtension(lang))
-    });
+    this.currentLanguage.set(lang);
   }
 
   private setEditorContent(value: string): void {
@@ -134,7 +150,7 @@ export class OibCodeBlockComponent implements OnDestroy, ControlValueAccessor {
     this.suppressOnChange = false;
   }
 
-  private getLanguageExtension(lang: string) {
+  private getLanguageExtension(lang: string, { json }: CodeMirror, { javascript, sql }: CodeMirrorLanguages): Extension {
     switch (lang) {
       case 'json':
         return json();
