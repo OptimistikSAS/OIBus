@@ -63,6 +63,7 @@ before(() => {
   mockUtils = {
     checkScanMode: mock.fn(),
     checkGroups: mock.fn(),
+    parseCsvImport: mock.fn(() => []),
     stringToBoolean: mock.fn(() => true),
     generateRandomId: mock.fn(() => 'exploreSessionId')
   };
@@ -1749,12 +1750,7 @@ describe('South Service', () => {
       }
     ];
 
-    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
-    if (papaparseMod) {
-      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
-        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
-      );
-    }
+    mockUtils.parseCsvImport.mock.mockImplementation(() => csvData);
 
     const result = await service.checkImportItems(
       testData.south.list[0].type,

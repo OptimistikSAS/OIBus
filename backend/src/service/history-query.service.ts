@@ -1,5 +1,3 @@
-import csv from 'papaparse';
-
 import {
   HistoryQueryCommandDTO,
   HistoryQueryCommonDTO,
@@ -42,7 +40,7 @@ import { northManifestList } from './north-manifests';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { southManifestList } from './south-manifests';
 import { toTransformerDTO } from './transformer.service';
-import { checkScanMode, stringToBoolean } from './utils';
+import { checkScanMode, parseCsvImport, stringToBoolean } from './utils';
 
 interface ISouthService {
   getManifest(type: string): SouthConnectorManifest;
