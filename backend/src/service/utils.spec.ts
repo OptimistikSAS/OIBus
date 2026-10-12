@@ -21,6 +21,7 @@ import type { SouthItemSettings } from '../../shared/model/connector/south-setti
 
 import type { OIBusError as OIBusErrorType } from '../model/engine.model';
 import type { SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/south-connector.model';
+import type { OIBusValidationError as OIBusValidationErrorType } from '../model/types';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';

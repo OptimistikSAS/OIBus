@@ -32,7 +32,6 @@ import {
 import { encryptionService } from './encryption.service';
 import { southManifestList } from './south-manifests';
 export { southManifestList } from './south-manifests';
-import csv from 'papaparse';
 
 import { OIBusContent, OIBusRecord } from '../../shared/model/common/content.model';
 import { GetUserInfo, Page } from '../../shared/model/common/types';
@@ -68,7 +67,7 @@ import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-wor
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import SouthExploreSessionManager from './south-explore-session-manager';
-import { checkGroups, checkScanMode, stringToBoolean } from './utils';
+import { checkGroups, checkScanMode, parseCsvImport, stringToBoolean } from './utils';
 
 interface ITransformerService {
   findById(transformerId: string): Transformer;
