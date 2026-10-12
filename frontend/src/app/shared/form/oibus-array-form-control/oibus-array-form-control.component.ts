@@ -60,7 +60,6 @@ export class OIBusArrayFormControlComponent {
   readonly parentGroup = input.required<FormGroup>();
   readonly control = input.required<FormControl<Array<ArrayElement>>>();
   readonly arrayAttribute = input.required<OIBusArrayAttribute>();
-  readonly southId = input<string>();
 
   /** The control is tracked so that this OnPush component renders its changes made from outside (value patched, touched...) */
   protected readonly trackedControl = trackControl(() => this.control());
