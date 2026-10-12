@@ -47,19 +47,19 @@ describe('Config Transfer Service', () => {
     transformerRepository = new TransformerRepositoryMock();
     oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
 
-    engineRepository.get = () => testData.engine.settings;
-    scanModeRepository.findAll = () => testData.scanMode.list;
-    ipFilterRepository.list = () => testData.ipFilters.list;
-    certificateRepository.list = () => testData.certificates.list;
-    userRepository.list = () => testData.users.list;
-    southRepository.findAllSouth = () => testData.south.list;
-    southRepository.findSouthById = (id: string) => testData.south.list.find(element => element.id === id) ?? null;
-    southRepository.findAllSouthFull = () => testData.south.list;
-    northRepository.findAllNorth = () => testData.north.list;
-    northRepository.findNorthById = (id: string) => testData.north.list.find(element => element.id === id) ?? null;
-    historyQueryRepository.findAllHistoriesFull = () => testData.historyQueries.list;
-    transformerRepository.list = () => testData.transformers.list;
-    oIAnalyticsRegistrationService.getRegistrationSettings = () => testData.oIAnalytics.registration.completed;
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+    scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
+    ipFilterRepository.list.mock.mockImplementation(() => testData.ipFilters.list);
+    certificateRepository.list.mock.mockImplementation(() => testData.certificates.list);
+    userRepository.list.mock.mockImplementation(() => testData.users.list);
+    southRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southRepository.findSouthById.mock.mockImplementation((id: string) => testData.south.list.find(element => element.id === id) ?? null);
+    southRepository.findAllSouthFull.mock.mockImplementation(() => testData.south.list);
+    northRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
+    northRepository.findNorthById.mock.mockImplementation((id: string) => testData.north.list.find(element => element.id === id) ?? null);
+    historyQueryRepository.findAllHistoriesFull.mock.mockImplementation(() => testData.historyQueries.list);
+    transformerRepository.list.mock.mockImplementation(() => testData.transformers.list);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     // Use the real EncryptionService (filterSecrets is a pure, synchronous, manifest-driven
     // function that needs no init) so the secret-stripping is exercised for real, not mocked away.
@@ -134,7 +134,7 @@ describe('Config Transfer Service', () => {
     for (const southConnector of envelope.config.southConnectors) {
       const manifest = southManifestList.find(manifest => manifest.id === southConnector.type)!;
       const secretKeys = collectSecretKeys(manifest.settings);
-      const settings = southConnector.settings.settings as Record<string, unknown>;
+      const settings = Object.fromEntries(Object.entries(southConnector.settings.settings));
       for (const key of secretKeys) {
         if (key in settings) {
           assert.strictEqual(settings[key], '', `expected south connector settings.${key} to be stripped`);
@@ -145,7 +145,7 @@ describe('Config Transfer Service', () => {
     for (const northConnector of envelope.config.northConnectors) {
       const manifest = northManifestList.find(manifest => manifest.id === northConnector.type)!;
       const secretKeys = collectSecretKeys(manifest.settings);
-      const settings = northConnector.settings.settings as Record<string, unknown>;
+      const settings = Object.fromEntries(Object.entries(northConnector.settings.settings));
       for (const key of secretKeys) {
         if (key in settings) {
           assert.strictEqual(settings[key], '', `expected north connector settings.${key} to be stripped`);
