@@ -63,6 +63,7 @@ before(() => {
   mockUtils = {
     checkScanMode: mock.fn(),
     checkGroups: mock.fn(),
+    parseCsvImport: mock.fn(() => []),
     stringToBoolean: mock.fn(() => true),
     generateRandomId: mock.fn(() => 'exploreSessionId')
   };
@@ -83,7 +84,6 @@ before(() => {
     }
   });
   mockModule(nodeRequire, './metrics/south-connector-metrics.service', { default: class {} });
-  mockModule(nodeRequire, 'papaparse', { parse: mock.fn(() => ({ meta: { delimiter: ',' }, data: [] })) });
 
   const mod = reloadModule<{
     default: new (...args: Array<unknown>) => InstanceType<typeof SouthServiceType>;
@@ -1515,13 +1515,7 @@ describe('South Service', () => {
       }
     ];
 
-    // Get the papaparse mock from the module cache and update it for this test
-    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
-    if (papaparseMod) {
-      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
-        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
-      );
-    }
+    mockUtils.parseCsvImport.mock.mockImplementation(() => csvData);
 
     validator.validateSettings.mock.mockImplementation(
       seq(
@@ -1627,12 +1621,7 @@ describe('South Service', () => {
       }
     ];
 
-    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
-    if (papaparseMod) {
-      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
-        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
-      );
-    }
+    mockUtils.parseCsvImport.mock.mockImplementation(() => csvData);
 
     const result = await service.checkImportItems(
       testData.south.list[1].type,
@@ -1680,12 +1669,7 @@ describe('South Service', () => {
       }
     ];
 
-    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
-    if (papaparseMod) {
-      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
-        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
-      );
-    }
+    mockUtils.parseCsvImport.mock.mockImplementation(() => csvData);
 
     const result = await service.checkImportItems(
       testData.south.list[0].type,
@@ -1733,12 +1717,7 @@ describe('South Service', () => {
       }
     ];
 
-    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
-    if (papaparseMod) {
-      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
-        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
-      );
-    }
+    mockUtils.parseCsvImport.mock.mockImplementation(() => csvData);
 
     const result = await service.checkImportItems(
       testData.south.list[0].type,
@@ -1765,12 +1744,7 @@ describe('South Service', () => {
       }
     ];
 
-    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
-    if (papaparseMod) {
-      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
-        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
-      );
-    }
+    mockUtils.parseCsvImport.mock.mockImplementation(() => csvData);
 
     const result = await service.checkImportItems(
       testData.south.list[0].type,
@@ -1818,12 +1792,7 @@ describe('South Service', () => {
       }
     ];
 
-    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
-    if (papaparseMod) {
-      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
-        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
-      );
-    }
+    mockUtils.parseCsvImport.mock.mockImplementation(() => csvData);
 
     const result = await service.checkImportItems(
       testData.south.list[0].type,
@@ -1843,17 +1812,15 @@ describe('South Service', () => {
   });
 
   it('should throw error if delimiter does not match', async () => {
-    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
-    if (papaparseMod) {
-      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
-        seq(() => ({ meta: { delimiter: ';' }, data: [] }))
-      );
-    }
+    mockUtils.parseCsvImport.mock.mockImplementation(() => {
+      throw new OIBusValidationError(`The entered delimiter "," does not correspond to the file delimiter ";"`);
+    });
 
     await assert.rejects(
-      async () => service.checkImportItems(testData.south.command.type, '', ',', []),
+      async () => service.checkImportItems(testData.south.command.type, 'file content', ',', []),
       new OIBusValidationError(`The entered delimiter "," does not correspond to the file delimiter ";"`)
     );
+    assert.deepStrictEqual(mockUtils.parseCsvImport.mock.calls.at(-1)!.arguments, ['file content', ',']);
   });
 
   it('should import items', async () => {

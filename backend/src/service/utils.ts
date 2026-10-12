@@ -315,6 +315,27 @@ export const convertDelimiter = (delimiter: CsvCharacter): string => {
 };
 
 /**
+ * Parses an imported CSV file of items with the delimiter entered by the user, and throws when the file uses another
+ * delimiter:
+ * - the entered delimiter cannot be a delimiter (papaparse then falls back to another one)
+ * - the header is a single column with the entered delimiter, but several with the delimiter papaparse detects (comma,
+ *   semicolon, tab or pipe). A single column file, or a file using a delimiter papaparse cannot detect, is accepted.
+ */
+export const parseCsvImport = (fileContent: string, delimiter: string): Array<Record<string, string>> => {
+  const csvContent = csv.parse<Record<string, string>>(fileContent, { header: true, delimiter, skipEmptyLines: true });
+  if (csvContent.meta.delimiter !== delimiter || csvContent.meta.fields?.length === 1) {
+    const detected = csv.parse(fileContent, { preview: 1 });
+    const fileDelimiter = detected.errors.some(error => error.code === 'UndetectableDelimiter')
+      ? csvContent.meta.delimiter
+      : detected.meta.delimiter;
+    if (fileDelimiter !== delimiter) {
+      throw new OIBusValidationError(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${fileDelimiter}"`);
+    }
+  }
+  return csvContent.data;
+};
+
+/**
  * Extract the last data row of a CSV string as an object keyed by the header line.
  *
  * Used to keep a lightweight "last value" in the South cache for connectors whose remote agent

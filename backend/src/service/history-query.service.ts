@@ -1,5 +1,3 @@
-import csv from 'papaparse';
-
 import {
   HistoryQueryCommandDTO,
   HistoryQueryCommonDTO,
@@ -42,7 +40,7 @@ import { northManifestList } from './north-manifests';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { southManifestList } from './south-manifests';
 import { toTransformerDTO } from './transformer.service';
-import { checkScanMode, stringToBoolean } from './utils';
+import { checkScanMode, parseCsvImport, stringToBoolean } from './utils';
 
 interface ISouthService {
   getManifest(type: string): SouthConnectorManifest;
@@ -553,16 +551,11 @@ export default class HistoryQueryService {
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.southService.getManifest(southType);
-    const csvContent = csv.parse<Record<string, string>>(fileContent, { header: true, delimiter, skipEmptyLines: true });
-    if (csvContent.meta.delimiter !== delimiter) {
-      throw new OIBusValidationError(
-        `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`
-      );
-    }
+    const csvData = parseCsvImport(fileContent, delimiter);
 
     const validItems: Array<HistoryQueryItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
-    for (const data of csvContent.data) {
+    for (const data of csvData) {
       const item: HistoryQueryItemDTO = {
         id: '',
         name: data.name,
