@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, WritableSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,7 +9,6 @@ import { map, Observable, of, switchMap } from 'rxjs';
 
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
@@ -18,14 +17,9 @@ import { ConfirmationService } from '../../../shared/confirmation.service';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { ModalService } from '../../../shared/modal.service';
 import { NotificationService } from '../../../shared/notification.service';
+import { SouthItemGroups } from '../../south-items/south-item-groups';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
 import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
-
-type AddOrEditGroup = (command: {
-  mode: 'create' | 'edit';
-  group: SouthItemGroupCommandDTO;
-}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 /** Prefix of the client-side id given to a workflow created in memory (not persisted yet) - the backend
  *  treats such an id as "create" when the south connector is saved, same convention as in-memory groups. */
@@ -51,7 +45,7 @@ export function toConfigurationWorkflowCommand(workflow: ConfigurationWorkflowDT
  * own directSave):
  * - direct (prepareForDirectSave, from south-detail): every change is saved straight through the REST
  *   endpoints, and a workflow can also be run now, previewed as persisted, and have its run history opened.
- * - in memory (prepareForInMemory, from edit-south): add/edit/duplicate/delete only mutate the array the
+ * - in memory (prepareForInMemory, from edit-south): add/edit/duplicate/delete only update the signal the
  *   page owns (saved along with the connector itself), and a preview runs the workflow as currently
  *   edited against the page's current, possibly unsaved, settings. No run, no history - there may not
  *   even be a persisted connector/workflow to run yet.
@@ -79,19 +73,18 @@ export default class ManageWorkflowsModalComponent {
   private southType!: OIBusSouthType;
   private southSettings!: SouthSettings;
   private readonly scanModes = signal<Array<ScanModeDTO>>([]);
-  private groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  private groups!: SouthItemGroups;
   private manifest!: SouthConnectorManifest;
   /**
-   * The workflows, mutated in place - in in-memory mode, this is edit-south's own array (shared by reference), which is
-   * how the page gets the changes back. The template renders the `workflows` snapshot instead, refreshed after every change.
+   * Where the workflows are kept: in in-memory mode, edit-south's own signal, so that the page gets the changes made
+   * here, and this modal shows the ones made by the page (a deleted group is unmapped from the workflows); in direct
+   * mode, the workflows loaded from the API.
    */
-  private sharedWorkflows: Array<ConfigurationWorkflowCommandDTO> = [];
-  readonly workflows = signal<Array<ConfigurationWorkflowCommandDTO>>([]);
+  private readonly workflowSource = signal<WritableSignal<Array<ConfigurationWorkflowCommandDTO>>>(signal([]));
+  readonly workflows = computed(() => this.workflowSource()());
   readonly loading = signal(true);
   readonly runningWorkflowId = signal<string | null>(null);
 
-  private addOrEditGroup!: AddOrEditGroup;
-  private deleteGroup!: DeleteGroup;
   // A manual run can create/update items directly on the south connector this modal was opened from -
   // called after each successful "Run now" so the display page behind this modal reflects them, without
   // this modal (which only has its own point-in-time snapshot of the connector) needing to know how.
@@ -110,9 +103,7 @@ export default class ManageWorkflowsModalComponent {
     southSettings: SouthSettings,
     scanModes: Array<ScanModeDTO>,
     manifest: SouthConnectorManifest,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    addOrEditGroup: AddOrEditGroup,
-    deleteGroup: DeleteGroup,
+    groups: SouthItemGroups,
     onWorkflowRun?: () => void
   ) {
     this.directSave.set(true);
@@ -122,49 +113,37 @@ export default class ManageWorkflowsModalComponent {
     this.scanModes.set(scanModes);
     this.manifest = manifest;
     this.groups = groups;
-    this.addOrEditGroup = addOrEditGroup;
-    this.deleteGroup = deleteGroup;
     this.onWorkflowRun = onWorkflowRun;
     this.loading.set(true);
+    this.workflowSource.set(signal([]));
     this.configurationWorkflowService.list(this.southId).subscribe(workflows => {
-      this.sharedWorkflows = workflows.map(workflow => toConfigurationWorkflowCommand(workflow));
+      this.workflowSource().set(workflows.map(workflow => toConfigurationWorkflowCommand(workflow)));
       this.loading.set(false);
-      this.refreshWorkflows();
     });
   }
 
   /**
-   * In-memory mode: `workflows` is the page's own array, mutated in place. `southId` is the connector id,
+   * In-memory mode: `workflows` is the page's own signal, updated by this modal. `southId` is the connector id,
    * or `create` for a connector being created - only used to test/preview against `southSettings`.
    */
   prepareForInMemory(
-    workflows: Array<ConfigurationWorkflowCommandDTO>,
+    workflows: WritableSignal<Array<ConfigurationWorkflowCommandDTO>>,
     southId: string,
     southSettings: SouthSettings,
     scanModes: Array<ScanModeDTO>,
     manifest: SouthConnectorManifest,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    addOrEditGroup: AddOrEditGroup,
-    deleteGroup: DeleteGroup
+    groups: SouthItemGroups
   ) {
     this.directSave.set(false);
-    this.sharedWorkflows = workflows;
+    this.workflowSource.set(workflows);
     this.southId = southId;
     this.southType = manifest.id;
     this.southSettings = southSettings;
     this.scanModes.set(scanModes);
     this.manifest = manifest;
     this.groups = groups;
-    this.addOrEditGroup = addOrEditGroup;
-    this.deleteGroup = deleteGroup;
     this.onWorkflowRun = undefined;
     this.loading.set(false);
-    this.refreshWorkflows();
-  }
-
-  /** Re-renders the workflow list after it was changed in place. */
-  private refreshWorkflows() {
-    this.workflows.set([...this.sharedWorkflows]);
   }
 
   close() {
@@ -192,32 +171,13 @@ export default class ManageWorkflowsModalComponent {
 
   onAdd() {
     const { component, result } = this.openEditModal();
-    component.prepareForCreation(
-      this.scanModes(),
-      this.sharedWorkflows,
-      this.manifest,
-      this.southId,
-      this.southSettings,
-      this.groups,
-      this.addOrEditGroup,
-      this.deleteGroup
-    );
+    component.prepareForCreation(this.scanModes(), this.workflows(), this.manifest, this.southId, this.southSettings, this.groups);
     result.subscribe(command => this.createWorkflow(command));
   }
 
   onEdit(workflow: ConfigurationWorkflowCommandDTO) {
     const { component, result } = this.openEditModal();
-    component.prepareForEdition(
-      this.scanModes(),
-      this.sharedWorkflows,
-      this.manifest,
-      workflow,
-      this.southId,
-      this.southSettings,
-      this.groups,
-      this.addOrEditGroup,
-      this.deleteGroup
-    );
+    component.prepareForEdition(this.scanModes(), this.workflows(), this.manifest, workflow, this.southId, this.southSettings, this.groups);
     result.subscribe(command => {
       const save$: Observable<ConfigurationWorkflowCommandDTO> = this.directSave()
         ? this.configurationWorkflowService
@@ -225,11 +185,7 @@ export default class ManageWorkflowsModalComponent {
             .pipe(map(updated => toConfigurationWorkflowCommand(updated)))
         : of({ ...command, id: workflow.id });
       save$.subscribe(updated => {
-        const index = this.sharedWorkflows.findIndex(w => w.id === workflow.id);
-        if (index >= 0) {
-          this.sharedWorkflows[index] = updated;
-        }
-        this.refreshWorkflows();
+        this.workflowSource().update(workflows => workflows.map(w => (w.id === workflow.id ? updated : w)));
         if (this.directSave()) {
           this.notificationService.success('south.workflows.updated');
         }
@@ -239,31 +195,23 @@ export default class ManageWorkflowsModalComponent {
 
   onDuplicate(workflow: ConfigurationWorkflowCommandDTO) {
     const { component, result } = this.openEditModal();
-    component.prepareForCopy(
-      this.scanModes(),
-      this.sharedWorkflows,
-      this.manifest,
-      workflow,
-      this.southId,
-      this.southSettings,
-      this.groups,
-      this.addOrEditGroup,
-      this.deleteGroup
-    );
+    component.prepareForCopy(this.scanModes(), this.workflows(), this.manifest, workflow, this.southId, this.southSettings, this.groups);
     result.subscribe(command => this.createWorkflow(command));
   }
 
   private createWorkflow(command: ConfigurationWorkflowCommandDTO) {
     if (!this.directSave()) {
-      this.sharedWorkflows.push({ ...command, id: `${TEMP_ID_PREFIX}${Date.now()}` });
-      this.refreshWorkflows();
+      this.addWorkflow({ ...command, id: `${TEMP_ID_PREFIX}${Date.now()}` });
       return;
     }
     this.configurationWorkflowService.create(this.southId, command).subscribe(created => {
-      this.sharedWorkflows.push(toConfigurationWorkflowCommand(created));
-      this.refreshWorkflows();
+      this.addWorkflow(toConfigurationWorkflowCommand(created));
       this.notificationService.success('south.workflows.created');
     });
+  }
+
+  private addWorkflow(workflow: ConfigurationWorkflowCommandDTO) {
+    this.workflowSource().update(workflows => [...workflows, workflow]);
   }
 
   onDelete(workflow: ConfigurationWorkflowCommandDTO) {
@@ -271,13 +219,7 @@ export default class ManageWorkflowsModalComponent {
       messageKey: 'south.workflows.confirm-deletion',
       interpolateParams: { name: workflow.name }
     });
-    const removeFromList = () => {
-      const index = this.sharedWorkflows.findIndex(w => w.id === workflow.id);
-      if (index >= 0) {
-        this.sharedWorkflows.splice(index, 1);
-      }
-      this.refreshWorkflows();
-    };
+    const removeFromList = () => this.workflowSource().update(workflows => workflows.filter(w => w.id !== workflow.id));
     if (!this.directSave()) {
       confirmation$.subscribe(() => removeFromList());
       return;
