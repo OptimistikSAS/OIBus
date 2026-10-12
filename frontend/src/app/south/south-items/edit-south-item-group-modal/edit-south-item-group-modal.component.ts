@@ -45,7 +45,7 @@ export class EditSouthItemGroupModalComponent {
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly manifest = signal<SouthConnectorManifest | null>(null);
   private group: SouthItemGroupDTO | SouthItemGroupCommandDTO | null = null;
-  private existingGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  private existingGroups: ReadonlyArray<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
 
   readonly recoveryStrategies: Array<{ value: SouthHistoryRecoveryStrategy; labelKey: string }> = [
     { value: 'oldest', labelKey: 'south.groups.recovery-strategy-oldest' },
@@ -98,7 +98,7 @@ export class EditSouthItemGroupModalComponent {
 
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
-    existingGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    existingGroups: ReadonlyArray<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
     manifest: SouthConnectorManifest
   ) {
     this.mode.set('create');
@@ -111,7 +111,7 @@ export class EditSouthItemGroupModalComponent {
 
   prepareForEdition(
     scanModes: Array<ScanModeDTO>,
-    existingGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    existingGroups: ReadonlyArray<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
     manifest: SouthConnectorManifest,
     group: SouthItemGroupDTO | SouthItemGroupCommandDTO
   ) {

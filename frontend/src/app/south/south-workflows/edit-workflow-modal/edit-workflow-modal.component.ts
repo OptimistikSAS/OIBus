@@ -13,11 +13,10 @@ import {
 
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { Observable, switchMap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
 import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest, SQL_FAMILY_SOUTH_TYPES } from '@oibus/shared/connector/south-manifest.model';
@@ -37,7 +36,7 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../../south-items/south-item-groups';
 
 // 'group-select' is not part of the manifest's own attribute-type vocabulary - it tags the
 // historian groupId field, whose options come from this south connector's item groups rather
@@ -89,12 +88,6 @@ interface MappableField {
    *  the set of valid group ids is dynamic). Unset for every field outside this historian group. */
   visibleWhenGrouped?: boolean;
 }
-
-type AddOrEditGroup = (command: {
-  mode: 'create' | 'edit';
-  group: SouthItemGroupCommandDTO;
-}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 /** Sentinel select-option value meaning "map this to a {{field}} expression instead of a fixed value". */
 const VARIABLE_SENTINEL = '__variable__';
@@ -195,12 +188,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   directSave = true;
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   /**
-   * The page's own group list, shared by reference and mutated in place (created groups are pushed, deleted ones
-   * spliced): edit-south keeps its in-memory groups in it. The template renders the `groups` snapshot instead, refreshed
-   * after every change.
+   * The groups of the page (south-detail saves them through the API, edit-south in memory), changed through it only, like
+   * EditSouthItemModalComponent's own group dropdown.
    */
-  private sharedGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  readonly groups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
+  private readonly groupStore = signal<SouthItemGroups | null>(null);
+  readonly groups = computed(() => this.groupStore()?.list() ?? []);
   private workflow: ConfigurationWorkflowCommandDTO | null = null;
   /** Every other workflow of the connector, for the name uniqueness check. */
   private existingWorkflows: Array<{ id: string | null; name: string }> = [];
@@ -222,12 +214,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   /** Whether OIBus is currently registered with OIAnalytics - gates the "Push to OIAnalytics" mode,
    *  refreshed each time this modal is prepared (registration can change between two workflow edits). */
   readonly isRegistered = signal(false);
-
-  // Saves through the page's own group callbacks, exactly like EditSouthItemModalComponent's own group
-  // dropdown - bound from south-detail.component.ts (direct) or edit-south.component.ts (in memory) and
-  // passed down through prepare().
-  private addOrEditGroup!: AddOrEditGroup;
-  private deleteGroup!: DeleteGroup;
 
   readonly operators: ReadonlyArray<RecordFilterOperator> = RECORD_FILTER_OPERATORS;
   readonly variableSentinel = VARIABLE_SENTINEL;
@@ -301,11 +287,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     manifest: SouthConnectorManifest,
     southId: string,
     southSettings: SouthSettings,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
-    addOrEditGroup?: AddOrEditGroup,
-    deleteGroup?: DeleteGroup
+    groups: SouthItemGroups
   ) {
-    this.prepare('create', scanModes, existingWorkflows, manifest, null, southId, southSettings, groups, addOrEditGroup, deleteGroup);
+    this.prepare('create', scanModes, existingWorkflows, manifest, null, southId, southSettings, groups);
   }
 
   prepareForEdition(
@@ -315,11 +299,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     workflow: ConfigurationWorkflowCommandDTO,
     southId: string,
     southSettings: SouthSettings,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
-    addOrEditGroup?: AddOrEditGroup,
-    deleteGroup?: DeleteGroup
+    groups: SouthItemGroups
   ) {
-    this.prepare('edit', scanModes, existingWorkflows, manifest, workflow, southId, southSettings, groups, addOrEditGroup, deleteGroup);
+    this.prepare('edit', scanModes, existingWorkflows, manifest, workflow, southId, southSettings, groups);
   }
 
   /**
@@ -335,12 +317,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     workflow: ConfigurationWorkflowCommandDTO,
     southId: string,
     southSettings: SouthSettings,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
-    addOrEditGroup?: AddOrEditGroup,
-    deleteGroup?: DeleteGroup
+    groups: SouthItemGroups
   ) {
     const clone: ConfigurationWorkflowCommandDTO = { ...structuredClone(workflow), id: null, name: `${workflow.name}-copy` };
-    this.prepare('copy', scanModes, existingWorkflows, manifest, clone, southId, southSettings, groups, addOrEditGroup, deleteGroup);
+    this.prepare('copy', scanModes, existingWorkflows, manifest, clone, southId, southSettings, groups);
   }
 
   private prepare(
@@ -351,16 +331,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     workflow: ConfigurationWorkflowCommandDTO | null,
     southId: string,
     southSettings: SouthSettings,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    addOrEditGroup: AddOrEditGroup | undefined,
-    deleteGroup: DeleteGroup | undefined
+    groups: SouthItemGroups
   ) {
     this.mode.set(mode);
     this.scanModes.set(scanModes);
-    this.sharedGroups = groups;
-    this.refreshGroups();
-    this.addOrEditGroup = addOrEditGroup!;
-    this.deleteGroup = deleteGroup!;
+    this.groupStore.set(groups);
     this.existingWorkflows = existingWorkflows;
     this.workflow = workflow;
     this.currentManifest.set(manifest);
@@ -376,11 +351,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.eligibilityFilter.set(workflow ? workflow.eligibilityFilter.map(condition => ({ ...condition })) : []);
     this.refreshRegistrationStatus();
     this.initForm();
-  }
-
-  /** Re-renders the page's group list after it was changed in place. */
-  private refreshGroups() {
-    this.groups.set([...this.sharedGroups]);
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -596,52 +566,35 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.setMappingValue('groupId', groupId ?? '');
   }
 
-  /** Mirrors EditSouthItemModalComponent's own onAddGroup - opens the same group modal, saves it via the
-   *  callback threaded in from the page (directly against the live south connector from south-detail, in
-   *  memory from edit-south), then maps the newly created group as this field's constant. */
+  /** Mirrors EditSouthItemModalComponent's own onAddGroup - creates the group through the groups of the page, then maps
+   *  the newly created group as this field's constant. */
   onAddGroup() {
-    const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
-    const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave;
-    component.prepareForCreation(this.scanModes(), this.sharedGroups, this.currentManifest()!);
-    modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
-      this.sharedGroups.push(groupResult);
-      this.refreshGroups();
-      this.onSelectGroup(groupResult.id!);
+    this.openGroupModal().subscribe(groupResult => this.onSelectGroup(groupResult.id!));
+  }
+
+  onEditGroup(group: SouthItemGroup, event: Event) {
+    event.stopPropagation();
+    this.openGroupModal(group).subscribe();
+  }
+
+  private openGroupModal(group?: SouthItemGroup) {
+    return openGroupModal(this.modalService, this.groupStore()!, {
+      scanModes: this.scanModes(),
+      manifest: this.currentManifest()!,
+      directSave: this.directSave,
+      group
     });
   }
 
-  onEditGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, event: Event) {
+  onDeleteGroup(group: SouthItemGroup, event: Event) {
     event.stopPropagation();
-    const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
-    const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave;
-    component.prepareForEdition(this.scanModes(), this.sharedGroups, this.currentManifest()!, group);
-    modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
-      const index = this.sharedGroups.findIndex(existing => existing.id === groupResult.id);
-      if (index >= 0) {
-        this.sharedGroups[index] = groupResult;
-      } else {
-        this.sharedGroups.push(groupResult);
-      }
-      this.refreshGroups();
-    });
-  }
-
-  onDeleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, event: Event) {
-    event.stopPropagation();
-    this.deleteGroup(group).subscribe(() => {
-      // Removed in place - `groups` is the page's own list (edit-south's in-memory groups), which must
-      // lose the deleted group too.
-      const index = this.sharedGroups.findIndex(existing => existing.id === group.id);
-      if (index >= 0) {
-        this.sharedGroups.splice(index, 1);
-      }
-      this.refreshGroups();
-      if (this.itemFieldMappingValues()['groupId'] === group.id) {
-        this.onSelectGroup(null);
-      }
-    });
+    this.groupStore()!
+      .delete(group)
+      .subscribe(() => {
+        if (this.itemFieldMappingValues()['groupId'] === group.id) {
+          this.onSelectGroup(null);
+        }
+      });
   }
 
   /** Whether an item field should be shown at all - every enabling rule covering it (its own, plus any

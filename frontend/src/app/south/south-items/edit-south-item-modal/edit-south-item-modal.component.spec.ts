@@ -2,16 +2,11 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of } from 'rxjs';
-import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import {
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO,
-  SouthItemGroupCommandDTO,
-  SouthItemGroupDTO
-} from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
@@ -24,13 +19,8 @@ import { DefaultValidationErrorsComponent } from '../../../shared/default-valida
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { FakeSouthItemGroups, fakeSouthItemGroups } from '../south-item-groups.testing';
 import EditSouthItemModalComponent from './edit-south-item-modal.component';
-
-type AddOrEditGroup = (command: {
-  mode: 'create' | 'edit';
-  group: SouthItemGroupCommandDTO;
-}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 const manifest = testData.south.manifest;
 const opcuaManifest: SouthConnectorManifest = { ...manifest, id: 'opcua' };
@@ -95,17 +85,13 @@ class EditSouthItemModalComponentTester {
 describe('EditSouthItemModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let unsavedChangesService: MockObject<UnsavedChangesConfirmationService>;
-  let addOrEditGroup: Mock<AddOrEditGroup>;
-  let deleteGroup: Mock<DeleteGroup>;
   let groupA: SouthItemGroupDTO;
   let groupB: SouthItemGroupDTO;
-  let groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
+  let groups: FakeSouthItemGroups;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     unsavedChangesService = createMock(UnsavedChangesConfirmationService);
-    addOrEditGroup = vi.fn<AddOrEditGroup>();
-    deleteGroup = vi.fn<DeleteGroup>();
     groupA = buildSouthItemGroup('group1', 'GroupA', scanModes[0], {
       historySettings: {
         startTimeOffset: 500,
@@ -117,7 +103,7 @@ describe('EditSouthItemModalComponent', () => {
       }
     });
     groupB = buildSouthItemGroup('group2', 'GroupB', scanModes[1]);
-    groups = [groupA, groupB];
+    groups = fakeSouthItemGroups([groupA, groupB]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -149,46 +135,13 @@ describe('EditSouthItemModalComponent', () => {
     component.directSave = directSave;
     switch (mode) {
       case 'create':
-        component.prepareForCreation(
-          itemList,
-          scanModes,
-          [],
-          groups,
-          itemManifest,
-          southId,
-          southConnectorCommand,
-          addOrEditGroup,
-          deleteGroup
-        );
+        component.prepareForCreation(itemList, scanModes, [], groups, itemManifest, southId, southConnectorCommand);
         break;
       case 'edit':
-        component.prepareForEdition(
-          itemList,
-          scanModes,
-          [],
-          groups,
-          itemManifest,
-          item,
-          southId,
-          southConnectorCommand,
-          tableIndex,
-          addOrEditGroup,
-          deleteGroup
-        );
+        component.prepareForEdition(itemList, scanModes, [], groups, itemManifest, item, southId, southConnectorCommand, tableIndex);
         break;
       case 'copy':
-        component.prepareForCopy(
-          itemList,
-          scanModes,
-          [],
-          groups,
-          itemManifest,
-          item,
-          southId,
-          southConnectorCommand,
-          addOrEditGroup,
-          deleteGroup
-        );
+        component.prepareForCopy(itemList, scanModes, [], groups, itemManifest, item, southId, southConnectorCommand);
         break;
     }
     return tester;
@@ -422,13 +375,12 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.maxReadInterval).toHaveValue(60);
     });
 
-    test('should create a group, add it to the shared list and select it', async () => {
+    test('should create a group through the groups of the page and select it', async () => {
       const tester = open('create', { directSave: false });
-      const command = buildSouthItemGroupCommand(null, 'GroupC');
-      const createdGroup = buildSouthItemGroupCommand('group3', 'GroupC', scanModes[1].id);
+      const command = buildSouthItemGroupCommand(null, 'GroupC', scanModes[1].id);
       const groupModal = createMock(EditSouthItemGroupModalComponent);
       TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'create', group: command });
-      addOrEditGroup.mockReturnValue(of(createdGroup));
+      const listedGroups = groups.list();
 
       await tester.groupToggle.click();
       await tester.createGroupButton.click();
@@ -436,11 +388,10 @@ describe('EditSouthItemModalComponent', () => {
       expect(groupModal.directSave).toBe(false);
       expect(groupModal.prepareForCreation).toHaveBeenCalledWith(
         scanModes.filter(scanMode => scanMode.id !== 'subscription'),
-        groups,
+        listedGroups,
         manifest
       );
-      expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'create', group: command });
-      expect(groups).toContain(createdGroup);
+      expect(groups.save).toHaveBeenCalledWith({ mode: 'create', group: command });
       await expect.element(tester.groupToggle).toHaveTextContent('GroupC');
       await expect.element(tester.syncWithGroup).toBeChecked();
       await expect.element(tester.okButton).toBeInTheDocument();
@@ -451,34 +402,29 @@ describe('EditSouthItemModalComponent', () => {
       await tester.selectGroup('GroupA');
       await tester.syncWithGroup.click();
       await tester.syncWithGroup.click();
-      const updatedGroup = buildSouthItemGroup('group1', 'GroupA renamed', scanModes[1]);
+      const command = buildSouthItemGroupCommand('group1', 'GroupA renamed', scanModes[1].id);
       const groupModal = createMock(EditSouthItemGroupModalComponent);
-      TestBed.inject(MockModalService).mockClosedModal(groupModal, {
-        mode: 'edit',
-        group: buildSouthItemGroupCommand('group1', 'GroupA renamed')
-      });
-      addOrEditGroup.mockReturnValue(of(updatedGroup));
+      TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'edit', group: command });
+      const listedGroups = groups.list();
 
       await tester.groupToggle.click();
       await tester.groupRowButton('GroupA', 'Edit group').click();
 
-      expect(groupModal.prepareForEdition).toHaveBeenCalledWith(expect.any(Array), groups, manifest, groupA);
-      expect(groups[0]).toBe(updatedGroup);
+      expect(groupModal.prepareForEdition).toHaveBeenCalledWith(expect.any(Array), listedGroups, manifest, groupA);
+      expect(groups.save).toHaveBeenCalledWith({ mode: 'edit', group: command });
       await expect.element(tester.groupToggle).toHaveTextContent('GroupA renamed');
       await expect.element(tester.maxReadInterval).toHaveValue(3600);
       await expect.element(tester.syncWithGroup).toBeChecked();
     });
 
-    test('should delete the selected group, remove it from the shared list and deselect it', async () => {
+    test('should delete the selected group through the groups of the page and deselect it', async () => {
       const tester = open('create');
       await tester.selectGroup('GroupA');
-      deleteGroup.mockReturnValue(of(undefined));
 
       await tester.groupToggle.click();
       await tester.groupRowButton('GroupA', 'Delete').click();
 
-      expect(deleteGroup).toHaveBeenCalledWith(groupA);
-      expect(groups).toEqual([groupB]);
+      expect(groups.delete).toHaveBeenCalledWith(groupA);
       await expect.element(tester.groupToggle).toHaveTextContent('None');
       await expect.element(tester.groupOption('GroupA')).not.toBeInTheDocument();
       await expect.element(tester.maxReadInterval).toBeEnabled();

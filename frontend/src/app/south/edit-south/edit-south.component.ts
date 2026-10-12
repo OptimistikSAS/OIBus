@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { NgbDropdownItem, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { combineLatest, finalize, firstValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
@@ -15,8 +15,7 @@ import {
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorLightDTO,
-  SouthItemGroupCommandDTO,
-  SouthItemGroupDTO
+  SouthItemGroupCommandDTO
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
@@ -35,6 +34,9 @@ import { addAttributeToForm, addEnablingConditions, asFormGroup, extractFormValu
 import { formDirectives } from '../../shared/form/form-directives';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
+import { ItemTableComponent } from '../../shared/item-table/item-table.component';
+import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -48,6 +50,7 @@ import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/ed
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
+import { SaveGroupCommand, SouthItemGroup, SouthItemGroups } from '../south-items/south-item-groups';
 import ManageWorkflowsModalComponent, {
   toConfigurationWorkflowCommand
 } from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
@@ -63,10 +66,6 @@ type SouthConnectorForm = FormGroup<{
   enabled: FormControl<boolean>;
   settings: FormGroup;
 }>;
-
-import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
-import { ItemTableComponent } from '../../shared/item-table/item-table.component';
-import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 
 @Component({
   selector: 'oib-edit-south',
@@ -131,15 +130,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
   /** The items of the connector, edited in memory and saved along with the connector. */
   readonly inMemoryItems = signal<Array<SouthConnectorItemCommandDTO>>([]);
 
-  /**
-   * The groups and Configuration Workflows of the connector, edited in memory and saved along with the connector. These
-   * arrays are shared by reference with the group/workflow modals, which add, replace and remove elements in place: the
-   * `inMemoryGroups`/`inMemoryWorkflows` signals are copies of them, updated by `syncSharedArrays()` after every change.
-   */
-  private groups: Array<SouthItemGroupCommandDTO> = [];
-  private workflows: Array<ConfigurationWorkflowCommandDTO> = [];
+  /** The groups and Configuration Workflows of the connector, edited in memory and saved along with the connector. */
   readonly inMemoryGroups = signal<Array<SouthItemGroupCommandDTO>>([]);
+  /** Given to the workflow modal, which updates it */
   readonly inMemoryWorkflows = signal<Array<ConfigurationWorkflowCommandDTO>>([]);
+  /** The groups, as given to the modals that list or change them */
+  private readonly itemGroups: SouthItemGroups = {
+    list: this.inMemoryGroups,
+    save: command => this.addOrEditGroup(command),
+    delete: group => this.deleteGroup(group)
+  };
 
   // --- Items table: the group and scan mode filters are added to the name and status filters of the table ---
   readonly groupFilterControl = this.fb.control(null as string | null);
@@ -242,21 +242,23 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   }) as SouthConnectorItemCommandDTO
               )
             );
-            this.groups = southConnector.groups.map(group => ({
-              id: groupIdMap.get(group.id) ?? group.id,
-              standardSettings: {
-                name: group.standardSettings.name,
-                scanModeId: group.standardSettings.scanMode.id
-              },
-              historySettings: {
-                startTimeOffset: group.historySettings.startTimeOffset,
-                endTimeOffset: group.historySettings.endTimeOffset,
-                maxReadInterval: group.historySettings.maxReadInterval,
-                readDelay: group.historySettings.readDelay,
-                recoveryStrategy: group.historySettings.recoveryStrategy,
-                cachingStrategy: group.historySettings.cachingStrategy
-              }
-            }));
+            this.inMemoryGroups.set(
+              southConnector.groups.map(group => ({
+                id: groupIdMap.get(group.id) ?? group.id,
+                standardSettings: {
+                  name: group.standardSettings.name,
+                  scanModeId: group.standardSettings.scanMode.id
+                },
+                historySettings: {
+                  startTimeOffset: group.historySettings.startTimeOffset,
+                  endTimeOffset: group.historySettings.endTimeOffset,
+                  maxReadInterval: group.historySettings.maxReadInterval,
+                  readDelay: group.historySettings.readDelay,
+                  recoveryStrategy: group.historySettings.recoveryStrategy,
+                  cachingStrategy: group.historySettings.cachingStrategy
+                }
+              }))
+            );
             // Workflows aren't part of SouthConnectorDTO - loaded separately (from the duplicated
             // connector when duplicating, then recreated like its groups).
             workflows$ = this.configurationWorkflowService
@@ -275,17 +277,10 @@ export class EditSouthComponent implements CanComponentDeactivate {
         if (!manifest) {
           return;
         }
-        this.workflows = workflows;
-        this.syncSharedArrays();
+        this.inMemoryWorkflows.set(workflows);
         this.manifest.set(manifest);
         this.buildForm();
       });
-  }
-
-  /** Renders the changes made in place in the arrays shared with the modals. */
-  private syncSharedArrays() {
-    this.inMemoryGroups.set([...this.groups]);
-    this.inMemoryWorkflows.set([...this.workflows]);
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -368,16 +363,12 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.inMemoryItems(),
       this.scanModes(),
       this.certificates(),
-      this.groups,
+      this.itemGroups,
       this.manifest()!,
       this.southConnector()?.id || 'create',
-      this.formSouthConnectorCommand,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      this.formSouthConnectorCommand
     );
-    modalRef.result
-      .pipe(finalize(() => this.syncSharedArrays()))
-      .subscribe((command: SouthConnectorItemCommandDTO) => this.inMemoryItems.update(items => [...items, command]));
+    modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => this.inMemoryItems.update(items => [...items, command]));
   }
 
   duplicateItem(item: SouthConnectorItemCommandDTO) {
@@ -388,17 +379,13 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.inMemoryItems(),
       this.scanModes(),
       this.certificates(),
-      this.groups,
+      this.itemGroups,
       this.manifest()!,
       item,
       this.southConnector()?.id || 'create',
-      this.formSouthConnectorCommand,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      this.formSouthConnectorCommand
     );
-    modalRef.result
-      .pipe(finalize(() => this.syncSharedArrays()))
-      .subscribe((command: SouthConnectorItemCommandDTO) => this.inMemoryItems.update(items => [...items, command]));
+    modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => this.inMemoryItems.update(items => [...items, command]));
   }
 
   editItem(southItem: SouthConnectorItemCommandDTO) {
@@ -418,20 +405,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.inMemoryItems(),
       this.scanModes(),
       this.certificates(),
-      this.groups,
+      this.itemGroups,
       this.manifest()!,
       southItem,
       this.southConnector()?.id || 'create',
       this.formSouthConnectorCommand,
-      tableIndex,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      tableIndex
     );
-    modalRef.result
-      .pipe(finalize(() => this.syncSharedArrays()))
-      .subscribe((command: SouthConnectorItemCommandDTO) =>
-        this.inMemoryItems.update(items => items.map((item, index) => (index === tableIndex ? command : item)))
-      );
+    modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) =>
+      this.inMemoryItems.update(items => items.map((item, index) => (index === tableIndex ? command : item)))
+    );
   }
 
   deleteItem(item: SouthConnectorItemCommandDTO) {
@@ -553,28 +536,19 @@ export class EditSouthComponent implements CanComponentDeactivate {
     });
   }
 
-  addOrEditGroup(command: {
-    mode: 'create' | 'edit';
-    group: SouthItemGroupCommandDTO;
-  }): Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO> {
+  /** Saves the group in memory: a created group gets a temporary id, replaced by a real one when the connector is saved */
+  addOrEditGroup(command: SaveGroupCommand): Observable<SouthItemGroupCommandDTO> {
     if (command.mode === 'create') {
-      const createdGroup = command.group;
-      createdGroup.id = `temp_${Date.now()}`;
+      const createdGroup: SouthItemGroupCommandDTO = { ...command.group, id: `temp_${Date.now()}` };
+      this.inMemoryGroups.update(groups => [...groups, createdGroup]);
       return of(createdGroup);
-    } else {
-      const foundGroup = this.groups.find(element => element.id === command.group.id)!;
-      foundGroup.standardSettings.name = command.group.standardSettings.name;
-      foundGroup.standardSettings.scanModeId = command.group.standardSettings.scanModeId;
-      foundGroup.historySettings.maxReadInterval = command.group.historySettings.maxReadInterval;
-      foundGroup.historySettings.readDelay = command.group.historySettings.readDelay;
-      foundGroup.historySettings.startTimeOffset = command.group.historySettings.startTimeOffset;
-      foundGroup.historySettings.endTimeOffset = command.group.historySettings.endTimeOffset;
-      this.syncSharedArrays();
-      return of(foundGroup);
     }
+    const updatedGroup = command.group;
+    this.inMemoryGroups.update(groups => groups.map(group => (group.id === updatedGroup.id ? updatedGroup : group)));
+    return of(updatedGroup);
   }
 
-  deleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO): Observable<void> {
+  deleteGroup(group: SouthItemGroup): Observable<void> {
     return this.confirmationService
       .confirm({
         messageKey: 'south.groups.confirm-deletion',
@@ -615,17 +589,19 @@ export class EditSouthComponent implements CanComponentDeactivate {
               };
             })
           );
-          // A workflow mapping its items into the deleted group now maps them into no group at all. Updated
-          // in place: an open ManageWorkflowsModalComponent (whose edit modal may have triggered this
-          // deletion) works on this very array.
-          this.workflows.forEach((workflow, index) => {
-            if (workflow.itemFieldMapping?.['groupId'] === group.id) {
+          this.inMemoryGroups.update(groups => groups.filter(element => element.id !== group.id));
+          // A workflow mapping its items into the deleted group now maps them into no group at all. An open
+          // ManageWorkflowsModalComponent (whose edit modal may have triggered this deletion) shows this signal.
+          this.inMemoryWorkflows.update(workflows =>
+            workflows.map(workflow => {
+              if (workflow.itemFieldMapping?.['groupId'] !== group.id) {
+                return workflow;
+              }
               const { groupId: _groupId, syncWithGroup: _syncWithGroup, ...itemFieldMapping } = workflow.itemFieldMapping;
-              this.workflows[index] = { ...workflow, itemFieldMapping };
-            }
-          });
+              return { ...workflow, itemFieldMapping };
+            })
+          );
           this.itemTable()?.goToFirstPage();
-          this.syncSharedArrays();
         }),
         map(() => undefined)
       );
@@ -635,16 +611,13 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const modalRef = this.modalService.open(ManageGroupsModalComponent, { size: 'lg', backdrop: 'static' });
     const component: ManageGroupsModalComponent = modalRef.componentInstance;
     component.prepare(
-      this.groups,
+      this.itemGroups,
       this.scanModes(),
       this.manifest()!,
       false,
-      groupId => this.inMemoryItems().filter(item => item.groupId === groupId).length,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      groupId => this.inMemoryItems().filter(item => item.groupId === groupId).length
     );
-    // the groups are changed in place by the modal
-    modalRef.result.pipe(finalize(() => this.syncSharedArrays())).subscribe(() => this.itemTable()?.goToFirstPage());
+    modalRef.result.subscribe(() => this.itemTable()?.goToFirstPage());
   }
 
   /**
@@ -673,17 +646,14 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const modalRef = this.modalService.open(ManageWorkflowsModalComponent, { size: 'xl', backdrop: 'static' });
     const component: ManageWorkflowsModalComponent = modalRef.componentInstance;
     component.prepareForInMemory(
-      this.workflows,
+      this.inMemoryWorkflows,
       this.southConnector()?.id || 'create',
       this.formSouthConnectorCommand.settings,
       this.scanModes(),
       this.manifest()!,
-      this.groups,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      this.itemGroups
     );
-    // the workflows, and the groups (from a workflow's group mapping field), are changed in place by the modal
-    modalRef.result.pipe(finalize(() => this.syncSharedArrays())).subscribe(() => this.itemTable()?.goToFirstPage());
+    modalRef.result.subscribe(() => this.itemTable()?.goToFirstPage());
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -740,8 +710,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
       enabled: formValue.enabled!,
       settings: extractFormValue(formValue.settings)!,
       items: this.inMemoryItems(),
-      groups: this.groups,
-      configurationWorkflows: this.workflows
+      groups: this.inMemoryGroups(),
+      configurationWorkflows: this.inMemoryWorkflows()
     } as SouthConnectorCommandDTO;
   }
 
@@ -783,11 +753,10 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
     const modalRef = this.modalService.open(SelectGroupModalComponent, { backdrop: 'static' });
     const component: SelectGroupModalComponent = modalRef.componentInstance;
-    component.prepare(this.groups, this.scanModes(), this.manifest()!, command => this.addOrEditGroup(command));
+    component.prepare(this.itemGroups, this.scanModes(), this.manifest()!);
 
-    // a group may have been created (and pushed into the groups) by the modal
-    modalRef.result.pipe(finalize(() => this.syncSharedArrays())).subscribe((groupId: string) => {
-      const group = this.groups.find(element => element.id === groupId);
+    modalRef.result.subscribe((groupId: string) => {
+      const group = this.inMemoryGroups().find(element => element.id === groupId);
       const selectedItems = this.selectedItems();
       this.inMemoryItems.update(items =>
         items.map(item =>

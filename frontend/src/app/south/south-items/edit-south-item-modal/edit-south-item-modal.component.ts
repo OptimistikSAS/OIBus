@@ -13,7 +13,7 @@ import {
 
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { Observable, switchMap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
@@ -35,14 +35,8 @@ import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-obje
 import { ModalService } from '../../../shared/modal.service';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
-
-type AddOrEditGroup = (command: {
-  mode: 'create' | 'edit';
-  group: SouthItemGroupCommandDTO;
-}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 @Component({
   selector: 'oib-edit-south-item-modal',
@@ -87,15 +81,9 @@ class EditSouthItemModalComponent {
   readonly manifest = signal<SouthConnectorManifest | null>(null);
   private item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO | null = null;
   private itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO> = [];
-  /**
-   * The opener's own group list, shared by reference and mutated in place (created groups are pushed, deleted ones
-   * spliced): edit-south keeps its in-memory groups in it. The template renders the `groups` snapshot instead, refreshed
-   * after every change.
-   */
-  private sharedGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  readonly groups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
-  private addOrEditGroup!: AddOrEditGroup;
-  private deleteGroup!: DeleteGroup;
+  /** The groups of the page, changed through it only */
+  private readonly groupStore = signal<SouthItemGroups | null>(null);
+  readonly groups = computed(() => this.groupStore()?.list() ?? []);
   private previousGroupId: string | null = null;
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
@@ -240,56 +228,26 @@ class EditSouthItemModalComponent {
     itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    groups: SouthItemGroups,
     manifest: SouthConnectorManifest,
     southId: string,
-    southConnectorCommand: SouthConnectorCommandDTO,
-    addOrEditGroup: AddOrEditGroup,
-    deleteGroup: DeleteGroup
+    southConnectorCommand: SouthConnectorCommandDTO
   ) {
-    this.prepare(
-      'create',
-      itemList,
-      scanModes,
-      certificates,
-      groups,
-      manifest,
-      null,
-      southId,
-      southConnectorCommand,
-      null,
-      addOrEditGroup,
-      deleteGroup
-    );
+    this.prepare('create', itemList, scanModes, certificates, groups, manifest, null, southId, southConnectorCommand, null);
   }
 
   prepareForCopy(
     itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    groups: SouthItemGroups,
     manifest: SouthConnectorManifest,
     item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO,
     southId: string,
-    southConnectorCommand: SouthConnectorCommandDTO,
-    addOrEditGroup: AddOrEditGroup,
-    deleteGroup: DeleteGroup
+    southConnectorCommand: SouthConnectorCommandDTO
   ) {
     const copy = { ...structuredClone(item), name: `${item.name}-copy`, id: '' };
-    this.prepare(
-      'copy',
-      itemList,
-      scanModes,
-      certificates,
-      groups,
-      manifest,
-      copy,
-      southId,
-      southConnectorCommand,
-      null,
-      addOrEditGroup,
-      deleteGroup
-    );
+    this.prepare('copy', itemList, scanModes, certificates, groups, manifest, copy, southId, southConnectorCommand, null);
   }
 
   /**
@@ -299,29 +257,14 @@ class EditSouthItemModalComponent {
     itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    groups: SouthItemGroups,
     manifest: SouthConnectorManifest,
     item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
-    tableIndex: number,
-    addOrEditGroup: AddOrEditGroup,
-    deleteGroup: DeleteGroup
+    tableIndex: number
   ) {
-    this.prepare(
-      'edit',
-      itemList,
-      scanModes,
-      certificates,
-      groups,
-      manifest,
-      item,
-      southId,
-      southConnectorCommand,
-      tableIndex,
-      addOrEditGroup,
-      deleteGroup
-    );
+    this.prepare('edit', itemList, scanModes, certificates, groups, manifest, item, southId, southConnectorCommand, tableIndex);
   }
 
   private prepare(
@@ -329,34 +272,24 @@ class EditSouthItemModalComponent {
     itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    groups: SouthItemGroups,
     manifest: SouthConnectorManifest,
     item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO | null,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
-    tableIndex: number | null,
-    addOrEditGroup: AddOrEditGroup,
-    deleteGroup: DeleteGroup
+    tableIndex: number | null
   ) {
     this.mode.set(mode);
     this.itemList = itemList;
     this.scanModes.set(this.setScanModes(scanModes, this.getScanModeAttribute(manifest)));
     this.certificates.set(certificates);
-    this.sharedGroups = groups;
-    this.refreshGroups();
+    this.groupStore.set(groups);
     this.manifest.set(manifest);
     this.item = item;
     this.southId.set(southId);
     this.southConnectorCommand.set(southConnectorCommand);
     this.tableIndex = tableIndex;
-    this.addOrEditGroup = addOrEditGroup;
-    this.deleteGroup = deleteGroup;
     this.initForm(manifest);
-  }
-
-  /** Re-renders the opener's group list after it was changed in place. */
-  private refreshGroups() {
-    this.groups.set([...this.sharedGroups]);
   }
 
   canDismiss(): Observable<boolean> | boolean {
@@ -569,75 +502,50 @@ class EditSouthItemModalComponent {
       this.form.controls.recoveryStrategy.enable();
       this.form.controls.cachingStrategy.enable();
     } else {
-      const selectedGroup = this.sharedGroups.find(g => g.id === groupId)!;
+      const selectedGroup = this.groups().find(g => g.id === groupId)!;
       this.applySyncLogicWhenSelectingGroup(selectedGroup, wasUnassigned);
     }
   }
 
   onAddGroup() {
-    const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
-    const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave;
-    component.prepareForCreation(this.scanModes(), this.sharedGroups, this.manifest()!);
-    modalRef.result
-      .pipe(
-        switchMap(result => {
-          return this.addOrEditGroup(result);
-        })
-      )
-      .subscribe((groupResult: SouthItemGroupDTO | SouthItemGroupCommandDTO) => {
-        const wasUnassigned = this.previousGroupId === null;
-        this.sharedGroups.push(groupResult);
-        this.refreshGroups();
-        this.form.controls.groupId.setValue(groupResult.id);
-        this.previousGroupId = groupResult.id;
-        this.applySyncLogicWhenSelectingGroup(groupResult, wasUnassigned);
-      });
+    this.openGroupModal().subscribe(groupResult => {
+      const wasUnassigned = this.previousGroupId === null;
+      this.form.controls.groupId.setValue(groupResult.id);
+      this.previousGroupId = groupResult.id;
+      this.applySyncLogicWhenSelectingGroup(groupResult, wasUnassigned);
+    });
   }
 
-  onEditGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, event: Event) {
+  onEditGroup(group: SouthItemGroup, event: Event) {
     event.stopPropagation();
-    const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
-    const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave;
-    component.prepareForEdition(this.scanModes(), this.sharedGroups, this.manifest()!, group);
-
-    modalRef.result
-      .pipe(
-        switchMap(result => {
-          return this.addOrEditGroup(result);
-        })
-      )
-      .subscribe((groupResult: SouthItemGroupDTO | SouthItemGroupCommandDTO) => {
-        const index = this.sharedGroups.findIndex(g => g.id === groupResult.id);
-        if (index >= 0) {
-          this.sharedGroups[index] = groupResult;
-        } else {
-          this.sharedGroups.push(groupResult);
-        }
-        this.refreshGroups();
-        if (this.form.controls.groupId.value === groupResult.id) {
-          // The group itself was edited (not reselected) — reflect its new scan mode / historian
-          // values without touching the item's current sync-with-group setting.
-          this.applySyncLogicWhenSelectingGroup(groupResult, false);
-        }
-      });
-  }
-
-  onDeleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, event: Event) {
-    event.stopPropagation();
-    this.deleteGroup(group).subscribe(() => {
-      // Removed in place: in edit-south, the shared list is the page's own in-memory groups
-      const index = this.sharedGroups.findIndex(g => g.id === group.id);
-      if (index >= 0) {
-        this.sharedGroups.splice(index, 1);
-      }
-      this.refreshGroups();
-      if (this.form.controls.groupId.value === group.id) {
-        // the item no longer has a group: its own historian settings apply again
-        this.onSelectGroup(null);
+    this.openGroupModal(group).subscribe(groupResult => {
+      if (this.form.controls.groupId.value === groupResult.id) {
+        // The group itself was edited (not reselected) — reflect its new scan mode / historian
+        // values without touching the item's current sync-with-group setting.
+        this.applySyncLogicWhenSelectingGroup(groupResult, false);
       }
     });
+  }
+
+  private openGroupModal(group?: SouthItemGroup) {
+    return openGroupModal(this.modalService, this.groupStore()!, {
+      scanModes: this.scanModes(),
+      manifest: this.manifest()!,
+      directSave: this.directSave,
+      group
+    });
+  }
+
+  onDeleteGroup(group: SouthItemGroup, event: Event) {
+    event.stopPropagation();
+    this.groupStore()!
+      .delete(group)
+      .subscribe(() => {
+        if (this.form.controls.groupId.value === group.id) {
+          // the item no longer has a group: its own historian settings apply again
+          this.onSelectGroup(null);
+        }
+      });
   }
 
   /**
@@ -722,7 +630,7 @@ class EditSouthItemModalComponent {
     cachingStrategy: SouthCachingStrategy | null;
   } {
     const groupId = this.form.controls.groupId.value;
-    const group = groupId ? this.sharedGroups.find(g => g.id === groupId) : null;
+    const group = groupId ? this.groups().find(g => g.id === groupId) : null;
     return {
       maxReadInterval: group?.historySettings.maxReadInterval ?? 3600,
       readDelay: group?.historySettings.readDelay ?? 200,

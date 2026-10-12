@@ -421,12 +421,10 @@ describe('SouthDetailComponent', () => {
         southConnector.items,
         scanModes,
         [],
-        southConnector.groups,
+        expect.anything(),
         manifest,
         'southId1',
-        expect.objectContaining({ id: 'southId1', configurationWorkflows: [] }),
-        expect.any(Function),
-        expect.any(Function)
+        expect.objectContaining({ id: 'southId1', configurationWorkflows: [] })
       );
       expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', command);
       expect(notificationService.success).toHaveBeenCalledWith('south.items.created');
@@ -453,14 +451,12 @@ describe('SouthDetailComponent', () => {
         southConnector.items,
         scanModes,
         [],
-        southConnector.groups,
+        expect.anything(),
         manifest,
         itemA,
         'southId1',
         expect.objectContaining({ id: 'southId1' }),
-        1,
-        expect.any(Function),
-        expect.any(Function)
+        1
       );
       expect(southConnectorService.updateItem).toHaveBeenCalledWith('southId1', 'itemA', command);
       expect(notificationService.success).toHaveBeenCalledWith('south.items.updated');
@@ -484,13 +480,11 @@ describe('SouthDetailComponent', () => {
         southConnector.items,
         scanModes,
         [],
-        southConnector.groups,
+        expect.anything(),
         manifest,
         itemA,
         'southId1',
-        expect.objectContaining({ id: 'southId1' }),
-        expect.any(Function),
-        expect.any(Function)
+        expect.objectContaining({ id: 'southId1' })
       );
       expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', { ...command, id: null });
       expect(notificationService.success).toHaveBeenCalledWith('south.items.created');
@@ -709,7 +703,8 @@ describe('SouthDetailComponent', () => {
 
       await tester.massAction('Move to group').click();
 
-      expect(selectGroupModal.prepare).toHaveBeenCalledWith(southConnector.groups, scanModes, manifest, expect.any(Function));
+      expect(selectGroupModal.prepare).toHaveBeenCalledWith(expect.anything(), scanModes, manifest);
+      expect(selectGroupModal.prepare.mock.lastCall![0].list()).toEqual([groupA]);
       expect(southConnectorService.moveItemsToGroup).toHaveBeenCalledWith('southId1', ['itemB'], 'groupA');
       expect(notificationService.success).toHaveBeenCalledWith('south.items.moved-to-group', { count: '1' });
     });
@@ -720,40 +715,35 @@ describe('SouthDetailComponent', () => {
       const manageGroupsModal = mockModal(createMock(ManageGroupsModalComponent));
       await expect.element(tester.manageGroupsButton).toHaveTextContent('Manage groups1');
       await tester.manageGroupsButton.click();
-      const [, , , , getItemCount, addOrEditGroup, deleteGroup] = manageGroupsModal.prepare.mock.lastCall!;
-      return { manageGroupsModal, getItemCount, addOrEditGroup, deleteGroup };
+      const [groups, , , , getItemCount] = manageGroupsModal.prepare.mock.lastCall!;
+      return { manageGroupsModal, groups, getItemCount };
     }
 
     test('should open the manage groups modal with the current groups and items', async () => {
       const tester = await createTester();
       const open = vi.spyOn(modalService, 'open');
 
-      const { manageGroupsModal, getItemCount } = await openManageGroups(tester);
+      const { manageGroupsModal, groups, getItemCount } = await openManageGroups(tester);
 
       expect(open).toHaveBeenCalledWith(ManageGroupsModalComponent, { size: 'lg', backdrop: 'static' });
-      expect(manageGroupsModal.prepare).toHaveBeenCalledWith(
-        [groupA],
-        scanModes,
-        manifest,
-        true,
-        expect.any(Function),
-        expect.any(Function),
-        expect.any(Function)
-      );
+      expect(manageGroupsModal.prepare).toHaveBeenCalledWith(expect.anything(), scanModes, manifest, true, expect.any(Function));
+      expect(groups.list()).toEqual([groupA]);
       expect(getItemCount('groupA')).toBe(1);
       expect(getItemCount('other')).toBe(0);
     });
 
     test('should create a group and refresh the connector', async () => {
       const tester = await createTester();
-      const { addOrEditGroup } = await openManageGroups(tester);
+      const { groups } = await openManageGroups(tester);
       const createdGroup = buildSouthItemGroup('groupB', 'Group B');
       southConnectorService.createGroup.mockReturnValue(of(createdGroup));
       southConnectorService.findById.mockReturnValue(of({ ...southConnector, groups: [groupA, createdGroup] }));
 
-      const result = await firstValueFrom(addOrEditGroup({ mode: 'create', group: buildSouthItemGroupCommand(null, 'Group B') }));
+      const result = await firstValueFrom(groups.save({ mode: 'create', group: buildSouthItemGroupCommand(null, 'Group B') }));
 
       expect(result).toEqual(createdGroup);
+      // the groups given to the modal are the reloaded ones
+      expect(groups.list()).toEqual([groupA, createdGroup]);
       expect(southConnectorService.createGroup).toHaveBeenCalledWith('southId1', buildSouthItemGroupCommand(null, 'Group B'));
       expect(notificationService.success).toHaveBeenCalledWith('south.groups.created');
       await expect.element(tester.manageGroupsButton).toHaveTextContent('Manage groups2');
@@ -762,7 +752,7 @@ describe('SouthDetailComponent', () => {
 
     test('should edit a group and refresh the items with the server state', async () => {
       const tester = await createTester();
-      const { addOrEditGroup } = await openManageGroups(tester);
+      const { groups } = await openManageGroups(tester);
       const renamedGroup = buildSouthItemGroup('groupA', 'Group A renamed', scanModes[1]);
       southConnectorService.updateGroup.mockReturnValue(of(undefined));
       southConnectorService.findById.mockReturnValue(
@@ -771,9 +761,10 @@ describe('SouthDetailComponent', () => {
       southConnectorService.getGroup.mockReturnValue(of(renamedGroup));
       const command = buildSouthItemGroupCommand('groupA', 'Group A renamed', scanModes[1].id);
 
-      const result = await firstValueFrom(addOrEditGroup({ mode: 'edit', group: command }));
+      const result = await firstValueFrom(groups.save({ mode: 'edit', group: command }));
 
       expect(result).toEqual(renamedGroup);
+      expect(groups.list()).toEqual([renamedGroup]);
       expect(southConnectorService.updateGroup).toHaveBeenCalledWith('southId1', 'groupA', command);
       expect(southConnectorService.getGroup).toHaveBeenCalledWith('southId1', 'groupA');
       expect(notificationService.success).toHaveBeenCalledWith('south.groups.updated');
@@ -782,7 +773,7 @@ describe('SouthDetailComponent', () => {
 
     test('should delete a group on the server before refetching, and refresh the items', async () => {
       const tester = await createTester();
-      const { deleteGroup } = await openManageGroups(tester);
+      const { groups } = await openManageGroups(tester);
       const callOrder: Array<string> = [];
       southConnectorService.deleteGroup.mockImplementation(() => {
         callOrder.push('delete');
@@ -793,8 +784,9 @@ describe('SouthDetailComponent', () => {
         return of({ ...southConnector, groups: [], items: [itemB, itemA, { ...itemC, group: null }] });
       });
 
-      await firstValueFrom(deleteGroup(groupA));
+      await firstValueFrom(groups.delete(groupA));
 
+      expect(groups.list()).toEqual([]);
       expect(confirmationService.confirm).toHaveBeenCalledWith({
         messageKey: 'south.groups.confirm-deletion',
         interpolateParams: { name: 'Group A' }
@@ -807,10 +799,10 @@ describe('SouthDetailComponent', () => {
 
     test('should notify when a group cannot be deleted', async () => {
       const tester = await createTester();
-      const { deleteGroup } = await openManageGroups(tester);
+      const { groups } = await openManageGroups(tester);
       southConnectorService.deleteGroup.mockReturnValue(throwError(() => new Error('in use')));
 
-      await expect(firstValueFrom(deleteGroup(groupA))).rejects.toThrow('in use');
+      await expect(firstValueFrom(groups.delete(groupA))).rejects.toThrow('in use');
 
       expect(notificationService.error).toHaveBeenCalledWith('south.groups.delete-error', { error: 'in use' });
     });
@@ -828,16 +820,14 @@ describe('SouthDetailComponent', () => {
         southConnector.settings,
         scanModes,
         manifest,
-        southConnector.groups,
-        expect.any(Function),
-        expect.any(Function),
+        expect.anything(),
         expect.any(Function)
       );
 
       southConnectorService.findById.mockReturnValue(
         of({ ...southConnector, items: [...southConnector.items, buildItem('new', 'item d')] })
       );
-      const onWorkflowRun = manageWorkflowsModal.prepareForDirectSave.mock.lastCall![7];
+      const onWorkflowRun = manageWorkflowsModal.prepareForDirectSave.mock.lastCall![5];
       onWorkflowRun!();
 
       await tester.expectItems('item b', 'item a', 'item c', 'item d');

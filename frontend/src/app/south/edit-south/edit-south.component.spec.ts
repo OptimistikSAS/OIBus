@@ -36,6 +36,7 @@ import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/ed
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
+import { SouthItemGroups } from '../south-items/south-item-groups';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { EditSouthComponent } from './edit-south.component';
 
@@ -429,11 +430,11 @@ describe('EditSouthComponent', () => {
 
     test('should add an item', async () => {
       const tester = await createTester('edit');
-      const newItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item d', groupId: 'temp_new' };
+      const newItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item d' };
       const editModal = mockModal(createMock(EditSouthItemModalComponent), newItem);
-      // the modal creates a group in the shared group list
+      // the modal creates a group through the groups of the page
       editModal.prepareForCreation.mockImplementation((_items, _scanModes, _certificates, groups) => {
-        groups.push(buildSouthItemGroupCommand('temp_new', 'New group'));
+        groups.save({ mode: 'create', group: buildSouthItemGroupCommand(null, 'New group') }).subscribe();
       });
       const open = vi.spyOn(modalService, 'open');
 
@@ -445,13 +446,12 @@ describe('EditSouthComponent', () => {
         itemCommands,
         scanModes,
         [],
-        [groupACommand, buildSouthItemGroupCommand('temp_new', 'New group')],
+        expect.anything(),
         manifest,
         'southId1',
-        expect.objectContaining({ name: 'South 1', items: itemCommands }),
-        expect.any(Function),
-        expect.any(Function)
+        expect.objectContaining({ name: 'South 1', items: itemCommands })
       );
+      expect(editModal.prepareForCreation.mock.lastCall![3].list()).toEqual([groupACommand, createdGroup('New group')]);
       await tester.expectItems('item b', 'item a', 'item c', 'item d');
       await expect.element(tester.manageGroupsButton).toHaveTextContent('Manage groups2');
       await expect.element(tester.groupFilter.getByRole('option', { name: 'New group' })).toBeInTheDocument();
@@ -472,15 +472,14 @@ describe('EditSouthComponent', () => {
         itemCommands,
         scanModes,
         [],
-        [groupACommand],
+        expect.anything(),
         manifest,
         itemCommands[1],
         'southId1',
         expect.objectContaining({ name: 'South 1' }),
-        1,
-        expect.any(Function),
-        expect.any(Function)
+        1
       );
+      expect(editModal.prepareForEdition.mock.lastCall![3].list()).toEqual([groupACommand]);
       await tester.expectItems('item b', 'item a edited', 'item c');
       expect((await lastSavedCommand(tester)).items[1]).toEqual(editedItem);
 
@@ -516,13 +515,11 @@ describe('EditSouthComponent', () => {
         itemCommands,
         scanModes,
         [],
-        [groupACommand],
+        expect.anything(),
         manifest,
         itemCommands[1],
         'southId1',
-        expect.objectContaining({ name: 'South 1' }),
-        expect.any(Function),
-        expect.any(Function)
+        expect.objectContaining({ name: 'South 1' })
       );
       await tester.expectItems('item b', 'item a', 'item c', 'item a copy');
     });
@@ -697,7 +694,8 @@ describe('EditSouthComponent', () => {
 
       await tester.massAction('Move to group').click();
 
-      expect(selectGroupModal.prepare).toHaveBeenCalledWith([groupACommand], scanModes, manifest, expect.any(Function));
+      expect(selectGroupModal.prepare).toHaveBeenCalledWith(expect.anything(), scanModes, manifest);
+      expect(selectGroupModal.prepare.mock.lastCall![0].list()).toEqual([groupACommand]);
       await expect.element(tester.row(0)).toMatchTextContent(/Group A\s*\(scanMode2\)/);
       const items = (await lastSavedCommand(tester)).items;
       expect(items.map(item => [item.groupId, item.groupName])).toEqual([
@@ -709,48 +707,43 @@ describe('EditSouthComponent', () => {
   });
 
   describe('groups and workflows', () => {
-    async function openManageGroups(tester: EditSouthComponentTester, onPrepare?: (groups: Array<SouthItemGroupCommandDTO>) => void) {
+    async function openManageGroups(tester: EditSouthComponentTester, onPrepare?: (groups: SouthItemGroups) => void) {
       const manageGroupsModal = mockModal(createMock(ManageGroupsModalComponent));
-      manageGroupsModal.prepare.mockImplementation(groups => onPrepare?.(groups as Array<SouthItemGroupCommandDTO>));
+      manageGroupsModal.prepare.mockImplementation(groups => onPrepare?.(groups));
       await tester.manageGroupsButton.click();
-      const [groups, , , , getItemCount, addOrEditGroup, deleteGroup] = manageGroupsModal.prepare.mock.lastCall!;
-      return { manageGroupsModal, groups, getItemCount, addOrEditGroup, deleteGroup };
+      const [groups, , , , getItemCount] = manageGroupsModal.prepare.mock.lastCall!;
+      return { manageGroupsModal, groups, getItemCount };
     }
 
-    test('should open the manage groups modal with the in-memory groups and refresh after it', async () => {
+    test('should open the manage groups modal with the in-memory groups and show the groups it changes', async () => {
       const tester = await createTester('edit');
 
-      const { manageGroupsModal, getItemCount } = await openManageGroups(tester, groups =>
-        groups.push(buildSouthItemGroupCommand('temp_1', 'Group B'))
+      const { manageGroupsModal, groups, getItemCount } = await openManageGroups(tester, groups =>
+        groups.save({ mode: 'create', group: buildSouthItemGroupCommand(null, 'Group B') }).subscribe()
       );
 
-      expect(manageGroupsModal.prepare).toHaveBeenCalledWith(
-        expect.any(Array),
-        scanModes,
-        manifest,
-        false,
-        expect.any(Function),
-        expect.any(Function),
-        expect.any(Function)
-      );
+      expect(manageGroupsModal.prepare).toHaveBeenCalledWith(expect.anything(), scanModes, manifest, false, expect.any(Function));
+      expect(groups.list()).toEqual([groupACommand, createdGroup('Group B')]);
       expect(getItemCount('groupA')).toBe(1);
       expect(getItemCount('other')).toBe(0);
       await expect.element(tester.manageGroupsButton).toHaveTextContent('Manage groups2');
-      expect((await lastSavedCommand(tester)).groups).toEqual([groupACommand, buildSouthItemGroupCommand('temp_1', 'Group B')]);
+      expect((await lastSavedCommand(tester)).groups).toEqual([groupACommand, createdGroup('Group B')]);
     });
 
     test('should create and edit groups in memory', async () => {
       const tester = await createTester('edit');
-      const { addOrEditGroup } = await openManageGroups(tester);
+      const { groups } = await openManageGroups(tester);
 
-      const created = await firstValueFrom(addOrEditGroup({ mode: 'create', group: buildSouthItemGroupCommand(null, 'Group B') }));
+      const created = await firstValueFrom(groups.save({ mode: 'create', group: buildSouthItemGroupCommand(null, 'Group B') }));
       expect(created.id).toMatch(/^temp_/);
 
-      const edited = await firstValueFrom(
-        addOrEditGroup({ mode: 'edit', group: buildSouthItemGroupCommand('groupA', 'Group A renamed', scanModes[0].id) })
-      );
-      expect(edited).toEqual(buildSouthItemGroupCommand('groupA', 'Group A renamed', scanModes[0].id));
-      expect((await lastSavedCommand(tester)).groups).toEqual([buildSouthItemGroupCommand('groupA', 'Group A renamed', scanModes[0].id)]);
+      const renamedGroup = buildSouthItemGroupCommand('groupA', 'Group A renamed', scanModes[0].id, {
+        historySettings: { ...groupACommand.historySettings, recoveryStrategy: 'newest', cachingStrategy: 'onChange' }
+      });
+      const edited = await firstValueFrom(groups.save({ mode: 'edit', group: renamedGroup }));
+      expect(edited).toEqual(renamedGroup);
+      expect(groups.list()).toEqual([renamedGroup, created]);
+      expect((await lastSavedCommand(tester)).groups).toEqual([renamedGroup, created]);
     });
 
     test('should delete a group, unassigning its items and unmapping it from the workflows', async () => {
@@ -763,18 +756,19 @@ describe('EditSouthComponent', () => {
       const tester = await createTester('edit');
       const manageWorkflowsModal = mockModal(createMock(ManageWorkflowsModalComponent));
       await tester.manageWorkflowsButton.click();
-      const sharedWorkflows: Array<ConfigurationWorkflowCommandDTO> = manageWorkflowsModal.prepareForInMemory.mock.lastCall![0];
-      const { deleteGroup } = await openManageGroups(tester);
+      const pageWorkflows = manageWorkflowsModal.prepareForInMemory.mock.lastCall![0];
+      const { groups } = await openManageGroups(tester);
 
-      await firstValueFrom(deleteGroup(groupACommand));
+      await firstValueFrom(groups.delete(groupACommand));
 
       expect(confirmationService.confirm).toHaveBeenLastCalledWith({
         messageKey: 'south.groups.confirm-deletion',
         interpolateParams: { name: 'Group A' }
       });
       await expect.element(tester.row(2)).toMatchTextContent(/None\s*\(scanMode2\)/);
-      // the workflows shared with an open manage workflows modal are updated in place
-      expect(sharedWorkflows.map(workflow => workflow.itemFieldMapping)).toEqual([
+      expect(groups.list()).toEqual([]);
+      // the workflows shown by an open manage workflows modal are updated
+      expect(pageWorkflows().map(workflow => workflow.itemFieldMapping)).toEqual([
         { name: '{{name}}' },
         { name: '{{name}}', groupId: 'otherGroup' }
       ]);
@@ -807,9 +801,9 @@ describe('EditSouthComponent', () => {
       });
       southConnectorService.findById.mockReturnValue(of({ ...southConnector, items: [ownItem] }));
       const tester = await createTester('edit');
-      const { deleteGroup } = await openManageGroups(tester);
+      const { groups } = await openManageGroups(tester);
 
-      await firstValueFrom(deleteGroup(groupACommand));
+      await firstValueFrom(groups.delete(groupACommand));
 
       const [item] = (await lastSavedCommand(tester)).items;
       expect(item).toEqual({ ...toItemCommand(ownItem), groupId: null, groupName: null, syncWithGroup: false });
@@ -818,22 +812,23 @@ describe('EditSouthComponent', () => {
     test('should manage the workflows in memory, against the unsaved settings', async () => {
       const tester = await createTester('edit');
       const manageWorkflowsModal = mockModal(createMock(ManageWorkflowsModalComponent));
-      manageWorkflowsModal.prepareForInMemory.mockImplementation(workflows => workflows.push(buildWorkflowCommandFor('temp_1')));
+      manageWorkflowsModal.prepareForInMemory.mockImplementation(workflows =>
+        workflows.update(list => [...list, buildWorkflowCommandFor('temp_1')])
+      );
       const open = vi.spyOn(modalService, 'open');
 
       await tester.manageWorkflowsButton.click();
 
       expect(open).toHaveBeenCalledWith(ManageWorkflowsModalComponent, { size: 'xl', backdrop: 'static' });
       expect(manageWorkflowsModal.prepareForInMemory).toHaveBeenCalledWith(
-        expect.any(Array),
+        expect.any(Function),
         'southId1',
         undefined,
         scanModes,
         manifest,
-        [groupACommand],
-        expect.any(Function),
-        expect.any(Function)
+        expect.anything()
       );
+      expect(manageWorkflowsModal.prepareForInMemory.mock.lastCall![5].list()).toEqual([groupACommand]);
       await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*1/);
       expect((await lastSavedCommand(tester)).configurationWorkflows).toEqual([buildWorkflowCommandFor('temp_1')]);
     });
@@ -848,6 +843,11 @@ describe('EditSouthComponent', () => {
     });
   });
 });
+
+/** A group created in memory, with a temporary id */
+function createdGroup(name: string): SouthItemGroupCommandDTO {
+  return { ...buildSouthItemGroupCommand(null, name), id: expect.stringMatching(/^temp_/) };
+}
 
 function buildWorkflowCommandFor(id: string): ConfigurationWorkflowCommandDTO {
   return {
