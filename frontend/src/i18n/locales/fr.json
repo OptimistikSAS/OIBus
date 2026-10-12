@@ -3309,6 +3309,7 @@
     "import-success": "Import effectué avec succès",
     "import-error": "Échec de l'import",
     "create": "Créer",
+    "add": "Ajouter",
     "edit": "Modifier",
     "cache": "Cache"
   },
