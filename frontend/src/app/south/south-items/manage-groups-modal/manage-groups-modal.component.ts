@@ -6,7 +6,7 @@ import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
-import { concatMap, from, Observable, switchMap, toArray } from 'rxjs';
+import { concatMap, from, toArray } from 'rxjs';
 
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
@@ -15,7 +15,7 @@ import { SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connect
 
 import { DownloadService } from '../../../services/download.service';
 import { ModalService } from '../../../shared/modal.service';
-import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 
 interface GroupImportError {
   row: number;
@@ -51,21 +51,12 @@ export default class ManageGroupsModalComponent {
   private downloadService = inject(DownloadService);
 
   readonly directSave = signal(true);
-  /**
-   * The opener's own group list, shared by reference and mutated in place (created groups are pushed, deleted ones
-   * spliced): edit-south keeps its in-memory groups in it. The template renders the `groups` snapshot instead, refreshed
-   * after every change.
-   */
-  private sharedGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  readonly groups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
+  /** The groups of the page, changed through it only */
+  private readonly groupStore = signal<SouthItemGroups | null>(null);
+  readonly groups = computed(() => this.groupStore()?.list() ?? []);
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   private readonly manifest = signal<SouthConnectorManifest | null>(null);
   private getItemCountFn: (groupId: string) => number = () => 0;
-  private addOrEditGroup!: (command: {
-    mode: 'create' | 'edit';
-    group: SouthItemGroupCommandDTO;
-  }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-  private deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
   readonly importing = signal(false);
   readonly importErrors = signal<Array<GroupImportError>>([]);
@@ -127,25 +118,17 @@ export default class ManageGroupsModalComponent {
   });
 
   prepare(
-    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    groups: SouthItemGroups,
     scanModes: Array<ScanModeDTO>,
     manifest: SouthConnectorManifest,
     directSave: boolean,
-    getItemCount: (groupId: string) => number,
-    addOrEditGroup: (command: {
-      mode: 'create' | 'edit';
-      group: SouthItemGroupCommandDTO;
-    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+    getItemCount: (groupId: string) => number
   ) {
-    this.sharedGroups = groups;
+    this.groupStore.set(groups);
     this.scanModes.set(scanModes);
     this.manifest.set(manifest);
     this.directSave.set(directSave);
     this.getItemCountFn = getItemCount;
-    this.addOrEditGroup = addOrEditGroup;
-    this.deleteGroup = deleteGroup;
-    this.refreshGroups();
   }
 
   close() {
@@ -176,50 +159,29 @@ export default class ManageGroupsModalComponent {
     }));
   }
 
-  /** Re-renders the opener's group list after it was changed in place. */
-  private refreshGroups() {
-    this.groups.set([...this.sharedGroups]);
-  }
-
   onAddGroup() {
-    const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
-    const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave();
-    component.prepareForCreation(this.scanModes(), this.sharedGroups, this.manifest()!);
-    modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
-      this.sharedGroups.push(groupResult);
-      this.refreshGroups();
+    this.openGroupModal().subscribe();
+  }
+
+  onEditGroup(group: SouthItemGroup) {
+    this.openGroupModal(group).subscribe();
+  }
+
+  private openGroupModal(group?: SouthItemGroup) {
+    return openGroupModal(this.modalService, this.groupStore()!, {
+      scanModes: this.scanModes(),
+      manifest: this.manifest()!,
+      directSave: this.directSave(),
+      group
     });
   }
 
-  onEditGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO) {
-    const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
-    const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.directSave = this.directSave();
-    component.prepareForEdition(this.scanModes(), this.sharedGroups, this.manifest()!, group);
-    modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
-      const index = this.sharedGroups.findIndex(g => g.id === groupResult.id);
-      if (index >= 0) {
-        this.sharedGroups[index] = groupResult;
-      } else {
-        this.sharedGroups.push(groupResult);
-      }
-      this.refreshGroups();
-    });
-  }
-
-  onDeleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO) {
-    this.deleteGroup(group).subscribe(() => {
-      const index = this.sharedGroups.findIndex(g => g.id === group.id);
-      if (index >= 0) {
-        this.sharedGroups.splice(index, 1);
-      }
-      this.refreshGroups();
-    });
+  onDeleteGroup(group: SouthItemGroup) {
+    this.groupStore()!.delete(group).subscribe();
   }
 
   exportGroups() {
-    const rows = this.sharedGroups.map(group => ({
+    const rows = this.groups().map(group => ({
       name: group.standardSettings.name,
       scanMode: this.getScanModeName(group),
       startTimeOffset: group.historySettings.startTimeOffset,
@@ -246,7 +208,7 @@ export default class ManageGroupsModalComponent {
     const content = await file.text();
     const parsed = csv.parse<Record<string, string>>(content, { header: true, skipEmptyLines: true });
 
-    const existingNames = new Set(this.sharedGroups.map(group => group.standardSettings.name.toLowerCase()));
+    const existingNames = new Set(this.groups().map(group => group.standardSettings.name.toLowerCase()));
     const seenNames = new Set<string>();
     const commands: Array<SouthItemGroupCommandDTO> = [];
     const errors: Array<GroupImportError> = [];
@@ -298,14 +260,12 @@ export default class ManageGroupsModalComponent {
     this.importing.set(true);
     from(commands)
       .pipe(
-        concatMap(command => this.addOrEditGroup({ mode: 'create', group: command })),
+        concatMap(command => this.groupStore()!.save({ mode: 'create', group: command })),
         toArray()
       )
       .subscribe(results => {
-        results.forEach(result => this.sharedGroups.push(result));
         this.importing.set(false);
         this.importSuccessCount.set(results.length);
-        this.refreshGroups();
       });
   }
 }

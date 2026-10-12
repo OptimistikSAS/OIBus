@@ -1,11 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of } from 'rxjs';
 import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
-
-import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../../../test/builders';
@@ -14,13 +11,8 @@ import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { DownloadService } from '../../../services/download.service';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { FakeSouthItemGroups, fakeSouthItemGroups } from '../south-item-groups.testing';
 import ManageGroupsModalComponent from './manage-groups-modal.component';
-
-type AddOrEditGroup = (command: {
-  mode: 'create' | 'edit';
-  group: SouthItemGroupCommandDTO;
-}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 const manifest = testData.south.manifest;
 const scanModes = testData.scanMode.list;
@@ -50,18 +42,17 @@ class ManageGroupsModalComponentTester {
 describe('ManageGroupsModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let downloadService: MockObject<DownloadService>;
-  let groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-  let addOrEditGroup: Mock<AddOrEditGroup>;
-  let deleteGroup: Mock<DeleteGroup>;
+  let groups: FakeSouthItemGroups;
   let getItemCount: Mock<(groupId: string) => number>;
   let tester: ManageGroupsModalComponentTester;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     downloadService = createMock(DownloadService);
-    groups = [buildSouthItemGroup('group1', 'Alpha', scanModes[1]), buildSouthItemGroup('group2', 'Beta', scanModes[0])];
-    addOrEditGroup = vi.fn<AddOrEditGroup>();
-    deleteGroup = vi.fn<DeleteGroup>();
+    groups = fakeSouthItemGroups([
+      buildSouthItemGroup('group1', 'Alpha', scanModes[1]),
+      buildSouthItemGroup('group2', 'Beta', scanModes[0])
+    ]);
     getItemCount = vi.fn((groupId: string) => (groupId === 'group1' ? 5 : 1));
 
     TestBed.configureTestingModule({
@@ -77,7 +68,7 @@ describe('ManageGroupsModalComponent', () => {
   });
 
   function prepare(directSave = true) {
-    tester.fixture.componentInstance.prepare(groups, scanModes, manifest, directSave, getItemCount, addOrEditGroup, deleteGroup);
+    tester.fixture.componentInstance.prepare(groups, scanModes, manifest, directSave, getItemCount);
   }
 
   test('should render every group with its schedule, history settings and item count', async () => {
@@ -96,7 +87,7 @@ describe('ManageGroupsModalComponent', () => {
   });
 
   test('should show a message when there is no group', async () => {
-    groups = [];
+    groups = fakeSouthItemGroups();
     prepare();
 
     await expect.element(tester.noGroup).toBeInTheDocument();
@@ -160,53 +151,47 @@ describe('ManageGroupsModalComponent', () => {
     await expect.element(tester.row(0)).toMatchTextContent('Beta');
   });
 
-  test('should create a group and add it to the shared list', async () => {
+  test('should create a group through the groups of the page', async () => {
     prepare(false);
     const command = buildSouthItemGroupCommand(null, 'Gamma');
-    const createdGroup = buildSouthItemGroupCommand('group3', 'Gamma');
     const groupModal = createMock(EditSouthItemGroupModalComponent);
     TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'create', group: command });
-    addOrEditGroup.mockReturnValue(of(createdGroup));
+    const listedGroups = groups.list();
 
     await tester.addButton.click();
 
     expect(groupModal.directSave).toBe(false);
-    expect(groupModal.prepareForCreation).toHaveBeenCalledWith(scanModes, groups, manifest);
-    expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'create', group: command });
-    expect(groups).toContain(createdGroup);
+    expect(groupModal.prepareForCreation).toHaveBeenCalledWith(scanModes, listedGroups, manifest);
+    expect(groups.save).toHaveBeenCalledWith({ mode: 'create', group: command });
     await expect.element(tester.title).toHaveTextContent('Groups (3)');
     await expect.element(tester.rows).toHaveLength(3);
     await expect.element(tester.row(2)).toMatchTextContent('Gamma');
   });
 
-  test('should edit a group and replace it in the shared list', async () => {
+  test('should edit a group through the groups of the page', async () => {
     prepare();
     const command = buildSouthItemGroupCommand('group1', 'Alpha renamed');
-    const updatedGroup = buildSouthItemGroup('group1', 'Alpha renamed', scanModes[1]);
     const groupModal = createMock(EditSouthItemGroupModalComponent);
     TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'edit', group: command });
-    addOrEditGroup.mockReturnValue(of(updatedGroup));
-    const editedGroup = groups[0];
+    const listedGroups = groups.list();
+    const editedGroup = groups.list()[0];
 
     await tester.row(0).getByRole('button', { name: 'Edit group' }).click();
 
     expect(groupModal.directSave).toBe(true);
-    expect(groupModal.prepareForEdition).toHaveBeenCalledWith(scanModes, groups, manifest, editedGroup);
-    expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'edit', group: command });
-    expect(groups[0]).toBe(updatedGroup);
+    expect(groupModal.prepareForEdition).toHaveBeenCalledWith(scanModes, listedGroups, manifest, editedGroup);
+    expect(groups.save).toHaveBeenCalledWith({ mode: 'edit', group: command });
     await expect.element(tester.row(0)).toMatchTextContent('Alpha renamed');
     await expect.element(tester.rows).toHaveLength(2);
   });
 
-  test('should delete a group and remove it from the shared list', async () => {
+  test('should delete a group through the groups of the page', async () => {
     prepare();
-    deleteGroup.mockReturnValue(of(undefined));
-    const deletedGroup = groups[0];
+    const deletedGroup = groups.list()[0];
 
     await tester.row(0).getByRole('button', { name: 'Delete' }).click();
 
-    expect(deleteGroup).toHaveBeenCalledWith(deletedGroup);
-    expect(groups.map(group => group.id)).toEqual(['group2']);
+    expect(groups.delete).toHaveBeenCalledWith(deletedGroup);
     await expect.element(tester.rows).toHaveLength(1);
     await expect.element(tester.title).toHaveTextContent('Groups (1)');
   });
@@ -235,7 +220,6 @@ describe('ManageGroupsModalComponent', () => {
 
   test('should import the valid groups of a CSV file and report the created count', async () => {
     prepare();
-    addOrEditGroup.mockImplementation(command => of({ ...command.group, id: 'imported1' }));
     const csvContent = [
       'name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay,recoveryStrategy',
       `Gamma,${scanModes[0].name},-1000,0,3600,200,newest`
@@ -244,7 +228,7 @@ describe('ManageGroupsModalComponent', () => {
     await tester.importInput.upload(new File([csvContent], 'groups.csv', { type: 'text/csv' }));
 
     await expect.element(tester.root.getByText('1 group(s) imported')).toBeInTheDocument();
-    expect(addOrEditGroup).toHaveBeenCalledWith({
+    expect(groups.save).toHaveBeenCalledWith({
       mode: 'create',
       group: {
         id: null,
@@ -259,7 +243,7 @@ describe('ManageGroupsModalComponent', () => {
         }
       }
     });
-    expect(groups.map(group => group.id)).toEqual(['group1', 'group2', 'imported1']);
+    expect(groups.list().map(group => group.id)).toEqual(['group1', 'group2', 'created-1']);
     await expect.element(tester.rows).toHaveLength(3);
   });
 
@@ -279,7 +263,7 @@ describe('ManageGroupsModalComponent', () => {
     await expect.element(errors).toMatchTextContent('Row 1: Group name is required');
     await expect.element(errors).toMatchTextContent('Row 2: A group named "alpha" already exists');
     await expect.element(errors).toMatchTextContent('Row 3: Scan mode "unknown-scan-mode" was not found');
-    expect(addOrEditGroup).not.toHaveBeenCalled();
+    expect(groups.save).not.toHaveBeenCalled();
     await expect.element(tester.rows).toHaveLength(2);
   });
 });
