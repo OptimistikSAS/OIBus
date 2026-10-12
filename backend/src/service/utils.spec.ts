@@ -21,16 +21,20 @@ import type { SouthItemSettings } from '../../shared/model/connector/south-setti
 
 import type { OIBusError as OIBusErrorType } from '../model/engine.model';
 import type { SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/south-connector.model';
+import type { OIBusValidationError as OIBusValidationErrorType } from '../model/types';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
+// the real papaparse, to parse the imported files
+const papaparse: typeof import('papaparse') = nodeRequire('papaparse');
 
 // Module-level mock exports for third-party modules
 const minimistExports = mock.fn(() => ({}));
 const csvExports = {
-  unparse: mock.fn((_data?: unknown, _config?: unknown): string => 'csv content')
+  unparse: mock.fn((_data?: unknown, _config?: unknown): string => 'csv content'),
+  parse: papaparse.parse
 };
 let unzipperExtractMock: ReturnType<typeof mock.fn>;
 const unzipperExports = {
@@ -43,6 +47,7 @@ type UtilsModule = typeof import('./utils');
 describe('Service utils', () => {
   let utils: UtilsModule;
   let OIBusError: typeof OIBusErrorType;
+  let OIBusValidationError: typeof OIBusValidationErrorType;
 
   before(() => {
     mockModule(nodeRequire, 'minimist', minimistExports);
@@ -52,6 +57,7 @@ describe('Service utils', () => {
     utils = reloadModule<UtilsModule>(nodeRequire, './utils');
     // OIBusError is a class from model/engine.model - import it directly
     OIBusError = nodeRequire('../model/engine.model').OIBusError;
+    OIBusValidationError = nodeRequire('../model/types').OIBusValidationError;
   });
 
   afterEach(() => {
@@ -858,6 +864,44 @@ describe('Service utils', () => {
       assert.deepStrictEqual(utils.convertDelimiter('PIPE'), '|');
       assert.deepStrictEqual(utils.convertDelimiter('SEMI_COLON'), ';');
       assert.deepStrictEqual(utils.convertDelimiter('TAB'), '\t');
+    });
+  });
+
+  describe('parseCsvImport', () => {
+    it('should parse the rows with the entered delimiter', () => {
+      assert.deepStrictEqual(utils.parseCsvImport('name;value\na;1\n\nb;2', ';'), [
+        { name: 'a', value: '1' },
+        { name: 'b', value: '2' }
+      ]);
+    });
+
+    it('should accept a single column file whatever the delimiter', () => {
+      assert.deepStrictEqual(utils.parseCsvImport('name\na\nb', ';'), [{ name: 'a' }, { name: 'b' }]);
+    });
+
+    it('should accept a file using a delimiter that papaparse cannot detect', () => {
+      assert.deepStrictEqual(utils.parseCsvImport('name/value\na/1', '/'), [{ name: 'a', value: '1' }]);
+    });
+
+    for (const { fileDelimiter, delimiter } of [
+      { fileDelimiter: ';', delimiter: ',' },
+      { fileDelimiter: ',', delimiter: ';' },
+      { fileDelimiter: '\t', delimiter: '|' }
+    ]) {
+      it(`should throw when the file uses "${fileDelimiter}" instead of "${delimiter}"`, () => {
+        assert.throws(
+          () => utils.parseCsvImport(`name${fileDelimiter}value\na${fileDelimiter}1`, delimiter),
+          new OIBusValidationError(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${fileDelimiter}"`)
+        );
+      });
+    }
+
+    it('should throw when the entered delimiter cannot be a delimiter', () => {
+      // papaparse guesses the delimiter of the file instead
+      assert.throws(
+        () => utils.parseCsvImport('name;value\na;1', '"'),
+        new OIBusValidationError('The entered delimiter """ does not correspond to the file delimiter ";"')
+      );
     });
   });
 

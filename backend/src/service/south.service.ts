@@ -32,7 +32,6 @@ import {
 import { encryptionService } from './encryption.service';
 import { southManifestList } from './south-manifests';
 export { southManifestList } from './south-manifests';
-import csv from 'papaparse';
 
 import { OIBusContent, OIBusRecord } from '../../shared/model/common/content.model';
 import { GetUserInfo, Page } from '../../shared/model/common/types';
@@ -68,7 +67,7 @@ import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-wor
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import SouthExploreSessionManager from './south-explore-session-manager';
-import { checkGroups, checkScanMode, stringToBoolean } from './utils';
+import { checkGroups, checkScanMode, parseCsvImport, stringToBoolean } from './utils';
 
 interface ITransformerService {
   findById(transformerId: string): Transformer;
@@ -810,17 +809,12 @@ export default class SouthService {
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.getManifest(southType);
-    const csvContent = csv.parse<Record<string, string>>(fileContent, { header: true, delimiter, skipEmptyLines: true });
-    if (csvContent.meta.delimiter !== delimiter) {
-      throw new OIBusValidationError(
-        `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`
-      );
-    }
+    const csvData = parseCsvImport(fileContent, delimiter);
     const scanModes = this.scanModeRepository.findAll();
 
     const validItems: Array<SouthConnectorItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
-    for (const data of csvContent.data) {
+    for (const data of csvData) {
       let scanMode = null;
       if (data.scanMode) {
         const foundScanMode = scanModes.find(scanMode => scanMode.name === data.scanMode);
