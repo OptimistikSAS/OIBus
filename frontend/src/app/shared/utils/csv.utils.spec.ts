@@ -163,6 +163,30 @@ describe('csv.utils', () => {
         /^The entered delimiter """ does not correspond to the file delimiter/
       );
     });
+
+    test.each([
+      { fileDelimiter: ';', delimiter: ',' },
+      { fileDelimiter: ',', delimiter: ';' },
+      { fileDelimiter: '\t', delimiter: '|' }
+    ])('should throw when the file uses "$fileDelimiter" instead of "$delimiter"', async ({ fileDelimiter, delimiter }) => {
+      const file = csvFile(`name${fileDelimiter}value\na${fileDelimiter}1`);
+
+      await expect(validateArrayElementsImport(file, delimiter, arrayAttribute)).rejects.toThrow(
+        `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${fileDelimiter}"`
+      );
+    });
+
+    test('should import a single column file whatever the delimiter', async () => {
+      const result = await validateArrayElementsImport(csvFile('name\na\nb'), ';', arrayAttribute);
+
+      expect(result.elements).toEqual([{ name: 'a' }, { name: 'b' }]);
+    });
+
+    test('should import a file using a delimiter that papaparse cannot detect', async () => {
+      const result = await validateArrayElementsImport(csvFile('name/value\na/1'), '/', arrayAttribute);
+
+      expect(result.elements).toEqual([{ name: 'a', value: 1 }]);
+    });
   });
 
   describe('flattenPlainObject', () => {
