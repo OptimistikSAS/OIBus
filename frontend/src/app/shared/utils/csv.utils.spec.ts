@@ -223,6 +223,7 @@ describe('csv.utils', () => {
       const file = createMockFile('');
       parseSpy.mockReturnValue({
         data: [],
+        errors: [],
         meta: { delimiter: ';' }
       } as any);
 
@@ -266,6 +267,13 @@ describe('csv.utils', () => {
         );
 
         expect(result.elements).toEqual([{ name: 'a', value: 1 }]);
+      });
+
+      test('should throw when the delimiter cannot be used for the file', async () => {
+        // papaparse falls back to another delimiter when the given one cannot be a delimiter
+        await expect(
+          validateArrayElementsImport(createMockFile('name;value\na;1'), '"', mockArrayAttribute as unknown as OIBusArrayAttribute)
+        ).rejects.toThrow('The entered delimiter """ does not correspond to the file delimiter ";"');
       });
     });
 
