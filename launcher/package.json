@@ -25,6 +25,7 @@
     "lint": "eslint src/ --cache && prettier --check \"src/**/*.ts\"",
     "lint:fix": "eslint src/ --cache --fix && prettier --write \"src/**/*.ts\"",
     "build": "tsc --project tsconfig.app.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
     "internal:build:lib": "npm run --prefix node_modules/argon2 install",
     "test": "node scripts/run-tests.mjs"
   },

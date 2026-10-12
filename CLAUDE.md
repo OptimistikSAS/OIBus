@@ -83,6 +83,7 @@ npm start
 npm test      # same single-file pattern as backend
 npm run lint
 npm run build
+npm run typecheck
 ```
 
 ### Documentation

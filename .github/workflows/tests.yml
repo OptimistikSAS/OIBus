@@ -211,6 +211,11 @@ jobs:
         working-directory: launcher
         run: npm run build
 
+      - name: Type-check launcher, specs included
+        shell: bash
+        working-directory: launcher
+        run: npm run typecheck
+
       - name: Run launcher unit tests
         shell: bash
         working-directory: launcher
