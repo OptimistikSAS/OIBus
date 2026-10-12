@@ -1,13 +1,13 @@
+import { signal, WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
-import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -18,15 +18,10 @@ import { ConfigurationWorkflowService } from '../../../services/configuration-wo
 import { ConfirmationService } from '../../../shared/confirmation.service';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../../shared/notification.service';
+import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
 import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
 import ManageWorkflowsModalComponent, { toConfigurationWorkflowCommand } from './manage-workflows-modal.component';
-
-type AddOrEditGroup = (command: {
-  mode: 'create' | 'edit';
-  group: SouthItemGroupCommandDTO;
-}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 const scanModes = testData.scanMode.list;
 const manifest = testData.south.manifest;
@@ -78,9 +73,7 @@ describe('ManageWorkflowsModalComponent', () => {
   let notificationService: MockObject<NotificationService>;
   let router: MockObject<Router>;
   let modalService: MockModalService<unknown>;
-  let groups: Array<SouthItemGroupDTO>;
-  let addOrEditGroup: Mock<AddOrEditGroup>;
-  let deleteGroup: Mock<DeleteGroup>;
+  let groups: FakeSouthItemGroups;
   let commands: Array<ConfigurationWorkflowCommandDTO>;
   let tester: ManageWorkflowsModalComponentTester;
 
@@ -90,9 +83,7 @@ describe('ManageWorkflowsModalComponent', () => {
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
     router = createMock(Router);
-    groups = [buildSouthItemGroup('group1', 'Group 1')];
-    addOrEditGroup = vi.fn<AddOrEditGroup>();
-    deleteGroup = vi.fn<DeleteGroup>();
+    groups = fakeSouthItemGroups([buildSouthItemGroup('group1', 'Group 1')]);
     const workflows = [
       buildWorkflow('workflow1', 'Alpha'),
       buildWorkflow('workflow2', 'Beta', { scanMode: scanModes[0], pushToOIAnalytics: true })
@@ -133,16 +124,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
     beforeEach(() => {
       onWorkflowRun = vi.fn();
-      tester.fixture.componentInstance.prepareForDirectSave(
-        'southId1',
-        southSettings,
-        scanModes,
-        manifest,
-        groups,
-        addOrEditGroup,
-        deleteGroup,
-        onWorkflowRun
-      );
+      tester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, manifest, groups, onWorkflowRun);
     });
 
     test('should load and render every workflow of the south connector', async () => {
@@ -158,15 +140,7 @@ describe('ManageWorkflowsModalComponent', () => {
       const workflows$ = new Subject<Array<ConfigurationWorkflowDTO>>();
       configurationWorkflowService.list.mockReturnValue(workflows$);
       const loadingTester = new ManageWorkflowsModalComponentTester();
-      loadingTester.fixture.componentInstance.prepareForDirectSave(
-        'southId1',
-        southSettings,
-        scanModes,
-        manifest,
-        groups,
-        addOrEditGroup,
-        deleteGroup
-      );
+      loadingTester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, manifest, groups);
 
       await expect.element(loadingTester.spinner).toBeInTheDocument();
 
@@ -203,9 +177,7 @@ describe('ManageWorkflowsModalComponent', () => {
         manifest,
         'southId1',
         southSettings,
-        groups,
-        addOrEditGroup,
-        deleteGroup
+        groups
       );
       expect(configurationWorkflowService.create).toHaveBeenCalledWith('southId1', command);
       expect(notificationService.success).toHaveBeenCalledWith('south.workflows.created');
@@ -227,9 +199,7 @@ describe('ManageWorkflowsModalComponent', () => {
         commands[0],
         'southId1',
         southSettings,
-        groups,
-        addOrEditGroup,
-        deleteGroup
+        groups
       );
       expect(configurationWorkflowService.update).toHaveBeenCalledWith('southId1', 'workflow1', command);
       expect(notificationService.success).toHaveBeenCalledWith('south.workflows.updated');
@@ -251,9 +221,7 @@ describe('ManageWorkflowsModalComponent', () => {
         commands[0],
         'southId1',
         southSettings,
-        groups,
-        addOrEditGroup,
-        deleteGroup
+        groups
       );
       expect(configurationWorkflowService.create).toHaveBeenCalledWith('southId1', command);
       await expect.element(tester.row(2)).toMatchTextContent('Alpha-copy');
@@ -339,17 +307,12 @@ describe('ManageWorkflowsModalComponent', () => {
   });
 
   describe('in-memory mode', () => {
+    /** The workflows of the page */
+    let pageWorkflows: WritableSignal<Array<ConfigurationWorkflowCommandDTO>>;
+
     function prepareInMemory(southId = 'create') {
-      tester.fixture.componentInstance.prepareForInMemory(
-        commands,
-        southId,
-        southSettings,
-        scanModes,
-        manifest,
-        groups,
-        addOrEditGroup,
-        deleteGroup
-      );
+      pageWorkflows = signal(commands);
+      tester.fixture.componentInstance.prepareForInMemory(pageWorkflows, southId, southSettings, scanModes, manifest, groups);
     }
 
     test("should display the page's own workflows without loading anything, resolving scan mode names by id", async () => {
@@ -379,54 +342,54 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.historyButtons).not.toBeInTheDocument();
     });
 
-    test("should add a workflow to the page's own array with a temp id, without calling the backend", async () => {
+    test('should show the workflows changed by the page', async () => {
+      prepareInMemory();
+
+      pageWorkflows.update(workflows => workflows.slice(1));
+
+      await expect.element(tester.rows).toHaveLength(1);
+      await expect.element(tester.row(0)).toMatchTextContent('Beta');
+    });
+
+    test("should add a workflow to the page's workflows with a temp id, without calling the backend", async () => {
       prepareInMemory();
       const editModal = mockEditModal(buildWorkflowCommand(null, 'Gamma'));
 
       await tester.addButton.click();
 
       expect(editModal.directSave).toBe(false);
-      expect(editModal.prepareForCreation).toHaveBeenCalledWith(
-        scanModes,
-        commands,
-        manifest,
-        'create',
-        southSettings,
-        groups,
-        addOrEditGroup,
-        deleteGroup
-      );
+      expect(editModal.prepareForCreation).toHaveBeenCalledWith(scanModes, commands, manifest, 'create', southSettings, groups);
       expect(configurationWorkflowService.create).not.toHaveBeenCalled();
       expect(notificationService.success).not.toHaveBeenCalled();
-      expect(commands).toHaveLength(3);
-      expect(commands[2]).toEqual(expect.objectContaining({ name: 'Gamma', id: expect.stringMatching(/^temp_/) }));
+      expect(pageWorkflows()).toHaveLength(3);
+      expect(pageWorkflows()[2]).toEqual(expect.objectContaining({ name: 'Gamma', id: expect.stringMatching(/^temp_/) }));
       await expect.element(tester.row(2)).toMatchTextContent('Gamma');
     });
 
-    test("should replace the edited workflow in the page's own array, keeping its id", async () => {
+    test("should replace the edited workflow in the page's workflows, keeping its id", async () => {
       prepareInMemory();
       mockEditModal(buildWorkflowCommand(null, 'Alpha renamed'));
 
       await tester.rowButton(0, 'Edit configuration workflow').click();
 
       expect(configurationWorkflowService.update).not.toHaveBeenCalled();
-      expect(commands[0]).toEqual(expect.objectContaining({ id: 'workflow1', name: 'Alpha renamed' }));
-      expect(commands).toHaveLength(2);
+      expect(pageWorkflows()[0]).toEqual(expect.objectContaining({ id: 'workflow1', name: 'Alpha renamed' }));
+      expect(pageWorkflows()).toHaveLength(2);
       await expect.element(tester.row(0)).toMatchTextContent('Alpha renamed');
     });
 
-    test("should add a duplicate to the page's own array with a fresh temp id", async () => {
+    test("should add a duplicate to the page's workflows with a fresh temp id", async () => {
       prepareInMemory();
       mockEditModal(buildWorkflowCommand(null, 'Alpha-copy'));
 
       await tester.rowButton(0, 'Duplicate').click();
 
       expect(configurationWorkflowService.create).not.toHaveBeenCalled();
-      expect(commands).toHaveLength(3);
-      expect(commands[2]).toEqual(expect.objectContaining({ name: 'Alpha-copy', id: expect.stringMatching(/^temp_/) }));
+      expect(pageWorkflows()).toHaveLength(3);
+      expect(pageWorkflows()[2]).toEqual(expect.objectContaining({ name: 'Alpha-copy', id: expect.stringMatching(/^temp_/) }));
     });
 
-    test("should confirm then remove the workflow from the page's own array, without calling the backend", async () => {
+    test("should confirm then remove the workflow from the page's workflows, without calling the backend", async () => {
       prepareInMemory();
       confirmationService.confirm.mockReturnValue(of(undefined));
 
@@ -434,7 +397,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
       expect(confirmationService.confirm).toHaveBeenCalled();
       expect(configurationWorkflowService.delete).not.toHaveBeenCalled();
-      expect(commands.map(workflow => workflow.id)).toEqual(['workflow2']);
+      expect(pageWorkflows().map(workflow => workflow.id)).toEqual(['workflow2']);
       await expect.element(tester.rows).toHaveLength(1);
     });
 

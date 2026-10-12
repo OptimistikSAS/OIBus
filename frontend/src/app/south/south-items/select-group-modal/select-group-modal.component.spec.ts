@@ -1,11 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
+import { throwError } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
-
-import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../../../test/builders';
@@ -13,12 +11,8 @@ import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { FakeSouthItemGroups, fakeSouthItemGroups } from '../south-item-groups.testing';
 import { SelectGroupModalComponent } from './select-group-modal.component';
-
-type AddOrEditGroup = (command: {
-  mode: 'create' | 'edit';
-  group: SouthItemGroupCommandDTO;
-}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
 
 const manifest = testData.south.manifest;
 const scanModes = testData.scanMode.list;
@@ -38,21 +32,19 @@ class SelectGroupModalComponentTester {
 
 describe('SelectGroupModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
-  let groups: Array<SouthItemGroupDTO>;
-  let addOrEditGroup: Mock<AddOrEditGroup>;
+  let groups: FakeSouthItemGroups;
   let tester: SelectGroupModalComponentTester;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
-    groups = [buildSouthItemGroup('group1', 'GroupA'), buildSouthItemGroup('group2', 'GroupB')];
-    addOrEditGroup = vi.fn<AddOrEditGroup>();
+    groups = fakeSouthItemGroups([buildSouthItemGroup('group1', 'GroupA'), buildSouthItemGroup('group2', 'GroupB')]);
 
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), provideModalTesting(), { provide: NgbActiveModal, useValue: activeModal }]
     });
 
     tester = new SelectGroupModalComponentTester();
-    tester.fixture.componentInstance.prepare(groups, scanModes, manifest, addOrEditGroup);
+    tester.fixture.componentInstance.prepare(groups, scanModes, manifest);
   });
 
   test('should select no group by default and close with null', async () => {
@@ -91,50 +83,43 @@ describe('SelectGroupModalComponent', () => {
     expect(activeModal.dismiss).toHaveBeenCalled();
   });
 
-  test('should create a group, add it to the shared list and select it', async () => {
+  test('should create a group through the groups of the page and select it', async () => {
     const command = buildSouthItemGroupCommand(null, 'GroupC');
-    const createdGroup = buildSouthItemGroupCommand('group3', 'GroupC');
     const groupModal = createMock(EditSouthItemGroupModalComponent);
     TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'create', group: command });
-    addOrEditGroup.mockReturnValue(of(createdGroup));
+    const listedGroups = groups.list();
 
     await tester.groupToggle.click();
     await tester.createGroupButton.click();
 
-    expect(groupModal.prepareForCreation).toHaveBeenCalledWith(scanModes, groups, manifest);
-    expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'create', group: command });
-    // the opener's own array receives the new group
-    expect(groups.map(group => group.id)).toEqual(['group1', 'group2', 'group3']);
+    expect(groupModal.prepareForCreation).toHaveBeenCalledWith(scanModes, listedGroups, manifest);
+    expect(groups.save).toHaveBeenCalledWith({ mode: 'create', group: command });
     await expect.element(tester.groupToggle).toHaveTextContent('GroupC');
     await tester.groupToggle.click();
     await expect.element(tester.groupOption('GroupC')).toBeInTheDocument();
     await tester.groupToggle.click();
 
     await tester.saveButton.click();
-    expect(activeModal.close).toHaveBeenCalledWith('group3');
+    expect(activeModal.close).toHaveBeenCalledWith('created-1');
   });
 
-  test('should not duplicate a created group the opener already added to the list', async () => {
-    const groupModal = createMock(EditSouthItemGroupModalComponent);
-    TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'create', group: buildSouthItemGroupCommand(null, 'GroupB') });
-    addOrEditGroup.mockReturnValue(of(groups[1]));
+  test('should show the groups changed by the page', async () => {
+    groups.list.update(list => [...list, buildSouthItemGroup('group3', 'GroupC')]);
 
     await tester.groupToggle.click();
-    await tester.createGroupButton.click();
 
-    expect(groups.map(group => group.id)).toEqual(['group1', 'group2']);
-    await expect.element(tester.groupToggle).toHaveTextContent('GroupB');
+    await expect.element(tester.groupOption('GroupC')).toBeInTheDocument();
   });
 
   test('should keep the current selection when the group creation fails', async () => {
     const groupModal = createMock(EditSouthItemGroupModalComponent);
     TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'create', group: buildSouthItemGroupCommand(null, 'GroupC') });
-    addOrEditGroup.mockReturnValue(throwError(() => new Error('creation failed')));
+    groups.save.mockReturnValue(throwError(() => new Error('creation failed')));
 
     await tester.groupToggle.click();
     await tester.createGroupButton.click();
 
-    expect(groups).toHaveLength(2);
+    expect(groups.save).toHaveBeenCalled();
     await expect.element(tester.groupToggle).toHaveTextContent('None');
   });
 });
