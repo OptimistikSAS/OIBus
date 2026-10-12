@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { mock } from 'node:test';
+import { Mock, mock } from 'node:test';
 
 import type { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
 import type { Instant } from '../../../shared/model/common/types';
@@ -66,6 +66,11 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
   hasSubscription = mock.fn((): boolean => false) as unknown as SouthConnector<SouthSettings, SouthItemSettings>['hasSubscription'];
   hasExplore = mock.fn((): boolean => false) as unknown as SouthConnector<SouthSettings, SouthItemSettings>['hasExplore'];
   explore = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => []);
-  hasConfigurationDiscovery = mock.fn((): boolean => false);
+  // Also typed as a mock, so that the specs can change what it returns
+  hasConfigurationDiscovery = mock.fn((): boolean => false) as unknown as SouthConnector<
+    SouthSettings,
+    SouthItemSettings
+  >['hasConfigurationDiscovery'] &
+    Mock<() => boolean>;
   discover = mock.fn(async (_scope: Record<string, unknown>): Promise<Array<OIBusRecord>> => []);
 }

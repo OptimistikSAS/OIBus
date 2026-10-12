@@ -98,7 +98,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       false
     );
     const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    oIAnalyticsRegistrationService.getRegistrationSettings = () => testData.oIAnalytics.registration.completed;
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
     const transferService = new ConfigTransferService(builderService, engineRepository, oIAnalyticsRegistrationService as never);
 
     // Stamped with the running version: the seeded engine row carries an older one
