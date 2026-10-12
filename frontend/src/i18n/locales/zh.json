@@ -3309,6 +3309,7 @@
     "import-success": "导入成功",
     "import-error": "导入失败",
     "create": "创建",
+    "add": "添加",
     "edit": "编辑",
     "cache": "缓存"
   },
