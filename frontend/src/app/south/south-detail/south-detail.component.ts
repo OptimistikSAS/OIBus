@@ -14,7 +14,6 @@ import {
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
@@ -46,6 +45,7 @@ import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/ed
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
+import { SaveGroupCommand, SouthItemGroup, SouthItemGroups } from '../south-items/south-item-groups';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
@@ -174,6 +174,13 @@ export class SouthDetailComponent {
   protected readonly itemSortValue = sortValue;
   private readonly itemTable = viewChild(ItemTableComponent);
 
+  /** The groups, as given to the modals that list or change them: saved through the API, then the connector is reloaded */
+  private readonly itemGroups: SouthItemGroups = {
+    list: computed(() => this.southConnector()?.groups ?? []),
+    save: command => this.addOrEditGroup(command),
+    delete: group => this.deleteGroup(group)
+  };
+
   // Mass action properties
   readonly selectedItems = signal<ItemSelection<SouthConnectorItemDTO>>(new Map());
 
@@ -204,12 +211,10 @@ export class SouthDetailComponent {
       this.southConnector()!.items,
       this.scanModes(),
       this.certificates(),
-      [...this.southConnector()!.groups],
+      this.itemGroups,
       this.manifest()!,
       this.southConnector()!.id,
-      this.southConnectorCommand,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      this.southConnectorCommand
     );
     modalRef.result
       .pipe(
@@ -254,13 +259,11 @@ export class SouthDetailComponent {
       this.southConnector()!.items,
       this.scanModes(),
       this.certificates(),
-      [...this.southConnector()!.groups],
+      this.itemGroups,
       this.manifest()!,
       item,
       this.southConnector()!.id,
-      this.southConnectorCommand,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      this.southConnectorCommand
     );
     modalRef.result
       .pipe(
@@ -314,14 +317,12 @@ export class SouthDetailComponent {
       this.southConnector()!.items,
       this.scanModes(),
       this.certificates(),
-      [...this.southConnector()!.groups],
+      this.itemGroups,
       this.manifest()!,
       item,
       this.southConnector()!.id,
       this.southConnectorCommand,
-      tableIndex,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      tableIndex
     );
     modalRef.result
       .pipe(
@@ -499,10 +500,7 @@ export class SouthDetailComponent {
     });
   }
 
-  addOrEditGroup(command: {
-    mode: 'create' | 'edit';
-    group: SouthItemGroupCommandDTO;
-  }): Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO> {
+  addOrEditGroup(command: SaveGroupCommand): Observable<SouthItemGroupDTO> {
     if (command.mode === 'create') {
       return this.southConnectorService.createGroup(this.southConnector()!.id, command.group).pipe(
         switchMap(createdGroup =>
@@ -532,7 +530,7 @@ export class SouthDetailComponent {
     }
   }
 
-  deleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO): Observable<void> {
+  deleteGroup(group: SouthItemGroup): Observable<void> {
     return this.confirmationService
       .confirm({
         messageKey: 'south.groups.confirm-deletion',
@@ -626,7 +624,7 @@ export class SouthDetailComponent {
 
     const modalRef = this.modalService.open(SelectGroupModalComponent, { backdrop: 'static' });
     const component: SelectGroupModalComponent = modalRef.componentInstance;
-    component.prepare([...this.southConnector()!.groups], this.scanModes(), this.manifest()!, command => this.addOrEditGroup(command));
+    component.prepare(this.itemGroups, this.scanModes(), this.manifest()!);
 
     modalRef.result
       .pipe(
@@ -648,13 +646,11 @@ export class SouthDetailComponent {
     const modalRef = this.modalService.open(ManageGroupsModalComponent, { size: 'lg', backdrop: 'static' });
     const component: ManageGroupsModalComponent = modalRef.componentInstance;
     component.prepare(
-      [...this.southConnector()!.groups],
+      this.itemGroups,
       this.scanModes(),
       this.manifest()!,
       true,
-      groupId => this.southConnector()!.items.filter(item => item.group?.id === groupId).length,
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      groupId => this.southConnector()!.items.filter(item => item.group?.id === groupId).length
     );
   }
 
@@ -666,9 +662,7 @@ export class SouthDetailComponent {
       this.southConnector()!.settings,
       this.scanModes(),
       this.manifest()!,
-      [...this.southConnector()!.groups],
-      this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this),
+      this.itemGroups,
       () => this.reloadAfterWorkflowRun()
     );
   }
