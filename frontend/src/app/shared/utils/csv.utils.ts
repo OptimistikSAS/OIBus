@@ -196,10 +196,10 @@ export const validateArrayElementsImport = async (
 
   const csvData = csv.parse(csvContent, { header: true, delimiter, skipEmptyLines: true });
 
-  if (csvData.meta.delimiter !== delimiter) {
-    throw new OIBusValidationError(
-      `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvData.meta.delimiter}"`
-    );
+  // papaparse guesses the delimiter itself when the entered one cannot be a delimiter
+  const fileDelimiter = csvData.meta.delimiter !== delimiter ? csvData.meta.delimiter : findOtherDelimiter(csvContent, delimiter);
+  if (fileDelimiter) {
+    throw new OIBusValidationError(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${fileDelimiter}"`);
   }
 
   const validElements: Array<Record<string, unknown>> = [];
@@ -245,6 +245,21 @@ export const validateArrayElementsImport = async (
 
   return { elements: validElements, errors };
 };
+
+/**
+ * Returns the delimiter of the file when the entered one is not used by its header but another one is: the header is a
+ * single column with the entered delimiter, and several with the delimiter papaparse detects (comma, semicolon, tab or
+ * pipe). A single column file, or a file using a delimiter papaparse cannot detect, is accepted.
+ */
+function findOtherDelimiter(csvContent: string, delimiter: string): string | null {
+  const header = csv.parse<Array<string>>(csvContent, { delimiter, preview: 1 }).data[0] ?? [];
+  if (header.length !== 1) {
+    return null;
+  }
+  const detected = csv.parse<Array<string>>(csvContent, { preview: 1 });
+  const undetectable = detected.errors.some(error => error.code === 'UndetectableDelimiter');
+  return !undetectable && detected.meta.delimiter !== delimiter ? detected.meta.delimiter : null;
+}
 
 export const getElementName = (element: Record<string, unknown>): string => {
   const nameKeys = ['name', 'id', 'key', 'title', 'fieldName'];

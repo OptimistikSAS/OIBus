@@ -231,6 +231,44 @@ describe('csv.utils', () => {
       );
     });
 
+    describe('with the real parser', () => {
+      beforeEach(() => {
+        parseSpy.mockRestore();
+      });
+
+      test.each([
+        { fileDelimiter: ';', delimiter: ',' },
+        { fileDelimiter: ',', delimiter: ';' },
+        { fileDelimiter: '\t', delimiter: '|' }
+      ])('should throw when the file uses "$fileDelimiter" instead of "$delimiter"', async ({ fileDelimiter, delimiter }) => {
+        const file = createMockFile(`name${fileDelimiter}value\na${fileDelimiter}1`);
+
+        await expect(validateArrayElementsImport(file, delimiter, mockArrayAttribute as unknown as OIBusArrayAttribute)).rejects.toThrow(
+          `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${fileDelimiter}"`
+        );
+      });
+
+      test('should import a single column file whatever the delimiter', async () => {
+        const result = await validateArrayElementsImport(
+          createMockFile('name\na\nb'),
+          ';',
+          mockArrayAttribute as unknown as OIBusArrayAttribute
+        );
+
+        expect(result.elements).toEqual([{ name: 'a' }, { name: 'b' }]);
+      });
+
+      test('should import a file using a delimiter that papaparse cannot detect', async () => {
+        const result = await validateArrayElementsImport(
+          createMockFile('name/value\na/1'),
+          '/',
+          mockArrayAttribute as unknown as OIBusArrayAttribute
+        );
+
+        expect(result.elements).toEqual([{ name: 'a', value: 1 }]);
+      });
+    });
+
     test('should handle unflattening of nested objects', async () => {
       const attribute = {
         ...mockArrayAttribute,
