@@ -196,10 +196,11 @@ export const validateArrayElementsImport = async (
 
   const csvData = csv.parse(csvContent, { header: true, delimiter, skipEmptyLines: true });
 
-  // papaparse guesses the delimiter itself when the entered one cannot be a delimiter
-  const fileDelimiter = csvData.meta.delimiter !== delimiter ? csvData.meta.delimiter : findOtherDelimiter(csvContent, delimiter);
-  if (fileDelimiter) {
-    throw new OIBusValidationError(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${fileDelimiter}"`);
+  if (csvData.meta.delimiter !== delimiter || csvData.meta.fields?.length === 1) {
+    const fileDelimiter = detectDelimiter(csvContent) ?? csvData.meta.delimiter;
+    if (fileDelimiter !== delimiter) {
+      throw new OIBusValidationError(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${fileDelimiter}"`);
+    }
   }
 
   const validElements: Array<Record<string, unknown>> = [];
@@ -247,18 +248,15 @@ export const validateArrayElementsImport = async (
 };
 
 /**
- * Returns the delimiter of the file when the entered one is not used by its header but another one is: the header is a
- * single column with the entered delimiter, and several with the delimiter papaparse detects (comma, semicolon, tab or
- * pipe). A single column file, or a file using a delimiter papaparse cannot detect, is accepted.
+ * The delimiter papaparse detects in the file (comma, semicolon, tab or pipe), or null if it cannot detect one.
+ *
+ * The file does not use the entered delimiter when the entered one cannot be a delimiter (papaparse then falls back to
+ * another one), or when the header is a single column with it but several with the detected one. A single column file,
+ * or a file using a delimiter papaparse cannot detect, is accepted.
  */
-function findOtherDelimiter(csvContent: string, delimiter: string): string | null {
-  const header = csv.parse<Array<string>>(csvContent, { delimiter, preview: 1 }).data[0] ?? [];
-  if (header.length !== 1) {
-    return null;
-  }
+function detectDelimiter(csvContent: string): string | null {
   const detected = csv.parse<Array<string>>(csvContent, { preview: 1 });
-  const undetectable = detected.errors.some(error => error.code === 'UndetectableDelimiter');
-  return !undetectable && detected.meta.delimiter !== delimiter ? detected.meta.delimiter : null;
+  return detected.errors.some(error => error.code === 'UndetectableDelimiter') ? null : detected.meta.delimiter;
 }
 
 export const getElementName = (element: Record<string, unknown>): string => {
