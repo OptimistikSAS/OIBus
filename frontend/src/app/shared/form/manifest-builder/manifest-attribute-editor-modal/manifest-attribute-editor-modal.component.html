@@ -385,8 +385,8 @@
       </div>
     }
 
-    <!-- Info for non-displayable types -->
-    @if (!isDisplayableType() && !isObjectType() && !isArrayType()) {
+    <!-- What the types with no specific field are used for -->
+    @if (hasInfo()) {
       <div class="alert alert-info">
         <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
         <span [translate]="infoTranslationKey()"></span>

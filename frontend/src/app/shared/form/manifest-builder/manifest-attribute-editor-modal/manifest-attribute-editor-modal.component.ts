@@ -25,6 +25,9 @@ const DISPLAYABLE_TYPES: ReadonlyArray<OIBusAttributeType> = [
   'certificate'
 ];
 
+/** The displayable types with no specific field, whose editor tells what they are used for */
+const TYPES_WITH_INFO: ReadonlyArray<OIBusAttributeType> = ['secret', 'instant', 'certificate'];
+
 @Component({
   selector: 'oib-manifest-attribute-editor-modal',
   templateUrl: './manifest-attribute-editor-modal.component.html',
@@ -96,6 +99,7 @@ export class ManifestAttributeEditorModalComponent {
   readonly isObjectType = computed(() => this.type() === 'object');
   readonly isArrayType = computed(() => this.type() === 'array');
   readonly isDisplayableType = computed(() => DISPLAYABLE_TYPES.includes(this.type()));
+  readonly hasInfo = computed(() => TYPES_WITH_INFO.includes(this.type()));
   readonly infoTranslationKey = computed(() => `configuration.oibus.manifest.transformers.attributes.${this.type()}-info`);
 
   private readonly currentAttributeKey = computed(() => this.key() || this.attribute()?.key || null);
