@@ -1,13 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
+import { of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
-import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
@@ -22,13 +21,8 @@ import { MockModalService, provideModalTesting } from '../../../shared/mock-moda
 import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
 import EditWorkflowModalComponent from './edit-workflow-modal.component';
-
-type AddOrEditGroup = (command: {
-  mode: 'create' | 'edit';
-  group: SouthItemGroupCommandDTO;
-}) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-type DeleteGroup = (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
 const scanModes = testData.scanMode.list;
 const southId = 'southId1';
@@ -214,18 +208,14 @@ describe('EditWorkflowModalComponent', () => {
   let engineService: MockObject<EngineService>;
   let unsavedChangesService: MockObject<UnsavedChangesConfirmationService>;
   let modalService: MockModalService<unknown>;
-  let groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
-  let addOrEditGroup: Mock<AddOrEditGroup>;
-  let deleteGroup: Mock<DeleteGroup>;
+  let groups: FakeSouthItemGroups;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     southConnectorService = createMock(SouthConnectorService);
     engineService = createMock(EngineService);
     unsavedChangesService = createMock(UnsavedChangesConfirmationService);
-    groups = [buildSouthItemGroup('group1', 'Group 1')];
-    addOrEditGroup = vi.fn<AddOrEditGroup>();
-    deleteGroup = vi.fn<DeleteGroup>();
+    groups = fakeSouthItemGroups([buildSouthItemGroup('group1', 'Group 1')]);
     // Default: OIBus isn't registered with OIAnalytics - individual tests override this to exercise the
     // "Push to OIAnalytics" mode.
     engineService.getRegistrationSettings.mockReturnValue(of(notRegistered));
@@ -263,42 +253,13 @@ describe('EditWorkflowModalComponent', () => {
     component.directSave = directSave;
     switch (mode) {
       case 'create':
-        component.prepareForCreation(
-          scanModes,
-          existingWorkflows,
-          workflowManifest,
-          workflowSouthId,
-          southSettings,
-          groups,
-          addOrEditGroup,
-          deleteGroup
-        );
+        component.prepareForCreation(scanModes, existingWorkflows, workflowManifest, workflowSouthId, southSettings, groups);
         break;
       case 'edit':
-        component.prepareForEdition(
-          scanModes,
-          existingWorkflows,
-          workflowManifest,
-          workflow,
-          workflowSouthId,
-          southSettings,
-          groups,
-          addOrEditGroup,
-          deleteGroup
-        );
+        component.prepareForEdition(scanModes, existingWorkflows, workflowManifest, workflow, workflowSouthId, southSettings, groups);
         break;
       case 'copy':
-        component.prepareForCopy(
-          scanModes,
-          existingWorkflows,
-          workflowManifest,
-          workflow,
-          workflowSouthId,
-          southSettings,
-          groups,
-          addOrEditGroup,
-          deleteGroup
-        );
+        component.prepareForCopy(scanModes, existingWorkflows, workflowManifest, workflow, workflowSouthId, southSettings, groups);
         break;
     }
     return tester;
@@ -940,53 +901,48 @@ describe('EditWorkflowModalComponent', () => {
       }
     });
 
-    test('should create a group, add it to the shared list and map it', async () => {
+    test('should create a group through the groups of the page and map it', async () => {
       const tester = create({ directSave: false });
       const command = buildSouthItemGroupCommand(null, 'Group 2');
-      const createdGroup = buildSouthItemGroupCommand('group2', 'Group 2');
       const groupModal = createMock(EditSouthItemGroupModalComponent);
       modalService.mockClosedModal(groupModal, { mode: 'create', group: command });
-      addOrEditGroup.mockReturnValue(of(createdGroup));
+      const listedGroups = groups.list();
 
       await tester.groupToggle.click();
       await tester.createGroupButton.click();
 
       expect(groupModal.directSave).toBe(false);
-      expect(groupModal.prepareForCreation).toHaveBeenCalledWith(scanModes, groups, manifest);
-      expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'create', group: command });
-      expect(groups).toContain(createdGroup);
+      expect(groupModal.prepareForCreation).toHaveBeenCalledWith(scanModes, listedGroups, manifest);
+      expect(groups.save).toHaveBeenCalledWith({ mode: 'create', group: command });
       await expect.element(tester.groupToggle).toHaveTextContent('Group 2');
     });
 
     test('should edit a group and show its new name', async () => {
       const tester = create();
       await tester.selectGroup('Group 1');
-      const editedGroup = groups[0];
-      const updatedGroup = buildSouthItemGroup('group1', 'Group 1 renamed');
+      const editedGroup = groups.list()[0];
+      const command = buildSouthItemGroupCommand('group1', 'Group 1 renamed');
       const groupModal = createMock(EditSouthItemGroupModalComponent);
-      modalService.mockClosedModal(groupModal, { mode: 'edit', group: buildSouthItemGroupCommand('group1', 'Group 1 renamed') });
-      addOrEditGroup.mockReturnValue(of(updatedGroup));
+      modalService.mockClosedModal(groupModal, { mode: 'edit', group: command });
+      const listedGroups = groups.list();
 
       await tester.groupToggle.click();
       await tester.groupRowButton('Group 1', 'Edit group').click();
 
-      expect(groupModal.prepareForEdition).toHaveBeenCalledWith(scanModes, groups, manifest, editedGroup);
-      expect(groups[0]).toBe(updatedGroup);
+      expect(groupModal.prepareForEdition).toHaveBeenCalledWith(scanModes, listedGroups, manifest, editedGroup);
+      expect(groups.save).toHaveBeenCalledWith({ mode: 'edit', group: command });
       await expect.element(tester.groupToggle).toHaveTextContent('Group 1 renamed');
     });
 
-    test('should delete a group, remove it from the shared list and unmap it if it was selected', async () => {
+    test('should delete a group through the groups of the page and unmap it if it was selected', async () => {
       const tester = create();
       await tester.selectGroup('Group 1');
-      deleteGroup.mockReturnValue(of(undefined));
-      const deletedGroup = groups[0];
+      const deletedGroup = groups.list()[0];
 
       await tester.groupToggle.click();
       await tester.groupRowButton('Group 1', 'Delete').click();
 
-      expect(deleteGroup).toHaveBeenCalledWith(deletedGroup);
-      // Removed from the caller's own list too, not just from a copy of it
-      expect(groups).toEqual([]);
+      expect(groups.delete).toHaveBeenCalledWith(deletedGroup);
       await expect.element(tester.groupToggle).toHaveTextContent('None');
       await expect.element(tester.groupOption('Group 1')).not.toBeInTheDocument();
     });
