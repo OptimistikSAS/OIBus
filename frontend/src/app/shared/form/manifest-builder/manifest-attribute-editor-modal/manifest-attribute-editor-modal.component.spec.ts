@@ -27,7 +27,7 @@ class ManifestAttributeEditorModalComponentTester {
   readonly booleanDefaultValue = this.root.getByLabelText('Yes');
   readonly nestedTitle = this.root.getByRole('heading', { level: 5 });
   readonly nestedPath = this.root.getByCss('.nested-attributes-path');
-  readonly info = this.root.getByRole('alert');
+  readonly info = this.root.getByCss('.alert-info');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly closeButton = this.root.getByRole('button', { name: 'Close' });
 }
@@ -111,11 +111,18 @@ describe('ManifestAttributeEditorModalComponent', () => {
       await expect.element(tester.unit).toHaveValue('');
     });
 
-    test.each(['Secret', 'Instant', 'Certificate'])('should only display the common fields for the %s type', async type => {
+    test.each([
+      { type: 'Secret', info: 'Secret fields are used for sensitive data' },
+      { type: 'Instant', info: 'Instant fields are used for timestamp values' },
+      { type: 'Certificate', info: 'Certificate fields are used for SSL certificates' }
+    ])('should only display the common fields for the $type type, and what it is used for', async ({ type, info }) => {
+      await expect.element(tester.info).not.toBeInTheDocument();
+
       await tester.type.selectOptions(type);
 
       await expect.element(tester.row).toBeInTheDocument();
       await expect.element(tester.defaultValue).not.toBeInTheDocument();
+      await expect.element(tester.info).toHaveTextContent(info);
     });
 
     test('should display the nested attributes of a new object', async () => {
