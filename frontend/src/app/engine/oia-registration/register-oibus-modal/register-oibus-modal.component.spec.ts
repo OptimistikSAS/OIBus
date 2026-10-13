@@ -28,11 +28,17 @@ class RegisterOibusModalComponentTester {
   readonly useApiGateway = this.root.getByLabelText('Use API Gateway');
   readonly apiGatewayHeaderValue = this.root.getByLabelText('Secret Header Value');
   readonly commandRefreshInterval = this.root.getByLabelText('Command retrieve interval (from OIAnalytics)');
-  readonly updateVersion = this.root.getByCss('#update-version');
-  readonly restartEngine = this.root.getByCss('#restart-engine');
+  readonly updateVersion = this.root.getByRole('checkbox', { name: 'Upgrade' });
+  readonly restartEngine = this.root.getByRole('checkbox', { name: 'Restart' });
+  readonly restartEngineLabel = this.root.getByCss('label[for="permission-restartEngine"]');
+  readonly createNorth = this.root.getByCss('#permission-createNorth');
   readonly permissions = this.root.getByCss('[formgroupname="commandPermissions"] input[type="checkbox"]');
-  readonly enableAll = this.root.getByRole('button', { name: 'Enable All' });
-  readonly disableAll = this.root.getByRole('button', { name: 'Disable All' });
+  readonly allowAllOIBus = this.root.getByCss('#allow-all-oibus');
+  readonly allowNoneOIBus = this.root.getByCss('#allow-none-oibus');
+  readonly allowAllConnectors = this.root.getByCss('#allow-all-connectors');
+  readonly allowNoneConnectors = this.root.getByCss('#allow-none-connectors');
+  readonly allowAllHistoryQueries = this.root.getByCss('#allow-all-history-query');
+  readonly allowNoneHistoryQueries = this.root.getByCss('#allow-none-history-query');
   readonly remoteUpdateDisabled = this.root.getByCss('#remote-update-disabled');
   readonly testButton = this.root.getByRole('button', { name: 'Test connection' });
   readonly testSuccess = this.root.getByCss('#test-success');
@@ -98,7 +104,7 @@ describe('RegisterOibusModalComponent', () => {
     await tester.proxyPassword.fill('secret');
     await tester.useApiGateway.click();
     await tester.apiGatewayHeaderValue.fill('gateway-secret');
-    await tester.restartEngine.click();
+    await tester.restartEngineLabel.click();
     await tester.saveButton.click();
 
     expect(engineService.register).toHaveBeenCalledWith(
@@ -168,25 +174,37 @@ describe('RegisterOibusModalComponent', () => {
     await expect.element(tester.testButton).toBeEnabled();
   });
 
-  test('should enable and disable all the permissions', async () => {
+  test('should allow all or none of the permissions of a group', async () => {
     const tester = new RegisterOibusModalComponentTester();
     tester.fixture.componentInstance.prepare(registration, 'register', false);
-    await expect.element(tester.enableAll).toBeDisabled();
-    await expect.element(tester.disableAll).toBeEnabled();
+    await expect.element(tester.allowAllOIBus).toBeDisabled();
+    await expect.element(tester.allowNoneOIBus).toBeEnabled();
 
-    await tester.disableAll.click();
+    await tester.allowNoneOIBus.click();
 
-    await expect.element(tester.disableAll).toBeDisabled();
-    await expect.element(tester.enableAll).toBeEnabled();
+    await expect.element(tester.allowNoneOIBus).toBeDisabled();
+    await expect.element(tester.allowAllOIBus).toBeEnabled();
+    await expect.element(tester.restartEngine).not.toBeChecked();
+    await expect.element(tester.restartEngineLabel).toHaveClass('btn-outline-danger');
+    // the other groups are left untouched
+    await expect.element(tester.createNorth).toBeChecked();
+    await expect.element(tester.allowAllConnectors).toBeDisabled();
+
+    await tester.restartEngineLabel.click();
+    await expect.element(tester.restartEngineLabel).toHaveClass('btn-outline-success');
+    await expect.element(tester.allowNoneOIBus).toBeEnabled();
+
+    await tester.allowNoneConnectors.click();
+    await tester.allowNoneHistoryQueries.click();
+    await tester.allowNoneOIBus.click();
     for (const checkbox of tester.permissions.elements()) {
       expect(checkbox).not.toBeChecked();
     }
 
-    await tester.restartEngine.click();
-    await expect.element(tester.disableAll).toBeEnabled();
-
-    await tester.enableAll.click();
-    await expect.element(tester.enableAll).toBeDisabled();
+    await tester.allowAllOIBus.click();
+    await tester.allowAllConnectors.click();
+    await tester.allowAllHistoryQueries.click();
+    await expect.element(tester.allowAllOIBus).toBeDisabled();
     for (const checkbox of tester.permissions.elements()) {
       expect(checkbox).toBeChecked();
     }
@@ -199,9 +217,11 @@ describe('RegisterOibusModalComponent', () => {
     await expect.element(tester.remoteUpdateDisabled).toBeInTheDocument();
     await expect.element(tester.updateVersion).toBeDisabled();
     await expect.element(tester.updateVersion).not.toBeChecked();
+    // the locked permission is ignored by the group buttons
+    await expect.element(tester.allowAllOIBus).toBeDisabled();
 
-    await tester.disableAll.click();
-    await tester.enableAll.click();
+    await tester.allowNoneOIBus.click();
+    await tester.allowAllOIBus.click();
     await expect.element(tester.updateVersion).not.toBeChecked();
     await tester.saveButton.click();
 
