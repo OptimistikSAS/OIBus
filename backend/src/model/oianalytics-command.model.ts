@@ -76,6 +76,14 @@ export interface OIBusImportConfigurationCommand extends BaseOIBusCommand {
   commandContent: { fileId: string };
 }
 
+export interface OIBusDumpMemoryCommand extends BaseOIBusCommand {
+  type: 'dump-memory';
+}
+
+export interface OIBusRetrieveLogsDatabaseCommand extends BaseOIBusCommand {
+  type: 'retrieve-logs-database';
+}
+
 export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand {
   type: 'update-registration-settings';
   commandContent: {
@@ -360,6 +368,8 @@ export type OIBusCommand =
   | OIBusUpdateEngineProxyCommand
   | OIBusUpdateEngineLoggerCommand
   | OIBusImportConfigurationCommand
+  | OIBusDumpMemoryCommand
+  | OIBusRetrieveLogsDatabaseCommand
   | OIBusUpdateRegistrationSettingsCommand
   | OIBusCreateScanModeCommand
   | OIBusUpdateScanModeCommand
