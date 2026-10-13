@@ -2472,6 +2472,7 @@
       "update-engine-web-server": "Mettre à jour les paramètres du serveur Web du moteur",
       "update-engine-proxy": "Mettre à jour les paramètres de proxy du moteur",
       "update-engine-logger": "Mettre à jour les paramètres de journalisation du moteur",
+      "import-configuration": "Importer la configuration",
       "update-registration-settings": "Mettre à jour les paramètres d'enregistrement",
       "create-scan-mode": "Créer un mode de scan",
       "update-scan-mode": "Mettre à jour le mode de scan",
@@ -3129,6 +3130,7 @@
           "upgrade": "Mettre à niveau",
           "restart": "Redémarrer",
           "settings": "Paramètres",
+          "import-config": "Importer config",
           "cipher-keys": "Clés de chiffrement",
           "create": "Créer",
           "update": "Modifier",
@@ -3176,6 +3178,9 @@
           },
           "update-registration-settings": {
             "command-content": "Contenu JSON"
+          },
+          "import-configuration": {
+            "file-id": "Fichier de configuration : {{ fileId }}"
           },
           "scan-mode": {
             "command-content": "Contenu JSON",

@@ -30,6 +30,7 @@ import {
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
   OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO,
   OIAnalyticsFetchGetNorthCacheFileContentCommandDTO,
+  OIAnalyticsFetchImportConfigurationCommandDTO,
   OIAnalyticsFetchRestartEngineCommandDTO,
   OIAnalyticsFetchSearchHistoryCacheContentCommandDTO,
   OIAnalyticsFetchSearchNorthCacheContentCommandDTO,
@@ -1305,6 +1306,28 @@ describe('OIAnalyticsCommandRepository', () => {
       completedDate: null,
       result: null,
       transformerId: 'tr1'
+    });
+  });
+
+  it('should create an import-configuration command', () => {
+    const command: OIAnalyticsFetchImportConfigurationCommandDTO = {
+      id: 'importConfigurationId',
+      targetVersion: 'v3.10.0',
+      type: 'import-configuration',
+      commandContent: { fileId: 'fileId' }
+    };
+    repository.create(command);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+      id: command.id,
+      type: command.type,
+      status: 'RETRIEVED',
+      ack: false,
+      targetVersion: command.targetVersion,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      commandContent: { fileId: 'fileId' }
     });
   });
 
