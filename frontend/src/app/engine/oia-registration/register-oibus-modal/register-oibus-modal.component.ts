@@ -39,7 +39,8 @@ const COMMAND_PERMISSION_GROUPS: ReadonlyArray<CommandPermissionGroup> = [
         entries: [
           { permission: 'updateVersion', labelKey: 'upgrade' },
           { permission: 'restartEngine', labelKey: 'restart' },
-          { permission: 'updateEngineSettings', labelKey: 'settings' }
+          { permission: 'updateEngineSettings', labelKey: 'settings' },
+          { permission: 'importConfiguration', labelKey: 'import-config' }
         ]
       },
       {
@@ -198,6 +199,7 @@ export class RegisterOibusModalComponent {
       restartEngine: [true, Validators.required],
       regenerateCipherKeys: [true, Validators.required],
       updateEngineSettings: [true, Validators.required],
+      importConfiguration: [true, Validators.required],
       updateRegistrationSettings: [true, Validators.required],
       createScanMode: [true, Validators.required],
       updateScanMode: [true, Validators.required],
