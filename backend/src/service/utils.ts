@@ -12,6 +12,7 @@ import { DateTime } from 'luxon';
 import minimist from 'minimist';
 import csv from 'papaparse';
 import unzipper from 'unzipper';
+import yazl from 'yazl';
 
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/api/engine.model';
 import { HistoryQueryItemDTO } from '../../shared/model/api/history-query.model';
@@ -193,6 +194,16 @@ export const compress = (input: string, output: string): Promise<void> => {
 
 export const unzip = (input: string, output: string): Promise<void> => {
   return pipeline(createReadStream(input), unzipper.Extract({ path: output }));
+};
+
+/**
+ * Zips (deflate) a single file, stored in the archive under the given entry name.
+ */
+export const zipFile = (input: string, entryName: string, output: string): Promise<void> => {
+  const zip = new yazl.ZipFile();
+  zip.addFile(input, entryName);
+  zip.end();
+  return pipeline(zip.outputStream, createWriteStream(output));
 };
 
 /**

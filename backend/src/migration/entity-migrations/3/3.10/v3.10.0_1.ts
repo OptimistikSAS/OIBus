@@ -34,15 +34,21 @@ const CONFIGURATION_PERMISSION_COLUMNS = [
 ];
 
 /**
- * Adds the permission of the import-configuration remote command. As importing a configuration replaces the whole
- * configuration, it is only granted on a registration granting every permission changing the configuration: an OIBus
- * forbidding any of them must not be fully reconfigured by a single command.
+ * Adds the permissions of the import-configuration, dump-memory and retrieve-logs-database remote commands.
+ *
+ * As importing a configuration replaces the whole configuration, it is only granted on a registration granting every
+ * permission changing the configuration: an OIBus forbidding any of them must not be fully reconfigured by a single
+ * command. The other two are granted, like the other permissions were when they were introduced.
  */
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
     table.boolean('command_import_configuration');
+    table.boolean('command_dump_memory');
+    table.boolean('command_retrieve_logs_database');
   });
   await knex(REGISTRATIONS_TABLE).update({
+    command_dump_memory: true,
+    command_retrieve_logs_database: true,
     command_import_configuration: knex.raw(
       `CASE WHEN ${CONFIGURATION_PERMISSION_COLUMNS.map(column => `${column} = 1`).join(' AND ')} THEN 1 ELSE 0 END`
     )
@@ -52,4 +58,6 @@ export async function up(knex: Knex): Promise<void> {
 export async function down(knex: Knex): Promise<void> {
   // native SQLite DROP COLUMN, like v3.10.0.ts, instead of the table rebuild of knex dropColumn
   await knex.raw(`ALTER TABLE ${REGISTRATIONS_TABLE} DROP COLUMN command_import_configuration`);
+  await knex.raw(`ALTER TABLE ${REGISTRATIONS_TABLE} DROP COLUMN command_dump_memory`);
+  await knex.raw(`ALTER TABLE ${REGISTRATIONS_TABLE} DROP COLUMN command_retrieve_logs_database`);
 }

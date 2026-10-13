@@ -188,6 +188,8 @@ describe('OianalyticsRegistrationRepository with empty database', () => {
       regenerateCipherKeys: true,
       updateEngineSettings: true,
       importConfiguration: true,
+      dumpMemory: true,
+      retrieveLogsDatabase: true,
       updateRegistrationSettings: true,
       createScanMode: true,
       updateScanMode: true,

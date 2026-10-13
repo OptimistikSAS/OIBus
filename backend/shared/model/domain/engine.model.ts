@@ -57,6 +57,19 @@ export interface RegistrationCommandPermissions {
   importConfiguration: boolean;
 
   /**
+   * Permission to write a memory dump (V8 heap snapshot) and upload it to OIAnalytics. A memory dump may contain secrets
+   * in clear text.
+   * @example true
+   */
+  dumpMemory: boolean;
+
+  /**
+   * Permission to upload the logs database to OIAnalytics.
+   * @example true
+   */
+  retrieveLogsDatabase: boolean;
+
+  /**
    * Permission to update registration settings.
    * @example true
    */

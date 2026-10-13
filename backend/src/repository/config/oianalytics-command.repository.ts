@@ -243,6 +243,8 @@ export default class OIAnalyticsCommandRepository {
         break;
       case 'restart-engine':
       case 'regenerate-cipher-keys':
+      case 'dump-memory':
+      case 'retrieve-logs-database':
         insertQuery += `(id, retrieved_date, type, status, ack, target_version) VALUES (?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-version':
@@ -433,6 +435,16 @@ export default class OIAnalyticsCommandRepository {
         return {
           ...baseCommandFields(command),
           type: 'restart-engine'
+        };
+      case 'dump-memory':
+        return {
+          ...baseCommandFields(command),
+          type: 'dump-memory'
+        };
+      case 'retrieve-logs-database':
+        return {
+          ...baseCommandFields(command),
+          type: 'retrieve-logs-database'
         };
       case 'regenerate-cipher-keys':
         return {

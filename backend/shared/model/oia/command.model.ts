@@ -25,6 +25,8 @@ export const OIBUS_COMMAND_TYPES = [
   'update-engine-proxy',
   'update-engine-logger',
   'import-configuration',
+  'dump-memory',
+  'retrieve-logs-database',
   'update-registration-settings',
   'create-scan-mode',
   'update-scan-mode',
@@ -275,6 +277,57 @@ export interface OIBusImportConfigurationCommandDTO extends BaseOIBusCommandDTO 
      */
     fileId: string;
   };
+}
+
+/**
+ * Command DTO for writing a V8 heap snapshot (memory dump) of OIBus, zipped and uploaded to OIAnalytics.
+ * The result of the command describes the uploaded file (see {@link OIBusUploadedFileCommandResult}).
+ */
+export interface OIBusDumpMemoryCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'dump-memory';
+}
+
+/**
+ * Command DTO for zipping the logs database of OIBus and uploading it to OIAnalytics.
+ * The result of the command describes the uploaded file (see {@link OIBusUploadedFileCommandResult}).
+ */
+export interface OIBusRetrieveLogsDatabaseCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'retrieve-logs-database';
+}
+
+/**
+ * The result (serialized in JSON) of a command uploading a file to OIAnalytics.
+ */
+export interface OIBusUploadedFileCommandResult {
+  /**
+   * The OIAnalytics identifier of the uploaded file.
+   * @example "1d5c4ee0-1c4a-4a43-9a64-8f6e9c1fa6d7"
+   */
+  fileId: string;
+
+  /**
+   * The name of the uploaded zip file.
+   * @example "heapdump-My_OIBus-2026_10_13_10_20_30.zip"
+   */
+  filename: string;
+
+  /**
+   * The size of the uploaded zip file, in bytes.
+   * @example 1048576
+   */
+  compressedSize: number;
+
+  /**
+   * The size of the zipped file, in bytes.
+   * @example 8388608
+   */
+  uncompressedSize: number;
 }
 
 /**
@@ -1184,6 +1237,8 @@ export type OIBusCommandDTO =
   | OIBusUpdateEngineProxyCommandDTO
   | OIBusUpdateEngineLoggerCommandDTO
   | OIBusImportConfigurationCommandDTO
+  | OIBusDumpMemoryCommandDTO
+  | OIBusRetrieveLogsDatabaseCommandDTO
   | OIBusUpdateRegistrationSettingsCommandDTO
   | OIBusCreateScanModeCommandDTO
   | OIBusUpdateScanModeCommandDTO

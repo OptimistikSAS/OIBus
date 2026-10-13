@@ -44,6 +44,13 @@ const COMMAND_PERMISSION_GROUPS: ReadonlyArray<CommandPermissionGroup> = [
         ]
       },
       {
+        key: 'diagnostic',
+        entries: [
+          { permission: 'dumpMemory', labelKey: 'memory-dump' },
+          { permission: 'retrieveLogsDatabase', labelKey: 'logs-database' }
+        ]
+      },
+      {
         key: 'registration',
         entries: [
           { permission: 'regenerateCipherKeys', labelKey: 'cipher-keys' },
@@ -200,6 +207,8 @@ export class RegisterOibusModalComponent {
       regenerateCipherKeys: [true, Validators.required],
       updateEngineSettings: [true, Validators.required],
       importConfiguration: [true, Validators.required],
+      dumpMemory: [true, Validators.required],
+      retrieveLogsDatabase: [true, Validators.required],
       updateRegistrationSettings: [true, Validators.required],
       createScanMode: [true, Validators.required],
       updateScanMode: [true, Validators.required],
