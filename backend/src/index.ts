@@ -305,6 +305,8 @@ export async function bootstrap(): Promise<void> {
     configImportService,
     loggerService.createChildLogger('internal'),
     binaryFolder,
+    path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
+    path.resolve(CACHE_FOLDER, 'tmp'),
     ignoreRemoteUpdate,
     launcherVersion
   );

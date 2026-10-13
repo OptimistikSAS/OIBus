@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { writeFileSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';
+import path from 'node:path';
+import v8 from 'node:v8';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import Database from 'better-sqlite3';
 
 import { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
 import { HistoryQueryItemDTO } from '../../../shared/model/api/history-query.model';
@@ -36,9 +41,11 @@ import {
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusDumpMemoryCommand,
   OIBusGetHistoryCacheFileContentCommand,
   OIBusGetNorthCacheFileContentCommand,
   OIBusImportConfigurationCommand,
+  OIBusRetrieveLogsDatabaseCommand,
   OIBusSearchHistoryCacheContentCommand,
   OIBusSearchNorthCacheContentCommand,
   OIBusSetpointCommand,
@@ -89,7 +96,7 @@ import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/
 import { ConfigImportError } from '../config-transfer/config-import.service';
 import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
-import { getErrorMessage } from '../utils';
+import { getErrorMessage, sanitizeFilename } from '../utils';
 import type OIAnalyticsCommandServiceType from './oianalytics-command.service';
 import type { toOIBusCommandDTO as toOIBusCommandDTOType } from './oianalytics-command.service';
 
@@ -118,6 +125,8 @@ const mockUtils = {
   delay: mock.fn(async () => undefined),
   getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
   unzip: mock.fn(),
+  zipFile: mock.fn(async (_input: string, _entryName: string, output: string) => fs.writeFile(output, 'zip')),
+  sanitizeFilename,
   getErrorMessage
 };
 
@@ -235,6 +244,10 @@ function resetAllMocks() {
   }
 }
 
+const TEST_FOLDER = path.join(os.tmpdir(), `oibus-command-service-spec-${process.pid}`);
+const LOGS_DATABASE_PATH = path.join(TEST_FOLDER, 'logs.db');
+const TMP_FOLDER = path.join(TEST_FOLDER, 'tmp');
+
 function makeService(ignoreRemoteUpdate = false, launcherVersion = testData.engine.settings.launcherVersion) {
   return new OIAnalyticsCommandService(
     oIAnalyticsCommandRepository,
@@ -252,6 +265,8 @@ function makeService(ignoreRemoteUpdate = false, launcherVersion = testData.engi
     configImportService,
     logger,
     'binaryFolder',
+    LOGS_DATABASE_PATH,
+    TMP_FOLDER,
     ignoreRemoteUpdate,
     launcherVersion
   );
@@ -948,6 +963,8 @@ describe('OIAnalytics Command Service', () => {
         regenerateCipherKeys: false,
         updateEngineSettings: false,
         importConfiguration: false,
+        dumpMemory: false,
+        retrieveLogsDatabase: false,
         updateRegistrationSettings: false,
         createScanMode: false,
         updateScanMode: false,
@@ -1136,6 +1153,127 @@ describe('OIAnalytics Command Service', () => {
         `Command ${command.id} of type ${command.type} is not authorized`
       ]);
     });
+  });
+
+  describe('commands uploading a file', () => {
+    const baseCommand = {
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null
+    };
+    const dumpMemoryCommand = { ...baseCommand, id: 'dumpMemoryId', type: 'dump-memory' } as OIBusDumpMemoryCommand;
+    const retrieveLogsDatabaseCommand = {
+      ...baseCommand,
+      id: 'retrieveLogsDatabaseId',
+      type: 'retrieve-logs-database'
+    } as OIBusRetrieveLogsDatabaseCommand;
+    const engineName = sanitizeFilename(testData.engine.settings.general.name);
+
+    beforeEach(async () => {
+      await fs.mkdir(TEST_FOLDER, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await fs.rm(TEST_FOLDER, { recursive: true, force: true });
+    });
+
+    it('should upload a zipped memory dump', async () => {
+      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => dumpMemoryCommand);
+      const writeHeapSnapshot = mock.method(v8, 'writeHeapSnapshot', (filePath: string) => {
+        writeFileSync(filePath, 'heap snapshot');
+        return filePath;
+      });
+
+      await service.processNextCommand();
+
+      const filename = `heapdump-${engineName}-2021_01_02_00_00_00.zip`;
+      const [snapshotPath, entryName, zipPath] = mockUtils.zipFile.mock.calls[0].arguments;
+      assert.deepStrictEqual(writeHeapSnapshot.mock.calls[0].arguments, [snapshotPath]);
+      assert.strictEqual(entryName, `heapdump-${engineName}-2021_01_02_00_00_00.heapsnapshot`);
+      assert.strictEqual(path.basename(zipPath), filename);
+      assert.deepStrictEqual(oIAnalyticsClient.uploadCommandFile.mock.calls[0].arguments, [
+        testData.oIAnalytics.registration.completed,
+        dumpMemoryCommand.id,
+        zipPath,
+        filename
+      ]);
+      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+        dumpMemoryCommand.id,
+        testData.constants.dates.FAKE_NOW,
+        JSON.stringify({ fileId: 'fileId', filename, compressedSize: 'zip'.length, uncompressedSize: 'heap snapshot'.length })
+      ]);
+      assert.deepStrictEqual(await fs.readdir(TMP_FOLDER), [], 'temporary files removed');
+    });
+
+    it('should upload a zipped copy of the logs database', async () => {
+      const logsDatabase = new Database(LOGS_DATABASE_PATH);
+      logsDatabase.exec(`CREATE TABLE logs (message TEXT); INSERT INTO logs VALUES ('log message');`);
+      logsDatabase.close();
+      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => retrieveLogsDatabaseCommand);
+      let copiedLogs: unknown;
+      mockUtils.zipFile.mock.mockImplementationOnce(async (input: string, _entryName: string, output: string) => {
+        const copy = new Database(input, { readonly: true });
+        copiedLogs = copy.prepare('SELECT message FROM logs').all();
+        copy.close();
+        await fs.writeFile(output, 'zip');
+      });
+
+      await service.processNextCommand();
+
+      const filename = `logs-${engineName}-2021_01_02_00_00_00.zip`;
+      assert.deepStrictEqual(copiedLogs, [{ message: 'log message' }]);
+      assert.strictEqual(mockUtils.zipFile.mock.calls[0].arguments[1], 'logs.db');
+      assert.strictEqual(oIAnalyticsClient.uploadCommandFile.mock.calls[0].arguments[3], filename);
+      const result = JSON.parse(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments[2] as string);
+      assert.strictEqual(result.fileId, 'fileId');
+      assert.strictEqual(result.filename, filename);
+      assert.strictEqual(result.compressedSize, 'zip'.length);
+      assert.ok(result.uncompressedSize > 0);
+      assert.deepStrictEqual(await fs.readdir(TMP_FOLDER), [], 'temporary files removed');
+    });
+
+    it('should remove the temporary files when the upload fails', async () => {
+      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => dumpMemoryCommand);
+      mock.method(v8, 'writeHeapSnapshot', (filePath: string) => {
+        writeFileSync(filePath, 'heap snapshot');
+        return filePath;
+      });
+      oIAnalyticsClient.uploadCommandFile.mock.mockImplementationOnce(async () => {
+        throw new Error('413 - Payload Too Large');
+      });
+
+      await service.processNextCommand();
+
+      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+        dumpMemoryCommand.id,
+        '413 - Payload Too Large'
+      ]);
+      assert.deepStrictEqual(await fs.readdir(TMP_FOLDER), []);
+    });
+
+    for (const [command, permission] of [
+      [dumpMemoryCommand, 'dumpMemory'],
+      [retrieveLogsDatabaseCommand, 'retrieveLogsDatabase']
+    ] as const) {
+      it(`should not execute ${command.type} command without permission`, async () => {
+        oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+        oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
+          ...testData.oIAnalytics.registration.completed,
+          commandPermissions: { ...testData.oIAnalytics.registration.completed.commandPermissions, [permission]: false }
+        }));
+
+        await service.processNextCommand();
+
+        assert.strictEqual(oIAnalyticsClient.uploadCommandFile.mock.calls.length, 0);
+        assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+          command.id,
+          `Command ${command.id} of type ${command.type} is not authorized`
+        ]);
+      });
+    }
   });
 
   it('should execute update-scan-mode command', async () => {

@@ -3,7 +3,9 @@ import { EventEmitter } from 'node:events';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import v8 from 'node:v8';
 
+import Database from 'better-sqlite3';
 import { DateTime } from 'luxon';
 
 import type { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
@@ -45,7 +47,8 @@ import {
   BaseOIBusCommandDTO,
   CommandSearchParam,
   OIBusCommandDTO,
-  OIBusTestTransformerItemCommandContent
+  OIBusTestTransformerItemCommandContent,
+  OIBusUploadedFileCommandResult
 } from '../../../shared/model/oia/command.model';
 import type { ConfigImportResponseDTO } from '../../../shared/model/oia/config-transfer.model';
 
@@ -72,11 +75,13 @@ import {
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusDumpMemoryCommand,
   OIBusGetHistoryCacheFileContentCommand,
   OIBusGetNorthCacheFileContentCommand,
   OIBusImportConfigurationCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
+  OIBusRetrieveLogsDatabaseCommand,
   OIBusSearchHistoryCacheContentCommand,
   OIBusSearchNorthCacheContentCommand,
   OIBusSetpointCommand,
@@ -115,7 +120,7 @@ import { ConfigImportError } from '../config-transfer/config-import.service';
 import { encryptionService } from '../encryption.service';
 import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
-import { delay, getErrorMessage, getOIBusInfo, unzip } from '../utils';
+import { delay, getErrorMessage, getOIBusInfo, sanitizeFilename, unzip, zipFile } from '../utils';
 import OIAnalyticsClient from './oianalytics-client.service';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 
@@ -307,6 +312,8 @@ export default class OIAnalyticsCommandService {
     private configImportService: IConfigImportService,
     private logger: ILogger,
     private binaryFolder: string,
+    private logsDatabasePath: string,
+    private tmpFolder: string,
     private ignoreRemoteUpdate: boolean,
     launcherVersion: string
   ) {
@@ -553,6 +560,12 @@ export default class OIAnalyticsCommandService {
           break;
         case 'import-configuration':
           await this.executeImportConfigurationCommand(command, registration);
+          break;
+        case 'dump-memory':
+          await this.executeDumpMemoryCommand(command, registration);
+          break;
+        case 'retrieve-logs-database':
+          await this.executeRetrieveLogsDatabaseCommand(command, registration);
           break;
         case 'update-registration-settings':
           await this.executeUpdateRegistrationSettingsCommand(command, registration);
@@ -910,6 +923,67 @@ export default class OIAnalyticsCommandService {
     process.exit();
   }
 
+  /**
+   * Writes a V8 heap snapshot and uploads it (zipped) to OIAnalytics. The snapshot is synchronous: every data flow is
+   * paused until it is written.
+   */
+  private async executeDumpMemoryCommand(command: OIBusDumpMemoryCommand, registration: OIAnalyticsRegistration) {
+    const basename = this.commandFileBasename('heapdump');
+    await this.uploadZippedFile(command, registration, basename, `${basename}.heapsnapshot`, filePath => {
+      this.logger.warn(`Writing memory dump for command ${command.id}. Data flows are paused until the dump completes`);
+      v8.writeHeapSnapshot(filePath);
+    });
+  }
+
+  /**
+   * Uploads a copy (zipped) of the logs database to OIAnalytics. The copy is made with the SQLite backup API, consistent
+   * while the logger keeps writing in the database.
+   */
+  private async executeRetrieveLogsDatabaseCommand(command: OIBusRetrieveLogsDatabaseCommand, registration: OIAnalyticsRegistration) {
+    await this.uploadZippedFile(command, registration, this.commandFileBasename('logs'), 'logs.db', async filePath => {
+      const logsDatabase = new Database(this.logsDatabasePath, { readonly: true, fileMustExist: true });
+      try {
+        await logsDatabase.backup(filePath);
+      } finally {
+        logsDatabase.close();
+      }
+    });
+  }
+
+  private commandFileBasename(prefix: string): string {
+    const engineName = sanitizeFilename(this.oIBusService.getEngineSettings().general.name);
+    return `${prefix}-${engineName}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss')}`;
+  }
+
+  /**
+   * Writes a file with `writeFile` in a temporary folder, zips it, uploads the zip to OIAnalytics and completes the
+   * command with the description of the uploaded file. The temporary files are always removed.
+   */
+  private async uploadZippedFile(
+    command: OIBusCommand,
+    registration: OIAnalyticsRegistration,
+    basename: string,
+    entryName: string,
+    writeFile: (filePath: string) => Promise<void> | void
+  ) {
+    await fs.mkdir(this.tmpFolder, { recursive: true });
+    const folder = await fs.mkdtemp(path.join(this.tmpFolder, `${command.type}-`));
+    try {
+      const filePath = path.join(folder, entryName);
+      await writeFile(filePath);
+      const filename = `${basename}.zip`;
+      const zipPath = path.join(folder, filename);
+      await zipFile(filePath, entryName, zipPath);
+      const uncompressedSize = (await fs.stat(filePath)).size;
+      const compressedSize = (await fs.stat(zipPath)).size;
+      const fileId = await this.oIAnalyticsClient.uploadCommandFile(registration, command.id, zipPath, filename);
+      const result: OIBusUploadedFileCommandResult = { fileId, filename, compressedSize, uncompressedSize };
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+    } finally {
+      await fs.rm(folder, { recursive: true, force: true });
+    }
+  }
+
   private async executeUpdateRegistrationSettingsCommand(
     command: OIBusUpdateRegistrationSettingsCommand,
     registration: OIAnalyticsRegistration
@@ -945,6 +1019,12 @@ export default class OIAnalyticsCommandService {
         importConfiguration: registration.commandPermissions.importConfiguration
           ? command.commandContent.commandPermissions.importConfiguration
           : registration.commandPermissions.importConfiguration,
+        dumpMemory: registration.commandPermissions.dumpMemory
+          ? command.commandContent.commandPermissions.dumpMemory
+          : registration.commandPermissions.dumpMemory,
+        retrieveLogsDatabase: registration.commandPermissions.retrieveLogsDatabase
+          ? command.commandContent.commandPermissions.retrieveLogsDatabase
+          : registration.commandPermissions.retrieveLogsDatabase,
         updateRegistrationSettings: registration.commandPermissions.updateRegistrationSettings
           ? command.commandContent.commandPermissions.updateRegistrationSettings
           : registration.commandPermissions.updateRegistrationSettings,
@@ -1718,6 +1798,10 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.updateEngineSettings;
       case 'import-configuration':
         return registration.commandPermissions.importConfiguration;
+      case 'dump-memory':
+        return registration.commandPermissions.dumpMemory;
+      case 'retrieve-logs-database':
+        return registration.commandPermissions.retrieveLogsDatabase;
       case 'update-registration-settings':
         return registration.commandPermissions.updateRegistrationSettings;
       case 'create-scan-mode':
@@ -1853,6 +1937,12 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
         ...toBaseOIBusCommandDTO(command),
         type: command.type,
         commandContent: command.commandContent
+      };
+    case 'dump-memory':
+    case 'retrieve-logs-database':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type
       };
     case 'update-registration-settings':
       return {
