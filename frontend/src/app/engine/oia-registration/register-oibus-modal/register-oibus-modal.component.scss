@@ -1,3 +1,19 @@
 .test-error-message {
   overflow-wrap: break-word;
 }
+
+.permission-section-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.permission-toggles {
+  // rounded like the other OIBus buttons (btn-group-sm uses this variable for the radius of its ends)
+  --bs-border-radius-sm: 0.5rem;
+
+  // the global .btn-group style whitens the left border of every button which is not a first child, which a label
+  // always is not (its checkbox comes first): restore the outer left border of the group
+  > .btn-check:first-child + .btn {
+    border-left-color: var(--bs-btn-border-color);
+  }
+}
