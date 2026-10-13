@@ -38,6 +38,7 @@ import {
   OIBusDeleteSouthConnectorCommand,
   OIBusGetHistoryCacheFileContentCommand,
   OIBusGetNorthCacheFileContentCommand,
+  OIBusImportConfigurationCommand,
   OIBusSearchHistoryCacheContentCommand,
   OIBusSearchNorthCacheContentCommand,
   OIBusSetpointCommand,
@@ -70,6 +71,7 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 import { NotFoundError } from '../../model/types';
 import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
 import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
+import ConfigImportServiceMock from '../../tests/__mocks__/service/config-import-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
@@ -84,6 +86,7 @@ import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import testData from '../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import { ConfigImportError } from '../config-transfer/config-import.service';
 import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
 import { getErrorMessage } from '../utils';
@@ -106,6 +109,7 @@ const southService = new SouthServiceMock();
 const northService = new NorthServiceMock();
 const historyQueryService = new HistoryQueryServiceMock();
 const transformerService = new TransformerServiceMock();
+const configImportService = new ConfigImportServiceMock();
 const oIAnalyticsClient = new OianalyticsClientMock();
 const encryptionService = new EncryptionServiceMock('', '');
 
@@ -212,6 +216,7 @@ function resetAllMocks() {
     northService,
     historyQueryService,
     transformerService,
+    configImportService,
     oIAnalyticsClient,
     encryptionService
   ];
@@ -244,6 +249,7 @@ function makeService(ignoreRemoteUpdate = false, launcherVersion = testData.engi
     northService,
     historyQueryService,
     transformerService,
+    configImportService,
     logger,
     'binaryFolder',
     ignoreRemoteUpdate,
@@ -941,6 +947,7 @@ describe('OIAnalytics Command Service', () => {
         restartEngine: false,
         regenerateCipherKeys: false,
         updateEngineSettings: false,
+        importConfiguration: false,
         updateRegistrationSettings: false,
         createScanMode: false,
         updateScanMode: false,
@@ -1035,6 +1042,100 @@ describe('OIAnalytics Command Service', () => {
     ]);
     assert.strictEqual(mockUtils.delay.mock.calls.length, 1);
     assert.strictEqual(exitMock.mock.calls.length, 1);
+  });
+
+  describe('import-configuration command', () => {
+    const command = {
+      id: 'importConfigurationId',
+      type: 'import-configuration',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      commandContent: { fileId: 'fileId' }
+    } as OIBusImportConfigurationCommand;
+    const configuration = { oibusVersion: '3.10.0', exportedAt: testData.constants.dates.FAKE_NOW, config: {} };
+
+    beforeEach(() => {
+      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+      oIAnalyticsClient.retrieveConfigurationFile.mock.mockImplementationOnce(async () => JSON.stringify(configuration));
+    });
+
+    it('should import the configuration downloaded from OIAnalytics and restart', async () => {
+      const exitMock = mock.method(process, 'exit', () => undefined as never);
+      const result = { fromVersion: '3.9.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: ['warning'], newPort: null };
+      configImportService.importConfigurationFromOIAnalytics.mock.mockImplementationOnce(async () => result);
+
+      await service.processNextCommand();
+
+      assert.deepStrictEqual(oIAnalyticsClient.retrieveConfigurationFile.mock.calls[0].arguments, [
+        testData.oIAnalytics.registration.completed,
+        'fileId'
+      ]);
+      assert.deepStrictEqual(configImportService.importConfigurationFromOIAnalytics.mock.calls[0].arguments, [configuration]);
+      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+        command.id,
+        testData.constants.dates.FAKE_NOW,
+        JSON.stringify(result)
+      ]);
+      assert.strictEqual(mockUtils.delay.mock.calls.length, 1);
+      assert.strictEqual(exitMock.mock.calls.length, 1);
+    });
+
+    it('should fail when the configuration file is not valid JSON', async () => {
+      oIAnalyticsClient.retrieveConfigurationFile.mock.mockImplementationOnce(async () => 'not json', 0);
+
+      await service.processNextCommand();
+
+      assert.strictEqual(configImportService.importConfigurationFromOIAnalytics.mock.calls.length, 0);
+      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+        command.id,
+        'Configuration file fileId is not valid JSON'
+      ]);
+    });
+
+    it('should report the validation errors of the configuration', async () => {
+      configImportService.importConfigurationFromOIAnalytics.mock.mockImplementationOnce(async () => {
+        throw new ConfigImportError('Configuration is invalid', [
+          { scope: 'south', entityName: 'MySouth', message: 'host is required' },
+          { scope: 'engine', message: 'port is required' }
+        ]);
+      });
+
+      await service.processNextCommand();
+
+      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+        command.id,
+        'Configuration is invalid\n- south "MySouth": host is required\n- engine: port is required'
+      ]);
+    });
+
+    it('should report the error of an import without validation errors', async () => {
+      configImportService.importConfigurationFromOIAnalytics.mock.mockImplementationOnce(async () => {
+        throw new ConfigImportError('Export from a newer OIBus');
+      });
+
+      await service.processNextCommand();
+
+      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'Export from a newer OIBus']);
+    });
+
+    it('should not import the configuration without permission', async () => {
+      oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
+        ...testData.oIAnalytics.registration.completed,
+        commandPermissions: { ...testData.oIAnalytics.registration.completed.commandPermissions, importConfiguration: false }
+      }));
+
+      await service.processNextCommand();
+
+      assert.strictEqual(oIAnalyticsClient.retrieveConfigurationFile.mock.calls.length, 0);
+      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+        command.id,
+        `Command ${command.id} of type ${command.type} is not authorized`
+      ]);
+    });
   });
 
   it('should execute update-scan-mode command', async () => {

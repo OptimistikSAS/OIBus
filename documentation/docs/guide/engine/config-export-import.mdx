@@ -131,3 +131,18 @@ import completes rather than in a toast that disappears.
 The OIAnalytics registration settings are included in the export for informational/reference
 purposes only. Importing a file never writes registration state — registering the target instance
 with OIAnalytics (or re-registering it) must be done manually, the same way as on a fresh instance.
+
+## Import from OIAnalytics {#import-from-oianalytics}
+
+From OIBus 3.10.0, a configuration file can also be sent from OIAnalytics to a registered OIBus, with the
+**Import configuration** command. OIAnalytics stores the uploaded file and creates the command; OIBus downloads the file
+when it retrieves the command, and imports it exactly like a file imported from its own UI, with two differences:
+
+- **The local users are all kept**, with their passwords, and the users of the file are not imported: they could only
+  be recreated with random passwords, which would lock everyone out of the local UI.
+- **There is no preview**: the file is upgraded and validated when the command runs. A rejected file errors the
+  command with the validation errors, and nothing is written.
+
+Once the configuration is imported, the command is completed with the import result (applied upgrades, warnings, new
+port) and OIBus restarts. The command requires the **Import config** permission of the **Engine** section of the
+[registration settings](../installation/oianalytics.mdx#registration-settings).

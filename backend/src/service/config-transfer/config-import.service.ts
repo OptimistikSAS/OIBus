@@ -385,7 +385,55 @@ export default class ConfigImportService {
    *    deleted; if the configuration also describes it, it is updated in place instead of recreated.
    */
   async importConfiguration(rawInput: unknown, importedBy: string): Promise<ConfigImportResponseDTO> {
-    const { fromVersion, toVersion, appliedUpgrades, config } = await this.validateAndUpgrade(rawInput);
+    const upgraded = await this.validateAndUpgrade(rawInput);
+    this.assertWritable();
+
+    const currentUser = this.userRepository!.findById(importedBy);
+    if (!currentUser) {
+      throw new Error('Config import must be run by an authenticated, existing user');
+    }
+
+    const warnings: Array<string> = [];
+
+    // Excluded on EITHER match, not just login: `wipeConfiguration` below preserves the local row by
+    // `id` (it's the only stable key across a login rename), so an entry whose id matches the importer's
+    // own id must never be recreated — that row was never deleted, and re-inserting it would collide on
+    // the primary key. The login match covers an entry describing a different id but the same (UNIQUE)
+    // login as the importer.
+    const usersToImport = upgraded.config.users.filter(
+      user => user.oIBusInternalId !== currentUser.id && user.settings.login !== currentUser.login
+    );
+    if (usersToImport.length < upgraded.config.users.length) {
+      warnings.push(
+        `The account you are signed in with ("${currentUser.login}") was preserved with its existing password and was not ` +
+          `overwritten by the import, so you are not locked out.`
+      );
+    }
+
+    return this.writeConfiguration(upgraded, importedBy, { keptUserId: currentUser.id, usersToImport }, warnings);
+  }
+
+  /**
+   * Same as `importConfiguration`, for a configuration sent by OIAnalytics through a remote command: there
+   * is no local user running it (the changes are attributed to `'oianalytics'`), and the local users are
+   * all kept as they are, with their passwords — the users of the configuration are not imported, since
+   * they could only be recreated with random passwords, which would lock everyone out of the local UI.
+   */
+  async importConfigurationFromOIAnalytics(rawInput: unknown): Promise<ConfigImportResponseDTO> {
+    const upgraded = await this.validateAndUpgrade(rawInput);
+    this.assertWritable();
+
+    const warnings: Array<string> = [];
+    if (upgraded.config.users.length > 0) {
+      warnings.push(
+        `The ${upgraded.config.users.length} user(s) of the configuration were not imported: the local users are kept with their ` +
+          `existing passwords.`
+      );
+    }
+    return this.writeConfiguration(upgraded, 'oianalytics', null, warnings);
+  }
+
+  private assertWritable(): void {
     if (
       !this.database ||
       !this.scanModeRepository ||
@@ -401,32 +449,23 @@ export default class ConfigImportService {
     ) {
       throw new Error('ConfigImportService was constructed without the repositories required to write an import');
     }
+  }
 
-    const currentUser = this.userRepository.findById(importedBy);
-    if (!currentUser) {
-      throw new Error('Config import must be run by an authenticated, existing user');
-    }
-
-    const warnings: Array<string> = [];
-
-    // Excluded on EITHER match, not just login: `wipeConfiguration` below preserves the local row by
-    // `id` (it's the only stable key across a login rename), so an entry whose id matches the importer's
-    // own id must never be recreated — that row was never deleted, and re-inserting it would collide on
-    // the primary key. The login match covers an entry describing a different id but the same (UNIQUE)
-    // login as the importer.
-    const usersToImport = config.users.filter(user => user.oIBusInternalId !== currentUser.id && user.settings.login !== currentUser.login);
-    if (usersToImport.length < config.users.length) {
-      warnings.push(
-        `The account you are signed in with ("${currentUser.login}") was preserved with its existing password and was not ` +
-          `overwritten by the import, so you are not locked out.`
-      );
-    }
-
+  /**
+   * Writes the upgraded configuration in a single transaction (see `importConfiguration`).
+   * @param users the users to import and the local user to keep, or null to keep every local user and import none
+   */
+  private async writeConfiguration(
+    { fromVersion, toVersion, appliedUpgrades, config }: UpgradedConfiguration,
+    importedBy: string,
+    users: { keptUserId: string; usersToImport: OIBusConfigurationDTO['users'] } | null,
+    warnings: Array<string>
+  ): Promise<ConfigImportResponseDTO> {
     // Passwords must be hashed (argon2, genuinely async) before the synchronous transaction below
     // starts — better-sqlite3 transaction callbacks cannot await anything without letting the
     // transaction commit/roll back around the awaited gap.
     const hashedUserPasswords = await Promise.all(
-      usersToImport.map(async user => ({
+      (users?.usersToImport ?? []).map(async user => ({
         user,
         hashedPassword: await argon2.hash(crypto.randomBytes(24).toString('hex'))
       }))
@@ -454,8 +493,8 @@ export default class ConfigImportService {
     }
 
     let newPort: number | null = null;
-    const runImport = this.database.transaction(() => {
-      this.wipeConfiguration(importedBy, currentUser.id);
+    const runImport = this.database!.transaction(() => {
+      this.wipeConfiguration(importedBy, users ? userId => userId === users.keptUserId : () => true);
       this.recreateConfiguration(config, importedBy, hashedUserPasswords, warnings);
       newPort = this.importEngineSettings(config, importedBy, warnings);
     });
@@ -549,15 +588,15 @@ export default class ConfigImportService {
    * Deletes every row in every section this import writes to, in the reverse of the creation order
    * `recreateConfiguration` uses — so a row is always deleted before whatever it references.
    *
-   * `preserveUserId` is never deleted (the account running the import must keep working), and the
-   * reserved `'subscription'` scan mode is never deleted (nothing reseeds it after process startup, so
+   * The users `keepUser` accepts are never deleted (the account running the import must keep working),
+   * and the reserved `'subscription'` scan mode is never deleted (nothing reseeds it after process startup, so
    * once gone it stays gone). Configuration workflows are deleted explicitly (and audited) before their
    * south connector, instead of silently going with it through the foreign key cascade; deleting one
    * also cascades to its run history and point metadata, which are runtime state and not exported.
    */
-  private wipeConfiguration(deletedBy: string, preserveUserId: string): void {
+  private wipeConfiguration(deletedBy: string, keepUser: (userId: string) => boolean): void {
     for (const user of this.userRepository!.list()) {
-      if (user.id === preserveUserId) continue;
+      if (keepUser(user.id)) continue;
       this.userRepository!.delete(user.id, deletedBy);
     }
     for (const historyQuery of this.historyQueryRepository!.findAllHistoriesLight()) {

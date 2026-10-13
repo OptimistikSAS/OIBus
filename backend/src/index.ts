@@ -302,6 +302,7 @@ export async function bootstrap(): Promise<void> {
     northService,
     historyQueryService,
     transformerService,
+    configImportService,
     loggerService.createChildLogger('internal'),
     binaryFolder,
     ignoreRemoteUpdate,
