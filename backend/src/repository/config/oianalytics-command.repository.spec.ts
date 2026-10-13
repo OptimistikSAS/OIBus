@@ -28,10 +28,12 @@ import {
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
+  OIAnalyticsFetchDumpMemoryCommandDTO,
   OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO,
   OIAnalyticsFetchGetNorthCacheFileContentCommandDTO,
   OIAnalyticsFetchImportConfigurationCommandDTO,
   OIAnalyticsFetchRestartEngineCommandDTO,
+  OIAnalyticsFetchRetrieveLogsDatabaseCommandDTO,
   OIAnalyticsFetchSearchHistoryCacheContentCommandDTO,
   OIAnalyticsFetchSearchNorthCacheContentCommandDTO,
   OIAnalyticsFetchSetpointCommandDTO,
@@ -1334,6 +1336,28 @@ describe('OIAnalyticsCommandRepository', () => {
       transformerId: 'tr1'
     });
   });
+
+  for (const type of ['dump-memory', 'retrieve-logs-database'] as const) {
+    it(`should create a ${type} command`, () => {
+      const command: OIAnalyticsFetchDumpMemoryCommandDTO | OIAnalyticsFetchRetrieveLogsDatabaseCommandDTO = {
+        id: `${type}Id`,
+        targetVersion: 'v3.10.0',
+        type
+      };
+      repository.create(command);
+
+      assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+        id: command.id,
+        type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null
+      });
+    });
+  }
 
   it('should create an import-configuration command', () => {
     const command: OIAnalyticsFetchImportConfigurationCommandDTO = {
