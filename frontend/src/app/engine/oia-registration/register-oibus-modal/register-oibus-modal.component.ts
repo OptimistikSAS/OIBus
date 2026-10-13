@@ -6,29 +6,166 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
+import { RegistrationCommandPermissions } from '@oibus/shared/domain/engine.model';
 
 import { EngineService } from '../../../services/engine.service';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { trackControl } from '../../../shared/form/tracked-control';
 import { NotificationService } from '../../../shared/notification.service';
-import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+
+type CommandPermission = keyof RegistrationCommandPermissions;
+
+interface CommandPermissionSection {
+  key: string;
+  entries: ReadonlyArray<{ permission: CommandPermission; labelKey: string }>;
+}
+
+interface CommandPermissionGroup {
+  key: string;
+  sections: ReadonlyArray<CommandPermissionSection>;
+}
+
+/**
+ * The command permissions, grouped as displayed. The labels are relative to their section (e.g. "Create" in "Scan mode").
+ */
+const COMMAND_PERMISSION_GROUPS: ReadonlyArray<CommandPermissionGroup> = [
+  {
+    key: 'oibus',
+    sections: [
+      {
+        key: 'engine',
+        entries: [
+          { permission: 'updateVersion', labelKey: 'upgrade' },
+          { permission: 'restartEngine', labelKey: 'restart' },
+          { permission: 'updateEngineSettings', labelKey: 'settings' }
+        ]
+      },
+      {
+        key: 'registration',
+        entries: [
+          { permission: 'regenerateCipherKeys', labelKey: 'cipher-keys' },
+          { permission: 'updateRegistrationSettings', labelKey: 'update' }
+        ]
+      },
+      {
+        key: 'scan-mode',
+        entries: [
+          { permission: 'createScanMode', labelKey: 'create' },
+          { permission: 'updateScanMode', labelKey: 'update' },
+          { permission: 'deleteScanMode', labelKey: 'delete' }
+        ]
+      },
+      {
+        key: 'ip-filter',
+        entries: [
+          { permission: 'createIpFilter', labelKey: 'create' },
+          { permission: 'updateIpFilter', labelKey: 'update' },
+          { permission: 'deleteIpFilter', labelKey: 'delete' }
+        ]
+      },
+      {
+        key: 'certificate',
+        entries: [
+          { permission: 'createCertificate', labelKey: 'create' },
+          { permission: 'updateCertificate', labelKey: 'update' },
+          { permission: 'deleteCertificate', labelKey: 'delete' }
+        ]
+      },
+      {
+        key: 'transformers',
+        entries: [
+          { permission: 'createCustomTransformer', labelKey: 'create' },
+          { permission: 'updateCustomTransformer', labelKey: 'update' },
+          { permission: 'deleteCustomTransformer', labelKey: 'delete' },
+          { permission: 'testCustomTransformer', labelKey: 'test' }
+        ]
+      }
+    ]
+  },
+  {
+    key: 'connectors',
+    sections: [
+      {
+        key: 'north-connector',
+        entries: [
+          { permission: 'createNorth', labelKey: 'create' },
+          { permission: 'updateNorth', labelKey: 'update' },
+          { permission: 'deleteNorth', labelKey: 'delete' }
+        ]
+      },
+      {
+        key: 'south-connector',
+        entries: [
+          { permission: 'createSouth', labelKey: 'create' },
+          { permission: 'updateSouth', labelKey: 'update' },
+          { permission: 'deleteSouth', labelKey: 'delete' }
+        ]
+      },
+      {
+        key: 'north-actions',
+        entries: [
+          { permission: 'testNorthConnection', labelKey: 'test-connection' },
+          { permission: 'setpoint', labelKey: 'setpoint' }
+        ]
+      },
+      {
+        key: 'south-actions',
+        entries: [
+          { permission: 'testSouthConnection', labelKey: 'test-connection' },
+          { permission: 'createOrUpdateSouthItemsFromCsv', labelKey: 'import-items' },
+          { permission: 'testSouthItem', labelKey: 'test-item' }
+        ]
+      },
+      {
+        key: 'north-cache',
+        entries: [
+          { permission: 'searchNorthCacheContent', labelKey: 'search' },
+          { permission: 'getNorthCacheFileContent', labelKey: 'view-file' },
+          { permission: 'updateNorthCacheContent', labelKey: 'update' }
+        ]
+      }
+    ]
+  },
+  {
+    key: 'history-query',
+    sections: [
+      {
+        key: 'history-query',
+        entries: [
+          { permission: 'createHistoryQuery', labelKey: 'create' },
+          { permission: 'updateHistoryQuery', labelKey: 'update' },
+          { permission: 'deleteHistoryQuery', labelKey: 'delete' },
+          { permission: 'createOrUpdateHistoryItemsFromCsv', labelKey: 'import-items' }
+        ]
+      },
+      {
+        key: 'test-history-query',
+        entries: [
+          { permission: 'testHistoryNorthConnection', labelKey: 'north' },
+          { permission: 'testHistorySouthConnection', labelKey: 'south' },
+          { permission: 'testHistorySouthItem', labelKey: 'item' }
+        ]
+      },
+      {
+        key: 'history-cache',
+        entries: [
+          { permission: 'searchHistoryCacheContent', labelKey: 'search' },
+          { permission: 'getHistoryCacheFileContent', labelKey: 'view-file' },
+          { permission: 'updateHistoryCacheContent', labelKey: 'update' }
+        ]
+      }
+    ]
+  }
+];
 
 @Component({
   selector: 'oib-register-oibus-modal',
   templateUrl: './register-oibus-modal.component.html',
   styleUrl: './register-oibus-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    TranslateDirective,
-    OibusCommandTypeEnumPipe,
-    BoxComponent,
-    BoxTitleDirective,
-    OI_FORM_VALIDATION_DIRECTIVES,
-    SaveButtonComponent
-  ]
+  imports: [ReactiveFormsModule, TranslateDirective, BoxComponent, BoxTitleDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
 })
 export class RegisterOibusModalComponent {
   private readonly modal = inject(NgbActiveModal);
@@ -108,8 +245,16 @@ export class RegisterOibusModalComponent {
   readonly useProxy = trackControl(() => this.form.controls.useProxy);
   readonly useApiGateway = trackControl(() => this.form.controls.useApiGateway);
   private readonly commandPermissions = trackControl(() => this.form.controls.commandPermissions);
-  readonly allPermissionsEnabled = computed(() => Object.values(this.commandPermissions()!.value).every(value => value === true));
-  readonly allPermissionsDisabled = computed(() => Object.values(this.commandPermissions()!.value).every(value => value === false));
+  // the "All" / "None" buttons of a group are disabled when they would change nothing (locked permissions ignored)
+  readonly permissionGroups = computed(() => {
+    const controls = this.commandPermissions()!.controls;
+    return COMMAND_PERMISSION_GROUPS.map(group => {
+      const values = this.groupPermissions(group)
+        .filter(permission => controls[permission].enabled)
+        .map(permission => controls[permission].value);
+      return { ...group, allAllowed: values.every(value => value), noneAllowed: values.every(value => !value) };
+    });
+  });
 
   /**
    * Prepares the component for edition.
@@ -218,19 +363,21 @@ export class RegisterOibusModalComponent {
     };
   }
 
-  enableAllPermissions() {
-    this.setAllPermissions(true);
+  isAllowed(permission: CommandPermission): boolean {
+    return this.commandPermissions()!.controls[permission].value;
   }
 
-  private setAllPermissions(value: boolean) {
-    for (const control of Object.values(this.form.controls.commandPermissions.controls)) {
-      if (control.enabled) {
-        control.setValue(value);
+  setGroupPermissions(group: CommandPermissionGroup, value: boolean) {
+    const controls = this.form.controls.commandPermissions.controls;
+    for (const permission of this.groupPermissions(group)) {
+      // the permissions locked by the OIBus startup arguments are disabled
+      if (controls[permission].enabled) {
+        controls[permission].setValue(value);
       }
     }
   }
 
-  disableAllPermissions() {
-    this.setAllPermissions(false);
+  private groupPermissions(group: CommandPermissionGroup): Array<CommandPermission> {
+    return group.sections.flatMap(section => section.entries.map(entry => entry.permission));
   }
 }

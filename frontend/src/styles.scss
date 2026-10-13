@@ -524,7 +524,8 @@ ngb-timepicker .ngb-tp-chevron:hover::before {
   .btn:disabled,
   .btn.disabled,
   fieldset:disabled .btn {
-    color: var(--bs-btn-disabled-color);
+    // the buttons of the title are outlined on a dark background, whatever their color
+    color: $white;
     pointer-events: none;
     outline-offset: -2px;
     opacity: 0.4;
