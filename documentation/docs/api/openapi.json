@@ -24921,6 +24921,11 @@
 						"description": "Permission to update engine settings.",
 						"example": true
 					},
+					"importConfiguration": {
+						"type": "boolean",
+						"description": "Permission to import a full configuration, replacing the local one (except the OIAnalytics registration and the users).",
+						"example": true
+					},
 					"updateRegistrationSettings": {
 						"type": "boolean",
 						"description": "Permission to update registration settings.",
@@ -25117,6 +25122,7 @@
 					"restartEngine",
 					"regenerateCipherKeys",
 					"updateEngineSettings",
+					"importConfiguration",
 					"updateRegistrationSettings",
 					"createScanMode",
 					"updateScanMode",
@@ -25415,6 +25421,7 @@
 					"update-engine-web-server",
 					"update-engine-proxy",
 					"update-engine-logger",
+					"import-configuration",
 					"update-registration-settings",
 					"create-scan-mode",
 					"update-scan-mode",
@@ -26303,6 +26310,91 @@
 					"commandContent": {
 						"$ref": "#/components/schemas/EngineLoggerCommandDTO",
 						"description": "The content of the command, including the logging parameters."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusImportConfigurationCommandDTO": {
+				"description": "Command DTO for importing a full configuration (as exported by OIBus), downloaded from OIAnalytics.\nThe local users and the OIAnalytics registration are kept, and OIBus restarts once the configuration is imported.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"import-configuration"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
+					"commandContent": {
+						"properties": {
+							"fileId": {
+								"type": "string",
+								"description": "The OIAnalytics identifier of the configuration file.",
+								"example": "1d5c4ee0-1c4a-4a43-9a64-8f6e9c1fa6d7"
+							}
+						},
+						"required": [
+							"fileId"
+						],
+						"type": "object",
+						"description": "The content of the command, referencing the configuration file to download from OIAnalytics."
 					}
 				},
 				"required": [
@@ -35384,6 +35476,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusUpdateEngineLoggerCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusImportConfigurationCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusUpdateRegistrationSettingsCommandDTO"
@@ -44631,7 +44726,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.9.4",
+		"version": "3.10.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"

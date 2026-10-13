@@ -234,6 +234,7 @@
       "update-engine-web-server": "Update engine web server settings",
       "update-engine-proxy": "Update engine proxy settings",
       "update-engine-logger": "Update engine logger settings",
+      "import-configuration": "Import configuration",
       "update-registration-settings": "Update registration settings",
       "create-scan-mode": "Create scan mode",
       "update-scan-mode": "Update scan mode",
@@ -512,6 +513,7 @@
           "upgrade": "Upgrade",
           "restart": "Restart",
           "settings": "Settings",
+          "import-config": "Import config",
           "cipher-keys": "Cipher keys",
           "create": "Create",
           "update": "Update",
@@ -559,6 +561,9 @@
           },
           "update-registration-settings": {
             "command-content": "JSON content"
+          },
+          "import-configuration": {
+            "file-id": "Configuration file: {{ fileId }}"
           },
           "scan-mode": {
             "command-content": "JSON content",

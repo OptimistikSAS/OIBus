@@ -24,6 +24,7 @@ export const OIBUS_COMMAND_TYPES = [
   'update-engine-web-server',
   'update-engine-proxy',
   'update-engine-logger',
+  'import-configuration',
   'update-registration-settings',
   'create-scan-mode',
   'update-scan-mode',
@@ -252,6 +253,28 @@ export interface OIBusUpdateEngineLoggerCommandDTO extends BaseOIBusCommandDTO {
    * The content of the command, including the logging parameters.
    */
   commandContent: EngineLoggerCommandDTO;
+}
+
+/**
+ * Command DTO for importing a full configuration (as exported by OIBus), downloaded from OIAnalytics.
+ * The local users and the OIAnalytics registration are kept, and OIBus restarts once the configuration is imported.
+ */
+export interface OIBusImportConfigurationCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'import-configuration';
+
+  /**
+   * The content of the command, referencing the configuration file to download from OIAnalytics.
+   */
+  commandContent: {
+    /**
+     * The OIAnalytics identifier of the configuration file.
+     * @example "1d5c4ee0-1c4a-4a43-9a64-8f6e9c1fa6d7"
+     */
+    fileId: string;
+  };
 }
 
 /**
@@ -1160,6 +1183,7 @@ export type OIBusCommandDTO =
   | OIBusUpdateEngineWebServerCommandDTO
   | OIBusUpdateEngineProxyCommandDTO
   | OIBusUpdateEngineLoggerCommandDTO
+  | OIBusImportConfigurationCommandDTO
   | OIBusUpdateRegistrationSettingsCommandDTO
   | OIBusCreateScanModeCommandDTO
   | OIBusUpdateScanModeCommandDTO
