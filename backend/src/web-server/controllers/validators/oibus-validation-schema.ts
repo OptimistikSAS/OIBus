@@ -167,6 +167,8 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     regenerateCipherKeys: Joi.boolean().required(),
     updateEngineSettings: Joi.boolean().required(),
     importConfiguration: Joi.boolean().required(),
+    dumpMemory: Joi.boolean().required(),
+    retrieveLogsDatabase: Joi.boolean().required(),
     updateRegistrationSettings: Joi.boolean().required(),
     createScanMode: Joi.boolean().required(),
     updateScanMode: Joi.boolean().required(),

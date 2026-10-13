@@ -62,10 +62,23 @@ describe('Entity migration v3.10.0_1', () => {
     return (await db('registrations').where('id', 'registration-id').first()).command_import_configuration;
   }
 
-  it('should add the import-configuration permission', async () => {
+  it('should add the new permissions', async () => {
     await up(db);
 
-    assert.ok((await columnNames(db, 'registrations')).includes('command_import_configuration'));
+    const columns = await columnNames(db, 'registrations');
+    assert.ok(columns.includes('command_import_configuration'));
+    assert.ok(columns.includes('command_dump_memory'));
+    assert.ok(columns.includes('command_retrieve_logs_database'));
+  });
+
+  it('should grant the dump-memory and retrieve-logs-database permissions', async () => {
+    await db('registrations').insert({ id: 'registration-id', host: 'http://localhost:4200', status: 'REGISTERED' });
+
+    await up(db);
+
+    const registration = await db('registrations').where('id', 'registration-id').first();
+    assert.strictEqual(registration.command_dump_memory, 1);
+    assert.strictEqual(registration.command_retrieve_logs_database, 1);
   });
 
   it('should grant the import-configuration permission when every configuration permission is granted', async () => {
@@ -93,10 +106,13 @@ describe('Entity migration v3.10.0_1', () => {
     assert.strictEqual(await importConfigurationAfterMigration({ ...CONFIGURATION_PERMISSIONS, command_create_south: null }), 0);
   });
 
-  it('should remove the import-configuration permission', async () => {
+  it('should remove the new permissions', async () => {
     await up(db);
     await down(db);
 
-    assert.ok(!(await columnNames(db, 'registrations')).includes('command_import_configuration'));
+    const columns = await columnNames(db, 'registrations');
+    assert.ok(!columns.includes('command_import_configuration'));
+    assert.ok(!columns.includes('command_dump_memory'));
+    assert.ok(!columns.includes('command_retrieve_logs_database'));
   });
 });

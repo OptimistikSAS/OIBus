@@ -24926,6 +24926,16 @@
 						"description": "Permission to import a full configuration, replacing the local one (except the OIAnalytics registration and the users).",
 						"example": true
 					},
+					"dumpMemory": {
+						"type": "boolean",
+						"description": "Permission to write a memory dump (V8 heap snapshot) and upload it to OIAnalytics. A memory dump may contain secrets\nin clear text.",
+						"example": true
+					},
+					"retrieveLogsDatabase": {
+						"type": "boolean",
+						"description": "Permission to upload the logs database to OIAnalytics.",
+						"example": true
+					},
 					"updateRegistrationSettings": {
 						"type": "boolean",
 						"description": "Permission to update registration settings.",
@@ -25123,6 +25133,8 @@
 					"regenerateCipherKeys",
 					"updateEngineSettings",
 					"importConfiguration",
+					"dumpMemory",
+					"retrieveLogsDatabase",
 					"updateRegistrationSettings",
 					"createScanMode",
 					"updateScanMode",
@@ -25422,6 +25434,8 @@
 					"update-engine-proxy",
 					"update-engine-logger",
 					"import-configuration",
+					"dump-memory",
+					"retrieve-logs-database",
 					"update-registration-settings",
 					"create-scan-mode",
 					"update-scan-mode",
@@ -26407,6 +26421,146 @@
 					"result",
 					"targetVersion",
 					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusDumpMemoryCommandDTO": {
+				"description": "Command DTO for writing a V8 heap snapshot (memory dump) of OIBus, zipped and uploaded to OIAnalytics.\nThe result of the command describes the uploaded file (see {@link OIBusUploadedFileCommandResult}).",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"dump-memory"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusRetrieveLogsDatabaseCommandDTO": {
+				"description": "Command DTO for zipping the logs database of OIBus and uploading it to OIAnalytics.\nThe result of the command describes the uploaded file (see {@link OIBusUploadedFileCommandResult}).",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"retrieve-logs-database"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -35479,6 +35633,12 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusImportConfigurationCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusDumpMemoryCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusRetrieveLogsDatabaseCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusUpdateRegistrationSettingsCommandDTO"
