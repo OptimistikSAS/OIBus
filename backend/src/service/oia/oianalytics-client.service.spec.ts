@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import fsSync from 'node:fs';
 import { createRequire } from 'node:module';
-import { PassThrough } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
 import { assertContains, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { ReqOptions } from '../http-request.utils';
 import type OIAnalyticsClientType from './oianalytics-client.service';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -362,6 +363,49 @@ describe('OIAnalytics Client', () => {
       await assert.rejects(
         () => service.retrieveConfigurationFile(testData.oIAnalytics.registration.completed, 'file-1'),
         /404 - Not Found/
+      );
+    });
+  });
+
+  describe('uploadCommandFile', () => {
+    it('should upload the file of a command as multipart', async () => {
+      const response = createMockResponse(200, { fileId: 'file-1' });
+      mockHttpRequest.HTTPRequest = mock.fn(async () => response);
+      mock.method(fsSync, 'createReadStream', () => Readable.from([Buffer.from('zip content')]));
+
+      const fileId = await service.uploadCommandFile(testData.oIAnalytics.registration.completed, 'command 1', 'path/file.zip', 'file.zip');
+
+      assert.strictEqual(fileId, 'file-1');
+      assert.deepStrictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls[0].arguments, [
+        'POST',
+        true,
+        testData.oIAnalytics.registration.completed,
+        null,
+        900_000,
+        null
+      ]);
+      assert.deepStrictEqual((fsSync.createReadStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['path/file.zip']);
+      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, ReqOptions];
+      assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/commands/command%201/file'));
+      const contentType = (calledOptions.headers as Record<string, string>)['content-type'];
+      const boundary = contentType.replace('multipart/form-data; boundary=', '');
+      const chunks: Array<Buffer> = [];
+      for await (const chunk of calledOptions.body as Readable) {
+        chunks.push(chunk);
+      }
+      assert.strictEqual(
+        Buffer.concat(chunks).toString(),
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="file.zip"\r\nContent-Type: application/zip\r\n\r\n` +
+          `zip content\r\n--${boundary}--\r\n`
+      );
+    });
+
+    it('should throw on error response', async () => {
+      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(413, 'Payload Too Large'));
+      mock.method(fsSync, 'createReadStream', () => Readable.from([]));
+      await assert.rejects(
+        () => service.uploadCommandFile(testData.oIAnalytics.registration.completed, 'command1', 'path/file.zip', 'file.zip'),
+        /413 - Payload Too Large/
       );
     });
   });

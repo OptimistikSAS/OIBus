@@ -40,6 +40,16 @@ let unzipperExtractMock: ReturnType<typeof mock.fn>;
 const unzipperExports = {
   Extract: (...args: Array<unknown>) => unzipperExtractMock(...args)
 };
+let zipOutputStream: PassThrough;
+const zipAddFileMock = mock.fn((_input: string, _entryName: string) => undefined);
+const zipEndMock = mock.fn(() => zipOutputStream.end('zip content'));
+const yazlExports = {
+  ZipFile: class {
+    outputStream = zipOutputStream;
+    addFile = zipAddFileMock;
+    end = zipEndMock;
+  }
+};
 
 // Type for the utils module exports
 type UtilsModule = typeof import('./utils');
@@ -53,6 +63,7 @@ describe('Service utils', () => {
     mockModule(nodeRequire, 'minimist', minimistExports);
     mockModule(nodeRequire, 'papaparse', csvExports);
     mockModule(nodeRequire, 'unzipper', unzipperExports);
+    mockModule(nodeRequire, 'yazl', yazlExports);
 
     utils = reloadModule<UtilsModule>(nodeRequire, './utils');
     // OIBusError is a class from model/engine.model - import it directly
@@ -292,6 +303,23 @@ describe('Service utils', () => {
       setImmediate(() => source.destroy(new Error('unzip error')));
 
       await assert.rejects(() => utils.unzip('myInputFile', 'myOutputFolder'), /unzip error/);
+    });
+  });
+
+  describe('zipFile', () => {
+    it('should zip a single file under the given entry name', async () => {
+      zipOutputStream = new PassThrough();
+      const dest = new PassThrough();
+      const written: Array<Buffer> = [];
+      dest.on('data', chunk => written.push(chunk));
+      const createWriteStreamMock = mock.method(fsSync, 'createWriteStream', () => dest as unknown as fsSync.WriteStream);
+
+      await utils.zipFile('myInputFile', 'entry.txt', 'myOutputFile.zip');
+
+      assert.deepStrictEqual(zipAddFileMock.mock.calls[0].arguments, ['myInputFile', 'entry.txt']);
+      assert.strictEqual(zipEndMock.mock.calls.length, 1);
+      assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, ['myOutputFile.zip']);
+      assert.strictEqual(Buffer.concat(written).toString(), 'zip content');
     });
   });
 

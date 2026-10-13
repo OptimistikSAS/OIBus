@@ -46,6 +46,8 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'update-engine-proxy',
   'update-engine-logger',
   'import-configuration',
+  'dump-memory',
+  'retrieve-logs-database',
   'update-registration-settings',
   'create-scan-mode',
   'update-scan-mode',
@@ -134,6 +136,14 @@ export interface OIAnalyticsFetchUpdateEngineLoggerCommandDTO extends BaseOIAnal
 export interface OIAnalyticsFetchImportConfigurationCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'import-configuration';
   commandContent: { fileId: string };
+}
+
+export interface OIAnalyticsFetchDumpMemoryCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'dump-memory';
+}
+
+export interface OIAnalyticsFetchRetrieveLogsDatabaseCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'retrieve-logs-database';
 }
 
 export interface OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -413,6 +423,8 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateEngineProxyCommandDTO
   | OIAnalyticsFetchUpdateEngineLoggerCommandDTO
   | OIAnalyticsFetchImportConfigurationCommandDTO
+  | OIAnalyticsFetchDumpMemoryCommandDTO
+  | OIAnalyticsFetchRetrieveLogsDatabaseCommandDTO
   | OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO
   | OIAnalyticsFetchCreateScanModeCommandDTO
   | OIAnalyticsFetchUpdateScanModeCommandDTO

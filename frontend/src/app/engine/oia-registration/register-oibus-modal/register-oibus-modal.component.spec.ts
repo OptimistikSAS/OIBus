@@ -230,6 +230,17 @@ describe('RegisterOibusModalComponent', () => {
     );
   });
 
+  test('should group the diagnostic permissions in their own section', async () => {
+    const tester = new RegisterOibusModalComponentTester();
+    tester.fixture.componentInstance.prepare(registration, 'register', false);
+
+    await expect.element(tester.root.getByCss('#permission-section-diagnostic')).toHaveTextContent('Diagnostic');
+    const diagnostic = tester.root.getByRole('group', { name: 'Diagnostic' });
+    await expect.element(diagnostic.getByRole('checkbox', { name: 'Memory dump' })).toBeChecked();
+    await expect.element(diagnostic.getByRole('checkbox', { name: 'Logs database' })).toBeChecked();
+    await expect.element(diagnostic.getByRole('checkbox')).toHaveLength(2);
+  });
+
   test('should cancel', async () => {
     const tester = new RegisterOibusModalComponentTester();
     tester.fixture.componentInstance.prepare(registration, 'register', false);

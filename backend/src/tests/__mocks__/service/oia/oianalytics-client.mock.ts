@@ -46,4 +46,8 @@ export default class OIAnalyticsClientMock {
     async (_registrationSettings: OIAnalyticsRegistration, _assetId: string, _filename: string): Promise<void> => undefined
   );
   retrieveConfigurationFile = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _fileId: string): Promise<string> => '');
+  uploadCommandFile = mock.fn(
+    async (_registrationSettings: OIAnalyticsRegistration, _commandId: string, _filePath: string, _filename: string): Promise<string> =>
+      'fileId'
+  );
 }
