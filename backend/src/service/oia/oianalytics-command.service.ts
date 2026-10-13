@@ -47,6 +47,7 @@ import {
   OIBusCommandDTO,
   OIBusTestTransformerItemCommandContent
 } from '../../../shared/model/oia/command.model';
+import type { ConfigImportResponseDTO } from '../../../shared/model/oia/config-transfer.model';
 
 import { version } from '../../../package.json';
 import type { EngineSettings } from '../../model/engine.model';
@@ -73,6 +74,7 @@ import {
   OIBusDeleteSouthConnectorCommand,
   OIBusGetHistoryCacheFileContentCommand,
   OIBusGetNorthCacheFileContentCommand,
+  OIBusImportConfigurationCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
   OIBusSearchHistoryCacheContentCommand,
@@ -109,6 +111,7 @@ import type { ScanMode } from '../../model/scan-mode.model';
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
 import { NotFoundError } from '../../model/types';
 import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
+import { ConfigImportError } from '../config-transfer/config-import.service';
 import { encryptionService } from '../encryption.service';
 import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
@@ -227,6 +230,10 @@ interface ICommandHistoryQueryService {
   pause(historyId: string): Promise<void>;
 }
 
+interface IConfigImportService {
+  importConfigurationFromOIAnalytics(rawInput: unknown): Promise<ConfigImportResponseDTO>;
+}
+
 interface ICommandTransformerService {
   create(command: CustomTransformerCommandDTO, createdBy: string): Promise<unknown>;
   update(transformerId: string, command: CustomTransformerCommandDTO, updatedBy: string): Promise<void>;
@@ -297,6 +304,7 @@ export default class OIAnalyticsCommandService {
     private northService: ICommandNorthService,
     private historyQueryService: ICommandHistoryQueryService,
     private transformerService: ICommandTransformerService,
+    private configImportService: IConfigImportService,
     private logger: ILogger,
     private binaryFolder: string,
     private ignoreRemoteUpdate: boolean,
@@ -542,6 +550,9 @@ export default class OIAnalyticsCommandService {
             const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateEngineLoggerCommand(command, privateKey);
           }
+          break;
+        case 'import-configuration':
+          await this.executeImportConfigurationCommand(command, registration);
           break;
         case 'update-registration-settings':
           await this.executeUpdateRegistrationSettingsCommand(command, registration);
@@ -865,6 +876,40 @@ export default class OIAnalyticsCommandService {
     );
   }
 
+  /**
+   * Downloads the configuration file from OIAnalytics and imports it (keeping the local users and the registration),
+   * then restarts OIBus to run the new configuration. Like restart-engine, the command is acknowledged on the next start.
+   */
+  private async executeImportConfigurationCommand(command: OIBusImportConfigurationCommand, registration: OIAnalyticsRegistration) {
+    const fileContent = await this.oIAnalyticsClient.retrieveConfigurationFile(registration, command.commandContent.fileId);
+    let configuration: unknown;
+    try {
+      configuration = JSON.parse(fileContent);
+    } catch {
+      throw new Error(`Configuration file ${command.commandContent.fileId} is not valid JSON`);
+    }
+    let result: ConfigImportResponseDTO;
+    try {
+      result = await this.configImportService.importConfigurationFromOIAnalytics(configuration);
+    } catch (error: unknown) {
+      if (error instanceof ConfigImportError && error.validationErrors.length > 0) {
+        throw new Error(
+          `${error.message}\n${error.validationErrors
+            .map(
+              validationError =>
+                `- ${validationError.scope}${validationError.entityName ? ` "${validationError.entityName}"` : ''}: ${validationError.message}`
+            )
+            .join('\n')}`
+        );
+      }
+      throw error;
+    }
+    this.logger.info(`Configuration imported (from version ${result.fromVersion}), restarting OIBus...`);
+    await delay(1500);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+    process.exit();
+  }
+
   private async executeUpdateRegistrationSettingsCommand(
     command: OIBusUpdateRegistrationSettingsCommand,
     registration: OIAnalyticsRegistration
@@ -897,6 +942,9 @@ export default class OIAnalyticsCommandService {
         updateEngineSettings: registration.commandPermissions.updateEngineSettings
           ? command.commandContent.commandPermissions.updateEngineSettings
           : registration.commandPermissions.updateEngineSettings,
+        importConfiguration: registration.commandPermissions.importConfiguration
+          ? command.commandContent.commandPermissions.importConfiguration
+          : registration.commandPermissions.importConfiguration,
         updateRegistrationSettings: registration.commandPermissions.updateRegistrationSettings
           ? command.commandContent.commandPermissions.updateRegistrationSettings
           : registration.commandPermissions.updateRegistrationSettings,
@@ -1678,6 +1726,8 @@ export default class OIAnalyticsCommandService {
       case 'update-engine-proxy':
       case 'update-engine-logger':
         return registration.commandPermissions.updateEngineSettings;
+      case 'import-configuration':
+        return registration.commandPermissions.importConfiguration;
       case 'update-registration-settings':
         return registration.commandPermissions.updateRegistrationSettings;
       case 'create-scan-mode':
@@ -1803,6 +1853,12 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
         commandContent: command.commandContent
       };
     case 'update-engine-logger':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
+    case 'import-configuration':
       return {
         ...toBaseOIBusCommandDTO(command),
         type: command.type,

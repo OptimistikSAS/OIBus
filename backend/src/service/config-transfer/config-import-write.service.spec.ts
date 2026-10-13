@@ -761,4 +761,45 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       beforeUserIds
     );
   });
+
+  it('keeps every local user, with its password, when importing a configuration from OIAnalytics', async () => {
+    await userRepository.create(
+      { login: 'local-operator', firstName: null, lastName: null, email: null, language: 'en', timezone: 'Europe/Paris' },
+      'local-password',
+      'test'
+    );
+    const usersBefore = userRepository
+      .list()
+      .map(user => ({ ...user, password: userRepository.getHashedPasswordByLogin(user.login) }))
+      .sort((a, b) => a.id.localeCompare(b.id));
+    const envelope = cloneEnvelope();
+    envelope.config.users.push({
+      ...envelope.config.users[0],
+      oIBusInternalId: 'remote-user-id',
+      settings: { ...envelope.config.users[0].settings, login: 'remote-user' }
+    });
+
+    const result = await service.importConfigurationFromOIAnalytics(envelope);
+
+    assert.deepStrictEqual(
+      userRepository
+        .list()
+        .map(user => ({ ...user, password: userRepository.getHashedPasswordByLogin(user.login) }))
+        .sort((a, b) => a.id.localeCompare(b.id)),
+      usersBefore
+    );
+    assert.strictEqual(userRepository.findByLogin('remote-user'), null);
+    assert.ok(
+      result.warnings.some(warning => warning.includes(`${envelope.config.users.length} user(s) of the configuration were not imported`)),
+      `expected a warning explaining the users were not imported, got ${JSON.stringify(result.warnings)}`
+    );
+    assert.ok(!result.warnings.some(warning => /random password/i.test(warning)));
+    assert.deepStrictEqual(
+      southConnectorRepository
+        .findAllSouth()
+        .map(south => south.id)
+        .sort(),
+      envelope.config.southConnectors.map(south => south.oIBusInternalId).sort()
+    );
+  });
 });

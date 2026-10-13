@@ -639,6 +639,7 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       command_update_custom_transformer: registration.commandPermissions.updateCustomTransformer,
       command_delete_custom_transformer: registration.commandPermissions.deleteCustomTransformer,
       command_test_custom_transformer: registration.commandPermissions.testCustomTransformer,
+      command_import_configuration: registration.commandPermissions.importConfiguration,
       created_by: registration.createdBy,
       updated_by: registration.updatedBy,
       created_at: registration.createdAt,
