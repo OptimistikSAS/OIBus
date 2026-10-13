@@ -21,6 +21,7 @@ const SEND_CONFIGURATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configur
 const HISTORY_QUERY_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration/history-query`;
 const CONFIGURATION_WORKFLOW_RESULT_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration/configuration-workflow-result`;
 const DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/upgrade/asset`;
+const CONFIGURATION_FILE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/configuration-file`;
 
 export default class OIAnalyticsClient {
   async updateCommandStatus(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
@@ -222,5 +223,23 @@ export default class OIAnalyticsClient {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
     await pipeline(response.body, createWriteStream(filename));
+  }
+
+  /**
+   * Retrieves the content of a configuration file to import, stored in OIAnalytics.
+   */
+  async retrieveConfigurationFile(registrationSettings: OIAnalyticsRegistration, fileId: string): Promise<string> {
+    const url = getUrl(CONFIGURATION_FILE_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
+    const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_DOWNLOAD_TIMEOUT, null);
+    httpOptions.query = { fileId };
+
+    const response = await HTTPRequest(url, httpOptions);
+    if (!response.ok) {
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
+    }
+    return response.body.text();
   }
 }

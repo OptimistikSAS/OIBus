@@ -70,7 +70,8 @@ export default class OIAnalyticsRegistrationRepository {
         createCustomTransformer: true,
         updateCustomTransformer: true,
         deleteCustomTransformer: true,
-        testCustomTransformer: true
+        testCustomTransformer: true,
+        importConfiguration: true
       }
     });
   }
@@ -90,7 +91,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
       `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
       `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content, ` +
-      `command_create_custom_transformer, command_update_custom_transformer, command_delete_custom_transformer, command_test_custom_transformer, ` +
+      `command_create_custom_transformer, command_update_custom_transformer, command_delete_custom_transformer, command_test_custom_transformer, command_import_configuration, ` +
       `created_by, updated_by, created_at, updated_at ` +
       `FROM ${REGISTRATIONS_TABLE};`;
     const results = this.database.prepare(query).all();
@@ -133,7 +134,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
       `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
       `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ?, ` +
-      `command_create_custom_transformer = ?, command_update_custom_transformer = ?, command_delete_custom_transformer = ?, command_test_custom_transformer = ?, ` +
+      `command_create_custom_transformer = ?, command_update_custom_transformer = ?, command_delete_custom_transformer = ?, command_test_custom_transformer = ?, command_import_configuration = ?, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
@@ -199,6 +200,7 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateCustomTransformer,
         +command.commandPermissions.deleteCustomTransformer,
         +command.commandPermissions.testCustomTransformer,
+        +command.commandPermissions.importConfiguration,
         updatedBy
       );
   }
@@ -233,7 +235,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
       `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
       `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ?, ` +
-      `command_create_custom_transformer = ?, command_update_custom_transformer = ?, command_delete_custom_transformer = ?, command_test_custom_transformer = ?, ` +
+      `command_create_custom_transformer = ?, command_update_custom_transformer = ?, command_delete_custom_transformer = ?, command_test_custom_transformer = ?, command_import_configuration = ?, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
@@ -293,6 +295,7 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateCustomTransformer,
         +command.commandPermissions.deleteCustomTransformer,
         +command.commandPermissions.testCustomTransformer,
+        +command.commandPermissions.importConfiguration,
         updatedBy
       );
     const after = this.get();
@@ -337,9 +340,9 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
       `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
       `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content, ` +
-      `command_create_custom_transformer, command_update_custom_transformer, command_delete_custom_transformer, command_test_custom_transformer, ` +
+      `command_create_custom_transformer, command_update_custom_transformer, command_delete_custom_transformer, command_test_custom_transformer, command_import_configuration, ` +
       `created_by, updated_by, created_at, updated_at` +
-      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
@@ -400,6 +403,7 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateCustomTransformer,
         +command.commandPermissions.deleteCustomTransformer,
         +command.commandPermissions.testCustomTransformer,
+        +command.commandPermissions.importConfiguration,
         'system',
         'system'
       );
@@ -491,7 +495,8 @@ export default class OIAnalyticsRegistrationRepository {
         createCustomTransformer: Boolean(result.command_create_custom_transformer),
         updateCustomTransformer: Boolean(result.command_update_custom_transformer),
         deleteCustomTransformer: Boolean(result.command_delete_custom_transformer),
-        testCustomTransformer: Boolean(result.command_test_custom_transformer)
+        testCustomTransformer: Boolean(result.command_test_custom_transformer),
+        importConfiguration: Boolean(result.command_import_configuration)
       }
     };
   }

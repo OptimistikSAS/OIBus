@@ -129,3 +129,20 @@ l'import plutôt que dans une notification éphémère.
 Les paramètres d'enregistrement OIAnalytics sont inclus dans l'export à titre informatif/de référence uniquement.
 Importer un fichier n'écrit jamais l'état d'enregistrement — enregistrer l'instance cible auprès d'OIAnalytics (ou la
 réenregistrer) doit être fait manuellement, de la même façon que sur une instance neuve.
+
+## Import depuis OIAnalytics {#import-from-oianalytics}
+
+À partir d'OIBus 3.10.0, un fichier de configuration peut aussi être envoyé depuis OIAnalytics à un OIBus enregistré,
+avec la commande **Import configuration**. OIAnalytics stocke le fichier téléversé et crée la commande ; OIBus télécharge
+le fichier quand il récupère la commande, et l'importe exactement comme un fichier importé depuis sa propre interface, à
+deux différences près :
+
+- **Les utilisateurs locaux sont tous conservés**, avec leurs mots de passe, et les utilisateurs du fichier ne sont pas
+  importés : ils ne pourraient être recréés qu'avec des mots de passe aléatoires, ce qui empêcherait tout le monde
+  d'accéder à l'interface locale.
+- **Il n'y a pas d'aperçu** : le fichier est mis à niveau et validé à l'exécution de la commande. Un fichier rejeté
+  met la commande en erreur avec les erreurs de validation, et rien n'est écrit.
+
+Une fois la configuration importée, la commande est terminée avec le résultat de l'import (mises à niveau appliquées,
+avertissements, nouveau port) et OIBus redémarre. La commande nécessite la permission **Importer config** de la section
+**Moteur** des [paramètres d'enregistrement](../installation/oianalytics.mdx#registration-settings).

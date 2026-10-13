@@ -71,6 +71,11 @@ export interface OIBusUpdateEngineLoggerCommand extends BaseOIBusCommand {
   commandContent: EngineLoggerCommandDTO;
 }
 
+export interface OIBusImportConfigurationCommand extends BaseOIBusCommand {
+  type: 'import-configuration';
+  commandContent: { fileId: string };
+}
+
 export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand {
   type: 'update-registration-settings';
   commandContent: {
@@ -354,6 +359,7 @@ export type OIBusCommand =
   | OIBusUpdateEngineWebServerCommand
   | OIBusUpdateEngineProxyCommand
   | OIBusUpdateEngineLoggerCommand
+  | OIBusImportConfigurationCommand
   | OIBusUpdateRegistrationSettingsCommand
   | OIBusCreateScanModeCommand
   | OIBusUpdateScanModeCommand

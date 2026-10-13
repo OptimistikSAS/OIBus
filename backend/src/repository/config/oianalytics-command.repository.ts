@@ -146,6 +146,7 @@ export default class OIAnalyticsCommandRepository {
       case 'update-engine-web-server':
       case 'update-engine-proxy':
       case 'update-engine-logger':
+      case 'import-configuration':
       case 'create-scan-mode':
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
@@ -460,6 +461,12 @@ export default class OIAnalyticsCommandRepository {
         return {
           ...baseCommandFields(command),
           type: 'update-engine-logger',
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'import-configuration':
+        return {
+          ...baseCommandFields(command),
+          type: 'import-configuration',
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-registration-settings':

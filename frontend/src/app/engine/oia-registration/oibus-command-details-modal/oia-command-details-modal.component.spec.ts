@@ -116,6 +116,18 @@ describe('OiaCommandDetailsModalComponent', () => {
     await expect.element(tester.contentLines.nth(4)).toHaveTextContent('CSV content: name;value');
   });
 
+  test('should display a configuration import', async () => {
+    const tester = new OiaCommandDetailsModalComponentTester({
+      ...commandOfType('restart-engine'),
+      type: 'import-configuration',
+      commandContent: { fileId: 'fileId1' }
+    });
+
+    await expect.element(tester.title).toHaveTextContent('Command Import configuration');
+    await expect.element(tester.contentLines).toHaveLength(2);
+    await expect.element(tester.contentLines.nth(1)).toHaveTextContent('Configuration file: fileId1');
+  });
+
   test('should close the modal', async () => {
     const tester = new OiaCommandDetailsModalComponentTester(commandOfType('restart-engine'));
 

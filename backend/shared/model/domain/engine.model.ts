@@ -51,6 +51,12 @@ export interface RegistrationCommandPermissions {
   updateEngineSettings: boolean;
 
   /**
+   * Permission to import a full configuration, replacing the local one (except the OIAnalytics registration and the users).
+   * @example true
+   */
+  importConfiguration: boolean;
+
+  /**
    * Permission to update registration settings.
    * @example true
    */

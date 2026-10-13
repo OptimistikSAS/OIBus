@@ -336,4 +336,33 @@ describe('OIAnalytics Client', () => {
       );
     });
   });
+
+  describe('retrieveConfigurationFile', () => {
+    it('should retrieve the content of a configuration file', async () => {
+      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(200, '{"oibusVersion":"3.10.0"}'));
+
+      const result = await service.retrieveConfigurationFile(testData.oIAnalytics.registration.completed, 'file-1');
+
+      assert.strictEqual(result, '{"oibusVersion":"3.10.0"}');
+      assert.deepStrictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls[0].arguments, [
+        'GET',
+        true,
+        testData.oIAnalytics.registration.completed,
+        null,
+        900_000,
+        null
+      ]);
+      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/commands/configuration-file'));
+      assert.deepStrictEqual(calledOptions.query, { fileId: 'file-1' });
+    });
+
+    it('should throw on error response', async () => {
+      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(404, 'Not Found'));
+      await assert.rejects(
+        () => service.retrieveConfigurationFile(testData.oIAnalytics.registration.completed, 'file-1'),
+        /404 - Not Found/
+      );
+    });
+  });
 });

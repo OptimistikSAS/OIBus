@@ -80,6 +80,12 @@
                 </div>
               </li>
             }
+            @case ('import-configuration') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.import-configuration.file-id"
+                [translateParams]="{ fileId: cmd.commandContent.fileId }"
+              ></li>
+            }
             @case ('update-registration-settings') {
               <li>
                 <span translate="oia-module.commands.details-modal.command-content.update-registration-settings.command-content"></span>
