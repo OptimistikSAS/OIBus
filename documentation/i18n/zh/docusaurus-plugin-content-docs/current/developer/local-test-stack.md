@@ -17,7 +17,7 @@ import DownloadButton from '../../../../../src/components/DownloadButton';
 请在 `backend/` 目录下运行它们：
 
 ```bash
-# IoT protocol servers only (OPC UA, Modbus, MQTT)
+# IoT protocol servers only (OPC UA, Modbus, MQTT, BACnet)
 npm run docker:iot
 
 # IoT servers + database servers + simulator (recommended for connector development)
@@ -55,7 +55,7 @@ docker compose --profile iot --profile database --profile simulator up -d
 
 | Profile     | 服务                                            |
 | ----------- | ----------------------------------------------- |
-| `iot`       | `opcua-server`、`modbus-server`、`mqtt-broker`  |
+| `iot`       | `opcua-server`、`modbus-server`、`mqtt-broker`、`bacnet-server`  |
 | `simulator` | `simulator`                                     |
 | `database`  | `postgres`、`influxdb`                          |
 | `ftp`       | `ftp-server`、`sftp-server`                     |
@@ -222,6 +222,50 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/mqtt-item-list.csv">Download item list (CSV)</DownloadButton>
 </div>
+
+---
+
+### BACnet/IP 设备 — `bacnet-server` {#bacnet-ip-device--bacnet-server}
+
+| 属性       | 值                                                                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| **镜像**   | `python:3.14-slim`，运行 `docker/bacnet/bacnet_server.py`（[BACpypes3](https://github.com/JoelBender/bacpypes3)） |
+| **端口**   | `47809`（主机，UDP）→ `47808`（容器，BACnet/IP）                                                                  |
+
+一个 BACnet/IP 设备（实例 `1001`，名称 `oibus-bacnet-sim`），其对象的值随时间变化，用于端到端测试
+[BACnet South 连接器](../guide/south-connectors/bacnet.mdx)：设备发现、轮询、COV 订阅和浏览。
+
+| 对象                  | 名称          | 单位  | 模拟方式                                                                                          | COV 增量 |
+| --------------------- | ------------- | ----- | ------------------------------------------------------------------------------------------------- | -------- |
+| `analog-input 1`      | `Temperature` | `°C`  | 正弦波，20 ± 5 °C，周期约 190 秒                                                                  | `0.1`    |
+| `analog-input 2`      | `Pressure`    | `hPa` | 正弦波，1013 ± 3 hPa，周期约 280 秒。每分钟有 15 秒处于故障状态：status flags 为 `0100`，reliability 为 unreliable-other | `0.5`    |
+| `analog-value 1`      | `Setpoint`    | `°C`  | 固定值 21.5                                                                                       | `0.1`    |
+| `binary-input 1`      | `Door`        | —     | 方波，周期 20 秒                                                                                  | —        |
+| `binary-value 1`      | `Fan`         | —     | 固定值 active                                                                                     | —        |
+| `multi-state-value 1` | `Mode`        | —     | 每 15 秒在 Off / Eco / Comfort（`1` – `3`）之间循环                                               | —        |
+
+:::note 端口 47809 与从主机发现设备
+在主机上运行的 OIBus 自身会占用标准 BACnet 端口 `47808`，因此该设备发布在 `47809`。广播无法通过 Docker
+的端口映射：从主机发送的广播 `Who-Is` 找不到任何设备，请改为设置 **发现目标地址**。在 `oibus-network`
+上的容器中运行的 OIBus 可以通过广播发现该设备。
+:::
+
+**从 OIBus 连接：** 使用以下设置创建一个 South BACnet/IP 连接器：
+
+| 设置             | 值                |
+| ---------------- | ----------------- |
+| **端口**         | `47808`           |
+| **发现目标地址** | `127.0.0.1:47809` |
+
+然后添加数据项，**设备地址** 为 `127.0.0.1:47809`，**设备实例** 为 `1001`，对象类型和实例取自上表；也可以通过
+**浏览** 查看这些对象。
+
+| 变量                     | 默认值             | 说明                                     |
+| ------------------------ | ------------------ | ---------------------------------------- |
+| `BACNET_DEVICE_INSTANCE` | `1001`             | 设备实例编号                             |
+| `BACNET_DEVICE_NAME`     | `oibus-bacnet-sim` | 设备对象名称                             |
+| `BACNET_ADDRESS`         | `host`             | 本地地址；`host` 表示使用容器自身的网卡  |
+| `BACNET_UPDATE_INTERVAL` | `1`                | 两次数值更新之间的秒数                   |
 
 ---
 
@@ -667,6 +711,9 @@ docker compose --profile simulator up -d --force-recreate simulator
 
 # Restart the Modbus server after changing docker/modbus/server_config.json
 docker compose --profile iot up -d --force-recreate modbus-server
+
+# Restart the BACnet device after changing docker/bacnet/bacnet_server.py
+docker compose --profile iot up -d --force-recreate bacnet-server
 
 # Stop everything and remove containers (data volumes are kept)
 npm run docker:down

@@ -85,6 +85,10 @@ not on the same local IP broadcast domain (e.g. routed subnets, VLANs, or a VPN 
 When enabled and no **Discovery target address** is set, device discovery (**Test settings**, root-level
 **Explore**) is routed through the BBMD instead of a plain local broadcast.
 
+**Test settings** and **Test item** register OIBus as a foreign device first, even when the connector is not
+running: the BBMD only forwards broadcasts to and from registered devices. If the BBMD refuses the
+registration (or does not answer), the test fails with that error.
+
 :::note BBMD is not just for discovery
 
 Registering as a foreign device also matters for **COV subscriptions**: a device typically sends its
@@ -121,6 +125,10 @@ this connector.
 :::note Property
 
 `Present value` (default), `Status flags`, `Reliability`, `Out of service`, `Units`.
+
+`Status flags` is sent as four `0`/`1` characters, in the BACnet order in-alarm, fault, overridden,
+out-of-service: `0100` means the object is in fault. `Reliability` and `Units` are sent as their BACnet
+enumeration number.
 
 For an item on the **Subscription** schedule, the underlying BACnet COV service always reports the object's
 present value and status flags, regardless of which **Property** is selected here — select a different
