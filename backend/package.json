@@ -81,7 +81,7 @@
     "mysql2": "3.24.2",
     "node-forge": "1.4.0",
     "node-opcua": "2.178.0",
-    "oracledb": "7.0.1",
+    "oracledb": "6.9.0",
     "papaparse": "5.7.0",
     "pg": "8.23.0",
     "pino": "10.3.1",
