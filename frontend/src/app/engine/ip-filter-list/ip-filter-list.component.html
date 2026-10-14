@@ -52,7 +52,7 @@
               <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
             </button>
           </th>
-          <th></th>
+          <th class="oib-actions-column-3"></th>
         </tr>
       </thead>
       <tbody>
@@ -68,39 +68,37 @@
                 [updatedBy]="ipFilter.updatedBy.friendlyName"
               />
             </td>
-            <td class="text-nowrap action-buttons">
-              <div class="pull-right">
-                <!-- Edit button -->
-                <button
-                  type="button"
-                  class="btn btn-link edit-ip-filter px-1 py-0"
-                  [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
-                  [attr.aria-label]="'engine.ip-filter.tooltips.edit' | translate"
-                  (click)="editIpFilter(ipFilter)"
-                >
-                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                </button>
-                <!-- Delete button -->
-                <button
-                  type="button"
-                  class="btn btn-link delete-ip-filter px-1 py-0"
-                  [ngbTooltip]="'engine.ip-filter.tooltips.delete' | translate"
-                  [attr.aria-label]="'engine.ip-filter.tooltips.delete' | translate"
-                  (click)="deleteIpFilter(ipFilter)"
-                >
-                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                </button>
-                <!-- Audit history button -->
-                <button
-                  type="button"
-                  class="btn btn-link show-audit-ip-filter px-1 py-0"
-                  [ngbTooltip]="'engine.ip-filter.tooltips.audit' | translate"
-                  [attr.aria-label]="'engine.ip-filter.tooltips.audit' | translate"
-                  (click)="showAudit(ipFilter)"
-                >
-                  <span class="fa-solid fa-history" aria-hidden="true"></span>
-                </button>
-              </div>
+            <td class="oib-actions">
+              <!-- Edit button -->
+              <button
+                type="button"
+                class="btn btn-link edit-ip-filter"
+                [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
+                [attr.aria-label]="'engine.ip-filter.tooltips.edit' | translate"
+                (click)="editIpFilter(ipFilter)"
+              >
+                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+              </button>
+              <!-- Delete button -->
+              <button
+                type="button"
+                class="btn btn-link delete-ip-filter"
+                [ngbTooltip]="'engine.ip-filter.tooltips.delete' | translate"
+                [attr.aria-label]="'engine.ip-filter.tooltips.delete' | translate"
+                (click)="deleteIpFilter(ipFilter)"
+              >
+                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+              </button>
+              <!-- Audit history button -->
+              <button
+                type="button"
+                class="btn btn-link show-audit-ip-filter"
+                [ngbTooltip]="'engine.ip-filter.tooltips.audit' | translate"
+                [attr.aria-label]="'engine.ip-filter.tooltips.audit' | translate"
+                (click)="showAudit(ipFilter)"
+              >
+                <span class="fa-solid fa-history" aria-hidden="true"></span>
+              </button>
             </td>
           </tr>
         }
