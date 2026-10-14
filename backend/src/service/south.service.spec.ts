@@ -1258,6 +1258,39 @@ describe('South Service', () => {
     });
   });
 
+  it('should convert number settings when checking items', async () => {
+    const csvData = [
+      {
+        name: 'numberItem',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_minAge: '100',
+        scanMode: testData.scanMode.list[0].name
+      },
+      {
+        name: 'emptyNumberItem',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_minAge: '',
+        scanMode: testData.scanMode.list[0].name
+      }
+    ];
+    mockUtils.parseCsvImport.mock.mockImplementation(() => csvData);
+
+    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', []);
+
+    assert.deepStrictEqual(result.errors, []);
+    assert.deepStrictEqual(
+      result.items.map(item => item.settings),
+      [
+        { regex: '*', minAge: 100 },
+        { regex: '*', minAge: undefined }
+      ]
+    );
+    assert.deepStrictEqual(validator.validateSettings.mock.calls[0].arguments[1], { regex: '*', minAge: 100 });
+    assert.deepStrictEqual(validator.validateSettings.mock.calls[1].arguments[1], { regex: '*', minAge: undefined });
+  });
+
   it('should properly check items with array or object', async () => {
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
 

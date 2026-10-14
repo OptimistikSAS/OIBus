@@ -51,7 +51,7 @@ const transformerService = new TransformerServiceMock();
 const encryptionService = new EncryptionServiceMock('', '');
 
 const validatorMock = {
-  validateSettings: mock.fn(async () => undefined),
+  validateSettings: mock.fn(async (_settings: unknown, _dto: object): Promise<void> => undefined),
   validate: mock.fn(async () => undefined)
 };
 
@@ -741,6 +741,37 @@ describe('History Query service', () => {
         }
       ]
     });
+  });
+
+  it('should convert number settings when checking items', async () => {
+    const csvData: Array<Record<string, unknown>> = [
+      {
+        name: 'numberItem',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_minAge: '100'
+      },
+      {
+        name: 'emptyNumberItem',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_minAge: ''
+      }
+    ];
+    mockUtils.parseCsvImport.mock.mockImplementationOnce(() => csvData);
+
+    const result = await service.checkImportItems(testData.historyQueries.command.southType, 'file content', ',', []);
+
+    assert.deepStrictEqual(result.errors, []);
+    assert.deepStrictEqual(
+      result.items.map(item => item.settings),
+      [
+        { regex: '*', minAge: 100 },
+        { regex: '*', minAge: undefined }
+      ]
+    );
+    assert.deepStrictEqual(validatorMock.validateSettings.mock.calls[0].arguments[1], { regex: '*', minAge: 100 });
+    assert.deepStrictEqual(validatorMock.validateSettings.mock.calls[1].arguments[1], { regex: '*', minAge: undefined });
   });
 
   it('should properly check items with array or object', async () => {
