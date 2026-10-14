@@ -180,7 +180,7 @@
               <th translate="south.workflows.eligibility-filter-field"></th>
               <th translate="south.workflows.eligibility-filter-operator"></th>
               <th translate="south.workflows.eligibility-filter-value"></th>
-              <th></th>
+              <th class="oib-actions-column-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -217,49 +217,45 @@
                       />
                     }
                   </td>
-                  <td>
-                    <div class="text-nowrap pull-right">
-                      <button
-                        type="button"
-                        class="btn btn-link px-1 py-0 save-eligibility-condition"
-                        [attr.aria-label]="'common.save' | translate"
-                        (click)="saveEligibilityCondition()"
-                      >
-                        <span class="fa-solid fa-check" aria-hidden="true"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-link px-1 py-0 cancel-eligibility-condition"
-                        [attr.aria-label]="'common.cancel' | translate"
-                        (click)="cancelEditEligibilityCondition()"
-                      >
-                        <span class="fa-solid fa-times" aria-hidden="true"></span>
-                      </button>
-                    </div>
+                  <td class="oib-actions">
+                    <button
+                      type="button"
+                      class="btn btn-link save-eligibility-condition"
+                      [attr.aria-label]="'common.save' | translate"
+                      (click)="saveEligibilityCondition()"
+                    >
+                      <span class="fa-solid fa-check" aria-hidden="true"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-link cancel-eligibility-condition"
+                      [attr.aria-label]="'common.cancel' | translate"
+                      (click)="cancelEditEligibilityCondition()"
+                    >
+                      <span class="fa-solid fa-times" aria-hidden="true"></span>
+                    </button>
                   </td>
                 } @else {
                   <td>{{ condition.field }}</td>
                   <td>{{ 'south.workflows.operator.' + condition.operator | translate }}</td>
                   <td>{{ condition.value }}</td>
-                  <td>
-                    <div class="text-nowrap pull-right">
-                      <button
-                        type="button"
-                        class="btn btn-link px-1 py-0 edit-eligibility-condition"
-                        [attr.aria-label]="'common.edit' | translate"
-                        (click)="startEditEligibilityCondition($index)"
-                      >
-                        <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-link px-1 py-0 remove-eligibility-condition"
-                        [attr.aria-label]="'common.delete' | translate"
-                        (click)="removeEligibilityCondition($index)"
-                      >
-                        <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                      </button>
-                    </div>
+                  <td class="oib-actions">
+                    <button
+                      type="button"
+                      class="btn btn-link edit-eligibility-condition"
+                      [attr.aria-label]="'common.edit' | translate"
+                      (click)="startEditEligibilityCondition($index)"
+                    >
+                      <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-link remove-eligibility-condition"
+                      [attr.aria-label]="'common.delete' | translate"
+                      (click)="removeEligibilityCondition($index)"
+                    >
+                      <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                    </button>
                   </td>
                 }
               </tr>

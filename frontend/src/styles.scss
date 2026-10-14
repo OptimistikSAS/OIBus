@@ -291,10 +291,6 @@ ngb-timepicker .ngb-tp-chevron:hover::before {
       width: 9rem;
     }
 
-    th.last-column {
-      width: 5rem;
-    }
-
     // alternative case if oib-box-title is on top of table
     .light {
       background-color: $white;
@@ -453,6 +449,37 @@ ngb-timepicker .ngb-tp-chevron:hover::before {
       &:hover {
         background-color: $mediumGrey;
       }
+    }
+  }
+}
+
+// Row actions: the last column of a table, holding one icon button per action.
+// Tables have a fixed layout, so the column cannot fit its content: the header class gives the maximum number of buttons
+// a row displays, and the column is sized for them:
+//   <th class="oib-actions-column-3"></th>
+//   <td class="oib-actions"><button type="button" class="btn btn-link">…</button>…</td>
+$oib-action-button-width: 1.625rem;
+$oib-max-action-count: 6;
+
+.table {
+  @for $count from 1 through $oib-max-action-count {
+    thead th.oib-actions-column-#{$count} {
+      width: $count * $oib-action-button-width + 1.25rem;
+    }
+  }
+
+  tbody tr td.oib-actions {
+    padding-left: 0.5rem;
+    padding-right: 0.75rem;
+    text-align: right;
+    white-space: nowrap;
+    // tooltips are rendered inside the cell
+    overflow: visible;
+
+    .btn {
+      width: $oib-action-button-width;
+      padding: 0;
+      border: 0;
     }
   }
 }
