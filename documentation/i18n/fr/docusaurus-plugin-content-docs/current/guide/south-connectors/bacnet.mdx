@@ -21,7 +21,7 @@ BACnet/IP, communiquant en UDP, à l'aide de la bibliothèque
 | **Adresse de diffusion**     | Adresse de diffusion utilisée pour la découverte d'appareils (`Who-Is`) lorsque ni l'**Adresse cible de découverte** ni le BBMD ne s'appliquent. | `255.255.255.255`   |
 | **Adresse cible de découverte** | Optionnel. Si renseigné, **Tester les paramètres** et le niveau racine d'**Explorer** envoient `Who-Is` directement à cet appareil (unicast) au lieu de diffuser. Laisser vide pour diffuser sur tout le sous-réseau. | `192.168.1.10` |
 | **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue). | `10000` |
-| **Requêtes parallèles max**  | Nombre maximal d'appareils qu'OIBus peut interroger simultanément. Les requêtes vers un même appareil sont toujours envoyées les unes après les autres. | `1` |
+| **Requêtes parallèles max**  | Nombre maximal d'éléments (ou de groupes synchronisés) qu'OIBus lit en même temps, jusqu'à `16`. Les requêtes vers un même appareil restent envoyées les unes après les autres : une valeur plus élevée n'accélère que les éléments répartis sur plusieurs appareils. | `1` |
 
 :::tip Découverte en unicast plutôt qu'en diffusion
 
@@ -57,10 +57,12 @@ cet élément est ignoré, avec un avertissement dans les logs ; les autres él�
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | **Objets max par requête**          | Nombre maximal de paires objet/propriété qu'OIBus regroupe dans une seule requête `ReadPropertyMultiple` vers un appareil. Réduisez cette valeur si un appareil rejette les requêtes volumineuses (par exemple, absence de prise en charge de la segmentation APDU). | `20` |
 | **Durée de l'abonnement COV**       | Durée, en secondes, demandée pour un abonnement COV. `0` demande un abonnement sans expiration.                                                 | `300`                |
-| **Marge de renouvellement COV**     | Délai, en secondes, avant l'expiration d'un abonnement COV à durée limitée auquel OIBus le renouvelle. Sans effet lorsque la durée est `0`.     | `60`                 |
+| **Marge de renouvellement COV**     | Délai, en secondes, avant l'expiration d'un abonnement COV à durée limitée auquel OIBus le renouvelle — mais jamais avant la moitié de sa durée. Sans effet lorsque la durée est `0`. | `60`                 |
 
-Un abonnement COV ou un renouvellement qui échoue (appareil hors ligne, par exemple) est retenté à chaque
-**Intervalle de nouvelle tentative** jusqu'à ce qu'il réussisse. Les appareils ne gèrent qu'un nombre limité
+Un abonnement COV ou un renouvellement qui échoue (appareil hors ligne, par exemple) est retenté jusqu'à ce
+qu'il réussisse : après l'**Intervalle de nouvelle tentative**, puis deux fois plus tard à chaque fois, jusqu'à
+toutes les 10 minutes. Seul le premier échec est enregistré comme avertissement ; les suivants le sont au niveau
+debug, et une réussite après des échecs est de nouveau enregistrée. Les appareils ne gèrent qu'un nombre limité
 d'abonnements COV : OIBus annule donc ses abonnements à l'arrêt du connecteur, et renouvelle les mêmes
 abonnements (plutôt que d'en ajouter de nouveaux) lorsqu'il se reconnecte après une panne réseau.
 
