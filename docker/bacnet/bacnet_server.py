@@ -2,12 +2,13 @@
 """
 OIBus demo BACnet/IP device.
 
-A single BACnet device built on BACpypes3, exposing analog, binary and multi-state objects whose values
-change over time, so OIBus's BACnet south can be exercised end to end: Who-Is/I-Am discovery,
-ReadProperty/ReadPropertyMultiple polling, COV subscriptions and Explore.
+BACnet devices built on BACpypes3, exposing objects whose values change over time, so OIBus's BACnet
+south can be exercised end to end: Who-Is/I-Am discovery, ReadProperty/ReadPropertyMultiple polling, COV
+subscriptions and Explore. One process runs every device of BACNET_DEVICES, each with its own BACnet
+application bound to its own UDP port: by default a "room" device on 47808 and an "ahu" device on 47809.
 
-Objects
-───────
+Profile "room" - a full-featured controller (device 1001, oibus-bacnet-room)
+───────────────────────────────────────────
 analog-input 1       Temperature   °C    sine wave, 20 ± 5, period ~190 s           COV increment 0.1
 analog-input 2       Pressure      hPa   sine wave, 1013 ± 3, period ~280 s         COV increment 0.5
                                          in fault 15 s every minute: status flags fault bit set and
@@ -17,12 +18,31 @@ binary-input 1       Door          -     square wave, period 20 s
 binary-value 1       Fan           -     fixed active
 multi-state-value 1  Mode          -     cycles Off / Eco / Comfort every 15 s
 
+Services: Who-Is, ReadProperty, ReadPropertyMultiple and SubscribeCOV come with BACpypes3. SubscribeCOVProperty,
+which BACpypes3 does not implement, is added here in a minimal form (see RoomApplication).
+
+Profile "ahu" - a constrained air handling unit, like a small MS/TP controller (device 1002, oibus-bacnet-ahu)
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+analog-input 1        SupplyAirTemp  °C    sine wave, 16 ± 2, period ~125 s          COV increment 0.1
+analog-input 2        ReturnAirTemp  °C    sine wave, 22 ± 1, period ~250 s          COV increment 0.1
+analog-output 1       DamperPosition %     sawtooth 0 - 99, period 100 s             COV increment 1
+binary-output 1       SupplyFan      -     square wave, period 40 s
+binary-input 1        FilterAlarm    -     active 20 s every 90 s, with the in-alarm status flag
+multi-state-input 1   UnitState      -     cycles Off / Starting / Running / Stopping every 10 s
+
+Services: Who-Is, ReadProperty and SubscribeCOV only. ReadPropertyMultiple and SubscribeCOVProperty are
+rejected (unrecognized service), and the object list cannot be read whole (abort, segmentation not
+supported): it must be read one array index at a time.
+
 Environment variables
 ─────────────────────
-BACNET_DEVICE_INSTANCE    device instance number (default: 1001)
-BACNET_DEVICE_NAME        device object name (default: oibus-bacnet-sim)
-BACNET_ADDRESS            local address, "host" to use the container's own interface (default: host)
+BACNET_DEVICES            comma-separated profile:instance:port, one device each
+                          (default: room:1001:47808,ahu:1002:47809). Device names are oibus-bacnet-<profile>.
+BACNET_HOST               local address the devices bind to, "host" for the container's own interface (default: host)
 BACNET_UPDATE_INTERVAL    seconds between value updates (default: 1)
+
+Only the device on the standard port 47808 hears broadcast Who-Is on the Docker network: a BACnet/IP
+broadcast goes to one UDP port. Devices on other ports answer unicast requests sent to that port.
 """
 
 import asyncio
@@ -30,27 +50,103 @@ import math
 import os
 import time
 
-from bacpypes3.argparse import SimpleArgumentParser
+from bacpypes3.apdu import (
+    ReadPropertyMultipleRequest,
+    ReadPropertyRequest,
+    SimpleAckPDU,
+    SubscribeCOVPropertyRequest,
+    UnconfirmedCOVNotificationRequest,
+)
 from bacpypes3.app import Application
-from bacpypes3.local.analog import AnalogInputObject, AnalogValueObject
-from bacpypes3.local.binary import BinaryInputObject, BinaryValueObject
-from bacpypes3.local.multistate import MultiStateValueObject
+from bacpypes3.argparse import SimpleArgumentParser
+from bacpypes3.basetypes import PropertyValue
+from bacpypes3.constructeddata import Any
+from bacpypes3.errors import ExecutionError, SegmentationNotSupported, UnrecognizedService
+from bacpypes3.local.analog import AnalogInputObject, AnalogOutputObject, AnalogValueObject
+from bacpypes3.local.binary import BinaryInputObject, BinaryOutputObject, BinaryValueObject
+from bacpypes3.local.multistate import MultiStateInputObject, MultiStateValueObject
 
-DEVICE_INSTANCE = int(os.environ.get("BACNET_DEVICE_INSTANCE", "1001"))
-DEVICE_NAME = os.environ.get("BACNET_DEVICE_NAME", "oibus-bacnet-sim")
-ADDRESS = os.environ.get("BACNET_ADDRESS", "host")
+DEVICES = os.environ.get("BACNET_DEVICES", "room:1001:47808,ahu:1002:47809")
+HOST = os.environ.get("BACNET_HOST", "host")
 UPDATE_INTERVAL = float(os.environ.get("BACNET_UPDATE_INTERVAL", "1"))
 
 NORMAL = [0, 0, 0, 0]  # status flags: in-alarm, fault, overridden, out-of-service
+IN_ALARM = [1, 0, 0, 0]
 FAULT = [0, 1, 0, 0]
 
 
-async def main() -> None:
-    args = SimpleArgumentParser().parse_args(
-        ["--name", DEVICE_NAME, "--instance", str(DEVICE_INSTANCE), "--address", ADDRESS]
-    )
-    app = Application.from_args(args)
+class RoomApplication(Application):
+    """
+    Adds SubscribeCOVProperty: a subscription to one property of one object. A notification, carrying that
+    property and the object's status flags, is sent whenever the property value changes - on each update
+    tick, not on a COV increment. Unconfirmed notifications only; a lifetime of 0 never expires.
+    """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # (subscriber address, process id, object id, property attribute) -> [expiry or None, last value sent]
+        self.property_subscriptions = {}
+
+    async def do_SubscribeCOVPropertyRequest(self, apdu: SubscribeCOVPropertyRequest) -> None:
+        obj = self.get_object_id(apdu.monitoredObjectIdentifier)
+        attr = apdu.monitoredPropertyIdentifier.propertyIdentifier.attr
+        key = (apdu.pduSource, apdu.subscriberProcessIdentifier, apdu.monitoredObjectIdentifier, attr)
+        if apdu.issueConfirmedNotifications is None and apdu.lifetime is None:
+            self.property_subscriptions.pop(key, None)
+        elif not obj:
+            raise ExecutionError(errorClass="object", errorCode="unknownObject")
+        elif getattr(obj, attr, None) is None:
+            raise ExecutionError(errorClass="property", errorCode="unknownProperty")
+        else:
+            expiry = time.monotonic() + apdu.lifetime if apdu.lifetime else None
+            # None as last value: the current value is sent on the next tick, as SubscribeCOV does.
+            self.property_subscriptions[key] = [expiry, None]
+        await self.response(SimpleAckPDU(context=apdu))
+
+    def notify_property_subscriptions(self) -> None:
+        now = time.monotonic()
+        for key, subscription in list(self.property_subscriptions.items()):
+            address, process_id, object_id, attr = key
+            expiry, last_value = subscription
+            obj = self.get_object_id(object_id)
+            if obj is None or (expiry is not None and expiry <= now):
+                del self.property_subscriptions[key]
+                continue
+            value = getattr(obj, attr)
+            if value == last_value:
+                continue
+            subscription[1] = value
+            request = UnconfirmedCOVNotificationRequest(
+                subscriberProcessIdentifier=process_id,
+                initiatingDeviceIdentifier=self.device_object.objectIdentifier,
+                monitoredObjectIdentifier=object_id,
+                timeRemaining=max(1, int(expiry - now)) if expiry is not None else 0,
+                listOfValues=[
+                    PropertyValue(propertyIdentifier=attr, value=Any(value)),
+                    PropertyValue(propertyIdentifier="statusFlags", value=Any(obj.statusFlags)),
+                ],
+                destination=address,
+            )
+            self.request(request)
+
+
+class ConstrainedApplication(Application):
+    """A device without ReadPropertyMultiple, SubscribeCOVProperty nor segmentation."""
+
+    async def do_ReadPropertyMultipleRequest(self, apdu: ReadPropertyMultipleRequest) -> None:
+        raise UnrecognizedService()
+
+    async def do_SubscribeCOVPropertyRequest(self, apdu: SubscribeCOVPropertyRequest) -> None:
+        raise UnrecognizedService()
+
+    async def do_ReadPropertyRequest(self, apdu: ReadPropertyRequest) -> None:
+        # The whole object list would need a segmented reply: only one entry at a time is served.
+        if apdu.propertyIdentifier == "objectList" and apdu.propertyArrayIndex is None:
+            raise SegmentationNotSupported()
+        await super().do_ReadPropertyRequest(apdu)
+
+
+def room_objects():
     temperature = AnalogInputObject(
         objectIdentifier=("analogInput", 1),
         objectName="Temperature",
@@ -103,14 +199,8 @@ async def main() -> None:
         stateText=["Off", "Eco", "Comfort"],
         statusFlags=NORMAL,
     )
-    for obj in (temperature, pressure, setpoint, door, fan, mode):
-        app.add_object(obj)
 
-    print(f"BACnet device {DEVICE_INSTANCE} ({DEVICE_NAME}) listening on {ADDRESS}", flush=True)
-    start = time.monotonic()
-    while True:
-        await asyncio.sleep(UPDATE_INTERVAL)
-        elapsed = time.monotonic() - start
+    def update(elapsed: float) -> None:
         temperature.presentValue = round(20 + 5 * math.sin(elapsed / 30), 2)
         pressure.presentValue = round(1013 + 3 * math.cos(elapsed / 45), 2)
         in_fault = elapsed % 60 >= 45
@@ -118,6 +208,119 @@ async def main() -> None:
         pressure.reliability = "unreliableOther" if in_fault else "noFaultDetected"
         door.presentValue = "active" if elapsed % 20 < 10 else "inactive"
         mode.presentValue = int(elapsed / 15) % 3 + 1
+
+    return [temperature, pressure, setpoint, door, fan, mode], update
+
+
+def ahu_objects():
+    supply_air = AnalogInputObject(
+        objectIdentifier=("analogInput", 1),
+        objectName="SupplyAirTemp",
+        description="Supply air temperature",
+        presentValue=16.0,
+        units="degreesCelsius",
+        covIncrement=0.1,
+        statusFlags=NORMAL,
+    )
+    return_air = AnalogInputObject(
+        objectIdentifier=("analogInput", 2),
+        objectName="ReturnAirTemp",
+        description="Return air temperature",
+        presentValue=22.0,
+        units="degreesCelsius",
+        covIncrement=0.1,
+        statusFlags=NORMAL,
+    )
+    damper = AnalogOutputObject(
+        objectIdentifier=("analogOutput", 1),
+        objectName="DamperPosition",
+        description="Outside air damper position",
+        presentValue=0.0,
+        relinquishDefault=0.0,
+        units="percent",
+        covIncrement=1.0,
+        statusFlags=NORMAL,
+    )
+    supply_fan = BinaryOutputObject(
+        objectIdentifier=("binaryOutput", 1),
+        objectName="SupplyFan",
+        description="Supply fan command",
+        presentValue="inactive",
+        relinquishDefault="inactive",
+        statusFlags=NORMAL,
+    )
+    filter_alarm = BinaryInputObject(
+        objectIdentifier=("binaryInput", 1),
+        objectName="FilterAlarm",
+        description="Dirty filter alarm",
+        presentValue="inactive",
+        statusFlags=NORMAL,
+    )
+    unit_state = MultiStateInputObject(
+        objectIdentifier=("multiStateInput", 1),
+        objectName="UnitState",
+        description="Unit state",
+        presentValue=1,
+        numberOfStates=4,
+        stateText=["Off", "Starting", "Running", "Stopping"],
+        statusFlags=NORMAL,
+    )
+
+    def update(elapsed: float) -> None:
+        supply_air.presentValue = round(16 + 2 * math.sin(elapsed / 20), 2)
+        return_air.presentValue = round(22 + math.sin(elapsed / 40), 2)
+        damper.presentValue = float(int(elapsed) % 100)
+        supply_fan.presentValue = "active" if elapsed % 40 < 20 else "inactive"
+        alarm = elapsed % 90 >= 70
+        filter_alarm.presentValue = "active" if alarm else "inactive"
+        filter_alarm.statusFlags = IN_ALARM if alarm else NORMAL
+        unit_state.presentValue = int(elapsed / 10) % 4 + 1
+
+    return [supply_air, return_air, damper, supply_fan, filter_alarm, unit_state], update
+
+
+PROFILES = {
+    "room": (RoomApplication, room_objects),
+    "ahu": (ConstrainedApplication, ahu_objects),
+}
+
+
+def start_device(profile: str, instance: int, port: int):
+    """Starts one device: its own BACnet application, bound to its own UDP port. Returns its update function."""
+    if profile not in PROFILES:
+        raise SystemExit(f"Unknown profile {profile!r} in BACNET_DEVICES, expected one of {', '.join(PROFILES)}")
+    application_class, build_objects = PROFILES[profile]
+    name = f"oibus-bacnet-{profile}"
+    address = f"{HOST}:{port}"
+    args = SimpleArgumentParser().parse_args(["--name", name, "--instance", str(instance), "--address", address])
+    app = application_class.from_args(args)
+    if application_class is ConstrainedApplication:
+        app.device_object.segmentationSupported = "noSegmentation"
+    objects, update_objects = build_objects()
+    for obj in objects:
+        app.add_object(obj)
+    print(f"BACnet device {instance} ({name}, profile {profile}) listening on {address}", flush=True)
+
+    def update(elapsed: float) -> None:
+        update_objects(elapsed)
+        if isinstance(app, RoomApplication):
+            app.notify_property_subscriptions()
+
+    return update
+
+
+async def main() -> None:
+    updates = []
+    for device in DEVICES.split(","):
+        profile, instance, port = device.strip().split(":")
+        updates.append(start_device(profile, int(instance), int(port)))
+
+    start = time.monotonic()
+    while True:
+        await asyncio.sleep(UPDATE_INTERVAL)
+        elapsed = time.monotonic() - start
+        for update in updates:
+            update(elapsed)
 
 
 if __name__ == "__main__":
