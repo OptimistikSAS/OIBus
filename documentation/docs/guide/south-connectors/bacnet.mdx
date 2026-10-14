@@ -2,6 +2,8 @@
 sidebar_position: 22
 ---
 
+import ThrottlingSettings from './_throttling-settings.mdx';
+
 # BACnet®/IP
 
 BACnet® (ASHRAE 135) is the standard communication protocol for building automation and control devices —
@@ -19,6 +21,7 @@ over UDP, using the [@bacnet-js/client](https://github.com/bacnet-js/client) lib
 | **APDU timeout**       | Maximum time, in milliseconds, to wait for a device's response to a request before treating it as failed.                   | `6000`             |
 | **Broadcast address**  | Broadcast address used for device discovery (`Who-Is`) when neither **Discovery target address** nor BBMD apply.            | `255.255.255.255`  |
 | **Discovery target address** | Optional. When set, **Test settings** and the root level of **Explore** send `Who-Is` directly to this one device (unicast) instead of broadcasting. Leave empty to broadcast on the whole subnet. | `192.168.1.10`     |
+| **Device time zone**   | Time zone the devices' clocks are set to. [Trend log](#history-from-trend-logs) records are timestamped in the device's local time; this setting turns them into exact instants. | `Europe/Paris` |
 | **Retry interval**     | Time to wait, in milliseconds, before reconnecting after a transport-level failure (e.g. the local socket itself fails).    | `10000`            |
 | **Max parallel queries** | Maximum number of items (or synchronized groups) OIBus reads at the same time, up to `16`. Requests to a single device are still sent one at a time, so a higher value only speeds up items spread over several devices. | `1` |
 
@@ -51,7 +54,7 @@ only that item is skipped, with a warning in the logs; the other items of the re
 
 | Setting                     | Description                                                                                                                                   | Example Value |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| **Max objects per request**  | Maximum number of object/property pairs OIBus packs into a single `ReadPropertyMultiple` request to one device. Lower this if a device rejects large requests (e.g. no APDU segmentation support). | `20`           |
+| **Max objects per request**  | Maximum number of object/property pairs OIBus packs into a single `ReadPropertyMultiple` request to one device, and of trend log records it asks for in a single `ReadRange` request. Lower this if a device rejects large requests (e.g. no APDU segmentation support). | `20`           |
 | **COV subscription lifetime** | Lifetime, in seconds, requested for a COV subscription. `0` requests a subscription that never expires.                                     | `300`          |
 | **COV renewal margin**       | How long, in seconds, before a finite-lifetime COV subscription expires that OIBus renews it — but never sooner than halfway through the lifetime. Has no effect when lifetime is `0`. | `60`           |
 
@@ -120,9 +123,14 @@ Each item targets one BACnet object property on one device.
 :::note Object type
 
 `Analog input`, `Analog output`, `Analog value`, `Binary input`, `Binary output`, `Binary value`,
-`Multi-state input`, `Multi-state output`, `Multi-state value`. These cover the object types that expose a
-simple scalar value; other BACnet object types (schedules, calendars, trend logs, etc.) are not supported by
-this connector.
+`Multi-state input`, `Multi-state output`, `Multi-state value`, `Accumulator`, `Pulse converter`, `Loop`,
+`Integer value`, `Positive integer value`, `Large analog value`, `Character string value`: objects read one
+property at a time, by polling or COV.
+
+`Trend log`: the item collects the records the trend log has logged — see
+[History from trend logs](#history-from-trend-logs). **Property** does not apply and is hidden.
+
+Other BACnet object types (schedules, calendars, files, etc.) are not supported by this connector.
 
 :::
 
@@ -154,6 +162,30 @@ actually determines success.
 
 :::
 
+## History from Trend Logs {#history-from-trend-logs}
+
+A **Trend log** object records the values of another object in the device itself, at a fixed interval or
+on change, in a buffer of timestamped records. An item whose **Object type** is `Trend log` collects these
+records instead of reading a current value: OIBus reads the trend log's buffer (`ReadRange`) and sends each
+record with the time it was logged.
+
+- On a regular schedule, each run collects the records logged since the previous run, like any history
+  item: the item's **Max read interval**, **Read delay** and time offsets apply.
+- In a [history query](../history-queries.md), the trend logs of a BACnet south back-fill the
+  requested time range, as long as the device still holds those records — a trend log buffer has a fixed
+  size, and the oldest records are dropped first.
+- A trend log item cannot use the **Subscription** schedule: it only logs a warning there.
+
+The buffer is read backwards from its most recent record, **Max objects per request** records per
+`ReadRange` request, until a record older than the requested range.
+
+:::caution Device time zone
+BACnet devices log their records in their own local time, without a time zone. Set **Device time zone** to
+the time zone the devices' clocks are set to, or every record will be shifted by the time difference.
+:::
+
+<ThrottlingSettings />
+
 ## Devices Behind a BACnet Router {#devices-behind-a-bacnet-router}
 
 Many building controllers are not on the IP network themselves: they sit on an MS/TP (RS-485) trunk, or
@@ -173,10 +205,11 @@ lists routed devices along with their network number and MAC address, and **Test
 routed devices are not discovered that way: set **Discovery target address** to the router instead.
 
 :::caution COV subscriptions to routed devices
-The BACnet library OIBus uses (`@bacnet-js/client` 3.3.2) sends COV subscription requests with a hop count
-of `0`, which routers discard. It is fixed in the library but not released yet: until OIBus ships the
-update, use a polling schedule for items on routed devices — on the **Subscription** schedule, they only log
-a warning.
+The BACnet library OIBus uses (`@bacnet-js/client` 3.3.2) sends COV subscription requests, and the
+`ReadRange` requests that read trend logs, with a hop count of `0`, which routers discard. It is fixed in the
+library but not released yet: until OIBus ships the update, use a polling schedule for items on routed
+devices — on the **Subscription** schedule, they only log a warning — and trend logs of routed devices cannot
+be read.
 :::
 
 ## Discovering Devices and Objects {#discovering-devices-and-objects}

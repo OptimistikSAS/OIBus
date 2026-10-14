@@ -924,6 +924,7 @@
             "port": "端口",
             "apdu-timeout": "APDU 超时",
             "broadcast-address": "广播地址",
+            "timezone": "设备时区",
             "discovery-target-address": "发现目标地址",
             "retry-interval": "重试间隔",
             "max-parallel-run": "最大并行查询数",
@@ -1277,7 +1278,15 @@
                 "binary-value": "二进制值",
                 "multi-state-input": "多状态输入",
                 "multi-state-output": "多状态输出",
-                "multi-state-value": "多状态值"
+                "multi-state-value": "多状态值",
+                "accumulator": "累加器",
+                "pulse-converter": "脉冲转换器",
+                "loop": "控制回路",
+                "integer-value": "整数值",
+                "positive-integer-value": "正整数值",
+                "large-analog-value": "大模拟值",
+                "characterstring-value": "字符串值",
+                "trend-log": "趋势日志"
               },
               "object-instance": "对象实例",
               "property-identifier": {

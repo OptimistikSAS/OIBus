@@ -245,7 +245,7 @@ room 设备是一个 BACnet/IP 控制器，同时路由到一个虚拟网络，�
 
 | 设备 | 实例   | 名称                | 地址                                          | 服务                                                                                                                                         |
 | ---- | ------ | ------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Room | `1001` | `oibus-bacnet-room` | 从主机访问 `127.0.0.1:47809`；路由到网络 `2`  | `Who-Is`、`ReadProperty`、`ReadPropertyMultiple`、`SubscribeCOV`，外加一个最小化的 `SubscribeCOVProperty`（BACpypes3 未提供），使读取其他属性的数据项也能使用 COV |
+| Room | `1001` | `oibus-bacnet-room` | 从主机访问 `127.0.0.1:47809`；路由到网络 `2`  | `Who-Is`、`ReadProperty`、`ReadPropertyMultiple`、`SubscribeCOV`，外加最小化的 `SubscribeCOVProperty` 和 `ReadRange`（BACpypes3 未提供），使读取其他属性的数据项也能使用 COV |
 | AHU  | `1002` | `oibus-bacnet-ahu`  | 网络 `2`，MAC `5`，通过 room 设备访问          | 仅支持 `Who-Is`、`ReadProperty`、`SubscribeCOV`，类似小型 MS/TP 控制器：拒绝 `ReadPropertyMultiple` 和 `SubscribeCOVProperty`，且其对象列表只能逐条读取（不支持分段） |
 
 AHU 用于验证连接器的路由寻址及回退机制：轮询时使用 `ReadProperty` 代替 `ReadPropertyMultiple`，在 **浏览** 中逐条
@@ -266,6 +266,14 @@ AHU 用于验证连接器的路由寻址及回退机制：轮询时使用 `ReadP
 | `binary-input 1`      | `Door`        | —     | 方波，周期 20 秒                                                                                                        | —        |
 | `binary-value 1`      | `Fan`         | —     | 固定值 active                                                                                                           | —        |
 | `multi-state-value 1` | `Mode`        | —     | 每 15 秒在 Off / Eco / Comfort（`1` – `3`）之间循环                                                                     | —        |
+| `integer-value 1`     | `Occupancy`   | —     | 房间人数，0 – 30，每 30 秒变化一次                                                                                       | —        |
+| `large-analog-value 1` | `Energy`     | `kWh` | 电表读数，每秒增加 0.01 kWh                                                                                              | —        |
+| `characterstring-value 1` | `StatusText` | — | `Normal`；`Pressure` 处于故障时为 `Pressure sensor fault`                                                              | —        |
+| `trend-log 1`         | `TemperatureLog` | — | 每 10 秒记录一次 `Temperature`（实数值）                                                                               | —        |
+| `trend-log 2`         | `DoorLog`     | —     | 每 10 秒记录一次 `Door`（枚举值）                                                                                       | —        |
+
+两个趋势日志启动时已包含 2 小时的记录，最多保存 1000 条记录，最旧的记录最先删除。其时间戳为容器的本地时间，即 UTC：
+请将连接器的 **设备时区** 设置为 `UTC`。
 
 **AHU 设备的对象：**
 
@@ -290,6 +298,7 @@ AHU 用于验证连接器的路由寻址及回退机制：轮询时使用 `ReadP
 | ---------------- | ----------------- |
 | **端口**         | `47808`           |
 | **发现目标地址** | `127.0.0.1:47809` |
+| **设备时区**     | `UTC`             |
 
 然后添加数据项，或通过 **浏览** 查看这些设备：
 
@@ -302,6 +311,7 @@ AHU 用于验证连接器的路由寻址及回退机制：轮询时使用 `ReadP
 | ------------------------ | ------- | ------------------------------------------- |
 | `BACNET_HOST`            | `host`  | 本地 IPv4 地址；`host` 表示使用容器自身的网卡 |
 | `BACNET_PORT`            | `47808` | room 设备的 BACnet/IP UDP 端口              |
+| `BACNET_TREND_LOG_INTERVAL` | `10` | 两条趋势日志记录之间的秒数 |
 | `BACNET_UPDATE_INTERVAL` | `1`     | 两次数值更新之间的秒数                      |
 
 ---
