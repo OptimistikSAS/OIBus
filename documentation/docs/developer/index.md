@@ -418,6 +418,7 @@ sources and destinations specifically to make this kind of work approachable:
 | `modbus-server`              | _(default)_ | `oitc/modbus-server` — Modbus TCP server                                           |
 | `simulator`                  | _(default)_ | Python script writing sinusoidal values to both Modbus and MQTT                    |
 | `mqtt-broker`                | _(default)_ | Eclipse Mosquitto broker (authenticated, WebSocket on port 9001)                   |
+| `bacnet-server`              | _(default)_ | BACpypes3 BACnet/IP device — 6 simulated objects, COV, published on UDP port 47809 |
 | `postgres`                   | _(default)_ | PostgreSQL for South-PostgreSQL                                                    |
 | `ftp-server` / `sftp-server` | `testing`   | File-based sources                                                                 |
 | `oibus` / `nginx`            | `oibus`     | Full OIBus runtime + reverse proxy for end-to-end testing                          |
