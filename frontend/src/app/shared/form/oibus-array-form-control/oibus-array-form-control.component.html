@@ -46,7 +46,7 @@
               <th>{{ column.translationKey | translate }}</th>
             }
           }
-          <th></th>
+          <th class="oib-actions-column-3"></th>
         </tr>
       </thead>
       <tbody>
@@ -57,10 +57,10 @@
                 {{ formatValue(element, column.path, column.type, column.translationKey) }}
               </td>
             }
-            <td class="text-nowrap text-end">
+            <td class="oib-actions">
               <button
                 type="button"
-                class="btn btn-sm btn-link btn-link-bold edit-button px-1 py-0"
+                class="btn btn-sm btn-link btn-link-bold edit-button"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
                 [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
                 (click)="editElement(element)"
@@ -69,7 +69,7 @@
               </button>
               <button
                 type="button"
-                class="btn btn-sm btn-link btn-link-bold copy-button px-1 py-0"
+                class="btn btn-sm btn-link btn-link-bold copy-button"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
                 [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
                 (click)="copyElement(element)"
@@ -78,7 +78,7 @@
               </button>
               <button
                 type="button"
-                class="btn btn-sm btn-link btn-link-bold delete-button px-1 py-0"
+                class="btn btn-sm btn-link btn-link-bold delete-button"
                 [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
                 [attr.aria-label]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
                 (click)="deleteElement(element)"

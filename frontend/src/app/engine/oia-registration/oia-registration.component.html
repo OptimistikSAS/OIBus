@@ -115,7 +115,7 @@
                       <th translate="oia-module.commands.command"></th>
                       <th translate="oia-module.commands.status"></th>
                       <th translate="oia-module.commands.completion-date"></th>
-                      <th></th>
+                      <th class="oib-actions-column-2"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -130,37 +130,35 @@
                             <span>{{ command.completedDate | datetime: 'mediumWithSeconds' }}</span>
                           }
                         </td>
-                        <td class="text-nowrap action-buttons">
-                          <div class="pull-right">
-                            <!-- Details button -->
-                            @if (['COMPLETED', 'ERRORED'].includes(command.status)) {
-                              <button
-                                type="button"
-                                class="btn btn-link details-button px-1 py-0"
-                                [attr.aria-label]="'oia-module.commands.details-tooltip' | translate"
-                                (click)="openCommandDetails(command)"
-                              >
-                                <span
-                                  class="fa-solid fa-search"
-                                  aria-hidden="true"
-                                  [ngbTooltip]="'oia-module.commands.details-tooltip' | translate"
-                                ></span>
-                              </button>
-                            }
-                            <!-- Delete button -->
+                        <td class="oib-actions">
+                          <!-- Details button -->
+                          @if (['COMPLETED', 'ERRORED'].includes(command.status)) {
                             <button
                               type="button"
-                              class="btn btn-link delete-command px-1 py-0"
-                              [attr.aria-label]="'oia-module.commands.delete-tooltip' | translate"
-                              (click)="deleteCommand(command)"
+                              class="btn btn-link details-button"
+                              [attr.aria-label]="'oia-module.commands.details-tooltip' | translate"
+                              (click)="openCommandDetails(command)"
                             >
                               <span
-                                class="fa-solid fa-trash-can"
+                                class="fa-solid fa-search"
                                 aria-hidden="true"
-                                [ngbTooltip]="'oia-module.commands.delete-tooltip' | translate"
+                                [ngbTooltip]="'oia-module.commands.details-tooltip' | translate"
                               ></span>
                             </button>
-                          </div>
+                          }
+                          <!-- Delete button -->
+                          <button
+                            type="button"
+                            class="btn btn-link delete-command"
+                            [attr.aria-label]="'oia-module.commands.delete-tooltip' | translate"
+                            (click)="deleteCommand(command)"
+                          >
+                            <span
+                              class="fa-solid fa-trash-can"
+                              aria-hidden="true"
+                              [ngbTooltip]="'oia-module.commands.delete-tooltip' | translate"
+                            ></span>
+                          </button>
                         </td>
                       </tr>
                     }
