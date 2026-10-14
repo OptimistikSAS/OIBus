@@ -243,21 +243,35 @@ ponctuelle) :
 | Propriété | Valeur                                                                                                               |
 | --------- | -------------------------------------------------------------------------------------------------------------------- |
 | **Image** | `python:3.14-slim` exécutant `docker/bacnet/bacnet_server.py` ([BACpypes3](https://github.com/JoelBender/bacpypes3)) |
-| **Ports** | `47809` → `47808` (équipement room) et `47810` → `47809` (équipement AHU), UDP, hôte → conteneur                      |
+| **Port**  | `47809` (hôte, UDP) → `47808` (conteneur, BACnet/IP)                                                                 |
 
-Deux équipements BACnet/IP dont les objets évoluent dans le temps, pour tester le
+Un petit réseau BACnet dont les objets évoluent dans le temps, pour tester le
 [connecteur South BACnet](../guide/south-connectors/bacnet.mdx) de bout en bout : découverte, scrutation,
-abonnements COV et exploration. Un seul processus les exécute, chacun avec sa propre application BACnet sur son
-propre port UDP.
+abonnements COV, exploration et [appareils derrière un routeur](../guide/south-connectors/bacnet.mdx#devices-behind-a-bacnet-router).
+Un seul processus exécute deux équipements :
 
-| Équipement | Instance | Nom                 | Port (conteneur / hôte) | Services                                                                                                                                                                                                         |
-| ---------- | -------- | ------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Room       | `1001`   | `oibus-bacnet-room` | `47808` / `47809`       | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus un `SubscribeCOVProperty` minimal (absent de BACpypes3) pour que les éléments lisant une autre propriété puissent aussi utiliser le COV |
-| AHU        | `1002`   | `oibus-bacnet-ahu`  | `47809` / `47810`       | `Who-Is`, `ReadProperty`, `SubscribeCOV` uniquement, comme un petit contrôleur MS/TP : rejette `ReadPropertyMultiple` et `SubscribeCOVProperty`, et sa liste d'objets doit être lue entrée par entrée (pas de segmentation) |
+```text
+OIBus ── BACnet/IP, network 1 ── room device 1001 (also a router) ── virtual network 2 ── AHU device 1002, MAC 5
+```
 
-L'AHU contraint exerce les solutions de repli du connecteur : `ReadProperty` au lieu de `ReadPropertyMultiple`
-lors de la scrutation, la liste d'objets lue entrée par entrée dans **Explorer**, et l'avertissement enregistré
-lorsqu'un `SubscribeCOVProperty` est refusé.
+L'équipement room est un contrôleur BACnet/IP qui route aussi vers un réseau virtuel, à la manière du bus MS/TP
+d'un contrôleur de bâtiment. L'AHU se trouve sur ce réseau : il n'a pas d'adresse IP propre et est joint à
+travers l'équipement room.
+
+| Équipement | Instance | Nom                 | Adresse                                                       | Services                                                                                                                                                                                                         |
+| ---------- | -------- | ------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Room       | `1001`   | `oibus-bacnet-room` | `127.0.0.1:47809` depuis l'hôte ; route vers le réseau `2`    | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus un `SubscribeCOVProperty` minimal (absent de BACpypes3) pour que les éléments lisant une autre propriété puissent aussi utiliser le COV |
+| AHU        | `1002`   | `oibus-bacnet-ahu`  | Réseau `2`, MAC `5`, à travers l'équipement room              | `Who-Is`, `ReadProperty`, `SubscribeCOV` uniquement, comme un petit contrôleur MS/TP : rejette `ReadPropertyMultiple` et `SubscribeCOVProperty`, et sa liste d'objets doit être lue entrée par entrée (pas de segmentation) |
+
+L'AHU exerce l'adressage routé du connecteur et ses solutions de repli : `ReadProperty` au lieu de
+`ReadPropertyMultiple` lors de la scrutation, la liste d'objets lue entrée par entrée dans **Explorer**, et
+l'avertissement enregistré lorsqu'un `SubscribeCOVProperty` est refusé.
+
+:::caution Abonnements COV à l'AHU
+`@bacnet-js/client` 3.3.2 envoie les demandes d'abonnement COV avec un nombre de sauts de `0`, que les routeurs
+— l'équipement room compris — rejettent. En attendant qu'OIBus intègre la mise à jour de la bibliothèque,
+interrogez les éléments de l'AHU par scrutation.
+:::
 
 **Objets de l'équipement room :**
 
@@ -281,31 +295,33 @@ lorsqu'un `SubscribeCOVProperty` est refusé.
 | `binary-input 1`      | `FilterAlarm`    | —     | Active 20 s toutes les 90 s, avec l'indicateur d'état in-alarm (`1000`) | —             |
 | `multi-state-input 1` | `UnitState`      | —     | Alterne Off / Starting / Running / Stopping (`1` – `4`) toutes les 10 s | —             |
 
-:::note Ports et découverte
-OIBus lancé sur l'hôte utilise lui-même le port BACnet standard `47808` : les équipements sont donc publiés sur
-`47809` et `47810`. Les diffusions ne traversent pas la redirection de port de Docker : depuis l'hôte, un
-`Who-Is` en diffusion ne trouve rien, renseignez donc l'**Adresse cible de découverte**. Dans `oibus-network`,
-une diffusion BACnet/IP n'atteint qu'un seul port UDP : OIBus lancé dans un conteneur découvre l'équipement room
-(port `47808`) par diffusion, et joint l'AHU en unicast sur l'adresse de `bacnet-server`, port `47809`.
+:::note Port et découverte
+OIBus lancé sur l'hôte utilise lui-même le port BACnet standard `47808` : l'équipement room est donc publié sur
+`47809`. Les diffusions ne traversent pas la redirection de port de Docker : depuis l'hôte, renseignez
+l'**Adresse cible de découverte** `127.0.0.1:47809`. Le `Who-Is` est une diffusion globale : l'équipement room
+le relaie vers le réseau 2 et les deux équipements sont listés. OIBus lancé dans un conteneur sur
+`oibus-network` peut découvrir les deux par diffusion.
 :::
 
 **Connexion depuis OIBus :** créez un connecteur South BACnet/IP avec les paramètres suivants :
 
-| Paramètre                       | Valeur                                              |
-| ------------------------------- | --------------------------------------------------- |
-| **Port**                        | `47808`                                             |
-| **Adresse cible de découverte** | `127.0.0.1:47809` (ou `127.0.0.1:47810` pour l'AHU) |
+| Paramètre                       | Valeur            |
+| ------------------------------- | ----------------- |
+| **Port**                        | `47808`           |
+| **Adresse cible de découverte** | `127.0.0.1:47809` |
 
-L'**Adresse cible de découverte** dirige **Explorer** et **Tester les paramètres** vers un seul équipement.
-Les éléments d'un même connecteur peuvent tout de même lire les deux : **Adresse de l'appareil**
-`127.0.0.1:47809` avec l'**Instance de l'appareil** `1001`, ou `127.0.0.1:47810` avec `1002`, et le type et
-l'instance d'objet des tableaux ci-dessus.
+Ajoutez ensuite des éléments, ou parcourez les équipements avec **Explorer** :
 
-| Variable                 | Défaut                           | Description                                                                                 |
-| ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------- |
-| `BACNET_DEVICES`         | `room:1001:47808,ahu:1002:47809` | Équipements à lancer, sous la forme `profil:instance:port` ; chacun s'appelle `oibus-bacnet-<profil>` |
-| `BACNET_HOST`            | `host`                           | Adresse locale des équipements ; `host` utilise l'interface du conteneur                    |
-| `BACNET_UPDATE_INTERVAL` | `1`                              | Secondes entre deux mises à jour des valeurs                                                |
+| Équipement | Adresse de l'appareil | Instance de l'appareil | Appareil routé | Numéro de réseau | Adresse MAC |
+| ---------- | --------------------- | ---------------------- | -------------- | ---------------- | ----------- |
+| Room       | `127.0.0.1:47809`     | `1001`                 | Désactivé      | —                | —           |
+| AHU        | `127.0.0.1:47809`     | `1002`                 | Activé         | `2`              | `5`         |
+
+| Variable                 | Défaut  | Description                                                    |
+| ------------------------ | ------- | -------------------------------------------------------------- |
+| `BACNET_HOST`            | `host`  | Adresse IPv4 locale ; `host` utilise l'interface du conteneur  |
+| `BACNET_PORT`            | `47808` | Port UDP BACnet/IP de l'équipement room                        |
+| `BACNET_UPDATE_INTERVAL` | `1`     | Secondes entre deux mises à jour des valeurs                   |
 
 ---
 

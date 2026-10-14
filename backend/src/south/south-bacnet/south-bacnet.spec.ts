@@ -171,7 +171,8 @@ describe('SouthBACnet', () => {
       deviceInstance: 10,
       objectType: 'analog-input',
       objectInstance: 1,
-      propertyIdentifier: 'present-value'
+      propertyIdentifier: 'present-value',
+      routed: false
     }
   });
   const item2 = buildItem({
@@ -182,7 +183,8 @@ describe('SouthBACnet', () => {
       deviceInstance: 10,
       objectType: 'analog-input',
       objectInstance: 2,
-      propertyIdentifier: 'present-value'
+      propertyIdentifier: 'present-value',
+      routed: false
     }
   });
   const item3 = buildItem({
@@ -193,7 +195,8 @@ describe('SouthBACnet', () => {
       deviceInstance: 11,
       objectType: 'binary-input',
       objectInstance: 1,
-      propertyIdentifier: 'present-value'
+      propertyIdentifier: 'present-value',
+      routed: false
     }
   });
   const subscriptionItem = buildItem({
@@ -205,8 +208,30 @@ describe('SouthBACnet', () => {
       deviceInstance: 10,
       objectType: 'analog-value',
       objectInstance: 5,
-      propertyIdentifier: 'present-value'
+      propertyIdentifier: 'present-value',
+      routed: false
     }
+  });
+
+  // Two MS/TP devices behind the same BACnet router (192.168.1.20), on network 2.
+  const routedItem1 = buildItem({
+    id: 'routed1',
+    name: 'routed1',
+    settings: {
+      deviceAddress: '192.168.1.20',
+      deviceInstance: 2005,
+      objectType: 'analog-input',
+      objectInstance: 1,
+      propertyIdentifier: 'present-value',
+      routed: true,
+      networkNumber: 2,
+      macAddress: '5'
+    }
+  });
+  const routedItem2 = buildItem({
+    id: 'routed2',
+    name: 'routed2',
+    settings: { ...routedItem1.settings, deviceInstance: 2006, macAddress: '6' }
   });
 
   const configuration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
@@ -374,6 +399,27 @@ describe('SouthBACnet', () => {
       assert.deepStrictEqual(result.items[0], { key: 'DevicesFound', value: '1' });
     });
 
+    it('should send a global Who-Is broadcast, so that routers forward it to the networks behind them', async () => {
+      const client = await connectSouth();
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      client.emit('iAm', iAm('192.168.1.20', 1000));
+      client.emit('iAm', {
+        header: { apduType: 0x10, expectingReply: false, sender: { address: '192.168.1.20', forwardedFrom: null, net: 2, adr: [5] } },
+        payload: { deviceId: 2005, maxApdu: 480, segmentation: 3, vendorId: 0 }
+      });
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ net: 0xffff }]);
+      assert.deepStrictEqual(result.items, [
+        { key: 'DevicesFound', value: '2' },
+        { key: 'Device 1000', value: '192.168.1.20' },
+        { key: 'Device 2005', value: '192.168.1.20, network 2, MAC 5' }
+      ]);
+    });
+
     it('should report each device address from the I-Am sender, using the original sender of a BBMD-forwarded reply', async () => {
       const client = await connectSouth();
 
@@ -465,7 +511,7 @@ describe('SouthBACnet', () => {
       await testPromise;
 
       assert.strictEqual(client.whoIs.mock.calls.length, 1);
-      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: '192.168.1.10' }]);
+      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: '192.168.1.10', net: 0xffff }]);
     });
 
     it('should prefer discoveryTargetAddress over BBMD when both are set', async () => {
@@ -560,6 +606,28 @@ describe('SouthBACnet', () => {
       await testPromise;
 
       assert.strictEqual(logger.warn.mock.calls.length, 0);
+    });
+
+    it('should verify a routed device through its router, ignoring the other devices behind it', async () => {
+      logger.warn.mock.resetCalls();
+      const testPromise = south.testItem(routedItem1, { history: undefined as never });
+      await flushPromises();
+      const client = lastCreatedClient;
+      const routedIAm = (adr: Array<number>, deviceId: number) => ({
+        header: { apduType: 0x10, expectingReply: false, sender: { address: '192.168.1.20', forwardedFrom: null, net: 2, adr } },
+        payload: { deviceId, maxApdu: 480, segmentation: 3, vendorId: 0 }
+      });
+      client.emit('iAm', routedIAm([6], 2006));
+      client.emit('iAm', routedIAm([5], 999));
+      await testPromise;
+
+      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: '192.168.1.20', net: 2, adr: [5] }]);
+      assert.deepStrictEqual(client.readProperty.mock.calls[0].arguments[0], { address: '192.168.1.20', net: 2, adr: [5] });
+      const warnings = logger.warn.mock.calls.map(call => call.arguments[0]).filter(message => typeof message === 'string');
+      assert.strictEqual(warnings.length, 1);
+      assert.ok(
+        (warnings[0] as string).includes('192.168.1.20, network 2, MAC 5') && (warnings[0] as string).includes('device instance 999')
+      );
     });
 
     it('should ignore I-Am replies from other devices while verifying the item device', async () => {
@@ -685,6 +753,39 @@ describe('SouthBACnet', () => {
       await flushPromises();
 
       assert.strictEqual(client.close.mock.calls.length, 1);
+    });
+
+    it('should read routed devices through their router, each device on its own', async () => {
+      const hexItem = buildItem({
+        id: 'routed3',
+        name: 'routed3',
+        settings: { ...routedItem1.settings, macAddress: '0a:00:00:05:BA:C0' }
+      });
+      const client = await connectSouth();
+      client.readPropertyMultiple.mock.mockImplementation(async (_address, specs) => ({
+        len: 0,
+        values: specs.map(spec => ({
+          objectId: spec.objectId,
+          values: [{ id: 85, index: bacnetJs.ASN1_ARRAY_ALL, value: [{ type: 4, value: 21.5 }] }]
+        }))
+      }));
+
+      await south.directQuery([routedItem1, routedItem2, hexItem, item1]);
+
+      assert.deepStrictEqual(
+        client.readPropertyMultiple.mock.calls.map(call => call.arguments[0]),
+        [
+          { address: '192.168.1.20', net: 2, adr: [5] },
+          { address: '192.168.1.20', net: 2, adr: [6] },
+          { address: '192.168.1.20', net: 2, adr: [0x0a, 0x00, 0x00, 0x05, 0xba, 0xc0] },
+          { address: '192.168.1.10' }
+        ]
+      );
+      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string }> };
+      assert.deepStrictEqual(
+        content.content.map(value => value.pointId),
+        ['routed1', 'routed2', 'routed3', 'item1']
+      );
     });
 
     it('should log a property the device answered with an error instead of publishing it', async () => {
@@ -955,6 +1056,24 @@ describe('SouthBACnet', () => {
       assert.strictEqual(client.subscribeCov.mock.calls[1].arguments[3], true);
     });
 
+    it('should hint at polling when a COV subscription to a routed device times out', async () => {
+      const routedSubscription = buildItem({ ...routedItem1, scanMode: subscriptionScanMode, settings: routedItem1.settings });
+      const client = await connectSouth();
+      client.subscribeCov.mock.mockImplementation(async () => {
+        throw new Error('ERR_TIMEOUT');
+      });
+      logger.warn.mock.resetCalls();
+
+      await south.subscribe([routedSubscription]);
+
+      assert.deepStrictEqual(client.subscribeCov.mock.calls[0].arguments[0], { address: '192.168.1.20', net: 2, adr: [5] });
+      assert.ok(
+        logger.warn.mock.calls.some(
+          call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('devices behind a router are not supported yet')
+        )
+      );
+    });
+
     it('should hint at polling when a device refuses SubscribeCOVProperty', async () => {
       const reliabilityItem = buildItem({
         id: 'id7',
@@ -1187,8 +1306,42 @@ describe('SouthBACnet', () => {
       const entries = await explorePromise;
 
       assert.strictEqual(entries.length, 1);
-      assert.strictEqual(entries[0].id, '192.168.1.10|10');
+      assert.strictEqual(entries[0].id, '192.168.1.10|||10');
       assert.strictEqual(entries[0].hasChildren, true);
+    });
+
+    it('should list routed devices with the item settings to reach them, and browse them through their router', async () => {
+      const explorePromise = south.explore(null);
+      await flushPromises();
+      const client = lastCreatedClient;
+      client.emit('iAm', {
+        header: { apduType: 0x10, expectingReply: false, sender: { address: '192.168.1.20', forwardedFrom: null, net: 2, adr: [5] } },
+        payload: { deviceId: 2005, maxApdu: 480, segmentation: 3, vendorId: 0 }
+      });
+      mock.timers.tick(3000);
+      const [device] = await explorePromise;
+
+      assert.deepStrictEqual(device, {
+        id: '192.168.1.20|2|5|2005',
+        name: 'Device 2005',
+        metadata: { address: '192.168.1.20', deviceInstance: 2005, networkNumber: 2, macAddress: '5' },
+        hasChildren: true
+      });
+
+      client.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
+        len: 0,
+        objectId,
+        property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL },
+        values: [{ type: 12, value: { type: 0, instance: 1 } }]
+      }));
+      const entries = await south.explore(device.id);
+
+      assert.deepStrictEqual(client.readProperty.mock.calls.at(-1)!.arguments.slice(0, 2), [
+        { address: '192.168.1.20', net: 2, adr: [5] },
+        { type: 8, instance: 2005 }
+      ]);
+      assert.deepStrictEqual(client.readPropertyMultiple.mock.calls[0].arguments[0], { address: '192.168.1.20', net: 2, adr: [5] });
+      assert.strictEqual(entries[0].id, '192.168.1.20|2|5|2005|0|1');
     });
 
     it('should list a device objects and degrade gracefully when enrichment fails', async () => {
@@ -1209,13 +1362,13 @@ describe('SouthBACnet', () => {
         throw new Error('ERR_TIMEOUT');
       });
 
-      const entries = await south.explore('192.168.1.10|10');
+      const entries = await south.explore('192.168.1.10|||10');
 
       assert.deepStrictEqual(
         entries.map(entry => [entry.id, entry.name, entry.hasChildren]),
         [
-          ['192.168.1.10|10|0|1', 'ANALOG_INPUT 1', false],
-          ['192.168.1.10|10|3|2', 'BINARY_INPUT 2', false]
+          ['192.168.1.10|||10|0|1', 'ANALOG_INPUT 1', false],
+          ['192.168.1.10|||10|3|2', 'BINARY_INPUT 2', false]
         ]
       );
     });
@@ -1248,7 +1401,7 @@ describe('SouthBACnet', () => {
         }))
       }));
 
-      const entries = await south.explore('192.168.1.10|10');
+      const entries = await south.explore('192.168.1.10|||10');
 
       assert.deepStrictEqual(client.readProperty.mock.calls[1].arguments[3], { arrayIndex: 0 });
       assert.deepStrictEqual(client.readPropertyMultiple.mock.calls[0].arguments[1], [
@@ -1263,8 +1416,8 @@ describe('SouthBACnet', () => {
       assert.deepStrictEqual(
         entries.map(entry => [entry.id, entry.name, entry.metadata]),
         [
-          ['192.168.1.10|10|0|1', 'Point 1', { objectType: 'ANALOG_INPUT', objectInstance: 1, value: 21.5 }],
-          ['192.168.1.10|10|3|2', 'Point 2', { objectType: 'BINARY_INPUT', objectInstance: 2 }]
+          ['192.168.1.10|||10|0|1', 'Point 1', { objectType: 'ANALOG_INPUT', objectInstance: 1, value: 21.5 }],
+          ['192.168.1.10|||10|3|2', 'Point 2', { objectType: 'BINARY_INPUT', objectInstance: 2 }]
         ]
       );
     });

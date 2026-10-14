@@ -3004,6 +3004,16 @@
 					},
 					"propertyIdentifier": {
 						"$ref": "#/components/schemas/SouthBACnetItemSettingsPropertyIdentifier"
+					},
+					"routed": {
+						"type": "boolean"
+					},
+					"networkNumber": {
+						"type": "number",
+						"format": "double"
+					},
+					"macAddress": {
+						"type": "string"
 					}
 				},
 				"required": [
@@ -3011,7 +3021,8 @@
 					"deviceInstance",
 					"objectType",
 					"objectInstance",
-					"propertyIdentifier"
+					"propertyIdentifier",
+					"routed"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -44886,7 +44897,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.10.0",
+		"version": "3.9.4",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
