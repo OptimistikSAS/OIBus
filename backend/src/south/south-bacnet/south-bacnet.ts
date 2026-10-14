@@ -1,9 +1,17 @@
+import crypto from 'node:crypto';
+
 import BACnetClient, {
+  ApplicationData,
+  ApplicationTag,
   ASN1_ARRAY_ALL,
   BACNetAddress,
+  BACnetMessageHeader,
   BACNetObjectID,
   BACNetReadAccessSpecification,
   CovNotifyPayload,
+  DecodeAcknowledgeMultipleResult,
+  ErrorClass,
+  ErrorCode,
   IAMResult,
   ObjectType,
   PropertyIdentifier
@@ -52,16 +60,92 @@ const PROPERTY_IDENTIFIER_BY_SETTING: Record<SouthBACnetItemSettingsPropertyIden
   units: PropertyIdentifier.UNITS
 };
 
+// Concurrent SubscribeCOV cancellations sent on disconnect. Kept well below the client's 256 invoke ids.
+const COV_CANCEL_BATCH_SIZE = 32;
+// Subscriber process ids start at a random value (BACnet allows any Unsigned32), so the ids of a
+// previous run, whose subscriptions may still be alive on the devices, are unlikely to be reused.
+const MAX_INITIAL_SUBSCRIBER_PROCESS_ID = 0x400000;
+
+/** The device's own request timeout: it never answered, so it is unreachable for now. */
+function isTimeout(error: unknown): boolean {
+  return error instanceof Error && error.message === 'ERR_TIMEOUT';
+}
+
 /**
- * A Reject/Abort PDU or the client's own per-request timeout is scoped to the one device that
- * failed to answer - other devices in the same batched work-unit (an OIBus item group is not
- * necessarily one physical BACnet device, unlike an OPC-UA session) must keep working, so these
- * are logged and skipped rather than tearing down the shared UDP client. Message text matches
- * @bacnet-js/client's RequestManager/Client implementation (ERR_TIMEOUT, BacnetError, BacnetAbort).
+ * The device answered with an Error, Reject or Abort PDU (@bacnet-js/client reports a Reject as a
+ * BacnetAbort): it is reachable, but refused this request - unknown object or property, a service it
+ * does not implement, or a reply too large for a device that does not support segmentation.
+ */
+function isServiceRefusal(error: unknown): boolean {
+  return error instanceof Error && (error.message.startsWith('BacnetError') || error.message.startsWith('BacnetAbort'));
+}
+
+/**
+ * A refusal or a timeout is scoped to the one device that failed to answer - other devices in the
+ * same batched work-unit (an OIBus item group is not necessarily one physical BACnet device, unlike
+ * an OPC-UA session) must keep working, so these are logged and skipped rather than tearing down the
+ * shared UDP client. Message text matches @bacnet-js/client's RequestManager/Client implementation.
  */
 function isDeviceScopedError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  return error.message === 'ERR_TIMEOUT' || error.message.startsWith('BacnetError') || error.message.startsWith('BacnetAbort');
+  return isTimeout(error) || isServiceRefusal(error);
+}
+
+/** A device that answered Who-Is. */
+interface DiscoveredDevice {
+  address: string;
+  deviceId: number;
+}
+
+/**
+ * The address of the device that sent an unconfirmed request such as I-Am. @bacnet-js/client keeps
+ * it in the message header, not in the payload (its `IAMResult.address` typing is wrong). A broadcast
+ * relayed by a BBMD arrives from the BBMD itself, with the original sender in `forwardedFrom`.
+ */
+function senderAddress(header: BACnetMessageHeader | undefined): string | null {
+  return header?.sender.forwardedFrom || header?.sender.address || null;
+}
+
+/** One property (or one entry of an array property) of one object, on a device. */
+interface PropertyReference {
+  objectId: BACNetObjectID;
+  propertyId: PropertyIdentifier;
+  /** ASN1_ARRAY_ALL reads the whole property. */
+  arrayIndex: number;
+}
+
+/** The value of a property reference, or why the device could not return it. */
+type PropertyReadResult = { values: Array<ApplicationData> } | { error: string };
+
+function referenceKey(objectId: BACNetObjectID, propertyId: number, arrayIndex: number): string {
+  return `${objectId.type}:${objectId.instance}:${propertyId}:${arrayIndex}`;
+}
+
+function toReferenceKey(reference: PropertyReference): string {
+  return referenceKey(reference.objectId, reference.propertyId, reference.arrayIndex);
+}
+
+/** Groups references by object: a ReadPropertyMultiple request lists each object once, with all its properties. */
+function toReadAccessSpecifications(references: Array<PropertyReference>): Array<BACNetReadAccessSpecification> {
+  const specifications = new Map<string, BACNetReadAccessSpecification>();
+  for (const reference of references) {
+    const objectKey = `${reference.objectId.type}:${reference.objectId.instance}`;
+    let specification = specifications.get(objectKey);
+    if (!specification) {
+      specification = { objectId: reference.objectId, properties: [] };
+      specifications.set(objectKey, specification);
+    }
+    specification.properties.push({ id: reference.propertyId, index: reference.arrayIndex });
+  }
+  return Array.from(specifications.values());
+}
+
+/** Formats the error a device returns for one property of a ReadPropertyMultiple, e.g. "OBJECT/UNKNOWN_OBJECT". */
+function toPropertyErrorMessage(error: { errorClass: number; errorCode: number }): string {
+  return `${ErrorClass[error.errorClass] ?? error.errorClass}/${ErrorCode[error.errorCode] ?? error.errorCode}`;
+}
+
+function isObjectId(value: unknown): value is BACNetObjectID {
+  return typeof value === 'object' && value !== null && 'type' in value && 'instance' in value;
 }
 
 function toAddress(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): BACNetAddress {
@@ -74,6 +158,10 @@ function toObjectId(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): BA
 
 function toPropertyIdentifier(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): PropertyIdentifier {
   return PROPERTY_IDENTIFIER_BY_SETTING[item.settings.propertyIdentifier];
+}
+
+function toPropertyReference(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): PropertyReference {
+  return { objectId: toObjectId(item), propertyId: toPropertyIdentifier(item), arrayIndex: ASN1_ARRAY_ALL };
 }
 
 /** Coerces a decoded BACnet application value into the string|number shape OIBusTimeValue expects. */
@@ -108,7 +196,11 @@ export default class SouthBACnet
   private disconnecting = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private foreignDeviceRenewalTimeout: NodeJS.Timeout | null = null;
-  private nextSubscriberProcessId = 1;
+  private nextSubscriberProcessId = crypto.randomInt(1, MAX_INITIAL_SUBSCRIBER_PROCESS_ID);
+  // Kept across reconnects: re-subscribing an item with its previous process id renews the
+  // subscription the device still holds (a subscription is identified by subscriber address,
+  // process id and object) instead of adding one more, which would take another of its few COV slots.
+  private readonly subscriberProcessIds = new Map<string, number>();
   private readonly covSubscriptions = new Map<string, CovSubscriptionEntry>();
   private bufferedValues: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; timestamp: Instant; value: OIBusTimeValue }> =
     [];
@@ -137,13 +229,13 @@ export default class SouthBACnet
     try {
       this.client = await this.createClient();
       if (this.connector.settings.bbmd.enabled) {
-        await this.registerForeignDevice();
+        await this.registerForeignDevice(this.client);
       }
       await super.connect();
     } catch (error: unknown) {
       this.logger.error(`Error while connecting to the BACnet network: ${getErrorMessage(error)}`);
       try {
-        await this.disconnect();
+        await this.closeConnection(false);
       } catch (disconnectError: unknown) {
         this.logger.error(`Error while disconnecting after failed connect: ${getErrorMessage(disconnectError)}`);
       }
@@ -156,6 +248,15 @@ export default class SouthBACnet
   }
 
   override async disconnect(): Promise<void> {
+    await this.closeConnection(true);
+  }
+
+  /**
+   * Closes the BACnet client. COV subscriptions are cancelled on their devices only on a real stop:
+   * after a transport failure the cancellations would most likely be lost too, and the reconnect
+   * renews the same subscriptions anyway (see `subscriberProcessIds`).
+   */
+  private async closeConnection(cancelCovSubscriptions: boolean): Promise<void> {
     this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -172,7 +273,11 @@ export default class SouthBACnet
     for (const subscription of this.covSubscriptions.values()) {
       if (subscription.renewalTimeout) {
         clearTimeout(subscription.renewalTimeout);
+        subscription.renewalTimeout = null;
       }
+    }
+    if (cancelCovSubscriptions && this.client) {
+      await this.cancelCovSubscriptions(this.client);
     }
     this.covSubscriptions.clear();
 
@@ -219,7 +324,7 @@ export default class SouthBACnet
 
   private triggerReconnect(): void {
     if (this.disconnecting || this.connecting) return;
-    this.disconnect()
+    this.closeConnection(false)
       .then(() => {
         if (!this.disconnecting && this.connector.enabled) {
           this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -230,23 +335,28 @@ export default class SouthBACnet
       });
   }
 
-  private async registerForeignDevice(): Promise<void> {
+  private async registerForeignDevice(client: BACnetClient): Promise<void> {
     const bbmd = this.connector.settings.bbmd;
-    await this.client!.registerForeignDevice({ address: bbmd.address! }, bbmd.foreignDeviceTtl!);
+    await client.registerForeignDevice({ address: bbmd.address! }, bbmd.foreignDeviceTtl!);
     this.logger.info(`Registered as a foreign device with BBMD ${bbmd.address}`);
-    this.scheduleForeignDeviceRenewal(bbmd.foreignDeviceTtl!);
+    this.scheduleForeignDeviceRegistration(client, Math.max(1000, Math.floor(bbmd.foreignDeviceTtl! * 500)));
   }
 
-  private scheduleForeignDeviceRenewal(ttlSeconds: number): void {
+  /** Renews the registration halfway through its TTL; a failed renewal is retried every `retryInterval` until it succeeds. */
+  private scheduleForeignDeviceRegistration(client: BACnetClient, delayMs: number): void {
     if (this.foreignDeviceRenewalTimeout) {
       clearTimeout(this.foreignDeviceRenewalTimeout);
     }
-    const renewalDelayMs = Math.max(1000, Math.floor(ttlSeconds * 500));
     this.foreignDeviceRenewalTimeout = setTimeout(() => {
-      this.registerForeignDevice().catch((error: unknown) => {
-        this.logger.error(`Error renewing BBMD foreign device registration: ${getErrorMessage(error)}`);
+      this.foreignDeviceRenewalTimeout = null;
+      this.registerForeignDevice(client).catch((error: unknown) => {
+        if (this.client !== client) return;
+        this.logger.error(
+          `Error renewing BBMD foreign device registration, retrying in ${this.connector.settings.retryInterval} ms: ${getErrorMessage(error)}`
+        );
+        this.scheduleForeignDeviceRegistration(client, this.connector.settings.retryInterval);
       });
-    }, renewalDelayMs);
+    }, delayMs);
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -302,11 +412,14 @@ export default class SouthBACnet
    * readProperty/readPropertyMultiple). Otherwise falls back to a broadcast, direct or through the
    * configured BBMD.
    */
-  private discoverDevices(client: BACnetClient): Promise<Array<IAMResult>> {
-    return new Promise<Array<IAMResult>>(resolve => {
-      const devices: Array<IAMResult> = [];
-      const onIAm = (content: { payload: IAMResult }) => {
-        devices.push(content.payload);
+  private discoverDevices(client: BACnetClient): Promise<Array<DiscoveredDevice>> {
+    return new Promise<Array<DiscoveredDevice>>(resolve => {
+      // Keyed by address and instance: a device reachable by several paths answers more than once.
+      const devices = new Map<string, DiscoveredDevice>();
+      const onIAm = (content: { header?: BACnetMessageHeader; payload: IAMResult }) => {
+        const address = senderAddress(content.header);
+        if (!address) return;
+        devices.set(`${address}|${content.payload.deviceId}`, { address, deviceId: content.payload.deviceId });
       };
       client.on('iAm', onIAm);
 
@@ -323,7 +436,7 @@ export default class SouthBACnet
       const windowMs = Math.max(this.connector.settings.apduTimeout, 3000);
       setTimeout(() => {
         client.off('iAm', onIAm);
-        resolve(devices);
+        resolve(Array.from(devices.values()));
       }, windowMs);
     });
   }
@@ -338,12 +451,12 @@ export default class SouthBACnet
    */
   private async verifyDeviceIdentity(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<void> {
     const targetHost = item.settings.deviceAddress.split(':')[0];
-    const match = await new Promise<IAMResult | null>(resolve => {
-      const onIAm = (content: { payload: IAMResult }) => {
-        if (content.payload.address.split(':')[0] === targetHost) {
+    const match = await new Promise<number | null>(resolve => {
+      const onIAm = (content: { header?: BACnetMessageHeader; payload: IAMResult }) => {
+        if (senderAddress(content.header)?.split(':')[0] === targetHost) {
           client.off('iAm', onIAm);
           clearTimeout(timeoutHandle);
-          resolve(content.payload);
+          resolve(content.payload.deviceId);
         }
       };
       client.on('iAm', onIAm);
@@ -357,17 +470,15 @@ export default class SouthBACnet
       );
     });
 
-    if (!match) {
+    if (match === null) {
       this.logger.debug(`No unicast Who-Is response from ${item.settings.deviceAddress} for item "${item.name}"`);
-    } else if (match.deviceId !== item.settings.deviceInstance) {
+    } else if (match !== item.settings.deviceInstance) {
       this.logger.warn(
-        `Unicast Who-Is to ${item.settings.deviceAddress} for item "${item.name}" replied with device instance ${match.deviceId}, ` +
+        `Unicast Who-Is to ${item.settings.deviceAddress} for item "${item.name}" replied with device instance ${match}, ` +
           `but the item is configured for device instance ${item.settings.deviceInstance} - check the static binding`
       );
     } else {
-      this.logger.debug(
-        `Unicast Who-Is confirmed device instance ${match.deviceId} at ${item.settings.deviceAddress} for item "${item.name}"`
-      );
+      this.logger.debug(`Unicast Who-Is confirmed device instance ${match} at ${item.settings.deviceAddress} for item "${item.name}"`);
     }
   }
 
@@ -380,6 +491,70 @@ export default class SouthBACnet
       timestamp: DateTime.now().toUTC().toISO()!,
       data: { value: toPointValue(rawValue) }
     };
+  }
+
+  /**
+   * Reads property references from one device, in ReadPropertyMultiple requests of at most
+   * `maxObjectsPerRequest` references each. When the device refuses a ReadPropertyMultiple (a service
+   * it does not implement, or a reply too large without segmentation), that chunk is read one
+   * property at a time with ReadProperty instead, as YABE does. An error scoped to one property
+   * (unknown object or property) is returned in the map, never as a value; a timeout or a transport
+   * failure is thrown, since the rest of the device is then out of reach too.
+   */
+  private async readProperties(
+    client: BACnetClient,
+    deviceAddress: string,
+    references: Array<PropertyReference>
+  ): Promise<Map<string, PropertyReadResult>> {
+    const results = new Map<string, PropertyReadResult>();
+    const uniqueReferences = Array.from(new Map(references.map(reference => [toReferenceKey(reference), reference])).values());
+    const chunkSize = Math.max(1, this.connector.settings.maxObjectsPerRequest);
+    for (let i = 0; i < uniqueReferences.length; i += chunkSize) {
+      const chunk = uniqueReferences.slice(i, i + chunkSize);
+      let response: DecodeAcknowledgeMultipleResult;
+      try {
+        response = await client.readPropertyMultiple({ address: deviceAddress }, toReadAccessSpecifications(chunk));
+      } catch (error: unknown) {
+        if (!isServiceRefusal(error)) throw error;
+        this.logger.debug(`Device ${deviceAddress} refused ReadPropertyMultiple (${getErrorMessage(error)}), using ReadProperty instead`);
+        await this.readPropertiesOneByOne(client, deviceAddress, chunk, results);
+        continue;
+      }
+      for (const objectResult of response.values) {
+        for (const property of objectResult.values) {
+          const first = property.value[0];
+          results.set(
+            referenceKey(objectResult.objectId, property.id, property.index),
+            first?.type === ApplicationTag.ERROR
+              ? { error: toPropertyErrorMessage(first.value as { errorClass: number; errorCode: number }) }
+              : { values: property.value }
+          );
+        }
+      }
+    }
+    return results;
+  }
+
+  private async readPropertiesOneByOne(
+    client: BACnetClient,
+    deviceAddress: string,
+    references: Array<PropertyReference>,
+    results: Map<string, PropertyReadResult>
+  ): Promise<void> {
+    for (const reference of references) {
+      try {
+        const response = await client.readProperty(
+          { address: deviceAddress },
+          reference.objectId,
+          reference.propertyId,
+          reference.arrayIndex === ASN1_ARRAY_ALL ? {} : { arrayIndex: reference.arrayIndex }
+        );
+        results.set(toReferenceKey(reference), { values: response.values });
+      } catch (error: unknown) {
+        if (!isServiceRefusal(error)) throw error;
+        results.set(toReferenceKey(reference), { error: getErrorMessage(error) });
+      }
+    }
   }
 
   async directQuery(items: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>): Promise<OIBusTimeValue | null> {
@@ -402,42 +577,29 @@ export default class SouthBACnet
 
     const queryTime = DateTime.now().toUTC().toISO()!;
     const candidates: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; value: OIBusTimeValue }> = [];
-    const chunkSize = Math.max(1, this.connector.settings.maxObjectsPerRequest);
 
-    for (const [deviceAddressText, deviceItems] of itemsByDevice) {
-      const address: BACNetAddress = { address: deviceAddressText };
-      for (let i = 0; i < deviceItems.length; i += chunkSize) {
-        const chunk = deviceItems.slice(i, i + chunkSize);
-        const readSpecs: Array<BACNetReadAccessSpecification> = chunk.map(item => ({
-          objectId: toObjectId(item),
-          properties: [{ id: toPropertyIdentifier(item), index: ASN1_ARRAY_ALL }]
-        }));
-
-        try {
-          const result = await client.readPropertyMultiple(address, readSpecs);
-          const itemsByObjectKey = new Map(chunk.map(item => [`${toObjectId(item).type}-${toObjectId(item).instance}`, item] as const));
-          for (const objectResult of result.values) {
-            const matchedItem = itemsByObjectKey.get(`${objectResult.objectId.type}-${objectResult.objectId.instance}`);
-            if (!matchedItem) continue;
-            const propertyValue = objectResult.values.find(value => value.id === toPropertyIdentifier(matchedItem));
-            const rawValue = propertyValue?.value?.[0]?.value;
-            if (rawValue === undefined || rawValue === null) continue;
-            candidates.push({
-              item: matchedItem,
-              value: { pointId: matchedItem.name, timestamp: queryTime, data: { value: toPointValue(rawValue) } }
-            });
-          }
-        } catch (error: unknown) {
-          if (isDeviceScopedError(error)) {
-            this.logger.warn(
-              logCtx,
-              `Read failed for device ${deviceAddressText} (device error, connection kept): ${getErrorMessage(error)}`
-            );
-            continue;
-          }
-          this.triggerReconnect();
-          throw error;
+    for (const [deviceAddress, deviceItems] of itemsByDevice) {
+      let results: Map<string, PropertyReadResult>;
+      try {
+        results = await this.readProperties(client, deviceAddress, deviceItems.map(toPropertyReference));
+      } catch (error: unknown) {
+        if (isDeviceScopedError(error)) {
+          this.logger.warn(logCtx, `Read failed for device ${deviceAddress} (device error, connection kept): ${getErrorMessage(error)}`);
+          continue;
         }
+        this.triggerReconnect();
+        throw error;
+      }
+      for (const item of deviceItems) {
+        const result = results.get(toReferenceKey(toPropertyReference(item)));
+        if (!result) continue;
+        if ('error' in result) {
+          this.logger.warn(logCtx, `Could not read item "${item.name}" on device ${deviceAddress}: ${result.error}`);
+          continue;
+        }
+        const rawValue = result.values[0]?.value;
+        if (rawValue === undefined || rawValue === null) continue;
+        candidates.push({ item, value: { pointId: item.name, timestamp: queryTime, data: { value: toPointValue(rawValue) } } });
       }
     }
 
@@ -458,8 +620,7 @@ export default class SouthBACnet
 
   async subscribe(items: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>): Promise<void> {
     if (!items.length) return;
-    const client = this.client;
-    if (!client) {
+    if (!this.client) {
       this.logger.debug('No BACnet client available, skipping subscribe');
       return;
     }
@@ -469,24 +630,22 @@ export default class SouthBACnet
 
     for (const item of items) {
       if (this.covSubscriptions.has(item.id)) continue;
-      const address = toAddress(item);
-      const objectId = toObjectId(item);
-      const subscriberProcessId = this.nextSubscriberProcessId++;
-      const lifetimeSeconds = this.connector.settings.covDefaultLifetime;
-      try {
-        // issueConfirmedNotifications=false so notifications arrive as 'covNotifyUnconfirmed'. Standard
-        // SubscribeCOV always reports PRESENT_VALUE + STATUS_FLAGS regardless of the item's configured
-        // propertyIdentifier - handleCovNotification() picks PRESENT_VALUE out of the notification.
-        await client.subscribeCov(address, objectId, subscriberProcessId, false, false, lifetimeSeconds, {});
-      } catch (error: unknown) {
-        this.logger.error(workUnitLogCtx([item]), `Error subscribing to COV for item "${item.name}": ${getErrorMessage(error)}`);
-        continue;
+      let subscriberProcessId = this.subscriberProcessIds.get(item.id);
+      if (subscriberProcessId === undefined) {
+        subscriberProcessId = this.nextSubscriberProcessId++;
+        this.subscriberProcessIds.set(item.id, subscriberProcessId);
       }
-      const entry: CovSubscriptionEntry = { item, address, objectId, subscriberProcessId, lifetimeSeconds, renewalTimeout: null };
-      if (lifetimeSeconds > 0) {
-        entry.renewalTimeout = this.scheduleCovRenewal(entry);
-      }
+      const entry: CovSubscriptionEntry = {
+        item,
+        address: toAddress(item),
+        objectId: toObjectId(item),
+        subscriberProcessId,
+        lifetimeSeconds: this.connector.settings.covDefaultLifetime,
+        renewalTimeout: null
+      };
+      // Registered before the request: a subscription that fails now is retried by sendCovSubscription.
       this.covSubscriptions.set(item.id, entry);
+      await this.sendCovSubscription(entry);
     }
   }
 
@@ -509,31 +668,91 @@ export default class SouthBACnet
     }
   }
 
-  private scheduleCovRenewal(entry: CovSubscriptionEntry): NodeJS.Timeout {
-    const marginSeconds = this.connector.settings.covRenewalMargin;
-    const renewalDelaySeconds = Math.max(1, entry.lifetimeSeconds - marginSeconds);
-    return setTimeout(() => {
-      this.renewCovSubscription(entry).catch((error: unknown) => {
+  /**
+   * Best-effort cancellation of every COV subscription on its device, so a stopped connector frees
+   * the device's limited COV slots instead of holding them until the subscriptions expire (never,
+   * with a 0 lifetime). Bounded by one APDU timeout, so an unreachable device cannot hold up the stop.
+   */
+  private async cancelCovSubscriptions(client: BACnetClient): Promise<void> {
+    const entries = Array.from(this.covSubscriptions.values());
+    if (entries.length === 0) return;
+    let deadlineReached = false;
+    const cancelAll = async () => {
+      for (let i = 0; i < entries.length && !deadlineReached; i += COV_CANCEL_BATCH_SIZE) {
+        await Promise.allSettled(
+          entries
+            .slice(i, i + COV_CANCEL_BATCH_SIZE)
+            .map(entry => client.subscribeCov(entry.address, entry.objectId, entry.subscriberProcessId, true, false, 0, {}))
+        );
+      }
+    };
+    let deadline: NodeJS.Timeout | undefined;
+    await Promise.race([
+      cancelAll(),
+      new Promise<void>(resolve => {
+        deadline = setTimeout(resolve, this.connector.settings.apduTimeout);
+      })
+    ]);
+    deadlineReached = true;
+    clearTimeout(deadline);
+  }
+
+  private scheduleCovSubscription(entry: CovSubscriptionEntry, delayMs: number): void {
+    entry.renewalTimeout = setTimeout(() => {
+      entry.renewalTimeout = null;
+      this.sendCovSubscription(entry).catch((error: unknown) => {
         this.logger.error(
           workUnitLogCtx([entry.item]),
           `Error renewing COV subscription for item "${entry.item.name}": ${getErrorMessage(error)}`
         );
       });
-    }, renewalDelaySeconds * 1000);
+    }, delayMs);
   }
 
-  private async renewCovSubscription(entry: CovSubscriptionEntry): Promise<void> {
+  /**
+   * Sends the SubscribeCOV request of a registered subscription, then schedules its renewal before
+   * the lifetime runs out. A failed request is retried every `retryInterval` until it succeeds or
+   * the item is unsubscribed, so a device that is offline for a while starts sending again once back.
+   */
+  private async sendCovSubscription(entry: CovSubscriptionEntry): Promise<void> {
     const client = this.client;
-    if (!client || !this.covSubscriptions.has(entry.item.id)) return;
-    await client.subscribeCov(entry.address, entry.objectId, entry.subscriberProcessId, false, false, entry.lifetimeSeconds, {});
-    entry.renewalTimeout = this.scheduleCovRenewal(entry);
+    if (!client || this.covSubscriptions.get(entry.item.id) !== entry) return;
+    try {
+      // issueConfirmedNotifications=false so notifications arrive as 'covNotifyUnconfirmed'. Standard
+      // SubscribeCOV always reports PRESENT_VALUE + STATUS_FLAGS regardless of the item's configured
+      // propertyIdentifier - handleCovNotification() picks PRESENT_VALUE out of the notification.
+      await client.subscribeCov(entry.address, entry.objectId, entry.subscriberProcessId, false, false, entry.lifetimeSeconds, {});
+    } catch (error: unknown) {
+      if (this.covSubscriptions.get(entry.item.id) !== entry) return;
+      this.logger.warn(
+        workUnitLogCtx([entry.item]),
+        `Error subscribing to COV for item "${entry.item.name}", retrying in ${this.connector.settings.retryInterval} ms: ${getErrorMessage(error)}`
+      );
+      this.scheduleCovSubscription(entry, this.connector.settings.retryInterval);
+      return;
+    }
+    if (entry.lifetimeSeconds > 0 && this.covSubscriptions.get(entry.item.id) === entry) {
+      const renewalDelaySeconds = Math.max(1, entry.lifetimeSeconds - this.connector.settings.covRenewalMargin);
+      this.scheduleCovSubscription(entry, renewalDelaySeconds * 1000);
+    }
   }
 
   private handleCovNotification(payload: CovNotifyPayload): void {
+    // The monitored object is checked too: a subscription left on a device by an earlier run keeps
+    // notifying until it expires, and may happen to carry a process id this run reuses.
     const subscription = Array.from(this.covSubscriptions.values()).find(
-      candidate => candidate.subscriberProcessId === payload.subscriberProcessId
+      candidate =>
+        candidate.subscriberProcessId === payload.subscriberProcessId &&
+        candidate.objectId.type === payload.monitoredObjectId.type &&
+        candidate.objectId.instance === payload.monitoredObjectId.instance
     );
-    if (!subscription) return;
+    if (!subscription) {
+      this.logger.trace(
+        `Ignoring COV notification for unknown subscription ${payload.subscriberProcessId} ` +
+          `(object ${payload.monitoredObjectId.type}:${payload.monitoredObjectId.instance}, device ${payload.initiatingDeviceId})`
+      );
+      return;
+    }
 
     const presentValueEntry = payload.values.find(value => value.property.id === PropertyIdentifier.PRESENT_VALUE) ?? payload.values[0];
     const rawValue = presentValueEntry?.value?.[0]?.value;
@@ -612,67 +831,82 @@ export default class SouthBACnet
       return entries;
     }
 
-    const [deviceAddressText, deviceInstanceText] = parentId.split('|');
+    const [deviceAddress, deviceInstanceText] = parentId.split('|');
     const deviceInstance = Number(deviceInstanceText);
-    const address: BACNetAddress = { address: deviceAddressText };
-    const deviceObjectId: BACNetObjectID = { type: ObjectType.DEVICE, instance: deviceInstance };
+    const objectIds = await this.readObjectList(client, deviceAddress, { type: ObjectType.DEVICE, instance: deviceInstance });
 
-    const objectListResult = await client.readProperty(address, deviceObjectId, PropertyIdentifier.OBJECT_LIST);
-    const objectIds = objectListResult.values
-      .map(applicationData => applicationData.value)
-      .filter((value): value is BACNetObjectID => typeof value === 'object' && value !== null && 'type' in value && 'instance' in value);
-
-    const entries: Array<SouthConnectorExploreEntry> = [];
-    const chunkSize = Math.max(1, this.connector.settings.maxObjectsPerRequest);
-    for (let i = 0; i < objectIds.length; i += chunkSize) {
-      const chunk = objectIds.slice(i, i + chunkSize);
-      const readSpecs: Array<BACNetReadAccessSpecification> = chunk.map(objectId => ({
-        objectId,
-        properties: [
-          { id: PropertyIdentifier.OBJECT_NAME, index: ASN1_ARRAY_ALL },
-          { id: PropertyIdentifier.PRESENT_VALUE, index: ASN1_ARRAY_ALL }
-        ]
-      }));
-      try {
-        const result = await client.readPropertyMultiple(address, readSpecs);
-        for (const objectResult of result.values) {
-          entries.push(this.toExploreEntry(deviceAddressText, deviceInstance, objectResult));
-        }
-      } catch (error: unknown) {
-        this.logger.debug(`Could not enrich BACnet objects while exploring device ${deviceInstance}: ${getErrorMessage(error)}`);
-        for (const objectId of chunk) {
-          entries.push({
-            id: `${deviceAddressText}|${deviceInstance}|${objectId.type}|${objectId.instance}`,
-            name: `${ObjectType[objectId.type] ?? objectId.type} ${objectId.instance}`,
-            metadata: { objectType: ObjectType[objectId.type] ?? String(objectId.type), objectInstance: objectId.instance },
-            hasChildren: false
-          });
-        }
-      }
+    let properties: Map<string, PropertyReadResult> | null = null;
+    try {
+      properties = await this.readProperties(
+        client,
+        deviceAddress,
+        objectIds.flatMap(objectId => [
+          { objectId, propertyId: PropertyIdentifier.OBJECT_NAME, arrayIndex: ASN1_ARRAY_ALL },
+          { objectId, propertyId: PropertyIdentifier.PRESENT_VALUE, arrayIndex: ASN1_ARRAY_ALL }
+        ])
+      );
+    } catch (error: unknown) {
+      this.logger.debug(`Could not enrich BACnet objects while exploring device ${deviceInstance}: ${getErrorMessage(error)}`);
     }
-    return entries;
+    return objectIds.map(objectId => this.toExploreEntry(deviceAddress, deviceInstance, objectId, properties));
+  }
+
+  /**
+   * Reads a device's object list. A device that cannot send the whole list in one reply (no
+   * segmentation support, common on MS/TP) refuses the plain read; the list is then read one entry
+   * at a time, as YABE does: array index 0 holds the number of entries.
+   */
+  private async readObjectList(
+    client: BACnetClient,
+    deviceAddress: string,
+    deviceObjectId: BACNetObjectID
+  ): Promise<Array<BACNetObjectID>> {
+    try {
+      const result = await client.readProperty({ address: deviceAddress }, deviceObjectId, PropertyIdentifier.OBJECT_LIST);
+      return result.values.map(applicationData => applicationData.value).filter(isObjectId);
+    } catch (error: unknown) {
+      if (!isServiceRefusal(error)) throw error;
+      this.logger.debug(
+        `Device ${deviceObjectId.instance} refused to send its whole object list (${getErrorMessage(error)}), reading it entry by entry`
+      );
+    }
+    const countResult = await client.readProperty({ address: deviceAddress }, deviceObjectId, PropertyIdentifier.OBJECT_LIST, {
+      arrayIndex: 0
+    });
+    const count = countResult.values[0]?.value;
+    if (typeof count !== 'number') return [];
+    const references: Array<PropertyReference> = Array.from({ length: count }, (_, index) => ({
+      objectId: deviceObjectId,
+      propertyId: PropertyIdentifier.OBJECT_LIST,
+      arrayIndex: index + 1
+    }));
+    const results = await this.readProperties(client, deviceAddress, references);
+    return references.flatMap(reference => {
+      const result = results.get(toReferenceKey(reference));
+      return result && 'values' in result ? result.values.map(applicationData => applicationData.value).filter(isObjectId) : [];
+    });
   }
 
   private toExploreEntry(
-    deviceAddressText: string,
+    deviceAddress: string,
     deviceInstance: number,
-    objectResult: { objectId: BACNetObjectID; values: Array<{ id: PropertyIdentifier; value: Array<{ value: unknown }> }> }
+    objectId: BACNetObjectID,
+    properties: Map<string, PropertyReadResult> | null
   ): SouthConnectorExploreEntry {
-    const nameEntry = objectResult.values.find(value => value.id === PropertyIdentifier.OBJECT_NAME);
-    const valueEntry = objectResult.values.find(value => value.id === PropertyIdentifier.PRESENT_VALUE);
-    const rawName = nameEntry?.value?.[0]?.value;
-    const rawValue = valueEntry?.value?.[0]?.value;
-    const objectTypeLabel = ObjectType[objectResult.objectId.type] ?? String(objectResult.objectId.type);
-    const metadata: Record<string, string | number> = {
-      objectType: objectTypeLabel,
-      objectInstance: objectResult.objectId.instance
+    const valueOf = (propertyId: PropertyIdentifier): unknown => {
+      const result = properties?.get(referenceKey(objectId, propertyId, ASN1_ARRAY_ALL));
+      return result && 'values' in result ? result.values[0]?.value : undefined;
     };
+    const rawName = valueOf(PropertyIdentifier.OBJECT_NAME);
+    const rawValue = valueOf(PropertyIdentifier.PRESENT_VALUE);
+    const objectTypeLabel = ObjectType[objectId.type] ?? String(objectId.type);
+    const metadata: Record<string, string | number> = { objectType: objectTypeLabel, objectInstance: objectId.instance };
     if (rawValue !== undefined && rawValue !== null) {
       metadata.value = toPointValue(rawValue);
     }
     return {
-      id: `${deviceAddressText}|${deviceInstance}|${objectResult.objectId.type}|${objectResult.objectId.instance}`,
-      name: typeof rawName === 'string' && rawName ? rawName : `${objectTypeLabel} ${objectResult.objectId.instance}`,
+      id: `${deviceAddress}|${deviceInstance}|${objectId.type}|${objectId.instance}`,
+      name: typeof rawName === 'string' && rawName ? rawName : `${objectTypeLabel} ${objectId.instance}`,
       metadata,
       hasChildren: false
     };
