@@ -44,13 +44,21 @@ Each item's **Scan mode** decides how it is collected, exactly as for any other 
   once and the device pushes a new value whenever it changes, instead of being polled.
 
 Items due on the same poll tick are grouped per physical device and read together with a single
-`ReadPropertyMultiple` request per chunk, instead of one request per point.
+`ReadPropertyMultiple` request per chunk, instead of one request per point. A device that refuses
+`ReadPropertyMultiple` (many small controllers don't implement it) is read one property at a time with
+`ReadProperty` instead. When a device answers with an error for one property (unknown object or property),
+only that item is skipped, with a warning in the logs; the other items of the request are still collected.
 
 | Setting                     | Description                                                                                                                                   | Example Value |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
 | **Max objects per request**  | Maximum number of object/property pairs OIBus packs into a single `ReadPropertyMultiple` request to one device. Lower this if a device rejects large requests (e.g. no APDU segmentation support). | `20`           |
 | **COV subscription lifetime** | Lifetime, in seconds, requested for a COV subscription. `0` requests a subscription that never expires.                                     | `300`          |
 | **COV renewal margin**       | How long, in seconds, before a finite-lifetime COV subscription expires that OIBus renews it. Has no effect when lifetime is `0`.             | `60`           |
+
+A COV subscription or renewal that fails (device offline, for example) is retried every **Retry interval**
+until it succeeds. Devices only hold a limited number of COV subscriptions, so OIBus cancels its
+subscriptions when the connector stops, and renews the same ones (rather than adding new ones) when it
+reconnects after a network failure.
 
 ### Data Throttling {#data-throttling}
 
@@ -140,7 +148,8 @@ identifiers by hand:
    otherwise broadcast (or routed through the BBMD, if enabled) — and lists every device that responds, with
    its name and instance number.
 2. Selecting a device reads its object list and shows every object it exposes, enriched with its current
-   present value where available.
+   present value where available. A device that cannot send its whole object list in one reply (no
+   segmentation support, common on MS/TP) has it read entry by entry instead.
 
 Use **Test settings** on the connector's own settings to run the same device discovery as a quick
 connectivity check, without opening the full browser.
