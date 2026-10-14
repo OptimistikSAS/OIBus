@@ -61,6 +61,17 @@ class BACnetClientMock extends EventEmitter {
       _options: unknown
     ): Promise<void> => undefined
   );
+  readRange = mock.fn(
+    async (
+      _address: { address: string },
+      _objectId: BACnetObjectId,
+      _position: number,
+      _count: number
+    ): Promise<{ itemCount: number; values?: Array<{ timestamp: Date; value: unknown; isLogStatus?: boolean }> }> => ({
+      itemCount: 0,
+      values: []
+    })
+  );
   subscribeProperty = mock.fn(
     async (
       _address: { address: string },
@@ -246,6 +257,7 @@ describe('SouthBACnet', () => {
       port: 47809,
       apduTimeout: 100,
       broadcastAddress: '255.255.255.255',
+      timezone: 'UTC',
       retryInterval: 1000,
       maxParallelRun: 1,
       covDefaultLifetime: 300,
@@ -899,6 +911,138 @@ describe('SouthBACnet', () => {
       assert.strictEqual(client.readProperty.mock.calls.length, 1);
       assert.strictEqual(addContentCallback.mock.calls.length, 0);
       assert.strictEqual(client.close.mock.calls.length, 0);
+    });
+  });
+
+  describe('historyQuery', () => {
+    const trendLogItem = buildItem({
+      id: 'trendLog1',
+      name: 'trendLog1',
+      settings: { deviceAddress: '192.168.1.10', deviceInstance: 10, objectType: 'trend-log', objectInstance: 1, routed: false }
+    });
+
+    /** Serves a log buffer by position, as a device does: count < 0 reads the records before the position. */
+    function serveLogBuffer(client: BACnetClientMock, records: Array<{ timestamp: Date; value: unknown; isLogStatus?: boolean }>) {
+      client.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
+        len: 0,
+        objectId,
+        property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL },
+        values: [{ type: 2, value: records.length }]
+      }));
+      client.readRange.mock.mockImplementation(async (_address, _objectId, position, count) => {
+        const values =
+          count < 0 ? records.slice(Math.max(0, position + count), position) : records.slice(position - 1, position - 1 + count);
+        return { itemCount: values.length, values };
+      });
+    }
+
+    it('should read a trend log backwards by position until the start of the window', async () => {
+      const client = await connectSouth();
+      // Positions 1 to 6, one record a minute; the 4th is a log status record, without value.
+      serveLogBuffer(client, [
+        { timestamp: new Date(2026, 9, 14, 11, 56), value: 18 },
+        { timestamp: new Date(2026, 9, 14, 11, 57), value: 19 },
+        { timestamp: new Date(2026, 9, 14, 11, 58), value: 20 },
+        { timestamp: new Date(2026, 9, 14, 11, 58, 30), value: null, isLogStatus: true },
+        { timestamp: new Date(2026, 9, 14, 11, 59), value: 21 },
+        { timestamp: new Date(2026, 9, 14, 12, 0), value: 22 }
+      ]);
+
+      const result = await south.historyQuery([trendLogItem], '2026-10-14T11:57:00.000Z', '2026-10-14T11:59:30.000Z');
+
+      // maxObjectsPerRequest is 2: positions 5-6, 3-4, then 1-2, where 11:57 reaches the (excluded) start.
+      assert.deepStrictEqual(
+        client.readRange.mock.calls.map(call => call.arguments.slice(1)),
+        [
+          [{ type: 20, instance: 1 }, 6, -2],
+          [{ type: 20, instance: 1 }, 4, -2],
+          [{ type: 20, instance: 1 }, 2, -2]
+        ]
+      );
+      const content = addContentCallback.mock.calls[0].arguments[1] as {
+        content: Array<{ pointId: string; timestamp: string; data: { value: unknown } }>;
+      };
+      assert.deepStrictEqual(
+        content.content.map(value => [value.pointId, value.timestamp, value.data.value]),
+        [
+          ['trendLog1', '2026-10-14T11:58:00.000Z', 20],
+          ['trendLog1', '2026-10-14T11:59:00.000Z', 21]
+        ]
+      );
+      assert.strictEqual(result.trackedInstant, '2026-10-14T11:59:00.000Z');
+    });
+
+    it('should not read the log buffer of an empty trend log', async () => {
+      const client = await connectSouth();
+      serveLogBuffer(client, []);
+
+      const result = await south.historyQuery([trendLogItem], '2026-10-14T11:00:00.000Z', '2026-10-14T12:00:00.000Z');
+
+      assert.strictEqual(client.readRange.mock.calls.length, 0);
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
+      assert.deepStrictEqual(result, { trackedInstant: null, value: null });
+    });
+
+    it('should skip a trend log whose device fails, and keep reading the others', async () => {
+      const otherTrendLog = buildItem({
+        id: 'trendLog2',
+        name: 'trendLog2',
+        settings: { ...trendLogItem.settings, deviceAddress: '192.168.1.11' }
+      });
+      const client = await connectSouth();
+      serveLogBuffer(client, [{ timestamp: new Date(2026, 9, 14, 11, 30), value: 1 }]);
+      client.readProperty.mock.mockImplementation(async (address, objectId, propertyId) => {
+        if (address.address === '192.168.1.10') throw new Error('ERR_TIMEOUT');
+        return { len: 0, objectId, property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL }, values: [{ type: 2, value: 1 }] };
+      });
+      logger.warn.mock.resetCalls();
+
+      await south.historyQuery([trendLogItem, otherTrendLog], '2026-10-14T11:00:00.000Z', '2026-10-14T12:00:00.000Z');
+
+      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string }> };
+      assert.deepStrictEqual(
+        content.content.map(value => value.pointId),
+        ['trendLog2']
+      );
+      assert.ok(logger.warn.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('"trendLog1"')));
+    });
+
+    it('should read record timestamps in the devices time zone', async () => {
+      south = new SouthBACnet(
+        { ...configuration, settings: { ...configuration.settings, timezone: 'Europe/Paris' } },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+      const testPromise = south.testItem(trendLogItem, {
+        history: { startTime: '2026-10-14T09:00:00.000Z', endTime: '2026-10-14T11:00:00.000Z' }
+      } as never);
+      await flushPromises();
+      serveLogBuffer(lastCreatedClient, [{ timestamp: new Date(2026, 9, 14, 12, 0), value: 21.5 }]);
+      // No I-Am: the device identity check times out without failing the test.
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      // 12:00 in Paris (summer time) is 10:00 UTC
+      assert.deepStrictEqual((result.result as { content: Array<unknown> }).content, [
+        { pointId: 'trendLog1', timestamp: '2026-10-14T10:00:00.000Z', data: { value: 21.5 } }
+      ]);
+    });
+
+    it('should leave trend logs out of polling and COV subscriptions', async () => {
+      const client = await connectSouth();
+      logger.warn.mock.resetCalls();
+
+      assert.strictEqual(await south.directQuery([trendLogItem]), null);
+      await south.subscribe([buildItem({ ...trendLogItem, scanMode: subscriptionScanMode, settings: trendLogItem.settings })]);
+
+      assert.deepStrictEqual(south.filterDirectItems([trendLogItem, item1]), [item1]);
+      assert.deepStrictEqual(south.filterHistoryItems([trendLogItem, item1]), [trendLogItem]);
+      assert.strictEqual(client.readPropertyMultiple.mock.calls.length, 0);
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 0);
+      assert.ok(
+        logger.warn.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('cannot be subscribed'))
+      );
     });
   });
 

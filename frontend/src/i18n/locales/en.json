@@ -1874,6 +1874,7 @@
             "port": "Port",
             "apdu-timeout": "APDU timeout",
             "broadcast-address": "Broadcast address",
+            "timezone": "Device time zone",
             "discovery-target-address": "Discovery target address",
             "retry-interval": "Retry interval",
             "max-parallel-run": "Max parallel queries",
@@ -2227,7 +2228,15 @@
                 "binary-value": "Binary value",
                 "multi-state-input": "Multi-state input",
                 "multi-state-output": "Multi-state output",
-                "multi-state-value": "Multi-state value"
+                "multi-state-value": "Multi-state value",
+                "accumulator": "Accumulator",
+                "pulse-converter": "Pulse converter",
+                "loop": "Loop",
+                "integer-value": "Integer value",
+                "positive-integer-value": "Positive integer value",
+                "large-analog-value": "Large analog value",
+                "characterstring-value": "Character string value",
+                "trend-log": "Trend log"
               },
               "object-instance": "Object instance",
               "property-identifier": {

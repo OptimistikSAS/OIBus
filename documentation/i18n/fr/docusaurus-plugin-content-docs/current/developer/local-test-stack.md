@@ -260,7 +260,7 @@ travers l'équipement room.
 
 | Équipement | Instance | Nom                 | Adresse                                                       | Services                                                                                                                                                                                                         |
 | ---------- | -------- | ------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Room       | `1001`   | `oibus-bacnet-room` | `127.0.0.1:47809` depuis l'hôte ; route vers le réseau `2`    | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus un `SubscribeCOVProperty` minimal (absent de BACpypes3) pour que les éléments lisant une autre propriété puissent aussi utiliser le COV |
+| Room       | `1001`   | `oibus-bacnet-room` | `127.0.0.1:47809` depuis l'hôte ; route vers le réseau `2`    | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus un `SubscribeCOVProperty` et un `ReadRange` minimaux (absents de BACpypes3) pour que les éléments lisant une autre propriété puissent aussi utiliser le COV |
 | AHU        | `1002`   | `oibus-bacnet-ahu`  | Réseau `2`, MAC `5`, à travers l'équipement room              | `Who-Is`, `ReadProperty`, `SubscribeCOV` uniquement, comme un petit contrôleur MS/TP : rejette `ReadPropertyMultiple` et `SubscribeCOVProperty`, et sa liste d'objets doit être lue entrée par entrée (pas de segmentation) |
 
 L'AHU exerce l'adressage routé du connecteur et ses solutions de repli : `ReadProperty` au lieu de
@@ -283,6 +283,15 @@ interrogez les éléments de l'AHU par scrutation.
 | `binary-input 1`      | `Door`        | —     | Signal carré, période 20 s                                                                                             | —             |
 | `binary-value 1`      | `Fan`         | —     | Fixe, active                                                                                                           | —             |
 | `multi-state-value 1` | `Mode`        | —     | Alterne Off / Eco / Comfort (`1` – `3`) toutes les 15 s                                                                | —             |
+| `integer-value 1`     | `Occupancy`   | —     | Personnes dans la pièce, 0 – 30, change toutes les 30 s                                                                | —             |
+| `large-analog-value 1` | `Energy`     | `kWh` | Index de compteur, +0,01 kWh par seconde                                                                               | —             |
+| `characterstring-value 1` | `StatusText` | — | `Normal`, ou `Pressure sensor fault` tant que `Pressure` est en défaut                                                | —             |
+| `trend-log 1`         | `TemperatureLog` | — | `Temperature` enregistrée toutes les 10 s (valeurs réelles)                                                          | —             |
+| `trend-log 2`         | `DoorLog`     | —     | `Door` enregistrée toutes les 10 s (valeurs énumérées)                                                                 | —             |
+
+Les deux journaux de tendance démarrent avec 2 heures d'enregistrements et en conservent jusqu'à 1000, les plus
+anciens supprimés en premier. Ils sont horodatés dans l'heure locale du conteneur, UTC : réglez le **Fuseau
+horaire des appareils** du connecteur sur `UTC`.
 
 **Objets de l'équipement AHU :**
 
@@ -309,6 +318,7 @@ le relaie vers le réseau 2 et les deux équipements sont listés. OIBus lancé 
 | ------------------------------- | ----------------- |
 | **Port**                        | `47808`           |
 | **Adresse cible de découverte** | `127.0.0.1:47809` |
+| **Fuseau horaire des appareils** | `UTC`           |
 
 Ajoutez ensuite des éléments, ou parcourez les équipements avec **Explorer** :
 
@@ -321,6 +331,7 @@ Ajoutez ensuite des éléments, ou parcourez les équipements avec **Explorer** 
 | ------------------------ | ------- | -------------------------------------------------------------- |
 | `BACNET_HOST`            | `host`  | Adresse IPv4 locale ; `host` utilise l'interface du conteneur  |
 | `BACNET_PORT`            | `47808` | Port UDP BACnet/IP de l'équipement room                        |
+| `BACNET_TREND_LOG_INTERVAL` | `10` | Secondes entre deux enregistrements des journaux de tendance |
 | `BACNET_UPDATE_INTERVAL` | `1`     | Secondes entre deux mises à jour des valeurs                   |
 
 ---

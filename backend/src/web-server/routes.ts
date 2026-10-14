@@ -843,7 +843,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthBACnetItemSettingsObjectType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["analog-input"]},{"dataType":"enum","enums":["analog-output"]},{"dataType":"enum","enums":["analog-value"]},{"dataType":"enum","enums":["binary-input"]},{"dataType":"enum","enums":["binary-output"]},{"dataType":"enum","enums":["binary-value"]},{"dataType":"enum","enums":["multi-state-input"]},{"dataType":"enum","enums":["multi-state-output"]},{"dataType":"enum","enums":["multi-state-value"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["analog-input"]},{"dataType":"enum","enums":["analog-output"]},{"dataType":"enum","enums":["analog-value"]},{"dataType":"enum","enums":["binary-input"]},{"dataType":"enum","enums":["binary-output"]},{"dataType":"enum","enums":["binary-value"]},{"dataType":"enum","enums":["multi-state-input"]},{"dataType":"enum","enums":["multi-state-output"]},{"dataType":"enum","enums":["multi-state-value"]},{"dataType":"enum","enums":["accumulator"]},{"dataType":"enum","enums":["pulse-converter"]},{"dataType":"enum","enums":["loop"]},{"dataType":"enum","enums":["integer-value"]},{"dataType":"enum","enums":["positive-integer-value"]},{"dataType":"enum","enums":["large-analog-value"]},{"dataType":"enum","enums":["characterstring-value"]},{"dataType":"enum","enums":["trend-log"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthBACnetItemSettingsPropertyIdentifier": {
@@ -858,7 +858,7 @@ const models: TsoaRoute.Models = {
             "deviceInstance": {"dataType":"double","required":true},
             "objectType": {"ref":"SouthBACnetItemSettingsObjectType","required":true},
             "objectInstance": {"dataType":"double","required":true},
-            "propertyIdentifier": {"ref":"SouthBACnetItemSettingsPropertyIdentifier","required":true},
+            "propertyIdentifier": {"ref":"SouthBACnetItemSettingsPropertyIdentifier"},
             "routed": {"dataType":"boolean","required":true},
             "networkNumber": {"dataType":"double"},
             "macAddress": {"dataType":"string"},
@@ -915,6 +915,7 @@ const models: TsoaRoute.Models = {
             "retryInterval": {"dataType":"double","required":true},
             "maxParallelRun": {"dataType":"double","required":true},
             "discoveryTargetAddress": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "timezone": {"ref":"Timezone","required":true},
             "covDefaultLifetime": {"dataType":"double","required":true},
             "covRenewalMargin": {"dataType":"double","required":true},
             "maxObjectsPerRequest": {"dataType":"double","required":true},

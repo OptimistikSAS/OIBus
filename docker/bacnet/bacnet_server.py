@@ -22,9 +22,17 @@ analog-value 1       Setpoint      °C    fixed 21.5                            
 binary-input 1       Door          -     square wave, period 20 s
 binary-value 1       Fan           -     fixed active
 multi-state-value 1  Mode          -     cycles Off / Eco / Comfort every 15 s
+integer-value 1      Occupancy     -     people in the room, 0 - 30, changes every 30 s
+large-analog-value 1 Energy        kWh   meter index, +0.01 kWh per second
+characterstring-value 1 StatusText -     "Normal", or "Pressure sensor fault" while Pressure is in fault
+trend-log 1          TemperatureLog      Temperature logged every BACNET_TREND_LOG_INTERVAL seconds (real values)
+trend-log 2          DoorLog             Door logged every BACNET_TREND_LOG_INTERVAL seconds (enumerated values)
 
-Services: Who-Is, ReadProperty, ReadPropertyMultiple and SubscribeCOV come with BACpypes3. SubscribeCOVProperty,
-which BACpypes3 does not implement, is added here in a minimal form (see RoomApplication).
+Both trend logs start with 2 hours of records and hold up to 1000 records, the oldest dropped first.
+
+Services: Who-Is, ReadProperty, ReadPropertyMultiple and SubscribeCOV come with BACpypes3. SubscribeCOVProperty
+and ReadRange (trend log buffers), which BACpypes3 does not implement as a server, are added here in a minimal
+form (see RoomApplication).
 
 AHU device - a constrained air handling unit, like a small MS/TP controller (device 1002, oibus-bacnet-ahu)
 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -44,9 +52,14 @@ Environment variables
 BACNET_HOST               local IPv4 address, "host" for the container's own interface (default: host)
 BACNET_PORT               BACnet/IP UDP port of the room device (default: 47808)
 BACNET_UPDATE_INTERVAL    seconds between value updates (default: 1)
+BACNET_TREND_LOG_INTERVAL seconds between two trend log records (default: 10)
+
+Trend log timestamps are the container's local time, UTC unless TZ is set.
 """
 
 import asyncio
+import collections
+import datetime
 import math
 import os
 import time
@@ -54,24 +67,32 @@ import time
 from bacpypes3.apdu import (
     ReadPropertyMultipleRequest,
     ReadPropertyRequest,
+    ReadRangeACK,
+    ReadRangeRequest,
     SimpleAckPDU,
     SubscribeCOVPropertyRequest,
     UnconfirmedCOVNotificationRequest,
 )
 import ifaddr
 from bacpypes3.app import Application
-from bacpypes3.basetypes import PropertyValue
-from bacpypes3.constructeddata import Any
+from bacpypes3.basetypes import DateTime, LogRecord, LogRecordLogDatum, PropertyValue, ResultFlags, StatusFlags
+from bacpypes3.constructeddata import Any, ListOf
 from bacpypes3.errors import ExecutionError, SegmentationNotSupported, UnrecognizedService
 from bacpypes3.local.analog import AnalogInputObject, AnalogOutputObject, AnalogValueObject
 from bacpypes3.local.binary import BinaryInputObject, BinaryOutputObject, BinaryValueObject
 from bacpypes3.local.multistate import MultiStateInputObject, MultiStateValueObject
+from bacpypes3.object import CharacterStringValueObject, IntegerValueObject, LargeAnalogValueObject, TrendLogObject
 from bacpypes3.pdu import Address
+from bacpypes3.primitivedata import Date, Time
 from bacpypes3.vlan import VirtualNetwork
 
 HOST = os.environ.get("BACNET_HOST", "host")
 PORT = int(os.environ.get("BACNET_PORT", "47808"))
 UPDATE_INTERVAL = float(os.environ.get("BACNET_UPDATE_INTERVAL", "1"))
+TREND_LOG_INTERVAL = int(os.environ.get("BACNET_TREND_LOG_INTERVAL", "10"))
+TREND_LOG_HISTORY = 7200  # seconds of records a trend log starts with
+TREND_LOG_BUFFER_SIZE = 1000
+MAX_RECORDS_PER_RESPONSE = 50  # a ReadRange reply carries at most this many records, flagged "more items"
 
 NORMAL = [0, 0, 0, 0]  # status flags: in-alarm, fault, overridden, out-of-service
 IN_ALARM = [1, 0, 0, 0]
@@ -84,17 +105,104 @@ ROUTER_MAC = 1
 AHU_MAC = 5
 
 
+def to_bacnet_datetime(when: datetime.datetime) -> DateTime:
+    return DateTime(
+        date=Date((when.year - 1900, when.month, when.day, when.isoweekday())),
+        time=Time((when.hour, when.minute, when.second, when.microsecond // 10000)),
+    )
+
+
+def from_bacnet_datetime(value: DateTime) -> datetime.datetime:
+    year, month, day, _ = value.date
+    hour, minute, second, hundredth = value.time
+    return datetime.datetime(year + 1900, month, day, hour, minute, second, hundredth * 10000)
+
+
+class TrendLogBuffer:
+    """The records of a trend log object, kept in memory and served by RoomApplication.do_ReadRangeRequest."""
+
+    def __init__(self, trend_log: TrendLogObject):
+        self.trend_log = trend_log
+        # (sequence number, local timestamp, LogRecord), oldest first
+        self.records = collections.deque(maxlen=TREND_LOG_BUFFER_SIZE)
+        self.total = 0
+
+    def log(self, when: datetime.datetime, datum: LogRecordLogDatum) -> None:
+        self.total += 1
+        record = LogRecord(timestamp=to_bacnet_datetime(when), logDatum=datum, statusFlags=StatusFlags(NORMAL))
+        self.records.append((self.total, when, record))
+        self.trend_log.recordCount = len(self.records)
+        self.trend_log.totalRecordCount = self.total
+
+
 class RoomApplication(Application):
     """
-    Adds SubscribeCOVProperty: a subscription to one property of one object. A notification, carrying that
-    property and the object's status flags, is sent whenever the property value changes - on each update
-    tick, not on a COV increment. Unconfirmed notifications only; a lifetime of 0 never expires.
+    Adds two services BACpypes3 only implements as a client:
+    - SubscribeCOVProperty: a subscription to one property of one object. A notification, carrying that
+      property and the object's status flags, is sent whenever the property value changes - on each update
+      tick, not on a COV increment. Unconfirmed notifications only; a lifetime of 0 never expires.
+    - ReadRange of a trend log's log-buffer, by position, sequence number or time.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # (subscriber address, process id, object id, property attribute) -> [expiry or None, last value sent]
         self.property_subscriptions = {}
+        # trend log object identifier -> TrendLogBuffer
+        self.trend_logs = {}
+
+    async def do_ReadRangeRequest(self, apdu: ReadRangeRequest) -> None:
+        trend_log = self.trend_logs.get(apdu.objectIdentifier)
+        if trend_log is None:
+            raise ExecutionError(errorClass="object", errorCode="unknownObject")
+        if apdu.propertyIdentifier.attr != "logBuffer":
+            raise ExecutionError(errorClass="services", errorCode="propertyIsNotAList")
+        records = list(trend_log.records)
+        by_position = apdu.range is None or apdu.range.byPosition is not None
+
+        # 0-based [start, stop) slice of the buffer, and the count asked for (its sign gives the direction)
+        if apdu.range is None:
+            start, stop, count = 0, len(records), len(records)
+        else:
+            if apdu.range.byPosition is not None:
+                reference, count = apdu.range.byPosition.referenceIndex - 1, apdu.range.byPosition.count
+            elif apdu.range.bySequenceNumber is not None:
+                sequence = apdu.range.bySequenceNumber.referenceSequenceNumber
+                count = apdu.range.bySequenceNumber.count
+                reference = next((i for i, record in enumerate(records) if record[0] == sequence), None)
+            else:
+                reference_time = from_bacnet_datetime(apdu.range.byTime.referenceTime)
+                count = apdu.range.byTime.count
+                if count > 0:
+                    reference = next((i for i, record in enumerate(records) if record[1] > reference_time), None)
+                else:
+                    reference = next((i for i in range(len(records) - 1, -1, -1) if records[i][1] < reference_time), None)
+            if reference is None or not 0 <= reference < len(records):
+                start = stop = 0
+            elif count > 0:
+                start, stop = reference, min(len(records), reference + count)
+            else:
+                start, stop = max(0, reference + count + 1), reference + 1
+
+        # Too many records for one reply: keep those closest to the reference, flag "more items".
+        more_items = stop - start > MAX_RECORDS_PER_RESPONSE
+        if more_items and count < 0:
+            start = stop - MAX_RECORDS_PER_RESPONSE
+        elif more_items:
+            stop = start + MAX_RECORDS_PER_RESPONSE
+        selected = records[start:stop]
+
+        ack = ReadRangeACK(
+            context=apdu,
+            objectIdentifier=apdu.objectIdentifier,
+            propertyIdentifier="logBuffer",
+            resultFlags=ResultFlags([int(bool(selected) and start == 0), int(bool(selected) and stop == len(records)), int(more_items)]),
+            itemCount=len(selected),
+            itemData=Any(ListOf(LogRecord)([record for _, _, record in selected])),
+        )
+        if selected and not by_position:
+            ack.firstSequenceNumber = selected[0][0]
+        await self.response(ack)
 
     async def do_SubscribeCOVPropertyRequest(self, apdu: SubscribeCOVPropertyRequest) -> None:
         obj = self.get_object_id(apdu.monitoredObjectIdentifier)
@@ -150,9 +258,17 @@ class ConstrainedApplication(Application):
 
     async def do_ReadPropertyRequest(self, apdu: ReadPropertyRequest) -> None:
         # The whole object list would need a segmented reply: only one entry at a time is served.
-        if apdu.propertyIdentifier == "objectList" and apdu.propertyArrayIndex is None:
+        if apdu.propertyIdentifier.attr == "objectList" and apdu.propertyArrayIndex is None:
             raise SegmentationNotSupported()
         await super().do_ReadPropertyRequest(apdu)
+
+
+def temperature_at(elapsed: float) -> float:
+    return round(20 + 5 * math.sin(elapsed / 30), 2)
+
+
+def door_at(elapsed: float) -> str:
+    return "active" if elapsed % 20 < 10 else "inactive"
 
 
 def room_objects():
@@ -208,17 +324,79 @@ def room_objects():
         stateText=["Off", "Eco", "Comfort"],
         statusFlags=NORMAL,
     )
+    occupancy = IntegerValueObject(
+        objectIdentifier=("integerValue", 1),
+        objectName="Occupancy",
+        description="People in the room",
+        presentValue=0,
+        units="noUnits",
+        statusFlags=NORMAL,
+    )
+    energy = LargeAnalogValueObject(
+        objectIdentifier=("largeAnalogValue", 1),
+        objectName="Energy",
+        description="Energy meter index",
+        presentValue=12500.0,
+        units="kilowattHours",
+        statusFlags=NORMAL,
+    )
+    status_text = CharacterStringValueObject(
+        objectIdentifier=("characterstringValue", 1),
+        objectName="StatusText",
+        description="Room status",
+        presentValue="Normal",
+        statusFlags=NORMAL,
+    )
+    trend_logs = []
+    for instance, name, description in ((1, "TemperatureLog", "Temperature history"), (2, "DoorLog", "Door history")):
+        trend_logs.append(
+            TrendLogBuffer(
+                TrendLogObject(
+                    objectIdentifier=("trendLog", instance),
+                    objectName=name,
+                    description=description,
+                    enable=True,
+                    stopWhenFull=False,
+                    bufferSize=TREND_LOG_BUFFER_SIZE,
+                    logBuffer=[],
+                    recordCount=0,
+                    totalRecordCount=0,
+                    loggingType="polled",
+                    logInterval=TREND_LOG_INTERVAL * 100,
+                    statusFlags=NORMAL,
+                    reliability="noFaultDetected",
+                )
+            )
+        )
+    temperature_log, door_log = trend_logs
+
+    def log(when: datetime.datetime, elapsed: float) -> None:
+        temperature_log.log(when, LogRecordLogDatum(realValue=temperature_at(elapsed)))
+        door_log.log(when, LogRecordLogDatum(enumValue=1 if door_at(elapsed) == "active" else 0))
+
+    # Start with TREND_LOG_HISTORY seconds of records, as if the device had been logging for a while.
+    started_at = datetime.datetime.now()
+    for back in range(TREND_LOG_HISTORY // TREND_LOG_INTERVAL, -1, -1):
+        log(started_at - datetime.timedelta(seconds=back * TREND_LOG_INTERVAL), -back * TREND_LOG_INTERVAL)
+    next_log = [TREND_LOG_INTERVAL]
 
     def update(elapsed: float) -> None:
-        temperature.presentValue = round(20 + 5 * math.sin(elapsed / 30), 2)
+        temperature.presentValue = temperature_at(elapsed)
         pressure.presentValue = round(1013 + 3 * math.cos(elapsed / 45), 2)
         in_fault = elapsed % 60 >= 45
         pressure.statusFlags = FAULT if in_fault else NORMAL
         pressure.reliability = "unreliableOther" if in_fault else "noFaultDetected"
-        door.presentValue = "active" if elapsed % 20 < 10 else "inactive"
+        status_text.presentValue = "Pressure sensor fault" if in_fault else "Normal"
+        door.presentValue = door_at(elapsed)
         mode.presentValue = int(elapsed / 15) % 3 + 1
+        occupancy.presentValue = int(15 + 15 * math.sin(int(elapsed / 30)))
+        energy.presentValue = round(12500 + elapsed * 0.01, 2)
+        if elapsed >= next_log[0]:
+            log(started_at + datetime.timedelta(seconds=elapsed), elapsed)
+            next_log[0] += TREND_LOG_INTERVAL
 
-    return [temperature, pressure, setpoint, door, fan, mode], update
+    objects = [temperature, pressure, setpoint, door, fan, mode, occupancy, energy, status_text]
+    return objects + [trend_log.trend_log for trend_log in trend_logs], update, trend_logs
 
 
 def ahu_objects():
@@ -285,7 +463,7 @@ def ahu_objects():
         filter_alarm.statusFlags = IN_ALARM if alarm else NORMAL
         unit_state.presentValue = int(elapsed / 10) % 4 + 1
 
-    return [supply_air, return_air, damper, supply_fan, filter_alarm, unit_state], update
+    return [supply_air, return_air, damper, supply_fan, filter_alarm, unit_state], update, []
 
 
 def device_json(instance: int, name: str, segmentation: str, max_apdu: int) -> dict:
@@ -387,9 +565,11 @@ def start_network():
 
     updates = []
     for app, build_objects in ((room, room_objects), (ahu, ahu_objects)):
-        objects, update = build_objects()
+        objects, update, trend_logs = build_objects()
         for obj in objects:
             app.add_object(obj)
+        for trend_log in trend_logs:
+            app.trend_logs[trend_log.trend_log.objectIdentifier] = trend_log
         updates.append(update)
     print(
         f"BACnet device 1001 (oibus-bacnet-room) on {ip}:{PORT}, network {IP_NETWORK}, routing to network "

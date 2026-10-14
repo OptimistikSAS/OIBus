@@ -19,7 +19,15 @@ export const SOUTH_B_A_CNET_ITEM_SETTINGS_OBJECT_TYPES = [
   'binary-value',
   'multi-state-input',
   'multi-state-output',
-  'multi-state-value'
+  'multi-state-value',
+  'accumulator',
+  'pulse-converter',
+  'loop',
+  'integer-value',
+  'positive-integer-value',
+  'large-analog-value',
+  'characterstring-value',
+  'trend-log'
 ] as const;
 export type SouthBACnetItemSettingsObjectType = (typeof SOUTH_B_A_CNET_ITEM_SETTINGS_OBJECT_TYPES)[number];
 
@@ -394,6 +402,7 @@ export interface SouthBACnetSettings {
   retryInterval: number;
   maxParallelRun: number;
   discoveryTargetAddress: string | null;
+  timezone: Timezone;
   covDefaultLifetime: number;
   covRenewalMargin: number;
   maxObjectsPerRequest: number;
@@ -819,7 +828,7 @@ export interface SouthBACnetItemSettings {
   deviceInstance: number;
   objectType: SouthBACnetItemSettingsObjectType;
   objectInstance: number;
-  propertyIdentifier: SouthBACnetItemSettingsPropertyIdentifier;
+  propertyIdentifier?: SouthBACnetItemSettingsPropertyIdentifier;
   routed: boolean;
   networkNumber?: number;
   macAddress?: string;
