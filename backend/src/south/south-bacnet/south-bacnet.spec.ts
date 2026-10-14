@@ -381,12 +381,21 @@ describe('SouthBACnet', () => {
       ]);
     });
 
-    it('should use whoIsThroughBBMD when BBMD is enabled', async () => {
+    it('should register as a foreign device, then use whoIsThroughBBMD when BBMD is enabled', async () => {
       const bbmdConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
         ...configuration,
         settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
       };
       south = new SouthBACnet(bbmdConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      let registrationsBeforeWhoIs: number | null = null;
+      bacnetExports.default.mock.mockImplementationOnce(function BACnetClientCtorMock(_options: unknown) {
+        const created = new BACnetClientMock();
+        created.whoIsThroughBBMD.mock.mockImplementation(() => {
+          registrationsBeforeWhoIs = created.registerForeignDevice.mock.calls.length;
+        });
+        lastCreatedClient = created;
+        return created;
+      });
 
       const testPromise = south.testConnection();
       await flushPromises();
@@ -394,10 +403,41 @@ describe('SouthBACnet', () => {
       mock.timers.tick(3000);
       await testPromise;
 
+      assert.deepStrictEqual(client.registerForeignDevice.mock.calls[0].arguments, [{ address: '10.0.0.1:47808' }, 900]);
+      assert.strictEqual(registrationsBeforeWhoIs, 1);
       assert.strictEqual(client.whoIsThroughBBMD.mock.calls.length, 1);
       assert.deepStrictEqual(client.whoIsThroughBBMD.mock.calls[0].arguments, [{ address: '10.0.0.1:47808' }]);
-      // Not reused from a live connection: opened and closed just for the test.
+      // Not reused from a live connection: opened and closed just for the test, and never renewed.
       assert.strictEqual(client.close.mock.calls.length, 1);
+      mock.timers.tick(900 * 500);
+      await flushPromises();
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 1);
+    });
+
+    it('should fail the test when the BBMD refuses the foreign device registration', async () => {
+      south = new SouthBACnet(
+        {
+          ...configuration,
+          settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
+        },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+      bacnetExports.default.mock.mockImplementationOnce(function BACnetClientCtorMock(_options: unknown) {
+        const created = new BACnetClientMock();
+        created.registerForeignDevice.mock.mockImplementation(async () => {
+          throw new Error('BacnetError - Class:7 - Code:0 - Result:48');
+        });
+        lastCreatedClient = created;
+        return created;
+      });
+
+      await assert.rejects(south.testConnection(), {
+        message: 'Could not register as a foreign device with BBMD 10.0.0.1:47808: BacnetError - Class:7 - Code:0 - Result:48'
+      });
+      assert.strictEqual(lastCreatedClient.whoIsThroughBBMD.mock.calls.length, 0);
+      assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
     });
 
     it('should send a unicast Who-Is when discoveryTargetAddress is set', async () => {
@@ -455,6 +495,27 @@ describe('SouthBACnet', () => {
       assert.strictEqual(typeof result.connectionDuration, 'number');
       assert.strictEqual(typeof result.queryDuration, 'number');
       assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
+    });
+
+    it('should register as a foreign device before testing an item when BBMD is enabled', async () => {
+      south = new SouthBACnet(
+        {
+          ...configuration,
+          settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
+        },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      const client = lastCreatedClient;
+      mock.timers.tick(3000);
+      await testPromise;
+
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 1);
+      assert.strictEqual(client.close.mock.calls.length, 1);
     });
 
     it('should send a unicast Who-Is to the item device address before reading', async () => {
@@ -608,7 +669,7 @@ describe('SouthBACnet', () => {
           values: spec.properties.map(property => ({
             id: property.id,
             index: property.index,
-            value: property.id === 85 ? [{ type: 4, value: 21.5 }] : [{ type: 8, value: { bitsUsed: 4, value: [0, 1, 0, 0] } }]
+            value: property.id === 85 ? [{ type: 4, value: 21.5 }] : [{ type: 8, value: { bitsUsed: 4, value: [0b1001] } }]
           }))
         }))
       }));
@@ -630,7 +691,7 @@ describe('SouthBACnet', () => {
         content.content.map(value => [value.pointId, value.data.value]),
         [
           ['item1', 21.5],
-          ['item5', '0100']
+          ['item5', '1001']
         ]
       );
     });

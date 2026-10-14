@@ -169,9 +169,12 @@ function toPointValue(raw: unknown): string | number {
   if (typeof raw === 'number' || typeof raw === 'string') return raw;
   if (typeof raw === 'boolean') return raw ? 1 : 0;
   if (raw && typeof raw === 'object') {
+    // @bacnet-js/client decodes a bit string into bytes, bit 0 in the least significant bit of byte 0.
+    // Rendered one character per bit in BACnet order: status flags "0100" is in-alarm, FAULT, overridden, out-of-service.
     const bitString = raw as Partial<{ bitsUsed: number; value: Array<number> }>;
-    if (Array.isArray(bitString.value) && typeof bitString.bitsUsed === 'number') {
-      return bitString.value.slice(0, bitString.bitsUsed).join('');
+    const bytes = bitString.value;
+    if (Array.isArray(bytes) && typeof bitString.bitsUsed === 'number') {
+      return Array.from({ length: bitString.bitsUsed }, (_, bit) => ((bytes[bit >> 3] ?? 0) >> (bit & 7)) & 1).join('');
     }
     return JSON.stringify(raw);
   }
@@ -227,10 +230,8 @@ export default class SouthBACnet
       this.reconnectTimeout = null;
     }
     try {
-      this.client = await this.createClient();
-      if (this.connector.settings.bbmd.enabled) {
-        await this.registerForeignDevice(this.client);
-      }
+      this.client = await this.openClient();
+      this.scheduleForeignDeviceRenewal(this.client);
       await super.connect();
     } catch (error: unknown) {
       this.logger.error(`Error while connecting to the BACnet network: ${getErrorMessage(error)}`);
@@ -335,27 +336,54 @@ export default class SouthBACnet
       });
   }
 
+  /**
+   * Opens a client, registered as a foreign device when a BBMD is configured. Every client needs
+   * the registration, including the short-lived ones of Test settings and Test item: the BBMD
+   * rejects a Who-Is to distribute from an unregistered device, and I-Am replies, usually
+   * broadcast on the device's own subnet, only reach OIBus through it.
+   */
+  private async openClient(): Promise<BACnetClient> {
+    const client = await this.createClient();
+    if (!this.connector.settings.bbmd.enabled) return client;
+    try {
+      await this.registerForeignDevice(client);
+    } catch (error: unknown) {
+      client.close();
+      throw new Error(
+        `Could not register as a foreign device with BBMD ${this.connector.settings.bbmd.address}: ${getErrorMessage(error)}`
+      );
+    }
+    return client;
+  }
+
   private async registerForeignDevice(client: BACnetClient): Promise<void> {
     const bbmd = this.connector.settings.bbmd;
     await client.registerForeignDevice({ address: bbmd.address! }, bbmd.foreignDeviceTtl!);
     this.logger.info(`Registered as a foreign device with BBMD ${bbmd.address}`);
-    this.scheduleForeignDeviceRegistration(client, Math.max(1000, Math.floor(bbmd.foreignDeviceTtl! * 500)));
   }
 
-  /** Renews the registration halfway through its TTL; a failed renewal is retried every `retryInterval` until it succeeds. */
+  /** Keeps a long-lived client registered: renewed halfway through its TTL. No-op without a BBMD. */
+  private scheduleForeignDeviceRenewal(client: BACnetClient): void {
+    if (!this.connector.settings.bbmd.enabled) return;
+    this.scheduleForeignDeviceRegistration(client, Math.max(1000, Math.floor(this.connector.settings.bbmd.foreignDeviceTtl! * 500)));
+  }
+
+  /** A failed renewal is retried every `retryInterval` until it succeeds. */
   private scheduleForeignDeviceRegistration(client: BACnetClient, delayMs: number): void {
     if (this.foreignDeviceRenewalTimeout) {
       clearTimeout(this.foreignDeviceRenewalTimeout);
     }
     this.foreignDeviceRenewalTimeout = setTimeout(() => {
       this.foreignDeviceRenewalTimeout = null;
-      this.registerForeignDevice(client).catch((error: unknown) => {
-        if (this.client !== client) return;
-        this.logger.error(
-          `Error renewing BBMD foreign device registration, retrying in ${this.connector.settings.retryInterval} ms: ${getErrorMessage(error)}`
-        );
-        this.scheduleForeignDeviceRegistration(client, this.connector.settings.retryInterval);
-      });
+      this.registerForeignDevice(client)
+        .then(() => this.scheduleForeignDeviceRenewal(client))
+        .catch((error: unknown) => {
+          if (this.client !== client) return;
+          this.logger.error(
+            `Error renewing BBMD foreign device registration, retrying in ${this.connector.settings.retryInterval} ms: ${getErrorMessage(error)}`
+          );
+          this.scheduleForeignDeviceRegistration(client, this.connector.settings.retryInterval);
+        });
     }, delayMs);
   }
 
@@ -364,7 +392,7 @@ export default class SouthBACnet
     let client = this.client;
     try {
       if (!client) {
-        client = await this.createClient();
+        client = await this.openClient();
       }
       const devices = await this.discoverDevices(client);
       const items: Array<{ key: string; value: string }> = [{ key: 'DevicesFound', value: String(devices.length) }];
@@ -389,7 +417,7 @@ export default class SouthBACnet
     try {
       if (!client) {
         const connectStart = DateTime.now().toMillis();
-        client = await this.createClient();
+        client = await this.openClient();
         connectionDuration = DateTime.now().toMillis() - connectStart;
       }
       await this.verifyDeviceIdentity(client, item);
@@ -801,7 +829,8 @@ export default class SouthBACnet
 
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
     if (this.client === null) {
-      this.client = await this.createClient();
+      this.client = await this.openClient();
+      this.scheduleForeignDeviceRenewal(this.client);
     }
     const client = this.client;
 
