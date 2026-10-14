@@ -104,7 +104,7 @@
                 <span class="fa-solid {{ sortIcon('itemCount') }}" aria-hidden="true"></span>
               </button>
             </th>
-            <th class="actions-column"></th>
+            <th class="oib-actions-column-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -124,27 +124,25 @@
                 </td>
               }
               <td>{{ getItemCount(group.id!) }}</td>
-              <td class="text-nowrap action-buttons">
-                <div class="pull-right">
-                  <button
-                    type="button"
-                    class="btn btn-link edit-group px-1 py-0"
-                    [ngbTooltip]="'south.groups.edit-title' | translate"
-                    [attr.aria-label]="'south.groups.edit-title' | translate"
-                    (click)="onEditGroup(group)"
-                  >
-                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-link delete-group px-1 py-0"
-                    [ngbTooltip]="'south.groups.confirm-deletion' | translate: { name: group.standardSettings.name }"
-                    [attr.aria-label]="'common.delete' | translate"
-                    (click)="onDeleteGroup(group)"
-                  >
-                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                  </button>
-                </div>
+              <td class="oib-actions">
+                <button
+                  type="button"
+                  class="btn btn-link edit-group"
+                  [ngbTooltip]="'south.groups.edit-title' | translate"
+                  [attr.aria-label]="'south.groups.edit-title' | translate"
+                  (click)="onEditGroup(group)"
+                >
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-link delete-group"
+                  [ngbTooltip]="'south.groups.confirm-deletion' | translate: { name: group.standardSettings.name }"
+                  [attr.aria-label]="'common.delete' | translate"
+                  (click)="onDeleteGroup(group)"
+                >
+                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                </button>
               </td>
             </tr>
           }

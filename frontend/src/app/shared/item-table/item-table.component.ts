@@ -85,6 +85,8 @@ export class ItemTableComponent<T extends TableItem> {
   readonly extraFilter = input<(item: T) => boolean>(() => true);
   /** Value to compare to sort the columns added by the page (the built-in columns are sorted by the table) */
   readonly sortValue = input<(item: T, column: string) => string | number>(builtInSortValue);
+  /** Maximum number of action buttons a row displays (1 to 6), to size the actions column */
+  readonly actionCount = input(0);
   readonly selection = model<ItemSelection<T>>(new Map());
 
   readonly enableSelected = output<void>();
