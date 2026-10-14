@@ -2,6 +2,8 @@
 sidebar_position: 22
 ---
 
+import ThrottlingSettings from './_throttling-settings.mdx';
+
 # BACnet®/IP
 
 BACnet® (ASHRAE 135) est le protocole de communication standard pour les équipements de gestion technique du
@@ -21,6 +23,7 @@ BACnet/IP, communiquant en UDP, à l'aide de la bibliothèque
 | **Adresse de diffusion**     | Adresse de diffusion utilisée pour la découverte d'appareils (`Who-Is`) lorsque ni l'**Adresse cible de découverte** ni le BBMD ne s'appliquent. | `255.255.255.255`   |
 | **Adresse cible de découverte** | Optionnel. Si renseigné, **Tester les paramètres** et le niveau racine d'**Explorer** envoient `Who-Is` directement à cet appareil (unicast) au lieu de diffuser. Laisser vide pour diffuser sur tout le sous-réseau. | `192.168.1.10` |
 | **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue). | `10000` |
+| **Fuseau horaire des appareils** | Fuseau horaire de l'horloge des appareils. Les enregistrements des [journaux de tendance](#history-from-trend-logs) sont horodatés dans l'heure locale de l'appareil ; ce paramètre les convertit en instants exacts. | `Europe/Paris` |
 | **Requêtes parallèles max**  | Nombre maximal d'éléments (ou de groupes synchronisés) qu'OIBus lit en même temps, jusqu'à `16`. Les requêtes vers un même appareil restent envoyées les unes après les autres : une valeur plus élevée n'accélère que les éléments répartis sur plusieurs appareils. | `1` |
 
 :::tip Découverte en unicast plutôt qu'en diffusion
@@ -55,7 +58,7 @@ cet élément est ignoré, avec un avertissement dans les logs ; les autres él�
 
 | Paramètre                        | Description                                                                                                                                      | Exemple de valeur |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| **Objets max par requête**          | Nombre maximal de paires objet/propriété qu'OIBus regroupe dans une seule requête `ReadPropertyMultiple` vers un appareil. Réduisez cette valeur si un appareil rejette les requêtes volumineuses (par exemple, absence de prise en charge de la segmentation APDU). | `20` |
+| **Objets max par requête**          | Nombre maximal de paires objet/propriété qu'OIBus regroupe dans une seule requête `ReadPropertyMultiple` vers un appareil, et d'enregistrements de journal de tendance demandés dans une seule requête `ReadRange`. Réduisez cette valeur si un appareil rejette les requêtes volumineuses (par exemple, absence de prise en charge de la segmentation APDU). | `20` |
 | **Durée de l'abonnement COV**       | Durée, en secondes, demandée pour un abonnement COV. `0` demande un abonnement sans expiration.                                                 | `300`                |
 | **Marge de renouvellement COV**     | Délai, en secondes, avant l'expiration d'un abonnement COV à durée limitée auquel OIBus le renouvelle — mais jamais avant la moitié de sa durée. Sans effet lorsque la durée est `0`. | `60`                 |
 
@@ -128,9 +131,17 @@ Chaque élément cible une propriété d'objet BACnet sur un appareil.
 :::note Type d'objet
 
 `Entrée analogique`, `Sortie analogique`, `Valeur analogique`, `Entrée binaire`, `Sortie binaire`,
-`Valeur binaire`, `Entrée multi-état`, `Sortie multi-état`, `Valeur multi-état`. Ces types couvrent les
-objets exposant une simple valeur scalaire ; les autres types d'objets BACnet (plannings, calendriers,
-journaux de tendance, etc.) ne sont pas pris en charge par ce connecteur.
+`Valeur binaire`, `Entrée multi-état`, `Sortie multi-état`, `Valeur multi-état`, `Accumulateur`,
+`Convertisseur d'impulsions`, `Boucle de régulation`, `Valeur entière`, `Valeur entière positive`,
+`Grande valeur analogique`, `Valeur chaîne de caractères` : objets lus une propriété à la fois, par scrutation
+ou COV.
+
+`Journal de tendance` : l'élément collecte les enregistrements du journal — voir
+[Historique depuis les journaux de tendance](#history-from-trend-logs). **Propriété** ne s'applique pas et est
+masquée.
+
+Les autres types d'objets BACnet (plannings, calendriers, fichiers, etc.) ne sont pas pris en charge par ce
+connecteur.
 
 :::
 
@@ -164,6 +175,33 @@ détermine réellement la réussite.
 
 :::
 
+## Historique depuis les journaux de tendance {#history-from-trend-logs}
+
+Un objet **Journal de tendance** (trend log) enregistre les valeurs d'un autre objet dans l'appareil lui-même,
+à intervalle fixe ou sur changement, dans un tampon d'enregistrements horodatés. Un élément dont le **Type
+d'objet** est `Journal de tendance` collecte ces enregistrements au lieu de lire une valeur courante : OIBus lit
+le tampon du journal (`ReadRange`) et envoie chaque enregistrement avec l'heure à laquelle il a été enregistré.
+
+- Avec un mode de scrutation classique, chaque exécution collecte les enregistrements faits depuis la
+  précédente, comme pour tout élément historique : l'**Intervalle de lecture max**, le **Délai de lecture** et
+  les décalages temporels de l'élément s'appliquent.
+- Dans une [requête d'historique](../history-queries.md), les journaux de tendance d'un South BACnet
+  complètent la plage demandée, tant que l'appareil conserve ces enregistrements — un tampon de journal a une
+  taille fixe, et les enregistrements les plus anciens sont supprimés en premier.
+- Un élément journal de tendance ne peut pas utiliser le mode **Subscription** : il n'y enregistre qu'un
+  avertissement.
+
+Le tampon est lu à rebours depuis son enregistrement le plus récent, **Objets max par requête** enregistrements
+par requête `ReadRange`, jusqu'à un enregistrement antérieur à la plage demandée.
+
+:::caution Fuseau horaire des appareils
+Les appareils BACnet horodatent leurs enregistrements dans leur heure locale, sans fuseau horaire. Renseignez
+le **Fuseau horaire des appareils** avec celui de l'horloge des appareils, sinon chaque enregistrement sera
+décalé de la différence horaire.
+:::
+
+<ThrottlingSettings />
+
 ## Appareils derrière un routeur BACnet {#devices-behind-a-bacnet-router}
 
 De nombreux contrôleurs de bâtiment ne sont pas eux-mêmes sur le réseau IP : ils se trouvent sur un bus MS/TP
@@ -185,10 +223,12 @@ derrière eux : **Explorer** liste les appareils routés avec leur numéro de r�
 renseignez plutôt l'**Adresse cible de découverte** avec le routeur.
 
 :::caution Abonnements COV aux appareils routés
-La bibliothèque BACnet utilisée par OIBus (`@bacnet-js/client` 3.3.2) envoie les demandes d'abonnement COV avec
-un nombre de sauts (hop count) de `0`, que les routeurs rejettent. C'est corrigé dans la bibliothèque mais pas
-encore publié : en attendant qu'OIBus intègre cette mise à jour, utilisez un mode de scrutation classique pour
-les éléments des appareils routés — en mode **Subscription**, ils ne font qu'enregistrer un avertissement.
+La bibliothèque BACnet utilisée par OIBus (`@bacnet-js/client` 3.3.2) envoie les demandes d'abonnement COV, et
+les requêtes `ReadRange` qui lisent les journaux de tendance, avec un nombre de sauts (hop count) de `0`, que
+les routeurs rejettent. C'est corrigé dans la bibliothèque mais pas encore publié : en attendant qu'OIBus
+intègre cette mise à jour, utilisez un mode de scrutation classique pour les éléments des appareils routés —
+en mode **Subscription**, ils ne font qu'enregistrer un avertissement — et les journaux de tendance des
+appareils routés ne peuvent pas être lus.
 :::
 
 ## Découvrir les appareils et les objets {#discovering-devices-and-objects}
