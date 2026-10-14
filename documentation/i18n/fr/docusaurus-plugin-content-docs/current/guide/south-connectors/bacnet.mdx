@@ -91,6 +91,10 @@ Lorsque cette option est activée et qu'aucune **Adresse cible de découverte** 
 d'appareils (**Tester les paramètres**, niveau racine d'**Explorer**) est acheminée via le BBMD au lieu d'une
 simple diffusion locale.
 
+**Tester les paramètres** et **Lancer le test** d'un élément enregistrent d'abord OIBus en tant que périphérique
+distant, même lorsque le connecteur n'est pas démarré : le BBMD ne relaie les diffusions que vers et depuis les
+appareils enregistrés. Si le BBMD refuse l'enregistrement (ou ne répond pas), le test échoue avec cette erreur.
+
 :::note Le BBMD ne sert pas qu'à la découverte
 
 L'enregistrement en tant que périphérique distant compte aussi pour les **abonnements COV** : un appareil
@@ -128,6 +132,10 @@ journaux de tendance, etc.) ne sont pas pris en charge par ce connecteur.
 :::note Propriété
 
 `Valeur actuelle` (par défaut), `Indicateurs d'état`, `Fiabilité`, `Hors service`, `Unités`.
+
+`Indicateurs d'état` est envoyé sous forme de quatre caractères `0`/`1`, dans l'ordre BACnet in-alarm, fault,
+overridden, out-of-service : `0100` signifie que l'objet est en défaut. `Fiabilité` et `Unités` sont envoyés
+sous forme de leur numéro d'énumération BACnet.
 
 Pour un élément sur le mode de scrutation **Subscription**, le service COV de BACnet transmet toujours la
 valeur actuelle et les indicateurs d'état de l'objet, quelle que soit la **Propriété** sélectionnée ici —
