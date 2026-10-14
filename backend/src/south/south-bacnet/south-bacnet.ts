@@ -60,6 +60,9 @@ const PROPERTY_IDENTIFIER_BY_SETTING: Record<SouthBACnetItemSettingsPropertyIden
   units: PropertyIdentifier.UNITS
 };
 
+// Every SubscribeCOV notification for the supported object types carries both (ASHRAE 135, clause 13.1):
+// items reading them use SubscribeCOV. Any other property needs SubscribeCOVProperty.
+const SUBSCRIBE_COV_PROPERTIES = new Set<PropertyIdentifier>([PropertyIdentifier.PRESENT_VALUE, PropertyIdentifier.STATUS_FLAGS]);
 // Concurrent SubscribeCOV cancellations sent on disconnect. Kept well below the client's 256 invoke ids.
 const COV_CANCEL_BATCH_SIZE = 32;
 // Subscriber process ids start at a random value (BACnet allows any Unsigned32), so the ids of a
@@ -185,6 +188,7 @@ interface CovSubscriptionEntry {
   item: SouthConnectorItemEntity<SouthBACnetItemSettings>;
   address: BACNetAddress;
   objectId: BACNetObjectID;
+  propertyId: PropertyIdentifier;
   subscriberProcessId: number;
   lifetimeSeconds: number;
   renewalTimeout: NodeJS.Timeout | null;
@@ -667,6 +671,7 @@ export default class SouthBACnet
         item,
         address: toAddress(item),
         objectId: toObjectId(item),
+        propertyId: toPropertyIdentifier(item),
         subscriberProcessId,
         lifetimeSeconds: this.connector.settings.covDefaultLifetime,
         renewalTimeout: null
@@ -688,7 +693,7 @@ export default class SouthBACnet
       this.covSubscriptions.delete(item.id);
       if (client) {
         try {
-          await client.subscribeCov(entry.address, entry.objectId, entry.subscriberProcessId, true, false, 0, {});
+          await this.sendSubscriptionRequest(client, entry, true);
         } catch (error: unknown) {
           this.logger.error(workUnitLogCtx([item]), `Error cancelling COV subscription for item "${item.name}": ${getErrorMessage(error)}`);
         }
@@ -708,9 +713,7 @@ export default class SouthBACnet
     const cancelAll = async () => {
       for (let i = 0; i < entries.length && !deadlineReached; i += COV_CANCEL_BATCH_SIZE) {
         await Promise.allSettled(
-          entries
-            .slice(i, i + COV_CANCEL_BATCH_SIZE)
-            .map(entry => client.subscribeCov(entry.address, entry.objectId, entry.subscriberProcessId, true, false, 0, {}))
+          entries.slice(i, i + COV_CANCEL_BATCH_SIZE).map(entry => this.sendSubscriptionRequest(client, entry, true))
         );
       }
     };
@@ -738,7 +741,38 @@ export default class SouthBACnet
   }
 
   /**
-   * Sends the SubscribeCOV request of a registered subscription, then schedules its renewal before
+   * Sends (or cancels) the subscription of an item, with issueConfirmedNotifications=false so that
+   * notifications arrive as 'covNotifyUnconfirmed'. present-value and status-flags use SubscribeCOV,
+   * which every COV-capable device implements. Any other property needs SubscribeCOVProperty, an
+   * optional service that @bacnet-js/client always requests without expiry (lifetime 0): it is still
+   * renewed on the same schedule, which re-creates it after a device restart, and cancelled when the
+   * item is unsubscribed or the connector stops.
+   */
+  private sendSubscriptionRequest(client: BACnetClient, entry: CovSubscriptionEntry, cancel: boolean): Promise<void> {
+    if (SUBSCRIBE_COV_PROPERTIES.has(entry.propertyId)) {
+      return client.subscribeCov(
+        entry.address,
+        entry.objectId,
+        entry.subscriberProcessId,
+        cancel,
+        false,
+        cancel ? 0 : entry.lifetimeSeconds,
+        {}
+      );
+    }
+    return client.subscribeProperty(
+      entry.address,
+      entry.objectId,
+      { id: entry.propertyId, index: ASN1_ARRAY_ALL },
+      entry.subscriberProcessId,
+      cancel,
+      false,
+      {}
+    );
+  }
+
+  /**
+   * Sends the subscription request of a registered subscription, then schedules its renewal before
    * the lifetime runs out. A failed request is retried every `retryInterval` until it succeeds or
    * the item is unsubscribed, so a device that is offline for a while starts sending again once back.
    */
@@ -746,15 +780,16 @@ export default class SouthBACnet
     const client = this.client;
     if (!client || this.covSubscriptions.get(entry.item.id) !== entry) return;
     try {
-      // issueConfirmedNotifications=false so notifications arrive as 'covNotifyUnconfirmed'. Standard
-      // SubscribeCOV always reports PRESENT_VALUE + STATUS_FLAGS regardless of the item's configured
-      // propertyIdentifier - handleCovNotification() picks PRESENT_VALUE out of the notification.
-      await client.subscribeCov(entry.address, entry.objectId, entry.subscriberProcessId, false, false, entry.lifetimeSeconds, {});
+      await this.sendSubscriptionRequest(client, entry, false);
     } catch (error: unknown) {
       if (this.covSubscriptions.get(entry.item.id) !== entry) return;
+      const hint =
+        isServiceRefusal(error) && !SUBSCRIBE_COV_PROPERTIES.has(entry.propertyId)
+          ? ' - the device may not support SubscribeCOVProperty: poll this item with a scan mode instead'
+          : '';
       this.logger.warn(
         workUnitLogCtx([entry.item]),
-        `Error subscribing to COV for item "${entry.item.name}", retrying in ${this.connector.settings.retryInterval} ms: ${getErrorMessage(error)}`
+        `Error subscribing to COV for item "${entry.item.name}", retrying in ${this.connector.settings.retryInterval} ms: ${getErrorMessage(error)}${hint}`
       );
       this.scheduleCovSubscription(entry, this.connector.settings.retryInterval);
       return;
@@ -782,8 +817,10 @@ export default class SouthBACnet
       return;
     }
 
-    const presentValueEntry = payload.values.find(value => value.property.id === PropertyIdentifier.PRESENT_VALUE) ?? payload.values[0];
-    const rawValue = presentValueEntry?.value?.[0]?.value;
+    // A notification carries several properties (present-value and status-flags for SubscribeCOV):
+    // only the one the item reads is published.
+    const propertyEntry = payload.values.find(value => value.property.id === subscription.propertyId);
+    const rawValue = propertyEntry?.value?.[0]?.value;
     if (rawValue === undefined || rawValue === null) return;
 
     const timestamp = DateTime.now().toUTC().toISO()!;
