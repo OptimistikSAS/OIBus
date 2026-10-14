@@ -130,9 +130,12 @@ this connector.
 out-of-service: `0100` means the object is in fault. `Reliability` and `Units` are sent as their BACnet
 enumeration number.
 
-For an item on the **Subscription** schedule, the underlying BACnet COV service always reports the object's
-present value and status flags, regardless of which **Property** is selected here — select a different
-property only for polled items.
+For an item on the **Subscription** schedule, `Present value` and `Status flags` are subscribed with the
+standard `SubscribeCOV` service, which every COV-capable device supports. Any other property uses
+`SubscribeCOVProperty`, an optional service that many devices don't implement: when a device refuses it,
+OIBus logs a warning suggesting to poll the item with a regular schedule instead. These property
+subscriptions never expire on the device; OIBus still renews them on the same schedule as other COV
+subscriptions, and cancels them when the item is removed or the connector stops.
 
 :::
 

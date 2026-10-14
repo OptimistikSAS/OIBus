@@ -137,9 +137,13 @@ journaux de tendance, etc.) ne sont pas pris en charge par ce connecteur.
 overridden, out-of-service : `0100` signifie que l'objet est en défaut. `Fiabilité` et `Unités` sont envoyés
 sous forme de leur numéro d'énumération BACnet.
 
-Pour un élément sur le mode de scrutation **Subscription**, le service COV de BACnet transmet toujours la
-valeur actuelle et les indicateurs d'état de l'objet, quelle que soit la **Propriété** sélectionnée ici —
-ne sélectionnez une propriété différente que pour les éléments interrogés par scrutation.
+Pour un élément sur le mode de scrutation **Subscription**, `Valeur actuelle` et `Indicateurs d'état` sont
+souscrits avec le service standard `SubscribeCOV`, pris en charge par tout appareil compatible COV. Toute autre
+propriété utilise `SubscribeCOVProperty`, un service optionnel que de nombreux appareils n'implémentent pas :
+lorsqu'un appareil le refuse, OIBus enregistre un avertissement suggérant d'interroger l'élément avec un mode
+de scrutation classique. Ces abonnements à une propriété n'expirent jamais sur l'appareil ; OIBus les renouvelle
+tout de même au même rythme que les autres abonnements COV, et les annule lorsque l'élément est supprimé ou que
+le connecteur s'arrête.
 
 :::
 

@@ -233,16 +233,27 @@ are meant for `any-content` / custom-transformer testing, not point-value items)
 
 ---
 
-### BACnet/IP Device — `bacnet-server` {#bacnet-ip-device--bacnet-server}
+### BACnet/IP Devices — `bacnet-server` {#bacnet-ip-devices--bacnet-server}
 
 | Property  | Value                                                                                                              |
 | --------- | ------------------------------------------------------------------------------------------------------------------ |
 | **Image** | `python:3.14-slim` running `docker/bacnet/bacnet_server.py` ([BACpypes3](https://github.com/JoelBender/bacpypes3)) |
-| **Port**  | `47809` (host, UDP) → `47808` (container, BACnet/IP)                                                               |
+| **Ports** | `47809` → `47808` (room device) and `47810` → `47809` (AHU device), UDP, host → container                          |
 
-A single BACnet/IP device (instance `1001`, name `oibus-bacnet-sim`) whose objects change over time, to test
-the [BACnet south connector](../guide/south-connectors/bacnet.mdx) end to end: discovery, polling, COV
-subscriptions and Explore.
+Two BACnet/IP devices whose objects change over time, to test the
+[BACnet south connector](../guide/south-connectors/bacnet.mdx) end to end: discovery, polling, COV
+subscriptions and Explore. One process runs both, each with its own BACnet application on its own UDP port.
+
+| Device | Instance | Name                | Port (container / host) | Services                                                                                                                                                                                                        |
+| ------ | -------- | ------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Room   | `1001`   | `oibus-bacnet-room` | `47808` / `47809`       | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus a minimal `SubscribeCOVProperty` (missing from BACpypes3) so that items reading another property can use COV too                         |
+| AHU    | `1002`   | `oibus-bacnet-ahu`  | `47809` / `47810`       | `Who-Is`, `ReadProperty`, `SubscribeCOV` only, like a small MS/TP controller: rejects `ReadPropertyMultiple` and `SubscribeCOVProperty`, and its object list must be read one entry at a time (no segmentation) |
+
+The constrained AHU exercises the connector's fallbacks: `ReadProperty` instead of `ReadPropertyMultiple`
+when polling, the object list read entry by entry in **Explore**, and the warning logged when a
+`SubscribeCOVProperty` is refused.
+
+**Room device objects:**
 
 | Object                | Name          | Unit  | Simulation                                                                                                            | COV increment |
 | --------------------- | ------------- | ----- | --------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -253,29 +264,41 @@ subscriptions and Explore.
 | `binary-value 1`      | `Fan`         | —     | Fixed, active                                                                                                         | —             |
 | `multi-state-value 1` | `Mode`        | —     | Cycles Off / Eco / Comfort (`1` – `3`) every 15 s                                                                     | —             |
 
-:::note Port 47809 and discovery from the host
-OIBus running on the host binds the standard BACnet port `47808` itself, so the device is published on
-`47809`. Broadcasts don't go through Docker's port mapping: from the host, a broadcast `Who-Is` finds
-nothing, so set **Discovery target address** instead. OIBus running in a container on `oibus-network`
-can discover the device by broadcast.
+**AHU device objects:**
+
+| Object                | Name             | Unit | Simulation                                                        | COV increment |
+| --------------------- | ---------------- | ---- | ----------------------------------------------------------------- | ------------- |
+| `analog-input 1`      | `SupplyAirTemp`  | `°C` | Sine wave, 16 ± 2 °C, period ~125 s                               | `0.1`         |
+| `analog-input 2`      | `ReturnAirTemp`  | `°C` | Sine wave, 22 ± 1 °C, period ~250 s                               | `0.1`         |
+| `analog-output 1`     | `DamperPosition` | `%`  | Sawtooth, 0 – 99 %, period 100 s                                  | `1`           |
+| `binary-output 1`     | `SupplyFan`      | —    | Square wave, period 40 s                                          | —             |
+| `binary-input 1`      | `FilterAlarm`    | —    | Active 20 s every 90 s, with the in-alarm status flag (`1000`)    | —             |
+| `multi-state-input 1` | `UnitState`      | —    | Cycles Off / Starting / Running / Stopping (`1` – `4`) every 10 s | —             |
+
+:::note Ports and discovery
+OIBus running on the host binds the standard BACnet port `47808` itself, so the devices are published on
+`47809` and `47810`. Broadcasts don't go through Docker's port mapping: from the host, a broadcast `Who-Is`
+finds nothing, so set **Discovery target address** instead. Inside `oibus-network`, a BACnet/IP broadcast
+reaches one UDP port only: OIBus running in a container discovers the room device (port `47808`) by
+broadcast, and reaches the AHU by unicast on `bacnet-server`'s address, port `47809`.
 :::
 
 **Connecting from OIBus:** create a South BACnet/IP connector with the following settings:
 
-| Setting                      | Value             |
-| ---------------------------- | ----------------- |
-| **Port**                     | `47808`           |
-| **Discovery target address** | `127.0.0.1:47809` |
+| Setting                      | Value                                                |
+| ---------------------------- | ---------------------------------------------------- |
+| **Port**                     | `47808`                                              |
+| **Discovery target address** | `127.0.0.1:47809` (or `127.0.0.1:47810` for the AHU) |
 
-Then add items with **Device address** `127.0.0.1:47809`, **Device instance** `1001`, and the object type
-and instance from the table above, or browse them with **Explore**.
+**Discovery target address** points **Explore** and **Test settings** at one device. Items of the same
+connector can still read both: **Device address** `127.0.0.1:47809` with **Device instance** `1001`, or
+`127.0.0.1:47810` with `1002`, and the object type and instance from the tables above.
 
-| Variable                 | Default            | Description                                              |
-| ------------------------ | ------------------ | -------------------------------------------------------- |
-| `BACNET_DEVICE_INSTANCE` | `1001`             | Device instance number                                   |
-| `BACNET_DEVICE_NAME`     | `oibus-bacnet-sim` | Device object name                                       |
-| `BACNET_ADDRESS`         | `host`             | Local address; `host` uses the container's own interface |
-| `BACNET_UPDATE_INTERVAL` | `1`                | Seconds between value updates                            |
+| Variable                 | Default                          | Description                                                                              |
+| ------------------------ | -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `BACNET_DEVICES`         | `room:1001:47808,ahu:1002:47809` | Devices to run, as `profile:instance:port`; the name of each is `oibus-bacnet-<profile>` |
+| `BACNET_HOST`            | `host`                           | Local address the devices bind to; `host` uses the container's own interface             |
+| `BACNET_UPDATE_INTERVAL` | `1`                              | Seconds between value updates                                                            |
 
 ---
 
@@ -779,7 +802,7 @@ docker compose --profile simulator up -d --force-recreate simulator
 # Restart the Modbus server after changing docker/modbus/server_config.json
 docker compose --profile iot up -d --force-recreate modbus-server
 
-# Restart the BACnet device after changing docker/bacnet/bacnet_server.py
+# Restart the BACnet devices after changing docker/bacnet/bacnet_server.py
 docker compose --profile iot up -d --force-recreate bacnet-server
 
 # Stop everything and remove containers (data volumes are kept)
