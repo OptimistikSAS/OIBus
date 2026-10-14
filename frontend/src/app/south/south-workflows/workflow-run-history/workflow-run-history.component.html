@@ -99,7 +99,7 @@
               <th translate="south.workflows.run-triggered-by"></th>
               <th translate="south.workflows.run-discovered-count"></th>
               <th translate="south.workflows.run-error"></th>
-              <th></th>
+              <th class="oib-actions-column-1"></th>
             </tr>
           </thead>
           <tbody>
@@ -118,11 +118,11 @@
                 <td>{{ run.triggeredBy?.friendlyName || '-' }}</td>
                 <td>{{ run.discoveredCount }}</td>
                 <td class="small" [class.text-danger]="run.error">{{ run.error || 'Ø' }}</td>
-                <td>
+                <td class="oib-actions">
                   @if (run.status !== 'RUNNING') {
                     <button
                       type="button"
-                      class="btn btn-link view-payload px-1 py-0"
+                      class="btn btn-link view-payload"
                       [ngbTooltip]="'south.workflows.run-payload' | translate"
                       [attr.aria-label]="'south.workflows.run-payload' | translate"
                       (click)="onViewPayload(run)"

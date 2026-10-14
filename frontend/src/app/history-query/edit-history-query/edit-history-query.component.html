@@ -339,6 +339,7 @@
                 #itemTable
                 [items]="inMemoryItems()"
                 translationPrefix="history-query.items"
+                [actionCount]="3"
                 [showDates]="false"
                 [(selection)]="selectedItems"
                 (enableSelected)="enableSelectedItems()"
@@ -348,7 +349,7 @@
                 <ng-template [oibItemTableActions]="inMemoryItems()" let-item>
                   <button
                     type="button"
-                    class="btn btn-link edit-south-item px-1 py-0"
+                    class="btn btn-link edit-south-item"
                     [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
                     [attr.aria-label]="'history-query.items.tooltips.edit' | translate"
                     (click)="editItem(item)"
@@ -357,7 +358,7 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-link duplicate-south-item px-1 py-0"
+                    class="btn btn-link duplicate-south-item"
                     [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
                     [attr.aria-label]="'history-query.items.tooltips.duplicate' | translate"
                     (click)="duplicateItem(item)"
@@ -366,7 +367,7 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-link delete-south-item px-1 py-0"
+                    class="btn btn-link delete-south-item"
                     [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
                     [attr.aria-label]="'history-query.items.tooltips.delete' | translate"
                     (click)="deleteItem(item)"

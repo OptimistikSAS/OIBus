@@ -53,7 +53,7 @@
               <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
             </button>
           </th>
-          <th class="last-column"></th>
+          <th class="oib-actions-column-3"></th>
         </tr>
       </thead>
       <tbody>
@@ -107,39 +107,37 @@
                 [updatedBy]="certificate.updatedBy.friendlyName"
               />
             </td>
-            <td class="text-nowrap action-buttons">
-              <div class="pull-right">
-                <!-- Edit button -->
-                <button
-                  type="button"
-                  class="btn btn-link edit-certificate px-1 py-0"
-                  [ngbTooltip]="'engine.certificate.tooltips.edit' | translate"
-                  [attr.aria-label]="'engine.certificate.tooltips.edit' | translate"
-                  (click)="editCertificate(certificate)"
-                >
-                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                </button>
-                <!-- Delete button -->
-                <button
-                  type="button"
-                  class="btn btn-link delete-certificate px-1 py-0"
-                  [ngbTooltip]="'engine.certificate.tooltips.delete' | translate"
-                  [attr.aria-label]="'engine.certificate.tooltips.delete' | translate"
-                  (click)="deleteCertificate(certificate)"
-                >
-                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                </button>
-                <!-- Audit history button -->
-                <button
-                  type="button"
-                  class="btn btn-link show-audit-certificate px-1 py-0"
-                  [ngbTooltip]="'engine.certificate.tooltips.audit' | translate"
-                  [attr.aria-label]="'engine.certificate.tooltips.audit' | translate"
-                  (click)="showAudit(certificate)"
-                >
-                  <span class="fa-solid fa-history" aria-hidden="true"></span>
-                </button>
-              </div>
+            <td class="oib-actions">
+              <!-- Edit button -->
+              <button
+                type="button"
+                class="btn btn-link edit-certificate"
+                [ngbTooltip]="'engine.certificate.tooltips.edit' | translate"
+                [attr.aria-label]="'engine.certificate.tooltips.edit' | translate"
+                (click)="editCertificate(certificate)"
+              >
+                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+              </button>
+              <!-- Delete button -->
+              <button
+                type="button"
+                class="btn btn-link delete-certificate"
+                [ngbTooltip]="'engine.certificate.tooltips.delete' | translate"
+                [attr.aria-label]="'engine.certificate.tooltips.delete' | translate"
+                (click)="deleteCertificate(certificate)"
+              >
+                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+              </button>
+              <!-- Audit history button -->
+              <button
+                type="button"
+                class="btn btn-link show-audit-certificate"
+                [ngbTooltip]="'engine.certificate.tooltips.audit' | translate"
+                [attr.aria-label]="'engine.certificate.tooltips.audit' | translate"
+                (click)="showAudit(certificate)"
+              >
+                <span class="fa-solid fa-history" aria-hidden="true"></span>
+              </button>
             </td>
           </tr>
         }

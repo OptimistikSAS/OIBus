@@ -54,7 +54,6 @@ export function toConfigurationWorkflowCommand(workflow: ConfigurationWorkflowDT
 @Component({
   selector: 'oib-manage-workflows-modal',
   templateUrl: './manage-workflows-modal.component.html',
-  styleUrl: './manage-workflows-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })

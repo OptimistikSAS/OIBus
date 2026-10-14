@@ -104,7 +104,7 @@
             </button>
           </th>
         }
-        <th class="actions-column"></th>
+        <th [class]="'oib-actions-column-' + actionCount()"></th>
       </tr>
     </thead>
     <tbody>
@@ -138,11 +138,9 @@
               }
             </td>
           }
-          <td class="text-nowrap action-buttons">
+          <td class="oib-actions">
             @if (actionsTemplate(); as actions) {
-              <div class="pull-right">
-                <ng-container *ngTemplateOutlet="actions; context: { $implicit: item }" />
-              </div>
+              <ng-container *ngTemplateOutlet="actions; context: { $implicit: item }" />
             }
           </td>
         </tr>

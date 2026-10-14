@@ -229,6 +229,7 @@
                   #itemTable
                   [items]="inMemoryItems()"
                   translationPrefix="south.items"
+                  [actionCount]="3"
                   [showDates]="false"
                   [extraFilter]="itemFilter()"
                   [sortValue]="itemSortValue"
@@ -299,7 +300,7 @@
                     <!-- Edit button -->
                     <button
                       type="button"
-                      class="btn btn-link edit-south-item px-1 py-0"
+                      class="btn btn-link edit-south-item"
                       [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
                       [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
                       (click)="editItem(item)"
@@ -309,7 +310,7 @@
                     <!-- Duplicate button -->
                     <button
                       type="button"
-                      class="btn btn-link duplicate-south-item px-1 py-0"
+                      class="btn btn-link duplicate-south-item"
                       [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
                       [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
                       (click)="duplicateItem(item)"
@@ -319,7 +320,7 @@
                     <!-- Delete button -->
                     <button
                       type="button"
-                      class="btn btn-link delete-south-item px-1 py-0"
+                      class="btn btn-link delete-south-item"
                       [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
                       [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
                       (click)="deleteItem(item)"

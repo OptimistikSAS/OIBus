@@ -22,7 +22,7 @@
           <tr>
             <th translate="north.transformers.source"></th>
             <th translate="north.transformers.output"></th>
-            <th></th>
+            <th class="oib-actions-column-3"></th>
           </tr>
         </thead>
         <tbody>
@@ -50,39 +50,37 @@
                   <span>{{ transformerWithOptions.transformer.name }}</span>
                 }
               </td>
-              <td class="text-nowrap action-buttons">
-                <div class="pull-right">
+              <td class="oib-actions">
+                <button
+                  type="button"
+                  class="btn btn-link edit-transformer"
+                  [ngbTooltip]="'north.transformers.tooltips.edit' | translate"
+                  [attr.aria-label]="'north.transformers.tooltips.edit' | translate"
+                  (click)="editTransformer(transformerWithOptions)"
+                >
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-link delete-transformer"
+                  [ngbTooltip]="'north.transformers.tooltips.delete' | translate"
+                  [attr.aria-label]="'north.transformers.tooltips.delete' | translate"
+                  (click)="deleteTransformer(transformerWithOptions)"
+                >
+                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                </button>
+                <!-- Audit history button: only for saved transformers (the edit page works on unsaved ones) -->
+                @if (saveChangesDirectly()) {
                   <button
                     type="button"
-                    class="btn btn-link edit-transformer px-1 py-0"
-                    [ngbTooltip]="'north.transformers.tooltips.edit' | translate"
-                    [attr.aria-label]="'north.transformers.tooltips.edit' | translate"
-                    (click)="editTransformer(transformerWithOptions)"
+                    class="btn btn-link show-audit-transformer"
+                    [ngbTooltip]="'north.transformers.tooltips.audit' | translate"
+                    [attr.aria-label]="'north.transformers.tooltips.audit' | translate"
+                    (click)="showAudit(transformerWithOptions)"
                   >
-                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                    <span class="fa-solid fa-history" aria-hidden="true"></span>
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-link delete-transformer px-1 py-0"
-                    [ngbTooltip]="'north.transformers.tooltips.delete' | translate"
-                    [attr.aria-label]="'north.transformers.tooltips.delete' | translate"
-                    (click)="deleteTransformer(transformerWithOptions)"
-                  >
-                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                  </button>
-                  <!-- Audit history button: only for saved transformers (the edit page works on unsaved ones) -->
-                  @if (saveChangesDirectly()) {
-                    <button
-                      type="button"
-                      class="btn btn-link show-audit-transformer px-1 py-0"
-                      [ngbTooltip]="'north.transformers.tooltips.audit' | translate"
-                      [attr.aria-label]="'north.transformers.tooltips.audit' | translate"
-                      (click)="showAudit(transformerWithOptions)"
-                    >
-                      <span class="fa-solid fa-history" aria-hidden="true"></span>
-                    </button>
-                  }
-                </div>
+                }
               </td>
             </tr>
           }

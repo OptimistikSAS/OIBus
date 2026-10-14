@@ -258,6 +258,7 @@
                 #itemTable
                 [items]="items()"
                 translationPrefix="south.items"
+                [actionCount]="5"
                 [extraFilter]="itemFilter()"
                 [sortValue]="itemSortValue"
                 [(selection)]="selectedItems"
@@ -345,7 +346,7 @@
                   <!-- Edit button -->
                   <button
                     type="button"
-                    class="btn btn-link edit-south-item px-1 py-0"
+                    class="btn btn-link edit-south-item"
                     [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
                     [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
                     (click)="editItem(item)"
@@ -355,7 +356,7 @@
                   <!-- View Last Value button -->
                   <button
                     type="button"
-                    class="btn btn-link view-item-last-value px-1 py-0"
+                    class="btn btn-link view-item-last-value"
                     [ngbTooltip]="'south.items.view-last-value' | translate"
                     [attr.aria-label]="'south.items.view-last-value' | translate"
                     (click)="viewItemLastValue(item)"
@@ -365,7 +366,7 @@
                   <!-- Duplicate button -->
                   <button
                     type="button"
-                    class="btn btn-link duplicate-south-item px-1 py-0"
+                    class="btn btn-link duplicate-south-item"
                     [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
                     [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
                     (click)="duplicateItem(item)"
@@ -375,7 +376,7 @@
                   <!-- Delete button -->
                   <button
                     type="button"
-                    class="btn btn-link delete-south-item px-1 py-0"
+                    class="btn btn-link delete-south-item"
                     [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
                     [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
                     (click)="deleteItem(item)"
@@ -385,7 +386,7 @@
                   <!-- Audit history button -->
                   <button
                     type="button"
-                    class="btn btn-link show-audit-item px-1 py-0"
+                    class="btn btn-link show-audit-item"
                     [ngbTooltip]="'south.items.tooltips.audit' | translate"
                     [attr.aria-label]="'south.items.tooltips.audit' | translate"
                     (click)="showAudit('south_item', item.id)"
