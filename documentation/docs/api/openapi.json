@@ -2973,7 +2973,15 @@
 					"binary-value",
 					"multi-state-input",
 					"multi-state-output",
-					"multi-state-value"
+					"multi-state-value",
+					"accumulator",
+					"pulse-converter",
+					"loop",
+					"integer-value",
+					"positive-integer-value",
+					"large-analog-value",
+					"characterstring-value",
+					"trend-log"
 				]
 			},
 			"SouthBACnetItemSettingsPropertyIdentifier": {
@@ -3021,7 +3029,6 @@
 					"deviceInstance",
 					"objectType",
 					"objectInstance",
-					"propertyIdentifier",
 					"routed"
 				],
 				"type": "object",
@@ -3252,6 +3259,9 @@
 						"type": "string",
 						"nullable": true
 					},
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
 					"covDefaultLifetime": {
 						"type": "number",
 						"format": "double"
@@ -3284,6 +3294,7 @@
 					"retryInterval",
 					"maxParallelRun",
 					"discoveryTargetAddress",
+					"timezone",
 					"covDefaultLifetime",
 					"covRenewalMargin",
 					"maxObjectsPerRequest",

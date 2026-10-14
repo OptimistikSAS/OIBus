@@ -255,7 +255,7 @@ through the room device.
 
 | Device | Instance | Name                | Address                                                | Services                                                                                                                                                                                                        |
 | ------ | -------- | ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Room   | `1001`   | `oibus-bacnet-room` | `127.0.0.1:47809` from the host; routes to network `2` | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus a minimal `SubscribeCOVProperty` (missing from BACpypes3) so that items reading another property can use COV too                         |
+| Room   | `1001`   | `oibus-bacnet-room` | `127.0.0.1:47809` from the host; routes to network `2` | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus a minimal `SubscribeCOVProperty` and `ReadRange` (missing from BACpypes3) so that items reading another property can use COV too         |
 | AHU    | `1002`   | `oibus-bacnet-ahu`  | Network `2`, MAC `5`, through the room device          | `Who-Is`, `ReadProperty`, `SubscribeCOV` only, like a small MS/TP controller: rejects `ReadPropertyMultiple` and `SubscribeCOVProperty`, and its object list must be read one entry at a time (no segmentation) |
 
 The AHU exercises the connector's routed addressing and its fallbacks: `ReadProperty` instead of
@@ -269,14 +269,22 @@ device included — discard. Until OIBus ships the library update, poll the AHU'
 
 **Room device objects:**
 
-| Object                | Name          | Unit  | Simulation                                                                                                            | COV increment |
-| --------------------- | ------------- | ----- | --------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `analog-input 1`      | `Temperature` | `°C`  | Sine wave, 20 ± 5 °C, period ~190 s                                                                                   | `0.1`         |
-| `analog-input 2`      | `Pressure`    | `hPa` | Sine wave, 1013 ± 3 hPa, period ~280 s. In fault 15 s every minute: status flags `0100`, reliability unreliable-other | `0.5`         |
-| `analog-value 1`      | `Setpoint`    | `°C`  | Fixed, 21.5                                                                                                           | `0.1`         |
-| `binary-input 1`      | `Door`        | —     | Square wave, period 20 s                                                                                              | —             |
-| `binary-value 1`      | `Fan`         | —     | Fixed, active                                                                                                         | —             |
-| `multi-state-value 1` | `Mode`        | —     | Cycles Off / Eco / Comfort (`1` – `3`) every 15 s                                                                     | —             |
+| Object                    | Name             | Unit  | Simulation                                                                                                            | COV increment |
+| ------------------------- | ---------------- | ----- | --------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `analog-input 1`          | `Temperature`    | `°C`  | Sine wave, 20 ± 5 °C, period ~190 s                                                                                   | `0.1`         |
+| `analog-input 2`          | `Pressure`       | `hPa` | Sine wave, 1013 ± 3 hPa, period ~280 s. In fault 15 s every minute: status flags `0100`, reliability unreliable-other | `0.5`         |
+| `analog-value 1`          | `Setpoint`       | `°C`  | Fixed, 21.5                                                                                                           | `0.1`         |
+| `binary-input 1`          | `Door`           | —     | Square wave, period 20 s                                                                                              | —             |
+| `binary-value 1`          | `Fan`            | —     | Fixed, active                                                                                                         | —             |
+| `multi-state-value 1`     | `Mode`           | —     | Cycles Off / Eco / Comfort (`1` – `3`) every 15 s                                                                     | —             |
+| `integer-value 1`         | `Occupancy`      | —     | People in the room, 0 – 30, changes every 30 s                                                                        | —             |
+| `large-analog-value 1`    | `Energy`         | `kWh` | Meter index, +0.01 kWh per second                                                                                     | —             |
+| `characterstring-value 1` | `StatusText`     | —     | `Normal`, or `Pressure sensor fault` while `Pressure` is in fault                                                     | —             |
+| `trend-log 1`             | `TemperatureLog` | —     | `Temperature` logged every 10 s (real values)                                                                         | —             |
+| `trend-log 2`             | `DoorLog`        | —     | `Door` logged every 10 s (enumerated values)                                                                          | —             |
+
+Both trend logs start with 2 hours of records and hold up to 1000 records, the oldest dropped first. Their
+timestamps are the container's local time, UTC: set the connector's **Device time zone** to `UTC`.
 
 **AHU device objects:**
 
@@ -302,6 +310,7 @@ devices are listed. OIBus running in a container on `oibus-network` can discover
 | ---------------------------- | ----------------- |
 | **Port**                     | `47808`           |
 | **Discovery target address** | `127.0.0.1:47809` |
+| **Device time zone**         | `UTC`             |
 
 Then add items, or browse the devices with **Explore**:
 
@@ -310,11 +319,12 @@ Then add items, or browse the devices with **Explore**:
 | Room   | `127.0.0.1:47809` | `1001`          | Disabled      | —              | —           |
 | AHU    | `127.0.0.1:47809` | `1002`          | Enabled       | `2`            | `5`         |
 
-| Variable                 | Default | Description                                                   |
-| ------------------------ | ------- | ------------------------------------------------------------- |
-| `BACNET_HOST`            | `host`  | Local IPv4 address; `host` uses the container's own interface |
-| `BACNET_PORT`            | `47808` | BACnet/IP UDP port of the room device                         |
-| `BACNET_UPDATE_INTERVAL` | `1`     | Seconds between value updates                                 |
+| Variable                    | Default | Description                                                   |
+| --------------------------- | ------- | ------------------------------------------------------------- |
+| `BACNET_HOST`               | `host`  | Local IPv4 address; `host` uses the container's own interface |
+| `BACNET_PORT`               | `47808` | BACnet/IP UDP port of the room device                         |
+| `BACNET_TREND_LOG_INTERVAL` | `10`    | Seconds between two trend log records                         |
+| `BACNET_UPDATE_INTERVAL`    | `1`     | Seconds between value updates                                 |
 
 ---
 

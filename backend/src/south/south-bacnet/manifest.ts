@@ -7,7 +7,7 @@ const manifest: SouthConnectorManifest = {
     subscription: true,
     lastPoint: true,
     lastFile: false,
-    history: false
+    history: true
   },
   explore: true,
   beta: true,
@@ -174,6 +174,23 @@ const manifest: SouthConnectorManifest = {
           row: 2,
           columns: 8,
           displayInViewMode: false
+        }
+      },
+      {
+        type: 'timezone',
+        key: 'timezone',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.timezone',
+        defaultValue: 'UTC',
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
         }
       },
       {
@@ -480,6 +497,29 @@ const manifest: SouthConnectorManifest = {
           },
           enablingConditions: [
             {
+              // A trend log is read as a whole (its log buffer), not one property
+              referralPathFromRoot: 'objectType',
+              targetPathFromRoot: 'propertyIdentifier',
+              values: [
+                'analog-input',
+                'analog-output',
+                'analog-value',
+                'binary-input',
+                'binary-output',
+                'binary-value',
+                'multi-state-input',
+                'multi-state-output',
+                'multi-state-value',
+                'accumulator',
+                'pulse-converter',
+                'loop',
+                'integer-value',
+                'positive-integer-value',
+                'large-analog-value',
+                'characterstring-value'
+              ]
+            },
+            {
               referralPathFromRoot: 'routed',
               targetPathFromRoot: 'networkNumber',
               values: [true]
@@ -553,7 +593,15 @@ const manifest: SouthConnectorManifest = {
                 'binary-value',
                 'multi-state-input',
                 'multi-state-output',
-                'multi-state-value'
+                'multi-state-value',
+                'accumulator',
+                'pulse-converter',
+                'loop',
+                'integer-value',
+                'positive-integer-value',
+                'large-analog-value',
+                'characterstring-value',
+                'trend-log'
               ],
               validators: [
                 {
