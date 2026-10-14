@@ -61,6 +61,17 @@ class BACnetClientMock extends EventEmitter {
       _options: unknown
     ): Promise<void> => undefined
   );
+  subscribeProperty = mock.fn(
+    async (
+      _address: { address: string },
+      _objectId: BACnetObjectId,
+      _monitoredProperty: { id: number; index: number },
+      _subscriberProcessId: number,
+      _cancel: boolean,
+      _issueConfirmed: boolean,
+      _options: unknown
+    ): Promise<void> => undefined
+  );
   registerForeignDevice = mock.fn(async () => undefined);
   close = mock.fn(() => undefined);
 
@@ -783,6 +794,132 @@ describe('SouthBACnet', () => {
       const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
       assert.strictEqual(content.content[0].pointId, 'item4');
       assert.strictEqual(content.content[0].data.value, 12.5);
+    });
+
+    it('should publish status flags from a SubscribeCOV notification for a status-flags item', async () => {
+      const statusFlagsItem = buildItem({
+        id: 'id6',
+        name: 'item6',
+        scanMode: subscriptionScanMode,
+        settings: { ...subscriptionItem.settings, propertyIdentifier: 'status-flags' }
+      });
+      const client = await connectSouth();
+
+      await south.subscribe([statusFlagsItem]);
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
+      assert.strictEqual(client.subscribeProperty.mock.calls.length, 0);
+
+      client.emit('covNotifyUnconfirmed', {
+        payload: {
+          subscriberProcessId: client.subscribeCov.mock.calls[0].arguments[2],
+          initiatingDeviceId: 10,
+          monitoredObjectId: { type: 2, instance: 5 },
+          timeRemaining: 300,
+          values: [
+            { property: { id: 85 }, value: [{ type: 4, value: 12.5 }] },
+            { property: { id: 111 }, value: [{ type: 8, value: { bitsUsed: 4, value: [0b0010] } }] }
+          ]
+        }
+      });
+      mock.timers.tick(1000);
+      await flushPromises();
+
+      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      assert.deepStrictEqual(
+        content.content.map(value => [value.pointId, value.data.value]),
+        [['item6', '0100']]
+      );
+    });
+
+    it('should use SubscribeCOVProperty for a property that SubscribeCOV does not report', async () => {
+      const reliabilityItem = buildItem({
+        id: 'id7',
+        name: 'item7',
+        scanMode: subscriptionScanMode,
+        settings: { ...subscriptionItem.settings, propertyIdentifier: 'reliability' }
+      });
+      const client = await connectSouth();
+
+      await south.subscribe([reliabilityItem]);
+
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 0);
+      assert.strictEqual(client.subscribeProperty.mock.calls.length, 1);
+      const [address, objectId, monitoredProperty, subscriberProcessId, cancel, issueConfirmed] =
+        client.subscribeProperty.mock.calls[0].arguments;
+      assert.deepStrictEqual(address, { address: '192.168.1.10' });
+      assert.deepStrictEqual(objectId, { type: 2, instance: 5 });
+      assert.deepStrictEqual(monitoredProperty, { id: 103, index: bacnetJs.ASN1_ARRAY_ALL });
+      assert.strictEqual(cancel, false);
+      assert.strictEqual(issueConfirmed, false);
+
+      const notify = (values: Array<{ property: { id: number }; value: Array<{ type: number; value: unknown }> }>) =>
+        client.emit('covNotifyUnconfirmed', {
+          payload: { subscriberProcessId, initiatingDeviceId: 10, monitoredObjectId: { type: 2, instance: 5 }, timeRemaining: 0, values }
+        });
+      // Without the item's property, a notification publishes nothing.
+      notify([{ property: { id: 85 }, value: [{ type: 4, value: 12.5 }] }]);
+      notify([
+        { property: { id: 103 }, value: [{ type: 9, value: 7 }] },
+        { property: { id: 111 }, value: [{ type: 8, value: { bitsUsed: 4, value: [0b0010] } }] }
+      ]);
+      mock.timers.tick(1000);
+      await flushPromises();
+
+      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      assert.deepStrictEqual(
+        content.content.map(value => [value.pointId, value.data.value]),
+        [['item7', 7]]
+      );
+
+      // Renewed on the usual schedule, then cancelled with SubscribeCOVProperty too.
+      mock.timers.tick((300 - 60) * 1000);
+      await flushPromises();
+      assert.strictEqual(client.subscribeProperty.mock.calls.length, 2);
+      await south.unsubscribe([reliabilityItem]);
+      assert.strictEqual(client.subscribeProperty.mock.calls.length, 3);
+      assert.strictEqual(client.subscribeProperty.mock.calls[2].arguments[3], subscriberProcessId);
+      assert.strictEqual(client.subscribeProperty.mock.calls[2].arguments[4], true);
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 0);
+    });
+
+    it('should cancel SubscribeCOVProperty subscriptions on disconnect', async () => {
+      const reliabilityItem = buildItem({
+        id: 'id7',
+        name: 'item7',
+        scanMode: subscriptionScanMode,
+        settings: { ...subscriptionItem.settings, propertyIdentifier: 'reliability' }
+      });
+      const client = await connectSouth();
+      await south.subscribe([reliabilityItem, subscriptionItem]);
+
+      await south.disconnect();
+
+      assert.strictEqual(client.subscribeProperty.mock.calls.length, 2);
+      assert.strictEqual(client.subscribeProperty.mock.calls[1].arguments[4], true);
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 2);
+      assert.strictEqual(client.subscribeCov.mock.calls[1].arguments[3], true);
+    });
+
+    it('should hint at polling when a device refuses SubscribeCOVProperty', async () => {
+      const reliabilityItem = buildItem({
+        id: 'id7',
+        name: 'item7',
+        scanMode: subscriptionScanMode,
+        settings: { ...subscriptionItem.settings, propertyIdentifier: 'reliability' }
+      });
+      const client = await connectSouth();
+      client.subscribeProperty.mock.mockImplementation(async () => {
+        throw new Error('BacnetAbort - Reason:9');
+      });
+      logger.warn.mock.resetCalls();
+
+      await south.subscribe([reliabilityItem]);
+
+      assert.ok(
+        logger.warn.mock.calls.some(
+          call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('may not support SubscribeCOVProperty')
+        )
+      );
     });
 
     it('should cancel the COV subscription and clear bookkeeping on unsubscribe', async () => {
