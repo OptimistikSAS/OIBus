@@ -418,7 +418,7 @@ OIBus 的 South / North 连接器是循序渐进学习代码库的好方式：�
 | `modbus-server`                | _（默认）_  | `oitc/modbus-server` — Modbus TCP 服务器                                              |
 | `simulator`                   | _（默认）_  | 一个向 Modbus 和 MQTT 同时写入正弦波数值的 Python 脚本                                |
 | `mqtt-broker`                  | _（默认）_  | Eclipse Mosquitto broker（需身份验证，WebSocket 端口为 9001）                          |
-| `bacnet-server`                | _（默认）_  | BACpypes3 BACnet/IP 设备（完整功能与受限）—— 支持 COV，UDP 47809 / 47810                 |
+| `bacnet-server`                | _（默认）_  | BACpypes3 BACnet 网络：一个 IP 控制器路由到一个受限的类 MS/TP 设备，UDP 47809             |
 | `postgres`                     | _（默认）_  | 用于 South-PostgreSQL 的 PostgreSQL                                                    |
 | `ftp-server` / `sftp-server`   | `testing`   | 基于文件的数据源                                                                        |
 | `oibus` / `nginx`              | `oibus`     | 完整的 OIBus 运行时 + 反向代理，用于端到端测试                                          |

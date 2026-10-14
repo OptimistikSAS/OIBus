@@ -478,7 +478,18 @@ const manifest: SouthConnectorManifest = {
             visible: true,
             wrapInBox: true
           },
-          enablingConditions: [],
+          enablingConditions: [
+            {
+              referralPathFromRoot: 'routed',
+              targetPathFromRoot: 'networkNumber',
+              values: [true]
+            },
+            {
+              referralPathFromRoot: 'routed',
+              targetPathFromRoot: 'macAddress',
+              values: [true]
+            }
+          ],
           validators: [],
           attributes: [
             {
@@ -597,6 +608,71 @@ const manifest: SouthConnectorManifest = {
               displayProperties: {
                 row: 1,
                 columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'boolean',
+              key: 'routed',
+              translationKey: 'configuration.oibus.manifest.south.items.bacnet.routed',
+              defaultValue: false,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 2,
+                columns: 4,
+                displayInViewMode: false
+              }
+            },
+            {
+              type: 'number',
+              key: 'networkNumber',
+              translationKey: 'configuration.oibus.manifest.south.items.bacnet.network-number',
+              unit: null,
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                },
+                {
+                  type: 'MINIMUM',
+                  arguments: ['1']
+                },
+                {
+                  type: 'MAXIMUM',
+                  arguments: ['65534']
+                }
+              ],
+              displayProperties: {
+                row: 2,
+                columns: 3,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'string',
+              key: 'macAddress',
+              translationKey: 'configuration.oibus.manifest.south.items.bacnet.mac-address',
+              defaultValue: null,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                },
+                {
+                  // One decimal byte (an MS/TP station, 0 - 255), or 2 to 7 hexadecimal bytes separated by colons
+                  type: 'PATTERN',
+                  arguments: ['^(25[0-5]|2[0-4]\\d|1?\\d?\\d|[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){1,6})$']
+                }
+              ],
+              displayProperties: {
+                row: 2,
+                columns: 5,
                 displayInViewMode: true
               }
             }

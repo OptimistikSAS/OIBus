@@ -820,6 +820,9 @@ export interface SouthBACnetItemSettings {
   objectType: SouthBACnetItemSettingsObjectType;
   objectInstance: number;
   propertyIdentifier: SouthBACnetItemSettingsPropertyIdentifier;
+  routed: boolean;
+  networkNumber?: number;
+  macAddress?: string;
 }
 
 export interface SouthFolderScannerItemSettings {

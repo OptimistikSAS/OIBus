@@ -2214,6 +2214,9 @@
             "bacnet": {
               "device-address": "Device address",
               "device-instance": "Device instance",
+              "routed": "Routed device",
+              "network-number": "Network number",
+              "mac-address": "MAC address",
               "object-type": {
                 "title": "Object type",
                 "analog-input": "Analog input",

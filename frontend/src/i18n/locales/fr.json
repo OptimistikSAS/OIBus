@@ -1264,6 +1264,9 @@
             "bacnet": {
               "device-address": "Adresse de l'appareil",
               "device-instance": "Instance de l'appareil",
+              "routed": "Appareil routé",
+              "network-number": "Numéro de réseau",
+              "mac-address": "Adresse MAC",
               "object-type": {
                 "title": "Type d'objet",
                 "analog-input": "Entrée analogique",

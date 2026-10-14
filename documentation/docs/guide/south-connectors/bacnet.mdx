@@ -108,11 +108,14 @@ Each item targets one BACnet object property on one device.
 
 | Setting              | Description                                                                                                         | Example Value      |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| **Device address**    | IP address (and optional port) of the target device.                                                                | `192.168.1.10`      |
+| **Device address**    | IP address (and optional port) of the target device, or of its BACnet router for a [routed device](#devices-behind-a-bacnet-router). | `192.168.1.10`      |
 | **Device instance**   | The device's BACnet instance number. Used for identification and logging; requests are addressed by IP, not by this number. | `10`                |
 | **Object type**       | Type of the BACnet object to read.                                                                                  | `Analog input`      |
 | **Object instance**   | Instance number of the object within the device.                                                                    | `1`                 |
 | **Property**          | Object property to read.                                                                                            | `Present value`     |
+| **Routed device**     | The device is on another BACnet network, behind a router. Shows the two settings below.                            | Enabled/Disabled    |
+| **Network number**    | _(Routed device)_ BACnet network number of the device's network.                                                    | `2`                 |
+| **MAC address**       | _(Routed device)_ Address of the device on that network: decimal station number for MS/TP, or hexadecimal bytes separated by colons. | `5`                 |
 
 :::note Object type
 
@@ -151,6 +154,31 @@ actually determines success.
 
 :::
 
+## Devices Behind a BACnet Router {#devices-behind-a-bacnet-router}
+
+Many building controllers are not on the IP network themselves: they sit on an MS/TP (RS-485) trunk, or
+another BACnet network, behind a BACnet router — often the supervisory controller of the building. Such a
+device has no IP address; OIBus reaches it through the router, with these item settings:
+
+| Setting            | Value                                                                                                                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Device address** | The router's IP address (and port).                                                                                                                                                |
+| **Routed device**  | Enabled.                                                                                                                                                                           |
+| **Network number** | The BACnet network number of the device's network, as configured on the router (`1` – `65534`).                                                                                    |
+| **MAC address**    | The device's address on that network: its station number for MS/TP, in decimal (`0` – `255`), or for other networks its address bytes in hexadecimal separated by colons (`0A:00:00:05:BA:C0` for a BACnet/IP device: IP address then port). |
+
+The discovery `Who-Is` is a global broadcast, which routers forward to the networks behind them: **Explore**
+lists routed devices along with their network number and MAC address, and **Test settings** shows them as
+`192.168.1.20, network 2, MAC 5`. Through a BBMD, the `Who-Is` stays a local broadcast on each subnet, so
+routed devices are not discovered that way: set **Discovery target address** to the router instead.
+
+:::caution COV subscriptions to routed devices
+The BACnet library OIBus uses (`@bacnet-js/client` 3.3.2) sends COV subscription requests with a hop count
+of `0`, which routers discard. It is fixed in the library but not released yet: until OIBus ships the
+update, use a polling schedule for items on routed devices — on the **Subscription** schedule, they only log
+a warning.
+:::
+
 ## Discovering Devices and Objects {#discovering-devices-and-objects}
 
 Click **Explore** to browse the BACnet network interactively instead of entering device and object
@@ -158,7 +186,8 @@ identifiers by hand:
 
 1. At the root level, OIBus sends a `Who-Is` request — directly to **Discovery target address** if set,
    otherwise broadcast (or routed through the BBMD, if enabled) — and lists every device that responds, with
-   its name and instance number.
+   its name and instance number. The `Who-Is` is a global broadcast, so devices
+   [behind a BACnet router](#devices-behind-a-bacnet-router) are listed too.
 2. Selecting a device reads its object list and shows every object it exposes, enriched with its current
    present value where available. A device that cannot send its whole object list in one reply (no
    segmentation support, common on MS/TP) has it read entry by entry instead.
