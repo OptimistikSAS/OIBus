@@ -46,17 +46,16 @@ services:
     profiles: [ "iot" ]
 
   bacnet-server:
-    # BACpypes3 devices (docker/bacnet/bacnet_server.py), one process: a full-featured "room" device
-    # (instance 1001) and a constrained "ahu" one (instance 1002, no ReadPropertyMultiple, no
-    # SubscribeCOVProperty, no segmentation). Published on 47809 / 47810: OIBus running on the host binds the
-    # standard 47808 itself. Broadcasts do not cross the port mapping, so from the host use unicast discovery
-    # (Discovery target address 127.0.0.1:47809 or 127.0.0.1:47810).
+    # BACpypes3 network (docker/bacnet/bacnet_server.py), one process: a full-featured "room" device
+    # (instance 1001) that also routes to a virtual network 2, and behind it a constrained "ahu" device
+    # (instance 1002, MAC 5: no ReadPropertyMultiple, no SubscribeCOVProperty, no segmentation). Published
+    # on 47809: OIBus running on the host binds the standard 47808 itself. Broadcasts do not cross the port
+    # mapping, so from the host use unicast discovery (Discovery target address 127.0.0.1:47809).
     image: python:3.14-slim
     container_name: oibus_bacnet-server
     hostname: bacnet-server
     ports:
       - "47809:47808/udp"
-      - "47810:47809/udp"
     volumes:
       - ./docker/bacnet/bacnet_server.py:/app/bacnet_server.py
     working_dir: /app
@@ -64,7 +63,7 @@ services:
       sh -c "pip install --quiet --root-user-action=ignore 'bacpypes3==0.0.110' 'ifaddr==0.2.0'
       && python -u bacnet_server.py"
     environment:
-      BACNET_DEVICES: room:1001:47808,ahu:1002:47809
+      BACNET_PORT: 47808
     networks:
       - oibus-network
     restart: unless-stopped

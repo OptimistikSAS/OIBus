@@ -230,18 +230,31 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 | 属性     | 值                                                                                                             |
 | -------- | -------------------------------------------------------------------------------------------------------------- |
 | **镜像** | `python:3.14-slim`，运行 `docker/bacnet/bacnet_server.py`（[BACpypes3](https://github.com/JoelBender/bacpypes3)） |
-| **端口** | `47809` → `47808`（room 设备）和 `47810` → `47809`（AHU 设备），UDP，主机 → 容器                                 |
+| **端口** | `47809`（主机，UDP）→ `47808`（容器，BACnet/IP）                                                               |
 
-两个 BACnet/IP 设备，其对象的值随时间变化，用于端到端测试 [BACnet South 连接器](../guide/south-connectors/bacnet.mdx)：
-设备发现、轮询、COV 订阅和浏览。两个设备由同一个进程运行，每个设备都有自己的 BACnet 应用和 UDP 端口。
+一个对象值随时间变化的小型 BACnet 网络，用于端到端测试 [BACnet South 连接器](../guide/south-connectors/bacnet.mdx)：
+设备发现、轮询、COV 订阅、浏览以及[路由器后面的设备](../guide/south-connectors/bacnet.mdx#devices-behind-a-bacnet-router)。
+一个进程运行两个设备：
 
-| 设备 | 实例   | 名称                | 端口（容器 / 主机） | 服务                                                                                                                                         |
-| ---- | ------ | ------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Room | `1001` | `oibus-bacnet-room` | `47808` / `47809`   | `Who-Is`、`ReadProperty`、`ReadPropertyMultiple`、`SubscribeCOV`，外加一个最小化的 `SubscribeCOVProperty`（BACpypes3 未提供），使读取其他属性的数据项也能使用 COV |
-| AHU  | `1002` | `oibus-bacnet-ahu`  | `47809` / `47810`   | 仅支持 `Who-Is`、`ReadProperty`、`SubscribeCOV`，类似小型 MS/TP 控制器：拒绝 `ReadPropertyMultiple` 和 `SubscribeCOVProperty`，且其对象列表只能逐条读取（不支持分段） |
+```text
+OIBus ── BACnet/IP, network 1 ── room device 1001 (also a router) ── virtual network 2 ── AHU device 1002, MAC 5
+```
 
-受限的 AHU 用于验证连接器的回退机制：轮询时使用 `ReadProperty` 代替 `ReadPropertyMultiple`，在 **浏览** 中逐条
+room 设备是一个 BACnet/IP 控制器，同时路由到一个虚拟网络，模拟楼宇控制器的 MS/TP 总线。AHU 位于该网络上：它
+没有自己的 IP 地址，需通过 room 设备访问。
+
+| 设备 | 实例   | 名称                | 地址                                          | 服务                                                                                                                                         |
+| ---- | ------ | ------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Room | `1001` | `oibus-bacnet-room` | 从主机访问 `127.0.0.1:47809`；路由到网络 `2`  | `Who-Is`、`ReadProperty`、`ReadPropertyMultiple`、`SubscribeCOV`，外加一个最小化的 `SubscribeCOVProperty`（BACpypes3 未提供），使读取其他属性的数据项也能使用 COV |
+| AHU  | `1002` | `oibus-bacnet-ahu`  | 网络 `2`，MAC `5`，通过 room 设备访问          | 仅支持 `Who-Is`、`ReadProperty`、`SubscribeCOV`，类似小型 MS/TP 控制器：拒绝 `ReadPropertyMultiple` 和 `SubscribeCOVProperty`，且其对象列表只能逐条读取（不支持分段） |
+
+AHU 用于验证连接器的路由寻址及回退机制：轮询时使用 `ReadProperty` 代替 `ReadPropertyMultiple`，在 **浏览** 中逐条
 读取对象列表，以及 `SubscribeCOVProperty` 被拒绝时记录的警告。
+
+:::caution AHU 的 COV 订阅
+`@bacnet-js/client` 3.3.2 发送 COV 订阅请求时跳数为 `0`，会被路由器（包括 room 设备）丢弃。在 OIBus 集成该库的
+更新之前，请通过轮询读取 AHU 的数据项。
+:::
 
 **room 设备的对象：**
 
@@ -266,27 +279,30 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 | `multi-state-input 1` | `UnitState`      | —    | 每 10 秒在 Off / Starting / Running / Stopping（`1` – `4`）之间循环 | —        |
 
 :::note 端口与设备发现
-在主机上运行的 OIBus 自身会占用标准 BACnet 端口 `47808`，因此这些设备发布在 `47809` 和 `47810`。广播无法通过
-Docker 的端口映射：从主机发送的广播 `Who-Is` 找不到任何设备，请改为设置 **发现目标地址**。在 `oibus-network`
-内，BACnet/IP 广播只能到达一个 UDP 端口：在容器中运行的 OIBus 可以通过广播发现 room 设备（端口 `47808`），
-并通过单播访问 `bacnet-server` 地址上端口 `47809` 的 AHU。
+在主机上运行的 OIBus 自身会占用标准 BACnet 端口 `47808`，因此 room 设备发布在 `47809`。广播无法通过 Docker
+的端口映射：从主机访问时，请将 **发现目标地址** 设置为 `127.0.0.1:47809`。`Who-Is` 是全局广播，room 设备会将其
+转发到网络 2，因此两个设备都会被列出。在 `oibus-network` 上的容器中运行的 OIBus 可以通过广播发现这两个设备。
 :::
 
 **从 OIBus 连接：** 使用以下设置创建一个 South BACnet/IP 连接器：
 
-| 设置             | 值                                              |
-| ---------------- | ----------------------------------------------- |
-| **端口**         | `47808`                                         |
-| **发现目标地址** | `127.0.0.1:47809`（AHU 则为 `127.0.0.1:47810`） |
+| 设置             | 值                |
+| ---------------- | ----------------- |
+| **端口**         | `47808`           |
+| **发现目标地址** | `127.0.0.1:47809` |
 
-**发现目标地址** 只让 **浏览** 和 **测试设置** 指向一个设备。同一连接器的数据项仍可读取两个设备：**设备地址**
-`127.0.0.1:47809` 配合 **设备实例** `1001`，或 `127.0.0.1:47810` 配合 `1002`，对象类型和实例取自上表。
+然后添加数据项，或通过 **浏览** 查看这些设备：
 
-| 变量                     | 默认值                           | 说明                                                           |
-| ------------------------ | -------------------------------- | -------------------------------------------------------------- |
-| `BACNET_DEVICES`         | `room:1001:47808,ahu:1002:47809` | 要运行的设备，格式为 `profile:instance:port`；名称为 `oibus-bacnet-<profile>` |
-| `BACNET_HOST`            | `host`                           | 设备绑定的本地地址；`host` 表示使用容器自身的网卡              |
-| `BACNET_UPDATE_INTERVAL` | `1`                              | 两次数值更新之间的秒数                                         |
+| 设备 | 设备地址          | 设备实例 | 路由设备 | 网络号 | MAC 地址 |
+| ---- | ----------------- | -------- | -------- | ------ | -------- |
+| Room | `127.0.0.1:47809` | `1001`   | 禁用     | —      | —        |
+| AHU  | `127.0.0.1:47809` | `1002`   | 启用     | `2`    | `5`      |
+
+| 变量                     | 默认值  | 说明                                        |
+| ------------------------ | ------- | ------------------------------------------- |
+| `BACNET_HOST`            | `host`  | 本地 IPv4 地址；`host` 表示使用容器自身的网卡 |
+| `BACNET_PORT`            | `47808` | room 设备的 BACnet/IP UDP 端口              |
+| `BACNET_UPDATE_INTERVAL` | `1`     | 两次数值更新之间的秒数                      |
 
 ---
 

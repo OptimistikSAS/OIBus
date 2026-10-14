@@ -65,6 +65,8 @@ const PROPERTY_IDENTIFIER_BY_SETTING: Record<SouthBACnetItemSettingsPropertyIden
 const SUBSCRIBE_COV_PROPERTIES = new Set<PropertyIdentifier>([PropertyIdentifier.PRESENT_VALUE, PropertyIdentifier.STATUS_FLAGS]);
 // Concurrent SubscribeCOV cancellations sent on disconnect. Kept well below the client's 256 invoke ids.
 const COV_CANCEL_BATCH_SIZE = 32;
+// Who-Is to this network number is a global broadcast: routers forward it to every network they reach.
+const GLOBAL_BROADCAST_NETWORK = 0xffff;
 // Upper bound of maxParallelRun, as in the manifest.
 const MAX_PARALLEL_RUN_CEILING = 16;
 // A failing COV subscription is retried after retryInterval, then twice as late each time, up to this delay.
@@ -99,17 +101,53 @@ function isDeviceScopedError(error: unknown): boolean {
 
 /** A device that answered Who-Is. */
 interface DiscoveredDevice {
-  address: string;
+  address: BACNetAddress;
   deviceId: number;
+}
+
+/** MAC address setting to bytes: one decimal byte (an MS/TP station), or hexadecimal bytes separated by colons. */
+function parseMacAddress(text: string): Array<number> {
+  return text.includes(':') ? text.split(':').map(byte => parseInt(byte, 16)) : [Number(text)];
+}
+
+/** Bytes to MAC address setting, the reverse of parseMacAddress. */
+function formatMacAddress(bytes: Array<number>): string {
+  return bytes.length === 1 ? String(bytes[0]) : bytes.map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join(':');
+}
+
+/** A device on another BACnet network, reached through the router at `address`. */
+function isRouted(address: BACNetAddress): boolean {
+  return address.net !== undefined && address.net > 0 && address.net !== GLOBAL_BROADCAST_NETWORK;
+}
+
+/** Identifies a device: devices behind the same router share its IP address. */
+function toDeviceKey(address: BACNetAddress): string {
+  return isRouted(address) ? `${address.address}|${address.net}|${formatMacAddress(address.adr ?? [])}` : address.address!;
+}
+
+/** Device address for logs: "10.0.0.5", or "10.0.0.5, network 2, MAC 5" for a routed device. */
+function describeAddress(address: BACNetAddress): string {
+  return isRouted(address) ? `${address.address}, network ${address.net}, MAC ${formatMacAddress(address.adr ?? [])}` : address.address!;
+}
+
+/** Same device, whether or not the IP address carries the default port. */
+function isSameDevice(a: BACNetAddress, b: BACNetAddress): boolean {
+  const host = (address: BACNetAddress) => address.address?.split(':')[0];
+  const route = (address: BACNetAddress) => (isRouted(address) ? `${address.net}|${formatMacAddress(address.adr ?? [])}` : '');
+  return host(a) === host(b) && route(a) === route(b);
 }
 
 /**
  * The address of the device that sent an unconfirmed request such as I-Am. @bacnet-js/client keeps
  * it in the message header, not in the payload (its `IAMResult.address` typing is wrong). A broadcast
- * relayed by a BBMD arrives from the BBMD itself, with the original sender in `forwardedFrom`.
+ * relayed by a BBMD arrives from the BBMD itself, with the original sender in `forwardedFrom`; a
+ * device behind a router comes with the network number and MAC address the router relayed it from.
  */
-function senderAddress(header: BACnetMessageHeader | undefined): string | null {
-  return header?.sender.forwardedFrom || header?.sender.address || null;
+function senderAddress(header: BACnetMessageHeader | undefined): BACNetAddress | null {
+  const address = header?.sender.forwardedFrom || header?.sender.address;
+  if (!address) return null;
+  const { net, adr } = header!.sender;
+  return net ? { address, net, adr: adr ?? [] } : { address };
 }
 
 /** One property (or one entry of an array property) of one object, on a device. */
@@ -164,8 +202,12 @@ function isObjectId(value: unknown): value is BACNetObjectID {
   return typeof value === 'object' && value !== null && 'type' in value && 'instance' in value;
 }
 
+/** The item's device: its IP address, or its router's IP address with the device's network number and MAC address. */
 function toAddress(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): BACNetAddress {
-  return { address: item.settings.deviceAddress };
+  if (!item.settings.routed) {
+    return { address: item.settings.deviceAddress };
+  }
+  return { address: item.settings.deviceAddress, net: item.settings.networkNumber, adr: parseMacAddress(item.settings.macAddress!) };
 }
 
 function toObjectId(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): BACNetObjectID {
@@ -414,19 +456,19 @@ export default class SouthBACnet
     return Math.max(1, Math.min(this.connector.settings.maxParallelRun, MAX_PARALLEL_RUN_CEILING));
   }
 
-  /** Runs `read` once every earlier read of the same device has settled. */
-  private async readDevice<T>(deviceAddress: string, read: () => Promise<T>): Promise<T> {
-    const previous = this.deviceReads.get(deviceAddress) ?? Promise.resolve();
+  /** Runs `read` once every earlier read of the same device (see toDeviceKey) has settled. */
+  private async readDevice<T>(deviceKey: string, read: () => Promise<T>): Promise<T> {
+    const previous = this.deviceReads.get(deviceKey) ?? Promise.resolve();
     let release!: () => void;
     const current = previous.then(() => new Promise<void>(resolve => (release = resolve)));
-    this.deviceReads.set(deviceAddress, current);
+    this.deviceReads.set(deviceKey, current);
     await previous;
     try {
       return await read();
     } finally {
       release();
-      if (this.deviceReads.get(deviceAddress) === current) {
-        this.deviceReads.delete(deviceAddress);
+      if (this.deviceReads.get(deviceKey) === current) {
+        this.deviceReads.delete(deviceKey);
       }
     }
   }
@@ -441,7 +483,7 @@ export default class SouthBACnet
       const devices = await this.discoverDevices(client);
       const items: Array<{ key: string; value: string }> = [{ key: 'DevicesFound', value: String(devices.length) }];
       for (const device of devices.slice(0, 5)) {
-        items.push({ key: `Device ${device.deviceId}`, value: device.address });
+        items.push({ key: `Device ${device.deviceId}`, value: describeAddress(device.address) });
       }
       return { items };
     } finally {
@@ -483,6 +525,11 @@ export default class SouthBACnet
    * no broadcast forwarding at all (it's plain routed UDP, same reachability requirement as
    * readProperty/readPropertyMultiple). Otherwise falls back to a broadcast, direct or through the
    * configured BBMD.
+   *
+   * The direct and unicast Who-Is are global broadcasts (network 0xFFFF): a BACnet router receiving
+   * one forwards it to the networks behind it (MS/TP trunks...), so their devices answer too. Through a
+   * BBMD it stays a local broadcast on each subnet - @bacnet-js/client sends Distribute-Broadcast-To-Network
+   * without a destination network.
    */
   private discoverDevices(client: BACnetClient): Promise<Array<DiscoveredDevice>> {
     return new Promise<Array<DiscoveredDevice>>(resolve => {
@@ -491,18 +538,18 @@ export default class SouthBACnet
       const onIAm = (content: { header?: BACnetMessageHeader; payload: IAMResult }) => {
         const address = senderAddress(content.header);
         if (!address) return;
-        devices.set(`${address}|${content.payload.deviceId}`, { address, deviceId: content.payload.deviceId });
+        devices.set(`${toDeviceKey(address)}|${content.payload.deviceId}`, { address, deviceId: content.payload.deviceId });
       };
       client.on('iAm', onIAm);
 
       const targetAddress = this.connector.settings.discoveryTargetAddress;
       const bbmd = this.connector.settings.bbmd;
       if (targetAddress) {
-        client.whoIs({ address: targetAddress });
+        client.whoIs({ address: targetAddress, net: GLOBAL_BROADCAST_NETWORK });
       } else if (bbmd.enabled) {
         client.whoIsThroughBBMD({ address: bbmd.address! });
       } else {
-        client.whoIs();
+        client.whoIs({ net: GLOBAL_BROADCAST_NETWORK });
       }
 
       const windowMs = Math.max(this.connector.settings.apduTimeout, 3000);
@@ -522,17 +569,18 @@ export default class SouthBACnet
    * since `readProperty` succeeding is the real pass/fail criterion.
    */
   private async verifyDeviceIdentity(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<void> {
-    const targetHost = item.settings.deviceAddress.split(':')[0];
+    const target = toAddress(item);
     const match = await new Promise<number | null>(resolve => {
       const onIAm = (content: { header?: BACnetMessageHeader; payload: IAMResult }) => {
-        if (senderAddress(content.header)?.split(':')[0] === targetHost) {
+        const sender = senderAddress(content.header);
+        if (sender && isSameDevice(sender, target)) {
           client.off('iAm', onIAm);
           clearTimeout(timeoutHandle);
           resolve(content.payload.deviceId);
         }
       };
       client.on('iAm', onIAm);
-      client.whoIs({ address: item.settings.deviceAddress });
+      client.whoIs(target);
       const timeoutHandle = setTimeout(
         () => {
           client.off('iAm', onIAm);
@@ -543,14 +591,14 @@ export default class SouthBACnet
     });
 
     if (match === null) {
-      this.logger.debug(`No unicast Who-Is response from ${item.settings.deviceAddress} for item "${item.name}"`);
+      this.logger.debug(`No unicast Who-Is response from ${describeAddress(target)} for item "${item.name}"`);
     } else if (match !== item.settings.deviceInstance) {
       this.logger.warn(
-        `Unicast Who-Is to ${item.settings.deviceAddress} for item "${item.name}" replied with device instance ${match}, ` +
+        `Unicast Who-Is to ${describeAddress(target)} for item "${item.name}" replied with device instance ${match}, ` +
           `but the item is configured for device instance ${item.settings.deviceInstance} - check the static binding`
       );
     } else {
-      this.logger.debug(`Unicast Who-Is confirmed device instance ${match} at ${item.settings.deviceAddress} for item "${item.name}"`);
+      this.logger.debug(`Unicast Who-Is confirmed device instance ${match} at ${describeAddress(target)} for item "${item.name}"`);
     }
   }
 
@@ -575,7 +623,7 @@ export default class SouthBACnet
    */
   private async readProperties(
     client: BACnetClient,
-    deviceAddress: string,
+    device: BACNetAddress,
     references: Array<PropertyReference>
   ): Promise<Map<string, PropertyReadResult>> {
     const results = new Map<string, PropertyReadResult>();
@@ -585,11 +633,13 @@ export default class SouthBACnet
       const chunk = uniqueReferences.slice(i, i + chunkSize);
       let response: DecodeAcknowledgeMultipleResult;
       try {
-        response = await client.readPropertyMultiple({ address: deviceAddress }, toReadAccessSpecifications(chunk));
+        response = await client.readPropertyMultiple(device, toReadAccessSpecifications(chunk));
       } catch (error: unknown) {
         if (!isServiceRefusal(error)) throw error;
-        this.logger.debug(`Device ${deviceAddress} refused ReadPropertyMultiple (${getErrorMessage(error)}), using ReadProperty instead`);
-        await this.readPropertiesOneByOne(client, deviceAddress, chunk, results);
+        this.logger.debug(
+          `Device ${describeAddress(device)} refused ReadPropertyMultiple (${getErrorMessage(error)}), using ReadProperty instead`
+        );
+        await this.readPropertiesOneByOne(client, device, chunk, results);
         continue;
       }
       for (const objectResult of response.values) {
@@ -609,14 +659,14 @@ export default class SouthBACnet
 
   private async readPropertiesOneByOne(
     client: BACnetClient,
-    deviceAddress: string,
+    device: BACNetAddress,
     references: Array<PropertyReference>,
     results: Map<string, PropertyReadResult>
   ): Promise<void> {
     for (const reference of references) {
       try {
         const response = await client.readProperty(
-          { address: deviceAddress },
+          device,
           reference.objectId,
           reference.propertyId,
           reference.arrayIndex === ASN1_ARRAY_ALL ? {} : { arrayIndex: reference.arrayIndex }
@@ -637,30 +687,30 @@ export default class SouthBACnet
       return null;
     }
 
-    const itemsByDevice = new Map<string, Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>>();
+    const itemsByDevice = new Map<string, { device: BACNetAddress; items: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>> }>();
     for (const item of items) {
-      const bucket = itemsByDevice.get(item.settings.deviceAddress);
+      const device = toAddress(item);
+      const deviceKey = toDeviceKey(device);
+      const bucket = itemsByDevice.get(deviceKey);
       if (bucket) {
-        bucket.push(item);
+        bucket.items.push(item);
       } else {
-        itemsByDevice.set(item.settings.deviceAddress, [item]);
+        itemsByDevice.set(deviceKey, { device, items: [item] });
       }
     }
 
     const queryTime = DateTime.now().toUTC().toISO()!;
     const candidates: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; value: OIBusTimeValue }> = [];
 
-    for (const [deviceAddress, deviceItems] of itemsByDevice) {
+    for (const [deviceKey, { device, items: deviceItems }] of itemsByDevice) {
       let results: Map<string, PropertyReadResult>;
       try {
-        results = await this.readDevice(deviceAddress, () =>
-          this.readProperties(client, deviceAddress, deviceItems.map(toPropertyReference))
-        );
+        results = await this.readDevice(deviceKey, () => this.readProperties(client, device, deviceItems.map(toPropertyReference)));
       } catch (error: unknown) {
         if (isDeviceScopedError(error)) {
           this.logger.warn(
             logCtx,
-            `Read failed for device ${deviceAddress} (device error, connection kept): ${toRequestErrorMessage(error)}`
+            `Read failed for device ${describeAddress(device)} (device error, connection kept): ${toRequestErrorMessage(error)}`
           );
           continue;
         }
@@ -671,7 +721,7 @@ export default class SouthBACnet
         const result = results.get(toReferenceKey(toPropertyReference(item)));
         if (!result) continue;
         if ('error' in result) {
-          this.logger.warn(logCtx, `Could not read item "${item.name}" on device ${deviceAddress}: ${result.error}`);
+          this.logger.warn(logCtx, `Could not read item "${item.name}" on device ${describeAddress(device)}: ${result.error}`);
           continue;
         }
         const rawValue = result.values[0]?.value;
@@ -837,10 +887,14 @@ export default class SouthBACnet
       const retryInterval = this.connector.settings.retryInterval;
       const delayMs = Math.min(retryInterval * 2 ** (entry.failedAttempts - 1), Math.max(retryInterval, MAX_COV_RETRY_DELAY_MS));
       if (entry.failedAttempts === 1) {
+        // @bacnet-js/client 3.3.2 sends SubscribeCOV(Property) with a hop count of 0, which routers drop: fixed
+        // upstream (bacnet-js/client#87) but not released yet. Drop the routed hint once the dependency is bumped.
         const hint =
           isServiceRefusal(error) && !SUBSCRIBE_COV_PROPERTIES.has(entry.propertyId)
             ? ' - the device may not support SubscribeCOVProperty: poll this item with a scan mode instead'
-            : '';
+            : isTimeout(error) && isRouted(entry.address)
+              ? ' - COV subscriptions to devices behind a router are not supported yet: poll this item with a scan mode instead'
+              : '';
         this.logger.warn(
           workUnitLogCtx([entry.item]),
           `Error subscribing to COV for item "${entry.item.name}": ${toRequestErrorMessage(error)}${hint}. ` +
@@ -951,7 +1005,7 @@ export default class SouthBACnet
         let name = `Device ${device.deviceId}`;
         try {
           const nameResult = await client.readProperty(
-            { address: device.address },
+            device.address,
             { type: ObjectType.DEVICE, instance: device.deviceId },
             PropertyIdentifier.OBJECT_NAME
           );
@@ -960,25 +1014,36 @@ export default class SouthBACnet
         } catch (error: unknown) {
           this.logger.debug(`Could not read device name for device ${device.deviceId}: ${getErrorMessage(error)}`);
         }
+        // The metadata holds the item settings to read this device with.
+        const metadata: Record<string, string | number> = { address: device.address.address!, deviceInstance: device.deviceId };
+        const routed = isRouted(device.address);
+        if (routed) {
+          metadata.networkNumber = device.address.net!;
+          metadata.macAddress = formatMacAddress(device.address.adr ?? []);
+        }
         entries.push({
-          id: `${device.address}|${device.deviceId}`,
+          // address|network|MAC|instance, network and MAC left empty for a device on the IP network
+          id: `${device.address.address}|${routed ? device.address.net : ''}|${routed ? metadata.macAddress : ''}|${device.deviceId}`,
           name,
-          metadata: { address: device.address, deviceInstance: device.deviceId },
+          metadata,
           hasChildren: true
         });
       }
       return entries;
     }
 
-    const [deviceAddress, deviceInstanceText] = parentId.split('|');
+    const [ipAddress, networkNumber, macAddress, deviceInstanceText] = parentId.split('|');
+    const device: BACNetAddress = networkNumber
+      ? { address: ipAddress, net: Number(networkNumber), adr: parseMacAddress(macAddress) }
+      : { address: ipAddress };
     const deviceInstance = Number(deviceInstanceText);
-    const objectIds = await this.readObjectList(client, deviceAddress, { type: ObjectType.DEVICE, instance: deviceInstance });
+    const objectIds = await this.readObjectList(client, device, { type: ObjectType.DEVICE, instance: deviceInstance });
 
     let properties: Map<string, PropertyReadResult> | null = null;
     try {
       properties = await this.readProperties(
         client,
-        deviceAddress,
+        device,
         objectIds.flatMap(objectId => [
           { objectId, propertyId: PropertyIdentifier.OBJECT_NAME, arrayIndex: ASN1_ARRAY_ALL },
           { objectId, propertyId: PropertyIdentifier.PRESENT_VALUE, arrayIndex: ASN1_ARRAY_ALL }
@@ -987,7 +1052,7 @@ export default class SouthBACnet
     } catch (error: unknown) {
       this.logger.debug(`Could not enrich BACnet objects while exploring device ${deviceInstance}: ${getErrorMessage(error)}`);
     }
-    return objectIds.map(objectId => this.toExploreEntry(deviceAddress, deviceInstance, objectId, properties));
+    return objectIds.map(objectId => this.toExploreEntry(parentId, objectId, properties));
   }
 
   /**
@@ -997,11 +1062,11 @@ export default class SouthBACnet
    */
   private async readObjectList(
     client: BACnetClient,
-    deviceAddress: string,
+    device: BACNetAddress,
     deviceObjectId: BACNetObjectID
   ): Promise<Array<BACNetObjectID>> {
     try {
-      const result = await client.readProperty({ address: deviceAddress }, deviceObjectId, PropertyIdentifier.OBJECT_LIST);
+      const result = await client.readProperty(device, deviceObjectId, PropertyIdentifier.OBJECT_LIST);
       return result.values.map(applicationData => applicationData.value).filter(isObjectId);
     } catch (error: unknown) {
       if (!isServiceRefusal(error)) throw error;
@@ -1009,7 +1074,7 @@ export default class SouthBACnet
         `Device ${deviceObjectId.instance} refused to send its whole object list (${getErrorMessage(error)}), reading it entry by entry`
       );
     }
-    const countResult = await client.readProperty({ address: deviceAddress }, deviceObjectId, PropertyIdentifier.OBJECT_LIST, {
+    const countResult = await client.readProperty(device, deviceObjectId, PropertyIdentifier.OBJECT_LIST, {
       arrayIndex: 0
     });
     const count = countResult.values[0]?.value;
@@ -1019,7 +1084,7 @@ export default class SouthBACnet
       propertyId: PropertyIdentifier.OBJECT_LIST,
       arrayIndex: index + 1
     }));
-    const results = await this.readProperties(client, deviceAddress, references);
+    const results = await this.readProperties(client, device, references);
     return references.flatMap(reference => {
       const result = results.get(toReferenceKey(reference));
       return result && 'values' in result ? result.values.map(applicationData => applicationData.value).filter(isObjectId) : [];
@@ -1027,8 +1092,7 @@ export default class SouthBACnet
   }
 
   private toExploreEntry(
-    deviceAddress: string,
-    deviceInstance: number,
+    deviceEntryId: string,
     objectId: BACNetObjectID,
     properties: Map<string, PropertyReadResult> | null
   ): SouthConnectorExploreEntry {
@@ -1044,7 +1108,7 @@ export default class SouthBACnet
       metadata.value = toPointValue(rawValue);
     }
     return {
-      id: `${deviceAddress}|${deviceInstance}|${objectId.type}|${objectId.instance}`,
+      id: `${deviceEntryId}|${objectId.type}|${objectId.instance}`,
       name: typeof rawName === 'string' && rawName ? rawName : `${objectTypeLabel} ${objectId.instance}`,
       metadata,
       hasChildren: false
