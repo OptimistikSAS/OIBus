@@ -575,6 +575,54 @@ describe('SouthBACnet', () => {
   });
 
   describe('directQuery', () => {
+    it('should run up to maxParallelRun work-units in parallel, within the manifest ceiling', () => {
+      for (const [maxParallelRun, expected] of [
+        [4, 4],
+        [50, 16],
+        [0, 1]
+      ]) {
+        const parallel = new SouthBACnet(
+          { ...configuration, settings: { ...configuration.settings, maxParallelRun } },
+          addContentCallback,
+          southCacheRepository,
+          'cacheFolder'
+        );
+        assert.strictEqual(parallel['getMaxParallelRun'](), expected);
+      }
+    });
+
+    it('should send one request at a time to a device, while reading different devices in parallel', async () => {
+      const client = await connectSouth();
+      const inFlight = new Map<string, number>();
+      const maxInFlight = new Map<string, number>();
+      let maxDevicesInFlight = 0;
+      const pending: Array<() => void> = [];
+      client.readPropertyMultiple.mock.mockImplementation(async address => {
+        inFlight.set(address.address, (inFlight.get(address.address) ?? 0) + 1);
+        maxInFlight.set(address.address, Math.max(maxInFlight.get(address.address) ?? 0, inFlight.get(address.address)!));
+        maxDevicesInFlight = Math.max(maxDevicesInFlight, Array.from(inFlight.values()).filter(count => count > 0).length);
+        await new Promise<void>(resolve => pending.push(resolve));
+        inFlight.set(address.address, inFlight.get(address.address)! - 1);
+        if (address.address === '192.168.1.10' && client.readPropertyMultiple.mock.calls.length === 1) {
+          // A failed read must still let the next read of the device go.
+          throw new Error('ERR_TIMEOUT');
+        }
+        return { len: 0, values: [] };
+      });
+
+      const queries = [south.directQuery([item1]), south.directQuery([item2]), south.directQuery([item3])];
+      for (let i = 0; i < 5; i++) {
+        await flushPromises();
+        pending.shift()?.();
+      }
+      await Promise.all(queries);
+
+      assert.strictEqual(client.readPropertyMultiple.mock.calls.length, 3);
+      assert.strictEqual(maxInFlight.get('192.168.1.10'), 1);
+      assert.strictEqual(maxInFlight.get('192.168.1.11'), 1);
+      assert.strictEqual(maxDevicesInFlight, 2);
+    });
+
     it('should batch reads per device, respecting maxObjectsPerRequest, and cache the results', async () => {
       const connectPromise = south.connect();
       await flushPromises();
@@ -726,7 +774,14 @@ describe('SouthBACnet', () => {
         content.content.map(value => [value.pointId, value.data.value]),
         [['item1', 21.5]]
       );
-      assert.ok(logger.warn.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('"item2"')));
+      assert.ok(
+        logger.warn.mock.calls.some(
+          call =>
+            typeof call.arguments[1] === 'string' &&
+            call.arguments[1].includes('"item2"') &&
+            call.arguments[1].includes('OBJECT/UNKNOWN_OBJECT')
+        )
+      );
     });
 
     it('should skip the device when ReadProperty times out during the fallback', async () => {
@@ -983,6 +1038,66 @@ describe('SouthBACnet', () => {
       mock.timers.tick((300 - 60) * 1000);
       await flushPromises();
       assert.strictEqual(client.subscribeCov.mock.calls.length, 3);
+    });
+
+    it('should retry a failing COV subscription less and less often, warning only once', async () => {
+      const client = await connectSouth();
+      client.subscribeCov.mock.mockImplementation(async () => {
+        throw new Error('BacnetError - Class:5 - Code:29');
+      });
+      logger.warn.mock.resetCalls();
+      logger.debug.mock.resetCalls();
+      logger.info.mock.resetCalls();
+
+      await south.subscribe([subscriptionItem]);
+      for (const [delayMs, expectedCalls] of [
+        [1000, 2],
+        [2000, 3],
+        [4000, 4]
+      ]) {
+        mock.timers.tick(delayMs - 1);
+        await flushPromises();
+        assert.strictEqual(client.subscribeCov.mock.calls.length, expectedCalls - 1);
+        mock.timers.tick(1);
+        await flushPromises();
+        assert.strictEqual(client.subscribeCov.mock.calls.length, expectedCalls);
+      }
+      const covWarnings = logger.warn.mock.calls.filter(
+        call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('Error subscribing to COV')
+      );
+      assert.strictEqual(covWarnings.length, 1);
+      assert.ok((covWarnings[0].arguments[1] as string).includes('SERVICES/SERVICE_REQUEST_DENIED'));
+      assert.ok(
+        logger.debug.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('attempt 3 failed'))
+      );
+
+      // Back on its feet: logged once, then renewed on the usual schedule.
+      client.subscribeCov.mock.mockImplementation(async () => undefined);
+      mock.timers.tick(8000);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 5);
+      assert.ok(logger.info.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('after 4 failed')));
+      mock.timers.tick((300 - 60) * 1000);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 6);
+    });
+
+    it('should never renew a COV subscription sooner than halfway through its lifetime', async () => {
+      south = new SouthBACnet(
+        { ...configuration, settings: { ...configuration.settings, covDefaultLifetime: 100, covRenewalMargin: 80 } },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+      const client = await connectSouth();
+      await south.subscribe([subscriptionItem]);
+
+      mock.timers.tick(49_999);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
+      mock.timers.tick(1);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 2);
     });
 
     it('should retry a failed COV renewal every retryInterval', async () => {

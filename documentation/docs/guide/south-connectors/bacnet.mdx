@@ -20,7 +20,7 @@ over UDP, using the [@bacnet-js/client](https://github.com/bacnet-js/client) lib
 | **Broadcast address**  | Broadcast address used for device discovery (`Who-Is`) when neither **Discovery target address** nor BBMD apply.            | `255.255.255.255`  |
 | **Discovery target address** | Optional. When set, **Test settings** and the root level of **Explore** send `Who-Is` directly to this one device (unicast) instead of broadcasting. Leave empty to broadcast on the whole subnet. | `192.168.1.10`     |
 | **Retry interval**     | Time to wait, in milliseconds, before reconnecting after a transport-level failure (e.g. the local socket itself fails).    | `10000`            |
-| **Max parallel queries** | Maximum number of devices OIBus may query concurrently. Requests to a single device are always sent one at a time.        | `1`                |
+| **Max parallel queries** | Maximum number of items (or synchronized groups) OIBus reads at the same time, up to `16`. Requests to a single device are still sent one at a time, so a higher value only speeds up items spread over several devices. | `1` |
 
 :::tip Unicast discovery instead of broadcast
 
@@ -53,10 +53,11 @@ only that item is skipped, with a warning in the logs; the other items of the re
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
 | **Max objects per request**  | Maximum number of object/property pairs OIBus packs into a single `ReadPropertyMultiple` request to one device. Lower this if a device rejects large requests (e.g. no APDU segmentation support). | `20`           |
 | **COV subscription lifetime** | Lifetime, in seconds, requested for a COV subscription. `0` requests a subscription that never expires.                                     | `300`          |
-| **COV renewal margin**       | How long, in seconds, before a finite-lifetime COV subscription expires that OIBus renews it. Has no effect when lifetime is `0`.             | `60`           |
+| **COV renewal margin**       | How long, in seconds, before a finite-lifetime COV subscription expires that OIBus renews it — but never sooner than halfway through the lifetime. Has no effect when lifetime is `0`. | `60`           |
 
-A COV subscription or renewal that fails (device offline, for example) is retried every **Retry interval**
-until it succeeds. Devices only hold a limited number of COV subscriptions, so OIBus cancels its
+A COV subscription or renewal that fails (device offline, for example) is retried until it succeeds: after
+**Retry interval**, then twice as late each time, up to every 10 minutes. Only the first failure is logged as a
+warning; the following ones are logged at debug level, and a success after failures is logged again. Devices only hold a limited number of COV subscriptions, so OIBus cancels its
 subscriptions when the connector stops, and renews the same ones (rather than adding new ones) when it
 reconnects after a network failure.
 
