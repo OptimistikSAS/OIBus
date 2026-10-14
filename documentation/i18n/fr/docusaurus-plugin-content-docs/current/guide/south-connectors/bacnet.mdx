@@ -116,11 +116,14 @@ Chaque élément cible une propriété d'objet BACnet sur un appareil.
 
 | Paramètre              | Description                                                                                                              | Exemple de valeur   |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| **Adresse de l'appareil**  | Adresse IP (et port optionnel) de l'appareil cible.                                                                     | `192.168.1.10`        |
+| **Adresse de l'appareil**  | Adresse IP (et port optionnel) de l'appareil cible, ou de son routeur BACnet pour un [appareil routé](#devices-behind-a-bacnet-router). | `192.168.1.10`        |
 | **Instance de l'appareil** | Numéro d'instance BACnet de l'appareil. Utilisé pour l'identification et la journalisation ; les requêtes sont adressées par IP, et non par ce numéro. | `10` |
 | **Type d'objet**           | Type de l'objet BACnet à lire.                                                                                          | `Entrée analogique`   |
 | **Instance d'objet**       | Numéro d'instance de l'objet au sein de l'appareil.                                                                     | `1`                    |
 | **Propriété**              | Propriété de l'objet à lire.                                                                                            | `Valeur actuelle`      |
+| **Appareil routé**         | L'appareil est sur un autre réseau BACnet, derrière un routeur. Affiche les deux paramètres ci-dessous.                | Activé/Désactivé       |
+| **Numéro de réseau**       | _(Appareil routé)_ Numéro de réseau BACnet du réseau de l'appareil.                                                     | `2`                    |
+| **Adresse MAC**            | _(Appareil routé)_ Adresse de l'appareil sur ce réseau : numéro de station en décimal pour le MS/TP, ou octets en hexadécimal séparés par des deux-points. | `5` |
 
 :::note Type d'objet
 
@@ -161,6 +164,33 @@ détermine réellement la réussite.
 
 :::
 
+## Appareils derrière un routeur BACnet {#devices-behind-a-bacnet-router}
+
+De nombreux contrôleurs de bâtiment ne sont pas eux-mêmes sur le réseau IP : ils se trouvent sur un bus MS/TP
+(RS-485), ou un autre réseau BACnet, derrière un routeur BACnet — souvent le contrôleur de supervision du
+bâtiment. Un tel appareil n'a pas d'adresse IP ; OIBus le joint à travers le routeur, avec ces paramètres
+d'élément :
+
+| Paramètre                 | Valeur                                                                                                                                                                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Adresse de l'appareil** | L'adresse IP (et le port) du routeur.                                                                                                                                                                                     |
+| **Appareil routé**        | Activé.                                                                                                                                                                                                                   |
+| **Numéro de réseau**      | Le numéro de réseau BACnet du réseau de l'appareil, tel que configuré sur le routeur (`1` – `65534`).                                                                                                                      |
+| **Adresse MAC**           | L'adresse de l'appareil sur ce réseau : son numéro de station pour le MS/TP, en décimal (`0` – `255`), ou pour les autres réseaux ses octets d'adresse en hexadécimal séparés par des deux-points (`0A:00:00:05:BA:C0` pour un appareil BACnet/IP : adresse IP puis port). |
+
+Le `Who-Is` de découverte est une diffusion globale, que les routeurs relaient vers les réseaux situés
+derrière eux : **Explorer** liste les appareils routés avec leur numéro de réseau et leur adresse MAC, et
+**Tester les paramètres** les affiche sous la forme `192.168.1.20, network 2, MAC 5`. À travers un BBMD, le
+`Who-Is` reste une diffusion locale à chaque sous-réseau : les appareils routés n'y sont pas découverts,
+renseignez plutôt l'**Adresse cible de découverte** avec le routeur.
+
+:::caution Abonnements COV aux appareils routés
+La bibliothèque BACnet utilisée par OIBus (`@bacnet-js/client` 3.3.2) envoie les demandes d'abonnement COV avec
+un nombre de sauts (hop count) de `0`, que les routeurs rejettent. C'est corrigé dans la bibliothèque mais pas
+encore publié : en attendant qu'OIBus intègre cette mise à jour, utilisez un mode de scrutation classique pour
+les éléments des appareils routés — en mode **Subscription**, ils ne font qu'enregistrer un avertissement.
+:::
+
 ## Découvrir les appareils et les objets {#discovering-devices-and-objects}
 
 Cliquez sur **Explorer** pour parcourir le réseau BACnet de manière interactive plutôt que de saisir
@@ -168,7 +198,8 @@ manuellement les identifiants d'appareils et d'objets :
 
 1. Au niveau racine, OIBus envoie une requête `Who-Is` — directement à l'**Adresse cible de découverte** si
    elle est renseignée, sinon en diffusion (ou acheminée via le BBMD, si activé) — et liste chaque appareil
-   qui répond, avec son nom et son numéro d'instance.
+   qui répond, avec son nom et son numéro d'instance. Le `Who-Is` est une diffusion globale : les appareils
+   [derrière un routeur BACnet](#devices-behind-a-bacnet-router) sont aussi listés.
 2. La sélection d'un appareil lit sa liste d'objets et affiche chaque objet qu'il expose, enrichi de sa
    valeur actuelle lorsqu'elle est disponible. Un appareil incapable d'envoyer sa liste d'objets complète en
    une seule réponse (pas de prise en charge de la segmentation, fréquent en MS/TP) la voit lue entrée par entrée.

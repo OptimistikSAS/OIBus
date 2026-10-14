@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """
-OIBus demo BACnet/IP device.
+OIBus demo BACnet network.
 
-BACnet devices built on BACpypes3, exposing objects whose values change over time, so OIBus's BACnet
+Two BACnet devices built on BACpypes3, exposing objects whose values change over time, so OIBus's BACnet
 south can be exercised end to end: Who-Is/I-Am discovery, ReadProperty/ReadPropertyMultiple polling, COV
-subscriptions and Explore. One process runs every device of BACNET_DEVICES, each with its own BACnet
-application bound to its own UDP port: by default a "room" device on 47808 and an "ahu" device on 47809.
+subscriptions, Explore, and devices reached through a BACnet router:
 
-Profile "room" - a full-featured controller (device 1001, oibus-bacnet-room)
-───────────────────────────────────────────
+    OIBus ── BACnet/IP, network 1 ── room device 1001 (also a router) ── virtual network 2 ── AHU device 1002, MAC 5
+
+The room device is a BACnet/IP controller that also routes to a virtual network, standing in for the
+MS/TP trunk of a building controller. The AHU sits on that network: it has no IP address of its own and is
+reached through the room device, with network number 2 and MAC address 5.
+
+Room device - a full-featured controller and router (device 1001, oibus-bacnet-room)
+────────────────────────────────────────────────────────────────────────────────────
 analog-input 1       Temperature   °C    sine wave, 20 ± 5, period ~190 s           COV increment 0.1
 analog-input 2       Pressure      hPa   sine wave, 1013 ± 3, period ~280 s         COV increment 0.5
                                          in fault 15 s every minute: status flags fault bit set and
@@ -21,8 +26,8 @@ multi-state-value 1  Mode          -     cycles Off / Eco / Comfort every 15 s
 Services: Who-Is, ReadProperty, ReadPropertyMultiple and SubscribeCOV come with BACpypes3. SubscribeCOVProperty,
 which BACpypes3 does not implement, is added here in a minimal form (see RoomApplication).
 
-Profile "ahu" - a constrained air handling unit, like a small MS/TP controller (device 1002, oibus-bacnet-ahu)
-──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+AHU device - a constrained air handling unit, like a small MS/TP controller (device 1002, oibus-bacnet-ahu)
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 analog-input 1        SupplyAirTemp  °C    sine wave, 16 ± 2, period ~125 s          COV increment 0.1
 analog-input 2        ReturnAirTemp  °C    sine wave, 22 ± 1, period ~250 s          COV increment 0.1
 analog-output 1       DamperPosition %     sawtooth 0 - 99, period 100 s             COV increment 1
@@ -36,13 +41,9 @@ supported): it must be read one array index at a time.
 
 Environment variables
 ─────────────────────
-BACNET_DEVICES            comma-separated profile:instance:port, one device each
-                          (default: room:1001:47808,ahu:1002:47809). Device names are oibus-bacnet-<profile>.
-BACNET_HOST               local address the devices bind to, "host" for the container's own interface (default: host)
+BACNET_HOST               local IPv4 address, "host" for the container's own interface (default: host)
+BACNET_PORT               BACnet/IP UDP port of the room device (default: 47808)
 BACNET_UPDATE_INTERVAL    seconds between value updates (default: 1)
-
-Only the device on the standard port 47808 hears broadcast Who-Is on the Docker network: a BACnet/IP
-broadcast goes to one UDP port. Devices on other ports answer unicast requests sent to that port.
 """
 
 import asyncio
@@ -57,22 +58,30 @@ from bacpypes3.apdu import (
     SubscribeCOVPropertyRequest,
     UnconfirmedCOVNotificationRequest,
 )
+import ifaddr
 from bacpypes3.app import Application
-from bacpypes3.argparse import SimpleArgumentParser
 from bacpypes3.basetypes import PropertyValue
 from bacpypes3.constructeddata import Any
 from bacpypes3.errors import ExecutionError, SegmentationNotSupported, UnrecognizedService
 from bacpypes3.local.analog import AnalogInputObject, AnalogOutputObject, AnalogValueObject
 from bacpypes3.local.binary import BinaryInputObject, BinaryOutputObject, BinaryValueObject
 from bacpypes3.local.multistate import MultiStateInputObject, MultiStateValueObject
+from bacpypes3.pdu import Address
+from bacpypes3.vlan import VirtualNetwork
 
-DEVICES = os.environ.get("BACNET_DEVICES", "room:1001:47808,ahu:1002:47809")
 HOST = os.environ.get("BACNET_HOST", "host")
+PORT = int(os.environ.get("BACNET_PORT", "47808"))
 UPDATE_INTERVAL = float(os.environ.get("BACNET_UPDATE_INTERVAL", "1"))
 
 NORMAL = [0, 0, 0, 0]  # status flags: in-alarm, fault, overridden, out-of-service
 IN_ALARM = [1, 0, 0, 0]
 FAULT = [0, 1, 0, 0]
+
+IP_NETWORK = 1
+ROUTED_NETWORK = 2
+ROUTED_NETWORK_NAME = "mstp"
+ROUTER_MAC = 1
+AHU_MAC = 5
 
 
 class RoomApplication(Application):
@@ -279,48 +288,129 @@ def ahu_objects():
     return [supply_air, return_air, damper, supply_fan, filter_alarm, unit_state], update
 
 
-PROFILES = {
-    "room": (RoomApplication, room_objects),
-    "ahu": (ConstrainedApplication, ahu_objects),
-}
+def device_json(instance: int, name: str, segmentation: str, max_apdu: int) -> dict:
+    return {
+        "object-identifier": f"device,{instance}",
+        "object-name": name,
+        "object-type": "device",
+        "apdu-segment-timeout": 1000,
+        "apdu-timeout": 3000,
+        "application-software-version": "1.0",
+        "database-revision": 1,
+        "firmware-revision": "N/A",
+        "max-apdu-length-accepted": max_apdu,
+        "model-name": "OIBus simulator",
+        "number-of-apdu-retries": 3,
+        "protocol-revision": 22,
+        "protocol-version": 1,
+        "segmentation-supported": segmentation,
+        "system-status": "operational",
+        "vendor-identifier": 999,
+        "vendor-name": "OIBus",
+    }
 
 
-def start_device(profile: str, instance: int, port: int):
-    """Starts one device: its own BACnet application, bound to its own UDP port. Returns its update function."""
-    if profile not in PROFILES:
-        raise SystemExit(f"Unknown profile {profile!r} in BACNET_DEVICES, expected one of {', '.join(PROFILES)}")
-    application_class, build_objects = PROFILES[profile]
-    name = f"oibus-bacnet-{profile}"
-    address = f"{HOST}:{port}"
-    args = SimpleArgumentParser().parse_args(["--name", name, "--instance", str(instance), "--address", address])
-    app = application_class.from_args(args)
-    if application_class is ConstrainedApplication:
-        app.device_object.segmentationSupported = "noSegmentation"
-    objects, update_objects = build_objects()
-    for obj in objects:
-        app.add_object(obj)
-    print(f"BACnet device {instance} ({name}, profile {profile}) listening on {address}", flush=True)
+def host_ipv4() -> tuple:
+    """The IPv4 address and network prefix length to bind to."""
+    address = str(Address(HOST)).split(":")[0] if HOST == "host" else HOST
+    for adapter in ifaddr.get_adapters():
+        for ip in adapter.ips:
+            if ip.is_IPv4 and ip.ip == address:
+                return address, ip.network_prefix
+    return address, 24
+
+
+def mask(prefix: int) -> str:
+    bits = (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF
+    return ".".join(str((bits >> shift) & 0xFF) for shift in (24, 16, 8, 0))
+
+
+def start_network():
+    """Starts the room device (BACnet/IP, routing to the virtual network) and the AHU behind it."""
+    VirtualNetwork(ROUTED_NETWORK_NAME)
+    ip, prefix = host_ipv4()
+
+    room = RoomApplication.from_json(
+        [
+            device_json(1001, "oibus-bacnet-room", "segmented-both", 1476),
+            {
+                "object-identifier": "network-port,1",
+                "object-name": "NetworkPort-1",
+                "object-type": "network-port",
+                "network-type": "ipv4",
+                "protocol-level": "bacnet-application",
+                "bacnet-ip-mode": "normal",
+                "bacnet-ip-udp-port": PORT,
+                "ip-address": ip,
+                "ip-subnet-mask": mask(prefix),
+                "mac-address": f"{ip}:{PORT}",
+                "network-number": IP_NETWORK,
+                "network-number-quality": "configured",
+                "changes-pending": False,
+                "link-speed": 0.0,
+                "out-of-service": False,
+                "reliability": "no-fault-detected",
+            },
+            {
+                "object-identifier": "network-port,2",
+                "object-name": "NetworkPort-2",
+                "object-type": "network-port",
+                "network-type": "virtual",
+                "protocol-level": "bacnet-application",
+                "network-interface-name": ROUTED_NETWORK_NAME,
+                "mac-address": f"0x{ROUTER_MAC:02x}",
+                "network-number": ROUTED_NETWORK,
+                "network-number-quality": "configured",
+                "changes-pending": False,
+                "out-of-service": False,
+                "reliability": "no-fault-detected",
+            },
+        ]
+    )
+    ahu = ConstrainedApplication.from_json(
+        [
+            device_json(1002, "oibus-bacnet-ahu", "no-segmentation", 480),
+            {
+                "object-identifier": "network-port,1",
+                "object-name": "NetworkPort-1",
+                "object-type": "network-port",
+                "network-type": "virtual",
+                "protocol-level": "bacnet-application",
+                "network-interface-name": ROUTED_NETWORK_NAME,
+                "mac-address": f"0x{AHU_MAC:02x}",
+                "changes-pending": False,
+                "out-of-service": False,
+                "reliability": "no-fault-detected",
+            },
+        ]
+    )
+
+    updates = []
+    for app, build_objects in ((room, room_objects), (ahu, ahu_objects)):
+        objects, update = build_objects()
+        for obj in objects:
+            app.add_object(obj)
+        updates.append(update)
+    print(
+        f"BACnet device 1001 (oibus-bacnet-room) on {ip}:{PORT}, network {IP_NETWORK}, routing to network "
+        f"{ROUTED_NETWORK}; BACnet device 1002 (oibus-bacnet-ahu) on network {ROUTED_NETWORK}, MAC {AHU_MAC}",
+        flush=True,
+    )
 
     def update(elapsed: float) -> None:
-        update_objects(elapsed)
-        if isinstance(app, RoomApplication):
-            app.notify_property_subscriptions()
+        for update_objects in updates:
+            update_objects(elapsed)
+        room.notify_property_subscriptions()
 
     return update
 
 
 async def main() -> None:
-    updates = []
-    for device in DEVICES.split(","):
-        profile, instance, port = device.strip().split(":")
-        updates.append(start_device(profile, int(instance), int(port)))
-
+    update = start_network()
     start = time.monotonic()
     while True:
         await asyncio.sleep(UPDATE_INTERVAL)
-        elapsed = time.monotonic() - start
-        for update in updates:
-            update(elapsed)
+        update(time.monotonic() - start)
 
 
 if __name__ == "__main__":
