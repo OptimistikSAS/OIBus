@@ -30,7 +30,8 @@ class BACnetClientMock extends EventEmitter {
     async (
       _address: { address: string },
       _objectId: BACnetObjectId,
-      _propertyId: number
+      _propertyId: number,
+      _options?: { arrayIndex?: number }
     ): Promise<{
       len: number;
       objectId: BACnetObjectId;
@@ -46,7 +47,7 @@ class BACnetClientMock extends EventEmitter {
   readPropertyMultiple = mock.fn(
     async (
       _address: { address: string },
-      _specs: Array<{ objectId: BACnetObjectId }>
+      _specs: Array<{ objectId: BACnetObjectId; properties: Array<{ id: number; index: number }> }>
     ): Promise<{ len: number; values: Array<unknown> }> => ({ len: 0, values: [] })
   );
   subscribeCov = mock.fn(
@@ -99,6 +100,17 @@ const subscriptionScanMode: ScanMode = {
   id: 'subscription',
   name: 'subscription'
 };
+
+/**
+ * An I-Am event as @bacnet-js/client really emits it: the sender address is in the message header,
+ * the payload has none (despite the library's IAMResult typing).
+ */
+function iAm(address: string, deviceId: number, forwardedFrom: string | null = null) {
+  return {
+    header: { apduType: 0x10, expectingReply: false, sender: { address, forwardedFrom } },
+    payload: { deviceId, maxApdu: 1476, segmentation: 0, vendorId: 0 }
+  };
+}
 
 function buildItem(overrides: {
   id: string;
@@ -241,6 +253,13 @@ describe('SouthBACnet', () => {
     mock.restoreAll();
   });
 
+  async function connectSouth(): Promise<BACnetClientMock> {
+    const connectPromise = south.connect();
+    await flushPromises();
+    await connectPromise;
+    return lastCreatedClient;
+  }
+
   describe('connect / disconnect', () => {
     it('should properly connect and open a BACnet/IP client', async () => {
       const connectPromise = south.connect();
@@ -298,6 +317,32 @@ describe('SouthBACnet', () => {
       await south.disconnect();
       assert.strictEqual(client.close.mock.calls.length, 1);
     });
+
+    it('should retry a failed BBMD registration renewal every retryInterval', async () => {
+      south = new SouthBACnet(
+        {
+          ...configuration,
+          settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
+        },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+      const client = await connectSouth();
+      client.registerForeignDevice.mock.resetCalls();
+      client.registerForeignDevice.mock.mockImplementation(async () => {
+        throw new Error('ERR_TIMEOUT');
+      });
+
+      mock.timers.tick(900 * 500);
+      await flushPromises();
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 1);
+
+      client.registerForeignDevice.mock.mockImplementation(async () => undefined);
+      mock.timers.tick(1000);
+      await flushPromises();
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 2);
+    });
   });
 
   describe('testConnection', () => {
@@ -309,13 +354,31 @@ describe('SouthBACnet', () => {
 
       const testPromise = south.testConnection();
       await flushPromises();
-      client.emit('iAm', { payload: { address: '192.168.1.10', deviceId: 10, maxApdu: 1476, segmentation: 0, vendorId: 0 } });
+      client.emit('iAm', iAm('192.168.1.10', 10));
       mock.timers.tick(3000);
       const result = await testPromise;
 
       assert.strictEqual(client.whoIs.mock.calls.length, 1);
       assert.strictEqual(client.close.mock.calls.length, 0);
       assert.deepStrictEqual(result.items[0], { key: 'DevicesFound', value: '1' });
+    });
+
+    it('should report each device address from the I-Am sender, using the original sender of a BBMD-forwarded reply', async () => {
+      const client = await connectSouth();
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      client.emit('iAm', iAm('192.168.1.10', 10));
+      client.emit('iAm', iAm('10.0.0.1', 20, '172.16.0.5:47809'));
+      client.emit('iAm', iAm('192.168.1.10', 10));
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      assert.deepStrictEqual(result.items, [
+        { key: 'DevicesFound', value: '2' },
+        { key: 'Device 10', value: '192.168.1.10' },
+        { key: 'Device 20', value: '172.16.0.5:47809' }
+      ]);
     });
 
     it('should use whoIsThroughBBMD when BBMD is enabled', async () => {
@@ -408,9 +471,7 @@ describe('SouthBACnet', () => {
       const testPromise = south.testItem(item1, { history: undefined as never });
       await flushPromises();
       const client = lastCreatedClient;
-      client.emit('iAm', {
-        payload: { address: item1.settings.deviceAddress, deviceId: 999, maxApdu: 1476, segmentation: 0, vendorId: 0 }
-      });
+      client.emit('iAm', iAm(item1.settings.deviceAddress, 999));
       await testPromise;
 
       assert.ok(
@@ -423,15 +484,18 @@ describe('SouthBACnet', () => {
       const testPromise = south.testItem(item1, { history: undefined as never });
       await flushPromises();
       const client = lastCreatedClient;
-      client.emit('iAm', {
-        payload: {
-          address: item1.settings.deviceAddress,
-          deviceId: item1.settings.deviceInstance,
-          maxApdu: 1476,
-          segmentation: 0,
-          vendorId: 0
-        }
-      });
+      client.emit('iAm', iAm(item1.settings.deviceAddress, item1.settings.deviceInstance));
+      await testPromise;
+
+      assert.strictEqual(logger.warn.mock.calls.length, 0);
+    });
+
+    it('should ignore I-Am replies from other devices while verifying the item device', async () => {
+      logger.warn.mock.resetCalls();
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      lastCreatedClient.emit('iAm', iAm('192.168.1.99', 999));
+      mock.timers.tick(3000);
       await testPromise;
 
       assert.strictEqual(logger.warn.mock.calls.length, 0);
@@ -501,6 +565,112 @@ describe('SouthBACnet', () => {
       await flushPromises();
 
       assert.strictEqual(client.close.mock.calls.length, 1);
+    });
+
+    it('should log a property the device answered with an error instead of publishing it', async () => {
+      const client = await connectSouth();
+      client.readPropertyMultiple.mock.mockImplementation(async () => ({
+        len: 0,
+        values: [
+          { objectId: { type: 0, instance: 1 }, values: [{ id: 85, index: bacnetJs.ASN1_ARRAY_ALL, value: [{ type: 4, value: 21.5 }] }] },
+          {
+            objectId: { type: 0, instance: 2 },
+            values: [{ id: 85, index: bacnetJs.ASN1_ARRAY_ALL, value: [{ type: 105, value: { errorClass: 1, errorCode: 31 } }] }]
+          }
+        ]
+      }));
+      logger.warn.mock.resetCalls();
+
+      await south.directQuery([item1, item2]);
+
+      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      assert.deepStrictEqual(
+        content.content.map(value => [value.pointId, value.data.value]),
+        [['item1', 21.5]]
+      );
+      assert.ok(
+        logger.warn.mock.calls.some(
+          call =>
+            typeof call.arguments[1] === 'string' &&
+            call.arguments[1].includes('"item2"') &&
+            call.arguments[1].includes('OBJECT/UNKNOWN_OBJECT')
+        )
+      );
+    });
+
+    it('should read several properties of the same object into their own items', async () => {
+      const statusFlagsItem = buildItem({ id: 'id5', name: 'item5', settings: { ...item1.settings, propertyIdentifier: 'status-flags' } });
+      const client = await connectSouth();
+      client.readPropertyMultiple.mock.mockImplementation(async (_address, specs) => ({
+        len: 0,
+        values: specs.map(spec => ({
+          objectId: spec.objectId,
+          values: spec.properties.map(property => ({
+            id: property.id,
+            index: property.index,
+            value: property.id === 85 ? [{ type: 4, value: 21.5 }] : [{ type: 8, value: { bitsUsed: 4, value: [0, 1, 0, 0] } }]
+          }))
+        }))
+      }));
+
+      await south.directQuery([item1, statusFlagsItem]);
+
+      assert.strictEqual(client.readPropertyMultiple.mock.calls.length, 1);
+      assert.deepStrictEqual(client.readPropertyMultiple.mock.calls[0].arguments[1], [
+        {
+          objectId: { type: 0, instance: 1 },
+          properties: [
+            { id: 85, index: bacnetJs.ASN1_ARRAY_ALL },
+            { id: 111, index: bacnetJs.ASN1_ARRAY_ALL }
+          ]
+        }
+      ]);
+      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      assert.deepStrictEqual(
+        content.content.map(value => [value.pointId, value.data.value]),
+        [
+          ['item1', 21.5],
+          ['item5', '0100']
+        ]
+      );
+    });
+
+    it('should fall back to ReadProperty when a device refuses ReadPropertyMultiple', async () => {
+      const client = await connectSouth();
+      client.readPropertyMultiple.mock.mockImplementation(async () => {
+        throw new Error('BacnetAbort - Reason:9');
+      });
+      client.readProperty.mock.mockImplementation(async (_address, objectId) => {
+        if (objectId.instance === 2) throw new Error('BacnetError - Class:1 - Code:31');
+        return { len: 0, objectId, property: { id: 85, index: bacnetJs.ASN1_ARRAY_ALL }, values: [{ type: 4, value: 21.5 }] };
+      });
+      logger.warn.mock.resetCalls();
+
+      await south.directQuery([item1, item2]);
+
+      assert.strictEqual(client.readProperty.mock.calls.length, 2);
+      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      assert.deepStrictEqual(
+        content.content.map(value => [value.pointId, value.data.value]),
+        [['item1', 21.5]]
+      );
+      assert.ok(logger.warn.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('"item2"')));
+    });
+
+    it('should skip the device when ReadProperty times out during the fallback', async () => {
+      const client = await connectSouth();
+      client.readPropertyMultiple.mock.mockImplementation(async () => {
+        throw new Error('BacnetAbort - Reason:9');
+      });
+      client.readProperty.mock.mockImplementation(async () => {
+        throw new Error('ERR_TIMEOUT');
+      });
+
+      await south.directQuery([item1, item2]);
+
+      assert.strictEqual(client.readProperty.mock.calls.length, 1);
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
+      assert.strictEqual(client.close.mock.calls.length, 0);
     });
   });
 
@@ -577,6 +747,121 @@ describe('SouthBACnet', () => {
       await flushPromises();
       assert.strictEqual(client.subscribeCov.mock.calls.length, 0);
     });
+
+    it('should ignore a COV notification whose monitored object does not match the subscription', async () => {
+      const client = await connectSouth();
+      await south.subscribe([subscriptionItem]);
+      const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2];
+
+      client.emit('covNotifyUnconfirmed', {
+        payload: {
+          subscriberProcessId,
+          initiatingDeviceId: 12,
+          monitoredObjectId: { type: 2, instance: 6 },
+          timeRemaining: 300,
+          values: [{ property: { id: 85 }, value: [{ type: 4, value: 12.5 }] }]
+        }
+      });
+      mock.timers.tick(1000);
+      await flushPromises();
+
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
+    });
+
+    it('should retry a failed COV subscription every retryInterval, then renew it', async () => {
+      const client = await connectSouth();
+      client.subscribeCov.mock.mockImplementationOnce(async () => {
+        throw new Error('ERR_TIMEOUT');
+      });
+
+      await south.subscribe([subscriptionItem]);
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
+
+      mock.timers.tick(1000);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 2);
+      assert.strictEqual(client.subscribeCov.mock.calls[1].arguments[2], client.subscribeCov.mock.calls[0].arguments[2]);
+
+      mock.timers.tick((300 - 60) * 1000);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 3);
+    });
+
+    it('should retry a failed COV renewal every retryInterval', async () => {
+      const client = await connectSouth();
+      await south.subscribe([subscriptionItem]);
+      client.subscribeCov.mock.mockImplementationOnce(async () => {
+        throw new Error('ERR_TIMEOUT');
+      }, 1);
+
+      mock.timers.tick((300 - 60) * 1000);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 2);
+
+      mock.timers.tick(1000);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 3);
+    });
+
+    it('should stop retrying a failed COV subscription once the item is unsubscribed', async () => {
+      const client = await connectSouth();
+      client.subscribeCov.mock.mockImplementationOnce(async () => {
+        throw new Error('ERR_TIMEOUT');
+      });
+      await south.subscribe([subscriptionItem]);
+      await south.unsubscribe([subscriptionItem]);
+      client.subscribeCov.mock.resetCalls();
+
+      mock.timers.tick(3600 * 1000);
+      await flushPromises();
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 0);
+    });
+
+    it('should keep the subscriber process id of an item across a reconnect, without cancelling on the device', async () => {
+      const firstClient = await connectSouth();
+      await south.subscribe([subscriptionItem]);
+      const subscriberProcessId = firstClient.subscribeCov.mock.calls[0].arguments[2];
+
+      firstClient.emit('error', new Error('ENETUNREACH'));
+      await flushPromises();
+      mock.timers.tick(1000);
+      await flushPromises();
+      const secondClient = lastCreatedClient;
+      assert.notStrictEqual(secondClient, firstClient);
+      assert.strictEqual(firstClient.subscribeCov.mock.calls.length, 1);
+
+      await south.subscribe([subscriptionItem]);
+      assert.strictEqual(secondClient.subscribeCov.mock.calls[0].arguments[2], subscriberProcessId);
+    });
+
+    it('should cancel COV subscriptions on the devices on disconnect', async () => {
+      const client = await connectSouth();
+      await south.subscribe([subscriptionItem]);
+      const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2];
+      client.subscribeCov.mock.resetCalls();
+
+      await south.disconnect();
+
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
+      const [, , cancelledProcessId, cancel] = client.subscribeCov.mock.calls[0].arguments;
+      assert.strictEqual(cancelledProcessId, subscriberProcessId);
+      assert.strictEqual(cancel, true);
+      assert.strictEqual(client.close.mock.calls.length, 1);
+    });
+
+    it('should not wait more than one APDU timeout for COV cancellations on disconnect', async () => {
+      const client = await connectSouth();
+      await south.subscribe([subscriptionItem]);
+      client.subscribeCov.mock.mockImplementation(() => new Promise<void>(() => undefined));
+
+      const disconnectPromise = south.disconnect();
+      await flushPromises();
+      assert.strictEqual(client.close.mock.calls.length, 0);
+      mock.timers.tick(100);
+      await disconnectPromise;
+
+      assert.strictEqual(client.close.mock.calls.length, 1);
+    });
   });
 
   describe('explore', () => {
@@ -584,7 +869,7 @@ describe('SouthBACnet', () => {
       const explorePromise = south.explore(null);
       await flushPromises();
       const client = lastCreatedClient;
-      client.emit('iAm', { payload: { address: '192.168.1.10', deviceId: 10, maxApdu: 1476, segmentation: 0, vendorId: 0 } });
+      client.emit('iAm', iAm('192.168.1.10', 10));
       mock.timers.tick(3000);
       const entries = await explorePromise;
 
@@ -608,14 +893,67 @@ describe('SouthBACnet', () => {
         ]
       }));
       client.readPropertyMultiple.mock.mockImplementation(async () => {
-        throw new Error('BacnetAbort - Reason:0');
+        throw new Error('ERR_TIMEOUT');
       });
 
       const entries = await south.explore('192.168.1.10|10');
 
-      assert.strictEqual(entries.length, 2);
-      assert.strictEqual(entries[0].hasChildren, false);
-      assert.ok(entries[0].id.startsWith('192.168.1.10|10|'));
+      assert.deepStrictEqual(
+        entries.map(entry => [entry.id, entry.name, entry.hasChildren]),
+        [
+          ['192.168.1.10|10|0|1', 'ANALOG_INPUT 1', false],
+          ['192.168.1.10|10|3|2', 'BINARY_INPUT 2', false]
+        ]
+      );
+    });
+
+    it('should read the object list entry by entry when the device refuses to send it whole', async () => {
+      const client = await connectSouth();
+      client.readProperty.mock.mockImplementation(async (_address, objectId, propertyId, options) => {
+        if (options?.arrayIndex !== 0) throw new Error('BacnetAbort - Reason:4');
+        return { len: 0, objectId, property: { id: propertyId, index: 0 }, values: [{ type: 2, value: 2 }] };
+      });
+      client.readPropertyMultiple.mock.mockImplementation(async (_address, specs) => ({
+        len: 0,
+        values: specs.map(spec => ({
+          objectId: spec.objectId,
+          values: spec.properties.map(property => {
+            if (property.id === 76) {
+              return {
+                id: 76,
+                index: property.index,
+                value: [{ type: 12, value: { type: property.index === 1 ? 0 : 3, instance: property.index } }]
+              };
+            }
+            if (property.id === 77) {
+              return { id: 77, index: property.index, value: [{ type: 7, value: `Point ${spec.objectId.instance}` }] };
+            }
+            return spec.objectId.type === 0
+              ? { id: 85, index: property.index, value: [{ type: 4, value: 21.5 }] }
+              : { id: 85, index: property.index, value: [{ type: 105, value: { errorClass: 2, errorCode: 32 } }] };
+          })
+        }))
+      }));
+
+      const entries = await south.explore('192.168.1.10|10');
+
+      assert.deepStrictEqual(client.readProperty.mock.calls[1].arguments[3], { arrayIndex: 0 });
+      assert.deepStrictEqual(client.readPropertyMultiple.mock.calls[0].arguments[1], [
+        {
+          objectId: { type: 8, instance: 10 },
+          properties: [
+            { id: 76, index: 1 },
+            { id: 76, index: 2 }
+          ]
+        }
+      ]);
+      assert.deepStrictEqual(
+        entries.map(entry => [entry.id, entry.name, entry.metadata]),
+        [
+          ['192.168.1.10|10|0|1', 'Point 1', { objectType: 'ANALOG_INPUT', objectInstance: 1, value: 21.5 }],
+          ['192.168.1.10|10|3|2', 'Point 2', { objectType: 'BINARY_INPUT', objectInstance: 2 }]
+        ]
+      );
     });
   });
 });
