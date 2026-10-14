@@ -18,7 +18,7 @@ La façon la plus simple de démarrer la pile est via les scripts npm définis d
 Exécutez-les depuis le répertoire `backend/` :
 
 ```bash
-# IoT protocol servers only (OPC UA, Modbus, MQTT)
+# IoT protocol servers only (OPC UA, Modbus, MQTT, BACnet)
 npm run docker:iot
 
 # IoT servers + database servers + simulator (recommended for connector development)
@@ -57,7 +57,7 @@ Les services sont regroupés en **profils Docker Compose** :
 
 | Profil      | Services                                       |
 | ----------- | ----------------------------------------------- |
-| `iot`       | `opcua-server`, `modbus-server`, `mqtt-broker` |
+| `iot`       | `opcua-server`, `modbus-server`, `mqtt-broker`, `bacnet-server` |
 | `simulator` | `simulator`                                    |
 | `database`  | `postgres`, `influxdb`                         |
 | `ftp`       | `ftp-server`, `sftp-server`                    |
@@ -235,6 +235,52 @@ ponctuelle) :
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/mqtt-item-list.csv">Download item list (CSV)</DownloadButton>
 </div>
+
+---
+
+### Équipement BACnet/IP — `bacnet-server` {#bacnet-ip-device--bacnet-server}
+
+| Propriété   | Valeur                                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Image**   | `python:3.14-slim` exécutant `docker/bacnet/bacnet_server.py` ([BACpypes3](https://github.com/JoelBender/bacpypes3)) |
+| **Port**    | `47809` (hôte, UDP) → `47808` (conteneur, BACnet/IP)                                                              |
+
+Un équipement BACnet/IP (instance `1001`, nom `oibus-bacnet-sim`) dont les objets évoluent dans le temps, pour
+tester le [connecteur South BACnet](../guide/south-connectors/bacnet.mdx) de bout en bout : découverte,
+scrutation, abonnements COV et exploration.
+
+| Objet                 | Nom           | Unité | Simulation                                                                                                     | Incrément COV |
+| --------------------- | ------------- | ----- | -------------------------------------------------------------------------------------------------------------- | ------------- |
+| `analog-input 1`      | `Temperature` | `°C`  | Sinusoïde, 20 ± 5 °C, période ~190 s                                                                           | `0.1`         |
+| `analog-input 2`      | `Pressure`    | `hPa` | Sinusoïde, 1013 ± 3 hPa, période ~280 s. En défaut 15 s par minute : status flags `0100`, reliability unreliable-other | `0.5`         |
+| `analog-value 1`      | `Setpoint`    | `°C`  | Fixe, 21.5                                                                                                     | `0.1`         |
+| `binary-input 1`      | `Door`        | —     | Signal carré, période 20 s                                                                                     | —             |
+| `binary-value 1`      | `Fan`         | —     | Fixe, active                                                                                                   | —             |
+| `multi-state-value 1` | `Mode`        | —     | Alterne Off / Eco / Comfort (`1` – `3`) toutes les 15 s                                                        | —             |
+
+:::note Port 47809 et découverte depuis l'hôte
+OIBus lancé sur l'hôte utilise lui-même le port BACnet standard `47808` : l'équipement est donc publié sur
+`47809`. Les diffusions ne traversent pas la redirection de port de Docker : depuis l'hôte, un `Who-Is` en
+diffusion ne trouve rien, renseignez donc l'**Adresse cible de découverte**. OIBus lancé dans un conteneur
+sur `oibus-network` peut découvrir l'équipement par diffusion.
+:::
+
+**Connexion depuis OIBus :** créez un connecteur South BACnet/IP avec les paramètres suivants :
+
+| Paramètre                          | Valeur            |
+| ---------------------------------- | ----------------- |
+| **Port**                           | `47808`           |
+| **Adresse cible de découverte**    | `127.0.0.1:47809` |
+
+Ajoutez ensuite des éléments avec l'**Adresse de l'appareil** `127.0.0.1:47809`, l'**Instance de l'appareil**
+`1001`, et le type et l'instance d'objet du tableau ci-dessus, ou parcourez-les avec **Explorer**.
+
+| Variable                 | Défaut             | Description                                                     |
+| ------------------------ | ------------------ | --------------------------------------------------------------- |
+| `BACNET_DEVICE_INSTANCE` | `1001`             | Numéro d'instance de l'équipement                               |
+| `BACNET_DEVICE_NAME`     | `oibus-bacnet-sim` | Nom de l'objet device                                           |
+| `BACNET_ADDRESS`         | `host`             | Adresse locale ; `host` utilise l'interface du conteneur        |
+| `BACNET_UPDATE_INTERVAL` | `1`                | Secondes entre deux mises à jour des valeurs                    |
 
 ---
 
@@ -692,6 +738,9 @@ docker compose --profile simulator up -d --force-recreate simulator
 
 # Restart the Modbus server after changing docker/modbus/server_config.json
 docker compose --profile iot up -d --force-recreate modbus-server
+
+# Restart the BACnet device after changing docker/bacnet/bacnet_server.py
+docker compose --profile iot up -d --force-recreate bacnet-server
 
 # Stop everything and remove containers (data volumes are kept)
 npm run docker:down

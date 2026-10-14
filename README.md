@@ -54,7 +54,7 @@ For prerequisites, cloning, and running the backend and frontend from source, se
 ### Local Test Stack
 
 The repository ships a `docker-compose.yml` at its root that spins up a complete set of protocol
-servers and a data simulator (OPC UA, Modbus, MQTT, PostgreSQL, FTP/SFTP) so you can develop and
+servers and a data simulator (OPC UA, Modbus, MQTT, BACnet, PostgreSQL, FTP/SFTP) so you can develop and
 test OIBus connectors without access to real industrial equipment.
 
 ```bash
