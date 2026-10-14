@@ -65,6 +65,10 @@ const PROPERTY_IDENTIFIER_BY_SETTING: Record<SouthBACnetItemSettingsPropertyIden
 const SUBSCRIBE_COV_PROPERTIES = new Set<PropertyIdentifier>([PropertyIdentifier.PRESENT_VALUE, PropertyIdentifier.STATUS_FLAGS]);
 // Concurrent SubscribeCOV cancellations sent on disconnect. Kept well below the client's 256 invoke ids.
 const COV_CANCEL_BATCH_SIZE = 32;
+// Upper bound of maxParallelRun, as in the manifest.
+const MAX_PARALLEL_RUN_CEILING = 16;
+// A failing COV subscription is retried after retryInterval, then twice as late each time, up to this delay.
+const MAX_COV_RETRY_DELAY_MS = 600_000;
 // Subscriber process ids start at a random value (BACnet allows any Unsigned32), so the ids of a
 // previous run, whose subscriptions may still be alive on the devices, are unlikely to be reused.
 const MAX_INITIAL_SUBSCRIBER_PROCESS_ID = 0x400000;
@@ -147,6 +151,15 @@ function toPropertyErrorMessage(error: { errorClass: number; errorCode: number }
   return `${ErrorClass[error.errorClass] ?? error.errorClass}/${ErrorCode[error.errorCode] ?? error.errorCode}`;
 }
 
+/**
+ * The message of a failed request, a device Error PDU being named as a ReadPropertyMultiple property error
+ * is: "BacnetError - Class:1 - Code:31" becomes "OBJECT/UNKNOWN_OBJECT".
+ */
+function toRequestErrorMessage(error: unknown): string {
+  const match = error instanceof Error ? /^BacnetError - Class:(\d+) - Code:(\d+)$/.exec(error.message) : null;
+  return match ? toPropertyErrorMessage({ errorClass: Number(match[1]), errorCode: Number(match[2]) }) : getErrorMessage(error);
+}
+
 function isObjectId(value: unknown): value is BACNetObjectID {
   return typeof value === 'object' && value !== null && 'type' in value && 'instance' in value;
 }
@@ -192,6 +205,8 @@ interface CovSubscriptionEntry {
   subscriberProcessId: number;
   lifetimeSeconds: number;
   renewalTimeout: NodeJS.Timeout | null;
+  // Consecutive failed requests: drives the retry delay, and only the first one is logged as a warning.
+  failedAttempts: number;
 }
 
 export default class SouthBACnet
@@ -209,6 +224,9 @@ export default class SouthBACnet
   // process id and object) instead of adding one more, which would take another of its few COV slots.
   private readonly subscriberProcessIds = new Map<string, number>();
   private readonly covSubscriptions = new Map<string, CovSubscriptionEntry>();
+  // Last pending read of each device address: work-units run in parallel (maxParallelRun), but each
+  // device gets one request at a time - small controllers handle a single transaction.
+  private readonly deviceReads = new Map<string, Promise<void>>();
   private bufferedValues: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; timestamp: Instant; value: OIBusTimeValue }> =
     [];
   private flushTimeout: NodeJS.Timeout | null = null;
@@ -389,6 +407,28 @@ export default class SouthBACnet
           this.scheduleForeignDeviceRegistration(client, this.connector.settings.retryInterval);
         });
     }, delayMs);
+  }
+
+  /** Work-units read in parallel; requests to one device are still serialized (see `deviceReads`). */
+  protected override getMaxParallelRun(): number {
+    return Math.max(1, Math.min(this.connector.settings.maxParallelRun, MAX_PARALLEL_RUN_CEILING));
+  }
+
+  /** Runs `read` once every earlier read of the same device has settled. */
+  private async readDevice<T>(deviceAddress: string, read: () => Promise<T>): Promise<T> {
+    const previous = this.deviceReads.get(deviceAddress) ?? Promise.resolve();
+    let release!: () => void;
+    const current = previous.then(() => new Promise<void>(resolve => (release = resolve)));
+    this.deviceReads.set(deviceAddress, current);
+    await previous;
+    try {
+      return await read();
+    } finally {
+      release();
+      if (this.deviceReads.get(deviceAddress) === current) {
+        this.deviceReads.delete(deviceAddress);
+      }
+    }
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -584,7 +624,7 @@ export default class SouthBACnet
         results.set(toReferenceKey(reference), { values: response.values });
       } catch (error: unknown) {
         if (!isServiceRefusal(error)) throw error;
-        results.set(toReferenceKey(reference), { error: getErrorMessage(error) });
+        results.set(toReferenceKey(reference), { error: toRequestErrorMessage(error) });
       }
     }
   }
@@ -613,10 +653,15 @@ export default class SouthBACnet
     for (const [deviceAddress, deviceItems] of itemsByDevice) {
       let results: Map<string, PropertyReadResult>;
       try {
-        results = await this.readProperties(client, deviceAddress, deviceItems.map(toPropertyReference));
+        results = await this.readDevice(deviceAddress, () =>
+          this.readProperties(client, deviceAddress, deviceItems.map(toPropertyReference))
+        );
       } catch (error: unknown) {
         if (isDeviceScopedError(error)) {
-          this.logger.warn(logCtx, `Read failed for device ${deviceAddress} (device error, connection kept): ${getErrorMessage(error)}`);
+          this.logger.warn(
+            logCtx,
+            `Read failed for device ${deviceAddress} (device error, connection kept): ${toRequestErrorMessage(error)}`
+          );
           continue;
         }
         this.triggerReconnect();
@@ -674,7 +719,8 @@ export default class SouthBACnet
         propertyId: toPropertyIdentifier(item),
         subscriberProcessId,
         lifetimeSeconds: this.connector.settings.covDefaultLifetime,
-        renewalTimeout: null
+        renewalTimeout: null,
+        failedAttempts: 0
       };
       // Registered before the request: a subscription that fails now is retried by sendCovSubscription.
       this.covSubscriptions.set(item.id, entry);
@@ -773,8 +819,12 @@ export default class SouthBACnet
 
   /**
    * Sends the subscription request of a registered subscription, then schedules its renewal before
-   * the lifetime runs out. A failed request is retried every `retryInterval` until it succeeds or
-   * the item is unsubscribed, so a device that is offline for a while starts sending again once back.
+   * the lifetime runs out - `covRenewalMargin` seconds before, but never sooner than halfway through it,
+   * so a margin larger than the lifetime cannot make it renew in a loop. A failed request is retried
+   * until it succeeds or the item is unsubscribed, so a device that is offline for a while starts
+   * sending again once back: after `retryInterval`, then twice as late each time (up to 10 minutes).
+   * Only the first failure is a warning - a device that refuses the subscription for good would
+   * otherwise fill the logs.
    */
   private async sendCovSubscription(entry: CovSubscriptionEntry): Promise<void> {
     const client = this.client;
@@ -783,19 +833,42 @@ export default class SouthBACnet
       await this.sendSubscriptionRequest(client, entry, false);
     } catch (error: unknown) {
       if (this.covSubscriptions.get(entry.item.id) !== entry) return;
-      const hint =
-        isServiceRefusal(error) && !SUBSCRIBE_COV_PROPERTIES.has(entry.propertyId)
-          ? ' - the device may not support SubscribeCOVProperty: poll this item with a scan mode instead'
-          : '';
-      this.logger.warn(
-        workUnitLogCtx([entry.item]),
-        `Error subscribing to COV for item "${entry.item.name}", retrying in ${this.connector.settings.retryInterval} ms: ${getErrorMessage(error)}${hint}`
-      );
-      this.scheduleCovSubscription(entry, this.connector.settings.retryInterval);
+      entry.failedAttempts++;
+      const retryInterval = this.connector.settings.retryInterval;
+      const delayMs = Math.min(retryInterval * 2 ** (entry.failedAttempts - 1), Math.max(retryInterval, MAX_COV_RETRY_DELAY_MS));
+      if (entry.failedAttempts === 1) {
+        const hint =
+          isServiceRefusal(error) && !SUBSCRIBE_COV_PROPERTIES.has(entry.propertyId)
+            ? ' - the device may not support SubscribeCOVProperty: poll this item with a scan mode instead'
+            : '';
+        this.logger.warn(
+          workUnitLogCtx([entry.item]),
+          `Error subscribing to COV for item "${entry.item.name}": ${toRequestErrorMessage(error)}${hint}. ` +
+            `Retrying in ${delayMs} ms, then less and less often (further failures are logged at debug level)`
+        );
+      } else {
+        this.logger.debug(
+          workUnitLogCtx([entry.item]),
+          `COV subscription attempt ${entry.failedAttempts} failed for item "${entry.item.name}", ` +
+            `retrying in ${delayMs} ms: ${toRequestErrorMessage(error)}`
+        );
+      }
+      this.scheduleCovSubscription(entry, delayMs);
       return;
     }
+    if (entry.failedAttempts > 0) {
+      this.logger.info(
+        workUnitLogCtx([entry.item]),
+        `Subscribed to COV for item "${entry.item.name}" after ${entry.failedAttempts} failed attempt(s)`
+      );
+      entry.failedAttempts = 0;
+    }
     if (entry.lifetimeSeconds > 0 && this.covSubscriptions.get(entry.item.id) === entry) {
-      const renewalDelaySeconds = Math.max(1, entry.lifetimeSeconds - this.connector.settings.covRenewalMargin);
+      const renewalDelaySeconds = Math.max(
+        1,
+        entry.lifetimeSeconds - this.connector.settings.covRenewalMargin,
+        Math.ceil(entry.lifetimeSeconds / 2)
+      );
       this.scheduleCovSubscription(entry, renewalDelaySeconds * 1000);
     }
   }
