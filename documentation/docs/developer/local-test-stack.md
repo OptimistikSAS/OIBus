@@ -18,7 +18,7 @@ The easiest way to start the stack is via the npm scripts defined in `backend/pa
 Run them from the `backend/` directory:
 
 ```bash
-# IoT protocol servers only (OPC UA, Modbus, MQTT)
+# IoT protocol servers only (OPC UA, Modbus, MQTT, BACnet)
 npm run docker:iot
 
 # IoT servers + database servers + simulator (recommended for connector development)
@@ -54,15 +54,15 @@ docker compose --profile iot --profile database --profile simulator up -d
 
 Services are grouped into **Docker Compose profiles**:
 
-| Profile     | Services                                       |
-| ----------- | ---------------------------------------------- |
-| `iot`       | `opcua-server`, `modbus-server`, `mqtt-broker` |
-| `simulator` | `simulator`                                    |
-| `database`  | `postgres`, `influxdb`                         |
-| `ftp`       | `ftp-server`, `sftp-server`                    |
-| `logging`   | `syslog-server`                                |
-| `proxy`     | `squid-proxy`                                  |
-| `oibus`     | `oibus`, `nginx`                               |
+| Profile     | Services                                                        |
+| ----------- | --------------------------------------------------------------- |
+| `iot`       | `opcua-server`, `modbus-server`, `mqtt-broker`, `bacnet-server` |
+| `simulator` | `simulator`                                                     |
+| `database`  | `postgres`, `influxdb`                                          |
+| `ftp`       | `ftp-server`, `sftp-server`                                     |
+| `logging`   | `syslog-server`                                                 |
+| `proxy`     | `squid-proxy`                                                   |
+| `oibus`     | `oibus`, `nginx`                                                |
 
 :::note Profile independence
 The `simulator` profile requires the `iot` and `database` profile services to be running (Modbus
@@ -230,6 +230,52 @@ are meant for `any-content` / custom-transformer testing, not point-value items)
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/mqtt-item-list.csv">Download item list (CSV)</DownloadButton>
 </div>
+
+---
+
+### BACnet/IP Device — `bacnet-server` {#bacnet-ip-device--bacnet-server}
+
+| Property  | Value                                                                                                              |
+| --------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Image** | `python:3.14-slim` running `docker/bacnet/bacnet_server.py` ([BACpypes3](https://github.com/JoelBender/bacpypes3)) |
+| **Port**  | `47809` (host, UDP) → `47808` (container, BACnet/IP)                                                               |
+
+A single BACnet/IP device (instance `1001`, name `oibus-bacnet-sim`) whose objects change over time, to test
+the [BACnet south connector](../guide/south-connectors/bacnet.mdx) end to end: discovery, polling, COV
+subscriptions and Explore.
+
+| Object                | Name          | Unit  | Simulation                                                                                                            | COV increment |
+| --------------------- | ------------- | ----- | --------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `analog-input 1`      | `Temperature` | `°C`  | Sine wave, 20 ± 5 °C, period ~190 s                                                                                   | `0.1`         |
+| `analog-input 2`      | `Pressure`    | `hPa` | Sine wave, 1013 ± 3 hPa, period ~280 s. In fault 15 s every minute: status flags `0100`, reliability unreliable-other | `0.5`         |
+| `analog-value 1`      | `Setpoint`    | `°C`  | Fixed, 21.5                                                                                                           | `0.1`         |
+| `binary-input 1`      | `Door`        | —     | Square wave, period 20 s                                                                                              | —             |
+| `binary-value 1`      | `Fan`         | —     | Fixed, active                                                                                                         | —             |
+| `multi-state-value 1` | `Mode`        | —     | Cycles Off / Eco / Comfort (`1` – `3`) every 15 s                                                                     | —             |
+
+:::note Port 47809 and discovery from the host
+OIBus running on the host binds the standard BACnet port `47808` itself, so the device is published on
+`47809`. Broadcasts don't go through Docker's port mapping: from the host, a broadcast `Who-Is` finds
+nothing, so set **Discovery target address** instead. OIBus running in a container on `oibus-network`
+can discover the device by broadcast.
+:::
+
+**Connecting from OIBus:** create a South BACnet/IP connector with the following settings:
+
+| Setting                      | Value             |
+| ---------------------------- | ----------------- |
+| **Port**                     | `47808`           |
+| **Discovery target address** | `127.0.0.1:47809` |
+
+Then add items with **Device address** `127.0.0.1:47809`, **Device instance** `1001`, and the object type
+and instance from the table above, or browse them with **Explore**.
+
+| Variable                 | Default            | Description                                              |
+| ------------------------ | ------------------ | -------------------------------------------------------- |
+| `BACNET_DEVICE_INSTANCE` | `1001`             | Device instance number                                   |
+| `BACNET_DEVICE_NAME`     | `oibus-bacnet-sim` | Device object name                                       |
+| `BACNET_ADDRESS`         | `host`             | Local address; `host` uses the container's own interface |
+| `BACNET_UPDATE_INTERVAL` | `1`                | Seconds between value updates                            |
 
 ---
 
@@ -732,6 +778,9 @@ docker compose --profile simulator up -d --force-recreate simulator
 
 # Restart the Modbus server after changing docker/modbus/server_config.json
 docker compose --profile iot up -d --force-recreate modbus-server
+
+# Restart the BACnet device after changing docker/bacnet/bacnet_server.py
+docker compose --profile iot up -d --force-recreate bacnet-server
 
 # Stop everything and remove containers (data volumes are kept)
 npm run docker:down
