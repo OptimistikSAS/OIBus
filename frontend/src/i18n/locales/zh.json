@@ -1264,6 +1264,9 @@
             "bacnet": {
               "device-address": "设备地址",
               "device-instance": "设备实例",
+              "routed": "路由设备",
+              "network-number": "网络号",
+              "mac-address": "MAC 地址",
               "object-type": {
                 "title": "对象类型",
                 "analog-input": "模拟输入",

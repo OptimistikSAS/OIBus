@@ -3004,6 +3004,16 @@
 					},
 					"propertyIdentifier": {
 						"$ref": "#/components/schemas/SouthBACnetItemSettingsPropertyIdentifier"
+					},
+					"routed": {
+						"type": "boolean"
+					},
+					"networkNumber": {
+						"type": "number",
+						"format": "double"
+					},
+					"macAddress": {
+						"type": "string"
 					}
 				},
 				"required": [
@@ -3011,7 +3021,8 @@
 					"deviceInstance",
 					"objectType",
 					"objectInstance",
-					"propertyIdentifier"
+					"propertyIdentifier",
+					"routed"
 				],
 				"type": "object",
 				"additionalProperties": false
