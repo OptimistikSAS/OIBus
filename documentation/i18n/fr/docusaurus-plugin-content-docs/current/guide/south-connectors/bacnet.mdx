@@ -48,13 +48,21 @@ autre connecteur South :
   interrogé.
 
 Les éléments dus au même cycle de scrutation sont regroupés par appareil physique et lus ensemble via une
-seule requête `ReadPropertyMultiple` par lot, plutôt qu'une requête par point.
+seule requête `ReadPropertyMultiple` par lot, plutôt qu'une requête par point. Un appareil qui refuse
+`ReadPropertyMultiple` (de nombreux petits contrôleurs ne l'implémentent pas) est lu propriété par propriété avec
+`ReadProperty`. Lorsqu'un appareil répond par une erreur pour une propriété (objet ou propriété inconnu), seul
+cet élément est ignoré, avec un avertissement dans les logs ; les autres éléments de la requête sont collectés.
 
 | Paramètre                        | Description                                                                                                                                      | Exemple de valeur |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | **Objets max par requête**          | Nombre maximal de paires objet/propriété qu'OIBus regroupe dans une seule requête `ReadPropertyMultiple` vers un appareil. Réduisez cette valeur si un appareil rejette les requêtes volumineuses (par exemple, absence de prise en charge de la segmentation APDU). | `20` |
 | **Durée de l'abonnement COV**       | Durée, en secondes, demandée pour un abonnement COV. `0` demande un abonnement sans expiration.                                                 | `300`                |
 | **Marge de renouvellement COV**     | Délai, en secondes, avant l'expiration d'un abonnement COV à durée limitée auquel OIBus le renouvelle. Sans effet lorsque la durée est `0`.     | `60`                 |
+
+Un abonnement COV ou un renouvellement qui échoue (appareil hors ligne, par exemple) est retenté à chaque
+**Intervalle de nouvelle tentative** jusqu'à ce qu'il réussisse. Les appareils ne gèrent qu'un nombre limité
+d'abonnements COV : OIBus annule donc ses abonnements à l'arrêt du connecteur, et renouvelle les mêmes
+abonnements (plutôt que d'en ajouter de nouveaux) lorsqu'il se reconnecte après une panne réseau.
 
 ### Régulation des données {#data-throttling}
 
@@ -148,7 +156,8 @@ manuellement les identifiants d'appareils et d'objets :
    elle est renseignée, sinon en diffusion (ou acheminée via le BBMD, si activé) — et liste chaque appareil
    qui répond, avec son nom et son numéro d'instance.
 2. La sélection d'un appareil lit sa liste d'objets et affiche chaque objet qu'il expose, enrichi de sa
-   valeur actuelle lorsqu'elle est disponible.
+   valeur actuelle lorsqu'elle est disponible. Un appareil incapable d'envoyer sa liste d'objets complète en
+   une seule réponse (pas de prise en charge de la segmentation, fréquent en MS/TP) la voit lue entrée par entrée.
 
 Utilisez **Tester les paramètres** sur les paramètres du connecteur pour lancer la même découverte
 d'appareils en guise de vérification rapide de la connectivité, sans ouvrir l'explorateur complet.
