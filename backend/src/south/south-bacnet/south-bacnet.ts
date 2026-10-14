@@ -38,7 +38,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
-import { SouthDirectQuery, SouthExplore, SouthSubscription } from '../south-interface';
+import { SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
 
 const OBJECT_TYPE_BY_SETTING: Record<SouthBACnetItemSettingsObjectType, ObjectType> = {
   'analog-input': ObjectType.ANALOG_INPUT,
@@ -49,7 +49,15 @@ const OBJECT_TYPE_BY_SETTING: Record<SouthBACnetItemSettingsObjectType, ObjectTy
   'binary-value': ObjectType.BINARY_VALUE,
   'multi-state-input': ObjectType.MULTI_STATE_INPUT,
   'multi-state-output': ObjectType.MULTI_STATE_OUTPUT,
-  'multi-state-value': ObjectType.MULTI_STATE_VALUE
+  'multi-state-value': ObjectType.MULTI_STATE_VALUE,
+  accumulator: ObjectType.ACCUMULATOR,
+  'pulse-converter': ObjectType.PULSE_CONVERTER,
+  loop: ObjectType.LOOP,
+  'integer-value': ObjectType.INTEGER_VALUE,
+  'positive-integer-value': ObjectType.POSITIVE_INTEGER_VALUE,
+  'large-analog-value': ObjectType.LARGE_ANALOG_VALUE,
+  'characterstring-value': ObjectType.CHARACTERSTRING_VALUE,
+  'trend-log': ObjectType.TREND_LOG
 };
 
 const PROPERTY_IDENTIFIER_BY_SETTING: Record<SouthBACnetItemSettingsPropertyIdentifier, PropertyIdentifier> = {
@@ -215,11 +223,38 @@ function toObjectId(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): BA
 }
 
 function toPropertyIdentifier(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): PropertyIdentifier {
-  return PROPERTY_IDENTIFIER_BY_SETTING[item.settings.propertyIdentifier];
+  // Only a trend log has no property: it is read as a whole, see SouthBACnet.readTrendLog
+  return PROPERTY_IDENTIFIER_BY_SETTING[item.settings.propertyIdentifier ?? 'present-value'];
 }
 
 function toPropertyReference(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): PropertyReference {
   return { objectId: toObjectId(item), propertyId: toPropertyIdentifier(item), arrayIndex: ASN1_ARRAY_ALL };
+}
+
+/** A trend log item is collected by history queries (its log buffer), the other items by polling or COV. */
+function isTrendLog(item: SouthConnectorItemEntity<SouthBACnetItemSettings>): boolean {
+  return item.settings.objectType === 'trend-log';
+}
+
+/**
+ * A log record's timestamp is the device's local date and time, without time zone. @bacnet-js/client
+ * turns it into a Date in the OIBus host's time zone: its fields are read back in the devices' time zone.
+ */
+function toInstant(date: Date, timezone: string): Instant {
+  return DateTime.fromObject(
+    {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      hour: date.getHours(),
+      minute: date.getMinutes(),
+      second: date.getSeconds(),
+      millisecond: date.getMilliseconds()
+    },
+    { zone: timezone }
+  )
+    .toUTC()
+    .toISO()!;
 }
 
 /** Coerces a decoded BACnet application value into the string|number shape OIBusTimeValue expects. */
@@ -253,7 +288,7 @@ interface CovSubscriptionEntry {
 
 export default class SouthBACnet
   extends SouthConnector<SouthBACnetSettings, SouthBACnetItemSettings>
-  implements SouthDirectQuery, SouthSubscription, SouthExplore
+  implements SouthDirectQuery, SouthHistoryQuery, SouthSubscription, SouthExplore
 {
   private client: BACnetClient | null = null;
   private connecting = false;
@@ -495,7 +530,7 @@ export default class SouthBACnet
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthBACnetItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings
+    testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
     const reusingLiveClient = this.client !== null;
     let client = this.client;
@@ -508,8 +543,18 @@ export default class SouthBACnet
       }
       await this.verifyDeviceIdentity(client, item);
       const queryStart = DateTime.now().toMillis();
-      const timeValue = await this.readItem(client, item);
-      const result: OIBusContent = { type: 'time-values', content: timeValue ? [timeValue] : [] };
+      let content: Array<OIBusTimeValue>;
+      if (isTrendLog(item)) {
+        // The test window, or the last hour when testing outside of a history window
+        const endTime = testingSettings.history?.endTime ?? DateTime.now().toUTC().toISO()!;
+        const startTime = testingSettings.history?.startTime ?? DateTime.fromISO(endTime).minus({ hours: 1 }).toUTC().toISO()!;
+        const records = await this.readTrendLog(client, toAddress(item), toObjectId(item), startTime, endTime);
+        content = records.map(record => ({ pointId: item.name, timestamp: record.timestamp, data: { value: record.value } }));
+      } else {
+        const timeValue = await this.readItem(client, item);
+        content = timeValue ? [timeValue] : [];
+      }
+      const result: OIBusContent = { type: 'time-values', content };
       return { result, connectionDuration, queryDuration: DateTime.now().toMillis() - queryStart };
     } finally {
       if (client && !reusingLiveClient) {
@@ -679,7 +724,18 @@ export default class SouthBACnet
     }
   }
 
-  async directQuery(items: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>): Promise<OIBusTimeValue | null> {
+  override filterDirectItems(items: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>) {
+    return items.filter(item => !isTrendLog(item));
+  }
+
+  override filterHistoryItems(items: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>) {
+    return items.filter(isTrendLog);
+  }
+
+  async directQuery(allItems: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>): Promise<OIBusTimeValue | null> {
+    // directQueryHandler passes the whole work-unit: trend logs are left to historyQuery.
+    const items = this.filterDirectItems(allItems);
+    if (!items.length) return null;
     const logCtx = workUnitLogCtx(items);
     const client = this.client;
     if (!client) {
@@ -745,6 +801,108 @@ export default class SouthBACnet
     return cachedCandidates.length > 0 ? cachedCandidates[cachedCandidates.length - 1].value : null;
   }
 
+  /**
+   * Collects the records each trend log item logged between `startTime` (excluded) and `endTime`
+   * (included). The tracked instant is the most recent record collected, so the next run picks up after it.
+   */
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const client = this.client;
+    if (!client) {
+      this.logger.debug('No BACnet client available, skipping history query');
+      return { trackedInstant: null, value: null };
+    }
+    const logCtx = workUnitLogCtx(items);
+    const queryTime = DateTime.now().toUTC().toISO()!;
+    const candidates: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; value: OIBusTimeValue }> = [];
+    let trackedInstant: Instant | null = null;
+    for (const item of this.filterHistoryItems(items)) {
+      const device = toAddress(item);
+      let records: Array<{ timestamp: Instant; value: string | number }>;
+      try {
+        records = await this.readDevice(toDeviceKey(device), () => this.readTrendLog(client, device, toObjectId(item), startTime, endTime));
+      } catch (error: unknown) {
+        if (isDeviceScopedError(error)) {
+          this.logger.warn(
+            logCtx,
+            `Could not read trend log "${item.name}" on device ${describeAddress(device)}: ${toRequestErrorMessage(error)}`
+          );
+          continue;
+        }
+        this.triggerReconnect();
+        throw error;
+      }
+      for (const record of records) {
+        candidates.push({ item, value: { pointId: item.name, timestamp: record.timestamp, data: { value: record.value } } });
+        if (!trackedInstant || record.timestamp > trackedInstant) {
+          trackedInstant = record.timestamp;
+        }
+      }
+    }
+
+    const cachedCandidates = this.applyCachingStrategy(candidates, candidate => ({
+      item: candidate.item,
+      value: candidate.value.data.value,
+      timestamp: candidate.value.timestamp
+    }));
+    if (cachedCandidates.length > 0) {
+      await this.addContent(
+        { type: 'time-values', content: cachedCandidates.map(candidate => candidate.value) },
+        queryTime,
+        cachedCandidates.map(candidate => candidate.item)
+      );
+    }
+    return { trackedInstant, value: cachedCandidates.length > 0 ? cachedCandidates[cachedCandidates.length - 1].value : null };
+  }
+
+  /**
+   * Reads the records of a trend log logged between `startTime` (excluded) and `endTime` (included),
+   * oldest first. @bacnet-js/client can only read a log buffer by position: it is read backwards from
+   * the most recent record (position = record count), `maxObjectsPerRequest` records at a time, until
+   * a record older than `startTime`. A device logging while it is read shifts the positions of a full
+   * buffer by one record at a time: the duplicates this may cause are dropped by timestamp. Log status
+   * and time change records carry no value and are skipped.
+   */
+  private async readTrendLog(
+    client: BACnetClient,
+    device: BACNetAddress,
+    trendLog: BACNetObjectID,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<{ timestamp: Instant; value: string | number }>> {
+    const recordCount = (await client.readProperty(device, trendLog, PropertyIdentifier.RECORD_COUNT)).values[0]?.value;
+    if (typeof recordCount !== 'number' || recordCount === 0) return [];
+
+    const start = DateTime.fromISO(startTime).toMillis();
+    const end = DateTime.fromISO(endTime).toMillis();
+    const chunkSize = Math.max(1, this.connector.settings.maxObjectsPerRequest);
+    const records = new Map<Instant, string | number>();
+    let position = recordCount;
+    while (position >= 1) {
+      const response = await client.readRange(device, trendLog, position, -Math.min(chunkSize, position));
+      const batch = response.values ?? [];
+      if (batch.length === 0) break;
+      let reachedStart = false;
+      for (const record of batch) {
+        const timestamp = toInstant(record.timestamp, this.connector.settings.timezone);
+        const time = DateTime.fromISO(timestamp).toMillis();
+        if (time <= start) {
+          reachedStart = true;
+        } else if (time <= end && !record.isLogStatus && !record.isTimeChange && record.value !== null) {
+          records.set(timestamp, toPointValue(record.value));
+        }
+      }
+      if (reachedStart) break;
+      position -= batch.length;
+    }
+    return Array.from(records.entries())
+      .map(([timestamp, value]) => ({ timestamp, value }))
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  }
+
   async subscribe(items: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>): Promise<void> {
     if (!items.length) return;
     if (!this.client) {
@@ -757,6 +915,13 @@ export default class SouthBACnet
 
     for (const item of items) {
       if (this.covSubscriptions.has(item.id)) continue;
+      if (isTrendLog(item)) {
+        this.logger.warn(
+          workUnitLogCtx([item]),
+          `Trend log item "${item.name}" cannot be subscribed to: its records are collected by history queries, give it a scan mode`
+        );
+        continue;
+      }
       let subscriberProcessId = this.subscriberProcessIds.get(item.id);
       if (subscriberProcessId === undefined) {
         subscriberProcessId = this.nextSubscriberProcessId++;
