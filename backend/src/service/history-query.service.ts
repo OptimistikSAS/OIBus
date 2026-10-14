@@ -546,7 +546,7 @@ export default class HistoryQueryService {
       }
 
       let hasSettingsError = false;
-      const settings: Record<string, string | object | boolean> = {};
+      const settings: Record<string, string | number | object | boolean | undefined> = {};
       const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
         attribute => attribute.key === 'settings'
       )! as OIBusObjectAttribute;
@@ -566,6 +566,8 @@ export default class HistoryQueryService {
             settings[settingsKey] = JSON.parse(value);
           } else if (fieldManifest.type === 'boolean') {
             settings[settingsKey] = stringToBoolean(value);
+          } else if (fieldManifest.type === 'number') {
+            settings[settingsKey] = value ? Number(value) : undefined;
           } else {
             settings[settingsKey] = value;
           }
