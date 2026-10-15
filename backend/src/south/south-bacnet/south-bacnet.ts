@@ -4,6 +4,7 @@ import BACnetClient, {
   ApplicationData,
   ApplicationTag,
   ASN1_ARRAY_ALL,
+  ASN1_MAX_INSTANCE,
   BACNetAddress,
   BACnetMessageHeader,
   BACNetObjectID,
@@ -204,6 +205,23 @@ function toPropertyErrorMessage(error: { errorClass: number; errorCode: number }
 function toRequestErrorMessage(error: unknown): string {
   const match = error instanceof Error ? /^BacnetError - Class:(\d+) - Code:(\d+)$/.exec(error.message) : null;
   return match ? toPropertyErrorMessage({ errorClass: Number(match[1]), errorCode: Number(match[2]) }) : getErrorMessage(error);
+}
+
+/**
+ * Why an item test failed on a device refusal: what was read where, the refusal decoded ("OBJECT/UNKNOWN_OBJECT"
+ * rather than "BacnetError - Class:1 - Code:31"), and whether the address answered Who-Is as another device.
+ */
+function toItemTestErrorMessage(
+  item: SouthConnectorItemEntity<SouthBACnetItemSettings>,
+  error: unknown,
+  respondingInstance: number | null
+): string {
+  const target = isTrendLog(item)
+    ? `${item.settings.objectType} ${item.settings.objectInstance}`
+    : `${item.settings.propertyIdentifier ?? 'present-value'} of ${item.settings.objectType} ${item.settings.objectInstance}`;
+  const message = `Device ${describeAddress(toAddress(item))} refused to read ${target}: ${toRequestErrorMessage(error)}`;
+  if (respondingInstance === null || respondingInstance === item.settings.deviceInstance) return message;
+  return `${message} - this address answers as device instance ${respondingInstance}, not ${item.settings.deviceInstance}`;
 }
 
 function isObjectId(value: unknown): value is BACNetObjectID {
@@ -541,18 +559,23 @@ export default class SouthBACnet
         client = await this.openClient();
         connectionDuration = DateTime.now().toMillis() - connectStart;
       }
-      await this.verifyDeviceIdentity(client, item);
+      const respondingInstance = await this.verifyDeviceIdentity(client, item);
       const queryStart = DateTime.now().toMillis();
       let content: Array<OIBusTimeValue>;
-      if (isTrendLog(item)) {
-        // The test window, or the last hour when testing outside of a history window
-        const endTime = testingSettings.history?.endTime ?? DateTime.now().toUTC().toISO()!;
-        const startTime = testingSettings.history?.startTime ?? DateTime.fromISO(endTime).minus({ hours: 1 }).toUTC().toISO()!;
-        const records = await this.readTrendLog(client, item, startTime, endTime);
-        content = records.map(record => ({ pointId: item.name, timestamp: record.timestamp, data: { value: record.value } }));
-      } else {
-        const timeValue = await this.readItem(client, item);
-        content = timeValue ? [timeValue] : [];
+      try {
+        if (isTrendLog(item)) {
+          // The test window, or the last hour when testing outside of a history window
+          const endTime = testingSettings.history?.endTime ?? DateTime.now().toUTC().toISO()!;
+          const startTime = testingSettings.history?.startTime ?? DateTime.fromISO(endTime).minus({ hours: 1 }).toUTC().toISO()!;
+          const records = await this.readTrendLog(client, item, startTime, endTime);
+          content = records.map(record => ({ pointId: item.name, timestamp: record.timestamp, data: { value: record.value } }));
+        } else {
+          const timeValue = await this.readItem(client, item);
+          content = timeValue ? [timeValue] : [];
+        }
+      } catch (error: unknown) {
+        if (!isServiceRefusal(error)) throw error;
+        throw new Error(toItemTestErrorMessage(item, error, respondingInstance));
       }
       const result: OIBusContent = { type: 'time-values', content };
       return { result, connectionDuration, queryDuration: DateTime.now().toMillis() - queryStart };
@@ -571,13 +594,18 @@ export default class SouthBACnet
    * readProperty/readPropertyMultiple). Otherwise falls back to a broadcast, direct or through the
    * configured BBMD.
    *
-   * The direct and unicast Who-Is are global broadcasts (network 0xFFFF): a BACnet router receiving
-   * one forwards it to the networks behind it (MS/TP trunks...), so their devices answer too. Through a
-   * BBMD it stays a local broadcast on each subnet - @bacnet-js/client sends Distribute-Broadcast-To-Network
-   * without a destination network.
+   * The direct Who-Is is a global broadcast (network 0xFFFF): a BACnet router receiving one forwards it
+   * to the networks behind it (MS/TP trunks...), so their devices answer too. The unicast one is sent
+   * twice: once for the target device alone, answered back to OIBus even across subnets, and once as a
+   * global broadcast for a router at the target address. Through a BBMD it stays a local broadcast on
+   * each subnet - @bacnet-js/client sends Distribute-Broadcast-To-Network without a destination network.
+   *
+   * When no I-Am comes back from the target address itself, the device there is identified by reading
+   * its device identifier instead (see identifyDevice).
    */
-  private discoverDevices(client: BACnetClient): Promise<Array<DiscoveredDevice>> {
-    return new Promise<Array<DiscoveredDevice>>(resolve => {
+  private async discoverDevices(client: BACnetClient): Promise<Array<DiscoveredDevice>> {
+    const targetAddress = this.connector.settings.discoveryTargetAddress;
+    const devices = await new Promise<Array<DiscoveredDevice>>(resolve => {
       // Keyed by address and instance: a device reachable by several paths answers more than once.
       const devices = new Map<string, DiscoveredDevice>();
       const onIAm = (content: { header?: BACnetMessageHeader; payload: IAMResult }) => {
@@ -587,9 +615,12 @@ export default class SouthBACnet
       };
       client.on('iAm', onIAm);
 
-      const targetAddress = this.connector.settings.discoveryTargetAddress;
       const bbmd = this.connector.settings.bbmd;
       if (targetAddress) {
+        // Directed to the target itself: a device answers it to OIBus. A device answering a broadcast Who-Is
+        // broadcasts its I-Am on its own subnet, out of OIBus's reach when that is not OIBus's subnet.
+        client.whoIs({ address: targetAddress });
+        // And through the target to every network: a router at this address forwards it to the networks behind it.
         client.whoIs({ address: targetAddress, net: GLOBAL_BROADCAST_NETWORK });
       } else if (bbmd.enabled) {
         client.whoIsThroughBBMD({ address: bbmd.address! });
@@ -603,6 +634,38 @@ export default class SouthBACnet
         resolve(Array.from(devices.values()));
       }, windowMs);
     });
+
+    const target: BACNetAddress | null = targetAddress ? { address: targetAddress } : null;
+    if (target && !devices.some(device => isSameDevice(device.address, target))) {
+      const device = await this.identifyDevice(client, target);
+      if (device) devices.push(device);
+    }
+    return devices;
+  }
+
+  /**
+   * Asks the device at `address` for its own identifier, through the wildcard Device instance (4194303)
+   * that a device takes as its own. It finds a device that answers no Who-Is, or whose I-Am is broadcast on
+   * its own subnet and never reaches OIBus, as YABE finds a device added by its address. Returns null when
+   * the device does not answer, or does not support the wildcard instance.
+   */
+  private async identifyDevice(client: BACnetClient, address: BACNetAddress): Promise<DiscoveredDevice | null> {
+    try {
+      const result = await client.readProperty(
+        address,
+        { type: ObjectType.DEVICE, instance: ASN1_MAX_INSTANCE },
+        PropertyIdentifier.OBJECT_IDENTIFIER
+      );
+      const objectId = result.values[0]?.value;
+      if (isObjectId(objectId) && objectId.type === ObjectType.DEVICE) {
+        this.logger.debug(`Device ${describeAddress(address)} answered no Who-Is, identified as device instance ${objectId.instance}`);
+        return { address, deviceId: objectId.instance };
+      }
+      this.logger.debug(`Device ${describeAddress(address)} answered no Who-Is, nor with its device identifier`);
+    } catch (error: unknown) {
+      this.logger.debug(`Device ${describeAddress(address)} answered no Who-Is, nor with its device identifier: ${getErrorMessage(error)}`);
+    }
+    return null;
   }
 
   /**
@@ -611,9 +674,13 @@ export default class SouthBACnet
    * catching the classic static-binding mistake (wrong IP/instance pairing) before it silently
    * produces data attributed to the wrong device. Best-effort and never throws: a device that
    * doesn't answer Who-Is (some restricted profiles don't implement it) must not fail the item test,
-   * since `readProperty` succeeding is the real pass/fail criterion.
+   * since `readProperty` succeeding is the real pass/fail criterion. Returns the device instance that
+   * answered, or null.
    */
-  private async verifyDeviceIdentity(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<void> {
+  private async verifyDeviceIdentity(
+    client: BACnetClient,
+    item: SouthConnectorItemEntity<SouthBACnetItemSettings>
+  ): Promise<number | null> {
     const target = toAddress(item);
     const match = await new Promise<number | null>(resolve => {
       const onIAm = (content: { header?: BACnetMessageHeader; payload: IAMResult }) => {
@@ -645,6 +712,7 @@ export default class SouthBACnet
     } else {
       this.logger.debug(`Unicast Who-Is confirmed device instance ${match} at ${describeAddress(target)} for item "${item.name}"`);
     }
+    return match;
   }
 
   private async readItem(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<OIBusTimeValue | null> {
