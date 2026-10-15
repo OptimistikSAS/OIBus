@@ -64,10 +64,10 @@ describe('SouthExploreModalComponent', () => {
     expect(southConnectorService.startExplore).toHaveBeenCalledWith('create', southConnector.settings, southConnector.type);
   });
 
-  test('should close with the selected node', async () => {
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, true);
+  test('should close with the node the action was run on', async () => {
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, 'south.explore.create-workflow');
 
-    await tester.root.getByRole('button', { name: 'Select' }).click();
+    await tester.root.getByRole('button', { name: 'Create workflow' }).click();
 
     expect(fakeActiveModal.close).toHaveBeenCalledWith({
       id: 'ns=0;i=85',

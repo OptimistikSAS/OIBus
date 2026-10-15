@@ -18,9 +18,11 @@ import {
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { AuditEntityType } from '@oibus/shared/domain/audit.model';
+import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { LogsComponent } from '../../logs/logs.component';
 import { CertificateService } from '../../services/certificate.service';
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
 import { EngineService } from '../../services/engine.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -48,6 +50,7 @@ import { SelectGroupModalComponent } from '../south-items/select-group-modal/sel
 import { SaveGroupCommand, SouthItemGroup, SouthItemGroups } from '../south-items/south-item-groups';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
 
 /** The group column is added by the page: the other columns are sorted by the item table. */
@@ -92,6 +95,8 @@ export class SouthDetailComponent {
   private readonly notificationService = inject(NotificationService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly modalService = inject(ModalService);
+  private readonly configurationWorkflowService = inject(ConfigurationWorkflowService);
+  private readonly workflowCreationService = inject(WorkflowCreationService);
   private readonly engineService = inject(EngineService);
   private readonly translateService = inject(TranslateService);
   private readonly docsUrlService = inject(DocsUrlService);
@@ -691,10 +696,40 @@ export class SouthDetailComponent {
     component.runTest('south', this.southConnector()!.id, this.southConnector()!.settings, this.southConnector()!.type);
   }
 
+  /**
+   * Browses the data source - and, when the connector has tree-based discovery, offers to create a
+   * Configuration Workflow from an explored node (saved through the API, like the Manage workflows modal).
+   */
   explore() {
+    const southConnector = this.southConnector()!;
+    const manifest = this.manifest()!;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector()!.id, this.southConnector()!.settings, this.southConnector()!.type);
+    const nodeActionKey = manifest.discovery === 'tree' ? 'south.explore.create-workflow' : null;
+    component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, nodeActionKey);
+    modalRef.result
+      .pipe(
+        switchMap((entry: SouthConnectorExploreEntry) =>
+          // The other workflows of the connector are only needed for the name uniqueness check
+          this.configurationWorkflowService.list(southConnector.id).pipe(
+            switchMap(workflows =>
+              this.workflowCreationService.createFromExploredNode(
+                {
+                  directSave: true,
+                  southId: southConnector.id,
+                  southSettings: southConnector.settings,
+                  scanModes: this.scanModes(),
+                  manifest,
+                  groups: this.itemGroups,
+                  existingWorkflows: workflows
+                },
+                entry
+              )
+            )
+          )
+        )
+      )
+      .subscribe();
   }
 
   toggleConnector(value: boolean) {
