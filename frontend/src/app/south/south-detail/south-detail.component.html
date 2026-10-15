@@ -10,6 +10,16 @@
                 <button
                   type="button"
                   class="btn btn-primary"
+                  id="south-enabled"
+                  [ngbTooltip]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
+                  [attr.aria-label]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
+                  (click)="toggleConnector(!southConnector.enabled)"
+                >
+                  <i [class]="southConnector.enabled ? 'fa-solid fa-pause' : 'fa-solid fa-play'" aria-hidden="true"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary ms-1"
                   id="edit-link"
                   routerLink="edit"
                   [ngbTooltip]="'south.tooltips.edit' | translate"
@@ -28,16 +38,6 @@
                   <i class="fa-solid fa-history" aria-hidden="true"></i>
                 </button>
               </span>
-              <button
-                type="button"
-                class="btn btn-primary pull-right me-2"
-                id="south-enabled"
-                [ngbTooltip]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-                [attr.aria-label]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-                (click)="toggleConnector(!southConnector.enabled)"
-              >
-                <i [class]="southConnector.enabled ? 'fa-solid fa-pause' : 'fa-solid fa-play'" aria-hidden="true"></i>
-              </button>
             </h1>
             <span class="text-disabled pull-right me-2">
               <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
