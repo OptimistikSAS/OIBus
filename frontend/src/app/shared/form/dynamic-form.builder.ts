@@ -111,7 +111,8 @@ export function applyPlatformConditions(group: FormGroup, objectAttribute: OIBus
   });
 }
 
-const checkCondition = (value: unknown, condition: OIBusEnablingCondition): boolean => {
+/** Whether `value`, the value of the condition's referral attribute, enables the condition's target attribute. */
+export const checkCondition = (value: unknown, condition: OIBusEnablingCondition): boolean => {
   const operator = condition.operator || 'EQUALS';
   if (operator === 'CONTAINS') {
     // For CONTAINS, check if the reference value (string) contains any of the condition values

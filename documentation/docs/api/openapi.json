@@ -1048,10 +1048,11 @@
 								{
 									"type": "boolean"
 								}
-							]
+							],
+							"nullable": true
 						},
 						"type": "array",
-						"description": "Values of the referral attribute that will enable the target attribute.",
+						"description": "Values of the referral attribute that will enable the target attribute. `null` matches an attribute\nleft empty, e.g. to enable a fallback setting only while an optional one is not set.",
 						"example": [
 							"MQTT"
 						]
@@ -3013,6 +3014,9 @@
 					"propertyIdentifier": {
 						"$ref": "#/components/schemas/SouthBACnetItemSettingsPropertyIdentifier"
 					},
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
 					"routed": {
 						"type": "boolean"
 					},
@@ -3232,10 +3236,6 @@
 			},
 			"SouthBACnetSettings": {
 				"properties": {
-					"localInterface": {
-						"type": "string",
-						"nullable": true
-					},
 					"port": {
 						"type": "number",
 						"format": "double"
@@ -3244,14 +3244,7 @@
 						"type": "number",
 						"format": "double"
 					},
-					"broadcastAddress": {
-						"type": "string"
-					},
 					"retryInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"maxParallelRun": {
 						"type": "number",
 						"format": "double"
 					},
@@ -3259,18 +3252,26 @@
 						"type": "string",
 						"nullable": true
 					},
-					"timezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"broadcastAddress": {
+						"type": "string"
+					},
+					"localInterface": {
+						"type": "string",
+						"nullable": true
+					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
+					},
+					"maxObjectsPerRequest": {
+						"type": "number",
+						"format": "double"
 					},
 					"covDefaultLifetime": {
 						"type": "number",
 						"format": "double"
 					},
 					"covRenewalMargin": {
-						"type": "number",
-						"format": "double"
-					},
-					"maxObjectsPerRequest": {
 						"type": "number",
 						"format": "double"
 					},
@@ -3287,17 +3288,15 @@
 					}
 				},
 				"required": [
-					"localInterface",
 					"port",
 					"apduTimeout",
-					"broadcastAddress",
 					"retryInterval",
-					"maxParallelRun",
 					"discoveryTargetAddress",
-					"timezone",
+					"localInterface",
+					"maxParallelRun",
+					"maxObjectsPerRequest",
 					"covDefaultLifetime",
 					"covRenewalMargin",
-					"maxObjectsPerRequest",
 					"maxNumberOfMessages",
 					"flushMessageTimeout",
 					"bbmd"

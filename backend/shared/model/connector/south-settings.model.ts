@@ -395,17 +395,16 @@ export interface SouthADSSettings {
 }
 
 export interface SouthBACnetSettings {
-  localInterface: string | null;
   port: number;
   apduTimeout: number;
-  broadcastAddress: string;
   retryInterval: number;
-  maxParallelRun: number;
   discoveryTargetAddress: string | null;
-  timezone: Timezone;
+  broadcastAddress?: string;
+  localInterface: string | null;
+  maxParallelRun: number;
+  maxObjectsPerRequest: number;
   covDefaultLifetime: number;
   covRenewalMargin: number;
-  maxObjectsPerRequest: number;
   maxNumberOfMessages: number;
   flushMessageTimeout: number;
   bbmd: SouthBACnetSettingsBbmd;
@@ -829,6 +828,7 @@ export interface SouthBACnetItemSettings {
   objectType: SouthBACnetItemSettingsObjectType;
   objectInstance: number;
   propertyIdentifier?: SouthBACnetItemSettingsPropertyIdentifier;
+  timezone?: Timezone;
   routed: boolean;
   networkNumber?: number;
   macAddress?: string;

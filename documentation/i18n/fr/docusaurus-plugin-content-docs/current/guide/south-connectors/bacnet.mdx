@@ -17,13 +17,12 @@ BACnet/IP, communiquant en UDP, à l'aide de la bibliothèque
 
 | Paramètre                  | Description                                                                                                                     | Exemple de valeur  |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| **Interface locale**         | IP de l'interface réseau locale à laquelle lier le socket BACnet/IP. Laisser vide pour que le système d'exploitation choisisse celle par défaut. | `192.168.1.50`      |
 | **Port**                     | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard.                           | `47808`              |
 | **Délai d'attente APDU**     | Temps maximal, en millisecondes, à attendre la réponse d'un appareil à une requête avant de la considérer comme échouée.       | `6000`               |
-| **Adresse de diffusion**     | Adresse de diffusion utilisée pour la découverte d'appareils (`Who-Is`) lorsque ni l'**Adresse cible de découverte** ni le BBMD ne s'appliquent. | `255.255.255.255`   |
-| **Adresse cible de découverte** | Optionnel. Si renseigné, **Tester les paramètres** et le niveau racine d'**Explorer** envoient `Who-Is` directement à cet appareil (unicast) au lieu de diffuser. Laisser vide pour diffuser sur tout le sous-réseau. | `192.168.1.10` |
 | **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue). | `10000` |
-| **Fuseau horaire des appareils** | Fuseau horaire de l'horloge des appareils. Les enregistrements des [journaux de tendance](#history-from-trend-logs) sont horodatés dans l'heure locale de l'appareil ; ce paramètre les convertit en instants exacts. | `Europe/Paris` |
+| **Adresse cible de découverte** | Optionnel. Si renseigné, **Tester les paramètres** et le niveau racine d'**Explorer** envoient `Who-Is` directement à cet appareil (unicast) au lieu de diffuser. Laisser vide pour diffuser sur tout le sous-réseau. | `192.168.1.10` |
+| **Adresse de diffusion**     | _(Affiché lorsque l'**Adresse cible de découverte** est vide)_ Adresse de diffusion du `Who-Is` envoyé pour découvrir les appareils. Ignorée lorsque le BBMD est activé : le `Who-Is` passe alors par le BBMD. | `255.255.255.255`   |
+| **Interface locale**         | Optionnel. Adresse IP de l'interface réseau locale à laquelle lier le socket BACnet/IP. Laissez vide pour laisser le système d'exploitation choisir l'interface par défaut. | `192.168.1.50` |
 | **Requêtes parallèles max**  | Nombre maximal d'éléments (ou de groupes synchronisés) qu'OIBus lit en même temps, jusqu'à `16`. Les requêtes vers un même appareil restent envoyées les unes après les autres : une valeur plus élevée n'accélère que les éléments répartis sur plusieurs appareils. | `1` |
 
 :::tip Découverte en unicast plutôt qu'en diffusion
@@ -124,6 +123,7 @@ Chaque élément cible une propriété d'objet BACnet sur un appareil.
 | **Type d'objet**           | Type de l'objet BACnet à lire.                                                                                          | `Entrée analogique`   |
 | **Instance d'objet**       | Numéro d'instance de l'objet au sein de l'appareil.                                                                     | `1`                    |
 | **Propriété**              | Propriété de l'objet à lire.                                                                                            | `Valeur actuelle`      |
+| **Fuseau horaire de l'appareil** | _(Journal de tendance)_ Fuseau horaire de l'horloge de l'appareil : les enregistrements de son [journal de tendance](#history-from-trend-logs) sont horodatés dans l'heure locale de l'appareil, et ce paramètre les convertit en instants exacts. Chaque élément a le sien, les appareils pouvant être réglés différemment. | `Europe/Paris` |
 | **Appareil routé**         | L'appareil est sur un autre réseau BACnet, derrière un routeur. Affiche les deux paramètres ci-dessous.                | Activé/Désactivé       |
 | **Numéro de réseau**       | _(Appareil routé)_ Numéro de réseau BACnet du réseau de l'appareil.                                                     | `2`                    |
 | **Adresse MAC**            | _(Appareil routé)_ Adresse de l'appareil sur ce réseau : numéro de station en décimal pour le MS/TP, ou octets en hexadécimal séparés par des deux-points. | `5` |
@@ -194,10 +194,10 @@ le tampon du journal (`ReadRange`) et envoie chaque enregistrement avec l'heure 
 Le tampon est lu à rebours depuis son enregistrement le plus récent, **Objets max par requête** enregistrements
 par requête `ReadRange`, jusqu'à un enregistrement antérieur à la plage demandée.
 
-:::caution Fuseau horaire des appareils
+:::caution Fuseau horaire de l'appareil
 Les appareils BACnet horodatent leurs enregistrements dans leur heure locale, sans fuseau horaire. Renseignez
-le **Fuseau horaire des appareils** avec celui de l'horloge des appareils, sinon chaque enregistrement sera
-décalé de la différence horaire.
+le **Fuseau horaire de l'appareil** de chaque élément journal de tendance avec celui de l'horloge de son appareil,
+sinon chaque enregistrement sera décalé de la différence horaire.
 :::
 
 <ThrottlingSettings />

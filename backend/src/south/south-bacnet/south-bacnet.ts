@@ -548,7 +548,7 @@ export default class SouthBACnet
         // The test window, or the last hour when testing outside of a history window
         const endTime = testingSettings.history?.endTime ?? DateTime.now().toUTC().toISO()!;
         const startTime = testingSettings.history?.startTime ?? DateTime.fromISO(endTime).minus({ hours: 1 }).toUTC().toISO()!;
-        const records = await this.readTrendLog(client, toAddress(item), toObjectId(item), startTime, endTime);
+        const records = await this.readTrendLog(client, item, startTime, endTime);
         content = records.map(record => ({ pointId: item.name, timestamp: record.timestamp, data: { value: record.value } }));
       } else {
         const timeValue = await this.readItem(client, item);
@@ -823,7 +823,7 @@ export default class SouthBACnet
       const device = toAddress(item);
       let records: Array<{ timestamp: Instant; value: string | number }>;
       try {
-        records = await this.readDevice(toDeviceKey(device), () => this.readTrendLog(client, device, toObjectId(item), startTime, endTime));
+        records = await this.readDevice(toDeviceKey(device), () => this.readTrendLog(client, item, startTime, endTime));
       } catch (error: unknown) {
         if (isDeviceScopedError(error)) {
           this.logger.warn(
@@ -864,15 +864,18 @@ export default class SouthBACnet
    * the most recent record (position = record count), `maxObjectsPerRequest` records at a time, until
    * a record older than `startTime`. A device logging while it is read shifts the positions of a full
    * buffer by one record at a time: the duplicates this may cause are dropped by timestamp. Log status
-   * and time change records carry no value and are skipped.
+   * and time change records carry no value and are skipped. Record timestamps are read in the item's
+   * time zone, the one its device's clock is set to.
    */
   private async readTrendLog(
     client: BACnetClient,
-    device: BACNetAddress,
-    trendLog: BACNetObjectID,
+    item: SouthConnectorItemEntity<SouthBACnetItemSettings>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<{ timestamp: Instant; value: string | number }>> {
+    const device = toAddress(item);
+    const trendLog = toObjectId(item);
+    const timezone = item.settings.timezone ?? 'UTC';
     const recordCount = (await client.readProperty(device, trendLog, PropertyIdentifier.RECORD_COUNT)).values[0]?.value;
     if (typeof recordCount !== 'number' || recordCount === 0) return [];
 
@@ -887,7 +890,7 @@ export default class SouthBACnet
       if (batch.length === 0) break;
       let reachedStart = false;
       for (const record of batch) {
-        const timestamp = toInstant(record.timestamp, this.connector.settings.timezone);
+        const timestamp = toInstant(record.timestamp, timezone);
         const time = DateTime.fromISO(timestamp).toMillis();
         if (time <= start) {
           reachedStart = true;

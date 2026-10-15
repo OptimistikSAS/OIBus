@@ -284,7 +284,8 @@ device included — discard. Until OIBus ships the library update, poll the AHU'
 | `trend-log 2`             | `DoorLog`        | —     | `Door` logged every 10 s (enumerated values)                                                                          | —             |
 
 Both trend logs start with 2 hours of records and hold up to 1000 records, the oldest dropped first. Their
-timestamps are the container's local time, UTC: set the connector's **Device time zone** to `UTC`.
+timestamps are the container's local time, UTC: set the trend log items' **Device time zone** to `UTC`
+(the item list below does).
 
 **AHU device objects:**
 
@@ -310,7 +311,6 @@ devices are listed. OIBus running in a container on `oibus-network` can discover
 | ---------------------------- | ----------------- |
 | **Port**                     | `47808`           |
 | **Discovery target address** | `127.0.0.1:47809` |
-| **Device time zone**         | `UTC`             |
 
 Then add items, or browse the devices with **Explore**:
 
@@ -318,6 +318,10 @@ Then add items, or browse the devices with **Explore**:
 | ------ | ----------------- | --------------- | ------------- | -------------- | ----------- |
 | Room   | `127.0.0.1:47809` | `1001`          | Disabled      | —              | —           |
 | AHU    | `127.0.0.1:47809` | `1002`          | Enabled       | `2`            | `5`         |
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <DownloadButton link="/files/bacnet-item-list.csv">Download item list (CSV)</DownloadButton>
+</div>
 
 | Variable                    | Default | Description                                                   |
 | --------------------------- | ------- | ------------------------------------------------------------- |

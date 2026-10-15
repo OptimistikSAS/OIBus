@@ -1874,7 +1874,6 @@
             "port": "Port",
             "apdu-timeout": "APDU timeout",
             "broadcast-address": "Broadcast address",
-            "timezone": "Device time zone",
             "discovery-target-address": "Discovery target address",
             "retry-interval": "Retry interval",
             "max-parallel-run": "Max parallel queries",
@@ -2215,6 +2214,7 @@
             "bacnet": {
               "device-address": "Device address",
               "device-instance": "Device instance",
+              "timezone": "Device time zone",
               "routed": "Routed device",
               "network-number": "Network number",
               "mac-address": "MAC address",

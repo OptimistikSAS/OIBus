@@ -291,7 +291,7 @@ interrogez les éléments de l'AHU par scrutation.
 
 Les deux journaux de tendance démarrent avec 2 heures d'enregistrements et en conservent jusqu'à 1000, les plus
 anciens supprimés en premier. Ils sont horodatés dans l'heure locale du conteneur, UTC : réglez le **Fuseau
-horaire des appareils** du connecteur sur `UTC`.
+horaire de l'appareil** des éléments journal de tendance sur `UTC` (la liste d'éléments ci-dessous le fait).
 
 **Objets de l'équipement AHU :**
 
@@ -318,7 +318,6 @@ le relaie vers le réseau 2 et les deux équipements sont listés. OIBus lancé 
 | ------------------------------- | ----------------- |
 | **Port**                        | `47808`           |
 | **Adresse cible de découverte** | `127.0.0.1:47809` |
-| **Fuseau horaire des appareils** | `UTC`           |
 
 Ajoutez ensuite des éléments, ou parcourez les équipements avec **Explorer** :
 
@@ -326,6 +325,10 @@ Ajoutez ensuite des éléments, ou parcourez les équipements avec **Explorer** 
 | ---------- | --------------------- | ---------------------- | -------------- | ---------------- | ----------- |
 | Room       | `127.0.0.1:47809`     | `1001`                 | Désactivé      | —                | —           |
 | AHU        | `127.0.0.1:47809`     | `1002`                 | Activé         | `2`              | `5`         |
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <DownloadButton link="/files/bacnet-item-list.csv">Download item list (CSV)</DownloadButton>
+</div>
 
 | Variable                 | Défaut  | Description                                                    |
 | ------------------------ | ------- | -------------------------------------------------------------- |

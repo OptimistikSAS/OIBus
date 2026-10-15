@@ -924,7 +924,6 @@
             "port": "Port",
             "apdu-timeout": "Délai d'attente APDU",
             "broadcast-address": "Adresse de diffusion",
-            "timezone": "Fuseau horaire des appareils",
             "discovery-target-address": "Adresse cible de découverte",
             "retry-interval": "Intervalle de nouvelle tentative",
             "max-parallel-run": "Requêtes parallèles max",
@@ -1265,6 +1264,7 @@
             "bacnet": {
               "device-address": "Adresse de l'appareil",
               "device-instance": "Instance de l'appareil",
+              "timezone": "Fuseau horaire de l'appareil",
               "routed": "Appareil routé",
               "network-number": "Numéro de réseau",
               "mac-address": "Adresse MAC",

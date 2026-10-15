@@ -924,7 +924,6 @@
             "port": "端口",
             "apdu-timeout": "APDU 超时",
             "broadcast-address": "广播地址",
-            "timezone": "设备时区",
             "discovery-target-address": "发现目标地址",
             "retry-interval": "重试间隔",
             "max-parallel-run": "最大并行查询数",
@@ -1265,6 +1264,7 @@
             "bacnet": {
               "device-address": "设备地址",
               "device-instance": "设备实例",
+              "timezone": "设备时区",
               "routed": "路由设备",
               "network-number": "网络号",
               "mac-address": "MAC 地址",
