@@ -165,6 +165,32 @@ describe('OIAnalyticsCommandRepository', () => {
     assert.ok(['RETRIEVED', 'RUNNING'].includes(firstToExecute!.status));
   });
 
+  it('should ignore commands of a type no longer supported when reading, but still delete them', () => {
+    // 'update-engine-settings' was split into dedicated engine commands in v3.9.0
+    database
+      .prepare(
+        `INSERT INTO commands (id, type, status, ack, target_version, retrieved_date, created_at, updated_at)
+         VALUES ('legacyId', 'update-engine-settings', 'RETRIEVED', 0, '', '2000-01-01T00:00:00.000Z', ?, ?);`
+      )
+      .run(testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW);
+
+    try {
+      const emptySearch = { types: [], status: [], ack: undefined, start: undefined, end: undefined };
+      assert.ok(repository.findAll().every(command => command.id !== 'legacyId'));
+      assert.ok(repository.list(emptySearch).every(command => command.id !== 'legacyId'));
+      const page = repository.search({ ...emptySearch, page: 0 });
+      assert.ok(page.content.every(command => command.id !== 'legacyId'));
+      assert.strictEqual(page.totalElements, testData.oIAnalytics.commands.oIBusList.length);
+      assert.strictEqual(repository.findById('legacyId'), null);
+      assert.notStrictEqual(repository.findFirstToExecute()?.id, 'legacyId');
+
+      repository.delete('legacyId');
+      assert.strictEqual(database.prepare(`SELECT id FROM commands WHERE id = 'legacyId';`).get(), undefined);
+    } finally {
+      database.prepare(`DELETE FROM commands WHERE id = 'legacyId';`).run();
+    }
+  });
+
   it('should create an update version command', () => {
     const command: OIAnalyticsFetchUpdateVersionCommandDTO = testData.oIAnalytics.commands
       .oIAnalyticsList[0] as OIAnalyticsFetchUpdateVersionCommandDTO;
