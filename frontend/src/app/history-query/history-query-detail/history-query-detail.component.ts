@@ -36,7 +36,7 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
-import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { checkCondition, isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 import { ModalService } from '../../shared/modal.service';
@@ -206,9 +206,7 @@ export class HistoryQueryDetailComponent {
         const condition = settingsManifest.enablingConditions.find(
           enablingCondition => enablingCondition.targetPathFromRoot === setting.key
         );
-        return (
-          !condition || (settings[condition.referralPathFromRoot] && condition.values.includes(settings[condition.referralPathFromRoot]))
-        );
+        return !condition || checkCondition(settings[condition.referralPathFromRoot] ?? null, condition);
       })
       .map(setting => ({
         key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
