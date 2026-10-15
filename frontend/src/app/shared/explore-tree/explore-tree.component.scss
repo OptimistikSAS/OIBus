@@ -50,7 +50,7 @@
   width: 0.85rem;
 }
 
-// The per-row "Select" action (selectable mode only). The global `.btn-link` rule (styles.scss)
+// The per-row node action (e.g. "Select", only when the tree has one). The global `.btn-link` rule (styles.scss)
 // sets color to $white for the box-title header buttons - invisible on this white modal/panel body,
 // exactly the same gotcha .explore-toggle above already works around. Given a deliberate, distinct
 // color ($electricBlue, bold) rather than reusing .explore-toggle's neutral $darkGrey: unlike the

@@ -19,7 +19,7 @@ import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
 import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
-import { SouthConnectorManifest, SQL_FAMILY_SOUTH_TYPES } from '@oibus/shared/connector/south-manifest.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '@oibus/shared/domain/configuration-workflow.model';
 import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
@@ -253,23 +253,16 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   /** Whether the workflow pushes the discovered records to OIAnalytics (remote mode) rather than creating items. */
   readonly pushToOIAnalytics = computed(() => this.pushToOIAnalyticsControl()?.value ?? false);
 
-  /** Tree-shaped discovery scope (a root node to browse) - OPC-UA, Folder Scanner. Checked before
-   *  isSqlFamily since a manifest could in principle declare both (none do today). */
-  readonly isTreeBased = computed(() => this.currentManifest()?.explore === true && !this.isSqlFamily());
+  /** Tree-shaped discovery scope (a root node to browse) - see the manifest's `discovery` flag. */
+  readonly isTreeBased = computed(() => this.currentManifest()?.discovery === 'tree');
 
-  /** Query-shaped discovery scope (a dedicated metadata query) - the SQL-family connectors that have
-   *  a `discover()` implementation today (see SQL_FAMILY_SOUTH_TYPES's own doc comment for why ODBC/
-   *  OLEDB aren't included). */
-  readonly isSqlFamily = computed(() => {
-    const manifest = this.currentManifest();
-    return !!manifest && SQL_FAMILY_SOUTH_TYPES.includes(manifest.id);
-  });
+  /** Query-shaped discovery scope (a dedicated metadata query) - the SQL-family connectors, see the
+   *  manifest's `discovery` flag. */
+  readonly isSqlFamily = computed(() => this.currentManifest()?.discovery === 'query');
 
   /** Whether to show the read-only explore tree above the SQL query editor, for reference while
-   *  writing the query - only SQLite has an `explore()` implementation among the SQL-family connectors
-   *  today, so this is the same condition as isSqlFamily for now, but stated independently since it's
-   *  conceptually a separate capability (a future SQL connector could get discover() without explore(),
-   *  or vice versa). */
+   *  writing the query - only for the SQL-family connectors that also have an `explore()`
+   *  implementation (a separate capability from discovery). */
   readonly showSqlExploreTree = computed(() => this.isSqlFamily() && this.currentManifest()?.explore === true);
 
   /** Name of the group currently mapped as a constant for the 'groupId' field, or '' when none is. */
@@ -281,15 +274,20 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     return this.groups().find(group => group.id === groupId)?.standardSettings.name ?? groupId;
   });
 
+  /**
+   * @param prefill - starting values for a new workflow, e.g. the discovery root picked from the Explore
+   *   modal (see `WorkflowCreationService.createFromExploredNode`). The form stays pristine: nothing was typed yet.
+   */
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
     existingWorkflows: Array<{ id: string | null; name: string }>,
     manifest: SouthConnectorManifest,
     southId: string,
     southSettings: SouthSettings,
-    groups: SouthItemGroups
+    groups: SouthItemGroups,
+    prefill: Pick<ConfigurationWorkflowCommandDTO, 'name' | 'discoveryScope'> | null = null
   ) {
-    this.prepare('create', scanModes, existingWorkflows, manifest, null, southId, southSettings, groups);
+    this.prepare('create', scanModes, existingWorkflows, manifest, null, southId, southSettings, groups, prefill);
   }
 
   prepareForEdition(
@@ -331,7 +329,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     workflow: ConfigurationWorkflowCommandDTO | null,
     southId: string,
     southSettings: SouthSettings,
-    groups: SouthItemGroups
+    groups: SouthItemGroups,
+    prefill: Pick<ConfigurationWorkflowCommandDTO, 'name' | 'discoveryScope'> | null = null
   ) {
     this.mode.set(mode);
     this.scanModes.set(scanModes);
@@ -343,14 +342,14 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.southSettings = southSettings;
     this.itemMappableFields.set(buildItemMappableFields(manifest));
 
-    const scope: Record<string, unknown> = workflow?.discoveryScope ?? {};
+    const scope: Record<string, unknown> = workflow?.discoveryScope ?? prefill?.discoveryScope ?? {};
     this.discoveryRootNodeId.set(typeof scope['rootNodeId'] === 'string' ? scope['rootNodeId'] : null);
     this.discoveryQuery.set(typeof scope['query'] === 'string' ? scope['query'] : '');
     this.itemFieldMappingValues.set({ ...(workflow?.itemFieldMapping ?? {}) });
     this.identityKeyFields.set(workflow ? [...workflow.identityKeyFields] : []);
     this.eligibilityFilter.set(workflow ? workflow.eligibilityFilter.map(condition => ({ ...condition })) : []);
     this.refreshRegistrationStatus();
-    this.initForm();
+    this.initForm(prefill?.name ?? '');
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -378,13 +377,13 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     });
   }
 
-  private initForm() {
+  private initForm(defaultName: string) {
     // SQL-family connectors are query-based (one item = one free-form query, item != point) - a
     // workflow there can only ever push the raw discovered records to OIAnalytics, never create/update
     // items itself (see isSqlFamily's own doc comment). pushToOIAnalytics is forced true and the mode
     // choice is hidden from the template for these.
     this.form.reset({
-      name: this.workflow?.name ?? '',
+      name: this.workflow?.name ?? defaultName,
       scanModeId: this.workflow?.scanModeId ?? null,
       pushToOIAnalytics: this.isSqlFamily() ? true : (this.workflow?.pushToOIAnalytics ?? false),
       enabled: this.workflow?.enabled ?? true
@@ -637,7 +636,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   openNodePicker() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southId, this.southSettings, this.currentManifest()!.id, undefined, true);
+    component.prepare(this.southId, this.southSettings, this.currentManifest()!.id, undefined, 'south.explore.select');
     modalRef.result.subscribe((entry: SouthConnectorExploreEntry) => {
       this.discoveryRootNodeId.set(entry.id);
     });
