@@ -299,7 +299,7 @@ describe('SouthDetailComponent', () => {
 
       await tester.exploreButton.click();
 
-      expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'lg' });
+      expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
       // no discovery: read-only browsing, no workflow can be created from a node
       expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', undefined, null);
       expect(workflowCreationService.createFromExploredNode).not.toHaveBeenCalled();
