@@ -33,13 +33,8 @@
         <span class="explore-name me-1">{{ node.entry.name }}</span>
         <ng-container *ngTemplateOutlet="metadataList; context: { $implicit: node.entry }" />
       </button>
-      @if (selectable()) {
-        <button
-          type="button"
-          class="btn btn-link btn-sm py-0 explore-select"
-          (click)="select(node)"
-          translate="south.explore.select"
-        ></button>
+      @if (nodeActionKey(); as actionKey) {
+        <button type="button" class="btn btn-link btn-sm py-0 explore-select" (click)="select(node)" [translate]="actionKey"></button>
       }
     } @else {
       <div class="d-flex align-items-center flex-grow-1">

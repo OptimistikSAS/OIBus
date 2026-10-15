@@ -11,10 +11,11 @@ import { SouthConnectorFolderScannerDTO, SouthConnectorMQTTDTO, SouthItemLastVal
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../../test/builders';
+import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflow, buildWorkflowCommand } from '../../../test/builders';
 import testData from '../../../test/test-data';
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
 import { EngineService } from '../../services/engine.service';
 import { LogService } from '../../services/log.service';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -34,6 +35,7 @@ import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manag
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 import { SouthDetailComponent } from './south-detail.component';
 
 const manifest = testData.south.manifest;
@@ -134,6 +136,8 @@ describe('SouthDetailComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let notificationService: MockObject<NotificationService>;
   let confirmationService: MockObject<ConfirmationService>;
+  let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
+  let workflowCreationService: MockObject<WorkflowCreationService>;
   let clipboard: MockObject<Clipboard>;
   let modalService: MockModalService<unknown>;
 
@@ -145,6 +149,8 @@ describe('SouthDetailComponent', () => {
     const logService = createMock(LogService);
     notificationService = createMock(NotificationService);
     confirmationService = createMock(ConfirmationService);
+    configurationWorkflowService = createMock(ConfigurationWorkflowService);
+    workflowCreationService = createMock(WorkflowCreationService);
     clipboard = createMock(Clipboard);
 
     scanModeService.list.mockReturnValue(of(scanModes));
@@ -169,6 +175,8 @@ describe('SouthDetailComponent', () => {
         { provide: LogService, useValue: logService },
         { provide: NotificationService, useValue: notificationService },
         { provide: ConfirmationService, useValue: confirmationService },
+        { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
+        { provide: WorkflowCreationService, useValue: workflowCreationService },
         { provide: Clipboard, useValue: clipboard }
       ]
     });
@@ -285,13 +293,49 @@ describe('SouthDetailComponent', () => {
 
     test('should open the explore modal with the persisted connector id, settings and type', async () => {
       const tester = await createTester();
-      const exploreModal = mockModal(createMock(SouthExploreModalComponent));
+      const exploreModal = createMock(SouthExploreModalComponent);
+      modalService.mockDismissedModal(exploreModal);
       const open = vi.spyOn(modalService, 'open');
 
       await tester.exploreButton.click();
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'lg' });
-      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner');
+      // no discovery: read-only browsing, no workflow can be created from a node
+      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', undefined, null);
+      expect(workflowCreationService.createFromExploredNode).not.toHaveBeenCalled();
+    });
+
+    test('should create a workflow from a node picked in the explore modal when the connector has tree-based discovery', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: 'tree' }));
+      const tester = await createTester();
+      const node = { id: 'folder/sub', name: 'sub', metadata: {}, hasChildren: true };
+      const exploreModal = mockModal(createMock(SouthExploreModalComponent), node);
+      const workflows = [buildWorkflow('workflow1', 'sub')];
+      configurationWorkflowService.list.mockReturnValue(of(workflows));
+      workflowCreationService.createFromExploredNode.mockReturnValue(of(buildWorkflowCommand('workflow2', 'sub-2')));
+
+      await tester.exploreButton.click();
+
+      expect(exploreModal.prepare).toHaveBeenCalledWith(
+        'southId1',
+        southConnector.settings,
+        'folder-scanner',
+        undefined,
+        'south.explore.create-workflow'
+      );
+      expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
+      expect(workflowCreationService.createFromExploredNode).toHaveBeenCalledWith(
+        {
+          directSave: true,
+          southId: 'southId1',
+          southSettings: southConnector.settings,
+          scanModes,
+          manifest: { ...manifest, discovery: 'tree' },
+          groups: expect.anything(),
+          existingWorkflows: workflows
+        },
+        node
+      );
     });
 
     test('should open the audit history of the south connector and of its items', async () => {

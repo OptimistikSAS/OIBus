@@ -28,14 +28,14 @@ const scanModes = testData.scanMode.list;
 const southId = 'southId1';
 const southSettings = testData.south.list[0].settings;
 // Real manifest fixture: modes.history is true, items.rootAttribute.attributes = [name, enabled, scanMode, settings{...}] -
-// exercises both the manifest-driven fields and the historian fields added alongside them.
-const manifest = testData.south.manifest;
-// A SQL-family connector with no explore() (e.g. MSSQL) - query-only discovery scope, no reference tree.
-const sqlManifest: SouthConnectorManifest = { ...manifest, id: 'mssql', explore: false };
-// A SQL-family connector that also has explore() (SQLite, today the only one) - query editor plus the reference tree.
-const sqliteManifest: SouthConnectorManifest = { ...manifest, id: 'sqlite', explore: true };
-// Neither tree-based nor SQL-family.
-const unsupportedManifest: SouthConnectorManifest = { ...manifest, id: 'mqtt', explore: false };
+// exercises both the manifest-driven fields and the historian fields added alongside them. Given a tree-based discovery.
+const manifest: SouthConnectorManifest = { ...testData.south.manifest, discovery: 'tree' };
+// A SQL-family connector with no explore() - query-only discovery scope, no reference tree.
+const sqlManifest: SouthConnectorManifest = { ...manifest, id: 'mysql', explore: false, discovery: 'query' };
+// A SQL-family connector that also has explore() (e.g. SQLite) - query editor plus the reference tree.
+const sqliteManifest: SouthConnectorManifest = { ...manifest, id: 'sqlite', explore: true, discovery: 'query' };
+// No discovery at all, even though it can be explored (e.g. Folder Scanner).
+const unsupportedManifest: SouthConnectorManifest = { ...manifest, explore: true, discovery: undefined };
 const noHistoryManifest: SouthConnectorManifest = { ...manifest, modes: { ...manifest.modes, history: false } };
 
 // Mirrors the real OPC-UA item manifest's mode -> haMode enabling condition (settings.mode is a
@@ -200,6 +200,7 @@ interface CreateOptions {
   existingWorkflows?: Array<{ id: string | null; name: string }>;
   workflowSouthId?: string;
   directSave?: boolean;
+  prefill?: Pick<ConfigurationWorkflowCommandDTO, 'name' | 'discoveryScope'>;
 }
 
 describe('EditWorkflowModalComponent', () => {
@@ -246,14 +247,15 @@ describe('EditWorkflowModalComponent', () => {
       workflow = existingWorkflow,
       existingWorkflows = [existingWorkflow],
       workflowSouthId = southId,
-      directSave = true
+      directSave = true,
+      prefill
     } = options;
     const tester = new EditWorkflowModalComponentTester();
     const component = tester.fixture.componentInstance;
     component.directSave = directSave;
     switch (mode) {
       case 'create':
-        component.prepareForCreation(scanModes, existingWorkflows, workflowManifest, workflowSouthId, southSettings, groups);
+        component.prepareForCreation(scanModes, existingWorkflows, workflowManifest, workflowSouthId, southSettings, groups, prefill);
         break;
       case 'edit':
         component.prepareForEdition(scanModes, existingWorkflows, workflowManifest, workflow, workflowSouthId, southSettings, groups);
@@ -420,7 +422,7 @@ describe('EditWorkflowModalComponent', () => {
       await tester.browseButton.click();
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'lg' });
-      expect(exploreModal.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, undefined, true);
+      expect(exploreModal.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, undefined, 'south.explore.select');
       await expect.element(tester.rootNodeId).toHaveTextContent('ns=1;s=Reactor');
 
       await tester.clearRootNodeButton.click();
@@ -453,7 +455,15 @@ describe('EditWorkflowModalComponent', () => {
       expect(southConnectorService.startExplore).toHaveBeenCalled();
     });
 
-    test('should show an unsupported-connector message when the connector is neither tree-based nor SQL-family', async () => {
+    test('should start a new workflow from the prefilled name and discovery root', async () => {
+      const tester = create({ prefill: { name: 'Reactor', discoveryScope: { rootNodeId: 'ns=1;s=Reactor' } } });
+
+      await expect.element(tester.name).toHaveValue('Reactor');
+      await expect.element(tester.rootNodeId).toHaveTextContent('ns=1;s=Reactor');
+      expect(tester.fixture.componentInstance.canDismiss()).toBe(true);
+    });
+
+    test('should show an unsupported-connector message when the connector has no discovery, even if it can be explored', async () => {
       const tester = create({ workflowManifest: unsupportedManifest });
 
       await expect.element(tester.unsupportedScope).toBeInTheDocument();
@@ -471,7 +481,7 @@ describe('EditWorkflowModalComponent', () => {
 
       expect(southConnectorService.testDiscoveryQuery).toHaveBeenCalledWith(
         'create',
-        'mssql',
+        'mysql',
         southSettings,
         'SELECT name, unit FROM metadata'
       );

@@ -2758,7 +2758,8 @@
       "button": "Explore",
       "empty": "Nothing to explore",
       "error": "Error while exploring the data source",
-      "select": "Select"
+      "select": "Select",
+      "create-workflow": "Create workflow"
     },
     "test-item": {
       "title": "Testing item",

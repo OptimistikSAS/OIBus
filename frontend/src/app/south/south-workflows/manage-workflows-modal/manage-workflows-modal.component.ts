@@ -7,7 +7,7 @@ import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { map, Observable, of, switchMap } from 'rxjs';
 
-import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
@@ -20,25 +20,7 @@ import { NotificationService } from '../../../shared/notification.service';
 import { SouthItemGroups } from '../../south-items/south-item-groups';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
 import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
-
-/** Prefix of the client-side id given to a workflow created in memory (not persisted yet) - the backend
- *  treats such an id as "create" when the south connector is saved, same convention as in-memory groups. */
-const TEMP_ID_PREFIX = 'temp_';
-
-/** A persisted workflow as the command the edit modal works on (and edit-south keeps in memory). */
-export function toConfigurationWorkflowCommand(workflow: ConfigurationWorkflowDTO): ConfigurationWorkflowCommandDTO {
-  return {
-    id: workflow.id,
-    name: workflow.name,
-    discoveryScope: workflow.discoveryScope,
-    identityKeyFields: workflow.identityKeyFields,
-    eligibilityFilter: workflow.eligibilityFilter,
-    itemFieldMapping: workflow.itemFieldMapping,
-    pushToOIAnalytics: workflow.pushToOIAnalytics,
-    scanModeId: workflow.scanMode?.id ?? null,
-    enabled: workflow.enabled
-  };
-}
+import { TEMP_ID_PREFIX, toConfigurationWorkflowCommand, WorkflowCreationService } from '../workflow-creation.service';
 
 /**
  * Lists a south connector's Configuration Workflows, in one of two modes (like ManageGroupsModalComponent's
@@ -63,6 +45,7 @@ export default class ManageWorkflowsModalComponent {
   private configurationWorkflowService = inject(ConfigurationWorkflowService);
   private confirmationService = inject(ConfirmationService);
   private notificationService = inject(NotificationService);
+  private workflowCreationService = inject(WorkflowCreationService);
   private router = inject(Router);
   private fb = inject(NonNullableFormBuilder);
 
@@ -199,18 +182,9 @@ export default class ManageWorkflowsModalComponent {
   }
 
   private createWorkflow(command: ConfigurationWorkflowCommandDTO) {
-    if (!this.directSave()) {
-      this.addWorkflow({ ...command, id: `${TEMP_ID_PREFIX}${Date.now()}` });
-      return;
-    }
-    this.configurationWorkflowService.create(this.southId, command).subscribe(created => {
-      this.addWorkflow(toConfigurationWorkflowCommand(created));
-      this.notificationService.success('south.workflows.created');
-    });
-  }
-
-  private addWorkflow(workflow: ConfigurationWorkflowCommandDTO) {
-    this.workflowSource().update(workflows => [...workflows, workflow]);
+    this.workflowCreationService
+      .save(this.southId, command, this.directSave())
+      .subscribe(created => this.workflowSource().update(workflows => [...workflows, created]));
   }
 
   onDelete(workflow: ConfigurationWorkflowCommandDTO) {

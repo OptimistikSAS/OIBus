@@ -65,9 +65,9 @@ describe('ExploreTreeComponent', () => {
     tester = new ExploreTreeComponentTester();
   });
 
-  function prepareWith(entries: Array<SouthConnectorExploreEntry>, selectable = false) {
+  function prepareWith(entries: Array<SouthConnectorExploreEntry>, nodeActionKey: string | null = null) {
     southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries }));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, selectable);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, nodeActionKey);
   }
 
   test('should be loading', async () => {
@@ -230,7 +230,7 @@ describe('ExploreTreeComponent', () => {
   test('should render a Select action on expandable nodes only, and emit the selected entry when clicked', async () => {
     const selected: Array<SouthConnectorExploreEntry> = [];
     tester.component.nodeSelected.subscribe(selectedEntry => selected.push(selectedEntry));
-    prepareWith([entry('Objects', true), entry('Server', false)], true);
+    prepareWith([entry('Objects', true), entry('Server', false)], 'south.explore.select');
 
     await expect.element(tester.selectButtons).toHaveLength(1);
     await tester.node('Objects').getByRole('button', { name: 'Select' }).click();

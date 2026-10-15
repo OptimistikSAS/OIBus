@@ -1900,6 +1900,14 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthDiscoveryKind": {
+				"type": "string",
+				"enum": [
+					"tree",
+					"query"
+				],
+				"description": "Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:\n- `tree`: a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA\n- `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors"
+			},
 			"SouthConnectorManifest": {
 				"description": "Manifest for a South connector type.\nDescribes the configuration schema, capabilities, and structure of a South connector type.",
 				"properties": {
@@ -1954,6 +1962,11 @@
 						"type": "boolean",
 						"description": "Whether this connector type supports the interactive \"explore/discovery\" feature\n(browsing the data source, e.g. expanding OPC-UA nodes or walking a folder tree).\nUI capability flag — mirrors the connector's structural `hasExplore()`.",
 						"example": true
+					},
+					"discovery": {
+						"$ref": "#/components/schemas/SouthDiscoveryKind",
+						"description": "Whether this connector type can feed Configuration Workflows, and the shape of their discovery scope\n(see {@link SouthDiscoveryKind}). Absent when the connector has no discovery.\nUI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB\nare SQL-family too but route through a separate agent process, so they don't have discovery yet.",
+						"example": "tree"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",

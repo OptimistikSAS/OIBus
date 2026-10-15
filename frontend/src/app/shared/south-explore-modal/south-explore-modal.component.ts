@@ -17,9 +17,9 @@ export type { SouthExploreApi } from '../explore-tree/explore-tree.component';
  * `ExploreTreeComponent`, which owns the session itself and is released automatically when this modal
  * (and so the child) is torn down.
  *
- * In `selectable` mode (see `prepare()`), picking a node in the tree closes this modal with that node
- * (`NgbActiveModal.close`) instead of just letting the user browse read-only - used e.g. to pick a
- * Configuration Workflow's discovery root.
+ * With a node action (see `prepare()`), running it on a node closes this modal with that node
+ * (`NgbActiveModal.close`) instead of just letting the user browse read-only - used to pick a
+ * Configuration Workflow's discovery root, or to create a workflow from the explored node.
  */
 @Component({
   selector: 'oib-south-explore-modal',
@@ -47,17 +47,17 @@ export class SouthExploreModalComponent implements AfterViewInit {
    * @param api - override the backend calls used to start/browse/close the session — needed when
    *   exploring settings that don't belong to a standalone south connector (e.g. a history query's
    *   south settings). Defaults to the south connector explore endpoints keyed by `connectorId`.
-   * @param selectable - when true, every expandable node gets a "Select" action that closes this
-   *   modal with the picked node. Defaults to false (pure read-only browsing).
+   * @param nodeActionKey - translation key of an action offered on every expandable node, which closes
+   *   this modal with that node. Defaults to null (pure read-only browsing).
    */
   prepare(
     connectorId: string | null,
     settingsToExplore: SouthSettings,
     southType: OIBusSouthType,
     api?: SouthExploreApi,
-    selectable = false
+    nodeActionKey: string | null = null
   ) {
-    const apply = () => this.tree()!.prepare(connectorId, settingsToExplore, southType, api, selectable);
+    const apply = () => this.tree()!.prepare(connectorId, settingsToExplore, southType, api, nodeActionKey);
     if (this.tree()) {
       apply();
     } else {

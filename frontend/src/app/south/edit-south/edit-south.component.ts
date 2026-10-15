@@ -19,6 +19,7 @@ import {
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { CertificateService } from '../../services/certificate.service';
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
@@ -51,9 +52,8 @@ import { ImportSouthItemsModalComponent } from '../south-items/import-south-item
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import { SaveGroupCommand, SouthItemGroup, SouthItemGroups } from '../south-items/south-item-groups';
-import ManageWorkflowsModalComponent, {
-  toConfigurationWorkflowCommand
-} from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { toConfigurationWorkflowCommand, WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 
 /** The group column is added by the page: the other columns are sorted by the item table. */
 function sortValue(item: SouthConnectorItemCommandDTO, column: string): string | number {
@@ -99,6 +99,7 @@ type SouthConnectorForm = FormGroup<{
 export class EditSouthComponent implements CanComponentDeactivate {
   private readonly southConnectorService = inject(SouthConnectorService);
   private readonly configurationWorkflowService = inject(ConfigurationWorkflowService);
+  private readonly workflowCreationService = inject(WorkflowCreationService);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly notificationService = inject(NotificationService);
@@ -343,9 +344,33 @@ export class EditSouthComponent implements CanComponentDeactivate {
     if (!this.form()!.controls.settings.valid) {
       return;
     }
+    const southId = this.southConnector()?.id || null;
+    const settings = this.formSouthConnectorCommand.settings;
+    const manifest = this.manifest()!;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector()?.id || null, this.formSouthConnectorCommand.settings, this.southType() as OIBusSouthType);
+    // With tree-based discovery, a workflow can be created from an explored node - kept in memory, like
+    // the ones added through the Manage workflows modal, and saved along with the connector.
+    const nodeActionKey = manifest.discovery === 'tree' ? 'south.explore.create-workflow' : null;
+    component.prepare(southId, settings, this.southType() as OIBusSouthType, undefined, nodeActionKey);
+    modalRef.result
+      .pipe(
+        switchMap((entry: SouthConnectorExploreEntry) =>
+          this.workflowCreationService.createFromExploredNode(
+            {
+              directSave: false,
+              southId: southId || 'create',
+              southSettings: settings,
+              scanModes: this.scanModes(),
+              manifest,
+              groups: this.itemGroups,
+              existingWorkflows: this.inMemoryWorkflows()
+            },
+            entry
+          )
+        )
+      )
+      .subscribe(workflow => this.inMemoryWorkflows.update(workflows => [...workflows, workflow]));
   }
 
   addItem() {

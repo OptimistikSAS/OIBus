@@ -15,7 +15,7 @@ import {
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflow } from '../../../test/builders';
+import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflow, buildWorkflowCommand } from '../../../test/builders';
 import { EmptyRouteComponent } from '../../../test/empty-route.component';
 import testData from '../../../test/test-data';
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
@@ -38,6 +38,7 @@ import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manag
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import { SouthItemGroups } from '../south-items/south-item-groups';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 import { EditSouthComponent } from './edit-south.component';
 
 const manifest = testData.south.manifest;
@@ -160,6 +161,7 @@ class EditSouthComponentTester {
 describe('EditSouthComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
+  let workflowCreationService: MockObject<WorkflowCreationService>;
   let notificationService: MockObject<NotificationService>;
   let confirmationService: MockObject<ConfirmationService>;
   let unsavedChangesService: MockObject<UnsavedChangesConfirmationService>;
@@ -168,6 +170,7 @@ describe('EditSouthComponent', () => {
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
+    workflowCreationService = createMock(WorkflowCreationService);
     const scanModeService = createMock(ScanModeService);
     const certificateService = createMock(CertificateService);
     const engineService = createMock(EngineService);
@@ -191,6 +194,7 @@ describe('EditSouthComponent', () => {
         provideModalTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
+        { provide: WorkflowCreationService, useValue: workflowCreationService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService },
         { provide: EngineService, useValue: engineService },
@@ -386,13 +390,48 @@ describe('EditSouthComponent', () => {
 
     test('should explore the data source with the settings of the form', async () => {
       const tester = await createTester('create');
-      const exploreModal = mockModal(createMock(SouthExploreModalComponent));
+      const exploreModal = createMock(SouthExploreModalComponent);
+      modalService.mockDismissedModal(exploreModal);
       const open = vi.spyOn(modalService, 'open');
 
       await tester.exploreButton.click();
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'lg' });
-      expect(exploreModal.prepare).toHaveBeenCalledWith(null, undefined, 'folder-scanner');
+      // no discovery: read-only browsing, no workflow can be created from a node
+      expect(exploreModal.prepare).toHaveBeenCalledWith(null, undefined, 'folder-scanner', undefined, null);
+    });
+
+    test('should add a workflow created from an explored node to the in-memory workflows', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: 'tree' }));
+      const tester = await createTester('edit');
+      const node = { id: 'folder/sub', name: 'sub', metadata: {}, hasChildren: true };
+      const exploreModal = mockModal(createMock(SouthExploreModalComponent), node);
+      workflowCreationService.createFromExploredNode.mockReturnValue(of(buildWorkflowCommand('temp_1', 'sub')));
+      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*0/);
+
+      await tester.exploreButton.click();
+
+      // the settings of the form (none in the test manifest)
+      expect(exploreModal.prepare).toHaveBeenCalledWith(
+        'southId1',
+        undefined,
+        'folder-scanner',
+        undefined,
+        'south.explore.create-workflow'
+      );
+      expect(workflowCreationService.createFromExploredNode).toHaveBeenCalledWith(
+        {
+          directSave: false,
+          southId: 'southId1',
+          southSettings: undefined,
+          scanModes,
+          manifest: { ...manifest, discovery: 'tree' },
+          groups: expect.anything(),
+          existingWorkflows: []
+        },
+        node
+      );
+      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*1/);
     });
 
     test('should ask for confirmation before leaving with unsaved changes', async () => {
