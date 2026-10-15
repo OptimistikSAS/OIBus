@@ -16,13 +16,12 @@ over UDP, using the [@bacnet-js/client](https://github.com/bacnet-js/client) lib
 
 | Setting               | Description                                                                                                                  | Example Value     |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
-| **Local interface**    | Local network interface IP to bind the BACnet/IP socket to. Leave empty to let the operating system pick the default one.   | `192.168.1.50`     |
 | **Port**               | UDP port used for BACnet/IP communication. `47808` (`0xBAC0`) is the standard BACnet/IP port.                                | `47808`            |
 | **APDU timeout**       | Maximum time, in milliseconds, to wait for a device's response to a request before treating it as failed.                   | `6000`             |
-| **Broadcast address**  | Broadcast address used for device discovery (`Who-Is`) when neither **Discovery target address** nor BBMD apply.            | `255.255.255.255`  |
-| **Discovery target address** | Optional. When set, **Test settings** and the root level of **Explore** send `Who-Is` directly to this one device (unicast) instead of broadcasting. Leave empty to broadcast on the whole subnet. | `192.168.1.10`     |
-| **Device time zone**   | Time zone the devices' clocks are set to. [Trend log](#history-from-trend-logs) records are timestamped in the device's local time; this setting turns them into exact instants. | `Europe/Paris` |
 | **Retry interval**     | Time to wait, in milliseconds, before reconnecting after a transport-level failure (e.g. the local socket itself fails).    | `10000`            |
+| **Discovery target address** | Optional. When set, **Test settings** and the root level of **Explore** send `Who-Is` directly to this one device (unicast) instead of broadcasting. Leave empty to broadcast on the whole subnet. | `192.168.1.10`     |
+| **Broadcast address**  | _(Shown when **Discovery target address** is empty)_ Broadcast address of the `Who-Is` sent to discover devices. Ignored when BBMD is enabled: the `Who-Is` then goes through the BBMD. | `255.255.255.255`  |
+| **Local interface**    | Optional. Local network interface IP to bind the BACnet/IP socket to. Leave empty to let the operating system pick the default one. | `192.168.1.50`     |
 | **Max parallel queries** | Maximum number of items (or synchronized groups) OIBus reads at the same time, up to `16`. Requests to a single device are still sent one at a time, so a higher value only speeds up items spread over several devices. | `1` |
 
 :::tip Unicast discovery instead of broadcast
@@ -116,6 +115,7 @@ Each item targets one BACnet object property on one device.
 | **Object type**       | Type of the BACnet object to read.                                                                                  | `Analog input`      |
 | **Object instance**   | Instance number of the object within the device.                                                                    | `1`                 |
 | **Property**          | Object property to read.                                                                                            | `Present value`     |
+| **Device time zone**  | _(Trend log)_ Time zone the device's clock is set to: its [trend log](#history-from-trend-logs) records are timestamped in the device's local time, and this setting turns them into exact instants. Each item has its own, as devices may be set differently. | `Europe/Paris` |
 | **Routed device**     | The device is on another BACnet network, behind a router. Shows the two settings below.                            | Enabled/Disabled    |
 | **Network number**    | _(Routed device)_ BACnet network number of the device's network.                                                    | `2`                 |
 | **MAC address**       | _(Routed device)_ Address of the device on that network: decimal station number for MS/TP, or hexadecimal bytes separated by colons. | `5`                 |
@@ -180,8 +180,9 @@ The buffer is read backwards from its most recent record, **Max objects per requ
 `ReadRange` request, until a record older than the requested range.
 
 :::caution Device time zone
-BACnet devices log their records in their own local time, without a time zone. Set **Device time zone** to
-the time zone the devices' clocks are set to, or every record will be shifted by the time difference.
+BACnet devices log their records in their own local time, without a time zone. Set each trend log item's
+**Device time zone** to the time zone its device's clock is set to, or every record will be shifted by the time
+difference.
 :::
 
 <ThrottlingSettings />

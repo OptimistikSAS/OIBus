@@ -31,7 +31,7 @@ import { DocsUrlService } from '../../shared/docs-url.service';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
-import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { checkCondition, isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -129,12 +129,7 @@ export class SouthDetailComponent {
         const condition = manifest.settings.enablingConditions.find(
           enablingCondition => enablingCondition.targetPathFromRoot === setting.key
         );
-        return (
-          !condition ||
-          (condition &&
-            southSettings[condition.referralPathFromRoot] &&
-            condition.values.includes(southSettings[condition.referralPathFromRoot]))
-        );
+        return !condition || checkCondition(southSettings[condition.referralPathFromRoot] ?? null, condition);
       })
       .map(setting => ({
         key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,

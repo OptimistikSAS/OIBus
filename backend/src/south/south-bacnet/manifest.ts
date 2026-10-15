@@ -19,21 +19,17 @@ const manifest: SouthConnectorManifest = {
       visible: true,
       wrapInBox: false
     },
-    enablingConditions: [],
+    enablingConditions: [
+      {
+        // The broadcast address is only used by a broadcast Who-Is, without discovery target address. A BBMD
+        // discovery ignores it too, but one enabling condition cannot depend on two settings.
+        referralPathFromRoot: 'discoveryTargetAddress',
+        targetPathFromRoot: 'broadcastAddress',
+        values: [null, '']
+      }
+    ],
     validators: [],
     attributes: [
-      {
-        type: 'string',
-        key: 'localInterface',
-        translationKey: 'configuration.oibus.manifest.south.bacnet.local-interface',
-        defaultValue: '',
-        validators: [],
-        displayProperties: {
-          row: 0,
-          columns: 6,
-          displayInViewMode: false
-        }
-      },
       {
         type: 'number',
         key: 'port',
@@ -56,7 +52,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 3,
+          columns: 4,
           displayInViewMode: true
         }
       },
@@ -82,8 +78,51 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 3,
+          columns: 4,
           displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'retryInterval',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.retry-interval',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['60000']
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'discoveryTargetAddress',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-target-address',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'PATTERN',
+            arguments: ['^\\d{1,3}(\\.\\d{1,3}){3}(:\\d{1,5})?$']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 6,
+          displayInViewMode: false
         }
       },
       {
@@ -108,29 +147,15 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'number',
-        key: 'retryInterval',
-        translationKey: 'configuration.oibus.manifest.south.bacnet.retry-interval',
-        unit: 'ms',
-        defaultValue: 10000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['60000']
-          }
-        ],
+        type: 'string',
+        key: 'localInterface',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.local-interface',
+        defaultValue: '',
+        validators: [],
         displayProperties: {
-          row: 1,
-          columns: 3,
-          displayInViewMode: true
+          row: 2,
+          columns: 6,
+          displayInViewMode: false
         }
       },
       {
@@ -154,43 +179,35 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 2,
           columns: 3,
           displayInViewMode: false
         }
       },
       {
-        type: 'string',
-        key: 'discoveryTargetAddress',
-        translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-target-address',
-        defaultValue: null,
-        validators: [
-          {
-            type: 'PATTERN',
-            arguments: ['^\\d{1,3}(\\.\\d{1,3}){3}(:\\d{1,5})?$']
-          }
-        ],
-        displayProperties: {
-          row: 2,
-          columns: 8,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'timezone',
-        key: 'timezone',
-        translationKey: 'configuration.oibus.manifest.south.bacnet.timezone',
-        defaultValue: 'UTC',
+        type: 'number',
+        key: 'maxObjectsPerRequest',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.max-objects-per-request',
+        unit: null,
+        defaultValue: 20,
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['100']
           }
         ],
         displayProperties: {
           row: 2,
-          columns: 4,
-          displayInViewMode: true
+          columns: 3,
+          displayInViewMode: false
         }
       },
       {
@@ -215,7 +232,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 3,
-          columns: 4,
+          columns: 6,
           displayInViewMode: true
         }
       },
@@ -241,33 +258,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 3,
-          columns: 4,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'number',
-        key: 'maxObjectsPerRequest',
-        translationKey: 'configuration.oibus.manifest.south.bacnet.max-objects-per-request',
-        unit: null,
-        defaultValue: 20,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['1']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['100']
-          }
-        ],
-        displayProperties: {
-          row: 3,
-          columns: 4,
+          columns: 6,
           displayInViewMode: false
         }
       },
@@ -520,6 +511,12 @@ const manifest: SouthConnectorManifest = {
               ]
             },
             {
+              // Trend log records are timestamped in the device's local time
+              referralPathFromRoot: 'objectType',
+              targetPathFromRoot: 'timezone',
+              values: ['trend-log']
+            },
+            {
               referralPathFromRoot: 'routed',
               targetPathFromRoot: 'networkNumber',
               values: [true]
@@ -620,7 +617,7 @@ const manifest: SouthConnectorManifest = {
               key: 'objectInstance',
               translationKey: 'configuration.oibus.manifest.south.items.bacnet.object-instance',
               unit: null,
-              defaultValue: null,
+              defaultValue: 1,
               validators: [
                 {
                   type: 'REQUIRED',
@@ -647,6 +644,23 @@ const manifest: SouthConnectorManifest = {
               translationKey: 'configuration.oibus.manifest.south.items.bacnet.property-identifier',
               defaultValue: 'present-value',
               selectableValues: ['present-value', 'status-flags', 'reliability', 'out-of-service', 'units'],
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                }
+              ],
+              displayProperties: {
+                row: 1,
+                columns: 4,
+                displayInViewMode: true
+              }
+            },
+            {
+              type: 'timezone',
+              key: 'timezone',
+              translationKey: 'configuration.oibus.manifest.south.items.bacnet.timezone',
+              defaultValue: 'UTC',
               validators: [
                 {
                   type: 'REQUIRED',

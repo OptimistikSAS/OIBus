@@ -1,0 +1,24 @@
+name,enabled,scanMode,group,syncWithGroup,maxReadInterval,readDelay,startTimeOffset,endTimeOffset,recoveryStrategy,settings_deviceAddress,settings_deviceInstance,settings_objectType,settings_objectInstance,settings_propertyIdentifier,settings_timezone,settings_routed,settings_networkNumber,settings_macAddress
+Room-Temperature,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,analog-input,1,present-value,,false,,
+Room-TemperatureCOV,true,Subscription,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,analog-input,1,present-value,,false,,
+Room-TemperatureUnits,true,Every 10 minutes,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,analog-input,1,units,,false,,
+Room-Pressure,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,analog-input,2,present-value,,false,,
+Room-PressureStatusFlags,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,analog-input,2,status-flags,,false,,
+Room-PressureReliability,true,Subscription,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,analog-input,2,reliability,,false,,
+Room-PressureOutOfService,true,Every minute,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,analog-input,2,out-of-service,,false,,
+Room-Setpoint,true,Every minute,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,analog-value,1,present-value,,false,,
+Room-Door,true,Subscription,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,binary-input,1,present-value,,false,,
+Room-Fan,true,Every minute,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,binary-value,1,present-value,,false,,
+Room-Mode,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,multi-state-value,1,present-value,,false,,
+Room-Occupancy,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,integer-value,1,present-value,,false,,
+Room-Energy,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,large-analog-value,1,present-value,,false,,
+Room-StatusText,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1001,characterstring-value,1,present-value,,false,,
+Room-TemperatureLog,true,Every minute,,false,3600,200,0,0,oldest,127.0.0.1:47809,1001,trend-log,1,,UTC,false,,
+Room-DoorLog,true,Every minute,,false,3600,200,0,0,oldest,127.0.0.1:47809,1001,trend-log,2,,UTC,false,,
+AHU-SupplyAirTemp,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1002,analog-input,1,present-value,,true,2,5
+AHU-ReturnAirTemp,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1002,analog-input,2,present-value,,true,2,5
+AHU-DamperPosition,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1002,analog-output,1,present-value,,true,2,5
+AHU-SupplyFan,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1002,binary-output,1,present-value,,true,2,5
+AHU-FilterAlarm,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1002,binary-input,1,present-value,,true,2,5
+AHU-FilterAlarmStatusFlags,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1002,binary-input,1,status-flags,,true,2,5
+AHU-UnitState,true,Every 10 seconds,,false,0,0,0,0,oldest,127.0.0.1:47809,1002,multi-state-input,1,present-value,,true,2,5

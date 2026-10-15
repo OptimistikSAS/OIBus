@@ -150,11 +150,12 @@ export interface OIBusEnablingCondition {
   referralPathFromRoot: string;
 
   /**
-   * Values of the referral attribute that will enable the target attribute.
+   * Values of the referral attribute that will enable the target attribute. `null` matches an attribute
+   * left empty, e.g. to enable a fallback setting only while an optional one is not set.
    *
    * @example ["MQTT"]
    */
-  values: Array<string | number | boolean>;
+  values: Array<string | number | boolean | null>;
 
   /**
    * Operator to use for the condition.
