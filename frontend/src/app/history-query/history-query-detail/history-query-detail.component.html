@@ -6,30 +6,10 @@
           <h1 id="title">
             <span>{{ 'history-query.title' | translate: { name: historyQuery.name } }}</span>
             <span class="ms-2">
-              <button
-                type="button"
-                class="btn btn-primary"
-                id="edit-link"
-                routerLink="edit"
-                [ngbTooltip]="'history-query.tooltips.edit' | translate"
-                [attr.aria-label]="'history-query.tooltips.edit' | translate"
-              >
-                <i class="fa-solid fa-pencil" aria-hidden="true"></i>
-              </button>
-              <button
-                type="button"
-                class="btn btn-primary ms-1"
-                id="show-audit-button"
-                [ngbTooltip]="'history-query.tooltips.audit' | translate"
-                [attr.aria-label]="'history-query.tooltips.audit' | translate"
-                (click)="showAudit('history_query', historyQuery.id)"
-              >
-                <i class="fa-solid fa-history" aria-hidden="true"></i>
-              </button>
               @if (historyQuery.status === 'PENDING') {
                 <button
                   type="button"
-                  class="btn btn-primary pull-right me-2"
+                  class="btn btn-primary"
                   id="history-query-start"
                   [ngbTooltip]="'history-query.tooltips.start' | translate"
                   [attr.aria-label]="'history-query.tooltips.start' | translate"
@@ -47,7 +27,7 @@
               @if (historyQuery.status === 'RUNNING') {
                 <button
                   type="button"
-                  class="btn btn-primary pull-right me-2"
+                  class="btn btn-primary"
                   id="history-query-pause"
                   [ngbTooltip]="'history-query.tooltips.pause' | translate"
                   [attr.aria-label]="'history-query.tooltips.pause' | translate"
@@ -65,7 +45,7 @@
               @if (historyQuery.status === 'PAUSED') {
                 <button
                   type="button"
-                  class="btn btn-primary pull-right me-2"
+                  class="btn btn-primary"
                   id="history-query-unpause"
                   [ngbTooltip]="'history-query.tooltips.resume' | translate"
                   [attr.aria-label]="'history-query.tooltips.resume' | translate"
@@ -83,7 +63,7 @@
               @if (historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED') {
                 <button
                   type="button"
-                  class="btn btn-primary pull-right me-2"
+                  class="btn btn-primary"
                   id="history-query-restart"
                   [ngbTooltip]="'history-query.tooltips.restart' | translate"
                   [attr.aria-label]="'history-query.tooltips.restart' | translate"
@@ -98,6 +78,26 @@
                   }
                 </button>
               }
+              <button
+                type="button"
+                class="btn btn-primary ms-1"
+                id="edit-link"
+                routerLink="edit"
+                [ngbTooltip]="'history-query.tooltips.edit' | translate"
+                [attr.aria-label]="'history-query.tooltips.edit' | translate"
+              >
+                <i class="fa-solid fa-pencil" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary ms-1"
+                id="show-audit-button"
+                [ngbTooltip]="'history-query.tooltips.audit' | translate"
+                [attr.aria-label]="'history-query.tooltips.audit' | translate"
+                (click)="showAudit('history_query', historyQuery.id)"
+              >
+                <i class="fa-solid fa-history" aria-hidden="true"></i>
+              </button>
             </span>
           </h1>
           <div class="d-flex justify-content-between align-items-center">
