@@ -16,6 +16,7 @@ import {
   addAttributeToForm,
   addEnablingConditions,
   applyPlatformConditions,
+  checkCondition,
   createControl,
   createMqttValidator,
   extractFormValue,
@@ -324,6 +325,36 @@ describe('dynamic-form.builder', () => {
     test('should throw when a control of the condition does not exist', () => {
       const group = new FormGroup({ driver: new FormControl('SMB') });
       expect(() => addEnablingConditions(group, [condition])).toThrow('wrong configuration in manifest');
+    });
+  });
+
+  describe('checkCondition', () => {
+    const condition = (
+      values: OIBusEnablingCondition['values'],
+      operator?: OIBusEnablingCondition['operator']
+    ): OIBusEnablingCondition => ({
+      referralPathFromRoot: 'source',
+      targetPathFromRoot: 'target',
+      values,
+      operator
+    });
+
+    test('should match an empty value with null and empty string values', () => {
+      expect(checkCondition(null, condition([null, '']))).toBe(true);
+      expect(checkCondition('', condition([null, '']))).toBe(true);
+      expect(checkCondition('192.168.1.10', condition([null, '']))).toBe(false);
+    });
+
+    test('should match false and 0 like any other value', () => {
+      expect(checkCondition(false, condition([false]))).toBe(true);
+      expect(checkCondition(0, condition([0]))).toBe(true);
+    });
+
+    test('should apply the NOT_EQUAL and CONTAINS operators', () => {
+      expect(checkCondition('a', condition(['b'], 'NOT_EQUAL'))).toBe(true);
+      expect(checkCondition('b', condition(['b'], 'NOT_EQUAL'))).toBe(false);
+      expect(checkCondition('abc', condition(['b'], 'CONTAINS'))).toBe(true);
+      expect(checkCondition(1, condition(['1'], 'CONTAINS'))).toBe(false);
     });
   });
 });
