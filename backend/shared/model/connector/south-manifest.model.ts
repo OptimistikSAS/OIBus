@@ -61,12 +61,11 @@ export type OIBusSouthType = (typeof OIBUS_SOUTH_TYPES)[number];
 export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt', 'bacnet'];
 
 /**
- * South connector types whose Configuration Workflow discoveryScope is a dedicated SQL metadata query
- * (`{ query: string }`) rather than a tree root to browse - i.e. the ones with a `discover()`
- * implementation today. ODBC and OLEDB are SQL-family too but route through a separate agent process
- * rather than a driver this repo talks to directly, so they don't have `discover()` yet.
+ * Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:
+ * - `tree`: a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA
+ * - `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors
  */
-export const SQL_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite'];
+export type SouthDiscoveryKind = 'tree' | 'query';
 
 /**
  * Represents the type metadata for a South connector.
@@ -195,6 +194,16 @@ export interface SouthConnectorManifest {
    * @example true
    */
   explore?: boolean;
+
+  /**
+   * Whether this connector type can feed Configuration Workflows, and the shape of their discovery scope
+   * (see {@link SouthDiscoveryKind}). Absent when the connector has no discovery.
+   * UI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB
+   * are SQL-family too but route through a separate agent process, so they don't have discovery yet.
+   *
+   * @example "tree"
+   */
+  discovery?: SouthDiscoveryKind;
 
   /**
    * The configuration schema for the connector settings.
