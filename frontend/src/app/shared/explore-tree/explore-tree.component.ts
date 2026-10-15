@@ -49,10 +49,10 @@ export interface SouthExploreApi {
  * (`SouthExploreModalComponent`, read-only browsing) or directly inline in another form (e.g. the
  * Configuration Workflow discovery-scope editor), with no other coordination needed from the host.
  *
- * In `selectable` mode, every expandable node (one with children — a leaf can't meaningfully scope a
- * walk, since there would be nothing left to discover under it) gets a "Select" action; picking one
- * emits `nodeSelected` instead of toggling. Non-selectable mode (the default) is pure read-only
- * browsing, as the standalone Explore feature has always been.
+ * With a node action (see `prepare()`), every expandable node (one with children — a leaf can't
+ * meaningfully scope a walk, since there would be nothing left to discover under it) gets an action
+ * button with that label (e.g. "Select" to pick a discovery root, "Create workflow" from the Explore
+ * modal); clicking it emits `nodeSelected`. Without one (the default), it is pure read-only browsing.
  */
 @Component({
   selector: 'oib-explore-tree',
@@ -78,7 +78,8 @@ export class ExploreTreeComponent implements OnDestroy {
   readonly maxHeight = input('50vh');
 
   private api: SouthExploreApi | null = null;
-  readonly selectable = signal(false);
+  /** Translation key of the action offered on each expandable node, or null for read-only browsing. */
+  readonly nodeActionKey = signal<string | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   private sessionId: string | null = null;
@@ -95,17 +96,17 @@ export class ExploreTreeComponent implements OnDestroy {
    * @param api - override the backend calls used to start/browse/close the session — needed when
    *   exploring settings that don't belong to a standalone south connector (e.g. a history query's
    *   south settings). Defaults to the south connector explore endpoints keyed by `connectorId`.
-   * @param selectable - when true, every expandable node gets a "Select" action that emits
-   *   `nodeSelected` instead of toggling. Defaults to false (pure read-only browsing).
+   * @param nodeActionKey - translation key of an action offered on every expandable node, which emits
+   *   `nodeSelected` with that node. Defaults to null (pure read-only browsing).
    */
   prepare(
     connectorId: string | null,
     settingsToExplore: SouthSettings,
     southType: OIBusSouthType,
     api?: SouthExploreApi,
-    selectable = false
+    nodeActionKey: string | null = null
   ) {
-    this.selectable.set(selectable);
+    this.nodeActionKey.set(nodeActionKey);
     this.api = api ?? this.defaultApi(connectorId || 'create');
     this.loading.set(true);
     this.api.start(settingsToExplore, southType).subscribe({
@@ -166,7 +167,7 @@ export class ExploreTreeComponent implements OnDestroy {
     });
   }
 
-  /** Picks this node as the caller's selection - only offered on expandable nodes (see class doc). */
+  /** Runs the node action on this node - only offered on expandable nodes (see class doc). */
   select(node: ExploreTreeNode) {
     this.nodeSelected.emit(node.entry);
   }
