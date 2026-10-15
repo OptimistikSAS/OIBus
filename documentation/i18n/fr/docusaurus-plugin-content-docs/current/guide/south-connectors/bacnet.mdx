@@ -36,6 +36,11 @@ utilisent la diffusion par défaut. Renseigner l'**Adresse cible de découverte*
 précis, ce qui ne nécessite qu'un simple routage IP — la même accessibilité déjà requise par `ReadProperty`,
 sans BBMD.
 
+Un appareil répond souvent au `Who-Is` par un `I-Am` diffusé sur son propre sous-réseau, qui ne parvient
+jamais à OIBus depuis un autre sous-réseau ; certains ne répondent pas du tout au `Who-Is`. Lorsqu'aucun
+`I-Am` ne revient de l'**Adresse cible de découverte**, OIBus lit à la place l'identifiant de l'appareil, via
+l'instance d'appareil générique `4194303` que tout appareil prend pour la sienne, et liste l'appareil trouvé.
+
 :::
 
 ### Interrogation et abonnements COV {#polling-and-cov-subscriptions}
@@ -221,6 +226,9 @@ derrière eux : **Explorer** liste les appareils routés avec leur numéro de r�
 **Tester les paramètres** les affiche sous la forme `192.168.1.20, network 2, MAC 5`. À travers un BBMD, le
 `Who-Is` reste une diffusion locale à chaque sous-réseau : les appareils routés n'y sont pas découverts,
 renseignez plutôt l'**Adresse cible de découverte** avec le routeur.
+Depuis un autre sous-réseau, les appareils situés derrière le routeur répondent par une diffusion sur le
+sous-réseau du routeur, qui ne parvient à OIBus qu'à travers un BBMD : gardez le BBMD activé avec l'**Adresse
+cible de découverte**, ou renseignez leurs paramètres d'item à la main.
 
 :::caution Abonnements COV aux appareils routés
 La bibliothèque BACnet utilisée par OIBus (`@bacnet-js/client` 3.3.2) envoie les demandes d'abonnement COV, et
