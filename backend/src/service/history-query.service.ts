@@ -22,7 +22,7 @@ import { encryptionService } from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { checkScanMode, stringToBoolean } from './utils';
+import { checkScanMode, parseCsvImport, stringToBoolean } from './utils';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toHistoryQueryItemDTO } from './history-query-item-dto.utils';
 import { southManifestList } from './south-manifests';
@@ -34,7 +34,6 @@ import { BaseEntity, GetUserInfo, Page } from '../../shared/model/types';
 import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
-import csv from 'papaparse';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -527,16 +526,11 @@ export default class HistoryQueryService {
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.southService.getManifest(southType);
-    const csvContent = csv.parse<Record<string, string>>(fileContent, { header: true, delimiter, skipEmptyLines: true });
-    if (csvContent.meta.delimiter !== delimiter) {
-      throw new OIBusValidationError(
-        `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`
-      );
-    }
+    const csvData = parseCsvImport(fileContent, delimiter);
 
     const validItems: Array<HistoryQueryItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
-    for (const data of csvContent.data) {
+    for (const data of csvData) {
       const item: HistoryQueryItemDTO = {
         id: '',
         name: data.name,

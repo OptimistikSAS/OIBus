@@ -55,14 +55,11 @@ const validatorMock = {
   validate: mock.fn(async () => undefined)
 };
 
-const mockPapaparse = {
-  parse: mock.fn((): { meta: { delimiter: string }; data: Array<Record<string, unknown>> } => ({ meta: { delimiter: ',' }, data: [] }))
-};
-
 const mockUtils = {
   stringToBoolean: mock.fn(() => true),
   checkScanMode: mock.fn((): (typeof testData.scanMode.list)[0] => testData.scanMode.list[0]),
-  checkGroups: mock.fn()
+  checkGroups: mock.fn(),
+  parseCsvImport: mock.fn((_fileContent: string, _delimiter: string): Array<Record<string, unknown>> => [])
 };
 
 const mockTransformerService = {
@@ -78,7 +75,6 @@ describe('History Query service', () => {
   let service: InstanceType<typeof HistoryQueryServiceType>;
 
   before(() => {
-    mockModule(nodeRequire, 'papaparse', mockPapaparse);
     mockModule(nodeRequire, '../service/utils', mockUtils);
     mockModule(nodeRequire, './utils', mockUtils);
     mockModule(nodeRequire, '../web-server/controllers/validators/joi.validator', {
@@ -142,7 +138,7 @@ describe('History Query service', () => {
     transformerService.findAll.mock.resetCalls();
     scanModeRepository.findAll.mock.resetCalls();
     validatorMock.validateSettings.mock.resetCalls();
-    mockPapaparse.parse.mock.resetCalls();
+    mockUtils.parseCsvImport.mock.resetCalls();
     mockUtils.stringToBoolean.mock.resetCalls();
     mockUtils.checkScanMode.mock.resetCalls();
     logRepository.deleteLogsByScopeId.mock.resetCalls();
@@ -683,10 +679,7 @@ describe('History Query service', () => {
         settings_minAge: 100
       }
     ];
-    mockPapaparse.parse.mock.mockImplementationOnce(() => ({
-      meta: { delimiter: ',' },
-      data: csvData
-    }));
+    mockUtils.parseCsvImport.mock.mockImplementationOnce(() => csvData);
     validatorMock.validateSettings.mock.mockImplementationOnce(async () => {
       throw new Error('validation error');
     });
@@ -768,10 +761,7 @@ describe('History Query service', () => {
         })
       }
     ];
-    mockPapaparse.parse.mock.mockImplementationOnce(() => ({
-      meta: { delimiter: ',' },
-      data: csvData
-    }));
+    mockUtils.parseCsvImport.mock.mockImplementationOnce(() => csvData);
     const result = await service.checkImportItems(
       testData.historyQueries.command.southType,
       'file content',
@@ -803,15 +793,15 @@ describe('History Query service', () => {
   });
 
   it('should throw error if delimiter does not match', async () => {
-    mockPapaparse.parse.mock.mockImplementationOnce(() => ({
-      meta: { delimiter: ';' },
-      data: []
-    }));
+    mockUtils.parseCsvImport.mock.mockImplementationOnce(() => {
+      throw new OIBusValidationError(`The entered delimiter "," does not correspond to the file delimiter ";"`);
+    });
 
     await assert.rejects(
-      async () => service.checkImportItems(testData.historyQueries.command.southType, '', ',', []),
+      async () => service.checkImportItems(testData.historyQueries.command.southType, 'file content', ',', []),
       new OIBusValidationError(`The entered delimiter "," does not correspond to the file delimiter ";"`)
     );
+    assert.deepStrictEqual(mockUtils.parseCsvImport.mock.calls[0].arguments, ['file content', ',']);
   });
 
   it('should import items', async () => {

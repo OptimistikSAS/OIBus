@@ -40,10 +40,9 @@ import { GetUserInfo, Page } from '../../shared/model/types';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
-import { checkGroups, checkScanMode, stringToBoolean } from './utils';
+import { checkGroups, checkScanMode, parseCsvImport, stringToBoolean } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import csv from 'papaparse';
 
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -591,17 +590,12 @@ export default class SouthService {
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.getManifest(southType);
-    const csvContent = csv.parse<Record<string, string>>(fileContent, { header: true, delimiter, skipEmptyLines: true });
-    if (csvContent.meta.delimiter !== delimiter) {
-      throw new OIBusValidationError(
-        `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`
-      );
-    }
+    const csvData = parseCsvImport(fileContent, delimiter);
     const scanModes = this.scanModeRepository.findAll();
 
     const validItems: Array<SouthConnectorItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
-    for (const data of csvContent.data) {
+    for (const data of csvData) {
       let scanMode = null;
       if (data.scanMode) {
         const foundScanMode = scanModes.find(scanMode => scanMode.name === data.scanMode);
