@@ -1014,7 +1014,11 @@ describe('SouthBACnet', () => {
     });
 
     it("should read record timestamps in the item's time zone", async () => {
-      const parisTrendLog = buildItem({ ...trendLogItem, settings: { ...trendLogItem.settings, timezone: 'Europe/Paris' } });
+      const parisTrendLog = buildItem({
+        id: trendLogItem.id,
+        name: trendLogItem.name,
+        settings: { ...trendLogItem.settings, timezone: 'Europe/Paris' }
+      });
       const testPromise = south.testItem(parisTrendLog, {
         history: { startTime: '2026-10-14T09:00:00.000Z', endTime: '2026-10-14T11:00:00.000Z' }
       } as never);
