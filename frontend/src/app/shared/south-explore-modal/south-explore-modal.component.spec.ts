@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -67,6 +67,8 @@ describe('SouthExploreModalComponent', () => {
   test('should close with the node the action was run on', async () => {
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, 'south.explore.create-workflow');
 
+    southConnectorService.browseExplore.mockReturnValue(NEVER);
+    await tester.root.getByRole('button', { name: /^Objects/ }).click();
     await tester.root.getByRole('button', { name: 'Create workflow' }).click();
 
     expect(fakeActiveModal.close).toHaveBeenCalledWith({

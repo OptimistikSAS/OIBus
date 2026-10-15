@@ -260,7 +260,7 @@ export class HistoryQueryDetailComponent {
 
   explore() {
     const historyQuery = this.historyQuery()!;
-    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
     component.prepare(historyQuery.id, historyQuery.southSettings, historyQuery.southType, {
       start: (settings, type) => this.historyQueryService.startExplore(historyQuery.id, settings, type),

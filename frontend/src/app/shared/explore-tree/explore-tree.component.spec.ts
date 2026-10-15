@@ -1,3 +1,4 @@
+import { Clipboard } from '@angular/cdk/clipboard';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
@@ -12,6 +13,7 @@ import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { provideCurrentUser } from '../current-user-testing';
+import { NotificationService } from '../notification.service';
 import { ExploreTreeComponent, SouthExploreApi } from './explore-tree.component';
 
 class ExploreTreeComponentTester {
@@ -23,12 +25,24 @@ class ExploreTreeComponentTester {
   readonly empty = this.root.getByCss('#explore-empty');
   readonly tree = this.root.getByCss('#explore-tree');
   readonly nodes = this.root.getByCss('.explore-node');
-  readonly metadataValues = this.root.getByCss('.explore-metadata-value');
-  readonly selectButtons = this.root.getByRole('button', { name: 'Select' });
   readonly nodeErrors = this.root.getByCss('.explore-node-error');
+  readonly details = this.root.getByCss('#explore-details');
+  readonly detailsName = this.root.getByCss('.explore-details-name');
+  readonly detailLabels = this.root.getByCss('.explore-details-fields dt');
+  readonly detailValues = this.root.getByCss('.explore-details-value');
+  readonly actionButton = this.root.getByCss('#explore-node-action');
 
-  toggleButton(name: string) {
+  /** The row of the node, which shows its details (its accessible name starts with the node name) */
+  row(name: string) {
     return this.root.getByRole('button', { name: new RegExp(`^${name}`) });
+  }
+
+  expandButton(name: string) {
+    return this.root.getByRole('button', { name: `Expand ${name}` });
+  }
+
+  collapseButton(name: string) {
+    return this.root.getByRole('button', { name: `Collapse ${name}` });
   }
 
   node(name: string) {
@@ -47,18 +61,24 @@ function entry(
 describe('ExploreTreeComponent', () => {
   let tester: ExploreTreeComponentTester;
   let southConnectorService: MockObject<SouthConnectorService>;
+  let notificationService: MockObject<NotificationService>;
+  let clipboard: MockObject<Clipboard>;
 
   const southConnector = testData.south.list[0];
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     southConnectorService.closeExplore.mockReturnValue(of(undefined));
+    notificationService = createMock(NotificationService);
+    clipboard = createMock(Clipboard);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideCurrentUser({ ...testData.users.list[0], timezone: 'UTC' }),
-        { provide: SouthConnectorService, useValue: southConnectorService }
+        { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: NotificationService, useValue: notificationService },
+        { provide: Clipboard, useValue: clipboard }
       ]
     });
 
@@ -76,48 +96,31 @@ describe('ExploreTreeComponent', () => {
     await expect.element(tester.spinner).toBeInTheDocument();
   });
 
-  test('should size the tree with the max height', async () => {
+  test('should size the tree and the details panel with the max height', async () => {
     tester.fixture.componentRef.setInput('maxHeight', '150px');
     prepareWith([entry('Objects', true)]);
 
-    await expect.element(tester.tree).toHaveStyle('max-height: 150px');
+    await expect.element(tester.tree).toHaveStyle({ maxHeight: '150px' });
+    await expect.element(tester.details).toHaveStyle({ maxHeight: '150px' });
   });
 
-  test('should display the root entries', async () => {
+  test('should display the root entries with their type', async () => {
     prepareWith([entry('Objects', true), entry('Server', false)]);
 
     expect(southConnectorService.startExplore).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
     await expect.element(tester.nodes).toHaveLength(2);
-    await expect.element(tester.toggleButton('Objects')).toBeVisible();
+    await expect.element(tester.expandButton('Objects')).toBeVisible();
     // a leaf can't be expanded
-    await expect.element(tester.toggleButton('Server')).not.toBeInTheDocument();
-    await expect.element(tester.node('Server')).toHaveTextContent('Servertype Object');
+    await expect.element(tester.expandButton('Server')).not.toBeInTheDocument();
+    await expect.element(tester.node('Server')).toHaveTextContent('ServerObject');
+    await expect.element(tester.details).toHaveTextContent('Select a node to see its details');
   });
 
-  test('should always show the type badge, including for folder/file entries', async () => {
-    prepareWith([entry('a-folder', true, { type: 'folder' }), entry('b-file', false, { type: 'file' })]);
+  test('should show the BACnet object type as the type, and nothing when there is no type', async () => {
+    prepareWith([entry('Analog input 1', false, { objectType: 'analog-input', objectInstance: 1 }), entry('Table', false, { rows: 3 })]);
 
-    await expect.element(tester.metadataValues).toHaveLength(2);
-    await expect.element(tester.metadataValues.nth(0)).toHaveTextContent('folder');
-    await expect.element(tester.metadataValues.nth(1)).toHaveTextContent('file');
-  });
-
-  test.each<{ kind: SouthConnectorExploreFieldKind | undefined; value: string | number; expected: string }>([
-    { kind: 'size', value: 512, expected: '512 B' },
-    { kind: 'instant', value: '2021-01-12T13:35:07.123Z', expected: '12 Jan 2021, 13:35:07.123' },
-    { kind: undefined, value: 3, expected: '3' }
-  ])('should format a metadata field of kind $kind', async ({ kind, value, expected }) => {
-    prepareWith([
-      {
-        id: 'file1.csv',
-        name: 'file1.csv',
-        metadata: { field: value },
-        metadataKinds: kind ? { field: kind } : undefined,
-        hasChildren: false
-      }
-    ]);
-
-    await expect.element(tester.metadataValues).toHaveTextContent(expected);
+    await expect.element(tester.node('Analog input 1')).toHaveTextContent('Analog input 1analog-input');
+    await expect.element(tester.node('Table')).toMatchTextContent(/^Table$/);
   });
 
   test('should default the connector id to create', () => {
@@ -139,7 +142,68 @@ describe('ExploreTreeComponent', () => {
     await expect.element(tester.error).toMatchTextContent(/boom$/);
   });
 
-  describe('when a node is clicked', () => {
+  describe('details', () => {
+    test('should list the metadata of the selected node, in the order sent, with readable labels', async () => {
+      prepareWith([
+        entry('Temperature', false, { nodeId: 'ns=3;i=1001', type: 'Variable', description: 'Simulated sensor', customField: 'x' }),
+        entry('Pressure', false)
+      ]);
+
+      await tester.row('Temperature').click();
+
+      await expect.element(tester.detailsName).toHaveTextContent('Temperature');
+      await expect.element(tester.detailLabels).toHaveLength(4);
+      expect(tester.detailLabels.elements().map(element => element.textContent)).toEqual([
+        'Node ID',
+        'Type',
+        'Description',
+        'Custom field'
+      ]);
+      expect(tester.detailValues.elements().map(element => element.textContent!.trim())).toEqual([
+        'ns=3;i=1001',
+        'Variable',
+        'Simulated sensor',
+        'x'
+      ]);
+      await expect.element(tester.row('Temperature')).toHaveAttribute('aria-current', 'true');
+      await expect.element(tester.row('Pressure')).not.toHaveAttribute('aria-current');
+    });
+
+    test.each<{ kind: SouthConnectorExploreFieldKind | undefined; value: string | number; expected: string }>([
+      { kind: 'size', value: 512, expected: '512 B' },
+      { kind: 'instant', value: '2021-01-12T13:35:07.123Z', expected: '12 Jan 2021, 13:35:07.123' },
+      { kind: undefined, value: 3, expected: '3' }
+    ])('should format a metadata field of kind $kind', async ({ kind, value, expected }) => {
+      prepareWith([
+        {
+          id: 'file1.csv',
+          name: 'file1.csv',
+          metadata: { field: value },
+          metadataKinds: kind ? { field: kind } : undefined,
+          hasChildren: false
+        }
+      ]);
+
+      await tester.row('file1.csv').click();
+
+      await expect.element(tester.detailValues).toHaveTextContent(expected);
+    });
+
+    test('should copy a field value, and notify the result', async () => {
+      clipboard.copy.mockReturnValueOnce(true).mockReturnValueOnce(false);
+      prepareWith([entry('Temperature', false, { nodeId: 'ns=3;i=1001' })]);
+      await tester.row('Temperature').click();
+
+      await tester.root.getByRole('button', { name: 'Copy Node ID' }).click();
+      expect(clipboard.copy).toHaveBeenCalledWith('ns=3;i=1001');
+      expect(notificationService.success).toHaveBeenCalledWith('south.explore.copied');
+
+      await tester.root.getByRole('button', { name: 'Copy Node ID' }).click();
+      expect(notificationService.error).toHaveBeenCalledWith('south.explore.copy-error');
+    });
+  });
+
+  describe('browsing', () => {
     beforeEach(() => {
       prepareWith([entry('Objects', true), entry('Types', true)]);
     });
@@ -147,7 +211,7 @@ describe('ExploreTreeComponent', () => {
     test('should display a spinner while loading the children', async () => {
       southConnectorService.browseExplore.mockReturnValue(NEVER);
 
-      await tester.toggleButton('Objects').click();
+      await tester.expandButton('Objects').click();
 
       await expect.element(tester.node('Objects').getByCss('.spinner-border')).toBeInTheDocument();
     });
@@ -155,40 +219,64 @@ describe('ExploreTreeComponent', () => {
     test('should expand a node and load its children', async () => {
       southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Server', false)] }));
 
-      await tester.toggleButton('Objects').click();
+      await tester.expandButton('Objects').click();
 
       expect(southConnectorService.browseExplore).toHaveBeenCalledWith(southConnector.id, 'sessionId', 'Objects');
       await expect.element(tester.nodes).toHaveLength(3);
-      await expect.element(tester.nodes.nth(1)).toHaveTextContent('Servertype Object');
+      await expect.element(tester.nodes.nth(1)).toHaveTextContent('ServerObject');
       await expect.element(tester.nodes.nth(1).getByCss('.explore-indent')).toHaveLength(1);
-      await expect.element(tester.node('Objects').getByCss('.fa-caret-down')).toBeInTheDocument();
+      await expect.element(tester.collapseButton('Objects')).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    test('should expand a node when its row is clicked, but never collapse it', async () => {
+      southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Server', false)] }));
+
+      await tester.row('Objects').click();
+      await expect.element(tester.nodes).toHaveLength(3);
+      await expect.element(tester.detailsName).toHaveTextContent('Objects');
+
+      await tester.row('Objects').click();
+      await expect.element(tester.nodes).toHaveLength(3);
+      expect(southConnectorService.browseExplore).toHaveBeenCalledTimes(1);
     });
 
     test('should load the children of a child node', async () => {
       southConnectorService.browseExplore.mockReturnValueOnce(of({ entries: [entry('Server', true)] }));
       southConnectorService.browseExplore.mockReturnValueOnce(of({ entries: [entry('Status', false)] }));
 
-      await tester.toggleButton('Objects').click();
-      await tester.toggleButton('Server').click();
+      await tester.expandButton('Objects').click();
+      await tester.expandButton('Server').click();
 
       expect(southConnectorService.browseExplore).toHaveBeenLastCalledWith(southConnector.id, 'sessionId', 'Server');
       await expect.element(tester.nodes).toHaveLength(4);
-      await expect.element(tester.nodes.nth(2)).toHaveTextContent('Statustype Object');
+      await expect.element(tester.nodes.nth(2)).toHaveTextContent('StatusObject');
       await expect.element(tester.nodes.nth(2).getByCss('.explore-indent')).toHaveLength(2);
     });
 
     test('should collapse an expanded node, and re-expand it without browsing again', async () => {
       southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Server', false)] }));
-      await tester.toggleButton('Objects').click();
+      await tester.expandButton('Objects').click();
       await expect.element(tester.nodes).toHaveLength(3);
 
-      await tester.toggleButton('Objects').click();
+      await tester.collapseButton('Objects').click();
       await expect.element(tester.nodes).toHaveLength(2);
-      await expect.element(tester.node('Objects').getByCss('.fa-caret-right')).toBeInTheDocument();
+      await expect.element(tester.expandButton('Objects')).toHaveAttribute('aria-expanded', 'false');
 
-      await tester.toggleButton('Objects').click();
+      await tester.expandButton('Objects').click();
       await expect.element(tester.nodes).toHaveLength(3);
       expect(southConnectorService.browseExplore).toHaveBeenCalledTimes(1);
+    });
+
+    test('should keep showing the details of a selected child when its parent is collapsed and re-expanded', async () => {
+      southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Server', false, { nodeId: 'ns=0;i=2253' })] }));
+      await tester.expandButton('Objects').click();
+      await tester.row('Server').click();
+
+      await tester.collapseButton('Objects').click();
+      await expect.element(tester.detailsName).toHaveTextContent('Server');
+
+      await tester.expandButton('Objects').click();
+      await expect.element(tester.row('Server')).toHaveAttribute('aria-current', 'true');
     });
 
     test('should surface an error when browsing fails, and allow to retry', async () => {
@@ -196,14 +284,14 @@ describe('ExploreTreeComponent', () => {
         throwError(() => new HttpErrorResponse({ error: { message: 'browse failed' } }))
       );
 
-      await tester.toggleButton('Objects').click();
+      await tester.expandButton('Objects').click();
 
       await expect.element(tester.nodeErrors).toHaveTextContent('browse failed');
       await expect.element(tester.nodeErrors.getByCss('.explore-indent')).toHaveLength(1);
       await expect.element(tester.nodes).toHaveLength(2);
 
       southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Server', false)] }));
-      await tester.toggleButton('Objects').click();
+      await tester.expandButton('Objects').click();
 
       await expect.element(tester.nodeErrors).not.toBeInTheDocument();
       await expect.element(tester.nodes).toHaveLength(3);
@@ -212,31 +300,50 @@ describe('ExploreTreeComponent', () => {
     test('should drop the caret but keep the type when an expandable node has no children', async () => {
       southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
 
-      await tester.toggleButton('Objects').click();
+      await tester.expandButton('Objects').click();
 
-      await expect.element(tester.toggleButton('Objects')).not.toBeInTheDocument();
-      await expect.element(tester.node('Objects')).toHaveTextContent('Objectstype Object');
-      await expect.element(tester.toggleButton('Types')).toBeVisible();
+      await expect.element(tester.expandButton('Objects')).not.toBeInTheDocument();
+      await expect.element(tester.collapseButton('Objects')).not.toBeInTheDocument();
+      await expect.element(tester.node('Objects')).toHaveTextContent('ObjectsObject');
+      await expect.element(tester.expandButton('Types')).toBeVisible();
     });
   });
 
-  test('should not render a Select action by default (read-only browsing)', async () => {
-    prepareWith([entry('Objects', true), entry('Server', false)]);
+  describe('node action', () => {
+    beforeEach(() => {
+      southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
+    });
 
-    await expect.element(tester.nodes).toHaveLength(2);
-    await expect.element(tester.selectButtons).toHaveLength(0);
-  });
+    test('should not offer any action by default (read-only browsing)', async () => {
+      prepareWith([entry('Objects', true)]);
 
-  test('should render a Select action on expandable nodes only, and emit the selected entry when clicked', async () => {
-    const selected: Array<SouthConnectorExploreEntry> = [];
-    tester.component.nodeSelected.subscribe(selectedEntry => selected.push(selectedEntry));
-    prepareWith([entry('Objects', true), entry('Server', false)], 'south.explore.select');
+      await tester.row('Objects').click();
 
-    await expect.element(tester.selectButtons).toHaveLength(1);
-    await tester.node('Objects').getByRole('button', { name: 'Select' }).click();
+      await expect.element(tester.detailsName).toHaveTextContent('Objects');
+      await expect.element(tester.actionButton).not.toBeInTheDocument();
+    });
 
-    expect(selected).toEqual([entry('Objects', true)]);
-    expect(southConnectorService.browseExplore).not.toHaveBeenCalled();
+    test('should run the action on the selected expandable node', async () => {
+      southConnectorService.browseExplore.mockReturnValue(NEVER);
+      const selected: Array<SouthConnectorExploreEntry> = [];
+      tester.component.nodeSelected.subscribe(selectedEntry => selected.push(selectedEntry));
+      prepareWith([entry('Objects', true)], 'south.explore.create-workflow');
+
+      await tester.row('Objects').click();
+      await expect.element(tester.actionButton).toHaveTextContent('Create workflow');
+      await tester.actionButton.click();
+
+      expect(selected).toEqual([entry('Objects', true)]);
+    });
+
+    test('should not offer the action on a leaf', async () => {
+      prepareWith([entry('Server', false)], 'south.explore.select');
+
+      await tester.row('Server').click();
+
+      await expect.element(tester.detailsName).toHaveTextContent('Server');
+      await expect.element(tester.actionButton).not.toBeInTheDocument();
+    });
   });
 
   test('should close the session when the component is destroyed', async () => {
@@ -262,7 +369,7 @@ describe('ExploreTreeComponent', () => {
     };
 
     tester.component.prepare(null, southConnector.settings, southConnector.type, api);
-    await tester.toggleButton('Objects').click();
+    await tester.expandButton('Objects').click();
     await expect.element(tester.nodes).toHaveLength(2);
     tester.fixture.destroy();
 

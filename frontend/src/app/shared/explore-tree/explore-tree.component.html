@@ -11,38 +11,99 @@
 } @else if (nodes().length === 0) {
   <div class="alert alert-info" id="explore-empty" translate="south.explore.empty"></div>
 } @else {
-  <div class="explore-tree" id="explore-tree">
-    @for (node of nodes(); track node.entry.id) {
-      <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: node }" />
-    }
+  <div class="explore-split">
+    <div class="explore-tree" id="explore-tree">
+      @for (node of nodes(); track node.entry.id) {
+        <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: node }" />
+      }
+    </div>
+    <div class="explore-details" id="explore-details">
+      @if (selectedNode(); as node) {
+        <div class="explore-details-name text-break">{{ node.entry.name }}</div>
+        @if (selectedFields().length > 0) {
+          <dl class="explore-details-fields">
+            @for (field of selectedFields(); track field.key) {
+              <dt>{{ field.labelKey ? (field.labelKey | translate) : field.humanLabel }}</dt>
+              <dd>
+                <span class="explore-details-value">
+                  @switch (field.kind) {
+                    @case ('instant') {
+                      {{ field.value | datetime: 'mediumWithMillis' }}
+                    }
+                    @case ('size') {
+                      {{ field.value | fileSize }}
+                    }
+                    @default {
+                      {{ field.value }}
+                    }
+                  }
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-link p-0 explore-copy"
+                  [cdkCopyToClipboard]="'' + field.value"
+                  (cdkCopyToClipboardCopied)="onCopied($event)"
+                  [attr.aria-label]="
+                    'south.explore.copy' | translate: { field: field.labelKey ? (field.labelKey | translate) : field.humanLabel }
+                  "
+                >
+                  <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                </button>
+              </dd>
+            }
+          </dl>
+        }
+        @if (nodeActionKey() && node.entry.hasChildren) {
+          <div class="explore-details-action">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              id="explore-node-action"
+              (click)="runNodeAction(node)"
+              [translate]="nodeActionKey()!"
+            ></button>
+          </div>
+        }
+      } @else {
+        <div class="explore-details-empty" translate="south.explore.no-selection"></div>
+      }
+    </div>
   </div>
 }
 
 <ng-template #treeNode let-node>
-  <div class="explore-node d-flex align-items-center" [class.explore-node-expandable]="node.entry.hasChildren">
+  <div class="explore-node d-flex align-items-center" [class.explore-node-selected]="node === selectedNode()">
     @for (ancestorId of node.path.slice(1); track $index) {
       <span class="explore-indent"></span>
     }
     @if (node.entry.hasChildren) {
-      <button type="button" class="btn btn-link p-0 flex-grow-1 text-start d-flex align-items-center explore-toggle" (click)="toggle(node)">
+      <button
+        type="button"
+        class="btn btn-link p-0 explore-caret"
+        (click)="toggle(node)"
+        [attr.aria-expanded]="node.expanded"
+        [attr.aria-label]="(node.expanded ? 'south.explore.collapse' : 'south.explore.expand') | translate: { name: node.entry.name }"
+      >
         @if (node.loading) {
-          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+          <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
         } @else {
-          <i class="fa-solid {{ node.expanded ? 'fa-caret-down' : 'fa-caret-right' }} explore-caret-icon me-1" aria-hidden="true"></i>
+          <i class="fa-solid {{ node.expanded ? 'fa-caret-down' : 'fa-caret-right' }}" aria-hidden="true"></i>
         }
-        <span class="explore-name me-1">{{ node.entry.name }}</span>
-        <ng-container *ngTemplateOutlet="metadataList; context: { $implicit: node.entry }" />
       </button>
-      @if (nodeActionKey(); as actionKey) {
-        <button type="button" class="btn btn-link btn-sm py-0 explore-select" (click)="select(node)" [translate]="actionKey"></button>
-      }
     } @else {
-      <div class="d-flex align-items-center flex-grow-1">
-        <span class="explore-leaf-spacer me-1"></span>
-        <span class="explore-name me-1">{{ node.entry.name }}</span>
-        <ng-container *ngTemplateOutlet="metadataList; context: { $implicit: node.entry }" />
-      </div>
+      <span class="explore-caret"></span>
     }
+    <button
+      type="button"
+      class="btn btn-link p-0 flex-grow-1 d-flex align-items-center explore-row"
+      [attr.aria-current]="node === selectedNode() ? 'true' : null"
+      (click)="showDetails(node)"
+    >
+      <span class="explore-name text-truncate">{{ node.entry.name }}</span>
+      @if (summary(node.entry); as type) {
+        <span class="explore-type text-truncate">{{ type }}</span>
+      }
+    </button>
   </div>
   @if (node.error) {
     <div class="d-flex text-danger small explore-node-error">
@@ -56,26 +117,5 @@
     @for (child of node.children; track child.entry.id) {
       <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child }" />
     }
-  }
-</ng-template>
-
-<ng-template #metadataList let-entry>
-  @for (metadataEntry of entry.metadata | keyvalue; track metadataEntry.key) {
-    <span class="explore-metadata me-1">
-      <span class="explore-metadata-key">{{ metadataEntry.key }}</span>
-      <span class="explore-metadata-value">
-        @switch (entry.metadataKinds?.[metadataEntry.key]) {
-          @case ('instant') {
-            {{ metadataEntry.value | datetime: 'mediumWithMillis' }}
-          }
-          @case ('size') {
-            {{ metadataEntry.value | fileSize }}
-          }
-          @default {
-            {{ metadataEntry.value }}
-          }
-        }
-      </span>
-    </span>
   }
 </ng-template>

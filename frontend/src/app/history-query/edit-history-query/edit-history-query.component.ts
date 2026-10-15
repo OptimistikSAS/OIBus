@@ -589,7 +589,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
     const historyQueryId = this.historyQuery()?.id ?? null;
     const fromSouthId = this.fromSouthId || null;
-    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
     component.prepare(historyQueryId, this.southConnectorCommand.settings, this.southConnectorCommand.type, {
       start: (settings, type) => this.historyQueryService.startExplore(historyQueryId || 'create', settings, type, fromSouthId),

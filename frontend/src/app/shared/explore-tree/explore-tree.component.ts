@@ -1,18 +1,20 @@
-import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
+import { ClipboardModule } from '@angular/cdk/clipboard';
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, input, OnDestroy, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, OnDestroy, output, signal } from '@angular/core';
 
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
 import { SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
-import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
+import { SouthConnectorExploreEntry, SouthConnectorExploreFieldKind } from '@oibus/shared/domain/south-connector.model';
 
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { DatetimePipe } from '../datetime.pipe';
 import { FileSizePipe } from '../file-size.pipe';
+import { NotificationService } from '../notification.service';
 
 interface ExploreTreeNode {
   readonly entry: SouthConnectorExploreEntry;
@@ -25,8 +27,57 @@ interface ExploreTreeNode {
   readonly children: ReadonlyArray<ExploreTreeNode>;
 }
 
+/** One metadata field of the selected node, as listed in the details panel. */
+interface ExploreDetailField {
+  readonly key: string;
+  /** Translation key of the label, or null for a field no connector is known to send (see `humanLabel`) */
+  readonly labelKey: string | null;
+  readonly humanLabel: string;
+  readonly value: string | number;
+  readonly kind: SouthConnectorExploreFieldKind | undefined;
+}
+
+/** The metadata fields the connectors send, which have a translated label (`south.explore.metadata.<key>`). */
+const TRANSLATED_METADATA_KEYS = new Set([
+  'nodeId',
+  'type',
+  'description',
+  'unit',
+  'min',
+  'max',
+  'value',
+  'columns',
+  'rows',
+  'nullable',
+  'primaryKey',
+  'default',
+  'size',
+  'ctime',
+  'mtime',
+  'files',
+  'address',
+  'deviceInstance',
+  'networkNumber',
+  'macAddress',
+  'objectType',
+  'objectInstance'
+]);
+
+/** The metadata fields shown next to the node name in the tree, the first one an entry has. */
+const SUMMARY_METADATA_KEYS = ['type', 'objectType'];
+
 function errorMessage(httpError: HttpErrorResponse): string {
   return httpError.error?.message ?? httpError.message;
+}
+
+/** `deviceInstance` -> `Device instance`: the fallback label of a metadata field with no translation. */
+function humanize(key: string): string {
+  const words = key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /**
@@ -45,14 +96,18 @@ export interface SouthExploreApi {
  * the user lazily expand the data source (OPC-UA nodes, folder tree, SQLite tables/columns, ...). The
  * session is released when the component is torn down.
  *
+ * Each row only shows the node name and its type; clicking it selects the node (and expands it), whose
+ * metadata is listed in a details panel - beside the tree when there is room for it, under it otherwise
+ * (a container query, so it adapts to the host: a modal, or inline in a form).
+ *
  * Owns its own session end to end so it can be embedded either inside a dedicated modal
  * (`SouthExploreModalComponent`, read-only browsing) or directly inline in another form (e.g. the
  * Configuration Workflow discovery-scope editor), with no other coordination needed from the host.
  *
- * With a node action (see `prepare()`), every expandable node (one with children — a leaf can't
- * meaningfully scope a walk, since there would be nothing left to discover under it) gets an action
- * button with that label (e.g. "Select" to pick a discovery root, "Create workflow" from the Explore
- * modal); clicking it emits `nodeSelected`. Without one (the default), it is pure read-only browsing.
+ * With a node action (see `prepare()`), the details panel of an expandable node (one with children — a
+ * leaf can't meaningfully scope a walk, since there would be nothing left to discover under it) gets an
+ * action button with that label (e.g. "Select" to pick a discovery root, "Create workflow" from the
+ * Explore modal); clicking it emits `nodeSelected`. Without one (the default), it is pure read-only browsing.
  */
 @Component({
   selector: 'oib-explore-tree',
@@ -62,15 +117,16 @@ export interface SouthExploreApi {
   host: {
     '[style.--explore-tree-max-height]': 'maxHeight()'
   },
-  imports: [NgTemplateOutlet, KeyValuePipe, DatetimePipe, FileSizePipe, TranslateDirective]
+  imports: [NgTemplateOutlet, ClipboardModule, DatetimePipe, FileSizePipe, TranslateDirective, TranslatePipe]
 })
 export class ExploreTreeComponent implements OnDestroy {
   private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly notificationService = inject(NotificationService);
 
   readonly nodeSelected = output<SouthConnectorExploreEntry>();
 
   /**
-   * Height of the tree's own scroll region. Defaults to the standalone Explore modal's fill-the-modal
+   * Height of the tree's (and the details panel's) own scroll region. Defaults to the standalone Explore modal's fill-the-modal
    * sizing; a host embedding this inline alongside other form content (e.g. the Configuration Workflow
    * discovery-scope editor) should pass a smaller value instead of wrapping this component in a second
    * `overflow: auto` container of its own - two nested scroll regions produce two vertical scrollbars.
@@ -85,6 +141,38 @@ export class ExploreTreeComponent implements OnDestroy {
   private sessionId: string | null = null;
   /** The tree is immutable: a node change replaces the node and its ancestors */
   readonly nodes = signal<ReadonlyArray<ExploreTreeNode>>([]);
+  /** Path of the node whose details are shown - kept as a path since the node itself is replaced on each change */
+  private readonly selectedPath = signal<ReadonlyArray<string> | null>(null);
+  readonly selectedNode = computed(() => {
+    const path = this.selectedPath();
+    if (!path) {
+      return null;
+    }
+    let node: ExploreTreeNode | undefined;
+    let level = this.nodes();
+    for (const id of path) {
+      node = level.find(candidate => candidate.entry.id === id);
+      if (!node) {
+        return null;
+      }
+      level = node.children;
+    }
+    return node ?? null;
+  });
+  readonly selectedFields = computed<ReadonlyArray<ExploreDetailField>>(() => {
+    const entry = this.selectedNode()?.entry;
+    if (!entry) {
+      return [];
+    }
+    // In the order the connector sent them, which puts the most useful ones first (unlike the keyvalue pipe)
+    return Object.entries(entry.metadata).map(([key, value]) => ({
+      key,
+      labelKey: TRANSLATED_METADATA_KEYS.has(key) ? `south.explore.metadata.${key}` : null,
+      humanLabel: humanize(key),
+      value,
+      kind: entry.metadataKinds?.[key]
+    }));
+  });
 
   /**
    * Start the explore session and load the root-level entries.
@@ -167,8 +255,30 @@ export class ExploreTreeComponent implements OnDestroy {
     });
   }
 
+  /** Shows the details of this node, and expands it to browse its children (never collapses it, see `toggle()` for that). */
+  showDetails(node: ExploreTreeNode) {
+    this.selectedPath.set(node.path);
+    if (!node.expanded) {
+      this.toggle(node);
+    }
+  }
+
+  /** The type shown next to the node name, if the connector sends one. */
+  summary(entry: SouthConnectorExploreEntry): string | number | null {
+    const key = SUMMARY_METADATA_KEYS.find(candidate => entry.metadata[candidate] !== undefined);
+    return key ? entry.metadata[key] : null;
+  }
+
+  onCopied(copied: boolean) {
+    if (copied) {
+      this.notificationService.success('south.explore.copied');
+    } else {
+      this.notificationService.error('south.explore.copy-error');
+    }
+  }
+
   /** Runs the node action on this node - only offered on expandable nodes (see class doc). */
-  select(node: ExploreTreeNode) {
+  runNodeAction(node: ExploreTreeNode) {
     this.nodeSelected.emit(node.entry);
   }
 

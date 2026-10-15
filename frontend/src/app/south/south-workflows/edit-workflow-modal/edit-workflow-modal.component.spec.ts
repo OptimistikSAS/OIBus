@@ -421,7 +421,7 @@ describe('EditWorkflowModalComponent', () => {
 
       await tester.browseButton.click();
 
-      expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'lg' });
+      expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
       expect(exploreModal.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, undefined, 'south.explore.select');
       await expect.element(tester.rootNodeId).toHaveTextContent('ns=1;s=Reactor');
 
