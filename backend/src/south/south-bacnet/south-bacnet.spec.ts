@@ -257,7 +257,6 @@ describe('SouthBACnet', () => {
       port: 47809,
       apduTimeout: 100,
       broadcastAddress: '255.255.255.255',
-      timezone: 'UTC',
       retryInterval: 1000,
       maxParallelRun: 1,
       covDefaultLifetime: 300,
@@ -918,7 +917,14 @@ describe('SouthBACnet', () => {
     const trendLogItem = buildItem({
       id: 'trendLog1',
       name: 'trendLog1',
-      settings: { deviceAddress: '192.168.1.10', deviceInstance: 10, objectType: 'trend-log', objectInstance: 1, routed: false }
+      settings: {
+        deviceAddress: '192.168.1.10',
+        deviceInstance: 10,
+        objectType: 'trend-log',
+        objectInstance: 1,
+        timezone: 'UTC',
+        routed: false
+      }
     });
 
     /** Serves a log buffer by position, as a device does: count < 0 reads the records before the position. */
@@ -1007,14 +1013,9 @@ describe('SouthBACnet', () => {
       assert.ok(logger.warn.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('"trendLog1"')));
     });
 
-    it('should read record timestamps in the devices time zone', async () => {
-      south = new SouthBACnet(
-        { ...configuration, settings: { ...configuration.settings, timezone: 'Europe/Paris' } },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
-      const testPromise = south.testItem(trendLogItem, {
+    it("should read record timestamps in the item's time zone", async () => {
+      const parisTrendLog = buildItem({ ...trendLogItem, settings: { ...trendLogItem.settings, timezone: 'Europe/Paris' } });
+      const testPromise = south.testItem(parisTrendLog, {
         history: { startTime: '2026-10-14T09:00:00.000Z', endTime: '2026-10-14T11:00:00.000Z' }
       } as never);
       await flushPromises();
@@ -1027,6 +1028,28 @@ describe('SouthBACnet', () => {
       assert.deepStrictEqual((result.result as { content: Array<unknown> }).content, [
         { pointId: 'trendLog1', timestamp: '2026-10-14T10:00:00.000Z', data: { value: 21.5 } }
       ]);
+    });
+
+    it('should read each trend log in the time zone of its own item', async () => {
+      const parisTrendLog = buildItem({
+        id: 'trendLog2',
+        name: 'trendLog2',
+        settings: { ...trendLogItem.settings, deviceAddress: '192.168.1.11', timezone: 'Europe/Paris' }
+      });
+      const client = await connectSouth();
+      // Both devices logged a record at 12:00 on their own clock
+      serveLogBuffer(client, [{ timestamp: new Date(2026, 9, 14, 12, 0), value: 1 }]);
+
+      await south.historyQuery([trendLogItem, parisTrendLog], '2026-10-14T09:00:00.000Z', '2026-10-14T13:00:00.000Z');
+
+      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; timestamp: string }> };
+      assert.deepStrictEqual(
+        content.content.map(value => [value.pointId, value.timestamp]),
+        [
+          ['trendLog1', '2026-10-14T12:00:00.000Z'],
+          ['trendLog2', '2026-10-14T10:00:00.000Z']
+        ]
+      );
     });
 
     it('should leave trend logs out of polling and COV subscriptions', async () => {

@@ -20,7 +20,7 @@ import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/aud
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
-import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { checkCondition, isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
@@ -97,12 +97,7 @@ export class NorthDetailComponent {
         const condition = manifest.settings.enablingConditions.find(
           enablingCondition => enablingCondition.targetPathFromRoot === setting.key
         );
-        return (
-          !condition ||
-          (condition &&
-            northSettings[condition.referralPathFromRoot] &&
-            condition.values.includes(northSettings[condition.referralPathFromRoot]))
-        );
+        return !condition || checkCondition(northSettings[condition.referralPathFromRoot] ?? null, condition);
       })
       .map(setting => {
         return {
