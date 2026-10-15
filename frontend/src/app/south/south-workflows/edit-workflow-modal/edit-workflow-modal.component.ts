@@ -634,7 +634,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   /** Opens the explore tree in picker mode - selecting a node sets it as the discovery root. */
   openNodePicker() {
-    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
     component.prepare(this.southId, this.southSettings, this.currentManifest()!.id, undefined, 'south.explore.select');
     modalRef.result.subscribe((entry: SouthConnectorExploreEntry) => {

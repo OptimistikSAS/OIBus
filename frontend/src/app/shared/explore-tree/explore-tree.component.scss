@@ -1,37 +1,68 @@
 @import '../../../common';
 
-.explore-tree {
-  // max-height is set by the host through the component's maxHeight input - the one scroll region this
-  // component owns, sized per host. Never wrap this component in a second overflow:auto container.
+// The details panel goes beside the tree or under it depending on the width the host gives this
+// component (a modal, or inline in a form), not on the viewport width.
+:host {
+  display: block;
+  container-type: inline-size;
+}
+
+.explore-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+// max-height is set by the host through the component's maxHeight input - each pane is its own scroll
+// region, sized per host. Never wrap this component in a second overflow:auto container.
+.explore-tree,
+.explore-details {
   max-height: var(--explore-tree-max-height);
   overflow: auto;
 }
 
+.explore-details {
+  border-top: 1px solid $mediumGrey;
+  padding-top: 0.75rem;
+}
+
+@container (min-width: 640px) {
+  .explore-split {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+
+  .explore-details {
+    border-top: none;
+    padding-top: 0;
+    border-left: 1px solid $mediumGrey;
+    padding-left: 0.75rem;
+  }
+}
+
 .explore-node {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
   border-radius: 0.25rem;
 }
 
-// Full row is the click target for expandable entries (not just the caret icon),
-// matching how most tree/file browsers (VS Code, GitHub, ...) let you click anywhere
-// on the row to expand it. $mediumGrey is this app's own established row-hover color
-// (see logs.component.scss's table row hover), reused here for consistency.
-.explore-node-expandable:hover {
+// The whole row is the click target, highlighted on hover; the selected one, whose details are shown, a shade darker
+.explore-node:hover {
+  background-color: $veryLightGrey;
+}
+
+.explore-node-selected,
+.explore-node-selected:hover {
   background-color: $mediumGrey;
 }
 
-.explore-toggle {
-  line-height: 1;
+// The global `.btn-link` rule (styles.scss) sets color to $white for the box-title header buttons -
+// reclaim this app's normal dark text color since these buttons sit on the white modal body. Kept
+// constant on hover/focus: the row's background tint is the hover affordance instead.
+.explore-caret,
+.explore-row,
+.explore-copy {
+  color: $darkGrey;
   text-decoration: none;
   // No transition: avoid the Bootstrap `.btn` default color/background fade on hover/focus.
   transition: none;
-  // The global `.btn-link` rule (styles.scss) sets color to $white for the box-title header
-  // buttons — reclaim this app's normal dark text color ($darkGrey, used app-wide e.g. in
-  // logs.component.scss) since this button sits on the white modal body. Kept constant on
-  // hover/focus too: $orange ($link-hover-color) is a pale gold tuned for the dark navbar and
-  // has poor contrast here — the row's background tint (above) is the hover affordance instead.
-  color: $darkGrey;
 
   &:hover,
   &:focus {
@@ -39,67 +70,91 @@
   }
 }
 
-.explore-caret-icon {
-  display: inline-block;
-  width: 0.85rem;
-  font-size: 1rem;
+.explore-caret {
+  flex: 0 0 1.25rem;
+  text-align: center;
+  line-height: 1;
 }
 
-.explore-leaf-spacer {
-  display: inline-block;
-  width: 0.85rem;
+.explore-row {
+  min-width: 0;
+  gap: 0.5rem;
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  text-align: start;
 }
 
-// The per-row node action (e.g. "Select", only when the tree has one). The global `.btn-link` rule (styles.scss)
-// sets color to $white for the box-title header buttons - invisible on this white modal/panel body,
-// exactly the same gotcha .explore-toggle above already works around. Given a deliberate, distinct
-// color ($electricBlue, bold) rather than reusing .explore-toggle's neutral $darkGrey: unlike the
-// toggle (the whole row, always there), this is the one actionable control a picker exists for, so
-// it needs to read as clickable at a glance, not blend into the row's own name/metadata text.
-.explore-select {
-  white-space: nowrap;
-  text-decoration: none;
-  color: $electricBlue;
+.explore-name {
+  min-width: 0;
+}
+
+// The node type, quiet so that the names stay what the eye scans
+.explore-type {
+  margin-left: auto;
+  padding-right: 0.5rem;
+  flex-shrink: 0;
+  max-width: 40%;
+  font-size: 0.8125rem;
+  color: var(--bs-secondary-color);
+}
+
+.explore-details-name {
   font-weight: 600;
+  margin-bottom: 0.5rem;
+}
 
-  &:hover,
-  &:focus {
-    color: $electricBlue;
-    text-decoration: underline;
+.explore-details-fields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 1rem;
+  row-gap: 0.25rem;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+
+  dt {
+    font-weight: 400;
+    color: var(--bs-secondary-color);
+  }
+
+  dd {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem;
+    margin-bottom: 0;
   }
 }
 
-// Two-tone "key | value" chip for metadata entries. Bootstrap's default .badge (0.75em,
-// bold, single flat color) reads as a tiny, hard-to-parse blob once it holds a "key: value"
-// pair — splitting key/value into their own tinted halves keeps each legible at a glance.
-.explore-metadata {
-  display: inline-flex;
-  align-items: stretch;
-  border: 1px solid $mediumGrey;
-  border-radius: 0.375rem;
-  overflow: hidden;
-  font-size: 0.8125rem;
+// Selectable, and wrapped rather than cut: ids and descriptions can be long
+.explore-details-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+// Only shown on the hovered/focused field, to keep the list readable
+.explore-copy {
+  font-size: 0.75rem;
   line-height: 1.5;
-  vertical-align: middle;
+  opacity: 0;
+
+  dd:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
 }
 
-.explore-metadata-key {
-  padding: 0.1rem 0.45rem;
-  background-color: $mediumGrey;
-  color: $darkGrey;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+.explore-details-action {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.explore-metadata-value {
-  padding: 0.1rem 0.5rem;
-  background-color: $veryLightGrey;
-  color: $darkGrey;
-  font-weight: 400;
+.explore-details-empty {
+  color: var(--bs-secondary-color);
+  font-size: 0.875rem;
 }
 
 // one per level of depth, to indent the node
 .explore-indent {
-  flex: 0 0 16px;
+  flex: 0 0 1rem;
 }
