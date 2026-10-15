@@ -347,7 +347,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const southId = this.southConnector()?.id || null;
     const settings = this.formSouthConnectorCommand.settings;
     const manifest = this.manifest()!;
-    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
     // With tree-based discovery, a workflow can be created from an explored node - kept in memory, like
     // the ones added through the Manage workflows modal, and saved along with the connector.
