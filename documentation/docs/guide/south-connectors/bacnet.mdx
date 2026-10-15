@@ -34,6 +34,11 @@ whether broadcast is available. Only **Test settings** and browsing the device l
 them at one specific device instead, which needs nothing more than plain IP routing — the same reachability
 `ReadProperty` already requires, no BBMD involved.
 
+A device often answers `Who-Is` with an `I-Am` broadcast on its own subnet, which never reaches OIBus from
+another subnet; some do not answer `Who-Is` at all. When no `I-Am` comes back from **Discovery target
+address**, OIBus reads the device's identifier instead, through the wildcard Device instance `4194303` that
+every device takes as its own, and lists the device it finds.
+
 :::
 
 ### Polling and COV Subscriptions {#polling-and-cov-subscriptions}
@@ -204,6 +209,9 @@ The discovery `Who-Is` is a global broadcast, which routers forward to the netwo
 lists routed devices along with their network number and MAC address, and **Test settings** shows them as
 `192.168.1.20, network 2, MAC 5`. Through a BBMD, the `Who-Is` stays a local broadcast on each subnet, so
 routed devices are not discovered that way: set **Discovery target address** to the router instead.
+From another subnet, devices behind the router answer with a broadcast on the router's subnet, which only
+reaches OIBus through a BBMD: keep BBMD enabled along with **Discovery target address**, or fill in their
+item settings by hand.
 
 :::caution COV subscriptions to routed devices
 The BACnet library OIBus uses (`@bacnet-js/client` 3.3.2) sends COV subscription requests, and the
