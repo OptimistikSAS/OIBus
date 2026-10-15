@@ -521,8 +521,99 @@ describe('SouthBACnet', () => {
       mock.timers.tick(3000);
       await testPromise;
 
-      assert.strictEqual(client.whoIs.mock.calls.length, 1);
-      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: '192.168.1.10', net: 0xffff }]);
+      // Directed to the device itself, then through it to the networks behind a router
+      assert.deepStrictEqual(
+        client.whoIs.mock.calls.map(call => call.arguments),
+        [[{ address: '192.168.1.10' }], [{ address: '192.168.1.10', net: 0xffff }]]
+      );
+    });
+
+    it('should list a device answering both Who-Is of discoveryTargetAddress once', async () => {
+      south = new SouthBACnet(
+        { ...configuration, settings: { ...configuration.settings, discoveryTargetAddress: '192.168.1.10' } },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      lastCreatedClient.emit('iAm', iAm('192.168.1.10', 10));
+      lastCreatedClient.emit('iAm', iAm('192.168.1.10', 10));
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      assert.deepStrictEqual(result.items, [
+        { key: 'DevicesFound', value: '1' },
+        { key: 'Device 10', value: '192.168.1.10' }
+      ]);
+      // It answered Who-Is: no need to read its identifier
+      assert.strictEqual(lastCreatedClient.readProperty.mock.calls.length, 0);
+    });
+
+    it('should identify the device at discoveryTargetAddress by its wildcard device identifier when it answers no Who-Is', async () => {
+      south = new SouthBACnet(
+        { ...configuration, settings: { ...configuration.settings, discoveryTargetAddress: '172.16.32.20' } },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      const client = lastCreatedClient;
+      client.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
+        len: 0,
+        objectId,
+        property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL },
+        values: [{ type: 12, value: { type: 8, instance: 201 } }]
+      }));
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      assert.deepStrictEqual(client.readProperty.mock.calls[0].arguments.slice(0, 3), [
+        { address: '172.16.32.20' },
+        { type: 8, instance: 4194303 },
+        75
+      ]);
+      assert.deepStrictEqual(result.items, [
+        { key: 'DevicesFound', value: '1' },
+        { key: 'Device 201', value: '172.16.32.20' }
+      ]);
+    });
+
+    it('should find no device when the device at discoveryTargetAddress answers neither Who-Is nor its wildcard identifier', async () => {
+      south = new SouthBACnet(
+        { ...configuration, settings: { ...configuration.settings, discoveryTargetAddress: '172.16.32.20' } },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      lastCreatedClient.readProperty.mock.mockImplementation(async () => {
+        throw new Error('BacnetError - Class:1 - Code:31');
+      });
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      assert.deepStrictEqual(result.items, [{ key: 'DevicesFound', value: '0' }]);
+      assert.ok(
+        logger.debug.mock.calls.some(
+          call => typeof call.arguments[0] === 'string' && call.arguments[0].includes('BacnetError - Class:1 - Code:31')
+        )
+      );
+    });
+
+    it('should not read a wildcard device identifier without discoveryTargetAddress', async () => {
+      const testPromise = south.testConnection();
+      await flushPromises();
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      assert.deepStrictEqual(result.items, [{ key: 'DevicesFound', value: '0' }]);
+      assert.strictEqual(lastCreatedClient.readProperty.mock.calls.length, 0);
     });
 
     it('should prefer discoveryTargetAddress over BBMD when both are set', async () => {
@@ -542,7 +633,7 @@ describe('SouthBACnet', () => {
       mock.timers.tick(3000);
       await testPromise;
 
-      assert.strictEqual(client.whoIs.mock.calls.length, 1);
+      assert.strictEqual(client.whoIs.mock.calls.length, 2);
       assert.strictEqual(client.whoIsThroughBBMD.mock.calls.length, 0);
     });
   });
@@ -650,6 +741,47 @@ describe('SouthBACnet', () => {
       await testPromise;
 
       assert.strictEqual(logger.warn.mock.calls.length, 0);
+    });
+
+    it('should name the item read and decode the error when the device refuses it', async () => {
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      lastCreatedClient.readProperty.mock.mockImplementation(async () => {
+        throw new Error('BacnetError - Class:1 - Code:31');
+      });
+      mock.timers.tick(3000);
+
+      await assert.rejects(testPromise, {
+        message: 'Device 192.168.1.10 refused to read present-value of analog-input 1: OBJECT/UNKNOWN_OBJECT'
+      });
+      assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
+    });
+
+    it('should report the device instance answering at the address when the device refuses the item', async () => {
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      const client = lastCreatedClient;
+      client.readProperty.mock.mockImplementation(async () => {
+        throw new Error('BacnetError - Class:1 - Code:31');
+      });
+      client.emit('iAm', iAm(item1.settings.deviceAddress, 999));
+
+      await assert.rejects(testPromise, {
+        message:
+          'Device 192.168.1.10 refused to read present-value of analog-input 1: OBJECT/UNKNOWN_OBJECT - ' +
+          'this address answers as device instance 999, not 10'
+      });
+    });
+
+    it('should not rewrite errors other than device refusals', async () => {
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      lastCreatedClient.readProperty.mock.mockImplementation(async () => {
+        throw new Error('ERR_TIMEOUT');
+      });
+      mock.timers.tick(3000);
+
+      await assert.rejects(testPromise, { message: 'ERR_TIMEOUT' });
     });
   });
 
@@ -1479,6 +1611,38 @@ describe('SouthBACnet', () => {
       assert.strictEqual(entries.length, 1);
       assert.strictEqual(entries[0].id, '192.168.1.10|||10');
       assert.strictEqual(entries[0].hasChildren, true);
+    });
+
+    it('should list the device at discoveryTargetAddress identified by its wildcard device identifier', async () => {
+      south = new SouthBACnet(
+        { ...configuration, settings: { ...configuration.settings, discoveryTargetAddress: '172.16.32.20' } },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+
+      const explorePromise = south.explore(null);
+      await flushPromises();
+      lastCreatedClient.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
+        len: 0,
+        objectId,
+        property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL },
+        values:
+          propertyId === bacnetJs.PropertyIdentifier.OBJECT_IDENTIFIER
+            ? [{ type: 12, value: { type: 8, instance: 201 } }]
+            : [{ type: 7, value: 'Remote controller' }]
+      }));
+      mock.timers.tick(3000);
+      const entries = await explorePromise;
+
+      assert.deepStrictEqual(entries, [
+        {
+          id: '172.16.32.20|||201',
+          name: 'Remote controller',
+          metadata: { address: '172.16.32.20', deviceInstance: 201 },
+          hasChildren: true
+        }
+      ]);
     });
 
     it('should list routed devices with the item settings to reach them, and browse them through their router', async () => {
