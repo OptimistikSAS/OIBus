@@ -49,12 +49,12 @@ class ManageWorkflowsModalComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByRole('heading', { level: 4 });
   readonly spinner = this.root.getByRole('status');
-  readonly addButton = this.root.getByRole('button', { name: 'Create a new configuration workflow' });
+  readonly addButton = this.root.getByRole('button', { name: 'Create a new items synchronisation' });
   readonly closeButton = this.root.getByRole('button', { name: 'Close' });
-  readonly search = this.root.getByPlaceholder('Search workflows by name');
+  readonly search = this.root.getByPlaceholder('Search synchronisations by name');
   readonly rows = this.root.getByCss('tbody tr');
-  readonly none = this.root.getByText('No configuration workflows for this south connector');
-  readonly noMatch = this.root.getByText('No configuration workflows match the current filters');
+  readonly none = this.root.getByText('No items synchronisation for this south connector');
+  readonly noMatch = this.root.getByText('No items synchronisation matches the current filters');
   readonly runButtons = this.root.getByRole('button', { name: 'Run now' });
   readonly historyButtons = this.root.getByRole('button', { name: 'Run history' });
 
@@ -62,7 +62,7 @@ class ManageWorkflowsModalComponentTester {
     return this.rows.nth(index);
   }
 
-  rowButton(index: number, name: 'Run now' | 'Preview' | 'Run history' | 'Edit configuration workflow' | 'Duplicate' | 'Delete') {
+  rowButton(index: number, name: 'Run now' | 'Preview' | 'Run history' | 'Edit items synchronisation' | 'Duplicate' | 'Delete') {
     return this.row(index).getByRole('button', { name });
   }
 }
@@ -130,7 +130,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
     test('should load and render every workflow of the south connector', async () => {
       expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
-      await expect.element(tester.title).toHaveTextContent('Configuration workflows (2)');
+      await expect.element(tester.title).toHaveTextContent('Items synchronisations (2)');
       await expect.element(tester.rows).toHaveLength(2);
       await expect.element(tester.row(0)).toMatchTextContent(/Alpha\s*Manual only\s*Create\/update items locally/);
       await expect.element(tester.row(1)).toMatchTextContent(new RegExp(`Beta\\s*${scanModes[0].name}\\s*Push to OIAnalytics`));
@@ -183,7 +183,7 @@ describe('ManageWorkflowsModalComponent', () => {
       expect(configurationWorkflowService.create).toHaveBeenCalledWith('southId1', command);
       expect(notificationService.success).toHaveBeenCalledWith('south.workflows.created');
       await expect.element(tester.rows).toHaveLength(3);
-      await expect.element(tester.title).toHaveTextContent('Configuration workflows (3)');
+      await expect.element(tester.title).toHaveTextContent('Items synchronisations (3)');
     });
 
     test('should edit a workflow through the edit modal and update it', async () => {
@@ -191,7 +191,7 @@ describe('ManageWorkflowsModalComponent', () => {
       const editModal = mockEditModal(command);
       configurationWorkflowService.update.mockReturnValue(of(buildWorkflow('workflow1', 'Alpha renamed')));
 
-      await tester.rowButton(0, 'Edit configuration workflow').click();
+      await tester.rowButton(0, 'Edit items synchronisation').click();
 
       expect(editModal.prepareForEdition).toHaveBeenCalledWith(
         scanModes,
@@ -320,7 +320,7 @@ describe('ManageWorkflowsModalComponent', () => {
       prepareInMemory();
 
       expect(configurationWorkflowService.list).not.toHaveBeenCalled();
-      await expect.element(tester.title).toHaveTextContent('Configuration workflows (2)');
+      await expect.element(tester.title).toHaveTextContent('Items synchronisations (2)');
       await expect.element(tester.row(0)).toMatchTextContent('Manual only');
       await expect.element(tester.row(1)).toMatchTextContent(scanModes[0].name);
     });
@@ -336,7 +336,7 @@ describe('ManageWorkflowsModalComponent', () => {
       prepareInMemory();
 
       await expect.element(tester.rowButton(0, 'Preview')).toBeInTheDocument();
-      await expect.element(tester.rowButton(0, 'Edit configuration workflow')).toBeInTheDocument();
+      await expect.element(tester.rowButton(0, 'Edit items synchronisation')).toBeInTheDocument();
       await expect.element(tester.rowButton(0, 'Duplicate')).toBeInTheDocument();
       await expect.element(tester.rowButton(0, 'Delete')).toBeInTheDocument();
       await expect.element(tester.runButtons).not.toBeInTheDocument();
@@ -371,7 +371,7 @@ describe('ManageWorkflowsModalComponent', () => {
       prepareInMemory();
       mockEditModal(buildWorkflowCommand(null, 'Alpha renamed'));
 
-      await tester.rowButton(0, 'Edit configuration workflow').click();
+      await tester.rowButton(0, 'Edit items synchronisation').click();
 
       expect(configurationWorkflowService.update).not.toHaveBeenCalled();
       expect(pageWorkflows()[0]).toEqual(expect.objectContaining({ id: 'workflow1', name: 'Alpha renamed' }));
