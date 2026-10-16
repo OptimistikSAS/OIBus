@@ -3226,8 +3226,9 @@ describe('SouthOPCUA', () => {
     // Depth-first: the root's first entry (the folder) is fully walked — pushing its Pressure leaf —
     // before the loop moves on to the root's second entry (Temperature).
     assert.deepStrictEqual(records, [
-      { id: 'ns=1;s=Folder.Pressure', name: 'Pressure', nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable' },
-      { id: 'ns=1;s=Temperature', name: 'Temperature', nodeId: 'ns=1;s=Temperature', type: 'Variable' }
+      // `path` is relative to the discovery root, so that two Variables of the same name in different folders differ
+      { id: 'ns=1;s=Folder.Pressure', name: 'Pressure', path: 'Folder/Pressure', nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable' },
+      { id: 'ns=1;s=Temperature', name: 'Temperature', path: 'Temperature', nodeId: 'ns=1;s=Temperature', type: 'Variable' }
     ]);
     assert.strictEqual(browseForDiscovery.mock.calls.length, 2);
   });
@@ -3308,6 +3309,7 @@ describe('SouthOPCUA', () => {
       {
         id: 'ns=1;s=V0',
         name: 'ns=1;s=V0',
+        path: 'ns=1;s=V0',
         nodeId: 'ns=1;s=V0',
         type: 'Variable',
         description: 'ns=1;s=V0 description',

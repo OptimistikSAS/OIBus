@@ -585,6 +585,29 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["tree"]},{"dataType":"enum","enums":["query"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Record_string.string_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"string"},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthDiscoveryDefaults": {
+        "dataType": "refObject",
+        "properties": {
+            "identityKeyFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
+            "itemFieldMapping": {"ref":"Record_string.string_","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorDiscovery": {
+        "dataType": "refObject",
+        "properties": {
+            "kind": {"ref":"SouthDiscoveryKind","required":true},
+            "defaults": {"ref":"SouthDiscoveryDefaults"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorManifest": {
         "dataType": "refObject",
         "properties": {
@@ -593,7 +616,7 @@ const models: TsoaRoute.Models = {
             "beta": {"dataType":"boolean"},
             "modes": {"dataType":"nestedObjectLiteral","nestedProperties":{"history":{"dataType":"boolean","required":true},"lastFile":{"dataType":"boolean","required":true},"lastPoint":{"dataType":"boolean","required":true},"subscription":{"dataType":"boolean","required":true}},"required":true},
             "explore": {"dataType":"boolean"},
-            "discovery": {"ref":"SouthDiscoveryKind"},
+            "discovery": {"ref":"SouthConnectorDiscovery"},
             "settings": {"ref":"OIBusObjectAttribute","required":true},
             "items": {"ref":"OIBusArrayAttribute","required":true},
         },
@@ -3721,11 +3744,6 @@ const models: TsoaRoute.Models = {
             "value": {"dataType":"string"},
         },
         "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Record_string.string_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"string"},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ConfigurationWorkflowCommandDTO": {
