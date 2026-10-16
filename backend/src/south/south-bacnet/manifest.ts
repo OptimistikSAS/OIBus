@@ -10,7 +10,26 @@ const manifest: SouthConnectorManifest = {
     history: true
   },
   explore: true,
-  discovery: 'tree',
+  discovery: {
+    kind: 'tree',
+    defaults: {
+      identityKeyFields: ['id'],
+      // routed and objectType vary per discovered object: the settings they enable are mapped too, and
+      // only apply to the records they concern
+      itemFieldMapping: {
+        name: '{{deviceName}} - {{name}}',
+        'settings.deviceAddress': '{{deviceAddress}}',
+        'settings.deviceInstance': '{{deviceInstance}}',
+        'settings.objectType': '{{objectType}}',
+        'settings.objectInstance': '{{objectInstance}}',
+        'settings.propertyIdentifier': 'present-value',
+        'settings.timezone': 'UTC',
+        'settings.routed': '{{routed}}',
+        'settings.networkNumber': '{{networkNumber}}',
+        'settings.macAddress': '{{macAddress}}'
+      }
+    }
+  },
   beta: true,
   settings: {
     type: 'object',
