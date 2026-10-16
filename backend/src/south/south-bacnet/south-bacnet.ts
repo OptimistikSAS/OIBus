@@ -10,6 +10,7 @@ import BACnetClient, {
   BACNetReadAccessSpecification,
   CovNotifyPayload,
   DecodeAcknowledgeMultipleResult,
+  EngineeringUnits,
   ErrorClass,
   ErrorCode,
   IAMResult,
@@ -18,7 +19,7 @@ import BACnetClient, {
 } from '@bacnet-js/client';
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import {
   SouthBACnetItemSettings,
@@ -38,7 +39,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
-import { SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
 
 const OBJECT_TYPE_BY_SETTING: Record<SouthBACnetItemSettingsObjectType, ObjectType> = {
   'analog-input': ObjectType.ANALOG_INPUT,
@@ -59,6 +60,11 @@ const OBJECT_TYPE_BY_SETTING: Record<SouthBACnetItemSettingsObjectType, ObjectTy
   'characterstring-value': ObjectType.CHARACTERSTRING_VALUE,
   'trend-log': ObjectType.TREND_LOG
 };
+
+/** The object types an item can read, back to their item setting: the ones a discovery records. */
+const SETTING_BY_OBJECT_TYPE = new Map<number, SouthBACnetItemSettingsObjectType>(
+  Object.entries(OBJECT_TYPE_BY_SETTING).map(([setting, objectType]) => [objectType, setting as SouthBACnetItemSettingsObjectType])
+);
 
 const PROPERTY_IDENTIFIER_BY_SETTING: Record<SouthBACnetItemSettingsPropertyIdentifier, PropertyIdentifier> = {
   'present-value': PropertyIdentifier.PRESENT_VALUE,
@@ -121,6 +127,35 @@ function parseMacAddress(text: string): Array<number> {
 /** Bytes to MAC address setting, the reverse of parseMacAddress. */
 function formatMacAddress(bytes: Array<number>): string {
   return bytes.length === 1 ? String(bytes[0]) : bytes.map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join(':');
+}
+
+/**
+ * Explore entry id of a device: address|network|MAC|instance, network and MAC left empty for a device on the
+ * IP network. The id of an object of the device appends |type|instance to it.
+ */
+function toDeviceEntryId(device: DiscoveredDevice): string {
+  const routed = isRouted(device.address);
+  return `${device.address.address}|${routed ? device.address.net : ''}|${routed ? formatMacAddress(device.address.adr ?? []) : ''}|${device.deviceId}`;
+}
+
+/** The reverse of toDeviceEntryId; throws for anything else, such as an object entry id. */
+function parseDeviceEntryId(entryId: string): DiscoveredDevice {
+  const parts = entryId.split('|');
+  if (parts.length !== 4 || !parts[0] || !/^\d+$/.test(parts[3])) {
+    throw new Error(`"${entryId}" is not a BACnet device`);
+  }
+  const [ipAddress, networkNumber, macAddress, deviceInstance] = parts;
+  return {
+    address: networkNumber ? { address: ipAddress, net: Number(networkNumber), adr: parseMacAddress(macAddress) } : { address: ipAddress },
+    deviceId: Number(deviceInstance)
+  };
+}
+
+/** Engineering units enumeration value to a readable name: 62 becomes "degrees-celsius". */
+function toUnitsLabel(raw: unknown): string | null {
+  if (typeof raw !== 'number') return null;
+  const name = EngineeringUnits[raw];
+  return name ? name.toLowerCase().replace(/_/g, '-') : String(raw);
 }
 
 /** A device on another BACnet network, reached through the router at `address`. */
@@ -335,7 +370,7 @@ interface CovSubscriptionEntry {
 
 export default class SouthBACnet
   extends SouthConnector<SouthBACnetSettings, SouthBACnetItemSettings>
-  implements SouthDirectQuery, SouthHistoryQuery, SouthSubscription, SouthExplore
+  implements SouthDirectQuery, SouthHistoryQuery, SouthSubscription, SouthExplore, SouthConfigurationDiscovery
 {
   private client: BACnetClient | null = null;
   private connecting = false;
@@ -1231,8 +1266,7 @@ export default class SouthBACnet
           metadata.macAddress = formatMacAddress(device.address.adr ?? []);
         }
         entries.push({
-          // address|network|MAC|instance, network and MAC left empty for a device on the IP network
-          id: `${device.address.address}|${routed ? device.address.net : ''}|${routed ? metadata.macAddress : ''}|${device.deviceId}`,
+          id: toDeviceEntryId(device),
           name,
           metadata,
           hasChildren: true
@@ -1241,11 +1275,7 @@ export default class SouthBACnet
       return entries;
     }
 
-    const [ipAddress, networkNumber, macAddress, deviceInstanceText] = parentId.split('|');
-    const device: BACNetAddress = networkNumber
-      ? { address: ipAddress, net: Number(networkNumber), adr: parseMacAddress(macAddress) }
-      : { address: ipAddress };
-    const deviceInstance = Number(deviceInstanceText);
+    const { address: device, deviceId: deviceInstance } = parseDeviceEntryId(parentId);
     const objectIds = await this.readObjectList(client, device, { type: ObjectType.DEVICE, instance: deviceInstance });
 
     let properties: Map<string, PropertyReadResult> | null = null;
@@ -1297,6 +1327,85 @@ export default class SouthBACnet
     return references.flatMap(reference => {
       const result = results.get(toReferenceKey(reference));
       return result && 'values' in result ? result.values.map(applicationData => applicationData.value).filter(isObjectId) : [];
+    });
+  }
+
+  /**
+   * Configuration Workflow discovery: one record per object of the devices under `scope.rootNodeId` - a device
+   * entry of `explore()`, or every device the discovery mode finds when omitted. Only the object types an item
+   * can read are recorded (not the device object itself, notification classes, schedules...).
+   *
+   * A record holds the settings to read its object under their item setting names, so that a workflow maps them
+   * as they are (`{{deviceAddress}}`, `{{objectType}}`...), and the object's static metadata: name, description
+   * and units - never its present value, which changes on every run and would make every record look changed
+   * against the previous run (see the OPC-UA connector's own discover()).
+   *
+   * Unlike `explore()`, a device that does not answer fails the run: the items of its objects, missing from the
+   * result, would be disabled otherwise.
+   */
+  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    if (this.client === null) {
+      this.client = await this.openClient();
+      this.scheduleForeignDeviceRenewal(this.client);
+    }
+    const client = this.client;
+    const rootNodeId = typeof scope.rootNodeId === 'string' && scope.rootNodeId ? scope.rootNodeId : null;
+    const devices = rootNodeId ? [parseDeviceEntryId(rootNodeId)] : await this.discoverDevices(client);
+    const records: Array<OIBusRecord> = [];
+    for (const device of devices) {
+      try {
+        records.push(...(await this.discoverDeviceObjects(client, device)));
+      } catch (error: unknown) {
+        throw new Error(
+          `Device ${device.deviceId} at ${describeAddress(device.address)} could not be discovered: ${toRequestErrorMessage(error)}`
+        );
+      }
+    }
+    return records;
+  }
+
+  private async discoverDeviceObjects(client: BACnetClient, device: DiscoveredDevice): Promise<Array<OIBusRecord>> {
+    const deviceObjectId: BACNetObjectID = { type: ObjectType.DEVICE, instance: device.deviceId };
+    const objectIds = (await this.readObjectList(client, device.address, deviceObjectId)).filter(objectId =>
+      SETTING_BY_OBJECT_TYPE.has(objectId.type)
+    );
+    const properties = await this.readProperties(client, device.address, [
+      { objectId: deviceObjectId, propertyId: PropertyIdentifier.OBJECT_NAME, arrayIndex: ASN1_ARRAY_ALL },
+      ...objectIds.flatMap(objectId =>
+        [PropertyIdentifier.OBJECT_NAME, PropertyIdentifier.DESCRIPTION, PropertyIdentifier.UNITS].map(propertyId => ({
+          objectId,
+          propertyId,
+          arrayIndex: ASN1_ARRAY_ALL
+        }))
+      )
+    ]);
+    // An optional property the object does not have (no description, no units on a binary object) is an error
+    // scoped to that property: the field is then null.
+    const valueOf = (objectId: BACNetObjectID, propertyId: PropertyIdentifier): unknown => {
+      const result = properties.get(referenceKey(objectId, propertyId, ASN1_ARRAY_ALL));
+      return result && 'values' in result ? result.values[0]?.value : undefined;
+    };
+    const nonEmptyString = (value: unknown): string | null => (typeof value === 'string' && value ? value : null);
+
+    const deviceEntryId = toDeviceEntryId(device);
+    const routed = isRouted(device.address);
+    const deviceName = nonEmptyString(valueOf(deviceObjectId, PropertyIdentifier.OBJECT_NAME)) ?? `Device ${device.deviceId}`;
+    return objectIds.map(objectId => {
+      const objectType = SETTING_BY_OBJECT_TYPE.get(objectId.type)!;
+      return {
+        id: `${deviceEntryId}|${objectId.type}|${objectId.instance}`,
+        name: nonEmptyString(valueOf(objectId, PropertyIdentifier.OBJECT_NAME)) ?? `${objectType} ${objectId.instance}`,
+        deviceName,
+        deviceAddress: device.address.address!,
+        deviceInstance: device.deviceId,
+        routed,
+        networkNumber: routed ? device.address.net! : null,
+        macAddress: routed ? formatMacAddress(device.address.adr ?? []) : null,
+        objectType,
+        objectInstance: objectId.instance,
+        description: nonEmptyString(valueOf(objectId, PropertyIdentifier.DESCRIPTION)),
+        units: toUnitsLabel(valueOf(objectId, PropertyIdentifier.UNITS))
+      };
     });
   }
 
