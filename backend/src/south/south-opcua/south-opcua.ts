@@ -704,17 +704,20 @@ export default class SouthOPCUA
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
     const rootNodeId = (scope.rootNodeId as string | undefined) ?? null;
     const records: Array<OIBusRecord> = [];
-    await this.walkForDiscovery(rootNodeId, records);
+    await this.walkForDiscovery(rootNodeId, '', records);
     return records;
   }
 
-  private async walkForDiscovery(parentId: string | null, records: Array<OIBusRecord>): Promise<void> {
+  /** `parentPath` is the display names from the discovery root down to `parentId`, joined by "/": each record's
+   *  `path` makes a readable item name that, unlike its display name alone, is unique across folders. */
+  private async walkForDiscovery(parentId: string | null, parentPath: string, records: Array<OIBusRecord>): Promise<void> {
     const entries = await this.browseForDiscovery(parentId);
     for (const entry of entries) {
+      const path = parentPath ? `${parentPath}/${entry.name}` : entry.name;
       if (entry.metadata.type === 'Variable') {
-        records.push({ id: entry.id, name: entry.name, ...entry.metadata });
+        records.push({ id: entry.id, name: entry.name, path, ...entry.metadata });
       } else if (entry.hasChildren) {
-        await this.walkForDiscovery(entry.id, records);
+        await this.walkForDiscovery(entry.id, path, records);
       }
     }
   }

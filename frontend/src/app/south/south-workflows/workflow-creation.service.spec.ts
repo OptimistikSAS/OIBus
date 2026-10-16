@@ -17,7 +17,7 @@ import { fakeSouthItemGroups } from '../south-items/south-item-groups.testing';
 import EditWorkflowModalComponent from './edit-workflow-modal/edit-workflow-modal.component';
 import { uniqueWorkflowName, WorkflowCreationContext, WorkflowCreationService } from './workflow-creation.service';
 
-const manifest: SouthConnectorManifest = { ...testData.south.manifest, id: 'opcua', discovery: 'tree' };
+const manifest: SouthConnectorManifest = { ...testData.south.manifest, id: 'opcua', discovery: { kind: 'tree' } };
 const reactor: SouthConnectorExploreEntry = { id: 'ns=1;s=Reactor', name: 'Reactor', metadata: {}, hasChildren: true };
 
 describe('uniqueWorkflowName', () => {

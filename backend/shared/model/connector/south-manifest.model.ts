@@ -68,6 +68,37 @@ export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus',
 export type SouthDiscoveryKind = 'tree' | 'query';
 
 /**
+ * Starting values of a new Configuration Workflow, for a connector whose discovered records always have
+ * the same shape: how a record identifies itself across runs, and how it becomes an item.
+ */
+export interface SouthDiscoveryDefaults {
+  /**
+   * Discovered-record field(s) identifying a record across runs.
+   * @example ["id"]
+   */
+  identityKeyFields: Array<string>;
+
+  /**
+   * Item field path to a constant or a {{field}} expression of the discovered record, as a workflow's own
+   * `itemFieldMapping`. Every required item setting that applies must be mapped: an item created by a
+   * workflow does not get the manifest default values.
+   * @example { "name": "{{path}}", "settings.nodeId": "{{nodeId}}", "settings.mode": "da" }
+   */
+  itemFieldMapping: Record<string, string>;
+}
+
+/**
+ * How a connector type feeds Configuration Workflows.
+ */
+export interface SouthConnectorDiscovery {
+  /** The shape of a workflow's discovery scope */
+  kind: SouthDiscoveryKind;
+
+  /** Starting values of a new workflow; absent when the records depend on the scope (e.g. a SQL query) */
+  defaults?: SouthDiscoveryDefaults;
+}
+
+/**
  * Represents the type metadata for a South connector.
  * Describes the basic characteristics and capabilities of a South connector type.
  */
@@ -196,14 +227,12 @@ export interface SouthConnectorManifest {
   explore?: boolean;
 
   /**
-   * Whether this connector type can feed Configuration Workflows, and the shape of their discovery scope
-   * (see {@link SouthDiscoveryKind}). Absent when the connector has no discovery.
+   * Whether this connector type can feed Configuration Workflows, the shape of their discovery scope and the
+   * starting values of a new one. Absent when the connector has no discovery.
    * UI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB
    * are SQL-family too but route through a separate agent process, so they don't have discovery yet.
-   *
-   * @example "tree"
    */
-  discovery?: SouthDiscoveryKind;
+  discovery?: SouthConnectorDiscovery;
 
   /**
    * The configuration schema for the connector settings.
