@@ -29,11 +29,11 @@ const southId = 'southId1';
 const southSettings = testData.south.list[0].settings;
 // Real manifest fixture: modes.history is true, items.rootAttribute.attributes = [name, enabled, scanMode, settings{...}] -
 // exercises both the manifest-driven fields and the historian fields added alongside them. Given a tree-based discovery.
-const manifest: SouthConnectorManifest = { ...testData.south.manifest, discovery: 'tree' };
+const manifest: SouthConnectorManifest = { ...testData.south.manifest, discovery: { kind: 'tree' } };
 // A SQL-family connector with no explore() - query-only discovery scope, no reference tree.
-const sqlManifest: SouthConnectorManifest = { ...manifest, id: 'mysql', explore: false, discovery: 'query' };
+const sqlManifest: SouthConnectorManifest = { ...manifest, id: 'mysql', explore: false, discovery: { kind: 'query' } };
 // A SQL-family connector that also has explore() (e.g. SQLite) - query editor plus the reference tree.
-const sqliteManifest: SouthConnectorManifest = { ...manifest, id: 'sqlite', explore: true, discovery: 'query' };
+const sqliteManifest: SouthConnectorManifest = { ...manifest, id: 'sqlite', explore: true, discovery: { kind: 'query' } };
 // No discovery at all, even though it can be explored (e.g. Folder Scanner).
 const unsupportedManifest: SouthConnectorManifest = { ...manifest, explore: true, discovery: undefined };
 const noHistoryManifest: SouthConnectorManifest = { ...manifest, modes: { ...manifest.modes, history: false } };
@@ -146,6 +146,9 @@ class EditWorkflowModalComponentTester {
   readonly addEligibilityConditionButton = this.root.getByCss('#add-eligibility-condition');
   // item field mapping
   readonly mappingTable = this.root.getByCss('#item-field-mapping-table');
+  readonly advancedToggle = this.root.getByCss('#advanced-mapping-toggle');
+  readonly advancedSummary = this.root.getByCss('#advanced-mapping-summary');
+  readonly advancedSection = this.root.getByCss('#advanced-mapping');
   readonly groupToggle = this.root.getByCss('#item-field-mapping-field-groupId');
   readonly createGroupButton = this.root.getByRole('button', { name: 'Create a new group...' });
   // footer
@@ -162,7 +165,7 @@ class EditWorkflowModalComponentTester {
   }
 
   mappingRow(path: string) {
-    return this.root.getByCss(`#item-field-mapping-table tr:has([id="item-field-mapping-field-${path}"])`);
+    return this.root.getByCss(`tr:has([id="item-field-mapping-field-${path}"])`);
   }
 
   groupOption(name: string) {
@@ -780,7 +783,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingExpression('enabled')).toHaveValue('{{isEnabled}}');
     });
 
-    test('should flag a field referenced by an enablingCondition and omit its {{ }} option, forcing a constant', async () => {
+    test('should flag a field referenced by an enablingCondition, which can still vary per record', async () => {
       const tester = create({ workflowManifest: enablingManifest });
 
       await expect.element(tester.mappingRow('settings.mode')).toMatchTextContent('Controls visibility');
@@ -788,7 +791,17 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingField('settings.mode').getByRole('option', { name: 'HA' })).toBeInTheDocument();
       await expect
         .element(tester.mappingField('settings.mode').getByRole('option', { name: 'Use a {{ field }} expression...' }))
-        .not.toBeInTheDocument();
+        .toBeInTheDocument();
+    });
+
+    test('should show the fields a referral controls when it is mapped to a {{ }} expression, since they may apply', async () => {
+      const tester = create({ workflowManifest: enablingManifest });
+      await expect.element(tester.mappingField('settings.haMode.aggregate')).not.toBeInTheDocument();
+
+      await tester.mappingField('settings.mode').selectOptions('Use a {{ field }} expression...');
+      await tester.mappingExpression('settings.mode').fill('{{mode}}');
+
+      await expect.element(tester.mappingField('settings.haMode.aggregate')).toBeInTheDocument();
     });
 
     test('should hide a field gated by an enablingCondition until the referral constant matches, then show it', async () => {
@@ -818,16 +831,16 @@ describe('EditWorkflowModalComponent', () => {
       expect(savedCommand().itemFieldMapping).toEqual({ 'settings.mode': 'da' });
     });
 
-    test('should reject saving when a field that gates other fields is mapped to a {{ }} expression', async () => {
-      // Not reachable through the select itself (its {{ }} option is gone) - an existing workflow whose mapping predates
-      // this restriction
-      const workflow = { ...existingWorkflow, itemFieldMapping: { 'settings.mode': '{{mode}}' } };
+    test('should save a field that gates other fields mapped to a {{ }} expression, with the fields it controls', async () => {
+      const workflow = {
+        ...existingWorkflow,
+        itemFieldMapping: { 'settings.mode': '{{mode}}', 'settings.haMode.aggregate': 'average' }
+      };
       const tester = create({ mode: 'edit', workflow, workflowManifest: enablingManifest });
 
       await tester.saveButton.click();
 
-      await expect.element(tester.formError).toMatchTextContent('This field must be mapped to a constant');
-      expect(activeModal.close).not.toHaveBeenCalled();
+      expect(savedCommand().itemFieldMapping).toEqual({ 'settings.mode': '{{mode}}', 'settings.haMode.aggregate': 'average' });
     });
 
     test('should never offer {{ }} for the schedule, recoveryStrategy and syncWithGroup fields', async () => {
@@ -862,6 +875,59 @@ describe('EditWorkflowModalComponent', () => {
 
       await expect.element(tester.formError).toMatchTextContent('Every mandatory field (marked "Required") must be mapped');
       expect(activeModal.close).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('discovery defaults', () => {
+    const presetManifest: SouthConnectorManifest = {
+      ...enablingManifest,
+      discovery: {
+        kind: 'tree',
+        defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}', 'settings.mode': 'da' } }
+      }
+    };
+
+    test('should start a new workflow from the connector defaults, with the Advanced section collapsed', async () => {
+      const tester = create({ workflowManifest: presetManifest });
+
+      await expect.element(tester.mappingField('name')).toHaveValue('{{path}}');
+      await expect.element(tester.advancedSection).not.toBeInTheDocument();
+      await expect.element(tester.advancedToggle).toHaveAttribute('aria-expanded', 'false');
+      await expect.element(tester.advancedSummary).toHaveTextContent('1 other fields mapped, records identified by id');
+
+      await tester.advancedToggle.click();
+
+      await expect.element(tester.identityKeyFields).toHaveTextContent('id');
+      await expect.element(tester.mappingField('settings.mode')).toHaveDisplayValue('DA');
+    });
+
+    test('should keep the mapping of an edited workflow rather than the defaults', async () => {
+      const workflow = { ...existingWorkflow, identityKeyFields: ['nodeId'], itemFieldMapping: { name: '{{name}}' } };
+      const tester = create({ mode: 'edit', workflow, workflowManifest: presetManifest });
+
+      await expect.element(tester.mappingField('name')).toHaveValue('{{name}}');
+      await expect.element(tester.advancedSummary).toHaveTextContent('0 other fields mapped, records identified by nodeId');
+    });
+
+    test('should expand the Advanced section when what is missing is in it', async () => {
+      const tester = create({ workflowManifest: presetManifest });
+      await tester.name.fill('Reactor');
+      await tester.advancedToggle.click();
+      await tester.root.getByCss('.remove-identity-key-field').click();
+      await tester.advancedToggle.click();
+      await expect.element(tester.advancedSection).not.toBeInTheDocument();
+
+      await tester.saveButton.click();
+
+      await expect.element(tester.formError).toMatchTextContent('At least one identity key field is required');
+      await expect.element(tester.advancedSection).toBeInTheDocument();
+    });
+
+    test('should show the Advanced section expanded when the connector has no defaults', async () => {
+      const tester = create();
+
+      await expect.element(tester.advancedSection).toBeInTheDocument();
+      await expect.element(tester.advancedSummary).not.toBeInTheDocument();
     });
   });
 

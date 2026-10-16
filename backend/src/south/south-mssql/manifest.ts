@@ -10,7 +10,7 @@ const manifest: SouthConnectorManifest = {
     history: true
   },
   explore: true,
-  discovery: 'query',
+  discovery: { kind: 'query' },
   settings: {
     type: 'object',
     key: 'settings',
