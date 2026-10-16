@@ -4,7 +4,6 @@ import BACnetClient, {
   ApplicationData,
   ApplicationTag,
   ASN1_ARRAY_ALL,
-  ASN1_MAX_INSTANCE,
   BACNetAddress,
   BACnetMessageHeader,
   BACNetObjectID,
@@ -139,13 +138,6 @@ function describeAddress(address: BACNetAddress): string {
   return isRouted(address) ? `${address.address}, network ${address.net}, MAC ${formatMacAddress(address.adr ?? [])}` : address.address!;
 }
 
-/** Same device, whether or not the IP address carries the default port. */
-function isSameDevice(a: BACNetAddress, b: BACNetAddress): boolean {
-  const host = (address: BACNetAddress) => address.address?.split(':')[0];
-  const route = (address: BACNetAddress) => (isRouted(address) ? `${address.net}|${formatMacAddress(address.adr ?? [])}` : '');
-  return host(a) === host(b) && route(a) === route(b);
-}
-
 /**
  * The address of the device that sent an unconfirmed request such as I-Am. @bacnet-js/client keeps
  * it in the message header, not in the payload (its `IAMResult.address` typing is wrong). A broadcast
@@ -208,20 +200,14 @@ function toRequestErrorMessage(error: unknown): string {
 }
 
 /**
- * Why an item test failed on a device refusal: what was read where, the refusal decoded ("OBJECT/UNKNOWN_OBJECT"
- * rather than "BacnetError - Class:1 - Code:31"), and whether the address answered Who-Is as another device.
+ * Why an item test failed on a device refusal: what was read where, and the refusal decoded ("OBJECT/UNKNOWN_OBJECT"
+ * rather than "BacnetError - Class:1 - Code:31").
  */
-function toItemTestErrorMessage(
-  item: SouthConnectorItemEntity<SouthBACnetItemSettings>,
-  error: unknown,
-  respondingInstance: number | null
-): string {
+function toItemTestErrorMessage(item: SouthConnectorItemEntity<SouthBACnetItemSettings>, error: unknown): string {
   const target = isTrendLog(item)
     ? `${item.settings.objectType} ${item.settings.objectInstance}`
     : `${item.settings.propertyIdentifier ?? 'present-value'} of ${item.settings.objectType} ${item.settings.objectInstance}`;
-  const message = `Device ${describeAddress(toAddress(item))} refused to read ${target}: ${toRequestErrorMessage(error)}`;
-  if (respondingInstance === null || respondingInstance === item.settings.deviceInstance) return message;
-  return `${message} - this address answers as device instance ${respondingInstance}, not ${item.settings.deviceInstance}`;
+  return `Device ${describeAddress(toAddress(item))} refused to read ${target}: ${toRequestErrorMessage(error)}`;
 }
 
 function isObjectId(value: unknown): value is BACNetObjectID {
@@ -534,6 +520,9 @@ export default class SouthBACnet
         client = await this.openClient();
       }
       const devices = await this.discoverDevices(client);
+      if (this.connector.settings.discoveryMode === 'target-device') {
+        await this.checkTargetDevice(client, devices[0]);
+      }
       const items: Array<{ key: string; value: string }> = [{ key: 'DevicesFound', value: String(devices.length) }];
       for (const device of devices.slice(0, 5)) {
         items.push({ key: `Device ${device.deviceId}`, value: describeAddress(device.address) });
@@ -559,7 +548,6 @@ export default class SouthBACnet
         client = await this.openClient();
         connectionDuration = DateTime.now().toMillis() - connectStart;
       }
-      const respondingInstance = await this.verifyDeviceIdentity(client, item);
       const queryStart = DateTime.now().toMillis();
       let content: Array<OIBusTimeValue>;
       try {
@@ -575,7 +563,7 @@ export default class SouthBACnet
         }
       } catch (error: unknown) {
         if (!isServiceRefusal(error)) throw error;
-        throw new Error(toItemTestErrorMessage(item, error, respondingInstance));
+        throw new Error(toItemTestErrorMessage(item, error));
       }
       const result: OIBusContent = { type: 'time-values', content };
       return { result, connectionDuration, queryDuration: DateTime.now().toMillis() - queryStart };
@@ -587,25 +575,25 @@ export default class SouthBACnet
   }
 
   /**
-   * Discovers devices via Who-Is and collects I-Am responses for a fixed window. When
-   * `discoveryTargetAddress` is set, the Who-Is is sent directly to that one address (unicast)
-   * instead of broadcasting - this takes priority over BBMD routing, since a unicast request needs
-   * no broadcast forwarding at all (it's plain routed UDP, same reachability requirement as
-   * readProperty/readPropertyMultiple). Otherwise falls back to a broadcast, direct or through the
-   * configured BBMD.
+   * The devices to list, as the discovery mode says. A target device is taken as configured, without any
+   * Who-Is: it may answer none, or broadcast its I-Am on its own subnet, out of OIBus's reach when that is
+   * not OIBus's subnet - as YABE does with a device added by its address and instance. Otherwise a Who-Is
+   * is broadcast, direct or through the configured BBMD, and the I-Am responses are collected for a fixed
+   * window.
    *
    * The direct Who-Is is a global broadcast (network 0xFFFF): a BACnet router receiving one forwards it
-   * to the networks behind it (MS/TP trunks...), so their devices answer too. The unicast one is sent
-   * twice: once for the target device alone, answered back to OIBus even across subnets, and once as a
-   * global broadcast for a router at the target address. Through a BBMD it stays a local broadcast on
-   * each subnet - @bacnet-js/client sends Distribute-Broadcast-To-Network without a destination network.
-   *
-   * When no I-Am comes back from the target address itself, the device there is identified by reading
-   * its device identifier instead (see identifyDevice).
+   * to the networks behind it (MS/TP trunks...), so their devices answer too. Through a BBMD it stays a
+   * local broadcast on each subnet - @bacnet-js/client sends Distribute-Broadcast-To-Network without a
+   * destination network.
    */
-  private async discoverDevices(client: BACnetClient): Promise<Array<DiscoveredDevice>> {
-    const targetAddress = this.connector.settings.discoveryTargetAddress;
-    const devices = await new Promise<Array<DiscoveredDevice>>(resolve => {
+  private discoverDevices(client: BACnetClient): Promise<Array<DiscoveredDevice>> {
+    const settings = this.connector.settings;
+    if (settings.discoveryMode === 'target-device') {
+      return Promise.resolve([
+        { address: { address: settings.discoveryTargetAddress! }, deviceId: settings.discoveryTargetDeviceInstance! }
+      ]);
+    }
+    return new Promise<Array<DiscoveredDevice>>(resolve => {
       // Keyed by address and instance: a device reachable by several paths answers more than once.
       const devices = new Map<string, DiscoveredDevice>();
       const onIAm = (content: { header?: BACnetMessageHeader; payload: IAMResult }) => {
@@ -615,104 +603,27 @@ export default class SouthBACnet
       };
       client.on('iAm', onIAm);
 
-      const bbmd = this.connector.settings.bbmd;
-      if (targetAddress) {
-        // Directed to the target itself: a device answers it to OIBus. A device answering a broadcast Who-Is
-        // broadcasts its I-Am on its own subnet, out of OIBus's reach when that is not OIBus's subnet.
-        client.whoIs({ address: targetAddress });
-        // And through the target to every network: a router at this address forwards it to the networks behind it.
-        client.whoIs({ address: targetAddress, net: GLOBAL_BROADCAST_NETWORK });
-      } else if (bbmd.enabled) {
-        client.whoIsThroughBBMD({ address: bbmd.address! });
+      if (settings.bbmd.enabled) {
+        client.whoIsThroughBBMD({ address: settings.bbmd.address! });
       } else {
         client.whoIs({ net: GLOBAL_BROADCAST_NETWORK });
       }
 
-      const windowMs = Math.max(this.connector.settings.apduTimeout, 3000);
+      const windowMs = Math.max(settings.apduTimeout, 3000);
       setTimeout(() => {
         client.off('iAm', onIAm);
         resolve(Array.from(devices.values()));
       }, windowMs);
     });
-
-    const target: BACNetAddress | null = targetAddress ? { address: targetAddress } : null;
-    if (target && !devices.some(device => isSameDevice(device.address, target))) {
-      const device = await this.identifyDevice(client, target);
-      if (device) devices.push(device);
-    }
-    return devices;
   }
 
-  /**
-   * Asks the device at `address` for its own identifier, through the wildcard Device instance (4194303)
-   * that a device takes as its own. It finds a device that answers no Who-Is, or whose I-Am is broadcast on
-   * its own subnet and never reaches OIBus, as YABE finds a device added by its address. Returns null when
-   * the device does not answer, or does not support the wildcard instance.
-   */
-  private async identifyDevice(client: BACnetClient, address: BACNetAddress): Promise<DiscoveredDevice | null> {
+  /** Reads the target device's name: Test settings fails when it does not answer as the configured device. */
+  private async checkTargetDevice(client: BACnetClient, device: DiscoveredDevice): Promise<void> {
     try {
-      const result = await client.readProperty(
-        address,
-        { type: ObjectType.DEVICE, instance: ASN1_MAX_INSTANCE },
-        PropertyIdentifier.OBJECT_IDENTIFIER
-      );
-      const objectId = result.values[0]?.value;
-      if (isObjectId(objectId) && objectId.type === ObjectType.DEVICE) {
-        this.logger.debug(`Device ${describeAddress(address)} answered no Who-Is, identified as device instance ${objectId.instance}`);
-        return { address, deviceId: objectId.instance };
-      }
-      this.logger.debug(`Device ${describeAddress(address)} answered no Who-Is, nor with its device identifier`);
+      await client.readProperty(device.address, { type: ObjectType.DEVICE, instance: device.deviceId }, PropertyIdentifier.OBJECT_NAME);
     } catch (error: unknown) {
-      this.logger.debug(`Device ${describeAddress(address)} answered no Who-Is, nor with its device identifier: ${getErrorMessage(error)}`);
+      throw new Error(`Device ${device.deviceId} at ${describeAddress(device.address)} did not answer: ${toRequestErrorMessage(error)}`);
     }
-    return null;
-  }
-
-  /**
-   * Sends a unicast Who-Is directly to the item's configured device address and, if an I-Am comes
-   * back, checks its reported device instance against the item's configured `Device instance` -
-   * catching the classic static-binding mistake (wrong IP/instance pairing) before it silently
-   * produces data attributed to the wrong device. Best-effort and never throws: a device that
-   * doesn't answer Who-Is (some restricted profiles don't implement it) must not fail the item test,
-   * since `readProperty` succeeding is the real pass/fail criterion. Returns the device instance that
-   * answered, or null.
-   */
-  private async verifyDeviceIdentity(
-    client: BACnetClient,
-    item: SouthConnectorItemEntity<SouthBACnetItemSettings>
-  ): Promise<number | null> {
-    const target = toAddress(item);
-    const match = await new Promise<number | null>(resolve => {
-      const onIAm = (content: { header?: BACnetMessageHeader; payload: IAMResult }) => {
-        const sender = senderAddress(content.header);
-        if (sender && isSameDevice(sender, target)) {
-          client.off('iAm', onIAm);
-          clearTimeout(timeoutHandle);
-          resolve(content.payload.deviceId);
-        }
-      };
-      client.on('iAm', onIAm);
-      client.whoIs(target);
-      const timeoutHandle = setTimeout(
-        () => {
-          client.off('iAm', onIAm);
-          resolve(null);
-        },
-        Math.max(this.connector.settings.apduTimeout, 3000)
-      );
-    });
-
-    if (match === null) {
-      this.logger.debug(`No unicast Who-Is response from ${describeAddress(target)} for item "${item.name}"`);
-    } else if (match !== item.settings.deviceInstance) {
-      this.logger.warn(
-        `Unicast Who-Is to ${describeAddress(target)} for item "${item.name}" replied with device instance ${match}, ` +
-          `but the item is configured for device instance ${item.settings.deviceInstance} - check the static binding`
-      );
-    } else {
-      this.logger.debug(`Unicast Who-Is confirmed device instance ${match} at ${describeAddress(target)} for item "${item.name}"`);
-    }
-    return match;
   }
 
   private async readItem(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<OIBusTimeValue | null> {

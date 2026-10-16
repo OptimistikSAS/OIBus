@@ -924,7 +924,13 @@
             "port": "Port",
             "apdu-timeout": "Délai d'attente APDU",
             "broadcast-address": "Adresse de diffusion",
-            "discovery-target-address": "Adresse cible de découverte",
+            "discovery-mode": {
+              "title": "Découverte",
+              "broadcast": "Diffusion Who-Is",
+              "target-device": "Appareil cible"
+            },
+            "discovery-target-address": "Adresse de l'appareil cible",
+            "discovery-target-device-instance": "Instance de l'appareil cible",
             "retry-interval": "Intervalle de nouvelle tentative",
             "max-parallel-run": "Requêtes parallèles max",
             "cov-default-lifetime": "Durée de l'abonnement COV",
