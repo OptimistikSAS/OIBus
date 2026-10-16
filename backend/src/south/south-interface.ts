@@ -46,7 +46,9 @@ export interface SouthConfigurationDiscovery {
    * source, the rows of a dedicated metadata query. Every connector's result is normalized to the same
    * flat `Array<OIBusRecord>` shape regardless of source, so the workflow's eligibility filter and
    * identity-key matching never need to know which connector produced it.
-   * @param scope - the workflow's `discoveryScope` (e.g. `{ rootNodeId }` for OPC-UA, `{ query }` for SQL)
+   * @param scope - the workflow's `discoveryScope`: `{ query }` for SQL; for a tree, `{ rootNodeId }` to walk
+   *   everything under one node (the source root when omitted), or `{ nodeIds }` for nodes picked one by one in
+   *   the Explore modal - each point recorded itself, each container walked
    */
   discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>>;
 }

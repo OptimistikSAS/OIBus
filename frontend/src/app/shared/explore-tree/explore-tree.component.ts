@@ -85,6 +85,20 @@ function humanize(key: string): string {
  * to `SouthConnectorService` — a south connector and a history query's south settings start/browse/
  * close their explore sessions through different endpoints.
  */
+/** How an explore session is driven and what it offers besides read-only browsing. */
+export interface ExploreOptions {
+  /**
+   * Override the backend calls used to start/browse/close the session — needed when exploring settings that
+   * don't belong to a standalone south connector (e.g. a history query's south settings). Defaults to the south
+   * connector explore endpoints keyed by the connector id.
+   */
+  api?: SouthExploreApi;
+  /** Translation key of an action offered on the selected expandable node, which emits `nodeSelected` with it */
+  nodeActionKey?: string | null;
+  /** Whether every node gets a checkbox, to pick several nodes at once (see `checkedIds`) */
+  checkable?: boolean;
+}
+
 export interface SouthExploreApi {
   start(settings: SouthSettings, type: OIBusSouthType): Observable<SouthExploreStartResult>;
   browse(sessionId: string, parentId: string | null): Observable<SouthExploreBrowseResult>;
@@ -136,6 +150,9 @@ export class ExploreTreeComponent implements OnDestroy {
   private api: SouthExploreApi | null = null;
   /** Translation key of the action offered on each expandable node, or null for read-only browsing. */
   readonly nodeActionKey = signal<string | null>(null);
+  readonly checkable = signal(false);
+  /** Ids of the checked nodes: a point stands for itself, any other node for everything under it */
+  readonly checkedIds = signal<ReadonlySet<string>>(new Set());
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   private sessionId: string | null = null;
@@ -181,21 +198,12 @@ export class ExploreTreeComponent implements OnDestroy {
    *   own settings; pass `null` for unsaved settings (create/edit forms)
    * @param settingsToExplore - the south settings to explore
    * @param southType - the south connector type
-   * @param api - override the backend calls used to start/browse/close the session — needed when
-   *   exploring settings that don't belong to a standalone south connector (e.g. a history query's
-   *   south settings). Defaults to the south connector explore endpoints keyed by `connectorId`.
-   * @param nodeActionKey - translation key of an action offered on every expandable node, which emits
-   *   `nodeSelected` with that node. Defaults to null (pure read-only browsing).
+   * @param options - see {@link ExploreOptions}; pure read-only browsing of a south connector by default
    */
-  prepare(
-    connectorId: string | null,
-    settingsToExplore: SouthSettings,
-    southType: OIBusSouthType,
-    api?: SouthExploreApi,
-    nodeActionKey: string | null = null
-  ) {
-    this.nodeActionKey.set(nodeActionKey);
-    this.api = api ?? this.defaultApi(connectorId || 'create');
+  prepare(connectorId: string | null, settingsToExplore: SouthSettings, southType: OIBusSouthType, options: ExploreOptions = {}) {
+    this.nodeActionKey.set(options.nodeActionKey ?? null);
+    this.checkable.set(options.checkable ?? false);
+    this.api = options.api ?? this.defaultApi(connectorId || 'create');
     this.loading.set(true);
     this.api.start(settingsToExplore, southType).subscribe({
       error: (httpError: HttpErrorResponse) => {
@@ -275,6 +283,20 @@ export class ExploreTreeComponent implements OnDestroy {
     } else {
       this.notificationService.error('south.explore.copy-error');
     }
+  }
+
+  isChecked(node: ExploreTreeNode): boolean {
+    return this.checkedIds().has(node.entry.id);
+  }
+
+  toggleChecked(node: ExploreTreeNode) {
+    this.checkedIds.update(checkedIds => {
+      const updated = new Set(checkedIds);
+      if (!updated.delete(node.entry.id)) {
+        updated.add(node.entry.id);
+      }
+      return updated;
+    });
   }
 
   /** Runs the node action on this node - only offered on expandable nodes (see class doc). */

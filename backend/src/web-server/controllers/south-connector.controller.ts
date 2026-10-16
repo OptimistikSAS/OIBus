@@ -88,6 +88,19 @@ interface SouthWorkflowPreviewRequest {
 }
 
 /**
+ * @interface SouthDiscoveredItemsRequest
+ * @description Request body for mapping what a discovery scope finds to new items
+ */
+interface SouthDiscoveredItemsRequest {
+  /** South connector settings, as currently edited */
+  southSettings: SouthSettings;
+  /** What to discover, e.g. `{ nodeIds: [...] }` for nodes picked in the Explore modal */
+  discoveryScope: Record<string, unknown>;
+  /** Item field path to a constant or a {{field}} expression of the discovered record */
+  itemFieldMapping: Record<string, string>;
+}
+
+/**
  * @interface SouthCsvImportResponse
  * @description Response for CSV import check operation
  */
@@ -343,6 +356,33 @@ export class SouthConnectorController extends Controller {
         command.southSettings,
         command.workflowId,
         command.workflow
+      );
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Discovers what a scope holds (e.g. nodes picked in the Explore modal) against the south connector settings
+   * as currently edited, and maps every record to a new item, as a configuration workflow would. Nothing is saved.
+   * @summary Map discovered records to new items
+   * @param southId The south connector id, or "create" for a connector not created yet
+   * @returns {Promise<Array<SouthConnectorItemCommandDTO>>} One item to create per discovered record
+   */
+  @Post('/{southId}/test/discovered-items')
+  async discoverItems(
+    @Path() southId: string,
+    @Query() southType: OIBusSouthType,
+    @Body() command: SouthDiscoveredItemsRequest,
+    @Request() request: CustomExpressRequest
+  ): Promise<Array<SouthConnectorItemCommandDTO>> {
+    try {
+      return await request.services.configurationWorkflowRunService.discoverItems(
+        southId,
+        southType,
+        command.southSettings,
+        command.discoveryScope,
+        command.itemFieldMapping
       );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);

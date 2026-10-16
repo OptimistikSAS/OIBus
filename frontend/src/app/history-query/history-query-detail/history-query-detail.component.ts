@@ -263,9 +263,11 @@ export class HistoryQueryDetailComponent {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
     component.prepare(historyQuery.id, historyQuery.southSettings, historyQuery.southType, {
-      start: (settings, type) => this.historyQueryService.startExplore(historyQuery.id, settings, type),
-      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQuery.id, sessionId, parentId),
-      close: sessionId => this.historyQueryService.closeExplore(historyQuery.id, sessionId)
+      api: {
+        start: (settings, type) => this.historyQueryService.startExplore(historyQuery.id, settings, type),
+        browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQuery.id, sessionId, parentId),
+        close: sessionId => this.historyQueryService.closeExplore(historyQuery.id, sessionId)
+      }
     });
   }
 
