@@ -278,6 +278,49 @@ function toPointValue(raw: unknown): string | number {
   return String(raw);
 }
 
+/**
+ * One BACnet/IP socket per local interface and port, shared by every connector bound to them. A second socket
+ * on the same port binds too (address reuse), but the operating system hands each unicast reply to one of the
+ * sockets only: a connector tested or explored while another one runs on the same port would miss its replies,
+ * or take the running one's. The socket keeps the APDU timeout and broadcast address of the connector that
+ * opened it.
+ */
+const sockets = new Map<string, Promise<BACnetClient>>();
+const socketUsers = new Map<BACnetClient, { key: string; socket: Promise<BACnetClient>; users: number }>();
+
+async function acquireSocket(key: string, open: () => Promise<BACnetClient>): Promise<BACnetClient> {
+  let socket = sockets.get(key);
+  if (!socket) {
+    const opening: Promise<BACnetClient> = open().then(client => {
+      socketUsers.set(client, { key, socket: opening, users: 0 });
+      // A failed socket is not handed out again: the next connector to connect opens a new one.
+      client.on('error', () => forgetSocket(key, opening));
+      return client;
+    });
+    opening.catch(() => forgetSocket(key, opening));
+    sockets.set(key, opening);
+    socket = opening;
+  }
+  const client = await socket;
+  socketUsers.get(client)!.users++;
+  return client;
+}
+
+/** The socket is closed when its last user releases it. */
+function releaseSocket(client: BACnetClient): void {
+  const entry = socketUsers.get(client);
+  if (!entry) return;
+  entry.users--;
+  if (entry.users > 0) return;
+  socketUsers.delete(client);
+  forgetSocket(entry.key, entry.socket);
+  client.close();
+}
+
+function forgetSocket(key: string, socket: Promise<BACnetClient>): void {
+  if (sockets.get(key) === socket) sockets.delete(key);
+}
+
 interface CovSubscriptionEntry {
   item: SouthConnectorItemEntity<SouthBACnetItemSettings>;
   address: BACNetAddress;
@@ -311,6 +354,12 @@ export default class SouthBACnet
   private bufferedValues: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; timestamp: Instant; value: OIBusTimeValue }> =
     [];
   private flushTimeout: NodeJS.Timeout | null = null;
+  // Listeners this connector adds to the shared socket, removed when it releases it.
+  private readonly onTransportError = (error: Error) => {
+    this.logger.error(`BACnet transport error: ${getErrorMessage(error)}`);
+    this.triggerReconnect();
+  };
+  private readonly onCovNotification = (content: { payload: CovNotifyPayload }) => this.handleCovNotification(content.payload);
 
   constructor(
     connector: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings>,
@@ -386,11 +435,7 @@ export default class SouthBACnet
     this.covSubscriptions.clear();
 
     if (this.client) {
-      try {
-        this.client.close();
-      } catch (error: unknown) {
-        this.logger.error(`Error closing BACnet client: ${getErrorMessage(error)}`);
-      }
+      this.releaseClient(this.client);
       this.client = null;
     }
 
@@ -399,7 +444,7 @@ export default class SouthBACnet
   }
 
   /** Opens the BACnet/IP UDP socket and waits for it to be bound before returning. */
-  private async createClient(): Promise<BACnetClient> {
+  private async createSocket(): Promise<BACnetClient> {
     const client = new BACnetClient({
       interface: this.connector.settings.localInterface || undefined,
       port: this.connector.settings.port,
@@ -418,12 +463,26 @@ export default class SouthBACnet
       client.once('listening', onListening);
       client.once('error', onError);
     });
-    client.on('error', (error: Error) => {
-      this.logger.error(`BACnet transport error: ${getErrorMessage(error)}`);
-      this.triggerReconnect();
-    });
-    client.on('covNotifyUnconfirmed', content => this.handleCovNotification(content.payload));
     return client;
+  }
+
+  /** The socket of this connector's local interface and port, opened by the first connector to use it. */
+  private async acquireClient(): Promise<BACnetClient> {
+    const settings = this.connector.settings;
+    const client = await acquireSocket(`${settings.localInterface || ''}|${settings.port}`, () => this.createSocket());
+    client.on('error', this.onTransportError);
+    client.on('covNotifyUnconfirmed', this.onCovNotification);
+    return client;
+  }
+
+  private releaseClient(client: BACnetClient): void {
+    client.off('error', this.onTransportError);
+    client.off('covNotifyUnconfirmed', this.onCovNotification);
+    try {
+      releaseSocket(client);
+    } catch (error: unknown) {
+      this.logger.error(`Error closing BACnet client: ${getErrorMessage(error)}`);
+    }
   }
 
   private triggerReconnect(): void {
@@ -446,12 +505,12 @@ export default class SouthBACnet
    * broadcast on the device's own subnet, only reach OIBus through it.
    */
   private async openClient(): Promise<BACnetClient> {
-    const client = await this.createClient();
+    const client = await this.acquireClient();
     if (!this.connector.settings.bbmd.enabled) return client;
     try {
       await this.registerForeignDevice(client);
     } catch (error: unknown) {
-      client.close();
+      this.releaseClient(client);
       throw new Error(
         `Could not register as a foreign device with BBMD ${this.connector.settings.bbmd.address}: ${getErrorMessage(error)}`
       );
@@ -530,7 +589,7 @@ export default class SouthBACnet
       return { items };
     } finally {
       if (client && !reusingLiveClient) {
-        client.close();
+        this.releaseClient(client);
       }
     }
   }
@@ -569,7 +628,7 @@ export default class SouthBACnet
       return { result, connectionDuration, queryDuration: DateTime.now().toMillis() - queryStart };
     } finally {
       if (client && !reusingLiveClient) {
-        client.close();
+        this.releaseClient(client);
       }
     }
   }
@@ -578,13 +637,14 @@ export default class SouthBACnet
    * The devices to list, as the discovery mode says. A target device is taken as configured, without any
    * Who-Is: it may answer none, or broadcast its I-Am on its own subnet, out of OIBus's reach when that is
    * not OIBus's subnet - as YABE does with a device added by its address and instance. Otherwise a Who-Is
-   * is broadcast, direct or through the configured BBMD, and the I-Am responses are collected for a fixed
-   * window.
+   * is sent - to the router, broadcast directly, or through the configured BBMD - and the I-Am responses are
+   * collected for a fixed window.
    *
-   * The direct Who-Is is a global broadcast (network 0xFFFF): a BACnet router receiving one forwards it
-   * to the networks behind it (MS/TP trunks...), so their devices answer too. Through a BBMD it stays a
-   * local broadcast on each subnet - @bacnet-js/client sends Distribute-Broadcast-To-Network without a
-   * destination network.
+   * The Who-Is to the router and the direct one are global broadcasts (network 0xFFFF): a BACnet router
+   * receiving one forwards it to the networks behind it (MS/TP trunks...), so their devices answer too. The
+   * one to the router is sent to it alone, even with a BBMD: the BBMD then only brings back the I-Am replies
+   * the router broadcasts on its own subnet. Through a BBMD the Who-Is stays a local broadcast on each subnet
+   * - @bacnet-js/client sends Distribute-Broadcast-To-Network without a destination network.
    */
   private discoverDevices(client: BACnetClient): Promise<Array<DiscoveredDevice>> {
     const settings = this.connector.settings;
@@ -603,7 +663,9 @@ export default class SouthBACnet
       };
       client.on('iAm', onIAm);
 
-      if (settings.bbmd.enabled) {
+      if (settings.discoveryMode === 'router') {
+        client.whoIs({ address: settings.discoveryRouterAddress!, net: GLOBAL_BROADCAST_NETWORK });
+      } else if (settings.bbmd.enabled) {
         client.whoIsThroughBBMD({ address: settings.bbmd.address! });
       } else {
         client.whoIs({ net: GLOBAL_BROADCAST_NETWORK });

@@ -927,10 +927,12 @@
             "discovery-mode": {
               "title": "发现方式",
               "broadcast": "广播 Who-Is",
-              "target-device": "目标设备"
+              "router": "路由器（单播）",
+              "target-device": "目标设备（单播）"
             },
             "discovery-target-address": "目标设备地址",
             "discovery-target-device-instance": "目标设备实例",
+            "discovery-router-address": "路由器地址",
             "retry-interval": "重试间隔",
             "max-parallel-run": "最大并行查询数",
             "cov-default-lifetime": "COV 订阅有效期",
