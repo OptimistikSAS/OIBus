@@ -3232,7 +3232,8 @@
 				"type": "string",
 				"enum": [
 					"broadcast",
-					"target-device"
+					"target-device",
+					"router"
 				]
 			},
 			"SouthBACnetSettingsBbmd": {
@@ -3277,6 +3278,9 @@
 					"discoveryTargetDeviceInstance": {
 						"type": "number",
 						"format": "double"
+					},
+					"discoveryRouterAddress": {
+						"type": "string"
 					},
 					"broadcastAddress": {
 						"type": "string"

@@ -927,10 +927,12 @@
             "discovery-mode": {
               "title": "Découverte",
               "broadcast": "Diffusion Who-Is",
-              "target-device": "Appareil cible"
+              "router": "Routeur (unicast)",
+              "target-device": "Appareil cible (unicast)"
             },
             "discovery-target-address": "Adresse de l'appareil cible",
             "discovery-target-device-instance": "Instance de l'appareil cible",
+            "discovery-router-address": "Adresse du routeur",
             "retry-interval": "Intervalle de nouvelle tentative",
             "max-parallel-run": "Requêtes parallèles max",
             "cov-default-lifetime": "Durée de l'abonnement COV",

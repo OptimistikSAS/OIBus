@@ -1877,10 +1877,12 @@
             "discovery-mode": {
               "title": "Discovery",
               "broadcast": "Broadcast Who-Is",
-              "target-device": "Target device"
+              "router": "Router (unicast)",
+              "target-device": "Target device (unicast)"
             },
             "discovery-target-address": "Target device address",
             "discovery-target-device-instance": "Target device instance",
+            "discovery-router-address": "Router address",
             "retry-interval": "Retry interval",
             "max-parallel-run": "Max parallel queries",
             "cov-default-lifetime": "COV subscription lifetime",

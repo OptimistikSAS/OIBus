@@ -36,6 +36,11 @@ const manifest: SouthConnectorManifest = {
         referralPathFromRoot: 'discoveryMode',
         targetPathFromRoot: 'discoveryTargetDeviceInstance',
         values: ['target-device']
+      },
+      {
+        referralPathFromRoot: 'discoveryMode',
+        targetPathFromRoot: 'discoveryRouterAddress',
+        values: ['router']
       }
     ],
     validators: [],
@@ -123,7 +128,7 @@ const manifest: SouthConnectorManifest = {
         key: 'discoveryMode',
         translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-mode',
         defaultValue: 'broadcast',
-        selectableValues: ['broadcast', 'target-device'],
+        selectableValues: ['broadcast', 'target-device', 'router'],
         validators: [
           {
             type: 'REQUIRED',
@@ -140,7 +145,7 @@ const manifest: SouthConnectorManifest = {
         type: 'string',
         key: 'discoveryTargetAddress',
         translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-target-address',
-        defaultValue: null,
+        defaultValue: '127.0.0.1:47809',
         validators: [
           {
             type: 'REQUIRED',
@@ -162,7 +167,7 @@ const manifest: SouthConnectorManifest = {
         key: 'discoveryTargetDeviceInstance',
         translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-target-device-instance',
         unit: null,
-        defaultValue: null,
+        defaultValue: 1001,
         validators: [
           {
             type: 'REQUIRED',
@@ -175,6 +180,27 @@ const manifest: SouthConnectorManifest = {
           {
             type: 'MAXIMUM',
             arguments: ['4194302']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'string',
+        key: 'discoveryRouterAddress',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-router-address',
+        defaultValue: '127.0.0.1:47809',
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'PATTERN',
+            arguments: ['^\\d{1,3}(\\.\\d{1,3}){3}(:\\d{1,5})?$']
           }
         ],
         displayProperties: {

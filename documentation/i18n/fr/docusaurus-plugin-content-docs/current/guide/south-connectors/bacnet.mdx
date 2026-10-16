@@ -17,14 +17,15 @@ BACnet/IP, communiquant en UDP, à l'aide de la bibliothèque
 
 | Paramètre                  | Description                                                                                                                     | Exemple de valeur  |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| **Port**                     | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard.                           | `47808`              |
+| **Port**                     | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard. Les connecteurs sur le même port et la même **Interface locale** partagent un socket, pour qu'un test ou une **Exploration** avec des paramètres non enregistrés reçoive ses réponses pendant que le connecteur tourne. | `47808`              |
 | **Délai d'attente APDU**     | Temps maximal, en millisecondes, à attendre la réponse d'un appareil à une requête avant de la considérer comme échouée.       | `6000`               |
 | **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue). | `10000` |
-| **Découverte**               | Comment **Tester les paramètres** et le niveau racine d'**Explorer** trouvent les appareils : **Diffusion Who-Is** liste chaque appareil qui répond à un `Who-Is` diffusé ; **Appareil cible** va directement à un appareil, sans aucun `Who-Is`. | `Diffusion Who-Is` |
-| **Adresse de l'appareil cible** | _(Affiché avec **Appareil cible**)_ Adresse IP (et port optionnel) de l'appareil. | `192.168.1.10` |
-| **Instance de l'appareil cible** | _(Affiché avec **Appareil cible**)_ Instance d'appareil de l'appareil (`0` – `4194302`). | `201` |
+| **Découverte**               | Comment **Tester les paramètres** et le niveau racine d'**Explorer** trouvent les appareils : **Diffusion Who-Is** liste chaque appareil qui répond à un `Who-Is` diffusé ; **Appareil cible (unicast)** va directement à un appareil, sans aucun `Who-Is` ; **Routeur (unicast)** envoie le `Who-Is` à un seul routeur BACnet, qui le relaie vers les réseaux situés derrière lui. | `Diffusion Who-Is` |
+| **Adresse de l'appareil cible** | _(Affiché avec **Appareil cible (unicast)**)_ Adresse IP (et port optionnel) de l'appareil. | `192.168.1.10` |
+| **Instance de l'appareil cible** | _(Affiché avec **Appareil cible (unicast)**)_ Instance d'appareil de l'appareil (`0` – `4194302`). | `201` |
+| **Adresse du routeur**       | _(Affiché avec **Routeur (unicast)**)_ Adresse IP (et port optionnel) du routeur BACnet. | `192.168.1.20` |
 | **Adresse de diffusion**     | _(Affiché avec **Diffusion Who-Is**)_ Adresse de diffusion du `Who-Is` envoyé pour découvrir les appareils. Ignorée lorsque le BBMD est activé : le `Who-Is` passe alors par le BBMD. | `255.255.255.255`   |
-| **Interface locale**         | Optionnel. Adresse IP de l'interface réseau locale à laquelle lier le socket BACnet/IP. Laissez vide pour laisser le système d'exploitation choisir l'interface par défaut. | `192.168.1.50` |
+| **Interface locale**         | Optionnel. Adresse IP de la carte réseau locale à laquelle lier le socket BACnet/IP. Laissez vide pour utiliser toutes les cartes réseau (voir [Quand renseigner l'interface locale](#when-to-set-the-local-interface)). | `192.168.1.50` |
 | **Requêtes parallèles max**  | Nombre maximal d'éléments (ou de groupes synchronisés) qu'OIBus lit en même temps, jusqu'à `16`. Les requêtes vers un même appareil restent envoyées les unes après les autres : une valeur plus élevée n'accélère que les éléments répartis sur plusieurs appareils. | `1` |
 
 :::tip Appareil cible plutôt que diffusion
@@ -35,10 +36,38 @@ son propre sous-réseau, qui ne parvient jamais à OIBus depuis un autre sous-r�
 `ReadPropertyMultiple` et `SubscribeCOV` sont en unicast — envoyés directement à l'**Adresse de l'appareil**
 configurée sur chaque élément — la collecte de données réelle fonctionne indépendamment de la disponibilité de
 la diffusion. Seuls **Tester les paramètres** et la liste d'appareils dans **Explorer** reposent sur
-`Who-Is`/`I-Am`. La découverte **Appareil cible** s'en passe : à partir de l'adresse et de l'instance de
+`Who-Is`/`I-Am`. La découverte **Appareil cible (unicast)** s'en passe : à partir de l'adresse et de l'instance de
 l'appareil, comme dans YABE, elle lit directement l'appareil, ce qui ne nécessite qu'un simple routage IP — la
 même accessibilité déjà requise par `ReadProperty`, sans BBMD.
 
+Pour les appareils [derrière un routeur BACnet](#devices-behind-a-bacnet-router), la découverte **Routeur
+(unicast)** envoie le `Who-Is` au seul routeur. Les appareils répondent toujours par un `I-Am`, qu'un routeur
+situé sur un autre sous-réseau diffuse en général sur son propre sous-réseau : activez aussi le
+[BBMD](#bbmd-foreign-device-registration). Le `Who-Is` est toujours envoyé au routeur, et le BBMD ramène les
+réponses à OIBus.
+
+:::
+
+### Quand renseigner l'interface locale {#when-to-set-the-local-interface}
+
+OIBus ouvre un socket UDP sur le port BACnet. Lorsque l'**Interface locale** est vide, le socket écoute sur
+toutes les cartes réseau, et le système d'exploitation choisit la carte par laquelle part chaque requête.
+Renseignez l'adresse IP de la carte reliée au réseau BACnet lorsque :
+
+- **L'hôte d'OIBus a plusieurs cartes réseau** — un réseau bureautique et un réseau OT, un VPN, des cartes
+  virtuelles Docker ou Hyper-V. Un `Who-Is` diffusé sur `255.255.255.255` ne part que par une seule carte, en
+  général celle de la route par défaut, et les appareils des autres cartes ne le voient jamais.
+- **Les appareils répondent à une adresse qu'ils ne peuvent pas joindre**, parce que le système d'exploitation a
+  choisi l'adresse d'une autre carte comme source des requêtes.
+
+Laissez-la vide sinon. Renseigner l'**Adresse de diffusion** du sous-réseau lui-même (par exemple
+`172.27.23.255`) suffit souvent pour que le système d'exploitation choisisse la bonne carte.
+
+:::caution Linux
+Sous Linux, un socket lié à une adresse IP ne reçoit aucune diffusion : les réponses `I-Am` et les
+notifications COV que les appareils diffusent sont perdues. Sous Linux, ne renseignez l'**Interface locale**
+qu'avec la découverte **Appareil cible (unicast)** et des éléments interrogés périodiquement, ou vérifiez que la
+découverte et le COV fonctionnent toujours. Windows remet les diffusions à un socket lié à l'une de ses cartes.
 :::
 
 ### Interrogation et abonnements COV {#polling-and-cov-subscriptions}
@@ -108,7 +137,7 @@ L'enregistrement en tant que périphérique distant compte aussi pour les **abon
 envoie généralement sa notification `UnconfirmedCOVNotification` en diffusion locale sur son propre
 sous-réseau, et non en unicast ciblé vers l'abonné. Sans cet enregistrement, ces notifications n'atteignent
 jamais OIBus depuis un sous-réseau distant, même si la requête unicast `SubscribeCOV` ayant créé l'abonnement
-a bien fonctionné. Le BBMD peut donc rester activé avec la découverte **Appareil cible** — les deux paramètres répondent à des besoins différents : l'un concerne la façon dont OIBus émet
+a bien fonctionné. Le BBMD peut donc rester activé avec la découverte **Appareil cible (unicast)** — les deux paramètres répondent à des besoins différents : l'un concerne la façon dont OIBus émet
 ses requêtes (découverte), l'autre la capacité du trafic de diffusion distant à atteindre OIBus (réception
 COV).
 
@@ -217,9 +246,9 @@ d'élément :
 Le `Who-Is` de découverte est une diffusion globale, que les routeurs relaient vers les réseaux situés
 derrière eux : **Explorer** liste les appareils routés avec leur numéro de réseau et leur adresse MAC, et
 **Tester les paramètres** les affiche sous la forme `192.168.1.20, network 2, MAC 5`. À travers un BBMD, le
-`Who-Is` reste une diffusion locale à chaque sous-réseau : les appareils routés n'y sont pas découverts, et la
-découverte **Appareil cible** n'atteint pas non plus les appareils routés : renseignez leurs paramètres
-d'élément à la main.
+`Who-Is` reste une diffusion locale à chaque sous-réseau : les appareils routés n'y sont pas découverts.
+Utilisez plutôt la découverte **Routeur (unicast)**, en gardant le BBMD activé lorsque le routeur est sur un
+autre sous-réseau. La découverte **Appareil cible (unicast)** n'atteint pas les appareils routés.
 
 :::caution Abonnements COV aux appareils routés
 La bibliothèque BACnet utilisée par OIBus (`@bacnet-js/client` 3.3.2) envoie les demandes d'abonnement COV, et
@@ -236,14 +265,14 @@ Cliquez sur **Explorer** pour parcourir le réseau BACnet de manière interactiv
 manuellement les identifiants d'appareils et d'objets :
 
 1. Au niveau racine, OIBus liste les appareils avec leur nom et leur numéro d'instance. Avec la découverte
-   **Appareil cible**, c'est cet appareil, sans aucun `Who-Is`. Sinon OIBus diffuse une requête `Who-Is` (ou
-   l'achemine via le BBMD, si activé) et liste chaque appareil qui répond. Le `Who-Is` est une diffusion
-   globale : les appareils [derrière un routeur BACnet](#devices-behind-a-bacnet-router) sont aussi listés.
+   **Appareil cible (unicast)**, c'est cet appareil, sans aucun `Who-Is`. Avec la découverte **Routeur
+   (unicast)**, OIBus envoie une requête `Who-Is` au seul routeur ; sinon il la diffuse (ou l'achemine via le
+   BBMD, si activé). Il liste ensuite chaque appareil qui répond. Le `Who-Is` est une diffusion globale : les appareils [derrière un routeur BACnet](#devices-behind-a-bacnet-router) sont aussi listés.
 2. La sélection d'un appareil lit sa liste d'objets et affiche chaque objet qu'il expose, enrichi de sa
    valeur actuelle lorsqu'elle est disponible. Un appareil incapable d'envoyer sa liste d'objets complète en
    une seule réponse (pas de prise en charge de la segmentation, fréquent en MS/TP) la voit lue entrée par entrée.
 
 Utilisez **Tester les paramètres** sur les paramètres du connecteur pour lancer la même découverte
 d'appareils en guise de vérification rapide de la connectivité, sans ouvrir l'explorateur complet. Avec la
-découverte **Appareil cible**, il lit le nom de l'appareil, et échoue lorsque l'appareil ne répond pas comme
+découverte **Appareil cible (unicast)**, il lit le nom de l'appareil, et échoue lorsque l'appareil ne répond pas comme
 l'instance d'appareil configurée.

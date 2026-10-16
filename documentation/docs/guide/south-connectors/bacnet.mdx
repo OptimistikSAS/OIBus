@@ -16,14 +16,15 @@ over UDP, using the [@bacnet-js/client](https://github.com/bacnet-js/client) lib
 
 | Setting               | Description                                                                                                                  | Example Value     |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
-| **Port**               | UDP port used for BACnet/IP communication. `47808` (`0xBAC0`) is the standard BACnet/IP port.                                | `47808`            |
+| **Port**               | UDP port used for BACnet/IP communication. `47808` (`0xBAC0`) is the standard BACnet/IP port. Connectors on the same port and **Local interface** share one socket, so that a test or an **Explore** with unsaved settings gets its replies while the connector runs. | `47808`            |
 | **APDU timeout**       | Maximum time, in milliseconds, to wait for a device's response to a request before treating it as failed.                   | `6000`             |
 | **Retry interval**     | Time to wait, in milliseconds, before reconnecting after a transport-level failure (e.g. the local socket itself fails).    | `10000`            |
-| **Discovery**          | How **Test settings** and the root level of **Explore** find devices: **Broadcast Who-Is** lists every device answering a broadcast `Who-Is`; **Target device** goes straight to one device, without any `Who-Is`. | `Broadcast Who-Is` |
-| **Target device address** | _(Shown with **Target device**)_ IP address (and optional port) of the device. | `192.168.1.10`     |
-| **Target device instance** | _(Shown with **Target device**)_ Device instance of the device (`0` – `4194302`). | `201`              |
+| **Discovery**          | How **Test settings** and the root level of **Explore** find devices: **Broadcast Who-Is** lists every device answering a broadcast `Who-Is`; **Target device (unicast)** goes straight to one device, without any `Who-Is`; **Router (unicast)** sends the `Who-Is` to one BACnet router alone, which forwards it to the networks behind it. | `Broadcast Who-Is` |
+| **Target device address** | _(Shown with **Target device (unicast)**)_ IP address (and optional port) of the device. | `192.168.1.10`     |
+| **Target device instance** | _(Shown with **Target device (unicast)**)_ Device instance of the device (`0` – `4194302`). | `201`              |
+| **Router address**     | _(Shown with **Router (unicast)**)_ IP address (and optional port) of the BACnet router. | `192.168.1.20` |
 | **Broadcast address**  | _(Shown with **Broadcast Who-Is**)_ Broadcast address of the `Who-Is` sent to discover devices. Ignored when BBMD is enabled: the `Who-Is` then goes through the BBMD. | `255.255.255.255`  |
-| **Local interface**    | Optional. Local network interface IP to bind the BACnet/IP socket to. Leave empty to let the operating system pick the default one. | `192.168.1.50`     |
+| **Local interface**    | Optional. IP address of the local network card to bind the BACnet/IP socket to. Leave empty to use every network card (see [When to set the local interface](#when-to-set-the-local-interface)). | `192.168.1.50`     |
 | **Max parallel queries** | Maximum number of items (or synchronized groups) OIBus reads at the same time, up to `16`. Requests to a single device are still sent one at a time, so a higher value only speeds up items spread over several devices. | `1` |
 
 :::tip Target device instead of broadcast
@@ -33,10 +34,37 @@ simply disables it), and a device often answers `Who-Is` with an `I-Am` broadcas
 never reaches OIBus from another subnet. Since `ReadProperty`, `ReadPropertyMultiple`, and `SubscribeCOV` are
 unicast — sent directly to each item's configured **Device address** — actual data collection works
 regardless of whether broadcast is available. Only **Test settings** and browsing the device list in
-**Explore** rely on `Who-Is`/`I-Am`. The **Target device** discovery skips them: given the device's address
+**Explore** rely on `Who-Is`/`I-Am`. The **Target device (unicast)** discovery skips them: given the device's address
 and instance, as in YABE, it reads the device directly, which needs nothing more than plain IP routing — the
 same reachability `ReadProperty` already requires, no BBMD involved.
 
+For devices [behind a BACnet router](#devices-behind-a-bacnet-router), the **Router (unicast)** discovery sends
+the `Who-Is` to the router alone. The devices still answer with an `I-Am`, which a router on another subnet
+usually broadcasts on its own subnet: enable [BBMD](#bbmd-foreign-device-registration) too. The `Who-Is` still
+goes to the router, and the BBMD brings the replies back to OIBus.
+
+:::
+
+### When to set the local interface {#when-to-set-the-local-interface}
+
+OIBus opens one UDP socket on the BACnet port. With **Local interface** empty, the socket listens on every
+network card, and the operating system picks the card each request leaves from. Set it to the IP address of
+the card connected to the BACnet network when:
+
+- **The OIBus host has several network cards** — an office network and an OT network, a VPN, Docker or
+  Hyper-V virtual adapters. A `Who-Is` broadcast to `255.255.255.255` leaves from one card only, usually the
+  one of the default route, and the devices on the other cards never see it.
+- **Devices answer an address they cannot reach**, because the operating system picked another card's address
+  as the source of the requests.
+
+Leave it empty otherwise. Setting **Broadcast address** to the subnet's own broadcast address (for example
+`172.27.23.255`) is often enough for the operating system to pick the right card.
+
+:::caution Linux
+On Linux, a socket bound to one IP address receives no broadcast: the `I-Am` replies and COV notifications
+that devices broadcast are lost. Only set **Local interface** on Linux with the **Target device (unicast)**
+discovery and polled items, or check that discovery and COV still work. Windows delivers broadcasts to a
+socket bound to one of its cards.
 :::
 
 ### Polling and COV Subscriptions {#polling-and-cov-subscriptions}
@@ -101,7 +129,7 @@ Registering as a foreign device also matters for **COV subscriptions**: a device
 `UnconfirmedCOVNotification` as a local broadcast on its own subnet, not a targeted unicast to the
 subscriber. Without a foreign device registration, those notifications never reach OIBus from a remote
 subnet, even though the unicast `SubscribeCOV` request that set up the subscription worked fine. This means
-BBMD can stay enabled with the **Target device** discovery — the two settings address different
+BBMD can stay enabled with the **Target device (unicast)** discovery — the two settings address different
 things: one is about how OIBus reaches out (discovery), the other about whether remote broadcast traffic can
 reach OIBus (COV reception).
 
@@ -203,8 +231,9 @@ device has no IP address; OIBus reaches it through the router, with these item s
 The discovery `Who-Is` is a global broadcast, which routers forward to the networks behind them: **Explore**
 lists routed devices along with their network number and MAC address, and **Test settings** shows them as
 `192.168.1.20, network 2, MAC 5`. Through a BBMD, the `Who-Is` stays a local broadcast on each subnet, so
-routed devices are not discovered that way, and the **Target device** discovery does not reach routed devices
-either: fill in their item settings by hand.
+routed devices are not discovered that way: use the **Router (unicast)** discovery instead, with BBMD still
+enabled when the router is on another subnet. The **Target device (unicast)** discovery does not reach routed
+devices.
 
 :::caution COV subscriptions to routed devices
 The BACnet library OIBus uses (`@bacnet-js/client` 3.3.2) sends COV subscription requests, and the
@@ -219,14 +248,15 @@ be read.
 Click **Explore** to browse the BACnet network interactively instead of entering device and object
 identifiers by hand:
 
-1. At the root level, OIBus lists the devices with their name and instance number. With the **Target device**
-   discovery, it is that one device, without any `Who-Is`. Otherwise OIBus broadcasts a `Who-Is` request (or
-   routes it through the BBMD, if enabled) and lists every device that responds. The `Who-Is` is a global
-   broadcast, so devices [behind a BACnet router](#devices-behind-a-bacnet-router) are listed too.
+1. At the root level, OIBus lists the devices with their name and instance number. With the **Target device (unicast)**
+   discovery, it is that one device, without any `Who-Is`. With the **Router (unicast)** discovery, OIBus sends
+   a `Who-Is` request to the router alone; otherwise it broadcasts it (or routes it through the BBMD, if
+   enabled). It then lists every device that responds. The `Who-Is` is a global broadcast, so devices
+   [behind a BACnet router](#devices-behind-a-bacnet-router) are listed too.
 2. Selecting a device reads its object list and shows every object it exposes, enriched with its current
    present value where available. A device that cannot send its whole object list in one reply (no
    segmentation support, common on MS/TP) has it read entry by entry instead.
 
 Use **Test settings** on the connector's own settings to run the same device discovery as a quick
-connectivity check, without opening the full browser. With the **Target device** discovery, it reads the
+connectivity check, without opening the full browser. With the **Target device (unicast)** discovery, it reads the
 device's name, and fails when the device does not answer as the configured device instance.
