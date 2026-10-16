@@ -1,7 +1,7 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input, OnDestroy, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, OnDestroy, signal } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
@@ -80,11 +80,6 @@ function humanize(key: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/**
- * Backend calls needed to drive an explore session, kept as a plain port so this component isn't tied
- * to `SouthConnectorService` — a south connector and a history query's south settings start/browse/
- * close their explore sessions through different endpoints.
- */
 /** How an explore session is driven and what it offers besides read-only browsing. */
 export interface ExploreOptions {
   /**
@@ -93,12 +88,17 @@ export interface ExploreOptions {
    * connector explore endpoints keyed by the connector id.
    */
   api?: SouthExploreApi;
-  /** Translation key of an action offered on the selected expandable node, which emits `nodeSelected` with it */
-  nodeActionKey?: string | null;
   /** Whether every node gets a checkbox, to pick several nodes at once (see `checkedIds`) */
   checkable?: boolean;
+  /** The ids of the nodes checked at the start, e.g. the ones a workflow already discovers from */
+  checkedIds?: Array<string>;
 }
 
+/**
+ * Backend calls needed to drive an explore session, kept as a plain port so this component isn't tied
+ * to `SouthConnectorService` — a south connector and a history query's south settings start/browse/
+ * close their explore sessions through different endpoints.
+ */
 export interface SouthExploreApi {
   start(settings: SouthSettings, type: OIBusSouthType): Observable<SouthExploreStartResult>;
   browse(sessionId: string, parentId: string | null): Observable<SouthExploreBrowseResult>;
@@ -118,10 +118,9 @@ export interface SouthExploreApi {
  * (`SouthExploreModalComponent`, read-only browsing) or directly inline in another form (e.g. the
  * Configuration Workflow discovery-scope editor), with no other coordination needed from the host.
  *
- * With a node action (see `prepare()`), the details panel of an expandable node (one with children — a
- * leaf can't meaningfully scope a walk, since there would be nothing left to discover under it) gets an
- * action button with that label (e.g. "Select" to pick a discovery root, "Create workflow" from the
- * Explore modal); clicking it emits `nodeSelected`. Without one (the default), it is pure read-only browsing.
+ * With checkable nodes (see `prepare()`), every node gets a checkbox to pick several of them at once (see
+ * `checkedIds`) - e.g. to add them as items, or to discover from them in a Configuration Workflow. Without
+ * (the default), it is pure read-only browsing.
  */
 @Component({
   selector: 'oib-explore-tree',
@@ -137,8 +136,6 @@ export class ExploreTreeComponent implements OnDestroy {
   private readonly southConnectorService = inject(SouthConnectorService);
   private readonly notificationService = inject(NotificationService);
 
-  readonly nodeSelected = output<SouthConnectorExploreEntry>();
-
   /**
    * Height of the tree's (and the details panel's) own scroll region. Defaults to the standalone Explore modal's fill-the-modal
    * sizing; a host embedding this inline alongside other form content (e.g. the Configuration Workflow
@@ -148,8 +145,6 @@ export class ExploreTreeComponent implements OnDestroy {
   readonly maxHeight = input('50vh');
 
   private api: SouthExploreApi | null = null;
-  /** Translation key of the action offered on each expandable node, or null for read-only browsing. */
-  readonly nodeActionKey = signal<string | null>(null);
   readonly checkable = signal(false);
   /** Ids of the checked nodes: a point stands for itself, any other node for everything under it */
   readonly checkedIds = signal<ReadonlySet<string>>(new Set());
@@ -201,8 +196,8 @@ export class ExploreTreeComponent implements OnDestroy {
    * @param options - see {@link ExploreOptions}; pure read-only browsing of a south connector by default
    */
   prepare(connectorId: string | null, settingsToExplore: SouthSettings, southType: OIBusSouthType, options: ExploreOptions = {}) {
-    this.nodeActionKey.set(options.nodeActionKey ?? null);
     this.checkable.set(options.checkable ?? false);
+    this.checkedIds.set(new Set(options.checkedIds ?? []));
     this.api = options.api ?? this.defaultApi(connectorId || 'create');
     this.loading.set(true);
     this.api.start(settingsToExplore, southType).subscribe({
@@ -297,11 +292,6 @@ export class ExploreTreeComponent implements OnDestroy {
       }
       return updated;
     });
-  }
-
-  /** Runs the node action on this node - only offered on expandable nodes (see class doc). */
-  runNodeAction(node: ExploreTreeNode) {
-    this.nodeSelected.emit(node.entry);
   }
 
   private createNode(entry: SouthConnectorExploreEntry, parentPath: ReadonlyArray<string>): ExploreTreeNode {

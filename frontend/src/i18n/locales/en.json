@@ -2766,8 +2766,6 @@
       "button": "Explore",
       "empty": "Nothing to explore",
       "error": "Error while exploring the data source",
-      "select": "Select",
-      "create-workflow": "Create workflow",
       "expand": "Expand {{name}}",
       "collapse": "Collapse {{name}}",
       "no-selection": "Select a node to see its details",
@@ -2800,6 +2798,7 @@
       },
       "check": "Select {{name}}",
       "checked-count": "{{count}} selected",
+      "keep-in-sync": "Keep in sync…",
       "add-as-items": "Add as items"
     },
     "add-discovered-items": {
@@ -3044,9 +3043,6 @@
       "duplicate": "Duplicate",
       "name": "Name",
       "discovery-scope": "Discovery scope",
-      "discovery-scope-node-hint": "The node to start browsing from - leave unset to browse the entire data source",
-      "discovery-scope-node-none": "None - browse from the data source root",
-      "discovery-scope-node-clear": "Clear",
       "discovery-scope-query-hint": "A dedicated metadata query, independent of any item's own query - each returned row becomes one discovered record. E.g. SELECT column_name, description, unit FROM my_metadata_table",
       "discovery-scope-query-required": "A metadata query is required",
       "discovery-scope-query-test": "Test query",
@@ -3148,6 +3144,32 @@
         "end": "Started before",
         "status": "Status",
         "trigger-type": "Trigger type"
+      },
+      "wizard": {
+        "steps": "Configuration workflow steps",
+        "step": {
+          "source": "Source",
+          "filter": "Filter",
+          "items": "Items",
+          "schedule": "Schedule",
+          "review": "Review"
+        },
+        "nodes-hint": "The nodes to discover from: a point stands for itself, any other node for everything under it",
+        "nodes-none": "The whole data source",
+        "remove-node": "Remove {{node}}",
+        "browse-nodes": "Pick nodes...",
+        "use-nodes": "Use these nodes",
+        "find-records": "Find records",
+        "records-found": "Records found: {{count}}",
+        "refresh-preview": "Refresh preview",
+        "records-matching": "Matching records: {{eligible}} of {{discovered}}",
+        "example-item-names": "Example item names:",
+        "missing-points": "When a point is no longer found, the item created for it is disabled.",
+        "conditions": "Conditions: {{count}}",
+        "review-incomplete": "Complete the previous steps to preview a run",
+        "records-pushed": "Records pushed to OIAnalytics: {{count}}",
+        "back": "Back",
+        "next": "Next"
       }
     },
     "monitoring": {
