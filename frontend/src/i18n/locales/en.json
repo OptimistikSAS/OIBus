@@ -1874,7 +1874,13 @@
             "port": "Port",
             "apdu-timeout": "APDU timeout",
             "broadcast-address": "Broadcast address",
-            "discovery-target-address": "Discovery target address",
+            "discovery-mode": {
+              "title": "Discovery",
+              "broadcast": "Broadcast Who-Is",
+              "target-device": "Target device"
+            },
+            "discovery-target-address": "Target device address",
+            "discovery-target-device-instance": "Target device instance",
             "retry-interval": "Retry interval",
             "max-parallel-run": "Max parallel queries",
             "cov-default-lifetime": "COV subscription lifetime",
