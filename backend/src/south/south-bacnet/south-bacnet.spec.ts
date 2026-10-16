@@ -1767,4 +1767,156 @@ describe('SouthBACnet', () => {
       );
     });
   });
+
+  describe('discover', () => {
+    interface FakeObject {
+      type: number;
+      instance: number;
+      name?: string;
+      description?: string;
+      units?: number;
+    }
+
+    /** The device answers its object list with ReadProperty, and the object properties with ReadPropertyMultiple. */
+    function mockDevice(client: BACnetClientMock, deviceName: string, objects: Array<FakeObject>) {
+      client.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
+        len: 0,
+        objectId,
+        property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL },
+        values: objects.map(object => ({ type: 12, value: { type: object.type, instance: object.instance } }))
+      }));
+      const unknownProperty = [{ type: 105, value: { errorClass: 2, errorCode: 32 } }];
+      client.readPropertyMultiple.mock.mockImplementation(async (_address, specs) => ({
+        len: 0,
+        values: specs.map(spec => {
+          const object = objects.find(candidate => candidate.type === spec.objectId.type && candidate.instance === spec.objectId.instance);
+          return {
+            objectId: spec.objectId,
+            values: spec.properties.map(property => {
+              if (spec.objectId.type === bacnetJs.ObjectType.DEVICE) {
+                return { id: property.id, index: property.index, value: [{ type: 7, value: deviceName }] };
+              }
+              const value = {
+                [bacnetJs.PropertyIdentifier.OBJECT_NAME]: object?.name,
+                [bacnetJs.PropertyIdentifier.DESCRIPTION]: object?.description,
+                [bacnetJs.PropertyIdentifier.UNITS]: object?.units
+              }[property.id];
+              return {
+                id: property.id,
+                index: property.index,
+                value: value === undefined ? unknownProperty : [{ type: typeof value === 'number' ? 9 : 7, value }]
+              };
+            })
+          };
+        })
+      }));
+    }
+
+    it('should record the readable objects of every discovered device, with the settings to read them', async () => {
+      const discoverPromise = south.discover({});
+      await flushPromises();
+      const client = lastCreatedClient;
+      mockDevice(client, 'AHU controller', [
+        { type: bacnetJs.ObjectType.DEVICE, instance: 10 },
+        {
+          type: bacnetJs.ObjectType.ANALOG_INPUT,
+          instance: 1,
+          name: 'Supply temperature',
+          description: 'Supply air',
+          units: bacnetJs.EngineeringUnits.DEGREES_CELSIUS
+        },
+        { type: bacnetJs.ObjectType.BINARY_OUTPUT, instance: 2 },
+        { type: bacnetJs.ObjectType.NOTIFICATION_CLASS, instance: 3, name: 'Alarms' }
+      ]);
+      client.emit('iAm', iAm('192.168.1.10', 10));
+      mock.timers.tick(3000);
+      const records = await discoverPromise;
+
+      assert.deepStrictEqual(records, [
+        {
+          id: '192.168.1.10|||10|0|1',
+          name: 'Supply temperature',
+          deviceName: 'AHU controller',
+          deviceAddress: '192.168.1.10',
+          deviceInstance: 10,
+          routed: false,
+          networkNumber: null,
+          macAddress: null,
+          objectType: 'analog-input',
+          objectInstance: 1,
+          description: 'Supply air',
+          units: 'degrees-celsius'
+        },
+        {
+          id: '192.168.1.10|||10|4|2',
+          name: 'binary-output 2',
+          deviceName: 'AHU controller',
+          deviceAddress: '192.168.1.10',
+          deviceInstance: 10,
+          routed: false,
+          networkNumber: null,
+          macAddress: null,
+          objectType: 'binary-output',
+          objectInstance: 2,
+          description: null,
+          units: null
+        }
+      ]);
+      // static metadata only: the present value changes on every run
+      const readProperties = client.readPropertyMultiple.mock.calls.flatMap(call =>
+        call.arguments[1].flatMap(spec => spec.properties.map(property => property.id))
+      );
+      assert.ok(!readProperties.includes(bacnetJs.PropertyIdentifier.PRESENT_VALUE));
+    });
+
+    it('should only discover the device picked as root, through its router, without any Who-Is', async () => {
+      const client = await connectSouth();
+      mockDevice(client, 'VAV 2005', [{ type: bacnetJs.ObjectType.ANALOG_VALUE, instance: 7, name: 'Setpoint' }]);
+
+      const records = await south.discover({ rootNodeId: '192.168.1.20|2|5|2005' });
+
+      assert.strictEqual(client.whoIs.mock.calls.length, 0);
+      assert.deepStrictEqual(client.readProperty.mock.calls[0].arguments.slice(0, 2), [
+        { address: '192.168.1.20', net: 2, adr: [5] },
+        { type: bacnetJs.ObjectType.DEVICE, instance: 2005 }
+      ]);
+      assert.deepStrictEqual(records, [
+        {
+          id: '192.168.1.20|2|5|2005|2|7',
+          name: 'Setpoint',
+          deviceName: 'VAV 2005',
+          deviceAddress: '192.168.1.20',
+          deviceInstance: 2005,
+          routed: true,
+          networkNumber: 2,
+          macAddress: '5',
+          objectType: 'analog-value',
+          objectInstance: 7,
+          description: null,
+          units: null
+        }
+      ]);
+    });
+
+    it('should refuse an object as root', async () => {
+      await connectSouth();
+
+      await assert.rejects(
+        south.discover({ rootNodeId: '192.168.1.10|||10|0|1' }),
+        new Error('"192.168.1.10|||10|0|1" is not a BACnet device')
+      );
+    });
+
+    it('should fail the run when a device does not answer, rather than return its objects as missing', async () => {
+      const client = await connectSouth();
+      client.readProperty.mock.mockImplementation(async () => {
+        throw new Error('ERR_TIMEOUT');
+      });
+
+      await assert.rejects(
+        south.discover({ rootNodeId: '192.168.1.10|||10' }),
+        new Error('Device 10 at 192.168.1.10 could not be discovered: ERR_TIMEOUT')
+      );
+    });
+  });
 });
