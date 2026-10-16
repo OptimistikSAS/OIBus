@@ -332,6 +332,67 @@ describe('ExploreTreeComponent', () => {
       expect(Array.from(tester.component.checkedIds())).toEqual(['Server']);
     });
 
+    describe('sub-nodes', () => {
+      beforeEach(() => {
+        southConnectorService.startExplore.mockReturnValue(
+          of({ sessionId: 'sessionId', entries: [entry('Objects', true), entry('Server', false)] })
+        );
+      });
+
+      function checkbox(name: string) {
+        return tester.root.getByRole('checkbox', { name: `Select ${name}` });
+      }
+
+      test('should offer to select the sub-nodes of a node with sub-nodes only, when nodes can be checked', async () => {
+        tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, { checkable: true });
+
+        await expect.element(tester.root.getByRole('button', { name: 'Select all the sub-nodes of Objects' })).toBeInTheDocument();
+        await expect.element(tester.root.getByRole('button', { name: 'Select all the sub-nodes of Server' })).not.toBeInTheDocument();
+      });
+
+      test('should not offer it when nodes can not be checked', async () => {
+        prepareWith([entry('Objects', true)]);
+
+        await expect.element(tester.nodes).toHaveLength(1);
+        await expect.element(tester.root.getByRole('button', { name: 'Select all the sub-nodes of Objects' })).not.toBeInTheDocument();
+      });
+
+      test('should load the sub-nodes to select them all, then unselect them all', async () => {
+        southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Temperature', false), entry('Pressure', false)] }));
+        tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, { checkable: true });
+
+        await tester.root.getByRole('button', { name: 'Select all the sub-nodes of Objects' }).click();
+
+        expect(southConnectorService.browseExplore).toHaveBeenCalledWith(southConnector.id, 'sessionId', 'Objects');
+        await expect.element(checkbox('Temperature')).toBeChecked();
+        await expect.element(checkbox('Pressure')).toBeChecked();
+        // the node itself is left as it was
+        await expect.element(checkbox('Objects')).not.toBeChecked();
+
+        await tester.root.getByRole('button', { name: 'Unselect all the sub-nodes of Objects' }).click();
+
+        await expect.element(checkbox('Temperature')).not.toBeChecked();
+        await expect.element(checkbox('Pressure')).not.toBeChecked();
+        expect(southConnectorService.browseExplore).toHaveBeenCalledTimes(1);
+      });
+
+      test('should select the remaining sub-nodes when only some are, and expand a collapsed node without browsing again', async () => {
+        southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Temperature', false), entry('Pressure', false)] }));
+        tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, { checkable: true });
+        await tester.expandButton('Objects').click();
+        await checkbox('Temperature').click();
+        await tester.collapseButton('Objects').click();
+        await expect.element(tester.nodes).toHaveLength(2);
+
+        await tester.root.getByRole('button', { name: 'Select all the sub-nodes of Objects' }).click();
+
+        await expect.element(tester.nodes).toHaveLength(4);
+        await expect.element(checkbox('Temperature')).toBeChecked();
+        await expect.element(checkbox('Pressure')).toBeChecked();
+        expect(southConnectorService.browseExplore).toHaveBeenCalledTimes(1);
+      });
+    });
+
     test('should start with the given nodes checked', async () => {
       southConnectorService.startExplore.mockReturnValue(
         of({ sessionId: 'sessionId', entries: [entry('Objects', true), entry('Server', false)] })

@@ -1847,6 +1847,8 @@
         "objectInstance": "Instance de l'objet"
       },
       "check": "Sélectionner {{name}}",
+      "check-children": "Sélectionner tous les sous-nœuds de {{name}}",
+      "uncheck-children": "Désélectionner tous les sous-nœuds de {{name}}",
       "checked-count": "{{count}} sélectionné(s)",
       "keep-in-sync": "Synchroniser…",
       "add-as-items": "Ajouter comme points"
