@@ -306,18 +306,21 @@ horaire de l'appareil** des éléments journal de tendance sur `UTC` (la liste d
 
 :::note Port et découverte
 OIBus lancé sur l'hôte utilise lui-même le port BACnet standard `47808` : l'équipement room est donc publié sur
-`47809`. Les diffusions ne traversent pas la redirection de port de Docker : depuis l'hôte, renseignez
-l'**Adresse cible de découverte** `127.0.0.1:47809`. Le `Who-Is` est une diffusion globale : l'équipement room
-le relaie vers le réseau 2 et les deux équipements sont listés. OIBus lancé dans un conteneur sur
-`oibus-network` peut découvrir les deux par diffusion.
+`47809`. Les diffusions ne traversent pas la redirection de port de Docker : depuis l'hôte, utilisez la
+découverte **Appareil cible** sur l'équipement room, `127.0.0.1:47809` instance `1001`. **Explorer** liste cet
+équipement : ajoutez à la main les éléments de l'AHU, derrière lui sur le réseau 2. OIBus lancé dans un
+conteneur sur `oibus-network` découvre les deux par diffusion : le `Who-Is` est une diffusion globale, que
+l'équipement room relaie vers le réseau 2.
 :::
 
 **Connexion depuis OIBus :** créez un connecteur South BACnet/IP avec les paramètres suivants :
 
-| Paramètre                       | Valeur            |
-| ------------------------------- | ----------------- |
-| **Port**                        | `47808`           |
-| **Adresse cible de découverte** | `127.0.0.1:47809` |
+| Paramètre                        | Valeur            |
+| -------------------------------- | ----------------- |
+| **Port**                         | `47808`           |
+| **Découverte**                   | Appareil cible    |
+| **Adresse de l'appareil cible**  | `127.0.0.1:47809` |
+| **Instance de l'appareil cible** | `1001`            |
 
 Ajoutez ensuite des éléments, ou parcourez les équipements avec **Explorer** :
 

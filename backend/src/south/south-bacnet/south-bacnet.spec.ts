@@ -103,6 +103,15 @@ const bacnetExports = {
   })
 };
 
+/** Sets up the next client before it is created, for a request it sends before the test could reach it. */
+function setUpNextClient(setUp: (client: BACnetClientMock) => void): void {
+  bacnetExports.default.mock.mockImplementationOnce(function BACnetClientCtorMock(_options: unknown) {
+    lastCreatedClient = new BACnetClientMock();
+    setUp(lastCreatedClient);
+    return lastCreatedClient;
+  });
+}
+
 const pollScanMode: ScanMode = {
   id: 'scanMode1',
   name: 'every second',
@@ -253,7 +262,7 @@ describe('SouthBACnet', () => {
     enabled: true,
     settings: {
       localInterface: '',
-      discoveryTargetAddress: null,
+      discoveryMode: 'broadcast',
       port: 47809,
       apduTimeout: 100,
       broadcastAddress: '255.255.255.255',
@@ -272,6 +281,15 @@ describe('SouthBACnet', () => {
     updatedBy: '',
     createdAt: '',
     updatedAt: ''
+  };
+  const targetDeviceConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
+    ...configuration,
+    settings: {
+      ...configuration.settings,
+      discoveryMode: 'target-device',
+      discoveryTargetAddress: '172.16.32.20',
+      discoveryTargetDeviceInstance: 201
+    }
   };
 
   before(() => {
@@ -508,133 +526,66 @@ describe('SouthBACnet', () => {
       assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
     });
 
-    it('should send a unicast Who-Is when discoveryTargetAddress is set', async () => {
-      const targetedConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
-        ...configuration,
-        settings: { ...configuration.settings, discoveryTargetAddress: '192.168.1.10' }
-      };
-      south = new SouthBACnet(targetedConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+    it('should read the target device directly, without any Who-Is', async () => {
+      south = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
 
-      const testPromise = south.testConnection();
-      await flushPromises();
+      const result = await south.testConnection();
+
       const client = lastCreatedClient;
-      mock.timers.tick(3000);
-      await testPromise;
-
-      // Directed to the device itself, then through it to the networks behind a router
-      assert.deepStrictEqual(
-        client.whoIs.mock.calls.map(call => call.arguments),
-        [[{ address: '192.168.1.10' }], [{ address: '192.168.1.10', net: 0xffff }]]
-      );
-    });
-
-    it('should list a device answering both Who-Is of discoveryTargetAddress once', async () => {
-      south = new SouthBACnet(
-        { ...configuration, settings: { ...configuration.settings, discoveryTargetAddress: '192.168.1.10' } },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
-
-      const testPromise = south.testConnection();
-      await flushPromises();
-      lastCreatedClient.emit('iAm', iAm('192.168.1.10', 10));
-      lastCreatedClient.emit('iAm', iAm('192.168.1.10', 10));
-      mock.timers.tick(3000);
-      const result = await testPromise;
-
-      assert.deepStrictEqual(result.items, [
-        { key: 'DevicesFound', value: '1' },
-        { key: 'Device 10', value: '192.168.1.10' }
-      ]);
-      // It answered Who-Is: no need to read its identifier
-      assert.strictEqual(lastCreatedClient.readProperty.mock.calls.length, 0);
-    });
-
-    it('should identify the device at discoveryTargetAddress by its wildcard device identifier when it answers no Who-Is', async () => {
-      south = new SouthBACnet(
-        { ...configuration, settings: { ...configuration.settings, discoveryTargetAddress: '172.16.32.20' } },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
-
-      const testPromise = south.testConnection();
-      await flushPromises();
-      const client = lastCreatedClient;
-      client.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
-        len: 0,
-        objectId,
-        property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL },
-        values: [{ type: 12, value: { type: 8, instance: 201 } }]
-      }));
-      mock.timers.tick(3000);
-      const result = await testPromise;
-
+      assert.strictEqual(client.whoIs.mock.calls.length, 0);
+      assert.strictEqual(client.whoIsThroughBBMD.mock.calls.length, 0);
       assert.deepStrictEqual(client.readProperty.mock.calls[0].arguments.slice(0, 3), [
         { address: '172.16.32.20' },
-        { type: 8, instance: 4194303 },
-        75
+        { type: 8, instance: 201 },
+        77
       ]);
       assert.deepStrictEqual(result.items, [
         { key: 'DevicesFound', value: '1' },
         { key: 'Device 201', value: '172.16.32.20' }
       ]);
+      assert.strictEqual(client.close.mock.calls.length, 1);
     });
 
-    it('should find no device when the device at discoveryTargetAddress answers neither Who-Is nor its wildcard identifier', async () => {
+    it('should fail the test when the target device does not answer', async () => {
+      south = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      setUpNextClient(client =>
+        client.readProperty.mock.mockImplementation(async () => {
+          throw new Error('ERR_TIMEOUT');
+        })
+      );
+
+      await assert.rejects(south.testConnection(), { message: 'Device 201 at 172.16.32.20 did not answer: ERR_TIMEOUT' });
+      assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
+    });
+
+    it('should decode the refusal when the target device is not the configured device instance', async () => {
+      south = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      setUpNextClient(client =>
+        client.readProperty.mock.mockImplementation(async () => {
+          throw new Error('BacnetError - Class:1 - Code:31');
+        })
+      );
+
+      await assert.rejects(south.testConnection(), { message: 'Device 201 at 172.16.32.20 did not answer: OBJECT/UNKNOWN_OBJECT' });
+    });
+
+    it('should still register with the BBMD, but not discover through it, when a target device is set', async () => {
       south = new SouthBACnet(
-        { ...configuration, settings: { ...configuration.settings, discoveryTargetAddress: '172.16.32.20' } },
+        {
+          ...targetDeviceConfiguration,
+          settings: { ...targetDeviceConfiguration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
+        },
         addContentCallback,
         southCacheRepository,
         'cacheFolder'
       );
 
-      const testPromise = south.testConnection();
-      await flushPromises();
-      lastCreatedClient.readProperty.mock.mockImplementation(async () => {
-        throw new Error('BacnetError - Class:1 - Code:31');
-      });
-      mock.timers.tick(3000);
-      const result = await testPromise;
+      await south.testConnection();
 
-      assert.deepStrictEqual(result.items, [{ key: 'DevicesFound', value: '0' }]);
-      assert.ok(
-        logger.debug.mock.calls.some(
-          call => typeof call.arguments[0] === 'string' && call.arguments[0].includes('BacnetError - Class:1 - Code:31')
-        )
-      );
-    });
-
-    it('should not read a wildcard device identifier without discoveryTargetAddress', async () => {
-      const testPromise = south.testConnection();
-      await flushPromises();
-      mock.timers.tick(3000);
-      const result = await testPromise;
-
-      assert.deepStrictEqual(result.items, [{ key: 'DevicesFound', value: '0' }]);
-      assert.strictEqual(lastCreatedClient.readProperty.mock.calls.length, 0);
-    });
-
-    it('should prefer discoveryTargetAddress over BBMD when both are set', async () => {
-      const targetedConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
-        ...configuration,
-        settings: {
-          ...configuration.settings,
-          discoveryTargetAddress: '192.168.1.10',
-          bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 }
-        }
-      };
-      south = new SouthBACnet(targetedConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
-
-      const testPromise = south.testConnection();
-      await flushPromises();
       const client = lastCreatedClient;
-      mock.timers.tick(3000);
-      await testPromise;
-
-      assert.strictEqual(client.whoIs.mock.calls.length, 2);
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 1);
       assert.strictEqual(client.whoIsThroughBBMD.mock.calls.length, 0);
+      assert.strictEqual(client.whoIs.mock.calls.length, 0);
     });
   });
 
@@ -642,8 +593,6 @@ describe('SouthBACnet', () => {
     it('should read the configured property and return one time value', async () => {
       const testPromise = south.testItem(item1, { history: undefined as never });
       await flushPromises();
-      // No 'iAm' reply is emitted: the unicast Who-Is verification times out and must not block the test.
-      mock.timers.tick(3000);
       const result = await testPromise;
 
       assert.strictEqual(result.result.type, 'time-values');
@@ -677,111 +626,44 @@ describe('SouthBACnet', () => {
       assert.strictEqual(client.close.mock.calls.length, 1);
     });
 
-    it('should send a unicast Who-Is to the item device address before reading', async () => {
-      const testPromise = south.testItem(item1, { history: undefined as never });
-      await flushPromises();
+    it('should read the item device directly, without any Who-Is', async () => {
+      await south.testItem(item1, { history: undefined as never });
+
       const client = lastCreatedClient;
-      assert.strictEqual(client.whoIs.mock.calls.length, 1);
-      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: item1.settings.deviceAddress }]);
-      mock.timers.tick(3000);
-      await testPromise;
+      assert.strictEqual(client.whoIs.mock.calls.length, 0);
+      assert.deepStrictEqual(client.readProperty.mock.calls[0].arguments.slice(0, 2), [
+        { address: item1.settings.deviceAddress },
+        { type: 0, instance: 1 }
+      ]);
     });
 
-    it('should log a warning when the unicast Who-Is reply reports a different device instance', async () => {
-      const testPromise = south.testItem(item1, { history: undefined as never });
-      await flushPromises();
-      const client = lastCreatedClient;
-      client.emit('iAm', iAm(item1.settings.deviceAddress, 999));
-      await testPromise;
+    it('should read a routed item through its router', async () => {
+      await south.testItem(routedItem1, { history: undefined as never });
 
-      assert.ok(
-        logger.warn.mock.calls.some(call => typeof call.arguments[0] === 'string' && call.arguments[0].includes('device instance 999'))
-      );
-    });
-
-    it('should not log a warning when the unicast Who-Is reply confirms the configured device instance', async () => {
-      logger.warn.mock.resetCalls();
-      const testPromise = south.testItem(item1, { history: undefined as never });
-      await flushPromises();
-      const client = lastCreatedClient;
-      client.emit('iAm', iAm(item1.settings.deviceAddress, item1.settings.deviceInstance));
-      await testPromise;
-
-      assert.strictEqual(logger.warn.mock.calls.length, 0);
-    });
-
-    it('should verify a routed device through its router, ignoring the other devices behind it', async () => {
-      logger.warn.mock.resetCalls();
-      const testPromise = south.testItem(routedItem1, { history: undefined as never });
-      await flushPromises();
-      const client = lastCreatedClient;
-      const routedIAm = (adr: Array<number>, deviceId: number) => ({
-        header: { apduType: 0x10, expectingReply: false, sender: { address: '192.168.1.20', forwardedFrom: null, net: 2, adr } },
-        payload: { deviceId, maxApdu: 480, segmentation: 3, vendorId: 0 }
-      });
-      client.emit('iAm', routedIAm([6], 2006));
-      client.emit('iAm', routedIAm([5], 999));
-      await testPromise;
-
-      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: '192.168.1.20', net: 2, adr: [5] }]);
-      assert.deepStrictEqual(client.readProperty.mock.calls[0].arguments[0], { address: '192.168.1.20', net: 2, adr: [5] });
-      const warnings = logger.warn.mock.calls.map(call => call.arguments[0]).filter(message => typeof message === 'string');
-      assert.strictEqual(warnings.length, 1);
-      assert.ok(
-        (warnings[0] as string).includes('192.168.1.20, network 2, MAC 5') && (warnings[0] as string).includes('device instance 999')
-      );
-    });
-
-    it('should ignore I-Am replies from other devices while verifying the item device', async () => {
-      logger.warn.mock.resetCalls();
-      const testPromise = south.testItem(item1, { history: undefined as never });
-      await flushPromises();
-      lastCreatedClient.emit('iAm', iAm('192.168.1.99', 999));
-      mock.timers.tick(3000);
-      await testPromise;
-
-      assert.strictEqual(logger.warn.mock.calls.length, 0);
+      assert.deepStrictEqual(lastCreatedClient.readProperty.mock.calls[0].arguments[0], { address: '192.168.1.20', net: 2, adr: [5] });
     });
 
     it('should name the item read and decode the error when the device refuses it', async () => {
-      const testPromise = south.testItem(item1, { history: undefined as never });
-      await flushPromises();
-      lastCreatedClient.readProperty.mock.mockImplementation(async () => {
-        throw new Error('BacnetError - Class:1 - Code:31');
-      });
-      mock.timers.tick(3000);
+      setUpNextClient(client =>
+        client.readProperty.mock.mockImplementation(async () => {
+          throw new Error('BacnetError - Class:1 - Code:31');
+        })
+      );
 
-      await assert.rejects(testPromise, {
+      await assert.rejects(south.testItem(item1, { history: undefined as never }), {
         message: 'Device 192.168.1.10 refused to read present-value of analog-input 1: OBJECT/UNKNOWN_OBJECT'
       });
       assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
     });
 
-    it('should report the device instance answering at the address when the device refuses the item', async () => {
-      const testPromise = south.testItem(item1, { history: undefined as never });
-      await flushPromises();
-      const client = lastCreatedClient;
-      client.readProperty.mock.mockImplementation(async () => {
-        throw new Error('BacnetError - Class:1 - Code:31');
-      });
-      client.emit('iAm', iAm(item1.settings.deviceAddress, 999));
-
-      await assert.rejects(testPromise, {
-        message:
-          'Device 192.168.1.10 refused to read present-value of analog-input 1: OBJECT/UNKNOWN_OBJECT - ' +
-          'this address answers as device instance 999, not 10'
-      });
-    });
-
     it('should not rewrite errors other than device refusals', async () => {
-      const testPromise = south.testItem(item1, { history: undefined as never });
-      await flushPromises();
-      lastCreatedClient.readProperty.mock.mockImplementation(async () => {
-        throw new Error('ERR_TIMEOUT');
-      });
-      mock.timers.tick(3000);
+      setUpNextClient(client =>
+        client.readProperty.mock.mockImplementation(async () => {
+          throw new Error('ERR_TIMEOUT');
+        })
+      );
 
-      await assert.rejects(testPromise, { message: 'ERR_TIMEOUT' });
+      await assert.rejects(south.testItem(item1, { history: undefined as never }), { message: 'ERR_TIMEOUT' });
     });
   });
 
@@ -1151,14 +1033,10 @@ describe('SouthBACnet', () => {
         name: trendLogItem.name,
         settings: { ...trendLogItem.settings, timezone: 'Europe/Paris' }
       });
-      const testPromise = south.testItem(parisTrendLog, {
+      setUpNextClient(client => serveLogBuffer(client, [{ timestamp: new Date(2026, 9, 14, 12, 0), value: 21.5 }]));
+      const result = await south.testItem(parisTrendLog, {
         history: { startTime: '2026-10-14T09:00:00.000Z', endTime: '2026-10-14T11:00:00.000Z' }
       } as never);
-      await flushPromises();
-      serveLogBuffer(lastCreatedClient, [{ timestamp: new Date(2026, 9, 14, 12, 0), value: 21.5 }]);
-      // No I-Am: the device identity check times out without failing the test.
-      mock.timers.tick(3000);
-      const result = await testPromise;
 
       // 12:00 in Paris (summer time) is 10:00 UTC
       assert.deepStrictEqual((result.result as { content: Array<unknown> }).content, [
@@ -1613,28 +1491,20 @@ describe('SouthBACnet', () => {
       assert.strictEqual(entries[0].hasChildren, true);
     });
 
-    it('should list the device at discoveryTargetAddress identified by its wildcard device identifier', async () => {
-      south = new SouthBACnet(
-        { ...configuration, settings: { ...configuration.settings, discoveryTargetAddress: '172.16.32.20' } },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
+    it('should list the target device without any Who-Is', async () => {
+      south = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      setUpNextClient(client =>
+        client.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
+          len: 0,
+          objectId,
+          property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL },
+          values: [{ type: 7, value: 'Remote controller' }]
+        }))
       );
 
-      const explorePromise = south.explore(null);
-      await flushPromises();
-      lastCreatedClient.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
-        len: 0,
-        objectId,
-        property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL },
-        values:
-          propertyId === bacnetJs.PropertyIdentifier.OBJECT_IDENTIFIER
-            ? [{ type: 12, value: { type: 8, instance: 201 } }]
-            : [{ type: 7, value: 'Remote controller' }]
-      }));
-      mock.timers.tick(3000);
-      const entries = await explorePromise;
+      const entries = await south.explore(null);
 
+      assert.strictEqual(lastCreatedClient.whoIs.mock.calls.length, 0);
       assert.deepStrictEqual(entries, [
         {
           id: '172.16.32.20|||201',

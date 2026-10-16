@@ -21,11 +21,21 @@ const manifest: SouthConnectorManifest = {
     },
     enablingConditions: [
       {
-        // The broadcast address is only used by a broadcast Who-Is, without discovery target address. A BBMD
-        // discovery ignores it too, but one enabling condition cannot depend on two settings.
-        referralPathFromRoot: 'discoveryTargetAddress',
+        // Only a broadcast Who-Is uses it. A BBMD discovery ignores it too, but one enabling condition cannot
+        // depend on two settings.
+        referralPathFromRoot: 'discoveryMode',
         targetPathFromRoot: 'broadcastAddress',
-        values: [null, '']
+        values: ['broadcast']
+      },
+      {
+        referralPathFromRoot: 'discoveryMode',
+        targetPathFromRoot: 'discoveryTargetAddress',
+        values: ['target-device']
+      },
+      {
+        referralPathFromRoot: 'discoveryMode',
+        targetPathFromRoot: 'discoveryTargetDeviceInstance',
+        values: ['target-device']
       }
     ],
     validators: [],
@@ -109,11 +119,33 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
+        type: 'string-select',
+        key: 'discoveryMode',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-mode',
+        defaultValue: 'broadcast',
+        selectableValues: ['broadcast', 'target-device'],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: false
+        }
+      },
+      {
         type: 'string',
         key: 'discoveryTargetAddress',
         translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-target-address',
         defaultValue: null,
         validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
           {
             type: 'PATTERN',
             arguments: ['^\\d{1,3}(\\.\\d{1,3}){3}(:\\d{1,5})?$']
@@ -121,7 +153,33 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 1,
-          columns: 6,
+          columns: 4,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'number',
+        key: 'discoveryTargetDeviceInstance',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-target-device-instance',
+        unit: null,
+        defaultValue: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['0']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['4194302']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
           displayInViewMode: false
         }
       },

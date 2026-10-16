@@ -3228,6 +3228,13 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthBACnetSettingsDiscoveryMode": {
+				"type": "string",
+				"enum": [
+					"broadcast",
+					"target-device"
+				]
+			},
 			"SouthBACnetSettingsBbmd": {
 				"properties": {
 					"enabled": {
@@ -3261,9 +3268,15 @@
 						"type": "number",
 						"format": "double"
 					},
+					"discoveryMode": {
+						"$ref": "#/components/schemas/SouthBACnetSettingsDiscoveryMode"
+					},
 					"discoveryTargetAddress": {
-						"type": "string",
-						"nullable": true
+						"type": "string"
+					},
+					"discoveryTargetDeviceInstance": {
+						"type": "number",
+						"format": "double"
 					},
 					"broadcastAddress": {
 						"type": "string"
@@ -3304,7 +3317,7 @@
 					"port",
 					"apduTimeout",
 					"retryInterval",
-					"discoveryTargetAddress",
+					"discoveryMode",
 					"localInterface",
 					"maxParallelRun",
 					"maxObjectsPerRequest",
