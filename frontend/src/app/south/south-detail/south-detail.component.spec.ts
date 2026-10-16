@@ -83,7 +83,7 @@ class SouthDetailComponentTester {
   readonly items = this.root.getByCss('oib-box.oib-south-items');
   readonly itemsTitle = this.items.getByCss('.oib-box-title');
   readonly manageGroupsButton = this.items.getByRole('button', { name: /^Manage groups/ });
-  readonly manageWorkflowsButton = this.items.getByRole('button', { name: 'Manage sync configuration' });
+  readonly manageWorkflowsButton = this.items.getByRole('button', { name: 'Manage items synchronisations' });
   readonly addItemButton = this.items.getByRole('button', { name: 'Create a new item' });
   readonly exportButton = this.items.getByRole('button', { name: 'Export' });
   readonly importButton = this.items.getByRole('button', { name: 'Import' });

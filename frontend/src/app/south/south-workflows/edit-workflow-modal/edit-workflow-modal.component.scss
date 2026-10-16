@@ -50,6 +50,12 @@
   font-weight: 600;
 }
 
+// Between the modal header and body: the global modal styles leave .modal-content transparent, each of its
+// parts sets its own background (styles.scss) - so does this one
+.workflow-steps {
+  background-color: var(--bs-white);
+}
+
 // The wizard steps: every step can be opened at any time, the current one stands out
 .workflow-step {
   display: flex;
@@ -81,7 +87,7 @@
   .workflow-step-number {
     background-color: $electricBlue;
     border-color: $electricBlue;
-    color: #fff;
+    color: var(--bs-white);
   }
 }
 

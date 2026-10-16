@@ -110,7 +110,7 @@ class EditSouthComponentTester {
 
   readonly items = this.root.getByCss('oib-box.oib-south-items');
   readonly manageGroupsButton = this.items.getByRole('button', { name: /^Manage groups/ });
-  readonly manageWorkflowsButton = this.items.getByRole('button', { name: /^Manage sync configuration/ });
+  readonly manageWorkflowsButton = this.items.getByRole('button', { name: /^Manage items synchronisations/ });
   readonly addItemButton = this.items.getByRole('button', { name: 'Create a new item' });
   readonly exportButton = this.items.getByRole('button', { name: 'Export' });
   readonly importButton = this.items.getByRole('button', { name: 'Import' });
@@ -243,7 +243,7 @@ describe('EditSouthComponent', () => {
       await expect.element(tester.title).toHaveTextContent('Create Folder scanner south connector');
       await expect.element(tester.enabled).toBeChecked();
       await expect.element(tester.noItems).toBeVisible();
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*0/);
+      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*0/);
       expect(configurationWorkflowService.list).not.toHaveBeenCalled();
       expect(southConnectorService.findById).not.toHaveBeenCalled();
       southConnectorService.create.mockReturnValue(of(southConnector));
@@ -296,7 +296,7 @@ describe('EditSouthComponent', () => {
       const tester = await createTester('edit');
       await expect.element(tester.title).toHaveTextContent('Edit South 1');
       await expect.element(tester.name).toHaveValue('South 1');
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*1/);
+      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*1/);
       expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
       expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
       // the existing name of the connector itself is not a duplicate
@@ -407,7 +407,7 @@ describe('EditSouthComponent', () => {
       const tester = await createTester('edit');
       const exploreModal = mockModal(createMock(SouthExploreModalComponent), { action: 'keep-in-sync', nodeIds: ['folder/sub'] });
       workflowCreationService.createFromExploredNodes.mockReturnValue(of(buildWorkflowCommand('temp_1', 'sub')));
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*0/);
+      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*0/);
 
       await tester.exploreButton.click();
 
@@ -427,7 +427,7 @@ describe('EditSouthComponent', () => {
         },
         ['folder/sub']
       );
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*1/);
+      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*1/);
     });
 
     test('should add the reviewed items of the nodes checked in the explore modal to the in-memory items', async () => {
@@ -899,7 +899,7 @@ describe('EditSouthComponent', () => {
         expect.anything()
       );
       expect(manageWorkflowsModal.prepareForInMemory.mock.lastCall![5].list()).toEqual([groupACommand]);
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*1/);
+      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*1/);
       expect((await lastSavedCommand(tester)).configurationWorkflows).toEqual([buildWorkflowCommandFor('temp_1')]);
     });
 

@@ -531,13 +531,24 @@
   </form>
 </div>
 <div class="modal-footer">
-  <div class="btn-group">
+  <!-- Moving between the steps, apart from saving: the main action is Save once it shows, Next before -->
+  <div class="btn-group me-auto">
     @if (!isFirstStep()) {
       <button type="button" class="btn btn-secondary" id="previous-step" (click)="back()" translate="south.workflows.wizard.back"></button>
     }
     @if (!isLastStep()) {
-      <button type="button" class="btn btn-primary" id="next-step" (click)="next()" translate="south.workflows.wizard.next"></button>
+      <button
+        type="button"
+        class="btn"
+        [class.btn-primary]="!canSave()"
+        [class.btn-secondary]="canSave()"
+        id="next-step"
+        (click)="next()"
+        translate="south.workflows.wizard.next"
+      ></button>
     }
+  </div>
+  <div class="btn-group">
     @if (canSave()) {
       <button
         type="submit"
