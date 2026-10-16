@@ -1,0 +1,147 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="south.add-discovered-items.title"></h4>
+</div>
+<div class="modal-body">
+  @if (loading()) {
+    <div class="text-center">
+      <div class="spinner-border" id="spinner" role="status"></div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger" id="discovered-items-error">
+      <div translate="south.add-discovered-items.error"></div>
+      <hr />
+      <div class="text-break">{{ error() }}</div>
+    </div>
+  } @else if (rows().length === 0) {
+    <div class="alert alert-info" id="discovered-items-empty" translate="south.add-discovered-items.none"></div>
+  } @else {
+    <!-- Applied to every added item -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label class="form-label" for="discovered-items-group" translate="south.items.group"></label>
+        <select class="form-select form-select-sm" id="discovered-items-group" [ngModel]="groupId()" (ngModelChange)="groupId.set($event)">
+          <option [ngValue]="null" translate="south.items.group-none"></option>
+          @for (group of groups(); track group.id) {
+            <option [ngValue]="group.id">{{ group.standardSettings.name }}</option>
+          }
+        </select>
+      </div>
+      @if (!subscriptionOnly()) {
+        <div class="col-md-4">
+          <label class="form-label" for="discovered-items-scan-mode" translate="south.items.scan-mode"></label>
+          @if (groupId()) {
+            <div class="form-text" id="discovered-items-scan-mode" translate="south.add-discovered-items.scan-mode-from-group"></div>
+          } @else {
+            <select
+              class="form-select form-select-sm"
+              id="discovered-items-scan-mode"
+              [class.is-invalid]="!scanModeId() && enabled()"
+              [ngModel]="scanModeId()"
+              (ngModelChange)="scanModeId.set($event)"
+            >
+              <option [ngValue]="null" translate="south.add-discovered-items.scan-mode-none"></option>
+              @for (scanMode of scanModes(); track scanMode.id) {
+                <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>
+              }
+            </select>
+          }
+        </div>
+      }
+      <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="discovered-items-enabled"
+            [ngModel]="enabled()"
+            (ngModelChange)="enabled.set($event)"
+          />
+          <label class="form-check-label" for="discovered-items-enabled" translate="south.add-discovered-items.enabled"></label>
+        </div>
+      </div>
+    </div>
+
+    <table class="table table-sm align-middle" id="discovered-items-table">
+      <thead>
+        <tr>
+          <th>
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="discovered-items-all"
+              [checked]="allIncluded()"
+              (change)="toggleAll()"
+              [attr.aria-label]="'south.add-discovered-items.select-all' | translate"
+            />
+          </th>
+          <th translate="south.add-discovered-items.name"></th>
+          @for (column of settingColumns(); track column.key) {
+            <th>{{ column.labelKey ? (column.labelKey | translate) : column.key }}</th>
+          }
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track $index; let index = $index) {
+          <tr [class.text-muted]="!row.included">
+            <td>
+              <input
+                class="form-check-input discovered-item-included"
+                type="checkbox"
+                [checked]="row.included"
+                (change)="toggleRow(index)"
+                [attr.aria-label]="'south.add-discovered-items.include' | translate: { name: row.name }"
+              />
+            </td>
+            <td>
+              <input
+                class="form-control form-control-sm discovered-item-name"
+                [class.is-invalid]="nameErrors()[index]"
+                [ngModel]="row.name"
+                (ngModelChange)="setName(index, $event)"
+                [attr.aria-label]="'south.add-discovered-items.name' | translate"
+              />
+              @if (nameErrors()[index]; as nameError) {
+                <div class="invalid-feedback" [translate]="nameError"></div>
+              }
+            </td>
+            @for (column of settingColumns(); track column.key) {
+              <td class="text-break small">{{ settingValue(row, column.key) }}</td>
+            }
+            <td>
+              @if (row.existingItemName) {
+                <span
+                  class="badge bg-secondary bg-opacity-25 text-secondary discovered-item-existing"
+                  [translate]="'south.add-discovered-items.already-read'"
+                  [translateParams]="{ name: row.existingItemName }"
+                ></span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+<div class="modal-footer">
+  @if (rows().length > 0) {
+    <span
+      class="me-auto text-muted"
+      id="discovered-items-count"
+      [translate]="'south.add-discovered-items.selected-count'"
+      [translateParams]="{ count: includedCount(), total: rows().length }"
+    ></span>
+  }
+  <div class="btn-group">
+    <button
+      type="button"
+      class="btn btn-primary"
+      id="add-discovered-items"
+      [disabled]="!canAdd()"
+      (click)="add()"
+      [translate]="'south.add-discovered-items.add'"
+      [translateParams]="{ count: includedCount() }"
+    ></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

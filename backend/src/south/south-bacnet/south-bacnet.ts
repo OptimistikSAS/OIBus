@@ -151,6 +151,29 @@ function parseDeviceEntryId(entryId: string): DiscoveredDevice {
   };
 }
 
+/**
+ * The devices to discover from the nodes picked in the Explore modal: a device picked itself is discovered whole
+ * (objectIds null), a device whose objects only were picked, for these objects.
+ */
+function toDiscoveryTargets(nodeIds: Array<string>): Array<{ device: DiscoveredDevice; objectIds: Array<BACNetObjectID> | null }> {
+  const targets = new Map<string, { device: DiscoveredDevice; objectIds: Array<BACNetObjectID> | null }>();
+  for (const nodeId of nodeIds) {
+    const parts = nodeId.split('|');
+    if (parts.length !== 4 && parts.length !== 6) {
+      throw new Error(`"${nodeId}" is not a BACnet device or object`);
+    }
+    const deviceEntryId = parts.slice(0, 4).join('|');
+    const target = targets.get(deviceEntryId) ?? { device: parseDeviceEntryId(deviceEntryId), objectIds: [] };
+    targets.set(deviceEntryId, target);
+    if (parts.length === 4) {
+      target.objectIds = null;
+    } else if (target.objectIds) {
+      target.objectIds.push({ type: Number(parts[4]), instance: Number(parts[5]) });
+    }
+  }
+  return Array.from(targets.values());
+}
+
 /** Engineering units enumeration value to a readable name: 62 becomes "degrees-celsius". */
 function toUnitsLabel(raw: unknown): string | null {
   if (typeof raw !== 'number') return null;
@@ -1332,8 +1355,9 @@ export default class SouthBACnet
 
   /**
    * Configuration Workflow discovery: one record per object of the devices under `scope.rootNodeId` - a device
-   * entry of `explore()`, or every device the discovery mode finds when omitted. Only the object types an item
-   * can read are recorded (not the device object itself, notification classes, schedules...).
+   * entry of `explore()`, or every device the discovery mode finds when omitted - or of the `scope.nodeIds`
+   * picked in the Explore modal: a picked device for all its objects, a picked object for itself. Only the
+   * object types an item can read are recorded (not the device object itself, notification classes, schedules...).
    *
    * A record holds the settings to read its object under their item setting names, so that a workflow maps them
    * as they are (`{{deviceAddress}}`, `{{objectType}}`...), and the object's static metadata: name, description
@@ -1349,12 +1373,18 @@ export default class SouthBACnet
       this.scheduleForeignDeviceRenewal(this.client);
     }
     const client = this.client;
-    const rootNodeId = typeof scope.rootNodeId === 'string' && scope.rootNodeId ? scope.rootNodeId : null;
-    const devices = rootNodeId ? [parseDeviceEntryId(rootNodeId)] : await this.discoverDevices(client);
+    let targets: Array<{ device: DiscoveredDevice; objectIds: Array<BACNetObjectID> | null }>;
+    if (Array.isArray(scope.nodeIds)) {
+      targets = toDiscoveryTargets(scope.nodeIds.filter(nodeId => typeof nodeId === 'string'));
+    } else {
+      const rootNodeId = typeof scope.rootNodeId === 'string' && scope.rootNodeId ? scope.rootNodeId : null;
+      const devices = rootNodeId ? [parseDeviceEntryId(rootNodeId)] : await this.discoverDevices(client);
+      targets = devices.map(device => ({ device, objectIds: null }));
+    }
     const records: Array<OIBusRecord> = [];
-    for (const device of devices) {
+    for (const { device, objectIds } of targets) {
       try {
-        records.push(...(await this.discoverDeviceObjects(client, device)));
+        records.push(...(await this.discoverDeviceObjects(client, device, objectIds)));
       } catch (error: unknown) {
         throw new Error(
           `Device ${device.deviceId} at ${describeAddress(device.address)} could not be discovered: ${toRequestErrorMessage(error)}`
@@ -1364,9 +1394,14 @@ export default class SouthBACnet
     return records;
   }
 
-  private async discoverDeviceObjects(client: BACnetClient, device: DiscoveredDevice): Promise<Array<OIBusRecord>> {
+  /** The objects of a device: the given ones, or every object of its object list when null. */
+  private async discoverDeviceObjects(
+    client: BACnetClient,
+    device: DiscoveredDevice,
+    selectedObjectIds: Array<BACNetObjectID> | null
+  ): Promise<Array<OIBusRecord>> {
     const deviceObjectId: BACNetObjectID = { type: ObjectType.DEVICE, instance: device.deviceId };
-    const objectIds = (await this.readObjectList(client, device.address, deviceObjectId)).filter(objectId =>
+    const objectIds = (selectedObjectIds ?? (await this.readObjectList(client, device.address, deviceObjectId))).filter(objectId =>
       SETTING_BY_OBJECT_TYPE.has(objectId.type)
     );
     const properties = await this.readProperties(client, device.address, [

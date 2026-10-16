@@ -87,7 +87,7 @@ describe('ExploreTreeComponent', () => {
 
   function prepareWith(entries: Array<SouthConnectorExploreEntry>, nodeActionKey: string | null = null) {
     southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries }));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, nodeActionKey);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, { nodeActionKey });
   }
 
   test('should be loading', async () => {
@@ -309,6 +309,31 @@ describe('ExploreTreeComponent', () => {
     });
   });
 
+  describe('checkable nodes', () => {
+    test('should not show any checkbox by default', async () => {
+      prepareWith([entry('Objects', true)]);
+
+      await expect.element(tester.nodes).toHaveLength(1);
+      await expect.element(tester.root.getByRole('checkbox')).not.toBeInTheDocument();
+    });
+
+    test('should check and uncheck any node, without selecting nor expanding it', async () => {
+      southConnectorService.startExplore.mockReturnValue(
+        of({ sessionId: 'sessionId', entries: [entry('Objects', true), entry('Server', false)] })
+      );
+      tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, { checkable: true });
+
+      await tester.root.getByRole('checkbox', { name: 'Select Objects' }).click();
+      await tester.root.getByRole('checkbox', { name: 'Select Server' }).click();
+      expect(Array.from(tester.component.checkedIds())).toEqual(['Objects', 'Server']);
+      expect(southConnectorService.browseExplore).not.toHaveBeenCalled();
+      await expect.element(tester.details).toHaveTextContent('Select a node to see its details');
+
+      await tester.root.getByRole('checkbox', { name: 'Select Objects' }).click();
+      expect(Array.from(tester.component.checkedIds())).toEqual(['Server']);
+    });
+  });
+
   describe('node action', () => {
     beforeEach(() => {
       southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
@@ -368,7 +393,7 @@ describe('ExploreTreeComponent', () => {
       close: vi.fn().mockReturnValue(of(undefined))
     };
 
-    tester.component.prepare(null, southConnector.settings, southConnector.type, api);
+    tester.component.prepare(null, southConnector.settings, southConnector.type, { api });
     await tester.expandButton('Objects').click();
     await expect.element(tester.nodes).toHaveLength(2);
     tester.fixture.destroy();

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, viewChild } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -7,9 +7,12 @@ import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
-import { ExploreTreeComponent, SouthExploreApi } from '../explore-tree/explore-tree.component';
+import { ExploreOptions, ExploreTreeComponent } from '../explore-tree/explore-tree.component';
 
-export type { SouthExploreApi } from '../explore-tree/explore-tree.component';
+export type { ExploreOptions, SouthExploreApi } from '../explore-tree/explore-tree.component';
+
+/** What the explore modal closes with: the node its node action ran on, or the nodes checked to add as items. */
+export type SouthExploreResult = { type: 'node'; entry: SouthConnectorExploreEntry } | { type: 'items'; nodeIds: Array<string> };
 
 /**
  * "Explore/discovery" modal: interactively browse a data source (OPC-UA nodes, folder tree, SQLite
@@ -19,7 +22,8 @@ export type { SouthExploreApi } from '../explore-tree/explore-tree.component';
  *
  * With a node action (see `prepare()`), running it on a node closes this modal with that node
  * (`NgbActiveModal.close`) instead of just letting the user browse read-only - used to pick a
- * Configuration Workflow's discovery root, or to create a workflow from the explored node.
+ * Configuration Workflow's discovery root, or to create a workflow from the explored node. With
+ * checkable nodes, "Add as items" closes it with the checked ones (see {@link SouthExploreResult}).
  */
 @Component({
   selector: 'oib-south-explore-modal',
@@ -36,6 +40,8 @@ export class SouthExploreModalComponent implements AfterViewInit {
   // possibly before the view child is resolved. Buffered here and flushed in ngAfterViewInit so prepare()
   // works regardless of that timing, rather than requiring every caller to know or care about it.
   private pendingPrepare: (() => void) | null = null;
+  readonly checkable = computed(() => this.tree()?.checkable() ?? false);
+  readonly checkedCount = computed(() => this.tree()?.checkedIds().size ?? 0);
 
   /**
    * Start the explore session and load the root-level entries.
@@ -44,20 +50,10 @@ export class SouthExploreModalComponent implements AfterViewInit {
    *   own settings; pass `null` for unsaved settings (create/edit forms)
    * @param settingsToExplore - the south settings to explore
    * @param southType - the south connector type
-   * @param api - override the backend calls used to start/browse/close the session — needed when
-   *   exploring settings that don't belong to a standalone south connector (e.g. a history query's
-   *   south settings). Defaults to the south connector explore endpoints keyed by `connectorId`.
-   * @param nodeActionKey - translation key of an action offered on every expandable node, which closes
-   *   this modal with that node. Defaults to null (pure read-only browsing).
+   * @param options - see {@link ExploreOptions}; pure read-only browsing of a south connector by default
    */
-  prepare(
-    connectorId: string | null,
-    settingsToExplore: SouthSettings,
-    southType: OIBusSouthType,
-    api?: SouthExploreApi,
-    nodeActionKey: string | null = null
-  ) {
-    const apply = () => this.tree()!.prepare(connectorId, settingsToExplore, southType, api, nodeActionKey);
+  prepare(connectorId: string | null, settingsToExplore: SouthSettings, southType: OIBusSouthType, options: ExploreOptions = {}) {
+    const apply = () => this.tree()!.prepare(connectorId, settingsToExplore, southType, options);
     if (this.tree()) {
       apply();
     } else {
@@ -73,7 +69,13 @@ export class SouthExploreModalComponent implements AfterViewInit {
   }
 
   onNodeSelected(entry: SouthConnectorExploreEntry) {
-    this.modal.close(entry);
+    const result: SouthExploreResult = { type: 'node', entry };
+    this.modal.close(result);
+  }
+
+  addCheckedAsItems() {
+    const result: SouthExploreResult = { type: 'items', nodeIds: Array.from(this.tree()!.checkedIds()) };
+    this.modal.close(result);
   }
 
   cancel() {

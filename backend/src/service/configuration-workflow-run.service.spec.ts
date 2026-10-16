@@ -781,6 +781,47 @@ describe('Configuration Workflow Run Service', () => {
     });
   });
 
+  describe('discoverItems', () => {
+    const southSettings = testData.south.list[0].settings;
+
+    it('should map every discovered record to a new item, coerced to the item field types, without saving anything', async () => {
+      southService.discover.mock.mockImplementation(async () => [
+        { id: 'ns=1;s=Temperature', path: 'Reactor/Temperature', nodeId: 'ns=1;s=Temperature' },
+        { id: 'ns=1;s=Pressure', path: 'Reactor/Pressure', nodeId: 'ns=1;s=Pressure' }
+      ]);
+
+      const items = await service.discoverItems(
+        'create',
+        'folder-scanner',
+        southSettings,
+        { nodeIds: ['ns=1;s=Reactor'] },
+        {
+          name: '{{path}}',
+          enabled: 'false',
+          'settings.regex': '{{nodeId}}',
+          'settings.minAge': '120'
+        }
+      );
+
+      assert.deepStrictEqual(southService.discover.mock.calls[0].arguments, [
+        'create',
+        'folder-scanner',
+        southSettings,
+        { nodeIds: ['ns=1;s=Reactor'] }
+      ]);
+      assert.deepStrictEqual(
+        items.map(item => [item.id, item.name, item.enabled, item.settings]),
+        [
+          [null, 'Reactor/Temperature', false, { regex: 'ns=1;s=Temperature', minAge: 120 }],
+          [null, 'Reactor/Pressure', false, { regex: 'ns=1;s=Pressure', minAge: 120 }]
+        ]
+      );
+      assert.strictEqual(items[0].cachingStrategy, null);
+      assert.strictEqual(items[0].maxCachingInterval, null);
+      assert.strictEqual(southService.createItem.mock.calls.length, 0);
+    });
+  });
+
   describe('findRuns', () => {
     it('should check ownership and pass the search params straight through to the repository', () => {
       const page = { content: [], size: 50, number: 0, totalElements: 0, totalPages: 0 };

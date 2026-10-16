@@ -422,6 +422,45 @@ describe('SouthConnectorController', () => {
     assert.deepStrictEqual(result, previewResult);
   });
 
+  it('should map what a discovery scope finds to new items', async () => {
+    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
+    const items = [{ ...testData.south.itemCommand, id: null }] as unknown as Array<SouthConnectorItemCommandDTO>;
+    workflowRunService.discoverItems.mock.mockImplementation(async () => items);
+    const requestBody = {
+      southSettings: testData.south.command.settings,
+      discoveryScope: { nodeIds: ['ns=1;s=Reactor'] },
+      itemFieldMapping: { name: '{{path}}' }
+    };
+
+    const result = await controller.discoverItems('create', testData.south.command.type, requestBody, mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(workflowRunService.discoverItems.mock.calls[0].arguments, [
+      'create',
+      testData.south.command.type,
+      requestBody.southSettings,
+      requestBody.discoveryScope,
+      requestBody.itemFieldMapping
+    ]);
+    assert.deepStrictEqual(result, items);
+  });
+
+  it('should wrap errors when mapping what a discovery scope finds to new items', async () => {
+    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
+    workflowRunService.discoverItems.mock.mockImplementation(async () => {
+      throw new Error('Discovery failure');
+    });
+
+    await assert.rejects(
+      controller.discoverItems(
+        'create',
+        testData.south.command.type,
+        { southSettings: testData.south.command.settings, discoveryScope: {}, itemFieldMapping: {} },
+        mockRequest as CustomExpressRequest
+      ),
+      new OIBusTestingError('Discovery failure')
+    );
+  });
+
   it('should wrap errors when previewing a configuration workflow as currently edited', async () => {
     const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
     workflowRunService.previewCommand.mock.mockImplementation(async () => {

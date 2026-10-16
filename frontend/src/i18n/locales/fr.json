@@ -1847,7 +1847,27 @@
         "macAddress": "Adresse MAC",
         "objectType": "Type d'objet",
         "objectInstance": "Instance de l'objet"
-      }
+      },
+      "check": "Sélectionner {{name}}",
+      "checked-count": "{{count}} sélectionné(s)",
+      "add-as-items": "Ajouter comme points"
+    },
+    "add-discovered-items": {
+      "title": "Ajouter des points depuis la source de données",
+      "error": "Erreur lors de la découverte des nœuds sélectionnés",
+      "none": "Rien à ajouter : les nœuds sélectionnés ne contiennent aucun point lisible",
+      "scan-mode-from-group": "Celle du groupe",
+      "scan-mode-none": "Sélectionner une planification",
+      "enabled": "Activer les points",
+      "select-all": "Tout sélectionner",
+      "name": "Nom du point",
+      "include": "Ajouter {{name}}",
+      "name-required": "Un nom est requis",
+      "name-taken": "Nom déjà utilisé",
+      "already-read": "Déjà lu par {{name}}",
+      "selected-count": "Points sélectionnés : {{count}} sur {{total}}",
+      "add": "Ajouter les points ({{count}})",
+      "added": "Points ajoutés : {{count}}"
     },
     "test-item": {
       "title": "Test de l'élément",

@@ -240,11 +240,9 @@ describe('EditHistoryQueryComponent', () => {
       await tester.exploreButton.click();
 
       expect(exploreModal.prepare).toHaveBeenCalledWith(savedQuery.id, {}, 'folder-scanner', {
-        start: expect.any(Function),
-        browse: expect.any(Function),
-        close: expect.any(Function)
+        api: { start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) }
       });
-      const api = exploreModal.prepare.mock.calls[0][3]!;
+      const api = exploreModal.prepare.mock.calls[0][3]!.api!;
       api.start(testData.south.list[0].settings, 'folder-scanner');
       expect(historyQueryService.startExplore).toHaveBeenCalledWith(savedQuery.id, testData.south.list[0].settings, 'folder-scanner', null);
       api.browse('sessionId', null);
@@ -489,7 +487,7 @@ describe('EditHistoryQueryComponent', () => {
       await tester.exploreButton.click();
 
       expect(exploreModal.prepare).toHaveBeenCalledWith(null, expect.anything(), 'folder-scanner', expect.anything());
-      exploreModal.prepare.mock.calls[0][3]!.start(testData.south.list[0].settings, 'folder-scanner');
+      exploreModal.prepare.mock.calls[0][3]!.api!.start(testData.south.list[0].settings, 'folder-scanner');
       expect(historyQueryService.startExplore).toHaveBeenCalledWith(
         'create',
         testData.south.list[0].settings,

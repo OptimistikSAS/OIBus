@@ -1898,6 +1898,46 @@ describe('SouthBACnet', () => {
       ]);
     });
 
+    it('should discover the picked devices whole and the picked objects alone, each device read once', async () => {
+      const client = await connectSouth();
+      mockDevice(client, 'AHU controller', [
+        { type: bacnetJs.ObjectType.ANALOG_INPUT, instance: 1, name: 'Supply temperature' },
+        { type: bacnetJs.ObjectType.ANALOG_VALUE, instance: 7, name: 'Setpoint' },
+        { type: bacnetJs.ObjectType.BINARY_INPUT, instance: 3, name: 'Alarm' },
+        { type: bacnetJs.ObjectType.NOTIFICATION_CLASS, instance: 9, name: 'Alarms' }
+      ]);
+
+      const records = await south.discover({
+        nodeIds: [
+          '192.168.1.10|||10',
+          '192.168.1.10|||10|0|1',
+          '192.168.1.20|2|5|2005|2|7',
+          '192.168.1.20|2|5|2005|15|9',
+          '192.168.1.20|2|5|2005|3|3'
+        ]
+      });
+
+      // the object list of the whole device only, the picked objects of the other one are read directly
+      assert.strictEqual(client.readProperty.mock.calls.length, 1);
+      assert.deepStrictEqual(client.readProperty.mock.calls[0].arguments[0], { address: '192.168.1.10' });
+      assert.deepStrictEqual(
+        records.map(record => [record.id, record.name]),
+        [
+          ['192.168.1.10|||10|0|1', 'Supply temperature'],
+          ['192.168.1.10|||10|2|7', 'Setpoint'],
+          ['192.168.1.10|||10|3|3', 'Alarm'],
+          ['192.168.1.20|2|5|2005|2|7', 'Setpoint'],
+          ['192.168.1.20|2|5|2005|3|3', 'Alarm']
+        ]
+      );
+    });
+
+    it('should refuse a picked node that is not a device or an object', async () => {
+      await connectSouth();
+
+      await assert.rejects(south.discover({ nodeIds: ['192.168.1.10'] }), new Error('"192.168.1.10" is not a BACnet device or object'));
+    });
+
     it('should refuse an object as root', async () => {
       await connectSouth();
 

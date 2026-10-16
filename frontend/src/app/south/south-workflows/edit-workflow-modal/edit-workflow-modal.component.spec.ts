@@ -357,7 +357,10 @@ describe('EditWorkflowModalComponent', () => {
     test('should close the modal with a valid command when everything is filled in', async () => {
       const tester = create();
       const exploreModal = createMock(SouthExploreModalComponent);
-      modalService.mockClosedModal(exploreModal, { id: 'ns=1;s=Root', name: 'Root', metadata: {}, hasChildren: true });
+      modalService.mockClosedModal(exploreModal, {
+        type: 'node',
+        entry: { id: 'ns=1;s=Root', name: 'Root', metadata: {}, hasChildren: true }
+      });
       await tester.name.fill('New workflow');
       await tester.browseButton.click();
       await tester.scanMode.selectOptions(scanModes[0].name);
@@ -419,13 +422,16 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.unsupportedScope).not.toBeInTheDocument();
       await expect.element(tester.clearRootNodeButton).not.toBeInTheDocument();
       const exploreModal = createMock(SouthExploreModalComponent);
-      modalService.mockClosedModal(exploreModal, { id: 'ns=1;s=Reactor', name: 'Reactor', metadata: {}, hasChildren: true });
+      modalService.mockClosedModal(exploreModal, {
+        type: 'node',
+        entry: { id: 'ns=1;s=Reactor', name: 'Reactor', metadata: {}, hasChildren: true }
+      });
       const open = vi.spyOn(modalService, 'open');
 
       await tester.browseButton.click();
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
-      expect(exploreModal.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, undefined, 'south.explore.select');
+      expect(exploreModal.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, { nodeActionKey: 'south.explore.select' });
       await expect.element(tester.rootNodeId).toHaveTextContent('ns=1;s=Reactor');
 
       await tester.clearRootNodeButton.click();

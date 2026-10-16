@@ -277,6 +277,35 @@ export default class ConfigurationWorkflowRunService {
     );
   }
 
+  /**
+   * The items a discovery scope would give, with no workflow - the "Add as items" of the Explore modal: every
+   * discovered record becomes one new item through `itemFieldMapping`, exactly as a workflow run creates it.
+   * Nothing is saved: the caller reviews the items, then creates them as any others.
+   */
+  async discoverItems(
+    southId: string,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
+    discoveryScope: Record<string, unknown>,
+    itemFieldMapping: Record<string, string>
+  ): Promise<Array<SouthConnectorItemCommandDTO>> {
+    const records = await this.southService.discover(southId, southType, southSettings, discoveryScope);
+    const itemFieldKinds = buildItemFieldKinds(southType);
+    return records.map(record => {
+      const command = buildItemCommand(coerceResolvedItemFields(resolveFieldMapping(record, itemFieldMapping), itemFieldKinds), null);
+      // A complete command for the caller to review: the caching settings a workflow never maps are left unset
+      return {
+        ...command,
+        cachingStrategy: command.cachingStrategy ?? null,
+        thresholdType: command.thresholdType ?? null,
+        threshold: command.threshold ?? null,
+        rangeLow: command.rangeLow ?? null,
+        rangeHigh: command.rangeHigh ?? null,
+        maxCachingInterval: command.maxCachingInterval ?? null
+      };
+    });
+  }
+
   /** Decide without Act - shared by `preview` and `previewCommand`. */
   private classifyForPreview(
     workflow: Pick<ConfigurationWorkflowEntity, 'pushToOIAnalytics' | 'identityKeyFields'>,

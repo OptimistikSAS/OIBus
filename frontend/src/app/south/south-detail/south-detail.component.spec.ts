@@ -24,11 +24,12 @@ import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/aud
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { provideCurrentUser } from '../../shared/current-user-testing';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
+import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { emptyPage } from '../../shared/utils/page.utils';
+import { AddDiscoveredItemsModalComponent } from '../south-items/add-discovered-items-modal/add-discovered-items-modal.component';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
@@ -301,7 +302,10 @@ describe('SouthDetailComponent', () => {
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
       // no discovery: read-only browsing, no workflow can be created from a node
-      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', undefined, null);
+      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', {
+        nodeActionKey: null,
+        checkable: false
+      });
       expect(workflowCreationService.createFromExploredNode).not.toHaveBeenCalled();
     });
 
@@ -309,20 +313,17 @@ describe('SouthDetailComponent', () => {
       southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: { kind: 'tree' } }));
       const tester = await createTester();
       const node = { id: 'folder/sub', name: 'sub', metadata: {}, hasChildren: true };
-      const exploreModal = mockModal(createMock(SouthExploreModalComponent), node);
+      const exploreModal = mockModal(createMock(SouthExploreModalComponent), { type: 'node', entry: node });
       const workflows = [buildWorkflow('workflow1', 'sub')];
       configurationWorkflowService.list.mockReturnValue(of(workflows));
       workflowCreationService.createFromExploredNode.mockReturnValue(of(buildWorkflowCommand('workflow2', 'sub-2')));
 
       await tester.exploreButton.click();
 
-      expect(exploreModal.prepare).toHaveBeenCalledWith(
-        'southId1',
-        southConnector.settings,
-        'folder-scanner',
-        undefined,
-        'south.explore.create-workflow'
-      );
+      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', {
+        nodeActionKey: 'south.explore.create-workflow',
+        checkable: false
+      });
       expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
       expect(workflowCreationService.createFromExploredNode).toHaveBeenCalledWith(
         {
@@ -336,6 +337,44 @@ describe('SouthDetailComponent', () => {
         },
         node
       );
+    });
+
+    test('should add the nodes checked in the explore modal as items, once reviewed', async () => {
+      const presetManifest: SouthConnectorManifest = {
+        ...manifest,
+        discovery: { kind: 'tree', defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}' } } }
+      };
+      southConnectorService.getSouthManifest.mockReturnValue(of(presetManifest));
+      const tester = await createTester();
+      const exploreModal = createMock(SouthExploreModalComponent);
+      const addItemsModal = createMock(AddDiscoveredItemsModalComponent);
+      const commands = [{ ...testData.south.itemCommand, id: null, name: 'Reactor/Temperature' }];
+      vi.spyOn(modalService, 'open').mockImplementation(component =>
+        component === SouthExploreModalComponent
+          ? fakeModal(exploreModal, Promise.resolve({ type: 'items', nodeIds: ['ns=1;s=Reactor'] }))
+          : fakeModal(addItemsModal, Promise.resolve(commands))
+      );
+      southConnectorService.importItems.mockReturnValue(of(undefined));
+
+      await tester.exploreButton.click();
+
+      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', {
+        nodeActionKey: 'south.explore.create-workflow',
+        checkable: true
+      });
+      await vi.waitFor(() =>
+        expect(addItemsModal.prepare).toHaveBeenCalledWith({
+          southId: 'southId1',
+          southSettings: southConnector.settings,
+          manifest: presetManifest,
+          scanModes,
+          groups: expect.anything(),
+          existingItems: southConnector.items,
+          nodeIds: ['ns=1;s=Reactor']
+        })
+      );
+      await vi.waitFor(() => expect(southConnectorService.importItems).toHaveBeenCalledWith('southId1', commands));
+      expect(notificationService.success).toHaveBeenCalledWith('south.add-discovered-items.added', { count: '1' });
     });
 
     test('should open the audit history of the south connector and of its items', async () => {

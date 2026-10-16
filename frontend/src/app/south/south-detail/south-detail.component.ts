@@ -18,7 +18,6 @@ import {
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { AuditEntityType } from '@oibus/shared/domain/audit.model';
-import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { LogsComponent } from '../../logs/logs.component';
 import { CertificateService } from '../../services/certificate.service';
@@ -41,8 +40,9 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
 import { PageLoader } from '../../shared/page-loader.service';
 import { pollMetrics } from '../../shared/polling';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { SouthExploreModalComponent, SouthExploreResult } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { AddDiscoveredItemsModalComponent } from '../south-items/add-discovered-items-modal/add-discovered-items-modal.component';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
@@ -698,38 +698,71 @@ export class SouthDetailComponent {
 
   /**
    * Browses the data source - and, when the connector has tree-based discovery, offers to create a
-   * Configuration Workflow from an explored node (saved through the API, like the Manage workflows modal).
+   * Configuration Workflow from an explored node (saved through the API, like the Manage workflows modal), and
+   * with discovery defaults, to add the checked nodes as items.
    */
   explore() {
     const southConnector = this.southConnector()!;
     const manifest = this.manifest()!;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    const nodeActionKey = manifest.discovery?.kind === 'tree' ? 'south.explore.create-workflow' : null;
-    component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, nodeActionKey);
+    component.prepare(southConnector.id, southConnector.settings, southConnector.type, {
+      nodeActionKey: manifest.discovery?.kind === 'tree' ? 'south.explore.create-workflow' : null,
+      checkable: !!manifest.discovery?.defaults
+    });
     modalRef.result
       .pipe(
-        switchMap((entry: SouthConnectorExploreEntry) =>
-          // The other workflows of the connector are only needed for the name uniqueness check
-          this.configurationWorkflowService.list(southConnector.id).pipe(
-            switchMap(workflows =>
-              this.workflowCreationService.createFromExploredNode(
-                {
-                  directSave: true,
-                  southId: southConnector.id,
-                  southSettings: southConnector.settings,
-                  scanModes: this.scanModes(),
-                  manifest,
-                  groups: this.itemGroups,
-                  existingWorkflows: workflows
-                },
-                entry
+        switchMap((result: SouthExploreResult) =>
+          result.type === 'items'
+            ? this.addDiscoveredItems(result.nodeIds)
+            : // The other workflows of the connector are only needed for the name uniqueness check
+              this.configurationWorkflowService.list(southConnector.id).pipe(
+                switchMap(workflows =>
+                  this.workflowCreationService.createFromExploredNode(
+                    {
+                      directSave: true,
+                      southId: southConnector.id,
+                      southSettings: southConnector.settings,
+                      scanModes: this.scanModes(),
+                      manifest,
+                      groups: this.itemGroups,
+                      existingWorkflows: workflows
+                    },
+                    result.entry
+                  )
+                )
               )
-            )
-          )
         )
       )
       .subscribe();
+  }
+
+  /** Reviews the items the checked nodes give, then creates them and reloads the connector. */
+  private addDiscoveredItems(nodeIds: Array<string>): Observable<unknown> {
+    const southConnector = this.southConnector()!;
+    const modalRef = this.modalService.open(AddDiscoveredItemsModalComponent, { size: 'xl', backdrop: 'static' });
+    const component: AddDiscoveredItemsModalComponent = modalRef.componentInstance;
+    component.prepare({
+      southId: southConnector.id,
+      southSettings: southConnector.settings,
+      manifest: this.manifest()!,
+      scanModes: this.scanModes(),
+      groups: this.itemGroups,
+      existingItems: southConnector.items,
+      nodeIds
+    });
+    return modalRef.result.pipe(
+      switchMap((commands: Array<SouthConnectorItemCommandDTO>) =>
+        this.southConnectorService.importItems(southConnector.id, commands).pipe(
+          switchMap(() => this.southConnectorService.findById(southConnector.id)),
+          tap(updatedSouthConnector => {
+            this.refresh(updatedSouthConnector);
+            this.itemTable()?.goToFirstPage();
+            this.notificationService.success('south.add-discovered-items.added', { count: String(commands.length) });
+          })
+        )
+      )
+    );
   }
 
   toggleConnector(value: boolean) {

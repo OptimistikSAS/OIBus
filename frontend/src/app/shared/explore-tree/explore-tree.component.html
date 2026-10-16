@@ -76,6 +76,15 @@
     @for (ancestorId of node.path.slice(1); track $index) {
       <span class="explore-indent"></span>
     }
+    @if (checkable()) {
+      <input
+        type="checkbox"
+        class="form-check-input mt-0 me-1 explore-check"
+        [checked]="isChecked(node)"
+        (change)="toggleChecked(node)"
+        [attr.aria-label]="'south.explore.check' | translate: { name: node.entry.name }"
+      />
+    }
     @if (node.entry.hasChildren) {
       <button
         type="button"

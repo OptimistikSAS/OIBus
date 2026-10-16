@@ -2797,7 +2797,27 @@
         "macAddress": "MAC address",
         "objectType": "Object type",
         "objectInstance": "Object instance"
-      }
+      },
+      "check": "Select {{name}}",
+      "checked-count": "{{count}} selected",
+      "add-as-items": "Add as items"
+    },
+    "add-discovered-items": {
+      "title": "Add items from the data source",
+      "error": "Error while discovering the selected nodes",
+      "none": "Nothing to add: the selected nodes hold no point an item can read",
+      "scan-mode-from-group": "From the group",
+      "scan-mode-none": "Select a schedule",
+      "enabled": "Enable the items",
+      "select-all": "Select all",
+      "name": "Item name",
+      "include": "Add {{name}}",
+      "name-required": "A name is required",
+      "name-taken": "Name already used",
+      "already-read": "Already read by {{name}}",
+      "selected-count": "Selected items: {{count}} of {{total}}",
+      "add": "Add items ({{count}})",
+      "added": "Items added: {{count}}"
     },
     "test-item": {
       "title": "Testing item",
