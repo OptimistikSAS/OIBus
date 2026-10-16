@@ -10,6 +10,9 @@ export type SouthADSSettingsEnumAsText = (typeof SOUTH_A_D_S_SETTINGS_ENUM_AS_TE
 export const SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS = ['text', 'integer'] as const;
 export type SouthADSSettingsBoolAsText = (typeof SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS)[number];
 
+export const SOUTH_B_A_CNET_SETTINGS_DISCOVERY_MODES = ['broadcast', 'target-device'] as const;
+export type SouthBACnetSettingsDiscoveryMode = (typeof SOUTH_B_A_CNET_SETTINGS_DISCOVERY_MODES)[number];
+
 export const SOUTH_B_A_CNET_ITEM_SETTINGS_OBJECT_TYPES = [
   'analog-input',
   'analog-output',
@@ -398,7 +401,9 @@ export interface SouthBACnetSettings {
   port: number;
   apduTimeout: number;
   retryInterval: number;
-  discoveryTargetAddress: string | null;
+  discoveryMode: SouthBACnetSettingsDiscoveryMode;
+  discoveryTargetAddress?: string;
+  discoveryTargetDeviceInstance?: number;
   broadcastAddress?: string;
   localInterface: string | null;
   maxParallelRun: number;
