@@ -1816,8 +1816,6 @@
       "button": "浏览",
       "empty": "没有可浏览的内容",
       "error": "浏览数据源时出错",
-      "select": "选择",
-      "create-workflow": "创建工作流",
       "expand": "展开 {{name}}",
       "collapse": "折叠 {{name}}",
       "no-selection": "选择一个节点以查看其详细信息",
@@ -1850,6 +1848,7 @@
       },
       "check": "选择 {{name}}",
       "checked-count": "已选择 {{count}} 个",
+      "keep-in-sync": "保持同步…",
       "add-as-items": "添加为项"
     },
     "add-discovered-items": {
@@ -2094,9 +2093,6 @@
       "duplicate": "复制",
       "name": "名称",
       "discovery-scope": "发现范围",
-      "discovery-scope-node-hint": "开始浏览的节点 - 留空则浏览整个数据源",
-      "discovery-scope-node-none": "无 - 从数据源根节点开始浏览",
-      "discovery-scope-node-clear": "清除",
       "discovery-scope-query-hint": "专用的元数据查询，独立于各项自身的查询 - 返回的每一行都会成为一条已发现的记录。例如：SELECT column_name, description, unit FROM my_metadata_table",
       "discovery-scope-query-required": "必须提供元数据查询",
       "discovery-scope-query-test": "测试查询",
@@ -2198,6 +2194,32 @@
         "end": "开始时间早于",
         "status": "状态",
         "trigger-type": "触发方式"
+      },
+      "wizard": {
+        "steps": "配置工作流步骤",
+        "step": {
+          "source": "来源",
+          "filter": "筛选",
+          "items": "项",
+          "schedule": "计划",
+          "review": "检查"
+        },
+        "nodes-hint": "要发现的节点：一个点代表其自身，其他节点代表其下的所有内容",
+        "nodes-none": "整个数据源",
+        "remove-node": "移除 {{node}}",
+        "browse-nodes": "选择节点...",
+        "use-nodes": "使用这些节点",
+        "find-records": "查找记录",
+        "records-found": "找到的记录：{{count}}",
+        "refresh-preview": "刷新预览",
+        "records-matching": "符合条件的记录：{{eligible}} / {{discovered}}",
+        "example-item-names": "项名称示例：",
+        "missing-points": "当某个点不再被找到时，为其创建的项将被禁用。",
+        "conditions": "条件：{{count}}",
+        "review-incomplete": "请完成前面的步骤以预览运行",
+        "records-pushed": "推送到 OIAnalytics 的记录：{{count}}",
+        "back": "上一步",
+        "next": "下一步"
       }
     },
     "monitoring": {

@@ -20,7 +20,8 @@ import { NotificationService } from '../../../shared/notification.service';
 import { SouthItemGroups } from '../../south-items/south-item-groups';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
 import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
-import { TEMP_ID_PREFIX, toConfigurationWorkflowCommand, WorkflowCreationService } from '../workflow-creation.service';
+import { TEMP_ID_PREFIX, toConfigurationWorkflowCommand } from '../workflow-command';
+import { WorkflowCreationService } from '../workflow-creation.service';
 
 /**
  * Lists a south connector's Configuration Workflows, in one of two modes (like ManageGroupsModalComponent's

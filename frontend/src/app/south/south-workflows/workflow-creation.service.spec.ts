@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { buildSouthItemGroup, buildWorkflow, buildWorkflowCommand } from '../../../test/builders';
 import testData from '../../../test/test-data';
@@ -15,18 +14,25 @@ import { MockModalService, provideModalTesting } from '../../shared/mock-modal.s
 import { NotificationService } from '../../shared/notification.service';
 import { fakeSouthItemGroups } from '../south-items/south-item-groups.testing';
 import EditWorkflowModalComponent from './edit-workflow-modal/edit-workflow-modal.component';
-import { uniqueWorkflowName, WorkflowCreationContext, WorkflowCreationService } from './workflow-creation.service';
+import { exploreCheckedActions, WorkflowCreationContext, WorkflowCreationService } from './workflow-creation.service';
 
-const manifest: SouthConnectorManifest = { ...testData.south.manifest, id: 'opcua', discovery: { kind: 'tree' } };
-const reactor: SouthConnectorExploreEntry = { id: 'ns=1;s=Reactor', name: 'Reactor', metadata: {}, hasChildren: true };
+const manifest: SouthConnectorManifest = {
+  ...testData.south.manifest,
+  id: 'opcua',
+  discovery: { kind: 'tree', defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}' } } }
+};
 
-describe('uniqueWorkflowName', () => {
-  test('should keep a name no workflow uses', () => {
-    expect(uniqueWorkflowName('Reactor', [{ name: 'Boiler' }])).toBe('Reactor');
-  });
-
-  test('should suffix a taken name with the first free number, ignoring case', () => {
-    expect(uniqueWorkflowName('Reactor', [{ name: 'reactor' }, { name: 'Reactor-2' }])).toBe('Reactor-3');
+describe('exploreCheckedActions', () => {
+  test('should offer to keep in sync with tree-based discovery, and to add items with discovery defaults', () => {
+    expect(exploreCheckedActions(manifest)).toEqual([
+      { id: 'keep-in-sync', labelKey: 'south.explore.keep-in-sync' },
+      { id: 'add-items', labelKey: 'south.explore.add-as-items' }
+    ]);
+    expect(exploreCheckedActions({ ...manifest, discovery: { kind: 'tree' } })).toEqual([
+      { id: 'keep-in-sync', labelKey: 'south.explore.keep-in-sync' }
+    ]);
+    expect(exploreCheckedActions({ ...manifest, discovery: { kind: 'query' } })).toEqual([]);
+    expect(exploreCheckedActions({ ...manifest, discovery: undefined })).toEqual([]);
   });
 });
 
@@ -36,7 +42,7 @@ describe('WorkflowCreationService', () => {
   let modalService: MockModalService<EditWorkflowModalComponent>;
   let service: WorkflowCreationService;
 
-  const command = buildWorkflowCommand(null, 'Reactor', { discoveryScope: { rootNodeId: reactor.id } });
+  const command = buildWorkflowCommand(null, 'Reactor', { discoveryScope: { nodeIds: ['ns=1;s=Reactor'] } });
 
   beforeEach(() => {
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
@@ -68,7 +74,7 @@ describe('WorkflowCreationService', () => {
 
   test('should save a new workflow through the API in direct mode', () => {
     configurationWorkflowService.create.mockReturnValue(
-      of(buildWorkflow('workflow2', 'Reactor', { discoveryScope: { rootNodeId: reactor.id } }))
+      of(buildWorkflow('workflow2', 'Reactor', { discoveryScope: { nodeIds: ['ns=1;s=Reactor'] } }))
     );
     const saved: Array<ConfigurationWorkflowCommandDTO> = [];
 
@@ -89,7 +95,7 @@ describe('WorkflowCreationService', () => {
     expect(saved).toEqual([{ ...command, id: 'temp_42' }]);
   });
 
-  test('should create a workflow discovering from an explored node, named after it', () => {
+  test('should create a workflow discovering from the nodes checked in the explore modal', () => {
     const editModal = createMock(EditWorkflowModalComponent);
     modalService.mockClosedModal(editModal, command);
     const open = vi.spyOn(modalService, 'open');
@@ -97,7 +103,7 @@ describe('WorkflowCreationService', () => {
     const workflowContext = context(false);
     const saved: Array<ConfigurationWorkflowCommandDTO> = [];
 
-    service.createFromExploredNode(workflowContext, reactor).subscribe(workflow => saved.push(workflow));
+    service.createFromExploredNodes(workflowContext, ['ns=1;s=Reactor', 'ns=1;s=Boiler']).subscribe(workflow => saved.push(workflow));
 
     expect(open).toHaveBeenCalledWith(EditWorkflowModalComponent, { size: 'xl', backdrop: 'static' });
     expect(editModal.directSave).toBe(false);
@@ -108,7 +114,7 @@ describe('WorkflowCreationService', () => {
       'southId1',
       workflowContext.southSettings,
       workflowContext.groups,
-      { name: 'Reactor-2', discoveryScope: { rootNodeId: 'ns=1;s=Reactor' } }
+      { name: '', discoveryScope: { nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] } }
     );
     expect(saved).toEqual([{ ...command, id: 'temp_42' }]);
   });
@@ -117,7 +123,7 @@ describe('WorkflowCreationService', () => {
     modalService.mockDismissedModal(createMock(EditWorkflowModalComponent));
     const saved: Array<ConfigurationWorkflowCommandDTO> = [];
 
-    service.createFromExploredNode(context(true), reactor).subscribe(workflow => saved.push(workflow));
+    service.createFromExploredNodes(context(true), ['ns=1;s=Reactor']).subscribe(workflow => saved.push(workflow));
 
     expect(configurationWorkflowService.create).not.toHaveBeenCalled();
     expect(saved).toEqual([]);

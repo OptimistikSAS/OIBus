@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { NEVER, of } from 'rxjs';
+import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -64,39 +64,34 @@ describe('SouthExploreModalComponent', () => {
     expect(southConnectorService.startExplore).toHaveBeenCalledWith('create', southConnector.settings, southConnector.type);
   });
 
-  test('should close with the node the action was run on', async () => {
+  test('should close with the checked nodes and the action run on them', async () => {
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, {
-      nodeActionKey: 'south.explore.create-workflow'
+      checkedActions: [
+        { id: 'keep-in-sync', labelKey: 'south.explore.keep-in-sync' },
+        { id: 'add-items', labelKey: 'south.explore.add-as-items' }
+      ]
     });
-
-    southConnectorService.browseExplore.mockReturnValue(NEVER);
-    await tester.root.getByRole('button', { name: /^Objects/ }).click();
-    await tester.root.getByRole('button', { name: 'Create workflow' }).click();
-
-    expect(fakeActiveModal.close).toHaveBeenCalledWith({
-      type: 'node',
-      entry: { id: 'ns=0;i=85', name: 'Objects', metadata: { type: 'Object' }, hasChildren: true }
-    });
-  });
-
-  test('should close with the checked nodes to add them as items', async () => {
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, { checkable: true });
     const addButton = tester.root.getByRole('button', { name: 'Add as items' });
+    const keepInSyncButton = tester.root.getByRole('button', { name: 'Keep in sync…' });
     await expect.element(addButton).toBeDisabled();
+    // the last action is the main one
+    await expect.element(addButton).toHaveClass('btn-primary');
+    await expect.element(keepInSyncButton).toHaveClass('btn-secondary');
     await expect.element(tester.root.getByCss('#explore-checked-count')).toHaveTextContent('0 selected');
 
     await tester.root.getByRole('checkbox', { name: 'Select Objects' }).click();
     await expect.element(tester.root.getByCss('#explore-checked-count')).toHaveTextContent('1 selected');
-    await addButton.click();
+    await keepInSyncButton.click();
 
-    expect(fakeActiveModal.close).toHaveBeenCalledWith({ type: 'items', nodeIds: ['ns=0;i=85'] });
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({ action: 'keep-in-sync', nodeIds: ['ns=0;i=85'] });
   });
 
-  test('should not offer to add items without checkable nodes', async () => {
+  test('should only browse without checked actions', async () => {
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
+    await expect.element(tester.root.getByText('Objects')).toBeInTheDocument();
     await expect.element(tester.root.getByRole('checkbox')).not.toBeInTheDocument();
-    await expect.element(tester.root.getByRole('button', { name: 'Add as items' })).not.toBeInTheDocument();
+    await expect.element(tester.root.getByCss('#explore-checked-count')).not.toBeInTheDocument();
   });
 
   test('should dismiss on cancel', async () => {

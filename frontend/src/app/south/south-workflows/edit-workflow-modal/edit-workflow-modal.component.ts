@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, signal, viewChild, WritableSignal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -16,14 +16,20 @@ import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
-import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
+import { OIBusRecord, OIBusRecordListContent } from '@oibus/shared/common/content.model';
 import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
-import { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '@oibus/shared/domain/configuration-workflow.model';
+import {
+  RECORD_FILTER_OPERATORS,
+  RecordFilterCondition,
+  RecordFilterOperator,
+  WORKFLOW_PREVIEW_ENTRY_STATUSES
+} from '@oibus/shared/domain/configuration-workflow.model';
 
+import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
@@ -37,6 +43,7 @@ import { SouthExploreModalComponent, SouthExploreResult } from '../../../shared/
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../../south-items/south-item-groups';
+import { TEMP_ID_PREFIX } from '../workflow-command';
 
 // 'group-select' is not part of the manifest's own attribute-type vocabulary - it tags the
 // historian groupId field, whose options come from this south connector's item groups rather
@@ -91,6 +98,23 @@ interface MappableField {
 
 /** Sentinel select-option value meaning "map this to a {{field}} expression instead of a fixed value". */
 const VARIABLE_SENTINEL = '__variable__';
+
+/** The steps of the workflow wizard, in order. */
+export const WORKFLOW_STEPS = ['source', 'filter', 'items', 'schedule', 'review'] as const;
+export type WorkflowStep = (typeof WORKFLOW_STEPS)[number];
+
+/** A preview run of the workflow as currently edited (see `ConfigurationWorkflowService.previewCommand`). */
+interface PreviewState {
+  readonly loading: boolean;
+  readonly error: string | null;
+  readonly result: WorkflowPreviewResultDTO | null;
+}
+
+/** How many discovered records the Filter step lists, to keep it light on large sources. */
+const PREVIEW_RECORD_LIMIT = 20;
+
+/** `{{field}}` expressions of a mapping template. */
+const TEMPLATE_PLACEHOLDER = /\{\{\s*([^}\s]+)\s*\}\}/g;
 
 // maxReadInterval/readDelay/the offsets/recoveryStrategy only apply to an item that owns its own
 // schedule/history settings - once synced with a group, those come from the group instead, so mapping
@@ -177,6 +201,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
+  private configurationWorkflowService = inject(ConfigurationWorkflowService);
   private engineService = inject(EngineService);
 
   // The inline, read-only explore tree shown alongside the SQL query editor (SQLite only, for now -
@@ -184,6 +209,40 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private readonly inlineExploreTree = viewChild(ExploreTreeComponent);
 
   readonly mode = signal<'create' | 'edit' | 'copy'>('create');
+  readonly steps = WORKFLOW_STEPS;
+  readonly step = signal<WorkflowStep>('source');
+  readonly isFirstStep = computed(() => this.step() === WORKFLOW_STEPS[0]);
+  readonly isLastStep = computed(() => this.step() === WORKFLOW_STEPS[WORKFLOW_STEPS.length - 1]);
+  /** A new workflow is saved from the Review step, an edited one from any step */
+  readonly canSave = computed(() => this.mode() === 'edit' || this.isLastStep());
+
+  /** Every record the source gives, before the eligibility filter - counted on the Source step */
+  readonly sourcePreview = signal<PreviewState | null>(null);
+  /** The records the eligibility filter keeps - listed on the Filter step, and used as examples on the Items step */
+  readonly filterPreview = signal<PreviewState | null>(null);
+  /** What a run would do (new, changed, missing... items), or push - on the Review step */
+  readonly reviewPreview = signal<PreviewState | null>(null);
+  readonly previewRecords = computed(() => (this.filterPreview()?.result?.records ?? []).slice(0, PREVIEW_RECORD_LIMIT));
+  /** The fields of the discovered records, suggested when writing a condition or an identity key */
+  readonly recordFields = computed(() => {
+    const records = this.filterPreview()?.result?.records ?? this.sourcePreview()?.result?.records ?? [];
+    return Array.from(new Set(records.slice(0, PREVIEW_RECORD_LIMIT).flatMap(record => Object.keys(record))));
+  });
+  /** The names the first matching records would give their items, from the name mapping */
+  readonly exampleItemNames = computed(() => {
+    const template = this.itemFieldMappingValues()['name'] ?? '';
+    if (!template.trim()) {
+      return [];
+    }
+    return this.previewRecords()
+      .slice(0, 3)
+      .map(record => resolveTemplate(template, record));
+  });
+  /** How many entries of the Review preview have each status, in the statuses order */
+  readonly reviewCounts = computed(() => {
+    const entries = this.reviewPreview()?.result?.entries ?? [];
+    return WORKFLOW_PREVIEW_ENTRY_STATUSES.map(status => ({ status, count: entries.filter(entry => entry.status === status).length }));
+  });
   readonly state = new ObservableState();
   /** True when opened from south-detail (the caller saves the workflow straight to the API); false when
    *  opened from edit-south (the caller keeps it in memory until the connector itself is saved) - only
@@ -204,9 +263,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private southId!: string;
   private southSettings!: SouthSettings;
 
-  /** Root node id currently picked via the explore-tree node picker (tree-based connectors only) -
-   *  null means "browse from the data source's true root". */
-  readonly discoveryRootNodeId = signal<string | null>(null);
+  /** The nodes the workflow discovers from, checked in the Explore modal (tree-based connectors only) - none
+   *  means the whole data source. A point stands for itself, any other node for everything under it. */
+  readonly discoveryNodeIds = signal<Array<string>>([]);
   /** The dedicated metadata query, as typed by the user (SQL-family connectors only). */
   readonly discoveryQuery = signal('');
 
@@ -292,8 +351,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   });
 
   /**
-   * @param prefill - starting values for a new workflow, e.g. the discovery root picked from the Explore
-   *   modal (see `WorkflowCreationService.createFromExploredNode`). The form stays pristine: nothing was typed yet.
+   * @param prefill - starting values for a new workflow, e.g. the nodes checked in the Explore modal (see
+   *   `WorkflowCreationService.createFromExploredNodes`). The form stays pristine: nothing was typed yet.
    */
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
@@ -360,7 +419,20 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.itemMappableFields.set(buildItemMappableFields(manifest));
 
     const scope: Record<string, unknown> = workflow?.discoveryScope ?? prefill?.discoveryScope ?? {};
-    this.discoveryRootNodeId.set(typeof scope['rootNodeId'] === 'string' ? scope['rootNodeId'] : null);
+    // A workflow saved before nodes could be picked one by one has a single root node
+    const scopeNodeIds = scope['nodeIds'];
+    const rootNodeId = scope['rootNodeId'];
+    this.discoveryNodeIds.set(
+      Array.isArray(scopeNodeIds)
+        ? scopeNodeIds.filter((nodeId): nodeId is string => typeof nodeId === 'string')
+        : typeof rootNodeId === 'string'
+          ? [rootNodeId]
+          : []
+    );
+    this.step.set('source');
+    this.sourcePreview.set(null);
+    this.filterPreview.set(null);
+    this.reviewPreview.set(null);
     this.discoveryQuery.set(typeof scope['query'] === 'string' ? scope['query'] : '');
     // A new workflow starts from the connector's own defaults: the records it discovers always have the same shape
     const defaults = manifest.discovery?.defaults;
@@ -651,21 +723,107 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }
   }
 
-  /** Opens the explore tree in picker mode - selecting a node sets it as the discovery root. */
+  /** Opens the Explore modal to check the nodes to discover from, the current ones already checked. */
   openNodePicker() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southId, this.southSettings, this.currentManifest()!.id, { nodeActionKey: 'south.explore.select' });
-    modalRef.result.subscribe((result: SouthExploreResult) => {
-      if (result.type === 'node') {
-        this.discoveryRootNodeId.set(result.entry.id);
-      }
+    component.prepare(this.southId, this.southSettings, this.currentManifest()!.id, {
+      checkedActions: [{ id: 'use', labelKey: 'south.workflows.wizard.use-nodes' }],
+      checkedIds: this.discoveryNodeIds()
     });
+    modalRef.result.subscribe((result: SouthExploreResult) => this.discoveryNodeIds.set(result.nodeIds));
   }
 
-  /** Resets the discovery root back to "browse from the data source's true root". */
-  clearRootNodeId() {
-    this.discoveryRootNodeId.set(null);
+  scanModeName(scanModeId: string): string {
+    return this.scanModes().find(scanMode => scanMode.id === scanModeId)?.name ?? scanModeId;
+  }
+
+  removeDiscoveryNode(nodeId: string) {
+    this.discoveryNodeIds.update(nodeIds => nodeIds.filter(candidate => candidate !== nodeId));
+  }
+
+  goToStep(step: WorkflowStep) {
+    this.step.set(step);
+    if (step === 'filter') {
+      this.previewFilter();
+    } else if (step === 'review') {
+      this.previewReview();
+    }
+  }
+
+  /** The next step - not before the Source step has what any preview needs: a name, and a query for SQL. */
+  next() {
+    if (this.step() === 'source') {
+      this.formError.set(null);
+      this.form.controls.name.markAsTouched();
+      if (this.form.controls.name.invalid) {
+        return;
+      }
+      if (this.isSqlFamily() && !this.discoveryQuery().trim()) {
+        this.formError.set('south.workflows.discovery-scope-query-required');
+        return;
+      }
+    }
+    this.goToStep(WORKFLOW_STEPS[WORKFLOW_STEPS.indexOf(this.step()) + 1]);
+  }
+
+  back() {
+    this.goToStep(WORKFLOW_STEPS[WORKFLOW_STEPS.indexOf(this.step()) - 1]);
+  }
+
+  /** How many records the source gives, regardless of the eligibility filter. */
+  previewSource() {
+    this.runPreview(this.sourcePreview, { ...this.recordsPreviewCommand(), eligibilityFilter: [] }, null);
+  }
+
+  /** The records the eligibility filter keeps, as currently edited. */
+  previewFilter() {
+    this.runPreview(this.filterPreview, this.recordsPreviewCommand(), null);
+  }
+
+  /** What a run of the workflow as currently edited would do - classified against its previous run once saved. */
+  previewReview() {
+    const built = this.buildCommand();
+    if ('error' in built) {
+      this.reviewPreview.set({ loading: false, error: null, result: null });
+      return;
+    }
+    const workflowId =
+      this.mode() === 'edit' && this.workflow?.id && !this.workflow.id.startsWith(TEMP_ID_PREFIX) ? this.workflow.id : null;
+    this.runPreview(this.reviewPreview, built.command, workflowId);
+  }
+
+  /** A remote preview of the workflow source and filter: it returns the matching records themselves, whatever the mode. */
+  private recordsPreviewCommand(): ConfigurationWorkflowCommandDTO {
+    return {
+      id: null,
+      name: this.form.controls.name.value,
+      discoveryScope: this.currentDiscoveryScope(),
+      identityKeyFields: [],
+      eligibilityFilter: this.eligibilityFilter(),
+      itemFieldMapping: null,
+      pushToOIAnalytics: true,
+      scanModeId: null,
+      enabled: true
+    };
+  }
+
+  private runPreview(target: WritableSignal<PreviewState | null>, command: ConfigurationWorkflowCommandDTO, workflowId: string | null) {
+    target.set({ loading: true, error: null, result: null });
+    this.configurationWorkflowService
+      .previewCommand(this.southId, this.currentManifest()!.id, this.southSettings, workflowId, command)
+      .subscribe({
+        next: result => target.set({ loading: false, error: null, result }),
+        error: error => target.set({ loading: false, error: extractErrorMessage(error), result: null })
+      });
+  }
+
+  private currentDiscoveryScope(): Record<string, unknown> {
+    if (this.isSqlFamily()) {
+      return { query: this.discoveryQuery().trim() };
+    }
+    // No node at all means the whole data source - a deliberate, valid choice.
+    return this.isTreeBased() && this.discoveryNodeIds().length > 0 ? { nodeIds: this.discoveryNodeIds() } : {};
   }
 
   /**
@@ -705,28 +863,36 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   save() {
     this.formError.set(null);
-    if (!this.form.valid) {
+    const built = this.buildCommand();
+    if ('error' in built) {
+      this.formError.set(built.error);
+      this.step.set(built.step);
       return;
+    }
+    this.modal.close(built.command);
+  }
+
+  /**
+   * The workflow as currently edited, or why it can't be saved yet and the step to fix it in. Opens the Advanced
+   * section when what is wrong is in it.
+   */
+  private buildCommand(): { command: ConfigurationWorkflowCommandDTO } | { error: string | null; step: WorkflowStep } {
+    if (!this.form.valid) {
+      this.form.markAllAsTouched();
+      return { error: null, step: 'source' };
     }
     const formValue = this.form.getRawValue();
     // SQL-family connectors can never create/update items (see initForm()'s own comment) - re-clamped
     // here too, defensively, not just via the mode choice being hidden from the template.
     const pushToOIAnalytics = this.isSqlFamily() ? true : formValue.pushToOIAnalytics;
 
-    let discoveryScope: Record<string, unknown>;
+    let discoveryScope: Record<string, unknown> = {};
     if (this.isSqlFamily()) {
       if (!this.discoveryQuery().trim()) {
-        this.formError.set('south.workflows.discovery-scope-query-required');
-        return;
+        return { error: 'south.workflows.discovery-scope-query-required', step: 'source' };
       }
-      discoveryScope = { query: this.discoveryQuery().trim() };
-    } else if (this.isTreeBased()) {
-      // No rootNodeId at all means "browse from the data source's true root" - a deliberate, valid choice.
-      const rootNodeId = this.discoveryRootNodeId();
-      discoveryScope = rootNodeId ? { rootNodeId } : {};
-    } else {
-      discoveryScope = {};
     }
+    discoveryScope = this.currentDiscoveryScope();
 
     // Deliberately not blocked here when pushToOIAnalytics is picked while OIBus isn't registered -
     // mirrors ConfigurationWorkflowService's own server-side behavior, which likewise now only warns
@@ -737,9 +903,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     if (!pushToOIAnalytics) {
       // Identity keys only drive the local diff against the previous run - a remote workflow has none.
       if (this.identityKeyFields().length === 0) {
-        this.formError.set('south.workflows.identity-key-fields-none');
         this.showAdvancedMapping.set(true);
-        return;
+        return { error: 'south.workflows.identity-key-fields-none', step: 'items' };
       }
 
       const mappingValues = this.itemFieldMappingValues();
@@ -751,9 +916,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
         field => !this.allowsVariable(field) && (mappingValues[field.path] ?? '').includes('{{')
       );
       if (hasConstantOnlyViolation) {
-        this.formError.set('south.workflows.mapping-constant-only');
         this.showAdvancedMapping.set(true);
-        return;
+        return { error: 'south.workflows.mapping-constant-only', step: 'items' };
       }
 
       // Every visible, manifest-REQUIRED field must be mapped to something - otherwise a workflow can be
@@ -762,11 +926,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
         field => this.isItemFieldVisible(field) && this.isMandatoryFieldMissing(field)
       );
       if (missingMandatoryFields.length > 0) {
-        this.formError.set('south.workflows.mapping-mandatory-missing');
         if (missingMandatoryFields.some(field => !BASIC_ITEM_PATHS.has(field.path))) {
           this.showAdvancedMapping.set(true);
         }
-        return;
+        return { error: 'south.workflows.mapping-mandatory-missing', step: 'items' };
       }
 
       // A field hidden by an unmet enabling condition keeps whatever value it had while editing (so
@@ -799,7 +962,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       scanModeId: formValue.scanModeId || null,
       enabled: formValue.enabled
     };
-    this.modal.close(command);
+    return { command };
   }
 }
 
@@ -913,6 +1076,14 @@ function buildItemMappableFields(manifest: SouthConnectorManifest): Array<Mappab
     field.isEnablingReferral = referralPaths.has(field.path);
   }
   return fields;
+}
+
+/** A mapping template with its `{{field}}` expressions replaced by the record values - an example item name. */
+function resolveTemplate(template: string, record: OIBusRecord): string {
+  return template.replace(TEMPLATE_PLACEHOLDER, (_match, field: string) => {
+    const value = record[field];
+    return value === null || value === undefined ? '' : String(value);
+  });
 }
 
 /** Trims every value, keeping only non-empty entries - a blank expression means "not mapped". */

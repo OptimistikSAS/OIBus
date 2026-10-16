@@ -2,35 +2,32 @@ import { inject, Service } from '@angular/core';
 
 import { map, Observable, of, switchMap } from 'rxjs';
 
-import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
-import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
+import { ExploreCheckedAction } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { SouthItemGroups } from '../south-items/south-item-groups';
 import EditWorkflowModalComponent from './edit-workflow-modal/edit-workflow-modal.component';
+import { TEMP_ID_PREFIX, toConfigurationWorkflowCommand } from './workflow-command';
 
-/** Prefix of the client-side id given to a workflow created in memory (not persisted yet) - the backend
- *  treats such an id as "create" when the south connector is saved, same convention as in-memory groups. */
-export const TEMP_ID_PREFIX = 'temp_';
-
-/** A persisted workflow as the command the edit modal works on (and edit-south keeps in memory). */
-export function toConfigurationWorkflowCommand(workflow: ConfigurationWorkflowDTO): ConfigurationWorkflowCommandDTO {
-  return {
-    id: workflow.id,
-    name: workflow.name,
-    discoveryScope: workflow.discoveryScope,
-    identityKeyFields: workflow.identityKeyFields,
-    eligibilityFilter: workflow.eligibilityFilter,
-    itemFieldMapping: workflow.itemFieldMapping,
-    pushToOIAnalytics: workflow.pushToOIAnalytics,
-    scanModeId: workflow.scanMode?.id ?? null,
-    enabled: workflow.enabled
-  };
+/**
+ * What the Explore modal of a south connector offers on the checked nodes: keeping items in sync with them through a
+ * workflow (tree-based discovery), and adding them as items once (with discovery defaults, which map them to items).
+ */
+export function exploreCheckedActions(manifest: SouthConnectorManifest): Array<ExploreCheckedAction> {
+  const actions: Array<ExploreCheckedAction> = [];
+  if (manifest.discovery?.kind === 'tree') {
+    actions.push({ id: 'keep-in-sync', labelKey: 'south.explore.keep-in-sync' });
+  }
+  if (manifest.discovery?.defaults) {
+    actions.push({ id: 'add-items', labelKey: 'south.explore.add-as-items' });
+  }
+  return actions;
 }
 
 /** Everything the workflow edit modal needs to create a workflow on a south connector. */
@@ -47,19 +44,9 @@ export interface WorkflowCreationContext {
   existingWorkflows: Array<{ id: string | null; name: string }>;
 }
 
-/** `name`, or `name-2`, `name-3`, ... - the first one no existing workflow uses (case-insensitive, like the edit modal's check). */
-export function uniqueWorkflowName(name: string, existingWorkflows: Array<{ name: string }>): string {
-  const taken = new Set(existingWorkflows.map(workflow => workflow.name.toLowerCase()));
-  let candidate = name;
-  for (let suffix = 2; taken.has(candidate.toLowerCase()); suffix++) {
-    candidate = `${name}-${suffix}`;
-  }
-  return candidate;
-}
-
 /**
- * Creates Configuration Workflows the same way wherever they come from - the Manage workflows modal, or a
- * node picked in the Explore modal - in either of the two modes of the page (see {@link WorkflowCreationContext}).
+ * Creates Configuration Workflows the same way wherever they come from - the Manage workflows modal, or the
+ * nodes checked in the Explore modal - in either of the two modes of the page (see {@link WorkflowCreationContext}).
  */
 @Service()
 export class WorkflowCreationService {
@@ -84,11 +71,11 @@ export class WorkflowCreationService {
   }
 
   /**
-   * Opens the workflow edit modal to create a workflow that discovers the data source from `entry` (a node
-   * picked in the Explore modal, tree-based discovery only), named after it, then saves it. Emits the saved
-   * workflow; completes without emitting if the modal is dismissed.
+   * Opens the workflow wizard to create a workflow that keeps items in sync with the nodes checked in the Explore
+   * modal (tree-based discovery only), then saves it. Emits the saved workflow; completes without emitting if the
+   * wizard is dismissed.
    */
-  createFromExploredNode(context: WorkflowCreationContext, entry: SouthConnectorExploreEntry): Observable<ConfigurationWorkflowCommandDTO> {
+  createFromExploredNodes(context: WorkflowCreationContext, nodeIds: Array<string>): Observable<ConfigurationWorkflowCommandDTO> {
     const modalRef = this.modalService.open(EditWorkflowModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditWorkflowModalComponent = modalRef.componentInstance;
     component.directSave = context.directSave;
@@ -99,7 +86,7 @@ export class WorkflowCreationService {
       context.southId,
       context.southSettings,
       context.groups,
-      { name: uniqueWorkflowName(entry.name, context.existingWorkflows), discoveryScope: { rootNodeId: entry.id } }
+      { name: '', discoveryScope: { nodeIds } }
     );
     return modalRef.result.pipe(
       switchMap((command: ConfigurationWorkflowCommandDTO) => this.save(context.southId, command, context.directSave))

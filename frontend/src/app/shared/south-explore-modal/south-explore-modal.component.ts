@@ -1,18 +1,32 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
-import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { ExploreOptions, ExploreTreeComponent } from '../explore-tree/explore-tree.component';
 
-export type { ExploreOptions, SouthExploreApi } from '../explore-tree/explore-tree.component';
+export type { SouthExploreApi } from '../explore-tree/explore-tree.component';
 
-/** What the explore modal closes with: the node its node action ran on, or the nodes checked to add as items. */
-export type SouthExploreResult = { type: 'node'; entry: SouthConnectorExploreEntry } | { type: 'items'; nodeIds: Array<string> };
+/** An action offered on the checked nodes, in the modal footer. */
+export interface ExploreCheckedAction {
+  /** What the modal closes with, to tell the actions apart */
+  id: string;
+  labelKey: string;
+}
+
+export interface ExploreModalOptions extends Omit<ExploreOptions, 'checkable'> {
+  /** The actions offered on the checked nodes - the nodes get a checkbox when there are some. The last one is the main one. */
+  checkedActions?: Array<ExploreCheckedAction>;
+}
+
+/** What the explore modal closes with: the action run on the checked nodes, and their ids. */
+export interface SouthExploreResult {
+  action: string;
+  nodeIds: Array<string>;
+}
 
 /**
  * "Explore/discovery" modal: interactively browse a data source (OPC-UA nodes, folder tree, SQLite
@@ -20,10 +34,9 @@ export type SouthExploreResult = { type: 'node'; entry: SouthConnectorExploreEnt
  * `ExploreTreeComponent`, which owns the session itself and is released automatically when this modal
  * (and so the child) is torn down.
  *
- * With a node action (see `prepare()`), running it on a node closes this modal with that node
- * (`NgbActiveModal.close`) instead of just letting the user browse read-only - used to pick a
- * Configuration Workflow's discovery root, or to create a workflow from the explored node. With
- * checkable nodes, "Add as items" closes it with the checked ones (see {@link SouthExploreResult}).
+ * With checked actions (see `prepare()`), every node gets a checkbox, and running an action closes this modal
+ * with the checked nodes (see {@link SouthExploreResult}) - e.g. to add them as items, to keep items in sync
+ * with them through a Configuration Workflow, or to pick the nodes a workflow discovers from.
  */
 @Component({
   selector: 'oib-south-explore-modal',
@@ -40,7 +53,7 @@ export class SouthExploreModalComponent implements AfterViewInit {
   // possibly before the view child is resolved. Buffered here and flushed in ngAfterViewInit so prepare()
   // works regardless of that timing, rather than requiring every caller to know or care about it.
   private pendingPrepare: (() => void) | null = null;
-  readonly checkable = computed(() => this.tree()?.checkable() ?? false);
+  readonly checkedActions = signal<Array<ExploreCheckedAction>>([]);
   readonly checkedCount = computed(() => this.tree()?.checkedIds().size ?? 0);
 
   /**
@@ -50,10 +63,13 @@ export class SouthExploreModalComponent implements AfterViewInit {
    *   own settings; pass `null` for unsaved settings (create/edit forms)
    * @param settingsToExplore - the south settings to explore
    * @param southType - the south connector type
-   * @param options - see {@link ExploreOptions}; pure read-only browsing of a south connector by default
+   * @param options - see {@link ExploreModalOptions}; pure read-only browsing of a south connector by default
    */
-  prepare(connectorId: string | null, settingsToExplore: SouthSettings, southType: OIBusSouthType, options: ExploreOptions = {}) {
-    const apply = () => this.tree()!.prepare(connectorId, settingsToExplore, southType, options);
+  prepare(connectorId: string | null, settingsToExplore: SouthSettings, southType: OIBusSouthType, options: ExploreModalOptions = {}) {
+    const { checkedActions = [], ...treeOptions } = options;
+    this.checkedActions.set(checkedActions);
+    const apply = () =>
+      this.tree()!.prepare(connectorId, settingsToExplore, southType, { ...treeOptions, checkable: checkedActions.length > 0 });
     if (this.tree()) {
       apply();
     } else {
@@ -68,13 +84,8 @@ export class SouthExploreModalComponent implements AfterViewInit {
     }
   }
 
-  onNodeSelected(entry: SouthConnectorExploreEntry) {
-    const result: SouthExploreResult = { type: 'node', entry };
-    this.modal.close(result);
-  }
-
-  addCheckedAsItems() {
-    const result: SouthExploreResult = { type: 'items', nodeIds: Array.from(this.tree()!.checkedIds()) };
+  runCheckedAction(action: ExploreCheckedAction) {
+    const result: SouthExploreResult = { action: action.id, nodeIds: Array.from(this.tree()!.checkedIds()) };
     this.modal.close(result);
   }
 

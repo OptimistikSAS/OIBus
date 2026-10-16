@@ -21,7 +21,7 @@ import { NotificationService } from '../../../shared/notification.service';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
 import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
-import { toConfigurationWorkflowCommand } from '../workflow-creation.service';
+import { toConfigurationWorkflowCommand } from '../workflow-command';
 import ManageWorkflowsModalComponent from './manage-workflows-modal.component';
 
 const scanModes = testData.scanMode.list;

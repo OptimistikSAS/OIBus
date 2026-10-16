@@ -50,7 +50,7 @@ import { SelectGroupModalComponent } from '../south-items/select-group-modal/sel
 import { SaveGroupCommand, SouthItemGroup, SouthItemGroups } from '../south-items/south-item-groups';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
-import { WorkflowCreationService } from '../south-workflows/workflow-creation.service';
+import { exploreCheckedActions, WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
 
 /** The group column is added by the page: the other columns are sorted by the item table. */
@@ -697,28 +697,25 @@ export class SouthDetailComponent {
   }
 
   /**
-   * Browses the data source - and, when the connector has tree-based discovery, offers to create a
-   * Configuration Workflow from an explored node (saved through the API, like the Manage workflows modal), and
-   * with discovery defaults, to add the checked nodes as items.
+   * Browses the data source - and, with tree-based discovery, offers to keep items in sync with the checked nodes
+   * through a Configuration Workflow (saved through the API, like the Manage workflows modal), and with discovery
+   * defaults, to add them as items once.
    */
   explore() {
     const southConnector = this.southConnector()!;
     const manifest = this.manifest()!;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(southConnector.id, southConnector.settings, southConnector.type, {
-      nodeActionKey: manifest.discovery?.kind === 'tree' ? 'south.explore.create-workflow' : null,
-      checkable: !!manifest.discovery?.defaults
-    });
+    component.prepare(southConnector.id, southConnector.settings, southConnector.type, { checkedActions: exploreCheckedActions(manifest) });
     modalRef.result
       .pipe(
         switchMap((result: SouthExploreResult) =>
-          result.type === 'items'
+          result.action === 'add-items'
             ? this.addDiscoveredItems(result.nodeIds)
             : // The other workflows of the connector are only needed for the name uniqueness check
               this.configurationWorkflowService.list(southConnector.id).pipe(
                 switchMap(workflows =>
-                  this.workflowCreationService.createFromExploredNode(
+                  this.workflowCreationService.createFromExploredNodes(
                     {
                       directSave: true,
                       southId: southConnector.id,
@@ -728,7 +725,7 @@ export class SouthDetailComponent {
                       groups: this.itemGroups,
                       existingWorkflows: workflows
                     },
-                    result.entry
+                    result.nodeIds
                   )
                 )
               )
