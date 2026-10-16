@@ -310,7 +310,7 @@ describe('EditWorkflowModalComponent', () => {
     test('should populate the form and dynamic lists in edit mode', async () => {
       const tester = create({ mode: 'edit' });
 
-      await expect.element(tester.title).toHaveTextContent('Edit configuration workflow');
+      await expect.element(tester.title).toHaveTextContent('Edit items synchronisation');
       await expect.element(tester.name).toHaveValue('Reactor discovery');
       await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[0].name);
       await expect.element(tester.localMode).toBeChecked();
@@ -324,7 +324,7 @@ describe('EditWorkflowModalComponent', () => {
     test('should render an empty form in create mode, defaulting to local (item-creating) mode', async () => {
       const tester = create();
 
-      await expect.element(tester.title).toHaveTextContent('Create a new configuration workflow');
+      await expect.element(tester.title).toHaveTextContent('Create a new items synchronisation');
       await expect.element(tester.name).toHaveValue('');
       await expect.element(tester.localMode).toBeChecked();
       await expect.element(tester.identityKeyFields).toHaveTextContent('');
@@ -336,7 +336,7 @@ describe('EditWorkflowModalComponent', () => {
     test('should prefill a duplicate with the source workflow settings, a "-copy" name, and create-mode uniqueness', async () => {
       const tester = create({ mode: 'copy' });
 
-      await expect.element(tester.title).toHaveTextContent('Duplicate configuration workflow');
+      await expect.element(tester.title).toHaveTextContent('Duplicate items synchronisation');
       await expect.element(tester.name).toHaveValue('Reactor discovery-copy');
       await expect.element(tester.identityKeyFields).toHaveTextContent('nodeId');
       await expect.element(tester.mappingField('name')).toHaveValue('{{name}}');
@@ -1000,10 +1000,17 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.stepButton('source')).toHaveAttribute('aria-current', 'step');
     });
 
-    test('should save an edited workflow from any step', async () => {
+    test('should save an edited workflow from any step, Save being then the main action rather than Next', async () => {
       const tester = create({ mode: 'edit' });
 
       await expect.element(tester.saveButton).toBeInTheDocument();
+      await expect.element(tester.nextButton).toHaveClass('btn-secondary');
+    });
+
+    test('should make Next the main action until Save shows', async () => {
+      const tester = create();
+
+      await expect.element(tester.nextButton).toHaveClass('btn-primary');
     });
 
     test('should go back to the step to fix when saving fails', async () => {
