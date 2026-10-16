@@ -2797,6 +2797,8 @@
         "objectInstance": "Object instance"
       },
       "check": "Select {{name}}",
+      "check-children": "Select all the sub-nodes of {{name}}",
+      "uncheck-children": "Unselect all the sub-nodes of {{name}}",
       "checked-count": "{{count}} selected",
       "keep-in-sync": "Keep in sync…",
       "add-as-items": "Add as items"

@@ -236,6 +236,11 @@ export class ExploreTreeComponent implements OnDestroy {
       this.updateNode(node.path, current => ({ ...current, expanded: true }));
       return;
     }
+    this.loadChildren(node);
+  }
+
+  /** Browses the children of the node and expands it, then hands them to `onLoaded`. */
+  private loadChildren(node: ExploreTreeNode, onLoaded: (children: ReadonlyArray<ExploreTreeNode>) => void = () => undefined) {
     if (!this.sessionId) {
       return;
     }
@@ -245,15 +250,17 @@ export class ExploreTreeComponent implements OnDestroy {
         this.updateNode(node.path, current => ({ ...current, error: errorMessage(httpError), loading: false }));
       },
       next: result => {
+        const children = result.entries.map(entry => this.createNode(entry, node.path));
         this.updateNode(node.path, current => ({
           ...current,
-          children: result.entries.map(entry => this.createNode(entry, current.path)),
+          children,
           loaded: true,
           expanded: true,
           loading: false,
           // The entry was optimistically marked expandable; if it has no children, drop the caret.
           entry: result.entries.length === 0 ? { ...current.entry, hasChildren: false } : current.entry
         }));
+        onLoaded(children);
       }
     });
   }
@@ -289,6 +296,41 @@ export class ExploreTreeComponent implements OnDestroy {
       const updated = new Set(checkedIds);
       if (!updated.delete(node.entry.id)) {
         updated.add(node.entry.id);
+      }
+      return updated;
+    });
+  }
+
+  /** Whether every sub-node of the node is checked - none can be before they are loaded. */
+  allChildrenChecked(node: ExploreTreeNode): boolean {
+    const checkedIds = this.checkedIds();
+    return node.loaded && node.children.length > 0 && node.children.every(child => checkedIds.has(child.entry.id));
+  }
+
+  /**
+   * Checks every sub-node of the node, or unchecks them when they all are - its direct children, loaded first if
+   * needed. The node is expanded to show them.
+   */
+  toggleChildrenChecked(node: ExploreTreeNode) {
+    if (!node.loaded) {
+      this.loadChildren(node, children => this.setChecked(children, true));
+      return;
+    }
+    this.setChecked(node.children, !this.allChildrenChecked(node));
+    if (!node.expanded) {
+      this.updateNode(node.path, current => ({ ...current, expanded: true }));
+    }
+  }
+
+  private setChecked(nodes: ReadonlyArray<ExploreTreeNode>, checked: boolean) {
+    this.checkedIds.update(checkedIds => {
+      const updated = new Set(checkedIds);
+      for (const node of nodes) {
+        if (checked) {
+          updated.add(node.entry.id);
+        } else {
+          updated.delete(node.entry.id);
+        }
       }
       return updated;
     });

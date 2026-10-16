@@ -102,6 +102,23 @@
         <span class="explore-type text-truncate">{{ type }}</span>
       }
     </button>
+    @if (checkable() && node.entry.hasChildren) {
+      @let childrenChecked = allChildrenChecked(node);
+      <button
+        type="button"
+        class="btn btn-link p-0 explore-check-children"
+        [disabled]="node.loading"
+        (click)="toggleChildrenChecked(node)"
+        [attr.title]="
+          (childrenChecked ? 'south.explore.uncheck-children' : 'south.explore.check-children') | translate: { name: node.entry.name }
+        "
+        [attr.aria-label]="
+          (childrenChecked ? 'south.explore.uncheck-children' : 'south.explore.check-children') | translate: { name: node.entry.name }
+        "
+      >
+        <i class="fa-solid {{ childrenChecked ? 'fa-square-minus' : 'fa-list-check' }}" aria-hidden="true"></i>
+      </button>
+    }
   </div>
   @if (node.error) {
     <div class="d-flex text-danger small explore-node-error">
