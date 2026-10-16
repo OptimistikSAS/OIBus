@@ -705,7 +705,7 @@ export class SouthDetailComponent {
     const manifest = this.manifest()!;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    const nodeActionKey = manifest.discovery === 'tree' ? 'south.explore.create-workflow' : null;
+    const nodeActionKey = manifest.discovery?.kind === 'tree' ? 'south.explore.create-workflow' : null;
     component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, nodeActionKey);
     modalRef.result
       .pipe(

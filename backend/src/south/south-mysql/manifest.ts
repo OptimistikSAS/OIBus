@@ -9,7 +9,7 @@ const manifest: SouthConnectorManifest = {
     lastFile: false,
     history: true
   },
-  discovery: 'query',
+  discovery: { kind: 'query' },
   settings: {
     type: 'object',
     key: 'settings',

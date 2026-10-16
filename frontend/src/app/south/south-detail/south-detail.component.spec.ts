@@ -306,7 +306,7 @@ describe('SouthDetailComponent', () => {
     });
 
     test('should create a workflow from a node picked in the explore modal when the connector has tree-based discovery', async () => {
-      southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: 'tree' }));
+      southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: { kind: 'tree' } }));
       const tester = await createTester();
       const node = { id: 'folder/sub', name: 'sub', metadata: {}, hasChildren: true };
       const exploreModal = mockModal(createMock(SouthExploreModalComponent), node);
@@ -330,7 +330,7 @@ describe('SouthDetailComponent', () => {
           southId: 'southId1',
           southSettings: southConnector.settings,
           scanModes,
-          manifest: { ...manifest, discovery: 'tree' },
+          manifest: { ...manifest, discovery: { kind: 'tree' } },
           groups: expect.anything(),
           existingWorkflows: workflows
         },

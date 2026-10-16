@@ -1908,6 +1908,62 @@
 				],
 				"description": "Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:\n- `tree`: a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA\n- `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors"
 			},
+			"Record_string.string_": {
+				"properties": {},
+				"additionalProperties": {
+					"type": "string"
+				},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"SouthDiscoveryDefaults": {
+				"description": "Starting values of a new Configuration Workflow, for a connector whose discovered records always have\nthe same shape: how a record identifies itself across runs, and how it becomes an item.",
+				"properties": {
+					"identityKeyFields": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "Discovered-record field(s) identifying a record across runs.",
+						"example": [
+							"id"
+						]
+					},
+					"itemFieldMapping": {
+						"$ref": "#/components/schemas/Record_string.string_",
+						"description": "Item field path to a constant or a {{field}} expression of the discovered record, as a workflow's own\n`itemFieldMapping`. Every required item setting that applies must be mapped: an item created by a\nworkflow does not get the manifest default values.",
+						"example": {
+							"name": "{{path}}",
+							"settings.nodeId": "{{nodeId}}",
+							"settings.mode": "da"
+						}
+					}
+				},
+				"required": [
+					"identityKeyFields",
+					"itemFieldMapping"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorDiscovery": {
+				"description": "How a connector type feeds Configuration Workflows.",
+				"properties": {
+					"kind": {
+						"$ref": "#/components/schemas/SouthDiscoveryKind",
+						"description": "The shape of a workflow's discovery scope"
+					},
+					"defaults": {
+						"$ref": "#/components/schemas/SouthDiscoveryDefaults",
+						"description": "Starting values of a new workflow; absent when the records depend on the scope (e.g. a SQL query)"
+					}
+				},
+				"required": [
+					"kind"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorManifest": {
 				"description": "Manifest for a South connector type.\nDescribes the configuration schema, capabilities, and structure of a South connector type.",
 				"properties": {
@@ -1964,9 +2020,8 @@
 						"example": true
 					},
 					"discovery": {
-						"$ref": "#/components/schemas/SouthDiscoveryKind",
-						"description": "Whether this connector type can feed Configuration Workflows, and the shape of their discovery scope\n(see {@link SouthDiscoveryKind}). Absent when the connector has no discovery.\nUI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB\nare SQL-family too but route through a separate agent process, so they don't have discovery yet.",
-						"example": "tree"
+						"$ref": "#/components/schemas/SouthConnectorDiscovery",
+						"description": "Whether this connector type can feed Configuration Workflows, the shape of their discovery scope and the\nstarting values of a new one. Absent when the connector has no discovery.\nUI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB\nare SQL-family too but route through a separate agent process, so they don't have discovery yet."
 					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
@@ -15498,14 +15553,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"Record_string.string_": {
-				"properties": {},
-				"additionalProperties": {
-					"type": "string"
-				},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
 			},
 			"ConfigurationWorkflowCommandDTO": {
 				"properties": {

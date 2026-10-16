@@ -402,7 +402,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should add a workflow created from an explored node to the in-memory workflows', async () => {
-      southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: 'tree' }));
+      southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: { kind: 'tree' } }));
       const tester = await createTester('edit');
       const node = { id: 'folder/sub', name: 'sub', metadata: {}, hasChildren: true };
       const exploreModal = mockModal(createMock(SouthExploreModalComponent), node);
@@ -425,7 +425,7 @@ describe('EditSouthComponent', () => {
           southId: 'southId1',
           southSettings: undefined,
           scanModes,
-          manifest: { ...manifest, discovery: 'tree' },
+          manifest: { ...manifest, discovery: { kind: 'tree' } },
           groups: expect.anything(),
           existingWorkflows: []
         },

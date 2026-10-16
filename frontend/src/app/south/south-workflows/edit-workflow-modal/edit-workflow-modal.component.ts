@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import {
   AbstractControl,
@@ -101,6 +102,9 @@ const HIDDEN_WHILE_SYNCED_WITH_GROUP: FieldEnablingRule = { referralPath: 'syncW
 
 // None of these vary meaningfully per discovered record - each is a fixed setting of the item's own
 // schedule, or a plain on/off toggle - so, like the schedule/group fields, they're constant-only.
+/** The item fields shown first; the others, and the identity key fields, are in the Advanced section. */
+const BASIC_ITEM_PATHS = new Set(['name', 'groupId', 'scanModeId']);
+
 const CONSTANT_ONLY_ITEM_PATHS = new Set([
   'maxReadInterval',
   'readDelay',
@@ -155,6 +159,7 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
   styleUrl: './edit-workflow-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     FormsModule,
     TranslateDirective,
@@ -224,6 +229,19 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly itemFieldMappingValues = signal<Record<string, string>>({});
 
   readonly identityKeyFields = signal<Array<string>>([]);
+  /**
+   * Whether the Advanced section (identity key fields and the item fields other than name, group and schedule)
+   * is expanded - collapsed when the connector's discovery defaults fill it, so that only what has to be picked
+   * shows; expanded when there are none, since everything has to be mapped by hand then.
+   */
+  readonly showAdvancedMapping = signal(false);
+  readonly basicMappableFields = computed(() => this.itemMappableFields().filter(field => BASIC_ITEM_PATHS.has(field.path)));
+  readonly advancedMappableFields = computed(() => this.itemMappableFields().filter(field => !BASIC_ITEM_PATHS.has(field.path)));
+  /** How many fields of the Advanced section are mapped, shown on its toggle while collapsed. */
+  readonly advancedMappedCount = computed(() => {
+    const values = this.itemFieldMappingValues();
+    return this.advancedMappableFields().filter(field => this.isItemFieldVisible(field) && !!values[field.path]?.trim()).length;
+  });
   readonly eligibilityFilter = signal<Array<RecordFilterCondition>>([]);
 
   readonly formError = signal<string | null>(null);
@@ -254,11 +272,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly pushToOIAnalytics = computed(() => this.pushToOIAnalyticsControl()?.value ?? false);
 
   /** Tree-shaped discovery scope (a root node to browse) - see the manifest's `discovery` flag. */
-  readonly isTreeBased = computed(() => this.currentManifest()?.discovery === 'tree');
+  readonly isTreeBased = computed(() => this.currentManifest()?.discovery?.kind === 'tree');
 
   /** Query-shaped discovery scope (a dedicated metadata query) - the SQL-family connectors, see the
    *  manifest's `discovery` flag. */
-  readonly isSqlFamily = computed(() => this.currentManifest()?.discovery === 'query');
+  readonly isSqlFamily = computed(() => this.currentManifest()?.discovery?.kind === 'query');
 
   /** Whether to show the read-only explore tree above the SQL query editor, for reference while
    *  writing the query - only for the SQL-family connectors that also have an `explore()`
@@ -345,8 +363,13 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     const scope: Record<string, unknown> = workflow?.discoveryScope ?? prefill?.discoveryScope ?? {};
     this.discoveryRootNodeId.set(typeof scope['rootNodeId'] === 'string' ? scope['rootNodeId'] : null);
     this.discoveryQuery.set(typeof scope['query'] === 'string' ? scope['query'] : '');
-    this.itemFieldMappingValues.set({ ...(workflow?.itemFieldMapping ?? {}) });
-    this.identityKeyFields.set(workflow ? [...workflow.identityKeyFields] : []);
+    // A new workflow starts from the connector's own defaults: the records it discovers always have the same shape
+    const defaults = manifest.discovery?.defaults;
+    const startingValues =
+      workflow ?? (defaults ? { itemFieldMapping: defaults.itemFieldMapping, identityKeyFields: defaults.identityKeyFields } : null);
+    this.itemFieldMappingValues.set({ ...(startingValues?.itemFieldMapping ?? {}) });
+    this.identityKeyFields.set([...(startingValues?.identityKeyFields ?? [])]);
+    this.showAdvancedMapping.set(!defaults);
     this.eligibilityFilter.set(workflow ? workflow.eligibilityFilter.map(condition => ({ ...condition })) : []);
     this.refreshRegistrationStatus();
     this.initForm(prefill?.name ?? '');
@@ -544,13 +567,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    *  per-record expression - and the historian fields, which are either a fixed setting of the item's own
    *  schedule (max read interval, read delay, the offsets, recovery strategy) or a plain toggle
    *  (syncWithGroup), neither ever meaningfully varying per discovered record. */
+  /** A field controlling other fields' visibility can vary per record too (e.g. a BACnet object type): the fields
+   *  it controls are then shown (see evaluatesTrue), since they may apply to some of the records. */
   allowsVariable(field: MappableField): boolean {
-    return (
-      !field.isEnablingReferral &&
-      field.attributeType !== 'scan-mode' &&
-      field.attributeType !== 'group-select' &&
-      !CONSTANT_ONLY_ITEM_PATHS.has(field.path)
-    );
+    return field.attributeType !== 'scan-mode' && field.attributeType !== 'group-select' && !CONSTANT_ONLY_ITEM_PATHS.has(field.path);
   }
 
   /** Placeholder for a plain-text item field's input - a constant-only field (e.g. maxReadInterval) gets
@@ -717,6 +737,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       // Identity keys only drive the local diff against the previous run - a remote workflow has none.
       if (this.identityKeyFields().length === 0) {
         this.formError.set('south.workflows.identity-key-fields-none');
+        this.showAdvancedMapping.set(true);
         return;
       }
 
@@ -730,16 +751,20 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       );
       if (hasConstantOnlyViolation) {
         this.formError.set('south.workflows.mapping-constant-only');
+        this.showAdvancedMapping.set(true);
         return;
       }
 
       // Every visible, manifest-REQUIRED field must be mapped to something - otherwise a workflow can be
       // saved in a state item creation would only reject later, at run time (see isMandatoryFieldMissing).
-      const hasMissingMandatoryField = this.itemMappableFields().some(
+      const missingMandatoryFields = this.itemMappableFields().filter(
         field => this.isItemFieldVisible(field) && this.isMandatoryFieldMissing(field)
       );
-      if (hasMissingMandatoryField) {
+      if (missingMandatoryFields.length > 0) {
         this.formError.set('south.workflows.mapping-mandatory-missing');
+        if (missingMandatoryFields.some(field => !BASIC_ITEM_PATHS.has(field.path))) {
+          this.showAdvancedMapping.set(true);
+        }
         return;
       }
 
@@ -780,6 +805,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 /** Whether one enabling rule passes against the referral field's current mapped value. */
 function evaluatesTrue(rule: FieldEnablingRule, values: Record<string, string>): boolean {
   const referralValue = values[rule.referralPath] ?? '';
+  // Resolved per record at run time: the rule may pass for some of them
+  if (referralValue.includes('{{')) {
+    return true;
+  }
   const matchesAnyValue = rule.values.some(value => String(value) === referralValue);
   if (rule.operator === 'CONTAINS') {
     return rule.values.some(value => referralValue.includes(String(value)));

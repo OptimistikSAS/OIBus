@@ -10,7 +10,18 @@ const manifest: SouthConnectorManifest = {
     history: true
   },
   explore: true,
-  discovery: 'tree',
+  discovery: {
+    kind: 'tree',
+    defaults: {
+      identityKeyFields: ['id'],
+      itemFieldMapping: {
+        name: '{{path}}',
+        'settings.nodeId': '{{nodeId}}',
+        'settings.mode': 'da',
+        'settings.timestampOrigin': 'oibus'
+      }
+    }
+  },
   settings: {
     type: 'object',
     key: 'settings',
