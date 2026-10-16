@@ -1847,6 +1847,8 @@
         "objectInstance": "对象实例"
       },
       "check": "选择 {{name}}",
+      "check-children": "选择 {{name}} 的所有子节点",
+      "uncheck-children": "取消选择 {{name}} 的所有子节点",
       "checked-count": "已选择 {{count}} 个",
       "keep-in-sync": "保持同步…",
       "add-as-items": "添加为项"

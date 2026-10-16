@@ -58,7 +58,8 @@
 // constant on hover/focus: the row's background tint is the hover affordance instead.
 .explore-caret,
 .explore-row,
-.explore-copy {
+.explore-copy,
+.explore-check-children {
   color: $darkGrey;
   text-decoration: none;
   // No transition: avoid the Bootstrap `.btn` default color/background fade on hover/focus.
@@ -151,4 +152,11 @@
 // one per level of depth, to indent the node
 .explore-indent {
   flex: 0 0 1rem;
+}
+
+// Checks the sub-nodes of a node: at the end of its row, before the panel border
+.explore-check-children {
+  flex: 0 0 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
 }
