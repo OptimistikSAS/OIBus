@@ -904,7 +904,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthBACnetSettingsDiscoveryMode": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["broadcast"]},{"dataType":"enum","enums":["target-device"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["broadcast"]},{"dataType":"enum","enums":["target-device"]},{"dataType":"enum","enums":["router"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthBACnetSettingsBbmd": {
@@ -926,6 +926,7 @@ const models: TsoaRoute.Models = {
             "discoveryMode": {"ref":"SouthBACnetSettingsDiscoveryMode","required":true},
             "discoveryTargetAddress": {"dataType":"string"},
             "discoveryTargetDeviceInstance": {"dataType":"double"},
+            "discoveryRouterAddress": {"dataType":"string"},
             "broadcastAddress": {"dataType":"string"},
             "localInterface": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "maxParallelRun": {"dataType":"double","required":true},
