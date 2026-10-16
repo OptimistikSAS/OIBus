@@ -1299,7 +1299,10 @@ export default class SouthBACnet
     }
 
     const { address: device, deviceId: deviceInstance } = parseDeviceEntryId(parentId);
-    const objectIds = await this.readObjectList(client, device, { type: ObjectType.DEVICE, instance: deviceInstance });
+    // The object list of a device holds the device object itself: it is the parent entry already, not one of its children
+    const objectIds = (await this.readObjectList(client, device, { type: ObjectType.DEVICE, instance: deviceInstance })).filter(
+      objectId => objectId.type !== ObjectType.DEVICE
+    );
 
     let properties: Map<string, PropertyReadResult> | null = null;
     try {
