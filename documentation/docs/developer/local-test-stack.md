@@ -300,17 +300,20 @@ timestamps are the container's local time, UTC: set the trend log items' **Devic
 
 :::note Port and discovery
 OIBus running on the host binds the standard BACnet port `47808` itself, so the room device is published on
-`47809`. Broadcasts don't go through Docker's port mapping: from the host, set **Discovery target address**
-to `127.0.0.1:47809`. The `Who-Is` is a global broadcast, so the room device forwards it to network 2 and both
-devices are listed. OIBus running in a container on `oibus-network` can discover both by broadcast.
+`47809`. Broadcasts don't go through Docker's port mapping: from the host, use the **Target device**
+discovery on the room device, `127.0.0.1:47809` instance `1001`. **Explore** lists that one device: add the
+items of the AHU, behind it on network 2, by hand. OIBus running in a container on `oibus-network` discovers
+both by broadcast: the `Who-Is` is a global broadcast, which the room device forwards to network 2.
 :::
 
 **Connecting from OIBus:** create a South BACnet/IP connector with the following settings:
 
-| Setting                      | Value             |
-| ---------------------------- | ----------------- |
-| **Port**                     | `47808`           |
-| **Discovery target address** | `127.0.0.1:47809` |
+| Setting                    | Value             |
+| -------------------------- | ----------------- |
+| **Port**                   | `47808`           |
+| **Discovery**              | Target device     |
+| **Target device address**  | `127.0.0.1:47809` |
+| **Target device instance** | `1001`            |
 
 Then add items, or browse the devices with **Explore**:
 
