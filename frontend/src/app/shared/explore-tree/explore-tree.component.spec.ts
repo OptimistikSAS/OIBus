@@ -30,7 +30,6 @@ class ExploreTreeComponentTester {
   readonly detailsName = this.root.getByCss('.explore-details-name');
   readonly detailLabels = this.root.getByCss('.explore-details-fields dt');
   readonly detailValues = this.root.getByCss('.explore-details-value');
-  readonly actionButton = this.root.getByCss('#explore-node-action');
 
   /** The row of the node, which shows its details (its accessible name starts with the node name) */
   row(name: string) {
@@ -85,9 +84,9 @@ describe('ExploreTreeComponent', () => {
     tester = new ExploreTreeComponentTester();
   });
 
-  function prepareWith(entries: Array<SouthConnectorExploreEntry>, nodeActionKey: string | null = null) {
+  function prepareWith(entries: Array<SouthConnectorExploreEntry>) {
     southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries }));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, { nodeActionKey });
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
   }
 
   test('should be loading', async () => {
@@ -332,42 +331,18 @@ describe('ExploreTreeComponent', () => {
       await tester.root.getByRole('checkbox', { name: 'Select Objects' }).click();
       expect(Array.from(tester.component.checkedIds())).toEqual(['Server']);
     });
-  });
 
-  describe('node action', () => {
-    beforeEach(() => {
-      southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
-    });
+    test('should start with the given nodes checked', async () => {
+      southConnectorService.startExplore.mockReturnValue(
+        of({ sessionId: 'sessionId', entries: [entry('Objects', true), entry('Server', false)] })
+      );
+      tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, {
+        checkable: true,
+        checkedIds: ['Server']
+      });
 
-    test('should not offer any action by default (read-only browsing)', async () => {
-      prepareWith([entry('Objects', true)]);
-
-      await tester.row('Objects').click();
-
-      await expect.element(tester.detailsName).toHaveTextContent('Objects');
-      await expect.element(tester.actionButton).not.toBeInTheDocument();
-    });
-
-    test('should run the action on the selected expandable node', async () => {
-      southConnectorService.browseExplore.mockReturnValue(NEVER);
-      const selected: Array<SouthConnectorExploreEntry> = [];
-      tester.component.nodeSelected.subscribe(selectedEntry => selected.push(selectedEntry));
-      prepareWith([entry('Objects', true)], 'south.explore.create-workflow');
-
-      await tester.row('Objects').click();
-      await expect.element(tester.actionButton).toHaveTextContent('Create workflow');
-      await tester.actionButton.click();
-
-      expect(selected).toEqual([entry('Objects', true)]);
-    });
-
-    test('should not offer the action on a leaf', async () => {
-      prepareWith([entry('Server', false)], 'south.explore.select');
-
-      await tester.row('Server').click();
-
-      await expect.element(tester.detailsName).toHaveTextContent('Server');
-      await expect.element(tester.actionButton).not.toBeInTheDocument();
+      await expect.element(tester.root.getByRole('checkbox', { name: 'Select Server' })).toBeChecked();
+      await expect.element(tester.root.getByRole('checkbox', { name: 'Select Objects' })).not.toBeChecked();
     });
   });
 

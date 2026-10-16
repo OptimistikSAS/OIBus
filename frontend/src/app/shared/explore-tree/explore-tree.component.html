@@ -53,17 +53,6 @@
             }
           </dl>
         }
-        @if (nodeActionKey() && node.entry.hasChildren) {
-          <div class="explore-details-action">
-            <button
-              type="button"
-              class="btn btn-primary btn-sm"
-              id="explore-node-action"
-              (click)="runNodeAction(node)"
-              [translate]="nodeActionKey()!"
-            ></button>
-          </div>
-        }
       } @else {
         <div class="explore-details-empty" translate="south.explore.no-selection"></div>
       }
