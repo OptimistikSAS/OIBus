@@ -19,7 +19,7 @@ import {
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { CertificateService } from '../../services/certificate.service';
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
@@ -43,10 +43,11 @@ import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { SouthExploreModalComponent, SouthExploreResult } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { AddDiscoveredItemsModalComponent } from '../south-items/add-discovered-items-modal/add-discovered-items-modal.component';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
@@ -349,28 +350,52 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const manifest = this.manifest()!;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    // With tree-based discovery, a workflow can be created from an explored node - kept in memory, like
-    // the ones added through the Manage workflows modal, and saved along with the connector.
-    const nodeActionKey = manifest.discovery?.kind === 'tree' ? 'south.explore.create-workflow' : null;
-    component.prepare(southId, settings, this.southType() as OIBusSouthType, undefined, nodeActionKey);
-    modalRef.result
-      .pipe(
-        switchMap((entry: SouthConnectorExploreEntry) =>
-          this.workflowCreationService.createFromExploredNode(
-            {
-              directSave: false,
-              southId: southId || 'create',
-              southSettings: settings,
-              scanModes: this.scanModes(),
-              manifest,
-              groups: this.itemGroups,
-              existingWorkflows: this.inMemoryWorkflows()
-            },
-            entry
-          )
+    // With tree-based discovery, a workflow can be created from an explored node, and with discovery defaults,
+    // the checked nodes added as items - kept in memory, like the ones added otherwise, and saved along with the
+    // connector.
+    component.prepare(southId, settings, this.southType() as OIBusSouthType, {
+      nodeActionKey: manifest.discovery?.kind === 'tree' ? 'south.explore.create-workflow' : null,
+      checkable: !!manifest.discovery?.defaults
+    });
+    modalRef.result.subscribe((result: SouthExploreResult) => {
+      if (result.type === 'items') {
+        this.addDiscoveredItems(southId || 'create', settings, result.nodeIds);
+        return;
+      }
+      this.workflowCreationService
+        .createFromExploredNode(
+          {
+            directSave: false,
+            southId: southId || 'create',
+            southSettings: settings,
+            scanModes: this.scanModes(),
+            manifest,
+            groups: this.itemGroups,
+            existingWorkflows: this.inMemoryWorkflows()
+          },
+          result.entry
         )
-      )
-      .subscribe(workflow => this.inMemoryWorkflows.update(workflows => [...workflows, workflow]));
+        .subscribe(workflow => this.inMemoryWorkflows.update(workflows => [...workflows, workflow]));
+    });
+  }
+
+  /** Reviews the items the checked nodes give, then adds them in memory. */
+  private addDiscoveredItems(southId: string, southSettings: SouthSettings, nodeIds: Array<string>) {
+    const modalRef = this.modalService.open(AddDiscoveredItemsModalComponent, { size: 'xl', backdrop: 'static' });
+    const component: AddDiscoveredItemsModalComponent = modalRef.componentInstance;
+    component.prepare({
+      southId,
+      southSettings,
+      manifest: this.manifest()!,
+      scanModes: this.scanModes(),
+      groups: this.itemGroups,
+      existingItems: this.inMemoryItems(),
+      nodeIds
+    });
+    modalRef.result.subscribe((commands: Array<SouthConnectorItemCommandDTO>) => {
+      this.inMemoryItems.update(items => [...items, ...commands]);
+      this.itemTable()?.goToFirstPage();
+    });
   }
 
   addItem() {

@@ -592,9 +592,11 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
     component.prepare(historyQueryId, this.southConnectorCommand.settings, this.southConnectorCommand.type, {
-      start: (settings, type) => this.historyQueryService.startExplore(historyQueryId || 'create', settings, type, fromSouthId),
-      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQueryId || 'create', sessionId, parentId),
-      close: sessionId => this.historyQueryService.closeExplore(historyQueryId || 'create', sessionId)
+      api: {
+        start: (settings, type) => this.historyQueryService.startExplore(historyQueryId || 'create', settings, type, fromSouthId),
+        browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQueryId || 'create', sessionId, parentId),
+        close: sessionId => this.historyQueryService.closeExplore(historyQueryId || 'create', sessionId)
+      }
     });
   }
 

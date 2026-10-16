@@ -5329,6 +5329,21 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorItemCommandDTO": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorADSItemCommandDTO"},{"ref":"SouthConnectorBACnetItemCommandDTO"},{"ref":"SouthConnectorFolderScannerItemCommandDTO"},{"ref":"SouthConnectorFTPItemCommandDTO"},{"ref":"SouthConnectorInfluxDBItemCommandDTO"},{"ref":"SouthConnectorModbusItemCommandDTO"},{"ref":"SouthConnectorMongoDBItemCommandDTO"},{"ref":"SouthConnectorMQTTItemCommandDTO"},{"ref":"SouthConnectorMSSQLItemCommandDTO"},{"ref":"SouthConnectorMySQLItemCommandDTO"},{"ref":"SouthConnectorODBCItemCommandDTO"},{"ref":"SouthConnectorOIAnalyticsItemCommandDTO"},{"ref":"SouthConnectorOLEDBItemCommandDTO"},{"ref":"SouthConnectorOPCItemCommandDTO"},{"ref":"SouthConnectorOPCUAItemCommandDTO"},{"ref":"SouthConnectorOracleItemCommandDTO"},{"ref":"SouthConnectorOsisoftPIItemCommandDTO"},{"ref":"SouthConnectorPostgreSQLItemCommandDTO"},{"ref":"SouthConnectorRESTItemCommandDTO"},{"ref":"SouthConnectorS7ItemCommandDTO"},{"ref":"SouthConnectorSFTPItemCommandDTO"},{"ref":"SouthConnectorSQLiteItemCommandDTO"}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthDiscoveredItemsRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "southSettings": {"ref":"SouthSettings","required":true},
+            "discoveryScope": {"ref":"Record_string.unknown_","required":true},
+            "itemFieldMapping": {"ref":"Record_string.string_","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Record_string.string-or-number_": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}]},"validators":{}},
@@ -5419,11 +5434,6 @@ const models: TsoaRoute.Models = {
             "groupLastValue": {"dataType":"union","subSchemas":[{"ref":"SouthItemLastValue"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthConnectorItemCommandDTO": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorADSItemCommandDTO"},{"ref":"SouthConnectorBACnetItemCommandDTO"},{"ref":"SouthConnectorFolderScannerItemCommandDTO"},{"ref":"SouthConnectorFTPItemCommandDTO"},{"ref":"SouthConnectorInfluxDBItemCommandDTO"},{"ref":"SouthConnectorModbusItemCommandDTO"},{"ref":"SouthConnectorMongoDBItemCommandDTO"},{"ref":"SouthConnectorMQTTItemCommandDTO"},{"ref":"SouthConnectorMSSQLItemCommandDTO"},{"ref":"SouthConnectorMySQLItemCommandDTO"},{"ref":"SouthConnectorODBCItemCommandDTO"},{"ref":"SouthConnectorOIAnalyticsItemCommandDTO"},{"ref":"SouthConnectorOLEDBItemCommandDTO"},{"ref":"SouthConnectorOPCItemCommandDTO"},{"ref":"SouthConnectorOPCUAItemCommandDTO"},{"ref":"SouthConnectorOracleItemCommandDTO"},{"ref":"SouthConnectorOsisoftPIItemCommandDTO"},{"ref":"SouthConnectorPostgreSQLItemCommandDTO"},{"ref":"SouthConnectorRESTItemCommandDTO"},{"ref":"SouthConnectorS7ItemCommandDTO"},{"ref":"SouthConnectorSFTPItemCommandDTO"},{"ref":"SouthConnectorSQLiteItemCommandDTO"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthCsvDelimiterRequest": {
@@ -11034,6 +11044,39 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'testWorkflowPreview',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_discoverItems: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthDiscoveredItemsRequest"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/test/discovered-items',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.discoverItems)),
+
+            async function SouthConnectorController_discoverItems(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_discoverItems, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'discoverItems',
                 controller,
                 response,
                 next,

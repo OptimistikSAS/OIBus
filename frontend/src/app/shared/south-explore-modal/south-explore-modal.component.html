@@ -5,6 +5,22 @@
   <oib-explore-tree (nodeSelected)="onNodeSelected($event)" />
 </div>
 <div class="modal-footer">
+  @if (checkable()) {
+    <span
+      class="me-auto text-muted"
+      id="explore-checked-count"
+      [translate]="'south.explore.checked-count'"
+      [translateParams]="{ count: checkedCount() }"
+    ></span>
+    <button
+      type="button"
+      class="btn btn-primary"
+      id="add-checked-as-items"
+      [disabled]="checkedCount() === 0"
+      (click)="addCheckedAsItems()"
+      translate="south.explore.add-as-items"
+    ></button>
+  }
   <div class="btn-group">
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.close" id="cancel-button"></button>
   </div>
