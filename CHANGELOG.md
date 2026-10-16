@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.9.5](https://github.com/OptimistikSAS/OIBus/compare/v3.9.4...v3.9.5) (2026-10-16)
+
+
+### Bug Fixes
+
+* **csv:** detect a file using another delimiter when importing array elements ([2aed373](https://github.com/OptimistikSAS/OIBus/commit/2aed3731c07c77931507cfc862cd9b0bed09d27f))
+* **csv:** name the actual file delimiter when the entered one cannot be used ([d5ba693](https://github.com/OptimistikSAS/OIBus/commit/d5ba69315fa20af723afcf4126c3046b725da374))
+* **csv:** use a tab character for the tab delimiter ([332213e](https://github.com/OptimistikSAS/OIBus/commit/332213e61b7e13ec750c644c9afc7d564ed66a49))
+* **oianalytics:** remove legacy update-engine-settings commands ([855473f](https://github.com/OptimistikSAS/OIBus/commit/855473f9782063f72126e3d0636e1e139bc69a97))
+* **south:** convert number item settings on csv import ([9195704](https://github.com/OptimistikSAS/OIBus/commit/9195704e78ca8183fcbb756a68c4b45f62c77960))
+* **south:** detect an imported items file using another delimiter ([125ec90](https://github.com/OptimistikSAS/OIBus/commit/125ec905cf1274383e89b9f8dc17734ad5f24844))
+
 ## [3.9.4](https://github.com/OptimistikSAS/OIBus/compare/v3.9.3...v3.9.4) (2026-10-01)
 
 
