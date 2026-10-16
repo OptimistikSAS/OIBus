@@ -1689,7 +1689,7 @@ describe('SouthBACnet', () => {
       assert.strictEqual(entries[0].id, '192.168.1.20|2|5|2005|0|1');
     });
 
-    it('should list a device objects and degrade gracefully when enrichment fails', async () => {
+    it('should list a device objects but the device itself, and degrade gracefully when enrichment fails', async () => {
       const connectPromise = south.connect();
       await flushPromises();
       await connectPromise;
@@ -1699,6 +1699,8 @@ describe('SouthBACnet', () => {
         objectId: { type: 8, instance: 10 },
         property: { id: 76, index: 0xffffffff },
         values: [
+          // the object list of a device holds the device object itself
+          { type: 12, value: { type: 8, instance: 10 } },
           { type: 12, value: { type: 0, instance: 1 } },
           { type: 12, value: { type: 3, instance: 2 } }
         ]
