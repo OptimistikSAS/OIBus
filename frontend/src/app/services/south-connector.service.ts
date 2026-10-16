@@ -164,6 +164,24 @@ export class SouthConnectorService {
   }
 
   /**
+   * Discover what a scope holds (e.g. nodes picked in the Explore modal) and map every record to a new item
+   * with `itemFieldMapping`, as a configuration workflow would. Nothing is saved.
+   */
+  discoverItems(
+    southId: string,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
+    discoveryScope: Record<string, unknown>,
+    itemFieldMapping: Record<string, string>
+  ): Observable<Array<SouthConnectorItemCommandDTO>> {
+    return this.http.post<Array<SouthConnectorItemCommandDTO>>(
+      `/api/south/${southId}/test/discovered-items`,
+      { southSettings, discoveryScope, itemFieldMapping },
+      { params: { southType } }
+    );
+  }
+
+  /**
    * Start an interactive explore session and return the root-level entries
    */
   startExplore(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<SouthExploreStartResult> {

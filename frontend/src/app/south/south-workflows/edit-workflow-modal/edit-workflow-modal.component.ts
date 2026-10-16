@@ -23,7 +23,6 @@ import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObject
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '@oibus/shared/domain/configuration-workflow.model';
-import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -34,7 +33,7 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
 import { trackControl } from '../../../shared/form/tracked-control';
 import { ModalService } from '../../../shared/modal.service';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
+import { SouthExploreModalComponent, SouthExploreResult } from '../../../shared/south-explore-modal/south-explore-modal.component';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../../south-items/south-item-groups';
@@ -656,9 +655,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   openNodePicker() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southId, this.southSettings, this.currentManifest()!.id, undefined, 'south.explore.select');
-    modalRef.result.subscribe((entry: SouthConnectorExploreEntry) => {
-      this.discoveryRootNodeId.set(entry.id);
+    component.prepare(this.southId, this.southSettings, this.currentManifest()!.id, { nodeActionKey: 'south.explore.select' });
+    modalRef.result.subscribe((result: SouthExploreResult) => {
+      if (result.type === 'node') {
+        this.discoveryRootNodeId.set(result.entry.id);
+      }
     });
   }
 

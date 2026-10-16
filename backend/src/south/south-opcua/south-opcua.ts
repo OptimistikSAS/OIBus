@@ -110,6 +110,18 @@ interface OperationLimits {
 
 /** Static (and, for explore, live) metadata read for one Variable - every field optional, since servers
  *  only expose what their information model declares (e.g. no unit/range on a plain BaseDataVariable). */
+/** A Variable node whose metadata is read: by its node id, and its display name for logs. */
+interface VariableNode {
+  nodeId: string;
+  displayName: string;
+}
+
+function toVariableNodes(references: Array<ReferenceDescription>): Array<VariableNode> {
+  return references
+    .filter(reference => reference.nodeClass === NodeClass.Variable)
+    .map(reference => ({ nodeId: reference.nodeId.toString(), displayName: reference.displayName?.text ?? reference.nodeId.toString() }));
+}
+
 interface VariableMetadata {
   value?: string;
   description?: string;
@@ -480,7 +492,7 @@ export default class SouthOPCUA
     const session = this.session;
     try {
       const references = await this.browseReferences(session, parentId);
-      const variables = references.filter(reference => reference.nodeClass === NodeClass.Variable);
+      const variables = toVariableNodes(references);
       let metadata = new Map<string, VariableMetadata>();
       try {
         metadata = await this.readVariableMetadata(session, variables, true);
@@ -523,7 +535,7 @@ export default class SouthOPCUA
     const session = this.session;
     try {
       const references = await this.browseReferences(session, parentId);
-      const variables = references.filter(reference => reference.nodeClass === NodeClass.Variable);
+      const variables = toVariableNodes(references);
       return this.mapReferencesToEntries(references, await this.readVariableMetadata(session, variables, false));
     } catch (error) {
       if (isSessionError(error)) {
@@ -586,14 +598,14 @@ export default class SouthOPCUA
    */
   private async readVariableMetadata(
     session: ClientSession,
-    variableReferences: Array<ReferenceDescription>,
+    variables: Array<VariableNode>,
     includeValue: boolean
   ): Promise<Map<string, VariableMetadata>> {
     const result = new Map<string, VariableMetadata>();
-    if (variableReferences.length === 0) {
+    if (variables.length === 0) {
       return result;
     }
-    const variableNodeIds = variableReferences.map(reference => reference.nodeId.toString());
+    const variableNodeIds = variables.map(variable => variable.nodeId);
     const limits = await this.getOperationLimits(session);
 
     const attributeIds = includeValue ? [AttributeIds.Description, AttributeIds.Value] : [AttributeIds.Description];
@@ -603,7 +615,7 @@ export default class SouthOPCUA
       requestInChunks(variableNodeIds, limits.maxNodesPerBrowse, chunk => session.browse(chunk))
     ]);
 
-    variableReferences.forEach((reference, index) => {
+    variables.forEach((variable, index) => {
       const entry: VariableMetadata = {};
       const descriptionDataValue = attributeDataValues[index * attributeIds.length];
       if (isGood(descriptionDataValue)) {
@@ -615,7 +627,7 @@ export default class SouthOPCUA
       if (includeValue) {
         const valueDataValue = attributeDataValues[index * attributeIds.length + 1];
         if (isGood(valueDataValue)) {
-          const parsedValue = parseOPCUAValue(reference.displayName?.text ?? variableNodeIds[index], valueDataValue.value, this.logger);
+          const parsedValue = parseOPCUAValue(variable.displayName, valueDataValue.value, this.logger);
           if (parsedValue) {
             entry.value = parsedValue;
           }
@@ -700,12 +712,83 @@ export default class SouthOPCUA
    * identity-key diff every single time, even though nothing about the monitored node itself changed. This assumes `rootNodeId`
    * names a folder/Object, not a Variable directly — pointing it at a leaf Variable would walk into
    * that Variable's own EngineeringUnits/EURange properties as if they were data points.
+   *
+   * `scope.nodeIds` (nodes picked in the Explore modal) takes precedence over `rootNodeId`: a picked Variable
+   * is recorded itself, any other picked node walked like a root.
    */
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
-    const rootNodeId = (scope.rootNodeId as string | undefined) ?? null;
     const records: Array<OIBusRecord> = [];
+    if (Array.isArray(scope.nodeIds)) {
+      // Nodes picked one by one: a Variable is recorded itself, any other node walked into. Each path starts with
+      // the picked node's own name, which tells apart the records of two picked folders.
+      for (const node of await this.readNodesForDiscovery(scope.nodeIds.filter(nodeId => typeof nodeId === 'string'))) {
+        if (node.metadata.type === 'Variable') {
+          records.push({ id: node.id, name: node.name, path: node.name, ...node.metadata });
+        } else {
+          await this.walkForDiscovery(node.id, node.name, records);
+        }
+      }
+      // A Variable picked along with a folder holding it is recorded once, as picked
+      const uniqueRecords = new Map<OIBusRecord[string], OIBusRecord>();
+      for (const record of records) {
+        if (!uniqueRecords.has(record.id)) {
+          uniqueRecords.set(record.id, record);
+        }
+      }
+      return Array.from(uniqueRecords.values());
+    }
+    const rootNodeId = (scope.rootNodeId as string | undefined) ?? null;
     await this.walkForDiscovery(rootNodeId, '', records);
     return records;
+  }
+
+  /**
+   * The nodes picked as discovery scope, as discovery entries (see `browseForDiscovery()`): their display name
+   * and node class are read as attributes, since they are not browsed from a parent. A node that does not
+   * exist fails the run.
+   */
+  async readNodesForDiscovery(nodeIds: Array<string>): Promise<Array<SouthConnectorExploreEntry>> {
+    if (nodeIds.length === 0) {
+      return [];
+    }
+    if (this.session === null) {
+      this.session = await this.createSession();
+    }
+    const session = this.session;
+    try {
+      const limits = await this.getOperationLimits(session);
+      const attributesToRead = nodeIds.flatMap(nodeId => [
+        { nodeId, attributeId: AttributeIds.DisplayName },
+        { nodeId, attributeId: AttributeIds.NodeClass }
+      ]);
+      const dataValues = await requestInChunks(attributesToRead, limits.maxNodesPerRead, chunk => session.read(chunk));
+      const nodes = nodeIds.map((nodeId, index) => {
+        const displayNameDataValue = dataValues[index * 2];
+        const nodeClassDataValue = dataValues[index * 2 + 1];
+        if (!isGood(nodeClassDataValue)) {
+          throw new Error(`Node ${nodeId} could not be read: ${nodeClassDataValue?.statusCode.name ?? 'no response'}`);
+        }
+        const displayName = isGood(displayNameDataValue) ? (displayNameDataValue.value.value as LocalizedText).text : null;
+        return { nodeId, displayName: displayName || nodeId, nodeClass: nodeClassDataValue.value.value as NodeClass };
+      });
+      const metadata = await this.readVariableMetadata(
+        session,
+        nodes.filter(node => node.nodeClass === NodeClass.Variable),
+        false
+      );
+      return nodes.map(node => ({
+        id: node.nodeId,
+        name: node.displayName,
+        metadata: { nodeId: node.nodeId, type: NodeClass[node.nodeClass] ?? String(node.nodeClass), ...metadata.get(node.nodeId) },
+        hasChildren: node.nodeClass === NodeClass.Object || node.nodeClass === NodeClass.Variable
+      }));
+    } catch (error) {
+      if (isSessionError(error)) {
+        await this.disconnect();
+        throw new Error(`OPCUA discovery session expired, please restart the configuration workflow run: ${(error as Error).message}`);
+      }
+      throw error;
+    }
   }
 
   /** `parentPath` is the display names from the discovery root down to `parentId`, joined by "/": each record's

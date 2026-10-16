@@ -1847,7 +1847,27 @@
         "macAddress": "MAC 地址",
         "objectType": "对象类型",
         "objectInstance": "对象实例"
-      }
+      },
+      "check": "选择 {{name}}",
+      "checked-count": "已选择 {{count}} 个",
+      "add-as-items": "添加为项"
+    },
+    "add-discovered-items": {
+      "title": "从数据源添加项",
+      "error": "发现所选节点时出错",
+      "none": "没有可添加的内容：所选节点不包含可读取的点",
+      "scan-mode-from-group": "使用组的计划",
+      "scan-mode-none": "选择计划",
+      "enabled": "启用这些项",
+      "select-all": "全选",
+      "name": "项名称",
+      "include": "添加 {{name}}",
+      "name-required": "必须填写名称",
+      "name-taken": "名称已被使用",
+      "already-read": "已由 {{name}} 读取",
+      "selected-count": "已选择项：{{count}} / {{total}}",
+      "add": "添加项（{{count}}）",
+      "added": "已添加项：{{count}}"
     },
     "test-item": {
       "title": "测试项",

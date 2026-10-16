@@ -3233,6 +3233,70 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(browseForDiscovery.mock.calls.length, 2);
   });
 
+  it('discover should record a picked Variable itself and walk a picked folder, paths starting with its name', async () => {
+    south.readNodesForDiscovery = mock.fn(async (_nodeIds: Array<string>): Promise<Array<SouthConnectorExploreEntry>> => [
+      { id: 'ns=1;s=Flow', name: 'Flow', metadata: { nodeId: 'ns=1;s=Flow', type: 'Variable', unit: 'L/min' }, hasChildren: true },
+      { id: 'ns=1;s=Pumps', name: 'Pumps', metadata: { nodeId: 'ns=1;s=Pumps', type: 'Object' }, hasChildren: true }
+    ]);
+    south.browseForDiscovery = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => [
+      { id: 'ns=1;s=Pumps.Speed', name: 'Speed', metadata: { nodeId: 'ns=1;s=Pumps.Speed', type: 'Variable' }, hasChildren: true },
+      // picked as well: recorded once
+      { id: 'ns=1;s=Flow', name: 'Flow', metadata: { nodeId: 'ns=1;s=Flow', type: 'Variable', unit: 'L/min' }, hasChildren: true }
+    ]);
+
+    const records = await south.discover({ nodeIds: ['ns=1;s=Flow', 'ns=1;s=Pumps'], rootNodeId: 'ignored' });
+
+    assert.deepStrictEqual((south.readNodesForDiscovery as unknown as Mock<() => void>).mock.calls[0].arguments, [
+      ['ns=1;s=Flow', 'ns=1;s=Pumps']
+    ]);
+    assert.deepStrictEqual((south.browseForDiscovery as unknown as Mock<() => void>).mock.calls[0].arguments, ['ns=1;s=Pumps']);
+    assert.deepStrictEqual(records, [
+      { id: 'ns=1;s=Flow', name: 'Flow', path: 'Flow', nodeId: 'ns=1;s=Flow', type: 'Variable', unit: 'L/min' },
+      { id: 'ns=1;s=Pumps.Speed', name: 'Speed', path: 'Pumps/Speed', nodeId: 'ns=1;s=Pumps.Speed', type: 'Variable' }
+    ]);
+  });
+
+  it('readNodesForDiscovery should read the picked nodes name and class, and the static metadata of the Variables', async () => {
+    const { mockedClient } = mockAddressSpace(1);
+    const read = mockedClient.read;
+    mockedClient.read = mock.fn(async (arg: unknown) => {
+      const nodes = arg as Array<{ nodeId: string; attributeId: number }>;
+      if (nodes.some(node => node.attributeId === AttributeIds.NodeClass)) {
+        return nodes.map(({ nodeId, attributeId }) =>
+          attributeId === AttributeIds.NodeClass
+            ? { statusCode: { value: 0 }, value: { value: nodeId === 'ns=1;s=V0' ? NodeClass.Variable : NodeClass.Object } }
+            : { statusCode: { value: 0 }, value: { value: { text: `${nodeId} name` } } }
+        );
+      }
+      return read(arg);
+    }) as unknown as typeof read;
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    const entries = await south.readNodesForDiscovery(['ns=1;s=V0', 'ns=1;s=Folder']);
+
+    assert.deepStrictEqual(entries, [
+      {
+        id: 'ns=1;s=V0',
+        name: 'ns=1;s=V0 name',
+        metadata: { nodeId: 'ns=1;s=V0', type: 'Variable', description: 'ns=1;s=V0 description', unit: 'bar', min: 0, max: 10 },
+        hasChildren: true
+      },
+      { id: 'ns=1;s=Folder', name: 'ns=1;s=Folder name', metadata: { nodeId: 'ns=1;s=Folder', type: 'Object' }, hasChildren: true }
+    ]);
+  });
+
+  it('readNodesForDiscovery should fail on a picked node that does not exist', async () => {
+    const { mockedClient } = mockAddressSpace(0);
+    mockedClient.read = mock.fn(async (arg: unknown) =>
+      (arg as Array<unknown>).map(() => ({ statusCode: { value: 0x80340000, name: 'BadNodeIdUnknown' }, value: { value: null } }))
+    ) as unknown as typeof mockedClient.read;
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    await assert.rejects(south.readNodesForDiscovery(['ns=1;s=Gone']), new Error('Node ns=1;s=Gone could not be read: BadNodeIdUnknown'));
+  });
+
   it('discover should default to browsing from the root when the scope has no rootNodeId', async () => {
     const browseForDiscovery = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => []);
     south.browseForDiscovery = browseForDiscovery;

@@ -65,18 +65,38 @@ describe('SouthExploreModalComponent', () => {
   });
 
   test('should close with the node the action was run on', async () => {
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, undefined, 'south.explore.create-workflow');
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, {
+      nodeActionKey: 'south.explore.create-workflow'
+    });
 
     southConnectorService.browseExplore.mockReturnValue(NEVER);
     await tester.root.getByRole('button', { name: /^Objects/ }).click();
     await tester.root.getByRole('button', { name: 'Create workflow' }).click();
 
     expect(fakeActiveModal.close).toHaveBeenCalledWith({
-      id: 'ns=0;i=85',
-      name: 'Objects',
-      metadata: { type: 'Object' },
-      hasChildren: true
+      type: 'node',
+      entry: { id: 'ns=0;i=85', name: 'Objects', metadata: { type: 'Object' }, hasChildren: true }
     });
+  });
+
+  test('should close with the checked nodes to add them as items', async () => {
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, { checkable: true });
+    const addButton = tester.root.getByRole('button', { name: 'Add as items' });
+    await expect.element(addButton).toBeDisabled();
+    await expect.element(tester.root.getByCss('#explore-checked-count')).toHaveTextContent('0 selected');
+
+    await tester.root.getByRole('checkbox', { name: 'Select Objects' }).click();
+    await expect.element(tester.root.getByCss('#explore-checked-count')).toHaveTextContent('1 selected');
+    await addButton.click();
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({ type: 'items', nodeIds: ['ns=0;i=85'] });
+  });
+
+  test('should not offer to add items without checkable nodes', async () => {
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+
+    await expect.element(tester.root.getByRole('checkbox')).not.toBeInTheDocument();
+    await expect.element(tester.root.getByRole('button', { name: 'Add as items' })).not.toBeInTheDocument();
   });
 
   test('should dismiss on cancel', async () => {
