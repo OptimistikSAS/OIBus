@@ -54,7 +54,8 @@ import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manag
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import { SaveGroupCommand, SouthItemGroup, SouthItemGroups } from '../south-items/south-item-groups';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
-import { toConfigurationWorkflowCommand, WorkflowCreationService } from '../south-workflows/workflow-creation.service';
+import { toConfigurationWorkflowCommand } from '../south-workflows/workflow-command';
+import { exploreCheckedActions, WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 
 /** The group column is added by the page: the other columns are sorted by the item table. */
 function sortValue(item: SouthConnectorItemCommandDTO, column: string): string | number {
@@ -350,20 +351,17 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const manifest = this.manifest()!;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    // With tree-based discovery, a workflow can be created from an explored node, and with discovery defaults,
-    // the checked nodes added as items - kept in memory, like the ones added otherwise, and saved along with the
-    // connector.
-    component.prepare(southId, settings, this.southType() as OIBusSouthType, {
-      nodeActionKey: manifest.discovery?.kind === 'tree' ? 'south.explore.create-workflow' : null,
-      checkable: !!manifest.discovery?.defaults
-    });
+    // With tree-based discovery, items can be kept in sync with the checked nodes through a workflow, and with
+    // discovery defaults, added once - both kept in memory, like the ones added otherwise, and saved along with
+    // the connector.
+    component.prepare(southId, settings, this.southType() as OIBusSouthType, { checkedActions: exploreCheckedActions(manifest) });
     modalRef.result.subscribe((result: SouthExploreResult) => {
-      if (result.type === 'items') {
+      if (result.action === 'add-items') {
         this.addDiscoveredItems(southId || 'create', settings, result.nodeIds);
         return;
       }
       this.workflowCreationService
-        .createFromExploredNode(
+        .createFromExploredNodes(
           {
             directSave: false,
             southId: southId || 'create',
@@ -373,7 +371,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
             groups: this.itemGroups,
             existingWorkflows: this.inMemoryWorkflows()
           },
-          result.entry
+          result.nodeIds
         )
         .subscribe(workflow => this.inMemoryWorkflows.update(workflows => [...workflows, workflow]));
     });

@@ -49,3 +49,42 @@
 .advanced-mapping-toggle {
   font-weight: 600;
 }
+
+// The wizard steps: every step can be opened at any time, the current one stands out
+.workflow-step {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: $darkGrey;
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: $darkGrey;
+  }
+}
+
+.workflow-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 1px solid $mediumGrey;
+  font-size: 0.8125rem;
+}
+
+.workflow-step-current {
+  font-weight: 600;
+
+  .workflow-step-number {
+    background-color: $electricBlue;
+    border-color: $electricBlue;
+    color: #fff;
+  }
+}
+
+.workflow-preview-records {
+  max-height: 20rem;
+}

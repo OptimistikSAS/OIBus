@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
@@ -14,6 +14,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflowCommand } from '../../../../test/builders';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
@@ -22,7 +23,7 @@ import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
-import EditWorkflowModalComponent from './edit-workflow-modal.component';
+import EditWorkflowModalComponent, { WorkflowStep } from './edit-workflow-modal.component';
 
 const scanModes = testData.scanMode.list;
 const southId = 'southId1';
@@ -122,9 +123,8 @@ class EditWorkflowModalComponentTester {
   readonly formError = this.root.getByCss('#form-error');
   readonly mustBeUnique = this.root.getByText('Must be unique');
   // discovery scope
-  readonly rootNodeId = this.root.getByCss('#discovery-root-node-id');
-  readonly browseButton = this.root.getByRole('button', { name: 'Explore' });
-  readonly clearRootNodeButton = this.root.getByRole('button', { name: 'Clear' });
+  readonly discoveryNodes = this.root.getByCss('#discovery-nodes');
+  readonly browseButton = this.root.getByRole('button', { name: 'Pick nodes...' });
   readonly discoveryQuery = this.root.getByCss('#discovery-query');
   readonly discoveryQueryInput = this.root.getByCss('#discovery-query .cm-content');
   readonly exploreTree = this.root.getByCss('#discovery-explore-tree');
@@ -154,6 +154,27 @@ class EditWorkflowModalComponentTester {
   // footer
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly okButton = this.root.getByRole('button', { name: 'OK' });
+  readonly nextButton = this.root.getByCss('#next-step');
+  readonly backButton = this.root.getByCss('#previous-step');
+
+  stepButton(step: WorkflowStep) {
+    return this.root.getByCss(`#workflow-step-${step}`);
+  }
+
+  async goToStep(step: WorkflowStep) {
+    await this.stepButton(step).click();
+  }
+
+  /** Saves from the Review step, where a new workflow is saved */
+  async save() {
+    await this.goToStep('review');
+    await this.saveButton.click();
+  }
+
+  async ok() {
+    await this.goToStep('review');
+    await this.okButton.click();
+  }
   readonly cancelButton = this.root.getByCss('#cancel-button');
 
   mappingField(path: string) {
@@ -204,6 +225,8 @@ interface CreateOptions {
   workflowSouthId?: string;
   directSave?: boolean;
   prefill?: Pick<ConfigurationWorkflowCommandDTO, 'name' | 'discoveryScope'>;
+  /** The step to open the wizard on - the one each group of tests is about, by default */
+  step?: WorkflowStep;
 }
 
 describe('EditWorkflowModalComponent', () => {
@@ -213,12 +236,18 @@ describe('EditWorkflowModalComponent', () => {
   let unsavedChangesService: MockObject<UnsavedChangesConfirmationService>;
   let modalService: MockModalService<unknown>;
   let groups: FakeSouthItemGroups;
+  let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
+  /** The step the tests of a group are about, see CreateOptions.step */
+  let startStep: WorkflowStep;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     southConnectorService = createMock(SouthConnectorService);
     engineService = createMock(EngineService);
     unsavedChangesService = createMock(UnsavedChangesConfirmationService);
+    configurationWorkflowService = createMock(ConfigurationWorkflowService);
+    configurationWorkflowService.previewCommand.mockReturnValue(NEVER);
+    startStep = 'source';
     groups = fakeSouthItemGroups([buildSouthItemGroup('group1', 'Group 1')]);
     // Default: OIBus isn't registered with OIAnalytics - individual tests override this to exercise the
     // "Push to OIAnalytics" mode.
@@ -234,6 +263,7 @@ describe('EditWorkflowModalComponent', () => {
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: EngineService, useValue: engineService },
+        { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
         { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesService }
       ]
     });
@@ -251,7 +281,8 @@ describe('EditWorkflowModalComponent', () => {
       existingWorkflows = [existingWorkflow],
       workflowSouthId = southId,
       directSave = true,
-      prefill
+      prefill,
+      step = startStep
     } = options;
     const tester = new EditWorkflowModalComponentTester();
     const component = tester.fixture.componentInstance;
@@ -267,6 +298,7 @@ describe('EditWorkflowModalComponent', () => {
         component.prepareForCopy(scanModes, existingWorkflows, workflowManifest, workflow, workflowSouthId, southSettings, groups);
         break;
     }
+    component.step.set(step);
     return tester;
   }
 
@@ -285,7 +317,8 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.identityKeyFields).toHaveTextContent('nodeId');
       await expect.element(tester.eligibilityRows.first()).toMatchTextContent(/type\s*equals\s*Variable/);
       await expect.element(tester.mappingField('name')).toHaveValue('{{name}}');
-      await expect.element(tester.rootNodeId).toHaveTextContent('ns=1;s=Root');
+      // a workflow saved with a single root node shows it as the one node picked
+      await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Root');
     });
 
     test('should render an empty form in create mode, defaulting to local (item-creating) mode', async () => {
@@ -297,7 +330,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.identityKeyFields).toHaveTextContent('');
       await expect.element(tester.noEligibilityCondition).toBeInTheDocument();
       await expect.element(tester.mappingField('name')).toHaveValue('');
-      await expect.element(tester.rootNodeId).toHaveTextContent('None - browse from the data source root');
+      await expect.element(tester.discoveryNodes).toHaveTextContent('The whole data source');
     });
 
     test('should prefill a duplicate with the source workflow settings, a "-copy" name, and create-mode uniqueness', async () => {
@@ -307,7 +340,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.name).toHaveValue('Reactor discovery-copy');
       await expect.element(tester.identityKeyFields).toHaveTextContent('nodeId');
       await expect.element(tester.mappingField('name')).toHaveValue('{{name}}');
-      await expect.element(tester.rootNodeId).toHaveTextContent('ns=1;s=Root');
+      await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Root');
 
       // The clone's blanked id means the uniqueness check excludes nothing - the original workflow's own
       // name is still reported as taken if renamed back onto it.
@@ -325,31 +358,37 @@ describe('EditWorkflowModalComponent', () => {
 
       await tester.name.fill('other discovery');
       await expect.element(tester.mustBeUnique).toBeInTheDocument();
-      await tester.saveButton.click();
+      await tester.save();
       expect(activeModal.close).not.toHaveBeenCalled();
     });
 
     test("should keep the edited workflow's own id on save, whether persisted or an in-memory temp one", async () => {
       const inMemoryWorkflow = { ...existingWorkflow, id: 'temp_123' };
-      const tester = create({ mode: 'edit', workflow: inMemoryWorkflow, existingWorkflows: [inMemoryWorkflow], workflowSouthId: 'create' });
+      const tester = create({
+        mode: 'edit',
+        workflow: inMemoryWorkflow,
+        existingWorkflows: [inMemoryWorkflow],
+        workflowSouthId: 'create',
+        step: 'items'
+      });
       await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
 
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(savedCommand()).toEqual(expect.objectContaining({ id: 'temp_123', name: 'Reactor discovery', scanModeId: scanModes[0].id }));
     });
 
     test('should save a duplicate with a null id, leaving the caller to decide what to give it', async () => {
-      const tester = create({ mode: 'copy' });
+      const tester = create({ mode: 'copy', step: 'items' });
       await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
 
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(savedCommand()).toEqual(expect.objectContaining({ id: null, name: 'Reactor discovery-copy' }));
     });
 
     test('should label the confirm button "OK" rather than "Save" when the caller keeps workflows in memory', async () => {
-      const tester = create({ directSave: false });
+      const tester = create({ directSave: false, step: 'review' });
 
       await expect.element(tester.okButton).toBeInTheDocument();
     });
@@ -357,25 +396,24 @@ describe('EditWorkflowModalComponent', () => {
     test('should close the modal with a valid command when everything is filled in', async () => {
       const tester = create();
       const exploreModal = createMock(SouthExploreModalComponent);
-      modalService.mockClosedModal(exploreModal, {
-        type: 'node',
-        entry: { id: 'ns=1;s=Root', name: 'Root', metadata: {}, hasChildren: true }
-      });
+      modalService.mockClosedModal(exploreModal, { action: 'use', nodeIds: ['ns=1;s=Root'] });
       await tester.name.fill('New workflow');
       await tester.browseButton.click();
+      await tester.goToStep('schedule');
       await tester.scanMode.selectOptions(scanModes[0].name);
+      await tester.goToStep('items');
       await tester.addIdentityKeyField('nodeId');
       await tester.mappingField('name').fill('{{name}}');
       // scanModeId is a manifest-REQUIRED item field - a constant only, never a {{ }} expression
       await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
       await tester.mappingField('maxReadInterval').fill('  '); // blank after trim -> not included
 
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(activeModal.close).toHaveBeenCalledWith({
         id: null,
         name: 'New workflow',
-        discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+        discoveryScope: { nodeIds: ['ns=1;s=Root'] },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id },
@@ -388,7 +426,7 @@ describe('EditWorkflowModalComponent', () => {
     test('should not save without a name', async () => {
       const tester = create();
 
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(activeModal.close).not.toHaveBeenCalled();
     });
@@ -415,34 +453,50 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   describe('discovery scope', () => {
-    test('should pick a root node in the explore modal for a tree-based connector, then clear it', async () => {
+    test('should pick the nodes to discover from in the explore modal for a tree-based connector', async () => {
       const tester = create();
       await expect.element(tester.browseButton).toBeInTheDocument();
       await expect.element(tester.discoveryQuery).not.toBeInTheDocument();
       await expect.element(tester.unsupportedScope).not.toBeInTheDocument();
-      await expect.element(tester.clearRootNodeButton).not.toBeInTheDocument();
+      await expect.element(tester.discoveryNodes).toHaveTextContent('The whole data source');
       const exploreModal = createMock(SouthExploreModalComponent);
-      modalService.mockClosedModal(exploreModal, {
-        type: 'node',
-        entry: { id: 'ns=1;s=Reactor', name: 'Reactor', metadata: {}, hasChildren: true }
-      });
+      modalService.mockClosedModal(exploreModal, { action: 'use', nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] });
       const open = vi.spyOn(modalService, 'open');
 
       await tester.browseButton.click();
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
-      expect(exploreModal.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, { nodeActionKey: 'south.explore.select' });
-      await expect.element(tester.rootNodeId).toHaveTextContent('ns=1;s=Reactor');
+      expect(exploreModal.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, {
+        checkedActions: [{ id: 'use', labelKey: 'south.workflows.wizard.use-nodes' }],
+        checkedIds: []
+      });
+      await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Reactor ns=1;s=Boiler');
 
-      await tester.clearRootNodeButton.click();
-      await expect.element(tester.rootNodeId).toHaveTextContent('None - browse from the data source root');
+      await tester.root.getByRole('button', { name: 'Remove ns=1;s=Reactor' }).click();
+      await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Boiler');
     });
 
-    test('should default a tree-based connector to an empty discoveryScope when no root node was picked', async () => {
+    test('should check the nodes already picked when picking again, and save them as the discovery scope', async () => {
+      const tester = create({ mode: 'edit' });
+      const exploreModal = createMock(SouthExploreModalComponent);
+      modalService.mockDismissedModal(exploreModal);
+
+      await tester.browseButton.click();
+      expect(exploreModal.prepare.mock.lastCall![3]!.checkedIds).toEqual(['ns=1;s=Root']);
+
+      await tester.goToStep('items');
+      await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+      await tester.save();
+      // A single root node of an older workflow is saved as the one node picked
+      expect(savedCommand().discoveryScope).toEqual({ nodeIds: ['ns=1;s=Root'] });
+    });
+
+    test('should default a tree-based connector to an empty discoveryScope when no node was picked', async () => {
       const tester = create({ mode: 'edit', workflow: { ...existingWorkflow, discoveryScope: {} } });
+      await tester.goToStep('items');
       await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
 
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(savedCommand().discoveryScope).toEqual({});
     });
@@ -464,11 +518,11 @@ describe('EditWorkflowModalComponent', () => {
       expect(southConnectorService.startExplore).toHaveBeenCalled();
     });
 
-    test('should start a new workflow from the prefilled name and discovery root', async () => {
-      const tester = create({ prefill: { name: 'Reactor', discoveryScope: { rootNodeId: 'ns=1;s=Reactor' } } });
+    test('should start a new workflow from the prefilled name and nodes', async () => {
+      const tester = create({ prefill: { name: 'Reactor', discoveryScope: { nodeIds: ['ns=1;s=Reactor'] } } });
 
       await expect.element(tester.name).toHaveValue('Reactor');
-      await expect.element(tester.rootNodeId).toHaveTextContent('ns=1;s=Reactor');
+      await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Reactor');
       expect(tester.fixture.componentInstance.canDismiss()).toBe(true);
     });
 
@@ -533,7 +587,7 @@ describe('EditWorkflowModalComponent', () => {
       const tester = create({ workflowManifest: sqlManifest });
       await tester.name.fill('SQL workflow');
 
-      await tester.saveButton.click();
+      await tester.save();
 
       await expect.element(tester.formError).toHaveTextContent('A metadata query is required');
       expect(activeModal.close).not.toHaveBeenCalled();
@@ -545,7 +599,7 @@ describe('EditWorkflowModalComponent', () => {
       const tester = create({ mode: 'edit', workflow: sqlWorkflow, existingWorkflows: [sqlWorkflow], workflowManifest: sqlManifest });
       await expect.element(tester.notRegisteredWarning).not.toBeInTheDocument();
 
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(savedCommand()).toEqual(
         expect.objectContaining({
@@ -559,6 +613,10 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   describe('mode', () => {
+    beforeEach(() => {
+      startStep = 'items';
+    });
+
     test('should allow picking the remote mode while OIBus is not registered, and show a warning instead of blocking it', async () => {
       const tester = create();
       await expect.element(tester.localMode).toBeChecked();
@@ -567,8 +625,9 @@ describe('EditWorkflowModalComponent', () => {
       await tester.remoteMode.click();
 
       await expect.element(tester.notRegisteredWarning).toBeInTheDocument();
+      await tester.goToStep('source');
       await tester.name.fill('New workflow');
-      await tester.saveButton.click();
+      await tester.save();
       expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: true }));
     });
 
@@ -591,7 +650,7 @@ describe('EditWorkflowModalComponent', () => {
 
       await tester.remoteMode.click();
       await expect.element(tester.notRegisteredWarning).not.toBeInTheDocument();
-      await tester.saveButton.click();
+      await tester.save();
 
       // Identity keys only apply to local mode - never sent for a remote workflow, even if some were typed before switching.
       expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null, identityKeyFields: [] }));
@@ -599,6 +658,10 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   describe('identity key fields', () => {
+    beforeEach(() => {
+      startStep = 'items';
+    });
+
     test('should add and remove identity key fields, ignoring duplicates', async () => {
       const tester = create();
       await expect.element(tester.addIdentityKeyFieldButton).toHaveAccessibleName('Add');
@@ -618,10 +681,10 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should reject saving a local workflow without identity key field', async () => {
-      const tester = create();
+      const tester = create({ step: 'source' });
       await tester.name.fill('New workflow');
 
-      await tester.saveButton.click();
+      await tester.save();
 
       await expect.element(tester.formError).toHaveTextContent('At least one identity key field is required');
       expect(activeModal.close).not.toHaveBeenCalled();
@@ -629,9 +692,14 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   describe('eligibility filter', () => {
+    beforeEach(() => {
+      startStep = 'filter';
+    });
+
     test('should add conditions, without a value for "exists", and ignore an empty field', async () => {
-      const tester = create({ mode: 'edit', workflow: { ...existingWorkflow, eligibilityFilter: [] } });
+      const tester = create({ mode: 'edit', workflow: { ...existingWorkflow, eligibilityFilter: [] }, step: 'items' });
       await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+      await tester.goToStep('filter');
 
       await tester.addEligibilityCondition('  ', 'equals', 'ignored');
       await expect.element(tester.noEligibilityCondition).toBeInTheDocument();
@@ -644,7 +712,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.eligibilityRows).toHaveLength(2);
       await expect.element(tester.newEligibilityField).toHaveValue('');
       await expect.element(tester.newEligibilityOperator).toHaveDisplayValue('equals');
-      await tester.saveButton.click();
+      await tester.save();
       expect(savedCommand().eligibilityFilter).toEqual([
         { field: 'type', operator: 'equals', value: 'Variable' },
         { field: 'unit', operator: 'exists' }
@@ -652,8 +720,9 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should edit an eligibility condition in place', async () => {
-      const tester = create({ mode: 'edit' });
+      const tester = create({ mode: 'edit', step: 'items' });
       await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+      await tester.goToStep('filter');
 
       await tester.eligibilityRows.first().getByRole('button', { name: 'Edit' }).click();
       const editedRow = tester.eligibilityRows.first();
@@ -667,7 +736,7 @@ describe('EditWorkflowModalComponent', () => {
       await editedRow.getByRole('button', { name: 'Save' }).click();
 
       await expect.element(tester.eligibilityRows.first()).toMatchTextContent(/kind\s*contains\s*Sensor/);
-      await tester.saveButton.click();
+      await tester.save();
       expect(savedCommand().eligibilityFilter).toEqual([{ field: 'kind', operator: 'contains', value: 'Sensor' }]);
     });
 
@@ -721,6 +790,10 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   describe('item field mapping', () => {
+    beforeEach(() => {
+      startStep = 'items';
+    });
+
     test('should list every field the manifest exposes, plus the historian fields', async () => {
       const tester = create();
 
@@ -778,7 +851,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingExpression('enabled')).toHaveValue('{{}}');
       await tester.mappingExpression('enabled').fill('{{isEnabled}}');
       await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
-      await tester.saveButton.click();
+      await tester.save();
       expect(savedCommand().itemFieldMapping).toEqual(expect.objectContaining({ enabled: '{{isEnabled}}' }));
     });
 
@@ -832,7 +905,7 @@ describe('EditWorkflowModalComponent', () => {
 
       await tester.mappingField('settings.mode').selectOptions('DA');
       await expect.element(tester.mappingField('settings.haMode.aggregate')).not.toBeInTheDocument();
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(savedCommand().itemFieldMapping).toEqual({ 'settings.mode': 'da' });
     });
@@ -844,7 +917,7 @@ describe('EditWorkflowModalComponent', () => {
       };
       const tester = create({ mode: 'edit', workflow, workflowManifest: enablingManifest });
 
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(savedCommand().itemFieldMapping).toEqual({ 'settings.mode': '{{mode}}', 'settings.haMode.aggregate': 'average' });
     });
@@ -866,7 +939,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingField('name')).toHaveAttribute('placeholder', 'constant or {{field}}');
 
       await tester.mappingField('maxReadInterval').fill('{{interval}}');
-      await tester.saveButton.click();
+      await tester.save();
 
       await expect.element(tester.formError).toMatchTextContent('This field must be mapped to a constant');
       expect(activeModal.close).not.toHaveBeenCalled();
@@ -877,14 +950,159 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingRow('scanModeId')).toMatchTextContent('Required');
       await expect.element(tester.mappingRow('enabled')).not.toMatchTextContent('Required');
 
-      await tester.saveButton.click();
+      await tester.save();
 
       await expect.element(tester.formError).toMatchTextContent('Every mandatory field (marked "Required") must be mapped');
       expect(activeModal.close).not.toHaveBeenCalled();
     });
   });
 
+  describe('wizard', () => {
+    const records = [
+      { id: 'ns=1;s=T', path: 'Reactor/Temperature', unit: '°C' },
+      { id: 'ns=1;s=P', path: 'Reactor/Pressure', unit: 'bar' }
+    ];
+
+    function previewResult(overrides: Partial<WorkflowPreviewResultDTO> = {}): WorkflowPreviewResultDTO {
+      return { discoveredCount: 3, eligibleCount: 2, entries: [], records, ...overrides };
+    }
+
+    test('should walk through the steps, a new workflow being saved from the last one', async () => {
+      const tester = create();
+      await expect.element(tester.stepButton('source')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.backButton).not.toBeInTheDocument();
+      await expect.element(tester.saveButton).not.toBeInTheDocument();
+
+      // the Source step needs a name before going on
+      await tester.nextButton.click();
+      await expect.element(tester.stepButton('source')).toHaveAttribute('aria-current', 'step');
+      await tester.name.fill('Reactor');
+      await tester.nextButton.click();
+      await expect.element(tester.stepButton('filter')).toHaveAttribute('aria-current', 'step');
+      await tester.nextButton.click();
+      await tester.nextButton.click();
+      await tester.nextButton.click();
+
+      await expect.element(tester.stepButton('review')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.nextButton).not.toBeInTheDocument();
+      await expect.element(tester.saveButton).toBeInTheDocument();
+      await tester.backButton.click();
+      await expect.element(tester.stepButton('schedule')).toHaveAttribute('aria-current', 'step');
+    });
+
+    test('should need a query before leaving the Source step of a SQL-family connector', async () => {
+      const tester = create({ workflowManifest: sqlManifest });
+      await tester.name.fill('Metadata');
+
+      await tester.nextButton.click();
+
+      await expect.element(tester.formError).toHaveTextContent('A metadata query is required');
+      await expect.element(tester.stepButton('source')).toHaveAttribute('aria-current', 'step');
+    });
+
+    test('should save an edited workflow from any step', async () => {
+      const tester = create({ mode: 'edit' });
+
+      await expect.element(tester.saveButton).toBeInTheDocument();
+    });
+
+    test('should go back to the step to fix when saving fails', async () => {
+      const tester = create({ step: 'source' });
+      await tester.name.fill('Reactor');
+
+      await tester.save();
+
+      await expect.element(tester.formError).toHaveTextContent('At least one identity key field is required');
+      await expect.element(tester.stepButton('items')).toHaveAttribute('aria-current', 'step');
+    });
+
+    test('should count the records the source gives, whatever the filter', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const tester = create({ mode: 'edit' });
+
+      await tester.root.getByRole('button', { name: 'Find records' }).click();
+
+      await expect.element(tester.root.getByCss('#source-preview-count')).toHaveTextContent('Records found: 3');
+      const [previewSouthId, southType, settings, workflowId, command] = configurationWorkflowService.previewCommand.mock.lastCall!;
+      expect([previewSouthId, southType, settings, workflowId]).toEqual([southId, manifest.id, southSettings, null]);
+      expect(command).toEqual(
+        expect.objectContaining({ discoveryScope: { nodeIds: ['ns=1;s=Root'] }, eligibilityFilter: [], pushToOIAnalytics: true })
+      );
+    });
+
+    test('should list the records the filter keeps on the Filter step, and suggest their fields', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const tester = create({ mode: 'edit' });
+
+      await tester.goToStep('filter');
+
+      expect(configurationWorkflowService.previewCommand.mock.lastCall![4].eligibilityFilter).toEqual(existingWorkflow.eligibilityFilter);
+      await expect.element(tester.root.getByCss('#filter-preview-count')).toHaveTextContent('Matching records: 2 of 3');
+      await expect.element(tester.root.getByCss('#filter-preview-records tbody tr')).toHaveLength(2);
+      await expect.element(tester.root.getByCss('#record-fields option')).toHaveLength(3);
+      await expect.element(tester.newEligibilityField).toHaveAttribute('list', 'record-fields');
+    });
+
+    test('should show the names the matching records would give their items', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const tester = create({ mode: 'edit', workflow: { ...existingWorkflow, itemFieldMapping: { name: '{{path}} ({{unit}})' } } });
+      await tester.goToStep('filter');
+
+      await tester.goToStep('items');
+
+      await expect
+        .element(tester.root.getByCss('#example-item-names'))
+        .toHaveTextContent('Example item names:Reactor/Temperature (°C)Reactor/Pressure (bar)');
+    });
+
+    test('should preview what a run would do on the Review step, against the previous run of a saved workflow', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(
+        of(
+          previewResult({
+            entries: [
+              { key: 'a', status: 'new', record: records[0], previousMetadata: null },
+              { key: 'b', status: 'missing', record: null, previousMetadata: {} }
+            ]
+          })
+        )
+      );
+      const tester = create({ mode: 'edit', step: 'items' });
+      await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+
+      await tester.goToStep('review');
+
+      expect(configurationWorkflowService.previewCommand.mock.lastCall![3]).toBe(existingWorkflow.id);
+      await expect.element(tester.root.getByCss('#review-preview-counts')).toMatchTextContent(/New: 1.*Missing: 1/);
+      await expect.element(tester.root.getByCss('#review-summary')).toMatchTextContent(/Reactor discovery/);
+    });
+
+    test('should ask to complete the previous steps before previewing a run', async () => {
+      const tester = create({ step: 'source' });
+      await tester.name.fill('Reactor');
+
+      await tester.goToStep('review');
+
+      await expect
+        .element(tester.root.getByCss('#review-preview-incomplete'))
+        .toHaveTextContent('Complete the previous steps to preview a run');
+      expect(configurationWorkflowService.previewCommand).not.toHaveBeenCalled();
+    });
+
+    test('should show why a preview failed', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(throwError(() => new Error('unreachable')));
+      const tester = create({ mode: 'edit' });
+
+      await tester.goToStep('filter');
+
+      await expect.element(tester.root.getByCss('#filter-preview-error')).toHaveTextContent('unreachable');
+    });
+  });
+
   describe('discovery defaults', () => {
+    beforeEach(() => {
+      startStep = 'items';
+    });
+
     const presetManifest: SouthConnectorManifest = {
       ...enablingManifest,
       discovery: {
@@ -916,14 +1134,15 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should expand the Advanced section when what is missing is in it', async () => {
-      const tester = create({ workflowManifest: presetManifest });
+      const tester = create({ workflowManifest: presetManifest, step: 'source' });
       await tester.name.fill('Reactor');
+      await tester.goToStep('items');
       await tester.advancedToggle.click();
       await tester.root.getByCss('.remove-identity-key-field').click();
       await tester.advancedToggle.click();
       await expect.element(tester.advancedSection).not.toBeInTheDocument();
 
-      await tester.saveButton.click();
+      await tester.save();
 
       await expect.element(tester.formError).toMatchTextContent('At least one identity key field is required');
       await expect.element(tester.advancedSection).toBeInTheDocument();
@@ -938,6 +1157,10 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   describe('groups', () => {
+    beforeEach(() => {
+      startStep = 'items';
+    });
+
     test("should map the group field to one of the connector's own groups, through a dropdown", async () => {
       const tester = create({ mode: 'edit' });
       await expect.element(tester.groupToggle).toHaveRole('button');
@@ -947,9 +1170,10 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.groupToggle).toHaveTextContent('Group 1');
       // scanModeId is no longer mandatory once the item is mapped into a group
       await expect.element(tester.mappingRow('scanModeId')).not.toMatchTextContent('Required');
-      await tester.saveButton.click();
+      await tester.save();
       expect(savedCommand().itemFieldMapping).toEqual({ name: '{{name}}', groupId: 'group1' });
 
+      await tester.goToStep('items');
       await tester.selectGroup('None');
       await expect.element(tester.groupToggle).toHaveTextContent('None');
     });
