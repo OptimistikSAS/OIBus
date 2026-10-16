@@ -291,6 +291,15 @@ describe('SouthBACnet', () => {
       discoveryTargetDeviceInstance: 201
     }
   };
+  const routerConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
+    ...configuration,
+    settings: { ...configuration.settings, discoveryMode: 'router', discoveryRouterAddress: '127.0.0.1:47809' }
+  };
+  /** An I-Am from a device behind the router at 127.0.0.1:47809, on network 2. */
+  const routedIAm = (adr: Array<number>, deviceId: number) => ({
+    header: { apduType: 0x10, expectingReply: false, sender: { address: '127.0.0.1:47809', forwardedFrom: null, net: 2, adr } },
+    payload: { deviceId, maxApdu: 480, segmentation: 3, vendorId: 0 }
+  });
 
   before(() => {
     mockModule(nodeRequire, '@bacnet-js/client', bacnetExports);
@@ -313,7 +322,9 @@ describe('SouthBACnet', () => {
     south = new SouthBACnet(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Releases the shared socket, so that the next test opens its own client
+    await south.disconnect();
     mock.timers.reset();
     mock.restoreAll();
   });
@@ -586,6 +597,116 @@ describe('SouthBACnet', () => {
       assert.strictEqual(client.registerForeignDevice.mock.calls.length, 1);
       assert.strictEqual(client.whoIsThroughBBMD.mock.calls.length, 0);
       assert.strictEqual(client.whoIs.mock.calls.length, 0);
+    });
+  });
+
+  describe('shared socket', () => {
+    it('should test other settings through the socket of a connector running on the same port', async () => {
+      const liveClient = await connectSouth();
+      const tested = new SouthBACnet(routerConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+
+      const testPromise = tested.testConnection();
+      await flushPromises();
+      liveClient.emit('iAm', iAm('127.0.0.1:47809', 1001));
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      assert.strictEqual(bacnetExports.default.mock.calls.length, 1);
+      assert.deepStrictEqual(liveClient.whoIs.mock.calls.at(-1)!.arguments, [{ address: '127.0.0.1:47809', net: 0xffff }]);
+      assert.deepStrictEqual(result.items, [
+        { key: 'DevicesFound', value: '1' },
+        { key: 'Device 1001', value: '127.0.0.1:47809' }
+      ]);
+      // Still used by the running connector
+      assert.strictEqual(liveClient.close.mock.calls.length, 0);
+    });
+
+    it('should close the socket when its last connector releases it', async () => {
+      const liveClient = await connectSouth();
+      const explorer = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      await explorer.connect();
+
+      await south.disconnect();
+      assert.strictEqual(liveClient.close.mock.calls.length, 0);
+      await explorer.disconnect();
+      assert.strictEqual(liveClient.close.mock.calls.length, 1);
+      assert.strictEqual(bacnetExports.default.mock.calls.length, 1);
+    });
+
+    it('should open one socket per port', async () => {
+      await connectSouth();
+      const otherPort = new SouthBACnet(
+        { ...configuration, settings: { ...configuration.settings, port: 47810 } },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+      await otherPort.connect();
+
+      assert.deepStrictEqual(
+        bacnetExports.default.mock.calls.map(call => (call.arguments[0] as { port: number }).port),
+        [47809, 47810]
+      );
+      await otherPort.disconnect();
+    });
+
+    it('should open a new socket after a transport error', async () => {
+      const failedClient = await connectSouth();
+      failedClient.emit('error', new Error('socket failure'));
+      await flushPromises();
+
+      const tested = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      await tested.testConnection();
+
+      assert.strictEqual(bacnetExports.default.mock.calls.length, 2);
+      assert.notStrictEqual(lastCreatedClient, failedClient);
+      assert.strictEqual(failedClient.close.mock.calls.length, 1);
+    });
+  });
+
+  describe('testConnection with a router', () => {
+    it('should send a global Who-Is to the router alone, and list the router and the devices behind it', async () => {
+      south = new SouthBACnet(routerConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      const client = lastCreatedClient;
+      client.emit('iAm', iAm('127.0.0.1:47809', 1001));
+      client.emit('iAm', routedIAm([5], 1002));
+      mock.timers.tick(3000);
+      const result = await testPromise;
+
+      assert.deepStrictEqual(
+        client.whoIs.mock.calls.map(call => call.arguments),
+        [[{ address: '127.0.0.1:47809', net: 0xffff }]]
+      );
+      assert.deepStrictEqual(result.items, [
+        { key: 'DevicesFound', value: '2' },
+        { key: 'Device 1001', value: '127.0.0.1:47809' },
+        { key: 'Device 1002', value: '127.0.0.1:47809, network 2, MAC 5' }
+      ]);
+    });
+
+    it('should send the Who-Is to the router, not through the BBMD, when BBMD is enabled', async () => {
+      south = new SouthBACnet(
+        {
+          ...routerConfiguration,
+          settings: { ...routerConfiguration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
+        },
+        addContentCallback,
+        southCacheRepository,
+        'cacheFolder'
+      );
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      const client = lastCreatedClient;
+      mock.timers.tick(3000);
+      await testPromise;
+
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 1);
+      assert.strictEqual(client.whoIsThroughBBMD.mock.calls.length, 0);
+      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: '127.0.0.1:47809', net: 0xffff }]);
     });
   });
 
@@ -1489,6 +1610,25 @@ describe('SouthBACnet', () => {
       assert.strictEqual(entries.length, 1);
       assert.strictEqual(entries[0].id, '192.168.1.10|||10');
       assert.strictEqual(entries[0].hasChildren, true);
+    });
+
+    it('should list the router and the devices behind it, with the item settings to reach them', async () => {
+      south = new SouthBACnet(routerConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+
+      const explorePromise = south.explore(null);
+      await flushPromises();
+      lastCreatedClient.emit('iAm', iAm('127.0.0.1:47809', 1001));
+      lastCreatedClient.emit('iAm', routedIAm([5], 1002));
+      mock.timers.tick(3000);
+      const entries = await explorePromise;
+
+      assert.deepStrictEqual(
+        entries.map(entry => [entry.id, entry.metadata]),
+        [
+          ['127.0.0.1:47809|||1001', { address: '127.0.0.1:47809', deviceInstance: 1001 }],
+          ['127.0.0.1:47809|2|5|1002', { address: '127.0.0.1:47809', deviceInstance: 1002, networkNumber: 2, macAddress: '5' }]
+        ]
+      );
     });
 
     it('should list the target device without any Who-Is', async () => {
