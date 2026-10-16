@@ -27,11 +27,12 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
+import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { AddDiscoveredItemsModalComponent } from '../south-items/add-discovered-items-modal/add-discovered-items-modal.component';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
@@ -398,27 +399,24 @@ describe('EditSouthComponent', () => {
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
       // no discovery: read-only browsing, no workflow can be created from a node
-      expect(exploreModal.prepare).toHaveBeenCalledWith(null, undefined, 'folder-scanner', undefined, null);
+      expect(exploreModal.prepare).toHaveBeenCalledWith(null, undefined, 'folder-scanner', { nodeActionKey: null, checkable: false });
     });
 
     test('should add a workflow created from an explored node to the in-memory workflows', async () => {
       southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: { kind: 'tree' } }));
       const tester = await createTester('edit');
       const node = { id: 'folder/sub', name: 'sub', metadata: {}, hasChildren: true };
-      const exploreModal = mockModal(createMock(SouthExploreModalComponent), node);
+      const exploreModal = mockModal(createMock(SouthExploreModalComponent), { type: 'node', entry: node });
       workflowCreationService.createFromExploredNode.mockReturnValue(of(buildWorkflowCommand('temp_1', 'sub')));
       await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*0/);
 
       await tester.exploreButton.click();
 
       // the settings of the form (none in the test manifest)
-      expect(exploreModal.prepare).toHaveBeenCalledWith(
-        'southId1',
-        undefined,
-        'folder-scanner',
-        undefined,
-        'south.explore.create-workflow'
-      );
+      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', undefined, 'folder-scanner', {
+        nodeActionKey: 'south.explore.create-workflow',
+        checkable: false
+      });
       expect(workflowCreationService.createFromExploredNode).toHaveBeenCalledWith(
         {
           directSave: false,
@@ -432,6 +430,41 @@ describe('EditSouthComponent', () => {
         node
       );
       await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage sync configuration\s*1/);
+    });
+
+    test('should add the reviewed items of the nodes checked in the explore modal to the in-memory items', async () => {
+      const presetManifest: SouthConnectorManifest = {
+        ...manifest,
+        discovery: { kind: 'tree', defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}' } } }
+      };
+      southConnectorService.getSouthManifest.mockReturnValue(of(presetManifest));
+      const tester = await createTester('edit');
+      await expect.element(tester.rows).toHaveLength(3);
+      const addItemsModal = createMock(AddDiscoveredItemsModalComponent);
+      const command = {
+        ...southConnector.items[0],
+        id: null,
+        name: 'added',
+        scanModeId: scanModes[0].id,
+        scanModeName: null,
+        groupId: null,
+        groupName: null
+      };
+      vi.spyOn(modalService, 'open').mockImplementation(component =>
+        component === SouthExploreModalComponent
+          ? fakeModal(createMock(SouthExploreModalComponent), Promise.resolve({ type: 'items', nodeIds: ['folder/sub'] }))
+          : fakeModal(addItemsModal, Promise.resolve([command]))
+      );
+
+      await tester.exploreButton.click();
+
+      await vi.waitFor(() =>
+        expect(addItemsModal.prepare).toHaveBeenCalledWith(
+          expect.objectContaining({ southId: 'southId1', manifest: presetManifest, nodeIds: ['folder/sub'] })
+        )
+      );
+      await expect.element(tester.rows).toHaveLength(4);
+      await expect.element(tester.root.getByText('added')).toBeInTheDocument();
     });
 
     test('should ask for confirmation before leaving with unsaved changes', async () => {

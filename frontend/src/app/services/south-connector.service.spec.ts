@@ -181,6 +181,14 @@ describe('SouthConnectorService', () => {
       response: discoveredRows
     },
     {
+      name: 'map discovered records to new items',
+      call: s => s.discoverItems('id1', 'opcua', command.settings, { nodeIds: ['ns=1;s=Reactor'] }, { name: '{{path}}' }),
+      method: 'POST',
+      url: '/api/south/id1/test/discovered-items?southType=opcua',
+      body: { southSettings: command.settings, discoveryScope: { nodeIds: ['ns=1;s=Reactor'] }, itemFieldMapping: { name: '{{path}}' } },
+      response: [testData.south.itemCommand]
+    },
+    {
       name: 'start an explore session',
       call: s => s.startExplore('id1', command.settings, command.type),
       method: 'POST',

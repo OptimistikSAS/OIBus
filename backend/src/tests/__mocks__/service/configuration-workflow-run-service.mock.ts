@@ -1,6 +1,7 @@
 import { mock } from 'node:test';
 
 import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../../shared/model/api/configuration-workflow.model';
+import { SouthConnectorItemCommandDTO } from '../../../../shared/model/api/south-connector.model';
 import { Page } from '../../../../shared/model/common/types';
 
 import { WorkflowRunEntity, WorkflowRunSearchParam } from '../../../model/workflow-run.model';
@@ -31,6 +32,15 @@ export default class ConfigurationWorkflowRunServiceMock {
       entries: [],
       records: []
     })
+  );
+  discoverItems = mock.fn(
+    async (
+      _southId: string,
+      _southType: string,
+      _southSettings: unknown,
+      _discoveryScope: Record<string, unknown>,
+      _itemFieldMapping: Record<string, string>
+    ): Promise<Array<SouthConnectorItemCommandDTO>> => []
   );
   findRuns = mock.fn((_southId: string, _workflowId: string, _searchParams: WorkflowRunSearchParam): Page<WorkflowRunEntity> => ({
     content: [],

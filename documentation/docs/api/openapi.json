@@ -24450,6 +24450,100 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthConnectorItemCommandDTO": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/SouthConnectorADSItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorBACnetItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorFolderScannerItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorFTPItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorInfluxDBItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorModbusItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorMongoDBItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorMQTTItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorMSSQLItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorMySQLItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorODBCItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorOIAnalyticsItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorOLEDBItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorOPCItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorOPCUAItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorOracleItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorOsisoftPIItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorPostgreSQLItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorRESTItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorS7ItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorSFTPItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorSQLiteItemCommandDTO"
+					}
+				],
+				"description": "Command Data Transfer Object for creating or updating a South connector item.\nUsed as the request body for South connector item creation/update endpoints."
+			},
+			"SouthDiscoveredItemsRequest": {
+				"properties": {
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthSettings",
+						"description": "South connector settings, as currently edited"
+					},
+					"discoveryScope": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "What to discover, e.g. `{ nodeIds: [...] }` for nodes picked in the Explore modal"
+					},
+					"itemFieldMapping": {
+						"$ref": "#/components/schemas/Record_string.string_",
+						"description": "Item field path to a constant or a {{field}} expression of the discovered record"
+					}
+				},
+				"required": [
+					"southSettings",
+					"discoveryScope",
+					"itemFieldMapping"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Record_string.string-or-number_": {
 				"properties": {},
 				"additionalProperties": {
@@ -24773,77 +24867,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"SouthConnectorItemCommandDTO": {
-				"anyOf": [
-					{
-						"$ref": "#/components/schemas/SouthConnectorADSItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorBACnetItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorFolderScannerItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorFTPItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorInfluxDBItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorModbusItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorMongoDBItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorMQTTItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorMSSQLItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorMySQLItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorODBCItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorOIAnalyticsItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorOLEDBItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorOPCItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorOPCUAItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorOracleItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorOsisoftPIItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorPostgreSQLItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorRESTItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorS7ItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorSFTPItemCommandDTO"
-					},
-					{
-						"$ref": "#/components/schemas/SouthConnectorSQLiteItemCommandDTO"
-					}
-				],
-				"description": "Command Data Transfer Object for creating or updating a South connector item.\nUsed as the request body for South connector item creation/update endpoints."
 			},
 			"SouthCsvDelimiterRequest": {
 				"properties": {
@@ -46150,6 +46173,61 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/SouthWorkflowPreviewRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/test/discovered-items": {
+			"post": {
+				"operationId": "DiscoverItems",
+				"responses": {
+					"200": {
+						"description": "One item to create per discovered record",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/SouthConnectorItemCommandDTO"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Discovers what a scope holds (e.g. nodes picked in the Explore modal) against the south connector settings\nas currently edited, and maps every record to a new item, as a configuration workflow would. Nothing is saved.",
+				"summary": "Map discovered records to new items",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The south connector id, or \"create\" for a connector not created yet",
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthDiscoveredItemsRequest"
 							}
 						}
 					}
