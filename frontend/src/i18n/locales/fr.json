@@ -1816,8 +1816,6 @@
       "button": "Explorer",
       "empty": "Rien à explorer",
       "error": "Erreur lors de l'exploration de la source de données",
-      "select": "Sélectionner",
-      "create-workflow": "Créer un workflow",
       "expand": "Déplier {{name}}",
       "collapse": "Replier {{name}}",
       "no-selection": "Sélectionnez un nœud pour afficher ses détails",
@@ -1850,6 +1848,7 @@
       },
       "check": "Sélectionner {{name}}",
       "checked-count": "{{count}} sélectionné(s)",
+      "keep-in-sync": "Synchroniser…",
       "add-as-items": "Ajouter comme points"
     },
     "add-discovered-items": {
@@ -2094,9 +2093,6 @@
       "duplicate": "Dupliquer",
       "name": "Nom",
       "discovery-scope": "Périmètre de découverte",
-      "discovery-scope-node-hint": "Le nœud à partir duquel parcourir - laisser vide pour parcourir toute la source de données",
-      "discovery-scope-node-none": "Aucun - parcourir depuis la racine de la source de données",
-      "discovery-scope-node-clear": "Effacer",
       "discovery-scope-query-hint": "Une requête de métadonnées dédiée, indépendante de la requête propre à chaque point - chaque ligne retournée devient un enregistrement découvert. Ex. : SELECT column_name, description, unit FROM my_metadata_table",
       "discovery-scope-query-required": "Une requête de métadonnées est requise",
       "discovery-scope-query-test": "Tester la requête",
@@ -2198,6 +2194,32 @@
         "end": "Démarré avant",
         "status": "Statut",
         "trigger-type": "Type de déclencheur"
+      },
+      "wizard": {
+        "steps": "Étapes du workflow de configuration",
+        "step": {
+          "source": "Source",
+          "filter": "Filtre",
+          "items": "Points",
+          "schedule": "Planification",
+          "review": "Vérification"
+        },
+        "nodes-hint": "Les nœuds à découvrir : un point vaut pour lui-même, tout autre nœud pour tout ce qu'il contient",
+        "nodes-none": "Toute la source de données",
+        "remove-node": "Retirer {{node}}",
+        "browse-nodes": "Choisir des nœuds...",
+        "use-nodes": "Utiliser ces nœuds",
+        "find-records": "Rechercher les enregistrements",
+        "records-found": "Enregistrements trouvés : {{count}}",
+        "refresh-preview": "Actualiser l'aperçu",
+        "records-matching": "Enregistrements correspondants : {{eligible}} sur {{discovered}}",
+        "example-item-names": "Exemples de noms de points :",
+        "missing-points": "Lorsqu'un point n'est plus trouvé, le point OIBus créé pour lui est désactivé.",
+        "conditions": "Conditions : {{count}}",
+        "review-incomplete": "Complétez les étapes précédentes pour prévisualiser une exécution",
+        "records-pushed": "Enregistrements envoyés à OIAnalytics : {{count}}",
+        "back": "Précédent",
+        "next": "Suivant"
       }
     },
     "monitoring": {

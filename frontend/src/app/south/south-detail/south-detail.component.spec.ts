@@ -302,30 +302,26 @@ describe('SouthDetailComponent', () => {
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
       // no discovery: read-only browsing, no workflow can be created from a node
-      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', {
-        nodeActionKey: null,
-        checkable: false
-      });
-      expect(workflowCreationService.createFromExploredNode).not.toHaveBeenCalled();
+      // no discovery: read-only browsing
+      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', { checkedActions: [] });
+      expect(workflowCreationService.createFromExploredNodes).not.toHaveBeenCalled();
     });
 
-    test('should create a workflow from a node picked in the explore modal when the connector has tree-based discovery', async () => {
+    test('should keep items in sync with the nodes checked in the explore modal when the connector has tree-based discovery', async () => {
       southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, discovery: { kind: 'tree' } }));
       const tester = await createTester();
-      const node = { id: 'folder/sub', name: 'sub', metadata: {}, hasChildren: true };
-      const exploreModal = mockModal(createMock(SouthExploreModalComponent), { type: 'node', entry: node });
+      const exploreModal = mockModal(createMock(SouthExploreModalComponent), { action: 'keep-in-sync', nodeIds: ['folder/sub'] });
       const workflows = [buildWorkflow('workflow1', 'sub')];
       configurationWorkflowService.list.mockReturnValue(of(workflows));
-      workflowCreationService.createFromExploredNode.mockReturnValue(of(buildWorkflowCommand('workflow2', 'sub-2')));
+      workflowCreationService.createFromExploredNodes.mockReturnValue(of(buildWorkflowCommand('workflow2', 'sub-2')));
 
       await tester.exploreButton.click();
 
       expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', {
-        nodeActionKey: 'south.explore.create-workflow',
-        checkable: false
+        checkedActions: [{ id: 'keep-in-sync', labelKey: 'south.explore.keep-in-sync' }]
       });
       expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
-      expect(workflowCreationService.createFromExploredNode).toHaveBeenCalledWith(
+      expect(workflowCreationService.createFromExploredNodes).toHaveBeenCalledWith(
         {
           directSave: true,
           southId: 'southId1',
@@ -335,7 +331,7 @@ describe('SouthDetailComponent', () => {
           groups: expect.anything(),
           existingWorkflows: workflows
         },
-        node
+        ['folder/sub']
       );
     });
 
@@ -351,7 +347,7 @@ describe('SouthDetailComponent', () => {
       const commands = [{ ...testData.south.itemCommand, id: null, name: 'Reactor/Temperature' }];
       vi.spyOn(modalService, 'open').mockImplementation(component =>
         component === SouthExploreModalComponent
-          ? fakeModal(exploreModal, Promise.resolve({ type: 'items', nodeIds: ['ns=1;s=Reactor'] }))
+          ? fakeModal(exploreModal, Promise.resolve({ action: 'add-items', nodeIds: ['ns=1;s=Reactor'] }))
           : fakeModal(addItemsModal, Promise.resolve(commands))
       );
       southConnectorService.importItems.mockReturnValue(of(undefined));
@@ -359,8 +355,10 @@ describe('SouthDetailComponent', () => {
       await tester.exploreButton.click();
 
       expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner', {
-        nodeActionKey: 'south.explore.create-workflow',
-        checkable: true
+        checkedActions: [
+          { id: 'keep-in-sync', labelKey: 'south.explore.keep-in-sync' },
+          { id: 'add-items', labelKey: 'south.explore.add-as-items' }
+        ]
       });
       await vi.waitFor(() =>
         expect(addItemsModal.prepare).toHaveBeenCalledWith({
