@@ -8,8 +8,8 @@ OIBus peut exporter l'intégralité de sa configuration sous la forme d'un uniqu
 ce fichier — sur la même instance ou sur une autre — pour recréer la configuration à partir de zéro. Cela est utile
 pour les sauvegardes, la reprise après sinistre, ou le clonage d'une configuration vers une nouvelle instance.
 
-Les deux actions sont disponibles depuis **Engine > Settings**, via les boutons **Export configuration** et
-**Import configuration**.
+Les deux actions sont disponibles depuis **Moteur > Paramètres**, via les boutons **Exporter la configuration** et
+**Importer la configuration**.
 
 ## Ce qui est exporté {#what-gets-exported}
 
@@ -26,7 +26,7 @@ Le fichier d'export (`oibus-config-export.json`) comporte trois champs de premie
   - Les connecteurs North
   - Les requêtes d'historique
   - Les utilisateurs
-  - Les paramètres du moteur : nom, serveur web, serveur proxy et logs
+  - Les paramètres du moteur : nom, serveur web, serveur proxy et journalisation
   - Les paramètres d'enregistrement OIAnalytics, à titre informatif uniquement : ils ne sont jamais importés (voir
     [Enregistrement](#registration-is-not-imported) ci-dessous)
 
@@ -49,7 +49,7 @@ l'instance cible et les recrée à partir du fichier**, en conservant l'ID inter
 opération est destructrice et ne peut pas être annulée : chaque connecteur South, connecteur North, requête
 d'historique, workflow de configuration, mode de scan, filtre IP, transformateur, certificat et utilisateur actuellement présent sur
 l'instance est supprimé avant que les éléments importés ne soient créés, et les paramètres du moteur de l'instance
-(nom, serveur web, serveur proxy et logs) sont remplacés par ceux importés. L'interface exige une confirmation
+(nom, serveur web, serveur proxy et journalisation) sont remplacés par ceux importés. L'interface exige une confirmation
 explicite, rappelant ce point, avant qu'un import ne soit soumis.
 
 L'enregistrement OIAnalytics n'est jamais effacé ni écrasé par un import — voir
@@ -62,7 +62,7 @@ redirige à la fermeture de la fenêtre d'import. Le nouveau port doit être lib
 
 Sélectionner un fichier dans la fenêtre **Importer la configuration** ne l'importe pas encore : OIBus le met d'abord à
 niveau et le valide exactement comme le ferait l'import, sans rien écrire, et affiche tout ce qu'il s'apprête à
-importer — connecteurs South (avec leur configuration, leurs items, groupes d'items et workflows de configuration),
+importer — connecteurs South (avec leur configuration, leurs éléments, groupes d'éléments et workflows de configuration),
 connecteurs North (avec leur configuration, leur cache et leurs transformateurs), requêtes d'historique, modes de scan,
 filtres IP, certificats, transformateurs, utilisateurs et paramètres du moteur. Chaque section peut être dépliée pour
 en consulter le contenu. Un fichier invalide affiche ses erreurs immédiatement, et l'import ne peut être confirmé
@@ -106,8 +106,8 @@ quelle :
   référence continue de fonctionner, mais la clé privée doit être réimportée manuellement avant que le certificat
   puisse être utilisé pour TLS.
 - **Les mots de passe du moteur ne sont conservés que si ce à quoi ils servent est inchangé.** Le mot de passe Loki
-  est conservé si les paramètres de logs importés ciblent la même adresse et le même utilisateur Loki que l'instance,
-  celui du serveur proxy si l'utilisateur du serveur proxy est le même, et celui du proxy de redirection si son URL et
+  est conservé si les paramètres de journalisation importés ciblent la même adresse et le même utilisateur Loki que l'instance,
+  celui du serveur proxy si l'utilisateur du serveur proxy est le même, et celui du proxy en amont si son URL et
   son utilisateur sont les mêmes. Sinon le mot de passe est effacé plutôt que réutilisé pour un autre serveur ou
   utilisateur, et un avertissement demande de le ressaisir dans les paramètres du moteur.
 - **Les utilisateurs sont recréés avec un mot de passe aléatoire**, puisque les mots de passe ne sont jamais
@@ -133,7 +133,7 @@ réenregistrer) doit être fait manuellement, de la même façon que sur une ins
 ## Import depuis OIAnalytics {#import-from-oianalytics}
 
 À partir d'OIBus 3.10.0, un fichier de configuration peut aussi être envoyé depuis OIAnalytics à un OIBus enregistré,
-avec la commande **Import configuration**. OIAnalytics stocke le fichier téléversé et crée la commande ; OIBus télécharge
+avec la commande **Importer la configuration**. OIAnalytics stocke le fichier téléversé et crée la commande ; OIBus télécharge
 le fichier quand il récupère la commande, et l'importe exactement comme un fichier importé depuis sa propre interface, à
 deux différences près :
 

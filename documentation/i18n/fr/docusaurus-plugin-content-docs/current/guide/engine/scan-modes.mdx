@@ -18,14 +18,14 @@ restreint à une **fenêtre d'activation**.
 
 OIBus fournit six modes de scan intégrés pour les besoins de planification courants :
 
-| Mode de scan | Expression cron    | Description                                            |
-| -------------------- | ----------------- | ------------------------------------------------------- |
-| Every second          | `* * * * * *`    | S'exécute toutes les secondes.                          |
-| Every 10 seconds       | `*/10 * * * * *` | S'exécute toutes les 10 secondes.                       |
-| Every minute           | `0 * * * * *`    | S'exécute chaque minute, à la marque des 0 seconde.     |
-| Every 10 minutes       | `0 */10 * * * *` | S'exécute toutes les 10 minutes, à la marque des 0 seconde. |
-| Every hour             | `0 0 * * * *`    | S'exécute chaque heure, à la marque des 0 minute, 0 seconde. |
-| Every 24 hours         | `0 0 0 * * *`    | S'exécute quotidiennement à minuit (00:00:00).           |
+| Mode de scan     | Expression cron  | Description                                                  |
+| ---------------- | ---------------- | ------------------------------------------------------------ |
+| Every second     | `* * * * * *`    | S'exécute toutes les secondes.                               |
+| Every 10 seconds | `*/10 * * * * *` | S'exécute toutes les 10 secondes.                            |
+| Every minute     | `0 * * * * *`    | S'exécute chaque minute, à la marque des 0 seconde.          |
+| Every 10 minutes | `0 */10 * * * *` | S'exécute toutes les 10 minutes, à la marque des 0 seconde.  |
+| Every hour       | `0 0 * * * *`    | S'exécute chaque heure, à la marque des 0 minute, 0 seconde. |
+| Every 24 hours   | `0 0 0 * * *`    | S'exécute quotidiennement à minuit (00:00:00).               |
 
 Un septième mode de scan, non modifiable, **Subscription**, existe également (sans expression cron) pour les
 connecteurs South qui poussent les données à leur arrivée plutôt que selon une planification (par ex. MQTT, OPC UA DA).

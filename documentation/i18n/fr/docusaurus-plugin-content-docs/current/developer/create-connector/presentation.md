@@ -47,7 +47,7 @@ la classe du connecteur reste centrée sur le cycle de vie et l'orchestration. E
 | Direction             | Tire _depuis_ une source                                     | Pousse _vers_ une destination                     |
 | Déclencheur           | Cron (mode de scan), push d'abonnement, ou requête directe | Extraction _pull_ cadencée par cron depuis un cache de fichiers local |
 | Sortie                | Pousse des lots vers le moteur via `this.addContent(...)`    | Implémente `handleContent(fileStream, metadata)` |
-| État persistant       | `trackedInstant` par item, mis en cache pour des lectures historiques reprenables | Cache par fichier → dossiers d'archive / d'erreurs |
+| État persistant       | `trackedInstant` par élément, mis en cache pour des lectures historiques reprenables | Cache par fichier → dossiers d'archive / d'erreurs |
 
 Les lots South sont écrits dans le cache de fichiers par North du moteur par le moteur lui-même ; chaque North
 puise ensuite dans ce cache à sa propre cadence. Ce découplage signifie qu'une destination défaillante ne bloque

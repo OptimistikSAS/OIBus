@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Translate, { translate } from '@docusaurus/Translate';
 
 // ---------------------------------------------------------------------------
 // Styles (inline, using Infima CSS vars for dark-mode compatibility)
@@ -72,11 +73,20 @@ const resultBanner = type => {
 };
 
 const EXAMPLES = [
-  { pattern: '.*', label: 'All files' },
-  { pattern: '.*\\.txt', label: 'Text files' },
-  { pattern: '.*\\.csv', label: 'CSV files' },
-  { pattern: '.*\\.csv|.*\\.xlsx', label: 'CSV or Excel files' },
-  { pattern: 'data_.*\\.json', label: 'JSON files starting with "data_"' }
+  { pattern: '.*', label: translate({ id: 'components.regexTester.example.allFiles', message: 'All files' }) },
+  { pattern: '.*\\.txt', label: translate({ id: 'components.regexTester.example.textFiles', message: 'Text files' }) },
+  { pattern: '.*\\.csv', label: translate({ id: 'components.regexTester.example.csvFiles', message: 'CSV files' }) },
+  {
+    pattern: '.*\\.csv|.*\\.xlsx',
+    label: translate({ id: 'components.regexTester.example.csvOrExcelFiles', message: 'CSV or Excel files' })
+  },
+  {
+    pattern: 'data_.*\\.json',
+    label: translate(
+      { id: 'components.regexTester.example.jsonFilesStartingWith', message: 'JSON files starting with "{prefix}"' },
+      { prefix: 'data_' }
+    )
+  }
 ];
 
 // ---------------------------------------------------------------------------
@@ -88,7 +98,7 @@ const RegexTester = () => {
 
   const runTest = () => {
     if (!pattern) {
-      setResult({ type: 'error', detail: 'Pattern is empty.' });
+      setResult({ type: 'error', detail: translate({ id: 'components.regexTester.emptyPattern', message: 'Pattern is empty.' }) });
       return;
     }
     try {
@@ -114,7 +124,7 @@ const RegexTester = () => {
       {/* ── Regex Pattern ── */}
       <div style={{ marginBottom: '1rem' }}>
         <label style={fieldLabel}>
-          Regex Pattern <span style={fieldHint}>(JavaScript RegExp)</span>
+          <Translate id="components.regexTester.regexPattern">Regex Pattern</Translate> <span style={fieldHint}>(JavaScript RegExp)</span>
         </label>
         <input
           type="text"
@@ -124,7 +134,7 @@ const RegexTester = () => {
             setResult(null);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="e.g. .*\.csv"
+          placeholder={translate({ id: 'components.regexTester.patternPlaceholder', message: 'e.g. {example}' }, { example: '.*\\.csv' })}
           style={inputBase}
         />
       </div>
@@ -132,7 +142,9 @@ const RegexTester = () => {
       {/* ── Filename + Test button ── */}
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '0' }}>
         <div style={{ flex: 1 }}>
-          <label style={fieldLabel}>Filename to Test</label>
+          <label style={fieldLabel}>
+            <Translate id="components.regexTester.filenameToTest">Filename to Test</Translate>
+          </label>
           <input
             type="text"
             value={filename}
@@ -141,7 +153,10 @@ const RegexTester = () => {
               setResult(null);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="e.g. data.csv"
+            placeholder={translate(
+              { id: 'components.regexTester.filenamePlaceholder', message: 'e.g. {example}' },
+              { example: 'data.csv' }
+            )}
             style={inputBase}
           />
         </div>
@@ -160,7 +175,7 @@ const RegexTester = () => {
             height: '2.25rem'
           }}
         >
-          Test
+          <Translate id="components.regexTester.test">Test</Translate>
         </button>
       </div>
 
@@ -172,14 +187,20 @@ const RegexTester = () => {
           </span>
           <div style={{ fontSize: '0.9rem' }}>
             <strong style={{ color: RESULT_COLORS[result.type]?.label }}>
-              {result.type === 'match' ? 'Matches' : result.type === 'error' ? 'Invalid pattern' : 'No match'}
+              {result.type === 'match'
+                ? translate({ id: 'components.regexTester.matches', message: 'Matches' })
+                : result.type === 'error'
+                  ? translate({ id: 'components.regexTester.invalidPattern', message: 'Invalid pattern' })
+                  : translate({ id: 'components.regexTester.noMatch', message: 'No match' })}
             </strong>
             {result.type === 'match' && (
-              <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>— the filename matches the pattern</span>
+              <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>
+                — <Translate id="components.regexTester.matchesDetail">the filename matches the pattern</Translate>
+              </span>
             )}
             {result.type === 'nomatch' && (
               <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>
-                — the filename does not match the pattern
+                — <Translate id="components.regexTester.noMatchDetail">the filename does not match the pattern</Translate>
               </span>
             )}
             {result.type === 'error' && (
@@ -219,7 +240,7 @@ const RegexTester = () => {
             letterSpacing: '0.05em'
           }}
         >
-          Common Examples
+          <Translate id="components.regexTester.commonExamples">Common Examples</Translate>
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
           {EXAMPLES.map(ex => (

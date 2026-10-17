@@ -6,9 +6,9 @@ OIBus 提供了灵活的选项，可将检索到的数据序列化为 CSV 格式
 
 | 设置     | 描述                                       | 示例值                                                                                                     |
 | ----------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Filename    | 输出文件的名称模式。                    | `data_@ConnectorName_@CurrentDate.csv`                                                                            |
-| Delimiter   | 用于在 CSV 文件中分隔各值的字符 | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
-| Compression | 是否对输出文件启用 gzip 压缩          | 启用/禁用                                                                                                  |
+| 文件名      | 输出文件的名称模式。                    | `data_@ConnectorName_@CurrentDate.csv`                                                                            |
+| 分隔符      | 用于在 CSV 文件中分隔各值的字符 | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
+| 压缩        | 是否对输出文件启用 gzip 压缩          | 启用/禁用                                                                                                  |
 
 :::info 文件名变量
 以下变量可用于文件名模式：
@@ -21,8 +21,8 @@ OIBus 提供了灵活的选项，可将检索到的数据序列化为 CSV 格式
 
 | 设置                | 描述                                                                                 | 示例值           |
 | ---------------------- | ------------------------------------------------------------------------------------------- | ----------------------- |
-| Output datetime format | CSV 中日期时间字段的格式模式（不影响文件名中的 `@CurrentDate`） | `yyyy-MM-dd HH:mm:ss`   |
-| Output timezone        | CSV 中日期时间值所使用的时区                                                | `UTC` 或 `Europe/Paris` |
+| 输出日期时间格式       | CSV 中日期时间字段的格式模式（不影响文件名中的 `@CurrentDate`） | `yyyy-MM-dd HH:mm:ss`   |
+| 输出时区               | CSV 中日期时间值所使用的时区                                                | `UTC` 或 `Europe/Paris` |
 
 :::info 重要说明
 

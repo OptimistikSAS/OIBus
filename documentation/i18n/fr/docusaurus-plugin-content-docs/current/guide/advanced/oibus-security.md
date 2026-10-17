@@ -35,10 +35,10 @@ OIBus utilise cinq bases de données SQLite :
 
 | Base de données  | Contenu                                                                                                                    |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **`oibus.db`**   | Toute la configuration : connecteurs, items, modes de scan, filtres IP, utilisateurs (mots de passe hachés), secrets chiffrés. |
+| **`oibus.db`**   | Toute la configuration : connecteurs, éléments, modes de scan, filtres IP, utilisateurs (mots de passe hachés), secrets chiffrés. |
 | **`crypto.db`**  | Clé et IV AES-256-CBC utilisés pour chiffrer/déchiffrer les secrets des connecteurs.                                          |
 | **`logs.db`**    | Entrées de journal d'exécution. Stockées dans le sous-dossier `logs/`.                                                        |
-| **`metrics.db`** | Métriques d'exécution South/North/history-query, mises à jour à chaque scan et chaque envoi North. Stockées dans le sous-dossier `logs/`. |
+| **`metrics.db`** | Métriques d'exécution South/North/requête d'historique, mises à jour à chaque scan et chaque envoi North. Stockées dans le sous-dossier `logs/`. |
 | **`cache.db`**   | Cache du connecteur South (valeurs en attente de transmission vers les connecteurs North). Stocké dans le sous-dossier `cache/`. |
 
 Sauvegarder à la fois `oibus.db` et `crypto.db` ensemble est nécessaire pour obtenir un instantané complet et restaurable.
@@ -96,7 +96,7 @@ d'être transmis, en utilisant la clé publique RSA d'OIBus (RSA-OAEP, 4096 bits
   la transmission.
 
 La paire de clés RSA est générée lors de l'enregistrement OIAnalytics et peut être renouvelée avec la
-commande à distance **Regenerate cipher keys**. Après le renouvellement, tout secret précédemment saisi via
+commande à distance **Régénérer les clés de chiffrement**. Après le renouvellement, tout secret précédemment saisi via
 OIAnalytics doit être ressaisi car l'ancien texte chiffré ne peut plus être déchiffré.
 
 Séparément, OIBus génère sa propre paire certificat/clé RSA de 4096 bits au démarrage (`private.pem` /

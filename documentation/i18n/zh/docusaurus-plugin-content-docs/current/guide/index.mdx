@@ -19,9 +19,9 @@ OIBus 最初是为支持 **OIAnalytics®** 而开发的，自 2020 年起由 Opt
 
 OIBus 采用模块化架构构建，由三个核心组件组成：
 
-- **South（南向连接器）**：从源系统采集数据。
-- **North（北向连接器）**：缓存数据并将其传输到目标系统。
-- **Engine（引擎）**：管理配置、编排和日志记录。
+- **南向**：从源系统采集数据。
+- **北向**：缓存数据并将其传输到目标系统。
+- **引擎**：管理配置、编排和日志记录。
 
 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
   <div style={{ width: '650px', height: '650px' }}>
@@ -33,7 +33,7 @@ OIBus 采用模块化架构构建，由三个核心组件组成：
 
 :::info
 这种模块化设计通过将复杂性集中在引擎中来简化可扩展性，使得
-[开发和集成](../developer/create-connector/presentation.md) 新的 North 或 South 模块变得更加容易。
+[开发和集成](../developer/create-connector/presentation.md) 新的北向或南向模块变得更加容易。
 :::
 
 ## 高级能力 {#advanced-capabilities}

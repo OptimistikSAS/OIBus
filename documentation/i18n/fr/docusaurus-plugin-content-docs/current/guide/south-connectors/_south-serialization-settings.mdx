@@ -4,11 +4,11 @@ OIBus offre des options flexibles pour sérialiser les données récupérées au
 
 #### Configuration du fichier {#file-configuration}
 
-| Setting     | Description                                       | Example Value                                                                                                     |
-| ----------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Filename    | Modèle de nom pour les fichiers de sortie.                    | `data_@ConnectorName_@CurrentDate.csv`                                                                            |
-| Delimiter   | Caractère utilisé pour séparer les valeurs dans le fichier CSV | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
-| Compression | Active la compression gzip pour les fichiers de sortie          | Enabled/Disabled                                                                                                  |
+| Paramètre      | Description                                                    | Exemple de valeur                                                                                                 |
+| -------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Nom du fichier | Modèle de nom pour les fichiers de sortie.                     | `data_@ConnectorName_@CurrentDate.csv`                                                                            |
+| Délimiteur     | Caractère utilisé pour séparer les valeurs dans le fichier CSV | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
+| Compression    | Active la compression gzip pour les fichiers de sortie         | Activé/Désactivé                                                                                                  |
 
 :::info Variables de nom de fichier
 Les variables suivantes peuvent être utilisées dans les modèles de nom de fichier :
@@ -19,10 +19,10 @@ Les variables suivantes peuvent être utilisées dans les modèles de nom de fic
 
 #### Gestion des données temporelles {#temporal-data-handling}
 
-| Setting                | Description                                                                                 | Example Value           |
+| Paramètre                      | Description                                                                                                     | Exemple de valeur        |
 | ---------------------- | ------------------------------------------------------------------------------------------- | ----------------------- |
-| Output datetime format | Modèle de format pour les champs date/heure dans le CSV (n'affecte pas `@CurrentDate` dans les noms de fichier) | `yyyy-MM-dd HH:mm:ss`   |
-| Output timezone        | Fuseau horaire utilisé pour les valeurs date/heure dans le CSV                                                | `UTC` or `Europe/Paris` |
+| Format de date/heure de sortie | Modèle de format pour les champs date/heure dans le CSV (n'affecte pas `@CurrentDate` dans les noms de fichier) | `yyyy-MM-dd HH:mm:ss`   |
+| Fuseau horaire de sortie       | Fuseau horaire utilisé pour les valeurs date/heure dans le CSV                                                  | `UTC` ou `Europe/Paris`  |
 
 :::info Remarques importantes
 
