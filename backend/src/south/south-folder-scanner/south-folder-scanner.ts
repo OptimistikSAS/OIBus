@@ -331,9 +331,10 @@ export default class SouthFolderScanner
         break;
       }
 
-      // Check size limit (applies across all items in this scan)
+      // Check size limit (applies across all items in this scan). The first file is always retrieved, even when it
+      // exceeds the limit on its own: otherwise it would block the item on every scan
       const filePath = path.resolve(inputFolder, file.filename);
-      if (maxSize > 0 && sizeRetrieved + file.stats.size > maxSize) {
+      if (maxSize > 0 && fileCount > 0 && sizeRetrieved + file.stats.size > maxSize) {
         this.logger.debug(logCtx, `Max size limit (${item.settings.maxSize} MB) reached for item ${item.name}, skipping remaining files`);
         break;
       }
