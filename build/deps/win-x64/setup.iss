@@ -122,6 +122,10 @@ var
   FinalAdminPassword: String;
   FinalPort: String;
 
+  // Other services sharing this (legacy) install folder that were running before the files
+  // were replaced: they had to be stopped too, and are restarted once Setup is done.
+  ServicesToRestart: TStringList;
+
 // --- Getter Functions for [Registry] ---
 
 function GetDataDir(Param: String): String;
@@ -268,6 +272,175 @@ begin
     Names.SaveToFile(GetServiceManifestPath());
   finally
     Names.Free;
+  end;
+end;
+
+// --- Stopping Running Processes ---
+// Files in {app} cannot be replaced or deleted while a process runs them: nssm.exe (the
+// service process itself), oibus-launcher.exe and binaries\oibus.exe. "sc stop" only REQUESTS
+// a stop and returns right away (and nssm needs several seconds to stop the launcher), so we
+// wait until each service is really stopped, then kill whatever still runs from {app} (a
+// launcher started from go.bat, an orphaned oibus.exe...). WMI is used to read service and
+// process states because sc.exe output is localized.
+
+const
+  ServiceStopTimeoutSec = 60;
+  ProcessKillTimeoutSec = 15;
+
+function GetWmi(): Variant;
+var
+  Locator: Variant;
+begin
+  Locator := CreateOleObject('WbemScripting.SWbemLocator');
+  Result := Locator.ConnectServer('.', 'root\CIMV2');
+end;
+
+function WqlQuote(const S: String): String;
+begin
+  Result := S;
+  StringChangeEx(Result, '\', '\\', True);
+  StringChangeEx(Result, '''', '\''', True);
+  Result := '''' + Result + '''';
+end;
+
+function IsUnderFolder(const FilePath, Folder: String): Boolean;
+begin
+  Result := Pos(Lowercase(AddBackslash(Folder)), Lowercase(RemoveQuotes(FilePath))) = 1;
+end;
+
+function ServiceExists(const ServiceName: String): Boolean;
+var
+  ResultCode: Integer;
+begin
+  // sc query exits with 1060 (ERROR_SERVICE_DOES_NOT_EXIST) for an unknown service
+  Result := Exec('sc.exe', 'query "' + ServiceName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
+// State of a service as reported by WMI ('Running', 'Stopped', 'Stop Pending'...), or '' if it does not exist.
+function GetServiceState(Wmi: Variant; const ServiceName: String): String;
+var
+  Services, Service: Variant;
+begin
+  Result := '';
+  Services := Wmi.ExecQuery('SELECT State FROM Win32_Service WHERE Name = ' + WqlQuote(ServiceName));
+  if Services.Count > 0 then
+  begin
+    Service := Services.ItemIndex(0);
+    Result := Service.State;
+  end;
+end;
+
+// Adds to Names every service whose executable (nssm.exe) lives in AppDir: they all lock its files.
+procedure AddServicesInFolder(Wmi: Variant; const AppDir: String; Names: TStringList);
+var
+  Services, Service: Variant;
+  I: Integer;
+  ServiceName: String;
+begin
+  Services := Wmi.ExecQuery('SELECT Name, PathName FROM Win32_Service WHERE PathName LIKE ''%nssm.exe%''');
+  for I := 0 to Services.Count - 1 do
+  begin
+    Service := Services.ItemIndex(I);
+    if not VarIsNull(Service.PathName) then
+      if IsUnderFolder(Service.PathName, AppDir) then
+      begin
+        ServiceName := Service.Name;
+        if Names.IndexOf(ServiceName) = -1 then
+          Names.Add(ServiceName);
+      end;
+  end;
+end;
+
+// Asks the service to stop and waits until it really is. Returns False on timeout.
+function StopServiceAndWait(Wmi: Variant; const ServiceName: String): Boolean;
+var
+  ResultCode, I: Integer;
+  State: String;
+begin
+  Result := True;
+  State := GetServiceState(Wmi, ServiceName);
+  if (State = '') or (State = 'Stopped') then Exit;
+
+  Log('Stopping service "' + ServiceName + '" (state: ' + State + ')');
+  Exec('sc.exe', 'stop "' + ServiceName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  for I := 1 to ServiceStopTimeoutSec * 2 do
+  begin
+    Sleep(500);
+    State := GetServiceState(Wmi, ServiceName);
+    if (State = '') or (State = 'Stopped') then Exit;
+  end;
+  Log('Service "' + ServiceName + '" did not stop in ' + IntToStr(ServiceStopTimeoutSec) + 's (state: ' + State + ')');
+  Result := False;
+end;
+
+// Counts the ImageName processes running from AppDir, killing them (with their children) if Kill is set.
+function ProcessesInFolder(Wmi: Variant; const ImageName, AppDir: String; Kill: Boolean): Integer;
+var
+  Processes, Process: Variant;
+  I, Pid, ResultCode: Integer;
+begin
+  Result := 0;
+  Processes := Wmi.ExecQuery('SELECT ProcessId, ExecutablePath FROM Win32_Process WHERE Name = ' + WqlQuote(ImageName));
+  for I := 0 to Processes.Count - 1 do
+  begin
+    Process := Processes.ItemIndex(I);
+    if not VarIsNull(Process.ExecutablePath) then
+      if IsUnderFolder(Process.ExecutablePath, AppDir) then
+      begin
+        Result := Result + 1;
+        if Kill then
+        begin
+          Pid := Process.ProcessId;
+          Log('Killing ' + ImageName + ' (PID ' + IntToStr(Pid) + ')');
+          Exec('taskkill.exe', '/F /T /PID ' + IntToStr(Pid), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        end;
+      end;
+  end;
+end;
+
+// Kills every OIBus process still running from AppDir. Top of the tree first: nssm restarts a
+// dead launcher, and the launcher restarts a dead oibus.exe. Returns False if some survive.
+function KillProcessesInFolder(Wmi: Variant; const AppDir: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  ProcessesInFolder(Wmi, 'nssm.exe', AppDir, True);
+  ProcessesInFolder(Wmi, 'oibus-launcher.exe', AppDir, True);
+  ProcessesInFolder(Wmi, 'oibus.exe', AppDir, True);
+  for I := 1 to ProcessKillTimeoutSec * 2 do
+  begin
+    if ProcessesInFolder(Wmi, 'nssm.exe', AppDir, False)
+       + ProcessesInFolder(Wmi, 'oibus-launcher.exe', AppDir, False)
+       + ProcessesInFolder(Wmi, 'oibus.exe', AppDir, False) = 0 then Exit;
+    Sleep(500);
+  end;
+  Result := False;
+end;
+
+// Stops the services listed in Names plus every service running from AppDir (added to Names),
+// then kills any OIBus process left in AppDir. The services that were running are added to
+// WasRunning. Returns '' on success, an error message otherwise.
+function StopOIBusInFolder(const AppDir: String; Names, WasRunning: TStringList): String;
+var
+  Wmi: Variant;
+  I: Integer;
+begin
+  Result := '';
+  try
+    Wmi := GetWmi();
+    AddServicesInFolder(Wmi, AppDir, Names);
+    for I := 0 to Names.Count - 1 do
+    begin
+      if GetServiceState(Wmi, Names[I]) = 'Running' then
+        WasRunning.Add(Names[I]);
+      // On timeout, the service process (nssm.exe) is killed below with the rest
+      StopServiceAndWait(Wmi, Names[I]);
+    end;
+    if not KillProcessesInFolder(Wmi, AppDir) then
+      Result := 'Some OIBus processes are still running from "' + AppDir + '".';
+  except
+    Result := 'Could not stop OIBus: ' + GetExceptionMessage;
   end;
 end;
 
@@ -553,13 +726,14 @@ begin
 
   SaveStringToFile(LogPath, '{#MyDateTime}' + #13#10, True);
 
-  // 1. Stop (Safety check)
-  ExecCmd(NssmPath, 'stop "' + FinalServiceName + '"', AppDir);
+  // 1. Install Service with Dynamic Name. On upgrade the service already exists (stopped in
+  // PrepareToInstall) and is only reconfigured below: deleting and recreating it fails when
+  // anything holds a handle on it (e.g. an open services.msc), as it then stays "marked for
+  // deletion" until that handle is closed.
+  if not ServiceExists(FinalServiceName) then
+    if not ExecCmd(NssmPath, 'install "' + FinalServiceName + '" "' + LauncherPath + '" "--config ""' + FinalDataDir + '"""', AppDir) then Exit;
 
-  // 2. Install Service with Dynamic Name
-  if not ExecCmd(NssmPath, 'install "' + FinalServiceName + '" "' + LauncherPath + '" "--config ""' + FinalDataDir + '"""', AppDir) then Exit;
-
-  // 3. Configure Service
+  // 2. Configure Service
   ExecCmd(NssmPath, 'set "' + FinalServiceName + '" DisplayName "' + FinalServiceName + ' (OIBus Collector)"', AppDir);
   if not ExecCmd(NssmPath, 'set "' + FinalServiceName + '" Application "' + LauncherPath + '"', AppDir) then Exit;
   if not ExecCmd(NssmPath, 'set "' + FinalServiceName + '" AppParameters "--config ""' + FinalDataDir + '"""', AppDir) then Exit;
@@ -567,7 +741,7 @@ begin
 
   ExecCmd(NssmPath, 'set "' + FinalServiceName + '" AppNoConsole 1', AppDir);
 
-  // 4. Start Service
+  // 3. Start Service
   if not ExecCmd(NssmPath, 'start "' + FinalServiceName + '"', AppDir) then
   begin
      MsgBox('Warning: The OIBus service failed to start automatically. Please try starting it from Windows Services.', mbError, MB_OK);
@@ -630,39 +804,40 @@ end;
 
 // --- Step Change Events ---
 
-procedure CurStepChanged(CurStep: TSetupStep);
+// Runs before Setup copies any file (and before its own files-in-use check): every OIBus
+// process running from {app} must be gone by then, or its files cannot be replaced.
+function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
-  LegacySvcName: String;
-  LegacySvcNameAnsi: AnsiString;
+  Names, WasRunning: TStringList;
+  I: Integer;
 begin
-  if CurStep = ssInstall then
-  begin
-     // Initialize default
-     LegacySvcName := 'OIBus';
+  if ServicesToRestart = nil then
+    ServicesToRestart := TStringList.Create;
+  ServicesToRestart.Clear;
 
-     // Try to load existing name if available
-     if FileExists(ExpandConstant('{app}\service.name')) then
-     begin
-        // Load into AnsiString buffer first
-        if LoadStringFromFile(ExpandConstant('{app}\service.name'), LegacySvcNameAnsi) then
-        begin
-            LegacySvcName := String(LegacySvcNameAnsi);
-        end;
-     end;
-
-     // The binaries folder is shared across instances (multiple named services can point
-     // at it), so the previously recorded service name may belong to a DIFFERENT, still
-     // wanted instance. Only stop/delete it when it's actually the same service being
-     // reinstalled/renamed under the name we are about to (re)create; never touch another
-     // instance's service just because it happens to share this install folder.
-     if CompareText(LegacySvcName, FinalServiceName) = 0 then
-     begin
-       ExecCmd('sc.exe', 'stop "' + LegacySvcName + '"', '');
-       Sleep(1000);
-       ExecCmd('sc.exe', 'delete "' + LegacySvcName + '"', '');
-     end;
+  Names := TStringList.Create;
+  WasRunning := TStringList.Create;
+  try
+    // The service being installed, wherever it currently runs from, plus (added by
+    // StopOIBusInFolder) any other instance still sharing this install folder.
+    Names.Add(FinalServiceName);
+    Result := StopOIBusInFolder(ExpandConstant('{app}'), Names, WasRunning);
+    for I := 0 to WasRunning.Count - 1 do
+      if CompareText(WasRunning[I], FinalServiceName) <> 0 then
+        ServicesToRestart.Add(WasRunning[I]);
+  finally
+    Names.Free;
+    WasRunning.Free;
   end;
 
+  if Result <> '' then
+    Result := Result + #13#10#13#10 + 'Stop the OIBus services and processes running from this folder, then run Setup again.';
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  I, ResultCode: Integer;
+begin
   if CurStep = ssPostInstall then
   begin
     // Record this service name in the shared manifest for the Uninstaller. The binaries
@@ -687,6 +862,11 @@ begin
       else if not InstallProgram() then
         MsgBox('ERROR : Installation has failed', mbCriticalError, MB_OK);
     end;
+
+    // Other instances sharing this (legacy) install folder had to be stopped as well
+    if ServicesToRestart <> nil then
+      for I := 0 to ServicesToRestart.Count - 1 do
+        Exec('sc.exe', 'start "' + ServicesToRestart[I] + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 end;
 
@@ -722,24 +902,27 @@ end;
 
 procedure CurUninstallStepChanged(RunStep: TUninstallStep);
 var
-  DirToDelete, SvcName: string;
-  Names: TStringList;
+  DirToDelete, SvcName, StopError: string;
+  Names, WasRunning: TStringList;
   I: Integer;
 begin
   if RunStep = usUninstall then
   begin
     Names := TStringList.Create;
+    WasRunning := TStringList.Create;
     try
       LoadServiceManifest(Names);
+
+      // 1. Stop every instance first: neither the program files nor the data folders can be
+      // deleted while OIBus still runs.
+      StopError := StopOIBusInFolder(ExpandConstant('{app}'), Names, WasRunning);
+      if StopError <> '' then
+        MsgBox(StopError + #13#10 + 'Some files may not be removed.', mbError, MB_OK);
 
       for I := 0 to Names.Count - 1 do
       begin
         SvcName := Trim(Names[I]);
         if Length(SvcName) = 0 then Continue;
-
-        // 1. Stop Service
-        ExecCmd('sc.exe', 'stop "' + SvcName + '"', '');
-        Sleep(1000);
 
         // 2. Data Removal
         if MsgBox('Do you wish to remove all data for service "' + SvcName + '" (cache, logs...)?', mbInformation, MB_YESNO) = IDYES then
@@ -757,6 +940,7 @@ begin
       end;
     finally
       Names.Free;
+      WasRunning.Free;
     end;
   end;
 end;
