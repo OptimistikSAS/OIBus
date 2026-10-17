@@ -773,6 +773,7 @@ describe('SouthSFTP', () => {
       });
 
       const item = configRecursive.items[0];
+      utilsExports.checkAge.mock.resetCalls();
       const result = await southRecursive.listFiles(item, []);
 
       const listCalls = mockSftpClient.list.mock.calls;
@@ -780,6 +781,9 @@ describe('SouthSFTP', () => {
       assert.ok(listCalls.some(c => c.arguments[0] === 'input/subdir'));
       assert.strictEqual(result.length, 1);
       assert.strictEqual(result[0].name, 'subdir/file.csv');
+      // The preserved files are stored by relative path: the age check must look them up the same way
+      assert.ok(utilsExports.checkAge.mock.calls.some(c => (c.arguments as Array<unknown>)[1] === 'subdir/file.csv'));
+      assert.ok(!utilsExports.checkAge.mock.calls.some(c => (c.arguments as Array<unknown>)[1] === 'file.csv'));
     });
 
     it('should update modifiedTime when file already in filesPreserved', async () => {
