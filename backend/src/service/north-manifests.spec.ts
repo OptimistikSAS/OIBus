@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import { findInvalidSelectDefaults } from '../tests/utils/manifest-test-utils';
 import { northManifestList } from './north-manifests';
 
 describe('northManifestList', () => {
@@ -47,5 +48,12 @@ describe('northManifestList', () => {
       assert.ok(Array.isArray(manifest.types));
       assert.ok(manifest.types.length > 0);
     }
+  });
+
+  it('every string-select default value is one of its selectable values', () => {
+    assert.deepStrictEqual(
+      northManifestList.flatMap(manifest => findInvalidSelectDefaults(manifest, manifest.id)),
+      []
+    );
   });
 });
