@@ -5,28 +5,28 @@ Transfer Protocol)**.
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Paramètre | Description                                     | Exemple de valeur |
-| ----------- | -------------------------------------------------- | -------------------- |
-| **Hôte**    | Adresse IP ou nom d'hôte du serveur SFTP.          | `192.168.1.100`      |
-| **Port**    | Port de connexion (par défaut : `22`).             | `22`                  |
+| Paramètre | Description                               | Exemple de valeur |
+| --------- | ----------------------------------------- | ----------------- |
+| **Hôte**  | Adresse IP ou nom d'hôte du serveur SFTP. | `192.168.1.100`   |
+| **Port**  | Port de connexion (par défaut : `22`).    | `22`              |
 
 ### Authentification {#authentication}
 
-| Paramètre           | Description                                                                    | Exemple de valeur                      |
-| --------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------ |
-| **Authentification**  | Méthode d'authentification.                                                          | `Username/Password`, `Private key`         |
-| **Nom d'utilisateur** | Nom d'utilisateur pour le serveur SFTP.                                              | `sftp_user`                                |
-| **Mot de passe**      | Mot de passe. Requis pour l'authentification Username/Password.                      | `••••••••`                                 |
-| **Clé privée**        | Chemin vers le fichier de clé privée (format PEM). Requis pour l'authentification Private key. | `/path/to/key.pem`                |
-| **Phrase secrète**    | Phrase secrète pour la clé privée (si protégée).                                     | `••••••••`                                 |
+| Paramètre             | Description                                                                                       | Exemple de valeur                              |
+| --------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **Authentification**  | Méthode d'authentification.                                                                       | `Nom d'utilisateur/Mot de passe`, `Clé privée` |
+| **Nom d'utilisateur** | Nom d'utilisateur pour le serveur SFTP.                                                           | `sftp_user`                                    |
+| **Mot de passe**      | Mot de passe. Requis pour l'authentification par nom d'utilisateur/mot de passe.                  | `••••••••`                                     |
+| **Clé privée**        | Chemin vers le fichier de clé privée (format PEM). Requis pour l'authentification par clé privée. | `/path/to/key.pem`                             |
+| **Phrase secrète**    | Phrase secrète pour la clé privée (si protégée).                                                  | `••••••••`                                     |
 
 ### Configuration des fichiers {#file-configuration}
 
-| Paramètre         | Description                                                                                              | Exemple de valeur |
-| -------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------- |
-| **Dossier distant**  | Répertoire sur le serveur SFTP où les fichiers seront stockés.                                                  | `/data/oibus`         |
-| **Préfixe**          | Texte à ajouter au début du nom de fichier. Prend en charge les variables internes comme `@ConnectorName`.      | `@ConnectorName-`    |
-| **Suffixe**          | Texte à ajouter à la fin du nom de fichier (avant l'extension). Prend en charge les variables internes comme `@CurrentDate`. | `-@CurrentDate`      |
+| Paramètre           | Description                                                                                                                  | Exemple de valeur |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Dossier distant** | Répertoire sur le serveur SFTP où les fichiers seront stockés.                                                               | `/data/oibus`     |
+| **Préfixe**         | Texte à ajouter au début du nom de fichier. Prend en charge les variables internes comme `@ConnectorName`.                   | `@ConnectorName-` |
+| **Suffixe**         | Texte à ajouter à la fin du nom de fichier (avant l'extension). Prend en charge les variables internes comme `@CurrentDate`. | `-@CurrentDate`   |
 
 :::tip Noms de fichiers dynamiques
 Utilisez des variables internes pour créer des noms de fichiers dynamiques :

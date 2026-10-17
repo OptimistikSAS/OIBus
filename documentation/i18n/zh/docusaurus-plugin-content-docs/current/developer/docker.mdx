@@ -25,7 +25,7 @@ docker pull ghcr.io/optimistiksas/oibus:latest
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `latest` | 最新稳定版本。每次发布稳定版时由 [`new_release.yml`](./release.mdx) 自动更新。                                                                                    |
 | `beta`   | 最新预发布版本。用于在测试环境中验证即将推出的功能。                                                                                                                |
-| `vX.Y.Z` | 固定到特定版本（例如 `v3.8.8`）。推荐用于生产环境，以便升级成为运维人员的明确操作。 {/* <!-- x-release-please-version --> */} |
+| `vX.Y.Z` | 固定到特定版本（例如 `v3.9.5`）。推荐用于生产环境，以便升级成为运维人员的明确操作。 {/* <!-- x-release-please-version --> */} |
 
 该镜像面向 `linux/amd64` 和 `linux/arm64` 构建；执行 `pull` 时 Docker 会自动为你的主机选择正确的变体。完整的发布流程通过
 [`.github/workflows/docker.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/docker.yml) 运行。
@@ -75,7 +75,7 @@ FROM ubuntu
 
 ARG TARGETARCH                         # set automatically by `docker buildx` / `--platform`
 ARG ARCH=${TARGETARCH/amd64/x64}        # GitHub release filenames use x64, not amd64
-ARG VERSION="v3.8.8"                    # overridden by the release workflow
+ARG VERSION="v3.9.5"                    # overridden by the release workflow
 
 RUN apt update -y && apt install -y curl unzip
 
@@ -99,7 +99,7 @@ CMD ["./oibus-launcher", "--config", "./OIBusData", "--ignoreIpFilters", "true",
 - **`--ignoreIpFilters true`** 被固化在默认的 `CMD` 中：容器假定你已经在网络层（Docker 网络、反向代理等）隔离了访问。如果你希望应用内的
   IP 过滤生效，请覆盖 `CMD` 或在不带该参数的情况下重新构建。
 - **`--ignoreRemoteUpdate true`** 禁用了 launcher 的自动更新路径：在容器中，更新是通过用更新的标签替换镜像来完成的，而不是修改正在运行的容器。
-- Dockerfile 中默认的 `VERSION="v3.8.8"` 仅是本地构建的占位符。 {/* <!-- x-release-please-version --> */}
+- Dockerfile 中默认的 `VERSION="v3.9.5"` 仅是本地构建的占位符。 {/* <!-- x-release-please-version --> */}
   发布流水线总是会传入 `--build-arg VERSION=<tag>` 来覆盖它。
 
 ### 构建参数 {#build-arguments}
@@ -107,7 +107,7 @@ CMD ["./oibus-launcher", "--config", "./OIBusData", "--ignoreIpFilters", "true",
 | 参数         | 如何设置                                     | 用途                                                                                                                   |
 | ------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `TARGETARCH` | 由 `docker buildx` 根据 `--platform` 设置       | 告诉 Dockerfile 应该获取哪个架构。不要手动传入。                                                                          |
-| `VERSION`    | `--build-arg VERSION=...`（默认 `v3.8.8`）      | 从哪个 GitHub Release 拉取二进制文件。必须匹配一个已存在的发布标签。 {/* <!-- x-release-please-version --> */}           |
+| `VERSION`    | `--build-arg VERSION=...`（默认 `v3.9.5`）      | 从哪个 GitHub Release 拉取二进制文件。必须匹配一个已存在的发布标签。 {/* <!-- x-release-please-version --> */}           |
 
 ## 🛠 构建你自己的镜像 {#-building-your-own-image}
 
@@ -144,7 +144,7 @@ docker buildx build --platform linux/amd64 -t oibus-local:amd64 .
 {/* x-release-please-start-version */}
 
 ```bash
-docker build -t oibus-local --build-arg VERSION="v3.8.8" .
+docker build -t oibus-local --build-arg VERSION="v3.9.5" .
 ```
 
 {/* x-release-please-end */}

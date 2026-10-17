@@ -41,12 +41,12 @@ Utilisez cette configuration si TwinCAT est installé sur une machine distante.
 | Port                 | Point de terminaison de communication de l'automate.                                         | `851`                |
 | Adresse du routeur   | Adresse IP ou nom de domaine du routeur AMS.                                                 | `192.168.1.100`      |
 | Port TCP du routeur  | Port utilisé par le routeur AMS pour la communication.                                       | `48898`              |
-| Net ID AMS           | Identifiant client pour se connecter au runtime TwinCAT.                                     | `192.168.1.50.1.1`   |
+| AMS Net ID           | Identifiant client pour se connecter au runtime TwinCAT.                                     | `192.168.1.50.1.1`   |
 | Port client ADS      | (Optionnel) Port utilisé par le client. S'il est laissé vide, le serveur AMS attribue un port aléatoire. | `1200`     |
 
 :::caution Routes statiques
 Pour activer la communication, configurez des **routes statiques** à l'aide de l'outil _TwinCAT Static Routes_. Le
-**Net ID AMS** spécifié dans l'outil doit correspondre à celui de la configuration OIBus.
+**AMS Net ID** spécifié dans l'outil doit correspondre à celui de la configuration OIBus.
 :::
 
 <div style={{ textAlign: 'center' }}>![Outil TwinCAT Static Routes](@site/static/img/guide/south/ads/installation-ads-distant.png)</div>
@@ -64,7 +64,7 @@ simultanément, utilisez un serveur AMS local.
 
 | Paramètre           | Description                                                                                                                                     | Exemple de valeur |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| Intervalle de nouvel essai | Temps d'attente (en millisecondes) avant de retenter la connexion.                                                                          | `10000`             |
+| Intervalle de nouvelle tentative | Temps d'attente (en millisecondes) avant de retenter la connexion.                                                                          | `10000`             |
 | Nom de l'automate    | Préfixe ajouté à chaque nom d'élément (par exemple, `PLC001.MyVariable.Value`). Utile pour distinguer les données de plusieurs automates dans les caches ou exports North. | `PLC001.` |
 | Valeur d'énumération | Choisissez de sérialiser les énumérations sous forme d'entiers ou de texte.                                                                     | `text`              |
 | Valeur booléenne     | Choisissez de sérialiser les booléens sous forme d'entiers ou de texte.                                                                          | `integer`           |

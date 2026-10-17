@@ -17,7 +17,7 @@ BACnet/IP, communiquant en UDP, à l'aide de la bibliothèque
 
 | Paramètre                  | Description                                                                                                                     | Exemple de valeur  |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| **Port**                     | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard. Les connecteurs sur le même port et la même **Interface locale** partagent un socket, pour qu'un test ou une **Exploration** avec des paramètres non enregistrés reçoive ses réponses pendant que le connecteur tourne. | `47808`              |
+| **Port**                     | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard. Les connecteurs sur le même port et la même **Interface locale** partagent un socket, pour qu'un test ou un **Explorer** avec des paramètres non enregistrés reçoive ses réponses pendant que le connecteur tourne. | `47808`              |
 | **Délai d'attente APDU**     | Temps maximal, en millisecondes, à attendre la réponse d'un appareil à une requête avant de la considérer comme échouée.       | `6000`               |
 | **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue). | `10000` |
 | **Découverte**               | Comment **Tester les paramètres** et le niveau racine d'**Explorer** trouvent les appareils : **Diffusion Who-Is** liste chaque appareil qui répond à un `Who-Is` diffusé ; **Appareil cible (unicast)** va directement à un appareil, sans aucun `Who-Is` ; **Routeur (unicast)** envoie le `Who-Is` à un seul routeur BACnet, qui le relaie vers les réseaux situés derrière lui. | `Diffusion Who-Is` |
@@ -72,16 +72,16 @@ découverte et le COV fonctionnent toujours. Windows remet les diffusions à un 
 
 ### Interrogation et abonnements COV {#polling-and-cov-subscriptions}
 
-Le **mode de scrutation** de chaque élément détermine la façon dont il est collecté, exactement comme pour tout
+Le **mode de scan** de chaque élément détermine la façon dont il est collecté, exactement comme pour tout
 autre connecteur South :
 
-- Un mode de scrutation classique (par exemple `Toutes les 1 min`) **interroge** l'élément — OIBus envoie une
-  requête `ReadProperty` ou `ReadPropertyMultiple` à chaque déclenchement du mode de scrutation.
-- Le mode de scrutation réservé **Subscription** bascule l'élément en **Change of Value (COV)** — OIBus
+- Un mode de scan classique (par exemple `Every 1 min`) **interroge** l'élément — OIBus envoie une
+  requête `ReadProperty` ou `ReadPropertyMultiple` à chaque déclenchement du mode de scan.
+- Le mode de scan réservé **Subscription** bascule l'élément en **Change of Value (COV)** — OIBus
   s'abonne une seule fois et l'appareil transmet une nouvelle valeur dès qu'elle change, au lieu d'être
   interrogé.
 
-Les éléments dus au même cycle de scrutation sont regroupés par appareil physique et lus ensemble via une
+Les éléments dus au même cycle de scan sont regroupés par appareil physique et lus ensemble via une
 seule requête `ReadPropertyMultiple` par lot, plutôt qu'une requête par point. Un appareil qui refuse
 `ReadPropertyMultiple` (de nombreux petits contrôleurs ne l'implémentent pas) est lu propriété par propriété avec
 `ReadProperty`. Lorsqu'un appareil répond par une erreur pour une propriété (objet ou propriété inconnu), seul
@@ -100,9 +100,9 @@ debug, et une réussite après des échecs est de nouveau enregistrée. Les appa
 d'abonnements COV : OIBus annule donc ses abonnements à l'arrêt du connecteur, et renouvelle les mêmes
 abonnements (plutôt que d'en ajouter de nouveaux) lorsqu'il se reconnecte après une panne réseau.
 
-### Régulation des données {#data-throttling}
+### Limitation des données {#data-throttling}
 
-S'applique aux éléments sur le mode de scrutation **Subscription** — les notifications COV entrantes sont
+S'applique aux éléments sur le mode de scan **Subscription** — les notifications COV entrantes sont
 mises en tampon et transmises aux caches North par lots plutôt qu'une par une.
 
 | Paramètre                             | Description                                                                          | Exemple de valeur |
@@ -164,7 +164,7 @@ Chaque élément cible une propriété d'objet BACnet sur un appareil.
 `Entrée analogique`, `Sortie analogique`, `Valeur analogique`, `Entrée binaire`, `Sortie binaire`,
 `Valeur binaire`, `Entrée multi-état`, `Sortie multi-état`, `Valeur multi-état`, `Accumulateur`,
 `Convertisseur d'impulsions`, `Boucle de régulation`, `Valeur entière`, `Valeur entière positive`,
-`Grande valeur analogique`, `Valeur chaîne de caractères` : objets lus une propriété à la fois, par scrutation
+`Grande valeur analogique`, `Valeur chaîne de caractères` : objets lus une propriété à la fois, par interrogation
 ou COV.
 
 `Journal de tendance` : l'élément collecte les enregistrements du journal — voir
@@ -184,11 +184,11 @@ connecteur.
 overridden, out-of-service : `0100` signifie que l'objet est en défaut. `Fiabilité` et `Unités` sont envoyés
 sous forme de leur numéro d'énumération BACnet.
 
-Pour un élément sur le mode de scrutation **Subscription**, `Valeur actuelle` et `Indicateurs d'état` sont
+Pour un élément sur le mode de scan **Subscription**, `Valeur actuelle` et `Indicateurs d'état` sont
 souscrits avec le service standard `SubscribeCOV`, pris en charge par tout appareil compatible COV. Toute autre
 propriété utilise `SubscribeCOVProperty`, un service optionnel que de nombreux appareils n'implémentent pas :
 lorsqu'un appareil le refuse, OIBus enregistre un avertissement suggérant d'interroger l'élément avec un mode
-de scrutation classique. Ces abonnements à une propriété n'expirent jamais sur l'appareil ; OIBus les renouvelle
+de scan classique. Ces abonnements à une propriété n'expirent jamais sur l'appareil ; OIBus les renouvelle
 tout de même au même rythme que les autres abonnements COV, et les annule lorsque l'élément est supprimé ou que
 le connecteur s'arrête.
 
@@ -209,10 +209,10 @@ Un objet **Journal de tendance** (trend log) enregistre les valeurs d'un autre o
 d'objet** est `Journal de tendance` collecte ces enregistrements au lieu de lire une valeur courante : OIBus lit
 le tampon du journal (`ReadRange`) et envoie chaque enregistrement avec l'heure à laquelle il a été enregistré.
 
-- Avec un mode de scrutation classique, chaque exécution collecte les enregistrements faits depuis la
-  précédente, comme pour tout élément historique : l'**Intervalle de lecture max**, le **Délai de lecture** et
+- Avec un mode de scan classique, chaque exécution collecte les enregistrements faits depuis la
+  précédente, comme pour tout élément historique : l'**Intervalle de lecture maximal**, le **Délai de lecture** et
   les décalages temporels de l'élément s'appliquent.
-- Dans une [requête d'historique](../history-queries.md), les journaux de tendance d'un South BACnet
+- Dans une [requête d'historique](../history-queries.md), les journaux de tendance d'un connecteur South BACnet
   complètent la plage demandée, tant que l'appareil conserve ces enregistrements — un tampon de journal a une
   taille fixe, et les enregistrements les plus anciens sont supprimés en premier.
 - Un élément journal de tendance ne peut pas utiliser le mode **Subscription** : il n'y enregistre qu'un
@@ -254,7 +254,7 @@ autre sous-réseau. La découverte **Appareil cible (unicast)** n'atteint pas le
 La bibliothèque BACnet utilisée par OIBus (`@bacnet-js/client` 3.3.2) envoie les demandes d'abonnement COV, et
 les requêtes `ReadRange` qui lisent les journaux de tendance, avec un nombre de sauts (hop count) de `0`, que
 les routeurs rejettent. C'est corrigé dans la bibliothèque mais pas encore publié : en attendant qu'OIBus
-intègre cette mise à jour, utilisez un mode de scrutation classique pour les éléments des appareils routés —
+intègre cette mise à jour, utilisez un mode de scan classique pour les éléments des appareils routés —
 en mode **Subscription**, ils ne font qu'enregistrer un avertissement — et les journaux de tendance des
 appareils routés ne peuvent pas être lus.
 :::

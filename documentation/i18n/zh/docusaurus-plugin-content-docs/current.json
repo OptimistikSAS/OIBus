@@ -20,19 +20,19 @@
     "description": "The generated-index page description for category 'Engine' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.category.North connectors": {
-    "message": "North 连接器",
+    "message": "北向连接器",
     "description": "The label for category 'North connectors' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.category.North connectors.link.generated-index.description": {
-    "message": "了解如何使用和配置 North 连接器。",
+    "message": "了解如何使用和配置北向连接器。",
     "description": "The generated-index page description for category 'North connectors' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.category.South connectors": {
-    "message": "South 连接器",
+    "message": "南向连接器",
     "description": "The label for category 'South connectors' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.category.South connectors.link.generated-index.description": {
-    "message": "了解如何使用和配置 South 连接器。",
+    "message": "了解如何使用和配置南向连接器。",
     "description": "The generated-index page description for category 'South connectors' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.category.Advanced": {
@@ -44,11 +44,11 @@
     "description": "The generated-index page description for category 'Advanced' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.category.OIBus Agent": {
-    "message": "OIBus 代理",
+    "message": "OIBus Agent",
     "description": "The label for category 'OIBus Agent' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.category.OIBus Agent.link.generated-index.description": {
-    "message": "了解如何安装 OIBus 代理并与其通信。",
+    "message": "了解如何安装 OIBus Agent 并与其通信。",
     "description": "The generated-index page description for category 'OIBus Agent' in sidebar 'guideSidebar'"
   },
   "sidebar.developerSidebar.category.Create a connector": {
