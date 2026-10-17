@@ -26,6 +26,7 @@ import SouthRest from '../south/south-rest/south-rest';
 import SouthS7 from '../south/south-s7/south-s7';
 import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
+import { findInvalidSelectDefaults } from '../tests/utils/manifest-test-utils';
 import { southManifestList } from './south-manifests';
 
 /**
@@ -165,5 +166,12 @@ describe('southManifestList', () => {
       assert.ok(manifest.items, `manifest '${manifest.id}' should have an items schema`);
       assert.equal(typeof manifest.category, 'string');
     }
+  });
+
+  it('every string-select default value is one of its selectable values', () => {
+    assert.deepStrictEqual(
+      southManifestList.flatMap(manifest => findInvalidSelectDefaults(manifest, manifest.id)),
+      []
+    );
   });
 });
