@@ -497,6 +497,22 @@ describe('SouthRestAPI connector', () => {
     assert.strictEqual(result.maxInstant, null);
   });
 
+  it('should keep the path of the host in the request URL', async () => {
+    const config = createConfiguration();
+    config.settings.host = 'https://api.example.com/base/';
+    south = new SouthRest(config, addContentCallback, southCacheRepository, 'cacheFolder');
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, 'OK'));
+
+    await south.queryData(createItem({ endpoint: '/data' }), testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+    await south.testConnection();
+
+    const urls = httpRequestExports.HTTPRequest.mock.calls.map(call => (call.arguments[0] as URL).href);
+    assert.deepStrictEqual(urls, [
+      'https://api.example.com/base/data',
+      `https://api.example.com/base/${config.settings.test.endpoint.replace(/^\/+/, '')}`
+    ]);
+  });
+
   it('should parse JSON string response manually if content-type is missing/text', async () => {
     const item = createItem();
     const jsonString = '{"manual": "parse"}';
@@ -506,7 +522,8 @@ describe('SouthRestAPI connector', () => {
     );
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    assert.deepStrictEqual(result.content, { manual: 'parse' });
+    // The raw text is kept: the content is written as is into the file
+    assert.strictEqual(result.content, jsonString);
     assert.ok((result.filename as string).includes('.json'));
   });
 
