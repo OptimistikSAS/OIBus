@@ -10,6 +10,7 @@ import {
   DataValue,
   InMemoryCertificateStore,
   OPCUAClient,
+  ReadProcessedDetails,
   TimestampsToReturn,
   UserTokenType,
   Variant
@@ -344,6 +345,7 @@ describe('Service utils OPCUA', () => {
       const result = getHistoryReadRequest(startTime, endTime, 'average', '10s', nodesToRead);
       assert.strictEqual(result.constructor.name, 'HistoryReadRequest');
       assert.strictEqual(result.historyReadDetails!.constructor.name, 'ReadProcessedDetails');
+      assert.strictEqual((result.historyReadDetails as ReadProcessedDetails).processingInterval, 10000);
       assert.strictEqual(result.nodesToRead!.length, nodesToRead.length);
       assert.strictEqual(result.timestampsToReturn, TimestampsToReturn.Both);
       assert.strictEqual(result.releaseContinuationPoints, false);
@@ -380,23 +382,23 @@ describe('Service utils OPCUA', () => {
   });
 
   describe('getResamplingValue', () => {
-    it('should return 1000 for "second"', () => {
-      assert.strictEqual(getResamplingValue('second'), 1000);
+    it('should return 1000 for "1s"', () => {
+      assert.strictEqual(getResamplingValue('1s'), 1000);
     });
-    it('should return 10000 for "10Seconds"', () => {
-      assert.strictEqual(getResamplingValue('10Seconds'), 10000);
+    it('should return 10000 for "10s"', () => {
+      assert.strictEqual(getResamplingValue('10s'), 10000);
     });
-    it('should return 30000 for "30Seconds"', () => {
-      assert.strictEqual(getResamplingValue('30Seconds'), 30000);
+    it('should return 30000 for "30s"', () => {
+      assert.strictEqual(getResamplingValue('30s'), 30000);
     });
-    it('should return 60000 for "minute"', () => {
-      assert.strictEqual(getResamplingValue('minute'), 60000);
+    it('should return 60000 for "1min"', () => {
+      assert.strictEqual(getResamplingValue('1min'), 60000);
     });
-    it('should return 3600000 for "hour"', () => {
-      assert.strictEqual(getResamplingValue('hour'), 3600000);
+    it('should return 3600000 for "1h"', () => {
+      assert.strictEqual(getResamplingValue('1h'), 3600000);
     });
-    it('should return 86400000 for "day"', () => {
-      assert.strictEqual(getResamplingValue('day'), 86400000);
+    it('should return 86400000 for "1d"', () => {
+      assert.strictEqual(getResamplingValue('1d'), 86400000);
     });
     it('should return undefined for "none"', () => {
       assert.strictEqual(getResamplingValue('none'), undefined);
