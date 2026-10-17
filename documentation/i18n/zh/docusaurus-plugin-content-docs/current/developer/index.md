@@ -27,7 +27,7 @@ OIBus 的源代码托管在 GitHub 上，地址是
 [github.com/OptimistikSAS/OIBus](https://github.com/OptimistikSAS/OIBus)。您将使用 **Git**
 将其克隆到本地，并通过 Pull Request 分享您的工作成果。
 
-:::tip New to Git?
+:::tip Git 新手？
 运行一次 [GitHub 的“配置 Git”指南](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git)
 来安装并配置它。添加一个
 [SSH 密钥](https://docs.github.com/en/authentication/connecting-to-github-with-ssh) 以使用下面的
@@ -116,7 +116,7 @@ npm install
 npm start  # Builds and watches for changes
 ```
 
-:::caution Frontend Note
+:::caution 前端说明
 前端由后端提供服务。虽然 `npm start` 会监听文件变化，但您仍需要**手动刷新**浏览器
 才能看到更新。
 :::
@@ -176,8 +176,8 @@ OIBus/
 
 若要验证一切是否正常工作：
 
-1. 创建一个 **FolderScanner** South 连接器（从目录读取文件）
-2. 创建一个 **Console** North 连接器（输出到控制台）
+1. 创建一个 **FolderScanner** 南向连接器（从目录读取文件）
+2. 创建一个 **Console** 北向连接器（输出到控制台）
 3. 将它们配置为协同工作
 
 ## 🔧 开发规范 {#-development-guidelines}
@@ -348,7 +348,7 @@ npm run lint
 - [Angular 指南](https://angular.dev/overview) — 前端使用 Angular 构建，包括响应式
   表单（用于渲染清单）和独立（standalone）组件。
 - [Node.js `node:stream` 模块](https://nodejs.org/api/stream.html) — 缓存管道、转换器，
-  以及 North 的 `handleContent` 都使用流；理解背压（backpressure）和 `pipeline()` 很重要。
+  以及北向连接器的 `handleContent` 都使用流；理解背压（backpressure）和 `pipeline()` 很重要。
 - [Pino 日志库](https://getpino.io/) — 每个连接器都使用 `this.logger`；其日志级别和
   子日志器（child-logger）模式是
   [连接器类指南](./create-connector/class.md)中约定的依据。
@@ -392,11 +392,11 @@ npm run lint
 
 ### 改进现有连接器 {#improve-an-existing-connector}
 
-OIBus 的 South / North 连接器是循序渐进学习代码库的好方式：每一个都是一个小型的
+OIBus 的南向 / 北向连接器是循序渐进学习代码库的好方式：每一个都是一个小型的
 自包含类，配有清单和测试文件，并且都遵循相同的模式。适合入门的工作包括新增一个
 设置项、改进错误信息，或者扩展 `testConnection()` 以展示更多诊断信息。
 
-从 `backend/src/south/south-<type>/`（或对应的 North 文件夹）入手，浏览对应的
+从 `backend/src/south/south-<type>/`（或对应的北向连接器文件夹）入手，浏览对应的
 `.spec.ts` 文件，了解已覆盖的内容。每个 PR 都应保持 100% 的覆盖率。
 
 ### 新增一个连接器 {#add-a-new-connector}
@@ -419,21 +419,21 @@ OIBus 的 South / North 连接器是循序渐进学习代码库的好方式：�
 | `simulator`                   | _（默认）_  | 一个向 Modbus 和 MQTT 同时写入正弦波数值的 Python 脚本                                |
 | `mqtt-broker`                  | _（默认）_  | Eclipse Mosquitto broker（需身份验证，WebSocket 端口为 9001）                          |
 | `bacnet-server`                | _（默认）_  | BACpypes3 BACnet 网络：一个 IP 控制器路由到一个受限的类 MS/TP 设备，UDP 47809             |
-| `postgres`                     | _（默认）_  | 用于 South-PostgreSQL 的 PostgreSQL                                                    |
+| `postgres`                     | _（默认）_  | 用于 PostgreSQL 南向连接器的 PostgreSQL                                                    |
 | `ftp-server` / `sftp-server`   | `testing`   | 基于文件的数据源                                                                        |
 | `oibus` / `nginx`              | `oibus`     | 完整的 OIBus 运行时 + 反向代理，用于端到端测试                                          |
 
 使用 `docker compose up -d` 启动整个栈（部分服务位于 `testing` / `oibus` 的 Docker
 Compose profile 之下——详见相关文件）。然后将 OIBus 配置指向这些模拟器，并在增加
-条目数量、扫描模式频率或批量大小时观察其行为表现。
+项目数量、扫描模式频率或批量大小时观察其行为表现。
 
 关于每项服务、其镜像、模拟信号及配置选项的完整说明，请参阅
 [本地测试环境](./local-test-stack.md)页面。
 
 **最有价值的测量内容：**
 
-- **持续负载下的吞吐量** — South 在不产生队列背压的情况下每秒能摄取多少条目；
-  North 在不在错误文件夹中堆积的情况下每秒能投递多少文件。
+- **持续负载下的吞吐量** — 南向连接器在不产生队列背压的情况下每秒能摄取多少项目；
+  北向连接器在不在错误文件夹中堆积的情况下每秒能投递多少文件。
 - **内存增长** — 在数小时的运行过程中观察堆内存和 RSS，寻找转换器或缓存路径中
   的缓慢内存泄漏。
 - **启动时间** — 在存在数百万条日志 / 积压缓存的情况下的启动时间。这方面的改进

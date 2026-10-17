@@ -26,7 +26,7 @@ Tags disponibles :
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `latest` | Dernière version stable. Mise à jour automatiquement par [`new_release.yml`](./release.mdx) à chaque publication stable.                                        |
 | `beta`   | Dernière pré-version. Utilisez-la pour valider les fonctionnalités à venir dans votre environnement de test.                                                     |
-| `vX.Y.Z` | Épinglé à une version spécifique (par ex. `v3.8.8`). Recommandé en production afin que les mises à jour soient une action explicite de l'opérateur. {/* <!-- x-release-please-version --> */} |
+| `vX.Y.Z` | Épinglé à une version spécifique (par ex. `v3.9.5`). Recommandé en production afin que les mises à jour soient une action explicite de l'opérateur. {/* <!-- x-release-please-version --> */} |
 
 L'image est construite pour `linux/amd64` et `linux/arm64` ; Docker choisit automatiquement la bonne variante
 pour votre hôte lors du `pull`. Le flux de publication complet s'exécute via
@@ -80,7 +80,7 @@ FROM ubuntu
 
 ARG TARGETARCH                         # set automatically by `docker buildx` / `--platform`
 ARG ARCH=${TARGETARCH/amd64/x64}        # GitHub release filenames use x64, not amd64
-ARG VERSION="v3.8.8"                    # overridden by the release workflow
+ARG VERSION="v3.9.5"                    # overridden by the release workflow
 
 RUN apt update -y && apt install -y curl unzip
 
@@ -107,7 +107,7 @@ Quelques points à connaître :
 - **`--ignoreRemoteUpdate true`** désactive le chemin de mise à jour automatique du launcher : dans un
   conteneur, les mises à jour se font en remplaçant l'image par un tag plus récent, pas en modifiant le
   conteneur en cours d'exécution.
-- La valeur par défaut `VERSION="v3.8.8"` dans le Dockerfile n'est qu'un espace réservé pour les builds
+- La valeur par défaut `VERSION="v3.9.5"` dans le Dockerfile n'est qu'un espace réservé pour les builds
   locaux. {/* <!-- x-release-please-version --> */}
   Le pipeline de release passe toujours `--build-arg VERSION=<tag>` pour la surcharger.
 
@@ -116,7 +116,7 @@ Quelques points à connaître :
 | Argument     | Comment il est défini                        | Objectif                                                                                                                   |
 | ------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `TARGETARCH` | Défini par `docker buildx` à partir de `--platform` | Indique au Dockerfile quelle architecture récupérer. Ne le passez pas manuellement.                                        |
-| `VERSION`    | `--build-arg VERSION=...` (par défaut `v3.8.8`) | Quelle release GitHub utiliser pour récupérer les binaires. Doit correspondre à un tag de release existant. {/* <!-- x-release-please-version --> */} |
+| `VERSION`    | `--build-arg VERSION=...` (par défaut `v3.9.5`) | Quelle release GitHub utiliser pour récupérer les binaires. Doit correspondre à un tag de release existant. {/* <!-- x-release-please-version --> */} |
 
 ## 🛠 Construire votre propre image {#-building-your-own-image}
 
@@ -155,7 +155,7 @@ correspondre au nommage des assets de release, et le bon zip est récupéré.
 {/* x-release-please-start-version */}
 
 ```bash
-docker build -t oibus-local --build-arg VERSION="v3.8.8" .
+docker build -t oibus-local --build-arg VERSION="v3.9.5" .
 ```
 
 {/* x-release-please-end */}

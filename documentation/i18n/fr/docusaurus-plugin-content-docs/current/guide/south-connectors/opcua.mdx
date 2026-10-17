@@ -61,12 +61,12 @@ interopérables**.
 | **URL du point d'accès**                            | URL du serveur OPC UA.                                                                                                 | `opc.tcp://localhost:4840` |
 | **Maintenir la session active**                      | Maintenir la session active entre les messages.                                                                                  | Activé/Désactivé           |
 | **Intervalle de nouvelle tentative**                          | Délai en millisecondes entre les nouvelles tentatives.                                                                                    | `5000`                     |
-| **Délai d'expiration de lecture**                            | Durée d'exécution maximale en millisecondes pour les requêtes.                                                                      | `15000`                    |
-| **Requêtes parallèles maximum** (`maxParallelRun`) | Nombre maximal de requêtes d'éléments/groupes qu'OIBus peut exécuter simultanément contre ce serveur. De `1` (entièrement séquentiel) à `32`. | `1`                         |
+| **Délai de lecture**                            | Durée d'exécution maximale en millisecondes pour les requêtes.                                                                      | `15000`                    |
+| **Requêtes parallèles max** (`maxParallelRun`) | Nombre maximal de requêtes d'éléments/groupes qu'OIBus peut exécuter simultanément contre ce serveur. De `1` (entièrement séquentiel) à `32`. | `1`                         |
 
 ### Requêtes parallèles {#parallel-queries}
 
-Par défaut (**Requêtes parallèles maximum** = `1`), OIBus interroge les éléments et groupes de ce connecteur un à
+Par défaut (**Requêtes parallèles max** = `1`), OIBus interroge les éléments et groupes de ce connecteur un à
 la fois, même si plusieurs d'entre eux sont dus en même temps. Augmenter ce paramètre permet à OIBus de traiter en pipeline jusqu'à
 ce nombre de requêtes simultanément, ce qui aide lorsque de nombreux éléments/groupes ont des modes de scan courts et attendre
 leur tour prendrait autrement du retard.
@@ -74,18 +74,18 @@ leur tour prendrait autrement du retard.
 Toutes les requêtes simultanées partagent la **même session OPC UA** — OIBus n'ouvre pas de session séparée par
 requête. Une session unique prend déjà en charge en toute sécurité des requêtes en cours de traitement qui se chevauchent, et de nombreux
 serveurs OPC UA (en particulier ceux embarqués dans des automates) limitent le nombre de sessions simultanées par client à un nombre
-faible, parfois exactement un, donc partager une seule session évite d'atteindre cette limite. **Requêtes parallèles maximum**
+faible, parfois exactement un, donc partager une seule session évite d'atteindre cette limite. **Requêtes parallèles max**
 limite uniquement le nombre de requêtes traitées en pipeline sur cette session partagée à la fois — cela n'ouvre pas de
 sessions supplémentaires.
 
 :::tip Augmentez progressivement
 Chaque requête simultanée ajoute quand même de la charge sur la même connexion sous-jacente et sur le serveur lui-même.
-Augmentez **Requêtes parallèles maximum** progressivement et surveillez les temps de réponse du serveur et les
+Augmentez **Requêtes parallèles max** progressivement et surveillez les temps de réponse du serveur et les
 journaux du connecteur — un serveur avec une capacité de traitement limitée peut mieux répondre à une valeur plus basse même si
 davantage de requêtes simultanées seraient techniquement autorisées.
 :::
 
-### Régulation des données {#data-throttling}
+### Limitation des données {#data-throttling}
 
 | Paramètre                         | Description                                                                    | Exemple de valeur |
 | ------------------------------- | ------------------------------------------------------------------------------ | ------------- |
@@ -130,7 +130,7 @@ davantage de requêtes simultanées seraient techniquement autorisées.
 ## Paramètres du groupe {#group-settings}
 
 Les éléments sont organisés en **groupes**. Chaque groupe définit une planification partagée et, pour le mode HA, les
-paramètres de régulation par défaut pour tous les éléments qu'il contient.
+paramètres de limitation par défaut pour tous les éléments qu'il contient.
 
 | Paramètre         | Description                                                | Exemple de valeur |
 | ------------------ | ------------------------------------------------------------ | ------------- |
@@ -139,8 +139,8 @@ paramètres de régulation par défaut pour tous les éléments qu'il contient.
 
 <ThrottlingSettings />
 
-:::tip Surcharger la régulation par élément
-Chaque élément peut surcharger les paramètres de régulation par défaut du groupe en désactivant le bouton **Synchroniser avec le groupe** dans le
+:::tip Surcharger la limitation par élément
+Chaque élément peut surcharger les paramètres de limitation par défaut du groupe en désactivant le bouton **Synchroniser avec le groupe** dans le
 formulaire d'édition de l'élément.
 :::
 
@@ -148,7 +148,7 @@ formulaire d'édition de l'élément.
 
 | Paramètre          | Description                                                                                                  | Exemple de valeur                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| ID du nœud          | Chemin vers le point de données dans l'espace de noms du serveur OPC UA.                                                       | `ns=3;i=1001`, `ns=3;s=Counter`                 |
+| ID de nœud          | Chemin vers le point de données dans l'espace de noms du serveur OPC UA.                                                       | `ns=3;i=1001`, `ns=3;s=Counter`                 |
 | Mode              | Méthode d'accès aux données : `ha` (Historical Access) ou `da` (Data Access).                                                  | `ha`, `da`                                      |
 | Agrégat        | Méthode d'agrégation des valeurs (mode HA uniquement).                                                                     | `Raw`, `Average`, `Minimum`, `Maximum`, `Count` |
 | Rééchantillonnage       | Rééchantillonnage de l'intervalle (mode HA uniquement).                                                                          | `None`, `1 second`, `1 hour`, `1 day`           |
@@ -179,6 +179,32 @@ formulaire d'édition de l'élément.
 `None` · `1 second` · `10 seconds` · `30 seconds` · `1 minute` · `1 hour` · `1 day`
 
 :::
+
+## Métadonnées des nœuds {#node-metadata}
+
+Lors de la navigation dans le serveur — avec **Explorer**, ou lors de l'exécution d'un
+[workflow de configuration](./common-settings.md#workflow-settings) — OIBus lit les champs suivants pour chaque nœud
+Variable, lorsque le serveur les expose :
+
+| Champ         | Source dans l'espace d'adressage OPC UA                                                             | Explorer | Workflow |
+| ------------- | --------------------------------------------------------------------------------------------------- | :------: | :------: |
+| `nodeId`      | L'identifiant du nœud                                                                               |    ✓     |    ✓     |
+| `name`        | Le nom d'affichage du nœud                                                                          |    ✓     |    ✓     |
+| `type`        | La classe du nœud (`Variable`, `Object`, …)                                                         |    ✓     |    ✓     |
+| `description` | L'attribut `Description` du nœud                                                                    |    ✓     |    ✓     |
+| `unit`        | Nom d'affichage de la propriété `EngineeringUnits` (éléments analogiques)                           |    ✓     |    ✓     |
+| `min` / `max` | Bornes basse / haute de la propriété `EURange` — la plage de fonctionnement normale (éléments analogiques) |    ✓     |    ✓     |
+| `value`       | La valeur actuelle                                                                                  |    ✓     |          |
+
+Un champ que le serveur n'expose pas pour un nœud est simplement omis. La valeur actuelle n'est jamais lue par un
+workflow : elle change à chaque exécution, ce qui ferait paraître chaque nœud comme modifié. Dans un workflow, ces champs
+peuvent être utilisés dans le filtre d'éligibilité et dans les expressions de correspondance des champs d'élément
+(par ex. `{{unit}}`).
+
+Les requêtes sont regroupées par niveau parcouru et découpées pour respecter les limites d'opération annoncées par le
+serveur (`MaxNodesPerRead` / `MaxNodesPerBrowse`), ou par lots de 1000 nœuds lorsque le serveur n'en annonce aucune. Si
+une requête de métadonnées échoue, Explorer affiche tout de même les nœuds sans ces champs, tandis que l'exécution d'un
+workflow échoue plutôt que d'enregistrer des métadonnées incomplètes.
 
 ## Configuration de sécurité {#security-configuration}
 

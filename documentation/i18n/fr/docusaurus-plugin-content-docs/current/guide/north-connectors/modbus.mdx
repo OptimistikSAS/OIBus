@@ -16,22 +16,22 @@ charge le protocole Modbus.
 
 ### Configuration de la connexion {#connection-configuration}
 
-| Paramètre                | Description                                                                                                                    | Exemple de valeur |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
-| **Hôte**                   | Adresse IP ou nom d'hôte de la machine serveur Modbus.                                                                              | `192.168.1.100`     |
-| **Port**                   | Port à utiliser pour la connexion (502 par défaut).                                                                                 | `502`                |
-| **Délai d'expiration de connexion** | Temps maximal d'attente d'une connexion (en millisecondes).                                                                  | `10000`              |
-| **Intervalle de nouvelle tentative** | Temps à attendre (en millisecondes) avant de se reconnecter, que ce soit après un échec de connexion ou après l'échec d'une commande d'écriture. | `10000`              |
-| **ID esclave**             | Identifie la machine source Modbus (1 par défaut).                                                                                  | `1`                  |
-| **Décalage d'adresse**     | Pour la plupart des automates, il n'y a pas de décalage (option Modbus). Certains automates peuvent démarrer la plage d'adresses à 1 au lieu de 0 (option JBus) | `Modbus`             |
+| Paramètre                            | Description                                                                                                                                                     | Exemple de valeur |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Hôte**                             | Adresse IP ou nom d'hôte de la machine serveur Modbus.                                                                                                          | `192.168.1.100`   |
+| **Port**                             | Port à utiliser pour la connexion (502 par défaut).                                                                                                             | `502`             |
+| **Délai de connexion**               | Temps maximal d'attente d'une connexion (en millisecondes).                                                                                                     | `10000`           |
+| **Intervalle de nouvelle tentative** | Temps à attendre (en millisecondes) avant de se reconnecter, que ce soit après un échec de connexion ou après l'échec d'une commande d'écriture.                | `10000`           |
+| **ID esclave**                       | Identifie la machine source Modbus (1 par défaut).                                                                                                              | `1`               |
+| **Décalage d'adresse**               | Pour la plupart des automates, il n'y a pas de décalage (option Modbus). Certains automates peuvent démarrer la plage d'adresses à 1 au lieu de 0 (option JBus) | `Modbus`          |
 
 ### Options de format des données {#data-format-options}
 
-| Paramètre         | Description                                                    | Exemple de valeur |
-| -------------------- | -------------------------------------------------------------------- | -------------------- |
-| **Boutisme**         | Type d'encodage des bits.                                             | `Big endian`         |
-| **Inverser les octets** | Indique si les octets au sein d'un mot de 16 bits doivent être inversés. | Activé/Désactivé   |
-| **Inverser les mots**  | Indique si les mots de 16 bits doivent être inversés au sein d'un groupe de 32 bits. | Activé/Désactivé   |
+| Paramètre               | Description                                                                          | Exemple de valeur |
+| ----------------------- | ------------------------------------------------------------------------------------ | ----------------- |
+| **Boutisme**            | Type d'encodage des bits.                                                            | `Gros-boutiste`   |
+| **Inverser les octets** | Indique si les octets au sein d'un mot de 16 bits doivent être inversés.             | Activé/Désactivé  |
+| **Inverser les mots**   | Indique si les mots de 16 bits doivent être inversés au sein d'un groupe de 32 bits. | Activé/Désactivé  |
 
 Utilisez le testeur ci-dessous pour prévisualiser comment différents paramètres de boutisme et d'inversion affectent la
 disposition des octets d'une valeur écrite dans un registre Modbus :

@@ -17,25 +17,25 @@ Connectez-vous à OSIsoft PI System™ pour la collecte et la visualisation de d
 
 ## Paramètres de connexion {#connection-settings}
 
-| Paramètre         | Description                                                                       | Exemple de valeur           |
-| ------------------ | ----------------------------------------------------------------------------------- | ---------------------------- |
-| URL de l'agent distant | URL du point de terminaison de l'agent. Requis pour toutes les connexions.       | `http://192.168.1.100:2224` |
-| Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`. | `10000`         |
+| Paramètre                        | Description                                                                             | Exemple de valeur           |
+| -------------------------------- | --------------------------------------------------------------------------------------- | --------------------------- |
+| URL de l'agent distant           | URL du point de terminaison de l'agent. Requis pour toutes les connexions.              | `http://192.168.1.100:2224` |
+| Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`. | `10000`                     |
 
 ## Paramètres de groupe {#group-settings}
 
-Les éléments sont organisés en **groupes**. Chaque groupe définit une planification partagée ainsi que les
+Les éléments sont organisés en **groupes**. Chaque groupe définit un mode de scan partagé ainsi que les
 paramètres de limitation par défaut pour la récupération des données historiques.
 
-| Paramètre     | Description                                                    | Exemple de valeur |
-| -------------- | ---------------------------------------------------------------- | ------------- |
-| **Nom**       | Libellé unique du groupe au sein de ce connecteur.               | `Group A`     |
-| **Mode de scan** | Planification de collecte appliquée à chaque élément du groupe. | `Every 1 min` |
+| Paramètre        | Description                                                   | Exemple de valeur |
+| ---------------- | ------------------------------------------------------------- | ----------------- |
+| **Nom**          | Libellé unique du groupe au sein de ce connecteur.            | `Group A`         |
+| **Mode de scan** | Mode de scan de collecte appliqué à chaque élément du groupe. | `Every 1 min`     |
 
 <ThrottlingSettings />
 
 :::tip Remplacer la limitation par élément
-Chaque élément peut remplacer les paramètres de limitation par défaut du groupe en désactivant l'option **Sync with group**
+Chaque élément peut remplacer les paramètres de limitation par défaut du groupe en désactivant l'option **Synchroniser avec le groupe**
 dans le formulaire d'édition de l'élément.
 :::
 
@@ -43,15 +43,15 @@ dans le formulaire d'édition de l'élément.
 
 ### Méthodes d'accès aux points {#point-access-methods}
 
-| Paramètre  | Description                                                                                                                                                                       | Exemple de valeur         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Type        | Méthode d'accès : `PI point` (point unique par ID) ou `PI query` (plusieurs points via une expression de requête)                                                                | `PI point` ou `PI query`  |
-| Point ID    | ID complet du point (sans le nom du serveur). Utilisé lorsque le Type est `PI point`.                                                                                            | `\\CDT158\SINUSOID`      |
-| Point Query | Sélecteur de requête pour plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Utilisé lorsque le Type est `PI query`. | `Name:='SINUSOID'`       |
+| Paramètre         | Description                                                                                                                                                                                          | Exemple de valeur        |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Type              | Méthode d'accès : `PI point` (point unique par ID) ou `PI query` (plusieurs points via une expression de requête)                                                                                    | `PI point` ou `PI query` |
+| ID du point       | ID complet du point (sans le nom du serveur). Utilisé lorsque le Type est `PI point`.                                                                                                                | `\\CDT158\SINUSOID`      |
+| Requête de points | Sélecteur de requête pour plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Utilisé lorsque le Type est `PI query`. | `Name:='SINUSOID'`       |
 
 :::info Noms de référence
 
-- Pour `PI point` : le nom de l'élément sert de référence dans les payloads JSON
+- Pour `PI point` : le nom de l'élément sert de référence dans les charges utiles JSON
 - Pour `PI query` : le nom PI est utilisé comme référence
   :::
 

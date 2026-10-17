@@ -16,11 +16,11 @@ gérer les connecteurs North.
 
 ## Paramètres généraux {#general-settings}
 
-| Paramètre        | Description                                                                                | Exemple de valeur    |
-| ----------------- | --------------------------------------------------------------------------------------------- | ---------------------- |
-| **Nom**           | Un libellé convivial pour identifier l'objectif du connecteur.                               | `My MQTT Connector`   |
-| **Description**   | Détails facultatifs sur la connexion, les droits d'accès ou les caractéristiques uniques.     | `Production broker`   |
-| **Activé**        | Activer ou désactiver le connecteur (depuis la liste ou sa page d'affichage).                | Activé/Désactivé      |
+| Paramètre       | Description                                                                               | Exemple de valeur   |
+| --------------- | ----------------------------------------------------------------------------------------- | ------------------- |
+| **Nom**         | Un libellé convivial pour identifier l'objectif du connecteur.                            | `My MQTT Connector` |
+| **Description** | Détails facultatifs sur la connexion, les droits d'accès ou les caractéristiques uniques. | `Production broker` |
+| **Activé**      | Activer ou désactiver le connecteur (depuis la liste ou sa page d'affichage).             | Activé/Désactivé    |
 
 :::caution Connecteurs North désactivés
 Un connecteur North désactivé **ne mettra en cache aucune donnée**.
@@ -40,31 +40,31 @@ Utilisez le bouton **Tester les paramètres** pour vérifier votre configuration
 
 Configurez le moment où les données sont envoyées à l'application cible :
 
-| Paramètre                    | Description                                                                                            | Exemple de valeur |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------- |
-| **Planification**             | Définit la fréquence de transmission des données. Configurez à l'aide des [modes de scan](../engine/scan-modes.mdx). | `Every 10 s`         |
-| **Nombre d'éléments**         | (Charges utiles JSON) Envoie les données lorsque le nombre d'éléments spécifié est atteint, en contournant la planification. | `1000`               |
-| **Nombre de fichiers**        | (Fichiers) Envoie les données lorsque le nombre de fichiers spécifié est atteint, en contournant la planification. | `10`                 |
+| Paramètre              | Description                                                                                                                  | Exemple de valeur |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Planification**      | Définit la fréquence de transmission des données. Configurez à l'aide des [modes de scan](../engine/scan-modes.mdx).         | `Every 10 s`      |
+| **Nombre d'éléments**  | (Charges utiles JSON) Envoie les données lorsque le nombre d'éléments spécifié est atteint, en contournant la planification. | `1000`            |
+| **Nombre de fichiers** | (Fichiers) Envoie les données lorsque le nombre de fichiers spécifié est atteint, en contournant la planification.           | `10`              |
 
-### Limitation de débit {#throttling}
+### Limitation {#throttling}
 
 Contrôlez la transmission des données pour éviter de surcharger la cible ou le réseau :
 
-| Paramètre                                    | Description                                                                                              | Exemple de valeur |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------- |
-| **Délai minimum entre les transmissions**      | Temps (en millisecondes) à attendre entre les transmissions.                                                   | `1000`               |
-| **Nombre maximum d'éléments**                  | Nombre maximum d'éléments envoyés dans une seule transmission.                                                 | `10000`              |
-| **Taille de stockage maximale**                | Taille maximale (en Mo) pour le cache + les erreurs + l'archive. Les données excédentaires sont supprimées une fois la limite atteinte. | `1000`               |
+| Paramètre                                  | Description                                                                                                                             | Exemple de valeur |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Délai minimum entre deux transmissions** | Temps (en millisecondes) à attendre entre les transmissions.                                                                            | `1000`            |
+| **Nombre maximal d'éléments**              | Nombre maximum d'éléments envoyés dans une seule transmission.                                                                          | `10000`           |
+| **Taille maximale de stockage**            | Taille maximale (en Mo) pour le cache + les erreurs + l'archive. Les données excédentaires sont supprimées une fois la limite atteinte. | `1000`            |
 
 ### Erreurs {#errors}
 
 Gérez la manière dont OIBus traite les échecs de transmission :
 
-| Paramètre                                     | Description                                                                        | Exemple de valeur |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------- | -------------------- |
-| **Délai d'attente avant nouvelle tentative**     | Temps (en millisecondes) à attendre avant de réessayer après un échec.                  | `5000`               |
-| **Nombre de tentatives**                         | Nombre de tentatives avant de déplacer les données en échec vers le dossier d'erreurs. | `3`                  |
-| **Durée de rétention des données en erreur**     | Durée (en heures) de conservation des données en erreur. Réglez sur `0` pour une conservation illimitée. | `72`                 |
+| Paramètre                                                 | Description                                                                                              | Exemple de valeur |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Délai d'attente avant nouvelle tentative après erreur** | Temps (en millisecondes) à attendre avant de réessayer après un échec.                                   | `5000`            |
+| **Nombre de tentatives**                                  | Nombre de tentatives avant de déplacer les données en échec vers le dossier d'erreurs.                   | `3`               |
+| **Durée de rétention des données en erreur**              | Durée (en heures) de conservation des données en erreur. Réglez sur `0` pour une conservation illimitée. | `72`              |
 
 :::tip Envoi avec nouvelles tentatives
 Certains connecteurs North, comme le [connecteur North OIAnalytics](./oianalytics.md), **réessaieront indéfiniment**
@@ -78,10 +78,10 @@ temporaire — corrigé, plutôt que de déplacer les données vers le dossier d
 
 Activez l'archivage pour conserver les données transmises :
 
-| Paramètre                                    | Description                                                                        | Exemple de valeur |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------- |
-| **Activé**                                     | Bascule pour activer ou désactiver l'archivage.                                          | Activé/Désactivé    |
-| **Durée de rétention des données archivées**   | Durée (en heures) de conservation des données archivées. Réglez sur `0` pour une conservation illimitée. | `168`                |
+| Paramètre                                    | Description                                                                                              | Exemple de valeur |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Activé**                                   | Bascule pour activer ou désactiver l'archivage.                                                          | Activé/Désactivé  |
+| **Durée de rétention des données archivées** | Durée (en heures) de conservation des données archivées. Réglez sur `0` pour une conservation illimitée. | `168`             |
 
 :::caution Espace disque
 Si les fichiers sont conservés indéfiniment, videz manuellement le dossier d'archive périodiquement pour éviter une

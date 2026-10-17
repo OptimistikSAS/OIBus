@@ -604,5 +604,373 @@
   "theme.tags.tagsPageTitle": {
     "message": "标签",
     "description": "The title of the tag list page"
+  },
+  "components.cronTester.preset.everySecond": {
+    "message": "每秒",
+    "description": "Cron tester preset: every second"
+  },
+  "components.cronTester.preset.every10Seconds": {
+    "message": "每 10 秒",
+    "description": "Cron tester preset: every 10 seconds"
+  },
+  "components.cronTester.preset.everyMinute": {
+    "message": "每分钟",
+    "description": "Cron tester preset: every minute"
+  },
+  "components.cronTester.preset.every10Minutes": {
+    "message": "每 10 分钟",
+    "description": "Cron tester preset: every 10 minutes"
+  },
+  "components.cronTester.preset.everyHour": {
+    "message": "每小时",
+    "description": "Cron tester preset: every hour"
+  },
+  "components.cronTester.preset.every24Hours": {
+    "message": "每 24 小时",
+    "description": "Cron tester preset: every 24 hours"
+  },
+  "components.cronTester.field.seconds": {
+    "message": "秒",
+    "description": "Cron tester field label: seconds"
+  },
+  "components.cronTester.field.minutes": {
+    "message": "分钟",
+    "description": "Cron tester field label: minutes"
+  },
+  "components.cronTester.field.hours": {
+    "message": "小时",
+    "description": "Cron tester field label: hours"
+  },
+  "components.cronTester.field.day": {
+    "message": "日",
+    "description": "Cron tester field label: day of month"
+  },
+  "components.cronTester.field.month": {
+    "message": "月",
+    "description": "Cron tester field label: month"
+  },
+  "components.cronTester.field.weekday": {
+    "message": "星期",
+    "description": "Cron tester field label: day of week"
+  },
+  "components.cronTester.invalidExpression": {
+    "message": "无效的 cron 表达式",
+    "description": "Cron tester: shown when the expression cannot be parsed"
+  },
+  "components.cronTester.inputPlaceholder": {
+    "message": "例如 {example}",
+    "description": "Cron tester input placeholder; {example} is a cron expression"
+  },
+  "components.cronTester.copyTitle": {
+    "message": "复制表达式",
+    "description": "Cron tester copy button tooltip"
+  },
+  "components.cronTester.copied": {
+    "message": "✓ 已复制",
+    "description": "Cron tester copy button label after copying"
+  },
+  "components.cronTester.copy": {
+    "message": "⎘ 复制",
+    "description": "Cron tester copy button label"
+  },
+  "components.cronTester.schedule": {
+    "message": "计划：",
+    "description": "Cron tester: label before the human-readable schedule"
+  },
+  "components.cronTester.nextExecutions": {
+    "message": "接下来的 {count} 次执行",
+    "description": "Cron tester: title of the list of next execution times"
+  },
+  "components.cronTester.noExecutions": {
+    "message": "在搜索窗口内未找到任何执行。请检查您的表达式。",
+    "description": "Cron tester: warning when no execution is found"
+  },
+  "components.dataSizeComparison.format.csvRow": {
+    "message": "CSV 行",
+    "description": "Data size comparison: CSV row format name"
+  },
+  "components.dataSizeComparison.format.csvColumn": {
+    "message": "CSV 列（K={k}）",
+    "description": "Data size comparison: CSV column format name; {k} is the number of points per row"
+  },
+  "components.dataSizeComparison.format.csvColumnRow": {
+    "message": "CSV 列-行（K={k}）",
+    "description": "Data size comparison: CSV column-row format name; {k} is the number of points per row"
+  },
+  "components.dataSizeComparison.input.pointsPerSecond": {
+    "message": "每秒数据点数",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.input.pointsPerRow": {
+    "message": "每行点数（K）",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.input.safetyBuffer": {
+    "message": "安全余量（%）",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.input.networkOverhead": {
+    "message": "网络开销（%）",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.input.outageDuration": {
+    "message": "中断时长（小时）",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.multiplier": {
+    "message": "综合开销乘数：{multiplier} — 安全余量 {safety}% × 网络开销 {network}%",
+    "description": "Data size comparison: combined overhead multiplier note"
+  },
+  "components.dataSizeComparison.column.format": {
+    "message": "格式",
+    "description": "Data size comparison table header"
+  },
+  "components.dataSizeComparison.column.bytesPerPoint": {
+    "message": "字节 / 点",
+    "description": "Data size comparison table header"
+  },
+  "components.dataSizeComparison.column.baseThroughput": {
+    "message": "基础吞吐量",
+    "description": "Data size comparison table header"
+  },
+  "components.dataSizeComparison.column.bufferedThroughput": {
+    "message": "含余量吞吐量",
+    "description": "Data size comparison table header"
+  },
+  "components.dataSizeComparison.column.outageCache": {
+    "message": "{hours} 小时中断所需缓存",
+    "description": "Data size comparison table header; {hours} is the outage duration"
+  },
+  "components.dataSizeComparison.footer": {
+    "message": "{cacheColumn} 列是北向连接器缓存设置中 {maxStorageSize} 应设置的最小值。K 仅适用于列格式 — 增大该值可查看共享时间戳带来的效率提升。",
+    "description": "Data size comparison footer hint; {cacheColumn} and {maxStorageSize} are bold labels"
+  },
+  "components.dataSizeComparison.footer.cacheColumn": {
+    "message": "中断所需缓存",
+    "description": "Data size comparison footer: name of the outage cache column"
+  },
+  "components.dataSizeComparison.footer.maxStorageSize": {
+    "message": "最大存储大小",
+    "description": "Data size comparison footer: North cache setting label"
+  },
+  "components.ipFilterTester.localhostRule": {
+    "message": "localhost（始终允许）",
+    "description": "IP filter tester: rule shown for localhost addresses"
+  },
+  "components.ipFilterTester.filterRules": {
+    "message": "过滤规则",
+    "description": "IP filter tester: filter rules field label"
+  },
+  "components.ipFilterTester.onePerLine": {
+    "message": "（每行一条）",
+    "description": "IP filter tester: filter rules field hint"
+  },
+  "components.ipFilterTester.ipToTest": {
+    "message": "要测试的 IP 地址",
+    "description": "IP filter tester: IP address field label"
+  },
+  "components.ipFilterTester.ipPlaceholder": {
+    "message": "例如 {ipv4} 或 {ipv6}",
+    "description": "IP filter tester: IP address placeholder; {ipv4} and {ipv6} are example addresses"
+  },
+  "components.ipFilterTester.test": {
+    "message": "测试",
+    "description": "IP filter tester: test button"
+  },
+  "components.ipFilterTester.allowed": {
+    "message": "允许",
+    "description": "IP filter tester result: allowed"
+  },
+  "components.ipFilterTester.blocked": {
+    "message": "已阻止",
+    "description": "IP filter tester result: blocked"
+  },
+  "components.ipFilterTester.matchedRule": {
+    "message": "匹配的规则",
+    "description": "IP filter tester: text before the matched rule"
+  },
+  "components.ipFilterTester.noRuleMatched": {
+    "message": "没有规则匹配此地址",
+    "description": "IP filter tester: no rule matched"
+  },
+  "components.modbusDataFormatTester.transform.swapBytes": {
+    "message": "交换字节",
+    "description": "Modbus tester: byte pipeline transform step"
+  },
+  "components.modbusDataFormatTester.transform.swapWords": {
+    "message": "交换字",
+    "description": "Modbus tester: byte pipeline transform step"
+  },
+  "components.modbusDataFormatTester.dataType": {
+    "message": "数据类型",
+    "description": "Modbus tester: data type field label"
+  },
+  "components.modbusDataFormatTester.endianness": {
+    "message": "字节序",
+    "description": "Modbus tester: endianness field label"
+  },
+  "components.modbusDataFormatTester.bigEndian": {
+    "message": "大端",
+    "description": "Modbus tester: endianness option"
+  },
+  "components.modbusDataFormatTester.littleEndian": {
+    "message": "小端",
+    "description": "Modbus tester: endianness option"
+  },
+  "components.modbusDataFormatTester.swapBytes": {
+    "message": "交换字节",
+    "description": "Modbus tester: swap bytes checkbox"
+  },
+  "components.modbusDataFormatTester.swapWords": {
+    "message": "交换字",
+    "description": "Modbus tester: swap words checkbox"
+  },
+  "components.modbusDataFormatTester.registers": {
+    "message": "寄存器",
+    "description": "Modbus tester: registers field label"
+  },
+  "components.modbusDataFormatTester.register": {
+    "message": "寄存器 {index}",
+    "description": "Modbus tester: register input label; {index} is the register number"
+  },
+  "components.modbusDataFormatTester.bytePipeline": {
+    "message": "字节处理流程",
+    "description": "Modbus tester: byte pipeline section title"
+  },
+  "components.modbusDataFormatTester.fromRegistersBigEndian": {
+    "message": "来自寄存器（大端）",
+    "description": "Modbus tester: raw bytes caption"
+  },
+  "components.modbusDataFormatTester.fromRegistersLittleEndian": {
+    "message": "来自寄存器（小端）",
+    "description": "Modbus tester: raw bytes caption"
+  },
+  "components.modbusDataFormatTester.presets": {
+    "message": "预设",
+    "description": "Modbus tester: presets section title"
+  },
+  "components.mqttWildcardTester.preset.allFactoryTopics": {
+    "message": "所有 factory 主题",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.temperatureAnyLine": {
+    "message": "任意产线的温度",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.allLine1Sensors": {
+    "message": "line1 的所有传感器",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.anyRootLine2AnyLeaf": {
+    "message": "任意根 → line2 → 任意叶",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.allAlerts": {
+    "message": "所有告警",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.everything": {
+    "message": "全部",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.subscriptionFilter": {
+    "message": "订阅过滤器",
+    "description": "MQTT wildcard tester: filter field label"
+  },
+  "components.mqttWildcardTester.singleLevel": {
+    "message": "单级",
+    "description": "MQTT wildcard tester: + wildcard hint"
+  },
+  "components.mqttWildcardTester.multiLevel": {
+    "message": "多级",
+    "description": "MQTT wildcard tester: # wildcard hint"
+  },
+  "components.mqttWildcardTester.placeholder": {
+    "message": "例如 {example}",
+    "description": "MQTT wildcard tester: filter placeholder; {example} is a topic filter"
+  },
+  "components.mqttWildcardTester.topicTree": {
+    "message": "主题树",
+    "description": "MQTT wildcard tester: topic tree section title"
+  },
+  "components.mqttWildcardTester.matchCount": {
+    "message": "{total} 个主题中有 {count} 个匹配",
+    "description": "MQTT wildcard tester: number of matched topics"
+  },
+  "components.mqttWildcardTester.enterFilter": {
+    "message": "请在上方输入订阅过滤器",
+    "description": "MQTT wildcard tester: shown when the filter is empty"
+  },
+  "components.mqttWildcardTester.examples": {
+    "message": "示例",
+    "description": "MQTT wildcard tester: examples section title"
+  },
+  "components.regexTester.example.allFiles": {
+    "message": "所有文件",
+    "description": "Regex tester example label"
+  },
+  "components.regexTester.example.textFiles": {
+    "message": "文本文件",
+    "description": "Regex tester example label"
+  },
+  "components.regexTester.example.csvFiles": {
+    "message": "CSV 文件",
+    "description": "Regex tester example label"
+  },
+  "components.regexTester.example.csvOrExcelFiles": {
+    "message": "CSV 或 Excel 文件",
+    "description": "Regex tester example label"
+  },
+  "components.regexTester.example.jsonFilesStartingWith": {
+    "message": "以 \"{prefix}\" 开头的 JSON 文件",
+    "description": "Regex tester example label; {prefix} is a file name prefix"
+  },
+  "components.regexTester.emptyPattern": {
+    "message": "模式为空。",
+    "description": "Regex tester: error when the pattern is empty"
+  },
+  "components.regexTester.regexPattern": {
+    "message": "正则表达式",
+    "description": "Regex tester: pattern field label"
+  },
+  "components.regexTester.patternPlaceholder": {
+    "message": "例如 {example}",
+    "description": "Regex tester: pattern placeholder; {example} is a regex"
+  },
+  "components.regexTester.filenameToTest": {
+    "message": "要测试的文件名",
+    "description": "Regex tester: file name field label"
+  },
+  "components.regexTester.filenamePlaceholder": {
+    "message": "例如 {example}",
+    "description": "Regex tester: file name placeholder; {example} is a file name"
+  },
+  "components.regexTester.test": {
+    "message": "测试",
+    "description": "Regex tester: test button"
+  },
+  "components.regexTester.matches": {
+    "message": "匹配",
+    "description": "Regex tester result: match"
+  },
+  "components.regexTester.invalidPattern": {
+    "message": "无效的模式",
+    "description": "Regex tester result: invalid pattern"
+  },
+  "components.regexTester.noMatch": {
+    "message": "不匹配",
+    "description": "Regex tester result: no match"
+  },
+  "components.regexTester.matchesDetail": {
+    "message": "文件名与模式匹配",
+    "description": "Regex tester result detail: match"
+  },
+  "components.regexTester.noMatchDetail": {
+    "message": "文件名与模式不匹配",
+    "description": "Regex tester result detail: no match"
+  },
+  "components.regexTester.commonExamples": {
+    "message": "常用示例",
+    "description": "Regex tester: examples section title"
   }
 }

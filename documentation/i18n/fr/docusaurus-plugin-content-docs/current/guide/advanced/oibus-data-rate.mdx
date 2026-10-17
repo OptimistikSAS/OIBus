@@ -84,7 +84,7 @@ Pour K = 3 : 40 octets / ligne → **≈ 13,3 octets par point de donnée**
 
 |                    |                                                                                                                 |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| **À utiliser quand** | Plusieurs signaux sont échantillonnés simultanément au même taux de scrutation (par exemple un groupe de scrutation SCADA) |
+| **À utiliser quand** | Plusieurs signaux sont échantillonnés simultanément à la même fréquence de scan (par exemple un groupe de scan SCADA) |
 | **Avantages**       | Horodatage partagé entre K points — très économe en espace à mesure que K augmente ; adapté naturellement à la scrutation synchrone |
 | **Inconvénients**   | Tous les points d'une ligne doivent partager le même horodatage ; le schéma réside dans l'en-tête — plus difficile à traiter sans lui |
 
@@ -162,19 +162,19 @@ Utilisez le calculateur ci-dessous pour estimer le débit et la taille minimale 
 
 | Saisie                             | Ce qu'elle représente                                                                                                                     |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Points de donnée / seconde**       | Votre taux de collecte soutenu sur l'ensemble des connecteurs South actifs alimentant ce connecteur North                                    |
+| **Points de données par seconde**   | Votre taux de collecte soutenu sur l'ensemble des connecteurs South actifs alimentant ce connecteur North                                    |
 | **Points par ligne (K)**             | Nombre de signaux partageant une ligne d'horodatage — n'affecte que les formats Colonne et Colonne-Ligne                                     |
 | **Marge de sécurité (%)**            | Marge supplémentaire pour les lignes d'en-tête CSV, les enregistrements partiels, les pics de mesure et les arrondis. 20 à 30 % est typique. |
-| **Surcharge réseau (%)**             | Octets supplémentaires dus à la couche de transport — amortissement TLS, découpage HTTP, encadrement de paquets SFTP. 20 à 50 % est typique pour HTTPS ou SFTP. |
-| **Durée d'interruption (heures)**    | La fenêtre de déconnexion la plus longue attendue. Le cache doit contenir au moins cette quantité de données avant le rétablissement de la connexion. |
+| **Surcoût réseau (%)**                | Octets supplémentaires dus à la couche de transport — amortissement TLS, découpage HTTP, encadrement de paquets SFTP. 20 à 50 % est typique pour HTTPS ou SFTP. |
+| **Durée de la coupure (heures)**      | La fenêtre de déconnexion la plus longue attendue. Le cache doit contenir au moins cette quantité de données avant le rétablissement de la connexion. |
 
-La colonne **Cache pour interruption** affiche la valeur minimale à configurer pour la **Taille de stockage maximale** dans les paramètres du cache du connecteur North.
+La colonne **Cache pour la coupure** affiche la valeur minimale à configurer pour la **Taille maximale de stockage** dans les paramètres du cache du connecteur North.
 
 <DataSizeComparison />
 
 ## Application du résultat {#applying-the-result}
 
-Dans l'onglet **Cache** de chaque connecteur North, réglez la **Taille de stockage maximale** sur au moins la valeur affichée dans la colonne **Cache pour interruption** pour le format choisi. Ajoutez une marge supplémentaire si :
+Dans l'onglet **Cache** de chaque connecteur North, réglez la **Taille maximale de stockage** sur au moins la valeur affichée dans la colonne **Cache pour la coupure** pour le format choisi. Ajoutez une marge supplémentaire si :
 
 - Les interruptions dans votre environnement ont tendance à durer plus longtemps que l'estimation
 - Plusieurs connecteurs North partagent le même volume disque

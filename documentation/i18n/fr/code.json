@@ -604,5 +604,373 @@
   "OIBus is an open source industrial data collection software. Connect to OPC UA, Modbus, SQL databases, MQTT, REST APIs and more. Forward data to OIAnalytics, Amazon S3, Azure Blob Storage, or any HTTP endpoint. Free, lightweight, runs on Windows, Linux, macOS and Docker.": {
     "message": "OIBus est un logiciel open source de collecte de données industrielles. Connectez-vous à OPC UA, Modbus, des bases de données SQL, MQTT, des API REST et plus encore. Transférez les données vers OIAnalytics, Amazon S3, Azure Blob Storage, ou tout endpoint HTTP. Gratuit, léger, fonctionne sur Windows, Linux, macOS et Docker.",
     "description": "The homepage meta description"
+  },
+  "components.cronTester.preset.everySecond": {
+    "message": "Chaque seconde",
+    "description": "Cron tester preset: every second"
+  },
+  "components.cronTester.preset.every10Seconds": {
+    "message": "Toutes les 10 s",
+    "description": "Cron tester preset: every 10 seconds"
+  },
+  "components.cronTester.preset.everyMinute": {
+    "message": "Chaque minute",
+    "description": "Cron tester preset: every minute"
+  },
+  "components.cronTester.preset.every10Minutes": {
+    "message": "Toutes les 10 min",
+    "description": "Cron tester preset: every 10 minutes"
+  },
+  "components.cronTester.preset.everyHour": {
+    "message": "Chaque heure",
+    "description": "Cron tester preset: every hour"
+  },
+  "components.cronTester.preset.every24Hours": {
+    "message": "Toutes les 24 h",
+    "description": "Cron tester preset: every 24 hours"
+  },
+  "components.cronTester.field.seconds": {
+    "message": "Secondes",
+    "description": "Cron tester field label: seconds"
+  },
+  "components.cronTester.field.minutes": {
+    "message": "Minutes",
+    "description": "Cron tester field label: minutes"
+  },
+  "components.cronTester.field.hours": {
+    "message": "Heures",
+    "description": "Cron tester field label: hours"
+  },
+  "components.cronTester.field.day": {
+    "message": "Jour",
+    "description": "Cron tester field label: day of month"
+  },
+  "components.cronTester.field.month": {
+    "message": "Mois",
+    "description": "Cron tester field label: month"
+  },
+  "components.cronTester.field.weekday": {
+    "message": "Jour de la semaine",
+    "description": "Cron tester field label: day of week"
+  },
+  "components.cronTester.invalidExpression": {
+    "message": "Expression cron invalide",
+    "description": "Cron tester: shown when the expression cannot be parsed"
+  },
+  "components.cronTester.inputPlaceholder": {
+    "message": "ex. {example}",
+    "description": "Cron tester input placeholder; {example} is a cron expression"
+  },
+  "components.cronTester.copyTitle": {
+    "message": "Copier l'expression",
+    "description": "Cron tester copy button tooltip"
+  },
+  "components.cronTester.copied": {
+    "message": "✓ Copié",
+    "description": "Cron tester copy button label after copying"
+  },
+  "components.cronTester.copy": {
+    "message": "⎘ Copier",
+    "description": "Cron tester copy button label"
+  },
+  "components.cronTester.schedule": {
+    "message": "Planification :",
+    "description": "Cron tester: label before the human-readable schedule"
+  },
+  "components.cronTester.nextExecutions": {
+    "message": "Prochaines {count} exécutions",
+    "description": "Cron tester: title of the list of next execution times"
+  },
+  "components.cronTester.noExecutions": {
+    "message": "Aucune exécution trouvée dans la fenêtre de recherche. Vérifiez votre expression.",
+    "description": "Cron tester: warning when no execution is found"
+  },
+  "components.dataSizeComparison.format.csvRow": {
+    "message": "CSV ligne",
+    "description": "Data size comparison: CSV row format name"
+  },
+  "components.dataSizeComparison.format.csvColumn": {
+    "message": "CSV colonne (K={k})",
+    "description": "Data size comparison: CSV column format name; {k} is the number of points per row"
+  },
+  "components.dataSizeComparison.format.csvColumnRow": {
+    "message": "CSV colonne-ligne (K={k})",
+    "description": "Data size comparison: CSV column-row format name; {k} is the number of points per row"
+  },
+  "components.dataSizeComparison.input.pointsPerSecond": {
+    "message": "Points de données par seconde",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.input.pointsPerRow": {
+    "message": "Points par ligne (K)",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.input.safetyBuffer": {
+    "message": "Marge de sécurité (%)",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.input.networkOverhead": {
+    "message": "Surcoût réseau (%)",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.input.outageDuration": {
+    "message": "Durée de la coupure (heures)",
+    "description": "Data size comparison input label"
+  },
+  "components.dataSizeComparison.multiplier": {
+    "message": "Multiplicateur de surcoût combiné : {multiplier} — sécurité {safety} % × surcoût réseau {network} %",
+    "description": "Data size comparison: combined overhead multiplier note"
+  },
+  "components.dataSizeComparison.column.format": {
+    "message": "Format",
+    "description": "Data size comparison table header"
+  },
+  "components.dataSizeComparison.column.bytesPerPoint": {
+    "message": "Octets / point",
+    "description": "Data size comparison table header"
+  },
+  "components.dataSizeComparison.column.baseThroughput": {
+    "message": "Débit de base",
+    "description": "Data size comparison table header"
+  },
+  "components.dataSizeComparison.column.bufferedThroughput": {
+    "message": "Débit avec marges",
+    "description": "Data size comparison table header"
+  },
+  "components.dataSizeComparison.column.outageCache": {
+    "message": "Cache pour une coupure de {hours} h",
+    "description": "Data size comparison table header; {hours} is the outage duration"
+  },
+  "components.dataSizeComparison.footer": {
+    "message": "La colonne {cacheColumn} indique la valeur minimale à définir pour {maxStorageSize} dans les paramètres de cache du connecteur North. K ne s’applique qu’aux formats en colonnes — augmentez-le pour voir le gain d’efficacité apporté par les horodatages partagés.",
+    "description": "Data size comparison footer hint; {cacheColumn} and {maxStorageSize} are bold labels"
+  },
+  "components.dataSizeComparison.footer.cacheColumn": {
+    "message": "Cache pour la coupure",
+    "description": "Data size comparison footer: name of the outage cache column"
+  },
+  "components.dataSizeComparison.footer.maxStorageSize": {
+    "message": "Taille maximale de stockage",
+    "description": "Data size comparison footer: North cache setting label"
+  },
+  "components.ipFilterTester.localhostRule": {
+    "message": "localhost (toujours autorisé)",
+    "description": "IP filter tester: rule shown for localhost addresses"
+  },
+  "components.ipFilterTester.filterRules": {
+    "message": "Règles de filtrage",
+    "description": "IP filter tester: filter rules field label"
+  },
+  "components.ipFilterTester.onePerLine": {
+    "message": "(une par ligne)",
+    "description": "IP filter tester: filter rules field hint"
+  },
+  "components.ipFilterTester.ipToTest": {
+    "message": "Adresse IP à tester",
+    "description": "IP filter tester: IP address field label"
+  },
+  "components.ipFilterTester.ipPlaceholder": {
+    "message": "ex. {ipv4} ou {ipv6}",
+    "description": "IP filter tester: IP address placeholder; {ipv4} and {ipv6} are example addresses"
+  },
+  "components.ipFilterTester.test": {
+    "message": "Tester",
+    "description": "IP filter tester: test button"
+  },
+  "components.ipFilterTester.allowed": {
+    "message": "Autorisée",
+    "description": "IP filter tester result: allowed"
+  },
+  "components.ipFilterTester.blocked": {
+    "message": "Bloquée",
+    "description": "IP filter tester result: blocked"
+  },
+  "components.ipFilterTester.matchedRule": {
+    "message": "règle correspondante",
+    "description": "IP filter tester: text before the matched rule"
+  },
+  "components.ipFilterTester.noRuleMatched": {
+    "message": "aucune règle ne correspond à cette adresse",
+    "description": "IP filter tester: no rule matched"
+  },
+  "components.modbusDataFormatTester.transform.swapBytes": {
+    "message": "inversion des octets",
+    "description": "Modbus tester: byte pipeline transform step"
+  },
+  "components.modbusDataFormatTester.transform.swapWords": {
+    "message": "inversion des mots",
+    "description": "Modbus tester: byte pipeline transform step"
+  },
+  "components.modbusDataFormatTester.dataType": {
+    "message": "Type de donnée",
+    "description": "Modbus tester: data type field label"
+  },
+  "components.modbusDataFormatTester.endianness": {
+    "message": "Boutisme",
+    "description": "Modbus tester: endianness field label"
+  },
+  "components.modbusDataFormatTester.bigEndian": {
+    "message": "Gros-boutiste",
+    "description": "Modbus tester: endianness option"
+  },
+  "components.modbusDataFormatTester.littleEndian": {
+    "message": "Petit-boutiste",
+    "description": "Modbus tester: endianness option"
+  },
+  "components.modbusDataFormatTester.swapBytes": {
+    "message": "Inverser les octets",
+    "description": "Modbus tester: swap bytes checkbox"
+  },
+  "components.modbusDataFormatTester.swapWords": {
+    "message": "Inverser les mots",
+    "description": "Modbus tester: swap words checkbox"
+  },
+  "components.modbusDataFormatTester.registers": {
+    "message": "Registres",
+    "description": "Modbus tester: registers field label"
+  },
+  "components.modbusDataFormatTester.register": {
+    "message": "Registre {index}",
+    "description": "Modbus tester: register input label; {index} is the register number"
+  },
+  "components.modbusDataFormatTester.bytePipeline": {
+    "message": "Pipeline des octets",
+    "description": "Modbus tester: byte pipeline section title"
+  },
+  "components.modbusDataFormatTester.fromRegistersBigEndian": {
+    "message": "Depuis les registres (gros-boutiste)",
+    "description": "Modbus tester: raw bytes caption"
+  },
+  "components.modbusDataFormatTester.fromRegistersLittleEndian": {
+    "message": "Depuis les registres (petit-boutiste)",
+    "description": "Modbus tester: raw bytes caption"
+  },
+  "components.modbusDataFormatTester.presets": {
+    "message": "Préréglages",
+    "description": "Modbus tester: presets section title"
+  },
+  "components.mqttWildcardTester.preset.allFactoryTopics": {
+    "message": "tous les topics factory",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.temperatureAnyLine": {
+    "message": "température de n'importe quelle ligne",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.allLine1Sensors": {
+    "message": "tous les capteurs de line1",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.anyRootLine2AnyLeaf": {
+    "message": "n'importe quelle racine → line2 → n'importe quelle feuille",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.allAlerts": {
+    "message": "toutes les alertes",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.preset.everything": {
+    "message": "tout",
+    "description": "MQTT wildcard tester preset hint"
+  },
+  "components.mqttWildcardTester.subscriptionFilter": {
+    "message": "Filtre d'abonnement",
+    "description": "MQTT wildcard tester: filter field label"
+  },
+  "components.mqttWildcardTester.singleLevel": {
+    "message": "un seul niveau",
+    "description": "MQTT wildcard tester: + wildcard hint"
+  },
+  "components.mqttWildcardTester.multiLevel": {
+    "message": "multi-niveaux",
+    "description": "MQTT wildcard tester: # wildcard hint"
+  },
+  "components.mqttWildcardTester.placeholder": {
+    "message": "ex. {example}",
+    "description": "MQTT wildcard tester: filter placeholder; {example} is a topic filter"
+  },
+  "components.mqttWildcardTester.topicTree": {
+    "message": "Arborescence des topics",
+    "description": "MQTT wildcard tester: topic tree section title"
+  },
+  "components.mqttWildcardTester.matchCount": {
+    "message": "{count} topics sur {total} correspondent",
+    "description": "MQTT wildcard tester: number of matched topics"
+  },
+  "components.mqttWildcardTester.enterFilter": {
+    "message": "Saisissez un filtre d'abonnement ci-dessus",
+    "description": "MQTT wildcard tester: shown when the filter is empty"
+  },
+  "components.mqttWildcardTester.examples": {
+    "message": "Exemples",
+    "description": "MQTT wildcard tester: examples section title"
+  },
+  "components.regexTester.example.allFiles": {
+    "message": "Tous les fichiers",
+    "description": "Regex tester example label"
+  },
+  "components.regexTester.example.textFiles": {
+    "message": "Fichiers texte",
+    "description": "Regex tester example label"
+  },
+  "components.regexTester.example.csvFiles": {
+    "message": "Fichiers CSV",
+    "description": "Regex tester example label"
+  },
+  "components.regexTester.example.csvOrExcelFiles": {
+    "message": "Fichiers CSV ou Excel",
+    "description": "Regex tester example label"
+  },
+  "components.regexTester.example.jsonFilesStartingWith": {
+    "message": "Fichiers JSON commençant par \"{prefix}\"",
+    "description": "Regex tester example label; {prefix} is a file name prefix"
+  },
+  "components.regexTester.emptyPattern": {
+    "message": "Le motif est vide.",
+    "description": "Regex tester: error when the pattern is empty"
+  },
+  "components.regexTester.regexPattern": {
+    "message": "Expression régulière",
+    "description": "Regex tester: pattern field label"
+  },
+  "components.regexTester.patternPlaceholder": {
+    "message": "ex. {example}",
+    "description": "Regex tester: pattern placeholder; {example} is a regex"
+  },
+  "components.regexTester.filenameToTest": {
+    "message": "Nom de fichier à tester",
+    "description": "Regex tester: file name field label"
+  },
+  "components.regexTester.filenamePlaceholder": {
+    "message": "ex. {example}",
+    "description": "Regex tester: file name placeholder; {example} is a file name"
+  },
+  "components.regexTester.test": {
+    "message": "Tester",
+    "description": "Regex tester: test button"
+  },
+  "components.regexTester.matches": {
+    "message": "Correspondance",
+    "description": "Regex tester result: match"
+  },
+  "components.regexTester.invalidPattern": {
+    "message": "Motif invalide",
+    "description": "Regex tester result: invalid pattern"
+  },
+  "components.regexTester.noMatch": {
+    "message": "Aucune correspondance",
+    "description": "Regex tester result: no match"
+  },
+  "components.regexTester.matchesDetail": {
+    "message": "le nom de fichier correspond au motif",
+    "description": "Regex tester result detail: match"
+  },
+  "components.regexTester.noMatchDetail": {
+    "message": "le nom de fichier ne correspond pas au motif",
+    "description": "Regex tester result detail: no match"
+  },
+  "components.regexTester.commonExamples": {
+    "message": "Exemples courants",
+    "description": "Regex tester: examples section title"
   }
 }

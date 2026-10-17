@@ -53,20 +53,23 @@ docker compose --profile iot --profile database --profile simulator up -d
 
 各服务被划分为多个 **Docker Compose profile**：
 
-| Profile     | 服务                                            |
-| ----------- | ----------------------------------------------- |
-| `iot`       | `opcua-server`、`modbus-server`、`mqtt-broker`、`bacnet-server`  |
-| `simulator` | `simulator`                                     |
-| `database`  | `postgres`、`influxdb`                          |
-| `ftp`       | `ftp-server`、`sftp-server`                     |
-| `logging`   | `syslog-server`                                 |
-| `proxy`     | `squid-proxy`                                   |
-| `oibus`     | `oibus`、`nginx`                                |
+| Profile     | 服务                                                            |
+| ----------- | --------------------------------------------------------------- |
+| `iot`       | `opcua-server`、`modbus-server`、`mqtt-broker`、`bacnet-server` |
+| `simulator` | `simulator`                                                     |
+| `database`  | `postgres`、`influxdb`                                          |
+| `ftp`       | `ftp-server`、`sftp-server`                                     |
+| `logging`   | `syslog-server`                                                 |
+| `proxy`     | `squid-proxy`                                                   |
+| `oibus`     | `oibus`、`nginx`                                                |
 
-:::note Profile independence
+:::note Profile 相互独立
 `simulator` profile 需要 `iot` 和 `database` profile 中的服务同时运行（Modbus
 服务器、MQTT broker、InfluxDB 和 PostgreSQL）。请始终一起启动它们：`--profile iot --profile
 database --profile simulator`（或者使用 `npm run docker:simulator`，它会自动完成这一点）。
+
+模拟器还会在 FTP 和 SFTP 服务器上生成[滚动 CSV 文件](#ftp--sftp-threads)，但仅在 `ftp` profile 启动时才会生成。
+如果需要这些文件，请在命令中加上 `--profile ftp`。
 :::
 
 所有服务共享内部桥接网络 `oibus-network`。各端口被转发到 `localhost`，因此在
@@ -87,7 +90,7 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 
 一个基于 [asyncua](https://github.com/FreeOpcUa/opcua-asyncio) 的小型 OPC UA 服务器，在 Objects 根目录的
 `OIBus` 文件夹下暴露 `nodes_config.json` 中定义的节点。每个节点都有描述、模拟值和历史数据；模拟量节点的类型为
-`AnalogItemType`，并带有 `EngineeringUnits` 和 `EURange` 属性，OIBus 的浏览（Explore）和配置工作流可以读取其单位和范围。
+`AnalogItemType`，并带有 `EngineeringUnits` 和 `EURange` 属性，OIBus 的浏览和配置工作流可以读取其单位和范围。
 
 **节点**（文件夹 `OIBus`）：
 
@@ -121,7 +124,7 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 `OPCUA_DEFAULT_PASSWORD`（默认为 `pass`）和 `OPCUA_ADMIN_PASSWORD`（默认为 `pass`），
 对应的用户名分别为 `oibus` 和 `admin`（在 `docker-compose.yml` 中设置）。
 
-**从 OIBus 连接：** 创建一个 South OPC UA 连接器，使用以下设置：
+**从 OIBus 连接：** 创建一个南向 OPC UA 连接器，使用以下设置：
 
 | 设置         | 值                                       |
 | ------------ | ---------------------------------------- |
@@ -140,17 +143,17 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 
 ### Modbus 服务器 — `modbus-server` {#modbus-server--modbus-server}
 
-| 属性       | 值                                                                   |
-| ---------- | --------------------------------------------------------------------- |
-| **镜像**   | [`oitc/modbus-server`](https://hub.docker.com/r/oitc/modbus-server)  |
-| **端口**   | `5020`（Modbus TCP）                                                  |
-| **配置**   | `docker/modbus/server_config.json`                                    |
+| 属性     | 值                                                                  |
+| -------- | ------------------------------------------------------------------- |
+| **镜像** | [`oitc/modbus-server`](https://hub.docker.com/r/oitc/modbus-server) |
+| **端口** | `5020`（Modbus TCP）                                                |
+| **配置** | `docker/modbus/server_config.json`                                  |
 
 一个轻量级的 Modbus TCP 服务器。其寄存器映射在 `server_config.json` 中声明。该
 服务器接受来自任意 Modbus TCP 客户端的写操作，因此[模拟器](#unified-simulator--simulator)
 可以实时动态更新保持寄存器和线圈。
 
-:::note server_config.json key numbering vs OIBus Address offset
+:::note server_config.json 的 key 编号与 OIBus 地址偏移
 该配置文件使用**从 1 开始的寄存器 key**（`"1"`、`"2"` ……），因为该服务器配置了
 `"zeroMode": false`。这只是服务器配置文件格式的一个细节——在线路层面，Modbus TCP
 始终是从 0 开始编号的，因此映射关系就是简单的
@@ -165,27 +168,27 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 
 **初始寄存器值**（模拟器连接后会覆盖这些值）：
 
-| 寄存器类型     | 协议地址          | 初始值        | 描述                       |
-| -------------- | :---------------: | :-----------: | -------------------------- |
-| 输入寄存器     |        0           |     `314`     | 固件版本（uint16）          |
-| 输入寄存器     |        1           |    `22136`    | 序列号 — 低位字            |
-| 输入寄存器     |        2           |    `4660`     | 序列号 — 高位字            |
-| 离散输入       |        0           |    `true`     | 面板门已关闭                |
-| 离散输入       |        1           |    `true`     | 安全继电器正常              |
-| 离散输入       |        2           |    `false`    | 网络已连接                  |
-| 离散输入       |        3           |    `false`    | 急停已按下                  |
+| 寄存器类型 | 协议地址 | 初始值  | 描述               |
+| ---------- | :------: | :-----: | ------------------ |
+| 输入寄存器 |    0     |  `314`  | 固件版本（uint16） |
+| 输入寄存器 |    1     | `22136` | 序列号 — 低位字    |
+| 输入寄存器 |    2     | `4660`  | 序列号 — 高位字    |
+| 离散输入   |    0     | `true`  | 面板门已关闭       |
+| 离散输入   |    1     | `true`  | 安全继电器正常     |
+| 离散输入   |    2     | `false` | 网络已连接         |
+| 离散输入   |    3     | `false` | 急停已按下         |
 
 从 Modbus 客户端的角度看，输入寄存器和离散输入是**只读**的，因此它们的值是静态
 的，来自 `server_config.json`。保持寄存器和线圈则由模拟器每 2 秒更新一次。
 
-**从 OIBus 连接：** 创建一个 South Modbus 连接器，使用以下设置：
+**从 OIBus 连接：** 创建一个南向 Modbus 连接器，使用以下设置：
 
-| 设置          | 值          |
-| ------------- | ----------- |
-| **主机**      | `localhost` |
-| **端口**      | `5020`      |
-| **从站 ID**   | `1`         |
-| **地址偏移**  | `Modbus`    |
+| 设置         | 值          |
+| ------------ | ----------- |
+| **主机**     | `localhost` |
+| **端口**     | `5020`      |
+| **从站 ID**  | `1`         |
+| **地址偏移** | `Modbus`    |
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/modbus-item-list.csv">Download item list (CSV)</DownloadButton>
@@ -195,29 +198,29 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 
 ### MQTT Broker — `mqtt-broker` {#mqtt-broker--mqtt-broker}
 
-| 属性       | 值                                                                 |
-| ---------- | -------------------------------------------------------------------- |
-| **镜像**   | [`eclipse-mosquitto`](https://hub.docker.com/_/eclipse-mosquitto)    |
-| **端口**   | `1883`（MQTT）、`9001`（WebSocket）                                  |
-| **配置**   | `docker/mosquitto/config/`                                           |
+| 属性     | 值                                                                |
+| -------- | ----------------------------------------------------------------- |
+| **镜像** | [`eclipse-mosquitto`](https://hub.docker.com/_/eclipse-mosquitto) |
+| **端口** | `1883`（MQTT）、`9001`（WebSocket）                               |
+| **配置** | `docker/mosquitto/config/`                                        |
 
 带有自定义入口脚本（`docker/mosquitto/entrypoint.sh`）的 Eclipse Mosquitto，该脚本
 会在启动时注入 `MQTT_USER` / `MQTT_PASSWORD` 凭据。匿名访问已被禁用。
 
 `9001` WebSocket 端口可供基于浏览器的 MQTT 客户端使用（如有需要）。
 
-**从 OIBus 连接：** 创建一个 South MQTT 连接器，使用以下设置：
+**从 OIBus 连接：** 创建一个南向 MQTT 连接器，使用以下设置：
 
-| 设置            | 值                             |
-| --------------- | ------------------------------- |
-| **URL**         | `mqtt://localhost:1883`         |
-| **QoS**         | `1`                              |
-| **身份验证**    | `basic`                          |
-| **用户名**      | `oibus`                          |
-| **密码**        | `pass`（或 `$MQTT_PASSWORD`）    |
+| 设置         | 值                            |
+| ------------ | ----------------------------- |
+| **URL**      | `mqtt://localhost:1883`       |
+| **QoS**      | `1`                           |
+| **身份验证** | `basic`                       |
+| **用户名**   | `oibus`                       |
+| **密码**     | `pass`（或 `$MQTT_PASSWORD`） |
 
-条目订阅模拟器发布的[标量主题](#scalar-topics)（JSON 主题则用于
-`any-content` / 自定义转换器测试，不适合作为逐点数值条目）：
+项目订阅模拟器发布的[标量主题](#scalar-topics)（JSON 主题则用于
+`any-content` / 自定义转换器测试，不适合作为逐点数值项目）：
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/mqtt-item-list.csv">Download item list (CSV)</DownloadButton>
@@ -227,12 +230,12 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 
 ### BACnet/IP 设备 — `bacnet-server` {#bacnet-ip-devices--bacnet-server}
 
-| 属性     | 值                                                                                                             |
-| -------- | -------------------------------------------------------------------------------------------------------------- |
+| 属性     | 值                                                                                                                |
+| -------- | ----------------------------------------------------------------------------------------------------------------- |
 | **镜像** | `python:3.14-slim`，运行 `docker/bacnet/bacnet_server.py`（[BACpypes3](https://github.com/JoelBender/bacpypes3)） |
-| **端口** | `47809`（主机，UDP）→ `47808`（容器，BACnet/IP）                                                               |
+| **端口** | `47809`（主机，UDP）→ `47808`（容器，BACnet/IP）                                                                  |
 
-一个对象值随时间变化的小型 BACnet 网络，用于端到端测试 [BACnet South 连接器](../guide/south-connectors/bacnet.mdx)：
+一个对象值随时间变化的小型 BACnet 网络，用于端到端测试 [BACnet 南向连接器](../guide/south-connectors/bacnet.mdx)：
 设备发现、轮询、COV 订阅、浏览以及[路由器后面的设备](../guide/south-connectors/bacnet.mdx#devices-behind-a-bacnet-router)。
 一个进程运行两个设备：
 
@@ -243,37 +246,37 @@ OIBus ── BACnet/IP, network 1 ── room device 1001 (also a router) ──
 room 设备是一个 BACnet/IP 控制器，同时路由到一个虚拟网络，模拟楼宇控制器的 MS/TP 总线。AHU 位于该网络上：它
 没有自己的 IP 地址，需通过 room 设备访问。
 
-| 设备 | 实例   | 名称                | 地址                                          | 服务                                                                                                                                         |
-| ---- | ------ | ------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Room | `1001` | `oibus-bacnet-room` | 从主机访问 `127.0.0.1:47809`；路由到网络 `2`  | `Who-Is`、`ReadProperty`、`ReadPropertyMultiple`、`SubscribeCOV`，外加最小化的 `SubscribeCOVProperty` 和 `ReadRange`（BACpypes3 未提供），使读取其他属性的数据项也能使用 COV |
-| AHU  | `1002` | `oibus-bacnet-ahu`  | 网络 `2`，MAC `5`，通过 room 设备访问          | 仅支持 `Who-Is`、`ReadProperty`、`SubscribeCOV`，类似小型 MS/TP 控制器：拒绝 `ReadPropertyMultiple` 和 `SubscribeCOVProperty`，且其对象列表只能逐条读取（不支持分段） |
+| 设备 | 实例   | 名称                | 地址                                         | 服务                                                                                                                                                                       |
+| ---- | ------ | ------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Room | `1001` | `oibus-bacnet-room` | 从主机访问 `127.0.0.1:47809`；路由到网络 `2` | `Who-Is`、`ReadProperty`、`ReadPropertyMultiple`、`SubscribeCOV`，外加最小化的 `SubscribeCOVProperty` 和 `ReadRange`（BACpypes3 未提供），使读取其他属性的项目也能使用 COV |
+| AHU  | `1002` | `oibus-bacnet-ahu`  | 网络 `2`，MAC `5`，通过 room 设备访问        | 仅支持 `Who-Is`、`ReadProperty`、`SubscribeCOV`，类似小型 MS/TP 控制器：拒绝 `ReadPropertyMultiple` 和 `SubscribeCOVProperty`，且其对象列表只能逐条读取（不支持分段）      |
 
 AHU 用于验证连接器的路由寻址及回退机制：轮询时使用 `ReadProperty` 代替 `ReadPropertyMultiple`，在 **浏览** 中逐条
 读取对象列表，以及 `SubscribeCOVProperty` 被拒绝时记录的警告。
 
 :::caution AHU 的 COV 订阅
 `@bacnet-js/client` 3.3.2 发送 COV 订阅请求时跳数为 `0`，会被路由器（包括 room 设备）丢弃。在 OIBus 集成该库的
-更新之前，请通过轮询读取 AHU 的数据项。
+更新之前，请通过轮询读取 AHU 的项目。
 :::
 
 **room 设备的对象：**
 
-| 对象                  | 名称          | 单位  | 模拟方式                                                                                                                | COV 增量 |
-| --------------------- | ------------- | ----- | ----------------------------------------------------------------------------------------------------------------------- | -------- |
-| `analog-input 1`      | `Temperature` | `°C`  | 正弦波，20 ± 5 °C，周期约 190 秒                                                                                        | `0.1`    |
-| `analog-input 2`      | `Pressure`    | `hPa` | 正弦波，1013 ± 3 hPa，周期约 280 秒。每分钟有 15 秒处于故障状态：status flags 为 `0100`，reliability 为 unreliable-other | `0.5`    |
-| `analog-value 1`      | `Setpoint`    | `°C`  | 固定值 21.5                                                                                                             | `0.1`    |
-| `binary-input 1`      | `Door`        | —     | 方波，周期 20 秒                                                                                                        | —        |
-| `binary-value 1`      | `Fan`         | —     | 固定值 active                                                                                                           | —        |
-| `multi-state-value 1` | `Mode`        | —     | 每 15 秒在 Off / Eco / Comfort（`1` – `3`）之间循环                                                                     | —        |
-| `integer-value 1`     | `Occupancy`   | —     | 房间人数，0 – 30，每 30 秒变化一次                                                                                       | —        |
-| `large-analog-value 1` | `Energy`     | `kWh` | 电表读数，每秒增加 0.01 kWh                                                                                              | —        |
-| `characterstring-value 1` | `StatusText` | — | `Normal`；`Pressure` 处于故障时为 `Pressure sensor fault`                                                              | —        |
-| `trend-log 1`         | `TemperatureLog` | — | 每 10 秒记录一次 `Temperature`（实数值）                                                                               | —        |
-| `trend-log 2`         | `DoorLog`     | —     | 每 10 秒记录一次 `Door`（枚举值）                                                                                       | —        |
+| 对象                      | 名称             | 单位  | 模拟方式                                                                                                                 | COV 增量 |
+| ------------------------- | ---------------- | ----- | ------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `analog-input 1`          | `Temperature`    | `°C`  | 正弦波，20 ± 5 °C，周期约 190 秒                                                                                         | `0.1`    |
+| `analog-input 2`          | `Pressure`       | `hPa` | 正弦波，1013 ± 3 hPa，周期约 280 秒。每分钟有 15 秒处于故障状态：status flags 为 `0100`，reliability 为 unreliable-other | `0.5`    |
+| `analog-value 1`          | `Setpoint`       | `°C`  | 固定值 21.5                                                                                                              | `0.1`    |
+| `binary-input 1`          | `Door`           | —     | 方波，周期 20 秒                                                                                                         | —        |
+| `binary-value 1`          | `Fan`            | —     | 固定值 active                                                                                                            | —        |
+| `multi-state-value 1`     | `Mode`           | —     | 每 15 秒在 Off / Eco / Comfort（`1` – `3`）之间循环                                                                      | —        |
+| `integer-value 1`         | `Occupancy`      | —     | 房间人数，0 – 30，每 30 秒变化一次                                                                                       | —        |
+| `large-analog-value 1`    | `Energy`         | `kWh` | 电表读数，每秒增加 0.01 kWh                                                                                              | —        |
+| `characterstring-value 1` | `StatusText`     | —     | `Normal`；`Pressure` 处于故障时为 `Pressure sensor fault`                                                                | —        |
+| `trend-log 1`             | `TemperatureLog` | —     | 每 10 秒记录一次 `Temperature`（实数值）                                                                                 | —        |
+| `trend-log 2`             | `DoorLog`        | —     | 每 10 秒记录一次 `Door`（枚举值）                                                                                        | —        |
 
 两个趋势日志启动时已包含 2 小时的记录，最多保存 1000 条记录，最旧的记录最先删除。其时间戳为容器的本地时间，即 UTC：
-请将趋势日志数据项的 **设备时区** 设置为 `UTC`（下方的数据项列表已如此设置）。
+请将趋势日志项目的 **设备时区** 设置为 `UTC`（下方的项目列表已如此设置）。
 
 **AHU 设备的对象：**
 
@@ -292,15 +295,15 @@ AHU 用于验证连接器的路由寻址及回退机制：轮询时使用 `ReadP
 转发到网络 2，因此两个设备都会被列出。在 `oibus-network` 上的容器中运行的 OIBus 可以通过广播发现这两个设备。
 :::
 
-**从 OIBus 连接：** 使用以下设置创建一个 South BACnet/IP 连接器：
+**从 OIBus 连接：** 使用以下设置创建一个南向 BACnet/IP 连接器：
 
-| 设置             | 值                |
-| ---------------- | ----------------- |
-| **端口**         | `47808`           |
-| **发现方式**     | 路由器（单播）    |
-| **路由器地址**   | `127.0.0.1:47809` |
+| 设置           | 值                |
+| -------------- | ----------------- |
+| **端口**       | `47808`           |
+| **发现方式**   | 路由器（单播）    |
+| **路由器地址** | `127.0.0.1:47809` |
 
-然后添加数据项，或通过 **浏览** 查看这些设备：
+然后添加项目，或通过 **浏览** 查看这些设备：
 
 | 设备 | 设备地址          | 设备实例 | 路由设备 | 网络号 | MAC 地址 |
 | ---- | ----------------- | -------- | -------- | ------ | -------- |
@@ -311,22 +314,22 @@ AHU 用于验证连接器的路由寻址及回退机制：轮询时使用 `ReadP
   <DownloadButton link="/files/bacnet-item-list.csv">Download item list (CSV)</DownloadButton>
 </div>
 
-| 变量                     | 默认值  | 说明                                        |
-| ------------------------ | ------- | ------------------------------------------- |
-| `BACNET_HOST`            | `host`  | 本地 IPv4 地址；`host` 表示使用容器自身的网卡 |
-| `BACNET_PORT`            | `47808` | room 设备的 BACnet/IP UDP 端口              |
-| `BACNET_TREND_LOG_INTERVAL` | `10` | 两条趋势日志记录之间的秒数 |
-| `BACNET_UPDATE_INTERVAL` | `1`     | 两次数值更新之间的秒数                      |
+| 变量                        | 默认值  | 说明                                          |
+| --------------------------- | ------- | --------------------------------------------- |
+| `BACNET_HOST`               | `host`  | 本地 IPv4 地址；`host` 表示使用容器自身的网卡 |
+| `BACNET_PORT`               | `47808` | room 设备的 BACnet/IP UDP 端口                |
+| `BACNET_TREND_LOG_INTERVAL` | `10`    | 两条趋势日志记录之间的秒数                    |
+| `BACNET_UPDATE_INTERVAL`    | `1`     | 两次数值更新之间的秒数                        |
 
 ---
 
 ### Syslog 服务器 — `syslog-server` _（profile：`logging`）_ {#syslog-server--syslog-server-_profile-logging_}
 
-| 属性       | 值                                                    |
-| ---------- | ------------------------------------------------------ |
-| **镜像**   | [`python:3.14-slim`](https://hub.docker.com/_/python)  |
-| **端口**   | `514`（UDP）、`514`（TCP）                              |
-| **脚本**   | `docker/syslog/syslog_server.py`                       |
+| 属性     | 值                                                    |
+| -------- | ----------------------------------------------------- |
+| **镜像** | [`python:3.14-slim`](https://hub.docker.com/_/python) |
+| **端口** | `514`（UDP）、`514`（TCP）                            |
+| **脚本** | `docker/syslog/syslog_server.py`                      |
 
 一个最小化的 syslog 接收器，用于测试 OIBus 的 Syslog logger（引擎设置 → 日志 →
 Syslog）。它同时监听同一端口的 UDP 和 TCP，并将收到的每一行打印到 stdout——不做
@@ -344,11 +347,11 @@ docker compose logs -f syslog-server
 
 ### Squid 代理 — `squid-proxy` _（profile：`proxy`）_ {#squid-proxy--squid-proxy-_profile-proxy_}
 
-| 属性       | 值                                                             |
-| ---------- | ---------------------------------------------------------------- |
-| **镜像**   | [`ubuntu/squid`](https://hub.docker.com/r/ubuntu/squid)         |
-| **端口**   | `3128`（HTTP/HTTPS 正向代理）                                    |
-| **配置**   | `docker/squid/conf.d/auth.conf`、`docker/squid/entrypoint.sh`    |
+| 属性     | 值                                                            |
+| -------- | ------------------------------------------------------------- |
+| **镜像** | [`ubuntu/squid`](https://hub.docker.com/r/ubuntu/squid)       |
+| **端口** | `3128`（HTTP/HTTPS 正向代理）                                 |
+| **配置** | `docker/squid/conf.d/auth.conf`、`docker/squid/entrypoint.sh` |
 
 一个需要 HTTP 基本身份验证的真实 Squid 正向代理，用于测试 OIBus 的
 [代理服务器](../guide/engine/engine-settings.mdx#proxy-server) ——特别是
@@ -369,17 +372,17 @@ docker compose logs -f syslog-server
 ### PostgreSQL — `postgres` {#postgresql--postgres}
 
 | 属性     | 值                                              |
-| -------- | ------------------------------------------------ |
-| **镜像** | [`postgres`](https://hub.docker.com/_/postgres)   |
-| **端口** | `5432`                                            |
+| -------- | ----------------------------------------------- |
+| **镜像** | [`postgres`](https://hub.docker.com/_/postgres) |
+| **端口** | `5432`                                          |
 
-一个原生的 PostgreSQL 实例，用于测试 South-PostgreSQL 连接器。凭据如下：
+一个原生的 PostgreSQL 实例，用于测试南向 PostgreSQL 连接器。凭据如下：
 
-| 变量                 | 默认值      |
-| -------------------- | ----------- |
-| `POSTGRES_USER`      | `oibus`     |
-| `POSTGRES_PASSWORD`  | `pass`      |
-| `POSTGRES_DB`        | `oibus-db`  |
+| 变量                | 默认值     |
+| ------------------- | ---------- |
+| `POSTGRES_USER`     | `oibus`    |
+| `POSTGRES_PASSWORD` | `pass`     |
+| `POSTGRES_DB`       | `oibus-db` |
 
 可以通过 `.env` 文件或 shell 环境变量覆盖密码（例如
 `POSTGRES_PASSWORD=secret docker compose up`）。
@@ -402,23 +405,23 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
 
 ### InfluxDB — `influxdb` {#influxdb--influxdb}
 
-| 属性     | 值                                                 |
-| -------- | ---------------------------------------------------- |
-| **镜像** | [`influxdb:2`](https://hub.docker.com/_/influxdb)    |
-| **端口** | `8088`（主机）→ `8086`（容器）                        |
+| 属性     | 值                                                |
+| -------- | ------------------------------------------------- |
+| **镜像** | [`influxdb:2`](https://hub.docker.com/_/influxdb) |
+| **端口** | `8088`（主机）→ `8086`（容器）                    |
 
-一个 InfluxDB 2.x 实例，用于测试 South-InfluxDB 连接器，通过镜像内置的初始化模式
+一个 InfluxDB 2.x 实例，用于测试南向 InfluxDB 连接器，通过镜像内置的初始化模式
 在首次启动时完成配置。凭据 / 连接详情如下：
 
-| 变量                              | 默认值               |
-| --------------------------------- | -------------------- |
-| `DOCKER_INFLUXDB_INIT_USERNAME`   | `oibus`               |
-| `INFLUXDB_PASSWORD`               | `oibuspassword`       |
-| `DOCKER_INFLUXDB_INIT_ORG`        | `oibus`               |
-| `DOCKER_INFLUXDB_INIT_BUCKET`     | `oibus-bucket`        |
-| `INFLUXDB_TOKEN`                  | `oibus-admin-token`   |
+| 变量                            | 默认值              |
+| ------------------------------- | ------------------- |
+| `DOCKER_INFLUXDB_INIT_USERNAME` | `oibus`             |
+| `INFLUXDB_PASSWORD`             | `oibuspassword`     |
+| `DOCKER_INFLUXDB_INIT_ORG`      | `oibus`             |
+| `DOCKER_INFLUXDB_INIT_BUCKET`   | `oibus-bucket`      |
+| `INFLUXDB_TOKEN`                | `oibus-admin-token` |
 
-:::note Why not `pass`?
+:::note 为什么不用 `pass`？
 该测试环境中的其他每一项服务都默认使用 `oibus` / `pass` 凭据，但 InfluxDB 2 在
 初始化设置时会拒绝少于 8 个字符的密码，因此这里不能使用 `pass`。如有需要，
 请通过 `INFLUXDB_PASSWORD` 覆盖为您自己的值（8 位以上字符）。
@@ -436,8 +439,8 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
 可以通过 `.env` 文件或 shell 环境变量覆盖密码/令牌（例如
 `INFLUXDB_PASSWORD=secret docker compose up`）。
 
-**条目查询示例（`version: 2`，Flux）：** OIBus 会将 `@StartTime` / `@EndTime` 直接
-（不加引号）替换到条目的 `query` 设置中，因此它们可以在 `range()` 中用作 Flux 的
+**项目查询示例（`version: 2`，Flux）：** OIBus 会将 `@StartTime` / `@EndTime` 直接
+（不加引号）替换到项目的 `query` 设置中，因此它们可以在 `range()` 中用作 Flux 的
 时间字面量。以下查询模拟器写入的 `temperature` measurement，并通过标签筛选出
 单个传感器：
 
@@ -454,7 +457,7 @@ from(bucket: "oibus-bucket")
 车间/传感器的数据，或者将 `"temperature"` 换成模拟器写入的其他任意 measurement
 （`humidity`、`pressure`、`vibration`、`co2` — 参见[下方的传感器表](#influxdb-thread)）。
 
-:::tip Excluding the start of the range
+:::tip 排除范围的起点
 Flux 的 `range()` 对 `start` 是闭区间（`start <= _time < stop`）。由于 OIBus 的下一次
 轮询恰好从上一次 `@EndTime` 结束的地方开始，一个恰好落在该边界上的数据点会被
 返回两次。添加一个针对 `_time` 的显式过滤条件，使起点也变为开区间：
@@ -474,33 +477,41 @@ from(bucket: "oibus-bucket")
 ### FTP 服务器 — `ftp-server` _（profile：`ftp`）_ {#ftp-server--ftp-server-_profile-ftp_}
 
 | 属性     | 值                                                        |
-| -------- | ----------------------------------------------------------- |
-| **镜像** | [`fauria/vsftpd`](https://hub.docker.com/r/fauria/vsftpd)   |
-| **端口** | `20`、`21`、`21100–21110`（被动模式）                        |
+| -------- | --------------------------------------------------------- |
+| **镜像** | [`fauria/vsftpd`](https://hub.docker.com/r/fauria/vsftpd) |
+| **端口** | `20`、`21`、`21100–21110`（被动模式）                     |
 
-被动模式的 vsftpd。凭据：`oibus` / `pass`（可通过 `FTP_PASSWORD` 覆盖密码）。文件
-存放在 `docker/ftp/data/`。
+被动模式的 vsftpd。凭据：`oibus` / `pass`（可通过 `FTP_PASSWORD` 覆盖密码）。`oibus` 用户的主目录
+挂载在 `docker/ftp/data/oibus/`。
+
+当[模拟器](#unified-simulator--simulator)运行时，它每分钟会向主目录的根目录（`/`）上传一个
+[滚动 CSV 文件](#ftp--sftp-threads)。要采集这些文件，请将 OIBus 的 FTP 南向连接器指向 `localhost:21`，
+并使用远程文件夹 `/`。
 
 ---
 
 ### SFTP 服务器 — `sftp-server` _（profile：`ftp`）_ {#sftp-server--sftp-server-_profile-ftp_}
 
-| 属性     | 值                                                   |
-| -------- | ------------------------------------------------------ |
-| **镜像** | [`atmoz/sftp`](https://hub.docker.com/r/atmoz/sftp)    |
-| **端口** | `2222`（SSH）                                          |
+| 属性     | 值                                                  |
+| -------- | --------------------------------------------------- |
+| **镜像** | [`atmoz/sftp`](https://hub.docker.com/r/atmoz/sftp) |
+| **端口** | `2222`（SSH）                                       |
 
 单用户的 SFTP 服务器。凭据：`oibus` / `pass`（可通过 `SFTP_PASSWORD` 覆盖密码）。
-上传目录：`docker/sftp/data/`。
+服务器的 `/upload` 目录挂载在 `docker/sftp/data/`。
+
+当[模拟器](#unified-simulator--simulator)运行时，它每分钟会向 `/upload` 上传一个
+[滚动 CSV 文件](#ftp--sftp-threads)。要采集这些文件，请将 OIBus 的 SFTP 南向连接器指向 `localhost:2222`，
+并使用远程文件夹 `/upload`。
 
 ---
 
 ### OIBus 运行时 — `oibus` _（profile：`oibus`）_ {#oibus-runtime--oibus-_profile-oibus_}
 
-| 属性     | 值                                                                                        |
+| 属性     | 值                                                                                           |
 | -------- | -------------------------------------------------------------------------------------------- |
-| **镜像** | [`ghcr.io/optimistiksas/oibus`](https://github.com/OptimistikSAS/OIBus/pkgs/container/oibus)|
-| **端口** | `2223`（Web UI / API）                                                                        |
+| **镜像** | [`ghcr.io/optimistiksas/oibus`](https://github.com/OptimistikSAS/OIBus/pkgs/container/oibus) |
+| **端口** | `2223`（Web UI / API）                                                                       |
 | **数据** | `./data-folder` → `/app/OIBus/OIBusData`                                                     |
 
 OIBus 运行时本身，适用于您希望在 Docker 内测试完整技术栈，而不是通过 `npm start`
@@ -510,11 +521,11 @@ OIBus 运行时本身，适用于您希望在 Docker 内测试完整技术栈，
 
 ### Nginx — `nginx` _（profile：`oibus`）_ {#nginx--nginx-_profile-oibus_}
 
-| 属性       | 值                                     |
-| ---------- | ---------------------------------------- |
-| **镜像**   | [`nginx`](https://hub.docker.com/_/nginx)|
-| **端口**   | `80`（HTTP）、`443`（HTTPS）              |
-| **配置**   | `docker/nginx/`                           |
+| 属性     | 值                                        |
+| -------- | ----------------------------------------- |
+| **镜像** | [`nginx`](https://hub.docker.com/_/nginx) |
+| **端口** | `80`（HTTP）、`443`（HTTPS）              |
+| **配置** | `docker/nginx/`                           |
 
 位于 OIBus 容器前面的反向代理。需要设置 `DOMAIN` 环境变量，并在
 `docker/nginx/certs/` 中提供 TLS 证书。仅在测试完整的 TLS / 反向代理设置时才需要。
@@ -523,15 +534,15 @@ OIBus 运行时本身，适用于您希望在 Docker 内测试完整技术栈，
 
 ### 统一模拟器 — `simulator` {#unified-simulator--simulator}
 
-| 属性       | 值                                                                    |
-| ---------- | ------------------------------------------------------------------------ |
-| **镜像**   | [`python:3.14-slim`](https://hub.docker.com/_/python)                    |
-| **脚本**   | `docker/simulator/simulator.py`                                          |
-| **库**     | `pymodbus==3.6.9`、`paho-mqtt`、`influxdb-client`、`psycopg2-binary`     |
+| 属性     | 值                                                                               |
+| -------- | -------------------------------------------------------------------------------- |
+| **镜像** | [`python:3.14-slim`](https://hub.docker.com/_/python)                            |
+| **脚本** | `docker/simulator/simulator.py`                                                  |
+| **库**   | `pymodbus==3.6.9`、`paho-mqtt`、`influxdb-client`、`psycopg2-binary`、`paramiko` |
 
-一个单一的 Python 脚本，驱动 Modbus 服务器、MQTT broker、InfluxDB 和 PostgreSQL。
-它为每个数据源运行一个独立的守护线程，每个线程都有自己独立的重试循环，因此
-某一个数据源的故障不会影响其他数据源。
+一个单一的 Python 脚本，驱动 Modbus 服务器、MQTT broker、InfluxDB、PostgreSQL 以及 FTP/SFTP 服务器。
+它为每个目标运行一个守护线程。每个线程都有自己的重试循环，因此某一个目标的故障，或某个目标所属的 profile
+未启动，都不会影响其他目标。
 
 #### Modbus 线程 {#modbus-thread}
 
@@ -540,45 +551,45 @@ OIBus 运行时本身，适用于您希望在 Docker 内测试完整技术栈，
 
 **保持寄存器 — uint16（1 个字）：**
 
-| 协议地址 | 名称         | 基准值 | 振幅 | 周期    |
-| :------: | ------------ | -----: | ---: | ------: |
-|    0     | temperature  |   250  |   50 |   60 秒 |
-|    1     | humidity     |   600  |  200 |  120 秒 |
-|    2     | pressure     |   100  |   30 |  180 秒 |
-|    3     | vibration    |   250  |  200 |   30 秒 |
-|    4     | co2          |   600  |  200 |  300 秒 |
-|    5     | flow_rate    |   150  |   80 |   90 秒 |
+| 协议地址 | 名称        | 基准值 | 振幅 |   周期 |
+| :------: | ----------- | -----: | ---: | -----: |
+|    0     | temperature |    250 |   50 |  60 秒 |
+|    1     | humidity    |    600 |  200 | 120 秒 |
+|    2     | pressure    |    100 |   30 | 180 秒 |
+|    3     | vibration   |    250 |  200 |  30 秒 |
+|    4     | co2         |    600 |  200 | 300 秒 |
+|    5     | flow_rate   |    150 |   80 |  90 秒 |
 
 **保持寄存器 — 扩展数据类型（多字）：**
 
-| 协议地址 | 名称               | 数据类型 |    基准值 |  振幅   | 周期    |
-| :------: | ------------------ | -------- | --------: | ------: | ------: |
-|    6     | outdoor_temp       | int16    |        5  |      25 |  240 秒 |
-|   7 – 8  | production_count   | uint32   |   50 000  |  40 000 |  600 秒 |
-|  9 – 10  | power_kw           | float    |     75.5  |    45.0 |  180 秒 |
-| 11 – 12  | energy_balance     | int32    |        0  |   5 000 |  360 秒 |
-| 13 – 16  | shaft_speed        | double   |  1 500.0  |   300.0 |  120 秒 |
-|    17    | status_flags       | bitfield |        —  |       — |       — |
+| 协议地址 | 名称             | 数据类型 |  基准值 |   振幅 |   周期 |
+| :------: | ---------------- | -------- | ------: | -----: | -----: |
+|    6     | outdoor_temp     | int16    |       5 |     25 | 240 秒 |
+|  7 – 8   | production_count | uint32   |  50 000 | 40 000 | 600 秒 |
+|  9 – 10  | power_kw         | float    |    75.5 |   45.0 | 180 秒 |
+| 11 – 12  | energy_balance   | int32    |       0 |  5 000 | 360 秒 |
+| 13 – 16  | shaft_speed      | double   | 1 500.0 |  300.0 | 120 秒 |
+|    17    | status_flags     | bitfield |       — |      — |      — |
 
 `status_flags` 是一个 16 位寄存器，其各个独立位分别是独立的方波：
 
-| 位  | 名称              | 周期    |
-| :-: | ----------------- | ------: |
-|  0  | motor_running      |   60 秒 |
-|  1  | fault_detected     |  300 秒 |
-|  2  | maintenance_due    |  600 秒 |
-|  3  | overload           |  120 秒 |
+| 位  | 名称            |   周期 |
+| :-: | --------------- | -----: |
+|  0  | motor_running   |  60 秒 |
+|  1  | fault_detected  | 300 秒 |
+|  2  | maintenance_due | 600 秒 |
+|  3  | overload        | 120 秒 |
 
 **线圈（方波，1 = 周期前半段为开）：**
 
-| 协议地址 | 名称          | 周期    |
-| :------: | ------------- | ------: |
-|    0     | pump_running  |   30 秒 |
-|    1     | valve_open    |   45 秒 |
-|    2     | alarm_active  |  120 秒 |
-|    3     | machine_on    |   20 秒 |
+| 协议地址 | 名称         |   周期 |
+| :------: | ------------ | -----: |
+|    0     | pump_running |  30 秒 |
+|    1     | valve_open   |  45 秒 |
+|    2     | alarm_active | 120 秒 |
+|    3     | machine_on   |  20 秒 |
 
-:::info Multi-word encoding
+:::info 多字编码
 OIBus 在读取多字数值之前会无条件地对其应用 `swap32() + swap16()`。模拟器对此
 的处理方式是，在每个 32 位双字中**先写入低 16 位字，再写入高 16 位字**。这与
 OIBus 的默认设置一致（`swapWordsInDWords: false`、`endianness: big-endian`）。
@@ -589,39 +600,39 @@ OIBus 的默认设置一致（`swapWordsInDWords: false`、`endianness: big-endi
 每 `MQTT_UPDATE_INTERVAL` 秒（默认 2 秒）向 MQTT broker 发布数据。每个发布周期
 发送**两类**主题：
 
-- **标量主题** — 单个数字，用于基于数值的条目。
+- **标量主题** — 单个数字，用于基于数值的项目。
 - **JSON 主题**（位于 `<workshop>/json/<shape>` 下）— 不同形状的结构化负载。OIBus
-  的 MQTT South 将这些内容作为 `any-content` 摄取，非常适合用来测试自定义转换器。
+  的 MQTT 南向连接器将这些内容作为 `any-content` 摄取，非常适合用来测试自定义转换器。
 
 ##### 标量主题 {#scalar-topics}
 
 主题遵循 `<workshop>/<sensor>/<type>` 的模式，携带一个裸数字（例如 `23.5`）。所有
 数值均为带有 5% 随机噪声的正弦波。
 
-| 主题                             |     基准值 |  振幅  | 周期    |
-| -------------------------------- | ---------: | -----: | ------: |
-| `workshop1/sensor1/temperature`  |       30.0 |   10.0 |   60 秒 |
-| `workshop1/sensor2/humidity`     |       55.0 |   25.0 |  120 秒 |
-| `workshop1/sensor3/pressure`     |    1 000.0 |   50.0 |  180 秒 |
-| `workshop1/sensor4/vibration`    |        5.0 |    5.0 |   30 秒 |
-| `workshop2/sensor1/temperature`  |       28.0 |    8.0 |   90 秒 |
-| `workshop2/sensor2/humidity`     |       50.0 |   20.0 |  150 秒 |
-| `workshop2/sensor3/pressure`     |      990.0 |   40.0 |  210 秒 |
-| `workshop2/sensor4/vibration`    |        4.0 |    4.0 |   45 秒 |
+| 主题                            |  基准值 | 振幅 |   周期 |
+| ------------------------------- | ------: | ---: | -----: |
+| `workshop1/sensor1/temperature` |    30.0 | 10.0 |  60 秒 |
+| `workshop1/sensor2/humidity`    |    55.0 | 25.0 | 120 秒 |
+| `workshop1/sensor3/pressure`    | 1 000.0 | 50.0 | 180 秒 |
+| `workshop1/sensor4/vibration`   |     5.0 |  5.0 |  30 秒 |
+| `workshop2/sensor1/temperature` |    28.0 |  8.0 |  90 秒 |
+| `workshop2/sensor2/humidity`    |    50.0 | 20.0 | 150 秒 |
+| `workshop2/sensor3/pressure`    |   990.0 | 40.0 | 210 秒 |
+| `workshop2/sensor4/vibration`   |     4.0 |  4.0 |  45 秒 |
 
 ##### JSON 主题 {#json-topics}
 
 每个主题发布不同的 JSON **形状**，因此连接器和自定义转换器可以针对 OIBus 通过
 MQTT 可能收到的全部负载类型进行测试。数值每个周期都会变化（带噪声的正弦波）。
 
-| 主题                     | 形状                                     |
-| ------------------------ | ------------------------------------------ |
-| `workshop1/json/flat`    | 扁平对象（单条读数）                       |
-| `workshop1/json/nested`  | 嵌套对象                                    |
-| `workshop1/json/array`   | 读数数组（一批数据）                       |
-| `workshop2/json/mixed`   | 每种 JSON 标量类型 + 数组 + 对象           |
-| `workshop2/json/string`  | 一个 JSON 字符串                           |
-| `workshop2/json/number`  | 一个裸 JSON 数字                           |
+| 主题                    | 形状                             |
+| ----------------------- | -------------------------------- |
+| `workshop1/json/flat`   | 扁平对象（单条读数）             |
+| `workshop1/json/nested` | 嵌套对象                         |
+| `workshop1/json/array`  | 读数数组（一批数据）             |
+| `workshop2/json/mixed`  | 每种 JSON 标量类型 + 数组 + 对象 |
+| `workshop2/json/string` | 一个 JSON 字符串                 |
+| `workshop2/json/number` | 一个裸 JSON 数字                 |
 
 负载示例：
 
@@ -664,7 +675,7 @@ MQTT 可能收到的全部负载类型进行测试。数值每个周期都会变
 42.7
 ```
 
-:::tip Testing custom transformers
+:::tip 测试自定义转换器
 `nested`、`array` 和 `mixed` 负载中包含本身就是对象或数组的字段。它们非常适合
 用来测试某个从负载字段派生输出文件名或内容的自定义转换器——如果该处返回了
 非字符串值，就绝不能让其进入指标数据库，而这些主题正好可以轻松复现这类边界
@@ -675,17 +686,17 @@ MQTT 可能收到的全部负载类型进行测试。数值每个周期都会变
 
 每 `INFLUXDB_UPDATE_INTERVAL` 秒（默认 **10 秒**）向 InfluxDB 写入数据。每个写入
 周期为每个传感器写入一个数据点，每个点都带有 `workshop` 和 `sensor_id` 标签，
-并携带单个 `value` 字段，分布在多个 measurement 中，以便 OIBus 的 InfluxDB South
+并携带单个 `value` 字段，分布在多个 measurement 中，以便 OIBus 的 InfluxDB 南向
 连接器有多个 measurement/标签可供查询：
 
-| Measurement  | Workshop  | Sensor id | 基准值  |  振幅  | 周期    |
-| ------------ | --------- | --------- | ------: | -----: | ------: |
-| temperature  | workshop1 | sensor1   |    22.0 |    5.0 |   60 秒 |
-| humidity     | workshop1 | sensor2   |    45.0 |   15.0 |   90 秒 |
-| pressure     | workshop1 | sensor3   |  1010.0 |   20.0 |  120 秒 |
-| temperature  | workshop2 | sensor1   |    20.0 |    4.0 |   75 秒 |
-| vibration    | workshop2 | sensor2   |     3.0 |    2.0 |   40 秒 |
-| co2          | workshop2 | sensor3   |   500.0 |  150.0 |  200 秒 |
+| Measurement | Workshop  | Sensor id | 基准值 |  振幅 |   周期 |
+| ----------- | --------- | --------- | -----: | ----: | -----: |
+| temperature | workshop1 | sensor1   |   22.0 |   5.0 |  60 秒 |
+| humidity    | workshop1 | sensor2   |   45.0 |  15.0 |  90 秒 |
+| pressure    | workshop1 | sensor3   | 1010.0 |  20.0 | 120 秒 |
+| temperature | workshop2 | sensor1   |   20.0 |   4.0 |  75 秒 |
+| vibration   | workshop2 | sensor2   |    3.0 |   2.0 |  40 秒 |
+| co2         | workshop2 | sensor3   |  500.0 | 150.0 | 200 秒 |
 
 #### PostgreSQL 线程 {#postgresql-thread}
 
@@ -695,31 +706,73 @@ MQTT 可能收到的全部负载类型进行测试。数值每个周期都会变
 列来对应 InfluxDB 的标签——因此两个数据库最终会拥有相同的数据，只是针对各自的
 查询模型进行了相应的形状调整（Flux/InfluxQL 标签 vs SQL 的 `WHERE` 子句）。
 
+#### FTP / SFTP 线程 {#ftp--sftp-threads}
+
+两个线程，一个用于 [FTP 服务器](#ftp-server--ftp-server-profile-ftp)，另一个用于
+[SFTP 服务器](#sftp-server--sftp-server-profile-ftp)，各自每 `FILE_UPDATE_INTERVAL` 秒（默认 **60 秒**）上传一个
+新的 CSV 文件。它们会不断重试，直到对应的服务器可以访问，因此只有在 `ftp` profile 启动时才会生成文件。
+
+- **文件名：** `sensors-<UTC timestamp>Z.csv`，例如 `sensors-20260923T103401Z.csv`。文件名按时间顺序排序。
+- **目标位置：** FTP 服务器上的 `/`（主机上的 `docker/ftp/data/oibus/`），以及 SFTP 服务器上的 `/upload`
+  （主机上的 `docker/sftp/data/`）。
+- **内容：** 一行表头，后跟 5 到 30 行随机数据。每一行都是 [InfluxDB 线程所用传感器](#influxdb-thread)之一的
+  一条读数。时间戳分布在已经过去的时间间隔内，并按顺序排列：
+
+```csv title="sensors-20260923T103408Z.csv"
+timestamp,workshop,sensor_id,measurement,value
+2026-09-23T10:34:06.364+00:00,workshop1,sensor1,temperature,23.76
+2026-09-23T10:34:06.618+00:00,workshop2,sensor3,co2,519.6
+2026-09-23T10:34:06.945+00:00,workshop2,sensor3,co2,517.47
+2026-09-23T10:34:07.099+00:00,workshop2,sensor1,temperature,21.59
+```
+
+- **原子上传：** 每个文件先以 `<name>.tmp` 上传，然后再重命名。按 `.*\.csv` 过滤的南向连接器永远不会取到
+  写入了一半的文件。
+- **滚动窗口：** 每次上传后，每台服务器上只保留最新的 `FILE_MAX_COUNT` 个 `sensors-*.csv` 文件（默认 **10** 个），
+  更旧的文件会被删除。已被 OIBus 获取并删除的文件不再计入该上限。
+
+:::tip 更快的迭代
+要测试南向连接器而无需在两个文件之间等待一分钟，可以在单次运行中降低间隔：
+`docker compose --profile simulator run --rm -e FILE_UPDATE_INTERVAL=5 simulator`。
+:::
+
 #### 环境变量 {#environment-variables}
 
-| 变量                          | 默认值                   | 描述                                                    |
-| ----------------------------- | ------------------------ | -------------------------------------------------------- |
-| `RETRY_INTERVAL`              | `10`                      | 重连尝试之间的间隔秒数                                    |
-| `MODBUS_HOST`                 | `modbus-server`           | Modbus 服务器的主机名                                     |
-| `MODBUS_PORT`                 | `5020`                    | Modbus TCP 端口                                           |
-| `MODBUS_SLAVE_ID`             | `1`                       | Modbus 从站 / 单元 ID                                     |
-| `MODBUS_UPDATE_INTERVAL`      | `2`                       | Modbus 写入周期之间的间隔秒数                              |
-| `MQTT_BROKER`                 | `mqtt-broker`             | MQTT broker 的主机名                                       |
-| `MQTT_PORT`                   | `1883`                    | MQTT 端口                                                  |
-| `MQTT_USER`                   | `oibus`                   | MQTT 用户名                                                |
-| `MQTT_PASSWORD`               | `pass`                    | MQTT 密码（也可通过 `$MQTT_PASSWORD` 设置）                 |
-| `MQTT_UPDATE_INTERVAL`        | `2`                       | MQTT 发布周期之间的间隔秒数                                 |
-| `INFLUXDB_URL`                | `http://influxdb:8086`    | InfluxDB 基础 URL                                           |
-| `INFLUXDB_TOKEN`              | `oibus-admin-token`       | InfluxDB API 令牌（也可通过 `$INFLUXDB_TOKEN` 设置）        |
-| `INFLUXDB_ORG`                | `oibus`                   | InfluxDB 组织                                               |
-| `INFLUXDB_BUCKET`             | `oibus-bucket`            | InfluxDB bucket                                              |
-| `INFLUXDB_UPDATE_INTERVAL`    | `10`                      | InfluxDB 写入周期之间的间隔秒数                              |
-| `POSTGRES_HOST`               | `postgres`                | PostgreSQL 服务器的主机名                                    |
-| `POSTGRES_PORT`               | `5432`                    | PostgreSQL 端口                                              |
-| `POSTGRES_USER`               | `oibus`                   | PostgreSQL 用户名                                            |
-| `POSTGRES_PASSWORD`           | `pass`                    | PostgreSQL 密码（也可通过 `$POSTGRES_PASSWORD` 设置）        |
-| `POSTGRES_DB`                 | `oibus-db`                | PostgreSQL 数据库名称                                        |
-| `POSTGRES_UPDATE_INTERVAL`    | `10`                      | PostgreSQL 写入周期之间的间隔秒数                             |
+| 变量                       | 默认值                 | 描述                                                  |
+| -------------------------- | ---------------------- | ----------------------------------------------------- |
+| `RETRY_INTERVAL`           | `10`                   | 重连尝试之间的间隔秒数                                |
+| `MODBUS_HOST`              | `modbus-server`        | Modbus 服务器的主机名                                 |
+| `MODBUS_PORT`              | `5020`                 | Modbus TCP 端口                                       |
+| `MODBUS_SLAVE_ID`          | `1`                    | Modbus 从站 / 单元 ID                                 |
+| `MODBUS_UPDATE_INTERVAL`   | `2`                    | Modbus 写入周期之间的间隔秒数                         |
+| `MQTT_BROKER`              | `mqtt-broker`          | MQTT broker 的主机名                                  |
+| `MQTT_PORT`                | `1883`                 | MQTT 端口                                             |
+| `MQTT_USER`                | `oibus`                | MQTT 用户名                                           |
+| `MQTT_PASSWORD`            | `pass`                 | MQTT 密码（也可通过 `$MQTT_PASSWORD` 设置）           |
+| `MQTT_UPDATE_INTERVAL`     | `2`                    | MQTT 发布周期之间的间隔秒数                           |
+| `INFLUXDB_URL`             | `http://influxdb:8086` | InfluxDB 基础 URL                                     |
+| `INFLUXDB_TOKEN`           | `oibus-admin-token`    | InfluxDB API 令牌（也可通过 `$INFLUXDB_TOKEN` 设置）  |
+| `INFLUXDB_ORG`             | `oibus`                | InfluxDB 组织                                         |
+| `INFLUXDB_BUCKET`          | `oibus-bucket`         | InfluxDB bucket                                       |
+| `INFLUXDB_UPDATE_INTERVAL` | `10`                   | InfluxDB 写入周期之间的间隔秒数                       |
+| `POSTGRES_HOST`            | `postgres`             | PostgreSQL 服务器的主机名                             |
+| `POSTGRES_PORT`            | `5432`                 | PostgreSQL 端口                                       |
+| `POSTGRES_USER`            | `oibus`                | PostgreSQL 用户名                                     |
+| `POSTGRES_PASSWORD`        | `pass`                 | PostgreSQL 密码（也可通过 `$POSTGRES_PASSWORD` 设置） |
+| `POSTGRES_DB`              | `oibus-db`             | PostgreSQL 数据库名称                                 |
+| `POSTGRES_UPDATE_INTERVAL` | `10`                   | PostgreSQL 写入周期之间的间隔秒数                     |
+| `FTP_HOST`                 | `ftp-server`           | FTP 服务器的主机名                                    |
+| `FTP_PORT`                 | `21`                   | FTP 端口                                              |
+| `FTP_USER`                 | `oibus`                | FTP 用户名                                            |
+| `FTP_PASSWORD`             | `pass`                 | FTP 密码（也可通过 `$FTP_PASSWORD` 设置）             |
+| `FTP_REMOTE_DIR`           | `/`                    | 上传 CSV 文件的 FTP 目录                              |
+| `SFTP_HOST`                | `sftp-server`          | SFTP 服务器的主机名                                   |
+| `SFTP_PORT`                | `22`                   | SFTP 端口（Docker 网络内部）                          |
+| `SFTP_USER`                | `oibus`                | SFTP 用户名                                           |
+| `SFTP_PASSWORD`            | `pass`                 | SFTP 密码（也可通过 `$SFTP_PASSWORD` 设置）           |
+| `SFTP_REMOTE_DIR`          | `/upload`              | 上传 CSV 文件的 SFTP 目录                             |
+| `FILE_UPDATE_INTERVAL`     | `60`                   | 两个生成的 FTP/SFTP 文件之间的间隔秒数                |
+| `FILE_MAX_COUNT`           | `10`                   | 每台服务器上保留的生成文件数（最旧的文件会被删除）    |
 
 ---
 
@@ -754,7 +807,10 @@ DOMAIN=oibus.example.com
 # Start the recommended development stack (IoT servers + simulator + database)
 npm run docker:dev
 
-# Tail simulator logs (Modbus + MQTT writes)
+# Development stack + FTP/SFTP servers with rolling CSV files
+docker compose --profile iot --profile database --profile ftp --profile simulator up -d
+
+# Tail simulator logs (Modbus, MQTT, InfluxDB, PostgreSQL and FTP/SFTP writes)
 docker compose logs -f simulator
 
 # Restart the simulator after changing docker/simulator/simulator.py

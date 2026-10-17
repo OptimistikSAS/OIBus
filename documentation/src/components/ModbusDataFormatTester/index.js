@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import Translate, { translate } from '@docusaurus/Translate';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -252,7 +253,12 @@ const ModbusDataFormatTester = () => {
   const value = interpretBytes(finalBytes, dataType);
   const isTransformed = rawBytes.some((b, i) => b !== finalBytes[i]);
 
-  const transformLabel = [swapBytes && 'swap bytes', swapWords && regCount > 1 && 'swap words'].filter(Boolean).join(' + ');
+  const transformLabel = [
+    swapBytes && translate({ id: 'components.modbusDataFormatTester.transform.swapBytes', message: 'swap bytes' }),
+    swapWords && regCount > 1 && translate({ id: 'components.modbusDataFormatTester.transform.swapWords', message: 'swap words' })
+  ]
+    .filter(Boolean)
+    .join(' + ');
 
   // ── Handlers ──
   const updateReg = (i, val) => {
@@ -275,7 +281,9 @@ const ModbusDataFormatTester = () => {
       {/* ── Controls row ── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'flex-end', marginBottom: '1.25rem' }}>
         <div>
-          <label style={fieldLabel}>Data Type</label>
+          <label style={fieldLabel}>
+            <Translate id="components.modbusDataFormatTester.dataType">Data Type</Translate>
+          </label>
           <select value={dataType} onChange={e => setDataType(e.target.value)} style={selectStyle}>
             {DATA_TYPES.map(t => (
               <option key={t} value={t}>
@@ -286,27 +294,44 @@ const ModbusDataFormatTester = () => {
         </div>
 
         <div>
-          <label style={fieldLabel}>Endianness</label>
+          <label style={fieldLabel}>
+            <Translate id="components.modbusDataFormatTester.endianness">Endianness</Translate>
+          </label>
           <select value={bigEndian ? 'big' : 'little'} onChange={e => setBigEndian(e.target.value === 'big')} style={selectStyle}>
-            <option value="big">Big Endian</option>
-            <option value="little">Little Endian</option>
+            <option value="big">{translate({ id: 'components.modbusDataFormatTester.bigEndian', message: 'Big Endian' })}</option>
+            <option value="little">{translate({ id: 'components.modbusDataFormatTester.littleEndian', message: 'Little Endian' })}</option>
           </select>
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', paddingBottom: '0.15rem' }}>
-          <Toggle label="Swap Bytes" checked={swapBytes} onChange={setSwapBytes} />
-          <Toggle label="Swap Words" checked={swapWords} onChange={setSwapWords} disabled={regCount < 2} />
+          <Toggle
+            label={translate({ id: 'components.modbusDataFormatTester.swapBytes', message: 'Swap Bytes' })}
+            checked={swapBytes}
+            onChange={setSwapBytes}
+          />
+          <Toggle
+            label={translate({ id: 'components.modbusDataFormatTester.swapWords', message: 'Swap Words' })}
+            checked={swapWords}
+            onChange={setSwapWords}
+            disabled={regCount < 2}
+          />
         </div>
       </div>
 
       {/* ── Register inputs ── */}
       <div style={{ marginBottom: '1.25rem' }}>
         <label style={fieldLabel}>
-          Registers <span style={fieldHint}>({regCount} × 16-bit, hex)</span>
+          <Translate id="components.modbusDataFormatTester.registers">Registers</Translate>{' '}
+          <span style={fieldHint}>({regCount} × 16-bit, hex)</span>
         </label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
           {Array.from({ length: regCount }).map((_, i) => (
-            <RegInput key={i} label={`Register ${i + 1}`} value={regHex[i] ?? '0000'} onChange={v => updateReg(i, v)} />
+            <RegInput
+              key={i}
+              label={translate({ id: 'components.modbusDataFormatTester.register', message: 'Register {index}' }, { index: i + 1 })}
+              value={regHex[i] ?? '0000'}
+              onChange={v => updateReg(i, v)}
+            />
           ))}
         </div>
       </div>
@@ -332,7 +357,7 @@ const ModbusDataFormatTester = () => {
             marginBottom: '0.75rem'
           }}
         >
-          Byte pipeline
+          <Translate id="components.modbusDataFormatTester.bytePipeline">Byte pipeline</Translate>
         </div>
 
         {/* Raw bytes — grouped by register */}
@@ -344,7 +369,9 @@ const ModbusDataFormatTester = () => {
               marginBottom: '0.4rem'
             }}
           >
-            From registers{bigEndian ? ' (Big Endian)' : ' (Little Endian)'}
+            {bigEndian
+              ? translate({ id: 'components.modbusDataFormatTester.fromRegistersBigEndian', message: 'From registers (Big Endian)' })
+              : translate({ id: 'components.modbusDataFormatTester.fromRegistersLittleEndian', message: 'From registers (Little Endian)' })}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
             {Array.from({ length: regCount }).map((_, regIdx) => (
@@ -439,7 +466,7 @@ const ModbusDataFormatTester = () => {
             color: 'var(--ifm-color-emphasis-700)'
           }}
         >
-          Presets
+          <Translate id="components.modbusDataFormatTester.presets">Presets</Translate>
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
           {PRESETS.map(p => (
