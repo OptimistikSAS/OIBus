@@ -10,6 +10,7 @@ declare module '@st-one-io/nodes7' {
       srcTSAP?: number;
       dstTSAP?: number;
       autoReconnect?: number;
+      s7ConnOpts?: { timeout?: number };
     });
     connect(): Promise<void>;
     disconnect(): Promise<void>;

@@ -239,7 +239,8 @@ describe('South S7', () => {
       rack: configuration.settings.rack,
       slot: configuration.settings.slot,
       srcTSAP: 0x0100,
-      autoReconnect: 0
+      autoReconnect: 0,
+      s7ConnOpts: { timeout: configuration.settings.requestTimeout }
     });
     assert.strictEqual(latestEndpoint.connect.mock.calls.length, 1);
     assert.ok(
@@ -248,6 +249,27 @@ describe('South S7', () => {
       )
     );
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
+  });
+
+  it('should fail the connection after the connect timeout', async () => {
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+    nodes7Exports.S7Endpoint = mock.fn(function () {
+      latestEndpoint = new FakeS7Endpoint();
+      latestEndpoint.connect = mock.fn(() => new Promise<void>(() => undefined));
+      return latestEndpoint;
+    });
+
+    const connection = south.connect();
+    mock.timers.tick(configuration.settings.connectTimeout);
+    await connection;
+
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[0] as string).includes(`S7 endpoint error: Connection timeout after ${configuration.settings.connectTimeout} ms`)
+      )
+    );
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should use the correct srcTSAP for OP and S7Basic connection types', async () => {
