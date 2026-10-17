@@ -593,6 +593,32 @@ describe('SouthSFTP', () => {
       assert.ok(logIncludes(logger.debug, 'Max size limit (1 MB) reached for item item1, skipping remaining files'));
     });
 
+    it('should retrieve a single file bigger than max size', async () => {
+      const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 0, maxSize: 1 }
+        })),
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
+      await southWithLimit.start();
+
+      const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+      const file1 = { name: 'file1.csv', size: 2 * 1024 * 1024, modifyTime: mtimeMs } as FileInfo;
+
+      mockSftpClient.list.mock.mockImplementation(async () => [file1]);
+
+      await southWithLimit.directQuery([configWithLimit.items[0]]);
+
+      assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 1);
+    });
+
     it('should respect max size limit and stop file query across items', async () => {
       const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
         ...configuration,
