@@ -253,17 +253,17 @@ export const getHistoryReadRequest = (
 
 export const getResamplingValue = (resampling: string | undefined): number | undefined => {
   switch (resampling) {
-    case 'second':
+    case '1s':
       return 1000;
-    case '10Seconds':
+    case '10s':
       return 1000 * 10;
-    case '30Seconds':
+    case '30s':
       return 1000 * 30;
-    case 'minute':
+    case '1min':
       return 1000 * 60;
-    case 'hour':
+    case '1h':
       return 1000 * 3600;
-    case 'day':
+    case '1d':
       return 1000 * 3600 * 24;
     case 'none':
     default:
