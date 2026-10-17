@@ -383,6 +383,20 @@ describe('SouthFolderScanner', () => {
         logger.debug.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Max size limit (1 MB) reached'))
       );
     });
+
+    it('should process a single file bigger than maxSize', async () => {
+      configuration.items[0].settings.maxSize = 1;
+
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async () => ({ mtimeMs: 1600000000000, size: 2 * 1024 * 1024 }))
+      );
+
+      await south.directQuery(configuration.items);
+
+      assert.strictEqual(sendFileMock.mock.calls.length, 1);
+    });
   });
 
   describe('sendFile', () => {
