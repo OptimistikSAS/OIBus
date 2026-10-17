@@ -2260,7 +2260,7 @@
               "regex": "Regex to pick up files",
               "min-age": "Min age",
               "preserve-files": "Preserve files",
-              "ignore-modified-date": "Ignorer modification date",
+              "ignore-modified-date": "Ignore modification date",
               "max-files": "Max files per scan (0 = no limit)",
               "max-size": "Max size per scan (0 = no limit)",
               "recursive": "Scan sub-folders"
@@ -2688,7 +2688,7 @@
               "regex": "Regex to pick up files",
               "min-age": "Min age",
               "preserve-files": "Preserve files",
-              "ignore-modified-date": "Ignorer modification date",
+              "ignore-modified-date": "Ignore modification date",
               "max-files": "Max files per scan (0 = no limit)",
               "max-size": "Max size per scan (0 = no limit)",
               "recursive": "Scan sub-folders"
