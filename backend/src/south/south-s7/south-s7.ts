@@ -49,6 +49,39 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
     return CONNECTION_TYPE_SRC_TSAP[connectionType];
   }
 
+  private createEndpoint(): S7Endpoint {
+    return new S7Endpoint({
+      host: this.connector.settings.host,
+      port: this.connector.settings.port,
+      rack: this.connector.settings.rack,
+      slot: this.connector.settings.slot,
+      srcTSAP: this.getSrcTSAP(this.connector.settings.connectionType),
+      autoReconnect: 0,
+      s7ConnOpts: { timeout: this.connector.settings.requestTimeout }
+    });
+  }
+
+  /**
+   * nodes7 has no connection timeout option (only a fixed 10 s one on the transport), so the connection is raced
+   * against the connector's own timeout.
+   */
+  private async connectEndpoint(endpoint: S7Endpoint): Promise<void> {
+    let timeout: NodeJS.Timeout | undefined;
+    try {
+      await Promise.race([
+        endpoint.connect(),
+        new Promise<never>((_resolve, reject) => {
+          timeout = setTimeout(
+            () => reject(new Error(`Connection timeout after ${this.connector.settings.connectTimeout} ms`)),
+            this.connector.settings.connectTimeout
+          );
+        })
+      ]);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   override async connect(): Promise<void> {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -56,15 +89,8 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
     }
     try {
       this.logger.debug(`Connecting S7 endpoint into ${this.connector.settings.host}:${this.connector.settings.port}`);
-      this.endpoint = new S7Endpoint({
-        host: this.connector.settings.host,
-        port: this.connector.settings.port,
-        rack: this.connector.settings.rack,
-        slot: this.connector.settings.slot,
-        srcTSAP: this.getSrcTSAP(this.connector.settings.connectionType),
-        autoReconnect: 0
-      });
-      await this.endpoint.connect();
+      this.endpoint = this.createEndpoint();
+      await this.connectEndpoint(this.endpoint);
       // Detect unexpected disconnections between scan cycles (server-side
       // timeout, network interruption, etc.) and reconnect immediately so the
       // next scan cycle does not fail on a dead endpoint.
@@ -109,16 +135,9 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const endpoint = new S7Endpoint({
-      host: this.connector.settings.host,
-      port: this.connector.settings.port,
-      rack: this.connector.settings.rack,
-      slot: this.connector.settings.slot,
-      srcTSAP: this.getSrcTSAP(this.connector.settings.connectionType),
-      autoReconnect: 0
-    });
+    const endpoint = this.createEndpoint();
     try {
-      await endpoint.connect();
+      await this.connectEndpoint(endpoint);
       return {
         items: [{ key: 'RemoteAddress', value: `${this.connector.settings.host}:${this.connector.settings.port}` }]
       };
@@ -139,17 +158,10 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
     item: SouthConnectorItemEntity<SouthS7ItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
-    const endpoint = new S7Endpoint({
-      host: this.connector.settings.host,
-      port: this.connector.settings.port,
-      rack: this.connector.settings.rack,
-      slot: this.connector.settings.slot,
-      srcTSAP: this.getSrcTSAP(this.connector.settings.connectionType),
-      autoReconnect: 0
-    });
+    const endpoint = this.createEndpoint();
     try {
       const connectStart = DateTime.now().toMillis();
-      await endpoint.connect();
+      await this.connectEndpoint(endpoint);
       const connectionDuration = DateTime.now().toMillis() - connectStart;
       const queryStart = DateTime.now().toMillis();
       const group = new S7ItemGroup(endpoint);
