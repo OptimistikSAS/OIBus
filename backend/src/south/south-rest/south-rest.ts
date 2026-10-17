@@ -35,6 +35,13 @@ import {
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
 
+/**
+ * Appends the endpoint to the host. `new URL(endpoint, host)` would drop the path of the host (e.g. the `/api` of
+ * `https://server.com/api`) when the endpoint starts with a slash.
+ */
+export const buildRequestUrl = (host: string, endpoint: string): URL =>
+  new URL(`${host.replace(/\/+$/, '')}/${endpoint.replace(/^\/+/, '')}`);
+
 export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRestItemSettings> implements SouthHistoryQuery {
   constructor(
     connector: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
@@ -56,7 +63,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     const testMethod = this.connector.settings.test.method;
     const successCode = this.connector.settings.test.successCode;
 
-    const requestUrl = new URL(testEndpoint, host);
+    const requestUrl = buildRequestUrl(host, testEndpoint);
 
     let response: ReqResponse;
     try {
@@ -157,7 +164,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     endTime: Instant
   ): Promise<{ filename: string; content: string; maxInstant: Instant | null }> {
     const host = this.connector.settings.host;
-    const requestUrl = new URL(item.settings.endpoint, host);
+    const requestUrl = buildRequestUrl(host, item.settings.endpoint);
 
     const query: Record<string, string | number | Array<string | number>> = {};
 
@@ -261,7 +268,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
               parsed as Record<string, unknown> | Array<Record<string, unknown>>
             );
           }
-          return { filename: `${filename}.json`, content: parsed, maxInstant };
+          return { filename: `${filename}.json`, content, maxInstant };
         } else {
           return { filename: `${filename}.json`, content, maxInstant: null };
         }
