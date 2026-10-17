@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Translate, { translate } from '@docusaurus/Translate';
 
 const LOCALHOST_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1', '::ffff:7f00:1', '0:0:0:0:0:0:0:1'];
 
@@ -11,7 +12,10 @@ const formatRegex = filter => filter.replace(/\\/g, '\\\\').replace(/\./g, '\\.'
 const testIPOnFilter = (userFilters, ipToCheck) => {
   // Localhost addresses are permanently allowed.
   if (LOCALHOST_ADDRESSES.includes(ipToCheck)) {
-    return { allowed: true, matchedRule: 'localhost (always allowed)' };
+    return {
+      allowed: true,
+      matchedRule: translate({ id: 'components.ipFilterTester.localhostRule', message: 'localhost (always allowed)' })
+    };
   }
 
   for (const filter of userFilters) {
@@ -117,7 +121,10 @@ const IPFilterTester = () => {
       {/* ── Filter Rules ── */}
       <div style={{ marginBottom: '1rem' }}>
         <label style={fieldLabel}>
-          Filter Rules <span style={fieldHint}>(one per line)</span>
+          <Translate id="components.ipFilterTester.filterRules">Filter Rules</Translate>{' '}
+          <span style={fieldHint}>
+            <Translate id="components.ipFilterTester.onePerLine">(one per line)</Translate>
+          </span>
         </label>
         <textarea
           value={filterText}
@@ -131,13 +138,18 @@ const IPFilterTester = () => {
       {/* ── IP Address + Test button ── */}
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
         <div style={{ flex: 1 }}>
-          <label style={fieldLabel}>IP Address to Test</label>
+          <label style={fieldLabel}>
+            <Translate id="components.ipFilterTester.ipToTest">IP Address to Test</Translate>
+          </label>
           <input
             type="text"
             value={ipToTest}
             onChange={e => setIpToTest(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="e.g. 192.168.1.100 or ::ffff:10.0.0.1"
+            placeholder={translate(
+              { id: 'components.ipFilterTester.ipPlaceholder', message: 'e.g. {ipv4} or {ipv6}' },
+              { ipv4: '192.168.1.100', ipv6: '::ffff:10.0.0.1' }
+            )}
             style={inputBase}
           />
         </div>
@@ -157,7 +169,7 @@ const IPFilterTester = () => {
             height: '2.25rem'
           }}
         >
-          Test
+          <Translate id="components.ipFilterTester.test">Test</Translate>
         </button>
       </div>
 
@@ -171,11 +183,13 @@ const IPFilterTester = () => {
                 color: result.allowed ? 'var(--ifm-color-success-darkest)' : 'var(--ifm-color-danger-darkest)'
               }}
             >
-              {result.allowed ? 'Allowed' : 'Blocked'}
+              {result.allowed
+                ? translate({ id: 'components.ipFilterTester.allowed', message: 'Allowed' })
+                : translate({ id: 'components.ipFilterTester.blocked', message: 'Blocked' })}
             </strong>
             {result.matchedRule ? (
               <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>
-                — matched rule{' '}
+                — <Translate id="components.ipFilterTester.matchedRule">matched rule</Translate>{' '}
                 <code
                   style={{
                     fontSize: '0.85rem',
@@ -188,7 +202,9 @@ const IPFilterTester = () => {
                 </code>
               </span>
             ) : (
-              <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>— no rule matched this address</span>
+              <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>
+                — <Translate id="components.ipFilterTester.noRuleMatched">no rule matched this address</Translate>
+              </span>
             )}
           </div>
         </div>

@@ -5,9 +5,9 @@ en fait un outil idéal pour le **débogage et le développement**.
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Paramètre    | Description                                                                                                                | Exemple de valeur |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
-| **Verbeux**    | Lorsqu'activé, affiche les données reçues dans des **tableaux détaillés**. Lorsque désactivé, affiche uniquement le **nombre de valeurs** reçues. | Activé/Désactivé   |
+| Paramètre   | Description                                                                                                                                       | Exemple de valeur |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Verbeux** | Lorsqu'activé, affiche les données reçues dans des **tableaux détaillés**. Lorsque désactivé, affiche uniquement le **nombre de valeurs** reçues. | Activé/Désactivé  |
 
 ## Utilisation de la console en production {#using-the-console-in-production}
 

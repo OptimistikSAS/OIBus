@@ -16,8 +16,8 @@ simplifiées — le tout sans nécessiter d'accès entrant vers la machine OIBus
 
 **1 – 2 · Initier l'enregistrement**
 
-- Naviguez vers la page **Engine** dans OIBus.
-- Cliquez sur le bouton **OIAnalytics**, remplissez le formulaire d'enregistrement, puis cliquez sur **Register**.
+- Naviguez vers la page **Moteur** dans OIBus.
+- Cliquez sur le bouton **OIAnalytics**, remplissez le formulaire d'enregistrement, puis cliquez sur **Enregistrer**.
 
 **3 · Valider dans OIAnalytics**
 
@@ -45,24 +45,24 @@ simplifiées — le tout sans nécessiter d'accès entrant vers la machine OIBus
 
 | Paramètre                           | Description                                                                                                                         | Exemple de valeur                       |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| **Host**                            | URL de l'instance OIAnalytics.                                                                                                      | `https://instance_name.oianalytics.com` |
-| **Accept unauthorized certificate** | Accepter les certificats TLS auto-signés ou autrement non fiables.                                                                  | Enabled/Disabled                        |
-| **Use proxy**                       | Faire transiter les requêtes OIAnalytics par un serveur proxy.                                                                      | Enabled/Disabled                        |
-| **Proxy URL**                       | URL du serveur proxy. Requis lorsque **Use proxy** est activé.                                                                      | `http://proxy.example.com:8080`         |
-| **Proxy username**                  | Nom d'utilisateur pour l'authentification du proxy (si requis).                                                                     | `proxy_user`                            |
-| **Proxy password**                  | Mot de passe pour l'authentification du proxy (si requis).                                                                          | `••••••••`                              |
-| **Use API gateway**                 | Faire transiter les requêtes par une passerelle API au lieu d'appeler OIAnalytics directement.                                     | Enabled/Disabled                        |
-| **API gateway header key**          | Nom de l'en-tête HTTP envoyé pour s'authentifier auprès de la passerelle. Requis lorsque **Use API gateway** est activé.            | `X-Api-Key`                             |
-| **API gateway header value**        | Valeur secrète de l'en-tête de la passerelle (stockée chiffrée). Requis lorsque **Use API gateway** est activé.                     | `••••••••`                              |
-| **API gateway base endpoint**       | Préfixe de chemin ajouté devant chaque chemin d'API OIAnalytics lors du routage via la passerelle. Requis lorsque **Use API gateway** est activé. | `/oianalytics`                          |
+| **Hôte**                            | URL de l'instance OIAnalytics.                                                                                                      | `https://instance_name.oianalytics.com` |
+| **Accepter les connexions non autorisées** | Accepter les certificats TLS auto-signés ou autrement non fiables.                                                                  | Activé/Désactivé                        |
+| **Utiliser un proxy**               | Faire transiter les requêtes OIAnalytics par un serveur proxy.                                                                      | Activé/Désactivé                        |
+| **URL du proxy**                    | URL du serveur proxy. Requis lorsque **Utiliser un proxy** est activé.                                                                      | `http://proxy.example.com:8080`         |
+| **Nom d'utilisateur du proxy**      | Nom d'utilisateur pour l'authentification du proxy (si requis).                                                                     | `proxy_user`                            |
+| **Mot de passe du proxy**           | Mot de passe pour l'authentification du proxy (si requis).                                                                          | `••••••••`                              |
+| **Utiliser une passerelle API**     | Faire transiter les requêtes par une passerelle API au lieu d'appeler OIAnalytics directement.                                     | Activé/Désactivé                        |
+| **Clé d'en-tête**                   | Nom de l'en-tête HTTP envoyé pour s'authentifier auprès de la passerelle. Requis lorsque **Utiliser une passerelle API** est activé.            | `X-Api-Key`                             |
+| **Valeur secrète de l'en-tête**     | Valeur secrète de l'en-tête de la passerelle (stockée chiffrée). Requis lorsque **Utiliser une passerelle API** est activé.                     | `••••••••`                              |
+| **Point de terminaison de base**    | Préfixe de chemin ajouté devant chaque chemin d'API OIAnalytics lors du routage via la passerelle. Requis lorsque **Utiliser une passerelle API** est activé. | `/oianalytics`                          |
 
 ### Configuration de la temporisation {#timing-configuration}
 
 | Paramètre                  | Description                                                    | Défaut |
-| -------------------------- | ---------------------------------------------------------------| ------- |
-| **Command check interval** | Fréquence à laquelle OIBus interroge OIAnalytics pour de nouvelles commandes. | `60 s`  |
-| **Command retry interval** | Délai avant de réessayer une demande de commande échouée.      | `5 s`   |
-| **Message retry interval** | Délai avant de réessayer l'envoi d'un message échoué.          | `5 s`   |
+| -------------------------- | -------------------------------------------------------------- | ------ |
+| **Intervalle de récupération des commandes (depuis OIAnalytics)** | Fréquence à laquelle OIBus interroge OIAnalytics pour de nouvelles commandes. | `60 s`  |
+| **Intervalle de nouvelle tentative des commandes (depuis OIAnalytics)** | Délai avant de réessayer une demande de commande échouée.      | `5 s`   |
+| **Intervalle de nouvelle tentative des messages (vers OIAnalytics)** | Délai avant de réessayer l'envoi d'un message échoué.          | `5 s`   |
 
 ## Utilisation de l'enregistrement dans les connecteurs {#using-the-registration-in-connectors}
 
@@ -71,7 +71,7 @@ le [connecteur North OIAnalytics](../north-connectors/oianalytics.md), ainsi que
 réutiliser les paramètres d'enregistrement au lieu de nécessiter des paramètres de connexion séparés :
 
 1. Ouvrez la configuration du connecteur ou de la requête d'historique.
-2. Activez **Use OIAnalytics registration**.
+2. Activez **Utiliser l'enregistrement OIAnalytics**.
 3. Enregistrez — l'hôte, l'authentification et le proxy sont hérités automatiquement de l'enregistrement.
 
 ## Transfert des journaux {#log-forwarding}
@@ -102,23 +102,23 @@ requise.
 
 | Commande                         | Description                                                                                                                                                 |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Upgrade version**              | Télécharger et installer une nouvelle version d'OIBus.                                                                                                       |
-| **Restart**                      | Redémarrer le service OIBus.                                                                                                                                 |
-| **Update engine settings**       | Appliquer une nouvelle configuration du moteur (journalisation, proxy…).                                                                                     |
-| **Import configuration**         | Remplacer toute la configuration par un fichier de configuration téléversé dans OIAnalytics, puis redémarrer. L'enregistrement OIAnalytics et les utilisateurs locaux sont conservés. Voir [Export et import de la configuration](../engine/config-export-import.mdx#import-from-oianalytics). |
-| **Memory dump**                  | Écrire un dump mémoire (instantané du tas V8) et le téléverser, compressé en zip, vers OIAnalytics. Les flux de données sont en pause pendant l'écriture de l'instantané, et le dump peut contenir des secrets en clair issus de la mémoire d'OIBus. |
-| **Logs database**                | Téléverser vers OIAnalytics une copie compressée en zip de la base des logs (`logs.db`). |
-| **Update registration settings** | Appliquer de nouveaux paramètres d'enregistrement OIAnalytics (réseau, temporisation, permissions…).                                                        |
-| **Regenerate cipher keys**       | Générer une nouvelle paire de clés RSA pour le chiffrement des secrets.                                                                                      |
-| **Scan mode management**         | Créer, mettre à jour ou supprimer des modes de scan.                                                                                                   |
-| **North connector**              | Créer, mettre à jour, supprimer ou tester des connecteurs North.                                                                                              |
-| **North connector cache**        | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'un connecteur North. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
-| **South connector**              | Créer, mettre à jour, supprimer ou tester des connecteurs South et leurs éléments.                                                                             |
-| **History query**                | Créer, mettre à jour, supprimer ou tester des requêtes d'historique et leurs éléments.                                                                       |
-| **History query cache**          | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'une requête d'historique. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
-| **Custom transformer**           | Créer, mettre à jour, supprimer ou tester des transformateurs personnalisés.                                                                                 |
-| **Test transformer**             | Tester n'importe quel transformateur (standard ou personnalisé) contre un véritable élément South ou des données collées — distinct du test du code propre d'un transformateur personnalisé. |
-| **Setpoint**                     | Recevoir des valeurs de consigne depuis OIAnalytics et les transmettre aux connecteurs North.                                                                 |
+| **Mettre à niveau la version**   | Télécharger et installer une nouvelle version d'OIBus.                                                                                                       |
+| **Redémarrer**                   | Redémarrer le service OIBus.                                                                                                                                 |
+| **Mettre à jour les paramètres du moteur** | Appliquer une nouvelle configuration du moteur (journalisation, proxy…).                                                                                     |
+| **Importer la configuration**    | Remplacer toute la configuration par un fichier de configuration téléversé dans OIAnalytics, puis redémarrer. L'enregistrement OIAnalytics et les utilisateurs locaux sont conservés. Voir [Export et import de la configuration](../engine/config-export-import.mdx#import-from-oianalytics). |
+| **Dump mémoire**                 | Écrire un dump mémoire (instantané du tas V8) et le téléverser, compressé en zip, vers OIAnalytics. Les flux de données sont en pause pendant l'écriture de l'instantané, et le dump peut contenir des secrets en clair issus de la mémoire d'OIBus. |
+| **Base des logs**                | Téléverser vers OIAnalytics une copie compressée en zip de la base des logs (`logs.db`). |
+| **Mettre à jour les paramètres d'enregistrement** | Appliquer de nouveaux paramètres d'enregistrement OIAnalytics (réseau, temporisation, permissions…).                                                        |
+| **Régénérer les clés de chiffrement** | Générer une nouvelle paire de clés RSA pour le chiffrement des secrets.                                                                                      |
+| **Gestion des modes de scan**    | Créer, mettre à jour ou supprimer des modes de scan.                                                                                                   |
+| **Connecteur North**             | Créer, mettre à jour, supprimer ou tester des connecteurs North.                                                                                              |
+| **Cache du connecteur North**    | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'un connecteur North. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
+| **Connecteur South**             | Créer, mettre à jour, supprimer ou tester des connecteurs South et leurs éléments.                                                                             |
+| **Requête d'historique**         | Créer, mettre à jour, supprimer ou tester des requêtes d'historique et leurs éléments.                                                                       |
+| **Cache de la requête d'historique** | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'une requête d'historique. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
+| **Transformateur personnalisé**  | Créer, mettre à jour, supprimer ou tester des transformateurs personnalisés.                                                                                 |
+| **Tester le transformateur**     | Tester n'importe quel transformateur (standard ou personnalisé) contre un véritable élément South ou des données collées — distinct du test du code propre d'un transformateur personnalisé. |
+| **Consigne**                     | Recevoir des valeurs de consigne depuis OIAnalytics et les transmettre aux connecteurs North.                                                                 |
 
 ### Processus de mise à niveau de version {#version-upgrade-process}
 
@@ -165,7 +165,7 @@ jamais la machine OIBus en clair :
 - Sur la machine OIBus, les secrets sont stockés avec un chiffrement local. La clé privée ne quitte jamais l'instance
   OIBus.
 
-Utilisez la commande **Regenerate cipher keys** pour faire pivoter la paire de clés RSA. Après régénération, les
+Utilisez la commande **Régénérer les clés de chiffrement** pour faire pivoter la paire de clés RSA. Après régénération, les
 secrets stockés dans OIAnalytics doivent être ressaisis puisque l'ancien texte chiffré ne peut plus être déchiffré.
 
 :::info Détails cryptographiques
@@ -177,10 +177,10 @@ Une fois sur la machine OIBus, les secrets sont stockés selon le
 
 ## Dépannage {#troubleshooting}
 
-| Problème                | Ce qu'il faut vérifier                                              |
-| ---------------------- | -------------------------------------------------------------------- |
-| Registration fails     | Connectivité réseau et règles de pare-feu vers OIAnalytics.          |
-| Code not accepted      | Vérifiez que le code à 6 caractères correspond et n'a pas expiré.    |
-| Commands not executing | Permissions de commande accordées dans OIAnalytics.                  |
-| Upgrade fails          | Espace disque disponible et permissions d'écriture sur le dossier de données. |
-| Connection errors      | Paramètres de proxy, confiance du certificat, et règles de pare-feu. |
+| Problème                         | Ce qu'il faut vérifier                                              |
+| -------------------------------- | -------------------------------------------------------------------- |
+| L'enregistrement échoue          | Connectivité réseau et règles de pare-feu vers OIAnalytics.          |
+| Code non accepté                 | Vérifiez que le code à 6 caractères correspond et n'a pas expiré.    |
+| Les commandes ne s'exécutent pas | Permissions de commande accordées dans OIAnalytics.                  |
+| La mise à niveau échoue          | Espace disque disponible et permissions d'écriture sur le dossier de données. |
+| Erreurs de connexion             | Paramètres de proxy, confiance du certificat, et règles de pare-feu. |

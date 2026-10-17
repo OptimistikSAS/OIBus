@@ -19,27 +19,27 @@ Le **connecteur North Azure Data Explorer™** ingère les données OIBus dans u
 
 Configurez les paramètres suivants pour vous connecter à votre cluster Azure Data Explorer :
 
-| Paramètre                       | Description                                                                                                                                                                                        | Exemple de valeur                                |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| **URL du cluster**               | Point de terminaison du moteur du cluster Azure Data Explorer. Saisissez l'URL simple du cluster, pas le point de terminaison `ingest-` : le connecteur en dérive automatiquement le point de terminaison d'ingestion (`ingest-`). | `https://mycluster.westeurope.kusto.windows.net` |
-| **Base de données**              | Nom de la base de données Azure Data Explorer dans laquelle ingérer.                                                                                                                              | `oibus`                                             |
-| **Table**                        | Nom de la table cible dans laquelle ingérer. La table doit déjà exister dans Azure Data Explorer.                                                                                                 | `TimeValues`                                        |
-| **Format des données**           | Format utilisé pour envoyer les données à Azure Data Explorer. Doit correspondre au transformateur sélectionné sur ce connecteur.                                                                | `CSV`, `JSON`, `Multiline JSON`                     |
-| **Nom du mapping d'ingestion**   | Nom d'un mapping d'ingestion Azure Data Explorer préexistant utilisé pour mapper les colonnes. Facultatif ; doit déjà exister dans Azure Data Explorer. Lorsqu'il est vide, Azure Data Explorer utilise sa résolution de colonnes par défaut. | `TimeValuesMapping`                                 |
+| Paramètre                      | Description                                                                                                                                                                                                                                   | Exemple de valeur                                |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **URL du cluster**             | Point de terminaison du moteur du cluster Azure Data Explorer. Saisissez l'URL simple du cluster, pas le point de terminaison `ingest-` : le connecteur en dérive automatiquement le point de terminaison d'ingestion (`ingest-`).            | `https://mycluster.westeurope.kusto.windows.net` |
+| **Base de données**            | Nom de la base de données Azure Data Explorer dans laquelle ingérer.                                                                                                                                                                          | `oibus`                                          |
+| **Table**                      | Nom de la table cible dans laquelle ingérer. La table doit déjà exister dans Azure Data Explorer.                                                                                                                                             | `TimeValues`                                     |
+| **Format de données**          | Format utilisé pour envoyer les données à Azure Data Explorer. Doit correspondre au transformateur sélectionné sur ce connecteur.                                                                                                             | `CSV`, `JSON`, `JSON multiligne`                 |
+| **Nom du mapping d'ingestion** | Nom d'un mapping d'ingestion Azure Data Explorer préexistant utilisé pour mapper les colonnes. Facultatif ; doit déjà exister dans Azure Data Explorer. Lorsqu'il est vide, Azure Data Explorer utilise sa résolution de colonnes par défaut. | `TimeValuesMapping`                              |
 
 ### Authentification {#authentication}
 
 Azure Data Explorer prend en charge trois modes d'authentification :
 
-| Paramètre           | Description                                                                                                                    | Exemple de valeur                                                           |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| **Authentification** | Méthode d'authentification.                                                                                                        | `AAD application secret`, `AAD application certificate`, `Managed identity` |
-| **ID du tenant**     | ID du tenant Azure Active Directory. Requis pour `AAD application secret` et `AAD application certificate`.                       | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                      |
-| **ID client**        | ID de l'application (client). Requis pour `AAD application secret` et `AAD application certificate`.                              | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                      |
-| **Secret client**    | Secret client de l'application. Requis pour `AAD application secret`.                                                             | `••••••••`                                                                  |
-| **Certificat**       | Certificat à utiliser pour l'authentification, sélectionné dans le magasin de certificats d'OIBus. Requis pour `AAD application certificate`. | `my-adx-certificate`                                                        |
+| Paramètre            | Description                                                                                                                                    | Exemple de valeur                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Authentification** | Méthode d'authentification.                                                                                                                    | `Secret d'application AAD`, `Certificat d'application AAD`, `Identité managée` |
+| **ID du locataire**  | ID du locataire Azure Active Directory. Requis pour `Secret d'application AAD` et `Certificat d'application AAD`.                              | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                         |
+| **ID client**        | ID de l'application (client). Requis pour `Secret d'application AAD` et `Certificat d'application AAD`.                                        | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                         |
+| **Secret client**    | Secret client de l'application. Requis pour `Secret d'application AAD`.                                                                        | `••••••••`                                                                     |
+| **Certificat**       | Certificat à utiliser pour l'authentification, sélectionné dans le magasin de certificats d'OIBus. Requis pour `Certificat d'application AAD`. | `my-adx-certificate`                                                           |
 
-Avec `Managed identity`, aucune information d'identification n'est requise : OIBus s'authentifie à l'aide de l'identité
+Avec `Identité managée`, aucune information d'identification n'est requise : OIBus s'authentifie à l'aide de l'identité
 managée Azure ambiante de l'hôte sur lequel il s'exécute (par exemple une VM Azure ou un App Service disposant d'une
 identité managée assignée par le système ou par l'utilisateur).
 
@@ -48,11 +48,11 @@ identité managée assignée par le système ou par l'utilisateur).
 Si votre infrastructure réseau exige que les requêtes passent par un serveur proxy pour atteindre Azure Data Explorer,
 activez l'option **Utiliser un proxy** et configurez les détails du proxy ci-dessous.
 
-| Paramètre                | Description                                          | Exemple de valeur               |
-| ------------------------- | ------------------------------------------------------ | -------------------------------- |
-| **URL du proxy**          | URL du serveur proxy.                                   | `http://proxy.example.com:8080` |
-| **Nom d'utilisateur proxy** | Nom d'utilisateur pour l'authentification proxy (si requis). | `proxy_user`                    |
-| **Mot de passe proxy**    | Mot de passe pour l'authentification proxy (si requis). | `••••••••`                      |
+| Paramètre                      | Description                                                  | Exemple de valeur               |
+| ------------------------------ | ------------------------------------------------------------ | ------------------------------- |
+| **URL du proxy**               | URL du serveur proxy.                                        | `http://proxy.example.com:8080` |
+| **Nom d'utilisateur du proxy** | Nom d'utilisateur pour l'authentification proxy (si requis). | `proxy_user`                    |
+| **Mot de passe du proxy**      | Mot de passe pour l'authentification proxy (si requis).      | `••••••••`                      |
 
 Le support du proxy est partiel. Le SDK Azure Data Explorer n'expose aucune option de proxy, OIBus installe donc le
 proxy directement sur les clients HTTP du SDK, et le transmet également aux informations d'identification Entra ID
@@ -68,7 +68,7 @@ définissez `HTTPS_PROXY` au niveau du système d'exploitation en complément de
 
 - **Le format des données doit correspondre au transformateur** : utilisez le transformateur `oibus-time-values-to-csv`
   avec le format de données `CSV`, ou le transformateur `oibus-time-values-to-json` avec le format de données `JSON`
-  ou `Multiline JSON`. Une incohérence entre le transformateur et le format de données entraîne des échecs d'ingestion
+  ou `JSON multiligne`. Une incohérence entre le transformateur et le format de données entraîne des échecs d'ingestion
   côté Azure Data Explorer.
 - **L'ingestion est mise en file d'attente, pas en flux continu** : Azure Data Explorer accepte le lot et termine
   l'ingestion de manière asynchrone, si bien que les lignes ne deviennent interrogeables qu'après la latence de mise en

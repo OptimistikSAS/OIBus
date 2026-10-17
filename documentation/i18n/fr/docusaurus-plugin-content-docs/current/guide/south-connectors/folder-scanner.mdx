@@ -20,7 +20,7 @@ correspondants sont transmis aux caches North.
 :::caution Exigences d'accès utilisateur
 
 L'utilisateur exécutant OIBus (utilisateur du terminal ou compte de service) **doit disposer d'un accès en lecture**
-au dossier d'entrée. Si **Conserver le fichier** est désactivé, un **accès en écriture** est également requis pour
+au dossier d'entrée. Si **Conserver les fichiers** est désactivé, un **accès en écriture** est également requis pour
 supprimer les fichiers.
 
 :::
@@ -50,8 +50,8 @@ qui a par ailleurs accès au partage.
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
 | RegExp                       | Expression régulière pour filtrer les fichiers.                                                                                                                         | `.*\.csv\|.*\xlsx` → fichiers CSV ou Excel |
 | Âge minimum                  | Âge minimum (en ms) des fichiers à récupérer. Évite de récupérer des fichiers corrompus encore en cours d'écriture. Par défaut : `1000` ms.                            | `1000`                                      |
-| Conserver le fichier         | Si activé, les fichiers ne sont **pas supprimés** après récupération. Utile si d'autres applications ont besoin d'y accéder. OIBus suit l'heure de modification pour éviter de récupérer à nouveau des fichiers inchangés. | Activé/Désactivé |
-| Ignorer la date de modification | (_Nécessite **Conserver le fichier**_) Force la récupération même si l'heure de modification du fichier n'a pas changé. Utile pour garantir que les fichiers sont toujours traités. | Activé/Désactivé |
+| Conserver les fichiers         | Si activé, les fichiers ne sont **pas supprimés** après récupération. Utile si d'autres applications ont besoin d'y accéder. OIBus suit l'heure de modification pour éviter de récupérer à nouveau des fichiers inchangés. | Activé/Désactivé |
+| Ignorer la date de modification | (_Nécessite **Conserver les fichiers**_) Force la récupération même si l'heure de modification du fichier n'a pas changé. Utile pour garantir que les fichiers sont toujours traités. | Activé/Désactivé |
 | Fichiers max par scan        | Nombre maximum de fichiers à récupérer par scan. Réglez sur **0** pour aucune limite. Les fichiers restants sont récupérés au scan suivant.                             | `0` (pas de limite), `100`                  |
 | Taille max par scan          | Taille totale maximale (en Mo) des fichiers par scan. Réglez sur **0** pour aucune limite. Les fichiers restants sont récupérés au scan suivant.                        | `0` (pas de limite), `500`                  |
 | Scanner les sous-dossiers    | Si activé, scanne récursivement les sous-dossiers au sein du dossier d'entrée.                                                                                          | Activé/Désactivé                            |

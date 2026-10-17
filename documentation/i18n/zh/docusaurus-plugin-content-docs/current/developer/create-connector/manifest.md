@@ -3,22 +3,22 @@ displayed_sidebar: developerSidebar
 sidebar_position: 2
 ---
 
-# 清单（manifest）
+# 清单
 
 清单是一个 TypeScript 文件（类型为 `SouthConnectorManifest` 或 `NorthConnectorManifest`），
 用于声明：
 
-- **连接器是什么** — id、类别、支持的模式（South）或内容类型（North）
+- **连接器是什么** — id、类别、支持的模式（南向）或内容类型（北向）
 - **操作人员可以配置哪些设置** — 连接 URL、凭据、协议相关的选项
-- **仅限 South：一个条目（item）是什么样的** — 要查询哪个值、扫描模式的可接受
-  性、条目专属的设置
+- **仅限南向：一个项目是什么样的** — 要查询哪个值、扫描模式的可接受
+  性、项目专属的设置
 
 前端将清单渲染为一个表单；后端的类型生成器则生成对应的 TypeScript
 接口（`South<Type>Settings`、`South<Type>ItemSettings`、`North<Type>Settings`）。
 
 ## 顶层结构 {#top-level-shape}
 
-### South {#south}
+### 南向 {#south}
 
 ```typescript title="backend/src/south/south-folder-scanner/manifest.ts (excerpt)"
 import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
@@ -44,7 +44,7 @@ export default manifest;
 `south-interface.ts` 中的哪些接口决定的；参见
 [连接器类文档](./class.md#capability-interfaces-south-only)。
 
-### North {#north}
+### 北向 {#north}
 
 ```typescript title="backend/src/north/north-console/manifest.ts"
 import { NorthConnectorManifest } from '../../../shared/model/connector/north-manifest.model';
@@ -59,7 +59,7 @@ const manifest: NorthConnectorManifest = {
 export default manifest;
 ```
 
-North 没有 `items`。`types` 数组必须与类的 `supportedTypes()` 返回值一致——
+北向没有 `items`。`types` 数组必须与类的 `supportedTypes()` 返回值一致——
 引擎会在运行时进行检查，并将不受支持的类型路由到错误文件夹。
 
 ## settings 对象 {#the-settings-object}
@@ -150,7 +150,7 @@ North 没有 `items`。`types` 数组必须与类的 `supportedTypes()` 返回�
 }
 ```
 
-### 校验器（Validators） {#validators}
+### 校验器 {#validators}
 
 ```typescript
 validators: [
@@ -205,9 +205,9 @@ validators: [
 
 路径是点分隔的，相对于**所在对象的根**（而不是整个表单的根）。
 
-## 条目（items，仅限 South） {#items-south-only}
+## 项目（仅限南向） {#items-south-only}
 
-`items` 描述了每个条目的子表单。它是一个 `OIBusArrayAttribute`，其
+`items` 描述了每个项目的子表单。它是一个 `OIBusArrayAttribute`，其
 `rootAttribute` 是定义单行的 `OIBusObjectAttribute`：
 
 ```typescript title="Typical items shape"
@@ -259,9 +259,9 @@ items: {
 
 | 值                        | 效果                                                                              |
 | ------------------------- | ---------------------------------------------------------------------------------- |
-| `'POLL'`                  | 仅周期性触发（大多数 South 连接器的默认值）                                        |
+| `'POLL'`                  | 仅周期性触发（大多数南向连接器的默认值）                                        |
 | `'SUBSCRIPTION'`          | 仅推送驱动——用于该连接器**只**支持订阅的场景（例如 MQTT）                         |
-| `'SUBSCRIPTION_AND_POLL'` | 每个条目均可选择其一（OPC UA：部分条目轮询，部分条目订阅）                        |
+| `'SUBSCRIPTION_AND_POLL'` | 每个项目均可选择其一（OPC UA：部分项目轮询，部分项目订阅）                        |
 
 一个完整的真实示例是 `backend/src/south/south-folder-scanner/manifest.ts`。
 
@@ -274,10 +274,10 @@ npm run generate:settings-interface
 ```
 
 该脚本会读取每一个 `manifest.ts`，推导出对应的 TypeScript 类型，并写入
-`backend/shared/model/connector/south-settings.model.ts`（以及 North 对应的文件）。它还会
+`backend/shared/model/connector/south-settings.model.ts`（以及北向对应的文件）。它还会
 刷新 OpenAPI 定义。
 
-:::caution Schema changes are breaking
+:::caution Schema 变更属于破坏性变更
 如果您更改了某个字段在其父级 `attributes` 数组中的 `key`、`type` 或位置，生成的
 接口就会发生变化。已保存到数据库中的现有连接器配置可能需要迁移——
 在 `backend/src/migration/entity-migrations/` 中添加一个迁移。
