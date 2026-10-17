@@ -5,7 +5,13 @@ import { describe, it } from 'node:test';
 
 import { CONFIG_TRANSFER_FIXTURES_DIR } from '../../../../tests/config-transfer-fixtures/config-transfer-fixture';
 import { JsonObject } from '../config-upgrade';
-import { buildRecordListToCsvOptions, keepsResolvedTransformer, toNewSqlItemSettings, upgrade } from './v3.10.0';
+import {
+  buildRecordListToCsvOptions,
+  keepsResolvedTransformer,
+  toNewSqlItemSettings,
+  toNoneResamplingItemSettings,
+  upgrade
+} from './v3.10.0';
 
 const fixtureConfig = (version: string): JsonObject =>
   JSON.parse(fs.readFileSync(path.join(CONFIG_TRANSFER_FIXTURES_DIR, version, 'export.json'), 'utf-8')).config;
@@ -66,6 +72,40 @@ describe('3.10.0 config upgrade', () => {
     upgrade.apply(config);
 
     assert.deepStrictEqual(standardTransformers(config, 'record-list-to-csv'), []);
+  });
+
+  it('replaces the raw resampling of OPC UA and OPC items with none', () => {
+    const config: JsonObject = {
+      southConnectors: [
+        {
+          type: 'opcua',
+          settings: { items: [{ settings: { nodeId: 'ns=1', mode: 'ha', haMode: { aggregate: 'average', resampling: 'raw' } } }] }
+        },
+        { type: 'opc', settings: { items: [{ settings: { nodeId: 'a', aggregate: 'count', resampling: 'raw' } }] } }
+      ],
+      historyQueries: [{ settings: { southType: 'opc', items: [{ settings: { nodeId: 'b', aggregate: 'count', resampling: 'raw' } }] } }]
+    };
+
+    upgrade.apply(config);
+
+    assert.deepStrictEqual(
+      (config.southConnectors as Array<JsonObject>).map(south => ((south.settings as JsonObject).items as Array<JsonObject>)[0].settings),
+      [
+        { nodeId: 'ns=1', mode: 'ha', haMode: { aggregate: 'average', resampling: 'none' } },
+        { nodeId: 'a', aggregate: 'count', resampling: 'none' }
+      ]
+    );
+    assert.deepStrictEqual(
+      (((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).items as Array<JsonObject>)[0].settings,
+      { nodeId: 'b', aggregate: 'count', resampling: 'none' }
+    );
+  });
+
+  it('leaves the other resamplings untouched', () => {
+    assert.strictEqual(toNoneResamplingItemSettings('opcua', { mode: 'ha', haMode: { aggregate: 'count', resampling: '1min' } }), null);
+    assert.strictEqual(toNoneResamplingItemSettings('opcua', { mode: 'da', haMode: null }), null);
+    assert.strictEqual(toNoneResamplingItemSettings('opc', { aggregate: 'count', resampling: '10s' }), null);
+    assert.strictEqual(toNoneResamplingItemSettings('mqtt', { resampling: 'raw' }), null);
   });
 
   it('keeps a resolved transformer, except none at all or iso', () => {

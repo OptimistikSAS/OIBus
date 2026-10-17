@@ -292,7 +292,7 @@ const manifest: SouthConnectorManifest = {
               type: 'string-select',
               key: 'resampling',
               translationKey: 'configuration.oibus.manifest.south.items.opc.resampling',
-              defaultValue: 'raw',
+              defaultValue: 'none',
               selectableValues: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
               validators: [
                 {

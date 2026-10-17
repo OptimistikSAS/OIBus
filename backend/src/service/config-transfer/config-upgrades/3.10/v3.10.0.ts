@@ -1,6 +1,14 @@
 import recordListToCsvManifest from '../../../../transformers/any/record-list-to-csv/manifest';
 import { generateRandomId } from '../../../utils';
-import { ConfigUpgrade, forEachHistoryQuery, forEachNorth, forEachSouth, JsonObject } from '../config-upgrade';
+import {
+  ConfigUpgrade,
+  forEachHistoryQuery,
+  forEachHistoryQueryItem,
+  forEachNorth,
+  forEachSouth,
+  forEachSouthItem,
+  JsonObject
+} from '../config-upgrade';
 
 /**
  * The 3.10.0 changes to the configuration, shared with the entity migration doing the same to existing
@@ -118,6 +126,26 @@ export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings): Re
  */
 export function keepsResolvedTransformer(resolvedFunctionName: string | null | undefined): boolean {
   return resolvedFunctionName !== undefined && resolvedFunctionName !== 'iso';
+}
+
+// The south types whose item manifest defaulted the resampling to 'raw', which is not one of its selectable values
+// ('none', '1s', ...). 'raw' already meant no resampling at runtime.
+export const RAW_RESAMPLING_SOUTH_TYPES = ['opcua', 'opc'];
+
+/**
+ * Returns the settings of an OPC UA (`haMode.resampling`) or OPC (`resampling`) item with a 'raw' resampling moved to
+ * 'none', or null when there is nothing to change.
+ */
+export function toNoneResamplingItemSettings(southType: string, settings: JsonObject): JsonObject | null {
+  if (southType === 'opcua') {
+    const haMode = settings.haMode as JsonObject | null | undefined;
+    if (haMode?.resampling !== 'raw') return null;
+    return { ...settings, haMode: { ...haMode, resampling: 'none' } };
+  }
+  if (southType === 'opc' && settings.resampling === 'raw') {
+    return { ...settings, resampling: 'none' };
+  }
+  return null;
 }
 
 const asObjects = (value: unknown): Array<JsonObject> => (Array.isArray(value) ? (value as Array<JsonObject>) : []);
@@ -268,7 +296,7 @@ export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
     'Add scan mode scheduling types, certificate chains, item caching strategies and configuration workflows; ' +
-    'move SQL items CSV serialization to record-list-to-csv transformers',
+    'move SQL items CSV serialization to record-list-to-csv transformers; replace the raw resampling of OPC UA and OPC items with none',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -313,6 +341,14 @@ export const upgrade: ConfigUpgrade = {
         setMissing(group.historySettings as JsonObject, 'cachingStrategy', defaultCachingStrategy);
       }
     });
+
+    for (const southType of RAW_RESAMPLING_SOUTH_TYPES) {
+      const updateResampling = (item: JsonObject): void => {
+        item.settings = toNoneResamplingItemSettings(southType, item.settings as JsonObject) ?? item.settings;
+      };
+      forEachSouthItem(config, southType, updateResampling);
+      forEachHistoryQueryItem(config, southType, updateResampling);
+    }
 
     const addReferenceProcess = (link: JsonObject): void => {
       if (!OIANALYTICS_TRANSFORMER_FUNCTION_NAMES.includes(catalog.functionName(link.transformerId) ?? '')) return;
