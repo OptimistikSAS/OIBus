@@ -163,6 +163,8 @@ describe('SouthOIAnalytics', () => {
     utilsOianalyticsExports.testOIAnalyticsConnection = mock.fn(async () => undefined);
     utilsExports.formatQueryParams = mock.fn((): Record<string, string> => ({ formatted: 'query' }));
     utilsExports.persistResults = mock.fn(async () => undefined);
+    utilsExports.formatInstant.mock.resetCalls();
+    utilsExports.formatInstant.mock.mockImplementation((inst: unknown) => inst);
 
     (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get = mock.fn(
       () => testData.oIAnalytics.registration.completed
@@ -264,8 +266,9 @@ describe('SouthOIAnalytics', () => {
     it('should process items, persist results, and return max instant', async () => {
       const item = baseConfiguration.items[0];
       const mockRaw = [{ raw: 1 }];
-      const mockFormatted = [{ pointId: 'p1' }];
+      const mockFormatted = [{ pointId: 'p1', timestamp: '2023-02-01T12:00:00.000Z', data: { value: 12, unit: '°C' } }];
       const maxInstant = '2023-02-01T12:00:00.000Z';
+      utilsExports.formatInstant.mock.mockImplementation(() => '2023-02-01');
 
       httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, mockRaw));
       utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
@@ -279,7 +282,11 @@ describe('SouthOIAnalytics', () => {
       assert.deepStrictEqual(utilsOianalyticsExports.parseData.mock.calls[0].arguments, [mockRaw]);
       assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
       const persistArgs = utilsExports.persistResults.mock.calls[0].arguments as Array<unknown>;
-      assert.deepStrictEqual(persistArgs[0], mockFormatted);
+      assert.deepStrictEqual(persistArgs[0], [{ pointId: 'p1', timestamp: '2023-02-01', value: 12, unit: '°C' }]);
+      assert.deepStrictEqual(utilsExports.formatInstant.mock.calls[0].arguments, [
+        '2023-02-01T12:00:00.000Z',
+        { type: 'string', format: 'yyyy-MM-dd', timezone: 'Europe/Paris', locale: 'en-En' }
+      ]);
       assert.deepStrictEqual(persistArgs[1], item.settings.serialization);
       assert.strictEqual(persistArgs[2], baseConfiguration.name);
       assert.deepStrictEqual(persistArgs[3], item);
@@ -293,7 +300,7 @@ describe('SouthOIAnalytics', () => {
         ),
         true
       );
-      assert.deepStrictEqual(resultInstant, { trackedInstant: '2023-02-01T12:00:00.000Z', value: { pointId: 'p1' } });
+      assert.deepStrictEqual(resultInstant, { trackedInstant: '2023-02-01T12:00:00.000Z', value: mockFormatted[0] });
     });
 
     it('should handle empty results gracefully', async () => {

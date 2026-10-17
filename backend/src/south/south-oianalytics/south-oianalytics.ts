@@ -15,7 +15,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { HTTPRequest } from '../../service/http-request.utils';
-import { formatQueryParams, persistResults, workUnitLogCtx } from '../../service/utils';
+import { formatInstant, formatQueryParams, persistResults, workUnitLogCtx } from '../../service/utils';
 import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
@@ -92,8 +92,20 @@ export default class SouthOIAnalytics
 
     if (formattedResult.length > 0) {
       this.logger.info(logCtx, `Found ${formattedResult.length} results in ${requestDuration} ms`);
+      // One CSV column per field: the value and unit are nested in `data`, and the timestamp follows the output settings
+      const rows = formattedResult.map(({ pointId, timestamp, data }) => ({
+        pointId,
+        timestamp: formatInstant(timestamp, {
+          type: 'string',
+          format: item.settings.serialization.outputTimestampFormat,
+          timezone: item.settings.serialization.outputTimezone,
+          locale: 'en-En'
+        }),
+        value: data.value,
+        unit: data.unit
+      }));
       await persistResults(
-        formattedResult,
+        rows,
         item.settings.serialization,
         this.connector.name,
         item,
