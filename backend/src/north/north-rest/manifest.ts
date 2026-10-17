@@ -57,7 +57,7 @@ const manifest: NorthConnectorManifest = {
         type: 'string-select',
         key: 'method',
         translationKey: 'configuration.oibus.manifest.north.rest.method',
-        defaultValue: 'GET',
+        defaultValue: 'POST',
         selectableValues: ['POST', 'PUT', 'PATCH'],
         validators: [
           {
