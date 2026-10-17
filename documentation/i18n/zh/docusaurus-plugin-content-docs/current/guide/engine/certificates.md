@@ -4,8 +4,7 @@ sidebar_position: 5
 
 # 证书
 
-OIBus 维护一个证书库（**引擎 > 证书**），用于向外部系统验证 OIBus 的身份。其中一种场景是使用指定证书通过 **Azure Active
-Directory with certificates** 建立 [OIAnalytics](../north-connectors/oianalytics.md) 连接。
+OIBus 维护一个证书库（**引擎 > 证书**），用于向外部系统验证 OIBus 的身份。其中一种场景是使用指定证书通过**带证书的 Azure Active Directory** 建立 [OIAnalytics](../north-connectors/oianalytics.md) 连接。
 
 证书条目可以由 **OIBus 生成**（自签名），也可以从外部证书颁发机构**导入**。
 
@@ -22,7 +21,7 @@ Directory with certificates** 建立 [OIAnalytics](../north-connectors/oianalyti
 
 - **证书文件**（必填）— 叶证书，PEM（`.pem`、`.crt`、`.cer`）或 DER（`.der`、`.cer`）编码。
 - **私钥文件**（必填）— 匹配的私钥，PKCS#1（`-----BEGIN RSA PRIVATE KEY-----`）或 PKCS#8
-  （`-----BEGIN PRIVATE KEY-----`），PEM 或 DER 编码。支持加密密钥 — 在**私钥口令**字段中提供口令。
+  （`-----BEGIN PRIVATE KEY-----`），PEM 或 DER 编码。支持加密密钥 — 在**私钥密码**字段中提供口令。
 - **CA 证书链文件**（可选）— 中间及根 CA 证书。由于一个 DER 文件只能容纳一个证书，多证书链必须以拼接后的 PEM 包形式提供。
 
 OIBus 会验证私钥是否与证书的公钥匹配，否则将拒绝导入。到期时间从证书本身读取。仅支持 RSA 密钥。
@@ -44,7 +43,7 @@ openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 
 - **格式** — **PEM**（`.pem`）或 **DER**（`.cer`）。DER 是 Kepware 等 OPC UA 服务器所期望的格式，因此可以直接使用，
   无需通过 `openssl` 进行转换。
-- **包含 CA 证书链** — 将存储的证书链附加到导出的文件中。仅在选择 PEM 时可用，因为一个 DER 文件只能容纳一个证书。
+- **包含 CA 链** — 将存储的证书链附加到导出的文件中。仅在选择 PEM 时可用，因为一个 DER 文件只能容纳一个证书。
 - **包含私钥** — 见下文。
 
 ## 下载私钥 {#downloading-the-private-key}

@@ -171,7 +171,7 @@ export default class SouthMyType extends SouthConnector<SouthMyTypeSettings, Sou
 | Méthode                                                   | Objet                                                                    |
 | -------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `testConnection(): Promise<OIBusConnectionTestResult>`   | Sonde la source. Lève une exception en cas d'échec.                         |
-| `testItem(item, testingSettings): Promise<OIBusContent>` | Exécute un item une fois pour le bouton « tester » de l'interface. Retourne le contenu produit. |
+| `testItem(item, testingSettings): Promise<OIBusContent>` | Exécute un élément une fois pour le bouton « tester » de l'interface. Retourne le contenu produit. |
 
 ### Surcharges optionnelles {#optional-overrides-1}
 
@@ -240,19 +240,19 @@ interface SouthSubscription {
 }
 ```
 
-La classe de base appelle `subscribe()` et `unsubscribe()` chaque fois que l'ensemble des items configurés diverge
+La classe de base appelle `subscribe()` et `unsubscribe()` chaque fois que l'ensemble des éléments configurés diverge
 de l'ensemble actuellement abonné. Lorsque des données arrivent, poussez-les via `this.addContent(...)` directement
 depuis votre gestionnaire d'événements.
 
-Les items d'abonnement sont identifiés par leur identifiant de mode de scan réservé `'subscription'`. Le
-manifeste doit autoriser `'SUBSCRIPTION'` ou `'SUBSCRIPTION_AND_POLL'` sur le `scanMode` de l'item pour que
+Les éléments d'abonnement sont identifiés par leur identifiant de mode de scan réservé `'subscription'`. Le
+manifeste doit autoriser `'SUBSCRIPTION'` ou `'SUBSCRIPTION_AND_POLL'` sur le `scanMode` de l'élément pour que
 l'interface permette aux opérateurs de le sélectionner.
 
 Exemples : `backend/src/south/south-mqtt/south-mqtt.ts` (abonnement uniquement),
 `backend/src/south/south-opcua/south-opcua.ts` (les trois).
 
 Une seule classe de connecteur peut implémenter n'importe quelle combinaison des trois interfaces ; la classe de
-base répartit les appels de façon appropriée à chaque tick de scrutation.
+base répartit les appels de façon appropriée à chaque tick de scan.
 
 ### Envoi de données — `addContent` {#pushing-data--addcontent}
 

@@ -55,21 +55,25 @@ docker compose --profile iot --profile database --profile simulator up -d
 
 Les services sont regroupés en **profils Docker Compose** :
 
-| Profil      | Services                                       |
-| ----------- | ----------------------------------------------- |
+| Profil      | Services                                                        |
+| ----------- | --------------------------------------------------------------- |
 | `iot`       | `opcua-server`, `modbus-server`, `mqtt-broker`, `bacnet-server` |
-| `simulator` | `simulator`                                    |
-| `database`  | `postgres`, `influxdb`                         |
-| `ftp`       | `ftp-server`, `sftp-server`                    |
-| `logging`   | `syslog-server`                                |
-| `proxy`     | `squid-proxy`                                  |
-| `oibus`     | `oibus`, `nginx`                               |
+| `simulator` | `simulator`                                                     |
+| `database`  | `postgres`, `influxdb`                                          |
+| `ftp`       | `ftp-server`, `sftp-server`                                     |
+| `logging`   | `syslog-server`                                                 |
+| `proxy`     | `squid-proxy`                                                   |
+| `oibus`     | `oibus`, `nginx`                                                |
 
 :::note Indépendance des profils
 Le profil `simulator` nécessite que les services des profils `iot` et `database` soient en cours
 d'exécution (serveur Modbus, broker MQTT, InfluxDB et PostgreSQL). Démarrez-les toujours ensemble :
 `--profile iot --profile database --profile simulator` (ou utilisez `npm run docker:simulator`, qui le
 fait automatiquement).
+
+Le simulateur génère aussi des [fichiers CSV tournants](#ftp--sftp-threads) sur les serveurs FTP et SFTP, mais
+uniquement lorsque le profil `ftp` est démarré. Ajoutez `--profile ftp` à votre commande si vous avez besoin de ces
+fichiers.
 :::
 
 Tous les services partagent le réseau bridge interne `oibus-network`. Les ports sont redirigés vers
@@ -150,11 +154,11 @@ défaut `pass`), avec respectivement les noms d'utilisateur `oibus` et `admin` (
 
 ### Serveur Modbus — `modbus-server` {#modbus-server--modbus-server}
 
-| Propriété  | Valeur                                                               |
-| ---------- | --------------------------------------------------------------------- |
+| Propriété  | Valeur                                                              |
+| ---------- | ------------------------------------------------------------------- |
 | **Image**  | [`oitc/modbus-server`](https://hub.docker.com/r/oitc/modbus-server) |
-| **Port**   | `5020` (Modbus TCP)                                                   |
-| **Config** | `docker/modbus/server_config.json`                                    |
+| **Port**   | `5020` (Modbus TCP)                                                 |
+| **Config** | `docker/modbus/server_config.json`                                  |
 
 Un serveur Modbus TCP léger. Sa carte de registres est déclarée dans `server_config.json`. Le serveur
 accepte les écritures de tout client Modbus TCP, de sorte que le [Simulateur](#unified-simulator--simulator)
@@ -176,15 +180,15 @@ protocole Modbus.
 
 **Valeurs de registre initiales** (écrasées par le simulateur après sa connexion) :
 
-| Type de registre | Adresse de protocole | Valeur initiale | Description                |
-| ----------------- | :--------------------: | :----------------: | ---------------------------- |
-| Registre d'entrée | 0                       | `314`               | Version du firmware (uint16) |
-| Registre d'entrée | 1                       | `22136`             | Numéro de série — mot bas    |
-| Registre d'entrée | 2                       | `4660`              | Numéro de série — mot haut   |
-| Entrée discrète    | 0                       | `true`              | Porte du panneau fermée      |
-| Entrée discrète    | 1                       | `true`              | Relais de sécurité OK        |
-| Entrée discrète    | 2                       | `false`             | Réseau connecté              |
-| Entrée discrète    | 3                       | `false`             | Arrêt d'urgence enclenché    |
+| Type de registre  | Adresse de protocole | Valeur initiale | Description                  |
+| ----------------- | :------------------: | :-------------: | ---------------------------- |
+| Registre d'entrée |          0           |      `314`      | Version du firmware (uint16) |
+| Registre d'entrée |          1           |     `22136`     | Numéro de série — mot bas    |
+| Registre d'entrée |          2           |     `4660`      | Numéro de série — mot haut   |
+| Entrée discrète   |          0           |     `true`      | Porte du panneau fermée      |
+| Entrée discrète   |          1           |     `true`      | Relais de sécurité OK        |
+| Entrée discrète   |          2           |     `false`     | Réseau connecté              |
+| Entrée discrète   |          3           |     `false`     | Arrêt d'urgence enclenché    |
 
 Les registres d'entrée et les entrées discrètes sont **en lecture seule** du point de vue d'un client
 Modbus, donc leurs valeurs sont statiques et proviennent de `server_config.json`. Les registres de
@@ -192,12 +196,12 @@ maintien et les bobines sont mis à jour toutes les 2 secondes par le simulateur
 
 **Connexion depuis OIBus :** créez un connecteur South Modbus avec les paramètres suivants :
 
-| Paramètre                | Valeur       |
-| -------------------------- | ------------- |
-| **Hôte**                   | `localhost`   |
-| **Port**                   | `5020`        |
-| **ID esclave**              | `1`           |
-| **Décalage d'adresse**     | `Modbus`      |
+| Paramètre              | Valeur      |
+| ---------------------- | ----------- |
+| **Hôte**               | `localhost` |
+| **Port**               | `5020`      |
+| **ID esclave**         | `1`         |
+| **Décalage d'adresse** | `Modbus`    |
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/modbus-item-list.csv">Download item list (CSV)</DownloadButton>
@@ -207,11 +211,11 @@ maintien et les bobines sont mis à jour toutes les 2 secondes par le simulateur
 
 ### Broker MQTT — `mqtt-broker` {#mqtt-broker--mqtt-broker}
 
-| Propriété  | Valeur                                                             |
-| ---------- | --------------------------------------------------------------------- |
+| Propriété  | Valeur                                                            |
+| ---------- | ----------------------------------------------------------------- |
 | **Image**  | [`eclipse-mosquitto`](https://hub.docker.com/_/eclipse-mosquitto) |
-| **Ports**  | `1883` (MQTT), `9001` (WebSocket)                                  |
-| **Config** | `docker/mosquitto/config/`                                          |
+| **Ports**  | `1883` (MQTT), `9001` (WebSocket)                                 |
+| **Config** | `docker/mosquitto/config/`                                        |
 
 Eclipse Mosquitto avec un point d'entrée personnalisé (`docker/mosquitto/entrypoint.sh`) qui injecte les
 identifiants `MQTT_USER` / `MQTT_PASSWORD` au démarrage. L'accès anonyme est désactivé.
@@ -220,13 +224,13 @@ Le port WebSocket `9001` est disponible pour les clients MQTT basés sur navigat
 
 **Connexion depuis OIBus :** créez un connecteur South MQTT avec les paramètres suivants :
 
-| Paramètre                | Valeur                        |
-| -------------------------- | -------------------------------- |
-| **URL**                    | `mqtt://localhost:1883`          |
-| **QoS**                    | `1`                               |
-| **Authentification**       | `basic`                          |
-| **Nom d'utilisateur**      | `oibus`                          |
-| **Mot de passe**           | `pass` (ou `$MQTT_PASSWORD`)     |
+| Paramètre             | Valeur                       |
+| --------------------- | ---------------------------- |
+| **URL**               | `mqtt://localhost:1883`      |
+| **QoS**               | `1`                          |
+| **Authentification**  | `basic`                      |
+| **Nom d'utilisateur** | `oibus`                      |
+| **Mot de passe**      | `pass` (ou `$MQTT_PASSWORD`) |
 
 Les éléments s'abonnent aux [sujets scalaires](#scalar-topics) publiés par le simulateur (les sujets
 JSON sont destinés aux tests `any-content` / transformateur personnalisé, pas aux éléments de valeur
@@ -258,10 +262,10 @@ L'équipement room est un contrôleur BACnet/IP qui route aussi vers un réseau 
 d'un contrôleur de bâtiment. L'AHU se trouve sur ce réseau : il n'a pas d'adresse IP propre et est joint à
 travers l'équipement room.
 
-| Équipement | Instance | Nom                 | Adresse                                                       | Services                                                                                                                                                                                                         |
-| ---------- | -------- | ------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Room       | `1001`   | `oibus-bacnet-room` | `127.0.0.1:47809` depuis l'hôte ; route vers le réseau `2`    | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus un `SubscribeCOVProperty` et un `ReadRange` minimaux (absents de BACpypes3) pour que les éléments lisant une autre propriété puissent aussi utiliser le COV |
-| AHU        | `1002`   | `oibus-bacnet-ahu`  | Réseau `2`, MAC `5`, à travers l'équipement room              | `Who-Is`, `ReadProperty`, `SubscribeCOV` uniquement, comme un petit contrôleur MS/TP : rejette `ReadPropertyMultiple` et `SubscribeCOVProperty`, et sa liste d'objets doit être lue entrée par entrée (pas de segmentation) |
+| Équipement | Instance | Nom                 | Adresse                                                    | Services                                                                                                                                                                                                                           |
+| ---------- | -------- | ------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Room       | `1001`   | `oibus-bacnet-room` | `127.0.0.1:47809` depuis l'hôte ; route vers le réseau `2` | `Who-Is`, `ReadProperty`, `ReadPropertyMultiple`, `SubscribeCOV`, plus un `SubscribeCOVProperty` et un `ReadRange` minimaux (absents de BACpypes3) pour que les éléments lisant une autre propriété puissent aussi utiliser le COV |
+| AHU        | `1002`   | `oibus-bacnet-ahu`  | Réseau `2`, MAC `5`, à travers l'équipement room           | `Who-Is`, `ReadProperty`, `SubscribeCOV` uniquement, comme un petit contrôleur MS/TP : rejette `ReadPropertyMultiple` et `SubscribeCOVProperty`, et sa liste d'objets doit être lue entrée par entrée (pas de segmentation)        |
 
 L'AHU exerce l'adressage routé du connecteur et ses solutions de repli : `ReadProperty` au lieu de
 `ReadPropertyMultiple` lors de la scrutation, la liste d'objets lue entrée par entrée dans **Explorer**, et
@@ -275,19 +279,19 @@ interrogez les éléments de l'AHU par scrutation.
 
 **Objets de l'équipement room :**
 
-| Objet                 | Nom           | Unité | Simulation                                                                                                             | Incrément COV |
-| --------------------- | ------------- | ----- | ---------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `analog-input 1`      | `Temperature` | `°C`  | Sinusoïde, 20 ± 5 °C, période ~190 s                                                                                   | `0.1`         |
-| `analog-input 2`      | `Pressure`    | `hPa` | Sinusoïde, 1013 ± 3 hPa, période ~280 s. En défaut 15 s par minute : status flags `0100`, reliability unreliable-other | `0.5`         |
-| `analog-value 1`      | `Setpoint`    | `°C`  | Fixe, 21.5                                                                                                             | `0.1`         |
-| `binary-input 1`      | `Door`        | —     | Signal carré, période 20 s                                                                                             | —             |
-| `binary-value 1`      | `Fan`         | —     | Fixe, active                                                                                                           | —             |
-| `multi-state-value 1` | `Mode`        | —     | Alterne Off / Eco / Comfort (`1` – `3`) toutes les 15 s                                                                | —             |
-| `integer-value 1`     | `Occupancy`   | —     | Personnes dans la pièce, 0 – 30, change toutes les 30 s                                                                | —             |
-| `large-analog-value 1` | `Energy`     | `kWh` | Index de compteur, +0,01 kWh par seconde                                                                               | —             |
-| `characterstring-value 1` | `StatusText` | — | `Normal`, ou `Pressure sensor fault` tant que `Pressure` est en défaut                                                | —             |
-| `trend-log 1`         | `TemperatureLog` | — | `Temperature` enregistrée toutes les 10 s (valeurs réelles)                                                          | —             |
-| `trend-log 2`         | `DoorLog`     | —     | `Door` enregistrée toutes les 10 s (valeurs énumérées)                                                                 | —             |
+| Objet                     | Nom              | Unité | Simulation                                                                                                             | Incrément COV |
+| ------------------------- | ---------------- | ----- | ---------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `analog-input 1`          | `Temperature`    | `°C`  | Sinusoïde, 20 ± 5 °C, période ~190 s                                                                                   | `0.1`         |
+| `analog-input 2`          | `Pressure`       | `hPa` | Sinusoïde, 1013 ± 3 hPa, période ~280 s. En défaut 15 s par minute : status flags `0100`, reliability unreliable-other | `0.5`         |
+| `analog-value 1`          | `Setpoint`       | `°C`  | Fixe, 21.5                                                                                                             | `0.1`         |
+| `binary-input 1`          | `Door`           | —     | Signal carré, période 20 s                                                                                             | —             |
+| `binary-value 1`          | `Fan`            | —     | Fixe, active                                                                                                           | —             |
+| `multi-state-value 1`     | `Mode`           | —     | Alterne Off / Eco / Comfort (`1` – `3`) toutes les 15 s                                                                | —             |
+| `integer-value 1`         | `Occupancy`      | —     | Personnes dans la pièce, 0 – 30, change toutes les 30 s                                                                | —             |
+| `large-analog-value 1`    | `Energy`         | `kWh` | Index de compteur, +0,01 kWh par seconde                                                                               | —             |
+| `characterstring-value 1` | `StatusText`     | —     | `Normal`, ou `Pressure sensor fault` tant que `Pressure` est en défaut                                                 | —             |
+| `trend-log 1`             | `TemperatureLog` | —     | `Temperature` enregistrée toutes les 10 s (valeurs réelles)                                                            | —             |
+| `trend-log 2`             | `DoorLog`        | —     | `Door` enregistrée toutes les 10 s (valeurs énumérées)                                                                 | —             |
 
 Les deux journaux de tendance démarrent avec 2 heures d'enregistrements et en conservent jusqu'à 1000, les plus
 anciens supprimés en premier. Ils sont horodatés dans l'heure locale du conteneur, UTC : réglez le **Fuseau
@@ -331,22 +335,22 @@ Ajoutez ensuite des éléments, ou parcourez les équipements avec **Explorer** 
   <DownloadButton link="/files/bacnet-item-list.csv">Download item list (CSV)</DownloadButton>
 </div>
 
-| Variable                 | Défaut  | Description                                                    |
-| ------------------------ | ------- | -------------------------------------------------------------- |
-| `BACNET_HOST`            | `host`  | Adresse IPv4 locale ; `host` utilise l'interface du conteneur  |
-| `BACNET_PORT`            | `47808` | Port UDP BACnet/IP de l'équipement room                        |
-| `BACNET_TREND_LOG_INTERVAL` | `10` | Secondes entre deux enregistrements des journaux de tendance |
-| `BACNET_UPDATE_INTERVAL` | `1`     | Secondes entre deux mises à jour des valeurs                   |
+| Variable                    | Défaut  | Description                                                   |
+| --------------------------- | ------- | ------------------------------------------------------------- |
+| `BACNET_HOST`               | `host`  | Adresse IPv4 locale ; `host` utilise l'interface du conteneur |
+| `BACNET_PORT`               | `47808` | Port UDP BACnet/IP de l'équipement room                       |
+| `BACNET_TREND_LOG_INTERVAL` | `10`    | Secondes entre deux enregistrements des journaux de tendance  |
+| `BACNET_UPDATE_INTERVAL`    | `1`     | Secondes entre deux mises à jour des valeurs                  |
 
 ---
 
 ### Serveur Syslog — `syslog-server` _(profil : `logging`)_ {#syslog-server--syslog-server-_profile-logging_}
 
-| Propriété  | Valeur                                                 |
-| ---------- | --------------------------------------------------------- |
+| Propriété  | Valeur                                                |
+| ---------- | ----------------------------------------------------- |
 | **Image**  | [`python:3.14-slim`](https://hub.docker.com/_/python) |
-| **Ports**  | `514` (UDP), `514` (TCP)                                |
-| **Script** | `docker/syslog/syslog_server.py`                          |
+| **Ports**  | `514` (UDP), `514` (TCP)                              |
+| **Script** | `docker/syslog/syslog_server.py`                      |
 
 Un récepteur syslog minimal utilisé pour tester le logger Syslog d'OIBus (Paramètres du moteur →
 Journalisation → Syslog). Il écoute à la fois en UDP et en TCP sur le même port et affiche chaque ligne
@@ -365,10 +369,10 @@ voulez tester.
 
 ### Proxy Squid — `squid-proxy` _(profil : `proxy`)_ {#squid-proxy--squid-proxy-_profile-proxy_}
 
-| Propriété  | Valeur                                                         |
-| ---------- | ----------------------------------------------------------------- |
+| Propriété  | Valeur                                                        |
+| ---------- | ------------------------------------------------------------- |
 | **Image**  | [`ubuntu/squid`](https://hub.docker.com/r/ubuntu/squid)       |
-| **Port**   | `3128` (proxy direct HTTP/HTTPS)                                 |
+| **Port**   | `3128` (proxy direct HTTP/HTTPS)                              |
 | **Config** | `docker/squid/conf.d/auth.conf`, `docker/squid/entrypoint.sh` |
 
 Un véritable proxy direct Squid nécessitant une authentification HTTP Basic, utilisé pour tester le
@@ -389,18 +393,18 @@ identifiants, pour le confirmer.
 
 ### PostgreSQL — `postgres` {#postgresql--postgres}
 
-| Propriété | Valeur                                           |
-| --------- | --------------------------------------------------- |
+| Propriété | Valeur                                          |
+| --------- | ----------------------------------------------- |
 | **Image** | [`postgres`](https://hub.docker.com/_/postgres) |
-| **Port**  | `5432`                                              |
+| **Port**  | `5432`                                          |
 
 Une instance PostgreSQL classique pour tester le connecteur South-PostgreSQL. Les identifiants sont :
 
-| Variable            | Par défaut  |
-| --------------------- | ----------- |
-| `POSTGRES_USER`     | `oibus`     |
-| `POSTGRES_PASSWORD` | `pass`      |
-| `POSTGRES_DB`       | `oibus-db`  |
+| Variable            | Par défaut |
+| ------------------- | ---------- |
+| `POSTGRES_USER`     | `oibus`    |
+| `POSTGRES_PASSWORD` | `pass`     |
+| `POSTGRES_DB`       | `oibus-db` |
 
 Remplacez les mots de passe via le fichier `.env` ou une variable d'environnement shell (par ex.
 `POSTGRES_PASSWORD=secret docker compose up`).
@@ -423,21 +427,21 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
 
 ### InfluxDB — `influxdb` {#influxdb--influxdb}
 
-| Propriété | Valeur                                             |
-| --------- | ----------------------------------------------------- |
+| Propriété | Valeur                                            |
+| --------- | ------------------------------------------------- |
 | **Image** | [`influxdb:2`](https://hub.docker.com/_/influxdb) |
-| **Port**  | `8088` (hôte) → `8086` (conteneur)                  |
+| **Port**  | `8088` (hôte) → `8086` (conteneur)                |
 
 Une instance InfluxDB 2.x pour tester le connecteur South-InfluxDB, initialisée au premier démarrage via
 le mode de configuration intégré de l'image. Les identifiants / détails de connexion sont :
 
 | Variable                        | Par défaut          |
-| ---------------------------------- | -------------------- |
-| `DOCKER_INFLUXDB_INIT_USERNAME` | `oibus`               |
-| `INFLUXDB_PASSWORD`             | `oibuspassword`       |
-| `DOCKER_INFLUXDB_INIT_ORG`      | `oibus`               |
-| `DOCKER_INFLUXDB_INIT_BUCKET`   | `oibus-bucket`        |
-| `INFLUXDB_TOKEN`                | `oibus-admin-token`   |
+| ------------------------------- | ------------------- |
+| `DOCKER_INFLUXDB_INIT_USERNAME` | `oibus`             |
+| `INFLUXDB_PASSWORD`             | `oibuspassword`     |
+| `DOCKER_INFLUXDB_INIT_ORG`      | `oibus`             |
+| `DOCKER_INFLUXDB_INIT_BUCKET`   | `oibus-bucket`      |
+| `INFLUXDB_TOKEN`                | `oibus-admin-token` |
 
 :::note Pourquoi pas `pass` ?
 Tous les autres services de cette pile utilisent par défaut les identifiants `oibus` / `pass`, mais
@@ -498,35 +502,43 @@ from(bucket: "oibus-bucket")
 
 ### Serveur FTP — `ftp-server` _(profil : `ftp`)_ {#ftp-server--ftp-server-_profile-ftp_}
 
-| Propriété | Valeur                                                     |
-| --------- | --------------------------------------------------------------- |
+| Propriété | Valeur                                                    |
+| --------- | --------------------------------------------------------- |
 | **Image** | [`fauria/vsftpd`](https://hub.docker.com/r/fauria/vsftpd) |
-| **Ports** | `20`, `21`, `21100–21110` (passif)                          |
+| **Ports** | `20`, `21`, `21100–21110` (passif)                        |
 
-vsftpd en mode passif. Identifiants : `oibus` / `pass` (remplacez le mot de passe via `FTP_PASSWORD`).
-Les fichiers atterrissent dans `docker/ftp/data/`.
+vsftpd en mode passif. Identifiants : `oibus` / `pass` (remplacez le mot de passe via `FTP_PASSWORD`). Le
+répertoire personnel de l'utilisateur `oibus` est monté sur `docker/ftp/data/oibus/`.
+
+Lorsque le [Simulateur](#unified-simulator--simulator) est en cours d'exécution, il téléverse un
+[fichier CSV tournant](#ftp--sftp-threads) à la racine du répertoire personnel (`/`) toutes les minutes. Pour
+collecter ces fichiers, pointez un connecteur South FTP d'OIBus sur `localhost:21` et utilisez le dossier distant `/`.
 
 ---
 
 ### Serveur SFTP — `sftp-server` _(profil : `ftp`)_ {#sftp-server--sftp-server-_profile-ftp_}
 
-| Propriété | Valeur                                               |
-| --------- | ----------------------------------------------------- |
+| Propriété | Valeur                                              |
+| --------- | --------------------------------------------------- |
 | **Image** | [`atmoz/sftp`](https://hub.docker.com/r/atmoz/sftp) |
-| **Port**  | `2222` (SSH)                                            |
+| **Port**  | `2222` (SSH)                                        |
 
 Serveur SFTP mono-utilisateur. Identifiants : `oibus` / `pass` (remplacez le mot de passe via
-`SFTP_PASSWORD`). Répertoire de téléversement : `docker/sftp/data/`.
+`SFTP_PASSWORD`). Le répertoire `/upload` du serveur est monté sur `docker/sftp/data/`.
+
+Lorsque le [Simulateur](#unified-simulator--simulator) est en cours d'exécution, il téléverse un
+[fichier CSV tournant](#ftp--sftp-threads) dans `/upload` toutes les minutes. Pour collecter ces fichiers, pointez
+un connecteur South SFTP d'OIBus sur `localhost:2222` et utilisez le dossier distant `/upload`.
 
 ---
 
 ### Environnement d'exécution OIBus — `oibus` _(profil : `oibus`)_ {#oibus-runtime--oibus-_profile-oibus_}
 
-| Propriété | Valeur                                                                                        |
-| --------- | -------------------------------------------------------------------------------------------------- |
+| Propriété | Valeur                                                                                       |
+| --------- | -------------------------------------------------------------------------------------------- |
 | **Image** | [`ghcr.io/optimistiksas/oibus`](https://github.com/OptimistikSAS/OIBus/pkgs/container/oibus) |
-| **Port**  | `2223` (interface web / API)                                                                        |
-| **Data**  | `./data-folder` → `/app/OIBus/OIBusData`                                                          |
+| **Port**  | `2223` (interface web / API)                                                                 |
+| **Data**  | `./data-folder` → `/app/OIBus/OIBusData`                                                     |
 
 L'environnement d'exécution OIBus lui-même, utile lorsque vous voulez tester la pile complète dans Docker
 plutôt que d'exécuter le backend avec `npm start`. Voir [Image Docker](./docker.mdx) pour plus de détails
@@ -536,11 +548,11 @@ sur cette image.
 
 ### Nginx — `nginx` _(profil : `oibus`)_ {#nginx--nginx-_profile-oibus_}
 
-| Propriété  | Valeur                                     |
-| ---------- | --------------------------------------------- |
+| Propriété  | Valeur                                    |
+| ---------- | ----------------------------------------- |
 | **Image**  | [`nginx`](https://hub.docker.com/_/nginx) |
-| **Ports**  | `80` (HTTP), `443` (HTTPS)                   |
-| **Config** | `docker/nginx/`                               |
+| **Ports**  | `80` (HTTP), `443` (HTTPS)                |
+| **Config** | `docker/nginx/`                           |
 
 Reverse proxy devant le conteneur OIBus. Nécessite la variable d'environnement `DOMAIN` et des
 certificats TLS dans `docker/nginx/certs/`. Nécessaire uniquement lors du test de la configuration
@@ -550,15 +562,15 @@ complète TLS / reverse-proxy.
 
 ### Simulateur unifié — `simulator` {#unified-simulator--simulator}
 
-| Propriété       | Valeur                                                                |
-| ---------------- | -------------------------------------------------------------------- |
-| **Image**        | [`python:3.14-slim`](https://hub.docker.com/_/python)                |
-| **Script**       | `docker/simulator/simulator.py`                                      |
-| **Bibliothèques** | `pymodbus==3.6.9`, `paho-mqtt`, `influxdb-client`, `psycopg2-binary` |
+| Propriété         | Valeur                                                                           |
+| ----------------- | -------------------------------------------------------------------------------- |
+| **Image**         | [`python:3.14-slim`](https://hub.docker.com/_/python)                            |
+| **Script**        | `docker/simulator/simulator.py`                                                  |
+| **Bibliothèques** | `pymodbus==3.6.9`, `paho-mqtt`, `influxdb-client`, `psycopg2-binary`, `paramiko` |
 
-Un unique script Python qui pilote le serveur Modbus, le broker MQTT, InfluxDB et PostgreSQL. Il exécute
-un thread démon par source, chacun avec sa propre boucle de réessai indépendante afin qu'une défaillance
-d'une source n'affecte pas les autres.
+Un unique script Python qui pilote le serveur Modbus, le broker MQTT, InfluxDB, PostgreSQL et les serveurs
+FTP/SFTP. Il exécute un thread démon par cible. Chaque thread a sa propre boucle de réessai, de sorte qu'une
+défaillance d'une cible, ou une cible dont le profil n'est pas démarré, n'affecte pas les autres.
 
 #### Thread Modbus {#modbus-thread}
 
@@ -567,43 +579,43 @@ valeurs sont sinusoïdales avec 5 % de bruit aléatoire, sauf indication contrai
 
 **Registres de maintien — uint16 (1 mot) :**
 
-| Adresse protocole | Nom          | Base | Amplitude | Période |
-| :------------------: | ------------ | ---: | --------: | -----: |
-| 0                     | temperature  |  250 |        50 |   60 s |
-| 1                     | humidity     |  600 |       200 |  120 s |
-| 2                     | pressure     |  100 |        30 |  180 s |
-| 3                     | vibration    |  250 |       200 |   30 s |
-| 4                     | co2          |  600 |       200 |  300 s |
-| 5                     | flow_rate    |  150 |        80 |   90 s |
+| Adresse protocole | Nom         | Base | Amplitude | Période |
+| :---------------: | ----------- | ---: | --------: | ------: |
+|         0         | temperature |  250 |        50 |    60 s |
+|         1         | humidity    |  600 |       200 |   120 s |
+|         2         | pressure    |  100 |        30 |   180 s |
+|         3         | vibration   |  250 |       200 |    30 s |
+|         4         | co2         |  600 |       200 |   300 s |
+|         5         | flow_rate   |  150 |        80 |    90 s |
 
 **Registres de maintien — types de données étendus (multi-mots) :**
 
-| Adresse protocole | Nom               | Type de données |    Base | Amplitude | Période |
-| :------------------: | ------------------ | --------- | ------: | --------: | -----: |
-| 6                     | outdoor_temp       | int16     |       5 |        25 |  240 s |
-| 7 – 8                 | production_count   | uint32    |  50 000 |    40 000 |  600 s |
-| 9 – 10                | power_kw           | float     |    75,5 |      45,0 |  180 s |
-| 11 – 12               | energy_balance      | int32     |       0 |     5 000 |  360 s |
-| 13 – 16               | shaft_speed         | double    | 1 500,0 |     300,0 |  120 s |
-| 17                    | status_flags        | bitfield  |       — |         — |      — |
+| Adresse protocole | Nom              | Type de données |    Base | Amplitude | Période |
+| :---------------: | ---------------- | --------------- | ------: | --------: | ------: |
+|         6         | outdoor_temp     | int16           |       5 |        25 |   240 s |
+|       7 – 8       | production_count | uint32          |  50 000 |    40 000 |   600 s |
+|      9 – 10       | power_kw         | float           |    75,5 |      45,0 |   180 s |
+|      11 – 12      | energy_balance   | int32           |       0 |     5 000 |   360 s |
+|      13 – 16      | shaft_speed      | double          | 1 500,0 |     300,0 |   120 s |
+|        17         | status_flags     | bitfield        |       — |         — |       — |
 
 `status_flags` est un registre 16 bits dont les bits individuels sont des ondes carrées indépendantes :
 
-| Bit | Nom              | Période |
-| :-: | ----------------- | -----: |
-| 0   | motor_running     |   60 s |
-| 1   | fault_detected    |  300 s |
-| 2   | maintenance_due   |  600 s |
-| 3   | overload          |  120 s |
+| Bit | Nom             | Période |
+| :-: | --------------- | ------: |
+|  0  | motor_running   |    60 s |
+|  1  | fault_detected  |   300 s |
+|  2  | maintenance_due |   600 s |
+|  3  | overload        |   120 s |
 
 **Bobines (onde carrée, 1 = activé pour la première moitié de la période) :**
 
-| Adresse protocole | Nom           | Période |
-| :------------------: | -------------- | -----: |
-| 0                     | pump_running   |   30 s |
-| 1                     | valve_open     |   45 s |
-| 2                     | alarm_active   |  120 s |
-| 3                     | machine_on     |   20 s |
+| Adresse protocole | Nom          | Période |
+| :---------------: | ------------ | ------: |
+|         0         | pump_running |    30 s |
+|         1         | valve_open   |    45 s |
+|         2         | alarm_active |   120 s |
+|         3         | machine_on   |    20 s |
 
 :::info Encodage multi-mots
 OIBus applique un `swap32() + swap16()` inconditionnel sur les valeurs multi-mots avant de les lire. Le
@@ -627,16 +639,16 @@ publication envoie **deux familles** de sujets :
 Les sujets suivent le modèle `<workshop>/<sensor>/<type>` et transportent un nombre nu (par ex. `23.5`).
 Toutes les valeurs sont sinusoïdales avec 5 % de bruit aléatoire.
 
-| Sujet                            |    Base | Amplitude | Période |
-| ---------------------------------- | ------: | --------: | -----: |
-| `workshop1/sensor1/temperature` |    30,0 |      10,0 |   60 s |
-| `workshop1/sensor2/humidity`     |    55,0 |      25,0 |  120 s |
-| `workshop1/sensor3/pressure`     | 1 000,0 |      50,0 |  180 s |
-| `workshop1/sensor4/vibration`    |     5,0 |       5,0 |   30 s |
-| `workshop2/sensor1/temperature` |    28,0 |       8,0 |   90 s |
-| `workshop2/sensor2/humidity`     |    50,0 |      20,0 |  150 s |
-| `workshop2/sensor3/pressure`     |   990,0 |      40,0 |  210 s |
-| `workshop2/sensor4/vibration`    |     4,0 |       4,0 |   45 s |
+| Sujet                           |    Base | Amplitude | Période |
+| ------------------------------- | ------: | --------: | ------: |
+| `workshop1/sensor1/temperature` |    30,0 |      10,0 |    60 s |
+| `workshop1/sensor2/humidity`    |    55,0 |      25,0 |   120 s |
+| `workshop1/sensor3/pressure`    | 1 000,0 |      50,0 |   180 s |
+| `workshop1/sensor4/vibration`   |     5,0 |       5,0 |    30 s |
+| `workshop2/sensor1/temperature` |    28,0 |       8,0 |    90 s |
+| `workshop2/sensor2/humidity`    |    50,0 |      20,0 |   150 s |
+| `workshop2/sensor3/pressure`    |   990,0 |      40,0 |   210 s |
+| `workshop2/sensor4/vibration`   |     4,0 |       4,0 |    45 s |
 
 ##### Sujets JSON {#json-topics}
 
@@ -644,14 +656,14 @@ Chaque sujet publie une **forme** JSON différente, afin que les connecteurs et 
 personnalisés puissent être testés sur toute la gamme des charges utiles qu'OIBus peut recevoir via MQTT.
 Les valeurs numériques varient à chaque cycle (sinusoïdales avec bruit).
 
-| Sujet                    | Forme                                    |
-| -------------------------- | ------------------------------------------ |
-| `workshop1/json/flat`    | Objet plat (lecture unique)                |
-| `workshop1/json/nested`  | Objets imbriqués                           |
-| `workshop1/json/array`   | Tableau de lectures (un lot)               |
-| `workshop2/json/mixed`   | Chaque type scalaire JSON + tableau + objet |
-| `workshop2/json/string`  | Une chaîne JSON                            |
-| `workshop2/json/number`  | Un nombre JSON nu                          |
+| Sujet                   | Forme                                       |
+| ----------------------- | ------------------------------------------- |
+| `workshop1/json/flat`   | Objet plat (lecture unique)                 |
+| `workshop1/json/nested` | Objets imbriqués                            |
+| `workshop1/json/array`  | Tableau de lectures (un lot)                |
+| `workshop2/json/mixed`  | Chaque type scalaire JSON + tableau + objet |
+| `workshop2/json/string` | Une chaîne JSON                             |
+| `workshop2/json/number` | Un nombre JSON nu                           |
 
 Exemples de charges utiles :
 
@@ -709,14 +721,14 @@ d'écriture écrit un point par capteur, chacun étiqueté avec `workshop` et `s
 seul champ `value`, répartis sur plusieurs mesures afin que le connecteur South InfluxDB d'OIBus ait
 plusieurs mesures/tags à interroger :
 
-| Mesure       | Atelier   | ID capteur |   Base | Amplitude | Période |
-| ------------- | --------- | ---------- | -----: | --------: | -----: |
-| temperature   | workshop1 | sensor1    |   22,0 |       5,0 |   60 s |
-| humidity      | workshop1 | sensor2    |   45,0 |      15,0 |   90 s |
-| pressure      | workshop1 | sensor3    | 1010,0 |      20,0 |  120 s |
-| temperature   | workshop2 | sensor1    |   20,0 |       4,0 |   75 s |
-| vibration     | workshop2 | sensor2    |    3,0 |       2,0 |   40 s |
-| co2           | workshop2 | sensor3    |  500,0 |     150,0 |  200 s |
+| Mesure      | Atelier   | ID capteur |   Base | Amplitude | Période |
+| ----------- | --------- | ---------- | -----: | --------: | ------: |
+| temperature | workshop1 | sensor1    |   22,0 |       5,0 |    60 s |
+| humidity    | workshop1 | sensor2    |   45,0 |      15,0 |    90 s |
+| pressure    | workshop1 | sensor3    | 1010,0 |      20,0 |   120 s |
+| temperature | workshop2 | sensor1    |   20,0 |       4,0 |    75 s |
+| vibration   | workshop2 | sensor2    |    3,0 |       2,0 |    40 s |
+| co2         | workshop2 | sensor3    |  500,0 |     150,0 |   200 s |
 
 #### Thread PostgreSQL {#postgresql-thread}
 
@@ -727,31 +739,77 @@ ci-dessus). Il utilise exactement la même liste de capteurs que le thread Influ
 données finissent avec les mêmes données, adaptées à leurs modèles de requête respectifs (tags Flux/InfluxQL
 vs une clause SQL `WHERE`).
 
+#### Threads FTP / SFTP {#ftp--sftp-threads}
+
+Deux threads, l'un pour le [serveur FTP](#ftp-server--ftp-server-profile-ftp) et l'autre pour le
+[serveur SFTP](#sftp-server--sftp-server-profile-ftp), téléversent chacun un nouveau fichier CSV toutes les
+`FILE_UPDATE_INTERVAL` secondes (par défaut **60 s**). Ils réessaient tant que leur serveur n'est pas joignable : les
+fichiers ne sont donc générés que lorsque le profil `ftp` est démarré.
+
+- **Nom de fichier :** `sensors-<UTC timestamp>Z.csv`, par exemple `sensors-20260923T103401Z.csv`. Les noms se trient
+  par ordre chronologique.
+- **Destination :** `/` sur le serveur FTP (`docker/ftp/data/oibus/` sur l'hôte), et `/upload` sur le serveur SFTP
+  (`docker/sftp/data/` sur l'hôte).
+- **Contenu :** une ligne d'en-tête suivie de 5 à 30 lignes aléatoires. Chaque ligne est une mesure de l'un des
+  [capteurs utilisés par le thread InfluxDB](#influxdb-thread). Les horodatages sont répartis sur l'intervalle écoulé
+  et triés :
+
+```csv title="sensors-20260923T103408Z.csv"
+timestamp,workshop,sensor_id,measurement,value
+2026-09-23T10:34:06.364+00:00,workshop1,sensor1,temperature,23.76
+2026-09-23T10:34:06.618+00:00,workshop2,sensor3,co2,519.6
+2026-09-23T10:34:06.945+00:00,workshop2,sensor3,co2,517.47
+2026-09-23T10:34:07.099+00:00,workshop2,sensor1,temperature,21.59
+```
+
+- **Téléversement atomique :** chaque fichier est téléversé sous le nom `<name>.tmp` puis renommé. Un connecteur
+  South qui filtre sur `.*\.csv` ne récupère jamais un fichier partiellement écrit.
+- **Fenêtre glissante :** après chaque téléversement, seuls les `FILE_MAX_COUNT` fichiers `sensors-*.csv` les plus
+  récents (par défaut **10**) sont conservés sur chaque serveur, et les plus anciens sont supprimés. Les fichiers
+  qu'OIBus a déjà récupérés et supprimés ne comptent plus dans cette limite.
+
+:::tip Itérations plus rapides
+Pour tester un connecteur South sans attendre une minute entre deux fichiers, réduisez l'intervalle le temps d'une
+exécution : `docker compose --profile simulator run --rm -e FILE_UPDATE_INTERVAL=5 simulator`.
+:::
+
 #### Variables d'environnement {#environment-variables}
 
-| Variable                    | Par défaut               | Description                                                |
-| ----------------------------- | ------------------------- | -------------------------------------------------------------- |
-| `RETRY_INTERVAL`            | `10`                       | Secondes entre les tentatives de reconnexion                    |
-| `MODBUS_HOST`               | `modbus-server`            | Nom d'hôte du serveur Modbus                                     |
-| `MODBUS_PORT`               | `5020`                     | Port TCP Modbus                                                  |
-| `MODBUS_SLAVE_ID`           | `1`                        | ID esclave / unité Modbus                                        |
-| `MODBUS_UPDATE_INTERVAL`    | `2`                        | Secondes entre les cycles d'écriture Modbus                     |
-| `MQTT_BROKER`               | `mqtt-broker`              | Nom d'hôte du broker MQTT                                        |
-| `MQTT_PORT`                 | `1883`                     | Port MQTT                                                        |
-| `MQTT_USER`                 | `oibus`                    | Nom d'utilisateur MQTT                                           |
-| `MQTT_PASSWORD`             | `pass`                     | Mot de passe MQTT (également défini via `$MQTT_PASSWORD`)       |
-| `MQTT_UPDATE_INTERVAL`      | `2`                        | Secondes entre les cycles de publication MQTT                   |
-| `INFLUXDB_URL`              | `http://influxdb:8086`     | URL de base InfluxDB                                             |
-| `INFLUXDB_TOKEN`            | `oibus-admin-token`        | Jeton API InfluxDB (également défini via `$INFLUXDB_TOKEN`)     |
-| `INFLUXDB_ORG`              | `oibus`                    | Organisation InfluxDB                                            |
-| `INFLUXDB_BUCKET`           | `oibus-bucket`             | Bucket InfluxDB                                                  |
-| `INFLUXDB_UPDATE_INTERVAL`  | `10`                       | Secondes entre les cycles d'écriture InfluxDB                   |
-| `POSTGRES_HOST`             | `postgres`                 | Nom d'hôte du serveur PostgreSQL                                 |
-| `POSTGRES_PORT`             | `5432`                     | Port PostgreSQL                                                  |
-| `POSTGRES_USER`             | `oibus`                    | Nom d'utilisateur PostgreSQL                                     |
-| `POSTGRES_PASSWORD`         | `pass`                     | Mot de passe PostgreSQL (également défini via `$POSTGRES_PASSWORD`) |
-| `POSTGRES_DB`               | `oibus-db`                 | Nom de la base de données PostgreSQL                             |
-| `POSTGRES_UPDATE_INTERVAL`  | `10`                       | Secondes entre les cycles d'écriture PostgreSQL                 |
+| Variable                   | Par défaut             | Description                                                                     |
+| -------------------------- | ---------------------- | ------------------------------------------------------------------------------- |
+| `RETRY_INTERVAL`           | `10`                   | Secondes entre les tentatives de reconnexion                                    |
+| `MODBUS_HOST`              | `modbus-server`        | Nom d'hôte du serveur Modbus                                                    |
+| `MODBUS_PORT`              | `5020`                 | Port TCP Modbus                                                                 |
+| `MODBUS_SLAVE_ID`          | `1`                    | ID esclave / unité Modbus                                                       |
+| `MODBUS_UPDATE_INTERVAL`   | `2`                    | Secondes entre les cycles d'écriture Modbus                                     |
+| `MQTT_BROKER`              | `mqtt-broker`          | Nom d'hôte du broker MQTT                                                       |
+| `MQTT_PORT`                | `1883`                 | Port MQTT                                                                       |
+| `MQTT_USER`                | `oibus`                | Nom d'utilisateur MQTT                                                          |
+| `MQTT_PASSWORD`            | `pass`                 | Mot de passe MQTT (également défini via `$MQTT_PASSWORD`)                       |
+| `MQTT_UPDATE_INTERVAL`     | `2`                    | Secondes entre les cycles de publication MQTT                                   |
+| `INFLUXDB_URL`             | `http://influxdb:8086` | URL de base InfluxDB                                                            |
+| `INFLUXDB_TOKEN`           | `oibus-admin-token`    | Jeton API InfluxDB (également défini via `$INFLUXDB_TOKEN`)                     |
+| `INFLUXDB_ORG`             | `oibus`                | Organisation InfluxDB                                                           |
+| `INFLUXDB_BUCKET`          | `oibus-bucket`         | Bucket InfluxDB                                                                 |
+| `INFLUXDB_UPDATE_INTERVAL` | `10`                   | Secondes entre les cycles d'écriture InfluxDB                                   |
+| `POSTGRES_HOST`            | `postgres`             | Nom d'hôte du serveur PostgreSQL                                                |
+| `POSTGRES_PORT`            | `5432`                 | Port PostgreSQL                                                                 |
+| `POSTGRES_USER`            | `oibus`                | Nom d'utilisateur PostgreSQL                                                    |
+| `POSTGRES_PASSWORD`        | `pass`                 | Mot de passe PostgreSQL (également défini via `$POSTGRES_PASSWORD`)             |
+| `POSTGRES_DB`              | `oibus-db`             | Nom de la base de données PostgreSQL                                            |
+| `POSTGRES_UPDATE_INTERVAL` | `10`                   | Secondes entre les cycles d'écriture PostgreSQL                                 |
+| `FTP_HOST`                 | `ftp-server`           | Nom d'hôte du serveur FTP                                                       |
+| `FTP_PORT`                 | `21`                   | Port FTP                                                                        |
+| `FTP_USER`                 | `oibus`                | Nom d'utilisateur FTP                                                           |
+| `FTP_PASSWORD`             | `pass`                 | Mot de passe FTP (également défini via `$FTP_PASSWORD`)                         |
+| `FTP_REMOTE_DIR`           | `/`                    | Répertoire FTP où les fichiers CSV sont téléversés                              |
+| `SFTP_HOST`                | `sftp-server`          | Nom d'hôte du serveur SFTP                                                      |
+| `SFTP_PORT`                | `22`                   | Port SFTP (au sein du réseau Docker)                                            |
+| `SFTP_USER`                | `oibus`                | Nom d'utilisateur SFTP                                                          |
+| `SFTP_PASSWORD`            | `pass`                 | Mot de passe SFTP (également défini via `$SFTP_PASSWORD`)                       |
+| `SFTP_REMOTE_DIR`          | `/upload`              | Répertoire SFTP où les fichiers CSV sont téléversés                             |
+| `FILE_UPDATE_INTERVAL`     | `60`                   | Secondes entre deux fichiers FTP/SFTP générés                                   |
+| `FILE_MAX_COUNT`           | `10`                   | Fichiers générés conservés sur chaque serveur (les plus anciens sont supprimés) |
 
 ---
 
@@ -786,7 +844,10 @@ DOMAIN=oibus.example.com
 # Start the recommended development stack (IoT servers + simulator + database)
 npm run docker:dev
 
-# Tail simulator logs (Modbus + MQTT writes)
+# Development stack + FTP/SFTP servers with rolling CSV files
+docker compose --profile iot --profile database --profile ftp --profile simulator up -d
+
+# Tail simulator logs (Modbus, MQTT, InfluxDB, PostgreSQL and FTP/SFTP writes)
 docker compose logs -f simulator
 
 # Restart the simulator after changing docker/simulator/simulator.py

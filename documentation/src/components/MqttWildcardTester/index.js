@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import Translate, { translate } from '@docusaurus/Translate';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -14,12 +15,21 @@ const TOPICS = [
 ];
 
 const PRESETS = [
-  { label: 'factory/#', hint: 'all factory topics' },
-  { label: 'factory/+/temperature', hint: 'temperature from any line' },
-  { label: 'factory/line1/#', hint: 'all line1 sensors' },
-  { label: '+/line2/+', hint: 'any root → line2 → any leaf' },
-  { label: 'alerts/#', hint: 'all alerts' },
-  { label: '#', hint: 'everything' }
+  { label: 'factory/#', hint: translate({ id: 'components.mqttWildcardTester.preset.allFactoryTopics', message: 'all factory topics' }) },
+  {
+    label: 'factory/+/temperature',
+    hint: translate({ id: 'components.mqttWildcardTester.preset.temperatureAnyLine', message: 'temperature from any line' })
+  },
+  {
+    label: 'factory/line1/#',
+    hint: translate({ id: 'components.mqttWildcardTester.preset.allLine1Sensors', message: 'all line1 sensors' })
+  },
+  {
+    label: '+/line2/+',
+    hint: translate({ id: 'components.mqttWildcardTester.preset.anyRootLine2AnyLeaf', message: 'any root → line2 → any leaf' })
+  },
+  { label: 'alerts/#', hint: translate({ id: 'components.mqttWildcardTester.preset.allAlerts', message: 'all alerts' }) },
+  { label: '#', hint: translate({ id: 'components.mqttWildcardTester.preset.everything', message: 'everything' }) }
 ];
 
 // ── MQTT wildcard matching ────────────────────────────────────────────────────
@@ -156,16 +166,17 @@ const MqttWildcardTester = () => {
       {/* ── Filter input ── */}
       <div style={{ marginBottom: '1.25rem' }}>
         <label style={fieldLabel}>
-          Subscription filter{' '}
+          <Translate id="components.mqttWildcardTester.subscriptionFilter">Subscription filter</Translate>{' '}
           <span style={fieldHint}>
-            (<code>+</code> single level &nbsp;·&nbsp; <code>#</code> multi-level)
+            (<code>+</code> <Translate id="components.mqttWildcardTester.singleLevel">single level</Translate> &nbsp;·&nbsp; <code>#</code>{' '}
+            <Translate id="components.mqttWildcardTester.multiLevel">multi-level</Translate>)
           </span>
         </label>
         <input
           type="text"
           value={filter}
           onChange={e => setFilter(e.target.value)}
-          placeholder="e.g. factory/#"
+          placeholder={translate({ id: 'components.mqttWildcardTester.placeholder', message: 'e.g. {example}' }, { example: 'factory/#' })}
           style={{
             width: '100%',
             padding: '0.5rem 0.75rem',
@@ -201,7 +212,7 @@ const MqttWildcardTester = () => {
             marginBottom: '0.75rem'
           }}
         >
-          Topic tree
+          <Translate id="components.mqttWildcardTester.topicTree">Topic tree</Translate>
         </div>
         {Object.entries(TREE).map(([seg, node]) => (
           <TreeNode key={seg} segment={seg} node={node} depth={0} filter={filter} />
@@ -222,7 +233,12 @@ const MqttWildcardTester = () => {
           transition: 'all 0.12s ease'
         }}
       >
-        {hasFilter ? `${matchCount} of ${TOPICS.length} topics matched` : 'Enter a subscription filter above'}
+        {hasFilter
+          ? translate(
+              { id: 'components.mqttWildcardTester.matchCount', message: '{count} of {total} topics matched' },
+              { count: matchCount, total: TOPICS.length }
+            )
+          : translate({ id: 'components.mqttWildcardTester.enterFilter', message: 'Enter a subscription filter above' })}
       </div>
 
       {/* ── Presets ── */}
@@ -242,7 +258,7 @@ const MqttWildcardTester = () => {
             color: 'var(--ifm-color-emphasis-700)'
           }}
         >
-          Examples
+          <Translate id="components.mqttWildcardTester.examples">Examples</Translate>
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
           {PRESETS.map(p => (

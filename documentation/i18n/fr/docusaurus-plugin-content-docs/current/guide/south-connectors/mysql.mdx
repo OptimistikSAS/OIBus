@@ -17,14 +17,14 @@ Se connecter et interroger des bases de données MySQL® ou MariaDB™ avec OIBu
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Setting            | Description                                                            | Example Value  |
-| ------------------ | ---------------------------------------------------------------------- | -------------- |
-| Host               | Adresse IP ou nom d'hôte du serveur MySQL/MariaDB.                     | `192.168.1.10` |
-| Port               | Numéro de port du serveur. Par défaut : `3306`.                        | `3306`         |
-| Connection timeout | Temps maximal en millisecondes pour établir la connexion. Par défaut : `5000`. | `5000`         |
-| Database           | Nom de la base de données à laquelle se connecter.                     | `production`   |
-| Username           | Nom d'utilisateur d'authentification.                                  | `db_user`      |
-| Password           | Mot de passe d'authentification.                                       | `••••••••`     |
+| Paramètre          | Description                                                                    | Exemple de valeur |
+| ------------------ | ------------------------------------------------------------------------------ | ----------------- |
+| Hôte               | Adresse IP ou nom d'hôte du serveur MySQL/MariaDB.                             | `192.168.1.10`    |
+| Port               | Numéro de port du serveur. Par défaut : `3306`.                                | `3306`            |
+| Délai de connexion | Temps maximal en millisecondes pour établir la connexion. Par défaut : `5000`. | `5000`            |
+| Base de données    | Nom de la base de données à laquelle se connecter.                             | `production`      |
+| Nom d'utilisateur  | Nom d'utilisateur d'authentification.                                          | `db_user`         |
+| Mot de passe       | Mot de passe d'authentification.                                               | `••••••••`        |
 
 :::caution Permissions utilisateur
 
@@ -34,22 +34,22 @@ Toujours utiliser un utilisateur de base de données en lecture seule
 
 <ItemSettings />
 
-:::note Types de champ datetime MySQL / MariaDB
-Les valeurs de **Type** suivantes sont disponibles pour le champ datetime de l'instant de suivi :
+:::note Types de champ date/heure MySQL / MariaDB
+Les valeurs de **Type** suivantes sont disponibles pour le champ date/heure de l'instant suivi :
 
-| Type            | Description                                       |
-| --------------- | ------------------------------------------------- |
-| String          | Représentation textuelle analysée avec un format personnalisé |
-| DateTime        | Colonne MySQL `DATETIME` ou `TIMESTAMP`            |
-| ISO String      | Chaîne ISO 8601 (par ex. `2024-01-15T10:30:00.000Z`) |
-| UNIX epoch (s)  | Horodatage Unix en secondes                        |
-| UNIX epoch (ms) | Horodatage Unix en millisecondes                   |
+| Type             | Description                                                   |
+| ---------------- | ------------------------------------------------------------- |
+| Chaîne           | Représentation textuelle analysée avec un format personnalisé |
+| DateTime         | Colonne MySQL `DATETIME` ou `TIMESTAMP`                       |
+| Chaîne ISO       | Chaîne ISO 8601 (par ex. `2024-01-15T10:30:00.000Z`)          |
+| Époque UNIX (s)  | Horodatage Unix en secondes                                   |
+| Époque UNIX (ms) | Horodatage Unix en millisecondes                              |
 
 :::
 
-:::note Délai d'expiration des requêtes d'un élément MySQL
-Chaque élément MySQL possède son propre champ **Request timeout** (en millisecondes), qui définit le temps d'exécution
-maximal pour la requête de cet élément. Il n'existe pas d'équivalent au niveau de la connexion pour le remplacer —
-**Connection timeout** ne borne que le temps qu'OIBus attend pour établir la connexion elle-même, pas la durée
+:::note Délai de requête d'un élément MySQL
+Chaque élément MySQL possède son propre champ **Délai de requête** (en millisecondes), qui définit le temps d'exécution
+maximal de la requête de cet élément. Il n'existe pas d'équivalent au niveau de la connexion pour le remplacer —
+**Délai de connexion** ne borne que le temps qu'OIBus attend pour établir la connexion elle-même, pas la durée
 d'exécution d'une requête.
 :::

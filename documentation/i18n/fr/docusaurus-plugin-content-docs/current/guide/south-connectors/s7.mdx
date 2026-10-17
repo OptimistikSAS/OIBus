@@ -27,7 +27,7 @@ y fier en production.
 | **Slot**                       | Numéro de l'emplacement (slot) occupé par la CPU sur son rack. Généralement `1` pour les S7-1200/1500, souvent `2` pour les S7-300/400.                                                                                                                                           | `1`               |
 | **Délai de connexion**         | Temps maximal (en millisecondes) à attendre lors de l'établissement de la connexion.                                                                                                                                                                                              | `10000`           |
 | **Délai de requête**           | Temps maximal (en millisecondes) à attendre pour la réponse à une requête de lecture.                                                                                                                                                                                             | `15000`           |
-| **Intervalle de nouvel essai** | Temps d'attente (en millisecondes) avant de retenter la connexion après un échec de connexion ou une déconnexion inattendue.                                                                                                                                                      | `10000`           |
+| **Intervalle de nouvelle tentative** | Temps d'attente (en millisecondes) avant de retenter la connexion après un échec de connexion ou une déconnexion inattendue.                                                                                                                                                      | `10000`           |
 
 :::tip Type de connexion, rack et slot
 Sur les CPU S7-1200/1500, les paramètres **Protection & Security &gt; Connection mechanisms** de TIA Portal
@@ -82,5 +82,5 @@ transformateurs ou des connecteurs North en aval.
 ## Stratégie de mise en cache {#caching-strategy}
 
 Comme les autres connecteurs de la famille IoT, les éléments S7 prennent en charge une
-[stratégie de mise en cache](./common-settings.md#caching-strategy) par élément (`All values`, `On change`,
-`Threshold`) pour filtrer les lectures effectivement mises en cache et transmises.
+[stratégie de mise en cache](./common-settings.md#caching-strategy) par élément (`Toutes les valeurs`, `Sur changement`,
+`Seuil`) pour filtrer les lectures effectivement mises en cache et transmises.

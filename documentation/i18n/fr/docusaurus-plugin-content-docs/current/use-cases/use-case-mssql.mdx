@@ -43,7 +43,7 @@ Avec le schéma proposé, les paramètres suivants peuvent être définis :
 </div>
 
 :::tip Test de la connexion
-Vous pouvez vérifier la connexion en testant les paramètres à l'aide du bouton `Test settings`.
+Vous pouvez vérifier la connexion en testant les paramètres à l'aide du bouton `Tester les paramètres`.
 :::
 
 ### Requêtes SQL {#sql-queries}
@@ -77,20 +77,20 @@ approprié. Seul le champ `timestamp` est un champ date-heure, et nous ne l'util
 #### Avec variables {#with-variables}
 
 La variable `@StartTime` capture le dernier instant maximum récupéré lors d'une requête précédente. Pour la toute première requête, avant qu'aucun instant
-n'ait été suivi, OIBus remonte dans le temps selon le paramètre **Intervalle de lecture maximum** (en secondes) depuis l'instant présent — ou 1 heure si l'intervalle de lecture maximum
-est laissé à `0`. La variable `@EndTime` est définie sur l'instant présent, ou sur la fin du sous-intervalle lorsque la requête est fractionnée par **Intervalle de lecture maximum**.
+n'ait été suivi, OIBus remonte dans le temps selon le paramètre **Intervalle de lecture maximal** (en secondes) depuis l'instant présent — ou 1 heure si l'intervalle de lecture maximal
+est laissé à `0`. La variable `@EndTime` est définie sur l'instant présent, ou sur la fin du sous-intervalle lorsque la requête est fractionnée par **Intervalle de lecture maximal**.
 
 Pour éviter de surcharger le serveur avec une requête volumineuse, vous pouvez diviser l'intervalle \[`@StartTime`, `@EndTime`\] en morceaux plus petits. Cela
 peut être configuré dans la section **Paramètres d'historique**, depuis les paramètres du connecteur :
 
-- **Intervalle de lecture maximum** (en secondes) : si réglé sur 60 secondes, et que l'intervalle est de 1 heure, 60 requêtes de sous-intervalle seront générées.
+- **Intervalle de lecture maximal** (en secondes) : si réglé sur 60 secondes, et que l'intervalle est de 1 heure, 60 requêtes de sous-intervalle seront générées.
 - **Délai de lecture** (en millisecondes) entre chaque requête de sous-intervalle.
-- **Décalage de début** (en millisecondes) : ajouté au début de la fenêtre de requête (`@StartTime`). Une valeur négative avance le début plus tôt,
+- **Décalage de l'heure de début** (en millisecondes) : ajouté au début de la fenêtre de requête (`@StartTime`). Une valeur négative avance le début plus tôt,
   pour capturer les données arrivant en retard — c'est l'ancien comportement « Overlap ».
-- **Décalage de fin** (en millisecondes) : ajouté à la fin de la fenêtre de requête (`@EndTime`). Une valeur négative rapproche la fin ; une
+- **Décalage de l'heure de fin** (en millisecondes) : ajouté à la fin de la fenêtre de requête (`@EndTime`). Une valeur négative rapproche la fin ; une
   valeur positive la prolonge.
-- **Stratégie de récupération** : ordre dans lequel OIBus rattrape un retard de sous-intervalles — `From oldest to newest` (par défaut) ou
-  `From newest to oldest`.
+- **Stratégie de récupération** : ordre dans lequel OIBus rattrape un retard de sous-intervalles — `Du plus ancien au plus récent` (par défaut) ou
+  `Du plus récent au plus ancien`.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -98,8 +98,8 @@ peut être configuré dans la section **Paramètres d'historique**, depuis les p
 
 </div>
 
-:::caution Quand utiliser le décalage de début ?
-Un **décalage de début** négatif est utile lorsque certaines données récupérées présentent une latence et sont stockées après l'exécution de la requête.
+:::caution Quand utiliser le décalage de l'heure de début ?
+Un **Décalage de l'heure de début** négatif est utile lorsque certaines données récupérées présentent une latence et sont stockées après l'exécution de la requête.
 Dans ce cas, cela permet d'étendre légèrement l'intervalle demandé vers l'arrière, afin que les lignes arrivant en retard ne soient pas manquées.
 
 Faites preuve de prudence si votre requête implique une agrégation, car cela pourrait altérer vos données en décalant l'origine temporelle du premier intervalle.
@@ -124,10 +124,10 @@ maximum du cache South.
 ##### Sérialisation {#serialization}
 
 - Type : `csv`
-- Nom de fichier : `sqlite-@CurrentDate.csv`
-- Format de date-heure de sortie : `yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`
+- Nom du fichier : `sqlite-@CurrentDate.csv`
+- Format de date/heure de sortie : `yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`
 - Fuseau horaire de sortie : `Europe/Paris`
-- Délimiteur : `Comma ,`
+- Délimiteur : `Virgule ,`
 
 <div style={{ textAlign: 'center' }}>
 
@@ -184,5 +184,5 @@ Si **Chemin** est laissé vide, les fichiers seront stockés à la racine du con
 </div>
 
 :::tip Test de la connexion
-Vous pouvez vérifier la connexion en testant les paramètres à l'aide du bouton `Test settings`.
+Vous pouvez vérifier la connexion en testant les paramètres à l'aide du bouton `Tester les paramètres`.
 :::

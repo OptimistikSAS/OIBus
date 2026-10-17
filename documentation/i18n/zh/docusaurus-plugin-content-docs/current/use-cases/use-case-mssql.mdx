@@ -27,7 +27,7 @@ sidebar_position: 2
 
 :::caution 只读用户
 虽然只读用户不是必需的，但强烈建议使用只读用户，以防止通过 SQL 查询插入或更新数据。
-南向连接器的设计用途是访问数据，而不是创建新条目。
+南向连接器的设计用途是访问数据，而不是创建新记录。
 :::
 
 按照所示模式，可以设置以下参数：
@@ -43,7 +43,7 @@ sidebar_position: 2
 </div>
 
 :::tip 测试连接
-您可以使用 `Test settings` 按钮测试设置以验证连接。
+您可以使用`测试设置`按钮测试设置以验证连接。
 :::
 
 ### SQL 查询 {#sql-queries}
@@ -85,12 +85,12 @@ WHERE timestamp > DATEADD(DAY,-1,GETDATE()) AND timestamp <= GETDATE()
 
 - **最大读取间隔**（以秒为单位）：如果设置为 60 秒，且区间为 1 小时，则将生成 60 个子区间查询。
 - 每个子区间查询之间的**读取延迟**（以毫秒为单位）。
-- **起始时间偏移量**（以毫秒为单位）：添加到查询窗口的起始时间（`@StartTime`）。负值会将起始时间提前，
-  以便捕获延迟到达的数据 — 这是旧的“重叠”行为。
-- **结束时间偏移量**（以毫秒为单位）：添加到查询窗口的结束时间（`@EndTime`）。负值会使结束时间提前；
+- **起始时间偏移**（以毫秒为单位）：添加到查询窗口的起始时间（`@StartTime`）。负值会将起始时间提前，
+  以便捕获延迟到达的数据 — 这是旧的“Overlap”行为。
+- **结束时间偏移**（以毫秒为单位）：添加到查询窗口的结束时间（`@EndTime`）。负值会使结束时间提前；
   正值会将其延后。
-- **恢复策略**：OIBus 追赶积压子区间的顺序 — `From oldest to newest`（默认，从最旧到最新）或
-  `From newest to oldest`（从最新到最旧）。
+- **恢复策略**：OIBus 追赶积压子区间的顺序 — `从最旧到最新`（默认）或
+  `从最新到最旧`。
 
 <div style={{ textAlign: 'center' }}>
 
@@ -98,8 +98,8 @@ WHERE timestamp > DATEADD(DAY,-1,GETDATE()) AND timestamp <= GETDATE()
 
 </div>
 
-:::caution 何时使用起始时间偏移量？
-当某些检索到的数据存在延迟，并且是在查询执行之后才被存储时，负的**起始时间偏移量**会很有帮助。
+:::caution 何时使用起始时间偏移？
+当某些检索到的数据存在延迟，并且是在查询执行之后才被存储时，负的**起始时间偏移**会很有帮助。
 在这种情况下，它可以将请求区间稍微向后扩展，从而不会遗漏延迟到达的行。
 
 如果您的查询涉及聚合操作，请务必谨慎，因为这可能会因移动第一个区间的时间起点而改变您的数据。
@@ -114,7 +114,7 @@ WHERE timestamp > @StartTime AND timestamp <= @EndTime
 
 可以添加一个日期时间字段：
 
-- 字段名称：timestamp
+- 字段名：timestamp
 - 参考字段：true
 - 类型：ISO 8601
 
@@ -127,7 +127,7 @@ WHERE timestamp > @StartTime AND timestamp <= @EndTime
 - 文件名：`sqlite-@CurrentDate.csv`
 - 输出日期时间格式：`yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`
 - 输出时区：`Europe/Paris`
-- 分隔符：`Comma ,`
+- 分隔符：`逗号 ,`
 
 <div style={{ textAlign: 'center' }}>
 
@@ -184,5 +184,5 @@ timestamp;message;level
 </div>
 
 :::tip 测试连接
-您可以使用 `Test settings` 按钮测试设置以验证连接。
+您可以使用`测试设置`按钮测试设置以验证连接。
 :::

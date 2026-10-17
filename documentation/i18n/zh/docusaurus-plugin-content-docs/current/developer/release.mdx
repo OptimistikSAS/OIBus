@@ -12,7 +12,7 @@ Conventional Commits 规范的 PR，其余工作——版本号提升、变更�
 本页介绍了各个环节的运作方式，方便您追踪正在进行中的发布、准备用于测试的
 预发布版本，或者更新发布流水线本身。
 
-:::info Releases are maintained by the Optimistik team
+:::info 发布由 Optimistik 团队维护
 OIBus 的正式发布——无论是稳定版还是预发布版——**只**由 Optimistik 团队在
 `OptimistikSAS/OIBus` 仓库上进行。该团队负责发布计划、签名密钥以及发布渠道
 （GitHub Releases、`ghcr.io`、文档站点）。外部贡献者不会直接触发发布——您的
@@ -170,7 +170,7 @@ Docker 镜像标签取决于发布类型：
 ### 步骤 {#steps}
 
 1. 在 [GitHub → Releases](https://github.com/OptimistikSAS/OIBus/releases) 页面，
-   点击**起草新版本（Draft a new release）**。
+   点击 **Draft a new release**。
 
    <div style={{ textAlign: 'center' }}>
      <div>![Draft a GitHub release](@site/static/img/developer/draft-release.png)</div>
@@ -186,10 +186,10 @@ Docker 镜像标签取决于发布类型：
    - **Set as the latest release**：❌ 保持不勾选——预发布版本不能成为默认下载
      版本。
 
-3. 点击**发布版本（Publish release）**。发布事件会触发 `build.yml`；几分钟后即可
+3. 点击 **Publish release**。发布事件会触发 `build.yml`；几分钟后即可
    获得二进制文件和打上 `beta` 标签的 Docker 镜像，同时还会收到一条 Slack 通知。
 
-:::tip Pre-release naming
+:::tip 预发布版本命名
 坚持使用标准的 semver 后缀（`-alpha`、`-beta`、`-rc`）加数字计数器。它们能够与
 未来的稳定版本正确排序（`v3.8.0-rc.1` < `v3.8.0`），并且 Docker 的 `beta` 标签会
 自动识别它们。
@@ -207,7 +207,7 @@ Docker 镜像标签取决于发布类型：
 | 文档站点没有更新                               | `deploy-documentation` job（在 `build.yml` 中）**仅针对非预发布版本**运行，且依赖 `needs: [build, docker]`——请确认该发布不是预发布版本，并且 build 和 docker job 均已成功。                            |
 | 单个平台失败，但其他平台已成功发布              | 这是预期行为——`build` 矩阵设置了 `fail-fast: false`。可以只重新运行失败的 job，或者通过 workflow_dispatch 针对该 tag 重新运行 `build.yml`。                                                            |
 
-:::info Running on a fork
+:::info 在 fork 上运行
 发布工作流需要 `REPO_ACCESS_TOKEN`、`GCP_SERVICE_ACCOUNT_JSON`、`CERT`、
 `SNYK_TOKEN` 和 `SLACK_BOT_TOKEN` 这些密钥。Fork 默认不会拥有这些密钥；工作流
 会跳过它无法完成身份验证的部分，但您得到的产物集合会不完整。该流水线的设计

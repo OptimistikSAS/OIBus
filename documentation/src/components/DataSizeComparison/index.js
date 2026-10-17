@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import Translate, { translate } from '@docusaurus/Translate';
 
 const DataSizeComparison = () => {
   const [pointsPerSecond, setPointsPerSecond] = useState(1);
@@ -21,9 +22,15 @@ const DataSizeComparison = () => {
 
     const formats = [
       { key: 'json', label: 'JSON' },
-      { key: 'csvRow', label: 'CSV Row' },
-      { key: 'csvColumn', label: `CSV Column (K=${K})` },
-      { key: 'csvColumnRow', label: `CSV Column-Row (K=${K})` }
+      { key: 'csvRow', label: translate({ id: 'components.dataSizeComparison.format.csvRow', message: 'CSV Row' }) },
+      {
+        key: 'csvColumn',
+        label: translate({ id: 'components.dataSizeComparison.format.csvColumn', message: 'CSV Column (K={k})' }, { k: K })
+      },
+      {
+        key: 'csvColumnRow',
+        label: translate({ id: 'components.dataSizeComparison.format.csvColumnRow', message: 'CSV Column-Row (K={k})' }, { k: K })
+      }
     ].map(f => {
       const bytesPerPoint = sizes[f.key];
       const baseThroughput = pointsPerSecond * bytesPerPoint;
@@ -113,7 +120,7 @@ const DataSizeComparison = () => {
       {/* inputs */}
       <div style={grid}>
         <label style={labelStyle}>
-          Data points per second
+          <Translate id="components.dataSizeComparison.input.pointsPerSecond">Data points per second</Translate>
           <input
             type="number"
             value={pointsPerSecond}
@@ -124,7 +131,7 @@ const DataSizeComparison = () => {
           />
         </label>
         <label style={labelStyle}>
-          Points per row (K)
+          <Translate id="components.dataSizeComparison.input.pointsPerRow">Points per row (K)</Translate>
           <input
             type="number"
             value={signalsPerRow}
@@ -135,7 +142,7 @@ const DataSizeComparison = () => {
           />
         </label>
         <label style={labelStyle}>
-          Safety buffer (%)
+          <Translate id="components.dataSizeComparison.input.safetyBuffer">Safety buffer (%)</Translate>
           <input
             type="number"
             value={safetyBuffer}
@@ -146,7 +153,7 @@ const DataSizeComparison = () => {
           />
         </label>
         <label style={labelStyle}>
-          Network overhead (%)
+          <Translate id="components.dataSizeComparison.input.networkOverhead">Network overhead (%)</Translate>
           <input
             type="number"
             value={networkBuffer}
@@ -157,7 +164,7 @@ const DataSizeComparison = () => {
           />
         </label>
         <label style={labelStyle}>
-          Outage duration (hours)
+          <Translate id="components.dataSizeComparison.input.outageDuration">Outage duration (hours)</Translate>
           <input
             type="number"
             value={networkFailureHours}
@@ -171,9 +178,16 @@ const DataSizeComparison = () => {
 
       {/* multiplier note */}
       <div style={{ marginBottom: '0.75rem', fontSize: '0.82rem', color: 'var(--ifm-color-emphasis-600)' }}>
-        Combined overhead multiplier:{' '}
-        <strong style={{ fontFamily: 'var(--ifm-font-family-monospace)' }}>×{results.multiplier.toFixed(3)}</strong> — safety {safetyBuffer}
-        % × network overhead {networkBuffer}%
+        <Translate
+          id="components.dataSizeComparison.multiplier"
+          values={{
+            multiplier: <strong style={{ fontFamily: 'var(--ifm-font-family-monospace)' }}>×{results.multiplier.toFixed(3)}</strong>,
+            safety: safetyBuffer,
+            network: networkBuffer
+          }}
+        >
+          {'Combined overhead multiplier: {multiplier} — safety {safety}% × network overhead {network}%'}
+        </Translate>
       </div>
 
       {/* results table */}
@@ -181,11 +195,23 @@ const DataSizeComparison = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88em' }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, textAlign: 'left' }}>Format</th>
-              <th style={thStyle}>Bytes / point</th>
-              <th style={thStyle}>Base throughput</th>
-              <th style={thStyle}>Buffered throughput</th>
-              <th style={thStyle}>Cache for {networkFailureHours} h outage</th>
+              <th style={{ ...thStyle, textAlign: 'left' }}>
+                <Translate id="components.dataSizeComparison.column.format">Format</Translate>
+              </th>
+              <th style={thStyle}>
+                <Translate id="components.dataSizeComparison.column.bytesPerPoint">Bytes / point</Translate>
+              </th>
+              <th style={thStyle}>
+                <Translate id="components.dataSizeComparison.column.baseThroughput">Base throughput</Translate>
+              </th>
+              <th style={thStyle}>
+                <Translate id="components.dataSizeComparison.column.bufferedThroughput">Buffered throughput</Translate>
+              </th>
+              <th style={thStyle}>
+                <Translate id="components.dataSizeComparison.column.outageCache" values={{ hours: networkFailureHours }}>
+                  {'Cache for {hours} h outage'}
+                </Translate>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -204,8 +230,25 @@ const DataSizeComparison = () => {
 
       {/* footer hint */}
       <p style={{ margin: '0.75rem 0 0', fontSize: '0.82rem', color: 'var(--ifm-color-emphasis-600)' }}>
-        The <strong>Cache for outage</strong> column is the minimum value to set for <strong>Maximum storage size</strong> in North
-        connector cache settings. K applies to Column formats only — increase it to see the efficiency gain from shared timestamps.
+        <Translate
+          id="components.dataSizeComparison.footer"
+          values={{
+            cacheColumn: (
+              <strong>
+                <Translate id="components.dataSizeComparison.footer.cacheColumn">Cache for outage</Translate>
+              </strong>
+            ),
+            maxStorageSize: (
+              <strong>
+                <Translate id="components.dataSizeComparison.footer.maxStorageSize">Maximum storage size</Translate>
+              </strong>
+            )
+          }}
+        >
+          {
+            'The {cacheColumn} column is the minimum value to set for {maxStorageSize} in North connector cache settings. K applies to Column formats only — increase it to see the efficiency gain from shared timestamps.'
+          }
+        </Translate>
       </p>
     </div>
   );

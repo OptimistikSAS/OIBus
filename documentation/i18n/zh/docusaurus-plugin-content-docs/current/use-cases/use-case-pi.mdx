@@ -13,17 +13,17 @@ OSIsoft PI System™ 是一个实时数据管理平台，广泛应用于制造�
 
 有关完整的配置详情，请参见[北向 OIAnalytics](../guide/north-connectors/oianalytics)和[南向 OSIsoft PI](../guide/south-connectors/osisoft-pi)连接器页面。
 
-此用例需要一个 [OIBus Agent](../guide/oibus-agent/installation)。可以将其安装在 PI 服务器本身上，也可以安装在安装了 OSIsoft PI SDK 的另一台机器上——详情请参见 [OSIsoft PI SDK 配置](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration)。以下示例使用了如下虚构网络。
+本使用案例需要一个 [OIBus Agent](../guide/oibus-agent/installation)。可以将其安装在 PI 服务器本身上，也可以安装在安装了 OSIsoft PI SDK 的另一台机器上——详情请参见 [OSIsoft PI SDK 配置](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration)。以下示例使用了如下虚构网络。
 
 <div style={{ textAlign: 'center' }}>
 
-![OSIsoft PI -> OIAnalytics 用例](@site/static/img/use-cases/pi-oia.svg)
+![OSIsoft PI -> OIAnalytics 使用案例](@site/static/img/use-cases/pi-oia.svg)
 
 </div>
 
 ## 南向 PI {#south-pi}
 
-输入**远程代理 URL**。在此示例中为：`http://localhost:2224`。
+输入**远程 Agent URL**。在此示例中为：`http://localhost:2224`。
 
 <div style={{ textAlign: 'center' }}>
 
@@ -35,26 +35,26 @@ OSIsoft PI System™ 是一个实时数据管理平台，广泛应用于制造�
 点击**测试设置**以在保存前验证连接。
 :::
 
-### 条目 {#items}
+### 项目 {#items}
 
-PI 条目可以是以下两种类型之一：
+PI 项目可以是以下两种类型之一：
 
-- **PI point** —— 检索单个 PI 点位的时间序列数值。
-- **PI query** —— 检索所有匹配类正则表达式的 PI 点位的时间序列数值。条目名称仅用于日志记录；数据会以实际的 PI 点位引用作为标签。
+- **PI 点位** —— 检索单个 PI 点位的时间序列数值。
+- **PI 查询** —— 检索所有匹配类正则表达式的 PI 点位的时间序列数值。项目名称仅用于日志记录；数据会以实际的 PI 点位引用作为标签。
 
-#### PI point {#pi-point}
+#### PI 点位 {#pi-point}
 
 <div style={{ textAlign: 'center' }}>
 
-![OSIsoft PI 条目点位 ID 设置](@site/static/img/use-cases/pi-item-point-id.png)
+![OSIsoft PI 点位项目设置](@site/static/img/use-cases/pi-item-point-id.png)
 
 </div>
 
-#### PI query {#pi-query}
+#### PI 查询 {#pi-query}
 
 <div style={{ textAlign: 'center' }}>
 
-![OSIsoft PI 条目查询设置](@site/static/img/use-cases/pi-item-query.png)
+![OSIsoft PI 查询项目设置](@site/static/img/use-cases/pi-item-query.png)
 
 </div>
 

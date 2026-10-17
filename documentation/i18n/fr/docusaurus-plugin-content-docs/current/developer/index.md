@@ -357,7 +357,7 @@ génériques.
 - [Guide Angular](https://angular.dev/overview) — le frontend est construit avec Angular, y compris les
   formulaires réactifs (utilisés pour rendre les manifests) et les composants autonomes.
 - [Module Node.js `node:stream`](https://nodejs.org/api/stream.html) — le pipeline de cache, les
-  transformateurs, et `handleContent` du North fonctionnent avec des flux ; comprendre la contre-pression
+  transformateurs, et `handleContent` des connecteurs North fonctionnent avec des flux ; comprendre la contre-pression
   et `pipeline()` est important.
 - [Logger Pino](https://getpino.io/) — chaque connecteur utilise `this.logger` ; les niveaux de log et les
   modèles de logger enfant informent les conventions documentées dans
@@ -446,8 +446,8 @@ trouvent dans la page [Pile de test locale](./local-test-stack.md).
 
 **Ce qu'il est le plus utile de mesurer :**
 
-- **Débit sous charge soutenue** — éléments/sec qu'un South peut ingérer sans contre-pression de file
-  d'attente ; fichiers/sec qu'un North peut livrer sans s'accumuler dans le dossier d'erreur.
+- **Débit sous charge soutenue** — éléments/sec qu'un connecteur South peut ingérer sans contre-pression de file
+  d'attente ; fichiers/sec qu'un connecteur North peut livrer sans s'accumuler dans le dossier d'erreur.
 - **Croissance de la mémoire** — heap et RSS sur une exécution de plusieurs heures, à la recherche de
   fuites lentes dans les chemins de transformateur ou de cache.
 - **Temps de démarrage** — temps de démarrage après quelques millions de journaux / un cache en retard.

@@ -11,8 +11,8 @@ déclare :
 - **Ce qu'est le connecteur** — id, catégorie, modes pris en charge (South) ou types de contenu (North)
 - **Les paramètres que l'opérateur peut configurer** — URL de connexion, identifiants, options spécifiques au
   protocole
-- **Pour South : à quoi ressemble un item** — quelle valeur interroger, l'acceptabilité du mode de scan,
-  les paramètres spécifiques à l'item
+- **Pour South : à quoi ressemble un élément** — quelle valeur interroger, l'acceptabilité du mode de scan,
+  les paramètres spécifiques à l'élément
 
 Le frontend restitue le manifeste sous forme de formulaire ; le générateur de types du backend produit les
 interfaces TypeScript correspondantes (`South<Type>Settings`, `South<Type>ItemSettings`, `North<Type>Settings`).
@@ -41,7 +41,7 @@ export default manifest;
 ```
 
 Les indicateurs `modes` sont _indicatifs_ — ils indiquent à l'interface quelles actions exposer (par ex. s'il faut
-afficher « créer une requête historique » pour ce type de connecteur). La capacité réelle à l'exécution est
+afficher « créer une requête d'historique » pour ce type de connecteur). La capacité réelle à l'exécution est
 déterminée par les interfaces de `south-interface.ts` que la classe implémente ; voir
 [la doc de la classe](./class.md#capability-interfaces-south-only).
 
@@ -208,9 +208,9 @@ chaque attribut :
 
 Les chemins sont pointés, relatifs à la **racine de l'objet englobant** (pas à la racine du formulaire).
 
-## Items (South uniquement) {#items-south-only}
+## Éléments (South uniquement) {#items-south-only}
 
-`items` décrit le sous-formulaire par item. C'est un `OIBusArrayAttribute` dont le `rootAttribute` est
+`items` décrit le sous-formulaire par élément. C'est un `OIBusArrayAttribute` dont le `rootAttribute` est
 l'`OIBusObjectAttribute` définissant une ligne :
 
 ```typescript title="Typical items shape"
@@ -264,7 +264,7 @@ items: {
 | ------------------------- | ----------------------------------------------------------------------------------- |
 | `'POLL'`                  | Périodique uniquement (par défaut pour la plupart des connecteurs South)             |
 | `'SUBSCRIPTION'`          | Piloté par événements uniquement — à utiliser quand le connecteur ne prend en charge QUE les abonnements (par ex. MQTT) |
-| `'SUBSCRIPTION_AND_POLL'` | Les deux sont valides par item (OPC UA : certains items scrutés, d'autres abonnés)   |
+| `'SUBSCRIPTION_AND_POLL'` | Les deux sont valides par élément (OPC UA : certains éléments scrutés, d'autres abonnés)   |
 
 Un exemple réel complet se trouve dans `backend/src/south/south-folder-scanner/manifest.ts`.
 

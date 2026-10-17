@@ -11,13 +11,13 @@ import TabItem from '@theme/TabItem';
   scriptés/automatisés (voir [Installation automatisée](./disk-image.mdx)).
 
 <Tabs>
-  <TabItem value="windows-installer" label="Installer" default>
+  <TabItem value="windows-installer" label="Installateur" default>
     <h2 id="download-windows-installer">Téléchargement</h2>
     <div style={{ display: "flex", justifyContent: "space-around" }}>
       <DownloadButton
         link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-win_x64-setup-v${packageInfo.version}.exe`}>
         <div>
-          <div>{`OIBus v${packageInfo.version} (x64 installer)`}</div>
+          <div>{`OIBus v${packageInfo.version} (installateur x64)`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
@@ -179,7 +179,7 @@ import TabItem from '@theme/TabItem';
     install.bat -c "[your-data-folder-path]"
     ```
 
-    | Flag | Description | Défaut |
+    | Option | Description | Défaut |
     |------|-------------|---------|
     | `-c` | Chemin du dossier de données OIBus (cache, journaux, configuration) | demandé si omis |
     | `-n` | Nom du service Windows — utilisez un nom unique pour exécuter plusieurs instances OIBus sur la même machine | `OIBus` |
@@ -190,9 +190,9 @@ import TabItem from '@theme/TabItem';
     :::info
     `-u`, `-p`, et `-port` ne sont utilisés que lorsque `oibus.db` n'existe pas encore (c'est-à-dire lors de la
     toute première installation). Ils sont écrits dans un fichier `oibus.init.json` dans le dossier de données et
-    appliqués par OIBus au premier démarrage. Les flags omis ne sont pas écrits dans le fichier — OIBus utilisera
+    appliqués par OIBus au premier démarrage. Les options omises ne sont pas écrits dans le fichier — OIBus utilisera
     ses valeurs par défaut intégrées pour ces valeurs. Lors des installations ou mises à jour ultérieures, le
-    fichier n'est pas recréé, donc ces flags n'ont aucun effet.
+    fichier n'est pas recréé, donc ces options n'ont aucun effet.
     :::
 
     :::tip

@@ -18,15 +18,15 @@ Se connecter à des sources de données ODBC, localement ou via un [OIBus Agent]
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Setting            | Description                                                                                                                                                                                                       | Example Value                                     |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Use remote agent   | Activer pour acheminer les requêtes via un OIBus Agent sur une machine distante.                                                                                                                                  | Enabled/Disabled                                  |
-| Remote agent URL   | URL du point de terminaison de l'agent. Requis en cas d'utilisation d'un agent distant.                                                                                                                           | `http://host:2224`                                |
-| Connection timeout | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                                                                                                   | `15000`                                           |
-| Retry interval     | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`.                                                                                                                           | `10000`                                           |
-| Request timeout    | _(Utilisé uniquement avec **Use remote agent**)_ Temps d'exécution maximal en millisecondes pour chaque requête individuelle, envoyé à l'agent. Par défaut : `15000`. Non applicable aux connexions locales (sans agent). | `15000`                                           |
-| Connection string  | Chaîne de connexion ODBC dans un format spécifique au pilote.                                                                                                                                                     | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
-| Password           | Mot de passe d'authentification (stocké de façon sécurisée). Toujours ajouté sous forme de `PWD=<password>;` — si votre chaîne de connexion contient déjà sa propre entrée `PWD=`/`Pwd=`, supprimez-la ici ou dans la chaîne pour éviter un doublon. | `••••••••`                                        |
+| Paramètre                        | Description                                                                                                                                                                                                                                          | Exemple de valeur                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Utiliser un agent distant        | Activer pour acheminer les requêtes via un OIBus Agent sur une machine distante.                                                                                                                                                                     | Activé/Désactivé                                  |
+| URL de l'agent distant           | URL du point de terminaison de l'agent. Requis en cas d'utilisation d'un agent distant.                                                                                                                                                              | `http://host:2224`                                |
+| Délai de connexion               | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                                                                                                                                      | `15000`                                           |
+| Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`.                                                                                                                                                              | `10000`                                           |
+| Délai de requête                 | _(Utilisé uniquement avec **Utiliser un agent distant**)_ Temps d'exécution maximal en millisecondes pour chaque requête individuelle, envoyé à l'agent. Par défaut : `15000`. Non applicable aux connexions locales (sans agent).                   | `15000`                                           |
+| Chaîne de connexion              | Chaîne de connexion ODBC dans un format spécifique au pilote.                                                                                                                                                                                        | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
+| Mot de passe                     | Mot de passe d'authentification (stocké de façon sécurisée). Toujours ajouté sous forme de `PWD=<password>;` — si votre chaîne de connexion contient déjà sa propre entrée `PWD=`/`Pwd=`, supprimez-la ici ou dans la chaîne pour éviter un doublon. | `••••••••`                                        |
 
 ### Exemples de chaîne de connexion {#connection-string-examples}
 
@@ -49,11 +49,11 @@ Se connecter à des sources de données ODBC, localement ou via un [OIBus Agent]
 
 ### Installation du pilote {#driver-installation}
 
-| Platform   | Installation Method                                        |
-| ---------- | ---------------------------------------------------------- |
+| Plateforme | Méthode d'installation                                                           |
+| ---------- | -------------------------------------------------------------------------------- |
 | Windows    | Utiliser l'administrateur de sources de données ODBC pour configurer les pilotes |
-| UNIX/Linux | Installer le pilote puis indiquer le chemin complet dans la chaîne de connexion |
-| macOS      | `brew install unixodbc` + installation du pilote            |
+| UNIX/Linux | Installer le pilote puis indiquer le chemin complet dans la chaîne de connexion  |
+| macOS      | `brew install unixodbc` + installation du pilote                                 |
 
 ### Configuration Aspen IP21 {#aspen-ip21-configuration}
 
@@ -66,21 +66,21 @@ Pour des performances IP21 optimales :
 
 :::caution Authentification
 
-- Les mots de passe dans les chaînes de connexion sont stockés en texte clair. Utilisez plutôt le champ **Password**.
+- Les mots de passe dans les chaînes de connexion sont stockés en texte clair. Utilisez plutôt le champ **Mot de passe**.
 - Pour l'authentification locale, assurez-vous qu'OIBus Agent s'exécute avec les permissions appropriées
 
 :::
 
 <ItemSettings />
 
-:::note Types de champ datetime ODBC
-Les valeurs de **Type** suivantes sont disponibles pour la configuration du champ datetime :
+:::note Types de champ date/heure ODBC
+Les valeurs de **Type** suivantes sont disponibles pour la configuration du champ date/heure :
 
-| Type            | Description                                       |
-| --------------- | ------------------------------------------------- |
-| String          | Représentation textuelle analysée avec un format personnalisé |
-| ISO String      | Chaîne ISO 8601 (par ex. `2024-01-15T10:30:00.000Z`) |
-| UNIX epoch (s)  | Horodatage Unix en secondes                        |
-| UNIX epoch (ms) | Horodatage Unix en millisecondes                   |
+| Type             | Description                                                   |
+| ---------------- | ------------------------------------------------------------- |
+| Chaîne           | Représentation textuelle analysée avec un format personnalisé |
+| Chaîne ISO       | Chaîne ISO 8601 (par ex. `2024-01-15T10:30:00.000Z`)          |
+| Époque UNIX (s)  | Horodatage Unix en secondes                                   |
+| Époque UNIX (ms) | Horodatage Unix en millisecondes                              |
 
 :::

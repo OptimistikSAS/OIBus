@@ -1,22 +1,29 @@
 import { useState, useMemo } from 'react';
 import cronstrue from 'cronstrue';
+import 'cronstrue/locales/fr';
+import 'cronstrue/locales/zh_CN';
+import Translate, { translate } from '@docusaurus/Translate';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+
+// Docusaurus locale → cronstrue locale
+const CRONSTRUE_LOCALES = { en: 'en', fr: 'fr', zh: 'zh_CN' };
 
 const PRESETS = [
-  { label: 'Every second', expr: '* * * * * *' },
-  { label: 'Every 10 s', expr: '/10 * * * * *' },
-  { label: 'Every minute', expr: '0 * * * * *' },
-  { label: 'Every 10 min', expr: '0 /10 * * * *' },
-  { label: 'Every hour', expr: '0 0 * * * *' },
-  { label: 'Every 24 h', expr: '0 0 0 * * *' }
+  { label: translate({ id: 'components.cronTester.preset.everySecond', message: 'Every second' }), expr: '* * * * * *' },
+  { label: translate({ id: 'components.cronTester.preset.every10Seconds', message: 'Every 10 s' }), expr: '/10 * * * * *' },
+  { label: translate({ id: 'components.cronTester.preset.everyMinute', message: 'Every minute' }), expr: '0 * * * * *' },
+  { label: translate({ id: 'components.cronTester.preset.every10Minutes', message: 'Every 10 min' }), expr: '0 /10 * * * *' },
+  { label: translate({ id: 'components.cronTester.preset.everyHour', message: 'Every hour' }), expr: '0 0 * * * *' },
+  { label: translate({ id: 'components.cronTester.preset.every24Hours', message: 'Every 24 h' }), expr: '0 0 0 * * *' }
 ];
 
 const FIELD_DEFS = [
-  { label: 'Seconds', range: '0 – 59', min: 0, max: 59 },
-  { label: 'Minutes', range: '0 – 59', min: 0, max: 59 },
-  { label: 'Hours', range: '0 – 23', min: 0, max: 23 },
-  { label: 'Day', range: '1 – 31', min: 1, max: 31 },
-  { label: 'Month', range: '1 – 12', min: 1, max: 12 },
-  { label: 'Weekday', range: '0 – 6', min: 0, max: 6 }
+  { label: translate({ id: 'components.cronTester.field.seconds', message: 'Seconds' }), range: '0 – 59', min: 0, max: 59 },
+  { label: translate({ id: 'components.cronTester.field.minutes', message: 'Minutes' }), range: '0 – 59', min: 0, max: 59 },
+  { label: translate({ id: 'components.cronTester.field.hours', message: 'Hours' }), range: '0 – 23', min: 0, max: 23 },
+  { label: translate({ id: 'components.cronTester.field.day', message: 'Day' }), range: '1 – 31', min: 1, max: 31 },
+  { label: translate({ id: 'components.cronTester.field.month', message: 'Month' }), range: '1 – 12', min: 1, max: 12 },
+  { label: translate({ id: 'components.cronTester.field.weekday', message: 'Weekday' }), range: '0 – 6', min: 0, max: 6 }
 ];
 
 /** Parse one cron field into a Set of valid integers, or null for wildcard '*'. */
@@ -112,6 +119,9 @@ function formatRun(date) {
 }
 
 const CronTester = () => {
+  const {
+    i18n: { currentLocale }
+  } = useDocusaurusContext();
   const [expr, setExpr] = useState('0 /10 * * * *');
   const [copied, setCopied] = useState(false);
 
@@ -122,10 +132,10 @@ const CronTester = () => {
   let description = '';
   let valid = false;
   try {
-    description = cronstrue.toString(expr);
+    description = cronstrue.toString(expr, { locale: CRONSTRUE_LOCALES[currentLocale] ?? 'en' });
     valid = true;
   } catch {
-    description = 'Invalid cron expression';
+    description = translate({ id: 'components.cronTester.invalidExpression', message: 'Invalid cron expression' });
   }
 
   const handleCopy = () => {
@@ -226,12 +236,18 @@ const CronTester = () => {
           type="text"
           value={expr}
           onChange={e => setExpr(e.target.value)}
-          placeholder="e.g. 0 /10 * * * *"
+          placeholder={translate({ id: 'components.cronTester.inputPlaceholder', message: 'e.g. {example}' }, { example: '0 /10 * * * *' })}
           spellCheck={false}
           style={input}
         />
-        <button onClick={handleCopy} style={copyBtn} title="Copy expression">
-          {copied ? '✓ Copied' : '⎘ Copy'}
+        <button
+          onClick={handleCopy}
+          style={copyBtn}
+          title={translate({ id: 'components.cronTester.copyTitle', message: 'Copy expression' })}
+        >
+          {copied
+            ? translate({ id: 'components.cronTester.copied', message: '✓ Copied' })
+            : translate({ id: 'components.cronTester.copy', message: '⎘ Copy' })}
         </button>
       </div>
 
@@ -269,7 +285,9 @@ const CronTester = () => {
       {/* ── description ── */}
       {expr && (
         <div style={{ ...descBox, marginBottom: '0.9rem' }}>
-          <strong>Schedule: </strong>
+          <strong>
+            <Translate id="components.cronTester.schedule">Schedule:</Translate>{' '}
+          </strong>
           {description}
         </div>
       )}
@@ -277,7 +295,11 @@ const CronTester = () => {
       {/* ── next runs ── */}
       {valid && nextRuns && nextRuns.length > 0 && (
         <div>
-          <div style={sectionLabel}>Next {nextRuns.length} executions</div>
+          <div style={sectionLabel}>
+            <Translate id="components.cronTester.nextExecutions" values={{ count: nextRuns.length }}>
+              {'Next {count} executions'}
+            </Translate>
+          </div>
           <ol style={{ margin: 0, paddingLeft: '1.3rem' }}>
             {nextRuns.map((run, i) => (
               <li
@@ -299,7 +321,10 @@ const CronTester = () => {
       {/* ── no runs warning ── */}
       {valid && nextRuns && nextRuns.length === 0 && (
         <div style={{ fontSize: '0.85rem', color: 'var(--ifm-color-warning-dark)' }}>
-          ⚠️ No executions found within the search window. Check your expression.
+          ⚠️{' '}
+          <Translate id="components.cronTester.noExecutions">
+            No executions found within the search window. Check your expression.
+          </Translate>
         </div>
       )}
     </div>

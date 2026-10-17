@@ -13,7 +13,7 @@ sidebar_position: 3
 本页是快速参考；要了解更深入的细节，请阅读
 `backend/src/south/south-connector.ts` 和 `backend/src/north/north-connector.ts`。
 
-## North 连接器 {#north-connectors}
+## 北向连接器 {#north-connectors}
 
 ### 最简完整示例 {#minimal-complete-example}
 
@@ -68,7 +68,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
 | 方法                                                    | 用途                                                                                                       |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `supportedTypes(): Array<string>`                      | 该 North 能够投递的 `contentType` 值。**必须与清单（manifest）的 `types` 数组保持一致。** 不受支持的类型会被路由到错误文件夹。 |
+| `supportedTypes(): Array<string>`                      | 该北向连接器能够投递的 `contentType` 值。**必须与清单的 `types` 数组保持一致。** 不受支持的类型会被路由到错误文件夹。 |
 | `testConnection(): Promise<OIBusConnectionTestResult>` | 使用当前设置探测目的地。失败时抛出异常——该消息会展示给用户。成功时返回一个包含诊断信息的 `{ items: [...] }`。 |
 | `handleContent(fileStream, metadata): Promise<void>`   | 实际投递一份缓存的负载。可以抛出异常——基类会处理重试和错误文件夹。                                        |
 
@@ -96,7 +96,7 @@ throw { ...new Error('Connection reset'), forceRetry: true } as OIBusError;
 
 `forceRetry` 会让文件无限期地保留在缓存中——永远不会被移动到错误文件夹。
 
-## South 连接器 {#south-connectors}
+## 南向连接器 {#south-connectors}
 
 ### 最简骨架 {#minimal-skeleton}
 
@@ -170,16 +170,16 @@ export default class SouthMyType extends SouthConnector<SouthMyTypeSettings, Sou
 | 方法                                                       | 用途                                                     |
 | ---------------------------------------------------------- | -------------------------------------------------------- |
 | `testConnection(): Promise<OIBusConnectionTestResult>`     | 探测数据源。失败时抛出异常。                              |
-| `testItem(item, testingSettings): Promise<OIBusContent>`   | 为 UI 的“测试”按钮运行一次单个条目。返回生成的内容。      |
+| `testItem(item, testingSettings): Promise<OIBusContent>`   | 为 UI 的“测试”按钮运行一次单个项目。返回生成的内容。      |
 
 ### 可选重写方法 {#optional-overrides-1}
 
-与 North 相同：`connect()` 和 `disconnect()`。**务必在重写方法的末尾调用 `super.*`**，
+与北向相同：`connect()` 和 `disconnect()`。**务必在重写方法的末尾调用 `super.*`**，
 以便定时任务状态、订阅记录以及 `'connected'` 事件保持同步。
 
-### 能力接口（仅限 South） {#capability-interfaces-south-only}
+### 能力接口（仅限南向） {#capability-interfaces-south-only}
 
-South 连接器需要实现来自 `south-interface.ts` 的三个能力接口中的一个或多个。基
+南向连接器需要实现来自 `south-interface.ts` 的三个能力接口中的一个或多个。基
 类通过运行时的结构化 `in` 检查来检测它们——您无需声明任何标志位。
 
 #### `SouthDirectQuery` {#southdirectquery}
@@ -235,11 +235,11 @@ interface SouthSubscription {
 }
 ```
 
-每当已配置的条目集合与当前已订阅的集合出现差异时，基类就会调用 `subscribe()`
+每当已配置的项目集合与当前已订阅的集合出现差异时，基类就会调用 `subscribe()`
 和 `unsubscribe()`。数据到达时，直接在您的事件处理函数中通过
 `this.addContent(...)` 推送。
 
-订阅条目通过其保留的扫描模式 id `'subscription'` 来标识。清单必须允许条目的
+订阅项目通过其保留的扫描模式 id `'subscription'` 来标识。清单必须允许项目的
 `scanMode` 使用 `'SUBSCRIPTION'` 或 `'SUBSCRIPTION_AND_POLL'`，以便 UI 让操作
 人员可以选择它。
 
@@ -267,7 +267,7 @@ await this.addContent(
 | `'any-content'` | `string` — 一段不透明的序列化负载（例如 JSON 字符串化的 MQTT 消息）           | 当目的地需要原始负载时                     |
 | `'any'`         | `{ filePath: string }` — 一个已写入磁盘的文件                                 | 基于文件的连接器（文件夹扫描器、FTP）      |
 
-引擎负责通过其转换器管道，将内容写入每个启用的 North 的缓存中。
+引擎负责通过其转换器管道，将内容写入每个启用的北向连接器的缓存中。
 请勿直接写入缓存——始终通过 `addContent` 完成。
 
 ## 生命周期 {#lifecycle}
@@ -293,7 +293,7 @@ disconnect()         ← close transport
 ```
 
 基类还负责驱动 `metricsEvent` 和 `'connected'` 事件发射器，并处理延迟 Promise
-（deferred-promise）的调度，使 `stop()` 能够等待任何正在进行的扫描干净地完成。
+的调度，使 `stop()` 能够等待任何正在进行的扫描干净地完成。
 在正确的层级重写方法、调用 `super.*`，其余的都会自动完成。
 
 ## 测试 {#tests}

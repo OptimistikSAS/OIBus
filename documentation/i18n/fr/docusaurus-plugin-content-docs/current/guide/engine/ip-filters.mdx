@@ -17,16 +17,16 @@ Les adresses suivantes sont autorisées de façon permanente et ne peuvent pas �
 
 ## Format de l'adresse {#address-format}
 
-Chaque règle de filtre IP contient un seul champ **address**. OIBus prend en charge IPv4, IPv6 et les motifs
+Chaque règle de filtre IP contient un seul champ **Adresse**. OIBus prend en charge IPv4, IPv6 et les motifs
 génériques.
 
-| Motif                    | Exemple         | Correspond à                                        |
-| ------------------------- | --------------- | ---------------------------------------------------- |
-| IPv4 exacte                | `192.168.1.100` | Uniquement cette adresse spécifique                  |
-| Générique IPv4             | `192.168.1.*`   | Toutes les adresses de `192.168.1.0` à `192.168.1.255` |
-| IPv6 exacte                 | `2001:db8::1`   | Uniquement cette adresse spécifique                  |
-| Générique de préfixe IPv6  | `2001:db8:*`    | Toutes les adresses sous ce préfixe                  |
-| Tout autoriser              | `*`             | Toute adresse distante                                |
+| Motif                     | Exemple         | Correspond à                                           |
+| ------------------------- | --------------- | ------------------------------------------------------ |
+| IPv4 exacte               | `192.168.1.100` | Uniquement cette adresse spécifique                    |
+| Générique IPv4            | `192.168.1.*`   | Toutes les adresses de `192.168.1.0` à `192.168.1.255` |
+| IPv6 exacte               | `2001:db8::1`   | Uniquement cette adresse spécifique                    |
+| Générique de préfixe IPv6 | `2001:db8:*`    | Toutes les adresses sous ce préfixe                    |
+| Tout autoriser            | `*`             | Toute adresse distante                                 |
 
 :::note Équivalence IPv4 et IPv6
 Une adresse IPv4 saisie sous la forme `192.168.1.100` est automatiquement comparée aussi à sa forme mappée IPv6
@@ -35,14 +35,14 @@ Une adresse IPv4 saisie sous la forme `192.168.1.100` est automatiquement compar
 
 ## Gestion des filtres {#managing-filters}
 
-Les filtres IP se gèrent depuis **Engine → IP Filters** dans l'interface OIBus.
+Les filtres IP se gèrent depuis **Moteur → Filtres IP** dans l'interface OIBus.
 
 Chaque règle comporte deux champs :
 
-| Champ            | Description                                                            |
-| ------------------ | -------------------------------------------------------------------------- |
-| **Address**        | L'adresse IP ou le motif à autoriser (voir les formats ci-dessus)          |
-| **Description**    | Note libre pour identifier la règle (par ex. `Production SCADA server`)    |
+| Champ           | Description                                                             |
+| --------------- | ----------------------------------------------------------------------- |
+| **Adresse**     | L'adresse IP ou le motif à autoriser (voir les formats ci-dessus)       |
+| **Description** | Note libre pour identifier la règle (par ex. `Production SCADA server`) |
 
 Les règles peuvent être ajoutées, modifiées et supprimées à tout moment. Les modifications prennent effet
 immédiatement — aucun redémarrage n'est nécessaire.
@@ -93,7 +93,7 @@ en production.
 
 :::note Désactiver complètement le filtrage IP
 Si OIBus est démarré avec le drapeau `--ignoreIpFilters`, tout filtrage IP est contourné et les règles existantes ne
-sont pas appliquées. Lorsque ce drapeau est actif, la page **IP Filters** devient en lecture seule et affiche un avis
+sont pas appliquées. Lorsque ce drapeau est actif, la page **Filtres IP** devient en lecture seule et affiche un avis
 à la place de la liste habituelle des règles.
 :::
 

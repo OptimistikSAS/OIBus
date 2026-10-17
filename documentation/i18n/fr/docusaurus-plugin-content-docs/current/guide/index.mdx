@@ -21,7 +21,7 @@ OIBus est construit avec une architecture modulaire, composée de trois composan
 
 - **South** : collecte les données depuis les systèmes source.
 - **North** : met en cache et transmet les données vers les systèmes cibles.
-- **Engine** : gère la configuration, l'orchestration, et la journalisation.
+- **Moteur** : gère la configuration, l'orchestration, et la journalisation.
 
 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
   <div style={{ width: '650px', height: '650px' }}>
@@ -32,7 +32,7 @@ OIBus est construit avec une architecture modulaire, composée de trois composan
 </div>
 
 :::info
-Cette conception modulaire simplifie l'évolutivité en centralisant la complexité dans l'Engine, ce qui facilite le
+Cette conception modulaire simplifie l'évolutivité en centralisant la complexité dans le moteur, ce qui facilite le
 [développement et l'intégration](../developer/create-connector/presentation.md) de nouveaux modules North ou South.
 :::
 

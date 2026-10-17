@@ -5,13 +5,13 @@ sidebar_position: 1
 
 # 创建一个新的 OIBus 连接器
 
-OIBus 连接器使用 [TypeScript](https://www.typescriptlang.org/) 编写。**South** 连接器 _从_
-数据源（PLC、文件系统、数据库、MQTT broker 等）_获取_数据；**North** 连接器则将数据 _投递_到
+OIBus 连接器使用 [TypeScript](https://www.typescriptlang.org/) 编写。**南向**连接器 _从_
+数据源（PLC、文件系统、数据库、MQTT broker 等）_获取_数据；**北向**连接器则将数据 _投递_到
 目的地（文件、OIAnalytics、OPC UA 服务器、S3 等）。
 
 本指南将带您了解文件布局、思维模型，以及向引擎注册新连接器所需的接入步骤。
 
-:::tip Before you start
+:::tip 开始之前
 如果不确定从何入手，请联系 OIBus 团队——您需要的功能可能已经被某个现有连接器支持，
 或者更适合作为对现有连接器的增强来实现。
 :::
@@ -40,15 +40,15 @@ backend/src/north/north-<type>/
 
 ## 思维模型 {#mental-model}
 
-|          | **South**                                                      | **North**                                          |
+|          | **南向**                                                         | **北向**                                            |
 | -------- | ---------------------------------------------------------------- | --------------------------------------------------- |
 | 方向     | 从数据源 _拉取_                                                  | 向目的地 _推送_                                     |
 | 触发方式 | 定时任务（扫描模式）、订阅推送，或直接查询                       | 由定时任务驱动，从本地文件缓存中 _拉取_             |
 | 输出     | 通过 `this.addContent(...)` 将批数据推送给引擎                    | 实现 `handleContent(fileStream, metadata)`         |
-| 持久化状态 | 每个条目缓存的 `trackedInstant`，用于可恢复的历史读取             | 逐文件缓存 → 归档 / 错误文件夹                       |
+| 持久化状态 | 每个项目缓存的 `trackedInstant`，用于可恢复的历史读取             | 逐文件缓存 → 归档 / 错误文件夹                       |
 
-South 的批数据由引擎本身写入每个 North 的文件缓存；每个 North 再按各自的节奏
-从该缓存中提取数据。这种解耦意味着一个不稳定的目的地不会阻塞 South 的数据摄取——
+南向的批数据由引擎本身写入每个北向的文件缓存；每个北向再按各自的节奏
+从该缓存中提取数据。这种解耦意味着一个不稳定的目的地不会阻塞南向的数据摄取——
 文件只会在缓存中堆积，并在下一次触发时重试。
 
 ## 注册步骤 {#registration-steps}
@@ -58,7 +58,7 @@ South 的批数据由引擎本身写入每个 North 的文件缓存；每个 Nor
 
 ### 1. 将类型 id 添加到共享列表中 {#1-add-the-type-id-to-the-shared-list}
 
-对于 South 连接器，将您的 id 追加到 `backend/shared/model/connector/south-manifest.model.ts`
+对于南向连接器，将您的 id 追加到 `backend/shared/model/connector/south-manifest.model.ts`
 中的 `OIBUS_SOUTH_TYPES`：
 
 ```typescript title="backend/shared/model/connector/south-manifest.model.ts"
@@ -68,7 +68,7 @@ export const OIBUS_SOUTH_TYPES = [
 ] as const;
 ```
 
-North 连接器则使用 `backend/shared/model/connector/north-manifest.model.ts` 中的
+北向连接器则使用 `backend/shared/model/connector/north-manifest.model.ts` 中的
 `OIBUS_NORTH_TYPES`。
 
 从现有列表（`OIBUS_SOUTH_CATEGORIES` 或 `OIBUS_NORTH_CATEGORIES`）中选择一个
@@ -90,7 +90,7 @@ case 'my-new-source':
   );
 ```
 
-North 对应的是 `backend/src/north/north-connector-factory.ts` 中的 `buildNorth(...)`。
+北向对应的是 `backend/src/north/north-connector-factory.ts` 中的 `buildNorth(...)`。
 
 ### 3. 将类型 id 映射到生成的设置接口名称 {#3-map-the-type-id-to-the-generated-settings-interface-name}
 
@@ -115,7 +115,7 @@ npm run generate:settings-interface
 ```
 
 该脚本会读取每一个 `manifest.ts`，推导出对应的 TypeScript 接口，并写入
-`backend/shared/model/connector/south-settings.model.ts`（以及 North 对应的文件）。生成器
+`backend/shared/model/connector/south-settings.model.ts`（以及北向对应的文件）。生成器
 还会刷新 OpenAPI 定义。
 
 :::caution
