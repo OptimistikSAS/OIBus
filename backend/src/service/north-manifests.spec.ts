@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+
 import { findInvalidSelectDefaults } from '../tests/utils/manifest-test-utils';
 import { northManifestList } from './north-manifests';
 
@@ -55,5 +57,12 @@ describe('northManifestList', () => {
       northManifestList.flatMap(manifest => findInvalidSelectDefaults(manifest, manifest.id)),
       []
     );
+  });
+
+  it('oianalytics shows the scope for both AAD authentications', () => {
+    const settings = northManifestList.find(manifest => manifest.id === 'oianalytics')!.settings;
+    const specificSettings = settings.attributes.find(attribute => attribute.key === 'specificSettings') as OIBusObjectAttribute;
+    const scopeCondition = specificSettings.enablingConditions.find(condition => condition.targetPathFromRoot === 'scope');
+    assert.deepStrictEqual(scopeCondition?.values, ['aad-client-secret', 'aad-certificate']);
   });
 });

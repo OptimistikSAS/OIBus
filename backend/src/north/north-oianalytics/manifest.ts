@@ -119,7 +119,7 @@ const manifest: NorthConnectorManifest = {
           {
             referralPathFromRoot: 'authentication',
             targetPathFromRoot: 'scope',
-            values: ['aad-certificate']
+            values: ['aad-client-secret', 'aad-certificate']
           },
           {
             referralPathFromRoot: 'useProxy',

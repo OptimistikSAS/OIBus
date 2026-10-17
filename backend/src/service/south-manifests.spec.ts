@@ -174,4 +174,11 @@ describe('southManifestList', () => {
       []
     );
   });
+
+  it('oianalytics shows the scope for both AAD authentications', () => {
+    const settings = southManifestList.find(manifest => manifest.id === 'oianalytics')!.settings;
+    const specificSettings = settings.attributes.find(attribute => attribute.key === 'specificSettings') as OIBusObjectAttribute;
+    const scopeCondition = specificSettings.enablingConditions.find(condition => condition.targetPathFromRoot === 'scope');
+    assert.deepStrictEqual(scopeCondition?.values, ['aad-client-secret', 'aad-certificate']);
+  });
 });
