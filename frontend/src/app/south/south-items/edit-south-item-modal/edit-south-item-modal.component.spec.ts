@@ -63,8 +63,10 @@ class EditSouthItemModalComponentTester {
   readonly rangeLow = this.root.getByLabelText('Range low');
   readonly rangeHigh = this.root.getByLabelText('Range high');
   readonly maxCachingInterval = this.root.getByLabelText('Max caching interval');
-  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
-  readonly okButton = this.root.getByRole('button', { name: 'OK' });
+  readonly saveButton = this.root.getByRole('button', { name: 'Save', exact: true });
+  readonly okButton = this.root.getByRole('button', { name: 'OK', exact: true });
+  readonly saveAndAddAnotherButton = this.root.getByRole('button', { name: 'Save & add another' });
+  readonly okAndAddAnotherButton = this.root.getByRole('button', { name: 'OK & add another' });
   readonly cancelButton = this.root.getByCss('.modal-footer').getByRole('button', { name: 'Cancel' });
   readonly createGroupButton = this.root.getByRole('button', { name: 'Create a new group...' });
   readonly mustBeUnique = this.root.getByText('Must be unique');
@@ -73,13 +75,22 @@ class EditSouthItemModalComponentTester {
   readonly groupScanMode = this.root.getByCss('#group-scan-mode');
   readonly summary = this.root.getByCss('#item-summary');
 
+  /** The value of a setting in a section of the Review step */
+  reviewed(sectionId: string, label: string) {
+    return this.root
+      .getByCss(`#${sectionId} dl > div`)
+      .filter({ has: page.getByText(label, { exact: true }) })
+      .getByRole('definition');
+  }
+  readonly runTestButton = this.root.getByRole('button', { name: 'Run test', includeHidden: true });
+
   step(step: ItemModalStep) {
     return this.root.getByCss(`#modal-step-${step}`);
   }
 
   /** Saves from the last step, where a new item is saved */
   async save() {
-    await this.step('test').click();
+    await this.step('review').click();
     await this.saveButton.click();
   }
 
@@ -140,17 +151,18 @@ describe('EditSouthItemModalComponent', () => {
     itemManifest?: SouthConnectorManifest;
     tableIndex?: number;
     directSave?: boolean;
+    previousItem?: SouthConnectorItemCommandDTO;
   }
 
   /** Opens the modal like its openers do: for creation, or for edition / copy of `item`. */
   function open(mode: 'create' | 'edit' | 'copy', options: OpenOptions = {}) {
-    const { item = savedItem1, itemList = [], itemManifest = manifest, tableIndex = 0, directSave = true } = options;
+    const { item = savedItem1, itemList = [], itemManifest = manifest, tableIndex = 0, directSave = true, previousItem = null } = options;
     const tester = new EditSouthItemModalComponentTester();
     const component = tester.fixture.componentInstance;
     component.directSave = directSave;
     switch (mode) {
       case 'create':
-        component.prepareForCreation(itemList, scanModes, [], groups, itemManifest, southId, southConnectorCommand);
+        component.prepareForCreation(itemList, scanModes, [], groups, itemManifest, southId, southConnectorCommand, previousItem);
         break;
       case 'edit':
         component.prepareForEdition(itemList, scanModes, [], groups, itemManifest, item, southId, southConnectorCommand, tableIndex);
@@ -170,6 +182,7 @@ describe('EditSouthItemModalComponent', () => {
     const tester = open('edit');
 
     await expect.element(tester.title).toHaveTextContent('Edit item');
+    await expect.element(tester.root.getByRole('heading', { level: 5, name: 'General' })).toBeInTheDocument();
     await expect.element(tester.name).toHaveValue(savedItem1.name);
     await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[0].name);
     await expect.element(tester.enabled).toBeChecked();
@@ -276,9 +289,12 @@ describe('EditSouthItemModalComponent', () => {
       await tester.scanMode.selectOptions(scanModes[0].name);
       await tester.nextButton.click();
       await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      // the settings are tested right where they are edited
+      await expect.element(tester.runTestButton).toBeVisible();
 
       await tester.nextButton.click();
-      await expect.element(tester.step('test')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.runTestButton).not.toBeVisible();
       await expect.element(tester.nextButton).not.toBeInTheDocument();
       await expect.element(tester.saveButton).toBeInTheDocument();
 
@@ -300,13 +316,29 @@ describe('EditSouthItemModalComponent', () => {
       const item: SouthConnectorItemDTO = { ...savedItem1, group: groupA, syncWithGroup: true, enabled: false };
       const tester = open('edit', { item });
 
-      await tester.step('test').click();
+      await tester.step('review').click();
 
       const values = tester.summary.getByRole('definition');
       await expect.element(values.nth(0)).toHaveTextContent(savedItem1.name);
       await expect.element(values.nth(1)).toHaveTextContent('Disabled');
       await expect.element(values.nth(2)).toHaveTextContent('GroupA');
       await expect.element(values.nth(3)).toHaveTextContent(scanModes[0].name);
+      // the history settings that apply: the group's ones, since the item is synced with it
+      await expect.element(tester.reviewed('history-summary', 'Sync with group')).toHaveTextContent('Yes');
+      await expect.element(tester.reviewed('history-summary', 'Max read interval')).toHaveTextContent('60 s');
+      await expect.element(tester.reviewed('history-summary', 'Recovery strategy')).toHaveTextContent('From newest to oldest');
+      // the connector specific settings
+      await expect.element(tester.root.getByCss('#settings-summary')).toBeInTheDocument();
+    });
+
+    test('should sum the caching strategy up for an IoT connector', async () => {
+      const item: SouthConnectorItemDTO = { ...savedItem1, cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 };
+      const tester = open('edit', { item, itemManifest: opcuaManifest });
+
+      await tester.step('review').click();
+
+      await expect.element(tester.reviewed('caching-summary', 'Caching strategy')).toHaveTextContent('Threshold');
+      await expect.element(tester.reviewed('caching-summary', 'Threshold type')).toHaveTextContent('Absolute');
     });
   });
 
@@ -466,7 +498,7 @@ describe('EditSouthItemModalComponent', () => {
       expect(groups.save).toHaveBeenCalledWith({ mode: 'create', group: command });
       await expect.element(tester.groupToggle).toHaveTextContent('GroupC');
       await expect.element(tester.syncWithGroup).toBeChecked();
-      await tester.step('test').click();
+      await tester.step('review').click();
       await expect.element(tester.okButton).toBeInTheDocument();
     });
 
@@ -636,6 +668,144 @@ describe('EditSouthItemModalComponent', () => {
 
       await typeName(tester, savedItem1.name);
       await expect.element(tester.mustBeUnique).toBeInTheDocument();
+    });
+  });
+
+  describe('save and add another', () => {
+    test('should only be offered on the last step of a new item', async () => {
+      const tester = open('create');
+      await expect.element(tester.nextButton).toBeInTheDocument();
+      await expect.element(tester.saveAndAddAnotherButton).not.toBeInTheDocument();
+
+      await tester.step('review').click();
+
+      await expect.element(tester.saveAndAddAnotherButton).toBeInTheDocument();
+    });
+
+    test.each(['edit' as const, 'copy' as const])('should not be offered in %s mode', async mode => {
+      const tester = open(mode);
+      await tester.step('review').click();
+
+      await expect.element(tester.saveButton).toBeInTheDocument();
+      await expect.element(tester.saveAndAddAnotherButton).not.toBeInTheDocument();
+    });
+
+    test('should save the new item and ask for another one', async () => {
+      const tester = open('create');
+      await tester.name.fill('new item');
+      await tester.scanMode.selectOptions(scanModes[1].name);
+      await tester.step('review').click();
+
+      await tester.saveAndAddAnotherButton.click();
+
+      expect(savedCommand()).toEqual(expect.objectContaining({ id: '', name: 'new item', scanModeId: scanModes[1].id }));
+      expect(tester.fixture.componentInstance.addAnother).toBe(true);
+    });
+
+    test('should not ask for another item when saved with the main action', async () => {
+      const tester = open('create');
+      await tester.scanMode.selectOptions(scanModes[1].name);
+      // an invalid attempt first, without a name: the main action must not reuse it
+      await tester.step('review').click();
+      await tester.saveAndAddAnotherButton.click();
+      expect(activeModal.close).not.toHaveBeenCalled();
+
+      await tester.name.fill('new item');
+      await tester.save();
+
+      expect(savedCommand()).toEqual(expect.objectContaining({ name: 'new item' }));
+      expect(tester.fixture.componentInstance.addAnother).toBe(false);
+    });
+
+    test('should be worded like the main action when the item is added in memory', async () => {
+      const tester = open('create', { directSave: false });
+      await tester.name.fill('new item');
+      await tester.scanMode.selectOptions(scanModes[1].name);
+      await tester.step('review').click();
+      await expect.element(tester.okButton).toBeInTheDocument();
+
+      await tester.okAndAddAnotherButton.click();
+
+      expect(tester.fixture.componentInstance.addAnother).toBe(true);
+    });
+
+    test('should start the next item with the schedule and history settings of the previous one', async () => {
+      const previousItem: SouthConnectorItemCommandDTO = {
+        ...testData.south.itemCommand,
+        name: 'previous item',
+        enabled: false,
+        scanModeId: scanModes[1].id,
+        maxReadInterval: 120,
+        readDelay: 50,
+        startTimeOffset: 10,
+        endTimeOffset: 20,
+        recoveryStrategy: 'newest',
+        cachingStrategy: 'onChange',
+        maxCachingInterval: 1000
+      };
+      const tester = open('create', { itemManifest: opcuaManifest, previousItem, itemList: [previousItem] });
+
+      // a fresh item to name, from the first step
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.name).toHaveValue('');
+      await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[1].name);
+      await expect.element(tester.enabled).not.toBeChecked();
+      await expect.element(tester.maxReadInterval).toHaveValue(120);
+      await expect.element(tester.readDelay).toHaveValue(50);
+      await expect.element(tester.startTimeOffset).toHaveValue(10);
+      await expect.element(tester.endTimeOffset).toHaveValue(20);
+      await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From newest to oldest');
+      await expect.element(tester.cachingStrategy).toHaveDisplayValue('On change');
+      await expect.element(tester.maxCachingInterval).toHaveValue(1000);
+      // nothing typed yet: no confirmation before dismissing
+      expect(tester.fixture.componentInstance.canDismiss()).toBe(true);
+
+      // the name of the item just added is taken
+      await tester.name.fill(previousItem.name);
+      await userEvent.tab();
+      await expect.element(tester.mustBeUnique).toBeInTheDocument();
+
+      await tester.name.fill('next item');
+      await tester.save();
+      // its connector settings, which tell it apart from the previous one, start from their defaults
+      expect(savedCommand()).toEqual(
+        expect.objectContaining({
+          id: '',
+          name: 'next item',
+          enabled: false,
+          scanModeId: scanModes[1].id,
+          maxReadInterval: 120,
+          cachingStrategy: 'onChange',
+          maxCachingInterval: 1000,
+          settings: expect.objectContaining({ objectValue: 1 })
+        })
+      );
+    });
+
+    test('should start the next item in the group of the previous one', async () => {
+      const previousItem: SouthConnectorItemCommandDTO = {
+        ...testData.south.itemCommand,
+        groupId: groupA.id,
+        groupName: groupA.standardSettings.name,
+        syncWithGroup: true,
+        scanModeId: scanModes[0].id,
+        maxReadInterval: null,
+        readDelay: null,
+        recoveryStrategy: null
+      };
+      const tester = open('create', { previousItem });
+
+      await expect.element(tester.groupToggle).toHaveTextContent('GroupA');
+      await expect.element(tester.groupScanMode).toHaveTextContent(`Schedule ${scanModes[0].name} (from the group)`);
+      await expect.element(tester.syncWithGroup).toBeChecked();
+      await expect.element(tester.maxReadInterval).toBeDisabled();
+      await expect.element(tester.maxReadInterval).toHaveValue(60);
+
+      await tester.name.fill('next item');
+      await tester.save();
+      expect(savedCommand()).toEqual(
+        expect.objectContaining({ groupId: 'group1', syncWithGroup: true, scanModeId: scanModes[0].id, maxReadInterval: null })
+      );
     });
   });
 

@@ -25,7 +25,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { provideCurrentUser } from '../../shared/current-user-testing';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
+import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
@@ -136,10 +136,11 @@ describe('EditHistoryQueryComponent', () => {
   }
 
   /** An item modal mock, with the signals set by the page */
-  function itemModalMock(): MockObject<EditHistoryQueryItemModalComponent> {
+  function itemModalMock(overrides: Partial<EditHistoryQueryItemModalComponent> = {}): MockObject<EditHistoryQueryItemModalComponent> {
     return createMock(EditHistoryQueryItemModalComponent, {
       directSave: signal(true),
-      inMemoryTransformers: signal<Array<HistoryTransformerDTOWithOptions> | null>(null)
+      inMemoryTransformers: signal<Array<HistoryTransformerDTOWithOptions> | null>(null),
+      ...overrides
     });
   }
 
@@ -275,7 +276,8 @@ describe('EditHistoryQueryComponent', () => {
         savedQuery.id,
         '',
         expect.objectContaining({ type: 'folder-scanner' }),
-        testData.south.manifest
+        testData.south.manifest,
+        null
       );
       await tester.expectItemNames('item1', 'item2', 'new item');
 
@@ -288,6 +290,34 @@ describe('EditHistoryQueryComponent', () => {
       expect(itemModal.prepareForEdition.mock.calls[0][6]).toBe(1);
       await tester.expectItemNames('item1', 'edited', 'new item', 'copy');
       // nothing is saved until the history query is saved
+      expect(historyQueryService.createItem).not.toHaveBeenCalled();
+    });
+
+    test('should add items in a row in memory, each one starting from the one added before', async () => {
+      const nextItem: HistoryQueryItemCommandDTO = { ...newItem, name: 'next item' };
+      const firstModal = itemModalMock({ addAnother: true });
+      const nextModal = itemModalMock({ addAnother: false });
+      const open = vi
+        .spyOn(TestBed.inject(MockModalService), 'open')
+        .mockReturnValueOnce(fakeModal(firstModal, Promise.resolve(newItem)))
+        .mockReturnValueOnce(fakeModal(nextModal, Promise.resolve(nextItem)));
+      const tester = new EditHistoryQueryComponentTester();
+
+      await tester.addItemButton.click();
+
+      await tester.expectItemNames('item1', 'item2', 'new item', 'next item');
+      expect(nextModal.directSave()).toBe(false);
+      // the next item is checked against the items with the first one
+      expect(nextModal.prepareForCreation).toHaveBeenCalledWith(
+        [...firstModal.prepareForCreation.mock.lastCall![0], newItem],
+        savedQuery.id,
+        '',
+        expect.objectContaining({ type: 'folder-scanner' }),
+        testData.south.manifest,
+        newItem
+      );
+      // the last one was added with the main action: no other item
+      expect(open).toHaveBeenCalledTimes(2);
       expect(historyQueryService.createItem).not.toHaveBeenCalled();
     });
 

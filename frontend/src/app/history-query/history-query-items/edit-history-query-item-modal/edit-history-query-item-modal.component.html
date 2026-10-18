@@ -13,6 +13,7 @@
     <form [formGroup]="form" (ngSubmit)="submit()" id="form">
       <!-- 1. General: what every item has, whatever its connector -->
       <div [hidden]="steps.current() !== 'general'" id="step-general">
+        <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
         <div class="row">
           <!-- Name -->
           <div class="col-md-6">
@@ -34,6 +35,7 @@
 
       <!-- 2. Settings: those of the connector type -->
       <div [hidden]="steps.current() !== 'settings'" id="step-settings">
+        <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
         <ng-container formGroupName="settings">
           <oib-oibus-object-form-control
             [scanModes]="[]"
@@ -45,24 +47,35 @@
       </div>
     </form>
 
-    <!-- 3. Test & save: the item as it will be saved, tried out -->
-    <div [hidden]="steps.current() !== 'test'" id="step-test">
-      @let item = formItem()!;
-      <dl class="row item-summary mb-2" id="item-summary">
-        <dt class="col-sm-2" translate="south.items.name"></dt>
-        <dd class="col-sm-4">{{ item.name }}</dd>
-        <dt class="col-sm-2" translate="south.items.status"></dt>
-        <dd class="col-sm-4" [translate]="item.enabled ? 'common.enabled' : 'common.disabled'"></dd>
-      </dl>
+    <!-- 2. Settings, tried out right away: the test panel has its own form, so it sits outside the item one -->
+    <div [hidden]="steps.current() !== 'settings'" class="mt-4" id="step-settings-test">
       <oib-south-item-test
         type="history-south"
         [entityId]="historyId()"
         [fromSouth]="fromSouth()"
-        [item]="item"
+        [item]="formItem()!"
         [connectorCommand]="southConnectorCommand()!"
         [manifest]="manifest()!"
         [inMemoryTransformers]="inMemoryTransformers()"
       />
+    </div>
+
+    <!-- 3. Review & save: the item as it will be saved -->
+    <div [hidden]="steps.current() !== 'review'" id="step-review">
+      @let item = formItem()!;
+      <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
+      <dl class="oib-summary" id="item-summary">
+        <div>
+          <dt translate="south.items.name"></dt>
+          <dd>{{ item.name }}</dd>
+        </div>
+        <div>
+          <dt translate="south.items.status"></dt>
+          <dd [translate]="item.enabled ? 'common.enabled' : 'common.disabled'"></dd>
+        </div>
+      </dl>
+      <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
+      <oib-oibus-settings-summary id="settings-summary" [objectAttribute]="itemSettingsAttribute()!" [value]="item.settings" />
     </div>
   </div>
 }
@@ -85,6 +98,13 @@
     }
   </div>
   <div class="btn-group">
+    <!-- Adding many items in a row -->
+    @if (mode() === 'create' && canSave()) {
+      <button type="button" class="btn btn-secondary" id="save-and-add-another" (click)="save(true)">
+        <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>
+        <span [translate]="directSave() ? 'south.edit-item-modal.save-and-add-another' : 'south.edit-item-modal.ok-and-add-another'"></span>
+      </button>
+    }
     @if (canSave()) {
       <button
         type="submit"
