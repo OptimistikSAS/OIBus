@@ -86,6 +86,12 @@ settings are configured the same way too, but items are simplified: a history qu
 **name**, an **enabled** flag, and its type-specific settings — there is no per-item scan mode, group, or
 throttling override. Every item shares the single **Time Range** settings above instead.
 
+Items are edited in the same three-step modal as South items — **General**, **Settings** (with the test panel) and
+**Review & save**, with **Save & add another** for a series of items — see
+[Creating and Editing an Item](./south-connectors/common-settings.md#creating-and-editing-an-item). For connectors
+that support it, **Explore** browses the data source, read-only: history queries have no Add as items or items
+synchronisation.
+
 ## Execution Controls {#execution-controls}
 
 | Control     | Description                                                                                                                                        |

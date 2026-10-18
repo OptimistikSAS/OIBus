@@ -22,7 +22,7 @@ Le fichier d'export (`oibus-config-export.json`) comporte trois champs de premie
   - Les filtres IP
   - Les certificats
   - Les transformateurs
-  - Les connecteurs South (y compris les éléments, les groupes et les workflows de configuration)
+  - Les connecteurs South (y compris les éléments, les groupes et les synchronisations des points)
   - Les connecteurs North
   - Les requêtes d'historique
   - Les utilisateurs
@@ -47,7 +47,7 @@ doivent être ressaisis manuellement après un import — voir [Étapes manuelle
 Importer un fichier de configuration **efface toutes les sections concernées de la configuration locale de
 l'instance cible et les recrée à partir du fichier**, en conservant l'ID interne d'origine de chaque entité. Cette
 opération est destructrice et ne peut pas être annulée : chaque connecteur South, connecteur North, requête
-d'historique, workflow de configuration, mode de scan, filtre IP, transformateur, certificat et utilisateur actuellement présent sur
+d'historique, synchronisation des points, mode de scan, filtre IP, transformateur, certificat et utilisateur actuellement présent sur
 l'instance est supprimé avant que les éléments importés ne soient créés, et les paramètres du moteur de l'instance
 (nom, serveur web, serveur proxy et journalisation) sont remplacés par ceux importés. L'interface exige une confirmation
 explicite, rappelant ce point, avant qu'un import ne soit soumis.
@@ -62,7 +62,7 @@ redirige à la fermeture de la fenêtre d'import. Le nouveau port doit être lib
 
 Sélectionner un fichier dans la fenêtre **Importer la configuration** ne l'importe pas encore : OIBus le met d'abord à
 niveau et le valide exactement comme le ferait l'import, sans rien écrire, et affiche tout ce qu'il s'apprête à
-importer — connecteurs South (avec leur configuration, leurs éléments, groupes d'éléments et workflows de configuration),
+importer — connecteurs South (avec leur configuration, leurs éléments, groupes d'éléments et synchronisations des points),
 connecteurs North (avec leur configuration, leur cache et leurs transformateurs), requêtes d'historique, modes de scan,
 filtres IP, certificats, transformateurs, utilisateurs et paramètres du moteur. Chaque section peut être dépliée pour
 en consulter le contenu. Un fichier invalide affiche ses erreurs immédiatement, et l'import ne peut être confirmé
@@ -112,8 +112,8 @@ quelle :
   utilisateur, et un avertissement demande de le ressaisir dans les paramètres du moteur.
 - **Les utilisateurs sont recréés avec un mot de passe aléatoire**, puisque les mots de passe ne sont jamais
   exportés. Chaque utilisateur importé doit réinitialiser son mot de passe avant de pouvoir se reconnecter.
-- **Les workflows de configuration sont importés désactivés**, avec les éléments qu'ils ont créés toujours rattachés.
-  Leur historique d'exécution n'est pas exporté. Réactivez chacun d'eux une fois son connecteur South configuré.
+- **Les synchronisations des points sont importées désactivées**, avec les éléments qu'elles ont créés toujours rattachés.
+  Leur historique d'exécution n'est pas exporté. Réactivez chacune d'elles une fois son connecteur South configuré.
 - **Les transformateurs standards sont mis en correspondance par nom de fonction**, et non recréés — ils sont
   initialisés une fois au démarrage d'OIBus et associés à la configuration importée via leur `functionName`. Si
   l'instance cible ne dispose pas d'un transformateur standard avec un nom de fonction correspondant (par exemple une
