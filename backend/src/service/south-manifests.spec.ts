@@ -152,8 +152,14 @@ describe('southManifestList', () => {
         }
       }
       for (const [path, field] of paths) {
-        // scan mode and group are picked by the user, enabled defaults to true
-        if (path.startsWith('settings.') && !field.conditional && field.attribute.validators.some(({ type }) => type === 'REQUIRED')) {
+        // scan mode and group are picked by the user; a field with a default gets it when left out
+        const hasDefault = 'defaultValue' in field.attribute && field.attribute.defaultValue != null;
+        if (
+          path.startsWith('settings.') &&
+          !field.conditional &&
+          !hasDefault &&
+          field.attribute.validators.some(({ type }) => type === 'REQUIRED')
+        ) {
           assert.ok(defaults.itemFieldMapping[path], `manifest '${manifest.id}' should map the required item field '${path}'`);
         }
       }

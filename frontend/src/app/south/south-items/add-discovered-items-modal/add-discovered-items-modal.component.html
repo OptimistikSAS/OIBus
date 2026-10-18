@@ -106,7 +106,13 @@
               }
             </td>
             @for (column of settingColumns(); track column.key) {
-              <td class="text-break small">{{ settingValue(row, column.key) }}</td>
+              <td class="text-break small">
+                @if (settingValueKey(row, column.key); as valueKey) {
+                  {{ valueKey | translate }}
+                } @else {
+                  {{ settingValue(row, column.key) }}
+                }
+              </td>
             }
             <td>
               @if (row.existingItemName) {

@@ -20,6 +20,7 @@ import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import testData from '../tests/utils/test-data';
 import ConfigurationWorkflowRunService from './configuration-workflow-run.service';
+import { southManifestList } from './south-manifests';
 
 const SOUTH_ID = testData.south.list[0].id;
 const WORKFLOW_ID = 'workflowId1';
@@ -837,6 +838,71 @@ describe('Configuration Workflow Run Service', () => {
       // timestamp origin only applies to DA
       assert.deepStrictEqual(item.settings, { nodeId: 'ns=1;s=T', mode: 'ha', haMode: { aggregate: 'raw' } });
       assert.strictEqual(item.scanModeId, null);
+    });
+
+    it('should turn the tables checked in the explore modal into SQL items, tracked from their time column if any', async () => {
+      southService.discover.mock.mockImplementation(async () => [
+        {
+          id: 'dbo.production',
+          name: 'dbo.production',
+          query: 'SELECT * FROM [dbo].[production] WHERE [produced_at] > @StartTime AND [produced_at] <= @EndTime',
+          trackInstant: true,
+          timeColumn: 'produced_at',
+          dateTimeType: 'date-time-2'
+        },
+        {
+          id: 'dbo.settings',
+          name: 'dbo.settings',
+          query: 'SELECT * FROM [dbo].[settings]',
+          trackInstant: false,
+          timeColumn: null,
+          dateTimeType: null
+        }
+      ]);
+      const mssqlManifest = southManifestList.find(manifest => manifest.id === 'mssql')!;
+
+      const items = await service.discoverItems(
+        'create',
+        'mssql',
+        southSettings,
+        { nodeIds: ['dbo.production', 'dbo.settings'] },
+        mssqlManifest.discovery!.defaults!.itemFieldMapping
+      );
+
+      assert.deepStrictEqual(
+        items.map(item => [item.name, item.settings]),
+        [
+          [
+            'dbo.production',
+            {
+              query: 'SELECT * FROM [dbo].[production] WHERE [produced_at] > @StartTime AND [produced_at] <= @EndTime',
+              // the time zone of a date-time-2 column gets its default
+              trackingInstant: { trackInstant: true, fieldName: 'produced_at', dateTimeInput: { type: 'date-time-2', timezone: 'UTC' } }
+            }
+          ],
+          // the time column and its date format don't apply to an untracked table: left out rather than empty
+          ['dbo.settings', { query: 'SELECT * FROM [dbo].[settings]', trackingInstant: { trackInstant: false } }]
+        ]
+      );
+    });
+
+    it('should leave out a mapped setting that does not apply to the record', async () => {
+      southService.discover.mock.mockImplementation(async () => [{ id: 'ns=1;s=T', path: 'Reactor/T' }]);
+
+      const [item] = await service.discoverItems(
+        'create',
+        'opcua',
+        southSettings,
+        {},
+        {
+          name: '{{path}}',
+          'settings.nodeId': '{{id}}',
+          'settings.mode': 'da',
+          'settings.haMode.aggregate': 'average'
+        }
+      );
+
+      assert.deepStrictEqual(item.settings, { nodeId: 'ns=1;s=T', mode: 'da', timestampOrigin: 'oibus' });
     });
 
     it('should not default the settings a mapped value disables', async () => {

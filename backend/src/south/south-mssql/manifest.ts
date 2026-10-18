@@ -10,7 +10,20 @@ const manifest: SouthConnectorManifest = {
     history: true
   },
   explore: true,
-  discovery: { kind: 'query' },
+  discovery: {
+    kind: 'query',
+    // The item of each table checked in the Explore modal (see discoverTables())
+    defaults: {
+      identityKeyFields: ['id'],
+      itemFieldMapping: {
+        name: '{{name}}',
+        'settings.query': '{{query}}',
+        'settings.trackingInstant.trackInstant': '{{trackInstant}}',
+        'settings.trackingInstant.fieldName': '{{timeColumn}}',
+        'settings.trackingInstant.dateTimeInput.type': '{{dateTimeType}}'
+      }
+    }
+  },
   settings: {
     type: 'object',
     key: 'settings',
