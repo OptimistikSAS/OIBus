@@ -481,6 +481,75 @@ describe('SouthMySQL', () => {
       assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
     });
 
+    it('should explore the tables of the database, then the columns of a table', async () => {
+      const mockExecute = mock.fn(async (query: string, _params?: unknown) =>
+        query.includes('information_schema.TABLES')
+          ? [[{ tableName: 'production', rowCount: '1200', columnCount: 2 }]]
+          : [
+              [
+                { name: 'id', type: 'int', nullable: 'NO', columnDefault: null, columnKey: 'PRI' },
+                { name: 'produced_at', type: 'datetime', nullable: 'YES', columnDefault: 'CURRENT_TIMESTAMP', columnKey: '' }
+              ]
+            ]
+      );
+      const mockEnd = mock.fn();
+      mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
+
+      assert.deepStrictEqual(await south.explore(null), [
+        { id: 'production', name: 'production', metadata: { columns: 2, rows: 1200 }, hasChildren: true }
+      ]);
+      assert.deepStrictEqual(await south.explore('production'), [
+        { id: 'production.id', name: 'id', metadata: { nullable: 'no', type: 'int', primaryKey: 'yes' }, hasChildren: false },
+        {
+          id: 'production.produced_at',
+          name: 'produced_at',
+          metadata: { nullable: 'yes', type: 'datetime', default: 'CURRENT_TIMESTAMP' },
+          hasChildren: false
+        }
+      ]);
+      assert.deepStrictEqual(mockExecute.mock.calls[1].arguments[1], ['production']);
+      assert.strictEqual(mockEnd.mock.calls.length, 2);
+    });
+
+    it('should close the connection when exploring fails', async () => {
+      const mockEnd = mock.fn();
+      mysqlExports.createConnection = mock.fn(async () => ({
+        end: mockEnd,
+        execute: mock.fn(async () => {
+          throw new Error('denied');
+        }),
+        ping: mock.fn()
+      }));
+
+      await assert.rejects(south.explore(null), new Error('denied'));
+      assert.strictEqual(mockEnd.mock.calls.length, 1);
+    });
+
+    it('should discover the item of each table checked in the explore modal, quoted and tracked as MySQL reads them', async () => {
+      mock.method(south, 'explore', async (parentId: string | null) =>
+        parentId === null
+          ? [{ id: 'production', name: 'production', metadata: { columns: 3 }, hasChildren: true }]
+          : [
+              { id: `${parentId}.id`, name: 'id', metadata: { type: 'int' }, hasChildren: false },
+              { id: `${parentId}.value`, name: 'value', metadata: { type: 'float' }, hasChildren: false },
+              { id: `${parentId}.produced_at`, name: 'produced_at', metadata: { type: 'datetime' }, hasChildren: false }
+            ]
+      );
+
+      const records = await south.discover({ nodeIds: ['production.value'] });
+
+      assert.deepStrictEqual(records, [
+        {
+          id: 'production',
+          name: 'production',
+          query: 'SELECT `produced_at`, `value` FROM `production` WHERE `produced_at` > @StartTime AND `produced_at` <= @EndTime',
+          trackInstant: true,
+          timeColumn: 'produced_at',
+          dateTimeType: 'date-time'
+        }
+      ]);
+    });
+
     it('should close the connection and rethrow when the discovery query fails', async () => {
       const queryError = new Error('bad query');
       const mockEnd = mock.fn();

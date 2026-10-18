@@ -10,7 +10,11 @@ import {
   SouthPostgreSQLSettings
 } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -25,7 +29,31 @@ import {
   workUnitLogCtx
 } from '../../service/utils';
 import SouthConnector from '../south-connector';
-import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
+import {
+  discoverTables,
+  extractNodeIds,
+  quoteAnsiIdentifier,
+  splitSchemaTable,
+  SqlDialect,
+  toColumnExploreEntry
+} from '../sql-table-discovery';
+
+/** The date formats of the PostgreSQL date/time column types (as `information_schema` names them), as an item tracking instant reads them. */
+const POSTGRESQL_DATE_TIME_TYPES: Record<string, string> = {
+  'timestamp without time zone': 'timestamp',
+  'timestamp with time zone': 'timestamptz'
+};
+
+/** The tables of PostgreSQL are schema-qualified (`schema.table`, see `explore()`). */
+const POSTGRESQL_DIALECT: SqlDialect = {
+  quoteTable: tableId => {
+    const { schema, table } = splitSchemaTable(tableId);
+    return schema ? `${quoteAnsiIdentifier(schema)}.${quoteAnsiIdentifier(table)}` : quoteAnsiIdentifier(table);
+  },
+  quoteColumn: quoteAnsiIdentifier,
+  dateTimeType: columnType => POSTGRESQL_DATE_TIME_TYPES[columnType.toLowerCase()] ?? null
+};
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send the resulting rows as
@@ -35,7 +63,7 @@ import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interfa
  */
 export default class SouthPostgreSQL
   extends SouthConnector<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
-  implements SouthHistoryQuery, SouthConfigurationDiscovery
+  implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
   constructor(
     connector: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
@@ -233,11 +261,95 @@ export default class SouthPostgreSQL
   }
 
   /**
+   * Interactive explore of the database: its tables at the root, schema-qualified as "schema.table" (system schemas
+   * left out), with their column count and an approximate row count (the `reltuples` statistic rather than a
+   * `COUNT(*)` per table, far too costly just to browse), and the columns of a table under it, with their type,
+   * nullability, primary key membership and default.
+   * @param parentId - a "schema.table" id to list the columns of, or null to list the tables
+   */
+  async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    const connection = new pg.Client(await this.createConnectionOptions());
+    await connection.connect();
+    try {
+      return parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId);
+    } finally {
+      await connection.end();
+    }
+  }
+
+  private async exploreTables(connection: pg.Client): Promise<Array<SouthConnectorExploreEntry>> {
+    const { rows } = await connection.query<{ tableSchema: string; tableName: string; columnCount: number; rowCount: string }>(`
+      SELECT
+        t.table_schema AS "tableSchema",
+        t.table_name AS "tableName",
+        (SELECT COUNT(*) FROM information_schema.columns c WHERE c.table_schema = t.table_schema AND c.table_name = t.table_name)::int AS "columnCount",
+        GREATEST(COALESCE((
+          SELECT pc.reltuples FROM pg_class pc INNER JOIN pg_namespace pn ON pn.oid = pc.relnamespace
+          WHERE pn.nspname = t.table_schema AND pc.relname = t.table_name
+        ), 0), 0)::bigint AS "rowCount"
+      FROM information_schema.tables t
+      WHERE t.table_type = 'BASE TABLE' AND t.table_schema NOT IN ('pg_catalog', 'information_schema')
+      ORDER BY t.table_schema, t.table_name
+    `);
+    return rows.map(table => ({
+      id: `${table.tableSchema}.${table.tableName}`,
+      name: `${table.tableSchema}.${table.tableName}`,
+      metadata: { columns: Number(table.columnCount), rows: Number(table.rowCount) },
+      hasChildren: Number(table.columnCount) > 0
+    }));
+  }
+
+  private async exploreColumns(connection: pg.Client, tableId: string): Promise<Array<SouthConnectorExploreEntry>> {
+    const { schema, table } = splitSchemaTable(tableId);
+    const { rows } = await connection.query<{
+      name: string;
+      type: string;
+      nullable: string;
+      columnDefault: string | null;
+      primaryKey: boolean;
+    }>(
+      `
+      SELECT
+        c.column_name AS name,
+        c.data_type AS type,
+        c.is_nullable AS nullable,
+        c.column_default AS "columnDefault",
+        EXISTS (
+          SELECT 1 FROM information_schema.table_constraints tc
+          INNER JOIN information_schema.key_column_usage ku
+            ON tc.constraint_name = ku.constraint_name AND tc.constraint_schema = ku.constraint_schema
+          WHERE tc.constraint_type = 'PRIMARY KEY'
+            AND ku.table_schema = c.table_schema AND ku.table_name = c.table_name AND ku.column_name = c.column_name
+        ) AS "primaryKey"
+      FROM information_schema.columns c
+      WHERE c.table_schema = $1 AND c.table_name = $2
+      ORDER BY c.ordinal_position
+    `,
+      [schema, table]
+    );
+    return rows.map(column =>
+      toColumnExploreEntry(tableId, {
+        name: column.name,
+        type: column.type,
+        nullable: column.nullable === 'YES',
+        primaryKey: column.primaryKey,
+        defaultValue: column.columnDefault
+      })
+    );
+  }
+
+  /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records.
+   * any item's own data query - and returns its rows directly as the discovered records. The tables and
+   * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
+   * the item that reads it (see `discoverTables()`).
    */
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const nodeIds = extractNodeIds(scope);
+    if (nodeIds) {
+      return discoverTables(parentId => this.explore(parentId), nodeIds, POSTGRESQL_DIALECT);
+    }
     const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();
 

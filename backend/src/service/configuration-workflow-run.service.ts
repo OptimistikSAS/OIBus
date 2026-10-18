@@ -609,12 +609,39 @@ function buildItemCommand(
   for (const [path, value] of Object.entries(resolved)) {
     setDeep(base, path, value);
   }
-  // An updated item keeps its own values for what the mapping leaves out (see buildItemCommandBase)
   const rootAttribute = southManifestList.find(manifest => manifest.id === connectorType)?.items.rootAttribute;
-  if (!existingItem && rootAttribute) {
-    fillManifestDefaults(rootAttribute, base);
+  if (rootAttribute) {
+    // An updated item keeps its own values for what the mapping leaves out (see buildItemCommandBase)
+    if (!existingItem) {
+      fillManifestDefaults(rootAttribute, base);
+    }
+    removeHiddenFields(rootAttribute, base);
   }
   return base as unknown as SouthConnectorItemCommandDTO;
+}
+
+/**
+ * Whether a field of an object applies: when its enabling condition, if any, passes against the values of the
+ * object - as the item validator checks it.
+ */
+function isFieldEnabled(objectAttribute: OIBusObjectAttribute, values: Record<string, unknown>, key: string): boolean {
+  const condition = objectAttribute.enablingConditions.find(candidate => candidate.targetPathFromRoot === key);
+  return !condition || condition.values.includes((values[condition.referralPathFromRoot] ?? null) as string | number | boolean | null);
+}
+
+/**
+ * Removes the fields that don't apply to an item, as the item form never sends them: a mapping sets its fields for
+ * every record, while a field another one enables only applies to some of them - e.g. the date format of the
+ * tracking instant of a SQL table without time column, whose empty value the validator would refuse.
+ */
+function removeHiddenFields(objectAttribute: OIBusObjectAttribute, values: Record<string, unknown>): void {
+  for (const attribute of objectAttribute.attributes) {
+    if (!isFieldEnabled(objectAttribute, values, attribute.key)) {
+      delete values[attribute.key];
+    } else if (attribute.type === 'object' && typeof values[attribute.key] === 'object' && values[attribute.key] !== null) {
+      removeHiddenFields(attribute, values[attribute.key] as Record<string, unknown>);
+    }
+  }
 }
 
 /**
@@ -625,10 +652,7 @@ function buildItemCommand(
  * until nothing changes.
  */
 function fillManifestDefaults(objectAttribute: OIBusObjectAttribute, values: Record<string, unknown>): void {
-  const applies = (key: string): boolean => {
-    const condition = objectAttribute.enablingConditions.find(candidate => candidate.targetPathFromRoot === key);
-    return !condition || condition.values.includes((values[condition.referralPathFromRoot] ?? null) as string | number | boolean | null);
-  };
+  const applies = (key: string): boolean => isFieldEnabled(objectAttribute, values, key);
   let filled = true;
   while (filled) {
     filled = false;

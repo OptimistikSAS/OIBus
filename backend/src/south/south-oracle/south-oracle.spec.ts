@@ -518,6 +518,57 @@ describe('SouthOracle', () => {
       assert.deepStrictEqual(result, []);
     });
 
+    it('should explore the tables of the schema of the user, then the columns of a table', async () => {
+      const exploreExecute = mock.fn(async (query: string, _params?: unknown) =>
+        query.includes('USER_TABLES')
+          ? { rows: [{ tableName: 'PRODUCTION', rowCount: 1200, columnCount: 2 }] }
+          : {
+              rows: [
+                { name: 'ID', type: 'NUMBER', nullable: 'N', primaryKey: 1 },
+                { name: 'PRODUCED_AT', type: 'TIMESTAMP(6)', nullable: 'Y', primaryKey: 0 }
+              ]
+            }
+      );
+      const exploreClose = mock.fn(async () => undefined);
+      oracledbExports.getConnection = mock.fn(async () => ({ execute: exploreExecute, close: exploreClose }));
+
+      assert.deepStrictEqual(await south.explore(null), [
+        { id: 'PRODUCTION', name: 'PRODUCTION', metadata: { columns: 2, rows: 1200 }, hasChildren: true }
+      ]);
+      assert.deepStrictEqual(await south.explore('PRODUCTION'), [
+        { id: 'PRODUCTION.ID', name: 'ID', metadata: { nullable: 'no', type: 'NUMBER', primaryKey: 'yes' }, hasChildren: false },
+        { id: 'PRODUCTION.PRODUCED_AT', name: 'PRODUCED_AT', metadata: { nullable: 'yes', type: 'TIMESTAMP(6)' }, hasChildren: false }
+      ]);
+      assert.deepStrictEqual(exploreExecute.mock.calls[1].arguments[1], { tableName: 'PRODUCTION' });
+      assert.strictEqual(exploreClose.mock.calls.length, 2);
+      oracledbExports.getConnection = getConnection;
+    });
+
+    it('should discover the item of each table checked in the explore modal, quoted and tracked as Oracle reads them', async () => {
+      mock.method(south, 'explore', async (parentId: string | null) =>
+        parentId === null
+          ? [{ id: 'PRODUCTION', name: 'PRODUCTION', metadata: { columns: 3 }, hasChildren: true }]
+          : [
+              { id: `${parentId}.id`, name: 'id', metadata: { type: 'int' }, hasChildren: false },
+              { id: `${parentId}.value`, name: 'value', metadata: { type: 'float' }, hasChildren: false },
+              { id: `${parentId}.produced_at`, name: 'produced_at', metadata: { type: 'TIMESTAMP(6)' }, hasChildren: false }
+            ]
+      );
+
+      const records = await south.discover({ nodeIds: ['PRODUCTION.value'] });
+
+      assert.deepStrictEqual(records, [
+        {
+          id: 'PRODUCTION',
+          name: 'PRODUCTION',
+          query: 'SELECT "produced_at", "value" FROM "PRODUCTION" WHERE "produced_at" > @StartTime AND "produced_at" <= @EndTime',
+          trackInstant: true,
+          timeColumn: 'produced_at',
+          dateTimeType: 'date-time'
+        }
+      ]);
+    });
+
     it('should close the connection and rethrow when the discovery query fails', async () => {
       const queryError = new Error('bad query');
       const mockClose = mock.fn();
