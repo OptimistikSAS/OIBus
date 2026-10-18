@@ -128,6 +128,90 @@ describe('AddDiscoveredItemsModalComponent', () => {
     await expect.element(tester.count).toHaveTextContent('Selected items: 2 of 2');
   });
 
+  test('should list a nested setting under its own label, a select or boolean value translated, as SQL items have', async () => {
+    const trackingManifest: SouthConnectorManifest = {
+      ...manifest,
+      items: {
+        ...manifest.items,
+        rootAttribute: {
+          ...manifest.items.rootAttribute,
+          attributes: manifest.items.rootAttribute.attributes.map(attribute =>
+            attribute.key === 'settings' && attribute.type === 'object'
+              ? {
+                  ...attribute,
+                  attributes: [
+                    ...attribute.attributes,
+                    {
+                      type: 'object',
+                      key: 'trackingInstant',
+                      translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.title',
+                      displayProperties: { visible: true, wrapInBox: false },
+                      enablingConditions: [],
+                      validators: [],
+                      attributes: [
+                        {
+                          type: 'boolean',
+                          key: 'trackInstant',
+                          translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.track-instant',
+                          defaultValue: false,
+                          validators: [],
+                          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+                        },
+                        {
+                          type: 'string',
+                          key: 'fieldName',
+                          translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name',
+                          defaultValue: null,
+                          validators: [],
+                          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+                        },
+                        {
+                          type: 'object',
+                          key: 'dateTimeInput',
+                          translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.date-time-input.title',
+                          displayProperties: { visible: true, wrapInBox: false },
+                          enablingConditions: [],
+                          validators: [],
+                          attributes: [
+                            {
+                              type: 'string-select',
+                              key: 'type',
+                              translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.date-time-input.type',
+                              selectableValues: ['date-time-2', 'date-time'],
+                              defaultValue: 'date-time-2',
+                              validators: [],
+                              displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              : attribute
+          )
+        }
+      }
+    };
+    const tracked = (name: string, fieldName: string | null): SouthConnectorItemCommandDTO => ({
+      ...discovered(name, 'same'),
+      settings: {
+        query: 'SELECT * FROM logs',
+        trackingInstant: fieldName ? { trackInstant: true, fieldName, dateTimeInput: { type: 'date-time-2' } } : { trackInstant: false }
+      }
+    });
+    southConnectorService.discoverItems.mockReturnValue(of([tracked('a', 'produced_at'), tracked('b', null)]));
+
+    prepare({ manifest: trackingManifest });
+
+    // the include checkbox, the name, then the settings that differ
+    await expect.element(tester.headers.nth(2)).toHaveTextContent('Track instant');
+    await expect.element(tester.headers.nth(3)).toMatchTextContent(/^Field name$/i);
+    await expect.element(tester.headers.nth(4)).toHaveTextContent('Type');
+    await expect.element(tester.rows.nth(0)).toMatchTextContent(/Yes\s*produced_at\s*DateTime2/);
+    await expect.element(tester.rows.nth(1)).toMatchTextContent(/No/);
+  });
+
   test('should skip by default what an item already reads, and refuse a name an item already has', async () => {
     southConnectorService.discoverItems.mockReturnValue(of([discovered('folder/a', 'a.csv'), discovered('folder/b', 'b.csv')]));
 

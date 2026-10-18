@@ -32,6 +32,10 @@ describe('exploreCheckedActions', () => {
       { id: 'keep-in-sync', labelKey: 'south.explore.keep-in-sync' }
     ]);
     expect(exploreCheckedActions({ ...manifest, discovery: { kind: 'query' } })).toEqual([]);
+    // SQL tables can be added as items, but their synchronisation discovers from a query
+    expect(exploreCheckedActions({ ...manifest, discovery: { kind: 'query', defaults: manifest.discovery!.defaults } })).toEqual([
+      { id: 'add-items', labelKey: 'south.explore.add-as-items' }
+    ]);
     expect(exploreCheckedActions({ ...manifest, discovery: undefined })).toEqual([]);
   });
 });

@@ -204,8 +204,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private configurationWorkflowService = inject(ConfigurationWorkflowService);
   private engineService = inject(EngineService);
 
-  // The inline, read-only explore tree shown alongside the SQL query editor (SQLite only, for now -
-  // see showSqlExploreTree) - undefined until that branch of the template actually renders it.
+  // The inline, read-only explore tree shown alongside the SQL query editor (for the SQL connectors that can be
+  // explored, see showSqlExploreTree) - undefined until that branch of the template actually renders it.
   private readonly inlineExploreTree = viewChild(ExploreTreeComponent);
 
   readonly mode = signal<'create' | 'edit' | 'copy'>('create');

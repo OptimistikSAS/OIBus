@@ -40,15 +40,51 @@ export interface AddDiscoveredItemsOptions {
 
 /** The settings without their unset values, keys sorted: two items read the same thing when these are equal. */
 function settingsKey(settings: SouthItemSettings): string {
-  const entries = Object.entries(settings)
+  const entries = Object.entries(settingsRecord(settings))
     .filter(([, value]) => value !== null && value !== undefined && value !== '')
     .sort(([a], [b]) => a.localeCompare(b));
   return JSON.stringify(entries);
 }
 
-/** The settings of an item as a plain record, whatever its connector type. */
-function settingsRecord(settings: SouthItemSettings): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(settings));
+/**
+ * The settings of an item as a plain record of their values, whatever its connector type: a nested setting by its
+ * path (`trackingInstant.fieldName`), like its own column in the review table.
+ */
+function settingsRecord(settings: object, prefix = ''): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(settings).flatMap(([key, value]) =>
+      typeof value === 'object' && value !== null && !Array.isArray(value)
+        ? Object.entries(settingsRecord(value, `${prefix}${key}.`))
+        : [[`${prefix}${key}`, value]]
+    )
+  );
+}
+
+/** How an item setting is shown in the review table. */
+interface SettingDisplay {
+  labelKey: string;
+  /** The translation key of a value of the setting, for the ones whose values are translated */
+  valueKey: ((value: string) => string) | null;
+}
+
+/**
+ * How every item setting is shown, by its path (see settingsRecord). The translation of a select setting holds its
+ * label as `title` and each of its values under their own key; a boolean reads as yes or no.
+ */
+function settingDisplays(objectAttribute: OIBusObjectAttribute, prefix = '', displays = new Map<string, SettingDisplay>()) {
+  for (const attribute of objectAttribute.attributes) {
+    const path = `${prefix}${attribute.key}`;
+    if (attribute.type === 'object') {
+      settingDisplays(attribute, `${path}.`, displays);
+    } else if (attribute.type === 'string-select') {
+      displays.set(path, { labelKey: `${attribute.translationKey}.title`, valueKey: value => `${attribute.translationKey}.${value}` });
+    } else if (attribute.type === 'boolean') {
+      displays.set(path, { labelKey: attribute.translationKey, valueKey: value => `enums.boolean.${value}` });
+    } else {
+      displays.set(path, { labelKey: attribute.translationKey, valueKey: null });
+    }
+  }
+  return displays;
 }
 
 /** A setting value as shown in the review table. */
@@ -86,8 +122,8 @@ export class AddDiscoveredItemsModalComponent {
   readonly scanModeId = signal<string | null>(null);
   readonly enabled = signal(true);
   private existingNames = new Set<string>();
-  /** Item settings key to its label translation key, for the review table */
-  private readonly settingLabelKeys = signal<Map<string, string>>(new Map());
+  /** How each item setting is shown in the review table, by its path */
+  private readonly settingDisplays = signal<Map<string, SettingDisplay>>(new Map());
 
   readonly includedCount = computed(() => this.rows().filter(row => row.included).length);
   readonly allIncluded = computed(() => this.rows().length > 0 && this.rows().every(row => row.included));
@@ -116,13 +152,13 @@ export class AddDiscoveredItemsModalComponent {
   /** The settings worth a column: the ones that differ between the items (all of them for a single item) */
   readonly settingColumns = computed(() => {
     const rows = this.rows();
-    const keys = new Set(rows.flatMap(row => Object.keys(row.command.settings)));
+    const keys = new Set(rows.flatMap(row => Object.keys(settingsRecord(row.command.settings))));
     return Array.from(keys)
       .filter(key => {
         const values = new Set(rows.map(row => displayValue(settingsRecord(row.command.settings)[key] ?? '')));
         return rows.length === 1 ? !values.has('') : values.size > 1;
       })
-      .map(key => ({ key, labelKey: this.settingLabelKeys().get(key) ?? null }));
+      .map(key => ({ key, labelKey: this.settingDisplays().get(key)?.labelKey ?? null }));
   });
 
   readonly canAdd = computed(
@@ -143,7 +179,7 @@ export class AddDiscoveredItemsModalComponent {
     const settingsAttribute = options.manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     ) as OIBusObjectAttribute;
-    this.settingLabelKeys.set(new Map(settingsAttribute.attributes.map(attribute => [attribute.key, attribute.translationKey])));
+    this.settingDisplays.set(settingDisplays(settingsAttribute));
     this.groupStore.set(options.groups);
     this.existingNames = new Set(options.existingItems.map(item => item.name));
     const existingBySettings = new Map(options.existingItems.map(item => [settingsKey(item.settings), item.name]));
@@ -177,6 +213,13 @@ export class AddDiscoveredItemsModalComponent {
   settingValue(row: DiscoveredItemRow, key: string): string {
     const value = settingsRecord(row.command.settings)[key];
     return value === null || value === undefined ? '' : displayValue(value);
+  }
+
+  /** The translation key of the value of a setting, when its values are translated (a select, a boolean) */
+  settingValueKey(row: DiscoveredItemRow, key: string): string | null {
+    const value = this.settingValue(row, key);
+    const valueKey = this.settingDisplays().get(key)?.valueKey;
+    return value && valueKey ? valueKey(value) : null;
   }
 
   toggleRow(index: number) {

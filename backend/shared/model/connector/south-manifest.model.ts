@@ -62,14 +62,17 @@ export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus',
 
 /**
  * Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:
- * - `tree`: a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA
- * - `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors
+ * - `tree`: the nodes checked in the Explore modal (`{ nodeIds: Array<string> }`), each point for itself and any other
+ *   node for everything under it - or a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA
+ * - `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors. Their tables and columns
+ *   checked in the Explore modal (`{ nodeIds }`) are discovered too, one record per table, to add as items
  */
 export type SouthDiscoveryKind = 'tree' | 'query';
 
 /**
- * Starting values of a new Configuration Workflow, for a connector whose discovered records always have
- * the same shape: how a record identifies itself across runs, and how it becomes an item.
+ * How the records a connector discovers from the nodes checked in the Explore modal become items, when they always
+ * have the same shape: how a record identifies itself across runs, and how it becomes an item. "Add as items" maps
+ * them with it, and a new Configuration Workflow starts from it.
  */
 export interface SouthDiscoveryDefaults {
   /**
@@ -80,8 +83,8 @@ export interface SouthDiscoveryDefaults {
 
   /**
    * Item field path to a constant or a {{field}} expression of the discovered record, as a workflow's own
-   * `itemFieldMapping`. Every required item setting that applies must be mapped: an item created by a
-   * workflow does not get the manifest default values.
+   * `itemFieldMapping`. A field left out gets its manifest default where it applies, as in the item form: every
+   * required one without a default must be mapped.
    * @example { "name": "{{path}}", "settings.nodeId": "{{nodeId}}", "settings.mode": "da" }
    */
   itemFieldMapping: Record<string, string>;
@@ -94,7 +97,7 @@ export interface SouthConnectorDiscovery {
   /** The shape of a workflow's discovery scope */
   kind: SouthDiscoveryKind;
 
-  /** Starting values of a new workflow; absent when the records depend on the scope (e.g. a SQL query) */
+  /** How the records of checked nodes become items; absent when the connector can't tell (see SouthDiscoveryDefaults) */
   defaults?: SouthDiscoveryDefaults;
 }
 

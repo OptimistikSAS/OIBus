@@ -1906,7 +1906,7 @@
 					"tree",
 					"query"
 				],
-				"description": "Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:\n- `tree`: a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA\n- `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors"
+				"description": "Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:\n- `tree`: the nodes checked in the Explore modal (`{ nodeIds: Array<string> }`), each point for itself and any other\n  node for everything under it - or a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA\n- `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors. Their tables and columns\n  checked in the Explore modal (`{ nodeIds }`) are discovered too, one record per table, to add as items"
 			},
 			"Record_string.string_": {
 				"properties": {},
@@ -1917,7 +1917,7 @@
 				"description": "Construct a type with a set of properties K of type T"
 			},
 			"SouthDiscoveryDefaults": {
-				"description": "Starting values of a new Configuration Workflow, for a connector whose discovered records always have\nthe same shape: how a record identifies itself across runs, and how it becomes an item.",
+				"description": "How the records a connector discovers from the nodes checked in the Explore modal become items, when they always\nhave the same shape: how a record identifies itself across runs, and how it becomes an item. \"Add as items\" maps\nthem with it, and a new Configuration Workflow starts from it.",
 				"properties": {
 					"identityKeyFields": {
 						"items": {
@@ -1931,7 +1931,7 @@
 					},
 					"itemFieldMapping": {
 						"$ref": "#/components/schemas/Record_string.string_",
-						"description": "Item field path to a constant or a {{field}} expression of the discovered record, as a workflow's own\n`itemFieldMapping`. Every required item setting that applies must be mapped: an item created by a\nworkflow does not get the manifest default values.",
+						"description": "Item field path to a constant or a {{field}} expression of the discovered record, as a workflow's own\n`itemFieldMapping`. A field left out gets its manifest default where it applies, as in the item form: every\nrequired one without a default must be mapped.",
 						"example": {
 							"name": "{{path}}",
 							"settings.nodeId": "{{nodeId}}",
@@ -1955,7 +1955,7 @@
 					},
 					"defaults": {
 						"$ref": "#/components/schemas/SouthDiscoveryDefaults",
-						"description": "Starting values of a new workflow; absent when the records depend on the scope (e.g. a SQL query)"
+						"description": "How the records of checked nodes become items; absent when the connector can't tell (see SouthDiscoveryDefaults)"
 					}
 				},
 				"required": [
