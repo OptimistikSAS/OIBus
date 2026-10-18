@@ -2042,40 +2042,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthDiscoveryTableQueryResponse": {
-				"properties": {
-					"query": {
-						"type": "string",
-						"example": "SELECT [tag], [unit] FROM [dbo].[tags]"
-					}
-				},
-				"required": [
-					"query"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthDiscoveryTableQueryRequest": {
-				"properties": {
-					"table": {
-						"type": "string",
-						"description": "The table, as the connector explore lists it"
-					},
-					"columns": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The columns to read - all of them when empty"
-					}
-				},
-				"required": [
-					"table",
-					"columns"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthConnectorLightDTO": {
 				"description": "Lightweight Data Transfer Object for a South connector.\nContains only essential information about a South connector for listing purposes.",
 				"properties": {
@@ -45725,49 +45691,6 @@
 						}
 					}
 				]
-			}
-		},
-		"/api/south/types/{type}/table-query": {
-			"post": {
-				"operationId": "BuildDiscoveryTableQuery",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/SouthDiscoveryTableQueryResponse"
-								}
-							}
-						}
-					}
-				},
-				"description": "Writes the query a Configuration Workflow runs to read the rows of a table, in the SQL dialect of the connector type",
-				"summary": "Write the query of a table",
-				"tags": [
-					"South Connectors"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "type",
-						"required": true,
-						"schema": {
-							"$ref": "#/components/schemas/OIBusSouthType"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/SouthDiscoveryTableQueryRequest"
-							}
-						}
-					}
-				}
 			}
 		},
 		"/api/south": {

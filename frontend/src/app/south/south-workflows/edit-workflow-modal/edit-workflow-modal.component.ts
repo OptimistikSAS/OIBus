@@ -1,16 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  OnDestroy,
-  signal,
-  untracked,
-  viewChild,
-  WritableSignal
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, signal, viewChild, WritableSignal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -34,7 +23,6 @@ import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObject
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '@oibus/shared/domain/configuration-workflow.model';
-import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { EngineService } from '../../../services/engine.service';
@@ -204,7 +192,7 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
     WorkflowPreviewComponent
   ]
 })
-export default class EditWorkflowModalComponent implements OnDestroy {
+export default class EditWorkflowModalComponent implements AfterViewInit {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
@@ -225,8 +213,6 @@ export default class EditWorkflowModalComponent implements OnDestroy {
   /** A new workflow is saved from the Review step, an edited one from any step */
   readonly canSave = computed(() => this.mode() === 'edit' || this.isLastStep());
 
-  /** Every record the source gives, before the eligibility filter - counted on the Source step */
-  readonly sourcePreview = signal<PreviewState | null>(null);
   /** The records the eligibility filter keeps - listed on the Filter step, and used as examples on the Items step */
   readonly filterPreview = signal<PreviewState | null>(null);
   /** What a run would do (new, changed, missing... items), or push - on the Review step */
@@ -234,7 +220,7 @@ export default class EditWorkflowModalComponent implements OnDestroy {
   readonly previewRecords = computed(() => (this.filterPreview()?.result?.records ?? []).slice(0, PREVIEW_RECORD_LIMIT));
   /** The fields of the discovered records, suggested when writing a condition or an identity key */
   readonly recordFields = computed(() => {
-    const records = this.filterPreview()?.result?.records ?? this.sourcePreview()?.result?.records ?? [];
+    const records = this.filterPreview()?.result?.records ?? [];
     return Array.from(new Set(records.slice(0, PREVIEW_RECORD_LIMIT).flatMap(record => Object.keys(record))));
   });
   /** The names the first matching records would give their items, from the name mapping */
@@ -272,24 +258,6 @@ export default class EditWorkflowModalComponent implements OnDestroy {
   readonly discoveryNodeIds = signal<Array<string>>([]);
   /** The dedicated metadata query, as typed by the user (SQL-family connectors only). */
   readonly discoveryQuery = signal('');
-
-  /** How a SQL source is described: a table and its columns, when the connector lists its tables, or a query written by hand */
-  readonly sqlSourceMode = signal<'table' | 'query'>('query');
-  /** The tables of the SQL connector, null until they are listed */
-  readonly sqlTables = signal<ReadonlyArray<SouthConnectorExploreEntry> | null>(null);
-  readonly sqlTablesError = signal<string | null>(null);
-  /** The picked table, as the explore of the connector lists it */
-  readonly sqlTable = signal<string | null>(null);
-  readonly sqlTableColumns = signal<ReadonlyArray<SouthConnectorExploreEntry>>([]);
-  /** The columns of the picked table read, in the table order */
-  readonly sqlColumns = signal<ReadonlyArray<string>>([]);
-  /** The query reading the picked table, as the connector writes it - shown, never edited */
-  readonly sqlTableQuery = signal('');
-  readonly sqlTableName = computed(() => this.sqlTables()?.find(table => table.id === this.sqlTable())?.name ?? this.sqlTable());
-  /** The explore session listing the tables and columns of the SQL connector */
-  private sqlExploreSessionId: string | null = null;
-  /** The columns of the table a workflow reads, applied once the columns of the table are listed (none: all of them) */
-  private pendingSqlColumns: Array<string> | null = null;
 
   /** "Test query" state - runs discoveryQuery as currently typed, independent of Save. */
   readonly queryTestRunning = signal(false);
@@ -362,23 +330,6 @@ export default class EditWorkflowModalComponent implements OnDestroy {
    *  writing the query - only for the SQL-family connectors that also have an `explore()`
    *  implementation (a separate capability from discovery). */
   readonly showSqlExploreTree = computed(() => this.isSqlFamily() && this.currentManifest()?.explore === true);
-
-  /** Whether a SQL source can be a table rather than a query: the connector lists its tables through its explore */
-  readonly canPickSqlTable = this.showSqlExploreTree;
-  /** The fields the Filter step offers for a condition: the columns of the table a SQL source reads, if it reads one */
-  readonly filterFieldOptions = computed(() =>
-    this.isSqlFamily() && this.sqlSourceMode() === 'table' && this.sqlTable() ? [...this.sqlColumns()] : []
-  );
-
-  constructor() {
-    // The reference tree only shows while the query is written by hand: prepared each time it appears
-    effect(() => {
-      const tree = this.inlineExploreTree();
-      if (tree) {
-        untracked(() => tree.prepare(this.southId, this.southSettings, this.currentManifest()!.id));
-      }
-    });
-  }
 
   /** Name of the group currently mapped as a constant for the 'groupId' field, or '' when none is. */
   readonly selectedGroupName = computed(() => {
@@ -469,24 +420,9 @@ export default class EditWorkflowModalComponent implements OnDestroy {
           : []
     );
     this.step.set('source');
-    this.sourcePreview.set(null);
     this.filterPreview.set(null);
     this.reviewPreview.set(null);
     this.discoveryQuery.set(typeof scope['query'] === 'string' ? scope['query'] : '');
-    const scopeTable = typeof scope['table'] === 'string' ? scope['table'] : null;
-    const scopeColumns = scope['columns'];
-    this.sqlTable.set(scopeTable);
-    this.sqlTableColumns.set([]);
-    this.sqlColumns.set([]);
-    this.sqlTableQuery.set('');
-    this.pendingSqlColumns = Array.isArray(scopeColumns)
-      ? scopeColumns.filter((column): column is string => typeof column === 'string')
-      : [];
-    // A SQL source is a table unless it is a query written by hand already, when the connector lists its tables
-    this.sqlSourceMode.set(this.canPickSqlTable() && typeof scope['query'] !== 'string' ? 'table' : 'query');
-    if (this.canPickSqlTable()) {
-      this.listSqlTables();
-    }
     // A new workflow starts from the connector's own defaults: the records it discovers always have the same shape
     const defaults = manifest.discovery?.defaults;
     const startingValues =
@@ -770,111 +706,9 @@ export default class EditWorkflowModalComponent implements OnDestroy {
     return !(values[field.path] ?? '').trim();
   }
 
-  private listSqlTables() {
-    this.sqlTables.set(null);
-    this.sqlTablesError.set(null);
-    this.southConnectorService.startExplore(this.southId, this.southSettings, this.currentManifest()!.id).subscribe({
-      next: result => {
-        this.sqlExploreSessionId = result.sessionId;
-        this.sqlTables.set(result.entries);
-        const table = this.sqlTable();
-        if (table) {
-          this.loadSqlTableColumns(table);
-        }
-      },
-      error: error => this.sqlTablesError.set(extractErrorMessage(error))
-    });
-  }
-
-  /** Picks the table a SQL source reads - all its columns, until some are unchecked. */
-  selectSqlTable(tableId: string | null) {
-    this.sqlTable.set(tableId);
-    this.sqlTableColumns.set([]);
-    this.sqlColumns.set([]);
-    this.sqlTableQuery.set('');
-    this.pendingSqlColumns = [];
-    if (tableId) {
-      this.loadSqlTableColumns(tableId);
-    }
-  }
-
-  private loadSqlTableColumns(tableId: string) {
-    if (!this.sqlExploreSessionId) {
-      return;
-    }
-    this.southConnectorService.browseExplore(this.southId, this.sqlExploreSessionId, tableId).subscribe({
-      next: result => {
-        const columnsToRead = this.pendingSqlColumns ?? [];
-        this.pendingSqlColumns = null;
-        const names = result.entries.map(entry => entry.name);
-        this.sqlTableColumns.set(result.entries);
-        this.sqlColumns.set(columnsToRead.length > 0 ? names.filter(name => columnsToRead.includes(name)) : names);
-        this.refreshSqlTableQuery();
-      },
-      error: error => this.sqlTablesError.set(extractErrorMessage(error))
-    });
-  }
-
-  isSqlColumnChecked(column: string): boolean {
-    return this.sqlColumns().includes(column);
-  }
-
-  toggleSqlColumn(column: string) {
-    const checked = new Set(this.sqlColumns());
-    if (!checked.delete(column)) {
-      checked.add(column);
-    }
-    this.sqlColumns.set(this.sqlTableColumns().flatMap(entry => (checked.has(entry.name) ? [entry.name] : [])));
-    this.refreshSqlTableQuery();
-  }
-
-  /** The columns a table scope reads: none when all are checked, which reads them all, new ones included */
-  private sqlScopeColumns(): Array<string> {
-    const columns = this.sqlColumns();
-    return columns.length === this.sqlTableColumns().length ? [] : [...columns];
-  }
-
-  private refreshSqlTableQuery() {
-    const table = this.sqlTable();
-    if (!table || this.sqlColumns().length === 0) {
-      this.sqlTableQuery.set('');
-      return;
-    }
-    this.southConnectorService
-      .buildDiscoveryTableQuery(this.currentManifest()!.id, table, this.sqlScopeColumns())
-      .subscribe(query => this.sqlTableQuery.set(query));
-  }
-
-  /** Writes the query of the SQL source by hand, from the one reading the picked table. */
-  writeQueryMyself() {
-    if (this.sqlTableQuery()) {
-      this.discoveryQuery.set(this.sqlTableQuery());
-    }
-    this.sqlSourceMode.set('query');
-  }
-
-  /** Describes the SQL source as a table again, rather than a query written by hand. */
-  pickSqlTable() {
-    this.sqlSourceMode.set('table');
-  }
-
-  /** Why the SQL source can't be discovered yet, if it can't: a query or a table with columns to read is needed. */
-  private sqlSourceError(): string | null {
-    if (!this.isSqlFamily()) {
-      return null;
-    }
-    if (this.sqlSourceMode() === 'query') {
-      return this.discoveryQuery().trim() ? null : 'south.workflows.discovery-scope-query-required';
-    }
-    if (!this.sqlTable()) {
-      return 'south.workflows.wizard.table-required';
-    }
-    return this.sqlColumns().length > 0 ? null : 'south.workflows.wizard.columns-required';
-  }
-
-  ngOnDestroy() {
-    if (this.sqlExploreSessionId) {
-      this.southConnectorService.closeExplore(this.southId, this.sqlExploreSessionId).subscribe({ error: () => undefined });
+  ngAfterViewInit() {
+    if (this.showSqlExploreTree()) {
+      this.inlineExploreTree()?.prepare(this.southId, this.southSettings, this.currentManifest()!.id);
     }
   }
 
@@ -914,9 +748,8 @@ export default class EditWorkflowModalComponent implements OnDestroy {
       if (this.form.controls.name.invalid) {
         return;
       }
-      const sqlSourceError = this.sqlSourceError();
-      if (sqlSourceError) {
-        this.formError.set(sqlSourceError);
+      if (this.isSqlFamily() && !this.discoveryQuery().trim()) {
+        this.formError.set('south.workflows.discovery-scope-query-required');
         return;
       }
     }
@@ -925,11 +758,6 @@ export default class EditWorkflowModalComponent implements OnDestroy {
 
   back() {
     this.goToStep(WORKFLOW_STEPS[WORKFLOW_STEPS.indexOf(this.step()) - 1]);
-  }
-
-  /** How many records the source gives, regardless of the eligibility filter. */
-  previewSource() {
-    this.runPreview(this.sourcePreview, { ...this.recordsPreviewCommand(), eligibilityFilter: [] }, null);
   }
 
   /** The records the eligibility filter keeps, as currently edited. */
@@ -976,9 +804,7 @@ export default class EditWorkflowModalComponent implements OnDestroy {
 
   private currentDiscoveryScope(): Record<string, unknown> {
     if (this.isSqlFamily()) {
-      return this.sqlSourceMode() === 'table'
-        ? { table: this.sqlTable(), columns: this.sqlScopeColumns() }
-        : { query: this.discoveryQuery().trim() };
+      return { query: this.discoveryQuery().trim() };
     }
     // No node at all means the whole data source - a deliberate, valid choice.
     return this.isTreeBased() && this.discoveryNodeIds().length > 0 ? { nodeIds: this.discoveryNodeIds() } : {};
@@ -1044,11 +870,13 @@ export default class EditWorkflowModalComponent implements OnDestroy {
     // here too, defensively, not just via the mode choice being hidden from the template.
     const pushToOIAnalytics = this.isSqlFamily() ? true : formValue.pushToOIAnalytics;
 
-    const sqlSourceError = this.sqlSourceError();
-    if (sqlSourceError) {
-      return { error: sqlSourceError, step: 'source' };
+    let discoveryScope: Record<string, unknown> = {};
+    if (this.isSqlFamily()) {
+      if (!this.discoveryQuery().trim()) {
+        return { error: 'south.workflows.discovery-scope-query-required', step: 'source' };
+      }
     }
-    const discoveryScope = this.currentDiscoveryScope();
+    discoveryScope = this.currentDiscoveryScope();
 
     // Deliberately not blocked here when pushToOIAnalytics is picked while OIBus isn't registered -
     // mirrors ConfigurationWorkflowService's own server-side behavior, which likewise now only warns

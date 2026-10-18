@@ -386,17 +386,6 @@ describe('SouthConnectorService', () => {
     expect(result).toEqual(response);
   });
 
-  test('should write the query reading the rows of a table', async () => {
-    const result = await expectHttp(
-      http,
-      service.buildDiscoveryTableQuery('mssql', 'dbo.tags', ['tag']),
-      { method: 'POST', url: '/api/south/types/mssql/table-query' },
-      { body: { table: 'dbo.tags', columns: ['tag'] }, response: { query: 'SELECT [tag] FROM [dbo].[tags]' } }
-    );
-
-    expect(result).toBe('SELECT [tag] FROM [dbo].[tags]');
-  });
-
   test('should get the South metrics and only notify an expired session', async () => {
     const result = firstValueFrom(service.getMetrics('id1'));
 

@@ -122,18 +122,6 @@ export function buildTableQuery(dialect: SqlDialect, tableId: string, columns: A
   return `SELECT ${select} FROM ${dialect.quoteTable(tableId)}`;
 }
 
-/**
- * The table (an explore entry id) and columns a Configuration Workflow discovers from, when it reads the rows of a
- * table rather than running a query of its own - see `buildTableQuery()`.
- */
-export function extractTableScope(scope: Record<string, unknown>): { table: string; columns: Array<string> } | null {
-  if (typeof scope.table !== 'string' || !scope.table) {
-    return null;
-  }
-  const columns = Array.isArray(scope.columns) ? scope.columns.filter((column): column is string => typeof column === 'string') : [];
-  return { table: scope.table, columns };
-}
-
 /** The nodes checked in the Explore modal, when the discovery scope is made of them rather than a query. */
 export function extractNodeIds(scope: Record<string, unknown>): Array<string> | null {
   return Array.isArray(scope.nodeIds) ? scope.nodeIds.filter((nodeId): nodeId is string => typeof nodeId === 'string') : null;
