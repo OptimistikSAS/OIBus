@@ -41,6 +41,16 @@ import { RegisterRoutes } from './routes';
 // tools and load balancers before any credentials could be presented.
 const PUBLIC_PATHS = ['/api/engine/status', '/api/status'];
 
+// The frontend build names its scripts, styles and fonts with a hash of their content (e.g. chunk-SWKI37E4.js): such a file
+// never changes, so the browser can keep it instead of revalidating it on each page load. The other files (index.html, which
+// references the hashed ones, and the images) keep the default revalidation, so that an upgrade is seen right away.
+const HASHED_FRONTEND_FILE = /-[A-Z0-9]{8}\.(js|css|woff2?|ttf)$/;
+const setFrontendCacheHeaders = (res: express.Response, filePath: string) => {
+  if (HASHED_FRONTEND_FILE.test(path.basename(filePath))) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+};
+
 /**
  * OIBus web server - using express
  */
@@ -147,7 +157,7 @@ export default class WebServer {
     );
 
     // Static files for web client
-    this.app.use(express.static(path.join(__dirname, '../../../frontend/browser')));
+    this.app.use(express.static(path.join(__dirname, '../../../frontend/browser'), { setHeaders: setFrontendCacheHeaders }));
 
     // Static files for the embedded documentation site
     this.app.use('/documentation', express.static(path.join(__dirname, '../../../documentation')));
