@@ -103,7 +103,7 @@
     "thread-stream": "4.2.0",
     "tsoa": "6.6.0",
     "undici": "8.11.2",
-    "unzipper": "0.12.5",
+    "yauzl": "3.4.0",
     "yazl": "3.3.1"
   },
   "optionalDependencies": {
@@ -123,8 +123,8 @@
     "@types/papaparse": "5.5.2",
     "@types/pg": "8.23.1",
     "@types/ssh2-sftp-client": "9.0.6",
-    "@types/unzipper": "0.10.11",
     "@types/ws": "8.18.2",
+    "@types/yauzl": "3.4.0",
     "@types/yazl": "3.3.1",
     "@yao-pkg/pkg": "6.23.0",
     "c8": "^12.0.0",
