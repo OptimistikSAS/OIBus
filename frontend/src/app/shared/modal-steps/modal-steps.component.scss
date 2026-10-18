@@ -1,0 +1,55 @@
+@import '../../../common';
+
+// Between the modal header and body: the global modal styles leave .modal-content transparent, each of its
+// parts sets its own background (styles.scss) - so does this one
+.modal-steps {
+  background-color: var(--bs-white);
+}
+
+.modal-step {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: $darkGrey;
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: $darkGrey;
+  }
+}
+
+.modal-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 1px solid $mediumGrey;
+  font-size: 0.8125rem;
+}
+
+.modal-step-current {
+  font-weight: 600;
+
+  .modal-step-number {
+    background-color: $electricBlue;
+    border-color: $electricBlue;
+    color: var(--bs-white);
+  }
+}
+
+.modal-step-invalid {
+  &,
+  &:hover,
+  &:focus {
+    color: var(--bs-danger);
+  }
+
+  .modal-step-number {
+    background-color: var(--bs-danger);
+    border-color: var(--bs-danger);
+    color: var(--bs-white);
+  }
+}
