@@ -33,12 +33,7 @@ import { OIBusRecord, OIBusRecordListContent } from '@oibus/shared/common/conten
 import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
-import {
-  RECORD_FILTER_OPERATORS,
-  RecordFilterCondition,
-  RecordFilterOperator,
-  WORKFLOW_PREVIEW_ENTRY_STATUSES
-} from '@oibus/shared/domain/configuration-workflow.model';
+import { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '@oibus/shared/domain/configuration-workflow.model';
 import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
@@ -56,6 +51,7 @@ import { TransformerTestResultComponent } from '../../../shared/transformer-test
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../../south-items/south-item-groups';
 import { TEMP_ID_PREFIX } from '../workflow-command';
+import { WorkflowPreviewComponent } from '../workflow-preview/workflow-preview.component';
 
 // 'group-select' is not part of the manifest's own attribute-type vocabulary - it tags the
 // historian groupId field, whose options come from this south connector's item groups rather
@@ -204,7 +200,8 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
     NgbDropdownModule,
     ExploreTreeComponent,
     OibCodeBlockComponent,
-    TransformerTestResultComponent
+    TransformerTestResultComponent,
+    WorkflowPreviewComponent
   ]
 })
 export default class EditWorkflowModalComponent implements OnDestroy {
@@ -249,11 +246,6 @@ export default class EditWorkflowModalComponent implements OnDestroy {
     return this.previewRecords()
       .slice(0, 3)
       .map(record => resolveTemplate(template, record));
-  });
-  /** How many entries of the Review preview have each status, in the statuses order */
-  readonly reviewCounts = computed(() => {
-    const entries = this.reviewPreview()?.result?.entries ?? [];
-    return WORKFLOW_PREVIEW_ENTRY_STATUSES.map(status => ({ status, count: entries.filter(entry => entry.status === status).length }));
   });
   readonly state = new ObservableState();
   /** True when opened from south-detail (the caller saves the workflow straight to the API); false when
