@@ -519,7 +519,8 @@ describe('EditSouthComponent', () => {
         expect.anything(),
         manifest,
         'southId1',
-        expect.objectContaining({ name: 'South 1', items: itemCommands })
+        expect.objectContaining({ name: 'South 1', items: itemCommands }),
+        null
       );
       expect(editModal.prepareForCreation.mock.lastCall![3].list()).toEqual([groupACommand, createdGroup('New group')]);
       await tester.expectItems('item b', 'item a', 'item c', 'item d');
@@ -528,6 +529,36 @@ describe('EditSouthComponent', () => {
 
       editModal.canDismiss.mockReturnValue(of(true));
       await expect(open.mock.lastCall![1]!.beforeDismiss!()).resolves.toBe(true);
+    });
+
+    test('should add items in a row, each one starting from the one added before', async () => {
+      const tester = await createTester('edit');
+      const firstItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item d' };
+      const nextItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item e' };
+      const firstModal = createMock(EditSouthItemModalComponent, { addAnother: true });
+      const nextModal = createMock(EditSouthItemModalComponent, { addAnother: false });
+      const open = vi
+        .spyOn(modalService, 'open')
+        .mockReturnValueOnce(fakeModal(firstModal, Promise.resolve(firstItem)))
+        .mockReturnValueOnce(fakeModal(nextModal, Promise.resolve(nextItem)));
+
+      await tester.addItemButton.click();
+
+      await tester.expectItems('item b', 'item a', 'item c', 'item d', 'item e');
+      expect(nextModal.directSave).toBe(false);
+      // the next item is checked against the items with the first one
+      expect(nextModal.prepareForCreation).toHaveBeenCalledWith(
+        [...itemCommands, firstItem],
+        scanModes,
+        [],
+        expect.anything(),
+        manifest,
+        'southId1',
+        expect.objectContaining({ name: 'South 1' }),
+        firstItem
+      );
+      // the last one was added with the main action: no other item
+      expect(open).toHaveBeenCalledTimes(2);
     });
 
     test('should edit an item', async () => {

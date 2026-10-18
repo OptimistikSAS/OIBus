@@ -620,6 +620,14 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   }
 
   addItem() {
+    this.openItemCreation(null);
+  }
+
+  /**
+   * Opens the modal for a new item, and again after each item added with "add another".
+   * @param previousItem the item added just before, whose shared settings the new one starts with
+   */
+  private openItemCreation(previousItem: HistoryQueryItemCommandDTO | null) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -631,9 +639,20 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.directSave.set(false);
     component.inMemoryTransformers.set(this.inMemoryTransformersWithOptions());
-    component.prepareForCreation(this.inMemoryItems(), this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest()!);
+    component.prepareForCreation(
+      this.inMemoryItems(),
+      this.historyId,
+      this.fromSouthId,
+      this.southConnectorCommand,
+      this.southManifest()!,
+      previousItem
+    );
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
       this.inMemoryItems.update(items => [...items, command]);
+      // opened on the items updated above, so that the next item can't take the name of this one
+      if (component.addAnother) {
+        this.openItemCreation(command);
+      }
     });
   }
 

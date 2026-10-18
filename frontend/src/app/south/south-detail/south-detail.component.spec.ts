@@ -7,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { LogDTO } from '@oibus/shared/api/logs.model';
-import { SouthConnectorFolderScannerDTO, SouthConnectorMQTTDTO, SouthItemLastValueResponse } from '@oibus/shared/api/south-connector.model';
+import {
+  SouthConnectorFolderScannerDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorMQTTDTO,
+  SouthItemLastValueResponse
+} from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -505,15 +510,54 @@ describe('SouthDetailComponent', () => {
         expect.anything(),
         manifest,
         'southId1',
-        expect.objectContaining({ id: 'southId1', configurationWorkflows: [] })
+        expect.objectContaining({ id: 'southId1', configurationWorkflows: [] }),
+        null
       );
       expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', command);
       expect(notificationService.success).toHaveBeenCalledWith('south.items.created');
       await tester.expectItems('item b', 'item a', 'item c', 'item d');
+      expect(open).toHaveBeenCalledTimes(1);
 
       // the modal is asked before being dismissed
       editModal.canDismiss.mockReturnValue(of(false));
       await expect(open.mock.lastCall![1]!.beforeDismiss!()).resolves.toBe(false);
+    });
+
+    test('should create items in a row, each one starting from the one saved before', async () => {
+      const tester = await createTester();
+      const firstCommand: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item d' };
+      const nextCommand: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item e' };
+      const firstModal = createMock(EditSouthItemModalComponent, { addAnother: true });
+      const nextModal = createMock(EditSouthItemModalComponent, { addAnother: false });
+      const open = vi
+        .spyOn(modalService, 'open')
+        .mockReturnValueOnce(fakeModal(firstModal, Promise.resolve(firstCommand)))
+        .mockReturnValueOnce(fakeModal(nextModal, Promise.resolve(nextCommand)));
+      southConnectorService.createItem.mockReturnValue(of(buildItem('new', 'item d')));
+      const southWithFirstItem: SouthConnectorFolderScannerDTO = {
+        ...southConnector,
+        items: [...southConnector.items, buildItem('d', 'item d')]
+      };
+      southConnectorService.findById.mockReturnValue(of(southWithFirstItem));
+
+      await tester.addItemButton.click();
+
+      await vi.waitFor(() => expect(southConnectorService.createItem).toHaveBeenCalledTimes(2));
+      // the next item is checked against the connector reloaded with the first one
+      expect(nextModal.prepareForCreation).toHaveBeenCalledWith(
+        southWithFirstItem.items,
+        scanModes,
+        [],
+        expect.anything(),
+        manifest,
+        'southId1',
+        expect.objectContaining({ id: 'southId1' }),
+        firstCommand
+      );
+      expect(southConnectorService.createItem).toHaveBeenNthCalledWith(1, 'southId1', firstCommand);
+      expect(southConnectorService.createItem).toHaveBeenNthCalledWith(2, 'southId1', nextCommand);
+      // the last one was saved with the main action: no other item
+      expect(open).toHaveBeenCalledTimes(2);
     });
 
     test('should edit an item', async () => {

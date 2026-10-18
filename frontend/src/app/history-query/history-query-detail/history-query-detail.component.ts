@@ -286,6 +286,18 @@ export class HistoryQueryDetailComponent {
   // Item management methods
 
   addItem() {
+    this.openItemCreation(this.historyQuery()!.items, null);
+  }
+
+  /**
+   * Opens the modal for a new item, and again after each item saved with "save and add another".
+   * @param items the items of the history query, the ones added just before included
+   * @param previousItem the item added just before, whose shared settings the new one starts with
+   */
+  private openItemCreation(
+    items: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
+    previousItem: HistoryQueryItemCommandDTO | null
+  ) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -296,12 +308,20 @@ export class HistoryQueryDetailComponent {
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     const historyQuery = this.historyQuery()!;
-    component.prepareForCreation(historyQuery.items, historyQuery.id, null, this.southConnectorCommand, this.southManifest()!);
+    component.prepareForCreation(items, historyQuery.id, null, this.southConnectorCommand, this.southManifest()!, previousItem);
     modalRef.result
-      .pipe(switchMap((command: HistoryQueryItemCommandDTO) => this.historyQueryService.createItem(historyQuery.id, command)))
-      .subscribe(() => {
+      .pipe(
+        switchMap((command: HistoryQueryItemCommandDTO) =>
+          this.historyQueryService.createItem(historyQuery.id, command).pipe(map(() => command))
+        )
+      )
+      .subscribe(command => {
         this.notificationService.success('history-query.items.created');
         this.refreshHistoryQuery();
+        // the history query is reloaded in the background: the next item is checked against the item just added too
+        if (component.addAnother) {
+          this.openItemCreation([...items, command], command);
+        }
       });
   }
 

@@ -1,9 +1,16 @@
 import { computed, Signal, signal } from '@angular/core';
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 
+import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+
 /** The steps of the south and history item modals, in order. */
-export const ITEM_MODAL_STEPS = ['general', 'settings', 'test'] as const;
+export const ITEM_MODAL_STEPS = ['general', 'settings', 'review'] as const;
 export type ItemModalStep = (typeof ITEM_MODAL_STEPS)[number];
+
+/** The item settings of a connector as shown in the Settings step: under the step's section name rather than in a box. */
+export function unboxedItemSettings(settingsAttribute: OIBusObjectAttribute): OIBusObjectAttribute {
+  return { ...settingsAttribute, displayProperties: { ...settingsAttribute.displayProperties, wrapInBox: false } };
+}
 
 /** True when the control, or one of its descendants, has an error the user was already shown. */
 function hasShownError(control: AbstractControl): boolean {

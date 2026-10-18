@@ -13,6 +13,7 @@
     <form [formGroup]="form" (ngSubmit)="submit()" id="form">
       <!-- 1. General: what every item has, whatever its connector -->
       <div [hidden]="steps.current() !== 'general'" id="step-general">
+        <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
         <div class="row">
           <!-- Name -->
           <div class="col-md-4">
@@ -106,7 +107,7 @@
 
         <!-- Historian fields (for historian connectors) -->
         @if (hasHistorianCapabilities()) {
-          <h5 class="mt-3" translate="south.edit-item-modal.history-settings"></h5>
+          <h5 class="oib-section-title" translate="south.edit-item-modal.history-settings"></h5>
           <!-- Sync with group toggle (only when item is in a group) -->
           @if (groupId() !== null) {
             <div class="form-group">
@@ -197,7 +198,7 @@
 
         <!-- Caching strategy fields (for IoT-family connectors: OPC UA, Modbus, ADS, OPC classic, S7, MQTT) -->
         @if (isIotFamilySouthType()) {
-          <h5 class="mt-3" translate="south.edit-item-modal.caching"></h5>
+          <h5 class="oib-section-title" translate="south.edit-item-modal.caching"></h5>
           <div class="row">
             <!-- Caching Strategy -->
             <div class="col-md-4">
@@ -276,38 +277,131 @@
 
       <!-- 2. Settings: those of the connector type -->
       <div [hidden]="steps.current() !== 'settings'" id="step-settings">
+        <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
         <ng-container formGroupName="settings">
           <oib-oibus-object-form-control
             [scanModes]="scanModes()"
             [certificates]="certificates()"
             [group]="form.controls.settings"
-            [objectAttribute]="getItemSettingsAttribute(manifest)"
+            [objectAttribute]="itemSettingsAttribute()!"
           />
         </ng-container>
       </div>
     </form>
 
-    <!-- 3. Test & save: the item as it will be saved, tried out -->
-    <div [hidden]="steps.current() !== 'test'" id="step-test">
-      @let item = formItem();
-      <dl class="row item-summary mb-2" id="item-summary">
-        <dt class="col-sm-2" translate="south.items.name"></dt>
-        <dd class="col-sm-4">{{ item.name }}</dd>
-        <dt class="col-sm-2" translate="south.items.status"></dt>
-        <dd class="col-sm-4" [translate]="item.enabled ? 'common.enabled' : 'common.disabled'"></dd>
-        <dt class="col-sm-2" translate="south.items.group"></dt>
-        <dd class="col-sm-4">{{ item.groupName ?? ('south.items.group-none' | translate) }}</dd>
-        @if (scanModeEnabled()) {
-          <dt class="col-sm-2" translate="configuration.oibus.manifest.south.items.scan-mode"></dt>
-          <dd class="col-sm-4">{{ scanModeName() }}</dd>
-        }
-      </dl>
+    <!-- 2. Settings, tried out right away: the test panel has its own form, so it sits outside the item one -->
+    <div [hidden]="steps.current() !== 'settings'" class="mt-4" id="step-settings-test">
       <oib-south-item-test
         type="south"
         [entityId]="southId()"
-        [item]="item"
+        [item]="formItem()"
         [connectorCommand]="southConnectorCommand()!"
         [manifest]="manifest"
+      />
+    </div>
+
+    <!-- 3. Review & save: the item as it will be saved -->
+    <div [hidden]="steps.current() !== 'review'" id="step-review">
+      @let item = formItem();
+      <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
+      <dl class="oib-summary" id="item-summary">
+        <div>
+          <dt translate="south.items.name"></dt>
+          <dd>{{ item.name }}</dd>
+        </div>
+        <div>
+          <dt translate="south.items.status"></dt>
+          <dd [translate]="item.enabled ? 'common.enabled' : 'common.disabled'"></dd>
+        </div>
+        <div>
+          <dt translate="south.items.group"></dt>
+          <dd>{{ item.groupName ?? ('south.items.group-none' | translate) }}</dd>
+        </div>
+        @if (scanModeEnabled()) {
+          <div>
+            <dt translate="configuration.oibus.manifest.south.items.scan-mode"></dt>
+            <dd>{{ scanModeName() }}</dd>
+          </div>
+        }
+        @let reviewed = review();
+        @if (hasHistorianCapabilities()) {
+          <div class="oib-summary-group" id="history-summary">
+            <div class="oib-summary-group-title" translate="south.edit-item-modal.history-settings"></div>
+            <dl class="oib-summary">
+              @if (item.groupId) {
+                <div>
+                  <dt translate="south.items.sync-with-group"></dt>
+                  <dd [translate]="'enums.boolean.' + reviewed.syncWithGroup"></dd>
+                </div>
+              }
+              <div>
+                <dt translate="south.items.max-read-interval"></dt>
+                <dd>{{ reviewed.maxReadInterval }} <span translate="common.unit.s"></span></dd>
+              </div>
+              <div>
+                <dt translate="south.items.read-delay"></dt>
+                <dd>{{ reviewed.readDelay }} <span translate="common.unit.ms"></span></dd>
+              </div>
+              <div>
+                <dt translate="south.items.recovery-strategy"></dt>
+                <dd>{{ reviewed.recoveryStrategyKey ? (reviewed.recoveryStrategyKey | translate) : '' }}</dd>
+              </div>
+              <div>
+                <dt translate="south.items.start-time-offset"></dt>
+                <dd>{{ reviewed.startTimeOffset }} <span translate="common.unit.ms"></span></dd>
+              </div>
+              <div>
+                <dt translate="south.items.end-time-offset"></dt>
+                <dd>{{ reviewed.endTimeOffset }} <span translate="common.unit.ms"></span></dd>
+              </div>
+            </dl>
+          </div>
+        }
+        @if (isIotFamilySouthType()) {
+          <div class="oib-summary-group" id="caching-summary">
+            <div class="oib-summary-group-title" translate="south.edit-item-modal.caching"></div>
+            <dl class="oib-summary">
+              <div>
+                <dt translate="south.items.caching-strategy"></dt>
+                <dd>{{ reviewed.cachingStrategyKey ? (reviewed.cachingStrategyKey | translate) : '' }}</dd>
+              </div>
+              @if (reviewed.cachingStrategy === 'threshold') {
+                <div>
+                  <dt translate="south.items.threshold-type"></dt>
+                  <dd>{{ reviewed.thresholdTypeKey ? (reviewed.thresholdTypeKey | translate) : '' }}</dd>
+                </div>
+                <div>
+                  <dt translate="south.items.threshold"></dt>
+                  <dd>{{ reviewed.threshold }}</dd>
+                </div>
+                @if (reviewed.thresholdType === 'percentage') {
+                  <div>
+                    <dt translate="south.items.range-low"></dt>
+                    <dd>{{ reviewed.rangeLow }}</dd>
+                  </div>
+                  <div>
+                    <dt translate="south.items.range-high"></dt>
+                    <dd>{{ reviewed.rangeHigh }}</dd>
+                  </div>
+                }
+              }
+              @if (reviewed.cachingStrategy !== 'allValues') {
+                <div>
+                  <dt translate="south.items.max-caching-interval"></dt>
+                  <dd>{{ reviewed.maxCachingInterval }} <span translate="common.unit.ms"></span></dd>
+                </div>
+              }
+            </dl>
+          </div>
+        }
+      </dl>
+      <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
+      <oib-oibus-settings-summary
+        id="settings-summary"
+        [objectAttribute]="itemSettingsAttribute()!"
+        [value]="item.settings"
+        [scanModes]="scanModes()"
+        [certificates]="certificates()"
       />
     </div>
   </div>
@@ -331,6 +425,13 @@
     }
   </div>
   <div class="btn-group">
+    <!-- Adding many items in a row: the next one starts with the settings they share -->
+    @if (mode() === 'create' && canSave()) {
+      <button type="button" class="btn btn-secondary" id="save-and-add-another" (click)="save(true)">
+        <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>
+        <span [translate]="directSave ? 'south.edit-item-modal.save-and-add-another' : 'south.edit-item-modal.ok-and-add-another'"></span>
+      </button>
+    }
     @if (canSave()) {
       <button
         type="submit"

@@ -25,6 +25,92 @@ html {
   padding: 1rem;
 }
 
+// A section of a form (e.g. a step of the item modals): its title, with an accent mark, underlined across the whole width, and
+// any action on its right
+.oib-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.75rem 0 1rem;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid $mediumGrey;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $darkGrey;
+
+  &::before {
+    content: '';
+    flex: none;
+    width: 0.25rem;
+    height: 1.125rem;
+    border-radius: 0.125rem;
+    background-color: $electricBlue;
+  }
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  // a heading inside the title row, next to actions
+  > h5 {
+    flex-grow: 1;
+    margin: 0;
+    font: inherit;
+  }
+
+  .btn {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+}
+
+// A read-only summary of settings (e.g. the review step of the item modals): they flow in columns, each one with its label above
+// its value; the long ones (code, tables) and the groups take the whole width
+.oib-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 0;
+
+  dt {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $new-link-color;
+  }
+
+  dd {
+    margin-bottom: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.oib-summary-wide,
+.oib-summary-group {
+  grid-column: 1 / -1;
+}
+
+.oib-summary-group {
+  padding-left: 0.75rem;
+  border-left: 2px solid $mediumGrey;
+}
+
+.oib-summary-group-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.oib-summary-code {
+  max-height: 12rem;
+  margin: 0.25rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background-color: $veryLightGrey;
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+}
+
 // Shared by south-item-test and north-transformer-test: wraps a "testing" section in its own
 // tinted, rounded card so it reads as a distinct zone within the surrounding modal instead of
 // more configuration fields, and gives collapsed-settings chips / recap boxes a consistent look.

@@ -1,0 +1,59 @@
+<ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{ $implicit: settings() }" />
+
+<ng-template #list let-settings>
+  <dl class="oib-summary">
+    @for (setting of asSettings(settings); track $index) {
+      @if (setting.kind === 'group') {
+        <div class="oib-summary-group">
+          <div class="oib-summary-group-title" [translate]="setting.labelKey"></div>
+          <ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{ $implicit: setting.settings }" />
+        </div>
+      } @else {
+        <div class="oib-summary-entry" [class.oib-summary-wide]="setting.kind === 'code' || setting.kind === 'table'">
+          <dt [translate]="setting.labelKey"></dt>
+          <dd>
+            @if (setting.kind === 'text') {
+              @if (setting.text !== null) {
+                {{ setting.text }}
+              } @else {
+                <span class="text-muted">–</span>
+              }
+            } @else if (setting.kind === 'boolean') {
+              <span [class]="setting.value ? 'fa-solid fa-check text-success' : 'fa-solid fa-xmark text-muted'" aria-hidden="true"></span>
+              <span class="ms-1" [translate]="'enums.boolean.' + setting.value"></span>
+            } @else if (setting.kind === 'code') {
+              @if (setting.code !== null) {
+                <pre class="oib-summary-code">{{ setting.code }}</pre>
+              } @else {
+                <span class="text-muted">–</span>
+              }
+            } @else if (setting.kind === 'table') {
+              @if (setting.rows.length > 0) {
+                <table class="table table-sm mb-0">
+                  <thead>
+                    <tr>
+                      @for (columnKey of setting.columnKeys; track columnKey) {
+                        <th [translate]="columnKey"></th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of setting.rows; track $index) {
+                      <tr>
+                        @for (cell of row; track $index) {
+                          <td>{{ cell }}</td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              } @else {
+                <span class="text-muted">–</span>
+              }
+            }
+          </dd>
+        </div>
+      }
+    }
+  </dl>
+</ng-template>

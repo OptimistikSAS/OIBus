@@ -25,10 +25,11 @@ import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { ItemModalStep, ItemModalSteps } from '../../../south/south-items/item-modal-steps';
+import { ItemModalStep, ItemModalSteps, unboxedItemSettings } from '../../../south/south-items/item-modal-steps';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
 type ItemForm = FormGroup<{
@@ -48,7 +49,8 @@ type ItemForm = FormGroup<{
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
     SaveButtonComponent,
-    ModalStepsComponent
+    ModalStepsComponent,
+    OIBusSettingsSummaryComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -69,6 +71,11 @@ export class EditHistoryQueryItemModalComponent {
   /** True when opened from history-query-detail (saves directly to API); false when opened from edit-history-query (changes are applied in-memory). */
   readonly directSave = signal(true);
   /**
+   * Set when a new item is saved with "save and add another": the opener then opens the modal again for the next item,
+   * from the one just saved (see prepareForCreation).
+   */
+  addAnother = false;
+  /**
    * Set by edit-history-query (in-memory editing) to the history query's current, possibly-unsaved
    * transformer list, so the item-test panel offers them instead of fetching the last-saved state.
    * Left null when opened from history-query-detail, where a fetch is already accurate.
@@ -80,6 +87,8 @@ export class EditHistoryQueryItemModalComponent {
   readonly southConnectorCommand = signal<SouthConnectorCommandDTO | null>(null);
   readonly manifest = signal<SouthConnectorManifest | null>(null);
   private item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO | null = null;
+  /** The item added just before, in a row of new items: the new one starts enabled or not like it */
+  private previousItem: HistoryQueryItemCommandDTO | null = null;
   private itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = [];
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
@@ -113,20 +122,26 @@ export class EditHistoryQueryItemModalComponent {
 
   readonly itemSettingsAttribute = computed(() => {
     const manifest = this.manifest();
-    return manifest ? (manifest.items.rootAttribute.attributes.find(element => element.key === 'settings') as OIBusObjectAttribute) : null;
+    return manifest
+      ? unboxedItemSettings(manifest.items.rootAttribute.attributes.find(element => element.key === 'settings') as OIBusObjectAttribute)
+      : null;
   });
 
   /**
    * Prepares the component for creation.
+   * @param itemList the items of the history query, the one added just before included
+   * @param previousItem the item added just before with "save and add another", whose shared settings the new one starts with
    */
   prepareForCreation(
     itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
     historyId: string,
     fromSouth: string | null,
     southConnectorCommand: SouthConnectorCommandDTO,
-    manifest: SouthConnectorManifest
+    manifest: SouthConnectorManifest,
+    previousItem: HistoryQueryItemCommandDTO | null = null
   ) {
     this.mode.set('create');
+    this.previousItem = previousItem;
     this.manifest.set(manifest);
     this.historyId.set(historyId);
     this.fromSouth.set(fromSouth);
@@ -194,11 +209,13 @@ export class EditHistoryQueryItemModalComponent {
     }
   }
 
-  save() {
+  /** @param addAnother true to open the modal again for a new item once this one is saved */
+  save(addAnother = false) {
     if (!this.form()!.valid) {
       this.steps.showFirstInvalid();
       return;
     }
+    this.addAnother = addAnother;
     this.modal.close(this.formItem());
   }
 
@@ -213,7 +230,7 @@ export class EditHistoryQueryItemModalComponent {
         return [form.controls.name, form.controls.enabled];
       case 'settings':
         return [form.controls.settings];
-      case 'test':
+      case 'review':
         return [];
     }
   }
@@ -258,7 +275,9 @@ export class EditHistoryQueryItemModalComponent {
     if (this.item) {
       form.patchValue(this.item);
     } else {
-      form.setValue(form.getRawValue());
+      // An item added after another one starts enabled or not like it, but with neither its name nor its connector
+      // settings, which tell the items apart
+      form.setValue({ ...form.getRawValue(), enabled: this.previousItem?.enabled ?? true });
     }
     form.valueChanges
       .pipe(startWith(form.value), takeUntilDestroyed(this.destroyRef))

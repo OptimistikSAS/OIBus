@@ -2875,11 +2875,13 @@
       "step": {
         "general": "General",
         "settings": "Settings",
-        "test": "Test & save"
+        "review": "Review & save"
       },
       "history-settings": "History settings",
       "caching": "Caching",
-      "group-scan-mode": "{{scanMode}} (from the group)"
+      "group-scan-mode": "{{scanMode}} (from the group)",
+      "save-and-add-another": "Save & add another",
+      "ok-and-add-another": "OK & add another"
     },
     "items": {
       "title": "Items",

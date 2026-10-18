@@ -1923,11 +1923,13 @@
       "step": {
         "general": "常规",
         "settings": "设置",
-        "test": "测试并保存"
+        "review": "检查并保存"
       },
       "history-settings": "历史设置",
       "caching": "缓存",
-      "group-scan-mode": "{{scanMode}}(来自组)"
+      "group-scan-mode": "{{scanMode}}(来自组)",
+      "save-and-add-another": "保存并继续添加",
+      "ok-and-add-another": "确定并继续添加"
     },
     "items": {
       "title": "项",

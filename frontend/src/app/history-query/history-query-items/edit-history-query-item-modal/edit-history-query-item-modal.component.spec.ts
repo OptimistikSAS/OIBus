@@ -42,10 +42,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
     const itemList = testData.historyQueries.list[0].items;
     const nameInput = page.getByLabelText('Name', { exact: true });
     const enabledInput = page.getByLabelText('Enable');
-    const saveButton = page.getByRole('button', { name: 'Save' });
+    const saveButton = page.getByRole('button', { name: 'Save', exact: true });
+    const saveAndAddAnotherButton = page.getByRole('button', { name: 'Save & add another' });
     const nextButton = page.getByRole('button', { name: 'Next' });
     const backButton = page.getByRole('button', { name: 'Back' });
-    const step = (name: 'general' | 'settings' | 'test') => page.getByCss(`#modal-step-${name}`);
+    const step = (name: 'general' | 'settings' | 'review') => page.getByCss(`#modal-step-${name}`);
 
     function createModal() {
       return TestBed.createComponent(EditHistoryQueryItemModalComponent).componentInstance;
@@ -92,7 +93,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
     test('should go back to the General step to show a missing name on save', async () => {
       createModal().prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
-      await step('test').click();
+      await step('review').click();
       await expect.element(backButton).toBeInTheDocument();
 
       await saveButton.click();
@@ -132,9 +133,9 @@ describe('EditHistoryQueryItemModalComponent', () => {
       const modal = createModal();
       modal.directSave.set(false);
       modal.prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
-      await step('test').click();
+      await step('review').click();
 
-      await expect.element(page.getByRole('button', { name: 'OK' })).toBeInTheDocument();
+      await expect.element(page.getByRole('button', { name: 'OK', exact: true })).toBeInTheDocument();
       await expect.element(saveButton).not.toBeInTheDocument();
     });
 
@@ -147,6 +148,100 @@ describe('EditHistoryQueryItemModalComponent', () => {
       await nameInput.fill('new item');
 
       await expect(firstValueFrom(modal.canDismiss() as Observable<boolean>)).resolves.toBe(false);
+    });
+
+    describe('save and add another', () => {
+      test('should only be offered on the last step of a new item', async () => {
+        createModal().prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+        await expect.element(nextButton).toBeInTheDocument();
+        await expect.element(saveAndAddAnotherButton).not.toBeInTheDocument();
+
+        await step('review').click();
+
+        await expect.element(saveAndAddAnotherButton).toBeInTheDocument();
+      });
+
+      test.each(['edit' as const, 'copy' as const])('should not be offered in %s mode', async mode => {
+        const modal = createModal();
+        if (mode === 'edit') {
+          modal.prepareForEdition(itemList, savedItem, historyId, null, testData.south.command, testData.south.manifest, 0);
+        } else {
+          modal.prepareForCopy(itemList, savedItem, historyId, null, testData.south.command, testData.south.manifest);
+        }
+        await step('review').click();
+
+        await expect.element(saveButton).toBeInTheDocument();
+        await expect.element(saveAndAddAnotherButton).not.toBeInTheDocument();
+      });
+
+      test('should save the new item and ask for another one', async () => {
+        const modal = createModal();
+        modal.prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+        await nameInput.fill('new item');
+        await step('review').click();
+
+        await saveAndAddAnotherButton.click();
+
+        expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ name: 'new item' }));
+        expect(modal.addAnother).toBe(true);
+      });
+
+      test('should not ask for another item when saved with the main action', async () => {
+        const modal = createModal();
+        modal.prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+        // an invalid attempt first, without a name: the main action must not reuse it
+        await step('review').click();
+        await saveAndAddAnotherButton.click();
+        expect(activeModal.close).not.toHaveBeenCalled();
+
+        await nameInput.fill('new item');
+        await step('review').click();
+        await saveButton.click();
+
+        expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ name: 'new item' }));
+        expect(modal.addAnother).toBe(false);
+      });
+
+      test('should be worded like the main action when the item is added in memory', async () => {
+        const modal = createModal();
+        modal.directSave.set(false);
+        modal.prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+        await nameInput.fill('new item');
+        await step('review').click();
+
+        await page.getByRole('button', { name: 'OK & add another' }).click();
+
+        expect(modal.addAnother).toBe(true);
+      });
+
+      test('should start the next item enabled or not like the previous one, with its own name', async () => {
+        const previousItem: HistoryQueryItemCommandDTO = { ...testData.historyQueries.itemCommand, name: 'previous item', enabled: false };
+        const modal = createModal();
+        modal.prepareForCreation(
+          [...itemList, previousItem],
+          historyId,
+          null,
+          testData.south.command,
+          testData.south.manifest,
+          previousItem
+        );
+
+        await expect.element(step('general')).toHaveAttribute('aria-current', 'step');
+        await expect.element(nameInput).toHaveValue('');
+        await expect.element(enabledInput).not.toBeChecked();
+        // nothing typed yet: no confirmation before dismissing
+        expect(modal.canDismiss()).toBe(true);
+
+        // the name of the item just added is taken
+        await nameInput.fill(previousItem.name);
+        await userEvent.tab();
+        await expect.element(page.getByText('Must be unique')).toBeInTheDocument();
+
+        await nameInput.fill('next item');
+        await step('review').click();
+        await saveButton.click();
+        expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ name: 'next item', enabled: false }));
+      });
     });
   });
 

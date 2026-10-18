@@ -198,6 +198,14 @@ export class SouthDetailComponent {
   }
 
   addItem() {
+    this.openItemCreation(null);
+  }
+
+  /**
+   * Opens the modal for a new item, and again after each item saved with "save and add another".
+   * @param previousItem the item added just before, whose shared settings the new one starts with
+   */
+  private openItemCreation(previousItem: SouthConnectorItemCommandDTO | null) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -214,11 +222,14 @@ export class SouthDetailComponent {
       this.itemGroups,
       this.manifest()!,
       this.southConnector()!.id,
-      this.southConnectorCommand
+      this.southConnectorCommand,
+      previousItem
     );
+    let savedItem: SouthConnectorItemCommandDTO;
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO) => {
+          savedItem = command;
           return this.southConnectorService.createItem(this.southConnector()!.id, {
             id: command.id,
             name: command.name,
@@ -249,6 +260,10 @@ export class SouthDetailComponent {
       .subscribe(southConnector => {
         this.refresh(southConnector);
         this.notificationService.success(`south.items.created`);
+        // the connector reloaded above holds the item just added, so that the next one can't take its name
+        if (component.addAnother) {
+          this.openItemCreation(savedItem);
+        }
       });
   }
 

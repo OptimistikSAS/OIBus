@@ -1923,11 +1923,13 @@
       "step": {
         "general": "Général",
         "settings": "Paramètres",
-        "test": "Test et enregistrement"
+        "review": "Vérification et enregistrement"
       },
       "history-settings": "Paramètres d'historique",
       "caching": "Mise en cache",
-      "group-scan-mode": "{{scanMode}} (du groupe)"
+      "group-scan-mode": "{{scanMode}} (du groupe)",
+      "save-and-add-another": "Enregistrer et en ajouter un autre",
+      "ok-and-add-another": "OK et en ajouter un autre"
     },
     "items": {
       "title": "Éléments",
