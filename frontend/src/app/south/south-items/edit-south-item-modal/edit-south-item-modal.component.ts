@@ -33,8 +33,10 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { ModalService } from '../../../shared/modal.service';
+import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { ItemModalStep, ItemModalSteps } from '../item-modal-steps';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
@@ -50,7 +52,8 @@ import SouthItemTestComponent from '../south-item-test/south-item-test.component
     ReactiveFormsModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
-    NgbDropdownModule
+    NgbDropdownModule,
+    ModalStepsComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -178,6 +181,12 @@ class EditSouthItemModalComponent {
     this.formEvents();
     return this.buildFormItem();
   });
+  /** Name of the schedule of the item: its own, or its group's while it has one */
+  readonly scanModeName = computed(() => this.scanModes().find(scanMode => scanMode.id === this.formItem().scanModeId)?.name ?? null);
+
+  readonly steps = new ItemModalSteps(step => this.stepControls(step), this.formEvents);
+  /** A new item is saved from the last step, an edited or copied one from any step */
+  readonly canSave = computed(() => this.mode() !== 'create' || this.steps.isLast());
 
   readonly hasHistorianCapabilities = computed(() => this.manifest()?.modes.history ?? false);
 
@@ -303,11 +312,34 @@ class EditSouthItemModalComponent {
     this.modal.dismiss();
   }
 
+  /** Submitting the form (e.g. pressing Enter) saves the item once it can be, and opens the next step before. */
+  submit() {
+    if (this.canSave()) {
+      this.save();
+    } else {
+      this.steps.next();
+    }
+  }
+
   save() {
     if (!this.form.valid) {
+      this.steps.showFirstInvalid();
       return;
     }
     this.modal.close(this.formItem());
+  }
+
+  /** The controls edited in each step: the manifest settings in the Settings step, all the others in the General one. */
+  private stepControls(step: ItemModalStep): Array<AbstractControl> {
+    const { settings, ...generalControls } = this.form.controls;
+    switch (step) {
+      case 'general':
+        return Object.values(generalControls);
+      case 'settings':
+        return [settings];
+      case 'test':
+        return [];
+    }
   }
 
   private buildFormItem(): SouthConnectorItemCommandDTO {

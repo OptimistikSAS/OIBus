@@ -19,6 +19,7 @@ import { DefaultValidationErrorsComponent } from '../../../shared/default-valida
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { ItemModalStep } from '../item-modal-steps';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../south-item-groups.testing';
 import EditSouthItemModalComponent from './edit-south-item-modal.component';
 
@@ -67,6 +68,20 @@ class EditSouthItemModalComponentTester {
   readonly cancelButton = this.root.getByCss('.modal-footer').getByRole('button', { name: 'Cancel' });
   readonly createGroupButton = this.root.getByRole('button', { name: 'Create a new group...' });
   readonly mustBeUnique = this.root.getByText('Must be unique');
+  readonly nextButton = this.root.getByRole('button', { name: 'Next' });
+  readonly backButton = this.root.getByRole('button', { name: 'Back' });
+  readonly groupScanMode = this.root.getByCss('#group-scan-mode');
+  readonly summary = this.root.getByCss('#item-summary');
+
+  step(step: ItemModalStep) {
+    return this.root.getByCss(`#modal-step-${step}`);
+  }
+
+  /** Saves from the last step, where a new item is saved */
+  async save() {
+    await this.step('test').click();
+    await this.saveButton.click();
+  }
 
   groupOption(name: string) {
     return this.root.getByRole('button', { name, exact: true });
@@ -198,7 +213,7 @@ describe('EditSouthItemModalComponent', () => {
     await tester.scanMode.selectOptions(scanModes[1].name);
     await tester.enabled.click();
     await tester.maxReadInterval.fill('60');
-    await tester.saveButton.click();
+    await tester.save();
 
     expect(savedCommand()).toEqual(
       expect.objectContaining({
@@ -231,12 +246,68 @@ describe('EditSouthItemModalComponent', () => {
     expect(savedCommand()).toEqual(expect.objectContaining({ id: savedItem1.id, name: 'renamed', scanModeId: scanModes[0].id }));
   });
 
-  test('should not save an invalid item', async () => {
+  test('should not save an invalid item, and show the step to fix', async () => {
     const tester = open('create');
 
-    await tester.saveButton.click();
+    await tester.save();
 
     expect(activeModal.close).not.toHaveBeenCalled();
+    await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+    await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
+    await expect.element(tester.step('settings')).not.toHaveClass('modal-step-invalid');
+
+    await tester.name.fill('new item');
+    await tester.scanMode.selectOptions(scanModes[0].name);
+    await expect.element(tester.step('general')).not.toHaveClass('modal-step-invalid');
+  });
+
+  describe('steps', () => {
+    test('should only open the next step once the current one is valid', async () => {
+      const tester = open('create');
+      await expect.element(tester.saveButton).not.toBeInTheDocument();
+      await expect.element(tester.backButton).not.toBeInTheDocument();
+
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
+      await expect.element(tester.root.getByText('This field is required').first()).toBeInTheDocument();
+
+      await tester.name.fill('new item');
+      await tester.scanMode.selectOptions(scanModes[0].name);
+      await tester.nextButton.click();
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+
+      await tester.nextButton.click();
+      await expect.element(tester.step('test')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.nextButton).not.toBeInTheDocument();
+      await expect.element(tester.saveButton).toBeInTheDocument();
+
+      await tester.backButton.click();
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+    });
+
+    test('should save an edited item from any step', async () => {
+      const tester = open('edit');
+
+      await expect.element(tester.saveButton).toBeInTheDocument();
+      await tester.step('settings').click();
+      await tester.saveButton.click();
+
+      expect(savedCommand()).toEqual(expect.objectContaining({ id: savedItem1.id }));
+    });
+
+    test('should sum the item up on the last step', async () => {
+      const item: SouthConnectorItemDTO = { ...savedItem1, group: groupA, syncWithGroup: true, enabled: false };
+      const tester = open('edit', { item });
+
+      await tester.step('test').click();
+
+      const values = tester.summary.getByRole('definition');
+      await expect.element(values.nth(0)).toHaveTextContent(savedItem1.name);
+      await expect.element(values.nth(1)).toHaveTextContent('Disabled');
+      await expect.element(values.nth(2)).toHaveTextContent('GroupA');
+      await expect.element(values.nth(3)).toHaveTextContent(scanModes[0].name);
+    });
   });
 
   test('should save a subscription item without schedule selection', async () => {
@@ -244,7 +315,7 @@ describe('EditSouthItemModalComponent', () => {
 
     await tester.name.fill('new item');
     await expect.element(tester.scanMode).not.toBeInTheDocument();
-    await tester.saveButton.click();
+    await tester.save();
 
     expect(savedCommand()).toEqual(expect.objectContaining({ scanModeId: 'subscription', scanModeName: '' }));
   });
@@ -269,6 +340,7 @@ describe('EditSouthItemModalComponent', () => {
 
       await expect.element(tester.groupToggle).toHaveTextContent('GroupA');
       await expect.element(tester.scanMode).not.toBeInTheDocument();
+      await expect.element(tester.groupScanMode).toHaveTextContent(`Schedule ${scanModes[0].name} (from the group)`);
       await expect.element(tester.syncWithGroup).toBeChecked();
       await expect.element(tester.maxReadInterval).toBeDisabled();
       await expect.element(tester.maxReadInterval).toHaveValue(60);
@@ -277,7 +349,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.endTimeOffset).toHaveValue(600);
       await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From newest to oldest');
 
-      await tester.saveButton.click();
+      await tester.save();
       // synced with the group: the historian fields are inherited from it
       expect(savedCommand()).toEqual(
         expect.objectContaining({
@@ -323,7 +395,7 @@ describe('EditSouthItemModalComponent', () => {
       await tester.syncWithGroup.click();
       await expect.element(tester.maxReadInterval).toBeEnabled();
       await tester.maxReadInterval.fill('120');
-      await tester.saveButton.click();
+      await tester.save();
 
       expect(savedCommand()).toEqual(
         expect.objectContaining({ groupId: 'group1', syncWithGroup: false, maxReadInterval: 120, readDelay: 10 })
@@ -349,7 +421,7 @@ describe('EditSouthItemModalComponent', () => {
       await tester.selectGroup('GroupB');
 
       await expect.element(tester.syncWithGroup).not.toBeChecked();
-      await tester.saveButton.click();
+      await tester.save();
       expect(savedCommand()).toEqual(expect.objectContaining({ groupId: 'group2', syncWithGroup: false, scanModeId: scanModes[1].id }));
     });
 
@@ -394,6 +466,7 @@ describe('EditSouthItemModalComponent', () => {
       expect(groups.save).toHaveBeenCalledWith({ mode: 'create', group: command });
       await expect.element(tester.groupToggle).toHaveTextContent('GroupC');
       await expect.element(tester.syncWithGroup).toBeChecked();
+      await tester.step('test').click();
       await expect.element(tester.okButton).toBeInTheDocument();
     });
 
@@ -447,12 +520,12 @@ describe('EditSouthItemModalComponent', () => {
 
       await tester.cachingStrategy.selectOptions('Threshold');
       await tester.thresholdType.selectOptions('Absolute');
-      await tester.saveButton.click();
+      await tester.save();
       expect(activeModal.close).not.toHaveBeenCalled();
 
       await tester.threshold.fill('5');
       await tester.maxCachingInterval.fill('1000');
-      await tester.saveButton.click();
+      await tester.save();
       expect(savedCommand()).toEqual(
         expect.objectContaining({ cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5, maxCachingInterval: 1000 })
       );
@@ -468,11 +541,11 @@ describe('EditSouthItemModalComponent', () => {
 
       await tester.rangeLow.fill('10');
       await tester.rangeHigh.fill('10');
-      await tester.saveButton.click();
+      await tester.save();
       expect(activeModal.close).not.toHaveBeenCalled();
 
       await tester.rangeHigh.fill('20');
-      await tester.saveButton.click();
+      await tester.save();
       expect(savedCommand()).toEqual(expect.objectContaining({ thresholdType: 'percentage', rangeLow: 10, rangeHigh: 20 }));
     });
 
