@@ -619,23 +619,13 @@
             <span class="text-danger small" id="review-preview-error">{{ preview.error }}</span>
           } @else if (!preview.result) {
             <span class="text-muted small" id="review-preview-incomplete" translate="south.workflows.wizard.review-incomplete"></span>
-          } @else if (pushToOIAnalytics()) {
-            <span
-              id="review-preview-pushed"
-              [translate]="'south.workflows.wizard.records-pushed'"
-              [translateParams]="{ count: preview.result.eligibleCount }"
-            ></span>
-          } @else {
-            <span class="d-flex flex-wrap gap-1" id="review-preview-counts">
-              @for (statusCount of reviewCounts(); track statusCount.status) {
-                <span class="badge bg-secondary bg-opacity-25 text-secondary">
-                  {{ 'south.workflows.preview-status.' + statusCount.status | translate }}: {{ statusCount.count }}
-                </span>
-              }
-            </span>
           }
         }
       </div>
+      <!-- What a run would do: the entries classified against the previous run, or the records pushed -->
+      @if (reviewPreview()?.result; as result) {
+        <oib-workflow-preview [result]="result" [workflowName]="form.controls.name.value" />
+      }
     </div>
   </form>
 </div>

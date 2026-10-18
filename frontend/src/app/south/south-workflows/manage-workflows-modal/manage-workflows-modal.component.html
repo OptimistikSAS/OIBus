@@ -45,7 +45,7 @@
             <th translate="south.workflows.scan-mode"></th>
             <th translate="south.workflows.mode"></th>
             <th translate="south.workflows.enabled"></th>
-            <th class="oib-actions-column-6"></th>
+            <th class="oib-actions-column-5"></th>
           </tr>
         </thead>
         <tbody>
@@ -87,15 +87,6 @@
                     }
                   </button>
                 }
-                <button
-                  type="button"
-                  class="btn btn-link preview-workflow"
-                  [ngbTooltip]="'south.workflows.preview' | translate"
-                  [attr.aria-label]="'south.workflows.preview' | translate"
-                  (click)="onPreview(workflow)"
-                >
-                  <span class="fa-regular fa-eye" aria-hidden="true"></span>
-                </button>
                 @if (directSave()) {
                   <button
                     type="button"

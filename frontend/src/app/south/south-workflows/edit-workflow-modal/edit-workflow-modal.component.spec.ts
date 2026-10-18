@@ -1097,7 +1097,10 @@ describe('EditWorkflowModalComponent', () => {
       await tester.goToStep('review');
 
       expect(configurationWorkflowService.previewCommand.mock.lastCall![3]).toBe(existingWorkflow.id);
-      await expect.element(tester.root.getByCss('#review-preview-counts')).toMatchTextContent(/New: 1.*Missing: 1/);
+      const previewRows = tester.root.getByCss('#preview-entries-table tbody tr');
+      await expect.element(previewRows).toHaveLength(2);
+      await expect.element(previewRows.nth(0).getByCss('.badge')).toHaveTextContent('New');
+      await expect.element(previewRows.nth(1).getByCss('.badge')).toHaveTextContent('Missing');
       await expect.element(tester.root.getByCss('#review-summary')).toMatchTextContent(/Reactor discovery/);
     });
 

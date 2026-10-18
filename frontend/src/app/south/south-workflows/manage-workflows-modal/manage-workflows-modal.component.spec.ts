@@ -20,7 +20,6 @@ import { MockModalService, provideModalTesting } from '../../../shared/mock-moda
 import { NotificationService } from '../../../shared/notification.service';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
-import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
 import { toConfigurationWorkflowCommand } from '../workflow-command';
 import ManageWorkflowsModalComponent from './manage-workflows-modal.component';
 
@@ -62,7 +61,7 @@ class ManageWorkflowsModalComponentTester {
     return this.rows.nth(index);
   }
 
-  rowButton(index: number, name: 'Run now' | 'Preview' | 'Run history' | 'Edit items synchronisation' | 'Duplicate' | 'Delete') {
+  rowButton(index: number, name: 'Run now' | 'Run history' | 'Edit items synchronisation' | 'Duplicate' | 'Delete') {
     return this.row(index).getByRole('button', { name });
   }
 }
@@ -112,12 +111,6 @@ describe('ManageWorkflowsModalComponent', () => {
     const editModal = createMock(EditWorkflowModalComponent);
     modalService.mockClosedModal(editModal, result);
     return editModal;
-  }
-
-  function mockPreviewModal() {
-    const previewModal = createMock(PreviewWorkflowModalComponent);
-    modalService.mockClosedModal(previewModal);
-    return previewModal;
   }
 
   describe('direct mode', () => {
@@ -282,17 +275,6 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.rowButton(0, 'Run now')).toBeEnabled();
     });
 
-    test('should open the preview modal immediately, letting it fetch the preview itself', async () => {
-      const previewModal = mockPreviewModal();
-      const open = vi.spyOn(modalService, 'open');
-
-      await tester.rowButton(0, 'Preview').click();
-
-      expect(open).toHaveBeenCalledWith(PreviewWorkflowModalComponent, { size: 'xl' });
-      expect(previewModal.prepareForPreview).toHaveBeenCalledWith('southId1', 'workflow1', 'Alpha');
-      expect(configurationWorkflowService.preview).not.toHaveBeenCalled();
-    });
-
     test('should navigate to the run history page and close the modal', async () => {
       await tester.rowButton(0, 'Run history').click();
 
@@ -332,10 +314,9 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.none).toBeInTheDocument();
     });
 
-    test('should not offer run now nor run history, only preview/edit/duplicate/delete', async () => {
+    test('should not offer run now nor run history, only edit/duplicate/delete', async () => {
       prepareInMemory();
 
-      await expect.element(tester.rowButton(0, 'Preview')).toBeInTheDocument();
       await expect.element(tester.rowButton(0, 'Edit items synchronisation')).toBeInTheDocument();
       await expect.element(tester.rowButton(0, 'Duplicate')).toBeInTheDocument();
       await expect.element(tester.rowButton(0, 'Delete')).toBeInTheDocument();
@@ -400,34 +381,6 @@ describe('ManageWorkflowsModalComponent', () => {
       expect(configurationWorkflowService.delete).not.toHaveBeenCalled();
       expect(pageWorkflows().map(workflow => workflow.id)).toEqual(['workflow2']);
       await expect.element(tester.rows).toHaveLength(1);
-    });
-
-    test('should preview a persisted workflow as currently edited, against its previous run', async () => {
-      prepareInMemory('southId1');
-      const previewModal = mockPreviewModal();
-
-      await tester.rowButton(0, 'Preview').click();
-
-      expect(previewModal.prepareForCommandPreview).toHaveBeenCalledWith(
-        'southId1',
-        manifest.id,
-        southSettings,
-        'workflow1',
-        commands[0],
-        'Alpha'
-      );
-      expect(configurationWorkflowService.preview).not.toHaveBeenCalled();
-    });
-
-    test('should preview a not-yet-saved (temp id) workflow with no persisted workflow id', async () => {
-      const unsaved = buildWorkflowCommand('temp_123', 'Unsaved');
-      commands.push(unsaved);
-      prepareInMemory();
-      const previewModal = mockPreviewModal();
-
-      await tester.rowButton(2, 'Preview').click();
-
-      expect(previewModal.prepareForCommandPreview).toHaveBeenCalledWith('create', manifest.id, southSettings, null, unsaved, 'Unsaved');
     });
   });
 });

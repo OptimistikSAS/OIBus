@@ -9,7 +9,7 @@ import { map, Observable, of, switchMap } from 'rxjs';
 
 import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
@@ -19,19 +19,18 @@ import { ModalService } from '../../../shared/modal.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { SouthItemGroups } from '../../south-items/south-item-groups';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
-import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
-import { TEMP_ID_PREFIX, toConfigurationWorkflowCommand } from '../workflow-command';
+import { toConfigurationWorkflowCommand } from '../workflow-command';
 import { WorkflowCreationService } from '../workflow-creation.service';
 
 /**
  * Lists a south connector's Configuration Workflows, in one of two modes (like ManageGroupsModalComponent's
  * own directSave):
  * - direct (prepareForDirectSave, from south-detail): every change is saved straight through the REST
- *   endpoints, and a workflow can also be run now, previewed as persisted, and have its run history opened.
+ *   endpoints, and a workflow can also be run now and have its run history opened.
  * - in memory (prepareForInMemory, from edit-south): add/edit/duplicate/delete only update the signal the
- *   page owns (saved along with the connector itself), and a preview runs the workflow as currently
- *   edited against the page's current, possibly unsaved, settings. No run, no history - there may not
- *   even be a persisted connector/workflow to run yet.
+ *   page owns (saved along with the connector itself). No run, no history - there may not even be a
+ *   persisted connector/workflow to run yet.
+ * A workflow is previewed in the Review step of its wizard, as edited, against the page's current settings.
  * Both modes display the same command shape - persisted DTOs are converted on load.
  */
 @Component({
@@ -53,7 +52,6 @@ export default class ManageWorkflowsModalComponent {
   readonly directSave = signal(true);
   /** The connector id - or `create` for a connector being created (in-memory mode only). */
   private southId!: string;
-  private southType!: OIBusSouthType;
   private southSettings!: SouthSettings;
   private readonly scanModes = signal<Array<ScanModeDTO>>([]);
   private groups!: SouthItemGroups;
@@ -91,7 +89,6 @@ export default class ManageWorkflowsModalComponent {
   ) {
     this.directSave.set(true);
     this.southId = southId;
-    this.southType = manifest.id;
     this.southSettings = southSettings;
     this.scanModes.set(scanModes);
     this.manifest = manifest;
@@ -120,7 +117,6 @@ export default class ManageWorkflowsModalComponent {
     this.directSave.set(false);
     this.workflowSource.set(workflows);
     this.southId = southId;
-    this.southType = manifest.id;
     this.southSettings = southSettings;
     this.scanModes.set(scanModes);
     this.manifest = manifest;
@@ -227,21 +223,6 @@ export default class ManageWorkflowsModalComponent {
         this.notificationService.error('south.workflows.run-now-error', { error: extractErrorMessage(error) });
       }
     });
-  }
-
-  onPreview(workflow: ConfigurationWorkflowCommandDTO) {
-    // Opened immediately, with its own loading spinner, rather than waiting for the preview request to
-    // resolve first - see PreviewWorkflowModalComponent.prepareForPreview, which makes the request itself.
-    const modalRef = this.modalService.open(PreviewWorkflowModalComponent, { size: 'xl' });
-    const component: PreviewWorkflowModalComponent = modalRef.componentInstance;
-    if (this.directSave()) {
-      component.prepareForPreview(this.southId, workflow.id!, workflow.name);
-      return;
-    }
-    // Only a workflow that already exists server-side has a previous run to classify entries against -
-    // a new (temp_) one is previewed as if it had never run.
-    const persistedWorkflowId = workflow.id && !workflow.id.startsWith(TEMP_ID_PREFIX) ? workflow.id : null;
-    component.prepareForCommandPreview(this.southId, this.southType, this.southSettings, persistedWorkflowId, workflow, workflow.name);
   }
 
   onViewHistory(workflow: ConfigurationWorkflowCommandDTO) {
