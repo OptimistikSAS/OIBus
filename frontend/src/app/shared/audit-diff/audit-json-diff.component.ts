@@ -25,7 +25,7 @@ export class AuditJsonDiffComponent {
 
   private readonly editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editor');
   /** The editor is created once CodeMirror is loaded */
-  private readonly codeMirror = loadOnDemand(() => Promise.all([loadCodeMirror(), loadCodeMirrorMerge()]));
+  private readonly codeMirror = loadOnDemand(loadCodeMirror, loadCodeMirrorMerge);
   private editorView: EditorView | null = null;
 
   constructor() {
