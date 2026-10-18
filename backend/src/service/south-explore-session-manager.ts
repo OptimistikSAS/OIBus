@@ -12,6 +12,9 @@ const DEFAULT_MAX_SESSIONS = 20; // upper bound on concurrent live sessions
 interface ExploreSession {
   id: string;
   south: SouthConnector<SouthSettings, SouthItemSettings>;
+  // False for the engine's live instance of a running connector: the session borrows it, so closing
+  // the session must not stop the connector.
+  stopOnClose: boolean;
   timer: NodeJS.Timeout;
 }
 
@@ -30,10 +33,11 @@ export default class SouthExploreSessionManager {
   ) {}
 
   /**
-   * Register an already-connected South connector as a new explore session.
-   * Evicts the oldest session first when the maximum number of sessions is reached.
+   * Register an already-connected South connector as a new explore session, stopped when the session
+   * closes unless `stopOnClose` is false. Evicts the oldest session first when the maximum number of
+   * sessions is reached.
    */
-  async start(south: SouthConnector<SouthSettings, SouthItemSettings>): Promise<string> {
+  async start(south: SouthConnector<SouthSettings, SouthItemSettings>, stopOnClose = true): Promise<string> {
     if (this.sessions.size >= this.maxSessions) {
       // Evict the least-recently-used session. The map preserves insertion order and `browse`
       // re-inserts on access, so the first key is the one untouched the longest.
@@ -43,7 +47,7 @@ export default class SouthExploreSessionManager {
       }
     }
     const id = generateRandomId();
-    this.sessions.set(id, { id, south, timer: this.armTimer(id) });
+    this.sessions.set(id, { id, south, stopOnClose, timer: this.armTimer(id) });
     return id;
   }
 
@@ -67,7 +71,7 @@ export default class SouthExploreSessionManager {
   }
 
   /**
-   * Close a session and release its connector. Idempotent.
+   * Close a session and release its connector (unless the session only borrowed it). Idempotent.
    */
   async close(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
@@ -76,7 +80,9 @@ export default class SouthExploreSessionManager {
     }
     clearTimeout(session.timer);
     this.sessions.delete(sessionId);
-    await session.south.stop();
+    if (session.stopOnClose) {
+      await session.south.stop();
+    }
   }
 
   /**
