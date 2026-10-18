@@ -303,16 +303,6 @@ describe('SouthSQLite', () => {
     ]);
   });
 
-  it('should discover the rows of a table, reading the given columns', async () => {
-    const mockAll = mock.fn(() => [{ tag: 'TIC-101', unit: '°C' }]);
-    mockDatabase.prepare = mock.fn(() => ({ all: mockAll }));
-
-    const result = await south.discover({ table: 'tags', columns: ['tag', 'unit'] });
-
-    assert.strictEqual(mockDatabase.prepare.mock.calls[0].arguments[0], 'SELECT "tag", "unit" FROM "tags"');
-    assert.deepStrictEqual(result, [{ tag: 'TIC-101', unit: '°C' }]);
-  });
-
   it('should close the database and rethrow when the discovery query fails', async () => {
     const queryError = new Error('bad query');
     mockDatabase.prepare = mock.fn(() => {

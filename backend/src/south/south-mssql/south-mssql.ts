@@ -26,7 +26,7 @@ import {
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { MSSQL_DIALECT } from '../sql-dialects';
-import { buildTableQuery, discoverTables, extractNodeIds, extractTableScope, splitSchemaTable } from '../sql-table-discovery';
+import { discoverTables, extractNodeIds, splitSchemaTable } from '../sql-table-discovery';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send the resulting rows as record-list
@@ -331,8 +331,7 @@ export default class SouthMSSQL
   /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records; or reads the rows of a table
-   * (`discoveryScope.table`, and the `columns` to read - all when none). The tables and
+   * any item's own data query - and returns its rows directly as the discovered records. The tables and
    * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
    * the item that reads it (see `discoverTables()`).
    */
@@ -341,9 +340,7 @@ export default class SouthMSSQL
     if (nodeIds) {
       return discoverTables(parentId => this.explore(parentId), nodeIds, MSSQL_DIALECT);
     }
-    // The rows of a table, or of a query of its own
-    const tableScope = extractTableScope(scope);
-    const query = tableScope ? buildTableQuery(MSSQL_DIALECT, tableScope.table, tableScope.columns) : extractDiscoveryQuery(scope);
+    const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();
 
     const pool = await new mssql.ConnectionPool(config).connect();

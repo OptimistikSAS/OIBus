@@ -31,14 +31,7 @@ import {
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { POSTGRESQL_DIALECT } from '../sql-dialects';
-import {
-  buildTableQuery,
-  discoverTables,
-  extractNodeIds,
-  extractTableScope,
-  splitSchemaTable,
-  toColumnExploreEntry
-} from '../sql-table-discovery';
+import { discoverTables, extractNodeIds, splitSchemaTable, toColumnExploreEntry } from '../sql-table-discovery';
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send the resulting rows as
@@ -326,8 +319,7 @@ export default class SouthPostgreSQL
   /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records; or reads the rows of a table
-   * (`discoveryScope.table`, and the `columns` to read - all when none). The tables and
+   * any item's own data query - and returns its rows directly as the discovered records. The tables and
    * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
    * the item that reads it (see `discoverTables()`).
    */
@@ -336,9 +328,7 @@ export default class SouthPostgreSQL
     if (nodeIds) {
       return discoverTables(parentId => this.explore(parentId), nodeIds, POSTGRESQL_DIALECT);
     }
-    // The rows of a table, or of a query of its own
-    const tableScope = extractTableScope(scope);
-    const query = tableScope ? buildTableQuery(POSTGRESQL_DIALECT, tableScope.table, tableScope.columns) : extractDiscoveryQuery(scope);
+    const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();
 
     let connection;

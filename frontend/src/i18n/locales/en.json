@@ -3158,8 +3158,6 @@
         "remove-node": "Remove {{node}}",
         "browse-nodes": "Pick nodes...",
         "use-nodes": "Use these nodes",
-        "find-records": "Find records",
-        "records-found": "Records found: {{count}}",
         "refresh-preview": "Refresh preview",
         "records-matching": "Matching records: {{eligible}} of {{discovered}}",
         "example-item-names": "Example item names:",
@@ -3167,19 +3165,7 @@
         "conditions": "Conditions: {{count}}",
         "review-incomplete": "Complete the previous steps to preview a run",
         "back": "Back",
-        "next": "Next",
-        "table-hint": "The table whose rows become the records - each with the columns read as fields",
-        "table": "Table",
-        "table-none": "Select a table",
-        "columns": "Columns",
-        "columns-hint": "The columns read from each row: all of them by default",
-        "query-run": "Query run by OIBus",
-        "write-query": "Write the query myself",
-        "pick-table": "Pick a table instead",
-        "table-required": "A table is required",
-        "columns-required": "At least one column must be read",
-        "table-summary": "Table {{table}}, {{count}} columns",
-        "table-summary-all": "Table {{table}}, all columns"
+        "next": "Next"
       }
     },
     "monitoring": {

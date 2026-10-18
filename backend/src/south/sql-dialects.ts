@@ -1,5 +1,3 @@
-import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
-
 import { quoteAnsiIdentifier, splitSchemaTable, SqlDialect } from './sql-table-discovery';
 
 /** The date formats of the MSSQL date/time column types, as an item tracking instant reads them. */
@@ -69,13 +67,4 @@ export const SQLITE_DIALECT: SqlDialect = {
   quoteTable: quoteAnsiIdentifier,
   quoteColumn: quoteAnsiIdentifier,
   dateTimeType: columnType => (/DATE|TIME/i.test(columnType) ? 'iso-string' : null)
-};
-
-/** The SQL dialect of each SQL connector type that can be explored, to write the queries of its tables. */
-export const SQL_DIALECTS: Partial<Record<OIBusSouthType, SqlDialect>> = {
-  mssql: MSSQL_DIALECT,
-  mysql: MYSQL_DIALECT,
-  postgresql: POSTGRESQL_DIALECT,
-  oracle: ORACLE_DIALECT,
-  sqlite: SQLITE_DIALECT
 };

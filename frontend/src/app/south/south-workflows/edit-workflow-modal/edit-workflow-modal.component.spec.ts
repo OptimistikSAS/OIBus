@@ -128,12 +128,6 @@ class EditWorkflowModalComponentTester {
   readonly discoveryQuery = this.root.getByCss('#discovery-query');
   readonly discoveryQueryInput = this.root.getByCss('#discovery-query .cm-content');
   readonly exploreTree = this.root.getByCss('#discovery-explore-tree');
-  readonly table = this.root.getByCss('#discovery-table');
-  readonly generatedQuery = this.root.getByCss('#discovery-generated-query');
-
-  column(name: string) {
-    return this.root.getByCss('.discovery-column').filter({ hasText: name });
-  }
   readonly testQueryButton = this.root.getByRole('button', { name: 'Test query' });
   readonly queryTestError = this.root.getByCss('#discovery-query-test-error');
   readonly queryTestResult = this.root.getByCss('#discovery-query-test-result');
@@ -516,24 +510,12 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.unsupportedScope).not.toBeInTheDocument();
     });
 
-    test('should show the reference explore tree above a query written by hand for SQLite', async () => {
-      const tester = create({
-        mode: 'edit',
-        workflowManifest: sqliteManifest,
-        workflow: { ...existingWorkflow, discoveryScope: { query: 'SELECT 1' } }
-      });
+    test('should show the reference explore tree above the query editor for SQLite', async () => {
+      const tester = create({ workflowManifest: sqliteManifest });
 
       await expect.element(tester.exploreTree).toBeInTheDocument();
       await expect.element(tester.discoveryQuery).toBeInTheDocument();
-      await expect.element(tester.root.getByCss('#pick-table')).toBeInTheDocument();
       expect(southConnectorService.startExplore).toHaveBeenCalled();
-    });
-
-    test('should not offer a table for a SQL-family connector that can not list its tables', async () => {
-      const tester = create({ workflowManifest: sqlManifest });
-
-      await expect.element(tester.discoveryQuery).toBeInTheDocument();
-      await expect.element(tester.root.getByCss('#pick-table')).not.toBeInTheDocument();
     });
 
     test('should start a new workflow from the prefilled name and nodes', async () => {
@@ -1041,20 +1023,6 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.stepButton('items')).toHaveAttribute('aria-current', 'step');
     });
 
-    test('should count the records the source gives, whatever the filter', async () => {
-      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
-      const tester = create({ mode: 'edit' });
-
-      await tester.root.getByRole('button', { name: 'Find records' }).click();
-
-      await expect.element(tester.root.getByCss('#source-preview-count')).toHaveTextContent('Records found: 3');
-      const [previewSouthId, southType, settings, workflowId, command] = configurationWorkflowService.previewCommand.mock.lastCall!;
-      expect([previewSouthId, southType, settings, workflowId]).toEqual([southId, manifest.id, southSettings, null]);
-      expect(command).toEqual(
-        expect.objectContaining({ discoveryScope: { nodeIds: ['ns=1;s=Root'] }, eligibilityFilter: [], pushToOIAnalytics: true })
-      );
-    });
-
     test('should list the records the filter keeps on the Filter step, and suggest their fields', async () => {
       configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
       const tester = create({ mode: 'edit' });
@@ -1123,115 +1091,6 @@ describe('EditWorkflowModalComponent', () => {
       await tester.goToStep('filter');
 
       await expect.element(tester.root.getByCss('#filter-preview-error')).toHaveTextContent('unreachable');
-    });
-  });
-
-  describe('SQL table source', () => {
-    const tables = [
-      { id: 'logs', name: 'logs', metadata: { columns: 3 }, hasChildren: true },
-      { id: 'tags', name: 'tags', metadata: { columns: 2 }, hasChildren: true }
-    ];
-    const columns = [
-      { id: 'tags.tag', name: 'tag', metadata: { type: 'TEXT' }, hasChildren: false },
-      { id: 'tags.unit', name: 'unit', metadata: { type: 'TEXT' }, hasChildren: false },
-      { id: 'tags.area', name: 'area', metadata: { type: 'TEXT' }, hasChildren: false }
-    ];
-
-    beforeEach(() => {
-      southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: tables }));
-      southConnectorService.browseExplore.mockReturnValue(of({ entries: columns }));
-      southConnectorService.buildDiscoveryTableQuery.mockImplementation((_type, table, read) =>
-        of(`SELECT ${read.length ? read.join(', ') : '*'} FROM ${table}`)
-      );
-    });
-
-    test('should read all the columns of the table picked, the connector writing the query', async () => {
-      const tester = create({ workflowManifest: sqliteManifest });
-      await expect.element(tester.discoveryQuery).not.toBeInTheDocument();
-
-      await tester.table.selectOptions('tags');
-
-      expect(southConnectorService.browseExplore).toHaveBeenCalledWith(southId, 'sessionId', 'tags');
-      await expect.element(tester.column('unit')).toHaveAttribute('aria-pressed', 'true');
-      expect(southConnectorService.buildDiscoveryTableQuery).toHaveBeenLastCalledWith('sqlite', 'tags', []);
-      await expect.element(tester.generatedQuery).toHaveTextContent('SELECT * FROM tags');
-    });
-
-    test('should read the columns left checked, and save the table they belong to', async () => {
-      const tester = create({ workflowManifest: sqliteManifest });
-      await tester.name.fill('Tags');
-      await tester.table.selectOptions('tags');
-
-      await tester.column('area').click();
-
-      await expect.element(tester.column('area')).toHaveAttribute('aria-pressed', 'false');
-      await expect.element(tester.generatedQuery).toHaveTextContent('SELECT tag, unit FROM tags');
-      await tester.save();
-      expect(savedCommand().discoveryScope).toEqual({ table: 'tags', columns: ['tag', 'unit'] });
-      expect(savedCommand().pushToOIAnalytics).toBe(true);
-    });
-
-    test('should reopen the table and the columns a workflow reads, and summarize them in the Review step', async () => {
-      const workflow = { ...existingWorkflow, discoveryScope: { table: 'tags', columns: ['unit'] } };
-      const tester = create({ mode: 'edit', workflowManifest: sqliteManifest, workflow });
-
-      await expect.element(tester.table).toHaveDisplayValue('tags');
-      await expect.element(tester.column('unit')).toHaveAttribute('aria-pressed', 'true');
-      await expect.element(tester.column('tag')).toHaveAttribute('aria-pressed', 'false');
-
-      await tester.goToStep('review');
-      await expect.element(tester.root.getByCss('#review-table')).toHaveTextContent('Table tags, 1 columns');
-    });
-
-    test('should write the query by hand from the one of the table, and go back to the table', async () => {
-      const tester = create({ workflowManifest: sqliteManifest });
-      await tester.table.selectOptions('tags');
-      await expect.element(tester.generatedQuery).toHaveTextContent('SELECT * FROM tags');
-
-      await tester.root.getByRole('button', { name: 'Write the query myself' }).click();
-
-      await expect.element(tester.discoveryQuery).toBeInTheDocument();
-      expect(tester.fixture.componentInstance.discoveryQuery()).toBe('SELECT * FROM tags');
-      await tester.root.getByRole('button', { name: 'Pick a table instead' }).click();
-      await expect.element(tester.table).toHaveDisplayValue('tags');
-    });
-
-    test('should need a table, and a column to read, before leaving the Source step', async () => {
-      const tester = create({ workflowManifest: sqliteManifest });
-      await tester.name.fill('Tags');
-
-      await tester.nextButton.click();
-      await expect.element(tester.formError).toHaveTextContent('A table is required');
-
-      await tester.table.selectOptions('tags');
-      for (const name of ['tag', 'unit', 'area']) {
-        await tester.column(name).click();
-      }
-      await tester.nextButton.click();
-      await expect.element(tester.formError).toHaveTextContent('At least one column must be read');
-    });
-
-    test('should offer the columns read as the fields of a condition in the Filter step', async () => {
-      const tester = create({ workflowManifest: sqliteManifest });
-      await tester.table.selectOptions('tags');
-      await tester.column('area').click();
-
-      await tester.goToStep('filter');
-
-      await expect.element(tester.newEligibilityField.getByRole('option')).toHaveLength(3);
-      await tester.newEligibilityField.selectOptions('unit');
-      await tester.newEligibilityValue.fill('°C');
-      await tester.addEligibilityConditionButton.click();
-      await expect.element(tester.eligibilityRows.first()).toMatchTextContent(/unit\s*equals\s*°C/);
-    });
-
-    test('should close the explore session listing the tables when closed', async () => {
-      const tester = create({ workflowManifest: sqliteManifest });
-      await expect.element(tester.table).toBeInTheDocument();
-
-      tester.fixture.destroy();
-
-      expect(southConnectorService.closeExplore).toHaveBeenCalledWith(southId, 'sessionId');
     });
   });
 

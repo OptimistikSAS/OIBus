@@ -101,26 +101,6 @@ interface SouthDiscoveredItemsRequest {
 }
 
 /**
- * @interface SouthDiscoveryTableQueryRequest
- * @description The table a Configuration Workflow reads the rows of, and its columns to read
- */
-interface SouthDiscoveryTableQueryRequest {
-  /** The table, as the connector explore lists it */
-  table: string;
-  /** The columns to read - all of them when empty */
-  columns: Array<string>;
-}
-
-/**
- * @interface SouthDiscoveryTableQueryResponse
- * @description The query reading the rows of a table
- */
-interface SouthDiscoveryTableQueryResponse {
-  /** @example "SELECT [tag], [unit] FROM [dbo].[tags]" */
-  query: string;
-}
-
-/**
  * @interface SouthCsvImportResponse
  * @description Response for CSV import check operation
  */
@@ -172,20 +152,6 @@ export class SouthConnectorController extends Controller {
   getManifest(@Path() type: OIBusSouthType, @Request() request: CustomExpressRequest): SouthConnectorManifest {
     const southService = request.services.southService as SouthService;
     return southService.getManifest(type);
-  }
-
-  /**
-   * Writes the query a Configuration Workflow runs to read the rows of a table, in the SQL dialect of the connector type
-   * @summary Write the query of a table
-   */
-  @Post('/types/{type}/table-query')
-  buildDiscoveryTableQuery(
-    @Path() type: OIBusSouthType,
-    @Body() command: SouthDiscoveryTableQueryRequest,
-    @Request() request: CustomExpressRequest
-  ): SouthDiscoveryTableQueryResponse {
-    const southService = request.services.southService as SouthService;
-    return { query: southService.buildDiscoveryTableQuery(type, command.table, command.columns) };
   }
 
   /**
