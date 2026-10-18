@@ -311,12 +311,9 @@ export default class SouthService {
       manifest.settings
     );
 
-    // If the connector being tested is already running with these exact settings, test against
-    // that live instance instead of a throwaway one — this lets it reuse whatever connection it
-    // already has open, rather than opening a second one that could exceed a server-side limit
-    // on concurrent connections per client (e.g. OPC-UA session caps).
-    if (southConnector && this.engine.hasSouth(southConnector.id) && isDeepStrictEqual(testSettings, southConnector.settings)) {
-      return this.engine.getSouth(southConnector.id).south;
+    const runningSouth = this.findRunningSouth(southConnector, testSettings);
+    if (runningSouth) {
+      return runningSouth;
     }
 
     const entity: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
@@ -344,6 +341,30 @@ export default class SouthService {
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository
     );
+  }
+
+  /**
+   * The engine's instance of a connector when it is running (enabled) with these exact settings — a
+   * test, discovery or explore then reuses whatever connection it already has open, rather than
+   * opening a second one that could exceed a server-side limit on concurrent connections per client
+   * (e.g. OPC-UA session caps). A disabled connector has no connection to reuse, and its engine
+   * instance is wired to the engine (its items, the north caches): connecting it would start its
+   * subscriptions, so it gets a throwaway instance like an unsaved one.
+   */
+  private findRunningSouth(
+    southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null,
+    settings: SouthSettings
+  ): ReturnType<typeof buildSouth> | null {
+    if (!southConnector || !this.engine.hasSouth(southConnector.id) || !isDeepStrictEqual(settings, southConnector.settings)) {
+      return null;
+    }
+    const south = this.engine.getSouth(southConnector.id).south;
+    return south.isEnabled() ? south : null;
+  }
+
+  /** True when `south` is the engine's own instance rather than a throwaway one built for the caller. */
+  private isLiveInstance(southId: string, south: ReturnType<typeof buildSouth>): boolean {
+    return this.engine.hasSouth(southId) && this.engine.getSouth(southId).south === south;
   }
 
   async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> {
@@ -380,7 +401,7 @@ export default class SouthService {
     if (!south.hasConfigurationDiscovery()) {
       throw new Error(`South connector of type "${southType}" does not support configuration discovery`);
     }
-    const isLiveInstance = this.engine.hasSouth(southId) && this.engine.getSouth(southId).south === south;
+    const isLiveInstance = this.isLiveInstance(southId, south);
     try {
       return await south.discover(scope);
     } finally {
@@ -392,21 +413,26 @@ export default class SouthService {
 
   /**
    * Start an interactive explore session: build a connector, connect it, and return the
-   * root-level entries plus a session id used for subsequent browse/close calls.
+   * root-level entries plus a session id used for subsequent browse/close calls. A running connector
+   * with these exact settings is explored through its live instance (see `findRunningSouth`), which is
+   * already connected and must keep running once the session is closed.
    */
   async startExplore(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<SouthExploreStartResult> {
     const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
     if (!south.hasExplore()) {
       throw new Error(`South connector of type "${southType}" does not support exploration`);
     }
-    try {
-      await south.connect();
-    } catch (error) {
-      // connect() failed before the session was registered — release the connector so it doesn't leak.
-      await south.stop();
-      throw error;
+    const isLiveInstance = this.isLiveInstance(southId, south);
+    if (!isLiveInstance) {
+      try {
+        await south.connect();
+      } catch (error) {
+        // connect() failed before the session was registered — release the connector so it doesn't leak.
+        await south.stop();
+        throw error;
+      }
     }
-    const sessionId = await this.exploreSessionManager.start(south);
+    const sessionId = await this.exploreSessionManager.start(south, !isLiveInstance);
     try {
       const entries = await this.exploreSessionManager.browse(sessionId, null);
       return { sessionId, entries };
@@ -501,12 +527,10 @@ export default class SouthService {
       manifest.settings
     );
 
-    // Same rationale as testSouth(): if the connector is already running with these exact
-    // settings, test the item against that live instance instead of a throwaway one, so it
-    // reuses whatever connection is already open.
     let queryResult: SouthConnectorItemQueryResult;
-    if (southConnector && this.engine.hasSouth(southConnector.id) && isDeepStrictEqual(testConnectorSettings, southConnector.settings)) {
-      queryResult = await this.engine.getSouth(southConnector.id).south.testItem(testItemToRun, testingSettings);
+    const runningSouth = this.findRunningSouth(southConnector, testConnectorSettings);
+    if (runningSouth) {
+      queryResult = await runningSouth.testItem(testItemToRun, testingSettings);
     } else {
       const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
         id: 'test',

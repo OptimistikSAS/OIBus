@@ -92,6 +92,17 @@ describe('SouthExploreSessionManager', () => {
     await assert.rejects(() => manager.browse(sessionId, null), /not found/);
   });
 
+  it('should close a session without stopping a borrowed connector', async () => {
+    const manager = new SouthExploreSessionManager();
+    const south = buildSouth();
+    const sessionId = await manager.start(south, false);
+
+    await manager.close(sessionId);
+
+    assert.strictEqual((south as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
+    await assert.rejects(() => manager.browse(sessionId, null), /not found/);
+  });
+
   it('should ignore closing an unknown session', async () => {
     const manager = new SouthExploreSessionManager();
     await assert.doesNotReject(() => manager.close('missing'));
