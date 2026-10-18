@@ -5,7 +5,7 @@
   transform: translateY(1px);
 }
 
-// .btn-link is globally styled white for the (dark) oib-box-title bars; this box sits on a
+// .btn-link is globally styled white for the (dark) oib-box-title bars; this panel sits on a
 // plain white background, so the edit icon needs its own color or it's invisible.
 .pipeline-transformer #edit-transformer-options {
   color: $darkGrey;
