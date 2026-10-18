@@ -278,6 +278,31 @@ describe('SouthSQLite', () => {
     assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
   });
 
+  it('should discover the item of each table checked in the explore modal, quoted and tracked as SQLite reads them', async () => {
+    mock.method(south, 'explore', async (parentId: string | null) =>
+      parentId === null
+        ? [{ id: 'production', name: 'production', metadata: { columns: 3 }, hasChildren: true }]
+        : [
+            { id: `${parentId}.id`, name: 'id', metadata: { type: 'int' }, hasChildren: false },
+            { id: `${parentId}.value`, name: 'value', metadata: { type: 'float' }, hasChildren: false },
+            { id: `${parentId}.produced_at`, name: 'produced_at', metadata: { type: 'DATETIME' }, hasChildren: false }
+          ]
+    );
+
+    const records = await south.discover({ nodeIds: ['production.value'] });
+
+    assert.deepStrictEqual(records, [
+      {
+        id: 'production',
+        name: 'production',
+        query: 'SELECT "produced_at", "value" FROM "production" WHERE "produced_at" > @StartTime AND "produced_at" <= @EndTime',
+        trackInstant: true,
+        timeColumn: 'produced_at',
+        dateTimeType: 'iso-string'
+      }
+    ]);
+  });
+
   it('should close the database and rethrow when the discovery query fails', async () => {
     const queryError = new Error('bad query');
     mockDatabase.prepare = mock.fn(() => {

@@ -7,7 +7,11 @@ import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.
 import { Instant } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -22,7 +26,15 @@ import {
   workUnitLogCtx
 } from '../../service/utils';
 import SouthConnector from '../south-connector';
-import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
+import { discoverTables, extractNodeIds, quoteAnsiIdentifier, SqlDialect, toColumnExploreEntry } from '../sql-table-discovery';
+
+/** The tables of the schema of the connected user, by name (see `explore()`): DATE and TIMESTAMP columns hold a date/time. */
+const ORACLE_DIALECT: SqlDialect = {
+  quoteTable: quoteAnsiIdentifier,
+  quoteColumn: quoteAnsiIdentifier,
+  dateTimeType: columnType => (/^(DATE|TIMESTAMP)/i.test(columnType) ? 'date-time' : null)
+};
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send the resulting rows as record-list
@@ -32,7 +44,7 @@ import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interfa
  */
 export default class SouthOracle
   extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings>
-  implements SouthHistoryQuery, SouthConfigurationDiscovery
+  implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
   constructor(
     connector: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
@@ -238,23 +250,100 @@ export default class SouthOracle
     }
   }
 
-  /**
-   * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
-   * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records.
-   */
-  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
-    const query = extractDiscoveryQuery(scope);
-
+  /** The connection to the database, as the connector settings describe it. */
+  private async createConnectionAttributes(): Promise<ConnectionAttributes> {
     let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
     if (this.connector.settings.connectionTimeout) {
       connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
     }
-    const config: ConnectionAttributes = {
+    return {
       user: this.connector.settings.username || undefined,
       password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
       connectString
     };
+  }
+
+  /**
+   * Interactive explore of the schema of the connected user: its tables at the root, with their column count and an
+   * approximate row count (the `NUM_ROWS` statistic rather than a `COUNT(*)` per table, far too costly just to
+   * browse), and the columns of a table under it, with their type, nullability and primary key membership.
+   * @param parentId - a table name to list the columns of, or null to list the tables
+   */
+  async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    const connection = await oracledb.getConnection(await this.createConnectionAttributes());
+    try {
+      return parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId);
+    } finally {
+      await connection.close();
+    }
+  }
+
+  private async exploreTables(connection: oracledb.Connection): Promise<Array<SouthConnectorExploreEntry>> {
+    const result = await connection.execute<{ tableName: string; rowCount: number; columnCount: number }>(
+      `
+      SELECT
+        t.TABLE_NAME AS "tableName",
+        NVL(t.NUM_ROWS, 0) AS "rowCount",
+        (SELECT COUNT(*) FROM USER_TAB_COLUMNS c WHERE c.TABLE_NAME = t.TABLE_NAME) AS "columnCount"
+      FROM USER_TABLES t
+      ORDER BY t.TABLE_NAME
+    `,
+      [],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    return (result.rows ?? []).map(table => ({
+      id: table.tableName,
+      name: table.tableName,
+      metadata: { columns: Number(table.columnCount), rows: Number(table.rowCount) },
+      hasChildren: Number(table.columnCount) > 0
+    }));
+  }
+
+  private async exploreColumns(connection: oracledb.Connection, tableName: string): Promise<Array<SouthConnectorExploreEntry>> {
+    // DATA_DEFAULT is a LONG, which can't be read in a query like the other columns: the default value is left out
+    const result = await connection.execute<{ name: string; type: string; nullable: string; primaryKey: number }>(
+      `
+      SELECT
+        c.COLUMN_NAME AS "name",
+        c.DATA_TYPE AS "type",
+        c.NULLABLE AS "nullable",
+        CASE WHEN EXISTS (
+          SELECT 1 FROM USER_CONSTRAINTS uc
+          INNER JOIN USER_CONS_COLUMNS ucc ON uc.CONSTRAINT_NAME = ucc.CONSTRAINT_NAME
+          WHERE uc.CONSTRAINT_TYPE = 'P' AND ucc.TABLE_NAME = c.TABLE_NAME AND ucc.COLUMN_NAME = c.COLUMN_NAME
+        ) THEN 1 ELSE 0 END AS "primaryKey"
+      FROM USER_TAB_COLUMNS c
+      WHERE c.TABLE_NAME = :tableName
+      ORDER BY c.COLUMN_ID
+    `,
+      { tableName },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    return (result.rows ?? []).map(column =>
+      toColumnExploreEntry(tableName, {
+        name: column.name,
+        type: column.type,
+        nullable: column.nullable === 'Y',
+        primaryKey: column.primaryKey === 1,
+        defaultValue: null
+      })
+    );
+  }
+
+  /**
+   * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
+   * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
+   * any item's own data query - and returns its rows directly as the discovered records. The tables and
+   * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
+   * the item that reads it (see `discoverTables()`).
+   */
+  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const nodeIds = extractNodeIds(scope);
+    if (nodeIds) {
+      return discoverTables(parentId => this.explore(parentId), nodeIds, ORACLE_DIALECT);
+    }
+    const query = extractDiscoveryQuery(scope);
+    const config = await this.createConnectionAttributes();
 
     let connection;
     try {
