@@ -397,6 +397,14 @@ export class EditSouthComponent implements CanComponentDeactivate {
   }
 
   addItem() {
+    this.openItemCreation(null);
+  }
+
+  /**
+   * Opens the modal for a new item, and again after each item added with "add another".
+   * @param previousItem the item added just before, whose shared settings the new one starts with
+   */
+  private openItemCreation(previousItem: SouthConnectorItemCommandDTO | null) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -414,9 +422,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.itemGroups,
       this.manifest()!,
       this.southConnector()?.id || 'create',
-      this.formSouthConnectorCommand
+      this.formSouthConnectorCommand,
+      previousItem
     );
-    modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => this.inMemoryItems.update(items => [...items, command]));
+    modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => {
+      this.inMemoryItems.update(items => [...items, command]);
+      // opened on the items updated above, so that the next item can't take the name of this one
+      if (component.addAnother) {
+        this.openItemCreation(command);
+      }
+    });
   }
 
   duplicateItem(item: SouthConnectorItemCommandDTO) {

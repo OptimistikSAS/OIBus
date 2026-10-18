@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 
 import { of } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
@@ -27,7 +27,7 @@ import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/aud
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { provideCurrentUser } from '../../shared/current-user-testing';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
+import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
@@ -283,11 +283,42 @@ describe('HistoryQueryDetailComponent', () => {
       historyQuery.id,
       null,
       { type: testData.south.manifest.id, settings: historyQuery.southSettings },
-      testData.south.manifest
+      testData.south.manifest,
+      null
     );
     expect(historyQueryService.createItem).toHaveBeenCalledWith(historyQuery.id, command);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.created');
     expect(historyQueryService.findById).toHaveBeenCalledTimes(2);
+  });
+
+  test('should create items in a row, each one starting from the one saved before', async () => {
+    const firstCommand: HistoryQueryItemCommandDTO = { ...testData.historyQueries.itemCommand, name: 'item3' };
+    const nextCommand: HistoryQueryItemCommandDTO = { ...testData.historyQueries.itemCommand, name: 'item4' };
+    const firstModal = createMock(EditHistoryQueryItemModalComponent, { addAnother: true });
+    const nextModal = createMock(EditHistoryQueryItemModalComponent, { addAnother: false });
+    const open = vi
+      .spyOn(TestBed.inject(MockModalService), 'open')
+      .mockReturnValueOnce(fakeModal(firstModal, Promise.resolve(firstCommand)))
+      .mockReturnValueOnce(fakeModal(nextModal, Promise.resolve(nextCommand)));
+    historyQueryService.createItem.mockReturnValue(of(historyQuery.items[0]));
+    const tester = new HistoryQueryDetailComponentTester();
+
+    await tester.addItemButton.click();
+
+    await vi.waitFor(() => expect(historyQueryService.createItem).toHaveBeenCalledTimes(2));
+    // the history query reloads in the background: the next item is checked against the first one too
+    expect(nextModal.prepareForCreation).toHaveBeenCalledWith(
+      [...historyQuery.items, firstCommand],
+      historyQuery.id,
+      null,
+      { type: testData.south.manifest.id, settings: historyQuery.southSettings },
+      testData.south.manifest,
+      firstCommand
+    );
+    expect(historyQueryService.createItem).toHaveBeenNthCalledWith(1, historyQuery.id, firstCommand);
+    expect(historyQueryService.createItem).toHaveBeenNthCalledWith(2, historyQuery.id, nextCommand);
+    // the last one was saved with the main action: no other item
+    expect(open).toHaveBeenCalledTimes(2);
   });
 
   test('should edit an item', async () => {
