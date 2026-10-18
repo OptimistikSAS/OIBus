@@ -33,6 +33,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { trackControl } from '../../../shared/form/tracked-control';
 import { ModalService } from '../../../shared/modal.service';
+import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { SouthExploreModalComponent, SouthExploreResult } from '../../../shared/south-explore-modal/south-explore-modal.component';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
@@ -189,7 +190,8 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
     ExploreTreeComponent,
     OibCodeBlockComponent,
     TransformerTestResultComponent,
-    WorkflowPreviewComponent
+    WorkflowPreviewComponent,
+    ModalStepsComponent
   ]
 })
 export default class EditWorkflowModalComponent implements AfterViewInit {

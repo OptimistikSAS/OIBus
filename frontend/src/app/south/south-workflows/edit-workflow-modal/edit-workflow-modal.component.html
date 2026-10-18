@@ -1,21 +1,14 @@
 <div class="modal-header">
   <h4 class="modal-title" [translate]="'south.workflows.' + mode() + '-title'"></h4>
 </div>
-<nav class="workflow-steps border-bottom px-3 py-2 d-flex flex-wrap gap-3" [attr.aria-label]="'south.workflows.wizard.steps' | translate">
-  @for (stepName of steps; track stepName) {
-    <button
-      type="button"
-      class="btn btn-link p-0 workflow-step"
-      [id]="'workflow-step-' + stepName"
-      [class.workflow-step-current]="step() === stepName"
-      [attr.aria-current]="step() === stepName ? 'step' : null"
-      (click)="goToStep(stepName)"
-    >
-      <span class="workflow-step-number">{{ $index + 1 }}</span>
-      <span [translate]="'south.workflows.wizard.step.' + stepName"></span>
-    </button>
-  }
-</nav>
+<oib-modal-steps
+  [steps]="steps"
+  [current]="step()"
+  (currentChange)="goToStep($event)"
+  labelPrefix="south.workflows.wizard.step."
+  ariaLabel="south.workflows.wizard.steps"
+  idPrefix="workflow-step-"
+/>
 <div class="modal-body">
   <form [formGroup]="form" (ngSubmit)="save()" id="workflow-form">
     @if (formError(); as formError) {

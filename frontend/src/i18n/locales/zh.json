@@ -1918,7 +1918,16 @@
     "edit-item-modal": {
       "create-title": "向 south 连接器添加新项",
       "edit-title": "编辑项",
-      "copy-title": "向 south 连接器添加新项"
+      "copy-title": "向 south 连接器添加新项",
+      "steps": "项步骤",
+      "step": {
+        "general": "常规",
+        "settings": "设置",
+        "test": "测试并保存"
+      },
+      "history-settings": "历史设置",
+      "caching": "缓存",
+      "group-scan-mode": "{{scanMode}}(来自组)"
     },
     "items": {
       "title": "项",
@@ -3461,6 +3470,7 @@
     "ok": "确定",
     "save": "保存",
     "back": "返回",
+    "next": "下一步",
     "cancel": "取消",
     "delete": "删除",
     "close": "关闭",
@@ -3559,7 +3569,8 @@
     "create": "创建",
     "add": "添加",
     "edit": "编辑",
-    "cache": "缓存"
+    "cache": "缓存",
+    "step-invalid": "(有错误)"
   },
   "duration-pipe": {
     "long": {

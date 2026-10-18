@@ -6,6 +6,7 @@
     "ok": "OK",
     "save": "Save",
     "back": "Back",
+    "next": "Next",
     "cancel": "Cancel",
     "delete": "Delete",
     "close": "Close",
@@ -104,7 +105,8 @@
     "create": "Create",
     "add": "Add",
     "edit": "Edit",
-    "cache": "Cache"
+    "cache": "Cache",
+    "step-invalid": "(has errors)"
   },
   "datepicker": {
     "parse-pattern": "d/M/yyyy",
@@ -2868,7 +2870,16 @@
     "edit-item-modal": {
       "create-title": "Add a new item to the south connector",
       "edit-title": "Edit item",
-      "copy-title": "Add a new item to the south connector"
+      "copy-title": "Add a new item to the south connector",
+      "steps": "Item steps",
+      "step": {
+        "general": "General",
+        "settings": "Settings",
+        "test": "Test & save"
+      },
+      "history-settings": "History settings",
+      "caching": "Caching",
+      "group-scan-mode": "{{scanMode}} (from the group)"
     },
     "items": {
       "title": "Items",

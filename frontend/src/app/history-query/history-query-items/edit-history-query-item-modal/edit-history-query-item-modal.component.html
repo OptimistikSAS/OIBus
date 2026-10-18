@@ -1,57 +1,99 @@
 <div class="modal-header">
   <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode() + '-title'"></h4>
 </div>
+<oib-modal-steps
+  [steps]="steps.steps"
+  [(current)]="steps.current"
+  [invalidSteps]="steps.invalid()"
+  labelPrefix="south.edit-item-modal.step."
+  ariaLabel="south.edit-item-modal.steps"
+/>
 @if (form(); as form) {
   <div class="modal-body">
-    <form [formGroup]="form" (ngSubmit)="save()" id="form">
-      <div class="row">
-        <div class="col-3">
+    <form [formGroup]="form" (ngSubmit)="submit()" id="form">
+      <!-- 1. General: what every item has, whatever its connector -->
+      <div [hidden]="steps.current() !== 'general'" id="step-general">
+        <div class="row">
           <!-- Name -->
-          <div class="form-group">
-            <label class="form-label" for="name" translate="south.items.name"></label>
-            <input formControlName="name" id="name" class="form-control" />
-            <val-errors controlName="name" />
-          </div>
-        </div>
-        <!-- Enabled -->
-        <div class="col-3">
-          <div class="form-group">
-            <div class="form-check form-switch padded">
-              <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
-              <label class="form-check-label" for="item-enabled" translate="south.items.enable"></label>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="name" translate="south.items.name"></label>
+              <input formControlName="name" id="name" class="form-control" />
+              <val-errors controlName="name" />
             </div>
           </div>
         </div>
+        <!-- Enabled -->
+        <div class="form-group">
+          <div class="form-check form-switch">
+            <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
+            <label class="form-check-label" for="item-enabled" translate="south.items.enable"></label>
+          </div>
+        </div>
       </div>
-      <ng-container formGroupName="settings">
-        <oib-oibus-object-form-control
-          [scanModes]="[]"
-          [certificates]="[]"
-          [group]="form.controls.settings"
-          [objectAttribute]="itemSettingsAttribute()!"
-        />
-      </ng-container>
+
+      <!-- 2. Settings: those of the connector type -->
+      <div [hidden]="steps.current() !== 'settings'" id="step-settings">
+        <ng-container formGroupName="settings">
+          <oib-oibus-object-form-control
+            [scanModes]="[]"
+            [certificates]="[]"
+            [group]="form.controls.settings"
+            [objectAttribute]="itemSettingsAttribute()!"
+          />
+        </ng-container>
+      </div>
     </form>
-    <oib-south-item-test
-      type="history-south"
-      [entityId]="historyId()"
-      [fromSouth]="fromSouth()"
-      [item]="formItem()!"
-      [connectorCommand]="southConnectorCommand()!"
-      [manifest]="manifest()!"
-      [inMemoryTransformers]="inMemoryTransformers()"
-    />
+
+    <!-- 3. Test & save: the item as it will be saved, tried out -->
+    <div [hidden]="steps.current() !== 'test'" id="step-test">
+      @let item = formItem()!;
+      <dl class="row item-summary mb-2" id="item-summary">
+        <dt class="col-sm-2" translate="south.items.name"></dt>
+        <dd class="col-sm-4">{{ item.name }}</dd>
+        <dt class="col-sm-2" translate="south.items.status"></dt>
+        <dd class="col-sm-4" [translate]="item.enabled ? 'common.enabled' : 'common.disabled'"></dd>
+      </dl>
+      <oib-south-item-test
+        type="history-south"
+        [entityId]="historyId()"
+        [fromSouth]="fromSouth()"
+        [item]="item"
+        [connectorCommand]="southConnectorCommand()!"
+        [manifest]="manifest()!"
+        [inMemoryTransformers]="inMemoryTransformers()"
+      />
+    </div>
   </div>
 }
 <div class="modal-footer">
+  <!-- Moving between the steps, apart from saving: the main action is Save once it shows, Next before -->
+  <div class="btn-group me-auto">
+    @if (!steps.isFirst()) {
+      <button type="button" class="btn btn-secondary" id="previous-step" (click)="steps.back()" translate="common.back"></button>
+    }
+    @if (!steps.isLast()) {
+      <button
+        type="button"
+        class="btn"
+        [class.btn-primary]="!canSave()"
+        [class.btn-secondary]="canSave()"
+        id="next-step"
+        (click)="steps.next()"
+        translate="common.next"
+      ></button>
+    }
+  </div>
   <div class="btn-group">
-    <button
-      type="submit"
-      [oib-save-button]="state"
-      form="form"
-      [translationKey]="directSave() ? 'common.save' : 'common.ok'"
-      [iconClass]="directSave() ? 'fa-floppy-disk' : 'fa-check'"
-    ></button>
+    @if (canSave()) {
+      <button
+        type="submit"
+        [oib-save-button]="state"
+        form="form"
+        [translationKey]="directSave() ? 'common.save' : 'common.ok'"
+        [iconClass]="directSave() ? 'fa-floppy-disk' : 'fa-check'"
+      ></button>
+    }
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

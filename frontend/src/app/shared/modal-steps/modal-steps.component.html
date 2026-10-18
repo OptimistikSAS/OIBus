@@ -1,0 +1,26 @@
+<nav class="modal-steps border-bottom px-3 py-2 d-flex flex-wrap gap-3" [attr.aria-label]="ariaLabel() | translate">
+  @for (step of steps(); track step) {
+    @let invalid = invalidSteps().includes(step);
+    <button
+      type="button"
+      class="btn btn-link p-0 modal-step"
+      [id]="idPrefix() + step"
+      [class.modal-step-current]="current() === step"
+      [class.modal-step-invalid]="invalid"
+      [attr.aria-current]="current() === step ? 'step' : null"
+      (click)="current.set(step)"
+    >
+      <span class="modal-step-number">
+        @if (invalid) {
+          <span class="fa-solid fa-exclamation" aria-hidden="true"></span>
+        } @else {
+          {{ $index + 1 }}
+        }
+      </span>
+      <span [translate]="labelPrefix() + step"></span>
+      @if (invalid) {
+        <span class="visually-hidden" translate="common.step-invalid"></span>
+      }
+    </button>
+  }
+</nav>
