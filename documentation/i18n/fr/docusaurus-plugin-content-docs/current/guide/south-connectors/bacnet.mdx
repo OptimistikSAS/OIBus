@@ -15,18 +15,18 @@ BACnet/IP, communiquant en UDP, à l'aide de la bibliothèque
 
 ### Connexion {#connection}
 
-| Paramètre                  | Description                                                                                                                     | Exemple de valeur  |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| **Port**                     | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard. Les connecteurs sur le même port et la même **Interface locale** partagent un socket, pour qu'un test ou un **Explorer** avec des paramètres non enregistrés reçoive ses réponses pendant que le connecteur tourne. | `47808`              |
-| **Délai d'attente APDU**     | Temps maximal, en millisecondes, à attendre la réponse d'un appareil à une requête avant de la considérer comme échouée.       | `6000`               |
-| **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue). | `10000` |
-| **Découverte**               | Comment **Tester les paramètres** et le niveau racine d'**Explorer** trouvent les appareils : **Diffusion Who-Is** liste chaque appareil qui répond à un `Who-Is` diffusé ; **Appareil cible (unicast)** va directement à un appareil, sans aucun `Who-Is` ; **Routeur (unicast)** envoie le `Who-Is` à un seul routeur BACnet, qui le relaie vers les réseaux situés derrière lui. | `Diffusion Who-Is` |
-| **Adresse de l'appareil cible** | _(Affiché avec **Appareil cible (unicast)**)_ Adresse IP (et port optionnel) de l'appareil. | `192.168.1.10` |
-| **Instance de l'appareil cible** | _(Affiché avec **Appareil cible (unicast)**)_ Instance d'appareil de l'appareil (`0` – `4194302`). | `201` |
-| **Adresse du routeur**       | _(Affiché avec **Routeur (unicast)**)_ Adresse IP (et port optionnel) du routeur BACnet. | `192.168.1.20` |
-| **Adresse de diffusion**     | _(Affiché avec **Diffusion Who-Is**)_ Adresse de diffusion du `Who-Is` envoyé pour découvrir les appareils. Ignorée lorsque le BBMD est activé : le `Who-Is` passe alors par le BBMD. | `255.255.255.255`   |
-| **Interface locale**         | Optionnel. Adresse IP de la carte réseau locale à laquelle lier le socket BACnet/IP. Laissez vide pour utiliser toutes les cartes réseau (voir [Quand renseigner l'interface locale](#when-to-set-the-local-interface)). | `192.168.1.50` |
-| **Requêtes parallèles max**  | Nombre maximal d'éléments (ou de groupes synchronisés) qu'OIBus lit en même temps, jusqu'à `16`. Les requêtes vers un même appareil restent envoyées les unes après les autres : une valeur plus élevée n'accélère que les éléments répartis sur plusieurs appareils. | `1` |
+| Paramètre                            | Description                                                                                                                                                                                                                                                                                                                                                                         | Exemple de valeur  |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Port**                             | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard. Les connecteurs sur le même port et la même **Interface locale** partagent un socket, pour qu'un test ou un **Explorer** avec des paramètres non enregistrés reçoive ses réponses pendant que le connecteur tourne.                                                            | `47808`            |
+| **Délai d'attente APDU**             | Temps maximal, en millisecondes, à attendre la réponse d'un appareil à une requête avant de la considérer comme échouée.                                                                                                                                                                                                                                                            | `6000`             |
+| **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue).                                                                                                                                                                                                                                    | `10000`            |
+| **Découverte**                       | Comment **Tester les paramètres** et le niveau racine d'**Explorer** trouvent les appareils : **Diffusion Who-Is** liste chaque appareil qui répond à un `Who-Is` diffusé ; **Appareil cible (unicast)** va directement à un appareil, sans aucun `Who-Is` ; **Routeur (unicast)** envoie le `Who-Is` à un seul routeur BACnet, qui le relaie vers les réseaux situés derrière lui. | `Diffusion Who-Is` |
+| **Adresse de l'appareil cible**      | _(Affiché avec **Appareil cible (unicast)**)_ Adresse IP (et port optionnel) de l'appareil.                                                                                                                                                                                                                                                                                         | `192.168.1.10`     |
+| **Instance de l'appareil cible**     | _(Affiché avec **Appareil cible (unicast)**)_ Instance d'appareil de l'appareil (`0` – `4194302`).                                                                                                                                                                                                                                                                                  | `201`              |
+| **Adresse du routeur**               | _(Affiché avec **Routeur (unicast)**)_ Adresse IP (et port optionnel) du routeur BACnet.                                                                                                                                                                                                                                                                                            | `192.168.1.20`     |
+| **Adresse de diffusion**             | _(Affiché avec **Diffusion Who-Is**)_ Adresse de diffusion du `Who-Is` envoyé pour découvrir les appareils. Ignorée lorsque le BBMD est activé : le `Who-Is` passe alors par le BBMD.                                                                                                                                                                                               | `255.255.255.255`  |
+| **Interface locale**                 | Optionnel. Adresse IP de la carte réseau locale à laquelle lier le socket BACnet/IP. Laissez vide pour utiliser toutes les cartes réseau (voir [Quand renseigner l'interface locale](#when-to-set-the-local-interface)).                                                                                                                                                            | `192.168.1.50`     |
+| **Requêtes parallèles max**          | Nombre maximal d'éléments (ou de groupes synchronisés) qu'OIBus lit en même temps, jusqu'à `16`. Les requêtes vers un même appareil restent envoyées les unes après les autres : une valeur plus élevée n'accélère que les éléments répartis sur plusieurs appareils.                                                                                                               | `1`                |
 
 :::tip Appareil cible plutôt que diffusion
 
@@ -87,11 +87,11 @@ seule requête `ReadPropertyMultiple` par lot, plutôt qu'une requête par point
 `ReadProperty`. Lorsqu'un appareil répond par une erreur pour une propriété (objet ou propriété inconnu), seul
 cet élément est ignoré, avec un avertissement dans les logs ; les autres éléments de la requête sont collectés.
 
-| Paramètre                        | Description                                                                                                                                      | Exemple de valeur |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| **Objets max par requête**          | Nombre maximal de paires objet/propriété qu'OIBus regroupe dans une seule requête `ReadPropertyMultiple` vers un appareil, et d'enregistrements de journal de tendance demandés dans une seule requête `ReadRange`. Réduisez cette valeur si un appareil rejette les requêtes volumineuses (par exemple, absence de prise en charge de la segmentation APDU). | `20` |
-| **Durée de l'abonnement COV**       | Durée, en secondes, demandée pour un abonnement COV. `0` demande un abonnement sans expiration.                                                 | `300`                |
-| **Marge de renouvellement COV**     | Délai, en secondes, avant l'expiration d'un abonnement COV à durée limitée auquel OIBus le renouvelle — mais jamais avant la moitié de sa durée. Sans effet lorsque la durée est `0`. | `60`                 |
+| Paramètre                       | Description                                                                                                                                                                                                                                                                                                                                                   | Exemple de valeur |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Objets max par requête**      | Nombre maximal de paires objet/propriété qu'OIBus regroupe dans une seule requête `ReadPropertyMultiple` vers un appareil, et d'enregistrements de journal de tendance demandés dans une seule requête `ReadRange`. Réduisez cette valeur si un appareil rejette les requêtes volumineuses (par exemple, absence de prise en charge de la segmentation APDU). | `20`              |
+| **Durée de l'abonnement COV**   | Durée, en secondes, demandée pour un abonnement COV. `0` demande un abonnement sans expiration.                                                                                                                                                                                                                                                               | `300`             |
+| **Marge de renouvellement COV** | Délai, en secondes, avant l'expiration d'un abonnement COV à durée limitée auquel OIBus le renouvelle — mais jamais avant la moitié de sa durée. Sans effet lorsque la durée est `0`.                                                                                                                                                                         | `60`              |
 
 Un abonnement COV ou un renouvellement qui échoue (appareil hors ligne, par exemple) est retenté jusqu'à ce
 qu'il réussisse : après l'**Intervalle de nouvelle tentative**, puis deux fois plus tard à chaque fois, jusqu'à
@@ -105,10 +105,10 @@ abonnements (plutôt que d'en ajouter de nouveaux) lorsqu'il se reconnecte aprè
 S'applique aux éléments sur le mode de scan **Subscription** — les notifications COV entrantes sont
 mises en tampon et transmises aux caches North par lots plutôt qu'une par une.
 
-| Paramètre                             | Description                                                                          | Exemple de valeur |
-| ---------------------------------------- | --------------------------------------------------------------------------------------- | ------------------- |
-| Nombre de messages avant envoi           | Nombre de notifications COV à accumuler avant l'envoi vers les caches North             | `1000`               |
-| Délai entre les envois                   | Délai (en millisecondes) entre les envois automatiques des messages accumulés           | `1000`               |
+| Paramètre                      | Description                                                                   | Exemple de valeur |
+| ------------------------------ | ----------------------------------------------------------------------------- | ----------------- |
+| Nombre de messages avant envoi | Nombre de notifications COV à accumuler avant l'envoi vers les caches North   | `1000`            |
+| Délai entre les envois         | Délai (en millisecondes) entre les envois automatiques des messages accumulés | `1000`            |
 
 ### BBMD / Enregistrement en tant que périphérique distant {#bbmd-foreign-device-registration}
 
@@ -117,11 +117,11 @@ Un **BBMD** (BACnet Broadcast Management Device) relaie les messages de diffusio
 OIBus et les appareils cibles ne se trouvent pas sur le même domaine de diffusion IP local (par exemple,
 sous-réseaux routés, VLAN ou liaison VPN).
 
-| Paramètre                    | Description                                                                                                              | Exemple de valeur   |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| **Activé**                      | Enregistre OIBus en tant que périphérique distant auprès d'un BBMD distant au lieu de diffuser sur le sous-réseau local. | Activé/Désactivé      |
-| **Adresse du BBMD**             | _(Affiché lorsque activé)_ Adresse IP (et port optionnel) du BBMD auprès duquel s'enregistrer.                          | `10.0.0.1:47808`      |
-| **Durée de vie (TTL) du périphérique distant** | _(Affiché lorsque activé)_ Durée de vie, en secondes, de l'enregistrement en tant que périphérique distant. OIBus la renouvelle automatiquement avant son expiration. | `900` |
+| Paramètre                                      | Description                                                                                                                                                           | Exemple de valeur |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Activé**                                     | Enregistre OIBus en tant que périphérique distant auprès d'un BBMD distant au lieu de diffuser sur le sous-réseau local.                                              | Activé/Désactivé  |
+| **Adresse du BBMD**                            | _(Affiché lorsque activé)_ Adresse IP (et port optionnel) du BBMD auprès duquel s'enregistrer.                                                                        | `10.0.0.1:47808`  |
+| **Durée de vie (TTL) du périphérique distant** | _(Affiché lorsque activé)_ Durée de vie, en secondes, de l'enregistrement en tant que périphérique distant. OIBus la renouvelle automatiquement avant son expiration. | `900`             |
 
 Lorsque cette option est activée avec la découverte **Diffusion Who-Is**, la découverte
 d'appareils (**Tester les paramètres**, niveau racine d'**Explorer**) est acheminée via le BBMD au lieu d'une
@@ -147,17 +147,17 @@ COV).
 
 Chaque élément cible une propriété d'objet BACnet sur un appareil.
 
-| Paramètre              | Description                                                                                                              | Exemple de valeur   |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| **Adresse de l'appareil**  | Adresse IP (et port optionnel) de l'appareil cible, ou de son routeur BACnet pour un [appareil routé](#devices-behind-a-bacnet-router). | `192.168.1.10`        |
-| **Instance de l'appareil** | Numéro d'instance BACnet de l'appareil. Utilisé pour l'identification et la journalisation ; les requêtes sont adressées par IP, et non par ce numéro. | `10` |
-| **Type d'objet**           | Type de l'objet BACnet à lire.                                                                                          | `Entrée analogique`   |
-| **Instance d'objet**       | Numéro d'instance de l'objet au sein de l'appareil.                                                                     | `1`                    |
-| **Propriété**              | Propriété de l'objet à lire.                                                                                            | `Valeur actuelle`      |
-| **Fuseau horaire de l'appareil** | _(Journal de tendance)_ Fuseau horaire de l'horloge de l'appareil : les enregistrements de son [journal de tendance](#history-from-trend-logs) sont horodatés dans l'heure locale de l'appareil, et ce paramètre les convertit en instants exacts. Chaque élément a le sien, les appareils pouvant être réglés différemment. | `Europe/Paris` |
-| **Appareil routé**         | L'appareil est sur un autre réseau BACnet, derrière un routeur. Affiche les deux paramètres ci-dessous.                | Activé/Désactivé       |
-| **Numéro de réseau**       | _(Appareil routé)_ Numéro de réseau BACnet du réseau de l'appareil.                                                     | `2`                    |
-| **Adresse MAC**            | _(Appareil routé)_ Adresse de l'appareil sur ce réseau : numéro de station en décimal pour le MS/TP, ou octets en hexadécimal séparés par des deux-points. | `5` |
+| Paramètre                        | Description                                                                                                                                                                                                                                                                                                                  | Exemple de valeur   |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| **Adresse de l'appareil**        | Adresse IP (et port optionnel) de l'appareil cible, ou de son routeur BACnet pour un [appareil routé](#devices-behind-a-bacnet-router).                                                                                                                                                                                      | `192.168.1.10`      |
+| **Instance de l'appareil**       | Numéro d'instance BACnet de l'appareil. Utilisé pour l'identification et la journalisation ; les requêtes sont adressées par IP, et non par ce numéro.                                                                                                                                                                       | `10`                |
+| **Type d'objet**                 | Type de l'objet BACnet à lire.                                                                                                                                                                                                                                                                                               | `Entrée analogique` |
+| **Instance d'objet**             | Numéro d'instance de l'objet au sein de l'appareil.                                                                                                                                                                                                                                                                          | `1`                 |
+| **Propriété**                    | Propriété de l'objet à lire.                                                                                                                                                                                                                                                                                                 | `Valeur actuelle`   |
+| **Fuseau horaire de l'appareil** | _(Journal de tendance)_ Fuseau horaire de l'horloge de l'appareil : les enregistrements de son [journal de tendance](#history-from-trend-logs) sont horodatés dans l'heure locale de l'appareil, et ce paramètre les convertit en instants exacts. Chaque élément a le sien, les appareils pouvant être réglés différemment. | `Europe/Paris`      |
+| **Appareil routé**               | L'appareil est sur un autre réseau BACnet, derrière un routeur. Affiche les deux paramètres ci-dessous.                                                                                                                                                                                                                      | Activé/Désactivé    |
+| **Numéro de réseau**             | _(Appareil routé)_ Numéro de réseau BACnet du réseau de l'appareil.                                                                                                                                                                                                                                                          | `2`                 |
+| **Adresse MAC**                  | _(Appareil routé)_ Adresse de l'appareil sur ce réseau : numéro de station en décimal pour le MS/TP, ou octets en hexadécimal séparés par des deux-points.                                                                                                                                                                   | `5`                 |
 
 :::note Type d'objet
 
@@ -236,11 +236,11 @@ De nombreux contrôleurs de bâtiment ne sont pas eux-mêmes sur le réseau IP :
 bâtiment. Un tel appareil n'a pas d'adresse IP ; OIBus le joint à travers le routeur, avec ces paramètres
 d'élément :
 
-| Paramètre                 | Valeur                                                                                                                                                                                                                    |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Adresse de l'appareil** | L'adresse IP (et le port) du routeur.                                                                                                                                                                                     |
-| **Appareil routé**        | Activé.                                                                                                                                                                                                                   |
-| **Numéro de réseau**      | Le numéro de réseau BACnet du réseau de l'appareil, tel que configuré sur le routeur (`1` – `65534`).                                                                                                                      |
+| Paramètre                 | Valeur                                                                                                                                                                                                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Adresse de l'appareil** | L'adresse IP (et le port) du routeur.                                                                                                                                                                                                                                      |
+| **Appareil routé**        | Activé.                                                                                                                                                                                                                                                                    |
+| **Numéro de réseau**      | Le numéro de réseau BACnet du réseau de l'appareil, tel que configuré sur le routeur (`1` – `65534`).                                                                                                                                                                      |
 | **Adresse MAC**           | L'adresse de l'appareil sur ce réseau : son numéro de station pour le MS/TP, en décimal (`0` – `255`), ou pour les autres réseaux ses octets d'adresse en hexadécimal séparés par des deux-points (`0A:00:00:05:BA:C0` pour un appareil BACnet/IP : adresse IP puis port). |
 
 Le `Who-Is` de découverte est une diffusion globale, que les routeurs relaient vers les réseaux situés
@@ -271,6 +271,13 @@ manuellement les identifiants d'appareils et d'objets :
 2. La sélection d'un appareil lit sa liste d'objets et affiche chaque objet qu'il expose, enrichi de sa
    valeur actuelle lorsqu'elle est disponible. Un appareil incapable d'envoyer sa liste d'objets complète en
    une seule réponse (pas de prise en charge de la segmentation, fréquent en MS/TP) la voit lue entrée par entrée.
+
+Cochez des appareils ou des objets et cliquez sur **Ajouter comme points** pour créer leurs éléments en une fois —
+chaque objet donne un élément nommé `<device name> - <object name>`, qui lit sa `present-value` — ou sur
+**Synchroniser…** pour créer une [synchronisation des points](./common-settings.md#items-synchronisation) qui, à
+chaque exécution, ajoute les éléments des nouveaux objets et désactive ceux des objets disparus. Un appareil coché vaut
+pour tous ses objets. Voir [Sélectionner des nœuds](./common-settings.md#selecting-nodes) et
+[Valeurs par défaut de découverte](./common-settings.md#discovery-defaults).
 
 Utilisez **Tester les paramètres** sur les paramètres du connecteur pour lancer la même découverte
 d'appareils en guise de vérification rapide de la connectivité, sans ouvrir l'explorateur complet. Avec la
