@@ -656,6 +656,7 @@ describe('South Service', () => {
 
   it('should discover on the live instance when its settings already match, without stopping it', async () => {
     (mockedSouth1.hasConfigurationDiscovery as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    mockedSouth1.isEnabled.mock.mockImplementation(() => true);
     engine.hasSouth.mock.mockImplementation(() => true);
     engine.getSouth.mock.mockImplementation(() => ({ south: mockedSouth1, metrics: {} }) as never);
 
@@ -677,6 +678,7 @@ describe('South Service', () => {
   });
 
   it('should test a south connector against the live instance when its settings already match', async () => {
+    mockedSouth1.isEnabled.mock.mockImplementation(() => true);
     engine.hasSouth.mock.mockImplementationOnce(() => true);
     engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} }) as never);
 
@@ -685,6 +687,16 @@ describe('South Service', () => {
     // Delegated straight to the live instance — no throwaway connector was built
     assert.strictEqual(mockBuildSouth.mock.calls.length, 0);
     assert.deepStrictEqual(engine.getSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
+  });
+
+  it('should fall back to a throwaway connector when the live instance is disabled', async () => {
+    engine.hasSouth.mock.mockImplementationOnce(() => true);
+    engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} }) as never);
+
+    await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.list[0].settings);
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
     assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
   });
 
@@ -701,6 +713,7 @@ describe('South Service', () => {
   });
 
   it('should test an item against the live instance when connector settings already match', async () => {
+    mockedSouth1.isEnabled.mock.mockImplementation(() => true);
     engine.hasSouth.mock.mockImplementationOnce(() => true);
     engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} }) as never);
 
@@ -786,6 +799,45 @@ describe('South Service', () => {
       sessionId: 'exploreSessionId',
       entries: [{ id: 'n1', name: 'N1', metadata: { type: 'Object' }, hasChildren: true }]
     });
+  });
+
+  it('should explore a disabled connector through a throwaway instance, stopped on close', async () => {
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    // The engine instance of the disabled connector (wired to the north caches) must not be connected
+    const engineSouth = new SouthConnectorMock(testData.south.list[0]);
+    engine.hasSouth.mock.mockImplementation(() => true);
+    engine.getSouth.mock.mockImplementation(() => ({ south: engineSouth, metrics: {} }) as never);
+
+    const { sessionId } = await service.startExplore(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.list[0].settings
+    );
+    await service.closeExplore(sessionId);
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.strictEqual(engineSouth.connect.mock.calls.length, 0);
+    assert.strictEqual(mockedSouth1.connect.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+  });
+
+  it('should explore a running connector through its live instance, without connecting or stopping it', async () => {
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    mockedSouth1.isEnabled.mock.mockImplementation(() => true);
+    engine.hasSouth.mock.mockImplementation(() => true);
+    engine.getSouth.mock.mockImplementation(() => ({ south: mockedSouth1, metrics: {} }) as never);
+
+    const { sessionId } = await service.startExplore(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.list[0].settings
+    );
+    await service.closeExplore(sessionId);
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 0);
+    assert.strictEqual(mockedSouth1.explore.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.connect.mock.calls.length, 0);
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 0);
   });
 
   it('should throw when starting explore on an unsupported connector', async () => {
