@@ -25,19 +25,8 @@ import {
 } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
-import { discoverTables, extractNodeIds, SqlDialect, toColumnExploreEntry } from '../sql-table-discovery';
-
-/** `` `name` ``, embedded backticks doubled. */
-function quoteMySQLIdentifier(identifier: string): string {
-  return `\`${identifier.replace(/`/g, '``')}\``;
-}
-
-/** The tables of the database the connector reads, by name (see `explore()`). */
-const MYSQL_DIALECT: SqlDialect = {
-  quoteTable: quoteMySQLIdentifier,
-  quoteColumn: quoteMySQLIdentifier,
-  dateTimeType: columnType => (['datetime', 'timestamp'].includes(columnType.toLowerCase()) ? 'date-time' : null)
-};
+import { MYSQL_DIALECT } from '../sql-dialects';
+import { buildTableQuery, discoverTables, extractNodeIds, extractTableScope, toColumnExploreEntry } from '../sql-table-discovery';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send the resulting rows as
@@ -304,7 +293,8 @@ export default class SouthMySQL
   /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records. The tables and
+   * any item's own data query - and returns its rows directly as the discovered records; or reads the rows of a table
+   * (`discoveryScope.table`, and the `columns` to read - all when none). The tables and
    * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
    * the item that reads it (see `discoverTables()`).
    */
@@ -313,7 +303,9 @@ export default class SouthMySQL
     if (nodeIds) {
       return discoverTables(parentId => this.explore(parentId), nodeIds, MYSQL_DIALECT);
     }
-    const query = extractDiscoveryQuery(scope);
+    // The rows of a table, or of a query of its own
+    const tableScope = extractTableScope(scope);
+    const query = tableScope ? buildTableQuery(MYSQL_DIALECT, tableScope.table, tableScope.columns) : extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();
 
     let connection;

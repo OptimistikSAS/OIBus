@@ -2221,7 +2221,19 @@
         "review-incomplete": "请完成前面的步骤以预览运行",
         "records-pushed": "推送到 OIAnalytics 的记录：{{count}}",
         "back": "上一步",
-        "next": "下一步"
+        "next": "下一步",
+        "table-hint": "其行成为记录的表 - 每条记录以读取的列作为字段",
+        "table": "表",
+        "table-none": "选择表",
+        "columns": "列",
+        "columns-hint": "从每行读取的列：默认全部",
+        "query-run": "OIBus 执行的查询",
+        "write-query": "自行编写查询",
+        "pick-table": "改为选择表",
+        "table-required": "必须选择一个表",
+        "columns-required": "至少需要读取一列",
+        "table-summary": "表 {{table}}，{{count}} 列",
+        "table-summary-all": "表 {{table}}，所有列"
       }
     },
     "monitoring": {
