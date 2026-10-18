@@ -30,30 +30,15 @@ import {
 } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
+import { POSTGRESQL_DIALECT } from '../sql-dialects';
 import {
+  buildTableQuery,
   discoverTables,
   extractNodeIds,
-  quoteAnsiIdentifier,
+  extractTableScope,
   splitSchemaTable,
-  SqlDialect,
   toColumnExploreEntry
 } from '../sql-table-discovery';
-
-/** The date formats of the PostgreSQL date/time column types (as `information_schema` names them), as an item tracking instant reads them. */
-const POSTGRESQL_DATE_TIME_TYPES: Record<string, string> = {
-  'timestamp without time zone': 'timestamp',
-  'timestamp with time zone': 'timestamptz'
-};
-
-/** The tables of PostgreSQL are schema-qualified (`schema.table`, see `explore()`). */
-const POSTGRESQL_DIALECT: SqlDialect = {
-  quoteTable: tableId => {
-    const { schema, table } = splitSchemaTable(tableId);
-    return schema ? `${quoteAnsiIdentifier(schema)}.${quoteAnsiIdentifier(table)}` : quoteAnsiIdentifier(table);
-  },
-  quoteColumn: quoteAnsiIdentifier,
-  dateTimeType: columnType => POSTGRESQL_DATE_TIME_TYPES[columnType.toLowerCase()] ?? null
-};
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send the resulting rows as
@@ -341,7 +326,8 @@ export default class SouthPostgreSQL
   /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records. The tables and
+   * any item's own data query - and returns its rows directly as the discovered records; or reads the rows of a table
+   * (`discoveryScope.table`, and the `columns` to read - all when none). The tables and
    * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
    * the item that reads it (see `discoverTables()`).
    */
@@ -350,7 +336,9 @@ export default class SouthPostgreSQL
     if (nodeIds) {
       return discoverTables(parentId => this.explore(parentId), nodeIds, POSTGRESQL_DIALECT);
     }
-    const query = extractDiscoveryQuery(scope);
+    // The rows of a table, or of a query of its own
+    const tableScope = extractTableScope(scope);
+    const query = tableScope ? buildTableQuery(POSTGRESQL_DIALECT, tableScope.table, tableScope.columns) : extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();
 
     let connection;

@@ -65,15 +65,15 @@ export async function discoverTables(
       type: typeof entry.metadata.type === 'string' ? entry.metadata.type : null
     }));
     const timeColumn = pickTimeColumn(columns, dialect);
-    let select = '*';
-    if (checkedColumns) {
-      const selected = columns.filter(column => checkedColumns.has(column.name));
-      if (timeColumn && !checkedColumns.has(timeColumn.name)) {
-        selected.unshift(timeColumn);
-      }
-      select = selected.map(column => dialect.quoteColumn(column.name)).join(', ');
+    const selected = checkedColumns ? columns.filter(column => checkedColumns.has(column.name)) : [];
+    if (checkedColumns && timeColumn && !checkedColumns.has(timeColumn.name)) {
+      selected.unshift(timeColumn);
     }
-    let query = `SELECT ${select} FROM ${dialect.quoteTable(tableId)}`;
+    let query = buildTableQuery(
+      dialect,
+      tableId,
+      selected.map(column => column.name)
+    );
     if (timeColumn) {
       const quotedTimeColumn = dialect.quoteColumn(timeColumn.name);
       query += ` WHERE ${quotedTimeColumn} > @StartTime AND ${quotedTimeColumn} <= @EndTime`;
@@ -114,6 +114,24 @@ export function toColumnExploreEntry(
     metadata.default = column.defaultValue;
   }
   return { id: `${tableId}.${column.name}`, name: column.name, metadata, hasChildren: false };
+}
+
+/** The query reading the given columns of a table, quoted in the dialect of its connector - all of them when none is given. */
+export function buildTableQuery(dialect: SqlDialect, tableId: string, columns: Array<string>): string {
+  const select = columns.length > 0 ? columns.map(column => dialect.quoteColumn(column)).join(', ') : '*';
+  return `SELECT ${select} FROM ${dialect.quoteTable(tableId)}`;
+}
+
+/**
+ * The table (an explore entry id) and columns a Configuration Workflow discovers from, when it reads the rows of a
+ * table rather than running a query of its own - see `buildTableQuery()`.
+ */
+export function extractTableScope(scope: Record<string, unknown>): { table: string; columns: Array<string> } | null {
+  if (typeof scope.table !== 'string' || !scope.table) {
+    return null;
+  }
+  const columns = Array.isArray(scope.columns) ? scope.columns.filter((column): column is string => typeof column === 'string') : [];
+  return { table: scope.table, columns };
 }
 
 /** The nodes checked in the Explore modal, when the discovery scope is made of them rather than a query. */
