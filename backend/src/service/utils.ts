@@ -11,7 +11,7 @@ import cronstrue from 'cronstrue';
 import { DateTime } from 'luxon';
 import minimist from 'minimist';
 import csv from 'papaparse';
-import unzipper from 'unzipper';
+import yauzl from 'yauzl';
 import yazl from 'yazl';
 
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/api/engine.model';
@@ -192,8 +192,21 @@ export const compress = (input: string, output: string): Promise<void> => {
   return pipeline(createReadStream(input), zlib.createGzip({ level: COMPRESSION_LEVEL }), createWriteStream(output));
 };
 
-export const unzip = (input: string, output: string): Promise<void> => {
-  return pipeline(createReadStream(input), unzipper.Extract({ path: output }));
+/**
+ * Extracts every entry of a zip archive into the output folder. yauzl rejects the archive if an entry name is absolute or
+ * contains `..`, so nothing can be written outside the output folder.
+ */
+export const unzip = async (input: string, output: string): Promise<void> => {
+  const zip = await yauzl.openPromise(input);
+  for await (const entry of zip.eachEntry()) {
+    const target = path.join(output, entry.fileName);
+    if (entry.fileName.endsWith('/')) {
+      await fs.mkdir(target, { recursive: true });
+      continue;
+    }
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await pipeline(await zip.openReadStreamPromise(entry), createWriteStream(target));
+  }
 };
 
 /**

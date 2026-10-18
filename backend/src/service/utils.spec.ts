@@ -29,16 +29,14 @@ import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
 const nodeRequire = createRequire(import.meta.url);
 // the real papaparse, to parse the imported files
 const papaparse: typeof import('papaparse') = nodeRequire('papaparse');
+// the real yazl, kept before it is mocked, to build the archives to unzip
+const realYazl: typeof import('yazl') = nodeRequire('yazl');
 
 // Module-level mock exports for third-party modules
 const minimistExports = mock.fn(() => ({}));
 const csvExports = {
   unparse: mock.fn((_data?: unknown, _config?: unknown): string => 'csv content'),
   parse: papaparse.parse
-};
-let unzipperExtractMock: ReturnType<typeof mock.fn>;
-const unzipperExports = {
-  Extract: (...args: Array<unknown>) => unzipperExtractMock(...args)
 };
 let zipOutputStream: PassThrough;
 const zipAddFileMock = mock.fn((_input: string, _entryName: string) => undefined);
@@ -62,7 +60,6 @@ describe('Service utils', () => {
   before(() => {
     mockModule(nodeRequire, 'minimist', minimistExports);
     mockModule(nodeRequire, 'papaparse', csvExports);
-    mockModule(nodeRequire, 'unzipper', unzipperExports);
     mockModule(nodeRequire, 'yazl', yazlExports);
 
     utils = reloadModule<UtilsModule>(nodeRequire, './utils');
@@ -279,30 +276,64 @@ describe('Service utils', () => {
   });
 
   describe('unzip', () => {
-    it('should properly unzip file', async () => {
-      const source = new PassThrough();
-      source.end();
-      const dest = new PassThrough();
-      dest.resume(); // drain so pipeline finishes
-      unzipperExtractMock = mock.fn(() => dest);
-      mock.method(fsSync, 'createReadStream', () => source as unknown as fsSync.ReadStream);
+    let tmpDir: string;
 
-      await utils.unzip('myInputFile', 'myOutputFolder');
+    const buildZip = async (files: Record<string, string>, directories: Array<string> = []): Promise<Buffer> => {
+      const zip = new realYazl.ZipFile();
+      for (const directory of directories) {
+        zip.addEmptyDirectory(directory);
+      }
+      for (const [name, content] of Object.entries(files)) {
+        zip.addBuffer(Buffer.from(content), name);
+      }
+      zip.end();
+      const chunks: Array<Buffer> = [];
+      for await (const chunk of zip.outputStream) {
+        chunks.push(chunk as Buffer);
+      }
+      return Buffer.concat(chunks);
+    };
 
-      assert.strictEqual(unzipperExtractMock.mock.calls.length, 1);
-      assert.deepStrictEqual(unzipperExtractMock.mock.calls[0].arguments, [{ path: 'myOutputFolder' }]);
+    beforeEach(async () => {
+      tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-unzip-spec-'));
     });
 
-    it('should properly manage unzip errors', async () => {
-      const source = new PassThrough();
-      const dest = new PassThrough();
-      unzipperExtractMock = mock.fn(() => dest);
-      mock.method(fsSync, 'createReadStream', () => source as unknown as fsSync.ReadStream);
+    afterEach(async () => {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    });
 
-      // Emit an error on the source after the pipeline has started
-      setImmediate(() => source.destroy(new Error('unzip error')));
+    it('should extract files and folders into the output folder', async () => {
+      const zipPath = path.join(tmpDir, 'archive.zip');
+      const output = path.join(tmpDir, 'update');
+      await fs.writeFile(zipPath, await buildZip({ oibus: 'binary', 'sub/folder/file.txt': 'nested' }, ['empty/']));
 
-      await assert.rejects(() => utils.unzip('myInputFile', 'myOutputFolder'), /unzip error/);
+      await utils.unzip(zipPath, output);
+
+      assert.strictEqual(await fs.readFile(path.join(output, 'oibus'), 'utf8'), 'binary');
+      assert.strictEqual(await fs.readFile(path.join(output, 'sub', 'folder', 'file.txt'), 'utf8'), 'nested');
+      assert.ok((await fs.stat(path.join(output, 'empty'))).isDirectory());
+    });
+
+    it('should reject an entry escaping the output folder', async () => {
+      const zipPath = path.join(tmpDir, 'archive.zip');
+      // yazl refuses `..` in a name, so the entry name is patched in the archive (same length, outside the checksummed data)
+      const archive = await buildZip({ 'xx/evil.txt': 'evil' });
+      let index = archive.indexOf('xx/evil.txt');
+      while (index !== -1) {
+        archive.write('..', index);
+        index = archive.indexOf('xx/evil.txt', index);
+      }
+      await fs.writeFile(zipPath, archive);
+
+      await assert.rejects(() => utils.unzip(zipPath, path.join(tmpDir, 'update')), /invalid relative path: \.\.\/evil\.txt/);
+      assert.strictEqual(fsSync.existsSync(path.join(tmpDir, 'evil.txt')), false);
+    });
+
+    it('should reject a file that is not a zip archive', async () => {
+      const zipPath = path.join(tmpDir, 'archive.zip');
+      await fs.writeFile(zipPath, 'not a zip');
+
+      await assert.rejects(() => utils.unzip(zipPath, path.join(tmpDir, 'update')), /End of central directory record signature not found/);
     });
   });
 
