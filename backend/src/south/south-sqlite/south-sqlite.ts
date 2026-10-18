@@ -20,7 +20,7 @@ import { convertDateTimeToInstant, extractDiscoveryQuery, formatInstant, logQuer
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { SQLITE_DIALECT } from '../sql-dialects';
-import { buildTableQuery, discoverTables, extractNodeIds, extractTableScope, quoteAnsiIdentifier } from '../sql-table-discovery';
+import { discoverTables, extractNodeIds, quoteAnsiIdentifier } from '../sql-table-discovery';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send the resulting rows as record-list
@@ -282,8 +282,7 @@ export default class SouthSQLite
   /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records; or reads the rows of a table
-   * (`discoveryScope.table`, and the `columns` to read - all when none). The tables and
+   * any item's own data query - and returns its rows directly as the discovered records. The tables and
    * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
    * the item that reads it (see `discoverTables()`).
    */
@@ -295,9 +294,7 @@ export default class SouthSQLite
     if (nodeIds) {
       return discoverTables(parentId => this.explore(parentId), nodeIds, SQLITE_DIALECT);
     }
-    // The rows of a table, or of a query of its own
-    const tableScope = extractTableScope(scope);
-    const query = tableScope ? buildTableQuery(SQLITE_DIALECT, tableScope.table, tableScope.columns) : extractDiscoveryQuery(scope);
+    const query = extractDiscoveryQuery(scope);
     const database = db(path.resolve(this.connector.settings.databasePath));
     try {
       const data = database.prepare(query).all();

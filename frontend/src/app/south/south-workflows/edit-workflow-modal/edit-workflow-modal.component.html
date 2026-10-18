@@ -57,138 +57,42 @@
             translate="south.workflows.wizard.browse-nodes"
           ></button>
         } @else if (isSqlFamily()) {
-          @if (sqlSourceMode() === 'table') {
-            <!-- A table and its columns: the connector writes the query -->
-            <div class="form-text" translate="south.workflows.wizard.table-hint"></div>
-            @if (sqlTablesError(); as sqlTablesError) {
-              <div class="alert alert-danger py-1 px-2" id="discovery-tables-error">{{ sqlTablesError }}</div>
-            }
-            @if (sqlTables(); as sqlTables) {
-              <select
-                class="form-select"
-                id="discovery-table"
-                [attr.aria-label]="'south.workflows.wizard.table' | translate"
-                [ngModel]="sqlTable()"
-                (ngModelChange)="selectSqlTable($event)"
-                [ngModelOptions]="{ standalone: true }"
-              >
-                <option [ngValue]="null" translate="south.workflows.wizard.table-none"></option>
-                @for (table of sqlTables; track table.id) {
-                  <option [ngValue]="table.id">{{ table.name }}</option>
-                }
-              </select>
-            } @else if (!sqlTablesError()) {
-              <div class="spinner-border spinner-border-sm" role="status"></div>
-            }
-            @if (sqlTable() && sqlTableColumns().length > 0) {
-              <div class="form-label mt-3" translate="south.workflows.wizard.columns"></div>
-              <div class="form-text" translate="south.workflows.wizard.columns-hint"></div>
-              <div class="d-flex flex-wrap gap-1" id="discovery-columns">
-                @for (column of sqlTableColumns(); track column.id) {
-                  <button
-                    type="button"
-                    class="btn btn-sm discovery-column"
-                    [class.btn-primary]="isSqlColumnChecked(column.name)"
-                    [class.btn-outline-secondary]="!isSqlColumnChecked(column.name)"
-                    [attr.aria-pressed]="isSqlColumnChecked(column.name)"
-                    (click)="toggleSqlColumn(column.name)"
-                  >
-                    {{ column.name }}
-                    @if (column.metadata['type']) {
-                      <span class="small opacity-75 ms-1">{{ column.metadata['type'] }}</span>
-                    }
-                  </button>
-                }
-              </div>
-            }
-            <div class="border rounded p-2 mt-3" id="discovery-table-query">
-              <div class="d-flex align-items-center">
-                <span class="form-text mt-0" translate="south.workflows.wizard.query-run"></span>
-                <button
-                  type="button"
-                  class="btn btn-link btn-sm p-0 ms-auto"
-                  id="write-query"
-                  (click)="writeQueryMyself()"
-                  translate="south.workflows.wizard.write-query"
-                ></button>
-              </div>
-              @if (sqlTableQuery()) {
-                <code class="d-block text-break mt-1" id="discovery-generated-query">{{ sqlTableQuery() }}</code>
+          <div class="form-text" translate="south.workflows.discovery-scope-query-hint"></div>
+          @if (showSqlExploreTree()) {
+            <div class="border rounded p-2 mb-2" id="discovery-explore-tree">
+              <oib-explore-tree maxHeight="12rem" />
+            </div>
+          }
+          <oib-code-block
+            id="discovery-query"
+            language="sql"
+            height="10rem"
+            [(ngModel)]="discoveryQuery"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          <div class="d-flex align-items-center gap-2 mt-2">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              id="test-discovery-query"
+              [disabled]="!discoveryQuery().trim() || queryTestRunning()"
+              (click)="testDiscoveryQuery()"
+            >
+              @if (queryTestRunning()) {
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
               }
-            </div>
-          } @else {
-            <div class="form-text" translate="south.workflows.discovery-scope-query-hint"></div>
-            @if (showSqlExploreTree()) {
-              <div class="border rounded p-2 mb-2" id="discovery-explore-tree">
-                <oib-explore-tree maxHeight="12rem" />
-              </div>
-            }
-            <oib-code-block
-              id="discovery-query"
-              language="sql"
-              height="10rem"
-              [(ngModel)]="discoveryQuery"
-              [ngModelOptions]="{ standalone: true }"
-            />
-            <div class="d-flex align-items-center gap-2 mt-2">
-              <button
-                type="button"
-                class="btn btn-secondary btn-sm"
-                id="test-discovery-query"
-                [disabled]="!discoveryQuery().trim() || queryTestRunning()"
-                (click)="testDiscoveryQuery()"
-              >
-                @if (queryTestRunning()) {
-                  <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
-                }
-                <span translate="south.workflows.discovery-scope-query-test"></span>
-              </button>
-            </div>
-            @if (queryTestError(); as queryTestError) {
-              <div class="alert alert-danger mt-2 mb-0" id="discovery-query-test-error">{{ queryTestError }}</div>
-            } @else if (queryTestResult(); as queryTestResult) {
-              <oib-transformer-test-result class="d-block mt-2" id="discovery-query-test-result" [raw]="queryTestResult" />
-            }
-            @if (canPickSqlTable()) {
-              <button
-                type="button"
-                class="btn btn-link btn-sm p-0 mt-2"
-                id="pick-table"
-                (click)="pickSqlTable()"
-                translate="south.workflows.wizard.pick-table"
-              ></button>
-            }
+              <span translate="south.workflows.discovery-scope-query-test"></span>
+            </button>
+          </div>
+          @if (queryTestError(); as queryTestError) {
+            <div class="alert alert-danger mt-2 mb-0" id="discovery-query-test-error">{{ queryTestError }}</div>
+          } @else if (queryTestResult(); as queryTestResult) {
+            <oib-transformer-test-result class="d-block mt-2" id="discovery-query-test-result" [raw]="queryTestResult" />
           }
         } @else {
           <div class="text-muted small" id="discovery-scope-unsupported" translate="south.workflows.discovery-scope-unsupported"></div>
         }
       </div>
-
-      @if (isTreeBased() || isSqlFamily()) {
-        <div class="d-flex align-items-center gap-2" id="source-preview">
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            id="preview-source"
-            [disabled]="sourcePreview()?.loading"
-            (click)="previewSource()"
-            translate="south.workflows.wizard.find-records"
-          ></button>
-          @if (sourcePreview(); as preview) {
-            @if (preview.loading) {
-              <span class="spinner-border spinner-border-sm" role="status"></span>
-            } @else if (preview.error) {
-              <span class="text-danger small" id="source-preview-error">{{ preview.error }}</span>
-            } @else if (preview.result) {
-              <span
-                id="source-preview-count"
-                [translate]="'south.workflows.wizard.records-found'"
-                [translateParams]="{ count: preview.result.discoveredCount }"
-              ></span>
-            }
-          }
-        </div>
-      }
     </div>
 
     <!-- 2. Filter: which records -->
@@ -214,25 +118,12 @@
                 <tr>
                   @if (editingEligibilityIndex() === $index) {
                     <td>
-                      @if (filterFieldOptions().length > 0) {
-                        <select
-                          class="form-select form-select-sm"
-                          [attr.aria-label]="'south.workflows.eligibility-filter-field' | translate"
-                          [(ngModel)]="editingEligibilityField"
-                          [ngModelOptions]="{ standalone: true }"
-                        >
-                          @for (field of filterFieldOptions(); track field) {
-                            <option [value]="field">{{ field }}</option>
-                          }
-                        </select>
-                      } @else {
-                        <input
-                          class="form-control form-control-sm"
-                          [attr.aria-label]="'south.workflows.eligibility-filter-field' | translate"
-                          [(ngModel)]="editingEligibilityField"
-                          [ngModelOptions]="{ standalone: true }"
-                        />
-                      }
+                      <input
+                        class="form-control form-control-sm"
+                        [attr.aria-label]="'south.workflows.eligibility-filter-field' | translate"
+                        [(ngModel)]="editingEligibilityField"
+                        [ngModelOptions]="{ standalone: true }"
+                      />
                     </td>
                     <td>
                       <select
@@ -303,30 +194,14 @@
           </table>
         }
         <div class="d-flex gap-1 align-items-center">
-          <!-- The columns of the table a SQL source reads, or any field of the discovered records -->
-          @if (filterFieldOptions().length > 0) {
-            <select
-              class="form-select form-select-sm"
-              id="new-eligibility-field"
-              [attr.aria-label]="'south.workflows.eligibility-filter-field' | translate"
-              [(ngModel)]="newEligibilityField"
-              [ngModelOptions]="{ standalone: true }"
-            >
-              <option value="" translate="south.workflows.eligibility-filter-field"></option>
-              @for (field of filterFieldOptions(); track field) {
-                <option [value]="field">{{ field }}</option>
-              }
-            </select>
-          } @else {
-            <input
-              class="form-control form-control-sm"
-              id="new-eligibility-field"
-              list="record-fields"
-              [(ngModel)]="newEligibilityField"
-              [ngModelOptions]="{ standalone: true }"
-              [placeholder]="'south.workflows.eligibility-filter-field' | translate"
-            />
-          }
+          <input
+            class="form-control form-control-sm"
+            id="new-eligibility-field"
+            list="record-fields"
+            [(ngModel)]="newEligibilityField"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'south.workflows.eligibility-filter-field' | translate"
+          />
           <select
             class="form-select form-select-sm"
             id="new-eligibility-operator"
@@ -567,17 +442,7 @@
         <dd class="col-sm-9">{{ form.controls.name.value }}</dd>
         <dt class="col-sm-3" translate="south.workflows.discovery-scope"></dt>
         <dd class="col-sm-9">
-          @if (isSqlFamily() && sqlSourceMode() === 'table') {
-            <span
-              id="review-table"
-              [translate]="
-                sqlColumns().length === sqlTableColumns().length
-                  ? 'south.workflows.wizard.table-summary-all'
-                  : 'south.workflows.wizard.table-summary'
-              "
-              [translateParams]="{ table: sqlTableName(), count: sqlColumns().length }"
-            ></span>
-          } @else if (isSqlFamily()) {
+          @if (isSqlFamily()) {
             <code>{{ discoveryQuery() }}</code>
           } @else if (discoveryNodeIds().length > 0) {
             {{ discoveryNodeIds().join(', ') }}
