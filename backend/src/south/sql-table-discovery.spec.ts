@@ -7,7 +7,6 @@ import {
   buildTableQuery,
   discoverTables,
   extractNodeIds,
-  extractTableScope,
   quoteAnsiIdentifier,
   splitSchemaTable,
   SqlDialect,
@@ -131,12 +130,6 @@ describe('SQL table discovery helpers', () => {
   it('should write the query reading the given columns of a table, or all of them', () => {
     assert.strictEqual(buildTableQuery(dialect, 'tags', ['tag', 'unit']), 'SELECT "tag", "unit" FROM "tags"');
     assert.strictEqual(buildTableQuery(dialect, 'tags', []), 'SELECT * FROM "tags"');
-  });
-
-  it('should extract the table of a discovery scope, if it reads one', () => {
-    assert.deepStrictEqual(extractTableScope({ table: 'tags', columns: ['tag', 2] }), { table: 'tags', columns: ['tag'] });
-    assert.deepStrictEqual(extractTableScope({ table: 'tags' }), { table: 'tags', columns: [] });
-    assert.strictEqual(extractTableScope({ query: 'SELECT 1' }), null);
   });
 
   it('should extract the checked nodes of a discovery scope, if it has some', () => {

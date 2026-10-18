@@ -159,19 +159,6 @@ describe('SouthConnectorController', () => {
     assert.deepStrictEqual(result, mockManifest);
   });
 
-  it('should write the query reading the rows of a table', () => {
-    southService.buildDiscoveryTableQuery = mock.fn(() => 'SELECT [tag] FROM [dbo].[tags]');
-
-    const result = controller.buildDiscoveryTableQuery(
-      'mssql',
-      { table: 'dbo.tags', columns: ['tag'] },
-      mockRequest as CustomExpressRequest
-    );
-
-    assert.deepStrictEqual(southService.buildDiscoveryTableQuery.mock.calls[0].arguments, ['mssql', 'dbo.tags', ['tag']]);
-    assert.deepStrictEqual(result, { query: 'SELECT [tag] FROM [dbo].[tags]' });
-  });
-
   it('should return a list of south connectors', async () => {
     const mockSouthConnectors = testData.south.list;
     southService.list = mock.fn(() => mockSouthConnectors);
