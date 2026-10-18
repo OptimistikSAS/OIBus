@@ -62,6 +62,10 @@ const TEST_PORT = 19998;
 const frontendIndexDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../frontend/browser');
 const frontendIndexPath = path.join(frontendIndexDir, 'index.html');
 let createdFrontendIndex = false;
+// A script of the frontend build, named with the hash of its content. Only ever created/deleted by its exact filename, in
+// case the frontend has been built for real.
+const frontendChunkPath = path.join(frontendIndexDir, 'chunk-TEST1234.js');
+const frontendChunk = "export const chunk = 'test';";
 
 // The embedded documentation site is served statically from this same relative location
 // (mirroring the frontend's dist layout). Unlike frontend/browser, this relative path resolves
@@ -98,6 +102,7 @@ describe('WebServer', () => {
       fs.writeFileSync(frontendIndexPath, '<!doctype html><html><body>test placeholder</body></html>');
       createdFrontendIndex = true;
     }
+    fs.writeFileSync(frontendChunkPath, frontendChunk);
 
     if (!fs.existsSync(documentationMarkerPath)) {
       // Never recursive/removed: this directory is the repo's real documentation/ folder when
@@ -129,6 +134,7 @@ describe('WebServer', () => {
   });
 
   after(() => {
+    fs.rmSync(frontendChunkPath, { force: true });
     if (createdFrontendIndex) {
       fs.rmSync(frontendIndexDir, { recursive: true, force: true });
     }
@@ -304,6 +310,35 @@ describe('WebServer', () => {
       assert.equal(res.status, 200);
       const body = await res.text();
       assert.equal(body, '<!doctype html><html><body>test placeholder</body></html>');
+    });
+  });
+
+  describe('web client cache', () => {
+    // Own port + own server instance for each test (see buildWebServer's comment)
+    async function fetchFromOwnServer(port: number, route: string): Promise<Response> {
+      const localServer = buildWebServer(port);
+      try {
+        await localServer.init();
+        const res = await fetch(`http://localhost:${port}${route}`);
+        await res.arrayBuffer();
+        return res;
+      } finally {
+        await localServer.stop();
+      }
+    }
+
+    it('lets the browser keep a hashed file of the build', async () => {
+      const res = await fetchFromOwnServer(TEST_PORT + 30, '/chunk-TEST1234.js');
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+    });
+
+    it('makes the browser revalidate index.html, served directly or as the Angular fallback', async () => {
+      for (const [index, route] of ['/', '/index.html', '/some-angular-route'].entries()) {
+        const res = await fetchFromOwnServer(TEST_PORT + 31 + index, route);
+        assert.equal(res.status, 200, route);
+        assert.equal(res.headers.get('cache-control'), 'public, max-age=0', route);
+      }
     });
   });
 

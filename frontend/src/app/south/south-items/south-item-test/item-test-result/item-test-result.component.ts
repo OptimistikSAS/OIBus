@@ -89,7 +89,7 @@ export class ItemTestResultComponent {
     inject(DestroyRef).onDestroy(() => this.editorView?.destroy());
     afterRenderEffect(() => {
       const container = this.editorContainer();
-      const codeMirror = this.codeMirror();
+      const [codeMirror] = this.codeMirror() ?? [null];
       if (!container || !codeMirror) {
         this.editorView?.destroy();
         this.editorView = null;

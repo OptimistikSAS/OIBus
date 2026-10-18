@@ -51,7 +51,7 @@ export class OibCodeBlockComponent implements OnDestroy, ControlValueAccessor {
   private readonly currentLanguage = linkedSignal(() => this.language());
 
   /** The editor is created once CodeMirror is loaded */
-  private readonly codeMirror = loadOnDemand(() => Promise.all([loadCodeMirror(), loadCodeMirrorLanguages()]));
+  private readonly codeMirror = loadOnDemand(loadCodeMirror, loadCodeMirrorLanguages);
   private editorView: EditorView | null = null;
   /** The value written before the editor is created */
   private pendingValue: string | null = null;
