@@ -62,8 +62,6 @@ import SouthItemGroupRepository from '../repository/config/south-item-group.repo
 import LogRepository from '../repository/logs/log.repository';
 import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
 import { buildSouth } from '../south/south-connector-factory';
-import { SQL_DIALECTS } from '../south/sql-dialects';
-import { buildTableQuery } from '../south/sql-table-discovery';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
 import { toScanModeDTO } from './scan-mode-dto.utils';
@@ -365,18 +363,6 @@ export default class SouthService {
     query: string
   ): Promise<Array<OIBusRecord>> {
     return await this.discover(southId, southType, settingsToTest, { query });
-  }
-
-  /**
-   * The query a Configuration Workflow of a SQL connector runs to read the rows of a table (`{ table, columns }`
-   * discovery scope) - shown read-only in its form, and as the start of a query written by hand.
-   */
-  buildDiscoveryTableQuery(southType: OIBusSouthType, table: string, columns: Array<string>): string {
-    const dialect = SQL_DIALECTS[southType];
-    if (!dialect) {
-      throw new OIBusValidationError(`South connector of type "${southType}" has no tables to read`);
-    }
-    return buildTableQuery(dialect, table, columns);
   }
 
   /**
