@@ -22,7 +22,7 @@ The export file (`oibus-config-export.json`) has three top-level fields:
   - IP filters
   - Certificates
   - Transformers
-  - South connectors (including items, groups and configuration workflows)
+  - South connectors (including items, groups and items synchronisations)
   - North connectors
   - History queries
   - Users
@@ -49,7 +49,7 @@ means those fields must be re-entered manually after an import — see
 Importing a configuration file **wipes every in-scope section of the target instance's local
 configuration and recreates it from the file**, preserving each entity's original internal ID.
 This is destructive and cannot be undone: every south connector, north connector, history query,
-configuration workflow, scan mode, IP filter, transformer, certificate and user currently on the
+items synchronisation, scan mode, IP filter, transformer, certificate and user currently on the
 instance is deleted before the imported ones are created, and the engine settings of the instance
 (name, web server, proxy server and logging) are overwritten by the imported ones. The UI requires an
 explicit confirmation, restating this, before an import is submitted.
@@ -65,7 +65,7 @@ redirects there when the import dialog is closed. The new port must be free on t
 Selecting a file in the **Import configuration** dialog does not import it yet: OIBus first upgrades
 and validates it exactly as the import would, without writing anything, and displays everything it
 is about to import — south connectors (with their configuration, items, item groups and
-configuration workflows), north connectors (with their configuration, caching and transformers),
+items synchronisations), north connectors (with their configuration, caching and transformers),
 history queries, scan modes, IP filters, certificates, transformers, users and engine settings.
 Each section can be expanded to review its content. A file that fails validation shows its errors
 right away, and the import can only be confirmed once the preview succeeded.
@@ -114,7 +114,7 @@ Because secrets are never exported, an imported configuration is not immediately
   reused for another server or user, and a warning asks to re-enter it in the engine settings.
 - **Users are recreated with a random password**, since passwords are never exported. Every
   imported user must have their password reset before they can sign in again.
-- **Configuration workflows are imported disabled**, with the items they created still attached to
+- **Items synchronisations are imported disabled**, with the items they created still attached to
   them. Their run history is not exported. Re-enable each one once its south connector is configured.
 - **Standard transformers are matched by function name**, not recreated — they are seeded once when
   OIBus starts and matched to the imported configuration by their `functionName`. If the target

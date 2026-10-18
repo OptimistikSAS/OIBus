@@ -86,34 +86,70 @@ for details. For every other connector type, execution stays fully sequential an
 
 ## Items {#items}
 
-Items retrieve data as files or JSON payloads. Each item has the following fields:
+An item reads one data point, query or file set from the data source. Items are listed on the connector's page,
+where they can be created, edited, copied, enabled/disabled, deleted, moved to a group, imported and exported.
+Instead of creating them one by one, items can also be [added from the Explore modal](#exploring-the-data-source)
+or kept up to date by an [items synchronisation](#items-synchronisation).
 
-| Setting               | Description                                                                                                                                 | Example Value           |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| **Name**              | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`   |
-| **Group**             | The group this item belongs to. Leave empty for a standalone item with its own scan mode.                                                   | `Group A`               |
-| **Scan mode**         | Schedule that determines when OIBus collects data. Only shown when the item has no group (otherwise inherited from the group).              | `Every 1 min`           |
-| **Enabled**           | Whether the item is active.                                                                                                                 | Enabled/Disabled        |
-| **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                                         | Enabled/Disabled        |
-| **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                  |
-| **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                   |
-| **Start time offset** | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.           | `-60000`                |
-| **End time offset**   | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                           | `0`                     |
-| **Recovery strategy** | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.    | `From oldest to newest` |
-| **Caching strategy**  | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy). | `On change`             |
-| **Specific settings** | Varies by connector type — see each connector's documentation.                                                                              | —                       |
+### Creating and Editing an Item {#creating-and-editing-an-item}
+
+The item modal walks through three steps, shown in a steps bar at its top:
+
+| Step              | Content                                                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **General**       | Name, group, schedule and **Enabled**, then the **History settings** (history-capable connectors) and the **Caching** settings (IoT-family connectors).          |
+| **Settings**      | The connector's own item settings (see each connector's page), with the [test panel](#testing-an-item) right below them, to try the settings as they are edited. |
+| **Review & save** | A read-only summary of the whole item: general, history and caching settings, then its connector settings.                                                       |
+
+**Next** only moves on once the current step is valid. A new item is saved from the last step; an item being edited
+or copied can be saved from any step. When a save fails on an invalid field, the modal opens the first step that has
+an error, and every step with an error is flagged in the steps bar.
+
+To create several similar items in a row, use **Save & add another** (**OK & add another** on the connector's
+create/edit page): the item is saved, and the modal opens again for the next one, starting with the same group,
+schedule and history settings.
+
+On the connector's create/edit page, items (like groups and items synchronisations) are kept in the page and saved
+together with the connector, hence the **OK** button instead of **Save**.
+
+### Item Fields {#item-fields}
+
+| Setting               | Step     | Description                                                                                                                                 | Example Value           |
+| --------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **Name**              | General  | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`   |
+| **Group**             | General  | The group this item belongs to. Leave on **None** for a standalone item with its own schedule.                                              | `Group A`               |
+| **Schedule**          | General  | Scan mode that determines when OIBus collects data. Only shown when the item has no group (the group's schedule is shown otherwise).        | `Every 1 min`           |
+| **Enabled**           | General  | Whether the item is active.                                                                                                                 | Enabled/Disabled        |
+| **Sync with group**   | General  | _(History-capable connectors, grouped items)_ When enabled, the history settings below are inherited from the group.                        | Enabled/Disabled        |
+| **Max read interval** | General  | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                  |
+| **Read delay**        | General  | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                   |
+| **Start time offset** | General  | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.           | `-60000`                |
+| **End time offset**   | General  | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                           | `0`                     |
+| **Recovery strategy** | General  | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.    | `From oldest to newest` |
+| **Caching strategy**  | General  | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy). | `On change`             |
+| **Specific settings** | Settings | Varies by connector type — see each connector's documentation.                                                                              | —                       |
 
 > For guidance on sizing **Max read interval**, **Read delay**, **Start time offset**, and **End time offset**
 > — with worked examples for large backlogs and sources that don't commit all items at once — see
-> [Tuning South History Call Settings](../advanced/history-query-timing.md).
+> [Advanced tuning of History Connectors](../advanced/history-query-timing.md).
+
+### Testing an Item {#testing-an-item}
+
+The **Settings** step holds the test panel, so the item's settings can be changed and tested again without leaving
+the step. **Run test** queries the data source with the settings as currently edited — saved or not — and shows the
+raw result. For history-capable connectors, **Query data from** / **Query data until** set the time range of the
+test query.
+
+The raw result can also be run through one of the item's North transformers, to preview the transformed output — see
+[Testing a Transformer Against a Real South Item](../engine/transformers.mdx#testing-a-transformer-against-a-real-south-item).
+
+> **Tip**: Use **Test settings** on the connector first, to check the connection before testing individual items.
 
 ### Item Actions {#item-actions}
 
-- **Disable/Enable**: Toggle from the item edit form or directly from the connector's display page.
-- **Test**: Verify item settings and preview results from the create/edit modal. You can also run the
-  raw result through one of the item's North transformers to preview the transformed output — see
-  [Testing a Transformer Against a Real South Item](../engine/transformers.mdx#testing-a-transformer-against-a-real-south-item).
-  > **Tip**: Test the connection settings before testing individual items.
+- **Disable/Enable**: Toggle from the item modal or directly from the connector's display page. Several selected items
+  can be enabled or disabled at once.
+- **Copy**: Opens the item modal pre-filled with the item's settings, to create a similar item.
 - **View last value** (🔍): Opens a read-only panel showing the item's last retrieval state. See
   [Inspecting the last retrieved value](#inspecting-the-last-retrieved-value) for details.
 - **Move to group**: Select multiple items and use the mass-action menu to reassign them to a group at once.
@@ -126,6 +162,85 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 - **Import**: Upload a CSV to create or update items in bulk. Export an existing list to get a valid
   template with the correct column names.
   > **Note**: The system validates for duplicates and correct formatting before applying the import.
+
+---
+
+## Exploring the Data Source {#exploring-the-data-source}
+
+Connectors that can browse their data source show an **Explore** button next to **Test settings**. It opens the
+**Explore data source** modal: a tree of what the data source holds, loaded level by level as nodes are expanded.
+
+| Connector                                                 | What the tree shows                                                                 | Actions on selected nodes           |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------- |
+| [OPC UA](./opcua.mdx#node-metadata)                       | The server's address space, with node metadata (node ID, type, description, unit…)  | **Add as items**, **Keep in sync…** |
+| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Devices, then the objects of each device                                            | **Add as items**, **Keep in sync…** |
+| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Tables (with column and row counts where available), then the columns of each table | **Add as items**                    |
+| [Folder Scanner](./folder-scanner.mdx)                    | Folders and files of the input folder, with size and dates                          | — (browsing only)                   |
+
+Click a node to show its details (the metadata the data source gives for it) in a side panel, each value with a copy
+button. Explore uses the settings as currently edited, so it works from the connector's create/edit page before the
+connector is saved.
+
+:::tip Explore and the connector's own connection
+A running connector with the same settings is explored through its open connection, rather than a second one —
+servers that cap the number of sessions per client (e.g. OPC UA) don't refuse it. A disabled or unsaved connector is
+explored through a temporary instance that is released when the modal is closed, so exploring never starts the
+connector's own collection.
+:::
+
+### Selecting Nodes {#selecting-nodes}
+
+For connectors with actions on selected nodes, every node has a checkbox. A node that has children also offers
+**Select all the sub-nodes**, which loads and checks its direct children at once (and unchecks them when they are all
+checked already). The number of selected nodes is shown at the bottom of the modal, next to the actions:
+
+- **Add as items** creates items once from the selected nodes — see [below](#adding-explored-nodes-as-items).
+- **Keep in sync…** creates an [items synchronisation](#items-synchronisation) that discovers from the selected
+  nodes: the wizard opens with them as its discovery scope, and the connector's
+  [discovery defaults](#discovery-defaults). Unlike **Add as items**, the synchronisation keeps the items up to date
+  on each run: new points get an item, and the items of points that disappeared are disabled.
+
+What a selected node stands for depends on its kind: a point (an OPC UA variable, a BACnet object, a SQL column)
+stands for itself, any other node (a folder, a device, a table) for everything under it.
+
+### Adding Explored Nodes as Items {#adding-explored-nodes-as-items}
+
+**Add as items** discovers the points under the selected nodes and opens the **Add items from the data source**
+modal, to review the items before they are created:
+
+- **Group**, **Schedule** and **Enable the items** apply to every added item. With a group, the items take the
+  group's schedule.
+- Each row is one item, with its name (editable) and its main settings. Uncheck a row to leave it out, or use the
+  header checkbox to select all or none.
+- A row whose settings are already read by an existing item is flagged **Already read by** _that item_, and left
+  unchecked. A name already used by another item or row is flagged **Name already used**.
+
+**Add items** creates the checked rows. Items are named and set up from the connector's
+[discovery defaults](#discovery-defaults); every item setting left out of them gets its usual default value, as in the
+item modal.
+
+#### SQL Tables as Items {#sql-tables-as-items}
+
+For the SQL connectors, each selected table (or each table some selected columns belong to) gives one item, named
+after the table, whose query reads the table:
+
+- A selected table reads all its columns (`SELECT *`); selected columns read only those columns.
+- OIBus picks a **date/time column** to track the table: among the date/time columns of the table, it prefers a
+  usual name (`timestamp`, `time`, `date`, `datetime`, or ending with `_at`, `_time`, `_date`, `timestamp`), else the
+  first one. That column is always read, even if not selected, and the query only reads the rows of the time range of
+  each run. For example, with the `tag` and `value` columns of an MSSQL table selected:
+
+  ```sql
+  SELECT [timestamp], [tag], [value] FROM [dbo].[measures] WHERE [timestamp] > @StartTime AND [timestamp] <= @EndTime
+  ```
+
+  The item's **Track instant** is enabled on that column, with the date/time type matching its SQL type, so each run
+  starts where the last one stopped.
+
+- A table without any date/time column is read whole on each run, untracked: review its query before enabling it.
+
+Table and column names are quoted in the connector's own SQL dialect. The generated query is a starting point: edit
+the item afterwards to filter rows or rename columns.
 
 ---
 
@@ -224,194 +339,242 @@ This panel is useful for:
 
 ---
 
-## Configuration Workflows {#configuration-workflows}
+## Items Synchronisation {#items-synchronisation}
 
-Rather than creating and maintaining items by hand, a **Configuration Workflow** browses or queries a data source,
-decides which of what it finds is worth acting on, and either creates/updates items from it or forwards it to
-OIAnalytics — run once on demand, or on a recurring schedule like any other collection.
+Rather than creating and maintaining items by hand, an **items synchronisation** browses or queries the data source,
+keeps what is worth acting on, and either creates/updates items from it or forwards it to OIAnalytics — run once on
+demand, or on a schedule like any other collection.
 
-Each workflow belongs to one South connector and runs in exactly one of two mutually exclusive modes, picked when the
-workflow is created:
+Each synchronisation belongs to one South connector and runs in one of two modes:
 
-- **Create/update items locally** — the workflow owns whatever items its own discovery creates, updating them on
-  later runs and disabling (never deleting) ones no longer discovered.
-- **Push to OIAnalytics** — every run forwards the raw eligible records to OIAnalytics as-is, with no field mapping,
-  no local item, and no diffing against a previous run. Can be picked and saved even before OIBus is
-  [registered with OIAnalytics](../installation/oianalytics.mdx) — a warning is shown (and, on each run, logged) that
-  nothing will actually be pushed until then. This is the only mode available for SQL-family connectors (see [Mode:
-  Local vs Remote](#mode-local-vs-remote)).
+- **Create/update items locally** — the synchronisation owns the items it creates, updates them on later runs, and
+  disables (never deletes) the ones whose point is no longer found.
+- **Push to OIAnalytics** — every run forwards the discovered records to OIAnalytics as-is, with no field mapping,
+  no local item, and no comparison with a previous run. This is the only mode of the SQL connectors (see
+  [Mode](#mode)).
 
-### Opening the Workflow List {#opening-the-workflow-list}
+Which connectors support it, and what they discover from:
 
-On a South connector's page, click **Manage sync configuration** (next to **Manage groups**) to open the list of
-workflows for that connector, then use the **+** button to create one. Each row in the list also exposes:
+| Connector family                                   | Discovery scope                                                                  | Modes                        |
+| -------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------- |
+| **Tree-based** (OPC UA, BACnet/IP)                 | Nodes picked in the Explore tree — or the whole data source when none is picked. | Local or Push to OIAnalytics |
+| **SQL** (MSSQL, MySQL, PostgreSQL, Oracle, SQLite) | A metadata query: each row it returns is one discovered record.                  | Push to OIAnalytics only     |
+| Any other connector type (Folder Scanner included) | Not supported yet: the Source step shows a short message instead.                | —                            |
 
-| Action           | Description                                                                                                            |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Run now** (▶)  | Trigger a real run immediately — see [Running a Workflow](#running-a-workflow).                                       |
-| **Preview** (👁) | Dry-run the workflow and inspect what it would do, without writing anything.                                          |
-| **Run history**  | Past runs for this workflow, with their status and counts — see [Run History](#run-history).                         |
-| **Edit** (✏️)    | Open the workflow for editing.                                                                                        |
-| **Duplicate**    | Open the create form pre-filled with this workflow's settings (name suffixed `-copy`), saved as an independent copy.  |
-| **Delete**       | Remove the workflow. Items and point metadata it already produced are **not** deleted.                                |
-
-Workflows can also be managed from the South connector's create/edit page, with the same **Manage sync configuration**
-button. There, changes are only kept in the page and saved together with the connector (like items and groups), and
-**Preview** runs against the connector settings as currently edited — so a workflow can be tried before the connector
-itself is saved. **Run now** and **Run history** are only available from the connector's page, once it is saved.
-
-### Discovery Scope {#discovery-scope}
-
-What a workflow (re-)browses or queries depends on the South connector's type:
-
-| Connector family                                     | Discovery scope                                                                                                                                                                       |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tree-based** (OPC UA, Folder Scanner)                | Click **Explore** to pick a root node to browse from, using the same interactive tree browser as the connector's own standalone Explore action. Leave it unset to browse the entire data source. |
-| **SQL-family** (MSSQL, MySQL, PostgreSQL, Oracle, SQLite) | A dedicated, syntax-highlighted SQL editor for a metadata query, independent of any item's own query — each row it returns becomes one discovered record.                          |
-| Any other connector type                               | Discovery isn't supported yet; the section shows a short message instead of a scope editor.                                                                                        |
-
-For SQL-family connectors, use **Test query** to run the query immediately and inspect its raw rows (as a table or
-JSON) before saving the workflow — the same round-trip a real run would make, just without acting on the result.
-SQLite additionally shows a read-only reference tree of tables and columns above the editor, to browse the schema
-while writing the query.
-
-### Workflow Settings {#workflow-settings}
-
-| Setting                | Description                                                                                                                                   | Example Value              |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| **Name**                | Unique label for this workflow within the South connector.                                                                                    | `Reactor OPC-UA discovery` |
-| **Schedule**            | Scan mode driving scheduled runs. Leave as **Manual only** to run this workflow exclusively via **Run now**.                                  | `Every 1 hour`              |
-| **Mode**                | **Create/update items locally** or **Push to OIAnalytics** — see [below](#mode-local-vs-remote). Fixed to Push to OIAnalytics, and hidden, for SQL-family connectors. | `Create/update items locally` |
-| **Identity key fields** | Create/update items locally only. One or more discovered-record field names whose combined value uniquely identifies a record — see [below](#identity-key-fields). | `nodeId`                    |
-| **Eligibility filter**  | Conditions a discovered record must all satisfy to be acted on — see [below](#eligibility-filter).                                            | `type equals Variable`     |
-| **Enabled**             | Whether scheduled runs fire at all. **Run now** still works while disabled.                                                                   | Enabled/Disabled           |
-
-### Identity Key Fields {#identity-key-fields}
-
-**Identity key fields** name the discovered-record field(s) (e.g. `nodeId` for OPC UA, a `column_name` returned by a
-metadata query for SQL) whose combined value uniquely identifies a record. They are only shown, and at least one is
-required, in **Create/update items locally** mode:
-
-- A local workflow re-discovers its data source on every run, so it needs a way to recognize "the same" record from
-  one run to the next — otherwise every run would look like an all-new set of records. Matched against the previous
-  run, a record is new, changed, or unchanged, and a previously-seen key that no longer comes back is treated as
-  missing (see [Running a Workflow](#running-a-workflow)). If two records of the same run share a key, the later one
-  wins.
-- **Push to OIAnalytics** never compares against a previous run, so it has no identity key fields at all: every
-  eligible record is forwarded as-is, and correlating records across runs is left to OIAnalytics.
-
-### Eligibility Filter {#eligibility-filter}
-
-Conditions a discovered record must **all** satisfy (logical AND) to be considered at all — leave it empty to make
-every discovered record eligible. Each condition has:
-
-| Setting      | Description                                                                                         | Example Value |
-| ------------ | ----------------------------------------------------------------------------------------------------- | -------------- |
-| **Field**    | A key of the discovered record to test.                                                                | `type`         |
-| **Operator** | `equals`, `not equals`, `contains`, `matches` (regex), `exists`, `greater than`, `less than`.           | `equals`       |
-| **Value**    | The value to compare against — not used for `exists`.                                                  | `Variable`     |
-
-Use the pencil/trash icons on a condition to edit or remove it, or the fields below the table to add a new one.
-
-### Mode: Local vs Remote {#mode-local-vs-remote}
-
-Pick **Create/update items locally** or **Push to OIAnalytics** — the two are mutually exclusive, and switching
-between them clears whatever was configured for the other.
-
-**Create/update items locally** has the workflow create or update its own items from what it discovers. Every field
-this South connector's items support is listed (the connector-specific settings, plus the schedule/group fields
-every item has), and each can be mapped to:
-
-- nothing (**Not mapped**) — the item falls back to its own default for that field,
-- a fixed constant (a dropdown for boolean/choice/schedule/group fields, free text otherwise), or
-- a `{{field}}` expression pulling from the discovered record — see [Mapping Expressions](#mapping-expressions).
-
-A field badged **Required** must resolve to something once every other currently-visible field is accounted for —
-saving is blocked otherwise. A field badged **Controls visibility** gates whether some other field is even shown,
-so it can only be mapped to a constant (its value must be knowable while editing, not resolved per record at run
-time) — the same restriction applies to the schedule and group fields themselves, and to every history-specific
-field (max read interval, read delay, the time offsets, recovery strategy, sync with group). The **Group** field
-defaults to **None** (self-scoped item) and lets you create, edit, or delete groups inline, exactly like the item
-edit form's own group dropdown; picking a group is exempt from the scan-mode field's own **Required** badge, since
-the item then inherits the group's schedule instead.
-
-**Push to OIAnalytics** forwards every run's raw eligible records to OIAnalytics as-is — no field mapping, no local
-item, and no per-record decision beyond the eligibility filter itself. Saving and running are never blocked by
-registration status, but a run's push only actually happens once OIBus is
-[registered with OIAnalytics](../installation/oianalytics.mdx) — while unregistered, a warning is shown when editing
-the workflow, and each run that would have pushed logs a warning and completes with nothing sent instead.
-
-:::note Fixed to Push to OIAnalytics for SQL-family connectors
-For a SQL-family connector, one item is one free-form query, and a query can return several distinct points in a
-single pass — so item and point aren't the same thing there, and a workflow never creates or updates items for
-these connectors. The mode picker is hidden and locked to **Push to OIAnalytics**.
+:::tip Items synchronisation or Add as items?
+To create items once from what the data source holds, select the nodes in the Explore modal and use
+[Add as items](#adding-explored-nodes-as-items). Use an items synchronisation when the data source changes over time
+(new points, removed points) and the items must follow.
 :::
 
-### Mapping Expressions {#mapping-expressions}
+### Managing Items Synchronisations {#managing-items-synchronisations}
 
-Item field mapping (local mode only) uses a `{{field}}` placeholder syntax:
+On a South connector's page, click **Manage items synchronisations** (next to **Manage groups**) to list the
+connector's synchronisations, and use the **+** button to create one. Each row shows the synchronisation's name,
+schedule, mode and whether it is enabled, with these actions:
 
-- A value that is **exactly** one placeholder (e.g. `{{nodeId}}`) resolves to that field's raw value, preserving
-  its type — a numeric discovered field lands on a numeric setting untouched, not stringified.
-- A placeholder embedded in other text (e.g. `Sensor {{nodeId}}`) is string interpolation instead — the result is
-  always a string.
-- A field missing from the discovered record resolves to an empty value rather than failing the run.
+| Action          | Description                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Run now** (▶) | Trigger a real run immediately — see [Running an Items Synchronisation](#running-an-items-synchronisation).  |
+| **Run history** | Past runs, with their status and counts — see [Run History](#run-history).                                   |
+| **Edit** (✏️)   | Open the synchronisation in the wizard.                                                                      |
+| **Duplicate**   | Open the wizard pre-filled with this synchronisation's settings (name suffixed `-copy`), saved as a new one. |
+| **Delete**      | Remove the synchronisation. The items it created and the metadata it pushed are **not** deleted.             |
 
-### Running a Workflow {#running-a-workflow}
+A synchronisation can also be created from the [Explore modal](#selecting-nodes): select nodes, then
+**Keep in sync…**.
 
-A run always starts with **Retrieve** (discover the data source, exactly as the discovery scope defines) and
-**Decide** (keep only eligible records), then **Act** differently depending on the workflow's mode:
+The same **Manage items synchronisations** button is on the connector's create/edit page. There, changes are kept in
+the page and saved together with the connector (like items and groups), and previews run against the connector
+settings as currently edited — so a synchronisation can be tried before the connector itself is saved. **Run now**
+and **Run history** are only available from the connector's page, once it is saved.
 
-- **Create/update items locally** diffs the eligible records by identity key against the previous run: create/update
-  an item for anything new, changed, or reactivated; skip anything unchanged; disable — never delete — the item for
-  anything no longer discovered, with the reason recorded as "Configuration workflow no longer discovers this
-  entry".
-- **Push to OIAnalytics** does neither — it never compares against a previous run, so nothing is ever created,
-  updated, or disabled. The eligible records are simply forwarded, as-is, to OIAnalytics as one message, once per
-  run.
+### The Wizard {#the-wizard}
 
-:::tip Run now works even on a disabled connector or item
-Building and testing a workflow shouldn't require switching the connector on first — **Run now** works the same
-way the standalone Explore feature already does. A **scheduled** run, however, is silently skipped if the South
-connector itself is disabled.
+A synchronisation is created and edited in a five-step wizard. The steps bar at its top shows where you are, and a
+click on a step opens it.
+
+| Step         | What it sets                                                                    |
+| ------------ | ------------------------------------------------------------------------------- |
+| **Source**   | The name, and what to discover: the nodes to browse, or the SQL metadata query. |
+| **Filter**   | Which discovered records to act on, with a preview of the matching records.     |
+| **Items**    | The mode, and for local mode how a record becomes an item.                      |
+| **Schedule** | When to run, and whether scheduled runs are enabled.                            |
+| **Review**   | A summary, and a preview of what a run would do.                                |
+
+**Next** leaves the Source step once it has a name (and a query, for SQL). A new synchronisation is saved from the
+Review step; one being edited can be saved from any step.
+
+#### Source {#source}
+
+- **Name** — unique among the connector's synchronisations.
+- **Discovery scope**:
+  - **Tree-based connectors**: **Pick nodes…** opens the Explore tree with the current nodes checked; check the
+    nodes to discover from and click **Use these nodes**. A point stands for itself, any other node (a folder, a
+    device) for everything under it. Remove a node with the cross on its badge. With no node, the whole data source
+    is discovered.
+  - **SQL connectors**: write a metadata query in the SQL editor — independent of any item's own query, each row it
+    returns becomes one discovered record (e.g. `SELECT tag, description, unit FROM tag_list`). When the connector
+    can be explored, its tables and columns are shown above the editor for reference. **Test query** runs the query
+    and shows its raw rows, as a table or JSON.
+
+#### Filter {#filter}
+
+The **Eligibility filter** lists the conditions a discovered record must **all** satisfy (logical AND) to be acted
+on — leave it empty to make every record eligible. Each condition has:
+
+| Setting      | Description                                                                                   | Example Value |
+| ------------ | --------------------------------------------------------------------------------------------- | ------------- |
+| **Field**    | A field of the discovered record. The fields of the previewed records are suggested.          | `type`        |
+| **Operator** | `equals`, `not equals`, `contains`, `matches (regex)`, `exists`, `greater than`, `less than`. | `equals`      |
+| **Value**    | The value to compare against — not used for `exists`.                                         | `Variable`    |
+
+Add a condition with the fields below the table; edit or remove one with its pencil and trash icons.
+
+Opening the step discovers the data source and shows **Matching records: _eligible_ of _discovered_**, with the first
+20 matching records in a table, to see which fields they have. Click **Refresh preview** after changing the
+conditions. Discovery is a real round trip to the data source: previewing a large source costs what a run costs,
+minus the writes.
+
+#### Items {#items-step}
+
+##### Mode {#mode}
+
+Pick **Create/update items locally** or **Push to OIAnalytics**. Switching between them clears what was configured
+for the other.
+
+- **Push to OIAnalytics** forwards every run's eligible records to OIAnalytics as-is. Saving and running are never
+  blocked by the registration status, but the push only happens once OIBus is
+  [registered with OIAnalytics](../installation/oianalytics.mdx): until then, a warning is shown in the wizard, and
+  each run logs a warning and sends nothing.
+- **Create/update items locally** shows the **Item field mapping** below.
+
+:::note SQL connectors only push to OIAnalytics
+For a SQL connector, one item is one free-form query, and a query can return several distinct points at once — item
+and point aren't the same thing there. A synchronisation never creates or updates items for these connectors, and the
+mode picker is replaced by a note. To create items from SQL tables, use [Add as items](#sql-tables-as-items) in the
+Explore modal.
 :::
 
-Use **Preview** to see what a run would do without doing it — the same discovery and eligibility filtering as a
-real run, without writing anything. For a local workflow, each record is classified as **New**, **Changed**,
-**Unchanged**, **Reactivated**, or **Missing**, alongside the raw discovered/previous metadata; for a remote
-workflow, it's simply the raw eligible records that would be sent, exactly as discovered. Discovery is a real
-round-trip to the data source either way, so previewing a large source costs what running it for real costs, minus
-the writes.
+##### Item Field Mapping {#item-field-mapping}
+
+Each field of the connector's items can be mapped to:
+
+- **Not mapped** — a new item gets the field's usual default value, as in the item modal (an updated item keeps its
+  own value),
+- a constant (a dropdown for yes/no, choice, schedule and group fields; free text otherwise), or
+- a `{{field}}` expression taking a value from the discovered record — see
+  [Mapping Expressions](#mapping-expressions).
+
+**Name**, **Group** and **Schedule** are shown first. Under the name, **Example item names** shows the names the first
+matching records would give. The **Group** dropdown defaults to **None** and lets you create, edit or delete groups,
+as in the item modal; with a group, the item takes the group's schedule.
+
+The other fields, and the [identity key fields](#identity-key-fields), are under **Advanced**. When the connector has
+[discovery defaults](#discovery-defaults), they fill this section, which stays collapsed with a summary (e.g.
+`3 other fields mapped, records identified by id`); otherwise, it opens expanded, since everything has to be mapped by
+hand.
+
+Two badges guide the mapping:
+
+- **Required** — the field must be mapped for the item to be valid, given the other fields currently shown. Saving is
+  blocked otherwise. The schedule is exempt once the item is mapped into a group.
+- **Controls visibility** — the field decides whether other fields apply, so it can only take a constant: its value
+  must be known while editing, not resolved per record. The same holds for the group, the schedule and every history
+  setting (max read interval, read delay, time offsets, recovery strategy, sync with group).
+
+##### Identity Key Fields {#identity-key-fields}
+
+The **Identity key fields** name the record field(s) whose combined value identifies a record across runs — e.g. `id`
+for OPC UA and BACnet. At least one is required in local mode:
+
+- A local synchronisation discovers the data source again on every run, and matches the records against the previous
+  run by this key: a record is new, changed or unchanged, and a key that no longer comes back is missing (see
+  [Running an Items Synchronisation](#running-an-items-synchronisation)). If two records of the same run share a key,
+  the later one wins.
+- **Push to OIAnalytics** never compares runs, so it has no identity key fields: correlating records across runs is
+  left to OIAnalytics.
+
+##### Mapping Expressions {#mapping-expressions}
+
+Item fields use a `{{field}}` placeholder syntax:
+
+- A value that is **exactly** one placeholder (e.g. `{{nodeId}}`) takes that field's raw value, keeping its type — a
+  numeric record field lands on a numeric setting untouched, not turned into text.
+- A placeholder inside other text (e.g. `Sensor {{nodeId}}`) is string interpolation — the result is always text.
+- A field missing from the record resolves to an empty value rather than failing the run.
+
+##### Discovery Defaults {#discovery-defaults}
+
+Connectors whose discovered records always have the same shape come with discovery defaults: a new synchronisation
+(and [Add as items](#adding-explored-nodes-as-items)) starts with these identity key fields and this mapping, which
+can then be changed.
+
+| Connector | Identity key | Item field mapping                                                                                                                                                                                      |
+| --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OPC UA    | `id`         | Name `{{path}}` (the display names from the discovery root, joined by `/`), Node ID `{{nodeId}}`, mode `DA`, timestamp origin `OIBus`. See [Node Metadata](./opcua.mdx#node-metadata).                  |
+| BACnet/IP | `id`         | Name `{{deviceName}} - {{name}}`, device address and instance, object type and instance, routing (`{{routed}}`, network number, MAC address) from the record; property `present-value`, timezone `UTC`. |
+
+#### Schedule {#schedule}
+
+- **Schedule** — the scan mode driving scheduled runs. Leave it on **Manual only** to run the synchronisation only
+  with **Run now**.
+- **Enabled** — whether scheduled runs fire. **Run now** works even when disabled.
+
+In local mode, a reminder states that when a point is no longer found, the item created for it is disabled.
+
+#### Review {#review}
+
+The Review step sums up the synchronisation (name, discovery scope, number of conditions, mode, schedule) and previews
+what a run would do — opening the step runs the preview, **Refresh preview** runs it again:
+
+- **Create/update items locally**: each record is classified against the previous run as **New**, **Changed**,
+  **Unchanged**, **Reactivated** or **Missing**, with its identity key and fields. A changed record highlights the
+  fields that differ, with the previous value on hover; a missing one shows the previous run's values, dimmed.
+- **Push to OIAnalytics**: the records that would be pushed, exactly as discovered.
+
+**Export CSV** downloads the previewed rows. Nothing is written by a preview.
+
+### Running an Items Synchronisation {#running-an-items-synchronisation}
+
+A run always discovers the data source (as the discovery scope defines it) and keeps the eligible records, then acts
+depending on the mode:
+
+- **Create/update items locally** matches the eligible records by identity key against the previous run: it creates
+  or updates an item for each new, changed or reactivated record, skips the unchanged ones, and disables — never
+  deletes — the item of each missing record, with the reason "Configuration workflow no longer discovers this entry".
+  A new item gets the usual default value of every field the mapping leaves out, where it applies.
+- **Push to OIAnalytics** forwards the eligible records as-is to OIAnalytics, as one message per run. Nothing is
+  created, updated or disabled.
+
+:::tip Run now works on a disabled connector
+Building and testing a synchronisation doesn't require enabling the connector first: **Run now** works on a disabled
+connector, as Explore does. A **scheduled** run, however, is skipped while the South connector is disabled.
+:::
 
 ### Run History {#run-history}
 
-Every run — manual or scheduled, whether it succeeds or fails — is recorded. The **Run history** page (reachable
-from the workflow list) opens with a search form for narrowing the list down, always shown in full (no need to
-expand anything first):
+Every run — manual or scheduled, successful or not — is recorded. The **Run history** page, opened from the list of
+synchronisations, starts with a search form:
 
 - **Started after / Started before** — a date range on when the run started.
-- **Status** and **Trigger type** — clickable filter chips (click again to remove one, or use **Clear** to remove
-  them all). Each status chip carries its own icon as well as its color (a spinner for Running, a check for
-  Completed, a cross for Errored), so the table's own status badges stay distinguishable without relying on color
-  alone.
+- **Status** and **Trigger type** — filter chips (click again to remove one, or **Clear** to remove them all). Each
+  status chip has its own icon as well as its color (a spinner for Running, a check for Completed, a cross for
+  Errored).
 
-The table itself shows, per run:
+The table shows, per run:
 
-| Column                    | Description                                                                                    |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Status**                 | `Running`, `Completed`, or `Errored`.                                                             |
-| **Trigger type**           | `Manual` (via Run now) or `Scheduled`.                                                            |
-| **Started/Completed at**   | When the run started, and when it finished (if it has).                                          |
-| **Triggered by**           | The name of the user who clicked Run now; empty for a scheduled run.                              |
-| **Discovered**             | How many records this run's discovery step found in total, before eligibility filtering.         |
-| **Error**                  | The failure message, if the run errored — shown as **Ø** when there wasn't one.                   |
+| Column                  | Description                                                         |
+| ----------------------- | ------------------------------------------------------------------- |
+| **Status**              | `Running`, `Completed`, or `Errored`.                               |
+| **Trigger**             | `Manual` (Run now) or `Scheduled`.                                  |
+| **Started / Completed** | When the run started, and when it finished (if it has).             |
+| **Triggered by**        | The user who clicked Run now; empty for a scheduled run.            |
+| **Discovered**          | How many records the run discovered, before the eligibility filter. |
+| **Error**               | The failure message, if the run errored — **Ø** otherwise.          |
 
-The table deliberately shows only the discovered count - everything else the run decided or did (Eligible /
-Created / Updated / Disabled / Pushed, plus the full discovered payload itself) lives one click away, behind the
-**View payload** (👁) action on a row. It opens a larger modal: for a local workflow, every record it decided on,
-classified exactly like **Preview** does (**New**, **Changed**, **Unchanged**, **Reactivated**, **Missing**) with
-the classification leading on the left and the full JSON payload given the rest of the modal's width; for a remote
-workflow, the raw records it forwarded to OIAnalytics; and — for either mode — the created/updated/disabled/pushed
-counts themselves. This is the same data the run itself acted on, persisted at the time it ran - not a live
-re-query - so it stays accurate even if the data source has since changed. Unavailable while a run is still
-`Running`.
+**View payload** (👁) on a row opens what the run did, as the Review step previews it: the records classified as
+**New**, **Changed**, **Unchanged**, **Reactivated** or **Missing** (local mode) or the records pushed (Push to
+OIAnalytics), with the created / updated / disabled / pushed counts and **Export CSV**. It is the data the run acted
+on, stored when it ran — not a new query — so it stays accurate even if the data source has changed since.
+Unavailable while the run is still `Running`.

@@ -53,6 +53,17 @@ Connect to and query Oracle Database™ using OIBus with support for both thin a
 
 :::
 
+## Exploring Tables {#exploring-tables}
+
+Click **Explore** to browse the database's tables (with their column count and, where the database gives it, an
+approximate row count) and the columns of each table, with their type and, where available, nullability, primary key
+and default value. Check tables or columns and click
+**Add as items** to create one item per table, whose query reads the checked columns and is tracked on a date/time
+column picked automatically — see [SQL Tables as Items](./common-settings.md#sql-tables-as-items).
+
+An [items synchronisation](./common-settings.md#items-synchronisation) on this connector runs a metadata query and
+pushes its rows to OIAnalytics; it never creates items.
+
 <ItemSettings />
 
 :::note Oracle datetime field types

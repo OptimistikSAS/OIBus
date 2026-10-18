@@ -20,6 +20,15 @@ import ItemSettings from './_south-record-list-item-settings.mdx';
 - 避免多个进程并发写入
 - 使用 WAL 模式以获得更好的并发性能（PRAGMA journal_mode=WAL）
 
+## 浏览数据表 {#exploring-tables}
+
+点击 **浏览** 可浏览数据库的表（附带列数，以及在数据库提供时的近似行数）和每个表的列，包括列的类型，以及在可获取时的
+是否可为空、主键和默认值。勾选表或列后点击 **添加为项**，即可为每个表创建一个项目，其查询读取所勾选的列，并基于自动
+选取的日期/时间列进行跟踪——参见 [SQL 表作为项目](./common-settings.md#sql-tables-as-items)。
+
+此连接器上的[项同步](./common-settings.md#items-synchronisation)会运行一个元数据查询并将其结果行推送到 OIAnalytics；
+它从不创建项目。
+
 <ItemSettings />
 
 :::note SQLite 日期时间字段类型
