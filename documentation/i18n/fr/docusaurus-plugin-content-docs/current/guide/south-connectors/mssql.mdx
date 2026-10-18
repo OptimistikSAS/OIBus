@@ -53,6 +53,18 @@ Ce connecteur est couramment utilisé pour extraire des données de process et d
 - Mettre en œuvre la pagination pour les grands jeux de résultats
 - Réutiliser les connexions autant que possible
 
+## Explorer les tables {#exploring-tables}
+
+Cliquez sur **Explorer** pour parcourir les tables de la base de données (avec leur nombre de colonnes et, lorsque la
+base le fournit, un nombre approximatif de lignes) et les colonnes de chaque table, avec leur type et, lorsque
+disponibles, leur nullabilité, leur clé primaire et leur valeur par défaut. Cochez des tables ou des colonnes et
+cliquez sur **Ajouter comme points** pour créer un élément par table, dont la requête lit les colonnes cochées et est
+suivie sur une colonne date/heure choisie automatiquement — voir
+[Tables SQL comme éléments](./common-settings.md#sql-tables-as-items).
+
+Une [synchronisation des points](./common-settings.md#items-synchronisation) sur ce connecteur exécute une requête de
+métadonnées et envoie ses lignes à OIAnalytics ; elle ne crée jamais d'éléments.
+
 <ItemSettings />
 
 :::note Types de champ date/heure MSSQL
