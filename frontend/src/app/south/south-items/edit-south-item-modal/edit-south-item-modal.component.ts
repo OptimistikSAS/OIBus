@@ -32,11 +32,12 @@ import { addAttributeToForm, createMqttValidator, extractFormValue } from '../..
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
 import { ModalService } from '../../../shared/modal.service';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { ItemModalStep, ItemModalSteps } from '../item-modal-steps';
+import { ItemModalStep, ItemModalSteps, unboxedItemSettings } from '../item-modal-steps';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
@@ -53,7 +54,8 @@ import SouthItemTestComponent from '../south-item-test/south-item-test.component
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
     NgbDropdownModule,
-    ModalStepsComponent
+    ModalStepsComponent,
+    OIBusSettingsSummaryComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -76,6 +78,11 @@ class EditSouthItemModalComponent {
    * Set by the opener right after opening the modal, before its first change detection.
    */
   directSave = true;
+  /**
+   * Set when a new item is saved with "save and add another": the opener then opens the modal again for the next item,
+   * from the one just saved (see prepareForCreation).
+   */
+  addAnother = false;
   readonly state = new ObservableState();
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
@@ -83,6 +90,8 @@ class EditSouthItemModalComponent {
   readonly southConnectorCommand = signal<SouthConnectorCommandDTO | null>(null);
   readonly manifest = signal<SouthConnectorManifest | null>(null);
   private item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO | null = null;
+  /** The item added just before, in a row of new items: the new one starts with its group, schedule and history settings */
+  private previousItem: SouthConnectorItemCommandDTO | null = null;
   private itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO> = [];
   /** The groups of the page, changed through it only */
   private readonly groupStore = signal<SouthItemGroups | null>(null);
@@ -188,6 +197,38 @@ class EditSouthItemModalComponent {
   /** A new item is saved from the last step, an edited or copied one from any step */
   readonly canSave = computed(() => this.mode() !== 'create' || this.steps.isLast());
 
+  /**
+   * The history and caching settings as they apply to the item, shown in the Review step: read from the controls, which hold the
+   * group's values while the item is synced with it.
+   */
+  readonly review = computed(() => {
+    this.formEvents();
+    const controls = this.form.controls;
+    const labelOf = <T>(options: Array<{ value: T; labelKey: string }>, value: T | null) =>
+      options.find(option => option.value === value)?.labelKey ?? null;
+    return {
+      syncWithGroup: controls.groupId.value !== null && controls.syncWithGroup.value,
+      maxReadInterval: controls.maxReadInterval.value,
+      readDelay: controls.readDelay.value,
+      startTimeOffset: controls.startTimeOffset.value,
+      endTimeOffset: controls.endTimeOffset.value,
+      recoveryStrategyKey: labelOf(this.recoveryStrategies, controls.recoveryStrategy.value),
+      cachingStrategy: controls.cachingStrategy.value,
+      cachingStrategyKey: labelOf(this.cachingStrategies, controls.cachingStrategy.value),
+      thresholdType: controls.thresholdType.value,
+      thresholdTypeKey: labelOf(this.thresholdTypes, controls.thresholdType.value),
+      threshold: controls.threshold.value,
+      rangeLow: controls.rangeLow.value,
+      rangeHigh: controls.rangeHigh.value,
+      maxCachingInterval: controls.maxCachingInterval.value
+    };
+  });
+
+  readonly itemSettingsAttribute = computed(() => {
+    const manifest = this.manifest();
+    return manifest ? unboxedItemSettings(this.getItemSettingsAttribute(manifest)) : null;
+  });
+
   readonly hasHistorianCapabilities = computed(() => this.manifest()?.modes.history ?? false);
 
   /**
@@ -233,6 +274,10 @@ class EditSouthItemModalComponent {
       .filter((topic): topic is string => typeof topic === 'string' && !!topic.trim());
   }
 
+  /**
+   * @param itemList the items of the connector, the one added just before included
+   * @param previousItem the item added just before with "save and add another", whose shared settings the new one starts with
+   */
   prepareForCreation(
     itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>,
     scanModes: Array<ScanModeDTO>,
@@ -240,8 +285,10 @@ class EditSouthItemModalComponent {
     groups: SouthItemGroups,
     manifest: SouthConnectorManifest,
     southId: string,
-    southConnectorCommand: SouthConnectorCommandDTO
+    southConnectorCommand: SouthConnectorCommandDTO,
+    previousItem: SouthConnectorItemCommandDTO | null = null
   ) {
+    this.previousItem = previousItem;
     this.prepare('create', itemList, scanModes, certificates, groups, manifest, null, southId, southConnectorCommand, null);
   }
 
@@ -321,11 +368,13 @@ class EditSouthItemModalComponent {
     }
   }
 
-  save() {
+  /** @param addAnother true to open the modal again for a new item once this one is saved */
+  save(addAnother = false) {
     if (!this.form.valid) {
       this.steps.showFirstInvalid();
       return;
     }
+    this.addAnother = addAnother;
     this.modal.close(this.formItem());
   }
 
@@ -337,7 +386,7 @@ class EditSouthItemModalComponent {
         return Object.values(generalControls);
       case 'settings':
         return [settings];
-      case 'test':
+      case 'review':
         return [];
     }
   }
@@ -479,27 +528,30 @@ class EditSouthItemModalComponent {
       this.form.controls.scanModeId.enable();
     }
 
-    if (this.item) {
-      this.previousGroupId = this.getGroupId(this.item);
+    // An item added after another one starts with its settings shared by the items added in a row, but neither its
+    // name nor its connector settings, which tell the items apart
+    const source = this.item ?? this.previousItem;
+    if (source) {
+      this.previousGroupId = this.getGroupId(source);
 
       this.form.patchValue({
-        name: this.item.name,
+        name: this.item?.name ?? '',
         groupId: this.previousGroupId,
-        scanModeId: this.getScanModeId(this.item),
-        enabled: this.item.enabled,
-        syncWithGroup: this.item.syncWithGroup ?? false,
-        maxReadInterval: this.item.maxReadInterval ?? 3600,
-        readDelay: this.item.readDelay ?? 200,
-        startTimeOffset: this.item.startTimeOffset ?? 0,
-        endTimeOffset: this.item.endTimeOffset ?? 0,
-        recoveryStrategy: this.item.recoveryStrategy ?? 'oldest',
-        cachingStrategy: this.item.cachingStrategy ?? 'allValues',
-        thresholdType: this.item.thresholdType ?? null,
-        threshold: this.item.threshold ?? null,
-        rangeLow: this.item.rangeLow ?? null,
-        rangeHigh: this.item.rangeHigh ?? null,
-        maxCachingInterval: this.item.maxCachingInterval ?? null,
-        settings: this.item.settings
+        scanModeId: this.getScanModeId(source),
+        enabled: source.enabled,
+        syncWithGroup: source.syncWithGroup ?? false,
+        maxReadInterval: source.maxReadInterval ?? 3600,
+        readDelay: source.readDelay ?? 200,
+        startTimeOffset: source.startTimeOffset ?? 0,
+        endTimeOffset: source.endTimeOffset ?? 0,
+        recoveryStrategy: source.recoveryStrategy ?? 'oldest',
+        cachingStrategy: source.cachingStrategy ?? 'allValues',
+        thresholdType: source.thresholdType ?? null,
+        threshold: source.threshold ?? null,
+        rangeLow: source.rangeLow ?? null,
+        rangeHigh: source.rangeHigh ?? null,
+        maxCachingInterval: source.maxCachingInterval ?? null,
+        settings: this.item?.settings ?? this.form.controls.settings.getRawValue()
       });
 
       // Apply sync behavior to update field states

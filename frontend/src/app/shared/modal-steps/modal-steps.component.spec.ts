@@ -7,7 +7,7 @@ import { page } from 'vitest/browser';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ModalStepsComponent } from './modal-steps.component';
 
-type ItemModalStep = 'general' | 'settings' | 'test';
+type ItemModalStep = 'general' | 'settings' | 'review';
 
 @Component({
   template: `<oib-modal-steps
@@ -21,7 +21,7 @@ type ItemModalStep = 'general' | 'settings' | 'test';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestModalStepsWrapper {
-  readonly steps: Array<ItemModalStep> = ['general', 'settings', 'test'];
+  readonly steps: Array<ItemModalStep> = ['general', 'settings', 'review'];
   readonly current = signal<ItemModalStep>('general');
   readonly invalidSteps = signal<Array<ItemModalStep>>([]);
 }
