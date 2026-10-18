@@ -51,6 +51,7 @@ export default class SouthServiceMock {
     async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> =>
       ({ items: [] }) as unknown as OIBusConnectionTestResult
   );
+  buildDiscoveryTableQuery = mock.fn((_southType: string, _table: string, _columns: Array<string>): string => '');
   testDiscoveryQuery = mock.fn(
     async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings, _query: string): Promise<Array<OIBusRecord>> => []
   );

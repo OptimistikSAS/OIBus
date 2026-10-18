@@ -164,6 +164,16 @@ export class SouthConnectorService {
   }
 
   /**
+   * The query a Configuration Workflow of a SQL connector runs to read the rows of a table - all its columns when none
+   * is given - in the SQL dialect of the connector type.
+   */
+  buildDiscoveryTableQuery(southType: OIBusSouthType, table: string, columns: Array<string>): Observable<string> {
+    return this.http
+      .post<{ query: string }>(`/api/south/types/${southType}/table-query`, { table, columns })
+      .pipe(map(response => response.query));
+  }
+
+  /**
    * Discover what a scope holds (e.g. nodes picked in the Explore modal) and map every record to a new item
    * with `itemFieldMapping`, as a configuration workflow would. Nothing is saved.
    */

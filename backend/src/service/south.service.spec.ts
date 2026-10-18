@@ -206,6 +206,15 @@ describe('South Service', () => {
     assert.throws(() => service.getManifest('bad'), new NotFoundError(`South manifest "bad" not found`));
   });
 
+  it('should write the query reading the rows of a table, in the dialect of the connector type', () => {
+    assert.strictEqual(service.buildDiscoveryTableQuery('mssql', 'dbo.tags', ['tag', 'unit']), 'SELECT [tag], [unit] FROM [dbo].[tags]');
+    assert.strictEqual(service.buildDiscoveryTableQuery('mysql', 'tags', []), 'SELECT * FROM `tags`');
+    assert.throws(
+      () => service.buildDiscoveryTableQuery('opcua', 'tags', []),
+      new OIBusValidationError('South connector of type "opcua" has no tables to read')
+    );
+  });
+
   it('should get all south connector settings', () => {
     service.list();
     assert.strictEqual(southConnectorRepository.findAllSouth.mock.calls.length, 1);

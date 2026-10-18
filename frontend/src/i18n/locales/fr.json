@@ -2221,7 +2221,19 @@
         "review-incomplete": "Complétez les étapes précédentes pour prévisualiser une exécution",
         "records-pushed": "Enregistrements envoyés à OIAnalytics : {{count}}",
         "back": "Précédent",
-        "next": "Suivant"
+        "next": "Suivant",
+        "table-hint": "La table dont les lignes deviennent les enregistrements - chacun avec les colonnes lues comme champs",
+        "table": "Table",
+        "table-none": "Sélectionner une table",
+        "columns": "Colonnes",
+        "columns-hint": "Les colonnes lues sur chaque ligne : toutes par défaut",
+        "query-run": "Requête exécutée par OIBus",
+        "write-query": "Écrire la requête moi-même",
+        "pick-table": "Choisir une table à la place",
+        "table-required": "Une table est requise",
+        "columns-required": "Au moins une colonne doit être lue",
+        "table-summary": "Table {{table}}, {{count}} colonnes",
+        "table-summary-all": "Table {{table}}, toutes les colonnes"
       }
     },
     "monitoring": {
