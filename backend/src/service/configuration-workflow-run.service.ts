@@ -6,6 +6,7 @@ import {
 import { SouthConnectorItemCommandDTO } from '../../shared/model/api/south-connector.model';
 import { OIBusRecord } from '../../shared/model/common/content.model';
 import { Page } from '../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
@@ -208,7 +209,8 @@ export default class ConfigurationWorkflowRunService {
         // Computed once per run, from this connector's own manifest, so a mapped constant lands on the
         // item command with the type the manifest actually declares (a boolean checkbox field, a
         // numeric setting, ...) instead of the raw string every mapping expression is written as.
-        const itemFieldKinds = buildItemFieldKinds(this.engine.getSouth(southId).south.connectorConfiguration.type);
+        const connectorType = this.engine.getSouth(southId).south.connectorConfiguration.type;
+        const itemFieldKinds = buildItemFieldKinds(connectorType);
         const previousPoints = this.itemPointMetadataRepository.findAllByWorkflow(workflow.id);
         const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
 
@@ -219,7 +221,7 @@ export default class ConfigurationWorkflowRunService {
           if (status === 'unchanged') {
             continue; // Nothing to act on, not even a metadata-snapshot refresh.
           }
-          await this.actOnRecord(southId, workflow, key, record, previous, actingUser, counts, itemFieldKinds);
+          await this.actOnRecord(southId, workflow, key, record, previous, actingUser, counts, connectorType, itemFieldKinds);
         }
 
         for (const point of previousPoints) {
@@ -292,7 +294,11 @@ export default class ConfigurationWorkflowRunService {
     const records = await this.southService.discover(southId, southType, southSettings, discoveryScope);
     const itemFieldKinds = buildItemFieldKinds(southType);
     return records.map(record => {
-      const command = buildItemCommand(coerceResolvedItemFields(resolveFieldMapping(record, itemFieldMapping), itemFieldKinds), null);
+      const command = buildItemCommand(
+        coerceResolvedItemFields(resolveFieldMapping(record, itemFieldMapping), itemFieldKinds),
+        null,
+        southType
+      );
       // A complete command for the caller to review: the caching settings a workflow never maps are left unset
       return {
         ...command,
@@ -419,6 +425,7 @@ export default class ConfigurationWorkflowRunService {
     previous: ItemPointMetadataEntity | null,
     triggeredBy: string,
     counts: WorkflowRunCounts,
+    connectorType: string,
     itemFieldKinds: Record<string, ItemFieldKind>
   ): Promise<void> {
     const resolved = coerceResolvedItemFields(resolveFieldMapping(record, workflow.itemFieldMapping!), itemFieldKinds);
@@ -427,12 +434,12 @@ export default class ConfigurationWorkflowRunService {
       // Re-discovered entry: update the item this workflow previously created for it.
       const southItemId = previous.southItemId;
       const existingItem = this.southConnectorRepository.findItemById(southId, southItemId)!;
-      await this.southService.updateItem(southId, southItemId, buildItemCommand(resolved, existingItem), triggeredBy);
+      await this.southService.updateItem(southId, southItemId, buildItemCommand(resolved, existingItem, connectorType), triggeredBy);
       counts.updatedCount++;
       this.itemPointMetadataRepository.update(previous.id, { discoveredEntryKey: key, discoveredMetadata: record });
     } else {
       // Brand new entry: create and claim ownership.
-      const created = await this.southService.createItem(southId, buildItemCommand(resolved, null), triggeredBy);
+      const created = await this.southService.createItem(southId, buildItemCommand(resolved, null, connectorType), triggeredBy);
       this.southConnectorRepository.claimItemForWorkflow(southId, created.id, workflow.id, triggeredBy);
       counts.createdCount++;
       this.itemPointMetadataRepository.create({
@@ -595,13 +602,56 @@ function coerceItemFieldValue(kind: ItemFieldKind, value: unknown): unknown {
 // validateSettings against the connector's manifest) still applies on the way in.
 function buildItemCommand(
   resolved: Record<string, unknown>,
-  existingItem: SouthConnectorItemEntity<SouthItemSettings> | null
+  existingItem: SouthConnectorItemEntity<SouthItemSettings> | null,
+  connectorType: string
 ): SouthConnectorItemCommandDTO {
   const base = buildItemCommandBase(existingItem);
   for (const [path, value] of Object.entries(resolved)) {
     setDeep(base, path, value);
   }
+  // An updated item keeps its own values for what the mapping leaves out (see buildItemCommandBase)
+  const rootAttribute = southManifestList.find(manifest => manifest.id === connectorType)?.items.rootAttribute;
+  if (!existingItem && rootAttribute) {
+    fillManifestDefaults(rootAttribute, base);
+  }
   return base as unknown as SouthConnectorItemCommandDTO;
+}
+
+/**
+ * Gives every field of a new item the mapping leaves out its manifest default, as the item form does - the
+ * workflow form counts such a field as filled (see its isMandatoryFieldMissing). A field only gets it where it
+ * applies: when its enabling condition passes against the values of its object, as the item validator checks
+ * them. A default can enable other fields (OPC-UA's mode enables its HA settings), so the object is filled again
+ * until nothing changes.
+ */
+function fillManifestDefaults(objectAttribute: OIBusObjectAttribute, values: Record<string, unknown>): void {
+  const applies = (key: string): boolean => {
+    const condition = objectAttribute.enablingConditions.find(candidate => candidate.targetPathFromRoot === key);
+    return !condition || condition.values.includes((values[condition.referralPathFromRoot] ?? null) as string | number | boolean | null);
+  };
+  let filled = true;
+  while (filled) {
+    filled = false;
+    for (const attribute of objectAttribute.attributes) {
+      // The schedule is the scanModeId of a command, never defaulted: a new item takes the one mapped, or its group's
+      if (attribute.type === 'scan-mode' || !applies(attribute.key)) {
+        continue;
+      }
+      if (attribute.type === 'object') {
+        const current = values[attribute.key];
+        const nested = typeof current === 'object' && current !== null ? (current as Record<string, unknown>) : {};
+        const before = JSON.stringify(nested);
+        fillManifestDefaults(attribute, nested);
+        if (current === undefined ? Object.keys(nested).length > 0 : JSON.stringify(nested) !== before) {
+          values[attribute.key] = nested;
+          filled = true;
+        }
+      } else if (values[attribute.key] === undefined && 'defaultValue' in attribute && attribute.defaultValue != null) {
+        values[attribute.key] = attribute.defaultValue;
+        filled = true;
+      }
+    }
+  }
 }
 
 function toNumberOrNull(value: unknown): number | null {

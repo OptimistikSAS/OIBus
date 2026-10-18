@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
 import { OIBusRecord } from '../../shared/model/common/content.model';
+import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
 
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
@@ -322,6 +323,9 @@ describe('Configuration Workflow Run Service', () => {
     const updateCall = southService.updateItem.mock.calls[0];
     assert.strictEqual(updateCall.arguments[0], SOUTH_ID);
     assert.strictEqual(updateCall.arguments[1], 'existingItemId');
+    // an updated item keeps its own values for what the mapping leaves out, rather than the manifest defaults
+    const existingItem = southConnectorRepository.findItemById.mock.calls[0].result as SouthConnectorItemEntity<SouthItemSettings>;
+    assert.deepStrictEqual((updateCall.arguments[2] as { settings: SouthItemSettings }).settings, existingItem.settings);
     assert.strictEqual(southConnectorRepository.claimItemForWorkflow.mock.calls.length, 0);
 
     const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { updatedCount: number; createdCount: number };
@@ -799,7 +803,8 @@ describe('Configuration Workflow Run Service', () => {
           name: '{{path}}',
           enabled: 'false',
           'settings.regex': '{{nodeId}}',
-          'settings.minAge': '120'
+          'settings.minAge': '120',
+          'settings.preserveFiles': 'false'
         }
       );
 
@@ -809,16 +814,47 @@ describe('Configuration Workflow Run Service', () => {
         southSettings,
         { nodeIds: ['ns=1;s=Reactor'] }
       ]);
+      // the settings left out get their manifest default, but ignoreModifiedDate, which only applies to preserved files
+      const defaults = { preserveFiles: false, maxFiles: 0, maxSize: 0, recursive: false };
       assert.deepStrictEqual(
         items.map(item => [item.id, item.name, item.enabled, item.settings]),
         [
-          [null, 'Reactor/Temperature', false, { regex: 'ns=1;s=Temperature', minAge: 120 }],
-          [null, 'Reactor/Pressure', false, { regex: 'ns=1;s=Pressure', minAge: 120 }]
+          [null, 'Reactor/Temperature', false, { regex: 'ns=1;s=Temperature', minAge: 120, ...defaults }],
+          [null, 'Reactor/Pressure', false, { regex: 'ns=1;s=Pressure', minAge: 120, ...defaults }]
         ]
       );
       assert.strictEqual(items[0].cachingStrategy, null);
       assert.strictEqual(items[0].maxCachingInterval, null);
       assert.strictEqual(southService.createItem.mock.calls.length, 0);
+    });
+
+    it('should give a left out setting its manifest default where it applies, a default enabling others', async () => {
+      southService.discover.mock.mockImplementation(async () => [{ id: 'ns=1;s=T', path: 'Reactor/T' }]);
+
+      const [item] = await service.discoverItems('create', 'opcua', southSettings, {}, { name: '{{path}}', 'settings.nodeId': '{{id}}' });
+
+      // mode defaults to HA, which enables the HA settings: aggregate defaults to raw, so no resampling applies; the
+      // timestamp origin only applies to DA
+      assert.deepStrictEqual(item.settings, { nodeId: 'ns=1;s=T', mode: 'ha', haMode: { aggregate: 'raw' } });
+      assert.strictEqual(item.scanModeId, null);
+    });
+
+    it('should not default the settings a mapped value disables', async () => {
+      southService.discover.mock.mockImplementation(async () => [{ id: 'ns=1;s=T', path: 'Reactor/T' }]);
+
+      const [item] = await service.discoverItems(
+        'create',
+        'opcua',
+        southSettings,
+        {},
+        {
+          name: '{{path}}',
+          'settings.nodeId': '{{id}}',
+          'settings.mode': 'da'
+        }
+      );
+
+      assert.deepStrictEqual(item.settings, { nodeId: 'ns=1;s=T', mode: 'da', timestampOrigin: 'oibus' });
     });
   });
 
