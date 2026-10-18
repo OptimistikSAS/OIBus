@@ -1918,7 +1918,16 @@
     "edit-item-modal": {
       "create-title": "Ajouter un nouvel élément au connecteur South",
       "edit-title": "Modifier l'élément",
-      "copy-title": "Ajouter un nouvel élément au connecteur South"
+      "copy-title": "Ajouter un nouvel élément au connecteur South",
+      "steps": "Étapes de l'élément",
+      "step": {
+        "general": "Général",
+        "settings": "Paramètres",
+        "test": "Test et enregistrement"
+      },
+      "history-settings": "Paramètres d'historique",
+      "caching": "Mise en cache",
+      "group-scan-mode": "{{scanMode}} (du groupe)"
     },
     "items": {
       "title": "Éléments",
@@ -3461,6 +3470,7 @@
     "ok": "OK",
     "save": "Enregistrer",
     "back": "Retour",
+    "next": "Suivant",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "close": "Fermer",
@@ -3559,7 +3569,8 @@
     "create": "Créer",
     "add": "Ajouter",
     "edit": "Modifier",
-    "cache": "Cache"
+    "cache": "Cache",
+    "step-invalid": "(contient des erreurs)"
   },
   "duration-pipe": {
     "long": {

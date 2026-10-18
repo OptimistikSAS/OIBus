@@ -25,8 +25,10 @@ import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { ItemModalStep, ItemModalSteps } from '../../../south/south-items/item-modal-steps';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
 type ItemForm = FormGroup<{
@@ -45,7 +47,8 @@ type ItemForm = FormGroup<{
     SouthItemTestComponent,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
-    SaveButtonComponent
+    SaveButtonComponent,
+    ModalStepsComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -87,6 +90,12 @@ export class EditHistoryQueryItemModalComponent {
 
   readonly form = signal<ItemForm | null>(null);
   private readonly formValue = signal<ItemForm['value'] | null>(null);
+  /** The last change of the form (value, status, touched...) */
+  private readonly formEvent = signal<unknown>(null);
+
+  readonly steps = new ItemModalSteps(step => this.stepControls(step), this.formEvent);
+  /** A new item is saved from the last step, an edited or copied one from any step */
+  readonly canSave = computed(() => this.mode() !== 'create' || this.steps.isLast());
 
   /** The item built from the form, tested by the item-test panel and returned when saving. */
   readonly formItem = computed<HistoryQueryItemCommandDTO | null>(() => {
@@ -176,11 +185,37 @@ export class EditHistoryQueryItemModalComponent {
     this.modal.dismiss();
   }
 
+  /** Submitting the form (e.g. pressing Enter) saves the item once it can be, and opens the next step before. */
+  submit() {
+    if (this.canSave()) {
+      this.save();
+    } else {
+      this.steps.next();
+    }
+  }
+
   save() {
     if (!this.form()!.valid) {
+      this.steps.showFirstInvalid();
       return;
     }
     this.modal.close(this.formItem());
+  }
+
+  /** The controls edited in each step */
+  private stepControls(step: ItemModalStep): Array<AbstractControl> {
+    const form = this.form();
+    if (!form) {
+      return [];
+    }
+    switch (step) {
+      case 'general':
+        return [form.controls.name, form.controls.enabled];
+      case 'settings':
+        return [form.controls.settings];
+      case 'test':
+        return [];
+    }
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -228,6 +263,7 @@ export class EditHistoryQueryItemModalComponent {
     form.valueChanges
       .pipe(startWith(form.value), takeUntilDestroyed(this.destroyRef))
       .subscribe(formValue => this.formValue.set(formValue));
+    form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
     this.form.set(form);
   }
 }
