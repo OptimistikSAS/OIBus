@@ -88,6 +88,12 @@ sont configurés de la même manière également, mais les éléments sont simpl
 dérogation de limitation par élément. Chaque élément partage à la place les seuls paramètres de **Plage temporelle**
 ci-dessus.
 
+Les éléments se modifient dans la même fenêtre en trois étapes que les éléments South — **Général**, **Paramètres**
+(avec le panneau de test) et **Vérification et enregistrement**, avec **Enregistrer et en ajouter un autre** pour une
+série d'éléments — voir [Créer et modifier un élément](./south-connectors/common-settings.md#creating-and-editing-an-item).
+Pour les connecteurs qui le permettent, **Explorer** parcourt la source de données, en lecture seule : les requêtes
+d'historique n'ont ni **Ajouter comme points** ni synchronisation des points.
+
 ## Contrôles d'exécution {#execution-controls}
 
 | Contrôle       | Description                                                                                                                                                                        |

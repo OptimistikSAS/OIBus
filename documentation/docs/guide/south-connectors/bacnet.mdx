@@ -257,6 +257,12 @@ identifiers by hand:
    present value where available. A device that cannot send its whole object list in one reply (no
    segmentation support, common on MS/TP) has it read entry by entry instead.
 
+Check devices or objects and click **Add as items** to create their items at once — each object gives one item
+named `<device name> - <object name>`, reading its `present-value` — or **Keep in sync…** to create an
+[items synchronisation](./common-settings.md#items-synchronisation) that adds the items of new objects and disables
+those of removed ones on each run. A checked device stands for all its objects. See
+[Selecting Nodes](./common-settings.md#selecting-nodes) and [Discovery Defaults](./common-settings.md#discovery-defaults).
+
 Use **Test settings** on the connector's own settings to run the same device discovery as a quick
 connectivity check, without opening the full browser. With the **Target device (unicast)** discovery, it reads the
 device's name, and fails when the device does not answer as the configured device instance.
