@@ -6,6 +6,7 @@ import { UserDTO } from '@oibus/shared/api/user.model';
 
 import { NavbarComponent } from './navbar/navbar.component';
 import { BreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
+import { prefetchCodeMirror } from './shared/code-mirror/code-mirror.loader';
 import { CurrentUserService } from './shared/current-user.service';
 import { DefaultValidationErrorsComponent } from './shared/default-validation-errors/default-validation-errors.component';
 import { ModalService } from './shared/modal.service';
@@ -41,6 +42,8 @@ export class AppComponent implements OnInit, OnDestroy {
         // Start version monitoring when user is authenticated
         if (user) {
           this.startVersionMonitoring();
+          // the code editor is in many pages and modals: have it ready before one is opened
+          prefetchCodeMirror();
         }
       });
   }

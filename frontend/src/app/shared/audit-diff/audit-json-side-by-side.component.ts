@@ -24,7 +24,7 @@ export class AuditJsonSideBySideComponent {
 
   private readonly editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editor');
   /** The merge view is created once CodeMirror is loaded */
-  private readonly codeMirror = loadOnDemand(() => Promise.all([loadCodeMirror(), loadCodeMirrorMerge()]));
+  private readonly codeMirror = loadOnDemand(loadCodeMirror, loadCodeMirrorMerge);
   private mergeView: MergeView | null = null;
 
   constructor() {
