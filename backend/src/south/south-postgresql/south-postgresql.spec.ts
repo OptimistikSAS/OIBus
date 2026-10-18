@@ -468,6 +468,60 @@ describe('SouthPostgreSQL', () => {
       assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
     });
 
+    it('should explore the tables of the database, schema-qualified, then the columns of a table', async () => {
+      clientQuery.mock.mockImplementation(async (query?: unknown) =>
+        String(query).includes('information_schema.tables')
+          ? { rows: [{ tableSchema: 'public', tableName: 'production', columnCount: 2, rowCount: '1200' }] }
+          : {
+              rows: [
+                { name: 'id', type: 'integer', nullable: 'NO', columnDefault: null, primaryKey: true },
+                { name: 'produced_at', type: 'timestamp with time zone', nullable: 'YES', columnDefault: 'now()', primaryKey: false }
+              ]
+            }
+      );
+      clientEnd.mock.resetCalls();
+
+      assert.deepStrictEqual(await south.explore(null), [
+        { id: 'public.production', name: 'public.production', metadata: { columns: 2, rows: 1200 }, hasChildren: true }
+      ]);
+      assert.deepStrictEqual(await south.explore('public.production'), [
+        { id: 'public.production.id', name: 'id', metadata: { nullable: 'no', type: 'integer', primaryKey: 'yes' }, hasChildren: false },
+        {
+          id: 'public.production.produced_at',
+          name: 'produced_at',
+          metadata: { nullable: 'yes', type: 'timestamp with time zone', default: 'now()' },
+          hasChildren: false
+        }
+      ]);
+      assert.deepStrictEqual((clientQuery.mock.calls.at(-1)!.arguments as Array<unknown>)[1], ['public', 'production']);
+      assert.strictEqual(clientEnd.mock.calls.length, 2);
+    });
+
+    it('should discover the item of each table checked in the explore modal, quoted and tracked as PostgreSQL reads them', async () => {
+      mock.method(south, 'explore', async (parentId: string | null) =>
+        parentId === null
+          ? [{ id: 'public.production', name: 'public.production', metadata: { columns: 3 }, hasChildren: true }]
+          : [
+              { id: `${parentId}.id`, name: 'id', metadata: { type: 'int' }, hasChildren: false },
+              { id: `${parentId}.value`, name: 'value', metadata: { type: 'float' }, hasChildren: false },
+              { id: `${parentId}.produced_at`, name: 'produced_at', metadata: { type: 'timestamp with time zone' }, hasChildren: false }
+            ]
+      );
+
+      const records = await south.discover({ nodeIds: ['public.production.value'] });
+
+      assert.deepStrictEqual(records, [
+        {
+          id: 'public.production',
+          name: 'public.production',
+          query: 'SELECT "produced_at", "value" FROM "public"."production" WHERE "produced_at" > @StartTime AND "produced_at" <= @EndTime',
+          trackInstant: true,
+          timeColumn: 'produced_at',
+          dateTimeType: 'timestamptz'
+        }
+      ]);
+    });
+
     it('should close the connection and rethrow when the discovery query fails', async () => {
       const queryError = new Error('bad query');
       clientQuery.mock.mockImplementationOnce(async () => {

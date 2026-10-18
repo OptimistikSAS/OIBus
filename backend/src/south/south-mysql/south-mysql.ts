@@ -5,7 +5,11 @@ import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.
 import { Instant } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthMySQLItemSettings, SouthMySQLSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -20,7 +24,20 @@ import {
   workUnitLogCtx
 } from '../../service/utils';
 import SouthConnector from '../south-connector';
-import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
+import { discoverTables, extractNodeIds, SqlDialect, toColumnExploreEntry } from '../sql-table-discovery';
+
+/** `` `name` ``, embedded backticks doubled. */
+function quoteMySQLIdentifier(identifier: string): string {
+  return `\`${identifier.replace(/`/g, '``')}\``;
+}
+
+/** The tables of the database the connector reads, by name (see `explore()`). */
+const MYSQL_DIALECT: SqlDialect = {
+  quoteTable: quoteMySQLIdentifier,
+  quoteColumn: quoteMySQLIdentifier,
+  dateTimeType: columnType => (['datetime', 'timestamp'].includes(columnType.toLowerCase()) ? 'date-time' : null)
+};
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send the resulting rows as
@@ -30,7 +47,7 @@ import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interfa
  */
 export default class SouthMySQL
   extends SouthConnector<SouthMySQLSettings, SouthMySQLItemSettings>
-  implements SouthHistoryQuery, SouthConfigurationDiscovery
+  implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
   constructor(
     connector: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
@@ -230,11 +247,72 @@ export default class SouthMySQL
   }
 
   /**
+   * Interactive explore of the database the connector reads: its tables at the root, with their column count and an
+   * approximate row count (the `TABLE_ROWS` statistic rather than a `COUNT(*)` per table, far too costly just to
+   * browse), and the columns of a table under it, with their type, nullability, primary key membership and default.
+   * @param parentId - a table name to list the columns of, or null to list the tables
+   */
+  async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    const connection = await mysql.createConnection(await this.createConnectionOptions());
+    try {
+      return parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId);
+    } finally {
+      await connection.end();
+    }
+  }
+
+  private async exploreTables(connection: mysql.Connection): Promise<Array<SouthConnectorExploreEntry>> {
+    const [tables] = await connection.execute(`
+      SELECT
+        t.TABLE_NAME AS tableName,
+        t.TABLE_ROWS AS rowCount,
+        (SELECT COUNT(*) FROM information_schema.COLUMNS c WHERE c.TABLE_SCHEMA = t.TABLE_SCHEMA AND c.TABLE_NAME = t.TABLE_NAME) AS columnCount
+      FROM information_schema.TABLES t
+      WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_TYPE = 'BASE TABLE'
+      ORDER BY t.TABLE_NAME
+    `);
+    return (tables as Array<{ tableName: string; rowCount: number | string | null; columnCount: number | string }>).map(table => ({
+      id: table.tableName,
+      name: table.tableName,
+      metadata: { columns: Number(table.columnCount), rows: Number(table.rowCount ?? 0) },
+      hasChildren: Number(table.columnCount) > 0
+    }));
+  }
+
+  private async exploreColumns(connection: mysql.Connection, tableName: string): Promise<Array<SouthConnectorExploreEntry>> {
+    const [columns] = await connection.execute(
+      `
+      SELECT COLUMN_NAME AS name, DATA_TYPE AS type, IS_NULLABLE AS nullable, COLUMN_DEFAULT AS columnDefault, COLUMN_KEY AS columnKey
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+      ORDER BY ORDINAL_POSITION
+    `,
+      [tableName]
+    );
+    return (columns as Array<{ name: string; type: string; nullable: string; columnDefault: string | null; columnKey: string }>).map(
+      column =>
+        toColumnExploreEntry(tableName, {
+          name: column.name,
+          type: column.type,
+          nullable: column.nullable === 'YES',
+          primaryKey: column.columnKey === 'PRI',
+          defaultValue: column.columnDefault
+        })
+    );
+  }
+
+  /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records.
+   * any item's own data query - and returns its rows directly as the discovered records. The tables and
+   * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
+   * the item that reads it (see `discoverTables()`).
    */
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const nodeIds = extractNodeIds(scope);
+    if (nodeIds) {
+      return discoverTables(parentId => this.explore(parentId), nodeIds, MYSQL_DIALECT);
+    }
     const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();
 

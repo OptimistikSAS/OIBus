@@ -25,6 +25,31 @@ import {
 } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
+import { discoverTables, extractNodeIds, splitSchemaTable, SqlDialect } from '../sql-table-discovery';
+
+/** The date formats of the MSSQL date/time column types, as an item tracking instant reads them. */
+const MSSQL_DATE_TIME_TYPES: Record<string, string> = {
+  datetime: 'date-time',
+  datetime2: 'date-time-2',
+  datetimeoffset: 'date-time-offset',
+  smalldatetime: 'small-date-time',
+  date: 'date'
+};
+
+/** `[name]`, embedded closing brackets doubled. */
+function quoteMSSQLIdentifier(identifier: string): string {
+  return `[${identifier.replace(/]/g, ']]')}]`;
+}
+
+/** The tables of MSSQL are schema-qualified (`schema.table`, see `explore()`). */
+const MSSQL_DIALECT: SqlDialect = {
+  quoteTable: tableId => {
+    const { schema, table } = splitSchemaTable(tableId);
+    return schema ? `${quoteMSSQLIdentifier(schema)}.${quoteMSSQLIdentifier(table)}` : quoteMSSQLIdentifier(table);
+  },
+  quoteColumn: quoteMSSQLIdentifier,
+  dateTimeType: columnType => MSSQL_DATE_TIME_TYPES[columnType.toLowerCase()] ?? null
+};
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send the resulting rows as record-list
@@ -283,13 +308,11 @@ export default class SouthMSSQL
   /** One level down from `explore()`'s root: every column of the "schema.table" being expanded, with
    *  its primary-key membership resolved via a single join rather than a second round-trip. */
   private async exploreColumns(pool: ConnectionPool, parentId: string): Promise<Array<SouthConnectorExploreEntry>> {
-    const dotIndex = parentId.indexOf('.');
-    const tableSchema = dotIndex === -1 ? '' : parentId.slice(0, dotIndex);
-    const tableName = dotIndex === -1 ? parentId : parentId.slice(dotIndex + 1);
+    const { schema, table } = splitSchemaTable(parentId);
 
     const request = pool.request();
-    request.input('tableSchema', tableSchema);
-    request.input('tableName', tableName);
+    request.input('tableSchema', schema);
+    request.input('tableName', table);
     const {
       recordsets: [columns]
     } = await request.query<Array<{ name: string; type: string; nullable: string; columnDefault: string | null; isPrimaryKey: number }>>(`
@@ -331,9 +354,15 @@ export default class SouthMSSQL
   /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records.
+   * any item's own data query - and returns its rows directly as the discovered records. The tables and
+   * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
+   * the item that reads it (see `discoverTables()`).
    */
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const nodeIds = extractNodeIds(scope);
+    if (nodeIds) {
+      return discoverTables(parentId => this.explore(parentId), nodeIds, MSSQL_DIALECT);
+    }
     const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();
 

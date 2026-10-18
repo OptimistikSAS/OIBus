@@ -19,16 +19,17 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { convertDateTimeToInstant, extractDiscoveryQuery, formatInstant, logQuery, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
+import { discoverTables, extractNodeIds, quoteAnsiIdentifier, SqlDialect } from '../sql-table-discovery';
 
 /**
- * Wraps a SQL identifier (table/column name) in double quotes for safe interpolation into PRAGMA and
- * COUNT statements, neither of which can be parameterized with a bind variable in SQLite — the name
- * itself has to be part of the SQL text. Embedded double quotes are doubled per the standard SQL
- * identifier-escaping rule, so a maliciously/oddly named table can't break out of the quoting.
+ * The tables and columns of SQLite. Its names are quoted for PRAGMA and COUNT statements too, which can't take a bind
+ * variable. SQLite has no date type: a column declared as one (DATETIME, TIMESTAMP...) usually holds ISO 8601 text.
  */
-function quoteIdentifier(identifier: string): string {
-  return `"${identifier.replace(/"/g, '""')}"`;
-}
+const SQLITE_DIALECT: SqlDialect = {
+  quoteTable: quoteAnsiIdentifier,
+  quoteColumn: quoteAnsiIdentifier,
+  dateTimeType: columnType => (/DATE|TIME/i.test(columnType) ? 'iso-string' : null)
+};
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send the resulting rows as record-list
@@ -150,12 +151,12 @@ export default class SouthSQLite
           .all() as Array<{ name: string }>;
 
         return tables.map(table => {
-          const columnCount = (database.prepare(`PRAGMA table_info(${quoteIdentifier(table.name)})`).all() as Array<unknown>).length;
+          const columnCount = (database.prepare(`PRAGMA table_info(${quoteAnsiIdentifier(table.name)})`).all() as Array<unknown>).length;
           // A table can exist without being queryable (e.g. a broken virtual table) — a row count that
           // can't be read shouldn't stop the rest of the tree from being explorable.
           let rowCount: number | null = null;
           try {
-            const countResult = database.prepare(`SELECT COUNT(*) AS count FROM ${quoteIdentifier(table.name)}`).all() as Array<{
+            const countResult = database.prepare(`SELECT COUNT(*) AS count FROM ${quoteAnsiIdentifier(table.name)}`).all() as Array<{
               count: number;
             }>;
             rowCount = countResult[0]?.count ?? null;
@@ -176,7 +177,7 @@ export default class SouthSQLite
         });
       }
 
-      const columns = database.prepare(`PRAGMA table_info(${quoteIdentifier(parentId)})`).all() as Array<{
+      const columns = database.prepare(`PRAGMA table_info(${quoteAnsiIdentifier(parentId)})`).all() as Array<{
         name: string;
         type: string;
         notnull: number;
@@ -290,12 +291,18 @@ export default class SouthSQLite
   /**
    * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
    * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
-   * any item's own data query - and returns its rows directly as the discovered records.
+   * any item's own data query - and returns its rows directly as the discovered records. The tables and
+   * columns checked in the Explore modal (`discoveryScope.nodeIds`) give one record per table instead, holding
+   * the item that reads it (see `discoverTables()`).
    */
   // better-sqlite3 is fully synchronous - see the same note on explore() above for why this is still
   // declared `async` rather than just typed `Promise<...>`.
   // eslint-disable-next-line require-await
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const nodeIds = extractNodeIds(scope);
+    if (nodeIds) {
+      return discoverTables(parentId => this.explore(parentId), nodeIds, SQLITE_DIALECT);
+    }
     const query = extractDiscoveryQuery(scope);
     const database = db(path.resolve(this.connector.settings.databasePath));
     try {
