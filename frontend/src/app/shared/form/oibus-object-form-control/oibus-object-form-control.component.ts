@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, Directive, effect, inject, input, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
@@ -36,20 +36,27 @@ interface FormColumn {
   attribute: OIBusAttribute;
 }
 
+/**
+ * Provides the group of the object, bound by the `formGroupName` around the component, as the parent of the `formGroupName`
+ * of a nested object.
+ * A view provider of the component can't: Angular hides it from a `@Host()` lookup coming from a view of the template the
+ * host itself is in, which is the case of this recursive component from the second level of nesting.
+ */
+@Directive({
+  selector: '[oibObjectFormGroup]',
+  providers: [{ provide: ControlContainer, useExisting: FormGroupName }]
+})
+class ObjectFormGroupDirective {}
+
 @Component({
   selector: 'oib-oibus-object-form-control',
   templateUrl: './oibus-object-form-control.component.html',
   styleUrl: './oibus-object-form-control.component.scss',
-  viewProviders: [
-    {
-      provide: ControlContainer,
-      useExisting: FormGroupName
-    }
-  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     NgTemplateOutlet,
     ReactiveFormsModule,
+    ObjectFormGroupDirective,
     TranslateDirective,
     BoxComponent,
     BoxTitleDirective,

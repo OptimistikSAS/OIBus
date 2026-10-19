@@ -65,13 +65,15 @@
       @if (enabledKeys().has(row.columns[0].attribute.key)) {
         @switch (row.columns[0].attribute.type) {
           @case ('object') {
-            <ng-container [formGroupName]="row.columns[0].attribute.key">
-              <oib-oibus-object-form-control
-                [scanModes]="scanModes()"
-                [certificates]="certificates()"
-                [group]="asFormGroup(group().controls[row.columns[0].attribute.key])"
-                [objectAttribute]="row.columns[0].attribute"
-              />
+            <ng-container oibObjectFormGroup>
+              <ng-container [formGroupName]="row.columns[0].attribute.key">
+                <oib-oibus-object-form-control
+                  [scanModes]="scanModes()"
+                  [certificates]="certificates()"
+                  [group]="asFormGroup(group().controls[row.columns[0].attribute.key])"
+                  [objectAttribute]="row.columns[0].attribute"
+                />
+              </ng-container>
             </ng-container>
           }
           @case ('array') {
