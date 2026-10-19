@@ -1,18 +1,11 @@
 import { computed, Signal, signal } from '@angular/core';
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 
-import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
-
 import { compareSettings, countChanges, SettingSummary } from '../../shared/form/oibus-settings-summary/settings-summary';
 
 /** The steps of the south and history item modals, in order. */
 export const ITEM_MODAL_STEPS = ['general', 'settings', 'review'] as const;
 export type ItemModalStep = (typeof ITEM_MODAL_STEPS)[number];
-
-/** The item settings of a connector as shown in the Settings step: under the step's section name rather than in a box. */
-export function unboxedItemSettings(settingsAttribute: OIBusObjectAttribute): OIBusObjectAttribute {
-  return { ...settingsAttribute, displayProperties: { ...settingsAttribute.displayProperties, wrapInBox: false } };
-}
 
 /** An item as summed up in the Review step: its general settings, and the settings of its connector type */
 export interface ItemSummary {
