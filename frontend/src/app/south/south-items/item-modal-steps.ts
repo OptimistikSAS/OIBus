@@ -3,6 +3,8 @@ import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 
+import { compareSettings, countChanges, SettingSummary } from '../../shared/form/oibus-settings-summary/settings-summary';
+
 /** The steps of the south and history item modals, in order. */
 export const ITEM_MODAL_STEPS = ['general', 'settings', 'review'] as const;
 export type ItemModalStep = (typeof ITEM_MODAL_STEPS)[number];
@@ -10,6 +12,17 @@ export type ItemModalStep = (typeof ITEM_MODAL_STEPS)[number];
 /** The item settings of a connector as shown in the Settings step: under the step's section name rather than in a box. */
 export function unboxedItemSettings(settingsAttribute: OIBusObjectAttribute): OIBusObjectAttribute {
   return { ...settingsAttribute, displayProperties: { ...settingsAttribute.displayProperties, wrapInBox: false } };
+}
+
+/** An item as summed up in the Review step: its general settings, and the settings of its connector type */
+export interface ItemSummary {
+  general: Array<SettingSummary>;
+  settings: Array<SettingSummary>;
+}
+
+/** How many settings of an item changed since it was saved */
+export function countItemChanges(summary: ItemSummary, saved: ItemSummary): number {
+  return countChanges(compareSettings(summary.general, saved.general)) + countChanges(compareSettings(summary.settings, saved.settings));
 }
 
 /** True when the control, or one of its descendants, has an error the user was already shown. */
@@ -37,6 +50,12 @@ export class ItemModalSteps {
    * notify its parents, so the form events don't tell.
    */
   private readonly errorsShown = signal(0);
+  /** The steps with an invalid control, whether its error was shown or not: listed in the Review step */
+  readonly withErrors = computed(() => {
+    this.formEvents();
+    this.errorsShown();
+    return ITEM_MODAL_STEPS.filter(step => this.controlsOf(step).some(control => control.invalid));
+  });
   /** The steps with an error shown to the user, flagged in the steps bar */
   readonly invalid = computed(() => {
     this.formEvents();

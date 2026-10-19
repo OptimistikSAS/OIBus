@@ -1,54 +1,39 @@
-<ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{ $implicit: settings() }" />
+<ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{ $implicit: views() }" />
 
-<ng-template #list let-settings>
+<ng-template #list let-views>
   <dl class="oib-summary">
-    @for (setting of asSettings(settings); track $index) {
+    @for (view of asViews(views); track $index) {
+      @let setting = view.setting;
       @if (setting.kind === 'group') {
         <div class="oib-summary-group">
           <div class="oib-summary-group-title" [translate]="setting.labelKey"></div>
-          <ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{ $implicit: setting.settings }" />
+          <ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{ $implicit: view.children }" />
         </div>
       } @else {
-        <div class="oib-summary-entry" [class.oib-summary-wide]="setting.kind === 'code' || setting.kind === 'table'">
-          <dt [translate]="setting.labelKey"></dt>
+        <div
+          class="oib-summary-entry"
+          [class.oib-summary-wide]="setting.kind === 'code' || setting.kind === 'table'"
+          [class.oib-summary-changed]="view.changed"
+          [class.oib-summary-invalid]="setting.invalid"
+        >
+          <dt>
+            <span [translate]="setting.labelKey"></span>
+            @if (setting.invalid) {
+              <span class="fa-solid fa-circle-exclamation ms-1" aria-hidden="true"></span>
+              <span class="visually-hidden" translate="common.step-invalid"></span>
+            }
+            @if (view.changed) {
+              <span class="oib-summary-badge ms-1" translate="common.changed"></span>
+            }
+          </dt>
           <dd>
-            @if (setting.kind === 'text') {
-              @if (setting.text !== null) {
-                {{ setting.text }}
-              } @else {
-                <span class="text-muted">–</span>
-              }
-            } @else if (setting.kind === 'boolean') {
-              <span [class]="setting.value ? 'fa-solid fa-check text-success' : 'fa-solid fa-xmark text-muted'" aria-hidden="true"></span>
-              <span class="ms-1" [translate]="'enums.boolean.' + setting.value"></span>
-            } @else if (setting.kind === 'code') {
-              @if (setting.code !== null) {
-                <pre class="oib-summary-code">{{ setting.code }}</pre>
-              } @else {
-                <span class="text-muted">–</span>
-              }
-            } @else if (setting.kind === 'table') {
-              @if (setting.rows.length > 0) {
-                <table class="table table-sm mb-0">
-                  <thead>
-                    <tr>
-                      @for (columnKey of setting.columnKeys; track columnKey) {
-                        <th [translate]="columnKey"></th>
-                      }
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of setting.rows; track $index) {
-                      <tr>
-                        @for (cell of row; track $index) {
-                          <td>{{ cell }}</td>
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              } @else {
-                <span class="text-muted">–</span>
+            <ng-container [ngTemplateOutlet]="value" [ngTemplateOutletContext]="{ $implicit: setting }" />
+            @if (view.previous; as previous) {
+              @if (previous.kind === 'text' || previous.kind === 'boolean') {
+                <div class="oib-summary-previous">
+                  <span translate="common.was"></span>&ngsp;
+                  <s><ng-container [ngTemplateOutlet]="value" [ngTemplateOutletContext]="{ $implicit: previous }" /></s>
+                </div>
               }
             }
           </dd>
@@ -56,4 +41,47 @@
       }
     }
   </dl>
+</ng-template>
+
+<ng-template #value let-setting>
+  @let shown = asSetting(setting);
+  @if (shown.kind === 'text') {
+    @if (shown.text !== null) {
+      {{ shown.text }}
+    } @else {
+      <span class="oib-summary-empty">–</span>
+    }
+  } @else if (shown.kind === 'boolean') {
+    <span [class]="shown.value ? 'fa-solid fa-check text-success' : 'fa-solid fa-xmark text-muted'" aria-hidden="true"></span>
+    <span class="ms-1" [translate]="'enums.boolean.' + shown.value"></span>
+  } @else if (shown.kind === 'code') {
+    @if (shown.code !== null) {
+      <pre class="oib-summary-code">{{ shown.code }}</pre>
+    } @else {
+      <span class="oib-summary-empty">–</span>
+    }
+  } @else if (shown.kind === 'table') {
+    @if (shown.rows.length > 0) {
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr>
+            @for (columnKey of shown.columnKeys; track columnKey) {
+              <th [translate]="columnKey"></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of shown.rows; track $index) {
+            <tr>
+              @for (cell of row; track $index) {
+                <td>{{ cell }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <span class="oib-summary-empty">–</span>
+    }
+  }
 </ng-template>

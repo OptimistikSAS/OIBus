@@ -60,22 +60,34 @@
       />
     </div>
 
-    <!-- 3. Review & save: the item as it will be saved -->
+    <!-- 3. Review & save: the item as it will be saved, what changed since it was saved, and what to fix before -->
     <div [hidden]="steps.current() !== 'review'" id="step-review">
-      @let item = formItem()!;
+      @let summary = reviewSummary();
+      @let saved = savedSummary();
+      @if (steps.withErrors().length > 0) {
+        <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
+          <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
+          <span translate="south.edit-item-modal.review-errors"></span>
+          @for (step of steps.withErrors(); track step) {
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              (click)="steps.current.set(step)"
+              [translate]="'south.edit-item-modal.step.' + step"
+            ></button>
+          }
+        </div>
+      } @else if (changeCount(); as changeCount) {
+        <div class="alert alert-warning py-2" id="review-changes" role="status">
+          {{ 'south.edit-item-modal.review-changes' | translate: { count: changeCount } }}
+        </div>
+      } @else if (saved) {
+        <div class="alert alert-secondary py-2" id="review-changes" role="status" translate="south.edit-item-modal.review-no-changes"></div>
+      }
       <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
-      <dl class="oib-summary" id="item-summary">
-        <div>
-          <dt translate="south.items.name"></dt>
-          <dd>{{ item.name }}</dd>
-        </div>
-        <div>
-          <dt translate="south.items.status"></dt>
-          <dd [translate]="item.enabled ? 'common.enabled' : 'common.disabled'"></dd>
-        </div>
-      </dl>
+      <oib-oibus-settings-summary id="item-summary" [settings]="summary.general" [previous]="saved?.general ?? null" />
       <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
-      <oib-oibus-settings-summary id="settings-summary" [objectAttribute]="itemSettingsAttribute()!" [value]="item.settings" />
+      <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" [previous]="saved?.settings ?? null" />
     </div>
   </div>
 }

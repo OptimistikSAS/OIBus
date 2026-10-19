@@ -1929,7 +1929,10 @@
       "caching": "缓存",
       "group-scan-mode": "{{scanMode}}(来自组)",
       "save-and-add-another": "保存并继续添加",
-      "ok-and-add-another": "确定并继续添加"
+      "ok-and-add-another": "确定并继续添加",
+      "review-errors": "保存前请修正以下步骤：",
+      "review-changes": "自上次保存以来修改的设置：{{count}}",
+      "review-no-changes": "自上次保存以来没有修改"
     },
     "items": {
       "title": "项",
@@ -3585,7 +3588,9 @@
     "add": "添加",
     "edit": "编辑",
     "cache": "缓存",
-    "step-invalid": "(有错误)"
+    "step-invalid": "(有错误)",
+    "changed": "已修改",
+    "was": "原为"
   },
   "duration-pipe": {
     "long": {
