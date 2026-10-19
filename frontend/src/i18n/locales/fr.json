@@ -2261,6 +2261,21 @@
       "view-metrics": "Voir les métriques du connecteur South",
       "copy-cache-path": "Copier le chemin du cache dans le presse-papiers",
       "audit": "Voir l'historique d'audit du connecteur South"
+    },
+    "steps": {
+      "steps": "Étapes du connecteur",
+      "step": {
+        "general": "Général",
+        "settings": "Paramètres",
+        "items": "Éléments",
+        "review": "Vérification et enregistrement"
+      },
+      "review-errors": "Corrigez ces étapes avant d'enregistrer :",
+      "review-changes": "Modifications depuis l'enregistrement du connecteur : {{count}}",
+      "review-no-changes": "Aucune modification depuis l'enregistrement du connecteur",
+      "groups": "Groupes",
+      "workflows": "Synchronisations des points",
+      "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}"
     }
   },
   "scan-mode": {

@@ -28,9 +28,10 @@ import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-obje
 import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
 import { summarizeSettings } from '../../../shared/form/oibus-settings-summary/settings-summary';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
+import { submitsOnEnter } from '../../../shared/modal-steps/wizard-steps';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary, submitsOnEnter } from '../../../south/south-items/item-modal-steps';
+import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary } from '../../../south/south-items/item-modal-steps';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
 type ItemForm = FormGroup<{

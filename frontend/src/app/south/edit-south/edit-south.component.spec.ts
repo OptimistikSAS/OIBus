@@ -3,7 +3,7 @@ import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
 import { firstValueFrom, of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import {
@@ -40,7 +40,7 @@ import { SelectGroupModalComponent } from '../south-items/select-group-modal/sel
 import { SouthItemGroups } from '../south-items/south-item-groups';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { WorkflowCreationService } from '../south-workflows/workflow-creation.service';
-import { EditSouthComponent } from './edit-south.component';
+import { EditSouthComponent, SouthConnectorStep } from './edit-south.component';
 
 const manifest = testData.south.manifest;
 const scanModes = testData.scanMode.list;
@@ -107,10 +107,24 @@ class EditSouthComponentTester {
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly testConnectionButton = this.root.getByRole('button', { name: 'Test settings' });
   readonly exploreButton = this.root.getByRole('button', { name: 'Explore' });
+  readonly nextButton = this.root.getByRole('button', { name: 'Next' });
+  readonly reviewErrors = this.root.getByCss('#review-errors');
+  readonly reviewChanges = this.root.getByCss('#review-changes');
+  readonly itemChanges = this.root.getByCss('#item-changes');
+
+  step(step: SouthConnectorStep) {
+    return this.root.getByCss(`#south-step-${step}`);
+  }
+
+  async goTo(step: SouthConnectorStep) {
+    await this.step(step).click();
+  }
 
   readonly items = this.root.getByCss('oib-box.oib-south-items');
   readonly manageGroupsButton = this.items.getByRole('button', { name: /^Manage groups/ });
   readonly manageWorkflowsButton = this.items.getByRole('button', { name: /^Manage items synchronisations/ });
+  /** The workflows button, to read its count from any step: a role locator leaves out the hidden Items step */
+  readonly manageWorkflowsCount = this.root.getByCss('#manage-workflows-button');
   readonly addItemButton = this.items.getByRole('button', { name: 'Create a new item' });
   readonly exportButton = this.items.getByRole('button', { name: 'Export' });
   readonly importButton = this.items.getByRole('button', { name: 'Import' });
@@ -206,7 +220,11 @@ describe('EditSouthComponent', () => {
     });
   });
 
-  async function createTester(mode: 'create' | 'edit' | 'duplicate'): Promise<EditSouthComponentTester> {
+  /** Opens the page, on the given step */
+  async function createTester(
+    mode: 'create' | 'edit' | 'duplicate',
+    step: SouthConnectorStep = 'general'
+  ): Promise<EditSouthComponentTester> {
     const route = {
       create: stubRoute({ queryParams: { type: 'folder-scanner' } }),
       edit: stubRoute({ params: { southId: 'southId1' } }),
@@ -217,6 +235,9 @@ describe('EditSouthComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent);
     const tester = new EditSouthComponentTester();
     await expect.element(tester.name).toBeVisible();
+    if (step !== 'general') {
+      await tester.goTo(step);
+    }
     return tester;
   }
 
@@ -229,6 +250,8 @@ describe('EditSouthComponent', () => {
   async function lastSavedCommand(tester: EditSouthComponentTester) {
     southConnectorService.update.mockReturnValue(of(undefined));
     southConnectorService.create.mockReturnValue(of(southConnector));
+    // a new connector is saved from the last step
+    await tester.goTo('review');
     await tester.saveButton.click();
     const updateCall = southConnectorService.update.mock.lastCall;
     if (updateCall) {
@@ -237,19 +260,77 @@ describe('EditSouthComponent', () => {
     return southConnectorService.create.mock.lastCall![0];
   }
 
+  describe('steps', () => {
+    test('should go through the steps of a new connector, the next one opening once the current one is valid', async () => {
+      const tester = await createTester('create');
+      await expect.element(tester.saveButton).not.toBeInTheDocument();
+
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
+
+      await tester.name.fill('My south');
+      // Enter in a field opens the next step too
+      await userEvent.keyboard('{Enter}');
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.testConnectionButton).toBeVisible();
+
+      await tester.nextButton.click();
+      await expect.element(tester.addItemButton).toBeVisible();
+      await tester.nextButton.click();
+      await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.saveButton).toBeVisible();
+      await expect.element(tester.nextButton).not.toBeInTheDocument();
+      await expect.element(tester.reviewChanges).not.toBeInTheDocument();
+    });
+
+    test('should list the steps to fix in the review, and open them', async () => {
+      const tester = await createTester('create', 'review');
+
+      await expect.element(tester.reviewErrors.getByText('Fix these steps before saving:')).toBeInTheDocument();
+      await tester.reviewErrors.getByRole('button', { name: 'General' }).click();
+
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+    });
+
+    test('should save an edited connector from any step', async () => {
+      const tester = await createTester('edit', 'items');
+
+      const command = await lastSavedCommand(tester);
+
+      expect(command.name).toBe('South 1');
+    });
+
+    test('should show what changed since the edited connector was saved', async () => {
+      const tester = await createTester('edit', 'review');
+      await expect.element(tester.reviewChanges).toHaveTextContent('No change since the connector was saved');
+
+      await tester.goTo('general');
+      await tester.description.fill('changed description');
+      await tester.goTo('items');
+      await tester.itemAction(1, 'Delete item').click();
+      await tester.goTo('review');
+
+      await expect.element(tester.reviewChanges).toHaveTextContent('Changes since the connector was saved: 2');
+      await expect.element(tester.itemChanges).toHaveTextContent('Items added: 0 · changed: 0 · removed: 1');
+    });
+  });
+
   describe('connector', () => {
     test('should create a connector', async () => {
       const tester = await createTester('create');
       await expect.element(tester.title).toHaveTextContent('Create Folder scanner south connector');
       await expect.element(tester.enabled).toBeChecked();
-      await expect.element(tester.noItems).toBeVisible();
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*0/);
+      await expect.element(tester.noItems).toBeInTheDocument();
+      await expect.element(tester.manageWorkflowsCount).toMatchTextContent(/Manage items synchronisations\s*0/);
       expect(configurationWorkflowService.list).not.toHaveBeenCalled();
       expect(southConnectorService.findById).not.toHaveBeenCalled();
       southConnectorService.create.mockReturnValue(of(southConnector));
 
       await tester.name.fill('My south');
       await tester.description.fill('my description');
+      await expect.element(tester.saveButton).not.toBeInTheDocument();
+      await tester.goTo('review');
       await tester.saveButton.click();
 
       expect(southConnectorService.create).toHaveBeenCalledWith(
@@ -270,10 +351,12 @@ describe('EditSouthComponent', () => {
     });
 
     test('should not save an invalid connector', async () => {
-      const tester = await createTester('create');
+      const tester = await createTester('create', 'review');
 
       await tester.saveButton.click();
 
+      // the first step with an error opens
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.root.getByText('This field is required')).toBeVisible();
       expect(southConnectorService.create).not.toHaveBeenCalled();
     });
@@ -284,6 +367,7 @@ describe('EditSouthComponent', () => {
       const tester = await createTester('create');
 
       await tester.name.fill(' south 2 ');
+      await tester.goTo('review');
       await tester.saveButton.click();
 
       expect(southConnectorService.create).not.toHaveBeenCalled();
@@ -296,7 +380,7 @@ describe('EditSouthComponent', () => {
       const tester = await createTester('edit');
       await expect.element(tester.title).toHaveTextContent('Edit South 1');
       await expect.element(tester.name).toHaveValue('South 1');
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*1/);
+      await expect.element(tester.manageWorkflowsCount).toMatchTextContent(/Manage items synchronisations\s*1/);
       expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
       expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
       // the existing name of the connector itself is not a duplicate
@@ -361,6 +445,7 @@ describe('EditSouthComponent', () => {
     test('should test the connection with the settings of the form', async () => {
       const tester = await createTester('edit');
       const testConnectionModal = mockModal(createMock(TestConnectionResultModalComponent));
+      await tester.goTo('settings');
 
       await tester.testConnectionButton.click();
 
@@ -381,6 +466,7 @@ describe('EditSouthComponent', () => {
       southConnectorService.getSouthManifest.mockReturnValue(of(southManifest));
       const tester = await createTester('create');
       const open = vi.spyOn(modalService, 'open');
+      await tester.goTo('settings');
 
       await tester.testConnectionButton.click();
       await tester.exploreButton.click();
@@ -395,6 +481,7 @@ describe('EditSouthComponent', () => {
       modalService.mockDismissedModal(exploreModal);
       const open = vi.spyOn(modalService, 'open');
 
+      await tester.goTo('settings');
       await tester.exploreButton.click();
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
@@ -407,8 +494,9 @@ describe('EditSouthComponent', () => {
       const tester = await createTester('edit');
       const exploreModal = mockModal(createMock(SouthExploreModalComponent), { action: 'keep-in-sync', nodeIds: ['folder/sub'] });
       workflowCreationService.createFromExploredNodes.mockReturnValue(of(buildWorkflowCommand('temp_1', 'sub')));
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*0/);
+      await expect.element(tester.manageWorkflowsCount).toMatchTextContent(/Manage items synchronisations\s*0/);
 
+      await tester.goTo('settings');
       await tester.exploreButton.click();
 
       // the settings of the form (none in the test manifest)
@@ -427,7 +515,7 @@ describe('EditSouthComponent', () => {
         },
         ['folder/sub']
       );
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*1/);
+      await expect.element(tester.manageWorkflowsCount).toMatchTextContent(/Manage items synchronisations\s*1/);
     });
 
     test('should add the reviewed items of the nodes checked in the explore modal to the in-memory items', async () => {
@@ -454,6 +542,7 @@ describe('EditSouthComponent', () => {
           : fakeModal(addItemsModal, Promise.resolve([command]))
       );
 
+      await tester.goTo('settings');
       await tester.exploreButton.click();
 
       await vi.waitFor(() =>
@@ -479,7 +568,7 @@ describe('EditSouthComponent', () => {
 
   describe('items', () => {
     test('should display the items', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
 
       await tester.expectItems('item b', 'item a', 'item c');
       await expect.element(tester.row(0)).toMatchTextContent(/Enabled.*None\s*\(scanMode1\)/);
@@ -488,7 +577,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should display the schedule details of an item in a tooltip', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
 
       await tester.row(2).getByCss('td:nth-child(4) > span').hover();
 
@@ -499,7 +588,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should add an item', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const newItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item d' };
       const editModal = mockModal(createMock(EditSouthItemModalComponent), newItem);
       // the modal creates a group through the groups of the page
@@ -532,7 +621,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should add items in a row, each one starting from the one added before', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const firstItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item d' };
       const nextItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item e' };
       const firstModal = createMock(EditSouthItemModalComponent, { addAnother: true });
@@ -562,7 +651,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should edit an item', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const editedItem = { ...itemCommands[1], name: 'item a edited' };
       const editModal = mockModal(createMock(EditSouthItemModalComponent), editedItem);
       const open = vi.spyOn(modalService, 'open');
@@ -589,7 +678,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should edit the clicked item when several unsaved items share an empty id', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       for (const name of ['unsaved-1', 'unsaved-2']) {
         mockModal(createMock(EditSouthItemModalComponent), { ...itemCommands[0], id: '', name });
         await tester.addItemButton.click();
@@ -604,7 +693,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should duplicate an item', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const copy = { ...itemCommands[1], id: '', name: 'item a copy' };
       const editModal = mockModal(createMock(EditSouthItemModalComponent), copy);
       const open = vi.spyOn(modalService, 'open');
@@ -626,7 +715,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should delete an item', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
 
       await tester.itemAction(1, 'Delete item').click();
 
@@ -635,7 +724,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should delete all the items', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
 
       await tester.deleteAllButton.click();
 
@@ -646,7 +735,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should export the items of a connector being created', async () => {
-      const tester = await createTester('create');
+      const tester = await createTester('create', 'items');
       const exportModal = mockModal(createMock(ExportItemModalComponent), { filename: 'items', delimiter: ';' });
       southConnectorService.itemsToCsv.mockReturnValue(of(undefined));
 
@@ -657,7 +746,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should export the items of an existing connector', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const exportModal = mockModal(createMock(ExportItemModalComponent), { filename: 'items', delimiter: ',' });
       southConnectorService.exportItems.mockReturnValue(of(undefined));
 
@@ -671,7 +760,7 @@ describe('EditSouthComponent', () => {
       { eraseExisting: false, expected: ['item b', 'item a', 'item c', 'item d'] },
       { eraseExisting: true, expected: ['item d'] }
     ])('should import items (erase existing: $eraseExisting)', async ({ eraseExisting, expected }) => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const imported = { ...testData.south.itemCommand, name: 'item d' };
       const importModal = mockModal(createMock(ImportSouthItemsModalComponent), { items: [imported], eraseExisting });
       southConnectorService.checkImportItems.mockReturnValue(of({ items: [itemC], errors: [] }));
@@ -698,7 +787,7 @@ describe('EditSouthComponent', () => {
 
     test('should give the existing topics to the import modal of an MQTT connector', async () => {
       southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, id: 'mqtt' }));
-      const tester = await createTester('create');
+      const tester = await createTester('create', 'items');
       mockModal(createMock(EditSouthItemModalComponent), { ...testData.south.itemCommand, name: 'topic item', settings: { topic: 'a/b' } });
       await tester.addItemButton.click();
       const importModal = mockModal(createMock(ImportSouthItemsModalComponent));
@@ -710,7 +799,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should filter the items', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
 
       await tester.search.fill('ITEM A');
       await tester.expectItems('item a');
@@ -738,7 +827,7 @@ describe('EditSouthComponent', () => {
       { column: 'Status', ascending: ['item a', 'item b', 'item c'], descending: ['item b', 'item c', 'item a'] },
       { column: 'Group (Schedule)', ascending: ['item b', 'item a', 'item c'], descending: ['item c', 'item b', 'item a'] }
     ] as const)('should sort the items by $column', async ({ column, ascending, descending }) => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
 
       await tester.sortBy(column).click();
       await tester.expectItems(...ascending);
@@ -749,7 +838,7 @@ describe('EditSouthComponent', () => {
     test('should paginate the items', async () => {
       const items = Array.from({ length: 25 }, (_, index) => buildItem(`item${index}`, `item ${String(index).padStart(2, '0')}`));
       southConnectorService.findById.mockReturnValue(of({ ...southConnector, items }));
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       await expect.element(tester.rows).toHaveLength(20);
 
       await tester.pagination.getByRole('link', { name: '2' }).click();
@@ -764,7 +853,7 @@ describe('EditSouthComponent', () => {
       { action: 'Enable', enabled: true },
       { action: 'Disable', enabled: false }
     ] as const)('should $action the selected items', async ({ action, enabled }) => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       await tester.selectItems('item a', 'item c');
 
       await tester.massAction(action).click();
@@ -775,7 +864,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should delete the selected items', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       await tester.selectItems('item a', 'item c');
 
       await tester.massAction('Delete').click();
@@ -788,7 +877,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should move the selected items to a group', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const selectGroupModal = mockModal(createMock(SelectGroupModalComponent), 'groupA');
       await tester.selectAllButton.click();
       await tester.massActionsButton.click();
@@ -817,7 +906,7 @@ describe('EditSouthComponent', () => {
     }
 
     test('should open the manage groups modal with the in-memory groups and show the groups it changes', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
 
       const { manageGroupsModal, groups, getItemCount } = await openManageGroups(tester, groups =>
         groups.save({ mode: 'create', group: buildSouthItemGroupCommand(null, 'Group B') }).subscribe()
@@ -832,7 +921,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should create and edit groups in memory', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const { groups } = await openManageGroups(tester);
 
       const created = await firstValueFrom(groups.save({ mode: 'create', group: buildSouthItemGroupCommand(null, 'Group B') }));
@@ -854,7 +943,7 @@ describe('EditSouthComponent', () => {
           buildWorkflow('workflow2', 'Beta', { itemFieldMapping: { name: '{{name}}', groupId: 'otherGroup' } })
         ])
       );
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const manageWorkflowsModal = mockModal(createMock(ManageWorkflowsModalComponent));
       await tester.manageWorkflowsButton.click();
       const pageWorkflows = manageWorkflowsModal.prepareForInMemory.mock.lastCall![0];
@@ -901,7 +990,7 @@ describe('EditSouthComponent', () => {
         recoveryStrategy: 'newest'
       });
       southConnectorService.findById.mockReturnValue(of({ ...southConnector, items: [ownItem] }));
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const { groups } = await openManageGroups(tester);
 
       await firstValueFrom(groups.delete(groupACommand));
@@ -911,7 +1000,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should manage the workflows in memory, against the unsaved settings', async () => {
-      const tester = await createTester('edit');
+      const tester = await createTester('edit', 'items');
       const manageWorkflowsModal = mockModal(createMock(ManageWorkflowsModalComponent));
       manageWorkflowsModal.prepareForInMemory.mockImplementation(workflows =>
         workflows.update(list => [...list, buildWorkflowCommandFor('temp_1')])
@@ -930,12 +1019,12 @@ describe('EditSouthComponent', () => {
         expect.anything()
       );
       expect(manageWorkflowsModal.prepareForInMemory.mock.lastCall![5].list()).toEqual([groupACommand]);
-      await expect.element(tester.manageWorkflowsButton).toMatchTextContent(/Manage items synchronisations\s*1/);
+      await expect.element(tester.manageWorkflowsCount).toMatchTextContent(/Manage items synchronisations\s*1/);
       expect((await lastSavedCommand(tester)).configurationWorkflows).toEqual([buildWorkflowCommandFor('temp_1')]);
     });
 
     test("should use the 'create' south id to manage the workflows of a connector being created", async () => {
-      const tester = await createTester('create');
+      const tester = await createTester('create', 'items');
       const manageWorkflowsModal = mockModal(createMock(ManageWorkflowsModalComponent));
 
       await tester.manageWorkflowsButton.click();

@@ -2261,6 +2261,21 @@
       "view-metrics": "查看 south 连接器指标",
       "copy-cache-path": "将缓存路径复制到剪贴板",
       "audit": "查看 south 连接器审计历史"
+    },
+    "steps": {
+      "steps": "连接器步骤",
+      "step": {
+        "general": "常规",
+        "settings": "设置",
+        "items": "项",
+        "review": "检查并保存"
+      },
+      "review-errors": "保存前请修正以下步骤：",
+      "review-changes": "自连接器上次保存以来的修改：{{count}}",
+      "review-no-changes": "自连接器上次保存以来没有修改",
+      "groups": "组",
+      "workflows": "项同步",
+      "item-changes": "已添加项：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}"
     }
   },
   "scan-mode": {

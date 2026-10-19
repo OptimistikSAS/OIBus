@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -35,10 +35,19 @@ import { addAttributeToForm, addEnablingConditions, asFormGroup, extractFormValu
 import { formDirectives } from '../../shared/form/form-directives';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import {
+  compareSettings,
+  countChanges,
+  SettingSummary,
+  summarizeSettings
+} from '../../shared/form/oibus-settings-summary/settings-summary';
 import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 import { ModalService } from '../../shared/modal.service';
+import { ModalStepsComponent } from '../../shared/modal-steps/modal-steps.component';
+import { submitsOnEnter, WizardSteps } from '../../shared/modal-steps/wizard-steps';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
@@ -60,6 +69,24 @@ import { exploreCheckedActions, WorkflowCreationService } from '../south-workflo
 /** The group column is added by the page: the other columns are sorted by the item table. */
 function sortValue(item: SouthConnectorItemCommandDTO, column: string): string | number {
   return column === 'group' ? item.groupName || '' : builtInSortValue(item, column);
+}
+
+/** The steps of the south connector page, in order. */
+export const SOUTH_CONNECTOR_STEPS = ['general', 'settings', 'items', 'review'] as const;
+export type SouthConnectorStep = (typeof SOUTH_CONNECTOR_STEPS)[number];
+
+/** The connector as summed up in the Review step */
+interface SouthConnectorSummary {
+  general: Array<SettingSummary>;
+  settings: Array<SettingSummary>;
+  items: Array<SettingSummary>;
+}
+
+/** What changed in the items since the connector was saved */
+interface ItemChanges {
+  added: number;
+  changed: number;
+  removed: number;
 }
 
 type SouthConnectorForm = FormGroup<{
@@ -85,7 +112,9 @@ type SouthConnectorForm = FormGroup<{
     NgbTooltip,
     NgbDropdownItem,
     ItemTableComponent,
-    ...ITEM_TABLE_TEMPLATES
+    ...ITEM_TABLE_TEMPLATES,
+    ModalStepsComponent,
+    OIBusSettingsSummaryComponent
   ],
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss',
@@ -113,6 +142,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   private readonly route = inject(ActivatedRoute);
   private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private readonly docsUrlService = inject(DocsUrlService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings');
   readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
@@ -129,6 +159,12 @@ export class EditSouthComponent implements CanComponentDeactivate {
   readonly manifest = signal<SouthConnectorManifest | null>(null);
   private existingSouthConnectors: Array<SouthConnectorLightDTO> = [];
   readonly form = signal<SouthConnectorForm | null>(null);
+  /** The last change of the form (value, status, touched...) */
+  private readonly formEvent = signal<unknown>(null);
+
+  readonly steps = new WizardSteps<SouthConnectorStep>(SOUTH_CONNECTOR_STEPS, step => this.stepControls(step), this.formEvent);
+  /** A new connector is saved from the last step, an edited one from any step */
+  readonly canSave = computed(() => this.mode() === 'edit' || this.steps.isLast());
 
   /** The items of the connector, edited in memory and saved along with the connector. */
   readonly inMemoryItems = signal<Array<SouthConnectorItemCommandDTO>>([]);
@@ -169,6 +205,49 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   // Mass action properties
   readonly selectedItems = signal<ItemSelection<SouthConnectorItemCommandDTO>>(new Map());
+
+  /** The connector as summed up in the Review step */
+  readonly reviewSummary = computed<SouthConnectorSummary>(() => {
+    this.formEvent();
+    this.inMemoryItems();
+    this.inMemoryGroups();
+    this.inMemoryWorkflows();
+    return this.summarizeConnector();
+  });
+  /** The connector as it was when opened for edition, to show what changed in the Review step: null for a new one */
+  readonly savedSummary = signal<SouthConnectorSummary | null>(null);
+  /** The items as they were when the connector was opened for edition */
+  private savedItems: Array<SouthConnectorItemCommandDTO> = [];
+  /** What changed in the items since the connector was saved: null for a new connector */
+  readonly itemChanges = computed<ItemChanges | null>(() => {
+    if (!this.savedSummary()) {
+      return null;
+    }
+    const items = this.inMemoryItems();
+    const savedItems = new Map(this.savedItems.map(item => [item.id, JSON.stringify(item)]));
+    const keptIds = new Set(items.filter(item => item.id && savedItems.has(item.id)).map(item => item.id));
+    return {
+      added: items.filter(item => !item.id || !savedItems.has(item.id)).length,
+      changed: items.filter(item => item.id && savedItems.has(item.id) && savedItems.get(item.id) !== JSON.stringify(item)).length,
+      removed: [...savedItems.keys()].filter(id => !keptIds.has(id)).length
+    };
+  });
+  /** How many settings and items changed since the connector was saved: null for a new connector */
+  readonly changeCount = computed(() => {
+    const saved = this.savedSummary();
+    const itemChanges = this.itemChanges();
+    if (!saved || !itemChanges) {
+      return null;
+    }
+    const summary = this.reviewSummary();
+    return (
+      countChanges(compareSettings(summary.general, saved.general)) +
+      countChanges(compareSettings(summary.settings, saved.settings)) +
+      itemChanges.added +
+      itemChanges.changed +
+      itemChanges.removed
+    );
+  });
 
   constructor() {
     // get the generator ID
@@ -316,9 +395,44 @@ export class EditSouthComponent implements CanComponentDeactivate {
     });
   }
 
+  /** Pressing Enter in a field submits the form, whether the Save button shows or not */
+  onEnter(event: Event) {
+    if (submitsOnEnter(event)) {
+      event.preventDefault();
+      this.submitStep();
+    }
+  }
+
+  /** Submitting the form (e.g. pressing Enter) saves the connector once it can be, and opens the next step before. */
+  submitStep() {
+    if (this.canSave()) {
+      this.submit('save');
+    } else {
+      this.steps.next();
+    }
+  }
+
+  /** The controls edited in each step */
+  private stepControls(step: SouthConnectorStep): Array<AbstractControl> {
+    const form = this.form();
+    if (!form) {
+      return [];
+    }
+    switch (step) {
+      case 'general':
+        return [form.controls.name, form.controls.description, form.controls.enabled];
+      case 'settings':
+        return [form.controls.settings];
+      case 'items':
+      case 'review':
+        return [];
+    }
+  }
+
   submit(value: 'save' | 'test') {
     if (value === 'save') {
       if (!this.form()!.valid) {
+        this.steps.showFirstInvalid();
         return;
       }
       this.createOrUpdateSouthConnector(this.formSouthConnectorCommand);
@@ -761,7 +875,41 @@ export class EditSouthComponent implements CanComponentDeactivate {
     }
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
     this.form.set(form);
+    if (this.mode() === 'edit') {
+      this.savedSummary.set(this.summarizeConnector());
+      this.savedItems = structuredClone(this.inMemoryItems());
+    }
+  }
+
+  /** The connector as currently edited, summed up: see `reviewSummary` */
+  private summarizeConnector(): SouthConnectorSummary {
+    const form = this.form();
+    const manifest = this.manifest();
+    if (!form || !manifest) {
+      return { general: [], settings: [], items: [] };
+    }
+    const translate = (key: string, params?: Record<string, unknown>): string => this.translateService.instant(key, params);
+    const value = form.getRawValue();
+    return {
+      general: [
+        { kind: 'text', labelKey: 'south.name', text: value.name || null, invalid: form.controls.name.invalid },
+        { kind: 'text', labelKey: 'south.description', text: value.description || null },
+        { kind: 'text', labelKey: 'south.status', text: translate(value.enabled ? 'enabled' : 'disabled') }
+      ],
+      settings: summarizeSettings(manifest.settings, extractFormValue(form.value.settings), {
+        translateService: this.translateService,
+        scanModes: this.scanModes(),
+        certificates: this.certificates(),
+        isInvalid: path => form.controls.settings.get(path)?.invalid ?? false
+      }),
+      items: [
+        { kind: 'text', labelKey: 'south.items.title', text: String(this.inMemoryItems().length) },
+        { kind: 'text', labelKey: 'south.steps.groups', text: String(this.inMemoryGroups().length) },
+        { kind: 'text', labelKey: 'south.steps.workflows', text: String(this.inMemoryWorkflows().length) }
+      ]
+    };
   }
 
   get formSouthConnectorCommand(): SouthConnectorCommandDTO {
