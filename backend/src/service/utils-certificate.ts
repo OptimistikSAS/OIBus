@@ -1,3 +1,5 @@
+import { createPrivateKey, KeyObject, X509Certificate } from 'node:crypto';
+
 import { DateTime } from 'luxon';
 import * as forge from 'node-forge';
 
@@ -119,4 +121,26 @@ export const privateKeyToEncryptedPkcs8Pem = (privateKeyPem: string, passphrase:
   return forge.pki.encryptedPrivateKeyToPem(
     forge.pki.encryptPrivateKeyInfo(info, passphrase, { algorithm: 'aes256', count: 100_000, saltSize: 16, prfAlgorithm: 'sha256' })
   );
+};
+
+/**
+ * Asserts that a PEM certificate (optionally followed by its CA chain) and a PEM private key can secure a TLS server: both
+ * parse and the key matches the certificate. Unlike readCertificate, any key algorithm Node.js supports is accepted (RSA, EC...).
+ */
+export const assertTlsCredentials = (certificatePem: string, privateKeyPem: string): void => {
+  let certificate: X509Certificate;
+  try {
+    certificate = new X509Certificate(certificatePem);
+  } catch (error) {
+    throw new OIBusValidationError(`Unable to parse the certificate: ${(error as Error).message}`);
+  }
+  let privateKey: KeyObject;
+  try {
+    privateKey = createPrivateKey(privateKeyPem);
+  } catch (error) {
+    throw new OIBusValidationError(`Unable to parse the private key: ${(error as Error).message}`);
+  }
+  if (!certificate.checkPrivateKey(privateKey)) {
+    throw new OIBusValidationError('The private key does not match the certificate public key');
+  }
 };

@@ -1,4 +1,5 @@
 import { Instant } from '../common/types';
+import { WebServerProtocol } from '../domain/engine.model';
 import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from './oianalytics-configuration.model';
 
 /**
@@ -32,8 +33,10 @@ export interface ConfigImportResponseDTO {
   toVersion: string;
   appliedUpgrades: Array<{ version: string; description: string }>;
   warnings: Array<string>;
-  /** The web server port OIBus listens on once restarted, when the import changed it; null otherwise. */
+  /** The web server port OIBus listens on once restarted, when the import changed its port or protocol; null otherwise. */
   newPort: number | null;
+  /** The web server protocol OIBus serves once restarted, when the import changed its port or protocol; null otherwise. */
+  newProtocol: WebServerProtocol | null;
 }
 
 /**

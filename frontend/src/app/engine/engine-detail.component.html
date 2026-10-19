@@ -127,6 +127,14 @@
                 <td class="first-column-body" translate="engine.web-server-settings.auth-token-duration"></td>
                 <td class="last-column-body" [translate]="authTokenDurationLabelKey(settings.webServer.authTokenDuration)"></td>
               </tr>
+              <tr>
+                <td class="first-column-body" translate="engine.web-server-settings.https"></td>
+                @if (httpsCertificate(); as certificate) {
+                  <td class="last-column-body">{{ certificate }}</td>
+                } @else {
+                  <td class="last-column-body" translate="engine.web-server-settings.https-disabled"></td>
+                }
+              </tr>
             </tbody>
           </table>
         </oib-box>

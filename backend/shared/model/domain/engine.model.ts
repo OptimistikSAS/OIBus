@@ -13,6 +13,64 @@ export const AUTH_TOKEN_DURATIONS = ['1h', '6h', '1d', '3d', '7d', '14d', '30d']
 export type AuthTokenDuration = (typeof AUTH_TOKEN_DURATIONS)[number];
 
 /**
+ * List of protocols the web server can serve its UI and API with.
+ */
+export const WEB_SERVER_PROTOCOLS = ['http', 'https'] as const;
+/**
+ * Type representing a web server protocol.
+ * @example "https"
+ */
+export type WebServerProtocol = (typeof WEB_SERVER_PROTOCOLS)[number];
+
+/**
+ * List of places the web server can read its HTTPS certificate and private key from: a certificate of the OIBus
+ * certificate store, or PEM files on the OIBus machine.
+ */
+export const WEB_SERVER_CERTIFICATE_SOURCES = ['store', 'file'] as const;
+/**
+ * Type representing where the web server reads its HTTPS certificate from.
+ * @example "store"
+ */
+export type WebServerCertificateSource = (typeof WEB_SERVER_CERTIFICATE_SOURCES)[number];
+
+/**
+ * HTTPS settings of the web server.
+ */
+export interface WebServerHttpsSettings {
+  /**
+   * Whether the web server serves HTTPS instead of HTTP.
+   * @example true
+   */
+  enabled: boolean;
+
+  /**
+   * Where the certificate and its private key are read from.
+   * @example "store"
+   */
+  certificateSource: WebServerCertificateSource;
+
+  /**
+   * The id of the certificate of the OIBus certificate store, when the source is 'store'.
+   * @example "certificateId"
+   */
+  certificateId: string | null;
+
+  /**
+   * The path of the PEM certificate file (optionally followed by its CA chain), when the source is 'file'. A relative path
+   * is resolved from the OIBus data folder.
+   * @example "/etc/oibus/oibus.crt"
+   */
+  certificatePath: string | null;
+
+  /**
+   * The path of the PEM private key file (not encrypted), when the source is 'file'. A relative path is resolved from the
+   * OIBus data folder.
+   * @example "/etc/oibus/oibus.key"
+   */
+  privateKeyPath: string | null;
+}
+
+/**
  * List of possible registration statuses.
  */
 export const REGISTRATION_STATUS = ['NOT_REGISTERED', 'PENDING', 'REGISTERED'] as const;

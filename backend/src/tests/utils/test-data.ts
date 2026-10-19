@@ -1467,7 +1467,14 @@ const engineSettings: EngineSettings = {
   },
   webServer: {
     port: 2223,
-    authTokenDuration: '7d'
+    authTokenDuration: '7d',
+    https: {
+      enabled: false,
+      certificateSource: 'store',
+      certificateId: null,
+      certificatePath: null,
+      privateKeyPath: null
+    }
   },
   proxyServer: {
     enabled: true,
@@ -1522,7 +1529,14 @@ const engineNameCommand: EngineNameCommandDTO = {
 };
 const engineWebServerCommand: EngineWebServerCommandDTO = {
   port: 3333,
-  authTokenDuration: '1d'
+  authTokenDuration: '1d',
+  https: {
+    enabled: false,
+    certificateSource: 'file',
+    certificateId: null,
+    certificatePath: 'oibus.crt',
+    privateKeyPath: 'oibus.key'
+  }
 };
 const engineProxyCommand: EngineProxyCommandDTO = {
   enabled: true,
