@@ -20,9 +20,13 @@
           idPrefix="history-query-step-"
         />
         <form [formGroup]="form" (ngSubmit)="submitStep()" (keydown.enter)="onEnter($event)" id="history-query-form" class="mt-3">
-          <div class="save-zone">
+          <div class="oib-steps-panel">
             <!-- 1. General settings -->
-            <oib-box boxTitle="south.general-settings" [helpUrl]="generalSettingsHelpUrl" [hidden]="steps.current() !== 'general'">
+            <section [hidden]="steps.current() !== 'general'">
+              <div class="oib-section-title">
+                <h5 translate="south.general-settings"></h5>
+                <oib-help [url]="generalSettingsHelpUrl" />
+              </div>
               <div class="row">
                 <!-- Name -->
                 <div class="col-4">
@@ -85,83 +89,69 @@
                   </div>
                 </div>
               </div>
-            </oib-box>
+            </section>
 
             <!-- 2. South settings -->
-            <oib-box [hidden]="steps.current() !== 'south'">
-              <ng-template oibBoxTitle>
-                <div class="d-flex justify-content-between align-items-center">
-                  <span
-                    translate="history-query.south.specific-settings"
-                    [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
-                    id="south-specific-settings-title"
-                  ></span>
-                  <div>
-                    @if (southManifest()!.explore) {
-                      <button
-                        type="button"
-                        class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                        id="explore"
-                        (click)="explore()"
-                        translate="south.explore.button"
-                      ></button>
-                    }
-                    <button
-                      translate="south.test-connection.button"
-                      type="button"
-                      class="btn btn-secondary btn-sm oib-box-btn"
-                      [class.ms-3]="!southManifest()!.explore"
-                      id="test-connection-south"
-                      (click)="test('south')"
-                    ></button>
-                    <oib-help [url]="southTypeHelpUrl()" />
-                  </div>
-                </div>
-              </ng-template>
+            <section [hidden]="steps.current() !== 'south'">
+              <div class="oib-section-title">
+                <h5
+                  translate="history-query.south.specific-settings"
+                  [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
+                  id="south-specific-settings-title"
+                ></h5>
+                <button
+                  translate="south.test-connection.button"
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  id="test-connection-south"
+                  (click)="test('south')"
+                ></button>
+                <oib-help [url]="southTypeHelpUrl()" />
+              </div>
               <div formGroupName="southSettings" class="row">
                 <oib-oibus-object-form-control
                   [scanModes]="scanModes()"
                   [certificates]="certificates()"
                   [group]="form.controls.southSettings"
                   [objectAttribute]="southManifest()!.settings"
+                  layout="sections"
                 />
               </div>
-            </oib-box>
+            </section>
 
             <!-- 4. North settings, with the caching and the transformers: after the items, which the transformers pick from -->
-            <div [hidden]="steps.current() !== 'north'">
-              <oib-box>
-                <ng-template oibBoxTitle>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <span
-                      translate="north.specific-settings"
-                      [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
-                      id="north-specific-settings-title"
-                    ></span>
-                    <div>
-                      <button
-                        translate="north.test-connection.button"
-                        type="button"
-                        class="ms-3 btn btn-secondary btn-sm oib-box-btn"
-                        id="test-connection-north"
-                        (click)="test('north')"
-                      ></button>
-                      <oib-help [url]="northTypeHelpUrl()" />
-                    </div>
-                  </div>
-                </ng-template>
-                <div formGroupName="northSettings" class="row">
-                  <oib-oibus-object-form-control
-                    [scanModes]="scanModes()"
-                    [certificates]="certificates()"
-                    [group]="form.controls.northSettings"
-                    [objectAttribute]="northManifest()!.settings"
-                  />
-                </div>
-              </oib-box>
-              <oib-box boxTitle="north.caching.title" [helpUrl]="cachingHelpUrl">
+            <section [hidden]="steps.current() !== 'north'">
+              <div class="oib-section-title">
+                <h5
+                  translate="north.specific-settings"
+                  [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
+                  id="north-specific-settings-title"
+                ></h5>
+                <button
+                  translate="north.test-connection.button"
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  id="test-connection-north"
+                  (click)="test('north')"
+                ></button>
+                <oib-help [url]="northTypeHelpUrl()" />
+              </div>
+              <div formGroupName="northSettings" class="row">
+                <oib-oibus-object-form-control
+                  [scanModes]="scanModes()"
+                  [certificates]="certificates()"
+                  [group]="form.controls.northSettings"
+                  [objectAttribute]="northManifest()!.settings"
+                  layout="sections"
+                />
+              </div>
+              <div class="oib-section-title">
+                <h5 translate="north.caching.title"></h5>
+                <oib-help [url]="cachingHelpUrl" />
+              </div>
+              <div>
                 <div formGroupName="caching">
-                  <h5 class="mt-2" translate="north.caching.trigger.title"></h5>
+                  <h6 class="oib-group-title" translate="north.caching.trigger.title"></h6>
                   <div formGroupName="trigger" class="row">
                     <!-- Scan mode -->
                     <div class="col-4">
@@ -186,8 +176,7 @@
                       </div>
                     </div>
                   </div>
-                  <hr />
-                  <h5 translate="north.caching.throttling.title"></h5>
+                  <h6 class="oib-group-title" translate="north.caching.throttling.title"></h6>
                   <div formGroupName="throttling" class="row">
                     <!-- Run min delay -->
                     <div class="col-4">
@@ -224,8 +213,7 @@
                       </div>
                     </div>
                   </div>
-                  <hr />
-                  <h5 translate="north.caching.error.title"></h5>
+                  <h6 class="oib-group-title" translate="north.caching.error.title"></h6>
                   <div formGroupName="error" class="row">
                     <!-- Retry interval -->
                     <div class="col-4">
@@ -257,8 +245,7 @@
                       </div>
                     </div>
                   </div>
-                  <hr />
-                  <h5 translate="north.caching.archive.title"></h5>
+                  <h6 class="oib-group-title" translate="north.caching.archive.title"></h6>
                   <div formGroupName="archive" class="row">
                     <!-- Archive Enabled -->
                     <div class="col-4">
@@ -285,8 +272,10 @@
                     </div>
                   </div>
                 </div>
-              </oib-box>
+              </div>
               <oib-history-query-transformers
+                class="d-block mt-4"
+                layout="section"
                 [scanModes]="scanModes()"
                 [certificates]="certificates()"
                 [northManifest]="northManifest()!"
@@ -297,101 +286,110 @@
                 [items]="inMemoryItems()"
                 (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
               />
-            </div>
-          </div>
-          <!-- 3. Items -->
-          <oib-box class="oib-south-items" [hidden]="steps.current() !== 'items'">
-            <ng-template oibBoxTitle>
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
+            </section>
+            <!-- 3. Items -->
+            <section class="oib-south-items" [hidden]="steps.current() !== 'items'">
+              <div class="oib-section-title">
+                <h5>
                   <span translate="south.items.title"></span>
-                  @if (itemTable.filteredItems().length) {
-                    <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
-                  }
-                </div>
-                <div class="ms-3">
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-sm oib-box-btn"
-                    [ngbTooltip]="'history-query.items.tooltips.add' | translate"
-                    [attr.aria-label]="'history-query.items.tooltips.add' | translate"
-                    (click)="addItem()"
-                  >
-                    <span class="fa-solid fa-plus" aria-hidden="true"></span>
+                  <!-- rendered once the item table below has its inputs: an embedded view is refreshed after the bindings of its parent -->
+                  <ng-container [ngTemplateOutlet]="itemCount" />
+                  <ng-template #itemCount>
+                    @if (itemTable.filteredItems().length) {
+                      <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
+                    }
+                  </ng-template>
+                </h5>
+                @if (southManifest()!.explore) {
+                  <button type="button" class="btn btn-secondary btn-sm" id="explore" (click)="explore()">
+                    <span class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></span>
+                    <span translate="south.explore.button"></span>
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  [ngbTooltip]="'history-query.items.tooltips.add' | translate"
+                  [attr.aria-label]="'history-query.items.tooltips.add' | translate"
+                  (click)="addItem()"
+                >
+                  <span class="fa-solid fa-plus" aria-hidden="true"></span>
+                </button>
+                <oib-help [url]="itemSectionHelpUrl" />
+              </div>
+              <!-- The tools of the item list -->
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <div class="d-flex flex-wrap gap-2 ms-auto">
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="importItems()" id="import-button">
+                    <span translate="south.items.import.button"></span>
                   </button>
                   <button
                     type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn"
+                    class="btn btn-secondary btn-sm"
                     id="export-items"
                     (click)="exportItems()"
                     [disabled]="inMemoryItems().length === 0"
                     translate="south.items.export.button"
                   ></button>
-                  <button type="button" class="btn btn-secondary btn-sm oib-box-btn" (click)="importItems()" id="import-button">
-                    <span translate="south.items.import.button"></span>
-                  </button>
                   <button
                     type="button"
-                    id="delete-all"
-                    class="btn btn-danger btn-sm oib-box-btn"
+                    class="btn btn-danger btn-sm"
                     (click)="deleteAllItems()"
                     [disabled]="inMemoryItems().length === 0"
                     translate="south.items.delete-all"
+                    id="delete-all"
                   ></button>
-                  <oib-help [url]="itemSectionHelpUrl" />
                 </div>
               </div>
-            </ng-template>
 
-            <div class="mb-3">
-              <oib-item-table
-                #itemTable
-                [items]="inMemoryItems()"
-                translationPrefix="history-query.items"
-                [actionCount]="3"
-                [showDates]="false"
-                [(selection)]="selectedItems"
-                (enableSelected)="enableSelectedItems()"
-                (disableSelected)="disableSelectedItems()"
-                (deleteSelected)="deleteSelectedItems()"
-              >
-                <ng-template [oibItemTableActions]="inMemoryItems()" let-item>
-                  <button
-                    type="button"
-                    class="btn btn-link edit-south-item"
-                    [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
-                    [attr.aria-label]="'history-query.items.tooltips.edit' | translate"
-                    (click)="editItem(item)"
-                  >
-                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-link duplicate-south-item"
-                    [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
-                    [attr.aria-label]="'history-query.items.tooltips.duplicate' | translate"
-                    (click)="duplicateItem(item)"
-                  >
-                    <span class="fa-solid fa-copy" aria-hidden="true"></span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-link delete-south-item"
-                    [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
-                    [attr.aria-label]="'history-query.items.tooltips.delete' | translate"
-                    (click)="deleteItem(item)"
-                  >
-                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                  </button>
-                </ng-template>
-              </oib-item-table>
-            </div>
-          </oib-box>
-          <!-- 5. Review & save: the history query as it will be saved, what changed since it was saved, and what to fix before -->
-          <oib-box boxTitle="history-query.steps.step.review" [hidden]="steps.current() !== 'review'" id="history-query-review">
-            @let summary = reviewSummary();
-            @let saved = savedSummary();
-            <div class="px-3 py-2">
+              <div class="mb-3">
+                <oib-item-table
+                  #itemTable
+                  [items]="inMemoryItems()"
+                  translationPrefix="history-query.items"
+                  [actionCount]="3"
+                  [showDates]="false"
+                  [(selection)]="selectedItems"
+                  (enableSelected)="enableSelectedItems()"
+                  (disableSelected)="disableSelectedItems()"
+                  (deleteSelected)="deleteSelectedItems()"
+                >
+                  <ng-template [oibItemTableActions]="inMemoryItems()" let-item>
+                    <button
+                      type="button"
+                      class="btn btn-link edit-south-item"
+                      [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
+                      [attr.aria-label]="'history-query.items.tooltips.edit' | translate"
+                      (click)="editItem(item)"
+                    >
+                      <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-link duplicate-south-item"
+                      [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
+                      [attr.aria-label]="'history-query.items.tooltips.duplicate' | translate"
+                      (click)="duplicateItem(item)"
+                    >
+                      <span class="fa-solid fa-copy" aria-hidden="true"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-link delete-south-item"
+                      [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
+                      [attr.aria-label]="'history-query.items.tooltips.delete' | translate"
+                      (click)="deleteItem(item)"
+                    >
+                      <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                    </button>
+                  </ng-template>
+                </oib-item-table>
+              </div>
+            </section>
+            <!-- 5. Review & save: the history query as it will be saved, what changed since it was saved, and what to fix before -->
+            <section [hidden]="steps.current() !== 'review'" id="history-query-review">
+              @let summary = reviewSummary();
+              @let saved = savedSummary();
               @if (steps.withErrors().length > 0) {
                 <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
                   <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
@@ -463,8 +461,8 @@
                   </div>
                 }
               }
-            </div>
-          </oib-box>
+            </section>
+          </div>
         </form>
         <!-- Moving between the steps, apart from saving: the main action is Save once it shows, Next before -->
         <div id="actions" class="mt-2 mb-3 d-flex">
