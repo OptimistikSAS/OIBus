@@ -2874,7 +2874,9 @@
         "value": "Value",
         "other": "Other",
         "no-values": "There are no values to display"
-      }
+      },
+      "result-outdated": "The item or the test settings changed since this test ran",
+      "run-again": "Run again"
     },
     "type": "Type",
     "created-by": "Created by",

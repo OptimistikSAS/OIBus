@@ -1907,7 +1907,9 @@
         "value": "Valeur",
         "other": "Autre",
         "no-values": "Il n'y a aucune valeur à afficher"
-      }
+      },
+      "result-outdated": "L'élément ou les paramètres du test ont changé depuis ce test",
+      "run-again": "Relancer"
     },
     "type": "Type",
     "created-by": "Créé par",

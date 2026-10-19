@@ -71,6 +71,9 @@ class SouthItemTestComponentTester {
   readonly result = this.root.getByCss('oib-transformer-test-result');
   readonly hideSettingsButton = this.root.getByRole('button', { name: 'Hide settings' });
   readonly settingsSummary = this.root.getByCss('#expand-settings');
+  readonly outdatedNotice = this.root.getByCss('#outdated-result');
+  readonly runAgainButton = this.root.getByRole('button', { name: 'Run again' });
+  readonly resultBlock = this.root.getByCss('.test-result');
 
   constructor(options: TesterOptions = {}) {
     this.fixture.componentRef.setInput('type', options.type ?? 'south');
@@ -188,6 +191,45 @@ describe('SouthItemTestComponent', () => {
     await expect.element(tester.durations).toHaveTextContent('Connection: 12 ms · Query: 34 ms');
     await expect.element(tester.result).toBeVisible();
     await expect.element(tester.info).not.toBeInTheDocument();
+  });
+
+  test('should mark the result as outdated once the item changes, until the test runs again', async () => {
+    const tester = new SouthItemTestComponentTester();
+    await tester.testButton.click();
+    await expect.element(tester.result).toBeInTheDocument();
+    // an equal item, e.g. rebuilt by the form on another change, is not a change
+    tester.fixture.componentRef.setInput('item', structuredClone(item));
+    await expect.element(tester.outdatedNotice).not.toBeInTheDocument();
+
+    const changedItem = { ...item, settings: { ...item.settings, objectValue: 2 } } as typeof item;
+    tester.fixture.componentRef.setInput('item', changedItem);
+
+    await expect.element(tester.outdatedNotice.getByText('The item or the test settings changed since this test ran')).toBeInTheDocument();
+    await expect.element(tester.resultBlock).toHaveClass('test-result-outdated');
+
+    await tester.runAgainButton.click();
+
+    expect(southConnectorService.testItem).toHaveBeenLastCalledWith(
+      'southId1',
+      connectorCommand.type,
+      item.name,
+      connectorCommand.settings,
+      changedItem.settings,
+      expect.anything()
+    );
+    await expect.element(tester.outdatedNotice).not.toBeInTheDocument();
+    await expect.element(tester.resultBlock).not.toHaveClass('test-result-outdated');
+  });
+
+  test('should mark the result as outdated once the transformer changes', async () => {
+    const tester = new SouthItemTestComponentTester();
+    await tester.testButton.click();
+    await expect.element(tester.result).toBeInTheDocument();
+
+    await tester.northSelect.selectOptions('North 1');
+    await tester.transformerSelect.selectOptions('my transformer 1');
+
+    await expect.element(tester.outdatedNotice).toBeInTheDocument();
   });
 
   test('should collapse the settings into a summary once there is a result', async () => {
