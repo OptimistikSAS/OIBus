@@ -27,7 +27,6 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { TransformerService } from '../../services/transformer.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
@@ -73,8 +72,6 @@ interface NorthConnectorSummary {
     TranslateDirective,
     SaveButtonComponent,
     BackNavigationDirective,
-    BoxComponent,
-    BoxTitleDirective,
     OibHelpComponent,
     OIBusNorthTypeEnumPipe,
     NorthTransformersComponent,

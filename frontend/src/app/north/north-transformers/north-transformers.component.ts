@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, output } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -26,7 +27,16 @@ import { EditNorthTransformerModalComponent } from './edit-north-transformer-mod
 
 @Component({
   selector: 'oib-north-transformers',
-  imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent, NgbTooltip],
+  imports: [
+    NgTemplateOutlet,
+    TranslateDirective,
+    BoxComponent,
+    ReactiveFormsModule,
+    TranslatePipe,
+    BoxTitleDirective,
+    OibHelpComponent,
+    NgbTooltip
+  ],
   templateUrl: './north-transformers.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './north-transformers.component.scss'
@@ -46,6 +56,8 @@ export class NorthTransformersComponent {
 
   readonly inMemoryTransformersWithOptions = output<Array<TransformerDTOWithOptions> | null>();
   readonly saveChangesDirectly = input<boolean>(false);
+  /** A box with its own title, or a section of the page, under a section title (on the edit pages) */
+  readonly layout = input<'box' | 'section'>('box');
 
   readonly northManifest = input.required<NorthConnectorManifest>();
   readonly certificates = input.required<Array<CertificateDTO>>();
