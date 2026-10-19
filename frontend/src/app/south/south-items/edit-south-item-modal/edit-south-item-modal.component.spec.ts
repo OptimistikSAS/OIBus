@@ -280,6 +280,34 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('steps', () => {
+    test('should open the next step when pressing Enter in a field of a new item', async () => {
+      const tester = open('create');
+      await tester.scanMode.selectOptions(scanModes[0].name);
+
+      // not from a checkbox, nor before the step is valid
+      await tester.enabled.click();
+      await userEvent.keyboard('{Enter}');
+      await tester.name.click();
+      await userEvent.keyboard('{Enter}');
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+
+      await tester.name.fill('new item');
+      await userEvent.keyboard('{Enter}');
+
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      expect(activeModal.close).not.toHaveBeenCalled();
+    });
+
+    test('should save an edited item once when pressing Enter in a field', async () => {
+      const tester = open('edit');
+
+      await tester.name.fill('renamed');
+      await userEvent.keyboard('{Enter}');
+
+      expect(activeModal.close).toHaveBeenCalledTimes(1);
+      expect(savedCommand()).toEqual(expect.objectContaining({ name: 'renamed' }));
+    });
+
     test('should only open the next step once the current one is valid', async () => {
       const tester = open('create');
       await expect.element(tester.saveButton).not.toBeInTheDocument();

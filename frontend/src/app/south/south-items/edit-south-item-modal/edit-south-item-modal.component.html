@@ -10,7 +10,7 @@
 />
 @if (manifest(); as manifest) {
   <div class="modal-body">
-    <form [formGroup]="form" (ngSubmit)="submit()" id="form">
+    <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onEnter($event)" id="form">
       <!-- 1. General: what every item has, whatever its connector -->
       <div [hidden]="steps.current() !== 'general'" id="step-general">
         <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>

@@ -30,7 +30,7 @@ import { summarizeSettings } from '../../../shared/form/oibus-settings-summary/s
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary } from '../../../south/south-items/item-modal-steps';
+import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary, submitsOnEnter } from '../../../south/south-items/item-modal-steps';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
 type ItemForm = FormGroup<{
@@ -213,6 +213,14 @@ export class EditHistoryQueryItemModalComponent {
 
   cancel() {
     this.modal.dismiss();
+  }
+
+  /** Pressing Enter in a field submits the form, whether the Save button shows or not */
+  onEnter(event: Event) {
+    if (submitsOnEnter(event)) {
+      event.preventDefault();
+      this.submit();
+    }
   }
 
   /** Submitting the form (e.g. pressing Enter) saves the item once it can be, and opens the next step before. */

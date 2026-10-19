@@ -38,7 +38,7 @@ import { ModalService } from '../../../shared/modal.service';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary } from '../item-modal-steps';
+import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary, submitsOnEnter } from '../item-modal-steps';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
@@ -348,6 +348,14 @@ class EditSouthItemModalComponent {
 
   cancel() {
     this.modal.dismiss();
+  }
+
+  /** Pressing Enter in a field submits the form, whether the Save button shows or not */
+  onEnter(event: Event) {
+    if (submitsOnEnter(event)) {
+      event.preventDefault();
+      this.submit();
+    }
   }
 
   /** Submitting the form (e.g. pressing Enter) saves the item once it can be, and opens the next step before. */
