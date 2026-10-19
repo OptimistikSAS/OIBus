@@ -18,6 +18,24 @@ export function countItemChanges(summary: ItemSummary, saved: ItemSummary): numb
   return countChanges(compareSettings(summary.general, saved.general)) + countChanges(compareSettings(summary.settings, saved.settings));
 }
 
+/** The inputs where pressing Enter submits a form, as a browser does it with a submit button */
+const SUBMITTING_INPUT_TYPES = new Set(['text', 'search', 'number', 'email', 'url', 'tel', 'password', 'date', 'time', 'datetime-local']);
+
+/**
+ * Whether pressing Enter (the `keydown.enter` event of an item form) should submit the form: in a single-line field only, and not
+ * when the field itself already handled the key (e.g. to pick a typeahead suggestion). The modals handle it themselves rather than
+ * let the browser submit the form, which it only does through a submit button: there is none before the Save one shows.
+ */
+export function submitsOnEnter(event: Event): boolean {
+  const target = event.target;
+  return (
+    !event.defaultPrevented &&
+    !(event as KeyboardEvent).isComposing &&
+    target instanceof HTMLInputElement &&
+    SUBMITTING_INPUT_TYPES.has(target.type)
+  );
+}
+
 /** True when the control, or one of its descendants, has an error the user was already shown. */
 function hasShownError(control: AbstractControl): boolean {
   if (control.errors && control.touched) {
