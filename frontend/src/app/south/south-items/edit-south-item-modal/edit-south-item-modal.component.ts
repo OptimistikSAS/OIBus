@@ -38,7 +38,7 @@ import { ModalService } from '../../../shared/modal.service';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary, unboxedItemSettings } from '../item-modal-steps';
+import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary } from '../item-modal-steps';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
@@ -217,7 +217,7 @@ class EditSouthItemModalComponent {
 
   readonly itemSettingsAttribute = computed(() => {
     const manifest = this.manifest();
-    return manifest ? unboxedItemSettings(this.getItemSettingsAttribute(manifest)) : null;
+    return manifest ? this.getItemSettingsAttribute(manifest) : null;
   });
 
   readonly hasHistorianCapabilities = computed(() => this.manifest()?.modes.history ?? false);
