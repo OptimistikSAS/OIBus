@@ -81,6 +81,16 @@ describe('EditHistoryQueryItemModalComponent', () => {
       );
     });
 
+    test('should open the next step when pressing Enter in the name of a new item', async () => {
+      createModal().prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+
+      await nameInput.fill('new item');
+      await userEvent.keyboard('{Enter}');
+
+      await expect.element(step('settings')).toHaveAttribute('aria-current', 'step');
+      expect(activeModal.close).not.toHaveBeenCalled();
+    });
+
     test('should not open the next step without a name', async () => {
       createModal().prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
 
