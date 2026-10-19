@@ -2894,8 +2894,6 @@
     "edit-title": "Modifier {{ name }}",
     "general-settings": "Paramètres généraux",
     "add": "Ajouter",
-    "from-existing-south": "À partir d'un South existant",
-    "from-existing-north": "À partir d'un North existant",
     "edit": "Modifier",
     "none": "Aucune requête d'historique",
     "name": "Nom",
@@ -3085,6 +3083,12 @@
       "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
       "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
       "confirm-connectors-change": "Changer de connecteurs recommence la requête d'historique : ses paramètres, éléments et transformateurs seront ceux des nouveaux connecteurs. Continuer ?"
+    },
+    "connectors": {
+      "south": "Connecteur South",
+      "north": "Connecteur North",
+      "duplicate-existing": "Dupliquer l'existant",
+      "new-settings": "Nouveaux paramètres"
     }
   },
   "explore-cache": {
