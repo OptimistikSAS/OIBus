@@ -290,7 +290,7 @@ describe('EditHistoryQueryComponent', () => {
       historyQueryService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
       historyQueryService.browseExplore.mockReturnValue(of({ entries: [] }));
       historyQueryService.closeExplore.mockReturnValue(of(undefined));
-      const tester = await createTester('south');
+      const tester = await createTester('items');
 
       await tester.exploreButton.click();
 
@@ -619,7 +619,7 @@ describe('EditHistoryQueryComponent', () => {
       historyQueryService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
       const exploreModal = createMock(SouthExploreModalComponent);
       mockModal(exploreModal);
-      const tester = await createTester('south');
+      const tester = await createTester('items');
 
       await tester.exploreButton.click();
 
