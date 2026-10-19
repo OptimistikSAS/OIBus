@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -12,7 +12,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
@@ -34,7 +34,16 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
+import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import {
+  compareSettings,
+  countChanges,
+  SettingSummary,
+  summarizeSettings
+} from '../../shared/form/oibus-settings-summary/settings-summary';
 import { ModalService } from '../../shared/modal.service';
+import { ModalStepsComponent } from '../../shared/modal-steps/modal-steps.component';
+import { submitsOnEnter, WizardSteps } from '../../shared/modal-steps/wizard-steps';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
@@ -43,7 +52,20 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { toSourceCommand } from '../../shared/utils/utils';
+import { compareLists, formatTransformerSource, summarizeCaching, transformerName } from '../north-summary';
 import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
+
+/** The steps of the north connector page, in order. */
+export const NORTH_CONNECTOR_STEPS = ['general', 'settings', 'caching', 'transformers', 'review'] as const;
+export type NorthConnectorStep = (typeof NORTH_CONNECTOR_STEPS)[number];
+
+/** The connector as summed up in the Review step */
+interface NorthConnectorSummary {
+  general: Array<SettingSummary>;
+  settings: Array<SettingSummary>;
+  caching: Array<SettingSummary>;
+  transformers: Array<SettingSummary>;
+}
 
 @Component({
   selector: 'oib-edit-north',
@@ -59,7 +81,10 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
     ReactiveFormsModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
-    OIBusScanModeFormControlComponent
+    OIBusScanModeFormControlComponent,
+    TranslatePipe,
+    ModalStepsComponent,
+    OIBusSettingsSummaryComponent
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss',
@@ -84,6 +109,8 @@ export class EditNorthComponent implements CanComponentDeactivate {
   private readonly route = inject(ActivatedRoute);
   private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private readonly docsUrlService = inject(DocsUrlService);
+  private readonly translateService = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings');
   readonly cachingHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#caching');
@@ -128,7 +155,48 @@ export class EditNorthComponent implements CanComponentDeactivate {
     settings: FormGroup;
   }> | null>(null);
 
-  private inMemoryTransformersWithOptions: Array<TransformerDTOWithOptions> = [];
+  /** The last change of the form (value, status, touched...) */
+  private readonly formEvent = signal<unknown>(null);
+
+  readonly steps = new WizardSteps<NorthConnectorStep>(NORTH_CONNECTOR_STEPS, step => this.stepControls(step), this.formEvent);
+  /** A new connector is saved from the last step, an edited one from any step */
+  readonly canSave = computed(() => this.mode() === 'edit' || this.steps.isLast());
+
+  /** The transformers of the connector, edited in memory and saved along with the connector */
+  private readonly inMemoryTransformersWithOptions = signal<Array<TransformerDTOWithOptions>>([]);
+
+  /** The connector as summed up in the Review step */
+  readonly reviewSummary = computed<NorthConnectorSummary>(() => {
+    this.formEvent();
+    this.inMemoryTransformersWithOptions();
+    return this.summarizeConnector();
+  });
+  /** The connector as it was when opened for edition, to show what changed in the Review step: null for a new one */
+  readonly savedSummary = signal<NorthConnectorSummary | null>(null);
+  /** The transformers as they were when the connector was opened for edition */
+  private readonly savedTransformers = signal<Array<TransformerDTOWithOptions>>([]);
+  /** What changed in the transformers since the connector was saved: null for a new connector */
+  readonly transformerChanges = computed(() =>
+    this.savedSummary() ? compareLists(this.inMemoryTransformersWithOptions(), this.savedTransformers()) : null
+  );
+  /** How many settings and transformers changed since the connector was saved: null for a new connector */
+  readonly changeCount = computed(() => {
+    const saved = this.savedSummary();
+    const transformerChanges = this.transformerChanges();
+    if (!saved || !transformerChanges) {
+      return null;
+    }
+    const summary = this.reviewSummary();
+    return (
+      countChanges(compareSettings(summary.general, saved.general)) +
+      countChanges(compareSettings(summary.settings, saved.settings)) +
+      countChanges(compareSettings(summary.caching, saved.caching)) +
+      transformerChanges.added +
+      transformerChanges.changed +
+      transformerChanges.removed
+    );
+  });
+
   readonly scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
     key: 'scanMode',
@@ -193,6 +261,10 @@ export class EditNorthComponent implements CanComponentDeactivate {
         }
         this.buildForm(manifest);
         this.manifest.set(manifest);
+        if (this.mode() === 'edit') {
+          this.savedSummary.set(this.summarizeConnector());
+          this.savedTransformers.set(structuredClone(this.inMemoryTransformersWithOptions()));
+        }
       });
   }
 
@@ -264,13 +336,14 @@ export class EditNorthComponent implements CanComponentDeactivate {
         }
       });
       // Initialize in-memory transformers for edit mode to allow deferring persistence
-      this.inMemoryTransformersWithOptions = [...northConnector.transformers];
+      this.inMemoryTransformersWithOptions.set([...northConnector.transformers]);
     } else {
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       form.setValue(form.getRawValue());
     }
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
     this.form.set(form);
   }
 
@@ -304,9 +377,46 @@ export class EditNorthComponent implements CanComponentDeactivate {
     });
   }
 
+  /** Pressing Enter in a field submits the form, whether the Save button shows or not */
+  onEnter(event: Event) {
+    if (submitsOnEnter(event)) {
+      event.preventDefault();
+      this.submitStep();
+    }
+  }
+
+  /** Submitting the form (e.g. pressing Enter) saves the connector once it can be, and opens the next step before. */
+  submitStep() {
+    if (this.canSave()) {
+      this.submit('save');
+    } else {
+      this.steps.next();
+    }
+  }
+
+  /** The controls edited in each step */
+  private stepControls(step: NorthConnectorStep): Array<AbstractControl> {
+    const form = this.form();
+    if (!form) {
+      return [];
+    }
+    switch (step) {
+      case 'general':
+        return [form.controls.name, form.controls.description, form.controls.enabled];
+      case 'settings':
+        return [form.controls.settings];
+      case 'caching':
+        return [form.controls.caching];
+      case 'transformers':
+      case 'review':
+        return [];
+    }
+  }
+
   submit(value: 'save' | 'test') {
     if (value === 'save') {
       if (!this.form()!.valid) {
+        this.steps.showFirstInvalid();
         return;
       }
       this.createOrUpdateNorthConnector(this.formNorthConnectorCommand);
@@ -332,14 +442,49 @@ export class EditNorthComponent implements CanComponentDeactivate {
 
   updateInMemoryTransformers(transformersWithOptions: Array<TransformerDTOWithOptions> | null) {
     if (transformersWithOptions) {
-      this.inMemoryTransformersWithOptions = transformersWithOptions;
+      this.inMemoryTransformersWithOptions.set(transformersWithOptions);
     } else {
       // When child signals backend update, refresh current connector view and in-memory cache
       this.northConnectorService.findById(this.northConnector()!.id).subscribe(northConnector => {
         this.northConnector.set(JSON.parse(JSON.stringify(northConnector)));
-        this.inMemoryTransformersWithOptions = [...northConnector.transformers];
+        this.inMemoryTransformersWithOptions.set([...northConnector.transformers]);
       });
     }
+  }
+
+  /** The connector as currently edited, summed up: see `reviewSummary` */
+  private summarizeConnector(): NorthConnectorSummary {
+    const form = this.form();
+    const manifest = this.manifest();
+    if (!form || !manifest) {
+      return { general: [], settings: [], caching: [], transformers: [] };
+    }
+    const value = form.getRawValue();
+    return {
+      general: [
+        { kind: 'text', labelKey: 'north.name', text: value.name || null, invalid: form.controls.name.invalid },
+        { kind: 'text', labelKey: 'north.description', text: value.description || null },
+        { kind: 'text', labelKey: 'north.status', text: this.translateService.instant(value.enabled ? 'enabled' : 'disabled') }
+      ],
+      settings: summarizeSettings(manifest.settings, extractFormValue(form.value.settings), {
+        translateService: this.translateService,
+        scanModes: this.scanModes(),
+        certificates: this.certificates(),
+        isInvalid: path => form.controls.settings.get(path)?.invalid ?? false
+      }),
+      caching: summarizeCaching(value.caching, this.translateService, path => form.controls.caching.get(path)?.invalid ?? false),
+      transformers: [
+        {
+          kind: 'table',
+          labelKey: 'north.transformers.title',
+          columnKeys: ['north.transformers.source', 'north.transformers.output'],
+          rows: this.inMemoryTransformersWithOptions().map(element => [
+            formatTransformerSource(element, this.translateService).trim(),
+            transformerName(element.transformer, this.translateService)
+          ])
+        }
+      ]
+    };
   }
 
   get formNorthConnectorCommand(): NorthConnectorCommandDTO {
@@ -372,7 +517,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
           retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
-      transformers: this.inMemoryTransformersWithOptions.map(element => ({
+      transformers: this.inMemoryTransformersWithOptions().map(element => ({
         id: element.id,
         transformerId: element.transformer.id,
         options: element.options,

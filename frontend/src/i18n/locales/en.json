@@ -3367,6 +3367,20 @@
       "copy-cache-path": "Copy cache path to clipboard",
       "view-metrics": "View north connector metrics",
       "audit": "View north connector audit history"
+    },
+    "steps": {
+      "steps": "Connector steps",
+      "step": {
+        "general": "General",
+        "settings": "Settings",
+        "caching": "Cache",
+        "transformers": "Transformers",
+        "review": "Review & save"
+      },
+      "review-errors": "Fix these steps before saving:",
+      "review-changes": "Changes since the connector was saved: {{count}}",
+      "review-no-changes": "No change since the connector was saved",
+      "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}"
     }
   },
   "audit": {
@@ -3637,7 +3651,22 @@
       "copy-cache-path": "Copy cache path to clipboard",
       "audit": "View history query audit history"
     },
-    "reset-cache-confirmation": "Do you want to reset the history query cache?"
+    "reset-cache-confirmation": "Do you want to reset the history query cache?",
+    "steps": {
+      "steps": "History query steps",
+      "step": {
+        "general": "General",
+        "south": "South",
+        "items": "Items",
+        "north": "North",
+        "review": "Review & save"
+      },
+      "review-errors": "Fix these steps before saving:",
+      "review-changes": "Changes since the history query was saved: {{count}}",
+      "review-no-changes": "No change since the history query was saved",
+      "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}",
+      "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}"
+    }
   },
   "explore-cache": {
     "title": "Cache of {{ name }}",

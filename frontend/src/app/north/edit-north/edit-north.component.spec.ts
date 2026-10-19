@@ -3,7 +3,7 @@ import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
 import { firstValueFrom, isObservable, of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
@@ -24,7 +24,7 @@ import { MockModalService, provideModalTesting } from '../../shared/mock-modal.s
 import { NotificationService } from '../../shared/notification.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
-import { EditNorthComponent } from './edit-north.component';
+import { EditNorthComponent, NorthConnectorStep } from './edit-north.component';
 
 const manifest: NorthConnectorManifest = {
   ...testData.north.manifest,
@@ -56,6 +56,20 @@ class EditNorthComponentTester {
   readonly transformerRows = this.root.getByCss('oib-north-transformers tbody tr');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly testButton = this.root.getByRole('button', { name: 'Test settings' });
+  readonly nextButton = this.root.getByRole('button', { name: 'Next' });
+  readonly backButton = this.root.getByRole('button', { name: 'Back' });
+  readonly reviewErrors = this.root.getByCss('#review-errors');
+  readonly reviewChanges = this.root.getByCss('#review-changes');
+  readonly transformerChanges = this.root.getByCss('#transformer-changes');
+  readonly cachingSummary = this.root.getByCss('#caching-summary');
+
+  step(step: NorthConnectorStep) {
+    return this.root.getByCss(`#north-step-${step}`);
+  }
+
+  async goTo(step: NorthConnectorStep) {
+    await this.step(step).click();
+  }
 }
 
 describe('EditNorthComponent', () => {
@@ -127,16 +141,70 @@ describe('EditNorthComponent', () => {
       expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith('file-writer');
       expect(northConnectorService.findById).not.toHaveBeenCalled();
       await expect.element(tester.name).toHaveValue('');
+      await tester.goTo('caching');
       await expect.element(tester.numberOfElements).toHaveValue(1000);
       await expect.element(tester.transformerRows).toHaveLength(0);
     });
 
+    test('should go through the steps of a new connector, the next one opening once the current one is valid', async () => {
+      const tester = new EditNorthComponentTester();
+      await expect.element(tester.name).toBeVisible();
+      await expect.element(tester.saveButton).not.toBeInTheDocument();
+      await expect.element(tester.backButton).not.toBeInTheDocument();
+
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
+
+      await tester.name.fill('New north');
+      // Enter in a field opens the next step too
+      await userEvent.keyboard('{Enter}');
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.testButton).toBeVisible();
+
+      await tester.outputFolder.fill('/out');
+      await tester.nextButton.click();
+      await expect.element(tester.numberOfElements).toBeVisible();
+      // the schedule is required
+      await tester.nextButton.click();
+      await expect.element(tester.step('caching')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('caching')).toHaveClass('modal-step-invalid');
+
+      await tester.scanMode.selectOptions('scanMode1');
+      await tester.nextButton.click();
+      await expect.element(tester.root.getByRole('button', { name: 'Add a transformer' })).toBeVisible();
+      await tester.backButton.click();
+      await expect.element(tester.step('caching')).toHaveAttribute('aria-current', 'step');
+      await tester.nextButton.click();
+      await tester.nextButton.click();
+      await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.saveButton).toBeVisible();
+      await expect.element(tester.nextButton).not.toBeInTheDocument();
+      await expect.element(tester.reviewErrors).not.toBeInTheDocument();
+      await expect.element(tester.reviewChanges).not.toBeInTheDocument();
+      await expect.element(tester.cachingSummary).toMatchTextContent(/Schedule\s*scanMode1/);
+      await expect.element(tester.cachingSummary).toMatchTextContent(/Minimum delay between two transmissions\s*200 ms/);
+    });
+
+    test('should list the steps to fix in the review, and open them', async () => {
+      const tester = new EditNorthComponentTester();
+      await tester.goTo('review');
+
+      await expect.element(tester.reviewErrors).toMatchTextContent(/Fix these steps before saving:\s*General\s*Settings\s*Cache/);
+      await tester.reviewErrors.getByRole('button', { name: 'Cache' }).click();
+
+      await expect.element(tester.step('caching')).toHaveAttribute('aria-current', 'step');
+    });
+
     test('should not save an invalid form', async () => {
       const tester = new EditNorthComponentTester();
+      await tester.goTo('review');
 
       await tester.saveButton.click();
 
-      await expect.element(tester.root.getByText('This field is required').first()).toBeInTheDocument();
+      // the first step with an error opens
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
       expect(northConnectorService.create).not.toHaveBeenCalled();
     });
 
@@ -144,9 +212,10 @@ describe('EditNorthComponent', () => {
       const tester = new EditNorthComponentTester();
 
       await tester.name.fill(' north 2 ');
+      await tester.goTo('review');
       await tester.saveButton.click();
 
-      await expect.element(tester.root.getByText('Must be unique')).toBeInTheDocument();
+      await expect.element(tester.root.getByText('Must be unique')).toBeVisible();
       expect(northConnectorService.create).not.toHaveBeenCalled();
     });
 
@@ -155,8 +224,11 @@ describe('EditNorthComponent', () => {
 
       await tester.name.fill('New north');
       await tester.description.fill('my description');
+      await tester.goTo('settings');
       await tester.outputFolder.fill('/out');
+      await tester.goTo('caching');
       await tester.scanMode.selectOptions('scanMode1');
+      await tester.goTo('review');
       await tester.saveButton.click();
 
       expect(northConnectorService.create).toHaveBeenCalledWith(
@@ -185,9 +257,10 @@ describe('EditNorthComponent', () => {
       const fakeModal = createMock(TestConnectionResultModalComponent);
       modalService.mockClosedModal(fakeModal);
       const tester = new EditNorthComponentTester();
+      await tester.goTo('settings');
 
       await tester.testButton.click();
-      await expect.element(tester.root.getByText('This field is required').first()).toBeInTheDocument();
+      await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
       expect(fakeModal.runTest).not.toHaveBeenCalled();
 
       await tester.outputFolder.fill('/out');
@@ -218,11 +291,46 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.title).toHaveTextContent('Edit North 1');
       expect(northConnectorService.findById).toHaveBeenCalledWith('northId1');
       await expect.element(tester.name).toHaveValue('North 1');
+      await tester.goTo('settings');
       await expect.element(tester.outputFolder).toHaveValue('output-folder');
+      await tester.goTo('caching');
       await expect.element(tester.scanMode).toHaveDisplayValue('scanMode1');
       await expect.element(tester.numberOfElements).toHaveValue(250);
+      await tester.goTo('transformers');
       await expect.element(tester.transformerRows).toHaveLength(3);
       expect(northConnector).toEqual(testData.north.list[0]);
+    });
+
+    test('should save an edited connector from any step', async () => {
+      const tester = new EditNorthComponentTester();
+      await expect.element(tester.name).toHaveValue('North 1');
+      await tester.goTo('caching');
+      // Save is the main action, Next a subtle one
+      await expect.element(tester.nextButton).toHaveClass('btn-subtle');
+
+      await tester.saveButton.click();
+
+      expect(northConnectorService.update).toHaveBeenCalledWith('northId1', expect.objectContaining({ name: 'North 1' }));
+    });
+
+    test('should show what changed since the edited connector was saved', async () => {
+      const tester = new EditNorthComponentTester();
+      await expect.element(tester.name).toHaveValue('North 1');
+      await tester.goTo('review');
+      await expect.element(tester.reviewChanges).toHaveTextContent('No change since the connector was saved');
+      await expect.element(tester.transformerChanges).not.toBeInTheDocument();
+
+      await tester.goTo('general');
+      await tester.description.fill('changed description');
+      await tester.goTo('caching');
+      await tester.numberOfElements.fill('300');
+      await tester.goTo('transformers');
+      await tester.transformerRows.nth(0).getByRole('button', { name: 'Delete transformer' }).click();
+      await tester.goTo('review');
+
+      await expect.element(tester.reviewChanges).toHaveTextContent('Changes since the connector was saved: 3');
+      await expect.element(tester.transformerChanges).toHaveTextContent('Transformers added: 0 · changed: 0 · removed: 1');
+      await expect.element(tester.cachingSummary).toMatchTextContent(/Number of elements\s*Changed\s*300\s*Was\s*250/);
     });
 
     test('should accept its own name', async () => {
@@ -239,7 +347,9 @@ describe('EditNorthComponent', () => {
       const tester = new EditNorthComponentTester();
       await expect.element(tester.transformerRows).toHaveLength(3);
 
+      await tester.goTo('transformers');
       await tester.transformerRows.nth(0).getByRole('button', { name: 'Delete transformer' }).click();
+      await tester.goTo('general');
       await tester.description.fill('updated');
       await tester.saveButton.click();
 
@@ -272,6 +382,7 @@ describe('EditNorthComponent', () => {
       const fakeModal = createMock(TestConnectionResultModalComponent);
       modalService.mockClosedModal(fakeModal);
       const tester = new EditNorthComponentTester();
+      await tester.goTo('settings');
       await expect.element(tester.outputFolder).toHaveValue('output-folder');
 
       await tester.testButton.click();
@@ -291,6 +402,9 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.name).toHaveValue('North 1');
       // the duplicated connector's name is already used
       await tester.name.fill('North 1 copy');
+      await tester.goTo('review');
+      // a copy is new: nothing to compare with
+      await expect.element(tester.reviewChanges).not.toBeInTheDocument();
       await tester.saveButton.click();
 
       expect(northConnectorService.create).toHaveBeenCalledWith(
