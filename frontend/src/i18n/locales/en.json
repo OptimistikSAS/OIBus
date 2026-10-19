@@ -3228,6 +3228,21 @@
       "view-metrics": "View south connector metrics",
       "copy-cache-path": "Copy cache path to clipboard",
       "audit": "View south connector audit history"
+    },
+    "steps": {
+      "steps": "Connector steps",
+      "step": {
+        "general": "General",
+        "settings": "Settings",
+        "items": "Items",
+        "review": "Review & save"
+      },
+      "review-errors": "Fix these steps before saving:",
+      "review-changes": "Changes since the connector was saved: {{count}}",
+      "review-no-changes": "No change since the connector was saved",
+      "groups": "Groups",
+      "workflows": "Items synchronisations",
+      "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}"
     }
   },
   "north": {
