@@ -1004,7 +1004,7 @@ describe('EditWorkflowModalComponent', () => {
       const tester = create({ mode: 'edit' });
 
       await expect.element(tester.saveButton).toBeInTheDocument();
-      await expect.element(tester.nextButton).toHaveClass('btn-secondary');
+      await expect.element(tester.nextButton).toHaveClass('btn-subtle');
     });
 
     test('should make Next the main action until Save shows', async () => {

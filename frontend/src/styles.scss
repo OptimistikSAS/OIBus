@@ -751,6 +751,28 @@ $oib-max-action-count: 6;
   }
 }
 
+// A secondary action next to the main one (e.g. Back, or Next once Save shows, in a wizard): outlined, so that the main action is
+// the one that stands out
+.btn-subtle {
+  border-radius: 0.5rem;
+  border: 1px solid $blue;
+  color: $darkGrey;
+  background-color: transparent;
+
+  &:hover,
+  &:focus-visible,
+  &:active {
+    border-color: $darkGrey;
+    color: $darkGrey;
+    background-color: $lightGrey;
+  }
+
+  &:disabled {
+    border-color: $mediumGrey;
+    color: $blue;
+  }
+}
+
 // override of some bootstrap styles to better fit Optimistik branding
 .btn-danger {
   border-radius: 0.5rem;
