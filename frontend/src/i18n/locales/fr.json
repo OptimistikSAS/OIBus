@@ -1929,7 +1929,10 @@
       "caching": "Mise en cache",
       "group-scan-mode": "{{scanMode}} (du groupe)",
       "save-and-add-another": "Enregistrer et en ajouter un autre",
-      "ok-and-add-another": "OK et en ajouter un autre"
+      "ok-and-add-another": "OK et en ajouter un autre",
+      "review-errors": "Corrigez ces étapes avant d'enregistrer :",
+      "review-changes": "Paramètres modifiés depuis l'enregistrement de l'élément : {{count}}",
+      "review-no-changes": "Aucune modification depuis l'enregistrement de l'élément"
     },
     "items": {
       "title": "Éléments",
@@ -3585,7 +3588,9 @@
     "add": "Ajouter",
     "edit": "Modifier",
     "cache": "Cache",
-    "step-invalid": "(contient des erreurs)"
+    "step-invalid": "(contient des erreurs)",
+    "changed": "Modifié",
+    "was": "Avant"
   },
   "duration-pipe": {
     "long": {

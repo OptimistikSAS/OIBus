@@ -101,6 +101,43 @@ html {
   margin-bottom: 0.5rem;
 }
 
+.oib-summary-empty {
+  color: var(--bs-secondary-color);
+}
+
+// A setting changed since the previous version (e.g. the saved item): highlighted, with its previous value under it
+.oib-summary-changed {
+  margin: -0.25rem -0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  background-color: rgba($yellow, 0.12);
+}
+
+.oib-summary-badge {
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.5rem;
+  background-color: $yellow;
+  color: $darkGrey;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.oib-summary-previous {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--bs-secondary-color);
+}
+
+// A setting with an error: it can't be saved as it is
+.oib-summary-invalid {
+  dt,
+  dd,
+  .oib-summary-empty {
+    color: var(--bs-danger);
+  }
+}
+
 .oib-summary-code {
   max-height: 12rem;
   margin: 0.25rem 0 0;
