@@ -2276,8 +2276,8 @@
     "confirm-memory-dump": "Un instantané du tas (heap snapshot) de la mémoire d'OIBus va être écrit dans le dossier de données. OIBus est figé pendant l'écriture, ce qui peut perturber les flux de données (cela peut prendre de quelques secondes à plusieurs minutes), et le fichier peut être aussi volumineux que la mémoire utilisée. Voulez-vous vraiment continuer ?",
     "updated": "Paramètres du moteur mis à jour",
     "port-changed": {
-      "title": "Port modifié",
-      "message": "Le port du serveur web a été changé pour {{ port }}. Vous serez automatiquement redirigé dans {{ seconds }} secondes.",
+      "title": "Serveur web modifié",
+      "message": "Le serveur web est désormais accessible à l'adresse {{ url }}. Vous serez automatiquement redirigé dans {{ seconds }} secondes.",
       "redirect-now": "Rediriger maintenant"
     },
     "general-settings": {
@@ -2303,7 +2303,20 @@
         "7d": "7 jours",
         "14d": "14 jours",
         "30d": "30 jours"
-      }
+      },
+      "https": "HTTPS",
+      "https-enabled": "Servir en HTTPS",
+      "https-disabled": "Désactivé",
+      "certificate-source": "Source du certificat",
+      "certificate-sources": {
+        "store": "Magasin de certificats",
+        "file": "Fichiers"
+      },
+      "certificate": "Certificat",
+      "no-certificate": "Aucun certificat dans le magasin : créez-en ou importez-en un dans la section certificats de cette page.",
+      "certificate-path": "Fichier du certificat",
+      "private-key-path": "Fichier de la clé privée",
+      "file-hint": "Fichiers PEM (le certificat peut être suivi de sa chaîne de certification, la clé privée ne doit pas être chiffrée). Un chemin relatif est résolu depuis le dossier de données d'OIBus."
     },
     "proxy-settings": {
       "title": "Serveur proxy",
@@ -2595,7 +2608,7 @@
           "web-server": "Serveur web",
           "proxy-server": "Serveur proxy"
         },
-        "port-changed-hint": "Le port du serveur web a changé : une fois OIBus redémarré, il est accessible sur le port {{ port }}. Vous serez redirigé à la fermeture de cette fenêtre.",
+        "port-changed-hint": "Le port ou le protocole du serveur web a changé : une fois OIBus redémarré, il est accessible en {{ protocol }} sur le port {{ port }}. Vous serez redirigé à la fermeture de cette fenêtre.",
         "close-and-redirect": "Fermer et rediriger"
       }
     },

@@ -4,6 +4,7 @@ import {
   EngineSettingsCommandDTO,
   EngineWebServerCommandDTO
 } from '../../shared/model/api/engine.model';
+import { WebServerHttpsSettings } from '../../shared/model/domain/engine.model';
 
 import { EngineLoggerCommand, EngineProxyCommand, EngineSettingsCommand, EngineWebServerCommand } from '../model/engine.model';
 
@@ -21,9 +22,25 @@ export interface EngineSecrets {
   lokiPassword: string | null;
 }
 
-export const toEngineWebServerCommand = (command: EngineWebServerCommandDTO): EngineWebServerCommand => ({
+/**
+ * The HTTPS settings are optional in the API command (callers predating HTTPS support, like OIAnalytics, don't send them):
+ * the current ones are then kept.
+ */
+export const toEngineWebServerCommand = (
+  command: EngineWebServerCommandDTO,
+  currentHttps: WebServerHttpsSettings
+): EngineWebServerCommand => ({
   port: command.port,
-  authTokenDuration: command.authTokenDuration
+  authTokenDuration: command.authTokenDuration,
+  https: command.https
+    ? {
+        enabled: command.https.enabled,
+        certificateSource: command.https.certificateSource,
+        certificateId: command.https.certificateId || null,
+        certificatePath: command.https.certificatePath || null,
+        privateKeyPath: command.https.privateKeyPath || null
+      }
+    : currentHttps
 });
 
 export const toEngineProxyCommand = (
@@ -63,12 +80,16 @@ export const toEngineLoggerCommand = (
   syslog: { level: command.syslog.level, host: command.syslog.host ?? null, port: command.syslog.port, protocol: command.syslog.protocol }
 });
 
-export const toEngineSettingsCommand = (command: EngineSettingsCommandDTO, secrets: EngineSecrets): EngineSettingsCommand => {
+export const toEngineSettingsCommand = (
+  command: EngineSettingsCommandDTO,
+  secrets: EngineSecrets,
+  currentHttps: WebServerHttpsSettings
+): EngineSettingsCommand => {
   const { auditRetentionDuration: _, ...logger } = toEngineLoggerCommand(command.logger, secrets);
   return {
     auditRetentionDuration: command.auditRetentionDuration,
     general: { name: command.general.name },
-    webServer: toEngineWebServerCommand(command.webServer),
+    webServer: toEngineWebServerCommand(command.webServer, currentHttps),
     proxyServer: toEngineProxyCommand(command.proxyServer, secrets),
     logger
   };

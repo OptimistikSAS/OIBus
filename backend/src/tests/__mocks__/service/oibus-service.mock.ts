@@ -19,7 +19,8 @@ import {
   CacheSearchResult,
   DataFolderType,
   EngineMetrics,
-  FileCacheContent
+  FileCacheContent,
+  WebServerHttpsSettings
 } from '../../../../shared/model/domain/engine.model';
 
 import { EngineSettings } from '../../../model/engine.model';
@@ -45,6 +46,10 @@ export default class OIBusServiceMock {
   updateOIBusVersion = mock.fn((_version: string, _launcherVersion: string): void => undefined);
   restart = mock.fn(async (): Promise<void> => undefined);
   dumpMemory = mock.fn((): EngineMemoryDumpDTO => ({ filename: '' }));
+  getWebServerCredentials = mock.fn(async (_https: WebServerHttpsSettings): Promise<{ cert: string; key: string }> => ({
+    cert: '',
+    key: ''
+  }));
   stop = mock.fn(async (): Promise<void> => undefined);
   addExternalContent = mock.fn(async (_northId: string, _dataSourceId: string, _content: OIBusContent): Promise<void> => undefined);
   logHealthSignal = mock.fn((): void => undefined);
@@ -66,5 +71,5 @@ export default class OIBusServiceMock {
     async (_type: 'north' | 'history', _id: string, _updateCommand: CacheContentUpdateCommand): Promise<void> => undefined
   );
   loggerEvent = new EventEmitter();
-  portChangeEvent = new EventEmitter();
+  webServerChangeEvent = new EventEmitter();
 }

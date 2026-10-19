@@ -25957,8 +25957,59 @@
 				"example": "7d",
 				"description": "Type representing an allowed authentication token duration."
 			},
+			"WebServerCertificateSource": {
+				"type": "string",
+				"enum": [
+					"file",
+					"store"
+				],
+				"example": "store",
+				"description": "Type representing where the web server reads its HTTPS certificate from."
+			},
+			"WebServerHttpsSettings": {
+				"description": "HTTPS settings of the web server.",
+				"properties": {
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the web server serves HTTPS instead of HTTP.",
+						"example": true
+					},
+					"certificateSource": {
+						"$ref": "#/components/schemas/WebServerCertificateSource",
+						"description": "Where the certificate and its private key are read from.",
+						"example": "store"
+					},
+					"certificateId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The id of the certificate of the OIBus certificate store, when the source is 'store'.",
+						"example": "certificateId"
+					},
+					"certificatePath": {
+						"type": "string",
+						"nullable": true,
+						"description": "The path of the PEM certificate file (optionally followed by its CA chain), when the source is 'file'. A relative path\nis resolved from the OIBus data folder.",
+						"example": "/etc/oibus/oibus.crt"
+					},
+					"privateKeyPath": {
+						"type": "string",
+						"nullable": true,
+						"description": "The path of the PEM private key file (not encrypted), when the source is 'file'. A relative path is resolved from the\nOIBus data folder.",
+						"example": "/etc/oibus/oibus.key"
+					}
+				},
+				"required": [
+					"enabled",
+					"certificateSource",
+					"certificateId",
+					"certificatePath",
+					"privateKeyPath"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"EngineWebServerCommandDTO": {
-				"description": "Engine web server command Data Transfer Object.\nUsed as the request body for updating only the web server port and authentication token duration.",
+				"description": "Engine web server command Data Transfer Object.\nUsed as the request body for updating only the web server port, authentication token duration and HTTPS settings.",
 				"properties": {
 					"port": {
 						"type": "number",
@@ -25970,6 +26021,10 @@
 						"$ref": "#/components/schemas/AuthTokenDuration",
 						"description": "The lifetime of an authentication token. One of AUTH_TOKEN_DURATIONS (jsonwebtoken `ms`-style duration string).",
 						"example": "7d"
+					},
+					"https": {
+						"$ref": "#/components/schemas/WebServerHttpsSettings",
+						"description": "HTTPS settings. When omitted (callers predating HTTPS support), the current ones are kept."
 					}
 				},
 				"required": [
@@ -43121,6 +43176,10 @@
 					},
 					"webServer": {
 						"properties": {
+							"https": {
+								"$ref": "#/components/schemas/WebServerHttpsSettings",
+								"description": "HTTPS settings."
+							},
 							"authTokenDuration": {
 								"$ref": "#/components/schemas/AuthTokenDuration",
 								"description": "The lifetime of an authentication token. One of AUTH_TOKEN_DURATIONS (jsonwebtoken `ms`-style duration string).",
@@ -43134,6 +43193,7 @@
 							}
 						},
 						"required": [
+							"https",
 							"authTokenDuration",
 							"port"
 						],
@@ -43398,25 +43458,45 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"WebServerProtocol": {
+				"type": "string",
+				"enum": [
+					"http",
+					"https"
+				],
+				"example": "https",
+				"description": "Type representing a web server protocol."
+			},
 			"EngineSettingsUpdateResultDTO": {
 				"description": "Engine settings update result Data Transfer Object.\nReturned after updating engine settings to indicate if a redirect is needed.",
 				"properties": {
 					"needsRedirect": {
 						"type": "boolean",
-						"description": "Whether the client needs to redirect due to a port change.",
+						"description": "Whether the client needs to redirect due to a port or protocol change.",
 						"example": true
 					},
 					"newPort": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "The new port to redirect to, if applicable.",
+						"description": "The port to redirect to, if applicable.",
 						"example": 3333
+					},
+					"newProtocol": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/WebServerProtocol"
+							}
+						],
+						"nullable": true,
+						"description": "The protocol to redirect to, if applicable.",
+						"example": "https"
 					}
 				},
 				"required": [
 					"needsRedirect",
-					"newPort"
+					"newPort",
+					"newProtocol"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -44720,7 +44800,16 @@
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "The web server port OIBus listens on once restarted, when the import changed it; null otherwise."
+						"description": "The web server port OIBus listens on once restarted, when the import changed its port or protocol; null otherwise."
+					},
+					"newProtocol": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/WebServerProtocol"
+							}
+						],
+						"nullable": true,
+						"description": "The web server protocol OIBus serves once restarted, when the import changed its port or protocol; null otherwise."
 					}
 				},
 				"required": [
@@ -44728,7 +44817,8 @@
 					"toVersion",
 					"appliedUpgrades",
 					"warnings",
-					"newPort"
+					"newPort",
+					"newProtocol"
 				],
 				"type": "object",
 				"additionalProperties": false

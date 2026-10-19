@@ -11,6 +11,7 @@ import { AuditEntityType } from '@oibus/shared/domain/audit.model';
 import { AuthTokenDuration } from '@oibus/shared/domain/engine.model';
 import { ConfigImportResponseDTO } from '@oibus/shared/oia/config-transfer.model';
 
+import { CertificateService } from '../services/certificate.service';
 import { ConfigTransferService } from '../services/config-transfer.service';
 import { EngineService } from '../services/engine.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
@@ -60,6 +61,7 @@ export class EngineDetailComponent {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly modalService = inject(ModalService);
   private readonly configTransferService = inject(ConfigTransferService);
+  private readonly certificateService = inject(CertificateService);
 
   private readonly engineSettingsResource = rxResource({ stream: () => this.engineService.getEngineSettings() });
   /** The engine settings, kept while they are reloaded after an edition */
@@ -68,6 +70,18 @@ export class EngineDetailComponent {
     pollMetrics(() => this.engineService.getEngineMetrics()),
     { initialValue: null }
   );
+  private readonly certificates = toSignal(this.certificateService.list(), { initialValue: [] });
+  /** What the web server serves HTTPS with: the name of its certificate of the store or the path of its certificate file */
+  readonly httpsCertificate = computed(() => {
+    const https = this.engineSettings()?.webServer.https;
+    if (!https?.enabled) {
+      return null;
+    }
+    if (https.certificateSource === 'file') {
+      return https.certificatePath;
+    }
+    return this.certificates().find(certificate => certificate.id === https.certificateId)?.name ?? https.certificateId;
+  });
   readonly restarting = new ObservableState();
   readonly exporting = new ObservableState();
   readonly dumpingMemory = new ObservableState();
@@ -171,13 +185,13 @@ export class EngineDetailComponent {
    * The import wipes and recreates most of the local configuration; a full reload is the safest way to
    * refresh every affected part of the app (scan modes, certificates, ip filters, transformers,
    * connectors, ...) rather than granularly refreshing each of them. When the import changed the web
-   * server port, OIBus is only reachable on the new port once restarted, so the app redirects there
+   * server port or protocol, OIBus is only reachable with them once restarted, so the app redirects there
    * instead (after the same countdown as when the port is edited directly).
    */
   private refreshAfterImport(result: ConfigImportResponseDTO) {
-    if (result.newPort) {
+    if (result.newPort && result.newProtocol) {
       const redirectModal = this.modalService.open(PortRedirectModalComponent, { backdrop: 'static', keyboard: false });
-      redirectModal.componentInstance.initialize(result.newPort);
+      redirectModal.componentInstance.initialize(result.newPort, result.newProtocol);
     } else {
       this.windowService.reload();
     }

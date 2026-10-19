@@ -1,5 +1,6 @@
 import os from 'node:os';
 import * as Http from 'http';
+import * as Https from 'https';
 import path from 'path';
 
 import bodyParser from 'body-parser';
@@ -12,6 +13,7 @@ import Joi from 'joi';
 import multer from 'multer';
 import { ValidateError } from 'tsoa';
 
+import { EngineSettings } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
 import AuditService from '../service/audit.service';
@@ -56,13 +58,13 @@ const setFrontendCacheHeaders = (res: express.Response, filePath: string) => {
  */
 export default class WebServer {
   private _logger: ILogger;
-  private _port: number;
+  private _settings: EngineSettings['webServer'];
   private _whiteList: Array<string> = [];
   private app: Express | null = null;
-  private webServer: Http.Server | null = null;
+  private webServer: Http.Server | Https.Server | null = null;
 
   constructor(
-    port: number,
+    settings: EngineSettings['webServer'],
     private readonly encryptionService: EncryptionService,
     private readonly auditService: AuditService,
     private readonly scanModeService: ScanModeService,
@@ -84,7 +86,7 @@ export default class WebServer {
     private readonly ignoreIpFilters: boolean,
     logger: ILogger
   ) {
-    this._port = port;
+    this._settings = settings;
     this._logger = logger;
     this._whiteList = this.ipFilterService.list().map(filter => filter.address);
   }
@@ -94,14 +96,32 @@ export default class WebServer {
   }
 
   get port(): number {
-    return this._port;
+    return this._settings.port;
+  }
+
+  get settings(): EngineSettings['webServer'] {
+    return this._settings;
   }
 
   get whiteList(): Array<string> {
     return this._whiteList;
   }
 
-  init(): void {
+  async init(): Promise<void> {
+    this.oIBusService.loggerEvent.on('updated', (logger: ILogger) => {
+      this._logger = logger;
+    });
+
+    this.oIBusService.webServerChangeEvent.on('updated', async (settings: EngineSettings['webServer']) => {
+      this._settings = settings;
+      await this.stop();
+      await this.start();
+    });
+
+    this.ipFilterService.whiteListEvent.on('update-white-list', (newWhiteList: Array<string>) => {
+      this._whiteList = newWhiteList;
+    });
+
     this.app = express();
 
     // Helmet for Express with Content Security Policy
@@ -279,7 +299,7 @@ export default class WebServer {
     this.app.use(this.handleBodyParserErrors.bind(this));
     this.app.use(this.setupErrorHandling());
 
-    this.start();
+    await this.start();
   }
 
   private setupRequestLogging(): express.RequestHandler {
@@ -364,30 +384,34 @@ export default class WebServer {
     };
   }
 
-  start(): void {
-    this.oIBusService.loggerEvent.on('updated', (logger: ILogger) => {
-      this._logger = logger;
-    });
-
-    this.oIBusService.portChangeEvent.on('updated', async (value: number) => {
-      this._port = value;
-      await this.stop();
-      await this.start();
-    });
-
-    this.ipFilterService.whiteListEvent.on('update-white-list', (newWhiteList: Array<string>) => {
-      this._whiteList = newWhiteList;
-    });
-
+  async start(): Promise<void> {
     if (!this.app) return;
 
-    this.webServer = this.app.listen(this.port, (error?: Error) => {
-      if (error) {
-        this.logger.error(`Could not start server on port ${this.port}: ${error.message}`);
-      } else {
-        this.logger.info(`OIBus web server started on ${this.port}`);
-      }
+    const credentials = await this.getHttpsCredentials();
+    const protocol = credentials ? 'HTTPS' : 'HTTP';
+    const server = credentials ? Https.createServer(credentials, this.app) : Http.createServer(this.app);
+    server.once('error', (error: Error) => {
+      this.logger.error(`Could not start server on port ${this.port}: ${error.message}`);
     });
+    server.listen(this.port, () => {
+      this.logger.info(`OIBus web server started on ${this.port} (${protocol})`);
+    });
+    this.webServer = server;
+  }
+
+  /**
+   * The certificate and private key to serve HTTPS with, or null to serve HTTP. When HTTPS is enabled but its certificate
+   * can't be loaded anymore (e.g. its file was removed since the settings were saved), the web server falls back to HTTP:
+   * the UI must stay reachable to fix the settings.
+   */
+  private async getHttpsCredentials(): Promise<{ cert: string; key: string } | null> {
+    if (!this._settings.https.enabled) return null;
+    try {
+      return await this.oIBusService.getWebServerCredentials(this._settings.https);
+    } catch (error: unknown) {
+      this.logger.error(`Could not load the HTTPS certificate, the web server falls back to HTTP: ${(error as Error).message}`);
+      return null;
+    }
   }
 
   async stop(): Promise<void> {

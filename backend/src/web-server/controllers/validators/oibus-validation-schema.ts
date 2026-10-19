@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { DateTime } from 'luxon';
 
-import { AUTH_TOKEN_DURATIONS } from '../../../../shared/model/domain/engine.model';
+import { AUTH_TOKEN_DURATIONS, WEB_SERVER_CERTIFICATE_SOURCES } from '../../../../shared/model/domain/engine.model';
 import { INTERVAL_UNITS, SCAN_MODE_TYPES, ScanModeInterval } from '../../../../shared/model/domain/scan-mode.model';
 
 import { intervalToMs, MAX_INTERVAL_MS, MIN_INTERVAL_MS } from '../../../service/scan-mode.utils';
@@ -120,11 +120,35 @@ const engineNameSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required()
 });
 
+// The certificate (from the store or from files) is only required when HTTPS is enabled
+const engineWebServerHttpsSchema: Joi.ObjectSchema = Joi.object({
+  enabled: Joi.boolean().required(),
+  certificateSource: Joi.string()
+    .required()
+    .valid(...WEB_SERVER_CERTIFICATE_SOURCES),
+  certificateId: Joi.when('enabled', {
+    is: true,
+    then: Joi.when('certificateSource', { is: 'store', then: Joi.string().required(), otherwise: Joi.string().allow(null, '') }),
+    otherwise: Joi.string().allow(null, '')
+  }),
+  certificatePath: Joi.when('enabled', {
+    is: true,
+    then: Joi.when('certificateSource', { is: 'file', then: Joi.string().required(), otherwise: Joi.string().allow(null, '') }),
+    otherwise: Joi.string().allow(null, '')
+  }),
+  privateKeyPath: Joi.when('enabled', {
+    is: true,
+    then: Joi.when('certificateSource', { is: 'file', then: Joi.string().required(), otherwise: Joi.string().allow(null, '') }),
+    otherwise: Joi.string().allow(null, '')
+  })
+});
+
 const engineWebServerSchema: Joi.ObjectSchema = Joi.object({
   port: Joi.number().required().port(),
   authTokenDuration: Joi.string()
     .required()
-    .valid(...AUTH_TOKEN_DURATIONS)
+    .valid(...AUTH_TOKEN_DURATIONS),
+  https: engineWebServerHttpsSchema.optional()
 });
 
 const engineProxySchema: Joi.ObjectSchema = Joi.object({

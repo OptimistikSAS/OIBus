@@ -623,8 +623,8 @@
     "confirm-memory-dump": "A heap snapshot of OIBus memory will be written in the data folder. OIBus is frozen while the dump is written, which may disrupt data flows (it can take from a few seconds to several minutes), and the file can be as large as the memory in use. Do you really want to continue?",
     "updated": "Engine settings updated",
     "port-changed": {
-      "title": "Port Changed",
-      "message": "The web server port has been changed to {{ port }}. You will be automatically redirected in {{ seconds }} seconds.",
+      "title": "Web server changed",
+      "message": "The web server is now reached at {{ url }}. You will be automatically redirected in {{ seconds }} seconds.",
       "redirect-now": "Redirect Now"
     },
     "general-settings": {
@@ -650,7 +650,20 @@
         "7d": "7 days",
         "14d": "14 days",
         "30d": "30 days"
-      }
+      },
+      "https": "HTTPS",
+      "https-enabled": "Serve HTTPS",
+      "https-disabled": "Disabled",
+      "certificate-source": "Certificate source",
+      "certificate-sources": {
+        "store": "Certificate store",
+        "file": "Files"
+      },
+      "certificate": "Certificate",
+      "no-certificate": "No certificate in the store: create or import one in the certificates section of this page.",
+      "certificate-path": "Certificate file",
+      "private-key-path": "Private key file",
+      "file-hint": "PEM files (the certificate may be followed by its CA chain, the private key must not be encrypted). A relative path is resolved from the OIBus data folder."
     },
     "proxy-settings": {
       "title": "Proxy server",
@@ -942,7 +955,7 @@
           "web-server": "Web server",
           "proxy-server": "Proxy server"
         },
-        "port-changed-hint": "The web server port changed: once OIBus has restarted, it is reached on port {{ port }}. You will be redirected when you close this dialog.",
+        "port-changed-hint": "The web server port or protocol changed: once OIBus has restarted, it is reached with {{ protocol }} on port {{ port }}. You will be redirected when you close this dialog.",
         "close-and-redirect": "Close and redirect"
       }
     },
