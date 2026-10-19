@@ -70,7 +70,7 @@ class NorthDetailComponentTester {
   readonly fixture = TestBed.createComponent(NorthDetailComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByRole('heading', { level: 1 });
-  readonly settings = this.root.getByCss('tbody.north-settings tr');
+  readonly settings = this.root.getByCss('#north-settings .oib-summary-entry');
   readonly editButton = this.root.getByRole('button', { name: 'Edit north connector' });
   readonly auditButton = this.root.getByRole('button', { name: 'View north connector audit history' });
   readonly stopButton = this.root.getByRole('button', { name: 'Stop north connector' });
@@ -146,9 +146,9 @@ describe('NorthDetailComponent', () => {
     expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith('file-writer');
     // status, output folder and prefix (the suffix is not enabled for this prefix)
     await expect.element(tester.settings).toHaveLength(3);
-    await expect.element(tester.settings.nth(0)).toHaveTextContent('Statusactive');
-    await expect.element(tester.settings.nth(1)).toHaveTextContent('Output folderoutput-folder');
-    await expect.element(tester.settings.nth(2)).toHaveTextContent('Prefixprefix-');
+    await expect.element(tester.settings.nth(0)).toHaveTextContent('Status active');
+    await expect.element(tester.settings.nth(1)).toHaveTextContent('Output folder output-folder');
+    await expect.element(tester.settings.nth(2)).toHaveTextContent('Prefix prefix-');
     await expect.element(tester.cachingRows.nth(0)).toMatchTextContent(/scanMode1.*250.*1/);
     await expect.element(tester.transformers).toHaveLength(3);
     await expect.element(tester.metrics).toBeInTheDocument();
@@ -182,7 +182,7 @@ describe('NorthDetailComponent', () => {
     expect(northConnectorService.stop).toHaveBeenCalledWith('northId1');
     expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: 'North 1' });
     await expect.element(tester.startButton).toBeInTheDocument();
-    await expect.element(tester.settings.nth(0)).toHaveTextContent('Statuspaused');
+    await expect.element(tester.settings.nth(0)).toHaveTextContent('Status paused');
   });
 
   test('should start the connector', async () => {

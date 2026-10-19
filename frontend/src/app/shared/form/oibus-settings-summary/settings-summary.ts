@@ -4,6 +4,7 @@ import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 
+import { checkCondition } from '../dynamic-form.builder';
 import { FormUtils } from '../form-utils';
 
 /** How the value of a setting shows */
@@ -34,6 +35,11 @@ export interface SettingsSummaryContext {
   certificates?: Array<CertificateDTO>;
   /** Whether the setting at this path (from the summed up object) has an error */
   isInvalid?: (path: Array<string>) => boolean;
+  /**
+   * Leaves out the settings that their enabling condition turns off. A form leaves them out of its value already, a saved value
+   * (e.g. of a connector) still has them.
+   */
+  applyEnablingConditions?: boolean;
 }
 
 /** Shown in place of a secret, so that it is never displayed */
@@ -50,8 +56,12 @@ export function summarizeSettings(
   path: Array<string> = []
 ): Array<SettingSummary> {
   const values = (value ?? {}) as Record<string, unknown>;
+  const enabled = (attribute: OIBusAttribute) => {
+    const condition = objectAttribute.enablingConditions.find(candidate => candidate.targetPathFromRoot === attribute.key);
+    return !context.applyEnablingConditions || !condition || checkCondition(values[condition.referralPathFromRoot] ?? null, condition);
+  };
   return objectAttribute.attributes
-    .filter(attribute => attribute.key in values)
+    .filter(attribute => attribute.key in values && enabled(attribute))
     .map(attribute => summarizeAttribute(attribute, values[attribute.key], context, [...path, attribute.key]))
     .filter((setting): setting is SettingSummary => setting !== null);
 }
