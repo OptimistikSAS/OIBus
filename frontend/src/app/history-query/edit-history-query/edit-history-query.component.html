@@ -1,6 +1,7 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
-    @if (southManifest() && northManifest() && form(); as form) {
+    @let form = southManifest() && northManifest() ? this.form() : null;
+    @if (form || choosesConnectors) {
       <div class="col-md-10 col-lg-8">
         <div class="d-flex">
           @if (mode() === 'create') {
@@ -13,457 +14,484 @@
         <oib-modal-steps
           class="d-block mt-3"
           [steps]="steps.steps"
-          [(current)]="steps.current"
+          [current]="steps.current()"
+          (currentChange)="goTo($event)"
           [invalidSteps]="steps.invalid()"
           labelPrefix="history-query.steps.step."
           ariaLabel="history-query.steps.steps"
           idPrefix="history-query-step-"
         />
-        <form [formGroup]="form" (ngSubmit)="submitStep()" (keydown.enter)="onEnter($event)" id="history-query-form" class="mt-3">
-          <div class="oib-steps-panel">
-            <!-- 1. General settings -->
-            <section [hidden]="steps.current() !== 'general'">
+        <!-- 0. A new history query starts with the connectors it is created from, the form being built from them -->
+        @if (choosesConnectors) {
+          <div class="oib-steps-panel mt-3" [hidden]="steps.current() !== 'connectors'">
+            <section>
               <div class="oib-section-title">
-                <h5 translate="south.general-settings"></h5>
-                <oib-help [url]="generalSettingsHelpUrl" />
+                <h5 translate="history-query.steps.step.connectors"></h5>
               </div>
-              <div class="row">
-                <!-- Name -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="history-query-name" translate="history-query.name"></label>
-                    <input formControlName="name" id="history-query-name" class="form-control" />
-                    <val-errors controlName="name" />
-                  </div>
-                </div>
-                <!-- Description -->
-                <div class="col-5">
-                  <div class="form-group">
-                    <label class="form-label" for="history-query-description" translate="history-query.description"></label>
-                    <input formControlName="description" id="history-query-description" class="form-control" />
-                  </div>
-                </div>
-              </div>
-
-              <div formGroupName="queryTimeRange">
-                <!-- Date Range Selector -->
-                <div class="row">
-                  <div class="col-12">
-                    <div class="form-group">
-                      <oib-date-range-selector
-                        formControlName="dateRange"
-                        [startLabel]="'history-query.query-time-range.start'"
-                        [endLabel]="'history-query.query-time-range.end'"
-                        [defaultRange]="'last-day'"
-                      />
-                      <val-errors controlName="dateRange" />
-                    </div>
-                  </div>
-                </div>
-                <div class="row">
-                  <!-- Max read interval -->
-                  <div class="col-3">
-                    <div class="form-group">
-                      <label
-                        class="form-label"
-                        for="max-read-interval"
-                        translate="history-query.query-time-range.max-read-interval"
-                      ></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="maxReadInterval" id="max-read-interval" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.s"></span>
-                      </div>
-                      <val-errors controlName="maxReadInterval" />
-                    </div>
-                  </div>
-                  <!-- Read delay -->
-                  <div class="col-3">
-                    <div class="form-group">
-                      <label class="form-label" for="read-delay" translate="history-query.query-time-range.read-delay"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="readDelay" id="read-delay" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.ms"></span>
-                      </div>
-                      <val-errors controlName="readDelay" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- 2. South settings -->
-            <section [hidden]="steps.current() !== 'south'">
-              <div class="oib-section-title">
-                <h5
-                  translate="history-query.south.specific-settings"
-                  [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
-                  id="south-specific-settings-title"
-                ></h5>
-                <button
-                  translate="south.test-connection.button"
-                  type="button"
-                  class="btn btn-secondary btn-sm"
-                  id="test-connection-south"
-                  (click)="test('south')"
-                ></button>
-                <oib-help [url]="southTypeHelpUrl()" />
-              </div>
-              <div formGroupName="southSettings" class="row">
-                <oib-oibus-object-form-control
-                  [scanModes]="scanModes()"
-                  [certificates]="certificates()"
-                  [group]="form.controls.southSettings"
-                  [objectAttribute]="southManifest()!.settings"
-                  layout="sections"
-                />
-              </div>
-            </section>
-
-            <!-- 4. North settings, with the caching and the transformers: after the items, which the transformers pick from -->
-            <section [hidden]="steps.current() !== 'north'">
-              <div class="oib-section-title">
-                <h5
-                  translate="north.specific-settings"
-                  [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
-                  id="north-specific-settings-title"
-                ></h5>
-                <button
-                  translate="north.test-connection.button"
-                  type="button"
-                  class="btn btn-secondary btn-sm"
-                  id="test-connection-north"
-                  (click)="test('north')"
-                ></button>
-                <oib-help [url]="northTypeHelpUrl()" />
-              </div>
-              <div formGroupName="northSettings" class="row">
-                <oib-oibus-object-form-control
-                  [scanModes]="scanModes()"
-                  [certificates]="certificates()"
-                  [group]="form.controls.northSettings"
-                  [objectAttribute]="northManifest()!.settings"
-                  layout="sections"
-                />
-              </div>
-              <div class="oib-section-title">
-                <h5 translate="north.caching.title"></h5>
-                <oib-help [url]="cachingHelpUrl" />
-              </div>
-              <div>
-                <div formGroupName="caching">
-                  <h6 class="oib-group-title" translate="north.caching.trigger.title"></h6>
-                  <div formGroupName="trigger" class="row">
-                    <!-- Scan mode -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <oib-oibus-scan-mode-form-control [allScanModes]="scanModes()" [scanModeAttribute]="scanModeAttribute" />
-                      </div>
-                    </div>
-                    <!-- Number of elements -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="number-of-elements" translate="north.caching.trigger.number-of-elements"></label>
-                        <input type="number" formControlName="numberOfElements" id="number-of-elements" class="form-control" />
-                        <val-errors controlName="numberOfElements" />
-                      </div>
-                    </div>
-                    <!-- Number of files -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="number-of-files" translate="north.caching.trigger.number-of-files"></label>
-                        <input type="number" formControlName="numberOfFiles" id="number-of-files" class="form-control" />
-                        <val-errors controlName="numberOfFiles" />
-                      </div>
-                    </div>
-                  </div>
-                  <h6 class="oib-group-title" translate="north.caching.throttling.title"></h6>
-                  <div formGroupName="throttling" class="row">
-                    <!-- Run min delay -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="run-min-delay" translate="north.caching.throttling.run-min-delay"></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="runMinDelay" id="run-min-delay" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.ms"></span>
-                        </div>
-                        <val-errors controlName="runMinDelay" />
-                      </div>
-                    </div>
-                    <!-- Max send count -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label
-                          class="form-label"
-                          for="max-number-of-elements"
-                          translate="north.caching.throttling.max-number-of-elements"
-                        ></label>
-                        <input type="number" formControlName="maxNumberOfElements" id="max-number-of-elements" class="form-control" />
-                        <val-errors controlName="maxNumberOfElements" />
-                      </div>
-                    </div>
-                    <!-- Max size -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="maxSize" translate="north.caching.throttling.max-size"></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.MB"></span>
-                        </div>
-                        <val-errors controlName="maxSize" />
-                      </div>
-                    </div>
-                  </div>
-                  <h6 class="oib-group-title" translate="north.caching.error.title"></h6>
-                  <div formGroupName="error" class="row">
-                    <!-- Retry interval -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="retry-interval" translate="north.caching.error.retry-interval"></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.ms"></span>
-                        </div>
-                        <val-errors controlName="retryInterval" />
-                      </div>
-                    </div>
-                    <!-- Retry count -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="retry-count" translate="north.caching.error.retry-count"></label>
-                        <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
-                        <val-errors controlName="retryCount" />
-                      </div>
-                    </div>
-                    <!-- Retention duration -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="error-retention-duration" translate="north.caching.error.retention-duration"></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="retentionDuration" id="error-retention-duration" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.hr"></span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <h6 class="oib-group-title" translate="north.caching.archive.title"></h6>
-                  <div formGroupName="archive" class="row">
-                    <!-- Archive Enabled -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <div class="form-check form-switch padded">
-                          <label class="form-check-label" for="archive-enabled" translate="north.caching.archive.enabled"></label>
-                          <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Retention duration -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label
-                          class="form-label"
-                          for="archive-retention-duration"
-                          translate="north.caching.archive.retention-duration"
-                        ></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.hr"></span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <oib-history-query-transformers
-                class="d-block mt-4"
-                layout="section"
-                [scanModes]="scanModes()"
-                [certificates]="certificates()"
-                [northManifest]="northManifest()!"
-                [historyQuery]="historyQuery()"
-                [transformers]="transformers()"
-                [southType]="southType()!"
-                [transformersFromNorth]="inMemoryTransformersWithOptions()"
-                [items]="inMemoryItems()"
-                (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
-              />
-            </section>
-            <!-- 3. Items -->
-            <section class="oib-south-items" [hidden]="steps.current() !== 'items'">
-              <div class="oib-section-title">
-                <h5>
-                  <span translate="south.items.title"></span>
-                  <!-- rendered once the item table below has its inputs: an embedded view is refreshed after the bindings of its parent -->
-                  <ng-container [ngTemplateOutlet]="itemCount" />
-                  <ng-template #itemCount>
-                    @if (itemTable.filteredItems().length) {
-                      <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
-                    }
-                  </ng-template>
-                </h5>
-                @if (southManifest()!.explore) {
-                  <button type="button" class="btn btn-secondary btn-sm" id="explore" (click)="explore()">
-                    <span class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></span>
-                    <span translate="south.explore.button"></span>
-                  </button>
-                }
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  [ngbTooltip]="'history-query.items.tooltips.add' | translate"
-                  [attr.aria-label]="'history-query.items.tooltips.add' | translate"
-                  (click)="addItem()"
-                >
-                  <span class="fa-solid fa-plus" aria-hidden="true"></span>
-                </button>
-                <oib-help [url]="itemSectionHelpUrl" />
-              </div>
-              <!-- The tools of the item list -->
-              <div class="d-flex flex-wrap gap-2 mb-2">
-                <div class="d-flex flex-wrap gap-2 ms-auto">
-                  <button type="button" class="btn btn-secondary btn-sm" (click)="importItems()" id="import-button">
-                    <span translate="south.items.import.button"></span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    id="export-items"
-                    (click)="exportItems()"
-                    [disabled]="inMemoryItems().length === 0"
-                    translate="south.items.export.button"
-                  ></button>
-                  <button
-                    type="button"
-                    class="btn btn-danger btn-sm"
-                    (click)="deleteAllItems()"
-                    [disabled]="inMemoryItems().length === 0"
-                    translate="south.items.delete-all"
-                    id="delete-all"
-                  ></button>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <oib-item-table
-                  #itemTable
-                  [items]="inMemoryItems()"
-                  translationPrefix="history-query.items"
-                  [actionCount]="3"
-                  [showDates]="false"
-                  [(selection)]="selectedItems"
-                  (enableSelected)="enableSelectedItems()"
-                  (disableSelected)="disableSelectedItems()"
-                  (deleteSelected)="deleteSelectedItems()"
-                >
-                  <ng-template [oibItemTableActions]="inMemoryItems()" let-item>
-                    <button
-                      type="button"
-                      class="btn btn-link edit-south-item"
-                      [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
-                      [attr.aria-label]="'history-query.items.tooltips.edit' | translate"
-                      (click)="editItem(item)"
-                    >
-                      <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-link duplicate-south-item"
-                      [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
-                      [attr.aria-label]="'history-query.items.tooltips.duplicate' | translate"
-                      (click)="duplicateItem(item)"
-                    >
-                      <span class="fa-solid fa-copy" aria-hidden="true"></span>
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-link delete-south-item"
-                      [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
-                      [attr.aria-label]="'history-query.items.tooltips.delete' | translate"
-                      (click)="deleteItem(item)"
-                    >
-                      <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                    </button>
-                  </ng-template>
-                </oib-item-table>
-              </div>
-            </section>
-            <!-- 5. Review & save: the history query as it will be saved, what changed since it was saved, and what to fix before -->
-            <section [hidden]="steps.current() !== 'review'" id="history-query-review">
-              @let summary = reviewSummary();
-              @let saved = savedSummary();
-              @if (steps.withErrors().length > 0) {
-                <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
-                  <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
-                  <span translate="history-query.steps.review-errors"></span>
-                  @for (step of steps.withErrors(); track step) {
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-danger"
-                      (click)="steps.current.set(step)"
-                      [translate]="'history-query.steps.step.' + step"
-                    ></button>
-                  }
-                </div>
-              } @else if (changeCount(); as changeCount) {
-                <div class="alert alert-warning py-2" id="review-changes" role="status">
-                  {{ 'history-query.steps.review-changes' | translate: { count: changeCount } }}
-                </div>
-              } @else if (saved) {
-                <div
-                  class="alert alert-secondary py-2"
-                  id="review-changes"
-                  role="status"
-                  translate="history-query.steps.review-no-changes"
-                ></div>
-              }
-              <h5 class="oib-section-title" translate="south.general-settings"></h5>
-              <oib-oibus-settings-summary id="general-summary" [settings]="summary.general" [previous]="saved?.general ?? null" />
-              <h5
-                class="oib-section-title"
-                translate="history-query.south.specific-settings"
-                [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
-              ></h5>
-              <oib-oibus-settings-summary
-                id="south-settings-summary"
-                [settings]="summary.southSettings"
-                [previous]="saved?.southSettings ?? null"
-              />
-              <h5 class="oib-section-title" translate="history-query.items.title"></h5>
-              <oib-oibus-settings-summary id="items-summary" [settings]="summary.items" [previous]="saved?.items ?? null" />
-              @if (itemChanges(); as itemChanges) {
-                @if (itemChanges.added + itemChanges.changed + itemChanges.removed > 0) {
-                  <div class="mt-2 text-muted small" id="item-changes">
-                    {{ 'history-query.steps.item-changes' | translate: itemChanges }}
-                  </div>
-                }
-              }
-              <h5
-                class="oib-section-title"
-                translate="north.specific-settings"
-                [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
-              ></h5>
-              <oib-oibus-settings-summary
-                id="north-settings-summary"
-                [settings]="summary.northSettings"
-                [previous]="saved?.northSettings ?? null"
-              />
-              <h5 class="oib-section-title" translate="north.caching.title"></h5>
-              <oib-oibus-settings-summary id="caching-summary" [settings]="summary.caching" [previous]="saved?.caching ?? null" />
-              <h5 class="oib-section-title" translate="history-query.transformers.title"></h5>
-              <oib-oibus-settings-summary
-                id="transformers-summary"
-                [settings]="summary.transformers"
-                [previous]="saved?.transformers ?? null"
-              />
-              @if (transformerChanges(); as transformerChanges) {
-                @if (transformerChanges.added + transformerChanges.changed + transformerChanges.removed > 0) {
-                  <div class="mt-2 text-muted small" id="transformer-changes">
-                    {{ 'history-query.steps.transformer-changes' | translate: transformerChanges }}
-                  </div>
-                }
-              }
+              <oib-history-query-connectors />
             </section>
           </div>
-        </form>
+        }
+        @if (form) {
+          <form
+            [formGroup]="form"
+            (ngSubmit)="submitStep()"
+            (keydown.enter)="onEnter($event)"
+            id="history-query-form"
+            class="mt-3"
+            [hidden]="steps.current() === 'connectors'"
+          >
+            <div class="oib-steps-panel">
+              <!-- 1. General settings -->
+              <section [hidden]="steps.current() !== 'general'">
+                <div class="oib-section-title">
+                  <h5 translate="south.general-settings"></h5>
+                  <oib-help [url]="generalSettingsHelpUrl" />
+                </div>
+                <div class="row">
+                  <!-- Name -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="history-query-name" translate="history-query.name"></label>
+                      <input formControlName="name" id="history-query-name" class="form-control" />
+                      <val-errors controlName="name" />
+                    </div>
+                  </div>
+                  <!-- Description -->
+                  <div class="col-5">
+                    <div class="form-group">
+                      <label class="form-label" for="history-query-description" translate="history-query.description"></label>
+                      <input formControlName="description" id="history-query-description" class="form-control" />
+                    </div>
+                  </div>
+                </div>
+
+                <div formGroupName="queryTimeRange">
+                  <!-- Date Range Selector -->
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="form-group">
+                        <oib-date-range-selector
+                          formControlName="dateRange"
+                          [startLabel]="'history-query.query-time-range.start'"
+                          [endLabel]="'history-query.query-time-range.end'"
+                          [defaultRange]="'last-day'"
+                        />
+                        <val-errors controlName="dateRange" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <!-- Max read interval -->
+                    <div class="col-3">
+                      <div class="form-group">
+                        <label
+                          class="form-label"
+                          for="max-read-interval"
+                          translate="history-query.query-time-range.max-read-interval"
+                        ></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="maxReadInterval" id="max-read-interval" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.s"></span>
+                        </div>
+                        <val-errors controlName="maxReadInterval" />
+                      </div>
+                    </div>
+                    <!-- Read delay -->
+                    <div class="col-3">
+                      <div class="form-group">
+                        <label class="form-label" for="read-delay" translate="history-query.query-time-range.read-delay"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="readDelay" id="read-delay" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.ms"></span>
+                        </div>
+                        <val-errors controlName="readDelay" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 2. South settings -->
+              <section [hidden]="steps.current() !== 'south'">
+                <div class="oib-section-title">
+                  <h5
+                    translate="history-query.south.specific-settings"
+                    [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
+                    id="south-specific-settings-title"
+                  ></h5>
+                  <button
+                    translate="south.test-connection.button"
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    id="test-connection-south"
+                    (click)="test('south')"
+                  ></button>
+                  <oib-help [url]="southTypeHelpUrl()" />
+                </div>
+                <div formGroupName="southSettings" class="row">
+                  <oib-oibus-object-form-control
+                    [scanModes]="scanModes()"
+                    [certificates]="certificates()"
+                    [group]="form.controls.southSettings"
+                    [objectAttribute]="southManifest()!.settings"
+                    layout="sections"
+                  />
+                </div>
+              </section>
+
+              <!-- 5. North settings, with the caching -->
+              <section [hidden]="steps.current() !== 'north'">
+                <div class="oib-section-title">
+                  <h5
+                    translate="north.specific-settings"
+                    [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
+                    id="north-specific-settings-title"
+                  ></h5>
+                  <button
+                    translate="north.test-connection.button"
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    id="test-connection-north"
+                    (click)="test('north')"
+                  ></button>
+                  <oib-help [url]="northTypeHelpUrl()" />
+                </div>
+                <div formGroupName="northSettings" class="row">
+                  <oib-oibus-object-form-control
+                    [scanModes]="scanModes()"
+                    [certificates]="certificates()"
+                    [group]="form.controls.northSettings"
+                    [objectAttribute]="northManifest()!.settings"
+                    layout="sections"
+                  />
+                </div>
+                <div class="oib-section-title">
+                  <h5 translate="north.caching.title"></h5>
+                  <oib-help [url]="cachingHelpUrl" />
+                </div>
+                <div>
+                  <div formGroupName="caching">
+                    <h6 class="oib-group-title" translate="north.caching.trigger.title"></h6>
+                    <div formGroupName="trigger" class="row">
+                      <!-- Scan mode -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <oib-oibus-scan-mode-form-control [allScanModes]="scanModes()" [scanModeAttribute]="scanModeAttribute" />
+                        </div>
+                      </div>
+                      <!-- Number of elements -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label class="form-label" for="number-of-elements" translate="north.caching.trigger.number-of-elements"></label>
+                          <input type="number" formControlName="numberOfElements" id="number-of-elements" class="form-control" />
+                          <val-errors controlName="numberOfElements" />
+                        </div>
+                      </div>
+                      <!-- Number of files -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label class="form-label" for="number-of-files" translate="north.caching.trigger.number-of-files"></label>
+                          <input type="number" formControlName="numberOfFiles" id="number-of-files" class="form-control" />
+                          <val-errors controlName="numberOfFiles" />
+                        </div>
+                      </div>
+                    </div>
+                    <h6 class="oib-group-title" translate="north.caching.throttling.title"></h6>
+                    <div formGroupName="throttling" class="row">
+                      <!-- Run min delay -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label class="form-label" for="run-min-delay" translate="north.caching.throttling.run-min-delay"></label>
+                          <div class="input-group">
+                            <input type="number" formControlName="runMinDelay" id="run-min-delay" class="form-control" />
+                            <span class="input-group-text" translate="common.unit.ms"></span>
+                          </div>
+                          <val-errors controlName="runMinDelay" />
+                        </div>
+                      </div>
+                      <!-- Max send count -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label
+                            class="form-label"
+                            for="max-number-of-elements"
+                            translate="north.caching.throttling.max-number-of-elements"
+                          ></label>
+                          <input type="number" formControlName="maxNumberOfElements" id="max-number-of-elements" class="form-control" />
+                          <val-errors controlName="maxNumberOfElements" />
+                        </div>
+                      </div>
+                      <!-- Max size -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label class="form-label" for="maxSize" translate="north.caching.throttling.max-size"></label>
+                          <div class="input-group">
+                            <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
+                            <span class="input-group-text" translate="common.unit.MB"></span>
+                          </div>
+                          <val-errors controlName="maxSize" />
+                        </div>
+                      </div>
+                    </div>
+                    <h6 class="oib-group-title" translate="north.caching.error.title"></h6>
+                    <div formGroupName="error" class="row">
+                      <!-- Retry interval -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label class="form-label" for="retry-interval" translate="north.caching.error.retry-interval"></label>
+                          <div class="input-group">
+                            <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
+                            <span class="input-group-text" translate="common.unit.ms"></span>
+                          </div>
+                          <val-errors controlName="retryInterval" />
+                        </div>
+                      </div>
+                      <!-- Retry count -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label class="form-label" for="retry-count" translate="north.caching.error.retry-count"></label>
+                          <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
+                          <val-errors controlName="retryCount" />
+                        </div>
+                      </div>
+                      <!-- Retention duration -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label
+                            class="form-label"
+                            for="error-retention-duration"
+                            translate="north.caching.error.retention-duration"
+                          ></label>
+                          <div class="input-group">
+                            <input type="number" formControlName="retentionDuration" id="error-retention-duration" class="form-control" />
+                            <span class="input-group-text" translate="common.unit.hr"></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <h6 class="oib-group-title" translate="north.caching.archive.title"></h6>
+                    <div formGroupName="archive" class="row">
+                      <!-- Archive Enabled -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <div class="form-check form-switch padded">
+                            <label class="form-check-label" for="archive-enabled" translate="north.caching.archive.enabled"></label>
+                            <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Retention duration -->
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label
+                            class="form-label"
+                            for="archive-retention-duration"
+                            translate="north.caching.archive.retention-duration"
+                          ></label>
+                          <div class="input-group">
+                            <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
+                            <span class="input-group-text" translate="common.unit.hr"></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <!-- 3. Items -->
+              <section class="oib-south-items" [hidden]="steps.current() !== 'items'">
+                <div class="oib-section-title">
+                  <h5>
+                    <span translate="south.items.title"></span>
+                    <!-- rendered once the item table below has its inputs: an embedded view is refreshed after the bindings of its parent -->
+                    <ng-container [ngTemplateOutlet]="itemCount" />
+                    <ng-template #itemCount>
+                      @if (itemTable.filteredItems().length) {
+                        <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
+                      }
+                    </ng-template>
+                  </h5>
+                  @if (southManifest()!.explore) {
+                    <button type="button" class="btn btn-secondary btn-sm" id="explore" (click)="explore()">
+                      <span class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></span>
+                      <span translate="south.explore.button"></span>
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    [ngbTooltip]="'history-query.items.tooltips.add' | translate"
+                    [attr.aria-label]="'history-query.items.tooltips.add' | translate"
+                    (click)="addItem()"
+                  >
+                    <span class="fa-solid fa-plus" aria-hidden="true"></span>
+                  </button>
+                  <oib-help [url]="itemSectionHelpUrl" />
+                </div>
+                <!-- The tools of the item list -->
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <div class="d-flex flex-wrap gap-2 ms-auto">
+                    <button type="button" class="btn btn-secondary btn-sm" (click)="importItems()" id="import-button">
+                      <span translate="south.items.import.button"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      id="export-items"
+                      (click)="exportItems()"
+                      [disabled]="inMemoryItems().length === 0"
+                      translate="south.items.export.button"
+                    ></button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-sm"
+                      (click)="deleteAllItems()"
+                      [disabled]="inMemoryItems().length === 0"
+                      translate="south.items.delete-all"
+                      id="delete-all"
+                    ></button>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <oib-item-table
+                    #itemTable
+                    [items]="inMemoryItems()"
+                    translationPrefix="history-query.items"
+                    [actionCount]="3"
+                    [showDates]="false"
+                    [(selection)]="selectedItems"
+                    (enableSelected)="enableSelectedItems()"
+                    (disableSelected)="disableSelectedItems()"
+                    (deleteSelected)="deleteSelectedItems()"
+                  >
+                    <ng-template [oibItemTableActions]="inMemoryItems()" let-item>
+                      <button
+                        type="button"
+                        class="btn btn-link edit-south-item"
+                        [ngbTooltip]="'history-query.items.tooltips.edit' | translate"
+                        [attr.aria-label]="'history-query.items.tooltips.edit' | translate"
+                        (click)="editItem(item)"
+                      >
+                        <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link duplicate-south-item"
+                        [ngbTooltip]="'history-query.items.tooltips.duplicate' | translate"
+                        [attr.aria-label]="'history-query.items.tooltips.duplicate' | translate"
+                        (click)="duplicateItem(item)"
+                      >
+                        <span class="fa-solid fa-copy" aria-hidden="true"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link delete-south-item"
+                        [ngbTooltip]="'history-query.items.tooltips.delete' | translate"
+                        [attr.aria-label]="'history-query.items.tooltips.delete' | translate"
+                        (click)="deleteItem(item)"
+                      >
+                        <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                      </button>
+                    </ng-template>
+                  </oib-item-table>
+                </div>
+              </section>
+              <!-- 4. Transformers, applied to the items -->
+              <section [hidden]="steps.current() !== 'transformers'">
+                <oib-history-query-transformers
+                  layout="section"
+                  [scanModes]="scanModes()"
+                  [certificates]="certificates()"
+                  [northManifest]="northManifest()!"
+                  [historyQuery]="historyQuery()"
+                  [transformers]="transformers()"
+                  [southType]="southType()!"
+                  [transformersFromNorth]="inMemoryTransformersWithOptions()"
+                  [items]="inMemoryItems()"
+                  (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
+                />
+              </section>
+              <!-- 6. Review & save: the history query as it will be saved, what changed since it was saved, and what to fix before -->
+              <section [hidden]="steps.current() !== 'review'" id="history-query-review">
+                @let summary = reviewSummary();
+                @let saved = savedSummary();
+                @if (steps.withErrors().length > 0) {
+                  <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
+                    <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
+                    <span translate="history-query.steps.review-errors"></span>
+                    @for (step of steps.withErrors(); track step) {
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="steps.current.set(step)"
+                        [translate]="'history-query.steps.step.' + step"
+                      ></button>
+                    }
+                  </div>
+                } @else if (changeCount(); as changeCount) {
+                  <div class="alert alert-warning py-2" id="review-changes" role="status">
+                    {{ 'history-query.steps.review-changes' | translate: { count: changeCount } }}
+                  </div>
+                } @else if (saved) {
+                  <div
+                    class="alert alert-secondary py-2"
+                    id="review-changes"
+                    role="status"
+                    translate="history-query.steps.review-no-changes"
+                  ></div>
+                }
+                <h5 class="oib-section-title" translate="south.general-settings"></h5>
+                <oib-oibus-settings-summary id="general-summary" [settings]="summary.general" [previous]="saved?.general ?? null" />
+                <h5
+                  class="oib-section-title"
+                  translate="history-query.south.specific-settings"
+                  [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
+                ></h5>
+                <oib-oibus-settings-summary
+                  id="south-settings-summary"
+                  [settings]="summary.southSettings"
+                  [previous]="saved?.southSettings ?? null"
+                />
+                <h5 class="oib-section-title" translate="history-query.items.title"></h5>
+                <oib-oibus-settings-summary id="items-summary" [settings]="summary.items" [previous]="saved?.items ?? null" />
+                @if (itemChanges(); as itemChanges) {
+                  @if (itemChanges.added + itemChanges.changed + itemChanges.removed > 0) {
+                    <div class="mt-2 text-muted small" id="item-changes">
+                      {{ 'history-query.steps.item-changes' | translate: itemChanges }}
+                    </div>
+                  }
+                }
+                <h5 class="oib-section-title" translate="history-query.transformers.title"></h5>
+                <oib-oibus-settings-summary
+                  id="transformers-summary"
+                  [settings]="summary.transformers"
+                  [previous]="saved?.transformers ?? null"
+                />
+                @if (transformerChanges(); as transformerChanges) {
+                  @if (transformerChanges.added + transformerChanges.changed + transformerChanges.removed > 0) {
+                    <div class="mt-2 text-muted small" id="transformer-changes">
+                      {{ 'history-query.steps.transformer-changes' | translate: transformerChanges }}
+                    </div>
+                  }
+                }
+                <h5
+                  class="oib-section-title"
+                  translate="north.specific-settings"
+                  [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
+                ></h5>
+                <oib-oibus-settings-summary
+                  id="north-settings-summary"
+                  [settings]="summary.northSettings"
+                  [previous]="saved?.northSettings ?? null"
+                />
+                <h5 class="oib-section-title" translate="north.caching.title"></h5>
+                <oib-oibus-settings-summary id="caching-summary" [settings]="summary.caching" [previous]="saved?.caching ?? null" />
+              </section>
+            </div>
+          </form>
+        }
         <!-- Moving between the steps, apart from saving: the main action is Save once it shows, Next before -->
         <div id="actions" class="mt-2 mb-3 d-flex">
           <div class="d-flex gap-2 me-auto">
@@ -479,7 +507,7 @@
                 [class.btn-primary]="!canSave()"
                 [class.btn-subtle]="canSave()"
                 id="next-step"
-                (click)="steps.next()"
+                (click)="nextStep()"
               >
                 <span translate="common.next"></span><i class="fa-solid fa-chevron-right ms-1" aria-hidden="true"></i>
               </button>
