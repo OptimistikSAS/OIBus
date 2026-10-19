@@ -3477,8 +3477,6 @@
     "edit-title": "Edit {{ name }}",
     "general-settings": "General settings",
     "add": "Add",
-    "from-existing-south": "From existing South",
-    "from-existing-north": "From existing North",
     "edit": "Edit",
     "none": "No History query",
     "name": "Name",
@@ -3668,6 +3666,12 @@
       "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}",
       "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}",
       "confirm-connectors-change": "Changing the connectors starts the history query over: its settings, items and transformers will be those of the new connectors. Continue?"
+    },
+    "connectors": {
+      "south": "South connector",
+      "north": "North connector",
+      "duplicate-existing": "Duplicate existing",
+      "new-settings": "New settings"
     }
   },
   "explore-cache": {

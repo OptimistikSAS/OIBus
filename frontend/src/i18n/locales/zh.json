@@ -2894,8 +2894,6 @@
     "edit-title": "编辑 {{ name }}",
     "general-settings": "常规设置",
     "add": "添加",
-    "from-existing-south": "从现有 South 创建",
-    "from-existing-north": "从现有 North 创建",
     "edit": "编辑",
     "none": "无历史查询",
     "name": "名称",
@@ -3085,6 +3083,12 @@
       "item-changes": "已添加项目：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
       "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
       "confirm-connectors-change": "更换连接器将重新开始历史查询：其设置、项目和转换器将来自新的连接器。是否继续？"
+    },
+    "connectors": {
+      "south": "South 连接器",
+      "north": "North 连接器",
+      "duplicate-existing": "复制现有",
+      "new-settings": "新设置"
     }
   },
   "explore-cache": {
