@@ -1,5 +1,15 @@
 @if (objectAttribute().displayProperties.visible) {
-  @if (objectAttribute().displayProperties.wrapInBox) {
+  @if (layout() === 'sections') {
+    <!-- The root object is a section of its own, titled by the page; the nested ones are groups with a light title -->
+    @if (nested() && objectAttribute().displayProperties.wrapInBox) {
+      <div class="object-group">
+        <div class="object-group-title" [translate]="objectAttribute().translationKey"></div>
+        <ng-container [ngTemplateOutlet]="rows" />
+      </div>
+    } @else {
+      <ng-container [ngTemplateOutlet]="rows" />
+    }
+  } @else if (objectAttribute().displayProperties.wrapInBox) {
     <oib-box class="mt-1">
       <ng-template oibBoxTitle>
         <span [translate]="objectAttribute().translationKey"></span>
@@ -72,6 +82,8 @@
                   [certificates]="certificates()"
                   [group]="asFormGroup(group().controls[row.columns[0].attribute.key])"
                   [objectAttribute]="row.columns[0].attribute"
+                  [layout]="layout()"
+                  [nested]="true"
                 />
               </ng-container>
             </ng-container>

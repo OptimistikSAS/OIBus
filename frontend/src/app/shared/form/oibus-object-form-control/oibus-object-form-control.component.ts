@@ -84,6 +84,13 @@ export class OIBusObjectFormControlComponent {
   readonly certificates = input.required<Array<CertificateDTO>>();
   readonly group = input.required<FormGroup>();
   readonly objectAttribute = input.required<OIBusObjectAttribute>();
+  /**
+   * How the objects show: in boxes (as they are wrapped by their manifest), or as sections of a page that titles the root object
+   * itself (e.g. a step of a modal), the nested objects being groups with a light title.
+   */
+  readonly layout = input<'boxes' | 'sections'>('boxes');
+  /** Set on the objects nested in another one */
+  readonly nested = input(false);
 
   private readonly trackedGroup = trackControl(() => this.group());
   /**

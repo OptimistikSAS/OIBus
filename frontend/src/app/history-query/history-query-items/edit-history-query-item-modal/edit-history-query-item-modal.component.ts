@@ -30,13 +30,7 @@ import { summarizeSettings } from '../../../shared/form/oibus-settings-summary/s
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import {
-  countItemChanges,
-  ItemModalStep,
-  ItemModalSteps,
-  ItemSummary,
-  unboxedItemSettings
-} from '../../../south/south-items/item-modal-steps';
+import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary } from '../../../south/south-items/item-modal-steps';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
 type ItemForm = FormGroup<{
@@ -145,9 +139,7 @@ export class EditHistoryQueryItemModalComponent {
 
   readonly itemSettingsAttribute = computed(() => {
     const manifest = this.manifest();
-    return manifest
-      ? unboxedItemSettings(manifest.items.rootAttribute.attributes.find(element => element.key === 'settings') as OIBusObjectAttribute)
-      : null;
+    return manifest ? (manifest.items.rootAttribute.attributes.find(element => element.key === 'settings') as OIBusObjectAttribute) : null;
   });
 
   /**
