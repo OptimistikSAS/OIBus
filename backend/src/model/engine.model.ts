@@ -1,5 +1,5 @@
 import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
-import { AuthTokenDuration } from '../../shared/model/domain/engine.model';
+import { AuthTokenDuration, WebServerHttpsSettings } from '../../shared/model/domain/engine.model';
 import { LogLevel } from '../../shared/model/domain/logs.model';
 
 import { HistoryQueryItemEntity } from './histor-query.model';
@@ -16,6 +16,7 @@ export interface EngineSettings extends BaseEntity {
   webServer: {
     port: number;
     authTokenDuration: AuthTokenDuration;
+    https: WebServerHttpsSettings;
   };
   proxyServer: {
     enabled: boolean;

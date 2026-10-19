@@ -105,6 +105,10 @@ quelle :
   certificat, chaîne de certificats, expiration) est recréée sous son ID d'origine afin que tout ce qui y fait
   référence continue de fonctionner, mais la clé privée doit être réimportée manuellement avant que le certificat
   puisse être utilisé pour TLS.
+- **HTTPS est importé désactivé.** Les paramètres du serveur web, y compris ceux du certificat HTTPS, sont importés,
+  mais HTTPS n'est pas activé : les certificats importés n'ont pas de clé privée, et les fichiers de certificat peuvent
+  ne pas exister sur cette machine. Un avertissement invite à le réactiver dans les paramètres du serveur web une fois
+  son certificat disponible.
 - **Les mots de passe du moteur ne sont conservés que si ce à quoi ils servent est inchangé.** Le mot de passe Loki
   est conservé si les paramètres de journalisation importés ciblent la même adresse et le même utilisateur Loki que l'instance,
   celui du serveur proxy si l'utilisateur du serveur proxy est le même, et celui du proxy en amont si son URL et

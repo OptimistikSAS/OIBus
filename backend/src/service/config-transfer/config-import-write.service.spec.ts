@@ -329,7 +329,12 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
     const afterEngine = engineRepository.get()!;
     assert.strictEqual(afterEngine.general.name, 'imported name');
-    assert.deepStrictEqual(afterEngine.webServer, { port: beforeEngine.webServer.port + 1, authTokenDuration: '1d' });
+    // an export without https settings keeps the local ones
+    assert.deepStrictEqual(afterEngine.webServer, {
+      port: beforeEngine.webServer.port + 1,
+      authTokenDuration: '1d',
+      https: beforeEngine.webServer.https
+    });
     assert.strictEqual(afterEngine.proxyServer.enabled, true);
     assert.strictEqual(afterEngine.proxyServer.port, 8888);
     assert.strictEqual(afterEngine.logger.console.level, 'debug');
@@ -338,7 +343,35 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.strictEqual(afterEngine.auditRetentionDuration, 30);
     // The UI must be reached on the new port once OIBus restarts
     assert.strictEqual(result.newPort, beforeEngine.webServer.port + 1);
+    assert.strictEqual(result.newProtocol, 'http');
     assert.ok(result.warnings.some(warning => warning.includes(`port ${beforeEngine.webServer.port + 1}`)));
+  });
+
+  it('imports the https settings disabled, and redirects to http when the local web server served https', async () => {
+    const local = engineRepository.get()!;
+    engineRepository.updateWebServer(
+      {
+        ...local.webServer,
+        https: { enabled: true, certificateSource: 'file', certificateId: null, certificatePath: 'local.crt', privateKeyPath: 'local.key' }
+      },
+      'test'
+    );
+    const envelope = cloneEnvelope();
+    const importedHttps = {
+      enabled: true,
+      certificateSource: 'store' as const,
+      certificateId: envelope.config.certificates[0].oIBusInternalId,
+      certificatePath: null,
+      privateKeyPath: null
+    };
+    envelope.config.engine.settings.webServer = { port: local.webServer.port, authTokenDuration: '7d', https: importedHttps };
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    assert.deepStrictEqual(engineRepository.get()!.webServer.https, { ...importedHttps, enabled: false });
+    assert.strictEqual(result.newPort, local.webServer.port);
+    assert.strictEqual(result.newProtocol, 'http');
+    assert.ok(result.warnings.some(warning => warning.startsWith('HTTPS was not enabled by the import')));
   });
 
   it('reports no new port when the web server port is unchanged', async () => {
@@ -348,6 +381,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     const result = await service.importConfiguration(envelope, importerId());
 
     assert.strictEqual(result.newPort, null);
+    assert.strictEqual(result.newProtocol, null);
   });
 
   it('keeps the local proxy passwords when the imported proxy settings target the same users and forward proxy', async () => {

@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { NgbActiveModal, NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { interval } from 'rxjs';
+
+import { WebServerProtocol } from '@oibus/shared/domain/engine.model';
 
 import { WindowService } from '../window.service';
 
@@ -21,6 +23,12 @@ export class PortRedirectModalComponent {
   private readonly windowService = inject(WindowService);
 
   readonly newPort = signal(0);
+  readonly newProtocol = signal<WebServerProtocol>('http');
+  /** The current page, reached with the new port and protocol of the web server */
+  readonly newUrl = computed(() => {
+    const currentUrl = new URL(window.location.href);
+    return `${this.newProtocol()}://${currentUrl.hostname}:${this.newPort()}${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+  });
   readonly secondsRemaining = signal(REDIRECT_DELAY_SECONDS);
   readonly progress = signal(1); // Progress bar goes from 1 (full) to 0 (empty)
 
@@ -39,14 +47,13 @@ export class PortRedirectModalComponent {
       }
     });
 
-  initialize(newPort: number) {
+  initialize(newPort: number, newProtocol: WebServerProtocol) {
     this.newPort.set(newPort);
+    this.newProtocol.set(newProtocol);
   }
 
   redirect(): void {
     this.countdown.unsubscribe();
-    const currentUrl = new URL(window.location.href);
-    const newUrl = `${currentUrl.protocol}//${currentUrl.hostname}:${this.newPort()}${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
-    this.windowService.redirectTo(newUrl);
+    this.windowService.redirectTo(this.newUrl());
   }
 }

@@ -1109,7 +1109,14 @@ describe('OIAnalytics Command Service', () => {
 
     it('should import the configuration downloaded from OIAnalytics and restart', async () => {
       const exitMock = mock.method(process, 'exit', () => undefined as never);
-      const result = { fromVersion: '3.9.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: ['warning'], newPort: null };
+      const result = {
+        fromVersion: '3.9.0',
+        toVersion: '3.10.0',
+        appliedUpgrades: [],
+        warnings: ['warning'],
+        newPort: null,
+        newProtocol: null
+      };
       configImportService.importConfigurationFromOIAnalytics.mock.mockImplementationOnce(async () => result);
 
       await service.processNextCommand();

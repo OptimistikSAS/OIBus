@@ -33,18 +33,18 @@ describe('PortRedirectModalComponent', () => {
     });
 
     tester = new PortRedirectModalComponentTester();
-    tester.fixture.componentInstance.initialize(3333);
+    tester.fixture.componentInstance.initialize(3333, 'https');
   });
 
   afterEach(() => vi.useRealTimers());
 
-  test('should display the new port and the countdown', async () => {
-    await expect.element(tester.title).toHaveTextContent('Port Changed');
+  test('should display the new url and the countdown', async () => {
+    await expect.element(tester.title).toHaveTextContent('Web server changed');
     await expect.element(tester.remaining).toHaveTextContent('30s');
     // the seconds of the message are not asserted: waiting for the translation advances the fake clock
     await expect
       .element(tester.message)
-      .toMatchTextContent(/The web server port has been changed to 3333. You will be automatically redirected in \d+ seconds./);
+      .toMatchTextContent(/The web server is now reached at https:\/\/[^:]+:3333\/.* You will be automatically redirected in \d+ seconds./);
     await expect.element(tester.progressBar).toHaveAttribute('aria-valuenow', '1');
   });
 
@@ -56,12 +56,12 @@ describe('PortRedirectModalComponent', () => {
     expect(windowService.redirectTo).not.toHaveBeenCalled();
   });
 
-  test('should redirect to the new port when countdown reaches zero, and stop counting', async () => {
+  test('should redirect to the new protocol and port when countdown reaches zero, and stop counting', async () => {
     await vi.advanceTimersByTimeAsync(30_000);
 
     const currentUrl = new URL(window.location.href);
     expect(windowService.redirectTo).toHaveBeenCalledWith(
-      `${currentUrl.protocol}//${currentUrl.hostname}:3333${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
+      `https://${currentUrl.hostname}:3333${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
     );
 
     await vi.advanceTimersByTimeAsync(10_000);

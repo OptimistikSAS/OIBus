@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -27,13 +28,16 @@ import {
   CacheSearchResult,
   DataFolderType,
   EngineMetrics,
-  FileCacheContent
+  FileCacheContent,
+  WebServerHttpsSettings
 } from '../../shared/model/domain/engine.model';
 
 import DataStreamEngine from '../engine/data-stream-engine';
 import { EngineSettings } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import { OIBusValidationError } from '../model/types';
+import CertificateRepository from '../repository/config/certificate.repository';
 import EngineRepository from '../repository/config/engine.repository';
 import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -55,6 +59,7 @@ import OIAnalyticsRegistrationService from './oia/oianalytics-registration.servi
 import SouthService from './south.service';
 import UserService from './user.service';
 import { getOIBusInfo } from './utils';
+import { assertTlsCredentials } from './utils-certificate';
 const HEALTH_SIGNAL_INTERVAL = 1_800_000; // 30 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
 
@@ -73,12 +78,13 @@ export default class OIBusService {
   private readonly logger: ILogger;
 
   public loggerEvent: EventEmitter = new EventEmitter(); // Used to trigger logger update for Web server
-  public portChangeEvent: EventEmitter = new EventEmitter(); // Used to trigger port update for Web server
+  public webServerChangeEvent: EventEmitter = new EventEmitter(); // Used to restart the Web server when its port or HTTPS settings change
 
   constructor(
     protected readonly validator: JoiValidator,
     private engineRepository: EngineRepository,
     private engineMetricsRepository: EngineMetricsRepository,
+    private certificateRepository: CertificateRepository,
     private ipFilterService: IPFilterService,
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private loggerService: LoggerService,
@@ -165,15 +171,18 @@ export default class OIBusService {
     }
 
     const oldEngineSettings = this.getEngineSettings();
-
-    this.engineRepository.update(
-      toEngineSettingsCommand(command, {
+    const engineCommand = toEngineSettingsCommand(
+      command,
+      {
         proxyPassword: await hashedOrCurrent(command.proxyServer.password, oldEngineSettings.proxyServer.password),
         forwardProxyPassword: encryptedOrCurrent(command.proxyServer.forward?.password, oldEngineSettings.proxyServer.forward.password),
         lokiPassword: encryptedOrCurrent(command.logger.loki.password, oldEngineSettings.logger.loki.password)
-      }),
-      updatedBy
+      },
+      oldEngineSettings.webServer.https
     );
+    await this.assertWebServerCanStart(oldEngineSettings.webServer, engineCommand.webServer);
+
+    this.engineRepository.update(engineCommand, updatedBy);
     const settings = this.getEngineSettings();
 
     if (
@@ -183,21 +192,12 @@ export default class OIBusService {
       await this.resetLogger(settings);
     }
 
-    const portChanged = command.webServer.port !== oldEngineSettings.webServer.port;
-    if (portChanged) {
-      // Emit the port change event asynchronously to ensure the HTTP response is sent first
-      setImmediate(() => {
-        this.portChangeEvent.emit('updated', settings.webServer.port);
-      });
-    }
+    const result = this.restartWebServerIfChanged(oldEngineSettings.webServer, settings.webServer);
     this.proxyServer.stop();
     this.proxyServer.start(settings.proxyServer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    return {
-      needsRedirect: portChanged,
-      newPort: portChanged ? settings.webServer.port : null
-    };
+    return result;
   }
 
   async updateEngineName(command: EngineNameCommandDTO, updatedBy: string): Promise<void> {
@@ -214,18 +214,69 @@ export default class OIBusService {
     if (command.port === oldEngineSettings.proxyServer.port) {
       throw new Error('Web server port and proxy port can not be the same');
     }
-    this.engineRepository.updateWebServer(toEngineWebServerCommand(command), updatedBy);
-    const settings = this.getEngineSettings();
-    const portChanged = command.port !== oldEngineSettings.webServer.port;
-    if (portChanged) {
-      setImmediate(() => {
-        this.portChangeEvent.emit('updated', settings.webServer.port);
-      });
-    }
+    const webServerCommand = toEngineWebServerCommand(command, oldEngineSettings.webServer.https);
+    await this.assertWebServerCanStart(oldEngineSettings.webServer, webServerCommand);
+    this.engineRepository.updateWebServer(webServerCommand, updatedBy);
+    const result = this.restartWebServerIfChanged(oldEngineSettings.webServer, this.getEngineSettings().webServer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    return result;
+  }
+
+  /**
+   * The certificate (followed by its CA chain) and private key the web server serves HTTPS with, read from the certificate
+   * store or from PEM files (a relative path is resolved from the data folder, the working directory of OIBus). Throws an
+   * OIBusValidationError when they can't be read or don't match.
+   */
+  async getWebServerCredentials(https: WebServerHttpsSettings): Promise<{ cert: string; key: string }> {
+    let cert: string;
+    let key: string;
+    if (https.certificateSource === 'store') {
+      const certificate = https.certificateId ? this.certificateRepository.findById(https.certificateId) : null;
+      if (!certificate) {
+        throw new OIBusValidationError(`Certificate "${https.certificateId}" not found`);
+      }
+      if (!certificate.privateKey) {
+        throw new OIBusValidationError(`Certificate "${certificate.name}" has no private key`);
+      }
+      cert = [certificate.certificate, certificate.certificateChain].filter(Boolean).join('\n');
+      key = await encryptionService.decryptText(certificate.privateKey);
+    } else {
+      cert = await readPemFile(https.certificatePath, 'certificate');
+      key = await readPemFile(https.privateKeyPath, 'private key');
+    }
+    assertTlsCredentials(cert, key);
+    return { cert, key };
+  }
+
+  /**
+   * When the web server is about to restart with HTTPS, checks that its certificate can be loaded: the settings are
+   * rejected rather than leaving the web server unable to serve HTTPS (it then falls back to HTTP).
+   */
+  private async assertWebServerCanStart(previous: EngineSettings['webServer'], next: EngineSettings['webServer']): Promise<void> {
+    if (next.https.enabled && webServerChanged(previous, next)) {
+      await this.getWebServerCredentials(next.https);
+    }
+  }
+
+  /**
+   * Restarts the web server when its port or HTTPS settings changed: the event is emitted asynchronously to ensure the HTTP
+   * response is sent first. The client must then be redirected when the port or protocol it reaches OIBus with changed.
+   */
+  private restartWebServerIfChanged(
+    previous: EngineSettings['webServer'],
+    next: EngineSettings['webServer']
+  ): EngineSettingsUpdateResultDTO {
+    if (!webServerChanged(previous, next)) {
+      return { needsRedirect: false, newPort: null, newProtocol: null };
+    }
+    setImmediate(() => {
+      this.webServerChangeEvent.emit('updated', next);
+    });
+    const needsRedirect = previous.port !== next.port || previous.https.enabled !== next.https.enabled;
     return {
-      needsRedirect: portChanged,
-      newPort: portChanged ? settings.webServer.port : null
+      needsRedirect,
+      newPort: needsRedirect ? next.port : null,
+      newProtocol: needsRedirect ? (next.https.enabled ? 'https' : 'http') : null
     };
   }
 
@@ -305,7 +356,7 @@ export default class OIBusService {
       this.updateEngineMetricsInterval = null;
     }
     this.loggerEvent.removeAllListeners();
-    this.portChangeEvent.removeAllListeners();
+    this.webServerChangeEvent.removeAllListeners();
     const startDuration = DateTime.now().toMillis() - start;
     this.logger.info(`OIBus stopped in ${startDuration} ms`);
   }
@@ -427,7 +478,8 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
     },
     webServer: {
       port: engineSettings.webServer.port,
-      authTokenDuration: engineSettings.webServer.authTokenDuration
+      authTokenDuration: engineSettings.webServer.authTokenDuration,
+      https: { ...engineSettings.webServer.https }
     },
     proxyServer: {
       enabled: engineSettings.proxyServer.enabled,
@@ -474,6 +526,18 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
       }
     }
   };
+};
+
+/** Whether the web server must restart: the authentication token duration is read at each sign in. */
+const webServerChanged = (previous: EngineSettings['webServer'], next: EngineSettings['webServer']): boolean =>
+  previous.port !== next.port || JSON.stringify(previous.https) !== JSON.stringify(next.https);
+
+const readPemFile = async (filePath: string | null, description: string): Promise<string> => {
+  try {
+    return await fs.readFile(path.resolve(filePath!), 'utf8');
+  } catch (error: unknown) {
+    throw new OIBusValidationError(`Unable to read the ${description} file "${filePath}": ${(error as Error).message}`);
+  }
 };
 
 /** An empty secret in an API command keeps the current one; a new one is encrypted. */

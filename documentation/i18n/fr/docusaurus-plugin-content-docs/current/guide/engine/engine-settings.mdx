@@ -22,6 +22,28 @@ Le paramètre **Durée d'authentification** contrôle la durée de validité d'u
 l'utilisateur ne doive se reconnecter. Les valeurs disponibles sont **1 heure**, **6 heures**, **1 jour**,
 **3 jours**, **7 jours** (par défaut), **14 jours** et **30 jours**.
 
+### HTTPS {#https}
+
+Par défaut, l'interface web et l'API sont servies en HTTP. Activez **Servir en HTTPS** pour les servir en HTTPS, avec
+l'un de ces certificats :
+
+- **Magasin de certificats** : un certificat du [magasin de certificats](./certificates.md), généré par OIBus
+  (auto-signé) ou importé avec sa clé privée.
+- **Fichiers** : un fichier de certificat et un fichier de clé privée sur la machine d'OIBus, au format PEM. Le fichier
+  de certificat peut être suivi de sa chaîne de certification, et la clé privée ne doit pas être chiffrée. Un chemin
+  relatif est résolu depuis le dossier de données d'OIBus.
+
+À l'enregistrement, OIBus vérifie que le certificat et sa clé privée peuvent être chargés et correspondent, et rejette
+les paramètres sinon. Le serveur web redémarre ensuite et la page redirige vers la nouvelle adresse `https://`. Un
+navigateur avertit d'un certificat auto-signé tant qu'il n'est pas approuvé.
+
+:::note
+Si le certificat ne peut plus être chargé au démarrage du serveur web (son fichier a été supprimé, ou sa clé privée
+manque), OIBus sert en HTTP et journalise une erreur, afin que l'interface web reste accessible pour corriger les
+paramètres. Un certificat du magasin régénéré ou réimporté pendant son utilisation n'est appliqué qu'au redémarrage du
+serveur web.
+:::
+
 ## Serveur proxy {#proxy-server}
 
 OIBus peut agir comme un **serveur proxy**, lui permettant de transférer des requêtes HTTP(S) vers un hôte cible.

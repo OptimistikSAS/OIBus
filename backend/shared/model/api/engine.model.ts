@@ -6,7 +6,9 @@ import {
   NorthConnectorMetrics,
   RegistrationCommandPermissions,
   RegistrationStatus,
-  SouthConnectorMetrics
+  SouthConnectorMetrics,
+  WebServerHttpsSettings,
+  WebServerProtocol
 } from '../domain/engine.model';
 import { LogLevel } from '../domain/logs.model';
 
@@ -60,6 +62,11 @@ export interface EngineSettingsDTO extends BaseEntity {
      * @example "7d"
      */
     authTokenDuration: AuthTokenDuration;
+
+    /**
+     * HTTPS settings.
+     */
+    https: WebServerHttpsSettings;
   };
 
   /**
@@ -483,7 +490,7 @@ export interface EngineNameCommandDTO {
 
 /**
  * Engine web server command Data Transfer Object.
- * Used as the request body for updating only the web server port and authentication token duration.
+ * Used as the request body for updating only the web server port, authentication token duration and HTTPS settings.
  */
 export interface EngineWebServerCommandDTO {
   /**
@@ -497,6 +504,11 @@ export interface EngineWebServerCommandDTO {
    * @example "7d"
    */
   authTokenDuration: AuthTokenDuration;
+
+  /**
+   * HTTPS settings. When omitted (callers predating HTTPS support), the current ones are kept.
+   */
+  https?: WebServerHttpsSettings;
 }
 
 /**
@@ -710,16 +722,22 @@ export interface EngineLoggerCommandDTO {
  */
 export interface EngineSettingsUpdateResultDTO {
   /**
-   * Whether the client needs to redirect due to a port change.
+   * Whether the client needs to redirect due to a port or protocol change.
    * @example true
    */
   needsRedirect: boolean;
 
   /**
-   * The new port to redirect to, if applicable.
+   * The port to redirect to, if applicable.
    * @example 3333
    */
   newPort: number | null;
+
+  /**
+   * The protocol to redirect to, if applicable.
+   * @example "https"
+   */
+  newProtocol: WebServerProtocol | null;
 }
 
 /**

@@ -9,7 +9,7 @@ import { EngineLoggerCommandDTO, EngineSettingsCommandDTO } from '../../../share
 import { version } from '../../../package.json';
 import { EngineSettings } from '../../model/engine.model';
 import AuditService from '../../service/audit.service';
-import { toEngineLoggerCommand, toEngineSettingsCommand } from '../../service/engine-command.utils';
+import { toEngineLoggerCommand, toEngineSettingsCommand, toEngineWebServerCommand } from '../../service/engine-command.utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import EngineRepository from './engine.repository';
@@ -19,11 +19,15 @@ type EngineSection = 'engine_general' | 'engine_web_server' | 'engine_proxy_serv
 
 /** The repository stores the secrets it is given: these build its commands from the API fixtures, secrets as-is. */
 const toSettingsCommand = (command: EngineSettingsCommandDTO) =>
-  toEngineSettingsCommand(command, {
-    proxyPassword: command.proxyServer.password ?? null,
-    forwardProxyPassword: command.proxyServer.forward?.password ?? null,
-    lokiPassword: command.logger.loki.password ?? null
-  });
+  toEngineSettingsCommand(
+    command,
+    {
+      proxyPassword: command.proxyServer.password ?? null,
+      forwardProxyPassword: command.proxyServer.forward?.password ?? null,
+      lokiPassword: command.logger.loki.password ?? null
+    },
+    testData.engine.settings.webServer.https
+  );
 const toLoggerCommand = (command: EngineLoggerCommandDTO) =>
   toEngineLoggerCommand(command, { lokiPassword: command.loki.password ?? null });
 
@@ -90,7 +94,11 @@ describe('EngineRepository with populated database', () => {
         launcherVersion: testData.engine.settings.launcherVersion,
         auditRetentionDuration: null,
         general: { name: 'updated engine' },
-        webServer: { port: command.webServer.port, authTokenDuration: command.webServer.authTokenDuration },
+        webServer: {
+          port: command.webServer.port,
+          authTokenDuration: command.webServer.authTokenDuration,
+          https: testData.engine.settings.webServer.https
+        },
         proxyServer: {
           enabled: command.proxyServer.enabled,
           port: command.proxyServer.port,
@@ -174,9 +182,13 @@ describe('EngineRepository with populated database', () => {
 
     it('should update web server port only', () => {
       const before = repository.get();
-      repository.updateWebServer(testData.engine.webServerCommand, testData.users.list[0].id);
+      repository.updateWebServer(
+        toEngineWebServerCommand(testData.engine.webServerCommand, testData.engine.settings.webServer.https),
+        testData.users.list[0].id
+      );
       const after = repository.get();
       assert.strictEqual(after!.webServer.port, testData.engine.webServerCommand.port);
+      assert.deepStrictEqual(after!.webServer.https, testData.engine.webServerCommand.https);
 
       assert.deepStrictEqual(recordCalls(auditService), [
         [

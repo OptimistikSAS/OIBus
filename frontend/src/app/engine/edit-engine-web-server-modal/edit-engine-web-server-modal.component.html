@@ -17,6 +17,48 @@
       </select>
       <val-errors controlName="authTokenDuration" />
     </div>
+    <div class="form-group">
+      <div class="form-check form-switch padded">
+        <input formControlName="httpsEnabled" id="https-enabled" type="checkbox" class="form-check-input" />
+        <label class="form-check-label" for="https-enabled" translate="engine.web-server-settings.https-enabled"></label>
+      </div>
+    </div>
+    @if (httpsEnabled()) {
+      <div class="form-group">
+        <label class="form-label" for="certificate-source" translate="engine.web-server-settings.certificate-source"></label>
+        <select class="form-select" id="certificate-source" formControlName="certificateSource">
+          @for (option of certificateSourceOptions; track option.value) {
+            <option [ngValue]="option.value" [translate]="option.labelKey"></option>
+          }
+        </select>
+      </div>
+      @if (certificateSource() === 'store') {
+        <div class="form-group">
+          <label class="form-label" for="certificate-id" translate="engine.web-server-settings.certificate"></label>
+          <select class="form-select" id="certificate-id" formControlName="certificateId">
+            @for (certificate of certificates(); track certificate.id) {
+              <option [ngValue]="certificate.id">{{ certificate.name }}</option>
+            }
+          </select>
+          <val-errors controlName="certificateId" />
+          @if (certificates().length === 0) {
+            <div class="form-text" translate="engine.web-server-settings.no-certificate"></div>
+          }
+        </div>
+      } @else {
+        <div class="form-group">
+          <label class="form-label" for="certificate-path" translate="engine.web-server-settings.certificate-path"></label>
+          <input formControlName="certificatePath" id="certificate-path" class="form-control" />
+          <val-errors controlName="certificatePath" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="private-key-path" translate="engine.web-server-settings.private-key-path"></label>
+          <input formControlName="privateKeyPath" id="private-key-path" class="form-control" />
+          <val-errors controlName="privateKeyPath" />
+          <div class="form-text" translate="engine.web-server-settings.file-hint"></div>
+        </div>
+      }
+    }
   </form>
 </div>
 <div class="modal-footer">

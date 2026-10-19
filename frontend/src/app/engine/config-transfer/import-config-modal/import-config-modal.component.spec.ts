@@ -45,7 +45,8 @@ const response: ConfigImportResponseDTO = {
   toVersion: '3.10.0',
   appliedUpgrades: [],
   warnings: [],
-  newPort: null
+  newPort: null,
+  newProtocol: null
 };
 
 const validationFailure = new ConfigImportFailure('Imported configuration failed validation; nothing was imported', [

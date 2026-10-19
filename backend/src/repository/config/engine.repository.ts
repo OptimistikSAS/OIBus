@@ -1,6 +1,6 @@
 import { Database } from 'better-sqlite3';
 
-import { AuthTokenDuration } from '../../../shared/model/domain/engine.model';
+import { AuthTokenDuration, WebServerCertificateSource } from '../../../shared/model/domain/engine.model';
 import { LogLevel } from '../../../shared/model/domain/logs.model';
 
 import { version } from '../../../package.json';
@@ -61,7 +61,14 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
   },
   webServer: {
     port: 2223,
-    authTokenDuration: '7d'
+    authTokenDuration: '7d',
+    https: {
+      enabled: false,
+      certificateSource: 'store',
+      certificateId: null,
+      certificatePath: null,
+      privateKeyPath: null
+    }
   },
   proxyServer: {
     enabled: false,
@@ -131,7 +138,8 @@ export default class EngineRepository {
 
   get(): EngineSettings | null {
     const query =
-      'SELECT id, name, port, auth_token_duration, audit_retention_duration, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
+      'SELECT id, name, port, auth_token_duration, https_enabled, https_certificate_source, https_certificate_id, https_certificate_path, ' +
+      'https_private_key_path, audit_retention_duration, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
       'forward_proxy_enabled, forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, ' +
       'log_database_level, log_database_max_number_of_logs, ' +
@@ -151,7 +159,8 @@ export default class EngineRepository {
   update(command: EngineSettingsCommand, updatedBy: string): void {
     const before = this.get();
     const query =
-      `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, auth_token_duration = ?, audit_retention_duration = ?, proxy_enabled = ?, proxy_port = ?, ` +
+      `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, auth_token_duration = ?, https_enabled = ?, https_certificate_source = ?, ` +
+      'https_certificate_id = ?, https_certificate_path = ?, https_private_key_path = ?, audit_retention_duration = ?, proxy_enabled = ?, proxy_port = ?, ' +
       'forward_proxy_enabled = ?, forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, proxy_username = ?, proxy_password = ?, ' +
       'log_console_level = ?, ' +
       'log_file_level = ?, ' +
@@ -179,6 +188,11 @@ export default class EngineRepository {
         command.general.name,
         command.webServer.port,
         command.webServer.authTokenDuration,
+        +command.webServer.https.enabled,
+        command.webServer.https.certificateSource,
+        command.webServer.https.certificateId,
+        command.webServer.https.certificatePath,
+        command.webServer.https.privateKeyPath,
         command.auditRetentionDuration,
         +command.proxyServer.enabled,
         command.proxyServer.port,
@@ -222,9 +236,21 @@ export default class EngineRepository {
   updateWebServer(command: EngineWebServerCommand, updatedBy: string): void {
     const before = this.get();
     const query =
-      `UPDATE ${ENGINES_TABLE} SET port = ?, auth_token_duration = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+      `UPDATE ${ENGINES_TABLE} SET port = ?, auth_token_duration = ?, https_enabled = ?, https_certificate_source = ?, https_certificate_id = ?, ` +
+      `https_certificate_path = ?, https_private_key_path = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
-    this.database.prepare(query).run(command.port, command.authTokenDuration, updatedBy);
+    this.database
+      .prepare(query)
+      .run(
+        command.port,
+        command.authTokenDuration,
+        +command.https.enabled,
+        command.https.certificateSource,
+        command.https.certificateId,
+        command.https.certificatePath,
+        command.https.privateKeyPath,
+        updatedBy
+      );
     this.recordSectionChanges(before, this.get(), updatedBy, ['engine_web_server']);
   }
 
@@ -316,14 +342,15 @@ export default class EngineRepository {
     }
 
     const query =
-      `INSERT INTO ${ENGINES_TABLE} (id, name, oibus_version, oibus_launcher_version, port, auth_token_duration, audit_retention_duration, proxy_enabled, proxy_port,` +
+      `INSERT INTO ${ENGINES_TABLE} (id, name, oibus_version, oibus_launcher_version, port, auth_token_duration, https_enabled, https_certificate_source, ` +
+      'https_certificate_id, https_certificate_path, https_private_key_path, audit_retention_duration, proxy_enabled, proxy_port,' +
       'forward_proxy_enabled, forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
       'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, ' +
       'log_loki_username, log_loki_password, log_oia_level, log_oia_interval, ' +
       'log_syslog_level, log_syslog_host, log_syslog_port, log_syslog_protocol, ' +
       `created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
@@ -333,6 +360,11 @@ export default class EngineRepository {
         launcherVersion,
         command.webServer.port,
         command.webServer.authTokenDuration,
+        +command.webServer.https.enabled,
+        command.webServer.https.certificateSource,
+        command.webServer.https.certificateId,
+        command.webServer.https.certificatePath,
+        command.webServer.https.privateKeyPath,
         command.auditRetentionDuration,
         +command.proxyServer.enabled,
         command.proxyServer.port,
@@ -401,7 +433,14 @@ export default class EngineRepository {
       },
       webServer: {
         port: result.port as number,
-        authTokenDuration: result.auth_token_duration as AuthTokenDuration
+        authTokenDuration: result.auth_token_duration as AuthTokenDuration,
+        https: {
+          enabled: Boolean(result.https_enabled),
+          certificateSource: result.https_certificate_source as WebServerCertificateSource,
+          certificateId: (result.https_certificate_id as string) || null,
+          certificatePath: (result.https_certificate_path as string) || null,
+          privateKeyPath: (result.https_private_key_path as string) || null
+        }
       },
       proxyServer: {
         enabled: Boolean(result.proxy_enabled),

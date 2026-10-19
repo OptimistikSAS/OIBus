@@ -123,7 +123,8 @@ describe('ConfigTransferController', () => {
         toVersion: '3.10.1',
         appliedUpgrades: [{ version: '3.10.1', description: 'an upgrade' }],
         warnings: ['a warning'],
-        newPort: null
+        newPort: null,
+        newProtocol: null
       };
       const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify(parsedEnvelope));
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
@@ -199,7 +200,8 @@ describe('ConfigTransferController', () => {
         toVersion: '3.10.0',
         appliedUpgrades: [],
         warnings: [],
-        newPort: null
+        newPort: null,
+        newProtocol: null
       };
       configImportService.importConfiguration.mock.mockImplementation(async () => response);
 

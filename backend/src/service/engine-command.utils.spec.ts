@@ -18,8 +18,32 @@ const loggerCommand: EngineLoggerCommandDTO = {
 
 describe('engine-command utils', () => {
   describe('toEngineWebServerCommand', () => {
+    const currentHttps = testData.engine.settings.webServer.https;
+
     it('should map the web server settings', () => {
-      assert.deepStrictEqual(toEngineWebServerCommand({ port: 2223, authTokenDuration: '7d' }), { port: 2223, authTokenDuration: '7d' });
+      assert.deepStrictEqual(
+        toEngineWebServerCommand(
+          {
+            port: 2223,
+            authTokenDuration: '7d',
+            https: { enabled: true, certificateSource: 'store', certificateId: 'certificateId', certificatePath: '', privateKeyPath: '' }
+          },
+          currentHttps
+        ),
+        {
+          port: 2223,
+          authTokenDuration: '7d',
+          https: { enabled: true, certificateSource: 'store', certificateId: 'certificateId', certificatePath: null, privateKeyPath: null }
+        }
+      );
+    });
+
+    it('should keep the current https settings when the command has none', () => {
+      assert.deepStrictEqual(toEngineWebServerCommand({ port: 2223, authTokenDuration: '7d' }, currentHttps), {
+        port: 2223,
+        authTokenDuration: '7d',
+        https: currentHttps
+      });
     });
   });
 
@@ -91,15 +115,19 @@ describe('engine-command utils', () => {
   describe('toEngineSettingsCommand', () => {
     it('should map every section, keeping the audit retention duration at the top level only', () => {
       const command = { ...testData.engine.command, auditRetentionDuration: 45, logger: { ...loggerCommand, auditRetentionDuration: 12 } };
-      const result = toEngineSettingsCommand(command, {
-        proxyPassword: 'hashed',
-        forwardProxyPassword: 'encrypted',
-        lokiPassword: 'secret'
-      });
+      const result = toEngineSettingsCommand(
+        command,
+        {
+          proxyPassword: 'hashed',
+          forwardProxyPassword: 'encrypted',
+          lokiPassword: 'secret'
+        },
+        testData.engine.settings.webServer.https
+      );
 
       assert.strictEqual(result.auditRetentionDuration, 45);
       assert.deepStrictEqual(result.general, { name: command.general.name });
-      assert.deepStrictEqual(result.webServer, toEngineWebServerCommand(command.webServer));
+      assert.deepStrictEqual(result.webServer, toEngineWebServerCommand(command.webServer, testData.engine.settings.webServer.https));
       assert.deepStrictEqual(
         result.proxyServer,
         toEngineProxyCommand(command.proxyServer, { proxyPassword: 'hashed', forwardProxyPassword: 'encrypted' })

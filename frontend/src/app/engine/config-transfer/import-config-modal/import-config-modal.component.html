@@ -92,7 +92,7 @@
         id="port-changed-hint"
         class="alert alert-info"
         translate="engine.config-transfer.import.port-changed-hint"
-        [translateParams]="{ port: result()!.newPort }"
+        [translateParams]="{ port: result()!.newPort, protocol: result()!.newProtocol }"
       ></div>
     } @else {
       <div class="alert alert-info" translate="engine.config-transfer.import.reload-hint"></div>

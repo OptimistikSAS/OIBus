@@ -492,11 +492,11 @@ export default class ConfigImportService {
       );
     }
 
-    let newPort: number | null = null;
+    let redirect: Pick<ConfigImportResponseDTO, 'newPort' | 'newProtocol'> = { newPort: null, newProtocol: null };
     const runImport = this.database!.transaction(() => {
       this.wipeConfiguration(importedBy, users ? userId => userId === users.keptUserId : () => true);
       this.recreateConfiguration(config, importedBy, hashedUserPasswords, warnings);
-      newPort = this.importEngineSettings(config, importedBy, warnings);
+      redirect = this.importEngineSettings(config, importedBy, warnings);
     });
     try {
       runImport();
@@ -517,21 +517,29 @@ export default class ConfigImportService {
       toVersion,
       appliedUpgrades: appliedUpgrades.map(upgrade => ({ version: upgrade.version, description: upgrade.description })),
       warnings,
-      newPort
+      ...redirect
     };
   }
 
   /**
    * Overwrites the local engine settings (name, web server, proxy server, logging) with the imported
-   * ones, and returns the new web server port when it changed (null otherwise), since the UI must then
-   * be reached on that port once OIBus restarts after the import.
+   * ones, and returns the new web server port and protocol when either changed (null otherwise), since
+   * the UI must then be reached with them once OIBus restarts after the import.
+   *
+   * HTTPS is never enabled by an import: the imported certificates have no private key, and certificate
+   * files may not exist on this machine. Restarting with a certificate it can't load, the web server
+   * would fall back to HTTP anyway; the HTTPS settings are kept for the user to enable them again.
    *
    * Passwords are secrets, so they are never exported. Each local one (Loki, proxy server, forward
    * proxy) is kept as long as the imported settings still target the same endpoint and user, and
    * cleared otherwise rather than reused for a different server; a warning then asks to re-enter it
    * when the imported settings actually need it.
    */
-  private importEngineSettings(config: OIBusConfigurationDTO, importedBy: string, warnings: Array<string>): number | null {
+  private importEngineSettings(
+    config: OIBusConfigurationDTO,
+    importedBy: string,
+    warnings: Array<string>
+  ): Pick<ConfigImportResponseDTO, 'newPort' | 'newProtocol'> {
     const local = this.engineRepository!.get()!;
     const imported = structuredClone(config.engine.settings);
     const same = (a: string | null | undefined, b: string | null | undefined) => (a ?? '') === (b ?? '');
@@ -567,21 +575,34 @@ export default class ConfigImportService {
     }
     proxy.forward = forward;
 
+    const https = imported.webServer.https ?? local.webServer.https;
+    if (https.enabled) {
+      warnings.push(
+        'HTTPS was not enabled by the import (imported certificates have no private key, and certificate files may not exist on ' +
+          'this machine); enable it again in the engine web server settings once its certificate is available.'
+      );
+    }
+    imported.webServer.https = { ...https, enabled: false };
+
     this.engineRepository!.update(
       toEngineSettingsCommand(
         { ...imported, auditRetentionDuration: logger.auditRetentionDuration },
-        { proxyPassword, forwardProxyPassword, lokiPassword }
+        { proxyPassword, forwardProxyPassword, lokiPassword },
+        local.webServer.https
       ),
       importedBy
     );
 
-    if (imported.webServer.port === local.webServer.port) {
-      return null;
+    const portChanged = imported.webServer.port !== local.webServer.port;
+    if (portChanged) {
+      warnings.push(
+        `The web server port changed from ${local.webServer.port} to ${imported.webServer.port}: once restarted, OIBus is reached on port ${imported.webServer.port}.`
+      );
     }
-    warnings.push(
-      `The web server port changed from ${local.webServer.port} to ${imported.webServer.port}: once restarted, OIBus is reached on port ${imported.webServer.port}.`
-    );
-    return imported.webServer.port;
+    if (!portChanged && !local.webServer.https.enabled) {
+      return { newPort: null, newProtocol: null };
+    }
+    return { newPort: imported.webServer.port, newProtocol: 'http' };
   }
 
   /**

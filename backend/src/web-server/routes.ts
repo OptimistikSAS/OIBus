@@ -5669,11 +5669,29 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["1h"]},{"dataType":"enum","enums":["1d"]},{"dataType":"enum","enums":["6h"]},{"dataType":"enum","enums":["3d"]},{"dataType":"enum","enums":["7d"]},{"dataType":"enum","enums":["14d"]},{"dataType":"enum","enums":["30d"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WebServerCertificateSource": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["store"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WebServerHttpsSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "enabled": {"dataType":"boolean","required":true},
+            "certificateSource": {"ref":"WebServerCertificateSource","required":true},
+            "certificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "certificatePath": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "privateKeyPath": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "EngineWebServerCommandDTO": {
         "dataType": "refObject",
         "properties": {
             "port": {"dataType":"double","required":true},
             "authTokenDuration": {"ref":"AuthTokenDuration","required":true},
+            "https": {"ref":"WebServerHttpsSettings"},
         },
         "additionalProperties": false,
     },
@@ -9561,11 +9579,16 @@ const models: TsoaRoute.Models = {
             "launcherVersion": {"dataType":"string","required":true},
             "auditRetentionDuration": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "general": {"dataType":"nestedObjectLiteral","nestedProperties":{"name":{"dataType":"string","required":true}},"required":true},
-            "webServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"authTokenDuration":{"ref":"AuthTokenDuration","required":true},"port":{"dataType":"double","required":true}},"required":true},
+            "webServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"https":{"ref":"WebServerHttpsSettings","required":true},"authTokenDuration":{"ref":"AuthTokenDuration","required":true},"port":{"dataType":"double","required":true}},"required":true},
             "proxyServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"forward":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"port":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},
             "logger": {"dataType":"nestedObjectLiteral","nestedProperties":{"syslog":{"dataType":"nestedObjectLiteral","nestedProperties":{"protocol":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["udp4"]},{"dataType":"enum","enums":["tcp"]}],"required":true},"port":{"dataType":"double","required":true},"host":{"dataType":"string","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"required":true},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WebServerProtocol": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["http"]},{"dataType":"enum","enums":["https"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "EngineSettingsUpdateResultDTO": {
@@ -9573,6 +9596,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "needsRedirect": {"dataType":"boolean","required":true},
             "newPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "newProtocol": {"dataType":"union","subSchemas":[{"ref":"WebServerProtocol"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -9947,6 +9971,7 @@ const models: TsoaRoute.Models = {
             "appliedUpgrades": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"description":{"dataType":"string","required":true},"version":{"dataType":"string","required":true}}},"required":true},
             "warnings": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "newPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "newProtocol": {"dataType":"union","subSchemas":[{"ref":"WebServerProtocol"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },

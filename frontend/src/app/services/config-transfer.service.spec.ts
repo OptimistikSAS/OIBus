@@ -85,7 +85,8 @@ const importResponse: ConfigImportResponseDTO = {
   toVersion: '3.10.0',
   appliedUpgrades: [],
   warnings: [],
-  newPort: null
+  newPort: null,
+  newProtocol: null
 };
 
 describe('ConfigTransferService', () => {

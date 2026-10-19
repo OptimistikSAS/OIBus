@@ -13,13 +13,15 @@ export default class ConfigImportServiceMock {
     toVersion: '3.10.0',
     appliedUpgrades: [],
     warnings: [],
-    newPort: null
+    newPort: null,
+    newProtocol: null
   }));
   importConfigurationFromOIAnalytics = mock.fn(async (_rawInput: unknown): Promise<ConfigImportResponseDTO> => ({
     fromVersion: '3.10.0',
     toVersion: '3.10.0',
     appliedUpgrades: [],
     warnings: [],
-    newPort: null
+    newPort: null,
+    newProtocol: null
   }));
 }

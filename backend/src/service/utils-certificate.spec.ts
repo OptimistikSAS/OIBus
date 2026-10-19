@@ -7,6 +7,7 @@ import * as forge from 'node-forge';
 import { OIBusValidationError } from '../model/types';
 import {
   assertKeyMatchesCertificate,
+  assertTlsCredentials,
   certificateContentToPem,
   certificatePemToDer,
   privateKeyContentToPem,
@@ -202,6 +203,41 @@ describe('utils-certificate', () => {
     it('throws an OIBusValidationError when the private key does not match the certificate public key', () => {
       const otherPrivateKeyPem = forge.pki.privateKeyToPem(otherKeys.privateKey);
       assert.throws(() => assertKeyMatchesCertificate(certPem, otherPrivateKeyPem), OIBusValidationError);
+    });
+  });
+
+  describe('assertTlsCredentials', () => {
+    it('does not throw when the private key matches the certificate, followed by its CA chain', () => {
+      const chainPem = forge.pki.certificateToPem(buildSelfSignedCertificate(otherKeys, 'oibus-ca'));
+      assert.doesNotThrow(() => assertTlsCredentials(`${certPem}\n${chainPem}`, privateKeyPkcs1Pem));
+    });
+
+    it('accepts a non RSA key pair', () => {
+      const { privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
+      // An EC certificate can't be built with forge: a mismatching certificate shows the key is parsed and compared
+      assert.throws(
+        () => assertTlsCredentials(certPem, privateKey.export({ type: 'pkcs8', format: 'pem' }) as string),
+        new OIBusValidationError('The private key does not match the certificate public key')
+      );
+    });
+
+    it('throws an OIBusValidationError when the private key does not match the certificate', () => {
+      const otherPrivateKeyPem = forge.pki.privateKeyToPem(otherKeys.privateKey);
+      assert.throws(
+        () => assertTlsCredentials(certPem, otherPrivateKeyPem),
+        new OIBusValidationError('The private key does not match the certificate public key')
+      );
+    });
+
+    it('throws an OIBusValidationError when the certificate or the private key cannot be parsed', () => {
+      assert.throws(
+        () => assertTlsCredentials('not a certificate', privateKeyPkcs1Pem),
+        (error: Error) => error instanceof OIBusValidationError && error.message.startsWith('Unable to parse the certificate')
+      );
+      assert.throws(
+        () => assertTlsCredentials(certPem, 'not a key'),
+        (error: Error) => error instanceof OIBusValidationError && error.message.startsWith('Unable to parse the private key')
+      );
     });
   });
 
