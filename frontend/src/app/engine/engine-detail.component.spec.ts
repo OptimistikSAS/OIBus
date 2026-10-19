@@ -52,7 +52,8 @@ const importResponse: ConfigImportResponseDTO = {
   toVersion: '3.10.0',
   appliedUpgrades: [],
   warnings: [],
-  newPort: null
+  newPort: null,
+  newProtocol: null
 };
 
 describe('EngineDetailComponent', () => {
@@ -61,6 +62,7 @@ describe('EngineDetailComponent', () => {
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
   let configTransferService: MockObject<ConfigTransferService>;
+  let certificateService: MockObject<CertificateService>;
   let modalService: MockModalService<
     ImportConfigModalComponent | AuditHistoryModalComponent | PortRedirectModalComponent | EngineSettingsModal
   >;
@@ -74,7 +76,7 @@ describe('EngineDetailComponent', () => {
     configTransferService = createMock(ConfigTransferService);
     const scanModeService = createMock(ScanModeService);
     const ipFilterService = createMock(IpFilterService);
-    const certificateService = createMock(CertificateService);
+    certificateService = createMock(CertificateService);
     const transformerService = createMock(TransformerService);
 
     // used by the help links of the lists
@@ -113,11 +115,57 @@ describe('EngineDetailComponent', () => {
     await expect.element(tester.settingRows.nth(0)).toMatchTextContent('NameOIBus Test');
     await expect.element(tester.settingRows.nth(1)).toMatchTextContent('Port2223');
     await expect.element(tester.settingRows.nth(2)).toMatchTextContent('7 days');
-    await expect.element(tester.settingRows.nth(3)).toMatchTextContent('Proxy serverEnabled on port 8888');
+    await expect.element(tester.settingRows.nth(3)).toMatchTextContent('HTTPSDisabled');
+    await expect.element(tester.settingRows.nth(4)).toMatchTextContent('Proxy serverEnabled on port 8888');
     await expect
-      .element(tester.settingRows.nth(4))
+      .element(tester.settingRows.nth(5))
       .toMatchTextContent('Console: silent|File: trace|Database: silent|Loki: error|Syslog: silent|OIAnalytics: silent');
-    await expect.element(tester.settingRows.nth(5)).toMatchTextContent('90 days');
+    await expect.element(tester.settingRows.nth(6)).toMatchTextContent('90 days');
+  });
+
+  test('should display the certificate of the store the web server serves https with', async () => {
+    certificateService.list.mockReturnValue(of([testData.certificates.list[0]]));
+    engineService.getEngineSettings.mockReturnValue(
+      of(
+        buildEngineSettings({
+          webServer: {
+            ...engineSettings.webServer,
+            https: {
+              enabled: true,
+              certificateSource: 'store',
+              certificateId: testData.certificates.list[0].id,
+              certificatePath: null,
+              privateKeyPath: null
+            }
+          }
+        })
+      )
+    );
+    const tester = new EngineDetailComponentTester();
+
+    await expect.element(tester.settingRows.nth(3)).toMatchTextContent(`HTTPS${testData.certificates.list[0].name}`);
+  });
+
+  test('should display the certificate file the web server serves https with', async () => {
+    engineService.getEngineSettings.mockReturnValue(
+      of(
+        buildEngineSettings({
+          webServer: {
+            ...engineSettings.webServer,
+            https: {
+              enabled: true,
+              certificateSource: 'file',
+              certificateId: null,
+              certificatePath: '/etc/oibus.crt',
+              privateKeyPath: 'key'
+            }
+          }
+        })
+      )
+    );
+    const tester = new EngineDetailComponentTester();
+
+    await expect.element(tester.settingRows.nth(3)).toMatchTextContent('HTTPS/etc/oibus.crt');
   });
 
   test('should display a disabled proxy server and no audit retention duration', async () => {
@@ -126,8 +174,8 @@ describe('EngineDetailComponent', () => {
     );
     const tester = new EngineDetailComponentTester();
 
-    await expect.element(tester.settingRows.nth(3)).toMatchTextContent('Proxy serverDisabled');
-    await expect.element(tester.settingRows.nth(5)).toMatchTextContent('0 days');
+    await expect.element(tester.settingRows.nth(4)).toMatchTextContent('Proxy serverDisabled');
+    await expect.element(tester.settingRows.nth(6)).toMatchTextContent('0 days');
   });
 
   test.each<[string, Type<EngineSettingsModal>]>([
@@ -337,13 +385,16 @@ describe('EngineDetailComponent', () => {
         .mockImplementation(component =>
           component === PortRedirectModalComponent
             ? fakeModal(redirectComponent)
-            : fakeModal(createMock(ImportConfigModalComponent), Promise.resolve({ ...importResponse, newPort: 2224 }))
+            : fakeModal(
+                createMock(ImportConfigModalComponent),
+                Promise.resolve({ ...importResponse, newPort: 2224, newProtocol: 'http' as const })
+              )
         );
       const tester = new EngineDetailComponentTester();
 
       await tester.importConfigButton.click();
 
-      await vi.waitFor(() => expect(redirectComponent.initialize).toHaveBeenCalledWith(2224));
+      await vi.waitFor(() => expect(redirectComponent.initialize).toHaveBeenCalledWith(2224, 'http'));
       expect(openSpy.mock.lastCall?.[1]).toEqual({ backdrop: 'static', keyboard: false });
       expect(windowService.reload).not.toHaveBeenCalled();
     });

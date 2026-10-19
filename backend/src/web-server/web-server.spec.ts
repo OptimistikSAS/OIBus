@@ -1,10 +1,16 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import http from 'node:http';
+import https from 'node:https';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import * as forge from 'node-forge';
+
+import { WebServerHttpsSettings } from '../../shared/model/domain/engine.model';
 
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
 import type AuditService from '../service/audit.service';
@@ -44,6 +50,7 @@ import ScanModeServiceMock from '../tests/__mocks__/service/scan-mode-service.mo
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
+import testData from '../tests/utils/test-data';
 import { fixTsoaModuleResolution, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type WebServerClass from './web-server';
 
@@ -76,6 +83,40 @@ const documentationDir = path.join(path.dirname(fileURLToPath(import.meta.url)),
 const documentationMarkerPath = path.join(documentationDir, '__oibus_test_placeholder__.html');
 const documentationMarker = '<!doctype html><html><body>documentation placeholder</body></html>';
 let createdDocumentationMarker = false;
+
+const HTTPS_SETTINGS: WebServerHttpsSettings = {
+  enabled: true,
+  certificateSource: 'file',
+  certificateId: null,
+  certificatePath: 'oibus.crt',
+  privateKeyPath: 'oibus.key'
+};
+
+function buildSelfSignedCredentials(): { cert: string; key: string } {
+  const keys = forge.pki.rsa.generateKeyPair(2048);
+  const cert = forge.pki.createCertificate();
+  cert.publicKey = keys.publicKey;
+  cert.serialNumber = '01';
+  cert.validity.notBefore = new Date();
+  cert.validity.notAfter = new Date();
+  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+  cert.setSubject([{ shortName: 'CN', value: 'localhost' }]);
+  cert.setIssuer([{ shortName: 'CN', value: 'localhost' }]);
+  cert.sign(keys.privateKey, forge.md.sha256.create());
+  return { cert: forge.pki.certificateToPem(cert), key: forge.pki.privateKeyToPem(keys.privateKey) };
+}
+
+// Status of a GET over HTTPS, accepting the self-signed certificate of the test
+function httpsGetStatus(url: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, { rejectUnauthorized: false }, res => {
+        res.resume();
+        resolve(res.statusCode!);
+      })
+      .on('error', reject);
+  });
+}
 
 function buildEncryptionMock() {
   return {
@@ -149,9 +190,9 @@ describe('WebServer', () => {
   // cycle but must not share TEST_PORT with the shared `webServer`/other such tests - reusing the
   // same port across many sequential real listen/close cycles in one process is a known source of
   // bind races once close() is slowed down (e.g. under coverage instrumentation).
-  function buildWebServer(port: number): WebServerClass {
+  function buildWebServer(port: number, httpsSettings = testData.engine.settings.webServer.https): WebServerClass {
     return new WebServer(
-      port,
+      { ...testData.engine.settings.webServer, port, https: httpsSettings },
       encryptionMock as unknown as EncryptionService,
       new AuditServiceMock() as unknown as AuditService,
       new ScanModeServiceMock() as unknown as ScanModeService,
@@ -197,7 +238,7 @@ describe('WebServer', () => {
   it('should populate whiteList from ipFilterService.list() on construction', () => {
     ipFilterService.list.mock.mockImplementation(() => [{ address: '192.168.1.1' }] as never);
     const ws = new WebServer(
-      TEST_PORT + 1,
+      { ...testData.engine.settings.webServer, port: TEST_PORT + 1 },
       encryptionMock as unknown as EncryptionService,
       new AuditServiceMock() as unknown as AuditService,
       new ScanModeServiceMock() as unknown as ScanModeService,
@@ -226,8 +267,8 @@ describe('WebServer', () => {
     await assert.doesNotReject(() => webServer.stop());
   });
 
-  it('start() should be a no-op if app is null (before init)', () => {
-    assert.doesNotThrow(() => (webServer as unknown as { start: () => void }).start());
+  it('start() should be a no-op if app is null (before init)', async () => {
+    await assert.doesNotReject(() => webServer.start());
   });
 
   it('should return 401 for unauthenticated API calls', async () => {
@@ -236,13 +277,55 @@ describe('WebServer', () => {
     assert.equal(res.status, 401);
   });
 
-  it('should stop and restart when portChangeEvent fires', async () => {
+  it('should stop and restart when webServerChangeEvent fires', async () => {
     await webServer.init();
-    // Port change event triggers stop + restart on a new port.
-    oIBusService.portChangeEvent.emit('updated', TEST_PORT + 10);
+    // Web server change event triggers stop + restart on a new port.
+    const settings = { ...testData.engine.settings.webServer, port: TEST_PORT + 10 };
+    oIBusService.webServerChangeEvent.emit('updated', settings);
     // Give async restart a moment to settle.
     await new Promise(resolve => setTimeout(resolve, 50));
     assert.equal(webServer.port, TEST_PORT + 10);
+    assert.strictEqual(webServer.settings, settings);
+  });
+
+  it('should serve HTTPS with the certificate of its settings', async () => {
+    const localPort = TEST_PORT + 22;
+    const credentials = buildSelfSignedCredentials();
+    oIBusService.getWebServerCredentials.mock.mockImplementation(async () => credentials);
+    const localServer = buildWebServer(localPort, HTTPS_SETTINGS);
+    try {
+      await localServer.init();
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      assert.equal(await httpsGetStatus(`https://localhost:${localPort}/api/engine`), 401);
+      assert.deepStrictEqual(oIBusService.getWebServerCredentials.mock.calls[0].arguments, [HTTPS_SETTINGS]);
+      assert.deepStrictEqual(loggerMock.info.mock.calls.at(-1)?.arguments, [`OIBus web server started on ${localPort} (HTTPS)`]);
+    } finally {
+      await localServer.stop();
+    }
+  });
+
+  it('should fall back to HTTP when the HTTPS certificate cannot be loaded', async () => {
+    const localPort = TEST_PORT + 23;
+    oIBusService.getWebServerCredentials.mock.mockImplementation(async () => {
+      throw new OIBusValidationError('Certificate "certificateId" not found');
+    });
+    const localServer = buildWebServer(localPort, HTTPS_SETTINGS);
+    try {
+      await localServer.init();
+
+      const res = await fetch(`http://localhost:${localPort}/api/engine`);
+      assert.equal(res.status, 401);
+      assert.ok(
+        loggerMock.error.mock.calls.some(
+          call =>
+            call.arguments[0] ===
+            'Could not load the HTTPS certificate, the web server falls back to HTTP: Certificate "certificateId" not found'
+        )
+      );
+    } finally {
+      await localServer.stop();
+    }
   });
 
   it('should update logger when loggerEvent fires', async () => {
@@ -499,22 +582,24 @@ describe('WebServer', () => {
     }
   });
 
-  it('start(): logs an error when the underlying listen callback reports one', () => {
-    const fakeServer = { closeAllConnections: mock.fn(), close: mock.fn((cb: () => void) => cb()) };
-    let listenCallback: ((error?: Error) => void) | undefined;
-    (webServer as unknown as { app: { listen: (port: number, cb: (error?: Error) => void) => unknown } }).app = {
-      listen: (_port: number, cb: (error?: Error) => void) => {
-        listenCallback = cb;
-        return fakeServer;
-      }
-    };
+  it('start(): logs an error when the server cannot listen', async () => {
+    const localPort = TEST_PORT + 24;
+    const occupyingServer = http.createServer();
+    await new Promise<void>(resolve => occupyingServer.listen(localPort, resolve));
+    const localServer = buildWebServer(localPort);
+    try {
+      await localServer.init();
+      await new Promise(resolve => setTimeout(resolve, 50));
 
-    webServer.start();
-    listenCallback!(new Error('listen failed'));
-
-    assert.deepStrictEqual(loggerMock.error.mock.calls.at(-1)?.arguments, [
-      `Could not start server on port ${webServer.port}: listen failed`
-    ]);
+      assert.ok(
+        loggerMock.error.mock.calls.some(call =>
+          String(call.arguments[0]).startsWith(`Could not start server on port ${localPort}: listen`)
+        )
+      );
+    } finally {
+      await localServer.stop();
+      await new Promise(resolve => occupyingServer.close(resolve));
+    }
   });
 
   it('stop(): logs an error if closing the server throws', async () => {

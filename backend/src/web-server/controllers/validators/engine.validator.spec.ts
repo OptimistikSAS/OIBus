@@ -241,6 +241,45 @@ describe('Engine web server validator', () => {
       message: '"authTokenDuration" must be one of [1h, 6h, 1d, 3d, 7d, 14d, 30d]'
     });
   });
+
+  const https = { enabled: true, certificateSource: 'store', certificateId: null, certificatePath: null, privateKeyPath: null };
+
+  it('should accept disabled https without certificate', async () => {
+    await assert.doesNotReject(
+      validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '7d', https: { ...https, enabled: false } })
+    );
+  });
+
+  it('should require the certificate of the store when https is enabled with it', async () => {
+    await assert.doesNotReject(
+      validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '7d', https: { ...https, certificateId: 'id' } })
+    );
+    await assert.rejects(validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '7d', https }), {
+      message: '"https.certificateId" must be a string'
+    });
+  });
+
+  it('should require the certificate and private key files when https is enabled with them', async () => {
+    const fileHttps = { ...https, certificateSource: 'file' };
+    await assert.doesNotReject(
+      validator.validate(engineWebServerSchema, {
+        port: 2223,
+        authTokenDuration: '7d',
+        https: { ...fileHttps, certificatePath: 'oibus.crt', privateKeyPath: 'oibus.key' }
+      })
+    );
+    await assert.rejects(
+      validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '7d', https: { ...fileHttps, certificatePath: '' } }),
+      { message: '"https.certificatePath" is not allowed to be empty. "https.privateKeyPath" must be a string' }
+    );
+  });
+
+  it('should reject an unknown certificate source', async () => {
+    await assert.rejects(
+      validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '7d', https: { ...https, certificateSource: 'vault' } }),
+      { message: '"https.certificateSource" must be one of [store, file]' }
+    );
+  });
 });
 
 describe('Engine proxy validator', () => {

@@ -107,6 +107,9 @@ Because secrets are never exported, an imported configuration is not immediately
   public key, certificate, certificate chain, expiry) is recreated under its original ID so anything
   referencing it keeps resolving, but the private key must be re-imported manually before the
   certificate can be used for TLS.
+- **HTTPS is imported disabled.** The web server settings, including the HTTPS certificate settings, are imported,
+  but HTTPS is not enabled: the imported certificates have no private key, and certificate files may not exist on this
+  machine. A warning asks to enable it again in the web server settings once its certificate is available.
 - **Engine passwords are kept only if what they are used with is unchanged.** The Loki password is
   kept if the imported logging settings target the same Loki address and username as the instance,
   the proxy server password if the proxy server username is the same, and the forward proxy password

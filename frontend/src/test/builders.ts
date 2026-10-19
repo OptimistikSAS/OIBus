@@ -105,7 +105,11 @@ export function buildEngineSettings(overrides: Partial<EngineSettingsDTO> = {}):
     launcherVersion: '3.7.0',
     auditRetentionDuration: 90,
     general: { name: 'OIBus Test' },
-    webServer: { port: 2223, authTokenDuration: '7d' },
+    webServer: {
+      port: 2223,
+      authTokenDuration: '7d',
+      https: { enabled: false, certificateSource: 'store', certificateId: null, certificatePath: null, privateKeyPath: null }
+    },
     proxyServer: {
       enabled: true,
       port: 8888,

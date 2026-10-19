@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { EngineSettingsDTO, HomeMetrics } from '@oibus/shared/api/engine.model';
 
+import { buildEngineSettings } from '../../test/builders';
 import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
@@ -40,7 +41,7 @@ const engineSettings: EngineSettingsDTO = {
   launcherVersion: '3.4.9',
   auditRetentionDuration: null,
   general: engineCommand.general,
-  webServer: engineCommand.webServer,
+  webServer: { ...engineCommand.webServer, https: buildEngineSettings().webServer.https },
   proxyServer: {
     enabled: true,
     port: 9000,
