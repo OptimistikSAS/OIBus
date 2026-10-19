@@ -2921,7 +2921,6 @@
       "error": "Erreur lors de la copie du chemin du cache dans le presse-papiers"
     },
     "modal": {
-      "title": "Créer une nouvelle requête d'historique",
       "create-details": "Importer des configurations de connecteurs existantes ou en créer une nouvelle à partir de zéro"
     },
     "north": {
@@ -3072,9 +3071,11 @@
     "steps": {
       "steps": "Étapes de la requête d'historique",
       "step": {
+        "connectors": "Connecteurs",
         "general": "Général",
         "south": "South",
         "items": "Éléments",
+        "transformers": "Transformateurs",
         "north": "North",
         "review": "Vérification et enregistrement"
       },
@@ -3082,7 +3083,8 @@
       "review-changes": "Modifications depuis l'enregistrement de la requête d'historique : {{count}}",
       "review-no-changes": "Aucune modification depuis l'enregistrement de la requête d'historique",
       "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
-      "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}"
+      "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
+      "confirm-connectors-change": "Changer de connecteurs recommence la requête d'historique : ses paramètres, éléments et transformateurs seront ceux des nouveaux connecteurs. Continuer ?"
     }
   },
   "explore-cache": {

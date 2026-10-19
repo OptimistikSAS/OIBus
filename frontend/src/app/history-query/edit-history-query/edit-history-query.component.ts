@@ -1,5 +1,16 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, LOCALE_ID, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  forwardRef,
+  inject,
+  LOCALE_ID,
+  signal,
+  viewChild
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -16,7 +27,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { combineLatest, firstValueFrom, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, Observable, of, Subject, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import {
@@ -74,14 +85,28 @@ import { SouthExploreModalComponent } from '../../shared/south-explore-modal/sou
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import {
+  ConnectorChoice,
+  HistoryQueryConnectorsComponent,
+  sameConnectorChoice
+} from '../history-query-connectors/history-query-connectors.component';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 
 /** The steps of the history query page, in order: the north step comes after the items, which its transformers pick from */
-export const HISTORY_QUERY_STEPS = ['general', 'south', 'items', 'north', 'review'] as const;
-export type HistoryQueryStep = (typeof HISTORY_QUERY_STEPS)[number];
+export const HISTORY_QUERY_STEPS = ['general', 'south', 'items', 'transformers', 'north', 'review'] as const;
+/** A new history query starts with the connectors it is created from */
+export type HistoryQueryStep = (typeof HISTORY_QUERY_STEPS)[number] | 'connectors';
+
+/** Whether the page opens on a new history query whose connectors are to choose: not given by the url, nor by a duplicated query */
+function choosesConnectors(route: ActivatedRoute): boolean {
+  const { paramMap, queryParamMap } = route.snapshot;
+  return (
+    !paramMap.get('historyQueryId') && !['duplicate', 'southId', 'northId', 'southType', 'northType'].some(key => queryParamMap.get(key))
+  );
+}
 
 /** The history query as summed up in the Review step */
 interface HistoryQuerySummary {
@@ -147,7 +172,8 @@ type HistoryQueryForm = FormGroup<{
     ItemTableComponent,
     ...ITEM_TABLE_TEMPLATES,
     ModalStepsComponent,
-    OIBusSettingsSummaryComponent
+    OIBusSettingsSummaryComponent,
+    HistoryQueryConnectorsComponent
   ],
   templateUrl: './edit-history-query.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -206,7 +232,19 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   /** The last change of the form (value, status, touched...) */
   private readonly formEvent = signal<unknown>(null);
 
-  readonly steps = new WizardSteps<HistoryQueryStep>(HISTORY_QUERY_STEPS, step => this.stepControls(step), this.formEvent);
+  readonly choosesConnectors = choosesConnectors(this.route);
+  readonly steps = new WizardSteps<HistoryQueryStep>(
+    this.choosesConnectors ? ['connectors', ...HISTORY_QUERY_STEPS] : HISTORY_QUERY_STEPS,
+    step => this.stepControls(step),
+    this.formEvent
+  );
+  private readonly connectorsStep = viewChild(HistoryQueryConnectorsComponent);
+  /** The connectors chosen in the first step, given to the page, which loads them */
+  private readonly connectorChoice = new Subject<ConnectorChoice>();
+  /** The connectors the form was built with, to rebuild it only when other ones are chosen */
+  private appliedChoice: ConnectorChoice | null = null;
+  /** The step to open once the chosen connectors are loaded */
+  private stepAfterConnectors: HistoryQueryStep = 'general';
   /** A new history query is saved from the last step, an edited one from any step */
   readonly canSave = computed(() => this.mode() === 'edit' || this.steps.isLast());
 
@@ -289,38 +327,29 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
           const paramHistoryQueryId = params.get('historyQueryId');
           const paramDuplicateHistoryQueryId = queryParams.get('duplicate');
-          const southId = queryParams.get('southId');
-          const northId = queryParams.get('northId') || '';
-
-          let historyQueryObs: Observable<null | HistoryQueryDTO> = of(null);
-          let northObs: Observable<null | NorthConnectorDTO> = of(null);
-          let southObs: Observable<null | SouthConnectorDTO> = of(null);
 
           // if there is a History ID, we are editing a History Query
           if (paramHistoryQueryId) {
             this.mode.set('edit');
             this.historyId = paramHistoryQueryId;
-            historyQueryObs = this.historyQueryService.findById(paramHistoryQueryId);
-          } else {
-            this.mode.set('create');
-            this.historyId = 'create';
-            if (paramDuplicateHistoryQueryId) {
-              this.duplicateId = paramDuplicateHistoryQueryId;
-              historyQueryObs = this.historyQueryService.findById(paramDuplicateHistoryQueryId);
-            } else {
-              if (southId) {
-                southObs = this.southConnectorService.findById(southId);
-              } else {
-                this.southType.set((queryParams.get('southType') as OIBusSouthType) || null);
-              }
-              if (northId) {
-                northObs = this.northConnectorService.findById(northId);
-              } else {
-                this.northType.set((queryParams.get('northType') as OIBusNorthType) || null);
-              }
-            }
+            return combineLatest([this.historyQueryService.findById(paramHistoryQueryId), of(null), of(null)]);
           }
-          return combineLatest([historyQueryObs, northObs, southObs]);
+          this.mode.set('create');
+          this.historyId = 'create';
+          if (paramDuplicateHistoryQueryId) {
+            this.duplicateId = paramDuplicateHistoryQueryId;
+            return combineLatest([this.historyQueryService.findById(paramDuplicateHistoryQueryId), of(null), of(null)]);
+          }
+          // the connectors are chosen in the first step, unless the url gives them
+          const choice$: Observable<ConnectorChoice> = this.choosesConnectors
+            ? this.connectorChoice
+            : of({
+                southId: queryParams.get('southId'),
+                northId: queryParams.get('northId'),
+                southType: queryParams.get('southType'),
+                northType: queryParams.get('northType')
+              });
+          return choice$.pipe(switchMap(choice => this.loadConnectors(choice)));
         }),
         switchMap(([historyQuery, northConnector, southConnector]) => {
           this.historyQuery.set(historyQuery);
@@ -357,6 +386,11 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
           }
           // creating new from an existing south and north connector
           else {
+            // another choice of connectors starts the history query over
+            this.fromSouthId = '';
+            this.fromNorthId = '';
+            this.inMemoryItems.set([]);
+            this.inMemoryTransformersWithOptions.set([]);
             if (southConnector) {
               this.southType.set(southConnector.type);
               this.fromSouthId = southConnector.id;
@@ -406,7 +440,78 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         this.northManifest.set(northManifest);
         this.southManifest.set(southManifest);
         this.buildForm(northConnector, southConnector);
+        if (this.steps.current() === 'connectors') {
+          this.steps.current.set(this.stepAfterConnectors);
+        }
       });
+
+    // the errors of the connectors step are flagged like those of the history query form
+    effect(onCleanup => {
+      const subscription = this.connectorsStep()?.createForm.events.subscribe(event => this.formEvent.set(event));
+      onCleanup(() => subscription?.unsubscribe());
+    });
+  }
+
+  /** The chosen connectors, with their types: the settings, items and transformers of existing ones are copied */
+  private loadConnectors(choice: ConnectorChoice) {
+    if (!choice.southId) {
+      this.southType.set((choice.southType as OIBusSouthType) || null);
+    }
+    if (!choice.northId) {
+      this.northType.set((choice.northType as OIBusNorthType) || null);
+    }
+    return combineLatest([
+      of(null),
+      choice.northId ? this.northConnectorService.findById(choice.northId) : of(null),
+      choice.southId ? this.southConnectorService.findById(choice.southId) : of(null)
+    ]);
+  }
+
+  /** Opens the next step: the first one, the connectors, loads the chosen connectors before */
+  nextStep() {
+    if (this.steps.current() === 'connectors') {
+      this.applyConnectors('general');
+    } else {
+      this.steps.next();
+    }
+  }
+
+  /** Opens a step of the steps bar: leaving the connectors step loads the chosen connectors, as Next does */
+  goTo(step: HistoryQueryStep) {
+    if (this.steps.current() === 'connectors' && step !== 'connectors') {
+      this.applyConnectors(step);
+    } else {
+      this.steps.current.set(step);
+    }
+  }
+
+  /**
+   * Loads the chosen connectors, then opens the given step. The history query is built again when other connectors are chosen,
+   * which the user confirms once it has been built: its settings, items and transformers start over.
+   */
+  private applyConnectors(step: HistoryQueryStep) {
+    const connectorsStep = this.connectorsStep();
+    if (!connectorsStep || connectorsStep.createForm.invalid) {
+      // shows the errors, without leaving the step
+      this.steps.next();
+      return;
+    }
+    const choice = connectorsStep.choice();
+    if (this.form() && sameConnectorChoice(choice, this.appliedChoice)) {
+      this.steps.current.set(step);
+      return;
+    }
+    const apply = () => {
+      this.appliedChoice = choice;
+      this.stepAfterConnectors = step;
+      this.form.set(null);
+      this.connectorChoice.next(choice);
+    };
+    if (this.form()) {
+      this.confirmationService.confirm({ messageKey: 'history-query.steps.confirm-connectors-change' }).subscribe(apply);
+    } else {
+      apply();
+    }
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -625,12 +730,16 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     if (this.canSave()) {
       this.save();
     } else {
-      this.steps.next();
+      this.nextStep();
     }
   }
 
   /** The controls edited in each step */
   private stepControls(step: HistoryQueryStep): Array<AbstractControl> {
+    if (step === 'connectors') {
+      const connectorsStep = this.connectorsStep();
+      return connectorsStep ? [connectorsStep.createForm] : [];
+    }
     const form = this.form();
     if (!form) {
       return [];
@@ -643,6 +752,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       case 'north':
         return [form.controls.northSettings, form.controls.caching];
       case 'items':
+      case 'transformers':
       case 'review':
         return [];
     }

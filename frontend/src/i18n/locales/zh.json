@@ -2921,7 +2921,6 @@
       "error": "复制缓存路径到剪贴板时出错"
     },
     "modal": {
-      "title": "创建新的历史查询",
       "create-details": "导入现有连接器配置或从头创建一个新的"
     },
     "north": {
@@ -3072,9 +3071,11 @@
     "steps": {
       "steps": "历史查询步骤",
       "step": {
+        "connectors": "连接器",
         "general": "常规",
         "south": "South",
         "items": "项目",
+        "transformers": "转换器",
         "north": "North",
         "review": "检查并保存"
       },
@@ -3082,7 +3083,8 @@
       "review-changes": "自历史查询上次保存以来的修改：{{count}}",
       "review-no-changes": "自历史查询上次保存以来没有修改",
       "item-changes": "已添加项目：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
-      "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}"
+      "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
+      "confirm-connectors-change": "更换连接器将重新开始历史查询：其设置、项目和转换器将来自新的连接器。是否继续？"
     }
   },
   "explore-cache": {

@@ -13,7 +13,7 @@
             id="create-history-query-button"
             [ngbTooltip]="'history-query.tooltips.add' | translate"
             [attr.aria-label]="'history-query.tooltips.add' | translate"
-            (click)="createHistoryQuery()"
+            [routerLink]="['/history-queries', 'create']"
           >
             <span class="fa-solid fa-plus" aria-hidden="true"></span>
           </button>

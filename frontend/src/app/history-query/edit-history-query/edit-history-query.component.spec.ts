@@ -10,6 +10,8 @@ import { page, userEvent } from 'vitest/browser';
 
 import { HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
 import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { NorthType } from '@oibus/shared/connector/north-manifest.model';
+import { SouthType } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EmptyRouteComponent } from '../../../test/empty-route.component';
@@ -59,6 +61,9 @@ class EditHistoryQueryComponentTester {
   readonly description = this.root.getByLabelText('Description', { exact: true });
   readonly schedule = this.root.getByLabelText('Schedule');
   readonly nextButton = this.root.getByRole('button', { name: 'Next' });
+  readonly addTransformerButton = this.root.getByRole('button', { name: 'Add a transformer' });
+  readonly southType = this.root.getByRole('combobox', { name: 'South type' });
+  readonly northType = this.root.getByRole('combobox', { name: 'North type' });
   readonly reviewErrors = this.root.getByCss('#review-errors');
   readonly reviewChanges = this.root.getByCss('#review-changes');
   readonly itemChanges = this.root.getByCss('#item-changes');
@@ -89,6 +94,12 @@ class EditHistoryQueryComponentTester {
 }
 
 const savedQuery = testData.historyQueries.list[0];
+const historyModes = { subscription: false, lastPoint: false, lastFile: false, history: true };
+const southTypes: Array<SouthType> = [{ id: 'mssql', category: 'database', modes: historyModes }];
+const northTypes: Array<NorthType> = [
+  { id: 'console', category: 'debug', types: ['any'] },
+  { id: 'file-writer', category: 'file', types: ['any'] }
+];
 const newItem: HistoryQueryItemCommandDTO = { ...testData.historyQueries.itemCommand, id: '', name: 'new item' };
 
 describe('EditHistoryQueryComponent', () => {
@@ -111,6 +122,11 @@ describe('EditHistoryQueryComponent', () => {
     unsavedChangesConfirmation = createMock(UnsavedChangesConfirmationService);
 
     northConnectorService.getNorthManifest.mockReturnValue(of(testData.north.manifest));
+    // the connectors a new history query is created from
+    northConnectorService.getNorthTypes.mockReturnValue(of(northTypes));
+    northConnectorService.list.mockReturnValue(of([]));
+    southConnectorService.getSouthTypes.mockReturnValue(of(southTypes));
+    southConnectorService.list.mockReturnValue(of([]));
     southConnectorService.getSouthManifest.mockReturnValue(of(testData.south.manifest));
     scanModeService.list.mockReturnValue(of(testData.scanMode.list));
     certificateService.list.mockReturnValue(of([]));
@@ -528,6 +544,8 @@ describe('EditHistoryQueryComponent', () => {
       await tester.nextButton.click();
       await expect.element(tester.addItemButton).toBeVisible();
       await tester.nextButton.click();
+      await expect.element(tester.addTransformerButton).toBeVisible();
+      await tester.nextButton.click();
       await expect.element(tester.testNorthButton).toBeVisible();
       // the schedule is required
       await tester.nextButton.click();
@@ -541,6 +559,55 @@ describe('EditHistoryQueryComponent', () => {
       await expect.element(tester.reviewErrors).not.toBeInTheDocument();
       await expect.element(tester.reviewChanges).not.toBeInTheDocument();
       await expect.element(tester.generalSummary).toMatchTextContent(/Name\s*new query/);
+    });
+
+    test('should start a new history query with the connectors it is created from', async () => {
+      configure({});
+      const tester = new EditHistoryQueryComponentTester();
+      await expect.element(tester.step('connectors')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.name).not.toBeInTheDocument();
+
+      await tester.nextButton.click();
+      await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
+      expect(southConnectorService.getSouthManifest).not.toHaveBeenCalled();
+
+      await tester.southType.selectOptions('Microsoft SQL Server™');
+      await tester.northType.selectOptions('Console');
+      await tester.nextButton.click();
+
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.name).toBeVisible();
+      expect(southConnectorService.getSouthManifest).toHaveBeenCalledWith('mssql');
+      expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith('console');
+
+      // back to the same connectors: the history query is kept
+      await tester.name.fill('new query');
+      await tester.goTo('connectors');
+      await tester.goTo('south');
+      await expect.element(tester.step('south')).toHaveAttribute('aria-current', 'step');
+      expect(confirmationService.confirm).not.toHaveBeenCalled();
+      expect(southConnectorService.getSouthManifest).toHaveBeenCalledTimes(1);
+
+      // other connectors start it over, once confirmed
+      await tester.goTo('connectors');
+      await tester.northType.selectOptions('File writer');
+      await tester.nextButton.click();
+      expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.steps.confirm-connectors-change' });
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      expect(northConnectorService.getNorthManifest).toHaveBeenLastCalledWith('file-writer');
+      await expect.element(tester.name).toHaveValue('');
+
+      await tester.name.fill('new query');
+      await tester.goTo('north');
+      await tester.schedule.selectOptions(testData.scanMode.list[0].name);
+      await tester.goTo('review');
+      await tester.saveButton.click();
+      expect(historyQueryService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'new query', southType: 'mssql', northType: 'file-writer' }),
+        '',
+        '',
+        ''
+      );
     });
 
     test('should list the steps to fix in the review, and open them', async () => {

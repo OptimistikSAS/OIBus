@@ -17,7 +17,6 @@ import { ConfirmationService } from '../shared/confirmation.service';
 import { provideCurrentUser } from '../shared/current-user-testing';
 import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { NotificationService } from '../shared/notification.service';
-import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
 import { HistoryQueryListComponent } from './history-query-list.component';
 
 class HistoryQueryListComponentTester {
@@ -218,17 +217,12 @@ describe('HistoryQueryListComponent', () => {
     await tester.expectNames('My second History Query', 'Another query');
   });
 
-  test('should open the creation modal and navigate to the creation page', async () => {
-    const createModal = createMock(CreateHistoryQueryModalComponent);
-    TestBed.inject<MockModalService<CreateHistoryQueryModalComponent>>(MockModalService).mockClosedModal(createModal, {
-      southType: 'mssql',
-      northType: 'console'
-    });
+  test('should navigate to the creation page', async () => {
     const tester = new HistoryQueryListComponentTester();
 
     await tester.createButton.click();
 
-    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/history-queries/create?southType=mssql&northType=console'));
+    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/history-queries/create'));
   });
 
   test('should open the audit history modal with the history query entity type and id', async () => {

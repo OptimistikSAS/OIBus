@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
@@ -14,10 +13,10 @@ import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { CreateHistoryQueryModalComponent } from './create-history-query-modal.component';
+import { HistoryQueryConnectorsComponent } from './history-query-connectors.component';
 
-class CreateHistoryQueryModalComponentTester {
-  readonly fixture = TestBed.createComponent(CreateHistoryQueryModalComponent);
+class HistoryQueryConnectorsComponentTester {
+  readonly fixture = TestBed.createComponent(HistoryQueryConnectorsComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly fromExistingSouth = this.root.getByRole('checkbox', { name: 'From existing South' });
   readonly fromExistingNorth = this.root.getByRole('checkbox', { name: 'From existing North' });
@@ -25,8 +24,13 @@ class CreateHistoryQueryModalComponentTester {
   readonly northConnector = this.root.getByRole('combobox', { name: 'From existing North' });
   readonly southType = this.root.getByRole('combobox', { name: 'South type' });
   readonly northType = this.root.getByRole('combobox', { name: 'North type' });
-  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
-  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
+  readonly component = this.fixture.componentInstance;
+
+  /** The chosen connectors, as the page reads them once the form is valid */
+  choice() {
+    this.component.createForm.markAllAsTouched();
+    return this.component.createForm.valid ? this.component.choice() : null;
+  }
 }
 
 const historyModes = { subscription: false, lastPoint: false, lastFile: false, history: true };
@@ -40,13 +44,11 @@ const northTypes: Array<NorthType> = [
   { id: 'file-writer', category: 'file', types: ['any'] }
 ];
 
-describe('CreateHistoryQueryModalComponent', () => {
-  let activeModal: MockObject<NgbActiveModal>;
+describe('HistoryQueryConnectorsComponent', () => {
   let northConnectorService: MockObject<NorthConnectorService>;
   let southConnectorService: MockObject<SouthConnectorService>;
 
   beforeEach(() => {
-    activeModal = createMock(NgbActiveModal);
     northConnectorService = createMock(NorthConnectorService);
     southConnectorService = createMock(SouthConnectorService);
 
@@ -58,7 +60,6 @@ describe('CreateHistoryQueryModalComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        { provide: NgbActiveModal, useValue: activeModal },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: SouthConnectorService, useValue: southConnectorService }
       ]
@@ -67,16 +68,8 @@ describe('CreateHistoryQueryModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent);
   });
 
-  test('should dismiss on cancel', async () => {
-    const tester = new CreateHistoryQueryModalComponentTester();
-
-    await tester.cancelButton.click();
-
-    expect(activeModal.dismiss).toHaveBeenCalled();
-  });
-
-  test('should create from existing connectors supporting history queries', async () => {
-    const tester = new CreateHistoryQueryModalComponentTester();
+  test('should choose existing connectors supporting history queries', async () => {
+    const tester = new HistoryQueryConnectorsComponentTester();
     await expect.element(tester.fromExistingSouth).toBeChecked();
     await expect.element(tester.fromExistingNorth).toBeChecked();
     await expect.element(tester.southType).not.toBeInTheDocument();
@@ -86,13 +79,12 @@ describe('CreateHistoryQueryModalComponent', () => {
 
     await tester.southConnector.selectOptions('South 3 (opcua)');
     await tester.northConnector.selectOptions('North 2 (oianalytics)');
-    await tester.saveButton.click();
 
-    expect(activeModal.close).toHaveBeenCalledWith({ northType: null, southType: null, northId: 'northId2', southId: 'southId3' });
+    expect(tester.choice()).toEqual({ northType: null, southType: null, northId: 'northId2', southId: 'southId3' });
   });
 
-  test('should create from connector types', async () => {
-    const tester = new CreateHistoryQueryModalComponentTester();
+  test('should choose connector types', async () => {
+    const tester = new HistoryQueryConnectorsComponentTester();
 
     await tester.fromExistingSouth.click();
     await tester.fromExistingNorth.click();
@@ -100,25 +92,23 @@ describe('CreateHistoryQueryModalComponent', () => {
     await expect.element(tester.southType.getByRole('option')).toHaveLength(2);
     await tester.southType.selectOptions('Microsoft SQL Server™');
     await tester.northType.selectOptions('Console');
-    await tester.saveButton.click();
 
-    expect(activeModal.close).toHaveBeenCalledWith({ northType: 'console', southType: 'mssql', northId: null, southId: null });
+    expect(tester.choice()).toEqual({ northType: 'console', southType: 'mssql', northId: null, southId: null });
   });
 
-  test('should not create without a South and a North', async () => {
-    const tester = new CreateHistoryQueryModalComponentTester();
+  test('should require a South and a North', async () => {
+    const tester = new HistoryQueryConnectorsComponentTester();
 
     await tester.southConnector.selectOptions('South 2 (mssql)');
-    await tester.saveButton.click();
 
-    expect(activeModal.close).not.toHaveBeenCalled();
+    expect(tester.choice()).toBeNull();
     await expect.element(tester.root.getByText('This field is required')).toBeInTheDocument();
   });
 
   test('should only allow connector types when there is no existing connector', async () => {
     northConnectorService.list.mockReturnValue(of([]));
     southConnectorService.list.mockReturnValue(of([testData.south.listLight[0]]));
-    const tester = new CreateHistoryQueryModalComponentTester();
+    const tester = new HistoryQueryConnectorsComponentTester();
 
     await expect.element(tester.fromExistingSouth).not.toBeChecked();
     await expect.element(tester.fromExistingSouth).toBeDisabled();
@@ -129,8 +119,7 @@ describe('CreateHistoryQueryModalComponent', () => {
 
     await tester.southType.selectOptions('OPC UA™');
     await tester.northType.selectOptions('File writer');
-    await tester.saveButton.click();
 
-    expect(activeModal.close).toHaveBeenCalledWith({ northType: 'file-writer', southType: 'opcua', northId: null, southId: null });
+    expect(tester.choice()).toEqual({ northType: 'file-writer', southType: 'opcua', northId: null, southId: null });
   });
 });
