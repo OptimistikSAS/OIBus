@@ -75,12 +75,17 @@ class EditSouthItemModalComponentTester {
   readonly groupScanMode = this.root.getByCss('#group-scan-mode');
   readonly summary = this.root.getByCss('#item-summary');
 
-  /** The value of a setting in a section of the Review step */
-  reviewed(sectionId: string, label: string) {
-    return this.root
-      .getByCss(`#${sectionId} dl > div`)
-      .filter({ has: page.getByText(label, { exact: true }) })
-      .getByRole('definition');
+  readonly reviewErrors = this.root.getByCss('#review-errors');
+  readonly reviewChanges = this.root.getByCss('#review-changes');
+
+  /** A setting in the Review step, by its label */
+  reviewedEntry(label: string) {
+    return this.root.getByCss('#step-review .oib-summary-entry').filter({ has: page.getByText(label, { exact: true }) });
+  }
+
+  /** The value of a setting in the Review step, by its label */
+  reviewed(label: string) {
+    return this.reviewedEntry(label).getByRole('definition');
   }
   readonly runTestButton = this.root.getByRole('button', { name: 'Run test', includeHidden: true });
 
@@ -324,9 +329,9 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(values.nth(2)).toHaveTextContent('GroupA');
       await expect.element(values.nth(3)).toHaveTextContent(scanModes[0].name);
       // the history settings that apply: the group's ones, since the item is synced with it
-      await expect.element(tester.reviewed('history-summary', 'Sync with group')).toHaveTextContent('Yes');
-      await expect.element(tester.reviewed('history-summary', 'Max read interval')).toHaveTextContent('60 s');
-      await expect.element(tester.reviewed('history-summary', 'Recovery strategy')).toHaveTextContent('From newest to oldest');
+      await expect.element(tester.reviewed('Sync with group')).toHaveTextContent('Yes');
+      await expect.element(tester.reviewed('Max read interval')).toHaveTextContent('60 s');
+      await expect.element(tester.reviewed('Recovery strategy')).toHaveTextContent('From newest to oldest');
       // the connector specific settings
       await expect.element(tester.root.getByCss('#settings-summary')).toBeInTheDocument();
     });
@@ -337,8 +342,46 @@ describe('EditSouthItemModalComponent', () => {
 
       await tester.step('review').click();
 
-      await expect.element(tester.reviewed('caching-summary', 'Caching strategy')).toHaveTextContent('Threshold');
-      await expect.element(tester.reviewed('caching-summary', 'Threshold type')).toHaveTextContent('Absolute');
+      await expect.element(tester.reviewed('Caching strategy')).toHaveTextContent('Threshold');
+      await expect.element(tester.reviewed('Threshold type')).toHaveTextContent('Absolute');
+    });
+
+    test('should show what changed since the edited item was saved', async () => {
+      const tester = open('edit');
+      await tester.step('review').click();
+      await expect.element(tester.reviewChanges).toHaveTextContent('No change since the item was saved');
+
+      await tester.step('general').click();
+      await tester.name.fill('renamed');
+      await tester.maxReadInterval.fill('60');
+      await tester.step('review').click();
+
+      await expect.element(tester.reviewChanges).toHaveTextContent('Settings changed since the item was saved: 2');
+      await expect.element(tester.reviewedEntry('Name')).toHaveClass('oib-summary-changed');
+      await expect.element(tester.reviewed('Name')).toHaveTextContent(`renamed Was ${savedItem1.name}`);
+      await expect.element(tester.reviewed('Max read interval')).toHaveTextContent('60 s Was 3600 s');
+      await expect.element(tester.reviewedEntry('Read delay')).not.toHaveClass('oib-summary-changed');
+    });
+
+    test('should not compare a new item with anything', async () => {
+      const tester = open('copy', { itemList: [] });
+
+      await tester.step('review').click();
+
+      await expect.element(tester.reviewed('Name')).toHaveTextContent(`${savedItem1.name}-copy`);
+      await expect.element(tester.reviewChanges).not.toBeInTheDocument();
+      await expect.element(tester.reviewedEntry('Name')).not.toHaveClass('oib-summary-changed');
+    });
+
+    test('should list the steps to fix, and open them', async () => {
+      const tester = open('create');
+
+      await tester.step('review').click();
+
+      await expect.element(tester.reviewErrors.getByText('Fix these steps before saving:')).toBeInTheDocument();
+      await expect.element(tester.reviewedEntry('Name')).toHaveClass('oib-summary-invalid');
+      await tester.reviewErrors.getByRole('button', { name: 'General' }).click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
     });
   });
 

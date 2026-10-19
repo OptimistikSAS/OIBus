@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
+import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -9,6 +10,7 @@ import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
 import { OIBusSettingsSummaryComponent } from './oibus-settings-summary.component';
+import { SettingSummary, summarizeSettings } from './settings-summary';
 
 const displayProperties = { row: 0, columns: 6, displayInViewMode: true };
 const items = 'configuration.oibus.manifest.south.items';
@@ -107,13 +109,12 @@ const settingsAttribute: OIBusObjectAttribute = {
 };
 
 @Component({
-  template: `<oib-oibus-settings-summary [objectAttribute]="settingsAttribute" [value]="value()" [scanModes]="scanModes" />`,
+  template: `<oib-oibus-settings-summary [settings]="settings()" [previous]="previous()" />`,
   imports: [OIBusSettingsSummaryComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
-  readonly settingsAttribute = settingsAttribute;
-  readonly scanModes = testData.scanMode.list;
+  private readonly translateService = inject(TranslateService);
   readonly value = signal<Record<string, unknown>>({
     mode: 'ha',
     minAge: 1000,
@@ -123,18 +124,32 @@ class TestComponent {
     trackingInstant: { trackInstant: true },
     queryParams: [{ key: 'from', value: '@StartTime' }]
   });
+  /** The paths of the settings with an error */
+  readonly invalidPaths = signal<Array<string>>([]);
+  readonly settings = computed(() => this.summarize(this.value()));
+  readonly previous = signal<Array<SettingSummary> | null>(null);
+
+  summarize(value: Record<string, unknown>) {
+    const invalidPaths = this.invalidPaths();
+    return summarizeSettings(settingsAttribute, value, {
+      translateService: this.translateService,
+      scanModes: testData.scanMode.list,
+      isInvalid: path => invalidPaths.includes(path.join('.'))
+    });
+  }
 }
 
 class OIBusSettingsSummaryComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
 
+  entry(label: string) {
+    return this.root.getByCss('.oib-summary-entry').filter({ has: page.getByText(label, { exact: true }) });
+  }
+
   /** The value shown for a label */
   setting(label: string) {
-    return this.root
-      .getByCss('.oib-summary-entry')
-      .filter({ has: page.getByText(label, { exact: true }) })
-      .getByRole('definition');
+    return this.entry(label).getByRole('definition');
   }
 }
 
@@ -166,5 +181,28 @@ describe('OIBusSettingsSummaryComponent', () => {
 
     await expect.element(tester.setting('Name')).toHaveTextContent('–');
     await expect.element(tester.setting('Query')).toHaveTextContent('–');
+  });
+
+  test('should mark what changed since a previous version, and show what it was', async () => {
+    const tester = new OIBusSettingsSummaryComponentTester();
+    const component = tester.fixture.componentInstance;
+    await expect.element(tester.entry('Min age')).not.toHaveClass('oib-summary-changed');
+
+    component.previous.set(component.summarize({ ...component.value(), minAge: 500, trackingInstant: { trackInstant: false } }));
+
+    await expect.element(tester.entry('Min age')).toHaveClass('oib-summary-changed');
+    await expect.element(tester.setting('Min age')).toHaveTextContent('1000 ms Was 500 ms');
+    await expect.element(tester.entry('Min age').getByText('Changed')).toBeInTheDocument();
+    await expect.element(tester.entry('Track instant').getByCss('.oib-summary-previous')).toHaveTextContent('Was No');
+    await expect.element(tester.entry('Mode')).not.toHaveClass('oib-summary-changed');
+  });
+
+  test('should flag the settings with an error', async () => {
+    const tester = new OIBusSettingsSummaryComponentTester();
+
+    tester.fixture.componentInstance.invalidPaths.set(['trackingInstant.trackInstant']);
+
+    await expect.element(tester.entry('Track instant')).toHaveClass('oib-summary-invalid');
+    await expect.element(tester.entry('Mode')).not.toHaveClass('oib-summary-invalid');
   });
 });

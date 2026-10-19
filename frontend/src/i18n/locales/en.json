@@ -106,7 +106,9 @@
     "add": "Add",
     "edit": "Edit",
     "cache": "Cache",
-    "step-invalid": "(has errors)"
+    "step-invalid": "(has errors)",
+    "changed": "Changed",
+    "was": "Was"
   },
   "datepicker": {
     "parse-pattern": "d/M/yyyy",
@@ -2894,7 +2896,10 @@
       "caching": "Caching",
       "group-scan-mode": "{{scanMode}} (from the group)",
       "save-and-add-another": "Save & add another",
-      "ok-and-add-another": "OK & add another"
+      "ok-and-add-another": "OK & add another",
+      "review-errors": "Fix these steps before saving:",
+      "review-changes": "Settings changed since the item was saved: {{count}}",
+      "review-no-changes": "No change since the item was saved"
     },
     "items": {
       "title": "Items",

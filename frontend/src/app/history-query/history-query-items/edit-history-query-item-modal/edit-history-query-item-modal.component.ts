@@ -12,7 +12,7 @@ import {
 } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Observable, startWith } from 'rxjs';
 
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/api/history-query.model';
@@ -26,10 +26,17 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import { summarizeSettings } from '../../../shared/form/oibus-settings-summary/settings-summary';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { ItemModalStep, ItemModalSteps, unboxedItemSettings } from '../../../south/south-items/item-modal-steps';
+import {
+  countItemChanges,
+  ItemModalStep,
+  ItemModalSteps,
+  ItemSummary,
+  unboxedItemSettings
+} from '../../../south/south-items/item-modal-steps';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
 type ItemForm = FormGroup<{
@@ -45,6 +52,7 @@ type ItemForm = FormGroup<{
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
+    TranslatePipe,
     SouthItemTestComponent,
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusObjectFormControlComponent,
@@ -66,6 +74,7 @@ export class EditHistoryQueryItemModalComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translateService = inject(TranslateService);
 
   readonly mode = signal<'create' | 'edit' | 'copy'>('create');
   /** True when opened from history-query-detail (saves directly to API); false when opened from edit-history-query (changes are applied in-memory). */
@@ -105,6 +114,20 @@ export class EditHistoryQueryItemModalComponent {
   readonly steps = new ItemModalSteps(step => this.stepControls(step), this.formEvent);
   /** A new item is saved from the last step, an edited or copied one from any step */
   readonly canSave = computed(() => this.mode() !== 'create' || this.steps.isLast());
+
+  /** The item as summed up in the Review step */
+  readonly reviewSummary = computed<ItemSummary>(() => {
+    this.formEvent();
+    this.formValue();
+    return this.summarizeItem();
+  });
+  /** The item as it was when opened for edition, to show what changed in the Review step: null for a new item */
+  readonly savedSummary = signal<ItemSummary | null>(null);
+  /** How many settings changed since the item was saved: null for a new item */
+  readonly changeCount = computed(() => {
+    const saved = this.savedSummary();
+    return saved ? countItemChanges(this.reviewSummary(), saved) : null;
+  });
 
   /** The item built from the form, tested by the item-test panel and returned when saving. */
   readonly formItem = computed<HistoryQueryItemCommandDTO | null>(() => {
@@ -284,5 +307,29 @@ export class EditHistoryQueryItemModalComponent {
       .subscribe(formValue => this.formValue.set(formValue));
     form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
     this.form.set(form);
+    this.savedSummary.set(this.mode() === 'edit' ? this.summarizeItem() : null);
+  }
+
+  /** The item as currently edited, summed up: see `reviewSummary` */
+  private summarizeItem(): ItemSummary {
+    const form = this.form();
+    const item = this.formItem();
+    if (!form || !item) {
+      return { general: [], settings: [] };
+    }
+    return {
+      general: [
+        { kind: 'text', labelKey: 'south.items.name', text: item.name || null, invalid: form.controls.name.invalid },
+        {
+          kind: 'text',
+          labelKey: 'south.items.status',
+          text: this.translateService.instant(item.enabled ? 'common.enabled' : 'common.disabled')
+        }
+      ],
+      settings: summarizeSettings(this.itemSettingsAttribute()!, item.settings, {
+        translateService: this.translateService,
+        isInvalid: path => form.controls.settings.get(path)?.invalid ?? false
+      })
+    };
   }
 }

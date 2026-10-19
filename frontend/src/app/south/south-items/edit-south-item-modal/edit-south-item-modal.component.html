@@ -300,109 +300,34 @@
       />
     </div>
 
-    <!-- 3. Review & save: the item as it will be saved -->
+    <!-- 3. Review & save: the item as it will be saved, what changed since it was saved, and what to fix before -->
     <div [hidden]="steps.current() !== 'review'" id="step-review">
-      @let item = formItem();
+      @let summary = reviewSummary();
+      @let saved = savedSummary();
+      @if (steps.withErrors().length > 0) {
+        <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
+          <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
+          <span translate="south.edit-item-modal.review-errors"></span>
+          @for (step of steps.withErrors(); track step) {
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              (click)="steps.current.set(step)"
+              [translate]="'south.edit-item-modal.step.' + step"
+            ></button>
+          }
+        </div>
+      } @else if (changeCount(); as changeCount) {
+        <div class="alert alert-warning py-2" id="review-changes" role="status">
+          {{ 'south.edit-item-modal.review-changes' | translate: { count: changeCount } }}
+        </div>
+      } @else if (saved) {
+        <div class="alert alert-secondary py-2" id="review-changes" role="status" translate="south.edit-item-modal.review-no-changes"></div>
+      }
       <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
-      <dl class="oib-summary" id="item-summary">
-        <div>
-          <dt translate="south.items.name"></dt>
-          <dd>{{ item.name }}</dd>
-        </div>
-        <div>
-          <dt translate="south.items.status"></dt>
-          <dd [translate]="item.enabled ? 'common.enabled' : 'common.disabled'"></dd>
-        </div>
-        <div>
-          <dt translate="south.items.group"></dt>
-          <dd>{{ item.groupName ?? ('south.items.group-none' | translate) }}</dd>
-        </div>
-        @if (scanModeEnabled()) {
-          <div>
-            <dt translate="configuration.oibus.manifest.south.items.scan-mode"></dt>
-            <dd>{{ scanModeName() }}</dd>
-          </div>
-        }
-        @let reviewed = review();
-        @if (hasHistorianCapabilities()) {
-          <div class="oib-summary-group" id="history-summary">
-            <div class="oib-summary-group-title" translate="south.edit-item-modal.history-settings"></div>
-            <dl class="oib-summary">
-              @if (item.groupId) {
-                <div>
-                  <dt translate="south.items.sync-with-group"></dt>
-                  <dd [translate]="'enums.boolean.' + reviewed.syncWithGroup"></dd>
-                </div>
-              }
-              <div>
-                <dt translate="south.items.max-read-interval"></dt>
-                <dd>{{ reviewed.maxReadInterval }} <span translate="common.unit.s"></span></dd>
-              </div>
-              <div>
-                <dt translate="south.items.read-delay"></dt>
-                <dd>{{ reviewed.readDelay }} <span translate="common.unit.ms"></span></dd>
-              </div>
-              <div>
-                <dt translate="south.items.recovery-strategy"></dt>
-                <dd>{{ reviewed.recoveryStrategyKey ? (reviewed.recoveryStrategyKey | translate) : '' }}</dd>
-              </div>
-              <div>
-                <dt translate="south.items.start-time-offset"></dt>
-                <dd>{{ reviewed.startTimeOffset }} <span translate="common.unit.ms"></span></dd>
-              </div>
-              <div>
-                <dt translate="south.items.end-time-offset"></dt>
-                <dd>{{ reviewed.endTimeOffset }} <span translate="common.unit.ms"></span></dd>
-              </div>
-            </dl>
-          </div>
-        }
-        @if (isIotFamilySouthType()) {
-          <div class="oib-summary-group" id="caching-summary">
-            <div class="oib-summary-group-title" translate="south.edit-item-modal.caching"></div>
-            <dl class="oib-summary">
-              <div>
-                <dt translate="south.items.caching-strategy"></dt>
-                <dd>{{ reviewed.cachingStrategyKey ? (reviewed.cachingStrategyKey | translate) : '' }}</dd>
-              </div>
-              @if (reviewed.cachingStrategy === 'threshold') {
-                <div>
-                  <dt translate="south.items.threshold-type"></dt>
-                  <dd>{{ reviewed.thresholdTypeKey ? (reviewed.thresholdTypeKey | translate) : '' }}</dd>
-                </div>
-                <div>
-                  <dt translate="south.items.threshold"></dt>
-                  <dd>{{ reviewed.threshold }}</dd>
-                </div>
-                @if (reviewed.thresholdType === 'percentage') {
-                  <div>
-                    <dt translate="south.items.range-low"></dt>
-                    <dd>{{ reviewed.rangeLow }}</dd>
-                  </div>
-                  <div>
-                    <dt translate="south.items.range-high"></dt>
-                    <dd>{{ reviewed.rangeHigh }}</dd>
-                  </div>
-                }
-              }
-              @if (reviewed.cachingStrategy !== 'allValues') {
-                <div>
-                  <dt translate="south.items.max-caching-interval"></dt>
-                  <dd>{{ reviewed.maxCachingInterval }} <span translate="common.unit.ms"></span></dd>
-                </div>
-              }
-            </dl>
-          </div>
-        }
-      </dl>
+      <oib-oibus-settings-summary id="item-summary" [settings]="summary.general" [previous]="saved?.general ?? null" />
       <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
-      <oib-oibus-settings-summary
-        id="settings-summary"
-        [objectAttribute]="itemSettingsAttribute()!"
-        [value]="item.settings"
-        [scanModes]="scanModes()"
-        [certificates]="certificates()"
-      />
+      <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" [previous]="saved?.settings ?? null" />
     </div>
   </div>
 }
