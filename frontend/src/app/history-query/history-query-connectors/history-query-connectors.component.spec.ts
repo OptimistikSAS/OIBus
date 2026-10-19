@@ -18,13 +18,23 @@ import { HistoryQueryConnectorsComponent } from './history-query-connectors.comp
 class HistoryQueryConnectorsComponentTester {
   readonly fixture = TestBed.createComponent(HistoryQueryConnectorsComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly fromExistingSouth = this.root.getByRole('checkbox', { name: 'From existing South' });
-  readonly fromExistingNorth = this.root.getByRole('checkbox', { name: 'From existing North' });
-  readonly southConnector = this.root.getByRole('combobox', { name: 'From existing South' });
-  readonly northConnector = this.root.getByRole('combobox', { name: 'From existing North' });
-  readonly southType = this.root.getByRole('combobox', { name: 'South type' });
-  readonly northType = this.root.getByRole('combobox', { name: 'North type' });
+  readonly south = this.root.getByCss('#south-connector');
+  readonly north = this.root.getByCss('#north-connector');
   readonly component = this.fixture.componentInstance;
+
+  /** The button of a mode of a side: "Duplicate existing" or "New settings" */
+  mode(side: 'south' | 'north', name: 'Duplicate existing' | 'New settings') {
+    return this[side].getByRole('button', { name, exact: true });
+  }
+
+  /** The card of an existing connector or of a type, by the name it starts with */
+  card(side: 'south' | 'north', name: string) {
+    return this[side].getByRole('button', { name: new RegExp(`^${name}`) });
+  }
+
+  cards(side: 'south' | 'north') {
+    return this[side].getByCss('.connector-choice');
+  }
 
   /** The chosen connectors, as the page reads them once the form is valid */
   choice() {
@@ -70,28 +80,33 @@ describe('HistoryQueryConnectorsComponent', () => {
 
   test('should choose existing connectors supporting history queries', async () => {
     const tester = new HistoryQueryConnectorsComponentTester();
-    await expect.element(tester.fromExistingSouth).toBeChecked();
-    await expect.element(tester.fromExistingNorth).toBeChecked();
-    await expect.element(tester.southType).not.toBeInTheDocument();
-    await expect.element(tester.northType).not.toBeInTheDocument();
+    await expect.element(tester.mode('south', 'Duplicate existing')).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(tester.mode('north', 'Duplicate existing')).toHaveAttribute('aria-pressed', 'true');
     // the folder scanner does not support history queries
-    await expect.element(tester.southConnector.getByRole('option')).toHaveLength(2);
+    await expect.element(tester.cards('south')).toHaveLength(2);
+    await expect.element(tester.card('south', 'South 3')).toMatchTextContent(/OPC UA™/);
 
-    await tester.southConnector.selectOptions('South 3 (opcua)');
-    await tester.northConnector.selectOptions('North 2 (oianalytics)');
+    await tester.card('south', 'South 3').click();
+    await tester.card('north', 'North 2').click();
 
+    await expect.element(tester.card('south', 'South 3')).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(tester.card('south', 'South 2')).toHaveAttribute('aria-pressed', 'false');
     expect(tester.choice()).toEqual({ northType: null, southType: null, northId: 'northId2', southId: 'southId3' });
   });
 
-  test('should choose connector types', async () => {
+  test('should choose connector types, by category', async () => {
     const tester = new HistoryQueryConnectorsComponentTester();
 
-    await tester.fromExistingSouth.click();
-    await tester.fromExistingNorth.click();
-    await expect.element(tester.southConnector).not.toBeInTheDocument();
-    await expect.element(tester.southType.getByRole('option')).toHaveLength(2);
-    await tester.southType.selectOptions('Microsoft SQL Server™');
-    await tester.northType.selectOptions('Console');
+    await tester.mode('south', 'New settings').click();
+    await tester.mode('north', 'New settings').click();
+    await expect.element(tester.mode('south', 'New settings')).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(tester.card('south', 'South 3')).not.toBeInTheDocument();
+    // the folder scanner does not support history queries
+    await expect.element(tester.cards('south')).toHaveLength(2);
+    await expect.element(tester.south.getByRole('group', { name: 'Database' })).toBeInTheDocument();
+    await expect.element(tester.card('south', 'Microsoft SQL Server™')).toMatchTextContent(/Query Microsoft SQL Server™ databases/);
+    await tester.card('south', 'Microsoft SQL Server™').click();
+    await tester.card('north', 'Console').click();
 
     expect(tester.choice()).toEqual({ northType: 'console', southType: 'mssql', northId: null, southId: null });
   });
@@ -99,26 +114,24 @@ describe('HistoryQueryConnectorsComponent', () => {
   test('should require a South and a North', async () => {
     const tester = new HistoryQueryConnectorsComponentTester();
 
-    await tester.southConnector.selectOptions('South 2 (mssql)');
+    await tester.card('south', 'South 2').click();
 
     expect(tester.choice()).toBeNull();
-    await expect.element(tester.root.getByText('This field is required')).toBeInTheDocument();
+    await expect.element(tester.north.getByText('This field is required')).toBeInTheDocument();
+    await expect.element(tester.south.getByText('This field is required')).not.toBeInTheDocument();
   });
 
-  test('should only allow connector types when there is no existing connector', async () => {
+  test('should only offer connector types when there is no existing connector', async () => {
     northConnectorService.list.mockReturnValue(of([]));
     southConnectorService.list.mockReturnValue(of([testData.south.listLight[0]]));
     const tester = new HistoryQueryConnectorsComponentTester();
 
-    await expect.element(tester.fromExistingSouth).not.toBeChecked();
-    await expect.element(tester.fromExistingSouth).toBeDisabled();
-    await expect.element(tester.fromExistingNorth).not.toBeChecked();
-    await expect.element(tester.fromExistingNorth).toBeDisabled();
-    await expect.element(tester.southConnector).not.toBeInTheDocument();
-    await expect.element(tester.northConnector).not.toBeInTheDocument();
+    await expect.element(tester.mode('south', 'New settings')).toHaveAttribute('aria-pressed', 'true');
+    await expect.element(tester.mode('south', 'Duplicate existing')).not.toBeInTheDocument();
+    await expect.element(tester.mode('north', 'Duplicate existing')).not.toBeInTheDocument();
 
-    await tester.southType.selectOptions('OPC UA™');
-    await tester.northType.selectOptions('File writer');
+    await tester.card('south', 'OPC UA™').click();
+    await tester.card('north', 'File writer').click();
 
     expect(tester.choice()).toEqual({ northType: 'file-writer', southType: 'opcua', northId: null, southId: null });
   });

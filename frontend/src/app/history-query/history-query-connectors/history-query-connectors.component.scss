@@ -1,0 +1,112 @@
+@import '../../../common';
+
+// Duplicate an existing connector, or start from new settings
+.connector-mode {
+  border: 1px solid $lightGrey;
+  background-color: $white;
+  color: $darkGrey;
+
+  &.active {
+    border-color: $orange;
+    background-color: $orange;
+    color: $darkGrey;
+  }
+}
+
+// The category of the types listed under it, with its icon, underlined
+.connector-category {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid $mediumGrey;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $new-link-color;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.connector-category-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  background-color: $darkGrey;
+
+  img {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.connector-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+// An existing connector or a type to choose
+.connector-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid $lightGrey;
+  border-radius: 0.5rem;
+  background-color: $white;
+  color: $darkGrey;
+  text-align: left;
+
+  &:hover {
+    border-color: $mediumGrey;
+    background-color: $veryLightGrey;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $electricBlue;
+    outline-offset: 1px;
+  }
+
+  &.selected {
+    border-color: $electricBlue;
+    box-shadow: 0 0 0 1px $electricBlue;
+    background-color: rgba($electricBlue, 0.06);
+  }
+}
+
+.connector-choice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.connector-choice-name {
+  font-weight: 600;
+}
+
+.connector-choice-description {
+  font-size: 0.8125rem;
+  color: $new-link-color;
+}
+
+.connector-type-badge {
+  flex: none;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  background-color: $lightGrey;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $new-link-color;
+}

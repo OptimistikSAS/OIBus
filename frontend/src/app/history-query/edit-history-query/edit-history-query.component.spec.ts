@@ -62,8 +62,11 @@ class EditHistoryQueryComponentTester {
   readonly schedule = this.root.getByLabelText('Schedule');
   readonly nextButton = this.root.getByRole('button', { name: 'Next' });
   readonly addTransformerButton = this.root.getByRole('button', { name: 'Add a transformer' });
-  readonly southType = this.root.getByRole('combobox', { name: 'South type' });
-  readonly northType = this.root.getByRole('combobox', { name: 'North type' });
+
+  /** The card of a connector type in the connectors step, by the name it starts with */
+  connectorType(side: 'south' | 'north', name: string) {
+    return this.root.getByCss(`#${side}-connector`).getByRole('button', { name: new RegExp(`^${name}`) });
+  }
   readonly reviewErrors = this.root.getByCss('#review-errors');
   readonly reviewChanges = this.root.getByCss('#review-changes');
   readonly itemChanges = this.root.getByCss('#item-changes');
@@ -571,8 +574,8 @@ describe('EditHistoryQueryComponent', () => {
       await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
       expect(southConnectorService.getSouthManifest).not.toHaveBeenCalled();
 
-      await tester.southType.selectOptions('Microsoft SQL Server™');
-      await tester.northType.selectOptions('Console');
+      await tester.connectorType('south', 'Microsoft SQL Server™').click();
+      await tester.connectorType('north', 'Console').click();
       await tester.nextButton.click();
 
       await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
@@ -590,7 +593,7 @@ describe('EditHistoryQueryComponent', () => {
 
       // other connectors start it over, once confirmed
       await tester.goTo('connectors');
-      await tester.northType.selectOptions('File writer');
+      await tester.connectorType('north', 'File writer').click();
       await tester.nextButton.click();
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.steps.confirm-connectors-change' });
       await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
