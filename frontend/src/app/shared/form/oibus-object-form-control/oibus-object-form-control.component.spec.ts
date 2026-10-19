@@ -63,6 +63,7 @@ const objectAttribute: OIBusObjectAttribute = {
           [certificates]="certificates"
           [group]="form.controls.settings"
           [objectAttribute]="objectAttribute()"
+          [layout]="layout()"
         />
       </ng-container>
     </form>
@@ -74,6 +75,7 @@ class TestHostComponent {
   readonly scanModes = testData.scanMode.list;
   readonly certificates = testData.certificates.list;
   readonly objectAttribute = signal(objectAttribute);
+  readonly layout = signal<'boxes' | 'sections'>('boxes');
   readonly form = new FormGroup({ settings: new FormGroup({}) });
 }
 
@@ -197,6 +199,32 @@ describe('OIBusObjectFormControlComponent', () => {
 
     await expect.element(tester.enabled).toBeInTheDocument();
     await expect.element(tester.root.getByText('Settings', { exact: true })).toHaveLength(title);
+  });
+
+  test('should display the nested objects as groups with a light title in the sections layout', async () => {
+    const tester = new TestHostComponentTester({
+      ...objectAttribute,
+      enablingConditions: [],
+      displayProperties: { visible: true, wrapInBox: true },
+      attributes: [
+        {
+          type: 'object',
+          key: 'trackingInstant',
+          translationKey: 'configuration.oibus.manifest.south.items.sqlite.tracking-instant.title',
+          validators: [],
+          attributes: [{ ...enabledAttribute, key: 'trackInstant' }],
+          enablingConditions: [],
+          displayProperties: { visible: true, wrapInBox: true }
+        }
+      ]
+    });
+    tester.fixture.componentInstance.layout.set('sections');
+
+    await expect.element(tester.enabled).toBeInTheDocument();
+    // the root object is titled by the page, the nested one by a light group title rather than a box
+    await expect.element(tester.root.getByCss('oib-box')).not.toBeInTheDocument();
+    await expect.element(tester.root.getByText('Settings', { exact: true })).not.toBeInTheDocument();
+    await expect.element(tester.root.getByCss('.object-group-title')).toHaveTextContent('Tracking instant');
   });
 
   test('should display a form control per attribute type', async () => {
