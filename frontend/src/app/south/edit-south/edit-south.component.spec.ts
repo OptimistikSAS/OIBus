@@ -120,7 +120,7 @@ class EditSouthComponentTester {
     await this.step(step).click();
   }
 
-  readonly items = this.root.getByCss('oib-box.oib-south-items');
+  readonly items = this.root.getByCss('section.oib-south-items');
   readonly manageGroupsButton = this.items.getByRole('button', { name: /^Manage groups/ });
   readonly manageWorkflowsButton = this.items.getByRole('button', { name: /^Manage items synchronisations/ });
   /** The workflows button, to read its count from any step: a role locator leaves out the hidden Items step */
@@ -466,12 +466,14 @@ describe('EditSouthComponent', () => {
       southConnectorService.getSouthManifest.mockReturnValue(of(southManifest));
       const tester = await createTester('create');
       const open = vi.spyOn(modalService, 'open');
-      await tester.goTo('settings');
+      await tester.goTo('items');
 
-      await tester.testConnectionButton.click();
       await tester.exploreButton.click();
 
+      // the settings step opens, to fix them
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.root.getByText('This field is required')).toBeVisible();
+      await tester.testConnectionButton.click();
       expect(open).not.toHaveBeenCalled();
     });
 
@@ -481,7 +483,7 @@ describe('EditSouthComponent', () => {
       modalService.mockDismissedModal(exploreModal);
       const open = vi.spyOn(modalService, 'open');
 
-      await tester.goTo('settings');
+      await tester.goTo('items');
       await tester.exploreButton.click();
 
       expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
@@ -496,7 +498,7 @@ describe('EditSouthComponent', () => {
       workflowCreationService.createFromExploredNodes.mockReturnValue(of(buildWorkflowCommand('temp_1', 'sub')));
       await expect.element(tester.manageWorkflowsCount).toMatchTextContent(/Manage items synchronisations\s*0/);
 
-      await tester.goTo('settings');
+      await tester.goTo('items');
       await tester.exploreButton.click();
 
       // the settings of the form (none in the test manifest)
@@ -542,7 +544,7 @@ describe('EditSouthComponent', () => {
           : fakeModal(addItemsModal, Promise.resolve([command]))
       );
 
-      await tester.goTo('settings');
+      await tester.goTo('items');
       await tester.exploreButton.click();
 
       await vi.waitFor(() =>

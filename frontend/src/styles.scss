@@ -29,6 +29,7 @@ html {
 // any action on its right
 .oib-section-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin: 1.75rem 0 1rem;
@@ -63,6 +64,11 @@ html {
   .btn {
     letter-spacing: normal;
     text-transform: none;
+  }
+
+  // the help icon is white, for the dark oib-box-title bars
+  oib-help .fa-question-circle {
+    color: $new-link-color !important;
   }
 }
 
@@ -1105,6 +1111,22 @@ val-errors > div {
 
 .text-disabled {
   color: $blue;
+}
+
+// A group of fields in a section, under a light title (as the nested objects of oib-oibus-object-form-control)
+.oib-group-title {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+// The content of a page edited in steps (e.g. the south connector page): one step shows at a time, its sections titled with
+// oib-section-title
+.oib-steps-panel {
+  border: 0.2rem solid $lightGrey;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .save-zone {

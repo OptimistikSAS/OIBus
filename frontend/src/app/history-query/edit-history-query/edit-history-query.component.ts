@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, LOCALE_ID, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -40,7 +41,6 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { TransformerService } from '../../services/transformer.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
@@ -129,12 +129,11 @@ type HistoryQueryForm = FormGroup<{
 @Component({
   selector: 'oib-edit-history-query',
   imports: [
+    NgTemplateOutlet,
     TranslateDirective,
     SaveButtonComponent,
     DateRangeSelectorComponent,
     BackNavigationDirective,
-    BoxComponent,
-    BoxTitleDirective,
     OibHelpComponent,
     OIBusNorthTypeEnumPipe,
     OIBusSouthTypeEnumPipe,
@@ -791,9 +790,10 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   }
 
   explore() {
-    // Explore: only validate the south settings section, like the test connection button
+    // Explore: only validate the south settings, like the test connection button, opening their step to fix them
     this.form()?.controls.southSettings.markAllAsTouched();
     if (!this.form()?.controls.southSettings.valid) {
+      this.steps.current.set('south');
       return;
     }
 

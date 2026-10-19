@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 
@@ -25,7 +26,16 @@ import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-
 
 @Component({
   selector: 'oib-history-query-transformers',
-  imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent, NgbTooltip],
+  imports: [
+    NgTemplateOutlet,
+    TranslateDirective,
+    BoxComponent,
+    ReactiveFormsModule,
+    TranslatePipe,
+    BoxTitleDirective,
+    OibHelpComponent,
+    NgbTooltip
+  ],
   templateUrl: './history-query-transformers.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './history-query-transformers.component.scss'
@@ -44,6 +54,8 @@ export class HistoryQueryTransformersComponent {
 
   readonly inMemoryTransformersWithOptions = output<Array<HistoryTransformerDTOWithOptions> | null>();
   readonly saveChangesDirectly = input<boolean>(false);
+  /** A box with its own title, or a section of the page, under a section title (on the edit pages) */
+  readonly layout = input<'box' | 'section'>('box');
 
   readonly northManifest = input.required<NorthConnectorManifest>();
   readonly certificates = input.required<Array<CertificateDTO>>();

@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
@@ -26,7 +27,6 @@ import { ConfigurationWorkflowService } from '../../services/configuration-workf
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
@@ -99,12 +99,11 @@ type SouthConnectorForm = FormGroup<{
 @Component({
   selector: 'oib-edit-south',
   imports: [
+    NgTemplateOutlet,
     TranslateDirective,
     ...formDirectives,
     SaveButtonComponent,
     BackNavigationDirective,
-    BoxComponent,
-    BoxTitleDirective,
     OibHelpComponent,
     OIBusSouthTypeEnumPipe,
     OIBusObjectFormControlComponent,
@@ -455,9 +454,10 @@ export class EditSouthComponent implements CanComponentDeactivate {
   }
 
   explore() {
-    // Explore: only validate the settings section, like the test connection button
+    // Explore: only validate the settings, like the test connection button, opening their step to fix them
     this.form()!.controls.settings.markAllAsTouched();
     if (!this.form()!.controls.settings.valid) {
+      this.steps.current.set('settings');
       return;
     }
     const southId = this.southConnector()?.id || null;
