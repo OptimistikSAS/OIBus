@@ -6,7 +6,7 @@ import { ActivatedRoute, Params, provideRouter, Router } from '@angular/router';
 
 import { Observable, of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import { HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
 import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
@@ -35,7 +35,7 @@ import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
-import { EditHistoryQueryComponent } from './edit-history-query.component';
+import { EditHistoryQueryComponent, HistoryQueryStep } from './edit-history-query.component';
 
 class EditHistoryQueryComponentTester {
   readonly fixture = TestBed.createComponent(EditHistoryQueryComponent);
@@ -56,6 +56,21 @@ class EditHistoryQueryComponentTester {
   readonly selectAllButton = this.root.getByRole('button', { name: 'Select all' });
   readonly massActions = this.root.getByRole('button', { name: /Mass actions/ });
   readonly component = this.fixture.componentInstance;
+  readonly description = this.root.getByLabelText('Description', { exact: true });
+  readonly schedule = this.root.getByLabelText('Schedule');
+  readonly nextButton = this.root.getByRole('button', { name: 'Next' });
+  readonly reviewErrors = this.root.getByCss('#review-errors');
+  readonly reviewChanges = this.root.getByCss('#review-changes');
+  readonly itemChanges = this.root.getByCss('#item-changes');
+  readonly generalSummary = this.root.getByCss('#general-summary');
+
+  step(step: HistoryQueryStep) {
+    return this.root.getByCss(`#history-query-step-${step}`);
+  }
+
+  async goTo(step: HistoryQueryStep) {
+    await this.step(step).click();
+  }
 
   itemName(index: number) {
     return this.items.nth(index).getByRole('cell').nth(2);
@@ -144,6 +159,16 @@ describe('EditHistoryQueryComponent', () => {
     });
   }
 
+  /** Opens the page, on the given step */
+  async function createTester(step: HistoryQueryStep = 'general'): Promise<EditHistoryQueryComponentTester> {
+    const tester = new EditHistoryQueryComponentTester();
+    await expect.element(tester.name).toBeVisible();
+    if (step !== 'general') {
+      await tester.goTo(step);
+    }
+    return tester;
+  }
+
   async function expectNavigationTo(url: string) {
     await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe(url));
   }
@@ -152,7 +177,7 @@ describe('EditHistoryQueryComponent', () => {
     beforeEach(() => configure({ params: { historyQueryId: savedQuery.id } }));
 
     test('should display the history query', async () => {
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await expect.element(tester.title).toHaveTextContent(`Edit ${savedQuery.name}`);
       await expect.element(tester.name).toHaveValue(savedQuery.name);
@@ -164,7 +189,7 @@ describe('EditHistoryQueryComponent', () => {
 
     test.each([true, false])('should update the history query, with reset cache %s', async resetCache => {
       mockModal(createMock(ResetCacheHistoryQueryModalComponent), resetCache);
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester();
       await tester.name.fill('updated name');
 
       await tester.saveButton.click();
@@ -193,18 +218,47 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     test('should not save an invalid history query', async () => {
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester();
       await tester.name.fill('My second History Query');
+      await tester.goTo('north');
 
       await tester.saveButton.click();
 
-      await expect.element(tester.root.getByText('Must be unique')).toBeInTheDocument();
+      // the first step with an error opens
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.root.getByText('Must be unique')).toBeVisible();
       expect(historyQueryService.update).not.toHaveBeenCalled();
+    });
+
+    test('should save an edited history query from any step', async () => {
+      mockModal(createMock(ResetCacheHistoryQueryModalComponent), false);
+      const tester = await createTester('items');
+      // Save is the main action, Next a subtle one
+      await expect.element(tester.nextButton).toHaveClass('btn-subtle');
+
+      await tester.saveButton.click();
+
+      expect(historyQueryService.update).toHaveBeenCalledWith(savedQuery.id, expect.objectContaining({ name: savedQuery.name }), false);
+    });
+
+    test('should show what changed since the edited history query was saved', async () => {
+      const tester = await createTester('review');
+      await expect.element(tester.reviewChanges).toHaveTextContent('No change since the history query was saved');
+
+      await tester.goTo('general');
+      await tester.description.fill('changed description');
+      await tester.goTo('items');
+      await tester.items.nth(0).getByRole('button', { name: 'Delete item' }).click();
+      await tester.goTo('review');
+
+      await expect.element(tester.reviewChanges).toHaveTextContent('Changes since the history query was saved: 2');
+      await expect.element(tester.itemChanges).toHaveTextContent('Items added: 0 · changed: 0 · removed: 1');
+      await expect.element(tester.generalSummary).toMatchTextContent(/Description\s*Changed\s*changed description/);
     });
 
     test('should ask for confirmation before leaving with unsaved changes', async () => {
       unsavedChangesConfirmation.confirmUnsavedChanges.mockReturnValue(of(true));
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester();
       await expect.element(tester.name).toHaveValue(savedQuery.name);
       expect(tester.component.canDeactivate()).toBe(true);
 
@@ -217,7 +271,7 @@ describe('EditHistoryQueryComponent', () => {
     test.each(['north', 'south'] as const)('should test the %s connection', async type => {
       const testModal = createMock(TestConnectionResultModalComponent);
       mockModal(testModal);
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester(type);
 
       await (type === 'north' ? tester.testNorthButton : tester.testSouthButton).click();
 
@@ -236,7 +290,7 @@ describe('EditHistoryQueryComponent', () => {
       historyQueryService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
       historyQueryService.browseExplore.mockReturnValue(of({ entries: [] }));
       historyQueryService.closeExplore.mockReturnValue(of(undefined));
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('south');
 
       await tester.exploreButton.click();
 
@@ -253,7 +307,7 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     test('should reload the transformers when they are saved directly', async () => {
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester();
       await expect.element(tester.name).toHaveValue(savedQuery.name);
 
       tester.fixture.debugElement
@@ -266,7 +320,7 @@ describe('EditHistoryQueryComponent', () => {
     test('should add, duplicate and edit items in memory', async () => {
       const itemModal = itemModalMock();
       mockModal(itemModal, newItem);
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await tester.addItemButton.click();
       expect(itemModal.directSave()).toBe(false);
@@ -301,7 +355,7 @@ describe('EditHistoryQueryComponent', () => {
         .spyOn(TestBed.inject(MockModalService), 'open')
         .mockReturnValueOnce(fakeModal(firstModal, Promise.resolve(newItem)))
         .mockReturnValueOnce(fakeModal(nextModal, Promise.resolve(nextItem)));
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await tester.addItemButton.click();
 
@@ -323,7 +377,7 @@ describe('EditHistoryQueryComponent', () => {
 
     test('should edit the clicked item when several unsaved items share an empty id', async () => {
       const itemModal = itemModalMock();
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
       for (const name of ['unsaved-1', 'unsaved-2']) {
         mockModal(itemModal, { ...newItem, name });
         await tester.addItemButton.click();
@@ -339,7 +393,7 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     test('should delete an item and all the items', async () => {
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await tester.items.nth(0).getByRole('button', { name: 'Delete item' }).click();
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.items.confirm-deletion' });
@@ -353,7 +407,7 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     test('should enable, disable and delete the selected items', async () => {
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await tester.items.nth(0).getByRole('checkbox').click();
       await tester.massActions.click();
@@ -378,7 +432,7 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     test('should filter and sort the items', async () => {
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await tester.searchItems.fill('2');
       await tester.expectItemNames('item2');
@@ -397,7 +451,7 @@ describe('EditHistoryQueryComponent', () => {
     test('should export the saved items', async () => {
       mockModal(createMock(ExportItemModalComponent), { filename: 'items.csv', delimiter: ';' });
       historyQueryService.exportItems.mockReturnValue(of(undefined));
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await tester.exportButton.click();
 
@@ -410,7 +464,7 @@ describe('EditHistoryQueryComponent', () => {
     ])('should import items, erasing the existing ones: %s', async (eraseExisting, expectedNames) => {
       const importModal = createMock(ImportHistoryQueryItemsModalComponent);
       mockModal(importModal, { items: [newItem], eraseExisting });
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await tester.importButton.click();
 
@@ -428,17 +482,23 @@ describe('EditHistoryQueryComponent', () => {
   describe('create mode', () => {
     test('should create a history query from connector types', async () => {
       configure({ queryParams: { southType: 'mssql', northType: 'console' } });
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester();
       await expect.element(tester.title).toHaveTextContent('Create a new history query');
       expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith('console');
       expect(southConnectorService.getSouthManifest).toHaveBeenCalledWith('mssql');
+      // a new history query is saved from the last step
+      await expect.element(tester.saveButton).not.toBeInTheDocument();
 
+      await tester.goTo('review');
       await tester.saveButton.click();
       expect(historyQueryService.create).not.toHaveBeenCalled();
-      await expect.element(tester.root.getByText('This field is required').first()).toBeInTheDocument();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
 
       await tester.name.fill('new query');
-      await tester.root.getByLabelText('Schedule').selectOptions(testData.scanMode.list[0].name);
+      await tester.goTo('north');
+      await tester.schedule.selectOptions(testData.scanMode.list[0].name);
+      await tester.goTo('review');
       await tester.saveButton.click();
 
       expect(historyQueryService.create).toHaveBeenCalledWith(
@@ -451,16 +511,60 @@ describe('EditHistoryQueryComponent', () => {
       await expectNavigationTo(`/history-queries/${savedQuery.id}`);
     });
 
+    test('should go through the steps of a new history query, the next one opening once the current one is valid', async () => {
+      configure({ queryParams: { southType: 'mssql', northType: 'console' } });
+      const tester = await createTester();
+
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
+
+      await tester.name.fill('new query');
+      // Enter in a field opens the next step too
+      await userEvent.keyboard('{Enter}');
+      await expect.element(tester.step('south')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.testSouthButton).toBeVisible();
+
+      await tester.nextButton.click();
+      await expect.element(tester.addItemButton).toBeVisible();
+      await tester.nextButton.click();
+      await expect.element(tester.testNorthButton).toBeVisible();
+      // the schedule is required
+      await tester.nextButton.click();
+      await expect.element(tester.step('north')).toHaveClass('modal-step-invalid');
+
+      await tester.schedule.selectOptions(testData.scanMode.list[0].name);
+      await tester.nextButton.click();
+      await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.saveButton).toBeVisible();
+      await expect.element(tester.nextButton).not.toBeInTheDocument();
+      await expect.element(tester.reviewErrors).not.toBeInTheDocument();
+      await expect.element(tester.reviewChanges).not.toBeInTheDocument();
+      await expect.element(tester.generalSummary).toMatchTextContent(/Name\s*new query/);
+    });
+
+    test('should list the steps to fix in the review, and open them', async () => {
+      configure({ queryParams: { southType: 'mssql', northType: 'console' } });
+      const tester = await createTester('review');
+
+      await expect.element(tester.reviewErrors).toMatchTextContent(/Fix these steps before saving:\s*General\s*North/);
+      await tester.reviewErrors.getByRole('button', { name: 'North' }).click();
+
+      await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
+    });
+
     test('should create a history query from existing connectors', async () => {
       configure({ queryParams: { southId: 'southId1', northId: 'northId1' } });
       const south = testData.south.list[0];
       const north = testData.north.list[0];
       southConnectorService.findById.mockReturnValue(of(south));
       northConnectorService.findById.mockReturnValue(of(north));
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
       await tester.expectItemNames(...south.items.map(item => item.name));
 
+      await tester.goTo('general');
       await tester.name.fill('new query');
+      await tester.goTo('review');
       await tester.saveButton.click();
 
       expect(historyQueryService.create).toHaveBeenCalledWith(
@@ -479,8 +583,11 @@ describe('EditHistoryQueryComponent', () => {
 
     test('should duplicate a history query', async () => {
       configure({ queryParams: { duplicate: savedQuery.id } });
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester();
       await expect.element(tester.name).toHaveValue(`${savedQuery.name}-copy`);
+      await tester.goTo('review');
+      // a copy is new: nothing to compare with
+      await expect.element(tester.reviewChanges).not.toBeInTheDocument();
 
       await tester.saveButton.click();
 
@@ -499,7 +606,7 @@ describe('EditHistoryQueryComponent', () => {
       configure({ queryParams: { duplicate: savedQuery.id } });
       mockModal(createMock(ExportItemModalComponent), { filename: 'items.csv', delimiter: ';' });
       historyQueryService.itemsToCsv.mockReturnValue(of(undefined));
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('items');
 
       await tester.exportButton.click();
 
@@ -512,7 +619,7 @@ describe('EditHistoryQueryComponent', () => {
       historyQueryService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
       const exploreModal = createMock(SouthExploreModalComponent);
       mockModal(exploreModal);
-      const tester = new EditHistoryQueryComponentTester();
+      const tester = await createTester('south');
 
       await tester.exploreButton.click();
 

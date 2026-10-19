@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, LOCALE_ID, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -13,7 +13,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { combineLatest, firstValueFrom, Observable, of, switchMap, tap } from 'rxjs';
 
@@ -32,6 +32,7 @@ import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/conn
 import { NorthConnectorManifest, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
+import { compareLists, summarizeCaching, transformerName } from '../../north/north-summary';
 import { CertificateService } from '../../services/certificate.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -41,16 +42,29 @@ import { TransformerService } from '../../services/transformer.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
+import { CurrentUserService } from '../../shared/current-user.service';
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
+import { formatDateTime } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
-import { addAttributeToForm, addEnablingConditions } from '../../shared/form/dynamic-form.builder';
+import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
+import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import {
+  compareSettings,
+  countChanges,
+  SettingSummary,
+  summarizeSettings
+} from '../../shared/form/oibus-settings-summary/settings-summary';
+import { ItemTableComponent } from '../../shared/item-table/item-table.component';
+import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 import { ModalService } from '../../shared/modal.service';
+import { ModalStepsComponent } from '../../shared/modal-steps/modal-steps.component';
+import { submitsOnEnter, WizardSteps } from '../../shared/modal-steps/wizard-steps';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
@@ -64,6 +78,20 @@ import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
+
+/** The steps of the history query page, in order: the north step comes after the items, which its transformers pick from */
+export const HISTORY_QUERY_STEPS = ['general', 'south', 'items', 'north', 'review'] as const;
+export type HistoryQueryStep = (typeof HISTORY_QUERY_STEPS)[number];
+
+/** The history query as summed up in the Review step */
+interface HistoryQuerySummary {
+  general: Array<SettingSummary>;
+  southSettings: Array<SettingSummary>;
+  items: Array<SettingSummary>;
+  northSettings: Array<SettingSummary>;
+  caching: Array<SettingSummary>;
+  transformers: Array<SettingSummary>;
+}
 
 type HistoryQueryForm = FormGroup<{
   name: FormControl<string>;
@@ -98,9 +126,6 @@ type HistoryQueryForm = FormGroup<{
   southSettings: FormGroup;
 }>;
 
-import { ItemTableComponent } from '../../shared/item-table/item-table.component';
-import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
-
 @Component({
   selector: 'oib-edit-history-query',
   imports: [
@@ -121,7 +146,9 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
     TranslatePipe,
     NgbTooltip,
     ItemTableComponent,
-    ...ITEM_TABLE_TEMPLATES
+    ...ITEM_TABLE_TEMPLATES,
+    ModalStepsComponent,
+    OIBusSettingsSummaryComponent
   ],
   templateUrl: './edit-history-query.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -148,6 +175,10 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly docsUrlService = inject(DocsUrlService);
+  private readonly translateService = inject(TranslateService);
+  private readonly currentUserService = inject(CurrentUserService);
+  private readonly locale = inject(LOCALE_ID);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/history-queries');
   readonly cachingHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#caching');
@@ -173,6 +204,12 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
   /** Built along with the manifests */
   readonly form = signal<HistoryQueryForm | null>(null);
+  /** The last change of the form (value, status, touched...) */
+  private readonly formEvent = signal<unknown>(null);
+
+  readonly steps = new WizardSteps<HistoryQueryStep>(HISTORY_QUERY_STEPS, step => this.stepControls(step), this.formEvent);
+  /** A new history query is saved from the last step, an edited one from any step */
+  readonly canSave = computed(() => this.mode() === 'edit' || this.steps.isLast());
 
   readonly inMemoryTransformersWithOptions = signal<Array<HistoryTransformerDTOWithOptions>>([]);
   readonly scanModeAttribute: OIBusScanModeAttribute = {
@@ -193,6 +230,46 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   private readonly itemTable = viewChild(ItemTableComponent);
   /** The selected items, by name */
   readonly selectedItems = signal<ReadonlyMap<string, HistoryQueryItemCommandDTO>>(new Map());
+
+  /** The history query as summed up in the Review step */
+  readonly reviewSummary = computed<HistoryQuerySummary>(() => {
+    this.formEvent();
+    this.inMemoryItems();
+    this.inMemoryTransformersWithOptions();
+    return this.summarizeHistoryQuery();
+  });
+  /** The history query as it was when opened for edition, to show what changed in the Review step: null for a new one */
+  readonly savedSummary = signal<HistoryQuerySummary | null>(null);
+  /** The items and transformers as they were when the history query was opened for edition */
+  private readonly savedItems = signal<Array<HistoryQueryItemCommandDTO>>([]);
+  private readonly savedTransformers = signal<Array<HistoryTransformerDTOWithOptions>>([]);
+  /** What changed in the items and transformers since the history query was saved: null for a new one */
+  readonly itemChanges = computed(() => (this.savedSummary() ? compareLists(this.inMemoryItems(), this.savedItems()) : null));
+  readonly transformerChanges = computed(() =>
+    this.savedSummary() ? compareLists(this.inMemoryTransformersWithOptions(), this.savedTransformers()) : null
+  );
+  /** How many settings, items and transformers changed since the history query was saved: null for a new one */
+  readonly changeCount = computed(() => {
+    const saved = this.savedSummary();
+    const itemChanges = this.itemChanges();
+    const transformerChanges = this.transformerChanges();
+    if (!saved || !itemChanges || !transformerChanges) {
+      return null;
+    }
+    const summary = this.reviewSummary();
+    return (
+      countChanges(compareSettings(summary.general, saved.general)) +
+      countChanges(compareSettings(summary.southSettings, saved.southSettings)) +
+      countChanges(compareSettings(summary.northSettings, saved.northSettings)) +
+      countChanges(compareSettings(summary.caching, saved.caching)) +
+      itemChanges.added +
+      itemChanges.changed +
+      itemChanges.removed +
+      transformerChanges.added +
+      transformerChanges.changed +
+      transformerChanges.removed
+    );
+  });
 
   constructor() {
     combineLatest([
@@ -438,6 +515,138 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     }
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
+    if (this.mode() === 'edit') {
+      this.savedSummary.set(this.summarizeHistoryQuery());
+      this.savedItems.set(structuredClone(this.inMemoryItems()));
+      this.savedTransformers.set(structuredClone(this.inMemoryTransformersWithOptions()));
+    }
+  }
+
+  /** The history query as currently edited, summed up: see `reviewSummary` */
+  private summarizeHistoryQuery(): HistoryQuerySummary {
+    const form = this.form();
+    const southManifest = this.southManifest();
+    const northManifest = this.northManifest();
+    if (!form || !southManifest || !northManifest) {
+      return { general: [], southSettings: [], items: [], northSettings: [], caching: [], transformers: [] };
+    }
+    const value = form.getRawValue();
+    const timeRange = value.queryTimeRange;
+    const timeRangeControls = form.controls.queryTimeRange.controls;
+    const instant = (time: string | undefined) =>
+      time ? formatDateTime(time, this.locale, this.currentUserService.getTimezone(), 'mediumWithSeconds') : null;
+    const duration = (raw: number | null, unitKey: string) =>
+      raw === null || raw === undefined ? null : `${raw} ${this.translateService.instant(unitKey)}`;
+    const settingsContext = (group: FormGroup) => ({
+      translateService: this.translateService,
+      scanModes: this.scanModes(),
+      certificates: this.certificates(),
+      isInvalid: (path: Array<string>) => group.get(path)?.invalid ?? false
+    });
+    return {
+      general: [
+        { kind: 'text', labelKey: 'history-query.name', text: value.name || null, invalid: form.controls.name.invalid },
+        { kind: 'text', labelKey: 'history-query.description', text: value.description || null },
+        {
+          kind: 'text',
+          labelKey: 'history-query.query-time-range.start',
+          text: instant(timeRange.dateRange?.startTime),
+          invalid: timeRangeControls.dateRange.invalid
+        },
+        {
+          kind: 'text',
+          labelKey: 'history-query.query-time-range.end',
+          text: instant(timeRange.dateRange?.endTime),
+          invalid: timeRangeControls.dateRange.invalid
+        },
+        {
+          kind: 'text',
+          labelKey: 'history-query.query-time-range.max-read-interval',
+          text: duration(timeRange.maxReadInterval, 'common.unit.s'),
+          invalid: timeRangeControls.maxReadInterval.invalid
+        },
+        {
+          kind: 'text',
+          labelKey: 'history-query.query-time-range.read-delay',
+          text: duration(timeRange.readDelay, 'common.unit.ms'),
+          invalid: timeRangeControls.readDelay.invalid
+        }
+      ],
+      southSettings: summarizeSettings(
+        southManifest.settings,
+        extractFormValue(form.value.southSettings),
+        settingsContext(form.controls.southSettings)
+      ),
+      items: [{ kind: 'text', labelKey: 'history-query.items.title', text: String(this.inMemoryItems().length) }],
+      northSettings: summarizeSettings(
+        northManifest.settings,
+        extractFormValue(form.value.northSettings),
+        settingsContext(form.controls.northSettings)
+      ),
+      caching: summarizeCaching(value.caching, this.translateService, path => form.controls.caching.get(path)?.invalid ?? false),
+      transformers: [
+        {
+          kind: 'table',
+          labelKey: 'history-query.transformers.title',
+          columnKeys: ['north.transformers.source', 'history-query.transformers.transformer'],
+          rows: this.inMemoryTransformersWithOptions().map(element => [
+            this.transformerSource(element),
+            transformerName(element.transformer, this.translateService)
+          ])
+        }
+      ]
+    };
+  }
+
+  /** The items a transformer applies to, as shown in the transformer list */
+  private transformerSource(transformer: HistoryTransformerDTOWithOptions): string {
+    switch (transformer.items.length) {
+      case 0:
+        return this.translateService.instant('configuration.oibus.manifest.transformers.all-items-selected');
+      case 1:
+        return transformer.items[0].name;
+      default:
+        return this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', {
+          numberOfItems: transformer.items.length
+        });
+    }
+  }
+
+  /** Pressing Enter in a field submits the form, whether the Save button shows or not */
+  onEnter(event: Event) {
+    if (submitsOnEnter(event)) {
+      event.preventDefault();
+      this.submitStep();
+    }
+  }
+
+  /** Submitting the form (e.g. pressing Enter) saves the history query once it can be, and opens the next step before. */
+  submitStep() {
+    if (this.canSave()) {
+      this.save();
+    } else {
+      this.steps.next();
+    }
+  }
+
+  /** The controls edited in each step */
+  private stepControls(step: HistoryQueryStep): Array<AbstractControl> {
+    const form = this.form();
+    if (!form) {
+      return [];
+    }
+    switch (step) {
+      case 'general':
+        return [form.controls.name, form.controls.description, form.controls.queryTimeRange];
+      case 'south':
+        return [form.controls.southSettings];
+      case 'north':
+        return [form.controls.northSettings, form.controls.caching];
+      case 'items':
+      case 'review':
+        return [];
+    }
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -479,6 +688,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   save() {
     const form = this.form();
     if (!form?.valid) {
+      this.steps.showFirstInvalid();
       return;
     }
 

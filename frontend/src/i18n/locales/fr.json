@@ -3068,7 +3068,22 @@
       "copy-cache-path": "Copier le chemin du cache dans le presse-papiers",
       "audit": "Voir l'historique d'audit de la requête d'historique"
     },
-    "reset-cache-confirmation": "Voulez-vous réinitialiser le cache de la requête d'historique ?"
+    "reset-cache-confirmation": "Voulez-vous réinitialiser le cache de la requête d'historique ?",
+    "steps": {
+      "steps": "Étapes de la requête d'historique",
+      "step": {
+        "general": "Général",
+        "south": "South",
+        "items": "Éléments",
+        "north": "North",
+        "review": "Vérification et enregistrement"
+      },
+      "review-errors": "Corrigez ces étapes avant d'enregistrer :",
+      "review-changes": "Modifications depuis l'enregistrement de la requête d'historique : {{count}}",
+      "review-no-changes": "Aucune modification depuis l'enregistrement de la requête d'historique",
+      "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
+      "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}"
+    }
   },
   "explore-cache": {
     "title": "Cache de {{ name }}",
@@ -3326,6 +3341,20 @@
       "copy-cache-path": "Copier le chemin du cache dans le presse-papiers",
       "view-metrics": "Voir les métriques du connecteur North",
       "audit": "Voir l'historique d'audit du connecteur North"
+    },
+    "steps": {
+      "steps": "Étapes du connecteur",
+      "step": {
+        "general": "Général",
+        "settings": "Paramètres",
+        "caching": "Cache",
+        "transformers": "Transformateurs",
+        "review": "Vérification et enregistrement"
+      },
+      "review-errors": "Corrigez ces étapes avant d'enregistrer :",
+      "review-changes": "Modifications depuis l'enregistrement du connecteur : {{count}}",
+      "review-no-changes": "Aucune modification depuis l'enregistrement du connecteur",
+      "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}"
     }
   },
   "oia-module": {
