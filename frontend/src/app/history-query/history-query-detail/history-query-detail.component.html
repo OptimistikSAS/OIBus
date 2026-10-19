@@ -225,16 +225,7 @@
               ></button>
             </div>
           </ng-template>
-          <table class="table table-sm table-hover oib-table">
-            <tbody class="north-settings">
-              @for (setting of northDisplayedSettings(); track setting) {
-                <tr>
-                  <td class="label-column">{{ setting.key | translate }}</td>
-                  <td>{{ setting.value }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+          <oib-oibus-settings-summary class="d-block px-3 py-2" id="north-settings" [settings]="northDisplayedSettings()" />
         </oib-box>
         <!-- South Specific settings -->
         <oib-box>
@@ -266,16 +257,7 @@
               </div>
             </div>
           </ng-template>
-          <table class="table table-sm table-hover oib-table">
-            <tbody class="south-settings">
-              @for (setting of southDisplayedSettings(); track setting) {
-                <tr>
-                  <td class="label-column">{{ setting.key | translate }}</td>
-                  <td>{{ setting.value }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+          <oib-oibus-settings-summary class="d-block px-3 py-2" id="south-settings" [settings]="southDisplayedSettings()" />
         </oib-box>
         <!-- Items -->
         <oib-box class="oib-south-items">

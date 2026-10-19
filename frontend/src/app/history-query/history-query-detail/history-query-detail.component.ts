@@ -36,7 +36,9 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
-import { checkCondition, isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import { SettingSummary, summarizeSettings } from '../../shared/form/oibus-settings-summary/settings-summary';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 import { ModalService } from '../../shared/modal.service';
@@ -73,7 +75,8 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
     OibHelpComponent,
     DatetimePipe,
     ItemTableComponent,
-    ...ITEM_TABLE_TEMPLATES
+    ...ITEM_TABLE_TEMPLATES,
+    OIBusSettingsSummaryComponent
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrl: './history-query-detail.component.scss',
@@ -198,23 +201,14 @@ export class HistoryQueryDetailComponent {
     this.historyQueryResource.reload();
   }
 
-  private displayedSettings(settingsManifest: OIBusObjectAttribute, settingsValue: object): Array<{ key: string; value: string }> {
-    const settings: Record<string, string> = JSON.parse(JSON.stringify(settingsValue));
-    return settingsManifest.attributes
-      .filter(setting => isDisplayableAttribute(setting))
-      .filter(setting => {
-        const condition = settingsManifest.enablingConditions.find(
-          enablingCondition => enablingCondition.targetPathFromRoot === setting.key
-        );
-        return !condition || checkCondition(settings[condition.referralPathFromRoot] ?? null, condition);
-      })
-      .map(setting => ({
-        key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
-        value:
-          setting.type === 'string-select'
-            ? this.translateService.instant(setting.translationKey + '.' + settings[setting.key])
-            : settings[setting.key]
-      }));
+  /** Settings of the north or south of the history query, summed up from their manifest */
+  private displayedSettings(settingsManifest: OIBusObjectAttribute, settingsValue: object): Array<SettingSummary> {
+    return summarizeSettings(settingsManifest, settingsValue, {
+      translateService: this.translateService,
+      scanModes: this.scanModes(),
+      certificates: this.certificates(),
+      applyEnablingConditions: true
+    });
   }
 
   toggleHistoryQuery(newStatus: HistoryQueryStatus) {
