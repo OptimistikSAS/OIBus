@@ -24,12 +24,7 @@
         <!-- 0. A new history query starts with the connectors it is created from, the form being built from them -->
         @if (choosesConnectors) {
           <div class="oib-steps-panel mt-3" [hidden]="steps.current() !== 'connectors'">
-            <section>
-              <div class="oib-section-title">
-                <h5 translate="history-query.steps.step.connectors"></h5>
-              </div>
-              <oib-history-query-connectors />
-            </section>
+            <oib-history-query-connectors />
           </div>
         }
         @if (form) {
