@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -27,7 +27,6 @@ import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
 
 type HistorySortField = 'name' | 'interval' | 'southType' | 'northType' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -61,7 +60,6 @@ export class HistoryQueryListComponent {
   private readonly notificationService = inject(NotificationService);
   private readonly modalService = inject(ModalService);
   private readonly historyQueryService = inject(HistoryQueryService);
-  private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
 
   private readonly historyQueries = rxResource({ stream: () => this.historyQueryService.list() });
@@ -145,13 +143,6 @@ export class HistoryQueryListComponent {
           name: historyQuery.name
         });
       });
-  }
-
-  createHistoryQuery() {
-    const modalRef = this.modalService.open(CreateHistoryQueryModalComponent, { backdrop: 'static' });
-    modalRef.result.subscribe(queryParams => {
-      this.router.navigate(['/history-queries', 'create'], { queryParams });
-    });
   }
 
   /**

@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, Signal } from '@a
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, map, tap } from 'rxjs';
 
@@ -16,12 +15,30 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
+/** The connectors a new history query is created from: existing connectors, whose settings it starts with, or connector types */
+export interface ConnectorChoice {
+  southId: string | null;
+  northId: string | null;
+  southType: string | null;
+  northType: string | null;
+}
+
+/** Whether two choices of connectors are the same */
+export function sameConnectorChoice(choice: ConnectorChoice, other: ConnectorChoice | null): boolean {
+  return (
+    !!other &&
+    choice.southId === other.southId &&
+    choice.northId === other.northId &&
+    choice.southType === other.southType &&
+    choice.northType === other.northType
+  );
+}
+
+/** The first step of a new history query: the connectors it is created from */
 @Component({
-  selector: 'oib-create-history-query-modal',
-  templateUrl: './create-history-query-modal.component.html',
-  styleUrl: './create-history-query-modal.component.scss',
+  selector: 'oib-history-query-connectors',
+  templateUrl: './history-query-connectors.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
@@ -29,17 +46,13 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
     TranslatePipe,
     OIBusSouthTypeEnumPipe,
     OIBusNorthTypeEnumPipe,
-    OI_FORM_VALIDATION_DIRECTIVES,
-    SaveButtonComponent
+    OI_FORM_VALIDATION_DIRECTIVES
   ]
 })
-export class CreateHistoryQueryModalComponent {
-  private readonly modal = inject(NgbActiveModal);
+export class HistoryQueryConnectorsComponent {
   private readonly northConnectorService = inject(NorthConnectorService);
   private readonly southConnectorService = inject(SouthConnectorService);
   private readonly fb = inject(NonNullableFormBuilder);
-
-  readonly state = new ObservableState();
 
   readonly createForm = this.fb.group({
     fromExistingSouth: true,
@@ -121,22 +134,14 @@ export class CreateHistoryQueryModalComponent {
     );
   }
 
-  create() {
-    if (!this.createForm.valid) {
-      return;
-    }
-
+  /** The chosen connectors, once the form is valid */
+  choice(): ConnectorChoice {
     const formValues = this.createForm.value;
-    const queryParams: Record<string, string | null> = {
+    return {
       northType: formValues.northType || null,
       southType: formValues.southType || null,
       northId: formValues.northId || null,
       southId: formValues.southId || null
     };
-    this.modal.close(queryParams);
-  }
-
-  cancel() {
-    this.modal.dismiss();
   }
 }
