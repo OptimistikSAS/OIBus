@@ -36,9 +36,10 @@ import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settin
 import { SettingSummary, summarizeSettings } from '../../../shared/form/oibus-settings-summary/settings-summary';
 import { ModalService } from '../../../shared/modal.service';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
+import { submitsOnEnter } from '../../../shared/modal-steps/wizard-steps';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary, submitsOnEnter } from '../item-modal-steps';
+import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary } from '../item-modal-steps';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
