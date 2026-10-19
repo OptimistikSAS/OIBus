@@ -1907,7 +1907,9 @@
         "value": "值",
         "other": "其他",
         "no-values": "没有可显示的值"
-      }
+      },
+      "result-outdated": "此测试运行后，项或测试设置已更改",
+      "run-again": "重新运行"
     },
     "type": "类型",
     "created-by": "创建者",

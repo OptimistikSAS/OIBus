@@ -161,15 +161,32 @@
 } @else if (errorMessage(); as errorMessage) {
   <div class="alert alert-danger mt-2 mb-0">{{ errorMessage }}</div>
 } @else if (testResult(); as testResult) {
-  <div class="small text-muted mt-2 mb-1">
-    {{ 'south.test-item.connection-duration' | translate: { duration: testResult.connectionDuration } }}
-    &middot;
-    {{ 'south.test-item.query-duration' | translate: { duration: testResult.queryDuration } }}
+  @if (resultOutdated()) {
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-1 px-2 mt-2 mb-0" id="outdated-result" role="status">
+      <span class="fa-solid fa-clock-rotate-left" aria-hidden="true"></span>
+      <span class="flex-grow-1" translate="south.test-item.result-outdated"></span>
+      <button
+        type="button"
+        id="run-test-again"
+        class="btn btn-sm btn-outline-secondary"
+        [disabled]="isTestRunning()"
+        (click)="testItem()"
+        translate="south.test-item.run-again"
+      ></button>
+    </div>
+  }
+  <!-- An outdated result stays readable, but faded: it no longer matches what a test would run on -->
+  <div class="test-result" [class.test-result-outdated]="resultOutdated()">
+    <div class="small text-muted mt-2 mb-1">
+      {{ 'south.test-item.connection-duration' | translate: { duration: testResult.connectionDuration } }}
+      &middot;
+      {{ 'south.test-item.query-duration' | translate: { duration: testResult.queryDuration } }}
+    </div>
+    <oib-transformer-test-result
+      class="d-block mt-2"
+      [raw]="testResult.raw"
+      [hasTransformer]="!!selectedTransformer()"
+      [output]="testResult.transformed"
+    />
   </div>
-  <oib-transformer-test-result
-    class="d-block mt-2"
-    [raw]="testResult.raw"
-    [hasTransformer]="!!selectedTransformer()"
-    [output]="testResult.transformed"
-  />
 }
