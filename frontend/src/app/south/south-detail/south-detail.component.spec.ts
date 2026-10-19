@@ -83,7 +83,7 @@ class SouthDetailComponentTester {
   readonly metrics = this.root.getByCss('oib-south-metrics');
   readonly exploreButton = this.root.getByRole('button', { name: 'Explore' });
   readonly testConnectionButton = this.root.getByRole('button', { name: 'Test settings' });
-  readonly settings = this.root.getByCss('.south-settings tr');
+  readonly settings = this.root.getByCss('#south-settings .oib-summary-entry');
 
   readonly items = this.root.getByCss('oib-box.oib-south-items');
   readonly itemsTitle = this.items.getByCss('.oib-box-title');
@@ -204,7 +204,7 @@ describe('SouthDetailComponent', () => {
       await expect.element(tester.title).toMatchTextContent('South South 1');
       await expect.element(tester.stopButton).toBeVisible();
       await expect.element(tester.settings).toHaveLength(1);
-      await expect.element(tester.settings.nth(0)).toHaveTextContent('Statusactive');
+      await expect.element(tester.settings.nth(0)).toHaveTextContent('Status active');
       await expect.element(tester.metrics).toBeVisible();
       await expect.element(tester.exploreButton).toBeVisible();
       expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
@@ -232,8 +232,8 @@ describe('SouthDetailComponent', () => {
       const tester = await createTester();
 
       await expect.element(tester.settings).toHaveLength(3);
-      await expect.element(tester.settings.nth(1)).toHaveTextContent('Input folderinput');
-      await expect.element(tester.settings.nth(2)).toHaveTextContent('SMB username');
+      await expect.element(tester.settings.nth(1)).toHaveTextContent('Input folder input');
+      await expect.element(tester.settings.nth(2)).toHaveTextContent('SMB username–');
     });
 
     test('should hide the explore button when the manifest does not support exploration', async () => {

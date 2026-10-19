@@ -29,10 +29,10 @@ import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/aud
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
-import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
-import { checkCondition, isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import { SettingSummary, summarizeSettings } from '../../shared/form/oibus-settings-summary/settings-summary';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -70,7 +70,6 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
     SouthMetricsComponent,
     BoxComponent,
     BoxTitleDirective,
-    EnabledEnumPipe,
     ClipboardModule,
     LogsComponent,
     OIBusSouthTypeEnumPipe,
@@ -81,7 +80,8 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
     ReactiveFormsModule,
     NgbDropdownItem,
     ItemTableComponent,
-    ...ITEM_TABLE_TEMPLATES
+    ...ITEM_TABLE_TEMPLATES,
+    OIBusSettingsSummaryComponent
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
@@ -121,28 +121,22 @@ export class SouthDetailComponent {
   });
   readonly manifest = computed(() => (this.manifestResource.hasValue() ? this.manifestResource.value() : null));
 
-  readonly displayedSettings = computed<Array<{ key: string; value: string }>>(() => {
+  /** The status and settings of the connector, summed up from its manifest */
+  readonly displayedSettings = computed<Array<SettingSummary>>(() => {
     const manifest = this.manifest();
     const southConnector = this.southConnector();
     if (!manifest || !southConnector) {
       return [];
     }
-    const southSettings: Record<string, string> = JSON.parse(JSON.stringify(southConnector.settings));
-    return manifest.settings.attributes
-      .filter(setting => isDisplayableAttribute(setting))
-      .filter(setting => {
-        const condition = manifest.settings.enablingConditions.find(
-          enablingCondition => enablingCondition.targetPathFromRoot === setting.key
-        );
-        return !condition || checkCondition(southSettings[condition.referralPathFromRoot] ?? null, condition);
+    return [
+      { kind: 'text', labelKey: 'south.status', text: this.translateService.instant(southConnector.enabled ? 'enabled' : 'disabled') },
+      ...summarizeSettings(manifest.settings, southConnector.settings, {
+        translateService: this.translateService,
+        scanModes: this.scanModes(),
+        certificates: this.certificates(),
+        applyEnablingConditions: true
       })
-      .map(setting => ({
-        key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
-        value:
-          setting.type === 'string-select'
-            ? this.translateService.instant(setting.translationKey + '.' + southSettings[setting.key])
-            : southSettings[setting.key]
-      }));
+    ];
   });
 
   // the metrics are polled once the connector and its manifest are loaded
