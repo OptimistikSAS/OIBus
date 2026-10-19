@@ -147,6 +147,42 @@ describe('OIBusObjectFormControlComponent', () => {
     expect(tester.settings.controls['name'].disabled).toBe(true);
   });
 
+  test.each([true, false])('should display an object nested two levels deep, wrapped in a box: %s', async wrapInBox => {
+    const tester = new TestHostComponentTester({
+      ...objectAttribute,
+      enablingConditions: [],
+      attributes: [
+        {
+          type: 'object',
+          key: 'trackingInstant',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          validators: [],
+          attributes: [
+            { ...enabledAttribute, key: 'trackInstant' },
+            {
+              type: 'object',
+              key: 'dateTimeInput',
+              translationKey: 'configuration.oibus.manifest.south.items.settings',
+              validators: [],
+              attributes: [{ ...nameAttribute, key: 'type' }],
+              enablingConditions: [],
+              displayProperties: { visible: true, wrapInBox }
+            }
+          ],
+          enablingConditions: [{ referralPathFromRoot: 'trackInstant', targetPathFromRoot: 'dateTimeInput', values: [true] }],
+          displayProperties: { visible: true, wrapInBox }
+        }
+      ]
+    });
+
+    await expect.element(tester.enabled).toBeInTheDocument();
+    await expect.element(tester.name).not.toBeInTheDocument();
+
+    await tester.enabled.click();
+    await tester.name.fill('iso-string');
+    expect(tester.settings.value).toEqual({ trackingInstant: { trackInstant: true, dateTimeInput: { type: 'iso-string' } } });
+  });
+
   test('should display nothing when not visible', async () => {
     const tester = new TestHostComponentTester({ ...objectAttribute, displayProperties: { visible: false, wrapInBox: false } });
 
