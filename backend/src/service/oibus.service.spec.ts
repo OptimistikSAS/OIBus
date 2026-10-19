@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,7 +10,9 @@ import { EngineSettingsCommandDTO } from '../../shared/model/api/engine.model';
 import { CacheContentUpdateCommand } from '../../shared/model/domain/engine.model';
 
 import { EngineSettings } from '../model/engine.model';
+import { OIBusValidationError } from '../model/types';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
 import EngineRepositoryMock from '../tests/__mocks__/repository/config/engine-repository.mock';
 import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/engine-metrics-repository.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
@@ -33,6 +36,7 @@ const nodeRequire = createRequire(import.meta.url);
 let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let mockProxyServer: Record<string, unknown>;
 let mockEncryptionService: Record<string, unknown>;
+let mockUtilsCertificate: Record<string, ReturnType<typeof mock.fn>>;
 
 // Captured mock proxy instance — set by MockProxyServer constructor in before()
 let lastProxyRefreshIpFilters: ReturnType<typeof mock.fn>;
@@ -64,7 +68,10 @@ before(() => {
   const encryptionServiceMock = new EncryptionServiceMock('', '');
   mockEncryptionService = { __esModule: true, encryptionService: encryptionServiceMock };
 
+  mockUtilsCertificate = { assertTlsCredentials: mock.fn() };
+
   mockModule(nodeRequire, './utils', mockUtils);
+  mockModule(nodeRequire, './utils-certificate', mockUtilsCertificate);
   mockModule(nodeRequire, '../web-server/proxy-server', mockProxyServer);
   mockModule(nodeRequire, './encryption.service', mockEncryptionService);
   mockModule(nodeRequire, 'argon2', {
@@ -84,6 +91,7 @@ describe('OIBus Service', () => {
   let service: InstanceType<typeof OIBusServiceType>;
   let engineRepository: EngineRepositoryMock;
   let engineMetricsRepository: EngineMetricsRepositoryMock;
+  let certificateRepository: CertificateRepositoryMock;
   let ipFilterService: IpFilterServiceMock;
   let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
   let loggerService: LoggerServiceMock;
@@ -106,6 +114,7 @@ describe('OIBus Service', () => {
 
     engineRepository = new EngineRepositoryMock();
     engineMetricsRepository = new EngineMetricsRepositoryMock();
+    certificateRepository = new CertificateRepositoryMock();
     ipFilterService = new IpFilterServiceMock();
     oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
     loggerService = new LoggerServiceMock();
@@ -120,6 +129,7 @@ describe('OIBus Service', () => {
 
     // Reset getOIBusInfo mock in-place
     mockUtils.getOIBusInfo = mock.fn();
+    mockUtilsCertificate.assertTlsCredentials = mock.fn();
 
     // Reset encryptionService mock in-place
     const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
@@ -161,6 +171,7 @@ describe('OIBus Service', () => {
       validator,
       engineRepository,
       engineMetricsRepository,
+      certificateRepository,
       ipFilterService,
       oIAnalyticsRegistrationService,
       loggerService,
@@ -280,7 +291,7 @@ describe('OIBus Service', () => {
       return newEngineSettings;
     });
 
-    const portChangeEmitSpy = mock.method(service.portChangeEvent, 'emit', mock.fn());
+    const webServerChangeEmitSpy = mock.method(service.webServerChangeEvent, 'emit', mock.fn());
 
     // Temporarily use real timers for setImmediate
     mock.timers.reset();
@@ -289,7 +300,8 @@ describe('OIBus Service', () => {
 
     assert.deepStrictEqual(result, {
       needsRedirect: true,
-      newPort: 999
+      newPort: 999,
+      newProtocol: 'http'
     });
     assert.strictEqual(engineRepository.get.mock.calls.length, 3);
     const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
@@ -303,9 +315,9 @@ describe('OIBus Service', () => {
     // Wait for setImmediate callback to execute
     await new Promise(resolve => setImmediate(resolve));
 
-    // Verify port change event was emitted
-    assert.strictEqual(portChangeEmitSpy.mock.calls.length, 1);
-    assert.deepStrictEqual(portChangeEmitSpy.mock.calls[0].arguments, ['updated', 999]);
+    // Verify web server change event was emitted
+    assert.strictEqual(webServerChangeEmitSpy.mock.calls.length, 1);
+    assert.deepStrictEqual(webServerChangeEmitSpy.mock.calls[0].arguments, ['updated', newEngineSettings.webServer]);
 
     // Restore fake timers
     mock.timers.enable({
@@ -335,14 +347,15 @@ describe('OIBus Service', () => {
     engineRepository.get.mock.mockImplementation(() => {
       getCallCount++;
       if (getCallCount === 1) return testData.engine.settings;
-      return { ...testData.engine.settings, ...specificTestCommand } as EngineSettings;
+      return { ...testData.engine.settings, ...specificTestCommand, webServer: testData.engine.settings.webServer } as EngineSettings;
     });
 
     const result = await service.updateEngineSettings(specificTestCommand, testData.users.list[0].id);
 
     assert.deepStrictEqual(result, {
       needsRedirect: false,
-      newPort: null
+      newPort: null,
+      newProtocol: null
     });
     assert.strictEqual(engineRepository.get.mock.calls.length, 3);
     const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
@@ -406,8 +419,10 @@ describe('OIBus Service', () => {
       testData.users.list[0].id
     );
 
-    assert.deepStrictEqual(result, { needsRedirect: false, newPort: null });
+    assert.deepStrictEqual(result, { needsRedirect: false, newPort: null, newProtocol: null });
     assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 1);
+    // the https settings are kept when the command has none
+    assert.deepStrictEqual(engineRepository.updateWebServer.mock.calls[0].arguments[0].https, testData.engine.settings.webServer.https);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
@@ -428,7 +443,153 @@ describe('OIBus Service', () => {
       now: new Date(testData.constants.dates.FAKE_NOW).getTime()
     });
 
-    assert.deepStrictEqual(result, { needsRedirect: true, newPort: 3333 });
+    assert.deepStrictEqual(result, { needsRedirect: true, newPort: 3333, newProtocol: 'http' });
+  });
+
+  describe('web server https', () => {
+    const certificate = { ...testData.certificates.list[0], privateKey: 'encrypted key', certificateChain: 'ca chain' };
+    const storeHttps = {
+      enabled: true,
+      certificateSource: 'store' as const,
+      certificateId: certificate.id,
+      certificatePath: null,
+      privateKeyPath: null
+    };
+    const fileHttps = {
+      enabled: true,
+      certificateSource: 'file' as const,
+      certificateId: null,
+      certificatePath: 'oibus.crt',
+      privateKeyPath: '/etc/oibus/oibus.key'
+    };
+
+    const withHttps = (https: EngineSettings['webServer']['https']): EngineSettings => ({
+      ...testData.engine.settings,
+      webServer: { ...testData.engine.settings.webServer, https }
+    });
+
+    it('should read the certificate, its chain and its decrypted private key from the store', async () => {
+      certificateRepository.findById.mock.mockImplementation(() => certificate);
+
+      const credentials = await service.getWebServerCredentials(storeHttps);
+
+      assert.deepStrictEqual(credentials, { cert: `${certificate.certificate}\nca chain`, key: 'encrypted key' });
+      assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, [certificate.id]);
+      assert.deepStrictEqual(mockUtilsCertificate.assertTlsCredentials.mock.calls[0].arguments, [credentials.cert, credentials.key]);
+    });
+
+    it('should reject a certificate of the store that is not found or has no private key', async () => {
+      await assert.rejects(
+        () => service.getWebServerCredentials(storeHttps),
+        new OIBusValidationError(`Certificate "${certificate.id}" not found`)
+      );
+      await assert.rejects(
+        () => service.getWebServerCredentials({ ...storeHttps, certificateId: null }),
+        new OIBusValidationError('Certificate "null" not found')
+      );
+      certificateRepository.findById.mock.mockImplementation(() => ({ ...certificate, privateKey: '' }));
+      await assert.rejects(
+        () => service.getWebServerCredentials(storeHttps),
+        new OIBusValidationError(`Certificate "${certificate.name}" has no private key`)
+      );
+    });
+
+    it('should read the certificate and private key from files, relative to the data folder', async () => {
+      const readFile = mock.method(fs, 'readFile', async (filePath: string) => `content of ${filePath}`);
+
+      const credentials = await service.getWebServerCredentials(fileHttps);
+
+      assert.deepStrictEqual(readFile.mock.calls[0].arguments, [path.resolve('oibus.crt'), 'utf8']);
+      assert.deepStrictEqual(readFile.mock.calls[1].arguments, [path.resolve('/etc/oibus/oibus.key'), 'utf8']);
+      assert.deepStrictEqual(credentials, {
+        cert: `content of ${path.resolve('oibus.crt')}`,
+        key: `content of ${path.resolve('/etc/oibus/oibus.key')}`
+      });
+    });
+
+    it('should reject a file that cannot be read', async () => {
+      mock.method(fs, 'readFile', async () => {
+        throw new Error('ENOENT');
+      });
+
+      await assert.rejects(
+        () => service.getWebServerCredentials(fileHttps),
+        new OIBusValidationError('Unable to read the certificate file "oibus.crt": ENOENT')
+      );
+    });
+
+    it('should reject the settings when the web server would restart with a certificate it cannot load', async () => {
+      engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+      await assert.rejects(
+        () =>
+          service.updateEngineWebServer(
+            { port: testData.engine.settings.webServer.port, authTokenDuration: '7d', https: storeHttps },
+            testData.users.list[0].id
+          ),
+        new OIBusValidationError(`Certificate "${certificate.id}" not found`)
+      );
+      assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 0);
+    });
+
+    it('should enable https and redirect to it', async () => {
+      certificateRepository.findById.mock.mockImplementation(() => certificate);
+      let getCallCount = 0;
+      engineRepository.get.mock.mockImplementation(() => (++getCallCount === 1 ? testData.engine.settings : withHttps(storeHttps)));
+      const webServerChangeEmitSpy = mock.method(service.webServerChangeEvent, 'emit', mock.fn());
+
+      mock.timers.reset();
+      const result = await service.updateEngineWebServer(
+        { port: testData.engine.settings.webServer.port, authTokenDuration: '7d', https: storeHttps },
+        testData.users.list[0].id
+      );
+      await new Promise(resolve => setImmediate(resolve));
+      mock.timers.enable({
+        apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
+        now: new Date(testData.constants.dates.FAKE_NOW).getTime()
+      });
+
+      assert.deepStrictEqual(result, { needsRedirect: true, newPort: testData.engine.settings.webServer.port, newProtocol: 'https' });
+      assert.strictEqual(mockUtilsCertificate.assertTlsCredentials.mock.calls.length, 1);
+      assert.deepStrictEqual(engineRepository.updateWebServer.mock.calls[0].arguments[0].https, storeHttps);
+      assert.deepStrictEqual(webServerChangeEmitSpy.mock.calls[0].arguments, ['updated', withHttps(storeHttps).webServer]);
+    });
+
+    it('should restart the web server without redirect when only its certificate changes', async () => {
+      const previous = withHttps(storeHttps);
+      const next = withHttps({ ...storeHttps, certificateId: 'other' });
+      certificateRepository.findById.mock.mockImplementation(() => certificate);
+      let getCallCount = 0;
+      engineRepository.get.mock.mockImplementation(() => (++getCallCount === 1 ? previous : next));
+      const webServerChangeEmitSpy = mock.method(service.webServerChangeEvent, 'emit', mock.fn());
+
+      mock.timers.reset();
+      const result = await service.updateEngineWebServer(
+        { port: previous.webServer.port, authTokenDuration: '7d', https: next.webServer.https },
+        testData.users.list[0].id
+      );
+      await new Promise(resolve => setImmediate(resolve));
+      mock.timers.enable({
+        apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
+        now: new Date(testData.constants.dates.FAKE_NOW).getTime()
+      });
+
+      assert.deepStrictEqual(result, { needsRedirect: false, newPort: null, newProtocol: null });
+      assert.deepStrictEqual(webServerChangeEmitSpy.mock.calls[0].arguments, ['updated', next.webServer]);
+    });
+
+    it('should not check the certificate when the web server does not restart', async () => {
+      engineRepository.get.mock.mockImplementation(() => withHttps(storeHttps));
+
+      const result = await service.updateEngineWebServer(
+        { port: testData.engine.settings.webServer.port, authTokenDuration: '1d', https: storeHttps },
+        testData.users.list[0].id
+      );
+
+      assert.deepStrictEqual(result, { needsRedirect: false, newPort: null, newProtocol: null });
+      assert.strictEqual(certificateRepository.findById.mock.calls.length, 0);
+      assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 1);
+    });
   });
 
   it('should throw error when web server port equals proxy port', async () => {
@@ -734,7 +895,8 @@ describe('OIBus Service', () => {
         },
         webServer: {
           port: engineSettings.webServer.port,
-          authTokenDuration: engineSettings.webServer.authTokenDuration
+          authTokenDuration: engineSettings.webServer.authTokenDuration,
+          https: engineSettings.webServer.https
         },
         proxyServer: {
           enabled: engineSettings.proxyServer.enabled,

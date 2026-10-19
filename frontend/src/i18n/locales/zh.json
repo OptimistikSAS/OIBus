@@ -2276,8 +2276,8 @@
     "confirm-memory-dump": "OIBus 内存的堆快照将写入数据文件夹。写入期间 OIBus 会被冻结，这可能会中断数据流（耗时从几秒到几分钟不等），且文件大小可能与已用内存相当。您确定要继续吗？",
     "updated": "引擎设置已更新",
     "port-changed": {
-      "title": "端口已更改",
-      "message": "Web 服务器端口已更改为 {{ port }}。您将在 {{ seconds }} 秒后自动跳转。",
+      "title": "Web 服务器已更改",
+      "message": "Web 服务器现在可通过 {{ url }} 访问。您将在 {{ seconds }} 秒后自动跳转。",
       "redirect-now": "立即跳转"
     },
     "general-settings": {
@@ -2303,7 +2303,20 @@
         "7d": "7 天",
         "14d": "14 天",
         "30d": "30 天"
-      }
+      },
+      "https": "HTTPS",
+      "https-enabled": "启用 HTTPS",
+      "https-disabled": "已禁用",
+      "certificate-source": "证书来源",
+      "certificate-sources": {
+        "store": "证书存储",
+        "file": "文件"
+      },
+      "certificate": "证书",
+      "no-certificate": "证书存储中没有证书：请在本页的证书部分创建或导入一个证书。",
+      "certificate-path": "证书文件",
+      "private-key-path": "私钥文件",
+      "file-hint": "PEM 文件（证书后可附带其 CA 链，私钥不能加密）。相对路径从 OIBus 数据文件夹解析。"
     },
     "proxy-settings": {
       "title": "代理服务器",
@@ -2595,7 +2608,7 @@
           "web-server": "Web 服务器",
           "proxy-server": "代理服务器"
         },
-        "port-changed-hint": "Web 服务器端口已更改：OIBus 重启后可通过端口 {{ port }} 访问。关闭此对话框后将进行重定向。",
+        "port-changed-hint": "Web 服务器端口或协议已更改：OIBus 重启后可通过 {{ protocol }} 在端口 {{ port }} 访问。关闭此对话框后将进行重定向。",
         "close-and-redirect": "关闭并重定向"
       }
     },

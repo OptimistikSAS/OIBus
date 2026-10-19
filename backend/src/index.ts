@@ -259,6 +259,7 @@ export async function bootstrap(): Promise<void> {
     new JoiValidator(),
     repositoryService.engineRepository,
     repositoryService.engineMetricsRepository,
+    repositoryService.certificateRepository,
     ipFilterService,
     oIAnalyticsRegistrationService,
     loggerService,
@@ -329,7 +330,7 @@ export async function bootstrap(): Promise<void> {
   await auditCleanupService.start();
 
   const server = new WebServer(
-    oibusSettings.webServer.port,
+    oibusSettings.webServer,
     encryptionService,
     repositoryService.auditService,
     scanModeService,
