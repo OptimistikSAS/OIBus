@@ -3068,7 +3068,22 @@
       "copy-cache-path": "复制缓存路径到剪贴板",
       "audit": "查看历史查询审计历史"
     },
-    "reset-cache-confirmation": "是否要重置历史查询缓存？"
+    "reset-cache-confirmation": "是否要重置历史查询缓存？",
+    "steps": {
+      "steps": "历史查询步骤",
+      "step": {
+        "general": "常规",
+        "south": "South",
+        "items": "项目",
+        "north": "North",
+        "review": "检查并保存"
+      },
+      "review-errors": "保存前请修正以下步骤：",
+      "review-changes": "自历史查询上次保存以来的修改：{{count}}",
+      "review-no-changes": "自历史查询上次保存以来没有修改",
+      "item-changes": "已添加项目：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
+      "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}"
+    }
   },
   "explore-cache": {
     "title": "{{ name }} 的缓存",
@@ -3326,6 +3341,20 @@
       "copy-cache-path": "复制缓存路径到剪贴板",
       "view-metrics": "查看 North 连接器指标",
       "audit": "查看 North 连接器审计历史"
+    },
+    "steps": {
+      "steps": "连接器步骤",
+      "step": {
+        "general": "常规",
+        "settings": "设置",
+        "caching": "缓存",
+        "transformers": "转换器",
+        "review": "检查并保存"
+      },
+      "review-errors": "保存前请修正以下步骤：",
+      "review-changes": "自连接器上次保存以来的修改：{{count}}",
+      "review-no-changes": "自连接器上次保存以来没有修改",
+      "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}"
     }
   },
   "oia-module": {
