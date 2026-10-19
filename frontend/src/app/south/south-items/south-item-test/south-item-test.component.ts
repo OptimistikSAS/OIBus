@@ -146,6 +146,8 @@ class SouthItemTestComponent {
 
   /** Latest test result (raw + optional transformed) feeding the pipeline view. */
   readonly testResult = signal<SouthConnectorItemTestResult | null>(null);
+  /** What the latest test ran on: see `testedInput` */
+  private readonly lastTestedInput = signal<string | null>(null);
 
   /** User-toggled: collapses the settings form into a summary chip to leave room for the result. */
   readonly settingsCollapsed = signal(false);
@@ -155,7 +157,9 @@ class SouthItemTestComponent {
 
   readonly form = signal<TestingSettingsForm | null>(null);
   /** The value of the form, kept in sync by initForm(). */
-  private readonly formValue = signal<{ northId: string | null; options: Record<string, unknown> } | null>(null);
+  private readonly formValue = signal<{ northId: string | null; transformerId: string | null; options: Record<string, unknown> } | null>(
+    null
+  );
 
   readonly northId = computed(() => this.formValue()?.northId ?? null);
 
@@ -177,6 +181,22 @@ class SouthItemTestComponent {
     }
     return this.norths().find(n => n.id === this.northId())?.name ?? null;
   });
+
+  /**
+   * What a test runs on: the item and its connector, and the transformer with its options. The date range is left out: a
+   * relative one (e.g. the last 10 minutes) moves on by itself.
+   */
+  private readonly testedInput = computed(() =>
+    JSON.stringify({
+      name: this.item().name,
+      settings: this.item().settings,
+      connectorSettings: this.connectorCommand().settings,
+      transformerId: this.formValue()?.transformerId ?? null,
+      options: this.currentOptions()
+    })
+  );
+  /** The latest test result no longer matches what a test would run on: the item, or the test settings, changed since */
+  readonly resultOutdated = computed(() => !!this.testResult() && this.lastTestedInput() !== this.testedInput());
 
   /** One-line recap of the current settings, shown on the collapsed summary chip. */
   readonly settingsSummary = computed(() => {
@@ -233,7 +253,11 @@ class SouthItemTestComponent {
   }
 
   private updateFormValue(form: TestingSettingsForm) {
-    this.formValue.set({ northId: form.controls.northId.value, options: form.controls.options.value as Record<string, unknown> });
+    this.formValue.set({
+      northId: form.controls.northId.value,
+      transformerId: form.controls.transformerId.value,
+      options: form.controls.options.value as Record<string, unknown>
+    });
   }
 
   private onNorthChange(northId: string | null) {
@@ -292,6 +316,7 @@ class SouthItemTestComponent {
     this.infoMessage.set(null);
     this.isTestRunning.set(true);
     this.optionsEditMode.set(false);
+    this.lastTestedInput.set(this.testedInput());
 
     const request = this.isHistory()
       ? this.historyQueryService.testItem(

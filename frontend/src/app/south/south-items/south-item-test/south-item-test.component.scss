@@ -14,3 +14,11 @@
     color: var(--bs-body-color);
   }
 }
+
+.test-result {
+  transition: opacity 0.15s ease-in-out;
+}
+
+.test-result-outdated {
+  opacity: 0.5;
+}
