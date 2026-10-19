@@ -3504,7 +3504,6 @@
       "error": "Error while copying cache path into clipboard"
     },
     "modal": {
-      "title": "Create a new history query",
       "create-details": "Import existing connector configurations or create a new one from scratch"
     },
     "north": {
@@ -3655,9 +3654,11 @@
     "steps": {
       "steps": "History query steps",
       "step": {
+        "connectors": "Connectors",
         "general": "General",
         "south": "South",
         "items": "Items",
+        "transformers": "Transformers",
         "north": "North",
         "review": "Review & save"
       },
@@ -3665,7 +3666,8 @@
       "review-changes": "Changes since the history query was saved: {{count}}",
       "review-no-changes": "No change since the history query was saved",
       "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}",
-      "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}"
+      "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}",
+      "confirm-connectors-change": "Changing the connectors starts the history query over: its settings, items and transformers will be those of the new connectors. Continue?"
     }
   },
   "explore-cache": {
