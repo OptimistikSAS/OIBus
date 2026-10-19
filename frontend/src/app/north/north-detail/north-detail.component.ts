@@ -19,8 +19,8 @@ import { TransformerService } from '../../services/transformer.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
-import { checkCondition, isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import { SettingSummary, summarizeSettings } from '../../shared/form/oibus-settings-summary/settings-summary';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
@@ -38,13 +38,13 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
     NorthMetricsComponent,
     BoxComponent,
     BoxTitleDirective,
-    EnabledEnumPipe,
     ClipboardModule,
     LogsComponent,
     OIBusNorthTypeEnumPipe,
     TranslatePipe,
     NgbTooltip,
-    NorthTransformersComponent
+    NorthTransformersComponent,
+    OIBusSettingsSummaryComponent
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',
@@ -84,30 +84,22 @@ export class NorthDetailComponent {
   });
   readonly manifest = computed(() => (this.manifestResource.hasValue() ? this.manifestResource.value() : null));
 
-  readonly displayedSettings = computed<Array<{ key: string; value: string }>>(() => {
+  /** The status and settings of the connector, summed up from its manifest */
+  readonly displayedSettings = computed<Array<SettingSummary>>(() => {
     const manifest = this.manifest();
     const northConnector = this.northConnector();
     if (!manifest || !northConnector) {
       return [];
     }
-    const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(northConnector.settings));
-    return manifest.settings.attributes
-      .filter(setting => isDisplayableAttribute(setting))
-      .filter(setting => {
-        const condition = manifest.settings.enablingConditions.find(
-          enablingCondition => enablingCondition.targetPathFromRoot === setting.key
-        );
-        return !condition || checkCondition(northSettings[condition.referralPathFromRoot] ?? null, condition);
+    return [
+      { kind: 'text', labelKey: 'north.status', text: this.translateService.instant(northConnector.enabled ? 'enabled' : 'disabled') },
+      ...summarizeSettings(manifest.settings, northConnector.settings, {
+        translateService: this.translateService,
+        scanModes: this.scanModes(),
+        certificates: this.certificates(),
+        applyEnablingConditions: true
       })
-      .map(setting => {
-        return {
-          key: setting.type === 'string-select' ? setting.translationKey + '.title' : setting.translationKey,
-          value:
-            setting.type === 'string-select'
-              ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
-              : northSettings[setting.key]
-        };
-      });
+    ];
   });
 
   // the metrics are polled once the connector and its manifest are loaded

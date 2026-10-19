@@ -89,20 +89,7 @@
                 </div>
               </div>
             </ng-template>
-            <table class="table table-sm table-hover oib-table mb-3">
-              <tbody class="south-settings">
-                <tr>
-                  <td translate="south.status"></td>
-                  <td>{{ southConnector.enabled | enabled }}</td>
-                </tr>
-                @for (setting of displayedSettings(); track setting) {
-                  <tr>
-                    <td>{{ setting.key | translate }}</td>
-                    <td>{{ setting.value }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+            <oib-oibus-settings-summary class="d-block px-3 py-2" id="south-settings" [settings]="displayedSettings()" />
           </oib-box>
           <!-- Items -->
           <oib-box class="oib-south-items">
