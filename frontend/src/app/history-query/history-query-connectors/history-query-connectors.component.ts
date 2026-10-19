@@ -1,6 +1,7 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, Signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, map, tap } from 'rxjs';
@@ -13,8 +14,6 @@ import { SouthType } from '@oibus/shared/connector/south-manifest.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
-import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
-import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 /** The connectors a new history query is created from: existing connectors, whose settings it starts with, or connector types */
 export interface ConnectorChoice {
@@ -35,19 +34,37 @@ export function sameConnectorChoice(choice: ConnectorChoice, other: ConnectorCho
   );
 }
 
-/** The first step of a new history query: the connectors it is created from */
+/** A side of the history query (South or North), as offered in the step: its existing connectors, and its types by category */
+interface ConnectorSide {
+  side: 'south' | 'north';
+  existing: Array<{ id: string; name: string; type: string }>;
+  categories: Array<{ category: string; types: Array<{ id: string; beta: boolean }> }>;
+}
+
+/** The connector types, grouped by category in their order */
+function groupByCategory(types: Array<SouthType | NorthType>): ConnectorSide['categories'] {
+  const categories: ConnectorSide['categories'] = [];
+  for (const type of types) {
+    let group = categories.find(element => element.category === type.category);
+    if (!group) {
+      group = { category: type.category, types: [] };
+      categories.push(group);
+    }
+    group.types.push({ id: type.id, beta: !!type.beta });
+  }
+  return categories;
+}
+
+/**
+ * The first step of a new history query: the connectors it is created from, for each side either an existing connector whose
+ * settings it duplicates, or a type to start from new settings.
+ */
 @Component({
   selector: 'oib-history-query-connectors',
   templateUrl: './history-query-connectors.component.html',
+  styleUrl: './history-query-connectors.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    TranslateDirective,
-    TranslatePipe,
-    OIBusSouthTypeEnumPipe,
-    OIBusNorthTypeEnumPipe,
-    OI_FORM_VALIDATION_DIRECTIVES
-  ]
+  imports: [NgTemplateOutlet, ReactiveFormsModule, TranslateDirective, TranslatePipe, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class HistoryQueryConnectorsComponent {
   private readonly northConnectorService = inject(NorthConnectorService);
@@ -62,13 +79,12 @@ export class HistoryQueryConnectorsComponent {
     southId: [null as string | null, Validators.required],
     northId: [null as string | null, Validators.required]
   });
-
-  /** Whether the South/North configurations are imported from existing connectors (also changed when there is none). */
-  readonly fromExistingSouth = toSignal(this.createForm.controls.fromExistingSouth.valueChanges, {
-    initialValue: this.createForm.controls.fromExistingSouth.value
-  });
-  readonly fromExistingNorth = toSignal(this.createForm.controls.fromExistingNorth.valueChanges, {
-    initialValue: this.createForm.controls.fromExistingNorth.value
+  /**
+   * The value of the form, disabled controls included: what is chosen on each side. Updated on every event of the form, its errors
+   * being shown once touched (e.g. by the Next button of the page).
+   */
+  readonly selection = toSignal(this.createForm.events.pipe(map(() => this.createForm.getRawValue())), {
+    initialValue: this.createForm.getRawValue()
   });
 
   private readonly connectors: Signal<
@@ -80,10 +96,16 @@ export class HistoryQueryConnectorsComponent {
       }
     | undefined
   >;
-  readonly northTypes = computed<Array<NorthType>>(() => this.connectors()?.northTypes ?? []);
-  readonly northList = computed<Array<NorthConnectorLightDTO>>(() => this.connectors()?.northList ?? []);
-  readonly southTypes = computed<Array<SouthType>>(() => this.connectors()?.southTypes ?? []);
-  readonly southList = computed<Array<SouthConnectorLightDTO>>(() => this.connectors()?.southList ?? []);
+  readonly south = computed<ConnectorSide>(() => ({
+    side: 'south',
+    existing: this.connectors()?.southList ?? [],
+    categories: groupByCategory(this.connectors()?.southTypes ?? [])
+  }));
+  readonly north = computed<ConnectorSide>(() => ({
+    side: 'north',
+    existing: this.connectors()?.northList ?? [],
+    categories: groupByCategory(this.connectors()?.northTypes ?? [])
+  }));
 
   constructor() {
     this.createForm.controls.fromExistingNorth.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
@@ -105,7 +127,7 @@ export class HistoryQueryConnectorsComponent {
       }
     });
 
-    // loaded once the form reacts to the switches, which are turned off when there is no existing connector
+    // loaded once the form reacts to the modes, which start from new settings when there is no existing connector
     this.connectors = toSignal(
       combineLatest([
         this.northConnectorService.getNorthTypes(),
@@ -123,15 +145,57 @@ export class HistoryQueryConnectorsComponent {
         tap(({ northList, southList }) => {
           if (southList.length === 0) {
             this.createForm.controls.fromExistingSouth.setValue(false);
-            this.createForm.controls.fromExistingSouth.disable();
           }
           if (northList.length === 0) {
             this.createForm.controls.fromExistingNorth.setValue(false);
-            this.createForm.controls.fromExistingNorth.disable();
           }
         })
       )
     );
+  }
+
+  /** The controls of a side */
+  controls(side: ConnectorSide['side']): {
+    fromExisting: FormControl<boolean>;
+    id: FormControl<string | null>;
+    type: FormControl<string | null>;
+  } {
+    const controls = this.createForm.controls;
+    return side === 'south'
+      ? { fromExisting: controls.fromExistingSouth, id: controls.southId, type: controls.southType }
+      : { fromExisting: controls.fromExistingNorth, id: controls.northId, type: controls.northType };
+  }
+
+  /** Whether a side duplicates an existing connector, or starts from new settings */
+  fromExisting(side: ConnectorSide['side']): boolean {
+    const selection = this.selection();
+    return side === 'south' ? selection.fromExistingSouth : selection.fromExistingNorth;
+  }
+
+  /** The existing connector or the type chosen on a side */
+  chosen(side: ConnectorSide['side']): string | null {
+    const selection = this.selection();
+    if (side === 'south') {
+      return selection.fromExistingSouth ? selection.southId : selection.southType;
+    }
+    return selection.fromExistingNorth ? selection.northId : selection.northType;
+  }
+
+  setFromExisting(side: ConnectorSide['side'], fromExisting: boolean) {
+    this.controls(side).fromExisting.setValue(fromExisting);
+  }
+
+  /** Chooses an existing connector, or a type, depending on the mode of the side */
+  choose(side: ConnectorSide['side'], value: string) {
+    const controls = this.controls(side);
+    const control = controls.fromExisting.value ? controls.id : controls.type;
+    control.setValue(value);
+    control.markAsDirty();
+  }
+
+  /** The context of the side template, typed */
+  protected asSide(side: ConnectorSide): ConnectorSide {
+    return side;
   }
 
   /** The chosen connectors, once the form is valid */
