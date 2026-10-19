@@ -12,7 +12,7 @@ import {
 } from '@angular/forms';
 
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
@@ -33,11 +33,12 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import { SettingSummary, summarizeSettings } from '../../../shared/form/oibus-settings-summary/settings-summary';
 import { ModalService } from '../../../shared/modal.service';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { ItemModalStep, ItemModalSteps, unboxedItemSettings } from '../item-modal-steps';
+import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary, unboxedItemSettings } from '../item-modal-steps';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
@@ -71,6 +72,7 @@ class EditSouthItemModalComponent {
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
+  private translateService = inject(TranslateService);
 
   readonly mode = signal<'create' | 'edit' | 'copy'>('create');
   /**
@@ -198,30 +200,19 @@ class EditSouthItemModalComponent {
   readonly canSave = computed(() => this.mode() !== 'create' || this.steps.isLast());
 
   /**
-   * The history and caching settings as they apply to the item, shown in the Review step: read from the controls, which hold the
+   * The item as summed up in the Review step. Its history and caching settings are read from the controls, which hold the
    * group's values while the item is synced with it.
    */
-  readonly review = computed(() => {
+  readonly reviewSummary = computed(() => {
     this.formEvents();
-    const controls = this.form.controls;
-    const labelOf = <T>(options: Array<{ value: T; labelKey: string }>, value: T | null) =>
-      options.find(option => option.value === value)?.labelKey ?? null;
-    return {
-      syncWithGroup: controls.groupId.value !== null && controls.syncWithGroup.value,
-      maxReadInterval: controls.maxReadInterval.value,
-      readDelay: controls.readDelay.value,
-      startTimeOffset: controls.startTimeOffset.value,
-      endTimeOffset: controls.endTimeOffset.value,
-      recoveryStrategyKey: labelOf(this.recoveryStrategies, controls.recoveryStrategy.value),
-      cachingStrategy: controls.cachingStrategy.value,
-      cachingStrategyKey: labelOf(this.cachingStrategies, controls.cachingStrategy.value),
-      thresholdType: controls.thresholdType.value,
-      thresholdTypeKey: labelOf(this.thresholdTypes, controls.thresholdType.value),
-      threshold: controls.threshold.value,
-      rangeLow: controls.rangeLow.value,
-      rangeHigh: controls.rangeHigh.value,
-      maxCachingInterval: controls.maxCachingInterval.value
-    };
+    return this.summarizeItem();
+  });
+  /** The item as it was when opened for edition, to show what changed in the Review step: null for a new item */
+  readonly savedSummary = signal<ItemSummary | null>(null);
+  /** How many settings changed since the item was saved: null for a new item */
+  readonly changeCount = computed(() => {
+    const saved = this.savedSummary();
+    return saved ? countItemChanges(this.reviewSummary(), saved) : null;
   });
 
   readonly itemSettingsAttribute = computed(() => {
@@ -561,6 +552,77 @@ class EditSouthItemModalComponent {
     } else {
       this.form.setValue(this.form.getRawValue());
     }
+    this.savedSummary.set(this.mode() === 'edit' ? this.summarizeItem() : null);
+  }
+
+  /** The item as currently edited, summed up: see `reviewSummary` */
+  private summarizeItem(): ItemSummary {
+    const controls = this.form.controls;
+    const translate = (key: string): string => this.translateService.instant(key);
+    const text = (labelKey: string, value: string | number | null, control?: AbstractControl, unitKey?: string): SettingSummary => ({
+      kind: 'text',
+      labelKey,
+      text: value === null || value === '' ? null : unitKey ? `${value} ${translate(unitKey)}` : String(value),
+      invalid: control?.invalid ?? false
+    });
+    const optionLabel = <T>(options: Array<{ value: T; labelKey: string }>, value: T | null): string | null => {
+      const option = options.find(candidate => candidate.value === value);
+      return option ? translate(option.labelKey) : null;
+    };
+    const item = this.formItem();
+
+    const general: Array<SettingSummary> = [
+      text('south.items.name', item.name, controls.name),
+      text('south.items.status', translate(item.enabled ? 'common.enabled' : 'common.disabled')),
+      text('south.items.group', item.groupName ?? translate('south.items.group-none'))
+    ];
+    if (this.scanModeEnabled()) {
+      general.push(text('configuration.oibus.manifest.south.items.scan-mode', this.scanModeName(), controls.scanModeId));
+    }
+    if (this.hasHistorianCapabilities()) {
+      const history: Array<SettingSummary> = [];
+      if (item.groupId) {
+        history.push({ kind: 'boolean', labelKey: 'south.items.sync-with-group', value: controls.syncWithGroup.value });
+      }
+      history.push(
+        text('south.items.max-read-interval', controls.maxReadInterval.value, controls.maxReadInterval, 'common.unit.s'),
+        text('south.items.read-delay', controls.readDelay.value, controls.readDelay, 'common.unit.ms'),
+        text('south.items.recovery-strategy', optionLabel(this.recoveryStrategies, controls.recoveryStrategy.value)),
+        text('south.items.start-time-offset', controls.startTimeOffset.value, controls.startTimeOffset, 'common.unit.ms'),
+        text('south.items.end-time-offset', controls.endTimeOffset.value, controls.endTimeOffset, 'common.unit.ms')
+      );
+      general.push({ kind: 'group', labelKey: 'south.edit-item-modal.history-settings', settings: history });
+    }
+    if (this.isIotFamilySouthType()) {
+      const strategy = controls.cachingStrategy.value;
+      const caching = [text('south.items.caching-strategy', optionLabel(this.cachingStrategies, strategy), controls.cachingStrategy)];
+      if (strategy === 'threshold') {
+        caching.push(
+          text('south.items.threshold-type', optionLabel(this.thresholdTypes, controls.thresholdType.value), controls.thresholdType),
+          text('south.items.threshold', controls.threshold.value, controls.threshold)
+        );
+        if (controls.thresholdType.value === 'percentage') {
+          caching.push(
+            text('south.items.range-low', controls.rangeLow.value, controls.rangeLow),
+            text('south.items.range-high', controls.rangeHigh.value, controls.rangeHigh)
+          );
+        }
+      }
+      if (strategy !== 'allValues') {
+        caching.push(
+          text('south.items.max-caching-interval', controls.maxCachingInterval.value, controls.maxCachingInterval, 'common.unit.ms')
+        );
+      }
+      general.push({ kind: 'group', labelKey: 'south.edit-item-modal.caching', settings: caching });
+    }
+
+    const settings = summarizeSettings(this.itemSettingsAttribute()!, item.settings, {
+      translateService: this.translateService,
+      scanModes: this.scanModes(),
+      certificates: this.certificates(),
+      isInvalid: path => controls.settings.get(path)?.invalid ?? false
+    });
+    return { general, settings };
   }
 
   getGroupId(item: SouthConnectorItemCommandDTO | SouthConnectorItemDTO): string | null {
