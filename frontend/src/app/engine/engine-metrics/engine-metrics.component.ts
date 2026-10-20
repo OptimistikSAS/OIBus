@@ -1,4 +1,4 @@
-import { PercentPipe } from '@angular/common';
+import { NgTemplateOutlet, PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -25,7 +25,8 @@ import { NotificationService } from '../../shared/notification.service';
     DatetimePipe,
     DurationPipe,
     NgbTooltip,
-    TranslatePipe
+    TranslatePipe,
+    NgTemplateOutlet
   ],
   templateUrl: './engine-metrics.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -96,14 +96,11 @@
   // table header
   --bs-table-bg: $white;
   --bs-table-color: $white;
+  // a light header, underlined, as the tables of the panels
   thead {
-    color: white;
-    background-color: $darkGrey;
-    // alternative case
-    &.light {
-      color: $darkGrey;
-      background-color: white;
-    }
+    color: $darkGrey;
+    background-color: transparent;
+    border-bottom: 1px solid $mediumGrey;
     // case of table header
     th {
       padding-left: 1rem;

@@ -1,226 +1,224 @@
 <div class="oib-padded-container">
-  <div class="d-flex">
-    <div class="oib-title-container mb-3">
-      <div class="oib-block-title">
-        <img class="oib-title-image pt-2" src="/home/north.svg" alt="logo" />
-      </div>
-      <h1 class="oib-title">
-        <span translate="north.list"></span>
-        <span class="ms-4">
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="create-modal"
-            [ngbTooltip]="'north.tooltips.add' | translate"
-            [attr.aria-label]="'north.tooltips.add' | translate"
-            (click)="createNorth()"
-          >
-            <span class="fa-solid fa-plus" aria-hidden="true"></span>
-          </button>
-        </span>
-      </h1>
+  <div class="oib-page-header">
+    <h1 translate="north.list"></h1>
+    <div class="oib-page-actions">
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="create-modal"
+        [attr.aria-label]="'north.tooltips.add' | translate"
+        (click)="createNorth()"
+      >
+        <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+        <span translate="common.create"></span>
+      </button>
     </div>
   </div>
 
-  <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm">
-    <div class="row gx-2 py-3">
-      <span class="col-auto col-form-label"><i class="fa-solid fa-search fa-lg" aria-hidden="true"></i></span>
-      <label for="name" class="col-auto col-form-label" translate="north.search-by-name"></label>
-      <div class="col-2">
-        <input type="text" class="form-control" id="name" formControlName="name" />
+  <section class="oib-panel">
+    <form class="mb-2" id="search-form" [formGroup]="searchForm">
+      <label for="name" class="visually-hidden" translate="north.search-by-name"></label>
+      <div class="input-group oib-list-search">
+        <span class="input-group-text"><i class="fa-solid fa-search" aria-hidden="true"></i></span>
+        <input type="text" class="form-control" id="name" formControlName="name" [placeholder]="'north.search-by-name' | translate" />
       </div>
+
+      @if (allNorths()?.length) {
+        <!-- Status filter chips — clickable legend, doubling as the enabled/disabled filter -->
+        <div class="d-flex align-items-center gap-1 flex-wrap py-2">
+          <span class="filter-label text-muted" translate="north.status"></span>
+          @for (entry of LEGEND; track entry.enabled) {
+            <button
+              type="button"
+              class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
+              [class.active]="activeEnabledStates().includes(entry.enabled)"
+              [class.inactive]="activeEnabledStates().length > 0 && !activeEnabledStates().includes(entry.enabled)"
+              (click)="toggleEnabledState(entry.enabled)"
+            >
+              <span [class]="entry.class" aria-hidden="true"></span>
+              <span class="filter-chip-label" [translate]="entry.label"></span>
+            </button>
+          }
+          @if (activeEnabledStates().length > 0) {
+            <button
+              type="button"
+              class="btn btn-sm btn-link text-secondary"
+              id="clear-enabled-states-button"
+              (click)="clearEnabledStates()"
+            >
+              <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
+              <span translate="common.clear"></span>
+            </button>
+          }
+
+          <div class="vr mx-2"></div>
+
+          <span class="filter-label text-muted" translate="north.type"></span>
+          @for (type of types(); track type) {
+            <button
+              type="button"
+              class="filter-chip d-flex align-items-center px-2 py-1"
+              [class.active]="activeTypes().includes(type)"
+              [class.inactive]="activeTypes().length > 0 && !activeTypes().includes(type)"
+              (click)="toggleType(type)"
+            >
+              <span class="filter-chip-label">{{ type | oIBusNorthTypeEnum }}</span>
+            </button>
+          }
+          @if (activeTypes().length > 0) {
+            <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-types-button" (click)="clearTypes()">
+              <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
+              <span translate="common.clear"></span>
+            </button>
+          }
+        </div>
+      }
+    </form>
+
+    <div class="justify-content-end d-flex">
+      <!-- only display it if there is more than 1 page -->
+      @if (displayedNorths().totalPages > 1) {
+        <oib-pagination class="d-flex justify-content-end" [page]="displayedNorths()" (pageChanged)="changePage($event)" />
+      }
     </div>
 
-    @if (allNorths()?.length) {
-      <!-- Status filter chips — clickable legend, doubling as the enabled/disabled filter -->
-      <div class="d-flex align-items-center gap-1 flex-wrap py-2">
-        <span class="filter-label text-muted" translate="north.status"></span>
-        @for (entry of LEGEND; track entry.enabled) {
-          <button
-            type="button"
-            class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
-            [class.active]="activeEnabledStates().includes(entry.enabled)"
-            [class.inactive]="activeEnabledStates().length > 0 && !activeEnabledStates().includes(entry.enabled)"
-            (click)="toggleEnabledState(entry.enabled)"
-          >
-            <span [class]="entry.class" aria-hidden="true"></span>
-            <span class="filter-chip-label" [translate]="entry.label"></span>
-          </button>
-        }
-        @if (activeEnabledStates().length > 0) {
-          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-enabled-states-button" (click)="clearEnabledStates()">
-            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
-            <span translate="common.clear"></span>
-          </button>
-        }
-
-        <div class="vr mx-2"></div>
-
-        <span class="filter-label text-muted" translate="north.type"></span>
-        @for (type of types(); track type) {
-          <button
-            type="button"
-            class="filter-chip d-flex align-items-center px-2 py-1"
-            [class.active]="activeTypes().includes(type)"
-            [class.inactive]="activeTypes().length > 0 && !activeTypes().includes(type)"
-            (click)="toggleType(type)"
-          >
-            <span class="filter-chip-label">{{ type | oIBusNorthTypeEnum }}</span>
-          </button>
-        }
-        @if (activeTypes().length > 0) {
-          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-types-button" (click)="clearTypes()">
-            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
-            <span translate="common.clear"></span>
-          </button>
-        }
-      </div>
-    }
-  </form>
-
-  <div class="justify-content-end d-flex">
-    <!-- only display it if there is more than 1 page -->
-    @if (displayedNorths().totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end" [page]="displayedNorths()" (pageChanged)="changePage($event)" />
-    }
-  </div>
-
-  <!-- the loading spinner when north are not yet loaded -->
-  @if (!allNorths()) {
-    <oib-loading-spinner />
-  } @else {
-    <!-- the list of north or a caption if empty -->
-    @if (displayedNorths().content.length !== 0) {
-      <div>
-        <table class="mt-2 table table-sm table-hover oib-table">
-          <thead>
-            <tr>
-              <th class="status-column"></th>
-              <th>
-                <button type="button" class="sort-button" (click)="toggleSort('name')">
-                  <span translate="north.name" class="me-2"></span>
-                  <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
-                </button>
-              </th>
-              <th class="type-column">
-                <button type="button" class="sort-button" (click)="toggleSort('type')">
-                  <span translate="north.type" class="me-2"></span>
-                  <span class="fa-solid {{ getSortIcon('type') }}" aria-hidden="true"></span>
-                </button>
-              </th>
-              <th translate="north.description"></th>
-              <th>
-                <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
-                  <span translate="north.updated-at" class="me-2"></span>
-                  <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
-                </button>
-              </th>
-              <th class="oib-actions-column-6"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (north of displayedNorths().content; track north.id) {
-              <tr>
-                @if (!north.enabled) {
-                  <td>
-                    <span [ngbTooltip]="'north.disabled' | translate" class="fa-solid fa-minus-circle status-grey"></span>
-                  </td>
-                } @else {
-                  <td>
-                    <span [ngbTooltip]="'north.enabled' | translate" class="fa-solid fa-check-circle status-green"></span>
-                  </td>
-                }
-                <td>
-                  <span [ngbTooltip]="north.name" placement="top-start">{{ north.name }}</span>
-                </td>
-                <td>{{ north.type | oIBusNorthTypeEnum }}</td>
-                <td>{{ north.description }}</td>
-                <td>
-                  <oib-audit-info
-                    [createdAt]="north.createdAt"
-                    [createdBy]="north.createdBy.friendlyName"
-                    [updatedAt]="north.updatedAt"
-                    [updatedBy]="north.updatedBy.friendlyName"
-                  />
-                </td>
-                <td class="oib-actions">
-                  <button
-                    type="button"
-                    class="btn btn-link"
-                    id="north-enable"
-                    [ngbTooltip]="(north.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
-                    [attr.aria-label]="(north.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
-                    (click)="toggleConnector(north.id, north.name, !north.enabled)"
-                    [disabled]="states.get(north.id)?.isPending | async"
-                  >
-                    @if (states.get(north.id)?.isPending | async) {
-                      <span class="fa-solid fa-spinner fa-spin" role="status"></span>
-                    }
-                    @if (north.enabled && (states.get(north.id)?.isPending | async) === false) {
-                      <span class="fa-solid fa-pause" aria-hidden="true"></span>
-                    }
-                    @if (!north.enabled && (states.get(north.id)?.isPending | async) === false) {
-                      <span class="fa-solid fa-play" aria-hidden="true"></span>
-                    }
-                  </button>
-                  <!-- Display button -->
-                  <a
-                    class="btn btn-link display-north"
-                    id="display-link"
-                    [ngbTooltip]="'north.tooltips.view' | translate"
-                    [attr.aria-label]="'north.tooltips.view' | translate"
-                    [routerLink]="[north.id]"
-                  >
-                    <span class="fa-solid fa-search" aria-hidden="true"></span>
-                  </a>
-                  <!-- Edit button -->
-                  <a
-                    class="btn btn-link edit-north"
-                    id="edit-link"
-                    [ngbTooltip]="'north.tooltips.edit' | translate"
-                    [attr.aria-label]="'north.tooltips.edit' | translate"
-                    [routerLink]="[north.id, 'edit']"
-                  >
-                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                  </a>
-                  <!-- Duplicate button -->
-                  <a
-                    class="btn btn-link duplicate-north"
-                    [ngbTooltip]="'north.tooltips.duplicate' | translate"
-                    [attr.aria-label]="'north.tooltips.duplicate' | translate"
-                    routerLink="create"
-                    [queryParams]="{ duplicate: north.id }"
-                  >
-                    <span class="fa-solid fa-copy" aria-hidden="true"></span>
-                  </a>
-                  <!-- Delete button -->
-                  <button
-                    type="button"
-                    class="btn btn-link delete-north"
-                    [ngbTooltip]="'north.tooltips.delete' | translate"
-                    [attr.aria-label]="'north.tooltips.delete' | translate"
-                    (click)="deleteNorth(north)"
-                  >
-                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                  </button>
-                  <!-- Audit history button -->
-                  <button
-                    type="button"
-                    class="btn btn-link show-audit-north"
-                    [ngbTooltip]="'north.tooltips.audit' | translate"
-                    [attr.aria-label]="'north.tooltips.audit' | translate"
-                    (click)="showAudit(north)"
-                  >
-                    <span class="fa-solid fa-history" aria-hidden="true"></span>
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+    <!-- the loading spinner when north are not yet loaded -->
+    @if (!allNorths()) {
+      <oib-loading-spinner />
     } @else {
-      <div class="oib-grey-container empty" translate="north.none"></div>
+      <!-- the list of north or a caption if empty -->
+      @if (displayedNorths().content.length !== 0) {
+        <div>
+          <table class="mt-2 table table-sm table-hover oib-table">
+            <thead>
+              <tr>
+                <th class="status-column"></th>
+                <th>
+                  <button type="button" class="sort-button" (click)="toggleSort('name')">
+                    <span translate="north.name" class="me-2"></span>
+                    <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="type-column">
+                  <button type="button" class="sort-button" (click)="toggleSort('type')">
+                    <span translate="north.type" class="me-2"></span>
+                    <span class="fa-solid {{ getSortIcon('type') }}" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th translate="north.description"></th>
+                <th>
+                  <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
+                    <span translate="north.updated-at" class="me-2"></span>
+                    <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="oib-actions-column-6"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (north of displayedNorths().content; track north.id) {
+                <tr>
+                  @if (!north.enabled) {
+                    <td>
+                      <span [ngbTooltip]="'north.disabled' | translate" class="fa-solid fa-minus-circle status-grey"></span>
+                    </td>
+                  } @else {
+                    <td>
+                      <span [ngbTooltip]="'north.enabled' | translate" class="fa-solid fa-check-circle status-green"></span>
+                    </td>
+                  }
+                  <td>
+                    <span [ngbTooltip]="north.name" placement="top-start">{{ north.name }}</span>
+                  </td>
+                  <td>{{ north.type | oIBusNorthTypeEnum }}</td>
+                  <td>{{ north.description }}</td>
+                  <td>
+                    <oib-audit-info
+                      [createdAt]="north.createdAt"
+                      [createdBy]="north.createdBy.friendlyName"
+                      [updatedAt]="north.updatedAt"
+                      [updatedBy]="north.updatedBy.friendlyName"
+                    />
+                  </td>
+                  <td class="oib-actions">
+                    <button
+                      type="button"
+                      class="btn btn-link"
+                      id="north-enable"
+                      [ngbTooltip]="(north.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
+                      [attr.aria-label]="(north.enabled ? 'north.tooltips.stop' : 'north.tooltips.start') | translate"
+                      (click)="toggleConnector(north.id, north.name, !north.enabled)"
+                      [disabled]="states.get(north.id)?.isPending | async"
+                    >
+                      @if (states.get(north.id)?.isPending | async) {
+                        <span class="fa-solid fa-spinner fa-spin" role="status"></span>
+                      }
+                      @if (north.enabled && (states.get(north.id)?.isPending | async) === false) {
+                        <span class="fa-solid fa-pause" aria-hidden="true"></span>
+                      }
+                      @if (!north.enabled && (states.get(north.id)?.isPending | async) === false) {
+                        <span class="fa-solid fa-play" aria-hidden="true"></span>
+                      }
+                    </button>
+                    <!-- Display button -->
+                    <a
+                      class="btn btn-link display-north"
+                      id="display-link"
+                      [ngbTooltip]="'north.tooltips.view' | translate"
+                      [attr.aria-label]="'north.tooltips.view' | translate"
+                      [routerLink]="[north.id]"
+                    >
+                      <span class="fa-solid fa-search" aria-hidden="true"></span>
+                    </a>
+                    <!-- Edit button -->
+                    <a
+                      class="btn btn-link edit-north"
+                      id="edit-link"
+                      [ngbTooltip]="'north.tooltips.edit' | translate"
+                      [attr.aria-label]="'north.tooltips.edit' | translate"
+                      [routerLink]="[north.id, 'edit']"
+                    >
+                      <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                    </a>
+                    <!-- Duplicate button -->
+                    <a
+                      class="btn btn-link duplicate-north"
+                      [ngbTooltip]="'north.tooltips.duplicate' | translate"
+                      [attr.aria-label]="'north.tooltips.duplicate' | translate"
+                      routerLink="create"
+                      [queryParams]="{ duplicate: north.id }"
+                    >
+                      <span class="fa-solid fa-copy" aria-hidden="true"></span>
+                    </a>
+                    <!-- Delete button -->
+                    <button
+                      type="button"
+                      class="btn btn-link delete-north"
+                      [ngbTooltip]="'north.tooltips.delete' | translate"
+                      [attr.aria-label]="'north.tooltips.delete' | translate"
+                      (click)="deleteNorth(north)"
+                    >
+                      <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                    </button>
+                    <!-- Audit history button -->
+                    <button
+                      type="button"
+                      class="btn btn-link show-audit-north"
+                      [ngbTooltip]="'north.tooltips.audit' | translate"
+                      [attr.aria-label]="'north.tooltips.audit' | translate"
+                      (click)="showAudit(north)"
+                    >
+                      <span class="fa-solid fa-history" aria-hidden="true"></span>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="oib-grey-container empty" translate="north.none"></div>
+      }
     }
-  }
+  </section>
 </div>

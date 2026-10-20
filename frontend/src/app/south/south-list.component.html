@@ -1,225 +1,223 @@
 <div class="oib-padded-container">
-  <div class="d-flex">
-    <div class="oib-title-container mb-3">
-      <div class="oib-block-title">
-        <img class="oib-title-image pt-2" src="/home/south.svg" alt="logo" />
-      </div>
-      <h1 class="oib-title">
-        <span translate="south.list"></span>
-        <span class="ms-4">
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="create-south-button"
-            [ngbTooltip]="'south.tooltips.add' | translate"
-            [attr.aria-label]="'south.tooltips.add' | translate"
-            (click)="createSouth()"
-          >
-            <span class="fa-solid fa-plus" aria-hidden="true"></span>
-          </button>
-        </span>
-      </h1>
+  <div class="oib-page-header">
+    <h1 translate="south.list"></h1>
+    <div class="oib-page-actions">
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="create-south-button"
+        [attr.aria-label]="'south.tooltips.add' | translate"
+        (click)="createSouth()"
+      >
+        <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+        <span translate="common.create"></span>
+      </button>
     </div>
   </div>
 
-  <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm">
-    <div class="row gx-2 py-3">
-      <span class="col-auto col-form-label"><i class="fa-solid fa-search fa-lg" aria-hidden="true"></i></span>
-      <label for="name" class="col-auto col-form-label" translate="south.search-by-name"></label>
-      <div class="col-2">
-        <input type="text" class="form-control" id="name" formControlName="name" />
+  <section class="oib-panel">
+    <form class="mb-2" id="search-form" [formGroup]="searchForm">
+      <label for="name" class="visually-hidden" translate="south.search-by-name"></label>
+      <div class="input-group oib-list-search">
+        <span class="input-group-text"><i class="fa-solid fa-search" aria-hidden="true"></i></span>
+        <input type="text" class="form-control" id="name" formControlName="name" [placeholder]="'south.search-by-name' | translate" />
       </div>
+
+      @if (allSouths()?.length) {
+        <!-- Status filter chips — clickable legend, doubling as the enabled/disabled filter -->
+        <div class="d-flex align-items-center gap-1 flex-wrap py-2">
+          <span class="filter-label text-muted" translate="south.status"></span>
+          @for (entry of LEGEND; track entry.enabled) {
+            <button
+              type="button"
+              class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
+              [class.active]="activeEnabledStates().includes(entry.enabled)"
+              [class.inactive]="activeEnabledStates().length > 0 && !activeEnabledStates().includes(entry.enabled)"
+              (click)="toggleEnabledState(entry.enabled)"
+            >
+              <span [class]="entry.class" aria-hidden="true"></span>
+              <span class="filter-chip-label" [translate]="entry.label"></span>
+            </button>
+          }
+          @if (activeEnabledStates().length > 0) {
+            <button
+              type="button"
+              class="btn btn-sm btn-link text-secondary"
+              id="clear-enabled-states-button"
+              (click)="clearEnabledStates()"
+            >
+              <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
+              <span translate="common.clear"></span>
+            </button>
+          }
+
+          <div class="vr mx-2"></div>
+
+          <span class="filter-label text-muted" translate="south.type"></span>
+          @for (type of types(); track type) {
+            <button
+              type="button"
+              class="filter-chip d-flex align-items-center px-2 py-1"
+              [class.active]="activeTypes().includes(type)"
+              [class.inactive]="activeTypes().length > 0 && !activeTypes().includes(type)"
+              (click)="toggleType(type)"
+            >
+              <span class="filter-chip-label">{{ type | oIBusSouthTypeEnum }}</span>
+            </button>
+          }
+          @if (activeTypes().length > 0) {
+            <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-types-button" (click)="clearTypes()">
+              <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
+              <span translate="common.clear"></span>
+            </button>
+          }
+        </div>
+      }
+    </form>
+
+    <div class="justify-content-end d-flex">
+      <!-- only display it if there is more than 1 page -->
+      @if (displayedSouths().totalPages > 1) {
+        <oib-pagination class="d-flex justify-content-end" [page]="displayedSouths()" (pageChanged)="changePage($event)" />
+      }
     </div>
 
-    @if (allSouths()?.length) {
-      <!-- Status filter chips — clickable legend, doubling as the enabled/disabled filter -->
-      <div class="d-flex align-items-center gap-1 flex-wrap py-2">
-        <span class="filter-label text-muted" translate="south.status"></span>
-        @for (entry of LEGEND; track entry.enabled) {
-          <button
-            type="button"
-            class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
-            [class.active]="activeEnabledStates().includes(entry.enabled)"
-            [class.inactive]="activeEnabledStates().length > 0 && !activeEnabledStates().includes(entry.enabled)"
-            (click)="toggleEnabledState(entry.enabled)"
-          >
-            <span [class]="entry.class" aria-hidden="true"></span>
-            <span class="filter-chip-label" [translate]="entry.label"></span>
-          </button>
-        }
-        @if (activeEnabledStates().length > 0) {
-          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-enabled-states-button" (click)="clearEnabledStates()">
-            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
-            <span translate="common.clear"></span>
-          </button>
-        }
-
-        <div class="vr mx-2"></div>
-
-        <span class="filter-label text-muted" translate="south.type"></span>
-        @for (type of types(); track type) {
-          <button
-            type="button"
-            class="filter-chip d-flex align-items-center px-2 py-1"
-            [class.active]="activeTypes().includes(type)"
-            [class.inactive]="activeTypes().length > 0 && !activeTypes().includes(type)"
-            (click)="toggleType(type)"
-          >
-            <span class="filter-chip-label">{{ type | oIBusSouthTypeEnum }}</span>
-          </button>
-        }
-        @if (activeTypes().length > 0) {
-          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-types-button" (click)="clearTypes()">
-            <span class="fa-solid fa-times me-1" aria-hidden="true"></span>
-            <span translate="common.clear"></span>
-          </button>
-        }
-      </div>
-    }
-  </form>
-
-  <div class="justify-content-end d-flex">
-    <!-- only display it if there is more than 1 page -->
-    @if (displayedSouths().totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end" [page]="displayedSouths()" (pageChanged)="changePage($event)" />
-    }
-  </div>
-
-  <!-- the loading spinner when south are not yet loaded -->
-  @if (!allSouths()) {
-    <oib-loading-spinner />
-  } @else {
-    <!-- the list of south or a caption if empty -->
-    @if (displayedSouths().content.length !== 0) {
-      <div>
-        <table class="mt-2 table table-sm table-hover oib-table">
-          <thead>
-            <tr>
-              <th class="status-column"></th>
-              <th>
-                <button type="button" class="sort-button" (click)="toggleSort('name')">
-                  <span translate="south.name" class="me-2"></span>
-                  <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
-                </button>
-              </th>
-              <th class="type-column">
-                <button type="button" class="sort-button" (click)="toggleSort('type')">
-                  <span translate="south.type" class="me-2"></span>
-                  <span class="fa-solid {{ getSortIcon('type') }}" aria-hidden="true"></span>
-                </button>
-              </th>
-              <th translate="south.description"></th>
-              <th>
-                <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
-                  <span translate="south.updated-at" class="me-2"></span>
-                  <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
-                </button>
-              </th>
-              <th class="oib-actions-column-6"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (south of displayedSouths().content; track south.id) {
-              <tr>
-                @if (!south.enabled) {
-                  <td>
-                    <span [ngbTooltip]="'south.disabled' | translate" class="fa-solid fa-minus-circle status-grey"></span>
-                  </td>
-                } @else {
-                  <td>
-                    <span [ngbTooltip]="'south.enabled' | translate" class="fa-solid fa-check-circle status-green"></span>
-                  </td>
-                }
-                <td>
-                  <span [ngbTooltip]="south.name" placement="top-start">{{ south.name }}</span>
-                </td>
-                <td>{{ south.type | oIBusSouthTypeEnum }}</td>
-                <td>{{ south.description }}</td>
-                <td>
-                  <oib-audit-info
-                    [createdAt]="south.createdAt"
-                    [createdBy]="south.createdBy.friendlyName"
-                    [updatedAt]="south.updatedAt"
-                    [updatedBy]="south.updatedBy.friendlyName"
-                  />
-                </td>
-                <td class="oib-actions">
-                  @let togglePending = pendingToggles().has(south.id);
-                  <button
-                    type="button"
-                    class="btn btn-link"
-                    id="south-enable"
-                    [ngbTooltip]="(south.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-                    [attr.aria-label]="(south.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-                    (click)="toggleConnector(south)"
-                    [disabled]="togglePending"
-                  >
-                    @if (togglePending) {
-                      <span class="fa-solid fa-spinner fa-spin" role="status"></span>
-                    } @else if (south.enabled) {
-                      <span class="fa-solid fa-pause" aria-hidden="true"></span>
-                    } @else {
-                      <span class="fa-solid fa-play" aria-hidden="true"></span>
-                    }
-                  </button>
-                  <!-- Display button -->
-                  <a
-                    class="btn btn-link display-south"
-                    id="display-link"
-                    [ngbTooltip]="'south.tooltips.view' | translate"
-                    [attr.aria-label]="'south.tooltips.view' | translate"
-                    [routerLink]="[south.id]"
-                  >
-                    <span class="fa-solid fa-search" aria-hidden="true"></span>
-                  </a>
-                  <!-- Edit button -->
-                  <a
-                    class="btn btn-link edit-south"
-                    id="edit-link"
-                    [ngbTooltip]="'south.tooltips.edit' | translate"
-                    [attr.aria-label]="'south.tooltips.edit' | translate"
-                    [routerLink]="[south.id, 'edit']"
-                  >
-                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                  </a>
-                  <!-- Duplicate button -->
-                  <a
-                    class="btn btn-link duplicate-south"
-                    [ngbTooltip]="'south.tooltips.duplicate' | translate"
-                    [attr.aria-label]="'south.tooltips.duplicate' | translate"
-                    routerLink="create"
-                    [queryParams]="{ duplicate: south.id }"
-                  >
-                    <span class="fa-solid fa-copy" aria-hidden="true"></span>
-                  </a>
-                  <!-- Delete button -->
-                  <button
-                    type="button"
-                    class="btn btn-link delete-south"
-                    [ngbTooltip]="'south.tooltips.delete' | translate"
-                    [attr.aria-label]="'south.tooltips.delete' | translate"
-                    (click)="deleteSouth(south)"
-                  >
-                    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                  </button>
-                  <!-- Audit history button -->
-                  <button
-                    type="button"
-                    class="btn btn-link show-audit-south"
-                    [ngbTooltip]="'south.tooltips.audit' | translate"
-                    [attr.aria-label]="'south.tooltips.audit' | translate"
-                    (click)="showAudit(south)"
-                  >
-                    <span class="fa-solid fa-history" aria-hidden="true"></span>
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+    <!-- the loading spinner when south are not yet loaded -->
+    @if (!allSouths()) {
+      <oib-loading-spinner />
     } @else {
-      <div class="oib-grey-container empty" translate="south.none"></div>
+      <!-- the list of south or a caption if empty -->
+      @if (displayedSouths().content.length !== 0) {
+        <div>
+          <table class="mt-2 table table-sm table-hover oib-table">
+            <thead>
+              <tr>
+                <th class="status-column"></th>
+                <th>
+                  <button type="button" class="sort-button" (click)="toggleSort('name')">
+                    <span translate="south.name" class="me-2"></span>
+                    <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="type-column">
+                  <button type="button" class="sort-button" (click)="toggleSort('type')">
+                    <span translate="south.type" class="me-2"></span>
+                    <span class="fa-solid {{ getSortIcon('type') }}" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th translate="south.description"></th>
+                <th>
+                  <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
+                    <span translate="south.updated-at" class="me-2"></span>
+                    <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="oib-actions-column-6"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (south of displayedSouths().content; track south.id) {
+                <tr>
+                  @if (!south.enabled) {
+                    <td>
+                      <span [ngbTooltip]="'south.disabled' | translate" class="fa-solid fa-minus-circle status-grey"></span>
+                    </td>
+                  } @else {
+                    <td>
+                      <span [ngbTooltip]="'south.enabled' | translate" class="fa-solid fa-check-circle status-green"></span>
+                    </td>
+                  }
+                  <td>
+                    <span [ngbTooltip]="south.name" placement="top-start">{{ south.name }}</span>
+                  </td>
+                  <td>{{ south.type | oIBusSouthTypeEnum }}</td>
+                  <td>{{ south.description }}</td>
+                  <td>
+                    <oib-audit-info
+                      [createdAt]="south.createdAt"
+                      [createdBy]="south.createdBy.friendlyName"
+                      [updatedAt]="south.updatedAt"
+                      [updatedBy]="south.updatedBy.friendlyName"
+                    />
+                  </td>
+                  <td class="oib-actions">
+                    @let togglePending = pendingToggles().has(south.id);
+                    <button
+                      type="button"
+                      class="btn btn-link"
+                      id="south-enable"
+                      [ngbTooltip]="(south.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
+                      [attr.aria-label]="(south.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
+                      (click)="toggleConnector(south)"
+                      [disabled]="togglePending"
+                    >
+                      @if (togglePending) {
+                        <span class="fa-solid fa-spinner fa-spin" role="status"></span>
+                      } @else if (south.enabled) {
+                        <span class="fa-solid fa-pause" aria-hidden="true"></span>
+                      } @else {
+                        <span class="fa-solid fa-play" aria-hidden="true"></span>
+                      }
+                    </button>
+                    <!-- Display button -->
+                    <a
+                      class="btn btn-link display-south"
+                      id="display-link"
+                      [ngbTooltip]="'south.tooltips.view' | translate"
+                      [attr.aria-label]="'south.tooltips.view' | translate"
+                      [routerLink]="[south.id]"
+                    >
+                      <span class="fa-solid fa-search" aria-hidden="true"></span>
+                    </a>
+                    <!-- Edit button -->
+                    <a
+                      class="btn btn-link edit-south"
+                      id="edit-link"
+                      [ngbTooltip]="'south.tooltips.edit' | translate"
+                      [attr.aria-label]="'south.tooltips.edit' | translate"
+                      [routerLink]="[south.id, 'edit']"
+                    >
+                      <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                    </a>
+                    <!-- Duplicate button -->
+                    <a
+                      class="btn btn-link duplicate-south"
+                      [ngbTooltip]="'south.tooltips.duplicate' | translate"
+                      [attr.aria-label]="'south.tooltips.duplicate' | translate"
+                      routerLink="create"
+                      [queryParams]="{ duplicate: south.id }"
+                    >
+                      <span class="fa-solid fa-copy" aria-hidden="true"></span>
+                    </a>
+                    <!-- Delete button -->
+                    <button
+                      type="button"
+                      class="btn btn-link delete-south"
+                      [ngbTooltip]="'south.tooltips.delete' | translate"
+                      [attr.aria-label]="'south.tooltips.delete' | translate"
+                      (click)="deleteSouth(south)"
+                    >
+                      <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                    </button>
+                    <!-- Audit history button -->
+                    <button
+                      type="button"
+                      class="btn btn-link show-audit-south"
+                      [ngbTooltip]="'south.tooltips.audit' | translate"
+                      [attr.aria-label]="'south.tooltips.audit' | translate"
+                      (click)="showAudit(south)"
+                    >
+                      <span class="fa-solid fa-history" aria-hidden="true"></span>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="oib-grey-container empty" translate="south.none"></div>
+      }
     }
-  }
+  </section>
 </div>
