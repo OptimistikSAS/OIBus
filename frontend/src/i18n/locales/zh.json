@@ -888,7 +888,6 @@
         },
         "south": {
           "tooltips": {
-            "create": "创建新项",
             "edit": "编辑项",
             "copy": "复制项",
             "delete": "删除项"
@@ -1780,7 +1779,6 @@
     }
   },
   "south": {
-    "title": "South {{ name }}",
     "list": "South 列表",
     "type-title": "South 类型",
     "type-error": "您必须选择一个 South 类型",
@@ -2060,7 +2058,8 @@
       "not-synced-notice": "此项使用其自身的历史查询设置（未与组同步）",
       "tooltips": {
         "audit": "查看项目审计历史"
-      }
+      },
+      "more-actions": "更多项操作"
     },
     "groups": {
       "create-title": "创建新组",
@@ -2250,7 +2249,6 @@
       "last-connection": "最近一次连接",
       "last-file": "最近检索的文件",
       "last-value": "最近检索的值",
-      "last-value-content": "{{ pointId }} 于 {{ timestamp }}，内容为 {{ data }}",
       "last-run-start": "最近一次运行",
       "last-run-duration": "最近一次运行时长"
     },
@@ -2888,7 +2886,6 @@
   },
   "history-query": {
     "list": "历史查询",
-    "title": "历史查询 {{ name }}",
     "search-by-name": "名称",
     "confirm-deletion": "确定要删除历史查询 {{ name }} 吗？",
     "updated": "历史查询 {{ name }} 更新成功",
@@ -2997,7 +2994,6 @@
       "none-match": "没有符合搜索条件的项目",
       "search": {},
       "tooltips": {
-        "add": "添加新项目",
         "edit": "编辑项目",
         "duplicate": "复制项目",
         "delete": "删除项目",
@@ -3006,18 +3002,17 @@
       "search-placeholder": "输入文本以筛选项"
     },
     "monitoring": {
-      "title": "{{ name }} 指标",
       "north": {
         "title": "North 指标",
         "reset-metrics": "重置指标",
         "metrics-reset": "指标重置成功",
         "metrics-start": "指标于 {{ start }} 开始统计",
         "cache-size-title": "缓存大小",
-        "cache-size-value": "当前大小：{{ currentSize }} / 已缓存总量：{{ totalCached }} / 已发送总量：{{ totalSent }}",
+        "cache-size-note": "已缓存总量：{{ totalCached }} / 已发送总量：{{ totalSent }}",
         "error-size-title": "错误大小",
-        "error-size-value": "当前大小：{{ currentSize }} / 出错总量：{{ totalSize }}",
+        "error-size-note": "出错总量：{{ totalSize }}",
         "archive-size-title": "归档大小",
-        "archive-size-value": "当前大小：{{ currentSize }} / 已归档总量：{{ totalSize }}",
+        "archive-size-note": "已归档总量：{{ totalSize }}",
         "last-content-sent": "上次发送内容",
         "last-connection": "上次连接",
         "last-run-start": "上次运行",
@@ -3034,7 +3029,6 @@
         "last-connection": "上次连接",
         "last-file": "上次获取的文件",
         "last-value": "上次获取的数值",
-        "last-value-content": "{{ pointId }}，时间 {{ timestamp }}，内容为 {{ data }}",
         "last-run-start": "上次运行",
         "last-run-duration": "上次运行时长",
         "data-retrieved": "已获取数据",
@@ -3230,7 +3224,6 @@
     }
   },
   "north": {
-    "title": "North {{ name }}",
     "list": "North 列表",
     "search-by-name": "名称",
     "choose-north-type-title": "选择 North 的类型",
@@ -3332,13 +3325,13 @@
       "last-connection": "上次连接",
       "last-content-sent": "上次发送内容",
       "last-run": "上次运行",
-      "last-run-value": "{{ lastRunStart }}（耗时 {{ lastRunDuration }}）",
+      "last-run-duration": "最近一次运行时长",
       "cache-size-title": "缓存大小",
-      "cache-size-value": "当前大小：{{ currentSize }} / 已缓存总量：{{ totalCached }} / 已发送总量：{{ totalSent }}",
+      "cache-size-note": "已缓存总量：{{ totalCached }} / 已发送总量：{{ totalSent }}",
       "error-size-title": "错误大小",
-      "error-size-value": "当前大小：{{ currentSize }} / 错误总量：{{ totalSize }}",
+      "error-size-note": "错误总量：{{ totalSize }}",
       "archive-size-title": "归档大小",
-      "archive-size-value": "当前大小：{{ currentSize }} / 归档总量：{{ totalSize }}"
+      "archive-size-note": "归档总量：{{ totalSize }}"
     },
     "tooltips": {
       "add": "创建新的 North 连接器",
@@ -3646,7 +3639,13 @@
     "cache": "缓存",
     "step-invalid": "(有错误)",
     "changed": "已修改",
-    "was": "原为"
+    "was": "原为",
+    "start": "启动",
+    "stop": "停止",
+    "pause": "暂停",
+    "resume": "恢复",
+    "restart": "重启",
+    "metrics": "指标"
   },
   "duration-pipe": {
     "long": {

@@ -108,7 +108,13 @@
     "cache": "Cache",
     "step-invalid": "(has errors)",
     "changed": "Changed",
-    "was": "Was"
+    "was": "Was",
+    "start": "Start",
+    "stop": "Stop",
+    "pause": "Pause",
+    "resume": "Resume",
+    "restart": "Restart",
+    "metrics": "Metrics"
   },
   "datepicker": {
     "parse-pattern": "d/M/yyyy",
@@ -1855,7 +1861,6 @@
         },
         "south": {
           "tooltips": {
-            "create": "Create a new item",
             "edit": "Edit item",
             "copy": "Copy item",
             "delete": "Delete item"
@@ -2747,7 +2752,6 @@
     }
   },
   "south": {
-    "title": "South {{ name }}",
     "list": "South list",
     "type-title": "South type",
     "type-error": "You must select a South type",
@@ -3027,7 +3031,8 @@
       "not-synced-notice": "Item uses its own historian settings (not synchronized with group)",
       "tooltips": {
         "audit": "View item audit history"
-      }
+      },
+      "more-actions": "More actions on the items"
     },
     "groups": {
       "create-title": "Create a new group",
@@ -3217,7 +3222,6 @@
       "last-connection": "Last connection",
       "last-file": "Last file retrieved",
       "last-value": "Last value retrieved",
-      "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
       "last-run-start": "Last run",
       "last-run-duration": "Last run duration"
     },
@@ -3250,7 +3254,6 @@
     }
   },
   "north": {
-    "title": "North {{ name }}",
     "list": "North list",
     "search-by-name": "Name",
     "choose-north-type-title": "Choose the type of north",
@@ -3352,13 +3355,13 @@
       "last-connection": "Last connection",
       "last-content-sent": "Last content sent",
       "last-run": "Last run",
-      "last-run-value": "{{ lastRunStart }} (in {{ lastRunDuration }})",
+      "last-run-duration": "Last run duration",
       "cache-size-title": "Cache size",
-      "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
+      "cache-size-note": "Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
       "error-size-title": "Error size",
-      "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
+      "error-size-note": "Total errored: {{ totalSize }}",
       "archive-size-title": "Archive size",
-      "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}"
+      "archive-size-note": "Total archived: {{ totalSize }}"
     },
     "tooltips": {
       "add": "Create a new north connector",
@@ -3471,7 +3474,6 @@
   },
   "history-query": {
     "list": "History queries",
-    "title": "History query {{ name }}",
     "search-by-name": "Name",
     "confirm-deletion": "Are you sure you want to delete the History query {{ name }}?",
     "updated": "History query {{ name }} successfully updated",
@@ -3580,7 +3582,6 @@
       "none-match": "No items match the search criteria",
       "search": {},
       "tooltips": {
-        "add": "Add a new item",
         "edit": "Edit item",
         "duplicate": "Duplicate item",
         "delete": "Delete item",
@@ -3589,18 +3590,17 @@
       "search-placeholder": "Enter text to filter items"
     },
     "monitoring": {
-      "title": "{{ name }} metrics",
       "north": {
         "title": "North metrics",
         "reset-metrics": "Reset metrics",
         "metrics-reset": "Metrics successfully reset",
         "metrics-start": "Metrics started on {{ start }}",
         "cache-size-title": "Cache size",
-        "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
+        "cache-size-note": "Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
         "error-size-title": "Error size",
-        "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
+        "error-size-note": "Total errored: {{ totalSize }}",
         "archive-size-title": "Archive size",
-        "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}",
+        "archive-size-note": "Total archived: {{ totalSize }}",
         "last-content-sent": "Last content sent",
         "last-connection": "Last connection",
         "last-run-start": "Last run",
@@ -3617,7 +3617,6 @@
         "last-connection": "Last connection",
         "last-file": "Last file retrieved",
         "last-value": "Last value retrieved",
-        "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration",
         "data-retrieved": "Data retrieved",

@@ -888,7 +888,6 @@
         },
         "south": {
           "tooltips": {
-            "create": "Créer un nouvel élément",
             "edit": "Modifier l'élément",
             "copy": "Copier l'élément",
             "delete": "Supprimer l'élément"
@@ -1780,7 +1779,6 @@
     }
   },
   "south": {
-    "title": "South {{ name }}",
     "list": "Liste des South",
     "type-title": "Type de South",
     "type-error": "Vous devez sélectionner un type de South",
@@ -2060,7 +2058,8 @@
       "not-synced-notice": "L'élément utilise ses propres paramètres d'historisation (non synchronisé avec le groupe)",
       "tooltips": {
         "audit": "Voir l'historique d'audit de l'élément"
-      }
+      },
+      "more-actions": "Autres actions sur les éléments"
     },
     "groups": {
       "create-title": "Créer un nouveau groupe",
@@ -2250,7 +2249,6 @@
       "last-connection": "Dernière connexion",
       "last-file": "Dernier fichier récupéré",
       "last-value": "Dernière valeur récupérée",
-      "last-value-content": "{{ pointId }} à {{ timestamp }} avec le contenu {{ data }}",
       "last-run-start": "Dernière exécution",
       "last-run-duration": "Durée de la dernière exécution"
     },
@@ -2888,7 +2886,6 @@
   },
   "history-query": {
     "list": "Requêtes d'historique",
-    "title": "Requête d'historique {{ name }}",
     "search-by-name": "Nom",
     "confirm-deletion": "Êtes-vous sûr de vouloir supprimer la requête d'historique {{ name }} ?",
     "updated": "Requête d'historique {{ name }} mise à jour avec succès",
@@ -2997,7 +2994,6 @@
       "none-match": "Aucun élément ne correspond aux critères de recherche",
       "search": {},
       "tooltips": {
-        "add": "Ajouter un nouvel élément",
         "edit": "Modifier l'élément",
         "duplicate": "Dupliquer l'élément",
         "delete": "Supprimer l'élément",
@@ -3006,18 +3002,17 @@
       "search-placeholder": "Saisir du texte pour filtrer les éléments"
     },
     "monitoring": {
-      "title": "Métriques de {{ name }}",
       "north": {
         "title": "Métriques North",
         "reset-metrics": "Réinitialiser les métriques",
         "metrics-reset": "Métriques réinitialisées avec succès",
         "metrics-start": "Métriques démarrées le {{ start }}",
         "cache-size-title": "Taille du cache",
-        "cache-size-value": "Taille actuelle : {{ currentSize }} / Total en cache : {{ totalCached }} / Total envoyé : {{ totalSent }}",
+        "cache-size-note": "Total en cache : {{ totalCached }} / Total envoyé : {{ totalSent }}",
         "error-size-title": "Taille des erreurs",
-        "error-size-value": "Taille actuelle : {{ currentSize }} / Total en erreur : {{ totalSize }}",
+        "error-size-note": "Total en erreur : {{ totalSize }}",
         "archive-size-title": "Taille de l'archive",
-        "archive-size-value": "Taille actuelle : {{ currentSize }} / Total archivé : {{ totalSize }}",
+        "archive-size-note": "Total archivé : {{ totalSize }}",
         "last-content-sent": "Dernier contenu envoyé",
         "last-connection": "Dernière connexion",
         "last-run-start": "Dernière exécution",
@@ -3034,7 +3029,6 @@
         "last-connection": "Dernière connexion",
         "last-file": "Dernier fichier récupéré",
         "last-value": "Dernière valeur récupérée",
-        "last-value-content": "{{ pointId }} à {{ timestamp }} avec le contenu {{ data }}",
         "last-run-start": "Dernière exécution",
         "last-run-duration": "Durée de la dernière exécution",
         "data-retrieved": "Données récupérées",
@@ -3230,7 +3224,6 @@
     }
   },
   "north": {
-    "title": "North {{ name }}",
     "list": "Liste des North",
     "search-by-name": "Nom",
     "choose-north-type-title": "Choisissez le type de North",
@@ -3332,13 +3325,13 @@
       "last-connection": "Dernière connexion",
       "last-content-sent": "Dernier contenu envoyé",
       "last-run": "Dernière exécution",
-      "last-run-value": "{{ lastRunStart }} (en {{ lastRunDuration }})",
+      "last-run-duration": "Durée de la dernière exécution",
       "cache-size-title": "Taille du cache",
-      "cache-size-value": "Taille actuelle : {{ currentSize }} / Total mis en cache : {{ totalCached }} / Total envoyé : {{ totalSent }}",
+      "cache-size-note": "Total mis en cache : {{ totalCached }} / Total envoyé : {{ totalSent }}",
       "error-size-title": "Taille des erreurs",
-      "error-size-value": "Taille actuelle : {{ currentSize }} / Total en erreur : {{ totalSize }}",
+      "error-size-note": "Total en erreur : {{ totalSize }}",
       "archive-size-title": "Taille de l'archive",
-      "archive-size-value": "Taille actuelle : {{ currentSize }} / Total archivé : {{ totalSize }}"
+      "archive-size-note": "Total archivé : {{ totalSize }}"
     },
     "tooltips": {
       "add": "Créer un nouveau connecteur North",
@@ -3646,7 +3639,13 @@
     "cache": "Cache",
     "step-invalid": "(contient des erreurs)",
     "changed": "Modifié",
-    "was": "Avant"
+    "was": "Avant",
+    "start": "Démarrer",
+    "stop": "Arrêter",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "restart": "Redémarrer",
+    "metrics": "Métriques"
   },
   "duration-pipe": {
     "long": {

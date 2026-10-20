@@ -24,13 +24,14 @@ class HistoryMetricsComponentTester {
     this.fixture.componentRef.setInput('southManifest', testData.south.manifest);
   }
 
+  /** The metric with the given label */
   row(label: string) {
-    return this.root.getByRole('row').filter({ has: page.getByRole('cell', { name: label, exact: true }) });
+    return this.root.getByCss('.oib-summary-entry').filter({ has: page.getByText(label, { exact: true }) });
   }
 
-  /** The value cell of the metrics row with the given label */
+  /** The value of the metric with the given label */
   value(label: string) {
-    return this.row(label).getByRole('cell').nth(1);
+    return this.row(label).getByRole('definition');
   }
 }
 
@@ -65,7 +66,7 @@ describe('HistoryMetricsComponent', () => {
   test('should display the per-item progress and the status of each item', async () => {
     const tester = new HistoryMetricsComponentTester(pendingQuery, testData.historyQueries.metrics);
 
-    await expect.element(tester.title).toHaveTextContent(`${pendingQuery.name} metrics`);
+    await expect.element(tester.title).toHaveTextContent('Metrics');
     await expect.element(tester.value('Items processed')).toMatchTextContent('Current item: item1 (1 / 3)');
     await expect.element(tester.row('Current item progress')).toBeInTheDocument();
     await expect.element(tester.row('Data retrieved')).not.toBeInTheDocument();
@@ -88,7 +89,7 @@ describe('HistoryMetricsComponent', () => {
     const tester = new HistoryMetricsComponentTester(pendingQuery, batchedMetrics);
 
     await expect.element(tester.row('Data retrieved').getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0.5');
-    await expect.element(tester.value('Interval progress')).toMatchTextContent(/2\s*\/\s*4/);
+    await expect.element(tester.value('Interval progress')).toMatchTextContent(/^2 \/ 4 15 Mar 2020/);
     await expect.element(tester.row('Items processed')).not.toBeInTheDocument();
     await expect.element(tester.itemStatuses).not.toBeInTheDocument();
     await expect.element(tester.root.getByText('Items status')).not.toBeInTheDocument();
@@ -145,9 +146,9 @@ describe('HistoryMetricsComponent', () => {
     await expect.element(tester.value('Last content sent')).toHaveTextContent('file.csv');
     await expect.element(tester.value('Last run duration').first()).toHaveTextContent('2 s');
     await expect.element(tester.value('Last file retrieved')).toHaveTextContent('retrieved.csv');
-    await expect.element(tester.value('Last value retrieved')).toMatchTextContent(/point1 at 2020-03-15T00:00:00.000Z with content/);
-    await expect.element(tester.value('Cache size')).toHaveTextContent('Current size: 10 B / Total cached: 22 B / Total sent: 11 B');
-    await expect.element(tester.value('Error size')).toHaveTextContent('Current size: 20 B / Total errored: 23 B');
-    await expect.element(tester.value('Archive size')).toHaveTextContent('Current size: 30 B / Total archived: 24 B');
+    await expect.element(tester.value('Last value retrieved')).toMatchTextContent(/^point1 15 Mar 2020.*"value": 12/);
+    await expect.element(tester.value('Cache size')).toHaveTextContent('10 B Total cached: 22 B / Total sent: 11 B');
+    await expect.element(tester.value('Error size')).toHaveTextContent('20 B Total errored: 23 B');
+    await expect.element(tester.value('Archive size')).toHaveTextContent('30 B Total archived: 24 B');
   });
 });
