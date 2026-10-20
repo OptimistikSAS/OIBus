@@ -3,12 +3,12 @@
     <div class="oib-padded-container">
       <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
-          <div class="oib-detail-header">
+          <div class="oib-page-header">
             <div>
               <h1 id="title">{{ southConnector.name }}</h1>
-              <div class="oib-detail-meta">
+              <div class="oib-page-meta">
                 <span class="d-flex align-items-center gap-1" id="south-type">
-                  <img class="oib-detail-type-image" [src]="'/' + manifest.category + '.svg'" alt="" />
+                  <img class="oib-type-image" [src]="'/' + manifest.category + '.svg'" alt="" />
                   {{ southConnector.type | oIBusSouthTypeEnum }}
                 </span>
                 <span class="oib-status-badge" id="south-status">
@@ -38,7 +38,7 @@
                 </span>
               </div>
             </div>
-            <div class="oib-detail-actions">
+            <div class="oib-page-actions">
               <button
                 type="button"
                 class="btn btn-subtle"

@@ -1,14 +1,11 @@
-<oib-box>
-  <ng-template oibBoxTitle>
-    <div class="d-flex justify-content-between align-items-center">
-      <span translate="engine.monitoring.title" id="title"></span>
-      <div class="d-flex align-items-center">
-        <span
-          translate="engine.monitoring.since"
-          [translateParams]="{ date: metrics().metricsStart | datetime: 'mediumWithSeconds' }"
-        ></span>
-        <!-- Display button -->
-        @if (displayButton()) {
+<!-- On the home page, a box with a link to the engine; on the engine page, a section of the page -->
+@if (displayButton()) {
+  <oib-box>
+    <ng-template oibBoxTitle>
+      <div class="d-flex justify-content-between align-items-center">
+        <span translate="engine.monitoring.title" id="title"></span>
+        <div class="d-flex align-items-center">
+          <ng-container [ngTemplateOutlet]="since" />
           <a
             class="btn btn-link display-engine px-1 py-0"
             id="display-link"
@@ -20,77 +17,76 @@
           >
             <span class="fa-solid fa-search" aria-hidden="true"></span>
           </a>
-        } @else {
-          <!-- Reset button -->
-          <button
-            type="button"
-            class="ms-3 btn btn-danger btn-sm oib-box-btn"
-            (click)="resetMetrics()"
-            translate="engine.monitoring.reset-metrics"
-          ></button>
-        }
+        </div>
       </div>
+    </ng-template>
+    <!-- the box pads its content with a div in it -->
+    <div class="pt-2">
+      <ng-container [ngTemplateOutlet]="content" />
     </div>
-  </ng-template>
+  </oib-box>
+} @else {
+  <section class="oib-panel">
+    <div class="oib-section-title">
+      <h5 translate="engine.monitoring.title" id="title"></h5>
+      <ng-container [ngTemplateOutlet]="since" />
+      <button type="button" class="btn btn-subtle btn-sm" (click)="resetMetrics()">
+        <span class="fa-solid fa-rotate-left me-1" aria-hidden="true"></span>
+        <span translate="engine.monitoring.reset-metrics"></span>
+      </button>
+    </div>
+    <ng-container [ngTemplateOutlet]="content" />
+  </section>
+}
 
-  <div class="mb-3">
-    <table class="table table-sm table-hover oib-table">
-      <tbody>
-        <!-- Instant percentage of CPU usage -->
-        <tr>
-          <td translate="engine.monitoring.cpu-usage-instant"></td>
-          <td>{{ metrics().processCpuUsageInstant | percent: '.2' }}</td>
-        </tr>
-        <!-- Average percentage of CPU usage -->
-        <tr>
-          <td translate="engine.monitoring.cpu-usage-average"></td>
-          <td>{{ metrics().processCpuUsageAverage | percent: '.2' }}</td>
-        </tr>
-        <!-- Percentage of CPU up time -->
-        <tr>
-          <td translate="engine.monitoring.uptime"></td>
-          <td>{{ metrics().processUptime | duration }}</td>
-        </tr>
-        <!-- Memory use -->
-        <tr>
-          <td translate="engine.monitoring.free-memory"></td>
-          <td>{{ metrics().freeMemory / metrics().totalMemory | percent }}</td>
-        </tr>
-        <!-- RSS -->
-        <tr>
-          <td translate="engine.monitoring.rss"></td>
-          <td>{{ metrics().minRss | fileSize }} / {{ metrics().currentRss | fileSize }} / {{ metrics().maxRss | fileSize }}</td>
-        </tr>
-        <!-- Heap Total -->
-        <tr>
-          <td translate="engine.monitoring.heap-total"></td>
-          <td>
-            {{ metrics().minHeapTotal | fileSize }} / {{ metrics().currentHeapTotal | fileSize }} / {{ metrics().maxHeapTotal | fileSize }}
-          </td>
-        </tr>
-        <!-- Heap Used -->
-        <tr>
-          <td translate="engine.monitoring.heap-used"></td>
-          <td>
-            {{ metrics().minHeapUsed | fileSize }} / {{ metrics().currentHeapUsed | fileSize }} / {{ metrics().maxHeapUsed | fileSize }}
-          </td>
-        </tr>
-        <!-- External -->
-        <tr>
-          <td translate="engine.monitoring.external"></td>
-          <td>
-            {{ metrics().minExternal | fileSize }} / {{ metrics().currentExternal | fileSize }} / {{ metrics().maxExternal | fileSize }}
-          </td>
-        </tr>
-        <!-- Array Buffers -->
-        <tr>
-          <td translate="engine.monitoring.array-buffer"></td>
-          <td>
-            {{ metrics().minArrayBuffers | fileSize }} / {{ metrics().currentArrayBuffers | fileSize }} /
-            {{ metrics().maxArrayBuffers | fileSize }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</oib-box>
+<ng-template #since>
+  <span
+    class="oib-section-note"
+    translate="engine.monitoring.since"
+    [translateParams]="{ date: metrics().metricsStart | datetime: 'mediumWithSeconds' }"
+  ></span>
+</ng-template>
+
+<ng-template #content>
+  @let metrics = this.metrics();
+  <dl class="oib-summary">
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.cpu-usage-instant"></dt>
+      <dd>{{ metrics.processCpuUsageInstant | percent: '.2' }}</dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.cpu-usage-average"></dt>
+      <dd>{{ metrics.processCpuUsageAverage | percent: '.2' }}</dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.uptime"></dt>
+      <dd>{{ metrics.processUptime | duration }}</dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.free-memory"></dt>
+      <dd>{{ metrics.freeMemory / metrics.totalMemory | percent }}</dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.rss"></dt>
+      <dd>{{ metrics.minRss | fileSize }} / {{ metrics.currentRss | fileSize }} / {{ metrics.maxRss | fileSize }}</dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.heap-total"></dt>
+      <dd>{{ metrics.minHeapTotal | fileSize }} / {{ metrics.currentHeapTotal | fileSize }} / {{ metrics.maxHeapTotal | fileSize }}</dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.heap-used"></dt>
+      <dd>{{ metrics.minHeapUsed | fileSize }} / {{ metrics.currentHeapUsed | fileSize }} / {{ metrics.maxHeapUsed | fileSize }}</dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.external"></dt>
+      <dd>{{ metrics.minExternal | fileSize }} / {{ metrics.currentExternal | fileSize }} / {{ metrics.maxExternal | fileSize }}</dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="engine.monitoring.array-buffer"></dt>
+      <dd>
+        {{ metrics.minArrayBuffers | fileSize }} / {{ metrics.currentArrayBuffers | fileSize }} / {{ metrics.maxArrayBuffers | fileSize }}
+      </dd>
+    </div>
+  </dl>
+</ng-template>

@@ -1140,7 +1140,7 @@ val-errors > div {
 
 // The header of a detail page (e.g. the south connector page): the name, what sums the entity up under it (its type, status, ...),
 // and the actions on the entity on the right
-.oib-detail-header {
+.oib-page-header {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -1159,7 +1159,7 @@ val-errors > div {
   }
 }
 
-.oib-detail-meta {
+.oib-page-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1179,11 +1179,11 @@ val-errors > div {
 }
 
 // the icon of the category of a connector type, next to the type
-.oib-detail-type-image {
+.oib-type-image {
   height: 1.25rem;
 }
 
-.oib-detail-actions {
+.oib-page-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -1209,6 +1209,19 @@ val-errors > div {
   letter-spacing: normal;
   text-transform: none;
   color: $new-link-color;
+}
+
+// A table in a panel (e.g. the list of the south connectors): its header is light and underlined, not the dark bar of the
+// oib-box titles
+.oib-panel .oib-table thead {
+  color: $darkGrey;
+  background-color: transparent;
+  border-bottom: 1px solid $mediumGrey;
+}
+
+// The search field of a list page, its icon on the left
+.oib-list-search {
+  max-width: 22rem;
 }
 
 // A dropdown toggle that shows its own icon (e.g. an ellipsis for more actions), without the caret
