@@ -79,7 +79,8 @@ class NorthDetailComponentTester {
   readonly copyCachePath = this.root.getByRole('button', { name: 'Copy cache path to clipboard' });
   readonly metrics = this.root.getByCss('oib-north-metrics');
   readonly transformers = this.root.getByCss('oib-north-transformers tbody tr');
-  readonly cachingRows = this.root.getByCss('oib-box').nth(1).getByCss('tbody tr');
+  readonly status = this.root.getByCss('#north-status');
+  readonly caching = this.root.getByCss('#north-caching .oib-summary-entry');
 }
 
 describe('NorthDetailComponent', () => {
@@ -141,15 +142,16 @@ describe('NorthDetailComponent', () => {
   test('should display the north connector', async () => {
     const tester = new NorthDetailComponentTester();
 
-    await expect.element(tester.title).toHaveTextContent('North North 1');
+    await expect.element(tester.title).toHaveTextContent('North 1');
+    await expect.element(tester.status).toHaveTextContent('Enabled');
     expect(northConnectorService.findById).toHaveBeenCalledWith('northId1');
     expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith('file-writer');
-    // status, output folder and prefix (the suffix is not enabled for this prefix)
-    await expect.element(tester.settings).toHaveLength(3);
-    await expect.element(tester.settings.nth(0)).toHaveTextContent('Status active');
-    await expect.element(tester.settings.nth(1)).toHaveTextContent('Output folder output-folder');
-    await expect.element(tester.settings.nth(2)).toHaveTextContent('Prefix prefix-');
-    await expect.element(tester.cachingRows.nth(0)).toMatchTextContent(/scanMode1.*250.*1/);
+    // output folder and prefix (the suffix is not enabled for this prefix)
+    await expect.element(tester.settings).toHaveLength(2);
+    await expect.element(tester.settings.nth(0)).toHaveTextContent('Output folder output-folder');
+    await expect.element(tester.settings.nth(1)).toHaveTextContent('Prefix prefix-');
+    await expect.element(tester.caching.nth(0)).toHaveTextContent('Schedule scanMode1');
+    await expect.element(tester.caching.nth(1)).toHaveTextContent('Number of elements 250');
     await expect.element(tester.transformers).toHaveLength(3);
     await expect.element(tester.metrics).toBeInTheDocument();
     await expect.element(tester.stopButton).toBeInTheDocument();
@@ -182,7 +184,7 @@ describe('NorthDetailComponent', () => {
     expect(northConnectorService.stop).toHaveBeenCalledWith('northId1');
     expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: 'North 1' });
     await expect.element(tester.startButton).toBeInTheDocument();
-    await expect.element(tester.settings.nth(0)).toHaveTextContent('Status paused');
+    await expect.element(tester.status).toHaveTextContent('Disabled');
   });
 
   test('should start the connector', async () => {

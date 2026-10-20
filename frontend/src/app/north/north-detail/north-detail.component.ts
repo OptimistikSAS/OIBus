@@ -18,7 +18,6 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { TransformerService } from '../../services/transformer.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
 import { SettingSummary, summarizeSettings } from '../../shared/form/oibus-settings-summary/settings-summary';
 import { ModalService } from '../../shared/modal.service';
@@ -28,6 +27,7 @@ import { PageLoader } from '../../shared/page-loader.service';
 import { pollMetrics } from '../../shared/polling';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
+import { summarizeCaching } from '../north-summary';
 import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
 
 @Component({
@@ -36,8 +36,6 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
     TranslateDirective,
     RouterLink,
     NorthMetricsComponent,
-    BoxComponent,
-    BoxTitleDirective,
     ClipboardModule,
     LogsComponent,
     OIBusNorthTypeEnumPipe,
@@ -47,7 +45,6 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
     OIBusSettingsSummaryComponent
   ],
   templateUrl: './north-detail.component.html',
-  styleUrl: './north-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [PageLoader, BooleanEnumPipe]
 })
@@ -84,22 +81,25 @@ export class NorthDetailComponent {
   });
   readonly manifest = computed(() => (this.manifestResource.hasValue() ? this.manifestResource.value() : null));
 
-  /** The status and settings of the connector, summed up from its manifest */
+  /** The settings of the connector, summed up from its manifest: its status shows in the header of the page */
   readonly displayedSettings = computed<Array<SettingSummary>>(() => {
     const manifest = this.manifest();
     const northConnector = this.northConnector();
     if (!manifest || !northConnector) {
       return [];
     }
-    return [
-      { kind: 'text', labelKey: 'north.status', text: this.translateService.instant(northConnector.enabled ? 'enabled' : 'disabled') },
-      ...summarizeSettings(manifest.settings, northConnector.settings, {
-        translateService: this.translateService,
-        scanModes: this.scanModes(),
-        certificates: this.certificates(),
-        applyEnablingConditions: true
-      })
-    ];
+    return summarizeSettings(manifest.settings, northConnector.settings, {
+      translateService: this.translateService,
+      scanModes: this.scanModes(),
+      certificates: this.certificates(),
+      applyEnablingConditions: true
+    });
+  });
+
+  /** The caching settings of the connector, summed up as in the review step of its edition */
+  readonly cachingSummary = computed<Array<SettingSummary>>(() => {
+    const northConnector = this.northConnector();
+    return northConnector ? summarizeCaching(northConnector.caching, this.translateService, () => false) : [];
   });
 
   // the metrics are polled once the connector and its manifest are loaded
@@ -115,10 +115,6 @@ export class NorthDetailComponent {
     this.northConnectorService.findById(this.northConnector()!.id).subscribe(northConnector => {
       this.northConnectorResource.set(northConnector);
     });
-  }
-
-  getScanMode(scanModeId: string) {
-    return this.scanModes().find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
   }
 
   testConnection() {

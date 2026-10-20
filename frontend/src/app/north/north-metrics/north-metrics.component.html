@@ -1,15 +1,12 @@
-@if (manifestOrNorthConnectorTypeManifest(); as manifest) {
-  <oib-box>
-    <ng-template oibBoxTitle>
-      <div class="d-flex justify-content-between align-items-center">
-        <span translate="north.monitoring.title" id="title" [translateParams]="{ name: northConnector().name }"></span>
-        <div class="d-flex align-items-center">
-          <span
-            translate="north.monitoring.since"
-            [translateParams]="{ date: connectorMetrics().metricsStart | datetime: 'mediumWithSeconds' }"
-          ></span>
-          <!-- Display button -->
-          @if (displayButton()) {
+@if (manifestOrNorthConnectorTypeManifest()) {
+  <!-- On the home page, a box with a link to the connector; on the connector page, a section of the page -->
+  @if (displayButton()) {
+    <oib-box>
+      <ng-template oibBoxTitle>
+        <div class="d-flex justify-content-between align-items-center">
+          <span translate="north.monitoring.title" id="title" [translateParams]="{ name: northConnector().name }"></span>
+          <div class="d-flex align-items-center">
+            <ng-container [ngTemplateOutlet]="since" />
             <a
               class="btn btn-link display-north px-1 py-0"
               id="display-link"
@@ -22,87 +19,97 @@
             >
               <span class="fa-solid fa-search" aria-hidden="true"></span>
             </a>
-          } @else {
-            <!-- Reset button -->
-            <button
-              type="button"
-              class="ms-3 btn btn-danger btn-sm oib-box-btn"
-              (click)="resetMetrics()"
-              translate="north.monitoring.reset-metrics"
-            ></button>
-          }
+          </div>
         </div>
+      </ng-template>
+      <!-- the box pads its content with a div in it -->
+      <div class="pt-2">
+        <ng-container [ngTemplateOutlet]="metrics" />
       </div>
-    </ng-template>
-    <div class="mb-3">
-      <table class="table table-sm table-hover oib-table">
-        <tbody>
-          <!-- last connection -->
-          @if (connectorMetrics().lastConnection; as lastConnection) {
-            <tr>
-              <td translate="north.monitoring.last-connection"></td>
-              <td class="last-column-body">{{ lastConnection | datetime: 'mediumWithSeconds' }}</td>
-            </tr>
-          }
-          @if (connectorMetrics().lastContentSent; as lastContentSent) {
-            <tr>
-              <td translate="north.monitoring.last-content-sent"></td>
-              <td class="last-column-body">{{ lastContentSent }}</td>
-            </tr>
-          }
-          <!-- last run -->
-          @if (connectorMetrics().lastRunStart; as lastRunStart) {
-            <tr>
-              <td translate="north.monitoring.last-run"></td>
-              <td
-                class="last-column-body"
-                translate="north.monitoring.last-run-value"
-                [translateParams]="{
-                  lastRunStart: lastRunStart | datetime: 'mediumWithSeconds',
-                  lastRunDuration: connectorMetrics().lastRunDuration! | duration: 'short'
-                }"
-              ></td>
-            </tr>
-          }
-          <!-- cache size -->
-          <tr>
-            <td translate="north.monitoring.cache-size-title"></td>
-            <td
-              class="last-column-body"
-              translate="north.monitoring.cache-size-value"
-              [translateParams]="{
-                currentSize: connectorMetrics().currentCacheSize | fileSize,
-                totalSent: connectorMetrics().contentSentSize | fileSize,
-                totalCached: connectorMetrics().contentCachedSize | fileSize
-              }"
-            ></td>
-          </tr>
-          <!-- error size -->
-          <tr>
-            <td translate="north.monitoring.error-size-title"></td>
-            <td
-              class="last-column-body"
-              translate="north.monitoring.error-size-value"
-              [translateParams]="{
-                currentSize: connectorMetrics().currentErrorSize | fileSize,
-                totalSize: connectorMetrics().contentErroredSize | fileSize
-              }"
-            ></td>
-          </tr>
-          <!-- archive size -->
-          <tr>
-            <td translate="north.monitoring.archive-size-title"></td>
-            <td
-              class="last-column-body"
-              translate="north.monitoring.archive-size-value"
-              [translateParams]="{
-                currentSize: connectorMetrics().currentArchiveSize | fileSize,
-                totalSize: connectorMetrics().contentArchivedSize | fileSize
-              }"
-            ></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </oib-box>
+    </oib-box>
+  } @else {
+    <section class="oib-panel">
+      <div class="oib-section-title">
+        <h5 translate="common.metrics" id="title"></h5>
+        <ng-container [ngTemplateOutlet]="since" />
+        <button type="button" class="btn btn-subtle btn-sm" (click)="resetMetrics()">
+          <span class="fa-solid fa-rotate-left me-1" aria-hidden="true"></span>
+          <span translate="north.monitoring.reset-metrics"></span>
+        </button>
+      </div>
+      <ng-container [ngTemplateOutlet]="metrics" />
+    </section>
+  }
 }
+
+<ng-template #since>
+  <span
+    class="oib-section-note"
+    translate="north.monitoring.since"
+    [translateParams]="{ date: connectorMetrics().metricsStart | datetime: 'mediumWithSeconds' }"
+  ></span>
+</ng-template>
+
+<ng-template #metrics>
+  @let metrics = connectorMetrics();
+  <dl class="oib-summary">
+    @if (metrics.lastConnection; as lastConnection) {
+      <div class="oib-summary-entry">
+        <dt translate="north.monitoring.last-connection"></dt>
+        <dd>{{ lastConnection | datetime: 'mediumWithSeconds' }}</dd>
+      </div>
+    }
+    @if (metrics.lastRunStart; as lastRunStart) {
+      <div class="oib-summary-entry">
+        <dt translate="north.monitoring.last-run"></dt>
+        <dd>{{ lastRunStart | datetime: 'mediumWithSeconds' }}</dd>
+      </div>
+    }
+    @if (metrics.lastRunDuration !== null) {
+      <div class="oib-summary-entry">
+        <dt translate="north.monitoring.last-run-duration"></dt>
+        <dd>{{ metrics.lastRunDuration | duration: 'short' }}</dd>
+      </div>
+    }
+    <!-- the sizes of the cache, the errors and the archive now, and what went through them since the metrics started -->
+    <div class="oib-summary-entry">
+      <dt translate="north.monitoring.cache-size-title"></dt>
+      <dd>
+        {{ metrics.currentCacheSize | fileSize }}
+        <div
+          class="oib-summary-note"
+          translate="north.monitoring.cache-size-note"
+          [translateParams]="{ totalCached: metrics.contentCachedSize | fileSize, totalSent: metrics.contentSentSize | fileSize }"
+        ></div>
+      </dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="north.monitoring.error-size-title"></dt>
+      <dd>
+        {{ metrics.currentErrorSize | fileSize }}
+        <div
+          class="oib-summary-note"
+          translate="north.monitoring.error-size-note"
+          [translateParams]="{ totalSize: metrics.contentErroredSize | fileSize }"
+        ></div>
+      </dd>
+    </div>
+    <div class="oib-summary-entry">
+      <dt translate="north.monitoring.archive-size-title"></dt>
+      <dd>
+        {{ metrics.currentArchiveSize | fileSize }}
+        <div
+          class="oib-summary-note"
+          translate="north.monitoring.archive-size-note"
+          [translateParams]="{ totalSize: metrics.contentArchivedSize | fileSize }"
+        ></div>
+      </dd>
+    </div>
+    @if (metrics.lastContentSent; as lastContentSent) {
+      <div class="oib-summary-entry oib-summary-wide">
+        <dt translate="north.monitoring.last-content-sent"></dt>
+        <dd>{{ lastContentSent }}</dd>
+      </div>
+    }
+  </dl>
+</ng-template>

@@ -73,6 +73,7 @@ import {
 } from '../../shared/form/oibus-settings-summary/settings-summary';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
+import { ItemsMenuComponent } from '../../shared/items-menu/items-menu.component';
 import { ModalService } from '../../shared/modal.service';
 import { ModalStepsComponent } from '../../shared/modal-steps/modal-steps.component';
 import { submitsOnEnter, WizardSteps } from '../../shared/modal-steps/wizard-steps';
@@ -176,7 +177,8 @@ type HistoryQueryForm = FormGroup<{
     ...ITEM_TABLE_TEMPLATES,
     ModalStepsComponent,
     OIBusSettingsSummaryComponent,
-    HistoryQueryConnectorsComponent
+    HistoryQueryConnectorsComponent,
+    ItemsMenuComponent
   ],
   templateUrl: './edit-history-query.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

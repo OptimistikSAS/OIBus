@@ -129,7 +129,8 @@ html {
   vertical-align: middle;
 }
 
-.oib-summary-previous {
+.oib-summary-previous,
+.oib-summary-note {
   margin-top: 0.125rem;
   font-size: 0.8125rem;
   color: var(--bs-secondary-color);
@@ -1127,13 +1128,92 @@ val-errors > div {
   font-weight: 600;
 }
 
-// The content of a page edited in steps (e.g. the south connector page): one step shows at a time, its sections titled with
-// oib-section-title
-.oib-steps-panel {
+// The content of a page edited in steps (e.g. the south connector page), where one step shows at a time, or a section of a detail
+// page (e.g. the metrics of the south connector page): a light frame, its sections titled with oib-section-title
+.oib-steps-panel,
+.oib-panel {
   border: 0.2rem solid $lightGrey;
   border-radius: 1rem;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
+}
+
+// The header of a detail page (e.g. the south connector page): the name, what sums the entity up under it (its type, status, ...),
+// and the actions on the entity on the right
+.oib-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+
+  // the name and the meta line take the room left by the actions, wrapping their content rather than the actions
+  > :first-child {
+    flex: 1 1 20rem;
+    min-width: 0;
+  }
+
+  h1 {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.oib-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  margin-top: 0.5rem;
+  color: $new-link-color;
+
+  // the light links of the meta line, not the white ones of the oib-box-title bars
+  .btn-link {
+    padding: 0;
+    color: $new-link-color;
+
+    &:hover {
+      color: $darkGrey;
+    }
+  }
+}
+
+// the icon of the category of a connector type, next to the type
+.oib-detail-type-image {
+  height: 1.25rem;
+}
+
+.oib-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+// The status of an entity (e.g. enabled, or the status of a history query): its icon, colored, and its label
+.oib-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.625rem;
+  border-radius: 1rem;
+  background-color: $veryLightGrey;
+  color: $darkGrey;
+  font-weight: 600;
+}
+
+// What qualifies the title of a section, next to it (e.g. since when the metrics are counted): in the case of the text
+.oib-section-title .oib-section-note {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: $new-link-color;
+}
+
+// A dropdown toggle that shows its own icon (e.g. an ellipsis for more actions), without the caret
+.oib-menu-toggle.dropdown-toggle::after {
+  display: none;
 }
 
 .save-zone {

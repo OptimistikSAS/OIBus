@@ -1,4 +1,4 @@
-import { DecimalPipe, JsonPipe } from '@angular/common';
+import { DecimalPipe, JsonPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
@@ -8,7 +8,6 @@ import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.m
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
 
-import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
@@ -17,19 +16,8 @@ import { ProgressbarComponent } from './progressbar/progressbar.component';
 @Component({
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
-  styleUrl: './history-metrics.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    TranslateDirective,
-    DatetimePipe,
-    DurationPipe,
-    BoxComponent,
-    BoxTitleDirective,
-    JsonPipe,
-    ProgressbarComponent,
-    FileSizePipe,
-    DecimalPipe
-  ]
+  imports: [TranslateDirective, DatetimePipe, DurationPipe, JsonPipe, ProgressbarComponent, FileSizePipe, DecimalPipe, NgTemplateOutlet]
 })
 export class HistoryMetricsComponent {
   readonly historyQuery = input.required<HistoryQueryDTO>();

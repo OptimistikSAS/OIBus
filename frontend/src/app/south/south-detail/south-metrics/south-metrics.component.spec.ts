@@ -21,7 +21,7 @@ class SouthMetricsComponentTester {
   readonly fixture = TestBed.createComponent(SouthMetricsComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByCss('#title');
-  readonly rows = this.root.getByCss('tbody tr');
+  readonly entries = this.root.getByCss('.oib-summary-entry');
   readonly resetButton = this.root.getByRole('button', { name: 'Reset metrics' });
   readonly displayButton = this.root.getByRole('button', { name: 'View south connector metrics' });
 
@@ -59,11 +59,11 @@ describe('SouthMetricsComponent', () => {
   test('should display the metrics with the given manifest', async () => {
     const tester = new SouthMetricsComponentTester({ manifest: testData.south.manifest });
 
-    await expect.element(tester.title).toHaveTextContent('South 1 metrics');
+    await expect.element(tester.title).toHaveTextContent('Metrics');
     // no last connection, value, file nor run in the fixture
-    await expect.element(tester.rows).toHaveLength(2);
-    await expect.element(tester.rows.nth(0)).toHaveTextContent('Number of values retrieved11');
-    await expect.element(tester.rows.nth(1)).toHaveTextContent('Number of files retrieved11');
+    await expect.element(tester.entries).toHaveLength(2);
+    await expect.element(tester.entries.nth(0)).toHaveTextContent('Number of values retrieved11');
+    await expect.element(tester.entries.nth(1)).toHaveTextContent('Number of files retrieved11');
     expect(southConnectorService.getSouthManifest).not.toHaveBeenCalled();
   });
 
@@ -82,13 +82,13 @@ describe('SouthMetricsComponent', () => {
       }
     });
 
-    await expect.element(tester.rows).toHaveLength(5);
-    await expect.element(tester.rows.nth(0)).toMatchTextContent('Last connection');
-    await expect.element(tester.rows.nth(1)).toMatchTextContent(/Last value retrievedpoint1 at 2020-03-15T10:30:00.000Z with content/);
-    await expect.element(tester.rows.nth(1)).toMatchTextContent('"value": "12"');
-    await expect.element(tester.rows.nth(2)).toHaveTextContent('Last file retrievedfile.csv');
-    await expect.element(tester.rows.nth(3)).toMatchTextContent('Last run');
-    await expect.element(tester.rows.nth(4)).toMatchTextContent('Last run duration');
+    await expect.element(tester.entries).toHaveLength(5);
+    await expect.element(tester.entries.nth(0)).toMatchTextContent('Last connection');
+    await expect.element(tester.entries.nth(1)).toMatchTextContent('Last run');
+    await expect.element(tester.entries.nth(2)).toHaveTextContent('Last run duration2 s');
+    await expect.element(tester.entries.nth(3)).toHaveTextContent('Last file retrievedfile.csv');
+    await expect.element(tester.entries.nth(4)).toMatchTextContent(/^Last value retrieved point1 15 Mar 2020/);
+    await expect.element(tester.entries.nth(4).getByCss('pre')).toMatchTextContent('"value": "12"');
   });
 
   test('should fetch the manifest of the connector type when none is given', async () => {
@@ -101,7 +101,7 @@ describe('SouthMetricsComponent', () => {
 
     manifest$.next(testData.south.manifest);
 
-    await expect.element(tester.title).toHaveTextContent('South 1 metrics');
+    await expect.element(tester.title).toHaveTextContent('Metrics');
   });
 
   test('should reset the metrics', async () => {
@@ -117,6 +117,8 @@ describe('SouthMetricsComponent', () => {
 
   test('should navigate to the connector when the display button is shown', async () => {
     const tester = new SouthMetricsComponentTester({ manifest: testData.south.manifest, displayButton: true });
+    await expect.element(tester.title).toHaveTextContent('South 1 metrics');
+    await expect.element(tester.entries).toHaveLength(2);
     await expect.element(tester.resetButton).not.toBeInTheDocument();
 
     await tester.displayButton.click();

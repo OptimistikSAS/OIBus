@@ -3,148 +3,133 @@
     <div class="oib-padded-container">
       <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
-          <div class="oib-header-container mb-3">
-            <h1 id="title">
-              <span>{{ 'south.title' | translate: { name: southConnector.name, type: southConnector.type } }}</span>
-              <span class="ms-2">
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  id="south-enabled"
-                  [ngbTooltip]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-                  [attr.aria-label]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-                  (click)="toggleConnector(!southConnector.enabled)"
-                >
-                  <i [class]="southConnector.enabled ? 'fa-solid fa-pause' : 'fa-solid fa-play'" aria-hidden="true"></i>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-primary ms-1"
-                  id="edit-link"
-                  routerLink="edit"
-                  [ngbTooltip]="'south.tooltips.edit' | translate"
-                  [attr.aria-label]="'south.tooltips.edit' | translate"
-                >
-                  <i class="fa-solid fa-pencil" aria-hidden="true"></i>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-primary ms-1"
-                  id="show-audit-button"
-                  [ngbTooltip]="'south.tooltips.audit' | translate"
-                  [attr.aria-label]="'south.tooltips.audit' | translate"
-                  (click)="showAudit('south_connector', southConnector.id)"
-                >
-                  <i class="fa-solid fa-history" aria-hidden="true"></i>
-                </button>
-              </span>
-            </h1>
-            <span class="text-disabled pull-right me-2">
-              <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
+          <div class="oib-detail-header">
+            <div>
+              <h1 id="title">{{ southConnector.name }}</h1>
+              <div class="oib-detail-meta">
+                <span class="d-flex align-items-center gap-1" id="south-type">
+                  <img class="oib-detail-type-image" [src]="'/' + manifest.category + '.svg'" alt="" />
+                  {{ southConnector.type | oIBusSouthTypeEnum }}
+                </span>
+                <span class="oib-status-badge" id="south-status">
+                  @if (southConnector.enabled) {
+                    <span class="fa-solid fa-check-circle status-green" aria-hidden="true"></span>
+                    <span translate="south.enabled"></span>
+                  } @else {
+                    <span class="fa-solid fa-minus-circle status-grey" aria-hidden="true"></span>
+                    <span translate="south.disabled"></span>
+                  }
+                </span>
+                @if (southConnector.description) {
+                  <span id="south-description">{{ southConnector.description }}</span>
+                }
+                <span>
+                  <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
+                  <button
+                    type="button"
+                    class="btn btn-link ms-1 align-baseline copy-cache-path"
+                    [ngbTooltip]="'south.tooltips.copy-cache-path' | translate"
+                    [attr.aria-label]="'south.tooltips.copy-cache-path' | translate"
+                    [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/data-stream/south-' + southConnector.id"
+                    (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+                  >
+                    <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                  </button>
+                </span>
+              </div>
+            </div>
+            <div class="oib-detail-actions">
               <button
                 type="button"
-                class="btn btn-link p-0 ms-1 align-baseline copy-cache-path"
-                [ngbTooltip]="'south.tooltips.copy-cache-path' | translate"
-                [attr.aria-label]="'south.tooltips.copy-cache-path' | translate"
-                [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/data-stream/south-' + southConnector.id"
-                (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+                class="btn btn-subtle"
+                id="show-audit-button"
+                [ngbTooltip]="'south.tooltips.audit' | translate"
+                [attr.aria-label]="'south.tooltips.audit' | translate"
+                (click)="showAudit('south_connector', southConnector.id)"
               >
-                <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                <i class="fa-solid fa-history" aria-hidden="true"></i>
               </button>
-            </span>
+              <button
+                type="button"
+                class="btn btn-subtle"
+                id="south-enabled"
+                [attr.aria-label]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
+                (click)="toggleConnector(!southConnector.enabled)"
+              >
+                <i [class]="southConnector.enabled ? 'fa-solid fa-pause me-1' : 'fa-solid fa-play me-1'" aria-hidden="true"></i>
+                <span [translate]="southConnector.enabled ? 'common.stop' : 'common.start'"></span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                id="edit-link"
+                routerLink="edit"
+                [attr.aria-label]="'south.tooltips.edit' | translate"
+              >
+                <i class="fa-solid fa-pencil me-1" aria-hidden="true"></i>
+                <span translate="common.edit"></span>
+              </button>
+            </div>
           </div>
           <!-- South metrics -->
           @if (connectorMetrics(); as connectorMetrics) {
             <oib-south-metrics [connectorMetrics]="connectorMetrics" [manifest]="manifest" [southConnector]="southConnector" />
           }
           <!-- Specific settings -->
-          <oib-box>
-            <ng-template oibBoxTitle>
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <span
-                    translate="south.specific-settings"
-                    [translateParams]="{ type: manifest.id | oIBusSouthTypeEnum }"
-                    id="specific-settings-title"
-                  ></span>
-                </div>
-                <div>
-                  <button
-                    translate="south.test-connection.button"
-                    type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                    id="test-connection"
-                    (click)="testConnection()"
-                  ></button>
-                </div>
-              </div>
-            </ng-template>
-            <oib-oibus-settings-summary class="d-block px-3 py-2" id="south-settings" [settings]="displayedSettings()" />
-          </oib-box>
+          <section class="oib-panel">
+            <div class="oib-section-title">
+              <h5
+                translate="south.specific-settings"
+                [translateParams]="{ type: manifest.id | oIBusSouthTypeEnum }"
+                id="specific-settings-title"
+              ></h5>
+              <button
+                translate="south.test-connection.button"
+                type="button"
+                class="btn btn-secondary btn-sm"
+                id="test-connection"
+                (click)="testConnection()"
+              ></button>
+            </div>
+            <oib-oibus-settings-summary id="south-settings" [settings]="displayedSettings()" />
+          </section>
           <!-- Items -->
-          <oib-box class="oib-south-items">
-            <ng-template oibBoxTitle>
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <span translate="south.items.title"></span>
+          <section class="oib-panel oib-south-items" id="south-items">
+            <div class="oib-section-title">
+              <h5>
+                <span translate="south.items.title"></span>
+                <!-- rendered once the item table below has its inputs: an embedded view is refreshed after the bindings of its parent -->
+                <ng-container [ngTemplateOutlet]="itemCount" />
+                <ng-template #itemCount>
                   @if (itemTable.filteredItems().length) {
                     <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
                   }
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn ms-2"
-                    id="manage-groups-button"
-                    [ngbTooltip]="'south.groups.manage-button' | translate"
-                    (click)="manageGroups()"
-                  >
-                    <span class="fa-solid fa-folder me-1" aria-hidden="true"></span>
-                    <span translate="south.groups.manage-button"></span>
-                    <span class="badge bg-secondary ms-1">{{ southConnector.groups.length }}</span>
-                  </button>
-                </div>
-                <div class="ms-3 d-flex align-items-center">
-                  @if (manifest.explore) {
-                    <oib-explore-button
-                      class="oib-box-btn"
-                      [synchronisations]="workflowCount()"
-                      (explore)="explore()"
-                      (manageSynchronisations)="manageWorkflows()"
-                    />
-                  }
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-sm oib-box-btn"
-                    [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.create' | translate"
-                    [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.create' | translate"
-                    (click)="addItem()"
-                  >
-                    <span class="fa-solid fa-plus" aria-hidden="true"></span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn"
-                    id="export-items"
-                    (click)="exportItems()"
-                    translate="south.items.export.button"
-                  ></button>
-                  <button type="button" class="btn btn-secondary btn-sm oib-box-btn" (click)="importItems()" id="import-button">
-                    <span translate="south.items.import.button"></span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-danger btn-sm oib-box-btn"
-                    (click)="deleteAllItems()"
-                    [disabled]="southConnector.items.length === 0"
-                    translate="south.items.delete-all"
-                    id="delete-all"
-                  ></button>
-                  <oib-help [url]="itemSectionHelpUrl" />
-                </div>
-              </div>
-            </ng-template>
+                </ng-template>
+              </h5>
+              @if (manifest.explore) {
+                <oib-explore-button
+                  [synchronisations]="workflowCount()"
+                  (explore)="explore()"
+                  (manageSynchronisations)="manageWorkflows()"
+                />
+              }
+              <button type="button" class="btn btn-primary btn-sm" id="add-item" (click)="addItem()">
+                <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+                <span translate="common.add"></span>
+              </button>
+              <oib-items-menu
+                [itemCount]="southConnector.items.length"
+                [groupCount]="southConnector.groups.length"
+                (manageGroups)="manageGroups()"
+                (importItems)="importItems()"
+                (exportItems)="exportItems()"
+                (deleteAllItems)="deleteAllItems()"
+              />
+              <oib-help [url]="itemSectionHelpUrl" />
+            </div>
 
             @if (workflowCount(); as workflowCount) {
-              <div class="alert alert-info d-flex align-items-center gap-2 py-2 mx-2 mt-2" id="synchronisations-info" role="status">
+              <div class="alert alert-info d-flex align-items-center gap-2 py-2" id="synchronisations-info" role="status">
                 <span class="fa-solid fa-sync" aria-hidden="true"></span>
                 <span class="me-auto" translate="south.workflows.synchronised-info" [translateParams]="{ count: workflowCount }"></span>
                 <button
@@ -383,19 +368,14 @@
                 </ng-template>
               </oib-item-table>
             </div>
-          </oib-box>
-
+          </section>
           <!-- Logs -->
-          <oib-box>
-            <ng-template oibBoxTitle>
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <span id="logs-title" translate="logs.title"></span>
-                </div>
-              </div>
-            </ng-template>
-          </oib-box>
-          <oib-logs [scopeId]="southConnector.id" scopeType="south" [embedded]="true" />
+          <section class="oib-panel">
+            <div class="oib-section-title">
+              <h5 id="logs-title" translate="logs.title"></h5>
+            </div>
+            <oib-logs [scopeId]="southConnector.id" scopeType="south" [embedded]="true" />
+          </section>
         </div>
       </div>
     </div>

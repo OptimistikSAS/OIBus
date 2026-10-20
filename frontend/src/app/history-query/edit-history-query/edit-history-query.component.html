@@ -313,42 +313,18 @@
                       <span translate="south.explore.button"></span>
                     </button>
                   }
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    [ngbTooltip]="'history-query.items.tooltips.add' | translate"
-                    [attr.aria-label]="'history-query.items.tooltips.add' | translate"
-                    (click)="addItem()"
-                  >
-                    <span class="fa-solid fa-plus" aria-hidden="true"></span>
+                  <button type="button" class="btn btn-primary btn-sm" id="add-item" (click)="addItem()">
+                    <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+                    <span translate="common.add"></span>
                   </button>
+                  <oib-items-menu
+                    [itemCount]="inMemoryItems().length"
+                    (importItems)="importItems()"
+                    (exportItems)="exportItems()"
+                    (deleteAllItems)="deleteAllItems()"
+                  />
                   <oib-help [url]="itemSectionHelpUrl" />
                 </div>
-                <!-- The tools of the item list -->
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                  <div class="d-flex flex-wrap gap-2 ms-auto">
-                    <button type="button" class="btn btn-secondary btn-sm" (click)="importItems()" id="import-button">
-                      <span translate="south.items.import.button"></span>
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      id="export-items"
-                      (click)="exportItems()"
-                      [disabled]="inMemoryItems().length === 0"
-                      translate="south.items.export.button"
-                    ></button>
-                    <button
-                      type="button"
-                      class="btn btn-danger btn-sm"
-                      (click)="deleteAllItems()"
-                      [disabled]="inMemoryItems().length === 0"
-                      translate="south.items.delete-all"
-                      id="delete-all"
-                    ></button>
-                  </div>
-                </div>
-
                 <div class="mb-3">
                   <oib-item-table
                     #itemTable

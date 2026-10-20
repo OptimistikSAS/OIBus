@@ -21,7 +21,7 @@ class NorthMetricsComponentTester {
   readonly fixture = TestBed.createComponent(NorthMetricsComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByCss('#title');
-  readonly rows = this.root.getByCss('tbody tr');
+  readonly entries = this.root.getByCss('.oib-summary-entry');
   readonly resetButton = this.root.getByRole('button', { name: 'Reset metrics' });
   readonly displayLink = this.root.getByRole('button', { name: 'View north connector metrics' });
 
@@ -59,12 +59,12 @@ describe('NorthMetricsComponent', () => {
   test('should display the metrics with the given manifest', async () => {
     const tester = new NorthMetricsComponentTester({ manifest: testData.north.manifest });
 
-    await expect.element(tester.title).toHaveTextContent('North 1 metrics');
+    await expect.element(tester.title).toHaveTextContent('Metrics');
     // no last connection, last content sent nor last run in the fixture
-    await expect.element(tester.rows).toHaveLength(3);
-    await expect.element(tester.rows.nth(0)).toHaveTextContent('Cache sizeCurrent size: 10 B / Total cached: 22 B / Total sent: 11 B');
-    await expect.element(tester.rows.nth(1)).toHaveTextContent('Error sizeCurrent size: 20 B / Total errored: 23 B');
-    await expect.element(tester.rows.nth(2)).toHaveTextContent('Archive sizeCurrent size: 30 B / Total archived: 24 B');
+    await expect.element(tester.entries).toHaveLength(3);
+    await expect.element(tester.entries.nth(0)).toHaveTextContent('Cache size 10 B Total cached: 22 B / Total sent: 11 B');
+    await expect.element(tester.entries.nth(1)).toHaveTextContent('Error size 20 B Total errored: 23 B');
+    await expect.element(tester.entries.nth(2)).toHaveTextContent('Archive size 30 B Total archived: 24 B');
     expect(northConnectorService.getNorthManifest).not.toHaveBeenCalled();
   });
 
@@ -80,10 +80,11 @@ describe('NorthMetricsComponent', () => {
       }
     });
 
-    await expect.element(tester.rows).toHaveLength(6);
-    await expect.element(tester.rows.nth(0)).toMatchTextContent(/^Last connection.*2020/);
-    await expect.element(tester.rows.nth(1)).toMatchTextContent('Last content sentfile.csv');
-    await expect.element(tester.rows.nth(2)).toMatchTextContent(/Last run.*\(in 2 s\)/);
+    await expect.element(tester.entries).toHaveLength(7);
+    await expect.element(tester.entries.nth(0)).toMatchTextContent(/^Last connection.*2020/);
+    await expect.element(tester.entries.nth(1)).toMatchTextContent(/^Last run.*2020/);
+    await expect.element(tester.entries.nth(2)).toHaveTextContent('Last run duration2 s');
+    await expect.element(tester.entries.nth(6)).toHaveTextContent('Last content sentfile.csv');
   });
 
   test('should fetch the manifest of the connector type when none is given', async () => {
@@ -96,7 +97,7 @@ describe('NorthMetricsComponent', () => {
 
     manifest$.next(testData.north.manifest);
 
-    await expect.element(tester.title).toHaveTextContent('North 1 metrics');
+    await expect.element(tester.title).toHaveTextContent('Metrics');
   });
 
   test('should reset the metrics', async () => {
@@ -112,6 +113,8 @@ describe('NorthMetricsComponent', () => {
 
   test('should navigate to the connector when the display button is shown', async () => {
     const tester = new NorthMetricsComponentTester({ manifest: testData.north.manifest, displayButton: true });
+    await expect.element(tester.title).toHaveTextContent('North 1 metrics');
+    await expect.element(tester.entries).toHaveLength(3);
     await expect.element(tester.resetButton).not.toBeInTheDocument();
 
     await tester.displayLink.click();

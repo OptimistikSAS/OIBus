@@ -27,6 +27,7 @@ import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
+import { HISTORY_QUERY_STATUS_ICONS } from './history-query-status';
 
 type HistorySortField = 'name' | 'interval' | 'southType' | 'northType' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -101,11 +102,11 @@ export class HistoryQueryListComponent {
   // Each status pairs a distinct icon shape with its color, so meaning does not rely on color alone
   // (e.g. colorblind users can still tell ERRORED from RUNNING even when red and green look the same).
   readonly LEGEND: Array<{ label: string; status: HistoryQueryStatus; class: string }> = [
-    { label: 'enums.status.PENDING', status: 'PENDING', class: 'fa-solid fa-hourglass-half status-grey' },
-    { label: 'enums.status.RUNNING', status: 'RUNNING', class: 'fa-solid fa-spinner fa-spin status-green' },
-    { label: 'enums.status.PAUSED', status: 'PAUSED', class: 'fa-solid fa-pause-circle status-yellow' },
-    { label: 'enums.status.FINISHED', status: 'FINISHED', class: 'fa-solid fa-check-circle status-blue' },
-    { label: 'enums.status.ERRORED', status: 'ERRORED', class: 'fa-solid fa-times-circle status-red' }
+    { label: 'enums.status.PENDING', status: 'PENDING', class: HISTORY_QUERY_STATUS_ICONS.PENDING },
+    { label: 'enums.status.RUNNING', status: 'RUNNING', class: HISTORY_QUERY_STATUS_ICONS.RUNNING },
+    { label: 'enums.status.PAUSED', status: 'PAUSED', class: HISTORY_QUERY_STATUS_ICONS.PAUSED },
+    { label: 'enums.status.FINISHED', status: 'FINISHED', class: HISTORY_QUERY_STATUS_ICONS.FINISHED },
+    { label: 'enums.status.ERRORED', status: 'ERRORED', class: HISTORY_QUERY_STATUS_ICONS.ERRORED }
   ];
 
   /** Distinct South connector types among the currently loaded history queries, used to build the filter chips. */

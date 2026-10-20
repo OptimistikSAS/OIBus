@@ -1,16 +1,12 @@
 @if (manifestOrSouthConnectorTypeManifest()) {
-  <oib-box>
-    <ng-template oibBoxTitle>
-      <div class="d-flex justify-content-between align-items-center">
-        <span translate="south.monitoring.title" id="title" [translateParams]="{ name: southConnector().name }"></span>
-        <div class="d-flex align-items-center">
-          @if (connectorMetrics(); as connectorMetrics) {
-            <span
-              translate="south.monitoring.since"
-              [translateParams]="{ date: connectorMetrics.metricsStart | datetime: 'mediumWithSeconds' }"
-            ></span>
-          }
-          @if (displayButton()) {
+  <!-- On the home page, a box with a link to the connector; on the connector page, a section of the page -->
+  @if (displayButton()) {
+    <oib-box>
+      <ng-template oibBoxTitle>
+        <div class="d-flex justify-content-between align-items-center">
+          <span translate="south.monitoring.title" id="title" [translateParams]="{ name: southConnector().name }"></span>
+          <div class="d-flex align-items-center">
+            <ng-container [ngTemplateOutlet]="since" />
             <button
               type="button"
               class="btn btn-link display-south px-1 py-0"
@@ -21,82 +17,87 @@
             >
               <span class="fa-solid fa-search" aria-hidden="true"></span>
             </button>
-          } @else {
-            <button
-              type="button"
-              class="ms-3 btn btn-danger btn-sm oib-box-btn"
-              (click)="resetMetrics()"
-              translate="south.monitoring.reset-metrics"
-            ></button>
-          }
+          </div>
         </div>
+      </ng-template>
+      <!-- the box pads its content with a div in it -->
+      <div class="pt-2">
+        <ng-container [ngTemplateOutlet]="metrics" />
       </div>
-    </ng-template>
-    <div class="mb-3">
-      <table class="table table-sm table-hover oib-table">
-        @if (connectorMetrics(); as connectorMetrics) {
-          <tbody>
-            <!-- number of values for point connectors -->
-            @if (connectorMetrics.numberOfValuesRetrieved) {
-              <tr>
-                <td translate="south.monitoring.number-of-values"></td>
-                <td class="last-column-body">{{ connectorMetrics.numberOfValuesRetrieved }}</td>
-              </tr>
-            }
-            <!-- number of files for file connectors -->
-            @if (connectorMetrics.numberOfFilesRetrieved) {
-              <tr>
-                <td translate="south.monitoring.number-of-files"></td>
-                <td class="last-column-body">{{ connectorMetrics.numberOfFilesRetrieved }}</td>
-              </tr>
-            }
-            <!-- last connection -->
-            @if (connectorMetrics.lastConnection !== null) {
-              <tr>
-                <td translate="south.monitoring.last-connection"></td>
-                <td class="last-column-body">{{ connectorMetrics.lastConnection | datetime: 'mediumWithSeconds' }}</td>
-              </tr>
-            }
-            <!-- last value -->
-            @if (connectorMetrics.lastValueRetrieved !== null) {
-              <tr>
-                <td translate="south.monitoring.last-value"></td>
-                <td class="last-column-body">
-                  <span
-                    translate="south.monitoring.last-value-content"
-                    [translateParams]="{
-                      pointId: connectorMetrics.lastValueRetrieved.pointId,
-                      timestamp: connectorMetrics.lastValueRetrieved.timestamp,
-                      data: connectorMetrics.lastValueRetrieved.data | json
-                    }"
-                  ></span>
-                </td>
-              </tr>
-            }
-            <!-- last file -->
-            @if (connectorMetrics.lastFileRetrieved !== null) {
-              <tr>
-                <td translate="south.monitoring.last-file"></td>
-                <td class="last-column-body">{{ connectorMetrics.lastFileRetrieved }}</td>
-              </tr>
-            }
-            <!-- last run -->
-            @if (connectorMetrics.lastRunStart !== null) {
-              <tr>
-                <td translate="south.monitoring.last-run-start"></td>
-                <td class="last-column-body">{{ connectorMetrics.lastRunStart | datetime: 'mediumWithSeconds' }}</td>
-              </tr>
-            }
-            <!-- last duration -->
-            @if (connectorMetrics.lastRunDuration !== null) {
-              <tr>
-                <td translate="south.monitoring.last-run-duration"></td>
-                <td class="last-column-body">{{ connectorMetrics.lastRunDuration | duration: 'short' }}</td>
-              </tr>
-            }
-          </tbody>
-        }
-      </table>
-    </div>
-  </oib-box>
+    </oib-box>
+  } @else {
+    <section class="oib-panel">
+      <div class="oib-section-title">
+        <h5 translate="common.metrics" id="title"></h5>
+        <ng-container [ngTemplateOutlet]="since" />
+        <button type="button" class="btn btn-subtle btn-sm" (click)="resetMetrics()">
+          <span class="fa-solid fa-rotate-left me-1" aria-hidden="true"></span>
+          <span translate="south.monitoring.reset-metrics"></span>
+        </button>
+      </div>
+      <ng-container [ngTemplateOutlet]="metrics" />
+    </section>
+  }
 }
+
+<ng-template #since>
+  <span
+    class="oib-section-note"
+    translate="south.monitoring.since"
+    [translateParams]="{ date: connectorMetrics().metricsStart | datetime: 'mediumWithSeconds' }"
+  ></span>
+</ng-template>
+
+<ng-template #metrics>
+  @let metrics = connectorMetrics();
+  <dl class="oib-summary">
+    <!-- number of values for point connectors -->
+    @if (metrics.numberOfValuesRetrieved) {
+      <div class="oib-summary-entry">
+        <dt translate="south.monitoring.number-of-values"></dt>
+        <dd>{{ metrics.numberOfValuesRetrieved }}</dd>
+      </div>
+    }
+    <!-- number of files for file connectors -->
+    @if (metrics.numberOfFilesRetrieved) {
+      <div class="oib-summary-entry">
+        <dt translate="south.monitoring.number-of-files"></dt>
+        <dd>{{ metrics.numberOfFilesRetrieved }}</dd>
+      </div>
+    }
+    @if (metrics.lastConnection !== null) {
+      <div class="oib-summary-entry">
+        <dt translate="south.monitoring.last-connection"></dt>
+        <dd>{{ metrics.lastConnection | datetime: 'mediumWithSeconds' }}</dd>
+      </div>
+    }
+    @if (metrics.lastRunStart !== null) {
+      <div class="oib-summary-entry">
+        <dt translate="south.monitoring.last-run-start"></dt>
+        <dd>{{ metrics.lastRunStart | datetime: 'mediumWithSeconds' }}</dd>
+      </div>
+    }
+    @if (metrics.lastRunDuration !== null) {
+      <div class="oib-summary-entry">
+        <dt translate="south.monitoring.last-run-duration"></dt>
+        <dd>{{ metrics.lastRunDuration | duration: 'short' }}</dd>
+      </div>
+    }
+    @if (metrics.lastFileRetrieved !== null) {
+      <div class="oib-summary-entry oib-summary-wide">
+        <dt translate="south.monitoring.last-file"></dt>
+        <dd>{{ metrics.lastFileRetrieved }}</dd>
+      </div>
+    }
+    @if (metrics.lastValueRetrieved; as lastValue) {
+      <div class="oib-summary-entry oib-summary-wide">
+        <dt translate="south.monitoring.last-value"></dt>
+        <dd>
+          {{ lastValue.pointId }}
+          <span class="oib-summary-note ms-1">{{ lastValue.timestamp | datetime: 'mediumWithSeconds' }}</span>
+          <pre class="oib-summary-code">{{ lastValue.data | json }}</pre>
+        </dd>
+      </div>
+    }
+  </dl>
+</ng-template>

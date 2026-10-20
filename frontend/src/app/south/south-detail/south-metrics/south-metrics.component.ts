@@ -1,4 +1,4 @@
-import { JsonPipe } from '@angular/common';
+import { JsonPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -21,7 +21,17 @@ import { NotificationService } from '../../../shared/notification.service';
   templateUrl: './south-metrics.component.html',
   styleUrl: './south-metrics.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, NgbTooltip, TranslatePipe]
+  imports: [
+    TranslateDirective,
+    DatetimePipe,
+    DurationPipe,
+    BoxComponent,
+    BoxTitleDirective,
+    JsonPipe,
+    NgbTooltip,
+    TranslatePipe,
+    NgTemplateOutlet
+  ]
 })
 export class SouthMetricsComponent {
   private readonly router = inject(Router);

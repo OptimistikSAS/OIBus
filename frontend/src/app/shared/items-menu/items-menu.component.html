@@ -1,0 +1,42 @@
+<div ngbDropdown class="d-inline-block" placement="bottom-end">
+  <button
+    type="button"
+    class="btn btn-subtle btn-sm oib-menu-toggle"
+    id="items-menu"
+    ngbDropdownToggle
+    [attr.aria-label]="'south.items.more-actions' | translate"
+  >
+    <span class="fa-solid fa-ellipsis" aria-hidden="true"></span>
+  </button>
+  <div ngbDropdownMenu>
+    @let groupCount = this.groupCount();
+    @if (groupCount !== null) {
+      <button type="button" ngbDropdownItem id="manage-groups-button" (click)="manageGroups.emit()">
+        <span class="fa-solid fa-folder me-2" aria-hidden="true"></span>
+        <span translate="south.groups.manage-button"></span>
+        <span class="badge bg-secondary ms-1">{{ groupCount }}</span>
+      </button>
+      <div class="dropdown-divider"></div>
+    }
+    <button type="button" ngbDropdownItem id="import-button" (click)="importItems.emit()">
+      <span class="fa-solid fa-file-import me-2" aria-hidden="true"></span>
+      <span translate="south.items.import.button"></span>
+    </button>
+    <button type="button" ngbDropdownItem id="export-items" (click)="exportItems.emit()">
+      <span class="fa-solid fa-file-export me-2" aria-hidden="true"></span>
+      <span translate="south.items.export.button"></span>
+    </button>
+    <div class="dropdown-divider"></div>
+    <button
+      type="button"
+      ngbDropdownItem
+      class="text-danger"
+      id="delete-all"
+      [disabled]="itemCount() === 0"
+      (click)="deleteAllItems.emit()"
+    >
+      <span class="fa-solid fa-trash-can me-2" aria-hidden="true"></span>
+      <span translate="south.items.delete-all"></span>
+    </button>
+  </div>
+</div>
