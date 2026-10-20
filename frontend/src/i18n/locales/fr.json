@@ -1851,7 +1851,9 @@
       "uncheck-children": "Désélectionner tous les sous-nœuds de {{name}}",
       "checked-count": "{{count}} sélectionné(s)",
       "keep-in-sync": "Synchroniser…",
-      "add-as-items": "Ajouter comme points"
+      "add-as-items": "Ajouter comme points",
+      "menu": "Synchronisations des points : {{count}}",
+      "explore-data-source": "Explorer la source de données…"
     },
     "add-discovered-items": {
       "title": "Ajouter des points depuis la source de données",
@@ -2103,7 +2105,6 @@
       "none-match": "Aucun groupe ne correspond aux filtres actuels"
     },
     "workflows": {
-      "manage-button": "Gérer les synchronisations des points",
       "manage-title": "Synchronisations des points ({{count}})",
       "create-title": "Créer une nouvelle synchronisation des points",
       "edit-title": "Modifier la synchronisation des points",
@@ -2232,7 +2233,10 @@
         "review-incomplete": "Complétez les étapes précédentes pour prévisualiser une exécution",
         "back": "Précédent",
         "next": "Suivant"
-      }
+      },
+      "manage-count": "Synchronisations des points ({{count}})…",
+      "synchronised-info": "Synchronisations des points maintenant les éléments à jour avec la source de données : {{count}}",
+      "manage": "Gérer"
     },
     "monitoring": {
       "title": "Métriques de {{ name }}",

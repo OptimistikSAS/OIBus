@@ -45,6 +45,8 @@ import { WorkflowCreationService } from '../south-workflows/workflow-creation.se
 import { SouthDetailComponent } from './south-detail.component';
 
 const manifest = testData.south.manifest;
+/** A manifest with discovery: its items can be kept in sync with the data source by items synchronisations */
+const discoveryManifest: SouthConnectorManifest = { ...manifest, discovery: { kind: 'tree' } };
 const scanModes = testData.scanMode.list;
 const groupA = buildSouthItemGroup('groupA', 'Group A', scanModes[1]);
 
@@ -88,7 +90,14 @@ class SouthDetailComponentTester {
   readonly items = this.root.getByCss('oib-box.oib-south-items');
   readonly itemsTitle = this.items.getByCss('.oib-box-title');
   readonly manageGroupsButton = this.items.getByRole('button', { name: /^Manage groups/ });
-  readonly manageWorkflowsButton = this.items.getByRole('button', { name: 'Manage items synchronisations' });
+  readonly exploreMenu = this.root.getByCss('#explore-menu');
+  readonly synchronisationsInfo = this.root.getByCss('#synchronisations-info');
+
+  /** Opens the items synchronisations, from the menu of the Explore button */
+  async manageWorkflows() {
+    await this.exploreMenu.click();
+    await this.root.getByCss('#manage-workflows-button').click();
+  }
   readonly addItemButton = this.items.getByRole('button', { name: 'Create a new item' });
   readonly exportButton = this.items.getByRole('button', { name: 'Export' });
   readonly importButton = this.items.getByRole('button', { name: 'Import' });
@@ -166,6 +175,7 @@ describe('SouthDetailComponent', () => {
     southConnectorService.findById.mockReturnValue(of(southConnector));
     southConnectorService.getSouthManifest.mockReturnValue(of(manifest));
     southConnectorService.getMetrics.mockReturnValue(of(testData.south.metrics));
+    configurationWorkflowService.list.mockReturnValue(of([]));
 
     TestBed.configureTestingModule({
       providers: [
@@ -370,8 +380,7 @@ describe('SouthDetailComponent', () => {
           southId: 'southId1',
           southSettings: southConnector.settings,
           manifest: presetManifest,
-          scanModes,
-          groups: expect.anything(),
+          schedule: { scanModes, groups: expect.anything() },
           existingItems: southConnector.items,
           nodeIds: ['ns=1;s=Reactor']
         })
@@ -932,19 +941,41 @@ describe('SouthDetailComponent', () => {
       expect(notificationService.error).toHaveBeenCalledWith('south.groups.delete-error', { error: 'in use' });
     });
 
+    test('should count the items synchronisations of a connector with discovery, and offer them on the Explore button', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
+      configurationWorkflowService.list.mockReturnValue(of([buildWorkflow('workflow1', 'Alpha'), buildWorkflow('workflow2', 'Beta')]));
+      const tester = await createTester();
+
+      await expect.element(tester.exploreMenu).toHaveAttribute('aria-label', 'Items synchronisations: 2');
+      await expect
+        .element(tester.synchronisationsInfo)
+        .toHaveTextContent('Items synchronisations keeping items in sync with the data source: 2Manage');
+      expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
+    });
+
+    test('should only explore the data source of a connector without discovery', async () => {
+      const tester = await createTester();
+
+      await expect.element(tester.exploreButton).toBeVisible();
+      await expect.element(tester.exploreMenu).not.toBeInTheDocument();
+      await expect.element(tester.synchronisationsInfo).not.toBeInTheDocument();
+      expect(configurationWorkflowService.list).not.toHaveBeenCalled();
+    });
+
     test('should open the manage workflows modal in direct mode and reload the connector after a run', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
       const tester = await createTester();
       const manageWorkflowsModal = mockModal(createMock(ManageWorkflowsModalComponent));
       const open = vi.spyOn(modalService, 'open');
 
-      await tester.manageWorkflowsButton.click();
+      await tester.manageWorkflows();
 
       expect(open).toHaveBeenCalledWith(ManageWorkflowsModalComponent, { size: 'xl', backdrop: 'static' });
       expect(manageWorkflowsModal.prepareForDirectSave).toHaveBeenCalledWith(
         'southId1',
         southConnector.settings,
         scanModes,
-        manifest,
+        discoveryManifest,
         expect.anything(),
         expect.any(Function)
       );

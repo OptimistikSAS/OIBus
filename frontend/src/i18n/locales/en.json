@@ -2818,7 +2818,9 @@
       "uncheck-children": "Unselect all the sub-nodes of {{name}}",
       "checked-count": "{{count}} selected",
       "keep-in-sync": "Keep in sync…",
-      "add-as-items": "Add as items"
+      "add-as-items": "Add as items",
+      "menu": "Items synchronisations: {{count}}",
+      "explore-data-source": "Explore the data source…"
     },
     "add-discovered-items": {
       "title": "Add items from the data source",
@@ -3070,7 +3072,6 @@
       "none-match": "No groups match the current filters"
     },
     "workflows": {
-      "manage-button": "Manage items synchronisations",
       "manage-title": "Items synchronisations ({{count}})",
       "create-title": "Create a new items synchronisation",
       "edit-title": "Edit items synchronisation",
@@ -3199,7 +3200,10 @@
         "review-incomplete": "Complete the previous steps to preview a run",
         "back": "Back",
         "next": "Next"
-      }
+      },
+      "manage-count": "Items synchronisations ({{count}})…",
+      "synchronised-info": "Items synchronisations keeping items in sync with the data source: {{count}}",
+      "manage": "Manage"
     },
     "monitoring": {
       "title": "{{ name }} metrics",
