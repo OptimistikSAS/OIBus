@@ -13,7 +13,7 @@ concurrency:
 jobs:
   changes:
     name: Detect changed packages
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -101,7 +101,7 @@ jobs:
     name: Test frontend on ubuntu-24.04
     needs: [ changes ]
     if: ${{ needs.changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 25
     steps:
       - name: Checkout
