@@ -11,6 +11,7 @@ import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '
 import { HistoryQueryItemSearchParam } from '../../../shared/model/domain/history-query.model';
 
 import { OIBusTestingError } from '../../model/types';
+import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
@@ -326,6 +327,56 @@ describe('HistoryQueryController', () => {
       assert.ok(error instanceof OIBusTestingError);
       assert.strictEqual((error as OIBusTestingError).message, 'Explore start failure');
     }
+  });
+
+  it('should map the records discovered against the south settings to new items', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const southType = testData.south.command.type;
+    const fromSouth = testData.south.list[0].id;
+    const command = {
+      southSettings: testData.south.command.settings,
+      discoveryScope: { nodeIds: ['node1'] },
+      itemFieldMapping: { name: '{{name}}' }
+    };
+    const resolvedSettings = { ...testData.south.command.settings };
+    const discovered = [testData.south.itemCommand];
+    historyQueryService.southSettingsToTest = mock.fn(async () => resolvedSettings);
+    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
+    workflowRunService.discoverItems.mock.mockImplementation(async () => discovered);
+
+    const result = await controller.discoverItems(historyId, southType, fromSouth, command, mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(historyQueryService.southSettingsToTest.mock.calls[0].arguments, [
+      historyId,
+      southType,
+      fromSouth,
+      command.southSettings
+    ]);
+    assert.deepStrictEqual(workflowRunService.discoverItems.mock.calls[0].arguments, [
+      'history',
+      southType,
+      resolvedSettings,
+      command.discoveryScope,
+      command.itemFieldMapping
+    ]);
+    assert.deepStrictEqual(result, discovered);
+  });
+
+  it('should wrap errors when discovering items', async () => {
+    historyQueryService.southSettingsToTest = mock.fn(async () => {
+      throw new Error('Invalid settings');
+    });
+
+    await assert.rejects(
+      controller.discoverItems(
+        'create',
+        testData.south.command.type,
+        undefined,
+        { southSettings: testData.south.command.settings, discoveryScope: {}, itemFieldMapping: {} },
+        mockRequest as CustomExpressRequest
+      ),
+      new OIBusTestingError('Invalid settings')
+    );
   });
 
   it('should browse an explore session', async () => {

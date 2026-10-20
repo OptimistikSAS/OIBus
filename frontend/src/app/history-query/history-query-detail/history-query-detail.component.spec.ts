@@ -10,6 +10,7 @@ import { page } from 'vitest/browser';
 
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
 import { LogDTO } from '@oibus/shared/api/logs.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -33,6 +34,7 @@ import { SouthExploreModalComponent } from '../../shared/south-explore-modal/sou
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { emptyPage } from '../../shared/utils/page.utils';
 import { WindowService } from '../../shared/window.service';
+import { AddDiscoveredItemsModalComponent } from '../../south/south-items/add-discovered-items-modal/add-discovered-items-modal.component';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryDetailComponent } from './history-query-detail.component';
@@ -162,7 +164,9 @@ describe('HistoryQueryDetailComponent', () => {
     await tester.exploreButton.click();
 
     expect(exploreModal.prepare).toHaveBeenCalledWith(historyQuery.id, historyQuery.southSettings, historyQuery.southType, {
-      api: { start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) }
+      api: { start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) },
+      // no discovery defaults in the test manifest: nothing to add from the checked nodes
+      checkedActions: []
     });
     const api = exploreModal.prepare.mock.calls[0][3]!.api!;
     api.start(historyQuery.southSettings, historyQuery.southType);
@@ -171,6 +175,43 @@ describe('HistoryQueryDetailComponent', () => {
     expect(historyQueryService.browseExplore).toHaveBeenCalledWith(historyQuery.id, 'sessionId', null);
     api.close('sessionId');
     expect(historyQueryService.closeExplore).toHaveBeenCalledWith(historyQuery.id, 'sessionId');
+  });
+
+  test('should add the items of the nodes checked in the explore modal, once reviewed', async () => {
+    const presetManifest: SouthConnectorManifest = {
+      ...testData.south.manifest,
+      discovery: { kind: 'tree', defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}' } } }
+    };
+    southConnectorService.getSouthManifest.mockReturnValue(of(presetManifest));
+    const exploreModal = createMock(SouthExploreModalComponent);
+    const addItemsModal = createMock(AddDiscoveredItemsModalComponent);
+    const discovered = { ...testData.south.itemCommand, id: null, name: 'Reactor/Temperature' };
+    vi.spyOn(TestBed.inject(MockModalService), 'open').mockImplementation(component =>
+      component === SouthExploreModalComponent
+        ? fakeModal(exploreModal, Promise.resolve({ action: 'add-items', nodeIds: ['ns=1;s=Reactor'] }))
+        : fakeModal(addItemsModal, Promise.resolve([discovered]))
+    );
+    historyQueryService.importItems.mockReturnValue(of(undefined));
+    const tester = new HistoryQueryDetailComponentTester();
+
+    await tester.exploreButton.click();
+
+    await vi.waitFor(() => expect(historyQueryService.importItems).toHaveBeenCalled());
+    const options = addItemsModal.prepare.mock.lastCall![0];
+    expect(options.schedule).toBeUndefined();
+    historyQueryService.discoverItems.mockReturnValue(of([]));
+    options.discover!({ nodeIds: ['ns=1;s=Reactor'] }, { name: '{{path}}' });
+    expect(historyQueryService.discoverItems).toHaveBeenCalledWith(
+      historyQuery.id,
+      historyQuery.southType,
+      historyQuery.southSettings,
+      { nodeIds: ['ns=1;s=Reactor'] },
+      { name: '{{path}}' }
+    );
+    expect(historyQueryService.importItems).toHaveBeenCalledWith(historyQuery.id, [
+      { id: '', name: 'Reactor/Temperature', enabled: discovered.enabled, settings: discovered.settings }
+    ]);
+    expect(notificationService.success).toHaveBeenCalledWith('south.add-discovered-items.added', { count: '1' });
   });
 
   test.each(['north', 'south'] as const)('should test the %s connection', async type => {

@@ -69,20 +69,10 @@
                   ></span>
                 </div>
                 <div>
-                  @if (manifest.explore) {
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                      id="explore"
-                      (click)="explore()"
-                      translate="south.explore.button"
-                    ></button>
-                  }
                   <button
                     translate="south.test-connection.button"
                     type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn"
-                    [class.ms-3]="!manifest.explore"
+                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
                     id="test-connection"
                     (click)="testConnection()"
                   ></button>
@@ -111,18 +101,16 @@
                     <span translate="south.groups.manage-button"></span>
                     <span class="badge bg-secondary ms-1">{{ southConnector.groups.length }}</span>
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn"
-                    id="manage-workflows-button"
-                    [ngbTooltip]="'south.workflows.manage-button' | translate"
-                    (click)="manageWorkflows()"
-                  >
-                    <span class="fa-solid fa-sync me-1" aria-hidden="true"></span>
-                    <span translate="south.workflows.manage-button"></span>
-                  </button>
                 </div>
-                <div class="ms-3">
+                <div class="ms-3 d-flex align-items-center">
+                  @if (manifest.explore) {
+                    <oib-explore-button
+                      class="oib-box-btn"
+                      [synchronisations]="workflowCount()"
+                      (explore)="explore()"
+                      (manageSynchronisations)="manageWorkflows()"
+                    />
+                  }
                   <button
                     type="button"
                     class="btn btn-primary btn-sm oib-box-btn"
@@ -155,6 +143,18 @@
               </div>
             </ng-template>
 
+            @if (workflowCount(); as workflowCount) {
+              <div class="alert alert-info d-flex align-items-center gap-2 py-2 mx-2 mt-2" id="synchronisations-info" role="status">
+                <span class="fa-solid fa-sync" aria-hidden="true"></span>
+                <span class="me-auto" translate="south.workflows.synchronised-info" [translateParams]="{ count: workflowCount }"></span>
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm alert-link"
+                  (click)="manageWorkflows()"
+                  translate="south.workflows.manage"
+                ></button>
+              </div>
+            }
             <div class="mb-3">
               <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
               <ng-template #scheduleTooltip>

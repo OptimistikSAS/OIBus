@@ -43,6 +43,7 @@ export default class HistoryQueryServiceMock {
   testNorth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);
   testSouth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);
   startExplore = mock.fn(async (): Promise<SouthExploreStartResult> => ({ sessionId: 'sessionId', entries: [] }));
+  southSettingsToTest = mock.fn(async (): Promise<SouthSettings> => ({}) as SouthSettings);
   testItem = mock.fn(async (): Promise<SouthConnectorItemTestResult> => ({
     raw: { type: 'any-content', content: '' } as OIBusAnyContent,
     transformed: null,

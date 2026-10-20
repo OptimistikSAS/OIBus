@@ -96,10 +96,11 @@
                     </ng-template>
                   </h5>
                   @if (manifest.explore) {
-                    <button type="button" class="btn btn-secondary btn-sm" id="explore" (click)="explore()">
-                      <span class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></span>
-                      <span translate="south.explore.button"></span>
-                    </button>
+                    <oib-explore-button
+                      [synchronisations]="manifest.discovery ? inMemoryWorkflows().length : null"
+                      (explore)="explore()"
+                      (manageSynchronisations)="manageWorkflows()"
+                    />
                   }
                   <button
                     type="button"
@@ -125,17 +126,6 @@
                     <span translate="south.groups.manage-button"></span>
                     <span class="badge bg-secondary ms-1">{{ inMemoryGroups().length }}</span>
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    id="manage-workflows-button"
-                    [ngbTooltip]="'south.workflows.manage-button' | translate"
-                    (click)="manageWorkflows()"
-                  >
-                    <span class="fa-solid fa-sync me-1" aria-hidden="true"></span>
-                    <span translate="south.workflows.manage-button"></span>
-                    <span class="badge bg-secondary ms-1">{{ inMemoryWorkflows().length }}</span>
-                  </button>
                   <div class="d-flex flex-wrap gap-2 ms-auto">
                     <button type="button" class="btn btn-secondary btn-sm" (click)="importItems()" id="import-button">
                       <span translate="south.items.import.button"></span>
@@ -158,6 +148,22 @@
                   </div>
                 </div>
 
+                @if (manifest.discovery && inMemoryWorkflows().length > 0) {
+                  <div class="alert alert-info d-flex align-items-center gap-2 py-2" id="synchronisations-info" role="status">
+                    <span class="fa-solid fa-sync" aria-hidden="true"></span>
+                    <span
+                      class="me-auto"
+                      translate="south.workflows.synchronised-info"
+                      [translateParams]="{ count: inMemoryWorkflows().length }"
+                    ></span>
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm alert-link"
+                      (click)="manageWorkflows()"
+                      translate="south.workflows.manage"
+                    ></button>
+                  </div>
+                }
                 <div class="mb-3">
                   <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
                   <ng-template #scheduleTooltip>

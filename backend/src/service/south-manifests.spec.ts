@@ -138,6 +138,12 @@ describe('southManifestList', () => {
     }
   });
 
+  it('every manifest with discovery has explore: the Discover button of the pages leads to both', () => {
+    for (const manifest of southManifestList.filter(element => element.discovery)) {
+      assert.equal(manifest.explore, true, `manifest '${manifest.id}'`);
+    }
+  });
+
   it('every discovery default mapping only maps item settings, with allowed constants, and every required one', () => {
     for (const manifest of southManifestList) {
       const defaults = manifest.discovery?.defaults;

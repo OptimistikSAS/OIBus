@@ -29,6 +29,7 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
+import { ExploreButtonComponent } from '../../shared/explore-button/explore-button.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
 import { addAttributeToForm, addEnablingConditions, asFormGroup, extractFormValue } from '../../shared/form/dynamic-form.builder';
@@ -113,7 +114,8 @@ type SouthConnectorForm = FormGroup<{
     ItemTableComponent,
     ...ITEM_TABLE_TEMPLATES,
     ModalStepsComponent,
-    OIBusSettingsSummaryComponent
+    OIBusSettingsSummaryComponent,
+    ExploreButtonComponent
   ],
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss',
@@ -499,8 +501,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       southId,
       southSettings,
       manifest: this.manifest()!,
-      scanModes: this.scanModes(),
-      groups: this.itemGroups,
+      schedule: { scanModes: this.scanModes(), groups: this.itemGroups },
       existingItems: this.inMemoryItems(),
       nodeIds
     });

@@ -168,6 +168,13 @@ html {
   padding: 0.75rem 0.75rem 1rem;
 }
 
+// a link button in an alert reads as the link of the alert, not as the white links of the oib-box-title bars
+.alert .btn-link.alert-link {
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+}
+
 // specificity must beat the global .btn-link white (that rule targets buttons in the dark
 // oib-box-title bars; this chip sits on the light testing-item-panel background instead)
 .btn-link.settings-summary-chip {

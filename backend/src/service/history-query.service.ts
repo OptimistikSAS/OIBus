@@ -342,23 +342,10 @@ export default class HistoryQueryService {
     retrieveSecretsFromSouth: string | undefined,
     settingsToTest: SouthSettings
   ): Promise<OIBusConnectionTestResult> {
-    let southSettings: SouthSettings | null = null;
-    if (historyId !== 'create') {
-      const historyQuery = this.findById(historyId);
-      southSettings = historyQuery.southSettings;
-    } else if (retrieveSecretsFromSouth) {
-      const south = this.southService.findById(retrieveSecretsFromSouth);
-      southSettings = south.settings;
-    }
-    const southManifest = this.southService.getManifest(southType);
-    await this.validator.validateSettings(southManifest.settings, settingsToTest);
     return await this.southService.testSouth(
       'history',
       southType,
-      await encryptionService.decryptConnectorSecrets(
-        await encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, southManifest.settings),
-        southManifest.settings
-      )
+      await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest)
     );
   }
 
@@ -368,6 +355,23 @@ export default class HistoryQueryService {
     retrieveSecretsFromSouth: string | undefined,
     settingsToTest: SouthSettings
   ): Promise<SouthExploreStartResult> {
+    return await this.southService.startExplore(
+      'history',
+      southType,
+      await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest)
+    );
+  }
+
+  /**
+   * The south settings as edited, validated, with the secrets left blank taken from the history query - or, for a history
+   * query being created, from the south connector it is created from - to test them against the data source.
+   */
+  async southSettingsToTest(
+    historyId: string,
+    southType: OIBusSouthType,
+    retrieveSecretsFromSouth: string | undefined,
+    settingsToTest: SouthSettings
+  ): Promise<SouthSettings> {
     let southSettings: SouthSettings | null = null;
     if (historyId !== 'create') {
       const historyQuery = this.findById(historyId);
@@ -378,13 +382,9 @@ export default class HistoryQueryService {
     }
     const southManifest = this.southService.getManifest(southType);
     await this.validator.validateSettings(southManifest.settings, settingsToTest);
-    return await this.southService.startExplore(
-      'history',
-      southType,
-      await encryptionService.decryptConnectorSecrets(
-        await encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, southManifest.settings),
-        southManifest.settings
-      )
+    return await encryptionService.decryptConnectorSecrets(
+      await encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, southManifest.settings),
+      southManifest.settings
     );
   }
 

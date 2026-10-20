@@ -42952,6 +42952,29 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryDiscoveredItemsRequest": {
+				"properties": {
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthSettings",
+						"description": "South settings of the history query, as currently edited"
+					},
+					"discoveryScope": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "What to discover, e.g. `{ nodeIds: [...] }` for nodes picked in the Explore modal"
+					},
+					"itemFieldMapping": {
+						"$ref": "#/components/schemas/Record_string.string_",
+						"description": "Item field path to a constant or a {{field}} expression of the discovered record"
+					}
+				},
+				"required": [
+					"southSettings",
+					"discoveryScope",
+					"itemFieldMapping"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryItemDTO": {
 				"anyOf": [
 					{
@@ -49449,6 +49472,70 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/SouthSettings"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/history/{historyId}/test/discovered-items": {
+			"post": {
+				"operationId": "DiscoverItems",
+				"responses": {
+					"200": {
+						"description": "One item to create per discovered record",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/SouthConnectorItemCommandDTO"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Discovers what a scope holds (e.g. nodes picked in the Explore modal) against the south settings of a history query as\ncurrently edited, and maps every record to a new item. Nothing is saved.",
+				"summary": "Map discovered records to new history query items",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The history query id, or \"create\" for a history query not created yet",
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					},
+					{
+						"description": "The south connector a history query being created is created from, whose secrets it uses",
+						"in": "query",
+						"name": "fromSouth",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/HistoryDiscoveredItemsRequest"
 							}
 						}
 					}
