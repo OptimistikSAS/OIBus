@@ -2306,7 +2306,6 @@
       "title": "常规设置",
       "name": "名称",
       "port": "端口",
-      "log-levels": "日志级别",
       "console": "控制台：{{ level }}",
       "file": "文件：{{ level }}",
       "database": "数据库：{{ level }}",
