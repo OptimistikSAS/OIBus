@@ -1851,7 +1851,9 @@
       "uncheck-children": "取消选择 {{name}} 的所有子节点",
       "checked-count": "已选择 {{count}} 个",
       "keep-in-sync": "保持同步…",
-      "add-as-items": "添加为项"
+      "add-as-items": "添加为项",
+      "menu": "项同步：{{count}}",
+      "explore-data-source": "浏览数据源…"
     },
     "add-discovered-items": {
       "title": "从数据源添加项",
@@ -2103,7 +2105,6 @@
       "none-match": "没有与当前筛选条件匹配的组"
     },
     "workflows": {
-      "manage-button": "管理项同步",
       "manage-title": "项同步 ({{count}})",
       "create-title": "创建新的项同步",
       "edit-title": "编辑项同步",
@@ -2232,7 +2233,10 @@
         "review-incomplete": "请完成前面的步骤以预览运行",
         "back": "上一步",
         "next": "下一步"
-      }
+      },
+      "manage-count": "项同步（{{count}}）…",
+      "synchronised-info": "使项与数据源保持同步的项同步：{{count}}",
+      "manage": "管理"
     },
     "monitoring": {
       "title": "{{ name }} 指标",

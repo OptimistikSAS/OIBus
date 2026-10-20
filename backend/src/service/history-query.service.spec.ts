@@ -515,6 +515,18 @@ describe('History Query service', () => {
     ]);
   });
 
+  it('should give the south settings to test, validated', async () => {
+    const settings = await service.southSettingsToTest(
+      testData.historyQueries.list[0].id,
+      testData.south.command.type,
+      undefined,
+      testData.south.command.settings
+    );
+
+    assert.deepStrictEqual(settings, testData.south.command.settings);
+    assert.strictEqual(validatorMock.validateSettings.mock.calls.length, 1);
+  });
+
   it('should start an explore session in creation mode', async () => {
     await service.startExplore('create', testData.south.command.type, undefined, testData.south.command.settings);
 

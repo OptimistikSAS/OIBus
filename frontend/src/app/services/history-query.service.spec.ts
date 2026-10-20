@@ -205,6 +205,22 @@ describe('HistoryQueryService', () => {
       response: exploreStartResult
     },
     {
+      name: 'discover the items of checked nodes',
+      call: s => s.discoverItems('id1', 'folder-scanner', southSettings, { nodeIds: ['node'] }, { name: '{{name}}' }, 'southId1'),
+      method: 'POST',
+      url: '/api/history/id1/test/discovered-items?fromSouth=southId1&southType=folder-scanner',
+      body: { southSettings, discoveryScope: { nodeIds: ['node'] }, itemFieldMapping: { name: '{{name}}' } },
+      response: []
+    },
+    {
+      name: 'discover the items of checked nodes of a history query',
+      call: s => s.discoverItems('id1', 'folder-scanner', southSettings, { nodeIds: ['node'] }, { name: '{{name}}' }),
+      method: 'POST',
+      url: '/api/history/id1/test/discovered-items?southType=folder-scanner',
+      body: { southSettings, discoveryScope: { nodeIds: ['node'] }, itemFieldMapping: { name: '{{name}}' } },
+      response: []
+    },
+    {
       name: 'browse an explore session',
       call: s => s.browseExplore('id1', 'sessionId', 'root'),
       method: 'PUT',
