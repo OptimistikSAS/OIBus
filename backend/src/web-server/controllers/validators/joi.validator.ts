@@ -19,6 +19,11 @@ import {
 import { getCurrentPlatform } from '../../../service/utils';
 
 export default class JoiValidator {
+  // Schemas built by validateSettings, by manifest attribute then by platform: building one is far slower than
+  // validating against it, and a connector save validates the settings of each of its (possibly thousands of) items
+  // against the same manifest. Manifests are static, and the WeakMap lets go of any that is not.
+  private readonly settingsSchemas = new WeakMap<OIBusObjectAttribute, Map<string, Joi.ObjectSchema>>();
+
   protected getCurrentPlatform(): string {
     return getCurrentPlatform();
   }
@@ -35,8 +40,22 @@ export default class JoiValidator {
   }
 
   async validateSettings(settings: OIBusObjectAttribute, dto: object): Promise<void> {
-    const schema = this.generateFormGroupJoiSchema(settings)[settings.key];
-    await this.validate(schema, dto);
+    await this.validate(this.getSettingsSchema(settings), dto);
+  }
+
+  private getSettingsSchema(settings: OIBusObjectAttribute): Joi.ObjectSchema {
+    const platform = this.getCurrentPlatform();
+    let schemasByPlatform = this.settingsSchemas.get(settings);
+    if (!schemasByPlatform) {
+      schemasByPlatform = new Map();
+      this.settingsSchemas.set(settings, schemasByPlatform);
+    }
+    let schema = schemasByPlatform.get(platform);
+    if (!schema) {
+      schema = this.generateFormGroupJoiSchema(settings)[settings.key];
+      schemasByPlatform.set(platform, schema);
+    }
+    return schema;
   }
 
   public generateJoiSchema(settings: OIBusObjectAttribute): Joi.ObjectSchema {
