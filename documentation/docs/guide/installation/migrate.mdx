@@ -48,22 +48,23 @@ Migrate from OIBus v1 and v2 into the new OIBus v3 version with our migration to
 ## Download specific version
 
 :::caution OIBus version
-The migration will work only with the 3.8.8 OIBus version. If you want to migrate to a later version, first
-install OIBus v3.8.8 from one of the links below, and then update OIBus from v3.8.8 to a later version.
+The migration tool writes directly into the database of OIBus v3.9.6. It refuses to run on a data folder initialized
+by another OIBus version: install OIBus v3.9.6 from one of the links below. You can update OIBus to a later version
+once the migration is done.
 :::
 
 <Tabs>
   <TabItem value="windows" label="Windows" default>
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-setup-v3.8.8.exe">
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-win_x64-setup-v3.9.6.exe">
         <div>
-          <div>{`OIBus v3.8.8 (installer)`}</div>
+          <div>{`OIBus v3.9.6 (installer)`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
-      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-v3.8.8.zip">
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-win_x64-v3.9.6.zip">
         <div>
-          <div>{`OIBus v3.8.8 (zip)`}</div>
+          <div>{`OIBus v3.9.6 (zip)`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
@@ -74,9 +75,9 @@ install OIBus v3.8.8 from one of the links below, and then update OIBus from v3.
   </TabItem>
   <TabItem value="linux" label="Linux">
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-linux_x64-v3.8.8.zip`}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-linux_x64-v3.9.6.zip`}>
         <div>
-          <div>{`OIBus v3.8.8`}</div>
+          <div>{`OIBus v3.9.6`}</div>
           <div>Linux (x64)</div>
         </div>
       </DownloadButton>
@@ -87,9 +88,9 @@ install OIBus v3.8.8 from one of the links below, and then update OIBus from v3.
   </TabItem>
   <TabItem value="macos" label="MacOS">
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-macos_x64-v3.8.8.zip`}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-macos_x64-v3.9.6.zip`}>
         <div>
-          <div>{`OIBus v3.8.8`}</div>
+          <div>{`OIBus v3.9.6`}</div>
           <div>MacOS (Intel chip)</div>
         </div>
       </DownloadButton>
@@ -107,7 +108,7 @@ install OIBus v3.8.8 from one of the links below, and then update OIBus from v3.
    You can zip the data folder, or at least the configuration file `oibus.json` and its `keys` as a backup.
    :::
 
-2. Install [OIBus v3.8.8](#download-specific-version). Be careful to specify the **same data folder**. Check that OIBus v3 run properly by
+2. Install [OIBus v3.9.6](#download-specific-version). Be careful to specify the **same data folder**. Check that OIBus v3 run properly by
    login on `http://localhost:2223` with admin / pass. If everything works, go on with the next step.
 
 3. Stop OIBus v3.
@@ -132,4 +133,14 @@ oibus-upgrade.exe --config D:\OIBusData
 
 :::tip
 The file `upgrade-journal.log` contains the logs of the migration.
+:::
+
+:::info What is migrated
+- Engine settings, IP filters and the admin user (it replaces the default `admin` user of OIBus v3).
+- Scan modes used by the South connectors.
+- South connectors and their points. Points of OPC UA, OPC HDA, Modbus and ADS connectors are gathered into groups,
+  one per scan mode. The overlap of history connectors becomes a negative start time offset.
+- The last completed instant of history South connectors, and the files already handled by folder scanners
+  preserving their files.
+- North connectors, their subscriptions, and the data waiting in their cache, error and archive folders.
 :::
