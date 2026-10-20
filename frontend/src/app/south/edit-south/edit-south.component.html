@@ -102,50 +102,19 @@
                       (manageSynchronisations)="manageWorkflows()"
                     />
                   }
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.create' | translate"
-                    [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.create' | translate"
-                    (click)="addItem()"
-                  >
-                    <span class="fa-solid fa-plus" aria-hidden="true"></span>
+                  <button type="button" class="btn btn-primary btn-sm" id="add-item" (click)="addItem()">
+                    <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+                    <span translate="common.add"></span>
                   </button>
+                  <oib-items-menu
+                    [itemCount]="inMemoryItems().length"
+                    [groupCount]="inMemoryGroups().length"
+                    (manageGroups)="manageGroups()"
+                    (importItems)="importItems()"
+                    (exportItems)="exportItems()"
+                    (deleteAllItems)="deleteAllItems()"
+                  />
                   <oib-help [url]="itemSectionHelpUrl" />
-                </div>
-                <!-- The tools of the item list -->
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    id="manage-groups-button"
-                    [ngbTooltip]="'south.groups.manage-button' | translate"
-                    (click)="manageGroups()"
-                  >
-                    <span class="fa-solid fa-folder me-1" aria-hidden="true"></span>
-                    <span translate="south.groups.manage-button"></span>
-                    <span class="badge bg-secondary ms-1">{{ inMemoryGroups().length }}</span>
-                  </button>
-                  <div class="d-flex flex-wrap gap-2 ms-auto">
-                    <button type="button" class="btn btn-secondary btn-sm" (click)="importItems()" id="import-button">
-                      <span translate="south.items.import.button"></span>
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      id="export-items"
-                      (click)="exportItems()"
-                      translate="south.items.export.button"
-                    ></button>
-                    <button
-                      type="button"
-                      class="btn btn-danger btn-sm"
-                      (click)="deleteAllItems()"
-                      [disabled]="inMemoryItems().length === 0"
-                      translate="south.items.delete-all"
-                      id="delete-all"
-                    ></button>
-                  </div>
                 </div>
 
                 @if (manifest.discovery && inMemoryWorkflows().length > 0) {

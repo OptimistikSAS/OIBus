@@ -1,8 +1,4 @@
-// The two halves of the split button stay together, even in the oib-box-title bars that space out their buttons
+// The two halves of the split button stay together
 .btn-group > .btn {
   margin-right: 0;
-}
-
-:host-context(.oib-box-title) .btn-group {
-  margin-right: 0.75rem;
 }

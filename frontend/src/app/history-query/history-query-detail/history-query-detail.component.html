@@ -2,123 +2,82 @@
   <div class="oib-padded-container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
-        <div class="oib-header-container mb-3">
-          <h1 id="title">
-            <span>{{ 'history-query.title' | translate: { name: historyQuery.name } }}</span>
-            <span class="ms-2">
-              @if (historyQuery.status === 'PENDING') {
+        <div class="oib-detail-header">
+          <div>
+            <h1 id="title">{{ historyQuery.name }}</h1>
+            <div class="oib-detail-meta">
+              <span class="oib-status-badge" id="history-query-status">
+                <span [class]="statusIcon(historyQuery.status)" aria-hidden="true"></span>
+                <span [translate]="'enums.status.' + historyQuery.status"></span>
+              </span>
+              <span class="d-flex align-items-center gap-1" id="history-query-time-range">
+                <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                {{ historyQuery.queryTimeRange.startTime | datetime: 'mediumWithSeconds' }}
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                {{ historyQuery.queryTimeRange.endTime | datetime: 'mediumWithSeconds' }}
+              </span>
+              <span class="d-flex align-items-center gap-1" id="history-query-connectors">
+                <img class="oib-detail-type-image" [src]="'/' + southManifest()!.category + '.svg'" alt="" />
+                {{ historyQuery.southType | oIBusSouthTypeEnum }}
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                <img class="oib-detail-type-image" [src]="'/' + northManifest()!.category + '.svg'" alt="" />
+                {{ historyQuery.northType | oIBusNorthTypeEnum }}
+              </span>
+              @if (historyQuery.description) {
+                <span id="history-query-description">{{ historyQuery.description }}</span>
+              }
+              <span>
+                {{ historyQuery.id }}
                 <button
                   type="button"
-                  class="btn btn-primary"
-                  id="history-query-start"
-                  [ngbTooltip]="'history-query.tooltips.start' | translate"
-                  [attr.aria-label]="'history-query.tooltips.start' | translate"
-                  (click)="toggleHistoryQuery('RUNNING')"
-                  [disabled]="state.isPending | async"
+                  class="btn btn-link ms-1 align-baseline copy-cache-path"
+                  [ngbTooltip]="'history-query.tooltips.copy-cache-path' | translate"
+                  [attr.aria-label]="'history-query.tooltips.copy-cache-path' | translate"
+                  [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
+                  (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
                 >
-                  @if (state.isPending | async) {
-                    <span class="fa-solid fa-spinner fa-spin" role="status" aria-hidden="true"></span>
-                  }
-                  @if ((state.isPending | async) === false) {
-                    <span class="fa-solid fa-play" role="status" aria-hidden="true"></span>
-                  }
+                  <i class="fa-solid fa-copy" aria-hidden="true"></i>
                 </button>
-              }
-              @if (historyQuery.status === 'RUNNING') {
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  id="history-query-pause"
-                  [ngbTooltip]="'history-query.tooltips.pause' | translate"
-                  [attr.aria-label]="'history-query.tooltips.pause' | translate"
-                  (click)="toggleHistoryQuery('PAUSED')"
-                  [disabled]="state.isPending | async"
-                >
-                  @if (state.isPending | async) {
-                    <span class="fa-solid fa-spinner fa-spin" role="status" aria-hidden="true"></span>
-                  }
-                  @if ((state.isPending | async) === false) {
-                    <span class="fa-solid fa-pause" role="status" aria-hidden="true"></span>
-                  }
-                </button>
-              }
-              @if (historyQuery.status === 'PAUSED') {
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  id="history-query-unpause"
-                  [ngbTooltip]="'history-query.tooltips.resume' | translate"
-                  [attr.aria-label]="'history-query.tooltips.resume' | translate"
-                  (click)="toggleHistoryQuery('RUNNING')"
-                  [disabled]="state.isPending | async"
-                >
-                  @if (state.isPending | async) {
-                    <span class="fa-solid fa-spinner fa-spin" role="status" aria-hidden="true"></span>
-                  }
-                  @if ((state.isPending | async) === false) {
-                    <span class="fa-solid fa-play" role="status" aria-hidden="true"></span>
-                  }
-                </button>
-              }
-              @if (historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED') {
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  id="history-query-restart"
-                  [ngbTooltip]="'history-query.tooltips.restart' | translate"
-                  [attr.aria-label]="'history-query.tooltips.restart' | translate"
-                  (click)="toggleHistoryQuery('RUNNING')"
-                  [disabled]="state.isPending | async"
-                >
-                  @if (state.isPending | async) {
-                    <span class="fa-solid fa-spinner fa-spin" role="status" aria-hidden="true"></span>
-                  }
-                  @if ((state.isPending | async) === false) {
-                    <span class="fa-solid fa-arrow-rotate-right" role="status" aria-hidden="true"></span>
-                  }
-                </button>
-              }
-              <button
-                type="button"
-                class="btn btn-primary ms-1"
-                id="edit-link"
-                routerLink="edit"
-                [ngbTooltip]="'history-query.tooltips.edit' | translate"
-                [attr.aria-label]="'history-query.tooltips.edit' | translate"
-              >
-                <i class="fa-solid fa-pencil" aria-hidden="true"></i>
-              </button>
-              <button
-                type="button"
-                class="btn btn-primary ms-1"
-                id="show-audit-button"
-                [ngbTooltip]="'history-query.tooltips.audit' | translate"
-                [attr.aria-label]="'history-query.tooltips.audit' | translate"
-                (click)="showAudit('history_query', historyQuery.id)"
-              >
-                <i class="fa-solid fa-history" aria-hidden="true"></i>
-              </button>
-            </span>
-          </h1>
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="d-flex align-items-center text-muted small">
-              <i class="fa-solid fa-calendar-days me-1" aria-hidden="true"></i>
-              {{ historyQuery.queryTimeRange.startTime | datetime: 'mediumWithSeconds' }}
-              <i class="fa-solid fa-arrow-right oib-fa-arrow" aria-hidden="true"></i>
-              {{ historyQuery.queryTimeRange.endTime | datetime: 'mediumWithSeconds' }}
-            </span>
-            <span class="text-disabled me-2">
-              {{ historyQuery.id }}
-              <i
-                class="fa-solid fa-copy"
-                role="button"
-                tabindex="0"
-                [ngbTooltip]="'history-query.tooltips.copy-cache-path' | translate"
-                [attr.aria-label]="'history-query.tooltips.copy-cache-path' | translate"
-                [cdkCopyToClipboard]="oibusInfo()!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
-                (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
-              ></i>
-            </span>
+              </span>
+            </div>
+          </div>
+          <div class="oib-detail-actions">
+            <button
+              type="button"
+              class="btn btn-subtle"
+              id="show-audit-button"
+              [ngbTooltip]="'history-query.tooltips.audit' | translate"
+              [attr.aria-label]="'history-query.tooltips.audit' | translate"
+              (click)="showAudit('history_query', historyQuery.id)"
+            >
+              <i class="fa-solid fa-history" aria-hidden="true"></i>
+            </button>
+            <!-- what can be done from the status of the query: start, pause, resume or restart it -->
+            @let action = statusAction(historyQuery.status);
+            <button
+              type="button"
+              class="btn btn-subtle"
+              [id]="action.id"
+              [attr.aria-label]="action.tooltip | translate"
+              (click)="toggleHistoryQuery(action.status)"
+              [disabled]="state.isPending | async"
+            >
+              <span
+                [class]="(state.isPending | async) ? 'fa-solid fa-spinner fa-spin me-1' : action.icon + ' me-1'"
+                aria-hidden="true"
+              ></span>
+              <span [translate]="action.label"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="edit-link"
+              routerLink="edit"
+              [attr.aria-label]="'history-query.tooltips.edit' | translate"
+            >
+              <i class="fa-solid fa-pencil me-1" aria-hidden="true"></i>
+              <span translate="common.edit"></span>
+            </button>
           </div>
         </div>
         @if (historyMetrics(); as historyMetrics) {
@@ -129,173 +88,52 @@
             [southManifest]="southManifest()!"
           />
         }
-        <!-- Cache-->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between">
-              <span translate="north.caching.title"></span>
-              <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/history-queries', historyQuery.id, 'cache']"
-                ><span class="fa-solid fa-search" aria-hidden="true"></span
-                ><span class="mx-1" translate="north.caching.explore-cache"></span
-              ></a>
-            </div>
-          </ng-template>
-          <table class="table table-sm table-hover oib-table">
-            <tbody>
-              <tr>
-                <td translate="north.caching.trigger.title" class="label-column"></td>
-                <td>
-                  <span
-                    translate="north.caching.trigger.value"
-                    [translateParams]="{
-                      scanMode: historyQuery.caching.trigger.scanMode.name,
-                      numberOfElements: historyQuery.caching.trigger.numberOfElements,
-                      numberOfFiles: historyQuery.caching.trigger.numberOfFiles
-                    }"
-                  ></span>
-                  @if (isWindowExpired(historyQuery.caching.trigger.scanMode)) {
-                    <i
-                      class="fa-solid fa-triangle-exclamation text-warning ms-1 scan-mode-window-expired"
-                      aria-hidden="true"
-                      [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
-                    ></i>
-                  }
-                </td>
-              </tr>
-              <tr>
-                <td translate="north.caching.throttling.title"></td>
-                <td
-                  translate="north.caching.throttling.value"
-                  [translateParams]="{
-                    runMinDelay: historyQuery.caching.throttling.runMinDelay,
-                    maxSize: historyQuery.caching.throttling.maxSize,
-                    maxNumberOfElements: historyQuery.caching.throttling.maxNumberOfElements
-                  }"
-                ></td>
-              </tr>
-              <tr>
-                <td translate="north.caching.error.title"></td>
-                <td
-                  translate="north.caching.error.value"
-                  [translateParams]="{
-                    retryInterval: historyQuery.caching.error.retryInterval,
-                    retryCount: historyQuery.caching.error.retryCount,
-                    retentionDuration: historyQuery.caching.error.retentionDuration
-                  }"
-                ></td>
-              </tr>
-              <tr>
-                <td translate="north.caching.archive.title"></td>
-                <td
-                  translate="north.caching.archive.value"
-                  [translateParams]="{
-                    enabled: historyQuery.caching.archive.enabled,
-                    retentionDuration: historyQuery.caching.archive.retentionDuration
-                  }"
-                ></td>
-              </tr>
-            </tbody>
-          </table>
-        </oib-box>
-        <oib-history-query-transformers
-          [southType]="historyQuery.southType"
-          [historyQuery]="historyQuery"
-          [scanModes]="scanModes()"
-          [certificates]="certificates()"
-          [northManifest]="northManifest()!"
-          [transformers]="transformers()"
-          [saveChangesDirectly]="true"
-          (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
-        />
-        <!-- North Specific settings -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <span
-                translate="history-query.north.specific-settings"
-                [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
-                id="north-specific-settings-title"
-              ></span>
-              <button
-                translate="north.test-connection.button"
-                type="button"
-                class="ms-3 btn btn-secondary btn-sm oib-box-btn"
-                id="test-connection-north"
-                (click)="test('north')"
-              ></button>
-            </div>
-          </ng-template>
-          <oib-oibus-settings-summary class="d-block px-3 py-2" id="north-settings" [settings]="northDisplayedSettings()" />
-        </oib-box>
-        <!-- South Specific settings -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <span
-                translate="history-query.south.specific-settings"
-                [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
-                id="south-specific-settings-title"
-              ></span>
-              <div>
-                <button
-                  translate="south.test-connection.button"
-                  type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                  id="test-connection-south"
-                  (click)="test('south')"
-                ></button>
-              </div>
-            </div>
-          </ng-template>
-          <oib-oibus-settings-summary class="d-block px-3 py-2" id="south-settings" [settings]="southDisplayedSettings()" />
-        </oib-box>
+        <!-- South specific settings -->
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5
+              translate="history-query.south.specific-settings"
+              [translateParams]="{ type: southManifest()!.id | oIBusSouthTypeEnum }"
+              id="south-specific-settings-title"
+            ></h5>
+            <button
+              translate="south.test-connection.button"
+              type="button"
+              class="btn btn-secondary btn-sm"
+              id="test-connection-south"
+              (click)="test('south')"
+            ></button>
+          </div>
+          <oib-oibus-settings-summary id="south-settings" [settings]="southDisplayedSettings()" />
+        </section>
         <!-- Items -->
-        <oib-box class="oib-south-items">
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span translate="south.items.title"></span>
+        <section class="oib-panel oib-south-items" id="history-query-items">
+          <div class="oib-section-title">
+            <h5>
+              <span translate="south.items.title"></span>
+              <!-- rendered once the item table below has its inputs: an embedded view is refreshed after the bindings of its parent -->
+              <ng-container [ngTemplateOutlet]="itemCount" />
+              <ng-template #itemCount>
                 @if (itemTable.filteredItems().length) {
                   <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
                 }
-              </div>
-              <div class="ms-3 d-flex align-items-center">
-                @if (southManifest()!.explore) {
-                  <oib-explore-button class="oib-box-btn" (explore)="explore()" />
-                }
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm oib-box-btn"
-                  [ngbTooltip]="'history-query.items.tooltips.add' | translate"
-                  [attr.aria-label]="'history-query.items.tooltips.add' | translate"
-                  (click)="addItem()"
-                >
-                  <span class="fa-solid fa-plus" aria-hidden="true"></span>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn"
-                  id="export-items"
-                  (click)="exportItems()"
-                  [disabled]="historyQuery.items.length === 0"
-                  translate="south.items.export.button"
-                ></button>
-                <button type="button" class="btn btn-secondary btn-sm oib-box-btn" (click)="importItems()" id="import-button">
-                  <span translate="south.items.import.button"></span>
-                </button>
-                <button
-                  type="button"
-                  id="delete-all"
-                  class="btn btn-danger btn-sm oib-box-btn"
-                  (click)="deleteAllItems()"
-                  [disabled]="historyQuery.items.length === 0"
-                  translate="south.items.delete-all"
-                ></button>
-                <oib-help [url]="itemSectionHelpUrl" />
-              </div>
-            </div>
-          </ng-template>
-
+              </ng-template>
+            </h5>
+            @if (southManifest()!.explore) {
+              <oib-explore-button (explore)="explore()" />
+            }
+            <button type="button" class="btn btn-primary btn-sm" id="add-item" (click)="addItem()">
+              <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+              <span translate="common.add"></span>
+            </button>
+            <oib-items-menu
+              [itemCount]="historyQuery.items.length"
+              (importItems)="importItems()"
+              (exportItems)="exportItems()"
+              (deleteAllItems)="deleteAllItems()"
+            />
+            <oib-help [url]="itemSectionHelpUrl" />
+          </div>
           <div class="mb-3">
             <oib-item-table
               #itemTable
@@ -361,18 +199,63 @@
               </ng-template>
             </oib-item-table>
           </div>
-        </oib-box>
-        <!-- Logs -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <span id="logs-title" translate="logs.title"></span>
-              </div>
+        </section>
+        <!-- North specific settings -->
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5
+              translate="history-query.north.specific-settings"
+              [translateParams]="{ type: northManifest()!.id | oIBusNorthTypeEnum }"
+              id="north-specific-settings-title"
+            ></h5>
+            <button
+              translate="north.test-connection.button"
+              type="button"
+              class="btn btn-secondary btn-sm"
+              id="test-connection-north"
+              (click)="test('north')"
+            ></button>
+          </div>
+          <oib-oibus-settings-summary id="north-settings" [settings]="northDisplayedSettings()" />
+        </section>
+        <!-- Cache -->
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="north.caching.title"></h5>
+            <a class="btn btn-subtle btn-sm" id="explore-cache" [routerLink]="['/history-queries', historyQuery.id, 'cache']">
+              <span class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></span>
+              <span translate="north.caching.explore-cache"></span>
+            </a>
+          </div>
+          @if (isWindowExpired(historyQuery.caching.trigger.scanMode)) {
+            <div class="alert alert-warning d-flex align-items-center gap-2 py-2" role="status">
+              <i class="fa-solid fa-triangle-exclamation scan-mode-window-expired" aria-hidden="true"></i>
+              <span translate="engine.scan-mode.window-never-fires"></span>
             </div>
-          </ng-template>
-        </oib-box>
-        <oib-logs [scopeId]="historyQueryId()" scopeType="history-query" [embedded]="true" />
+          }
+          <oib-oibus-settings-summary id="history-query-caching" [settings]="cachingSummary()" />
+        </section>
+        <!-- Transformers -->
+        <section class="oib-panel">
+          <oib-history-query-transformers
+            layout="section"
+            [southType]="historyQuery.southType"
+            [historyQuery]="historyQuery"
+            [scanModes]="scanModes()"
+            [certificates]="certificates()"
+            [northManifest]="northManifest()!"
+            [transformers]="transformers()"
+            [saveChangesDirectly]="true"
+            (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
+          />
+        </section>
+        <!-- Logs -->
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 id="logs-title" translate="logs.title"></h5>
+          </div>
+          <oib-logs [scopeId]="historyQueryId()" scopeType="history-query" [embedded]="true" />
+        </section>
       </div>
     </div>
   </div>

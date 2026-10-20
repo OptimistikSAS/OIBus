@@ -1,268 +1,225 @@
-<oib-box>
-  <ng-template oibBoxTitle>
-    <div class="d-flex justify-content-between">
-      <span translate="history-query.monitoring.title" [translateParams]="{ name: historyQuery().name }" id="title"></span>
-    </div>
-  </ng-template>
-
-  <div>
-    <table class="table table-sm table-hover oib-table mb-1">
-      <thead class="light">
-        <tr>
-          <th translate="history-query.monitoring.north.title"></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- interval progressbar  -->
-        @if (historyMetrics().historyMetrics.intervalProgress >= 1) {
-          <tr>
-            <td translate="history-query.monitoring.north.data-sent"></td>
-            <td>
-              <oib-progressbar [value]="northProgress()" [max]="1" [animated]="northProgressbarAnimated()" />
-            </td>
-          </tr>
-        }
-        <!-- last connection -->
-        @if (historyMetrics().north.lastConnection; as lastConnection) {
-          <tr>
-            <td translate="history-query.monitoring.north.last-connection"></td>
-            <td>{{ lastConnection | datetime: 'mediumWithSeconds' }}</td>
-          </tr>
-        }
-        <!-- last content sent -->
-        @if (historyMetrics().north.lastContentSent; as lastContentSent) {
-          <tr>
-            <td translate="history-query.monitoring.north.last-content-sent"></td>
-            <td>{{ historyMetrics().north.lastContentSent }}</td>
-          </tr>
-        }
-        <!-- last run -->
-        @if (historyMetrics().north.lastRunStart; as lastRunStart) {
-          <tr>
-            <td translate="history-query.monitoring.north.last-run-start"></td>
-            <td>{{ lastRunStart | datetime: 'mediumWithSeconds' }}</td>
-          </tr>
-        }
-        <!-- last duration -->
-        @if (historyMetrics().north.lastRunDuration; as lastRunDuration) {
-          <tr>
-            <td translate="history-query.monitoring.north.last-run-duration"></td>
-            <td>{{ lastRunDuration | duration: 'short' }}</td>
-          </tr>
-        }
-        <!-- cache size -->
-        <tr>
-          <td translate="history-query.monitoring.north.cache-size-title"></td>
-          <td
-            translate="history-query.monitoring.north.cache-size-value"
-            [translateParams]="{
-              currentSize: historyMetrics().north.currentCacheSize | fileSize,
-              totalSent: historyMetrics().north.contentSentSize | fileSize,
-              totalCached: historyMetrics().north.contentCachedSize | fileSize
-            }"
-          ></td>
-        </tr>
-        <!-- error size -->
-        <tr>
-          <td translate="history-query.monitoring.north.error-size-title"></td>
-          <td
-            translate="history-query.monitoring.north.error-size-value"
-            [translateParams]="{
-              currentSize: historyMetrics().north.currentErrorSize | fileSize,
-              totalSize: historyMetrics().north.contentErroredSize | fileSize
-            }"
-          ></td>
-        </tr>
-        <!-- archive size -->
-        <tr>
-          <td translate="history-query.monitoring.north.archive-size-title"></td>
-          <td
-            translate="history-query.monitoring.north.archive-size-value"
-            [translateParams]="{
-              currentSize: historyMetrics().north.currentArchiveSize | fileSize,
-              totalSize: historyMetrics().north.contentArchivedSize | fileSize
-            }"
-          ></td>
-        </tr>
-      </tbody>
-    </table>
-    <table class="table table-sm table-hover oib-table">
-      <thead class="light">
-        <tr>
-          <th translate="history-query.monitoring.south.title"></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+@let metrics = historyMetrics();
+@let progress = metrics.historyMetrics;
+<section class="oib-panel">
+  <div class="oib-section-title">
+    <h5 translate="common.metrics" id="title"></h5>
+  </div>
+  <dl class="oib-summary">
+    <!-- South: what is retrieved from the data source, interval by interval -->
+    <div class="oib-summary-group" id="south-metrics">
+      <div class="oib-summary-group-title" translate="history-query.monitoring.south.title"></div>
+      <dl class="oib-summary">
         <!-- whole-range progress, only for batched connectors (no per-item data) -->
         @if (!hasItemProgress()) {
-          <!-- south interval progressbar -->
-          @if (historyMetrics().historyMetrics.intervalProgress) {
-            <tr>
-              <td translate="history-query.monitoring.south.data-retrieved"></td>
-              <td>
-                <oib-progressbar [value]="historyMetrics().historyMetrics.intervalProgress" [animated]="southProgressbarAnimated()" />
-              </td>
-            </tr>
+          @if (progress.intervalProgress) {
+            <div class="oib-summary-entry oib-summary-wide">
+              <dt translate="history-query.monitoring.south.data-retrieved"></dt>
+              <dd><oib-progressbar [value]="progress.intervalProgress" [animated]="southProgressbarAnimated()" /></dd>
+            </div>
           }
-          <!-- south interval progress -->
-          @if (historyMetrics().historyMetrics.currentIntervalNumber && historyMetrics().historyMetrics.numberOfIntervals) {
-            <tr>
-              <td translate="history-query.monitoring.south.interval-progress"></td>
-              <td>
-                {{ historyMetrics().historyMetrics.currentIntervalNumber }}
-                / {{ historyMetrics().historyMetrics.numberOfIntervals }} : [
-                @if (historyMetrics().historyMetrics.currentIntervalStart; as currentIntervalStart) {
-                  {{ currentIntervalStart | datetime: 'ff' }}
-                }
-                ,
-                @if (historyMetrics().historyMetrics.currentIntervalEnd; as currentIntervalEnd) {
-                  {{ currentIntervalEnd | datetime: 'ff' }}
-                }
-                ]
-              </td>
-            </tr>
+          @if (progress.currentIntervalNumber && progress.numberOfIntervals) {
+            <div class="oib-summary-entry">
+              <dt translate="history-query.monitoring.south.interval-progress"></dt>
+              <dd>
+                {{ progress.currentIntervalNumber }} / {{ progress.numberOfIntervals }}
+                <ng-container [ngTemplateOutlet]="currentInterval" />
+              </dd>
+            </div>
           }
         } @else {
           <!-- per-item progress, only for connectors that query items one at a time -->
-          <tr>
-            <td translate="history-query.monitoring.south.item-progress"></td>
-            <td>
+          <div class="oib-summary-entry oib-summary-wide">
+            <dt translate="history-query.monitoring.south.item-progress"></dt>
+            <dd>
               <span
                 translate="history-query.monitoring.south.current-item"
-                [translateParams]="{
-                  name: historyMetrics().historyMetrics.itemName,
-                  current: historyMetrics().historyMetrics.currentItemNumber,
-                  total: historyMetrics().historyMetrics.numberOfItems
-                }"
+                [translateParams]="{ name: progress.itemName, current: progress.currentItemNumber, total: progress.numberOfItems }"
               ></span>
               <oib-progressbar
-                [value]="(historyMetrics().historyMetrics.currentItemNumber ?? 0) / (historyMetrics().historyMetrics.numberOfItems ?? 1)"
+                [value]="(progress.currentItemNumber ?? 0) / (progress.numberOfItems ?? 1)"
                 [animated]="itemProgressbarAnimated()"
               />
-            </td>
-          </tr>
-          <tr>
-            <td translate="history-query.monitoring.south.item-interval-progress"></td>
-            <td>
-              {{ historyMetrics().historyMetrics.itemIntervalNumber }}
-              / {{ historyMetrics().historyMetrics.itemNumberOfIntervals }} : [
-              @if (historyMetrics().historyMetrics.currentIntervalStart; as currentIntervalStart) {
-                {{ currentIntervalStart | datetime: 'ff' }}
-              }
-              ,
-              @if (historyMetrics().historyMetrics.currentIntervalEnd; as currentIntervalEnd) {
-                {{ currentIntervalEnd | datetime: 'ff' }}
-              }
-              ]
-              <oib-progressbar
-                [value]="historyMetrics().historyMetrics.itemIntervalProgress ?? 0"
-                [animated]="itemIntervalProgressbarAnimated()"
-              />
-            </td>
-          </tr>
+            </dd>
+          </div>
+          <div class="oib-summary-entry oib-summary-wide">
+            <dt translate="history-query.monitoring.south.item-interval-progress"></dt>
+            <dd>
+              {{ progress.itemIntervalNumber }} / {{ progress.itemNumberOfIntervals }}
+              <ng-container [ngTemplateOutlet]="currentInterval" />
+              <oib-progressbar [value]="progress.itemIntervalProgress ?? 0" [animated]="itemIntervalProgressbarAnimated()" />
+            </dd>
+          </div>
         }
         <!-- rate and ETA, only while the query is running -->
         @if (historyQuery().status === 'RUNNING') {
-          <tr>
-            <td translate="history-query.monitoring.south.values-per-second"></td>
-            <td>{{ southRate() | number: '1.0-2' }}</td>
-          </tr>
+          <div class="oib-summary-entry">
+            <dt translate="history-query.monitoring.south.values-per-second"></dt>
+            <dd>{{ southRate() | number: '1.0-2' }}</dd>
+          </div>
           @if (southEta(); as eta) {
-            <tr>
-              <td translate="history-query.monitoring.south.eta"></td>
-              <td>{{ eta * 1000 | duration: 'short' }}</td>
-            </tr>
+            <div class="oib-summary-entry">
+              <dt translate="history-query.monitoring.south.eta"></dt>
+              <dd>{{ eta * 1000 | duration: 'short' }}</dd>
+            </div>
           }
         }
-        <!-- number of values for point connectors -->
-        <tr>
-          <td translate="history-query.monitoring.south.number-of-values"></td>
-          <td>{{ historyMetrics().south.numberOfValuesRetrieved }}</td>
-        </tr>
-        <!-- number of files for file connectors -->
-        <tr>
-          <td translate="history-query.monitoring.south.number-of-files"></td>
-          <td>{{ historyMetrics().south.numberOfFilesRetrieved }}</td>
-        </tr>
-        <!-- last connection -->
-        @if (historyMetrics().south.lastConnection; as lastConnection) {
-          <tr>
-            <td translate="history-query.monitoring.south.last-connection"></td>
-            <td>{{ lastConnection | datetime: 'mediumWithSeconds' }}</td>
-          </tr>
+        <div class="oib-summary-entry">
+          <dt translate="history-query.monitoring.south.number-of-values"></dt>
+          <dd>{{ metrics.south.numberOfValuesRetrieved }}</dd>
+        </div>
+        <div class="oib-summary-entry">
+          <dt translate="history-query.monitoring.south.number-of-files"></dt>
+          <dd>{{ metrics.south.numberOfFilesRetrieved }}</dd>
+        </div>
+        @if (metrics.south.lastConnection; as lastConnection) {
+          <div class="oib-summary-entry">
+            <dt translate="history-query.monitoring.south.last-connection"></dt>
+            <dd>{{ lastConnection | datetime: 'mediumWithSeconds' }}</dd>
+          </div>
         }
-        <!-- last value -->
-        @if (historyMetrics().south.lastValueRetrieved; as lastValueRetrieved) {
-          <tr>
-            <td translate="history-query.monitoring.south.last-value"></td>
+        @if (metrics.south.lastRunStart; as lastRunStart) {
+          <div class="oib-summary-entry">
+            <dt translate="history-query.monitoring.south.last-run-start"></dt>
+            <dd>{{ lastRunStart | datetime: 'mediumWithSeconds' }}</dd>
+          </div>
+        }
+        @if (metrics.south.lastRunDuration; as lastRunDuration) {
+          <div class="oib-summary-entry">
+            <dt translate="history-query.monitoring.south.last-run-duration"></dt>
+            <dd>{{ lastRunDuration | duration: 'short' }}</dd>
+          </div>
+        }
+        @if (metrics.south.lastFileRetrieved; as lastFileRetrieved) {
+          <div class="oib-summary-entry oib-summary-wide">
+            <dt translate="history-query.monitoring.south.last-file"></dt>
+            <dd>{{ lastFileRetrieved }}</dd>
+          </div>
+        }
+        @if (metrics.south.lastValueRetrieved; as lastValue) {
+          <div class="oib-summary-entry oib-summary-wide">
+            <dt translate="history-query.monitoring.south.last-value"></dt>
+            <dd>
+              {{ lastValue.pointId }}
+              <span class="oib-summary-note ms-1">{{ lastValue.timestamp | datetime: 'mediumWithSeconds' }}</span>
+              <pre class="oib-summary-code">{{ lastValue.data | json }}</pre>
+            </dd>
+          </div>
+        }
+      </dl>
+    </div>
+    <!-- North: what is sent from the cache, once the data is retrieved -->
+    <div class="oib-summary-group" id="north-metrics">
+      <div class="oib-summary-group-title" translate="history-query.monitoring.north.title"></div>
+      <dl class="oib-summary">
+        @if (progress.intervalProgress >= 1) {
+          <div class="oib-summary-entry oib-summary-wide">
+            <dt translate="history-query.monitoring.north.data-sent"></dt>
+            <dd><oib-progressbar [value]="northProgress()" [max]="1" [animated]="northProgressbarAnimated()" /></dd>
+          </div>
+        }
+        @if (metrics.north.lastConnection; as lastConnection) {
+          <div class="oib-summary-entry">
+            <dt translate="history-query.monitoring.north.last-connection"></dt>
+            <dd>{{ lastConnection | datetime: 'mediumWithSeconds' }}</dd>
+          </div>
+        }
+        @if (metrics.north.lastRunStart; as lastRunStart) {
+          <div class="oib-summary-entry">
+            <dt translate="history-query.monitoring.north.last-run-start"></dt>
+            <dd>{{ lastRunStart | datetime: 'mediumWithSeconds' }}</dd>
+          </div>
+        }
+        @if (metrics.north.lastRunDuration; as lastRunDuration) {
+          <div class="oib-summary-entry">
+            <dt translate="history-query.monitoring.north.last-run-duration"></dt>
+            <dd>{{ lastRunDuration | duration: 'short' }}</dd>
+          </div>
+        }
+        <!-- the sizes of the cache, the errors and the archive now, and what went through them since the metrics started -->
+        <div class="oib-summary-entry">
+          <dt translate="history-query.monitoring.north.cache-size-title"></dt>
+          <dd>
+            {{ metrics.north.currentCacheSize | fileSize }}
+            <div
+              class="oib-summary-note"
+              translate="history-query.monitoring.north.cache-size-note"
+              [translateParams]="{
+                totalCached: metrics.north.contentCachedSize | fileSize,
+                totalSent: metrics.north.contentSentSize | fileSize
+              }"
+            ></div>
+          </dd>
+        </div>
+        <div class="oib-summary-entry">
+          <dt translate="history-query.monitoring.north.error-size-title"></dt>
+          <dd>
+            {{ metrics.north.currentErrorSize | fileSize }}
+            <div
+              class="oib-summary-note"
+              translate="history-query.monitoring.north.error-size-note"
+              [translateParams]="{ totalSize: metrics.north.contentErroredSize | fileSize }"
+            ></div>
+          </dd>
+        </div>
+        <div class="oib-summary-entry">
+          <dt translate="history-query.monitoring.north.archive-size-title"></dt>
+          <dd>
+            {{ metrics.north.currentArchiveSize | fileSize }}
+            <div
+              class="oib-summary-note"
+              translate="history-query.monitoring.north.archive-size-note"
+              [translateParams]="{ totalSize: metrics.north.contentArchivedSize | fileSize }"
+            ></div>
+          </dd>
+        </div>
+        @if (metrics.north.lastContentSent; as lastContentSent) {
+          <div class="oib-summary-entry oib-summary-wide">
+            <dt translate="history-query.monitoring.north.last-content-sent"></dt>
+            <dd>{{ lastContentSent }}</dd>
+          </div>
+        }
+      </dl>
+    </div>
+  </dl>
+</section>
+
+@if (progress.itemsStatus?.length) {
+  <section class="oib-panel">
+    <div class="oib-section-title">
+      <h5 translate="history-query.monitoring.south.items-status.title"></h5>
+    </div>
+    <table class="table table-sm table-hover oib-table mb-0">
+      <thead class="light">
+        <tr>
+          <th translate="history-query.monitoring.south.items-status.status"></th>
+          <th translate="history-query.monitoring.south.items-status.name"></th>
+          <th translate="history-query.monitoring.south.items-status.last-value"></th>
+          <th translate="history-query.monitoring.south.items-status.records"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (itemStatus of progress.itemsStatus; track itemStatus.itemId) {
+          <tr class="history-item-status">
             <td>
-              <span
-                translate="history-query.monitoring.south.last-value-content"
-                [translateParams]="{
-                  pointId: lastValueRetrieved.pointId,
-                  timestamp: lastValueRetrieved.timestamp,
-                  data: lastValueRetrieved.data | json
-                }"
-              ></span>
+              <span [translate]="'history-query.monitoring.south.items-status.' + itemStatus.status"></span>
             </td>
-          </tr>
-        }
-        <!-- last file -->
-        @if (historyMetrics().south.lastFileRetrieved) {
-          <tr>
-            <td translate="history-query.monitoring.south.last-file"></td>
-            <td>{{ historyMetrics().south.lastFileRetrieved }}</td>
-          </tr>
-        }
-        <!-- last run -->
-        @if (historyMetrics().south.lastRunStart; as lastRunStart) {
-          <tr>
-            <td translate="history-query.monitoring.south.last-run-start"></td>
-            <td>{{ lastRunStart | datetime: 'mediumWithSeconds' }}</td>
-          </tr>
-        }
-        <!-- last duration -->
-        @if (historyMetrics().south.lastRunDuration; as lastRunDuration) {
-          <tr>
-            <td translate="history-query.monitoring.south.last-run-duration"></td>
-            <td>{{ lastRunDuration | duration: 'short' }}</td>
+            <td>{{ itemStatus.itemName }}</td>
+            <td>{{ itemStatus.lastValueTimestamp ? (itemStatus.lastValueTimestamp | datetime: 'ff') : '' }}</td>
+            <td>{{ itemStatus.recordsCount }}</td>
           </tr>
         }
       </tbody>
     </table>
-  </div>
-</oib-box>
-
-@if (historyMetrics().historyMetrics.itemsStatus?.length) {
-  <oib-box>
-    <ng-template oibBoxTitle>
-      <span translate="history-query.monitoring.south.items-status.title"></span>
-    </ng-template>
-    <div>
-      <table class="table table-sm table-hover oib-table">
-        <thead class="light">
-          <tr>
-            <th translate="history-query.monitoring.south.items-status.status"></th>
-            <th translate="history-query.monitoring.south.items-status.name"></th>
-            <th translate="history-query.monitoring.south.items-status.last-value"></th>
-            <th translate="history-query.monitoring.south.items-status.records"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (itemStatus of historyMetrics().historyMetrics.itemsStatus; track itemStatus.itemId) {
-            <tr class="history-item-status">
-              <td>
-                <span [translate]="'history-query.monitoring.south.items-status.' + itemStatus.status"></span>
-              </td>
-              <td>{{ itemStatus.itemName }}</td>
-              <td>{{ itemStatus.lastValueTimestamp ? (itemStatus.lastValueTimestamp | datetime: 'ff') : '' }}</td>
-              <td>{{ itemStatus.recordsCount }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </oib-box>
+  </section>
 }
+
+<!-- The interval being retrieved -->
+<ng-template #currentInterval>
+  @if (progress.currentIntervalStart && progress.currentIntervalEnd) {
+    <div class="oib-summary-note">
+      {{ progress.currentIntervalStart | datetime: 'ff' }}
+      <span class="fa-solid fa-arrow-right mx-1" aria-hidden="true"></span>
+      {{ progress.currentIntervalEnd | datetime: 'ff' }}
+    </div>
+  }
+</ng-template>
