@@ -51,10 +51,12 @@ class HistoryQueryDetailComponentTester {
   readonly pauseButton = this.root.getByRole('button', { name: 'Pause history query' });
   readonly resumeButton = this.root.getByRole('button', { name: 'Resume history query' });
   readonly restartButton = this.root.getByRole('button', { name: 'Restart history query' });
-  readonly addItemButton = this.root.getByRole('button', { name: 'Add a new item' });
-  readonly exportButton = this.root.getByRole('button', { name: 'Export' });
-  readonly importButton = this.root.getByRole('button', { name: 'Import' });
-  readonly deleteAllButton = this.root.getByRole('button', { name: 'Delete all' });
+  readonly addItemButton = this.root.getByRole('button', { name: 'Add', exact: true });
+  /** The menu of the actions on all the items: managing their groups, importing, exporting and deleting them */
+  readonly itemsMenu = this.root.getByCss('#items-menu');
+  readonly exportButton = this.root.getByCss('#export-items');
+  readonly importButton = this.root.getByCss('#import-button');
+  readonly deleteAllButton = this.root.getByCss('#delete-all');
   readonly searchItems = this.root.getByCss('oib-item-table').getByRole('textbox', { name: 'Search' });
   readonly statusFilter = this.root.getByRole('combobox', { name: 'Status' });
   readonly selectAllButton = this.root.getByRole('button', { name: 'Select all' });
@@ -136,7 +138,7 @@ describe('HistoryQueryDetailComponent', () => {
   test('should display the history query, its metrics and its items', async () => {
     const tester = new HistoryQueryDetailComponentTester();
 
-    await expect.element(tester.title).toMatchTextContent(`History query ${historyQuery.name}`);
+    await expect.element(tester.title).toHaveTextContent(historyQuery.name);
     expect(historyQueryService.findById).toHaveBeenCalledWith(historyQuery.id);
     await expect.element(tester.metrics).toBeInTheDocument();
     expect(historyQueryService.getMetrics).toHaveBeenCalledWith(historyQuery.id);
@@ -413,6 +415,8 @@ describe('HistoryQueryDetailComponent', () => {
     expect(historyQueryService.deleteItem).toHaveBeenCalledWith(historyQuery.id, historyQuery.items[0].id);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.deleted');
 
+    await tester.itemsMenu.click();
+
     await tester.deleteAllButton.click();
     expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.items.confirm-delete-all' });
     expect(historyQueryService.deleteAllItems).toHaveBeenCalledWith(historyQuery.id);
@@ -469,6 +473,8 @@ describe('HistoryQueryDetailComponent', () => {
     historyQueryService.exportItems.mockReturnValue(of(undefined));
     const tester = new HistoryQueryDetailComponentTester();
 
+    await tester.itemsMenu.click();
+
     await tester.exportButton.click();
 
     expect(exportModal.prepare).toHaveBeenCalledWith(historyQuery.name);
@@ -481,6 +487,8 @@ describe('HistoryQueryDetailComponent', () => {
     mockModal(importModal, { items, eraseExisting: true });
     historyQueryService.importItems.mockReturnValue(of(undefined));
     const tester = new HistoryQueryDetailComponentTester();
+
+    await tester.itemsMenu.click();
 
     await tester.importButton.click();
 
