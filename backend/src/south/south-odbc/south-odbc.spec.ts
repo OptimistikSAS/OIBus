@@ -488,6 +488,12 @@ describe('SouthODBC', () => {
 
       const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       assert.strictEqual(queryOdbcDataMock.mock.calls.length, 1);
+      assert.deepStrictEqual(queryOdbcDataMock.mock.calls[0].arguments, [
+        configuration.items[1],
+        testData.south.itemTestingSettings.history!.startTime,
+        testData.south.itemTestingSettings.history!.endTime,
+        true
+      ]);
       assert.strictEqual(utilsExports.convertDateTimeToInstant.mock.calls.length, 0);
       assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
       assert.strictEqual(result.queryDuration, 25);
