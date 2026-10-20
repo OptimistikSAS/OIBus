@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -21,7 +22,17 @@ import { NotificationService } from '../../shared/notification.service';
   templateUrl: './north-metrics.component.html',
   styleUrl: './north-metrics.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, FileSizePipe, NgbTooltip, TranslatePipe]
+  imports: [
+    TranslateDirective,
+    DatetimePipe,
+    DurationPipe,
+    BoxComponent,
+    BoxTitleDirective,
+    FileSizePipe,
+    NgbTooltip,
+    TranslatePipe,
+    NgTemplateOutlet
+  ]
 })
 export class NorthMetricsComponent {
   private readonly router = inject(Router);

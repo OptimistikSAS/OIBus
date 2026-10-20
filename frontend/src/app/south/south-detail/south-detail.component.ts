@@ -1,4 +1,5 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -26,7 +27,6 @@ import { EngineService } from '../../services/engine.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExploreButtonComponent } from '../../shared/explore-button/explore-button.component';
@@ -34,6 +34,7 @@ import { ExportItemModalComponent } from '../../shared/export-item-modal/export-
 import { findItemIndex } from '../../shared/find-item-index';
 import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
 import { SettingSummary, summarizeSettings } from '../../shared/form/oibus-settings-summary/settings-summary';
+import { ItemsMenuComponent } from '../../shared/items-menu/items-menu.component';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -69,8 +70,6 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
     TranslateDirective,
     RouterLink,
     SouthMetricsComponent,
-    BoxComponent,
-    BoxTitleDirective,
     ClipboardModule,
     LogsComponent,
     OIBusSouthTypeEnumPipe,
@@ -83,7 +82,9 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
     ItemTableComponent,
     ...ITEM_TABLE_TEMPLATES,
     OIBusSettingsSummaryComponent,
-    ExploreButtonComponent
+    ExploreButtonComponent,
+    ItemsMenuComponent,
+    NgTemplateOutlet
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
@@ -135,22 +136,19 @@ export class SouthDetailComponent {
     return this.workflowsResource.hasValue() ? this.workflowsResource.value().length : 0;
   });
 
-  /** The status and settings of the connector, summed up from its manifest */
+  /** The settings of the connector, summed up from its manifest: its status shows in the header of the page */
   readonly displayedSettings = computed<Array<SettingSummary>>(() => {
     const manifest = this.manifest();
     const southConnector = this.southConnector();
     if (!manifest || !southConnector) {
       return [];
     }
-    return [
-      { kind: 'text', labelKey: 'south.status', text: this.translateService.instant(southConnector.enabled ? 'enabled' : 'disabled') },
-      ...summarizeSettings(manifest.settings, southConnector.settings, {
-        translateService: this.translateService,
-        scanModes: this.scanModes(),
-        certificates: this.certificates(),
-        applyEnablingConditions: true
-      })
-    ];
+    return summarizeSettings(manifest.settings, southConnector.settings, {
+      translateService: this.translateService,
+      scanModes: this.scanModes(),
+      certificates: this.certificates(),
+      applyEnablingConditions: true
+    });
   });
 
   // the metrics are polled once the connector and its manifest are loaded

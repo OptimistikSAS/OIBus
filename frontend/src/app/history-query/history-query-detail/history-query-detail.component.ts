@@ -1,5 +1,5 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -22,6 +22,7 @@ import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
 import { HistoryQueryStatus } from '@oibus/shared/domain/history-query.model';
 
 import { LogsComponent } from '../../logs/logs.component';
+import { summarizeCaching } from '../../north/north-summary';
 import { CertificateService } from '../../services/certificate.service';
 import { EngineService } from '../../services/engine.service';
 import { HistoryQueryService } from '../../services/history-query.service';
@@ -30,7 +31,6 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { TransformerService } from '../../services/transformer.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
@@ -42,6 +42,7 @@ import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-
 import { SettingSummary, summarizeSettings } from '../../shared/form/oibus-settings-summary/settings-summary';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
+import { ItemsMenuComponent } from '../../shared/items-menu/items-menu.component';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -57,6 +58,7 @@ import { exploreCheckedActions } from '../../south/south-workflows/workflow-crea
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { toHistoryQueryItemCommand } from '../history-query-items/history-query-item-command';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
+import { HISTORY_QUERY_STATUS_ICONS, historyQueryStatusAction } from '../history-query-status';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 
@@ -65,8 +67,6 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
   imports: [
     TranslateDirective,
     RouterLink,
-    BoxComponent,
-    BoxTitleDirective,
     HistoryMetricsComponent,
     AsyncPipe,
     ClipboardModule,
@@ -81,10 +81,11 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
     ItemTableComponent,
     ...ITEM_TABLE_TEMPLATES,
     OIBusSettingsSummaryComponent,
-    ExploreButtonComponent
+    ExploreButtonComponent,
+    ItemsMenuComponent,
+    NgTemplateOutlet
   ],
   templateUrl: './history-query-detail.component.html',
-  styleUrl: './history-query-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HistoryQueryDetailComponent {
@@ -193,6 +194,15 @@ export class HistoryQueryDetailComponent {
   readonly items = computed<Array<HistoryQueryItemDTO>>(() => this.historyQuery()?.items ?? []);
   /** The selected items, by name */
   readonly selectedItems = signal<ReadonlyMap<string, HistoryQueryItemDTO>>(new Map());
+
+  /** The caching settings of the history query, summed up as in the review step of its edition */
+  readonly cachingSummary = computed<Array<SettingSummary>>(() => {
+    const historyQuery = this.historyQuery();
+    return historyQuery ? summarizeCaching(historyQuery.caching, this.translateService, () => false) : [];
+  });
+
+  readonly statusIcon = (status: HistoryQueryStatus) => HISTORY_QUERY_STATUS_ICONS[status];
+  readonly statusAction = historyQueryStatusAction;
 
   /** Whether a scan mode's activation window can never fire again. */
   isWindowExpired(scanMode: ScanModeDTO | null | undefined): boolean {

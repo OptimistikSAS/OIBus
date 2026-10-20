@@ -50,10 +50,12 @@ class EditHistoryQueryComponentTester {
   readonly exploreButton = this.root.getByRole('button', { name: 'Explore' });
   readonly testNorthButton = this.root.getByCss('#test-connection-north');
   readonly testSouthButton = this.root.getByCss('#test-connection-south');
-  readonly addItemButton = this.root.getByRole('button', { name: 'Add a new item' });
-  readonly exportButton = this.root.getByRole('button', { name: 'Export' });
-  readonly importButton = this.root.getByRole('button', { name: 'Import', exact: true });
-  readonly deleteAllButton = this.root.getByRole('button', { name: 'Delete all' });
+  readonly addItemButton = this.root.getByRole('button', { name: 'Add', exact: true });
+  /** The menu of the actions on all the items: managing their groups, importing, exporting and deleting them */
+  readonly itemsMenu = this.root.getByCss('#items-menu');
+  readonly exportButton = this.root.getByCss('#export-items');
+  readonly importButton = this.root.getByCss('#import-button');
+  readonly deleteAllButton = this.root.getByCss('#delete-all');
   readonly searchItems = this.root.getByCss('oib-item-table').getByRole('textbox', { name: 'Search' });
   readonly statusFilter = this.root.getByRole('combobox', { name: 'Status' });
   readonly selectAllButton = this.root.getByRole('button', { name: 'Select all' });
@@ -459,6 +461,8 @@ describe('EditHistoryQueryComponent', () => {
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.items.confirm-deletion' });
       await tester.expectItemNames('item2');
 
+      await tester.itemsMenu.click();
+
       await tester.deleteAllButton.click();
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.items.confirm-delete-all' });
       await expect.element(tester.items).not.toBeInTheDocument();
@@ -513,6 +517,8 @@ describe('EditHistoryQueryComponent', () => {
       historyQueryService.exportItems.mockReturnValue(of(undefined));
       const tester = await createTester('items');
 
+      await tester.itemsMenu.click();
+
       await tester.exportButton.click();
 
       expect(historyQueryService.exportItems).toHaveBeenCalledWith(savedQuery.id, 'items.csv', ';');
@@ -525,6 +531,8 @@ describe('EditHistoryQueryComponent', () => {
       const importModal = createMock(ImportHistoryQueryItemsModalComponent);
       mockModal(importModal, { items: [newItem], eraseExisting });
       const tester = await createTester('items');
+
+      await tester.itemsMenu.click();
 
       await tester.importButton.click();
 
@@ -718,6 +726,8 @@ describe('EditHistoryQueryComponent', () => {
       mockModal(createMock(ExportItemModalComponent), { filename: 'items.csv', delimiter: ';' });
       historyQueryService.itemsToCsv.mockReturnValue(of(undefined));
       const tester = await createTester('items');
+
+      await tester.itemsMenu.click();
 
       await tester.exportButton.click();
 

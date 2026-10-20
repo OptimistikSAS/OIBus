@@ -123,7 +123,7 @@ class EditSouthComponentTester {
   }
 
   readonly items = this.root.getByCss('section.oib-south-items');
-  readonly manageGroupsButton = this.items.getByRole('button', { name: /^Manage groups/ });
+  readonly manageGroupsButton = this.root.getByCss('#manage-groups-button');
   readonly exploreMenu = this.root.getByCss('#explore-menu');
   readonly synchronisationsInfo = this.root.getByCss('#synchronisations-info');
 
@@ -132,10 +132,12 @@ class EditSouthComponentTester {
     await this.exploreMenu.click();
     await this.root.getByCss('#manage-workflows-button').click();
   }
-  readonly addItemButton = this.items.getByRole('button', { name: 'Create a new item' });
-  readonly exportButton = this.items.getByRole('button', { name: 'Export' });
-  readonly importButton = this.items.getByRole('button', { name: 'Import' });
-  readonly deleteAllButton = this.items.getByRole('button', { name: 'Delete all' });
+  readonly addItemButton = this.items.getByRole('button', { name: 'Add', exact: true });
+  /** The menu of the actions on all the items: managing their groups, importing, exporting and deleting them */
+  readonly itemsMenu = this.root.getByCss('#items-menu');
+  readonly exportButton = this.root.getByCss('#export-items');
+  readonly importButton = this.root.getByCss('#import-button');
+  readonly deleteAllButton = this.root.getByCss('#delete-all');
   readonly search = this.items.getByRole('textbox', { name: 'Search' });
   readonly groupFilter = this.items.getByRole('combobox', { name: 'Group' });
   readonly scanModeFilter = this.items.getByRole('combobox', { name: 'Schedule' });
@@ -742,6 +744,8 @@ describe('EditSouthComponent', () => {
     test('should delete all the items', async () => {
       const tester = await createTester('edit', 'items');
 
+      await tester.itemsMenu.click();
+
       await tester.deleteAllButton.click();
 
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'south.items.confirm-delete-all' });
@@ -755,6 +759,8 @@ describe('EditSouthComponent', () => {
       const exportModal = mockModal(createMock(ExportItemModalComponent), { filename: 'items', delimiter: ';' });
       southConnectorService.itemsToCsv.mockReturnValue(of(undefined));
 
+      await tester.itemsMenu.click();
+
       await tester.exportButton.click();
 
       expect(exportModal.prepare).toHaveBeenCalledWith('items');
@@ -765,6 +771,8 @@ describe('EditSouthComponent', () => {
       const tester = await createTester('edit', 'items');
       const exportModal = mockModal(createMock(ExportItemModalComponent), { filename: 'items', delimiter: ',' });
       southConnectorService.exportItems.mockReturnValue(of(undefined));
+
+      await tester.itemsMenu.click();
 
       await tester.exportButton.click();
 
@@ -780,6 +788,8 @@ describe('EditSouthComponent', () => {
       const imported = { ...testData.south.itemCommand, name: 'item d' };
       const importModal = mockModal(createMock(ImportSouthItemsModalComponent), { items: [imported], eraseExisting });
       southConnectorService.checkImportItems.mockReturnValue(of({ items: [itemC], errors: [] }));
+
+      await tester.itemsMenu.click();
 
       await tester.importButton.click();
 
@@ -807,6 +817,8 @@ describe('EditSouthComponent', () => {
       mockModal(createMock(EditSouthItemModalComponent), { ...testData.south.itemCommand, name: 'topic item', settings: { topic: 'a/b' } });
       await tester.addItemButton.click();
       const importModal = mockModal(createMock(ImportSouthItemsModalComponent));
+
+      await tester.itemsMenu.click();
 
       await tester.importButton.click();
 
@@ -918,6 +930,7 @@ describe('EditSouthComponent', () => {
     async function openManageGroups(tester: EditSouthComponentTester, onPrepare?: (groups: SouthItemGroups) => void) {
       const manageGroupsModal = mockModal(createMock(ManageGroupsModalComponent));
       manageGroupsModal.prepare.mockImplementation(groups => onPrepare?.(groups));
+      await tester.itemsMenu.click();
       await tester.manageGroupsButton.click();
       const [groups, , , , getItemCount] = manageGroupsModal.prepare.mock.lastCall!;
       return { manageGroupsModal, groups, getItemCount };
