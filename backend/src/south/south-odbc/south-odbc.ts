@@ -121,7 +121,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     if (this.connector.settings.remoteAgent) {
       result = await this.queryRemoteAgentData(item, startTime, endTime, true);
     } else {
-      const tempResult = await this.queryOdbcData(item, endTime, startTime, true);
+      const tempResult = await this.queryOdbcData(item, startTime, endTime, true);
       const formattedResults = (tempResult.value as Array<Record<string, string>>).map(entry => {
         const formattedEntry: Record<string, string | number> = {};
         Object.entries(entry).forEach(([key, value]) => {
