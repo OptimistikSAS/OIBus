@@ -891,6 +891,19 @@ export type SouthConnectorCommandDTO =
   | SouthConnectorSFTPCommandDTO
   | SouthConnectorSQLiteCommandDTO;
 
+/**
+ * Request body of the South connector create and update endpoints: a {@link SouthConnectorCommandDTO} of any type,
+ * whose connector and item settings are checked against the manifest of that type by the service.
+ *
+ * The request is not validated against the {@link SouthConnectorCommandDTO} union: tsoa tries each member in turn and
+ * piles up the errors of every item for each member that does not match, which takes a time quadratic in the number of
+ * items (tens of minutes for ten thousand items, blocking the whole process).
+ */
+export interface SouthConnectorCommandBodyDTO extends SouthConnectorCommandTypedDTO<OIBusSouthType, object, object> {
+  items: Array<SouthConnectorItemCommandBodyDTO>;
+}
+export interface SouthConnectorItemCommandBodyDTO extends SouthConnectorItemCommandTypedDTO<object> {}
+
 // ── Named item DTO variants (tsoa uses these as schema names) ────────────
 /** South connector item DTO for Beckhoff ADS. */
 export interface SouthConnectorADSItemDTO extends SouthConnectorItemTypedDTO<SouthADSItemSettings> {}

@@ -248,9 +248,25 @@ describe('History Query service', () => {
     historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.listLight);
     await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false, 'userTest');
 
+    // The new settings are checked, not the stored ones
+    assert.deepStrictEqual(validatorMock.validateSettings.mock.calls[0].arguments[1], testData.historyQueries.command.northSettings);
+    assert.deepStrictEqual(validatorMock.validateSettings.mock.calls[1].arguments[1], testData.historyQueries.command.southSettings);
+    assert.deepStrictEqual(validatorMock.validateSettings.mock.calls[2].arguments[1], testData.historyQueries.command.items[0].settings);
     assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.strictEqual(engine.reloadHistoryQuery.mock.calls.length, 1);
+  });
+
+  it('should not update a history query whose settings do not match the manifest', async () => {
+    validatorMock.validateSettings.mock.mockImplementationOnce(async () => {
+      throw new Error('"outputFolder" is required');
+    });
+
+    await assert.rejects(
+      service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false, 'userTest'),
+      new Error('"outputFolder" is required')
+    );
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 0);
   });
 
   it('should update a history query without changing the name', async () => {

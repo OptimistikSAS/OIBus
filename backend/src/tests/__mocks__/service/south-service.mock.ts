@@ -38,7 +38,7 @@ export default class SouthServiceMock {
       _createdBy: string
     ): Promise<SouthConnectorEntity<SouthSettings, SouthItemSettings>> => ({}) as SouthConnectorEntity<SouthSettings, SouthItemSettings>
   );
-  update = mock.fn(async (): Promise<void> => undefined);
+  update = mock.fn(async (_southId: string, _command: SouthConnectorCommandDTO, _updatedBy: string): Promise<void> => undefined);
   delete = mock.fn(async (_southId: string): Promise<void> => undefined);
   start = mock.fn(async (_southId: string): Promise<void> => undefined);
   stop = mock.fn(async (_southId: string): Promise<void> => undefined);

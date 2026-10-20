@@ -16,6 +16,7 @@ import {
 } from 'tsoa';
 import {
   OIBusSouthType,
+  SouthConnectorCommandBodyDTO,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
@@ -141,12 +142,13 @@ export class SouthConnectorController extends Controller {
   @Post('/')
   @SuccessResponse(201, 'Created')
   async create(
-    @Body() command: SouthConnectorCommandDTO,
+    @Body() command: SouthConnectorCommandBodyDTO,
     @Query() duplicate: string | undefined,
     @Request() request: CustomExpressRequest
   ): Promise<SouthConnectorDTO> {
     const southService = request.services.southService as SouthService;
-    return toSouthConnectorDTO(await southService.create(command, duplicate || null, request.user.id), id =>
+    // The service checks the connector and item settings against the manifest of the South type
+    return toSouthConnectorDTO(await southService.create(command as SouthConnectorCommandDTO, duplicate || null, request.user.id), id =>
       request.services.userService.getUserInfo(id)
     ) as SouthConnectorDTO;
   }
@@ -159,11 +161,12 @@ export class SouthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   async update(
     @Path() southId: string,
-    @Body() command: SouthConnectorCommandDTO,
+    @Body() command: SouthConnectorCommandBodyDTO,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.update(southId, command, request.user.id);
+    // The service checks the connector and item settings against the manifest of the South type
+    await southService.update(southId, command as SouthConnectorCommandDTO, request.user.id);
   }
 
   /**

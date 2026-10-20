@@ -936,13 +936,14 @@ const copySouthConnectorCommandToSouthEntity = async (
     currentSettings?.settings || null,
     manifest.settings
   );
+  const currentItems = new Map((currentSettings?.items ?? []).map(item => [item.id, item]));
   southEntity.items = await Promise.all(
     command.items.map(async itemCommand => {
       const itemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
       await copySouthItemCommandToSouthItemEntity(
         itemEntity,
         itemCommand,
-        currentSettings?.items.find(element => element.id === itemCommand.id) || null,
+        (itemCommand.id && currentItems.get(itemCommand.id)) || null,
         southEntity.type,
         scanModes,
         groups,

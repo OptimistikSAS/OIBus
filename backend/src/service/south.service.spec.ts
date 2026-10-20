@@ -387,6 +387,24 @@ describe('South Service', () => {
     assert.strictEqual(existingItem!.updatedBy, 'user1');
   });
 
+  it('should not update a south connector whose item settings do not match the manifest', async () => {
+    validator.validateSettings.mock.mockImplementation(
+      seq(
+        async () => undefined, // connector settings
+        async () => {
+          throw new Error('"regex" must be a string');
+        }
+      )
+    );
+
+    await assert.rejects(
+      service.update(testData.south.list[0].id, testData.south.command, 'userTest'),
+      new Error('"regex" must be a string')
+    );
+    assert.strictEqual(validator.validateSettings.mock.calls[1].arguments[1], testData.south.command.items[0].settings);
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 0);
+  });
+
   it('should not update a south connector with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.name = 'Duplicate Name';

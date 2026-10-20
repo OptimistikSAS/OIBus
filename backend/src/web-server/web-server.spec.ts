@@ -1,6 +1,7 @@
 import { describe, it, beforeEach, afterEach, mock, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import Joi from 'joi';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import OIBusServiceMock from '../tests/__mocks__/service/oibus-service.mock';
 import ScanModeServiceMock from '../tests/__mocks__/service/scan-mode-service.mock';
@@ -66,6 +67,7 @@ describe('WebServer', () => {
         app.get('/test-notfound', (_req, _res, next) => next(new NotFoundError('test')));
         app.get('/test-oibus-validation', (_req, _res, next) => next(new OIBusValidationError('val')));
         app.get('/test-oibus-testing', (_req, _res, next) => next(new OIBusTestingError('test')));
+        app.get('/test-joi-validation', (_req, _res, next) => next(Joi.object({ nodeId: Joi.string() }).validate({ nodeId: 3 }).error));
         app.get('/test-validate-error', (_req, _res, next) => next(new ValidateError({ f: { message: 'b', value: 'x' } }, 'v')));
         app.get('/test-generic-error', (_req, _res, next) => next(new Error('generic')));
         app.get('/test-null-err', (_req, _res, next) => next(null));
@@ -264,6 +266,10 @@ describe('WebServer', () => {
 
       const r3 = await fetch(`${base}/test-oibus-testing`);
       assert.equal(r3.status, 400);
+
+      const r3b = await fetch(`${base}/test-joi-validation`);
+      assert.equal(r3b.status, 400);
+      assert.deepEqual(await r3b.json(), { message: '"nodeId" must be a string' });
 
       const r4 = await fetch(`${base}/test-validate-error`);
       assert.equal(r4.status, 400);

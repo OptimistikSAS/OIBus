@@ -15,6 +15,7 @@ import {
   UploadedFile
 } from 'tsoa';
 import {
+  HistoryQueryCommandBodyDTO,
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
   HistoryQueryItemCommandDTO,
@@ -123,16 +124,22 @@ export class HistoryQueryController extends Controller {
   @Post('/')
   @SuccessResponse(201, 'Created')
   async create(
-    @Body() command: HistoryQueryCommandDTO,
+    @Body() command: HistoryQueryCommandBodyDTO,
     @Query() fromSouth: string | undefined,
     @Query() fromNorth: string | undefined,
     @Query() duplicate: string | undefined,
     @Request() request: CustomExpressRequest
   ): Promise<HistoryQueryDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    return toHistoryQueryDTO(await historyQueryService.create(command, fromSouth, fromNorth, duplicate, request.user.id), id =>
-      request.services.userService.getUserInfo(id)
-    ) as HistoryQueryDTO;
+    // The service checks the settings against the manifests of the South and North types
+    const historyQuery = await historyQueryService.create(
+      command as HistoryQueryCommandDTO,
+      fromSouth,
+      fromNorth,
+      duplicate,
+      request.user.id
+    );
+    return toHistoryQueryDTO(historyQuery, id => request.services.userService.getUserInfo(id)) as HistoryQueryDTO;
   }
 
   /**
@@ -143,12 +150,13 @@ export class HistoryQueryController extends Controller {
   @SuccessResponse(204, 'No Content')
   async update(
     @Path() historyId: string,
-    @Body() command: HistoryQueryCommandDTO,
+    @Body() command: HistoryQueryCommandBodyDTO,
     @Query() resetCache: string | undefined,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.update(historyId, command, resetCache === 'true', request.user.id);
+    // The service checks the settings against the manifests of the South and North types
+    await historyQueryService.update(historyId, command as HistoryQueryCommandDTO, resetCache === 'true', request.user.id);
   }
 
   /**

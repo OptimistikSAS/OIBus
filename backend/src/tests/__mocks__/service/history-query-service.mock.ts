@@ -24,7 +24,13 @@ export default class HistoryQueryServiceMock {
       ({}) as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>
   );
   create = mock.fn(
-    async (): Promise<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> =>
+    async (
+      _command: HistoryQueryCommandDTO,
+      _retrieveSecretsFromSouth: string | undefined,
+      _retrieveSecretsFromNorth: string | undefined,
+      _retrieveSecretsFromHistoryQuery: string | undefined,
+      _createdBy: string
+    ): Promise<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> =>
       ({}) as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>
   );
   update = mock.fn(
