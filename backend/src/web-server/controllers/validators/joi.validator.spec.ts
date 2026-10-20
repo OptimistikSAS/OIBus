@@ -94,6 +94,42 @@ describe('Joi validator', () => {
     assert.deepStrictEqual(validateMock.mock.calls[0].arguments, [schema, dto]);
   });
 
+  it('validateSettings should build the schema of the same settings only once per platform', async () => {
+    const cachingValidator = new JoiValidatorExtend();
+    const settings: OIBusObjectAttribute = {
+      type: 'object',
+      key: 'objectSettings',
+      translationKey: '',
+      attributes: [
+        {
+          type: 'string',
+          key: 'field',
+          translationKey: '',
+          defaultValue: null,
+          validators: [{ type: 'REQUIRED', arguments: [] }],
+          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+        } as OIBusStringAttribute
+      ],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: { visible: true, wrapInBox: false }
+    };
+    const generateSpy = mock.method(cachingValidator, 'generateFormGroupJoiSchema');
+    mock.method(cachingValidator, 'getCurrentPlatform', () => 'linux');
+
+    await cachingValidator.validateSettings(settings, { field: 'a' });
+    await cachingValidator.validateSettings(settings, { field: 'b' });
+    await assert.rejects(cachingValidator.validateSettings(settings, {}));
+    assert.equal(generateSpy.mock.callCount(), 1);
+
+    mock.method(cachingValidator, 'getCurrentPlatform', () => 'windows');
+    await cachingValidator.validateSettings(settings, { field: 'c' });
+    assert.equal(generateSpy.mock.callCount(), 2);
+
+    await cachingValidator.validateSettings({ ...settings }, { field: 'd' });
+    assert.equal(generateSpy.mock.callCount(), 3);
+  });
+
   it('generateJoiSchema should generate proper Joi schema for different form controls', async () => {
     const settings: OIBusObjectAttribute = {
       type: 'object',
