@@ -25,6 +25,7 @@ import {
   HistoryQueryLightDTO
 } from '../../../shared/model/api/history-query.model';
 import {
+  SouthConnectorItemCommandDTO,
   SouthConnectorItemTestResult,
   SouthExploreBrowseCommand,
   SouthExploreBrowseResult,
@@ -54,6 +55,19 @@ import OIBusService from '../../service/oibus.service';
 import SouthService from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { CustomExpressRequest } from '../express';
+
+/**
+ * @interface HistoryDiscoveredItemsRequest
+ * @description Request body for mapping what a discovery scope finds to new items of a history query
+ */
+interface HistoryDiscoveredItemsRequest {
+  /** South settings of the history query, as currently edited */
+  southSettings: SouthSettings;
+  /** What to discover, e.g. `{ nodeIds: [...] }` for nodes picked in the Explore modal */
+  discoveryScope: Record<string, unknown>;
+  /** Item field path to a constant or a {{field}} expression of the discovered record */
+  itemFieldMapping: Record<string, string>;
+}
 
 /**
  * @interface HistorySouthItemTestRequest
@@ -291,6 +305,37 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
       return await historyQueryService.startExplore(historyId, southType, fromSouth, command);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Discovers what a scope holds (e.g. nodes picked in the Explore modal) against the south settings of a history query as
+   * currently edited, and maps every record to a new item. Nothing is saved.
+   * @summary Map discovered records to new history query items
+   * @param historyId The history query id, or "create" for a history query not created yet
+   * @param fromSouth The south connector a history query being created is created from, whose secrets it uses
+   * @returns {Promise<Array<SouthConnectorItemCommandDTO>>} One item to create per discovered record
+   */
+  @Post('/{historyId}/test/discovered-items')
+  async discoverItems(
+    @Path() historyId: string,
+    @Query() southType: OIBusSouthType,
+    @Query() fromSouth: string | undefined,
+    @Body() command: HistoryDiscoveredItemsRequest,
+    @Request() request: CustomExpressRequest
+  ): Promise<Array<SouthConnectorItemCommandDTO>> {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    try {
+      const southSettings = await historyQueryService.southSettingsToTest(historyId, southType, fromSouth, command.southSettings);
+      return await request.services.configurationWorkflowRunService.discoverItems(
+        'history',
+        southType,
+        southSettings,
+        command.discoveryScope,
+        command.itemFieldMapping
+      );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

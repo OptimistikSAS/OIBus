@@ -9533,6 +9533,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryDiscoveredItemsRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "southSettings": {"ref":"SouthSettings","required":true},
+            "discoveryScope": {"ref":"Record_string.unknown_","required":true},
+            "itemFieldMapping": {"ref":"Record_string.string_","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryItemDTO": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"HistoryQueryADSItemDTO"},{"ref":"HistoryQueryBACnetItemDTO"},{"ref":"HistoryQueryFolderScannerItemDTO"},{"ref":"HistoryQueryFTPItemDTO"},{"ref":"HistoryQueryInfluxDBItemDTO"},{"ref":"HistoryQueryModbusItemDTO"},{"ref":"HistoryQueryMongoDBItemDTO"},{"ref":"HistoryQueryMQTTItemDTO"},{"ref":"HistoryQueryMSSQLItemDTO"},{"ref":"HistoryQueryMySQLItemDTO"},{"ref":"HistoryQueryODBCItemDTO"},{"ref":"HistoryQueryOIAnalyticsItemDTO"},{"ref":"HistoryQueryOLEDBItemDTO"},{"ref":"HistoryQueryOPCItemDTO"},{"ref":"HistoryQueryOPCUAItemDTO"},{"ref":"HistoryQueryOracleItemDTO"},{"ref":"HistoryQueryOsisoftPIItemDTO"},{"ref":"HistoryQueryPostgreSQLItemDTO"},{"ref":"HistoryQueryRESTItemDTO"},{"ref":"HistoryQueryS7ItemDTO"},{"ref":"HistoryQuerySFTPItemDTO"},{"ref":"HistoryQuerySQLiteItemDTO"}],"validators":{}},
@@ -13680,6 +13690,40 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'startExplore',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsHistoryQueryController_discoverItems: Record<string, TsoaRoute.ParameterSchema> = {
+                historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
+                southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
+                fromSouth: {"in":"query","name":"fromSouth","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                command: {"in":"body","name":"command","required":true,"ref":"HistoryDiscoveredItemsRequest"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/history/:historyId/test/discovered-items',
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.discoverItems)),
+
+            async function HistoryQueryController_discoverItems(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_discoverItems, request, response });
+
+                const controller = new HistoryQueryController();
+
+              await templateService.apiHandler({
+                methodName: 'discoverItems',
                 controller,
                 response,
                 next,
