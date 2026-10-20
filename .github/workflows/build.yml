@@ -17,7 +17,7 @@ permissions:
 jobs:
   prepare:
     name: Get release info and generate SBOM
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     outputs:
       prerelease: ${{ steps.release_info.outputs.prerelease }}
@@ -76,7 +76,7 @@ jobs:
 
   build-documentation:
     name: 'Build embedded documentation'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -321,7 +321,7 @@ jobs:
     name: Monitor with Snyk
     needs: [ build ]
     if: ${{ needs.build.outputs.prerelease == 'false' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -348,7 +348,7 @@ jobs:
   docker:
     name: 'Publish Docker image'
     needs: [ build ]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - name: Set up Docker Buildx
@@ -377,7 +377,7 @@ jobs:
     name: 'Deploy documentation'
     needs: [ build, docker ]
     if: ${{ needs.build.outputs.prerelease == 'false' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -409,7 +409,7 @@ jobs:
     name: 'Slack notification'
     needs: [ snyk, docker, deploy-documentation ]
     if: ${{ always() }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 1
     steps:
       - name: Slack notification
