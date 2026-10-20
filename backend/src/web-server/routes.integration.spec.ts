@@ -22,6 +22,7 @@ import ScanModeServiceMock from '../tests/__mocks__/service/scan-mode-service.mo
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
+import testData from '../tests/utils/test-data';
 
 import type CertificateService from '../service/certificate.service';
 import type HistoryQueryService from '../service/history-query.service';
@@ -87,12 +88,14 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
   let app: express.Express;
   let server: http.Server;
   let baseUrl: string;
+  let historyQueryService: HistoryQueryServiceMock;
+  let southService: SouthServiceMock;
 
   before(async () => {
     app = express();
 
     const certificateService = new CertificateServiceMock();
-    const historyQueryService = new HistoryQueryServiceMock();
+    historyQueryService = new HistoryQueryServiceMock();
     const ipFilterService = new IpFilterServiceMock();
     const logService = new LogServiceMock();
     const northService = new NorthServiceMock();
@@ -100,7 +103,7 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
     const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
     const oIBusService = new OIBusServiceMock();
     const scanModeService = new ScanModeServiceMock();
-    const southService = new SouthServiceMock();
+    southService = new SouthServiceMock();
     const transformerService = new TransformerServiceMock();
     const userService = new UserServiceMock();
 
@@ -123,6 +126,11 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
       )
     );
 
+    // Stands in for the auth middleware, for the controllers recording who made the change
+    app.use((req, _res, next) => {
+      (req as unknown as { user: { id: string; login: string } }).user = { id: 'userId', login: 'admin' };
+      next();
+    });
     app.use(express.json({ limit: '20mb' }));
     app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
@@ -223,5 +231,77 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
       body: JSON.stringify({ some: 'value' })
     });
     assert.ok(res.status >= 200 && res.status < 500);
+  });
+
+  // A connector body used to be validated against the union of every connector type: tsoa piled up the errors of
+  // every item for each type that did not match, which took a time quadratic in the number of items (tens of minutes
+  // for ten thousand items, blocking the whole process).
+  describe('connector bodies with many items', () => {
+    const NUMBER_OF_ITEMS = 11_120;
+    const MAX_DURATION = 5_000;
+
+    const southCommand = (numberOfItems: number) => ({
+      ...testData.south.command,
+      items: Array.from({ length: numberOfItems }, (_, i) => ({ ...testData.south.command.items[0], id: `item${i}`, name: `item ${i}` }))
+    });
+    const historyQueryCommand = (numberOfItems: number) => ({
+      ...testData.historyQueries.command,
+      items: Array.from({ length: numberOfItems }, (_, i) => ({
+        ...testData.historyQueries.command.items[0],
+        id: `item${i}`,
+        name: `item ${i}`
+      }))
+    });
+    const send = async (method: string, path: string, body: unknown) => {
+      const start = performance.now();
+      const res = await fetch(`${baseUrl}${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const responseBody = await res.text();
+      return { status: res.status, body: responseBody, duration: performance.now() - start };
+    };
+
+    it('validates the creation of a south connector in linear time', async () => {
+      southService.create.mock.mockImplementationOnce(async () => testData.south.list[0]);
+      const res = await send('POST', '/api/south', southCommand(NUMBER_OF_ITEMS));
+
+      assert.equal(res.status, 201, res.body);
+      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
+      assert.equal(southService.create.mock.calls.at(-1)!.arguments[0].items.length, NUMBER_OF_ITEMS);
+    });
+
+    it('validates the update of a south connector in linear time', async () => {
+      const res = await send('PUT', '/api/south/test-id', southCommand(NUMBER_OF_ITEMS));
+
+      assert.equal(res.status, 204, res.body);
+      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
+      assert.equal(southService.update.mock.calls.at(-1)!.arguments[1].items.length, NUMBER_OF_ITEMS);
+    });
+
+    it('validates the creation of a history query in linear time', async () => {
+      historyQueryService.create.mock.mockImplementationOnce(async () => testData.historyQueries.list[0]);
+      const res = await send('POST', '/api/history', historyQueryCommand(NUMBER_OF_ITEMS));
+
+      assert.equal(res.status, 201, res.body);
+      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
+      assert.equal(historyQueryService.create.mock.calls.at(-1)!.arguments[0].items.length, NUMBER_OF_ITEMS);
+    });
+
+    it('validates the update of a history query in linear time', async () => {
+      const res = await send('PUT', '/api/history/test-id', historyQueryCommand(NUMBER_OF_ITEMS));
+
+      assert.equal(res.status, 204, res.body);
+      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
+      assert.equal(historyQueryService.update.mock.calls.at(-1)!.arguments[1].items.length, NUMBER_OF_ITEMS);
+    });
+
+    it('still rejects an invalid item, pointing at it', async () => {
+      const command = southCommand(NUMBER_OF_ITEMS);
+      (command.items[5_000] as Record<string, unknown>).enabled = 'not a boolean';
+      const res = await send('PUT', '/api/south/test-id', command);
+
+      assert.equal(res.status, 400);
+      assert.deepEqual(JSON.parse(res.body), {
+        message: { 'items.$5000.enabled': { message: 'invalid boolean value', value: 'not a boolean' } }
+      });
+    });
   });
 });

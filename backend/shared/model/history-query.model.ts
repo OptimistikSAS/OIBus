@@ -713,6 +713,23 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
     | HistoryQuerySFTPNorthCommandDTO
   );
 
+/**
+ * Request body of the history query create and update endpoints: a {@link HistoryQueryCommandDTO} of any South and
+ * North types, whose South, North and item settings are checked against the manifests of those types by the service.
+ *
+ * The request is not validated against the {@link HistoryQueryCommandDTO} unions: tsoa tries each member in turn and
+ * piles up the errors of every item for each member that does not match, which takes a time quadratic in the number of
+ * items (blocking the whole process).
+ */
+export interface HistoryQueryCommandBodyDTO
+  extends
+    HistoryQueryCommandCommonDTO,
+    HistoryQuerySouthCommandTypedDTO<OIBusSouthType, object, object>,
+    HistoryQueryNorthCommandTypedDTO<OIBusNorthType, object> {
+  items: Array<HistoryQueryItemCommandBodyDTO>;
+}
+export interface HistoryQueryItemCommandBodyDTO extends HistoryQueryItemCommandTypedDTO<object> {}
+
 // ── Named item DTO variants (tsoa uses these as schema names) ────────────
 /** History query item DTO for Beckhoff ADS. */
 export interface HistoryQueryADSItemDTO extends HistoryQueryItemTypedDTO<SouthADSItemSettings> {}

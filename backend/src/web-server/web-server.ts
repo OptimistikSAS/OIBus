@@ -3,6 +3,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import Joi from 'joi';
 import authMiddleware from './middlewares/auth.middleware';
 import EncryptionService from '../service/encryption.service';
 import * as Http from 'http';
@@ -193,6 +194,12 @@ export default class WebServer {
       }
       if (err instanceof OIBusValidationError) {
         // Validation Error trigger by OIBus at the service layer
+        return res.status(400).json({
+          message: err.message
+        });
+      }
+      if (Joi.isError(err)) {
+        // Settings rejected by the manifest validator at the service layer
         return res.status(400).json({
           message: err.message
         });

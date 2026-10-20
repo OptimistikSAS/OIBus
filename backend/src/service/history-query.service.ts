@@ -153,6 +153,7 @@ export default class HistoryQueryService {
       item.updatedBy = createdBy;
     }
     const transformers = this.transformerService.findAll();
+    const historyItems = new Map(historyQuery.items.map(item => [item.id, item]));
     historyQuery.northTransformers = command.northTransformers.map(transformerWithOptions => {
       const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformerId);
       if (!foundTransformer) {
@@ -170,7 +171,7 @@ export default class HistoryQueryService {
             updatedAt: ''
           };
         }
-        const item = historyQuery.items.find(element => element.id === itemLight.id);
+        const item = historyItems.get(itemLight.id);
         if (!item) {
           throw new NotFoundError(`Could not find History item "${itemLight.name}" (${itemLight.id})`);
         }
@@ -204,8 +205,8 @@ export default class HistoryQueryService {
     const previousSettings = this.findById(historyId);
     const northManifest = this.northService.getManifest(command.northType);
     const southManifest = this.southService.getManifest(command.southType);
-    await this.validator.validateSettings(northManifest.settings, previousSettings.northSettings);
-    await this.validator.validateSettings(southManifest.settings, previousSettings.southSettings);
+    await this.validator.validateSettings(northManifest.settings, command.northSettings);
+    await this.validator.validateSettings(southManifest.settings, command.southSettings);
 
     // Check for unique name (excluding current entity)
     if (command.name !== previousSettings.name) {
@@ -233,6 +234,7 @@ export default class HistoryQueryService {
       item.updatedBy = updatedBy;
     }
     const transformers = this.transformerService.findAll();
+    const historyItems = new Map(historyQuery.items.map(item => [item.id, item]));
     historyQuery.northTransformers = command.northTransformers.map(transformerWithOptions => {
       const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformerId);
       if (!foundTransformer) {
@@ -252,7 +254,7 @@ export default class HistoryQueryService {
           };
         }
 
-        const item = historyQuery.items.find(element => element.id === itemLight.id);
+        const item = historyItems.get(itemLight.id);
         if (!item) {
           throw new NotFoundError(`Could not find History item "${itemLight.name}" (${itemLight.id})`);
         }
@@ -725,13 +727,14 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
       retentionDuration: command.caching.archive.retentionDuration
     }
   };
+  const currentItems = new Map((currentSettings?.items ?? []).map(item => [item.id, item]));
   historyQueryEntity.items = await Promise.all(
     command.items.map(async itemCommand => {
       const itemEntity = { id: itemCommand.id } as HistoryQueryItemEntity<SouthItemSettings>;
       await copyHistoryQueryItemCommandToHistoryQueryItemEntity(
         itemEntity,
         itemCommand,
-        currentSettings?.items.find(element => element.id === itemCommand.id) || null,
+        (itemCommand.id && currentItems.get(itemCommand.id)) || null,
         historyQueryEntity.southType
       );
       return itemEntity;
