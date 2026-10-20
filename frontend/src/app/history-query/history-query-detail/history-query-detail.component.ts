@@ -1,6 +1,6 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -12,7 +12,7 @@ import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { OIBusInfo } from '@oibus/shared/api/engine.model';
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/api/history-query.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorCommandDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
@@ -34,6 +34,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
+import { ExploreButtonComponent } from '../../shared/explore-button/explore-button.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
@@ -49,9 +50,12 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
 import { pollMetrics } from '../../shared/polling';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { SouthExploreModalComponent, SouthExploreResult } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { AddDiscoveredItemsModalComponent } from '../../south/south-items/add-discovered-items-modal/add-discovered-items-modal.component';
+import { exploreCheckedActions } from '../../south/south-workflows/workflow-creation.service';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
+import { toHistoryQueryItemCommand } from '../history-query-items/history-query-item-command';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
@@ -76,7 +80,8 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
     DatetimePipe,
     ItemTableComponent,
     ...ITEM_TABLE_TEMPLATES,
-    OIBusSettingsSummaryComponent
+    OIBusSettingsSummaryComponent,
+    ExploreButtonComponent
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrl: './history-query-detail.component.scss',
@@ -117,6 +122,7 @@ export class HistoryQueryDetailComponent {
     params: () => this.historyQueryId() || undefined,
     stream: ({ params }) => this.historyQueryService.findById(params)
   });
+  private readonly itemTable = viewChild(ItemTableComponent);
   readonly historyQuery = computed<HistoryQueryDTO | null>(() =>
     this.historyQueryResource.hasValue() ? this.historyQueryResource.value() : null
   );
@@ -261,8 +267,53 @@ export class HistoryQueryDetailComponent {
         start: (settings, type) => this.historyQueryService.startExplore(historyQuery.id, settings, type),
         browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQuery.id, sessionId, parentId),
         close: sessionId => this.historyQueryService.closeExplore(historyQuery.id, sessionId)
+      },
+      // the items of the checked nodes can be added, with the discovery defaults of the connector: there is no synchronisation
+      checkedActions: exploreCheckedActions(this.southManifest()!).filter(action => action.id === 'add-items')
+    });
+    modalRef.result.subscribe((result: SouthExploreResult) => {
+      if (result?.action === 'add-items') {
+        this.addDiscoveredItems(result.nodeIds);
       }
     });
+  }
+
+  /** Reviews the items the checked nodes give, then creates them and reloads the history query. */
+  private addDiscoveredItems(nodeIds: Array<string>) {
+    const historyQuery = this.historyQuery()!;
+    const modalRef = this.modalService.open(AddDiscoveredItemsModalComponent, { size: 'xl', backdrop: 'static' });
+    const component: AddDiscoveredItemsModalComponent = modalRef.componentInstance;
+    component.prepare({
+      southId: historyQuery.id,
+      southSettings: historyQuery.southSettings,
+      manifest: this.southManifest()!,
+      existingItems: historyQuery.items,
+      nodeIds,
+      discover: (discoveryScope, itemFieldMapping) =>
+        this.historyQueryService.discoverItems(
+          historyQuery.id,
+          historyQuery.southType,
+          historyQuery.southSettings,
+          discoveryScope,
+          itemFieldMapping
+        )
+    });
+    modalRef.result
+      .pipe(
+        switchMap((commands: Array<SouthConnectorItemCommandDTO>) =>
+          this.historyQueryService
+            .importItems(
+              historyQuery.id,
+              commands.map(command => toHistoryQueryItemCommand(command))
+            )
+            .pipe(map(() => commands.length))
+        )
+      )
+      .subscribe(count => {
+        this.refreshHistoryQuery();
+        this.itemTable()?.goToFirstPage();
+        this.notificationService.success('south.add-discovered-items.added', { count: String(count) });
+      });
   }
 
   /** The history query is finished when all the intervals are retrieved and all the data is sent */

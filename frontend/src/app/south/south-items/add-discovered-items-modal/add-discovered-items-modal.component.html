@@ -17,35 +17,43 @@
   } @else {
     <!-- Applied to every added item -->
     <div class="row g-3 mb-3">
-      <div class="col-md-4">
-        <label class="form-label" for="discovered-items-group" translate="south.items.group"></label>
-        <select class="form-select form-select-sm" id="discovered-items-group" [ngModel]="groupId()" (ngModelChange)="groupId.set($event)">
-          <option [ngValue]="null" translate="south.items.group-none"></option>
-          @for (group of groups(); track group.id) {
-            <option [ngValue]="group.id">{{ group.standardSettings.name }}</option>
-          }
-        </select>
-      </div>
-      @if (!subscriptionOnly()) {
+      <!-- The items of a history query have no schedule: they are all read over its time range -->
+      @if (hasSchedule()) {
         <div class="col-md-4">
-          <label class="form-label" for="discovered-items-scan-mode" translate="south.items.scan-mode"></label>
-          @if (groupId()) {
-            <div class="form-text" id="discovered-items-scan-mode" translate="south.add-discovered-items.scan-mode-from-group"></div>
-          } @else {
-            <select
-              class="form-select form-select-sm"
-              id="discovered-items-scan-mode"
-              [class.is-invalid]="!scanModeId() && enabled()"
-              [ngModel]="scanModeId()"
-              (ngModelChange)="scanModeId.set($event)"
-            >
-              <option [ngValue]="null" translate="south.add-discovered-items.scan-mode-none"></option>
-              @for (scanMode of scanModes(); track scanMode.id) {
-                <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>
-              }
-            </select>
-          }
+          <label class="form-label" for="discovered-items-group" translate="south.items.group"></label>
+          <select
+            class="form-select form-select-sm"
+            id="discovered-items-group"
+            [ngModel]="groupId()"
+            (ngModelChange)="groupId.set($event)"
+          >
+            <option [ngValue]="null" translate="south.items.group-none"></option>
+            @for (group of groups(); track group.id) {
+              <option [ngValue]="group.id">{{ group.standardSettings.name }}</option>
+            }
+          </select>
         </div>
+        @if (!subscriptionOnly()) {
+          <div class="col-md-4">
+            <label class="form-label" for="discovered-items-scan-mode" translate="south.items.scan-mode"></label>
+            @if (groupId()) {
+              <div class="form-text" id="discovered-items-scan-mode" translate="south.add-discovered-items.scan-mode-from-group"></div>
+            } @else {
+              <select
+                class="form-select form-select-sm"
+                id="discovered-items-scan-mode"
+                [class.is-invalid]="!scanModeId() && enabled()"
+                [ngModel]="scanModeId()"
+                (ngModelChange)="scanModeId.set($event)"
+              >
+                <option [ngValue]="null" translate="south.add-discovered-items.scan-mode-none"></option>
+                @for (scanMode of scanModes(); track scanMode.id) {
+                  <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>
+                }
+              </select>
+            }
+          </div>
+        }
       }
       <div class="col-md-4 d-flex align-items-end">
         <div class="form-check">

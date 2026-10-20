@@ -10,7 +10,12 @@ import {
   HistoryQueryItemDTO,
   HistoryQueryLightDTO
 } from '@oibus/shared/api/history-query.model';
-import { SouthConnectorItemTestResult, SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestResult,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult
+} from '@oibus/shared/api/south-connector.model';
 import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { Page } from '@oibus/shared/common/types';
 import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
@@ -160,6 +165,25 @@ export class HistoryQueryService {
     return this.http.post<SouthExploreStartResult>(`/api/history/${historyId}/explore`, settings, {
       params: fromSouth ? { fromSouth, southType } : { southType }
     });
+  }
+
+  /**
+   * Discovers what a scope holds (e.g. the nodes checked in the Explore modal) against the south settings of a history query,
+   * and maps every record to a new item. Nothing is saved.
+   */
+  discoverItems(
+    historyId: string,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
+    discoveryScope: Record<string, unknown>,
+    itemFieldMapping: Record<string, string>,
+    fromSouth: string | null = null
+  ): Observable<Array<SouthConnectorItemCommandDTO>> {
+    return this.http.post<Array<SouthConnectorItemCommandDTO>>(
+      `/api/history/${historyId}/test/discovered-items`,
+      { southSettings, discoveryScope, itemFieldMapping },
+      { params: fromSouth ? { fromSouth, southType } : { southType } }
+    );
   }
 
   /**

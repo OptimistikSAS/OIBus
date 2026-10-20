@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NEVER, of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
@@ -72,8 +72,7 @@ describe('AddDiscoveredItemsModalComponent', () => {
       southId: 'southId1',
       southSettings: testData.south.list[0].settings,
       manifest,
-      scanModes,
-      groups,
+      schedule: { scanModes, groups },
       existingItems: [],
       nodeIds: ['folder'],
       ...options
@@ -268,6 +267,20 @@ describe('AddDiscoveredItemsModalComponent', () => {
         syncWithGroup: false
       }
     ]);
+  });
+
+  test('should discover and add the items of a history query, which have no schedule', async () => {
+    const discover = vi.fn(() => of([discovered('folder/a', 'a.csv')]));
+    prepare({ schedule: undefined, discover });
+
+    await expect.element(tester.names).toHaveLength(1);
+    await expect.element(tester.group).not.toBeInTheDocument();
+    await expect.element(tester.scanMode).not.toBeInTheDocument();
+    expect(discover).toHaveBeenCalledWith({ nodeIds: ['folder'] }, manifest.discovery!.defaults!.itemFieldMapping);
+    expect(southConnectorService.discoverItems).not.toHaveBeenCalled();
+    await tester.addButton.click();
+
+    expect(addedCommands()).toEqual([expect.objectContaining({ name: 'folder/a', enabled: true })]);
   });
 
   test('should add the items to the group picked, following its schedule', async () => {

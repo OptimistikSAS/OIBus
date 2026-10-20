@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
 
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
@@ -30,8 +31,16 @@ export interface AddDiscoveredItemsOptions {
   southSettings: SouthSettings;
   /** Its manifest: the discovery defaults map each discovered record to an item */
   manifest: SouthConnectorManifest;
-  scanModes: Array<ScanModeDTO>;
-  groups: SouthItemGroups;
+  /** The schedules the items can follow, with the groups; absent for the items of a history query, which have none */
+  schedule?: { scanModes: Array<ScanModeDTO>; groups: SouthItemGroups };
+  /**
+   * Discovers the items, when they are not those of a south connector (e.g. of a history query, whose secrets it holds);
+   * the mapping is the one of the discovery defaults
+   */
+  discover?: (
+    discoveryScope: Record<string, unknown>,
+    itemFieldMapping: Record<string, string>
+  ) => Observable<Array<SouthConnectorItemCommandDTO>>;
   /** The items of the connector: a new one can't take their names, and one with the same settings is skipped by default */
   existingItems: ReadonlyArray<{ name: string; settings: SouthItemSettings }>;
   /** The nodes checked in the Explore modal: a point stands for itself, any other node for everything under it */
@@ -121,6 +130,8 @@ export class AddDiscoveredItemsModalComponent {
   readonly groupId = signal<string | null>(null);
   readonly scanModeId = signal<string | null>(null);
   readonly enabled = signal(true);
+  /** Whether the items follow a schedule (they don't in a history query) */
+  readonly hasSchedule = signal(true);
   private existingNames = new Set<string>();
   /** How each item setting is shown in the review table, by its path */
   private readonly settingDisplays = signal<Map<string, SettingDisplay>>(new Map());
@@ -165,49 +176,48 @@ export class AddDiscoveredItemsModalComponent {
     () =>
       this.includedCount() > 0 &&
       this.nameErrors().every(error => error === null) &&
-      (!!this.groupId() || !!this.scanModeId() || this.subscriptionOnly() || !this.enabled())
+      (!this.hasSchedule() || !!this.groupId() || !!this.scanModeId() || this.subscriptionOnly() || !this.enabled())
   );
 
   prepare(options: AddDiscoveredItemsOptions) {
-    const scanModeAttribute = options.manifest.items.rootAttribute.attributes.find(
-      attribute => attribute.key === 'scanMode'
-    ) as OIBusScanModeAttribute;
-    this.subscriptionOnly.set(scanModeAttribute.acceptableType === 'SUBSCRIPTION');
+    const scanModeAttribute = options.manifest.items.rootAttribute.attributes.find(attribute => attribute.key === 'scanMode') as
+      OIBusScanModeAttribute | undefined;
+    this.subscriptionOnly.set(scanModeAttribute?.acceptableType === 'SUBSCRIPTION');
+    this.hasSchedule.set(!!options.schedule);
+    const scanModes = options.schedule?.scanModes ?? [];
     this.scanModes.set(
-      scanModeAttribute.acceptableType === 'POLL' ? options.scanModes.filter(scanMode => scanMode.id !== 'subscription') : options.scanModes
+      scanModeAttribute?.acceptableType === 'POLL' ? scanModes.filter(scanMode => scanMode.id !== 'subscription') : scanModes
     );
     const settingsAttribute = options.manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     ) as OIBusObjectAttribute;
     this.settingDisplays.set(settingDisplays(settingsAttribute));
-    this.groupStore.set(options.groups);
+    this.groupStore.set(options.schedule?.groups ?? null);
     this.existingNames = new Set(options.existingItems.map(item => item.name));
     const existingBySettings = new Map(options.existingItems.map(item => [settingsKey(item.settings), item.name]));
 
     this.loading.set(true);
-    this.southConnectorService
-      .discoverItems(
-        options.southId,
-        options.manifest.id,
-        options.southSettings,
-        { nodeIds: options.nodeIds },
-        options.manifest.discovery!.defaults!.itemFieldMapping
-      )
-      .subscribe({
-        next: commands => {
-          this.rows.set(
-            commands.map(command => {
-              const existingItemName = existingBySettings.get(settingsKey(command.settings)) ?? null;
-              return { command, name: command.name, included: existingItemName === null, existingItemName };
-            })
-          );
-          this.loading.set(false);
-        },
-        error: error => {
-          this.error.set(extractErrorMessage(error));
-          this.loading.set(false);
-        }
-      });
+    const discoveryScope = { nodeIds: options.nodeIds };
+    const itemFieldMapping = options.manifest.discovery!.defaults!.itemFieldMapping;
+    const discover =
+      options.discover ??
+      ((scope, mapping) =>
+        this.southConnectorService.discoverItems(options.southId, options.manifest.id, options.southSettings, scope, mapping));
+    discover(discoveryScope, itemFieldMapping).subscribe({
+      next: commands => {
+        this.rows.set(
+          commands.map(command => {
+            const existingItemName = existingBySettings.get(settingsKey(command.settings)) ?? null;
+            return { command, name: command.name, included: existingItemName === null, existingItemName };
+          })
+        );
+        this.loading.set(false);
+      },
+      error: error => {
+        this.error.set(extractErrorMessage(error));
+        this.loading.set(false);
+      }
+    });
   }
 
   settingValue(row: DiscoveredItemRow, key: string): string {

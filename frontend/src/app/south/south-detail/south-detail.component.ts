@@ -29,6 +29,7 @@ import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/aud
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
+import { ExploreButtonComponent } from '../../shared/explore-button/explore-button.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
 import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
@@ -81,7 +82,8 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
     NgbDropdownItem,
     ItemTableComponent,
     ...ITEM_TABLE_TEMPLATES,
-    OIBusSettingsSummaryComponent
+    OIBusSettingsSummaryComponent,
+    ExploreButtonComponent
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
@@ -120,6 +122,18 @@ export class SouthDetailComponent {
     stream: ({ params: type }) => this.southConnectorService.getSouthManifest(type)
   });
   readonly manifest = computed(() => (this.manifestResource.hasValue() ? this.manifestResource.value() : null));
+  /** The items synchronisations of a connector with discovery, counted on the Explore button */
+  private readonly workflowsResource = rxResource({
+    params: () => (this.manifest()?.discovery ? this.southConnector()?.id : undefined),
+    stream: ({ params: southId }) => this.configurationWorkflowService.list(southId)
+  });
+  /** How many items synchronisations the connector has; null when it has no discovery */
+  readonly workflowCount = computed(() => {
+    if (!this.manifest()?.discovery) {
+      return null;
+    }
+    return this.workflowsResource.hasValue() ? this.workflowsResource.value().length : 0;
+  });
 
   /** The status and settings of the connector, summed up from its manifest */
   readonly displayedSettings = computed<Array<SettingSummary>>(() => {
@@ -674,6 +688,7 @@ export class SouthDetailComponent {
       this.itemGroups,
       () => this.reloadAfterWorkflowRun()
     );
+    modalRef.result.subscribe(() => this.workflowsResource.reload());
   }
 
   /** A manual workflow run may have created/updated items directly on this connector - reload it so
@@ -736,7 +751,8 @@ export class SouthDetailComponent {
                     },
                     result.nodeIds
                   )
-                )
+                ),
+                tap(() => this.workflowsResource.reload())
               )
         )
       )
@@ -752,8 +768,7 @@ export class SouthDetailComponent {
       southId: southConnector.id,
       southSettings: southConnector.settings,
       manifest: this.manifest()!,
-      scanModes: this.scanModes(),
-      groups: this.itemGroups,
+      schedule: { scanModes: this.scanModes(), groups: this.itemGroups },
       existingItems: southConnector.items,
       nodeIds
     });

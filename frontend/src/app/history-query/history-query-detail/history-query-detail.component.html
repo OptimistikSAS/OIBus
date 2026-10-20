@@ -237,20 +237,10 @@
                 id="south-specific-settings-title"
               ></span>
               <div>
-                @if (southManifest()!.explore) {
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                    id="explore"
-                    (click)="explore()"
-                    translate="south.explore.button"
-                  ></button>
-                }
                 <button
                   translate="south.test-connection.button"
                   type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn"
-                  [class.ms-3]="!southManifest()!.explore"
+                  class="btn btn-secondary btn-sm oib-box-btn ms-3"
                   id="test-connection-south"
                   (click)="test('south')"
                 ></button>
@@ -269,7 +259,10 @@
                   <span class="mx-1">({{ itemTable.filteredItems().length }})</span>
                 }
               </div>
-              <div class="ms-3">
+              <div class="ms-3 d-flex align-items-center">
+                @if (southManifest()!.explore) {
+                  <oib-explore-button class="oib-box-btn" (explore)="explore()" />
+                }
                 <button
                   type="button"
                   class="btn btn-primary btn-sm oib-box-btn"
