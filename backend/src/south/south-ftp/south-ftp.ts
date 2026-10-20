@@ -163,7 +163,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
       if (fileInfo.isDirectory && item.settings.recursive) {
         const subFiles = await this.listFilesRecursively(client, `${dirPath}/${fileInfo.name}`, item, filesPreserved, entryRelative);
         files.push(...subFiles);
-      } else if (fileInfo.isFile && this.checkCondition(item, fileInfo, filesPreserved)) {
+      } else if (fileInfo.isFile && this.checkCondition(item, fileInfo, filesPreserved, entryRelative)) {
         fileInfo.name = entryRelative;
         files.push(fileInfo);
       }
@@ -240,12 +240,14 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
 
   /**
    * Filter the files if the name and the age of the file meet the request or - when preserveFiles - if they were
-   * already sent.
+   * already sent. `relativePath` is the path of the file from the remote folder (it differs from its name in a
+   * sub-folder of a recursive scan): it is the key of the preserved files.
    */
   checkCondition(
     item: SouthConnectorItemEntity<SouthFTPItemSettings>,
     fileInfo: FileInfo,
-    filesPreserved: Array<{ filename: string; modifiedTime: number }>
+    filesPreserved: Array<{ filename: string; modifiedTime: number }>,
+    relativePath = fileInfo.name
   ): boolean {
     if (!fileInfo.name.match(item.settings.regex)) {
       this.logger.trace(`File name "${fileInfo.name}" does not match regex ${item.settings.regex}`);
@@ -253,7 +255,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     }
     const timestamp = DateTime.now().toMillis();
     const fileModifyTime = fileInfo.modifiedAt?.getTime() || timestamp + item.settings.minAge;
-    return checkAge(item, fileInfo.name, fileModifyTime, filesPreserved, this.logger);
+    return checkAge(item, relativePath, fileModifyTime, filesPreserved, this.logger);
   }
 
   /**
