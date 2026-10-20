@@ -2306,7 +2306,6 @@
       "title": "Paramètres généraux",
       "name": "Nom",
       "port": "Port",
-      "log-levels": "Niveaux de log",
       "console": "Console : {{ level }}",
       "file": "Fichier : {{ level }}",
       "database": "Base de données : {{ level }}",

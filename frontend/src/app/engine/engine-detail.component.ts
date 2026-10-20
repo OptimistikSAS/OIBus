@@ -15,8 +15,8 @@ import { CertificateService } from '../services/certificate.service';
 import { ConfigTransferService } from '../services/config-transfer.service';
 import { EngineService } from '../services/engine.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
-import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
 import { ConfirmationService } from '../shared/confirmation.service';
+import { LogLevelsEnumPipe } from '../shared/log-levels-enum.pipe';
 import { ModalService } from '../shared/modal.service';
 import { NotificationService } from '../shared/notification.service';
 import { pollMetrics } from '../shared/polling';
@@ -42,8 +42,7 @@ import { TransformerListComponent } from './transformer-list/transformer-list.co
     CertificateListComponent,
     IpFilterListComponent,
     AsyncPipe,
-    BoxComponent,
-    BoxTitleDirective,
+    LogLevelsEnumPipe,
     EngineMetricsComponent,
     RouterLink,
     NgbTooltip,

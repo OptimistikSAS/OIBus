@@ -11,7 +11,6 @@ import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -28,17 +27,7 @@ const PAGE_SIZE = 20;
 
 @Component({
   selector: 'oib-scan-mode-list',
-  imports: [
-    TranslateDirective,
-    BoxComponent,
-    BoxTitleDirective,
-    OibHelpComponent,
-    NgbTooltip,
-    TranslatePipe,
-    PaginationComponent,
-    AuditInfoComponent,
-    ScanModeSchedulePipe
-  ],
+  imports: [TranslateDirective, OibHelpComponent, NgbTooltip, TranslatePipe, PaginationComponent, AuditInfoComponent, ScanModeSchedulePipe],
   templateUrl: './scan-mode-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './scan-mode-list.component.scss'

@@ -2,10 +2,10 @@
   <div class="oib-padded-container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
-        <div class="oib-detail-header">
+        <div class="oib-page-header">
           <div>
             <h1 id="title">{{ historyQuery.name }}</h1>
-            <div class="oib-detail-meta">
+            <div class="oib-page-meta">
               <span class="oib-status-badge" id="history-query-status">
                 <span [class]="statusIcon(historyQuery.status)" aria-hidden="true"></span>
                 <span [translate]="'enums.status.' + historyQuery.status"></span>
@@ -17,10 +17,10 @@
                 {{ historyQuery.queryTimeRange.endTime | datetime: 'mediumWithSeconds' }}
               </span>
               <span class="d-flex align-items-center gap-1" id="history-query-connectors">
-                <img class="oib-detail-type-image" [src]="'/' + southManifest()!.category + '.svg'" alt="" />
+                <img class="oib-type-image" [src]="'/' + southManifest()!.category + '.svg'" alt="" />
                 {{ historyQuery.southType | oIBusSouthTypeEnum }}
                 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                <img class="oib-detail-type-image" [src]="'/' + northManifest()!.category + '.svg'" alt="" />
+                <img class="oib-type-image" [src]="'/' + northManifest()!.category + '.svg'" alt="" />
                 {{ historyQuery.northType | oIBusNorthTypeEnum }}
               </span>
               @if (historyQuery.description) {
@@ -41,7 +41,7 @@
               </span>
             </div>
           </div>
-          <div class="oib-detail-actions">
+          <div class="oib-page-actions">
             <button
               type="button"
               class="btn btn-subtle"

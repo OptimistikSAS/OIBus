@@ -11,7 +11,6 @@ import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { CertificateService } from '../../services/certificate.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DatetimePipe } from '../../shared/datetime.pipe';
@@ -34,8 +33,6 @@ const PAGE_SIZE = 20;
   selector: 'oib-certificate-list',
   imports: [
     TranslateDirective,
-    BoxComponent,
-    BoxTitleDirective,
     DatetimePipe,
     ClipboardCopyDirective,
     OibHelpComponent,

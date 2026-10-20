@@ -36,7 +36,7 @@ class EngineDetailComponentTester {
   readonly fixture = TestBed.createComponent(EngineDetailComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByRole('heading', { level: 1 });
-  readonly settingRows = this.root.getByCss('table.mb-3 tr');
+  readonly settingRows = this.root.getByCss('.engine-settings .oib-summary-entry');
   readonly restartButton = this.root.getByRole('button', { name: 'Restart' });
   readonly exportConfigButton = this.root.getByCss('#export-config');
   readonly importConfigButton = this.root.getByCss('#import-config');
@@ -117,10 +117,13 @@ describe('EngineDetailComponent', () => {
     await expect.element(tester.settingRows.nth(2)).toMatchTextContent('7 days');
     await expect.element(tester.settingRows.nth(3)).toMatchTextContent('HTTPSDisabled');
     await expect.element(tester.settingRows.nth(4)).toMatchTextContent('Proxy serverEnabled on port 8888');
-    await expect
-      .element(tester.settingRows.nth(5))
-      .toMatchTextContent('Console: silent|File: trace|Database: silent|Loki: error|Syslog: silent|OIAnalytics: silent');
-    await expect.element(tester.settingRows.nth(6)).toMatchTextContent('90 days');
+    await expect.element(tester.settingRows.nth(5)).toMatchTextContent('Console levelSilent');
+    await expect.element(tester.settingRows.nth(6)).toMatchTextContent('File levelTrace');
+    await expect.element(tester.settingRows.nth(7)).toMatchTextContent('Database levelSilent');
+    await expect.element(tester.settingRows.nth(8)).toMatchTextContent('Loki levelError');
+    await expect.element(tester.settingRows.nth(9)).toMatchTextContent('Syslog levelSilent');
+    await expect.element(tester.settingRows.nth(10)).toMatchTextContent('OIAnalytics levelSilent');
+    await expect.element(tester.settingRows.nth(11)).toMatchTextContent('90 days');
   });
 
   test('should display the certificate of the store the web server serves https with', async () => {
@@ -175,7 +178,7 @@ describe('EngineDetailComponent', () => {
     const tester = new EngineDetailComponentTester();
 
     await expect.element(tester.settingRows.nth(4)).toMatchTextContent('Proxy serverDisabled');
-    await expect.element(tester.settingRows.nth(6)).toMatchTextContent('0 days');
+    await expect.element(tester.settingRows.nth(11)).toMatchTextContent('0 days');
   });
 
   test.each<[string, Type<EngineSettingsModal>]>([

@@ -1,120 +1,116 @@
-<oib-box>
-  <ng-template oibBoxTitle>
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <span translate="engine.scan-mode.list" id="title"></span>
-        @if (allScanModes().length) {
-          <span class="mx-1">({{ allScanModes().length }})</span>
-        }
-      </div>
-      <div>
-        <button
-          type="button"
-          class="btn btn-primary btn-sm oib-box-btn"
-          [ngbTooltip]="'engine.scan-mode.tooltips.add' | translate"
-          [attr.aria-label]="'engine.scan-mode.tooltips.add' | translate"
-          (click)="addScanMode()"
-          id="add-scan-mode"
-        >
-          <span class="fa-solid fa-plus" aria-hidden="true"></span>
-        </button>
-        <oib-help [url]="helpUrl" />
-      </div>
-    </div>
-  </ng-template>
-</oib-box>
-
-<!-- the scan mode list -->
-@let displayed = displayedScanModes();
-@if (displayed.content.length !== 0) {
-  <div>
-    <table class="mb-2 table table-sm table-hover oib-table">
-      <thead class="light">
-        <tr>
-          <th class="first-column">
-            <button type="button" class="sort-button" (click)="toggleSort('name')">
-              <span translate="engine.scan-mode.name" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
-            </button>
-          </th>
-          <th translate="engine.scan-mode.description"></th>
-          <th translate="engine.scan-mode.schedule"></th>
-          <th>
-            <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
-              <span translate="engine.scan-mode.updated-at" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
-            </button>
-          </th>
-          <th class="oib-actions-column-3"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (scanMode of displayed.content; track scanMode.id) {
-          <tr>
-            <td>{{ scanMode.name }}</td>
-            <td>{{ scanMode.description }}</td>
-            <td>
-              <span>{{ scanMode | scanModeSchedule }}</span>
-              @if (isWindowExpired(scanMode)) {
-                <i
-                  class="fa-solid fa-triangle-exclamation text-warning ms-1 window-expired-warning"
-                  role="img"
-                  [attr.aria-label]="'engine.scan-mode.window-never-fires' | translate"
-                  [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
-                ></i>
-              }
-              @if (scanMode.activationWindow) {
-                <div class="text-muted small" translate="engine.scan-mode.window-restricted"></div>
-              }
-            </td>
-            <td>
-              <oib-audit-info
-                [createdAt]="scanMode.createdAt"
-                [createdBy]="scanMode.createdBy.friendlyName"
-                [updatedAt]="scanMode.updatedAt"
-                [updatedBy]="scanMode.updatedBy.friendlyName"
-              />
-            </td>
-            <td class="oib-actions">
-              <!-- Edit button -->
-              <button
-                type="button"
-                class="btn btn-link edit-scan-mode"
-                [ngbTooltip]="'engine.scan-mode.tooltips.edit' | translate"
-                [attr.aria-label]="'engine.scan-mode.tooltips.edit' | translate"
-                (click)="editScanMode(scanMode)"
-              >
-                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-              </button>
-              <!-- Delete button -->
-              <button
-                type="button"
-                class="btn btn-link delete-scan-mode"
-                [ngbTooltip]="'engine.scan-mode.tooltips.delete' | translate"
-                [attr.aria-label]="'engine.scan-mode.tooltips.delete' | translate"
-                (click)="deleteScanMode(scanMode)"
-              >
-                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-              </button>
-              <!-- Audit history button -->
-              <button
-                type="button"
-                class="btn btn-link show-audit-scan-mode"
-                [ngbTooltip]="'engine.scan-mode.tooltips.audit' | translate"
-                [attr.aria-label]="'engine.scan-mode.tooltips.audit' | translate"
-                (click)="showAudit(scanMode)"
-              >
-                <span class="fa-solid fa-history" aria-hidden="true"></span>
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-    @if (displayed.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayed" (pageChanged)="changePage($event)" />
-    }
+<section class="oib-panel">
+  <div class="oib-section-title">
+    <h5>
+      <span translate="engine.scan-mode.list" id="title"></span>
+      @if (allScanModes().length) {
+        <span class="mx-1">({{ allScanModes().length }})</span>
+      }
+    </h5>
+    <button
+      type="button"
+      class="btn btn-primary btn-sm"
+      id="add-scan-mode"
+      [attr.aria-label]="'engine.scan-mode.tooltips.add' | translate"
+      (click)="addScanMode()"
+    >
+      <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+      <span translate="common.add"></span>
+    </button>
+    <oib-help [url]="helpUrl" />
   </div>
-} @else {
-  <div class="oib-grey-container" id="no-scan-mode" translate="engine.scan-mode.none"></div>
-}
+
+  <!-- the scan mode list -->
+  @let displayed = displayedScanModes();
+  @if (displayed.content.length !== 0) {
+    <div>
+      <table class="mb-2 table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th class="first-column">
+              <button type="button" class="sort-button" (click)="toggleSort('name')">
+                <span translate="engine.scan-mode.name" class="me-2"></span>
+                <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
+              </button>
+            </th>
+            <th translate="engine.scan-mode.description"></th>
+            <th translate="engine.scan-mode.schedule"></th>
+            <th>
+              <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
+                <span translate="engine.scan-mode.updated-at" class="me-2"></span>
+                <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
+              </button>
+            </th>
+            <th class="oib-actions-column-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (scanMode of displayed.content; track scanMode.id) {
+            <tr>
+              <td>{{ scanMode.name }}</td>
+              <td>{{ scanMode.description }}</td>
+              <td>
+                <span>{{ scanMode | scanModeSchedule }}</span>
+                @if (isWindowExpired(scanMode)) {
+                  <i
+                    class="fa-solid fa-triangle-exclamation text-warning ms-1 window-expired-warning"
+                    role="img"
+                    [attr.aria-label]="'engine.scan-mode.window-never-fires' | translate"
+                    [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
+                  ></i>
+                }
+                @if (scanMode.activationWindow) {
+                  <div class="text-muted small" translate="engine.scan-mode.window-restricted"></div>
+                }
+              </td>
+              <td>
+                <oib-audit-info
+                  [createdAt]="scanMode.createdAt"
+                  [createdBy]="scanMode.createdBy.friendlyName"
+                  [updatedAt]="scanMode.updatedAt"
+                  [updatedBy]="scanMode.updatedBy.friendlyName"
+                />
+              </td>
+              <td class="oib-actions">
+                <!-- Edit button -->
+                <button
+                  type="button"
+                  class="btn btn-link edit-scan-mode"
+                  [ngbTooltip]="'engine.scan-mode.tooltips.edit' | translate"
+                  [attr.aria-label]="'engine.scan-mode.tooltips.edit' | translate"
+                  (click)="editScanMode(scanMode)"
+                >
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                </button>
+                <!-- Delete button -->
+                <button
+                  type="button"
+                  class="btn btn-link delete-scan-mode"
+                  [ngbTooltip]="'engine.scan-mode.tooltips.delete' | translate"
+                  [attr.aria-label]="'engine.scan-mode.tooltips.delete' | translate"
+                  (click)="deleteScanMode(scanMode)"
+                >
+                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                </button>
+                <!-- Audit history button -->
+                <button
+                  type="button"
+                  class="btn btn-link show-audit-scan-mode"
+                  [ngbTooltip]="'engine.scan-mode.tooltips.audit' | translate"
+                  [attr.aria-label]="'engine.scan-mode.tooltips.audit' | translate"
+                  (click)="showAudit(scanMode)"
+                >
+                  <span class="fa-solid fa-history" aria-hidden="true"></span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (displayed.totalPages > 1) {
+        <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayed" (pageChanged)="changePage($event)" />
+      }
+    </div>
+  } @else {
+    <div class="oib-grey-container empty" id="no-scan-mode" translate="engine.scan-mode.none"></div>
+  }
+</section>

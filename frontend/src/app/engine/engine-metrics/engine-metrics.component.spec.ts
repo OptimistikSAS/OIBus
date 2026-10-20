@@ -31,7 +31,7 @@ const metrics: EngineMetrics = {
 class EngineMetricsComponentTester {
   readonly fixture = TestBed.createComponent(EngineMetricsComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly rows = this.root.getByCss('tbody tr');
+  readonly rows = this.root.getByCss('.oib-summary-entry');
   readonly resetButton = this.root.getByRole('button', { name: 'Reset metrics' });
   readonly displayLink = this.root.getByLabelText('View engine metrics');
 

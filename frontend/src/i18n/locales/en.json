@@ -639,7 +639,6 @@
       "title": "General settings",
       "name": "Name",
       "port": "Port",
-      "log-levels": "Log levels",
       "console": "Console: {{ level }}",
       "file": "File: {{ level }}",
       "database": "Database: {{ level }}",

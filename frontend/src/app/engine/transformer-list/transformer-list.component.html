@@ -1,109 +1,104 @@
-<oib-box>
-  <ng-template oibBoxTitle>
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <span translate="configuration.oibus.manifest.transformers.list" id="title"></span>
-        @if (allTransformers().length) {
-          <span class="mx-1">({{ allTransformers().length }})</span>
-        }
-      </div>
-      <div>
-        <button
-          type="button"
-          id="add-transformer"
-          class="btn btn-primary btn-sm oib-box-btn"
-          [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.add' | translate"
-          [attr.aria-label]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.add' | translate"
-          (click)="addTransformer()"
-        >
-          <span class="fa-solid fa-plus" aria-hidden="true"></span>
-        </button>
-
-        <oib-help [url]="helpUrl" />
-      </div>
-    </div>
-  </ng-template>
-</oib-box>
-
-<!-- the Custom Transformers list -->
-@if (displayedTransformers().content.length !== 0) {
-  <div>
-    <table class="mb-2 table table-sm table-hover oib-table">
-      <thead class="light">
-        <tr>
-          <th>
-            <button type="button" class="sort-button" (click)="toggleSort('name')">
-              <span translate="configuration.oibus.manifest.transformers.edit-transformer-modal.name" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
-            </button>
-          </th>
-          <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.description"></th>
-          <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.input-type"></th>
-          <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.output-type"></th>
-          <th>
-            <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
-              <span translate="engine.transformer.updated-at" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
-            </button>
-          </th>
-          <th class="oib-actions-column-3"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (transformer of displayedTransformers().content; track transformer.id) {
-          <tr>
-            <td>{{ transformer.name }}</td>
-            <td>{{ transformer.description }}</td>
-            <td>{{ transformer.inputType }}</td>
-            <td>{{ transformer.outputType }}</td>
-            <td>
-              <oib-audit-info
-                [createdAt]="transformer.createdAt"
-                [createdBy]="transformer.createdBy.friendlyName"
-                [updatedAt]="transformer.updatedAt"
-                [updatedBy]="transformer.updatedBy.friendlyName"
-              />
-            </td>
-            <td class="oib-actions">
-              <!-- Edit button -->
-              <button
-                type="button"
-                class="btn btn-link edit-transformer"
-                [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.edit' | translate"
-                [attr.aria-label]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.edit' | translate"
-                (click)="editTransformer(transformer)"
-              >
-                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-              </button>
-              <!-- Delete button -->
-              <button
-                type="button"
-                class="btn btn-link delete-transformer"
-                [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.delete' | translate"
-                [attr.aria-label]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.delete' | translate"
-                (click)="deleteTransformer(transformer)"
-              >
-                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-              </button>
-              <!-- Audit history button -->
-              <button
-                type="button"
-                class="btn btn-link show-audit-transformer"
-                [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.audit' | translate"
-                [attr.aria-label]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.audit' | translate"
-                (click)="showAudit(transformer)"
-              >
-                <span class="fa-solid fa-history" aria-hidden="true"></span>
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-    @if (displayedTransformers().totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedTransformers()" (pageChanged)="changePage($event)" />
-    }
+<section class="oib-panel">
+  <div class="oib-section-title">
+    <h5>
+      <span translate="configuration.oibus.manifest.transformers.list" id="title"></span>
+      @if (allTransformers().length) {
+        <span class="mx-1">({{ allTransformers().length }})</span>
+      }
+    </h5>
+    <button
+      type="button"
+      class="btn btn-primary btn-sm"
+      id="add-transformer"
+      [attr.aria-label]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.add' | translate"
+      (click)="addTransformer()"
+    >
+      <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+      <span translate="common.add"></span>
+    </button>
+    <oib-help [url]="helpUrl" />
   </div>
-} @else {
-  <div class="oib-grey-container" id="no-transformer" translate="configuration.oibus.manifest.transformers.none"></div>
-}
+
+  <!-- the Custom Transformers list -->
+  @if (displayedTransformers().content.length !== 0) {
+    <div>
+      <table class="mb-2 table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th>
+              <button type="button" class="sort-button" (click)="toggleSort('name')">
+                <span translate="configuration.oibus.manifest.transformers.edit-transformer-modal.name" class="me-2"></span>
+                <span class="fa-solid {{ getSortIcon('name') }}" aria-hidden="true"></span>
+              </button>
+            </th>
+            <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.description"></th>
+            <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.input-type"></th>
+            <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.output-type"></th>
+            <th>
+              <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
+                <span translate="engine.transformer.updated-at" class="me-2"></span>
+                <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
+              </button>
+            </th>
+            <th class="oib-actions-column-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (transformer of displayedTransformers().content; track transformer.id) {
+            <tr>
+              <td>{{ transformer.name }}</td>
+              <td>{{ transformer.description }}</td>
+              <td>{{ transformer.inputType }}</td>
+              <td>{{ transformer.outputType }}</td>
+              <td>
+                <oib-audit-info
+                  [createdAt]="transformer.createdAt"
+                  [createdBy]="transformer.createdBy.friendlyName"
+                  [updatedAt]="transformer.updatedAt"
+                  [updatedBy]="transformer.updatedBy.friendlyName"
+                />
+              </td>
+              <td class="oib-actions">
+                <!-- Edit button -->
+                <button
+                  type="button"
+                  class="btn btn-link edit-transformer"
+                  [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.edit' | translate"
+                  [attr.aria-label]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.edit' | translate"
+                  (click)="editTransformer(transformer)"
+                >
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                </button>
+                <!-- Delete button -->
+                <button
+                  type="button"
+                  class="btn btn-link delete-transformer"
+                  [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.delete' | translate"
+                  [attr.aria-label]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.delete' | translate"
+                  (click)="deleteTransformer(transformer)"
+                >
+                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                </button>
+                <!-- Audit history button -->
+                <button
+                  type="button"
+                  class="btn btn-link show-audit-transformer"
+                  [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.audit' | translate"
+                  [attr.aria-label]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.audit' | translate"
+                  (click)="showAudit(transformer)"
+                >
+                  <span class="fa-solid fa-history" aria-hidden="true"></span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (displayedTransformers().totalPages > 1) {
+        <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedTransformers()" (pageChanged)="changePage($event)" />
+      }
+    </div>
+  } @else {
+    <div class="oib-grey-container empty" id="no-transformer" translate="configuration.oibus.manifest.transformers.none"></div>
+  }
+</section>

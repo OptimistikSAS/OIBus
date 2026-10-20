@@ -1,113 +1,108 @@
-<oib-box>
-  <ng-template oibBoxTitle>
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <span translate="engine.ip-filter.list" id="title"></span>
-        @if (allIpFilters().length) {
-          <span class="mx-1">({{ allIpFilters().length }})</span>
-        }
-      </div>
-      <div>
-        @if (!ignoreIpFilters()) {
-          <button
-            type="button"
-            id="add-ip-filter"
-            class="btn btn-primary btn-sm oib-box-btn"
-            [ngbTooltip]="'engine.ip-filter.tooltips.add' | translate"
-            [attr.aria-label]="'engine.ip-filter.tooltips.add' | translate"
-            (click)="addIpFilter()"
-          >
-            <span class="fa-solid fa-plus" aria-hidden="true"></span>
-          </button>
-        }
-
-        <oib-help [url]="helpUrl" />
-      </div>
-    </div>
-  </ng-template>
-</oib-box>
-
-<!-- the IP filter list -->
-@let displayed = displayedIpFilters();
-@if (ignoreIpFilters()) {
-  <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert" id="ip-filter-disabled">
-    <span class="icon-info-circle fs-5" aria-hidden="true"></span>
-    <span translate="engine.ip-filter.disabled"></span>
-  </div>
-} @else if (displayed.content.length !== 0) {
-  <div>
-    <table class="mb-2 table table-sm table-hover oib-table">
-      <thead class="light">
-        <tr>
-          <th>
-            <button type="button" class="sort-button" (click)="toggleSort('address')">
-              <span translate="engine.ip-filter.address" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('address') }}" aria-hidden="true"></span>
-            </button>
-          </th>
-          <th translate="engine.ip-filter.description"></th>
-          <th>
-            <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
-              <span translate="engine.ip-filter.updated-at" class="me-2"></span>
-              <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
-            </button>
-          </th>
-          <th class="oib-actions-column-3"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (ipFilter of displayed.content; track ipFilter.id) {
-          <tr>
-            <td>{{ ipFilter.address }}</td>
-            <td>{{ ipFilter.description }}</td>
-            <td>
-              <oib-audit-info
-                [createdAt]="ipFilter.createdAt"
-                [createdBy]="ipFilter.createdBy.friendlyName"
-                [updatedAt]="ipFilter.updatedAt"
-                [updatedBy]="ipFilter.updatedBy.friendlyName"
-              />
-            </td>
-            <td class="oib-actions">
-              <!-- Edit button -->
-              <button
-                type="button"
-                class="btn btn-link edit-ip-filter"
-                [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
-                [attr.aria-label]="'engine.ip-filter.tooltips.edit' | translate"
-                (click)="editIpFilter(ipFilter)"
-              >
-                <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-              </button>
-              <!-- Delete button -->
-              <button
-                type="button"
-                class="btn btn-link delete-ip-filter"
-                [ngbTooltip]="'engine.ip-filter.tooltips.delete' | translate"
-                [attr.aria-label]="'engine.ip-filter.tooltips.delete' | translate"
-                (click)="deleteIpFilter(ipFilter)"
-              >
-                <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-              </button>
-              <!-- Audit history button -->
-              <button
-                type="button"
-                class="btn btn-link show-audit-ip-filter"
-                [ngbTooltip]="'engine.ip-filter.tooltips.audit' | translate"
-                [attr.aria-label]="'engine.ip-filter.tooltips.audit' | translate"
-                (click)="showAudit(ipFilter)"
-              >
-                <span class="fa-solid fa-history" aria-hidden="true"></span>
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-    @if (displayed.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayed" (pageChanged)="changePage($event)" />
+<section class="oib-panel">
+  <div class="oib-section-title">
+    <h5>
+      <span translate="engine.ip-filter.list" id="title"></span>
+      @if (allIpFilters().length) {
+        <span class="mx-1">({{ allIpFilters().length }})</span>
+      }
+    </h5>
+    @if (!ignoreIpFilters()) {
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        id="add-ip-filter"
+        [attr.aria-label]="'engine.ip-filter.tooltips.add' | translate"
+        (click)="addIpFilter()"
+      >
+        <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+        <span translate="common.add"></span>
+      </button>
     }
+    <oib-help [url]="helpUrl" />
   </div>
-} @else {
-  <div class="oib-grey-container" id="no-ip-filter" translate="engine.ip-filter.none"></div>
-}
+
+  <!-- the IP filter list -->
+  @let displayed = displayedIpFilters();
+  @if (ignoreIpFilters()) {
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert" id="ip-filter-disabled">
+      <span class="icon-info-circle fs-5" aria-hidden="true"></span>
+      <span translate="engine.ip-filter.disabled"></span>
+    </div>
+  } @else if (displayed.content.length !== 0) {
+    <div>
+      <table class="mb-2 table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th>
+              <button type="button" class="sort-button" (click)="toggleSort('address')">
+                <span translate="engine.ip-filter.address" class="me-2"></span>
+                <span class="fa-solid {{ getSortIcon('address') }}" aria-hidden="true"></span>
+              </button>
+            </th>
+            <th translate="engine.ip-filter.description"></th>
+            <th>
+              <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
+                <span translate="engine.ip-filter.updated-at" class="me-2"></span>
+                <span class="fa-solid {{ getSortIcon('updatedAt') }}" aria-hidden="true"></span>
+              </button>
+            </th>
+            <th class="oib-actions-column-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ipFilter of displayed.content; track ipFilter.id) {
+            <tr>
+              <td>{{ ipFilter.address }}</td>
+              <td>{{ ipFilter.description }}</td>
+              <td>
+                <oib-audit-info
+                  [createdAt]="ipFilter.createdAt"
+                  [createdBy]="ipFilter.createdBy.friendlyName"
+                  [updatedAt]="ipFilter.updatedAt"
+                  [updatedBy]="ipFilter.updatedBy.friendlyName"
+                />
+              </td>
+              <td class="oib-actions">
+                <!-- Edit button -->
+                <button
+                  type="button"
+                  class="btn btn-link edit-ip-filter"
+                  [ngbTooltip]="'engine.ip-filter.tooltips.edit' | translate"
+                  [attr.aria-label]="'engine.ip-filter.tooltips.edit' | translate"
+                  (click)="editIpFilter(ipFilter)"
+                >
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                </button>
+                <!-- Delete button -->
+                <button
+                  type="button"
+                  class="btn btn-link delete-ip-filter"
+                  [ngbTooltip]="'engine.ip-filter.tooltips.delete' | translate"
+                  [attr.aria-label]="'engine.ip-filter.tooltips.delete' | translate"
+                  (click)="deleteIpFilter(ipFilter)"
+                >
+                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                </button>
+                <!-- Audit history button -->
+                <button
+                  type="button"
+                  class="btn btn-link show-audit-ip-filter"
+                  [ngbTooltip]="'engine.ip-filter.tooltips.audit' | translate"
+                  [attr.aria-label]="'engine.ip-filter.tooltips.audit' | translate"
+                  (click)="showAudit(ipFilter)"
+                >
+                  <span class="fa-solid fa-history" aria-hidden="true"></span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (displayed.totalPages > 1) {
+        <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayed" (pageChanged)="changePage($event)" />
+      }
+    </div>
+  } @else {
+    <div class="oib-grey-container empty" id="no-ip-filter" translate="engine.ip-filter.none"></div>
+  }
+</section>

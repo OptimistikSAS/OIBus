@@ -1,4 +1,3 @@
-import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, OnInit, signal, WritableSignal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -56,8 +55,7 @@ import { emptyPage } from '../shared/utils/page.utils';
     NgbTypeahead,
     NgbAccordionModule,
     OI_FORM_VALIDATION_DIRECTIVES,
-    NgbTooltip,
-    NgOptimizedImage
+    NgbTooltip
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',

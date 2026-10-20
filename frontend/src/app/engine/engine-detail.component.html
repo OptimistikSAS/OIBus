@@ -2,43 +2,41 @@
   <div class="oib-padded-container">
     <div class="row justify-content-center mb-2">
       <div class="col-md-10 col-lg-8">
-        <div class="oib-header-container d-flex align-items-center justify-content-between mb-3">
-          <div class="d-flex">
-            <div class="oib-block-title">
-              <img class="oib-title-image pt-2" src="/home/engine.svg" alt="logo" />
-            </div>
-            <h1 class="oib-title" translate="engine.title"></h1>
-          </div>
+        <div class="oib-page-header">
           <div>
-            <a class="btn btn-primary me-2" id="oianalytics-module" routerLink="oianalytics">
-              <span class="fa-solid fa-gear me-1" role="status" aria-hidden="true"></span>
+            <h1 translate="engine.title"></h1>
+            <div class="oib-page-meta">
+              <span id="engine-name">{{ settings.general.name }}</span>
+            </div>
+          </div>
+          <div class="oib-page-actions">
+            <a class="btn btn-subtle" id="oianalytics-module" routerLink="oianalytics">
+              <span class="fa-solid fa-gear me-1" aria-hidden="true"></span>
               <span translate="engine.oianalytics"></span>
             </a>
             <button
               (click)="exportConfig()"
               type="button"
               [disabled]="exporting.isPending | async"
-              class="btn btn-secondary me-2"
+              class="btn btn-subtle"
               id="export-config"
             >
               @if (exporting.isPending | async) {
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              }
-              @if ((exporting.isPending | async) === false) {
-                <span class="fa-solid fa-download me-1" role="status" aria-hidden="true"></span>
+              } @else {
+                <span class="fa-solid fa-download me-1" aria-hidden="true"></span>
               }
               <span translate="engine.config-transfer.export"></span>
             </button>
-            <button (click)="openImportConfigModal()" type="button" class="btn btn-secondary me-2" id="import-config">
-              <span class="fa-solid fa-upload me-1" role="status" aria-hidden="true"></span>
+            <button (click)="openImportConfigModal()" type="button" class="btn btn-subtle" id="import-config">
+              <span class="fa-solid fa-upload me-1" aria-hidden="true"></span>
               <span translate="engine.config-transfer.import.button"></span>
             </button>
-            <button (click)="restart()" type="button" [disabled]="restarting.isPending | async" class="btn btn-danger" id="restart">
+            <button (click)="restart()" type="button" [disabled]="restarting.isPending | async" class="btn btn-subtle" id="restart">
               @if (restarting.isPending | async) {
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              }
-              @if ((restarting.isPending | async) === false) {
-                <span class="fa-solid fa-arrow-rotate-right me-1" role="status" aria-hidden="true"></span>
+              } @else {
+                <span class="fa-solid fa-arrow-rotate-right me-1" aria-hidden="true"></span>
               }
               <span translate="engine.restart"></span>
             </button>
@@ -48,217 +46,176 @@
         @if (metrics()) {
           <oib-engine-metrics [metrics]="metrics()!" />
         }
-
-        <!-- General Settings -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex align-items-center justify-content-between">
-              <span translate="engine.general-settings.title"></span>
-              <div class="d-flex gap-1">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  id="edit-name-button"
-                  (click)="openNameModal()"
-                  [ngbTooltip]="'engine.tooltips.edit' | translate"
-                  [attr.aria-label]="'engine.tooltips.edit' | translate"
-                >
-                  <i class="fa-solid fa-pencil" aria-hidden="true"></i>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  id="show-audit-general-button"
-                  (click)="showAudit('engine_general')"
-                  [ngbTooltip]="'engine.tooltips.audit' | translate"
-                  [attr.aria-label]="'engine.tooltips.audit' | translate"
-                >
-                  <i class="fa-solid fa-history" aria-hidden="true"></i>
-                </button>
-              </div>
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="engine.general-settings.title"></h5>
+            <button
+              type="button"
+              class="btn btn-subtle btn-sm"
+              id="edit-name-button"
+              (click)="openNameModal()"
+              [attr.aria-label]="'engine.tooltips.edit' | translate"
+            >
+              <i class="fa-solid fa-pencil me-1" aria-hidden="true"></i>
+              <span translate="common.edit"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-subtle btn-sm"
+              id="show-audit-general-button"
+              (click)="showAudit('engine_general')"
+              [ngbTooltip]="'engine.tooltips.audit' | translate"
+              [attr.aria-label]="'engine.tooltips.audit' | translate"
+            >
+              <i class="fa-solid fa-history" aria-hidden="true"></i>
+            </button>
+          </div>
+          <dl class="oib-summary engine-settings">
+            <div class="oib-summary-entry">
+              <dt translate="engine.general-settings.name"></dt>
+              <dd>{{ settings.general.name }}</dd>
             </div>
-          </ng-template>
-          <table class="table table-sm table-hover oib-table mb-3">
-            <tbody>
-              <tr>
-                <td class="first-column-body" translate="engine.general-settings.name"></td>
-                <td class="last-column-body">{{ settings.general.name }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </oib-box>
-
-        <!-- Web Server Settings -->
-        <oib-box class="mt-2 d-block">
-          <ng-template oibBoxTitle>
-            <div class="d-flex align-items-center justify-content-between">
-              <span translate="engine.web-server-settings.title"></span>
-              <div class="d-flex gap-1">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  id="edit-web-server-button"
-                  (click)="openWebServerModal()"
-                  [ngbTooltip]="'engine.tooltips.edit' | translate"
-                  [attr.aria-label]="'engine.tooltips.edit' | translate"
-                >
-                  <i class="fa-solid fa-pencil" aria-hidden="true"></i>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  id="show-audit-web-server-button"
-                  (click)="showAudit('engine_web_server')"
-                  [ngbTooltip]="'engine.tooltips.audit' | translate"
-                  [attr.aria-label]="'engine.tooltips.audit' | translate"
-                >
-                  <i class="fa-solid fa-history" aria-hidden="true"></i>
-                </button>
-              </div>
+          </dl>
+        </section>
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="engine.web-server-settings.title"></h5>
+            <button
+              type="button"
+              class="btn btn-subtle btn-sm"
+              id="edit-web-server-button"
+              (click)="openWebServerModal()"
+              [attr.aria-label]="'engine.tooltips.edit' | translate"
+            >
+              <i class="fa-solid fa-pencil me-1" aria-hidden="true"></i>
+              <span translate="common.edit"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-subtle btn-sm"
+              id="show-audit-web-server-button"
+              (click)="showAudit('engine_web_server')"
+              [ngbTooltip]="'engine.tooltips.audit' | translate"
+              [attr.aria-label]="'engine.tooltips.audit' | translate"
+            >
+              <i class="fa-solid fa-history" aria-hidden="true"></i>
+            </button>
+          </div>
+          <dl class="oib-summary engine-settings">
+            <div class="oib-summary-entry">
+              <dt translate="engine.general-settings.port"></dt>
+              <dd>{{ settings.webServer.port }}</dd>
             </div>
-          </ng-template>
-          <table class="table table-sm table-hover oib-table mb-3">
-            <tbody>
-              <tr>
-                <td class="first-column-body" translate="engine.general-settings.port"></td>
-                <td class="last-column-body">{{ settings.webServer.port }}</td>
-              </tr>
-              <tr>
-                <td class="first-column-body" translate="engine.web-server-settings.auth-token-duration"></td>
-                <td class="last-column-body" [translate]="authTokenDurationLabelKey(settings.webServer.authTokenDuration)"></td>
-              </tr>
-              <tr>
-                <td class="first-column-body" translate="engine.web-server-settings.https"></td>
-                @if (httpsCertificate(); as certificate) {
-                  <td class="last-column-body">{{ certificate }}</td>
-                } @else {
-                  <td class="last-column-body" translate="engine.web-server-settings.https-disabled"></td>
-                }
-              </tr>
-            </tbody>
-          </table>
-        </oib-box>
-
-        <!-- Proxy Settings -->
-        <oib-box class="mt-2 d-block">
-          <ng-template oibBoxTitle>
-            <div class="d-flex align-items-center justify-content-between">
-              <span translate="engine.proxy-settings.title"></span>
-              <div class="d-flex gap-1">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  id="edit-proxy-button"
-                  (click)="openProxyModal()"
-                  [ngbTooltip]="'engine.tooltips.edit' | translate"
-                  [attr.aria-label]="'engine.tooltips.edit' | translate"
-                >
-                  <i class="fa-solid fa-pencil" aria-hidden="true"></i>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  id="show-audit-proxy-button"
-                  (click)="showAudit('engine_proxy_server')"
-                  [ngbTooltip]="'engine.tooltips.audit' | translate"
-                  [attr.aria-label]="'engine.tooltips.audit' | translate"
-                >
-                  <i class="fa-solid fa-history" aria-hidden="true"></i>
-                </button>
-              </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.web-server-settings.auth-token-duration"></dt>
+              <dd [translate]="authTokenDurationLabelKey(settings.webServer.authTokenDuration)"></dd>
             </div>
-          </ng-template>
-          <table class="table table-sm table-hover oib-table mb-3">
-            <tbody>
-              <tr>
-                <td class="first-column-body" translate="engine.proxy-settings.title"></td>
-                @if (settings.proxyServer.enabled) {
-                  <td
-                    class="last-column-body"
-                    translate="engine.proxy-settings.enabled-details"
-                    [translateParams]="{ port: settings.proxyServer.port }"
-                  ></td>
-                } @else {
-                  <td class="last-column-body" translate="engine.proxy-settings.disabled-details"></td>
-                }
-              </tr>
-            </tbody>
-          </table>
-        </oib-box>
-
-        <!-- Logger Settings -->
-        <oib-box class="mt-2 d-block">
-          <ng-template oibBoxTitle>
-            <div class="d-flex align-items-center justify-content-between">
-              <span translate="engine.logger.title"></span>
-              <div class="d-flex gap-1">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  id="edit-logger-button"
-                  (click)="openLoggerModal()"
-                  [ngbTooltip]="'engine.tooltips.edit' | translate"
-                  [attr.aria-label]="'engine.tooltips.edit' | translate"
-                >
-                  <i class="fa-solid fa-pencil" aria-hidden="true"></i>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  id="show-audit-logger-button"
-                  (click)="showAudit('engine_logging')"
-                  [ngbTooltip]="'engine.tooltips.audit' | translate"
-                  [attr.aria-label]="'engine.tooltips.audit' | translate"
-                >
-                  <i class="fa-solid fa-history" aria-hidden="true"></i>
-                </button>
-              </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.web-server-settings.https"></dt>
+              @if (httpsCertificate(); as certificate) {
+                <dd>{{ certificate }}</dd>
+              } @else {
+                <dd translate="engine.web-server-settings.https-disabled"></dd>
+              }
             </div>
-          </ng-template>
-          <table class="table table-sm table-hover oib-table mb-3">
-            <tbody>
-              <tr>
-                <td class="first-column-body" translate="engine.general-settings.log-levels"></td>
-                <td class="last-column-body">
-                  <span translate="engine.general-settings.console" [translateParams]="{ level: settings.logger.console.level }"></span>
-                  <span class="mx-1">|</span>
-                  <span translate="engine.general-settings.file" [translateParams]="{ level: settings.logger.file.level }"></span>
-                  <span class="mx-1">|</span>
-                  <span translate="engine.general-settings.database" [translateParams]="{ level: settings.logger.database.level }"></span>
-                  <span class="mx-1">|</span>
-                  <span translate="engine.general-settings.loki" [translateParams]="{ level: settings.logger.loki.level }"></span>
-                  <span class="mx-1">|</span>
-                  <span translate="engine.general-settings.syslog" [translateParams]="{ level: settings.logger.syslog.level }"></span>
-                  <span class="mx-1">|</span>
-                  <span translate="engine.general-settings.oia" [translateParams]="{ level: settings.logger.oia.level }"></span>
-                </td>
-              </tr>
-              <tr>
-                <td class="first-column-body" translate="engine.logger.audit-retention-duration"></td>
-                <td class="last-column-body">{{ settings.auditRetentionDuration || 0 }} {{ 'common.unit.days' | translate }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </oib-box>
-
+          </dl>
+        </section>
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="engine.proxy-settings.title"></h5>
+            <button
+              type="button"
+              class="btn btn-subtle btn-sm"
+              id="edit-proxy-button"
+              (click)="openProxyModal()"
+              [attr.aria-label]="'engine.tooltips.edit' | translate"
+            >
+              <i class="fa-solid fa-pencil me-1" aria-hidden="true"></i>
+              <span translate="common.edit"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-subtle btn-sm"
+              id="show-audit-proxy-button"
+              (click)="showAudit('engine_proxy_server')"
+              [ngbTooltip]="'engine.tooltips.audit' | translate"
+              [attr.aria-label]="'engine.tooltips.audit' | translate"
+            >
+              <i class="fa-solid fa-history" aria-hidden="true"></i>
+            </button>
+          </div>
+          <dl class="oib-summary engine-settings">
+            <div class="oib-summary-entry">
+              <dt translate="engine.proxy-settings.title"></dt>
+              @if (settings.proxyServer.enabled) {
+                <dd translate="engine.proxy-settings.enabled-details" [translateParams]="{ port: settings.proxyServer.port }"></dd>
+              } @else {
+                <dd translate="engine.proxy-settings.disabled-details"></dd>
+              }
+            </div>
+          </dl>
+        </section>
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="engine.logger.title"></h5>
+            <button
+              type="button"
+              class="btn btn-subtle btn-sm"
+              id="edit-logger-button"
+              (click)="openLoggerModal()"
+              [attr.aria-label]="'engine.tooltips.edit' | translate"
+            >
+              <i class="fa-solid fa-pencil me-1" aria-hidden="true"></i>
+              <span translate="common.edit"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-subtle btn-sm"
+              id="show-audit-logger-button"
+              (click)="showAudit('engine_logging')"
+              [ngbTooltip]="'engine.tooltips.audit' | translate"
+              [attr.aria-label]="'engine.tooltips.audit' | translate"
+            >
+              <i class="fa-solid fa-history" aria-hidden="true"></i>
+            </button>
+          </div>
+          <dl class="oib-summary engine-settings">
+            <div class="oib-summary-entry">
+              <dt translate="engine.logger.console.level"></dt>
+              <dd>{{ settings.logger.console.level | logLevelsEnum }}</dd>
+            </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.logger.file.level"></dt>
+              <dd>{{ settings.logger.file.level | logLevelsEnum }}</dd>
+            </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.logger.database.level"></dt>
+              <dd>{{ settings.logger.database.level | logLevelsEnum }}</dd>
+            </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.logger.loki.level"></dt>
+              <dd>{{ settings.logger.loki.level | logLevelsEnum }}</dd>
+            </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.logger.syslog.level"></dt>
+              <dd>{{ settings.logger.syslog.level | logLevelsEnum }}</dd>
+            </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.logger.oia.level"></dt>
+              <dd>{{ settings.logger.oia.level | logLevelsEnum }}</dd>
+            </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.logger.audit-retention-duration"></dt>
+              <dd>{{ settings.auditRetentionDuration || 0 }} {{ 'common.unit.days' | translate }}</dd>
+            </div>
+          </dl>
+        </section>
         <oib-scan-mode-list />
-        <div class="mt-2">
-          <oib-ip-filter-list />
-        </div>
-        <div class="mt-2">
-          <oib-certificate-list />
-        </div>
-        <div class="mt-2">
-          <oib-transformer-list />
-        </div>
-        <div class="mt-2 d-flex justify-content-end">
-          <button
-            (click)="dumpMemory()"
-            type="button"
-            [disabled]="dumpingMemory.isPending | async"
-            class="btn btn-outline-danger"
-            id="memory-dump"
-          >
+        <oib-ip-filter-list />
+        <oib-certificate-list />
+        <oib-transformer-list />
+        <div class="d-flex justify-content-end">
+          <button (click)="dumpMemory()" type="button" [disabled]="dumpingMemory.isPending | async" class="btn btn-subtle" id="memory-dump">
             @if (dumpingMemory.isPending | async) {
               <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             } @else {

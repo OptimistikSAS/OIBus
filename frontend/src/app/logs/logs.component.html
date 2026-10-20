@@ -1,16 +1,11 @@
 <div [class.oib-padded-container]="standalone()">
-  <!-- embedded in a page section, the logs take the height they need: the fixed height of a page header would let them overflow -->
-  <div [class.oib-header-container]="standalone()">
-    @if (standalone()) {
-      <div class="row mb-3">
-        <div class="col d-flex">
-          <div class="oib-block-title">
-            <img class="oib-title-image pt-2" ngSrc="/home/logs.svg" alt="Logo logs" height="30" width="30" />
-          </div>
-          <h1 class="oib-title" translate="logs.title"></h1>
-        </div>
-      </div>
-    }
+  @if (standalone()) {
+    <div class="oib-page-header">
+      <h1 translate="logs.title"></h1>
+    </div>
+  }
+  <!-- on the logs page, the search and the logs found are a panel; embedded, they are in a section of the page already -->
+  <div [class.oib-panel]="standalone()">
     <div>
       <div ngbAccordion class="mb-4">
         <div ngbAccordionItem="searchArea" #searchArea="ngbAccordionItem" [collapsed]="embedded()">
@@ -259,7 +254,7 @@
       @if (logs().totalElements !== 0) {
         <div class="table-container">
           <table class="table table-sm table-hover oib-table-logs">
-            <thead [class.light]="scopeId() && scopeType()">
+            <thead>
               <tr>
                 <th class="level-column"><span class="visually-hidden" translate="logs.level"></span></th>
                 <th translate="logs.date"></th>
