@@ -20,7 +20,7 @@ gérer les connecteurs North.
 | --------------- | ----------------------------------------------------------------------------------------- | ------------------- |
 | **Nom**         | Un libellé convivial pour identifier l'objectif du connecteur.                            | `My MQTT Connector` |
 | **Description** | Détails facultatifs sur la connexion, les droits d'accès ou les caractéristiques uniques. | `Production broker` |
-| **Activé**      | Activer ou désactiver le connecteur (depuis la liste ou sa page d'affichage).             | Activé/Désactivé    |
+| **Statut**      | Activer ou désactiver le connecteur (depuis la liste ou sa page d'affichage).             | Activé/Désactivé    |
 
 :::caution Connecteurs North désactivés
 Un connecteur North désactivé **ne mettra en cache aucune donnée**.

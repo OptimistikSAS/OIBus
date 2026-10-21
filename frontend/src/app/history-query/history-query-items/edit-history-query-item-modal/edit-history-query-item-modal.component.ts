@@ -22,6 +22,7 @@ import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
 import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../../shared/form/dynamic-form.builder';
+import { EnabledSelectorComponent } from '../../../shared/form/enabled-selector/enabled-selector.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
@@ -45,6 +46,7 @@ type ItemForm = FormGroup<{
   templateUrl: './edit-history-query-item-modal.component.html',
   styleUrl: './edit-history-query-item-modal.component.scss',
   imports: [
+    EnabledSelectorComponent,
     ReactiveFormsModule,
     TranslateDirective,
     TranslatePipe,

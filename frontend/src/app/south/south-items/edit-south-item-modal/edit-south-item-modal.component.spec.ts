@@ -51,6 +51,8 @@ class EditSouthItemModalComponentTester {
   readonly groupToggle = this.root.getByRole('button', { name: 'Group', exact: true });
   readonly scanMode = this.root.getByLabelText('Schedule');
   readonly enabled = this.root.getByLabelText('Enabled');
+  /** The Disabled choice of the status, by its label: its radio button is hidden behind it */
+  readonly disable = this.root.getByCss('label[for="item-enabled-disabled"]');
   readonly syncWithGroup = this.root.getByLabelText('Sync with group');
   readonly maxReadInterval = this.root.getByLabelText('Max read interval');
   readonly readDelay = this.root.getByLabelText('Read delay');
@@ -242,7 +244,7 @@ describe('EditSouthItemModalComponent', () => {
 
     await tester.name.fill('new item');
     await tester.scanMode.selectOptions(scanModes[1].name);
-    await tester.enabled.click();
+    await tester.disable.click();
     await tester.maxReadInterval.fill('60');
     await tester.save();
 
@@ -297,8 +299,8 @@ describe('EditSouthItemModalComponent', () => {
       const tester = await open('create');
       await tester.scanMode.selectOptions(scanModes[0].name);
 
-      // not from a checkbox, nor before the step is valid
-      await tester.enabled.click();
+      // not from a radio button, nor before the step is valid
+      await tester.disable.click();
       await userEvent.keyboard('{Enter}');
       await tester.name.click();
       await userEvent.keyboard('{Enter}');

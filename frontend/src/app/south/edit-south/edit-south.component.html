@@ -289,27 +289,27 @@
                 </div>
                 <div class="row">
                   <!-- Name -->
-                  <div class="col-4">
+                  <div class="col-8">
                     <div class="form-group">
                       <label class="form-label" for="south-name" translate="south.name"></label>
                       <input formControlName="name" id="south-name" class="form-control" />
                       <val-errors controlName="name" />
                     </div>
                   </div>
-                  <!-- Description -->
-                  <div class="col-5">
+                  <!-- Status -->
+                  <div class="col-4">
                     <div class="form-group">
-                      <label class="form-label" for="south-description" translate="south.description"></label>
-                      <input formControlName="description" id="south-description" class="form-control" />
+                      <div class="form-label" id="south-status" translate="south.status"></div>
+                      <oib-enabled-selector formControlName="enabled" inputId="south-enabled" labelledBy="south-status" />
                     </div>
                   </div>
-                  <div class="col">
-                    <!-- Enabled -->
+                </div>
+                <div class="row">
+                  <!-- Description -->
+                  <div class="col-12">
                     <div class="form-group">
-                      <div class="form-check form-switch padded">
-                        <input formControlName="enabled" id="south-enabled" type="checkbox" class="form-check-input" />
-                        <label class="form-check-label" for="south-enabled" translate="south.enabled"></label>
-                      </div>
+                      <label class="form-label" for="south-description" translate="south.description"></label>
+                      <textarea formControlName="description" id="south-description" class="form-control" rows="3"></textarea>
                     </div>
                   </div>
                 </div>

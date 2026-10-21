@@ -29,6 +29,7 @@ import { TransformerService } from '../../services/transformer.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../shared/form/dynamic-form.builder';
+import { EnabledSelectorComponent } from '../../shared/form/enabled-selector/enabled-selector.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
@@ -69,6 +70,7 @@ interface NorthConnectorSummary {
 @Component({
   selector: 'oib-edit-north',
   imports: [
+    EnabledSelectorComponent,
     TranslateDirective,
     SaveButtonComponent,
     BackNavigationDirective,

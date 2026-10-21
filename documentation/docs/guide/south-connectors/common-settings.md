@@ -21,7 +21,7 @@ Items can optionally be organised into **groups** to share a common schedule and
 | --------------- | ----------------------------------------------------------------------------- | --------------------- |
 | **Name**        | User-friendly label for easy identification.                                  | `My MSSQL Connector`  |
 | **Description** | Optional context (connection details, access rights, unique characteristics). | `Production database` |
-| **Enabled**     | Enable/disable the connector from the list or its display page.               | Enabled/Disabled      |
+| **Status**      | Enable/disable the connector from the list or its display page.               | Enabled/Disabled      |
 
 ## Specific Section {#specific-section}
 
@@ -96,11 +96,11 @@ or kept up to date by an [items synchronisation](#items-synchronisation).
 The item modal walks through three steps, shown in a steps bar at its top. The settings come first, so that they can
 be tested before the item is named and scheduled:
 
-| Step                | Content                                                                                                                                                          |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Settings**        | The connector's own item settings (see each connector's page), with the [test panel](#testing-an-item) right below them, to try the settings as they are edited. |
-| **Name & schedule** | Name, group, schedule and **Enabled**, then the **History settings** (history-capable connectors) and the **Caching** settings (IoT-family connectors).          |
-| **Review & save**   | A read-only summary of the whole item: general, history and caching settings, then its connector settings.                                                       |
+| Step                | Content                                                                                                                                                                      |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Settings**        | The connector's own item settings (see each connector's page), with the [test panel](#testing-an-item) right below them, to try the settings as they are edited.             |
+| **Name & schedule** | Name, **Status** (enabled or disabled), group and schedule, then the **History settings** (history-capable connectors) and the **Caching** settings (IoT-family connectors). |
+| **Review & save**   | A read-only summary of the whole item: general, history and caching settings, then its connector settings.                                                                   |
 
 **Next** only moves on once the current step is valid. A new item is saved from the last step; an item being edited
 or copied can be saved from any step. When a save fails on an invalid field, the modal opens the first step that has
@@ -120,7 +120,7 @@ together with the connector, hence the **OK** button instead of **Save**.
 | **Name**              | Name & schedule | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`   |
 | **Group**             | Name & schedule | The group this item belongs to. Leave on **None** for a standalone item with its own schedule.                                              | `Group A`               |
 | **Schedule**          | Name & schedule | Scan mode that determines when OIBus collects data. Only shown when the item has no group (the group's schedule is shown otherwise).        | `Every 1 min`           |
-| **Enabled**           | Name & schedule | Whether the item is active.                                                                                                                 | Enabled/Disabled        |
+| **Status**            | Name & schedule | Whether the item is active.                                                                                                                 | Enabled/Disabled        |
 | **Sync with group**   | Name & schedule | _(History-capable connectors, grouped items)_ When enabled, the history settings below are inherited from the group.                        | Enabled/Disabled        |
 | **Max read interval** | Name & schedule | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                  |
 | **Read delay**        | Name & schedule | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                   |

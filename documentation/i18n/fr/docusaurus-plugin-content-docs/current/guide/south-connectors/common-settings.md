@@ -22,7 +22,7 @@ partager une planification et une configuration de limitation (throttling) commu
 | --------------- | ------------------------------------------------------------------------------------ | --------------------- |
 | **Nom**         | Libellé convivial pour une identification facile.                                    | `My MSSQL Connector`  |
 | **Description** | Contexte optionnel (détails de connexion, droits d'accès, caractéristiques uniques). | `Production database` |
-| **Activé**      | Active/désactive le connecteur depuis la liste ou sa page d'affichage.               | Activé/Désactivé      |
+| **Statut**      | Active/désactive le connecteur depuis la liste ou sa page d'affichage.               | Activé/Désactivé      |
 
 ## Section spécifique {#specific-section}
 
@@ -103,11 +103,11 @@ déplacés vers un groupe, importés et exportés. Plutôt que de les créer un 
 La fenêtre de l'élément se parcourt en trois étapes, affichées dans une barre d'étapes en haut de la fenêtre. Les
 paramètres viennent en premier, pour être testés avant de nommer et de planifier l'élément :
 
-| Étape                              | Contenu                                                                                                                                                                                                    |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Paramètres**                     | Les paramètres d'élément propres au connecteur (voir la page de chaque connecteur), avec le [panneau de test](#testing-an-item) juste en dessous, pour essayer les paramètres au fil de leur modification. |
-| **Nom et planification**           | Nom, groupe, planification et **Activé**, puis les **Paramètres d'historique** (connecteurs compatibles historique) et les paramètres de **Mise en cache** (connecteurs de la famille IoT).                |
-| **Vérification et enregistrement** | Un récapitulatif en lecture seule de l'élément complet : paramètres généraux, d'historique et de mise en cache, puis ses paramètres de connecteur.                                                         |
+| Étape                              | Contenu                                                                                                                                                                                                           |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Paramètres**                     | Les paramètres d'élément propres au connecteur (voir la page de chaque connecteur), avec le [panneau de test](#testing-an-item) juste en dessous, pour essayer les paramètres au fil de leur modification.        |
+| **Nom et planification**           | Nom, **Statut** (activé ou désactivé), groupe et planification, puis les **Paramètres d'historique** (connecteurs compatibles historique) et les paramètres de **Mise en cache** (connecteurs de la famille IoT). |
+| **Vérification et enregistrement** | Un récapitulatif en lecture seule de l'élément complet : paramètres généraux, d'historique et de mise en cache, puis ses paramètres de connecteur.                                                                |
 
 **Suivant** ne passe à l'étape suivante qu'une fois l'étape courante valide. Un nouvel élément s'enregistre depuis la
 dernière étape ; un élément en cours de modification ou de copie peut être enregistré depuis n'importe quelle étape.
@@ -129,7 +129,7 @@ points) sont conservés dans la page et enregistrés avec le connecteur, d'où l
 | **Nom**                           | Nom et planification | Référence unique utilisée par les connecteurs North et les transformateurs pour identifier ce point de données.                                                                       | `Temperature_Sensor1`           |
 | **Groupe**                        | Nom et planification | Le groupe auquel cet élément appartient. Laissez sur **Aucun** pour un élément autonome avec sa propre planification.                                                                 | `Group A`                       |
 | **Planification**                 | Nom et planification | Mode de scan qui détermine quand OIBus collecte les données. Affiché uniquement lorsque l'élément n'a pas de groupe (la planification du groupe est affichée sinon).                  | `Every 1 min`                   |
-| **Activé**                        | Nom et planification | Indique si l'élément est actif.                                                                                                                                                       | Activé/Désactivé                |
+| **Statut**                        | Nom et planification | Indique si l'élément est actif.                                                                                                                                                       | Activé/Désactivé                |
 | **Synchroniser avec le groupe**   | Nom et planification | _(connecteurs compatibles historique, éléments groupés)_ Lorsque activé, les paramètres d'historique ci-dessous sont hérités du groupe.                                               | Activé/Désactivé                |
 | **Intervalle de lecture maximal** | Nom et planification | _(connecteurs compatibles historique)_ Durée maximale d'une sous-requête en secondes.                                                                                                 | `3600`                          |
 | **Délai de lecture**              | Nom et planification | _(connecteurs compatibles historique)_ Pause en millisecondes entre les sous-requêtes consécutives.                                                                                   | `200`                           |

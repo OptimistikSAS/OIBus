@@ -862,7 +862,9 @@ textarea.form-control {
   background-color: $yellow;
 }
 
-label {
+// a div labels a control which is not a single input (e.g. a group of buttons): it looks like the other labels
+label,
+div.form-label {
   font-size: 0.9rem;
   font-weight: bold;
   color: black;

@@ -30,15 +30,24 @@
         <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
         <div class="row">
           <!-- Name -->
-          <div class="col-md-4">
+          <div class="col-md-8">
             <div class="form-group">
               <label class="form-label" for="name" translate="south.items.name"></label>
               <input formControlName="name" id="name" class="form-control" />
               <val-errors controlName="name" />
             </div>
           </div>
-          <!-- Group -->
+          <!-- Status -->
           <div class="col-md-4">
+            <div class="form-group">
+              <div class="form-label" id="item-status" translate="south.items.status"></div>
+              <oib-enabled-selector formControlName="enabled" inputId="item-enabled" labelledBy="item-status" />
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <!-- Group -->
+          <div class="col-md-6">
             <div class="form-group">
               <label for="group" class="form-label" translate="south.items.group"></label>
               <div ngbDropdown class="d-inline-block w-100">
@@ -86,7 +95,7 @@
             </div>
           </div>
           @if (scanModeEnabled()) {
-            <div class="col-md-4">
+            <div class="col-md-6">
               @if (groupId() === null) {
                 <!-- Scan mode: the item's own, while it has no group -->
                 <div class="form-group">
@@ -110,13 +119,6 @@
               }
             </div>
           }
-        </div>
-        <!-- Enabled -->
-        <div class="form-group">
-          <div class="form-check form-switch">
-            <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
-            <label class="form-check-label" for="item-enabled" translate="south.items.enabled-label"></label>
-          </div>
         </div>
 
         <!-- Historian fields (for historian connectors) -->

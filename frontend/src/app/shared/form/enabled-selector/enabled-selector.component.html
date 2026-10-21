@@ -1,0 +1,26 @@
+<div class="btn-group oib-enabled-selector" role="radiogroup" [attr.aria-labelledby]="labelledBy()">
+  <input
+    type="radio"
+    class="btn-check"
+    autocomplete="off"
+    [id]="inputId()"
+    [name]="inputId()"
+    [checked]="enabled()"
+    [disabled]="disabled()"
+    (change)="select(true)"
+    (blur)="touch()"
+  />
+  <label class="btn btn-outline-success" [for]="inputId()" translate="common.enabled"></label>
+  <input
+    type="radio"
+    class="btn-check"
+    autocomplete="off"
+    [id]="inputId() + '-disabled'"
+    [name]="inputId()"
+    [checked]="!enabled()"
+    [disabled]="disabled()"
+    (change)="select(false)"
+    (blur)="touch()"
+  />
+  <label class="btn btn-outline-secondary" [for]="inputId() + '-disabled'" translate="common.disabled"></label>
+</div>
