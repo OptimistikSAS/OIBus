@@ -1,25 +1,24 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
+import { before, beforeEach, describe, it } from 'node:test';
 
 import { OIBusSetpoint } from '../../../../shared/model/common/content.model';
 
-import { streamToString } from '../../../service/utils';
+import type * as Utils from '../../../service/utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import setpointToOpcuaManifest from './manifest';
 import type OIBusSetpointToOPCUATransformerType from './oibus-setpoint-to-opcua-transformer';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let OIBusSetpointToOPCUATransformer: typeof OIBusSetpointToOPCUATransformerType;
 
 before(() => {
-  mockUtils = { generateRandomId: mock.fn(() => 'randomId'), streamToString: mock.fn(streamToString) };
-  mockModule(nodeRequire, '../../../service/utils', mockUtils);
+  const utils = nodeRequire('../../../service/utils') as typeof Utils;
+  mockModule(nodeRequire, '../../../service/utils', { ...utils, generateRandomId: () => 'randomId' });
   const mod = reloadModule<{ default: typeof OIBusSetpointToOPCUATransformerType }>(nodeRequire, './oibus-setpoint-to-opcua-transformer');
   OIBusSetpointToOPCUATransformer = mod.default;
 });
@@ -29,12 +28,6 @@ describe('OIBusSetpointToOPCUATransformer', () => {
 
   beforeEach(() => {
     logger = new PinoLogger();
-    mockUtils.generateRandomId = mock.fn(() => 'randomId');
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
-  });
-
-  afterEach(() => {
-    mock.timers.reset();
   });
 
   it('should transform data from a stream and return metadata', async () => {
@@ -50,14 +43,7 @@ describe('OIBusSetpointToOPCUATransformer', () => {
       { reference: 'reference2', value: '2' },
       { reference: 'reference3', value: 'value1' }
     ];
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify(dataChunks));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
+    const result = await transformer.transform(Readable.from(JSON.stringify(dataChunks)), { source: 'test' }, null);
 
     assert.deepStrictEqual(result, {
       output: Buffer.from(
