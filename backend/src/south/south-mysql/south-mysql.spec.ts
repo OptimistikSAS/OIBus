@@ -1,17 +1,17 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type { SouthItemSettings, SouthMySQLItemSettings, SouthMySQLSettings } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthMySQLClass from './south-mysql';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -39,50 +39,106 @@ class MYSQL2Error extends Error {
   }
 }
 
+const trackedItemSettings = (query: string): SouthMySQLItemSettings => ({
+  query,
+  requestTimeout: 1000,
+  trackingInstant: {
+    trackInstant: true,
+    fieldName: 'timestamp',
+    dateTimeInput: {
+      type: 'string',
+      timezone: 'Europe/Paris',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
+      locale: 'en-US'
+    }
+  }
+});
+
+const buildItem = (
+  id: string,
+  settings: SouthMySQLItemSettings,
+  scanMode = testData.scanMode.list[0]
+): SouthConnectorItemEntity<SouthMySQLItemSettings> => ({
+  id,
+  name: id.replace('id', 'item'),
+  enabled: true,
+  settings,
+  scanMode,
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: 3600,
+  readDelay: 0,
+  startTimeOffset: 0,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const buildConfiguration = (
+  settings: Partial<SouthMySQLSettings>,
+  items: Array<SouthConnectorItemEntity<SouthMySQLItemSettings>>
+): SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> => ({
+  id: 'southId',
+  name: 'south',
+  type: 'mysql',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    host: 'localhost',
+    port: 3306,
+    database: 'db',
+    username: 'username',
+    password: 'password',
+    connectionTimeout: 1000,
+    ...settings
+  },
+  groups: [],
+  items,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const items = [
+  buildItem('id1', trackedItemSettings('query1')),
+  buildItem('id2', { query: 'query2', requestTimeout: 1000, trackingInstant: { trackInstant: false } }),
+  buildItem('id3', trackedItemSettings('query3'), testData.scanMode.list[1])
+];
+
 describe('SouthMySQL', () => {
   let SouthMySQL: typeof SouthMySQLClass;
 
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(
-    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-      undefined
-  );
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let logger: PinoLogger;
+  let addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  >;
+  let execute: Mock<(query: unknown, params?: unknown) => Promise<unknown>>;
+  let ping: Mock<() => void>;
+  let end: Mock<() => void>;
+  let createConnection: Mock<(config: unknown) => Promise<unknown>>;
 
-  const mysqlExports: Record<string, unknown> = {
-    __esModule: true,
-    createConnection: mock.fn(async () => ({
-      end: mock.fn(),
-      execute: mock.fn(),
-      ping: mock.fn()
-    }))
-  };
+  const mysqlExports: Record<string, unknown> = { __esModule: true };
   mysqlExports.default = mysqlExports;
 
-  const utilsExports = {
-    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
+  const realUtils: typeof Utils = nodeRequire('../../service/utils');
+  const createUtilsMocks = () => ({
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
     formatInstant: mock.fn((instant: unknown) => instant),
     generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
-    extractDiscoveryQuery: mock.fn((scope: Record<string, unknown>) => scope.query as string),
-    getErrorMessage: mock.fn((error: unknown) => {
-      if (error instanceof Error) return error.message;
-      if (typeof error === 'string') return error;
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
-      }
-      return String(error);
-    }),
-    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-      if (items.length === 0) return {};
-      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-      const lead = items[0];
-      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-    })
-  };
+    extractDiscoveryQuery: mock.fn(realUtils.extractDiscoveryQuery)
+  });
+  const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
@@ -92,7 +148,7 @@ describe('SouthMySQL', () => {
       encryptionService: new EncryptionServiceMock('', '')
     });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -100,16 +156,14 @@ describe('SouthMySQL', () => {
   });
 
   beforeEach(() => {
-    addContentCallback.mock.resetCalls();
-    mysqlExports.createConnection = mock.fn(async () => ({
-      end: mock.fn(),
-      execute: mock.fn(),
-      ping: mock.fn()
-    }));
-    utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
-    utilsExports.formatInstant = mock.fn((instant: unknown) => instant);
-    utilsExports.generateReplacementParameters = mock.fn(() => []);
-    utilsExports.logQuery = mock.fn();
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
+    execute = mock.fn(async () => [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]);
+    ping = mock.fn();
+    end = mock.fn();
+    createConnection = mock.fn(async () => ({ execute, ping, end }));
+    mysqlExports.createConnection = createConnection;
+    Object.assign(utilsExports, createUtilsMocks());
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -120,135 +174,10 @@ describe('SouthMySQL', () => {
 
   describe('SouthMySQL with authentication', () => {
     let south: SouthMySQLClass;
-    const configuration: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mysql',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 3306,
-        database: 'db',
-        username: 'username',
-        password: 'password',
-        connectionTimeout: 1000
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            query: 'query1',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: {
-            query: 'query2',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: false
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id3',
-          name: 'item3',
-          enabled: true,
-          settings: {
-            query: 'query3',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[1],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration({}, items);
 
     beforeEach(() => {
-      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthMySQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -261,8 +190,7 @@ describe('SouthMySQL', () => {
           { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
         ])
       );
-      utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+      utilsExports.formatInstant.mock.mockImplementation(() => '2020-02-01 00:00:00.000');
 
       const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
@@ -319,31 +247,21 @@ describe('SouthMySQL', () => {
       const endTime = '2022-01-01T00:00:00.000Z';
 
       let formatCallCount = 0;
-      utilsExports.formatInstant = mock.fn(() => {
+      utilsExports.formatInstant.mock.mockImplementation(() => {
         formatCallCount++;
         if (formatCallCount === 1) return startTime;
         if (formatCallCount === 2) return endTime;
         return startTime;
       });
-
-      utilsExports.generateReplacementParameters = mock.fn(() => ({ startTime, endTime }));
-
-      const mockExecute = mock.fn(async (_query: unknown) => [
-        [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-      ]);
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
+      utilsExports.generateReplacementParameters.mock.mockImplementation(() => ({ startTime, endTime }));
 
       const result = await south.queryData(configuration.items[0], startTime, endTime);
 
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
-        configuration.items[0].settings.query
-      );
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
 
-      assert.strictEqual((mysqlExports.createConnection as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((mysqlExports.createConnection as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.strictEqual(createConnection.mock.calls.length, 1);
+      assert.deepStrictEqual(createConnection.mock.calls[0].arguments[0], {
         host: configuration.settings.host,
         port: configuration.settings.port,
         user: configuration.settings.username,
@@ -353,13 +271,13 @@ describe('SouthMySQL', () => {
         timezone: 'Z'
       });
 
-      assert.strictEqual(mockExecute.mock.calls.length, 1);
-      assert.deepStrictEqual(mockExecute.mock.calls[0].arguments[0], {
+      assert.strictEqual(execute.mock.calls.length, 1);
+      assert.deepStrictEqual(execute.mock.calls[0].arguments[0], {
         sql: configuration.items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
         values: { startTime, endTime },
         timeout: configuration.items[0].settings.requestTimeout
       });
-      assert.strictEqual(mockEnd.mock.calls.length, 1);
+      assert.strictEqual(end.mock.calls.length, 1);
       assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
     });
 
@@ -367,20 +285,11 @@ describe('SouthMySQL', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      const mockExecute = mock.fn(async (_query: unknown) => [
-        [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-      ]);
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
-
       const result = await south.queryData(configuration.items[1], startTime, endTime);
 
-      assert.strictEqual((utilsExports.formatInstant as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
-        configuration.items[1].settings.query
-      );
+      assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[1].settings.query);
 
       assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
     });
@@ -389,29 +298,20 @@ describe('SouthMySQL', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      utilsExports.generateReplacementParameters = mock.fn(() => ({ startTime, endTime }));
-
-      const mockExecute = mock.fn((_query: unknown) => {
+      utilsExports.generateReplacementParameters.mock.mockImplementation(() => ({ startTime, endTime }));
+      execute.mock.mockImplementation(async () => {
         throw new Error('query error');
       });
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
 
-      let error: unknown;
-      try {
-        await south.queryData(configuration.items[0], startTime, endTime);
-      } catch (err) {
-        error = err;
-      }
+      await assert.rejects(south.queryData(configuration.items[0], startTime, endTime), new Error('query error'));
 
-      assert.strictEqual(mockExecute.mock.calls.length, 1);
-      assert.deepStrictEqual(mockExecute.mock.calls[0].arguments[0], {
+      assert.strictEqual(execute.mock.calls.length, 1);
+      assert.deepStrictEqual(execute.mock.calls[0].arguments[0], {
         sql: configuration.items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
         values: { startTime, endTime },
         timeout: configuration.items[0].settings.requestTimeout
       });
-      assert.deepStrictEqual(error, new Error('query error'));
-      assert.strictEqual(mockEnd.mock.calls.length, 1);
+      assert.strictEqual(end.mock.calls.length, 1);
     });
 
     it('should test item', async () => {
@@ -429,10 +329,6 @@ describe('SouthMySQL', () => {
           ];
         })
       );
-
-      const formattedInstant = '2020-01-01T00:00:00.000Z';
-      utilsExports.formatInstant = mock.fn(() => formattedInstant);
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
       const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -454,10 +350,6 @@ describe('SouthMySQL', () => {
         })
       );
 
-      const formattedInstant = '2020-01-01T00:00:00.000Z';
-      utilsExports.formatInstant = mock.fn(() => formattedInstant);
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
-
       const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime]);
@@ -466,24 +358,22 @@ describe('SouthMySQL', () => {
     });
 
     it("should discover a Configuration Workflow's dedicated metadata query, with no @StartTime/@EndTime substitution", async () => {
-      const mockExecute = mock.fn(async (_query: unknown) => [[{ column_name: 'temp', description: 'Temperature' }]]);
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
+      execute.mock.mockImplementation(async () => [[{ column_name: 'temp', description: 'Temperature' }]]);
 
       const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
 
-      assert.deepStrictEqual((utilsExports.extractDiscoveryQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.deepStrictEqual(utilsExports.extractDiscoveryQuery.mock.calls[0].arguments[0], {
         query: 'SELECT column_name, description FROM my_metadata_table'
       });
-      assert.strictEqual(mockExecute.mock.calls.length, 1);
-      assert.strictEqual(mockExecute.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
-      assert.strictEqual(mockEnd.mock.calls.length, 1);
+      assert.strictEqual(execute.mock.calls.length, 1);
+      assert.strictEqual(execute.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
+      assert.strictEqual(end.mock.calls.length, 1);
       assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
     });
 
     it('should explore the tables of the database, then the columns of a table', async () => {
-      const mockExecute = mock.fn(async (query: string, _params?: unknown) =>
-        query.includes('information_schema.TABLES')
+      execute.mock.mockImplementation(async query =>
+        String(query).includes('information_schema.TABLES')
           ? [[{ tableName: 'production', rowCount: '1200', columnCount: 2 }]]
           : [
               [
@@ -492,8 +382,6 @@ describe('SouthMySQL', () => {
               ]
             ]
       );
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
 
       assert.deepStrictEqual(await south.explore(null), [
         { id: 'production', name: 'production', metadata: { columns: 2, rows: 1200 }, hasChildren: true }
@@ -507,22 +395,17 @@ describe('SouthMySQL', () => {
           hasChildren: false
         }
       ]);
-      assert.deepStrictEqual(mockExecute.mock.calls[1].arguments[1], ['production']);
-      assert.strictEqual(mockEnd.mock.calls.length, 2);
+      assert.deepStrictEqual(execute.mock.calls[1].arguments[1], ['production']);
+      assert.strictEqual(end.mock.calls.length, 2);
     });
 
     it('should close the connection when exploring fails', async () => {
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({
-        end: mockEnd,
-        execute: mock.fn(async () => {
-          throw new Error('denied');
-        }),
-        ping: mock.fn()
-      }));
+      execute.mock.mockImplementation(async () => {
+        throw new Error('denied');
+      });
 
       await assert.rejects(south.explore(null), new Error('denied'));
-      assert.strictEqual(mockEnd.mock.calls.length, 1);
+      assert.strictEqual(end.mock.calls.length, 1);
     });
 
     it('should discover the item of each table checked in the explore modal, quoted and tracked as MySQL reads them', async () => {
@@ -552,170 +435,35 @@ describe('SouthMySQL', () => {
 
     it('should close the connection and rethrow when the discovery query fails', async () => {
       const queryError = new Error('bad query');
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({
-        end: mockEnd,
-        execute: mock.fn(async () => {
-          throw queryError;
-        }),
-        ping: mock.fn()
-      }));
+      execute.mock.mockImplementation(async () => {
+        throw queryError;
+      });
 
       await assert.rejects(south.discover({ query: 'SELECT 1' }), queryError);
-      assert.strictEqual(mockEnd.mock.calls.length, 1);
+      assert.strictEqual(end.mock.calls.length, 1);
     });
   });
 
   describe('SouthMySQL without authentication', () => {
     let south: SouthMySQLClass;
-    const configuration: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mysql',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 3306,
-        database: 'db',
-        username: null,
-        password: null,
-        connectionTimeout: 1000
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            query: 'query1',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: {
-            query: 'query2',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: false
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id3',
-          name: 'item3',
-          enabled: true,
-          settings: {
-            query: 'query3',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[1],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration({ username: null, password: null }, items);
 
     beforeEach(() => {
-      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthMySQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('should manage connection error', async () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      mysqlExports.createConnection = mock.fn(() => {
+      createConnection.mock.mockImplementation(() => {
         throw new Error('connection error');
       });
 
-      let error: unknown;
-      try {
-        await south.queryData(configuration.items[0], startTime, endTime);
-      } catch (err) {
-        error = err;
-      }
+      await assert.rejects(south.queryData(configuration.items[0], startTime, endTime), new Error('connection error'));
 
-      assert.strictEqual((mysqlExports.createConnection as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((mysqlExports.createConnection as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.strictEqual(createConnection.mock.calls.length, 1);
+      assert.deepStrictEqual(createConnection.mock.calls[0].arguments[0], {
         host: configuration.settings.host,
         port: configuration.settings.port,
         user: undefined,
@@ -724,48 +472,24 @@ describe('SouthMySQL', () => {
         connectTimeout: configuration.settings.connectionTimeout,
         timezone: 'Z'
       });
-      assert.deepStrictEqual(error, new Error('connection error'));
     });
   });
 
   describe('SouthMySQL test connection', () => {
     let south: SouthMySQLClass;
-    const configuration: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mysql',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 3306,
-        database: 'db',
-        username: 'username',
-        password: 'password',
-        connectionTimeout: 1000
-      },
-      groups: [],
-      items: [],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration({}, []);
 
     beforeEach(() => {
-      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthMySQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {
       let executeCallCount = 0;
-      const mockExecute = mock.fn(async () => {
+      execute.mock.mockImplementation(async () => {
         executeCallCount++;
         if (executeCallCount === 1) return [[{ table_count: 21 }]];
         return [[{ version: '8.0.32' }]];
       });
-      const mockEnd = mock.fn();
-      const mockPing = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ execute: mockExecute, ping: mockPing, end: mockEnd }));
 
       const testResult = await south.testConnection();
 
@@ -775,31 +499,28 @@ describe('SouthMySQL', () => {
           { key: 'Tables', value: '21' }
         ]
       });
-      assert.ok(mockEnd.mock.calls.length > 0);
+      assert.ok(end.mock.calls.length > 0);
     });
 
     it('Database is reachable but version is unavailable', async () => {
       let executeCallCount = 0;
-      const mockExecute = mock.fn(async () => {
+      execute.mock.mockImplementation(async () => {
         executeCallCount++;
         if (executeCallCount === 1) return [[{ table_count: 5 }]];
         return [[{}]]; // no version key
       });
-      const mockEnd = mock.fn();
-      const mockPing = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ execute: mockExecute, ping: mockPing, end: mockEnd }));
 
       const testResult = await south.testConnection();
 
       assert.deepStrictEqual(testResult, { items: [{ key: 'Tables', value: '5' }] });
-      assert.ok(mockEnd.mock.calls.length > 0);
+      assert.ok(end.mock.calls.length > 0);
     });
 
     it('Unable to create connection', async () => {
       const errorMessage = 'Error creating connection';
 
       for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-        mysqlExports.createConnection = mock.fn(() => {
+        createConnection.mock.mockImplementation(() => {
           throw new MYSQL2Error(errorMessage, code);
         });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
@@ -809,72 +530,57 @@ describe('SouthMySQL', () => {
     it('Unable to ping database', async () => {
       const errorMessage = 'Error pinging database';
 
-      for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-        const mockEnd = mock.fn();
-        mysqlExports.createConnection = mock.fn(async () => ({
-          ping: () => {
-            throw new MYSQL2Error(errorMessage, code);
-          },
-          end: mockEnd
-        }));
+      for (const [index, code] of (Object.keys(ERROR_CODES) as Array<ErrorCodes>).entries()) {
+        ping.mock.mockImplementation(() => {
+          throw new MYSQL2Error(errorMessage, code);
+        });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
-        assert.ok(mockEnd.mock.calls.length > 0);
+        assert.strictEqual(end.mock.calls.length, index + 1);
       }
     });
 
     it('System table unreachable', async () => {
       const errorMessage = 'information_schema.TABLES does not exist';
-      const mockExecute = mock.fn(() => {
+      execute.mock.mockImplementation(async () => {
         throw new Error(errorMessage);
       });
-      const mockEnd = mock.fn();
-      const mockPing = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ execute: mockExecute, ping: mockPing, end: mockEnd }));
 
       await assert.rejects(
         south.testConnection(),
         new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
       );
-      assert.ok(mockEnd.mock.calls.length > 0);
+      assert.ok(end.mock.calls.length > 0);
     });
 
     it('Database has no tables', async () => {
-      const mockExecute = mock.fn(async () => [[{ table_count: 0 }]]);
-      const mockEnd = mock.fn();
-      const mockPing = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ execute: mockExecute, ping: mockPing, end: mockEnd }));
+      execute.mock.mockImplementation(async () => [[{ table_count: 0 }]]);
 
       await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
-      assert.ok(mockEnd.mock.calls.length > 0);
+      assert.ok(end.mock.calls.length > 0);
     });
 
     it('Database does not return count of tables', async () => {
-      const mockExecute = mock.fn(async () => [[]]);
-      const mockEnd = mock.fn();
-      const mockPing = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({ execute: mockExecute, ping: mockPing, end: mockEnd }));
+      execute.mock.mockImplementation(async () => [[]]);
 
       await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
-      assert.ok(mockEnd.mock.calls.length > 0);
+      assert.ok(end.mock.calls.length > 0);
     });
 
     it('Unable to ping database without password', async () => {
-      const savedPassword = configuration.settings.password;
-      configuration.settings.password = '';
+      south = new SouthMySQL(
+        buildConfiguration({ password: '' }, []),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
       const errorMessage = 'Error pinging database';
 
       for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-        const mockEnd = mock.fn();
-        mysqlExports.createConnection = mock.fn(async () => ({
-          ping: () => {
-            throw new MYSQL2Error(errorMessage, code);
-          },
-          end: mockEnd
-        }));
+        ping.mock.mockImplementation(() => {
+          throw new MYSQL2Error(errorMessage, code);
+        });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
       }
-
-      configuration.settings.password = savedPassword;
     });
   });
 });

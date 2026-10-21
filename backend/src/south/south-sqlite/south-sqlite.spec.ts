@@ -11,112 +11,62 @@ import type { SouthItemSettings, SouthSQLiteItemSettings, SouthSQLiteSettings } 
 
 import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import type * as Utils from '../../service/utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { buildSouthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { buildSouthEntity, createMock, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import type SouthSQLiteClass from './south-sqlite';
 
 const nodeRequire = createRequire(import.meta.url);
 
-const logger = new PinoLogger();
-const addContentCallback = mock.fn(
-  async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => undefined
-);
-const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-
-const mockDatabase: {
-  prepare: Mock<(_sql?: unknown) => unknown>;
-  transaction: Mock<() => undefined>;
-  close: Mock<() => undefined>;
-  all: Mock<(_sql?: unknown) => unknown>;
-} = {
-  prepare: mock.fn((_sql?: unknown): unknown => undefined),
-  transaction: mock.fn(),
-  close: mock.fn(),
-  all: mock.fn((_sql?: unknown): unknown => undefined)
-};
-
-const utilsExports = {
-  checkAge: mock.fn(() => true),
-  compress: mock.fn(async () => undefined),
-  delay: mock.fn(async () => undefined),
-  generateIntervals: mock.fn(() => []),
-  groupItemsByGroup: mock.fn(() => []),
-  validateCronExpression: mock.fn(() => ({ expression: '' })),
-  formatInstant: mock.fn((inst: unknown) => inst),
-  convertDateTimeToInstant: mock.fn((inst: unknown) => inst),
-  logQuery: mock.fn(),
-  generateReplacementParameters: mock.fn((): unknown => []),
-  extractDiscoveryQuery: mock.fn((scope: Record<string, unknown>) => scope.query as string),
-  getErrorMessage: mock.fn((error: unknown) => {
-    if (error instanceof Error) return error.message;
-    if (typeof error === 'string') return error;
-    if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-      return (error as { message: string }).message;
-    }
-    return String(error);
-  }),
-  // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-  // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-  workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-    if (items.length === 0) return {};
-    if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-    const lead = items[0];
-    return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-  })
-};
-
-const connectorSettings: SouthSQLiteSettings = {
-  databasePath: './database.db'
-};
-
-const itemSettings: Array<SouthSQLiteItemSettings> = [
-  {
-    query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
-    trackingInstant: {
-      trackInstant: true,
-      fieldName: 'timestamp',
-      dateTimeInput: {
-        type: 'string',
-        timezone: 'Europe/Paris',
-        format: 'yyyy-MM-dd HH:mm:ss.SSS',
-        locale: 'en-US'
-      }
-    }
-  },
-  {
-    query: 'query 2',
-    trackingInstant: {
-      trackInstant: false
-    }
-  },
-  {
-    query: 'query 3',
-    trackingInstant: {
-      trackInstant: true,
-      fieldName: 'timestamp',
-      dateTimeInput: {
-        type: 'string',
-        timezone: 'Europe/Paris',
-        format: 'yyyy-MM-dd HH:mm:ss.SSS',
-        locale: 'en-US'
-      }
+const trackedItemSettings = (query: string): SouthSQLiteItemSettings => ({
+  query,
+  trackingInstant: {
+    trackInstant: true,
+    fieldName: 'timestamp',
+    dateTimeInput: {
+      type: 'string',
+      timezone: 'Europe/Paris',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
+      locale: 'en-US'
     }
   }
-];
+});
 
-let SouthSQLite: typeof SouthSQLiteClass;
+const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', { databasePath: './database.db' }, [
+  trackedItemSettings('SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime'),
+  { query: 'query 2', trackingInstant: { trackInstant: false } },
+  trackedItemSettings('query 3')
+]);
+const dbPath = path.resolve(configuration.settings.databasePath);
+
+/** A `prepare` implementation returning, call after call, a statement whose `all()` gives each of these row sets. */
+const statements = (...rowSets: Array<Array<unknown>>) => seq(...rowSets.map(rows => () => ({ all: () => rows })));
 
 describe('SouthSQLite', () => {
+  let SouthSQLite: typeof SouthSQLiteClass;
   let south: SouthSQLiteClass;
-  const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', connectorSettings, itemSettings);
+
+  let logger: PinoLogger;
+  let addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  >;
+  let database: { prepare: Mock<(sql: string) => unknown>; close: Mock<() => void> };
+
+  const realUtils: typeof Utils = nodeRequire('../../service/utils');
+  const createUtilsMocks = () => ({
+    formatInstant: mock.fn((instant: unknown) => instant),
+    convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
+    logQuery: mock.fn(),
+    extractDiscoveryQuery: mock.fn(realUtils.extractDiscoveryQuery)
+  });
+  const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, 'better-sqlite3', () => mockDatabase);
+    mockModule(nodeRequire, 'better-sqlite3', () => database);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -124,22 +74,13 @@ describe('SouthSQLite', () => {
   });
 
   beforeEach(() => {
-    addContentCallback.mock.resetCalls();
-
-    mockDatabase.prepare = mock.fn();
-    mockDatabase.all = mock.fn();
-
-    utilsExports.formatInstant = mock.fn((inst: unknown) => inst);
-    utilsExports.convertDateTimeToInstant = mock.fn((inst: unknown) => inst);
-    utilsExports.logQuery = mock.fn();
-    utilsExports.generateReplacementParameters = mock.fn(() => [
-      new Date(testData.constants.dates.FAKE_NOW),
-      new Date(testData.constants.dates.FAKE_NOW)
-    ]);
-
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
+    database = { prepare: mock.fn(), close: mock.fn() };
+    Object.assign(utilsExports, createUtilsMocks());
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    south = new SouthSQLite(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
   });
 
   afterEach(() => {
@@ -154,7 +95,7 @@ describe('SouthSQLite', () => {
       { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
     ];
     const queryDataMock = mock.method(south, 'queryData', async () => queryDataResults);
-    utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
+    utilsExports.formatInstant.mock.mockImplementation(() => '2020-02-01 00:00:00.000');
 
     const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
     assert.strictEqual(addContentCallback.mock.calls.length, 1);
@@ -172,16 +113,14 @@ describe('SouthSQLite', () => {
       trackedInstant: '2020-03-01T00:00:00.000Z',
       value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
     });
-    const foundLog = (logger.info as ReturnType<typeof mock.fn>).mock.calls.find(
-      (c: { arguments: Array<unknown> }) => c.arguments[1] === 'Found 2 results in 0 ms'
-    );
+    const foundLog = logger.info.mock.calls.find((c: { arguments: Array<unknown> }) => c.arguments[1] === 'Found 2 results in 0 ms');
     assert.ok(foundLog);
     assert.deepStrictEqual(foundLog.arguments[0], { itemId: configuration.items[0].id, itemName: configuration.items[0].name });
   });
 
   it('should properly run historyQuery without result', async () => {
     const startTime = testData.constants.dates.DATE_1;
-    const queryDataMock = mock.method(south, 'queryData', async () => [] as Array<Record<string, string | number>>);
+    const queryDataMock = mock.method(south, 'queryData', async () => []);
 
     const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
     assert.strictEqual(addContentCallback.mock.calls.length, 0);
@@ -192,7 +131,7 @@ describe('SouthSQLite', () => {
       testData.constants.dates.FAKE_NOW
     ]);
     assert.deepStrictEqual(result, { trackedInstant: null, value: null });
-    const noResultLog = (logger.debug as ReturnType<typeof mock.fn>).mock.calls.find(
+    const noResultLog = logger.debug.mock.calls.find(
       (c: { arguments: Array<unknown> }) => c.arguments[1] === 'No result found. Request done in 0 ms'
     );
     assert.ok(noResultLog);
@@ -202,27 +141,26 @@ describe('SouthSQLite', () => {
   it('should get data from sqlite', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
+    const formattedStartTime = DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
+    const formattedEndTime = DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
 
-    mockDatabase.all = mock.fn(() => [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
-    utilsExports.formatInstant = mock.fn(
-      (() => {
-        let callCount = 0;
-        return () => {
-          callCount++;
-          if (callCount === 1) return DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
-          return DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
-        };
-      })()
+    database.prepare.mock.mockImplementation(
+      statements([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
+    );
+    utilsExports.formatInstant.mock.mockImplementation(
+      seq(
+        () => formattedStartTime,
+        () => formattedEndTime
+      )
     );
 
-    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
     const result = await south.queryData(configuration.items[0], startTime, endTime);
 
     assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
     assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments, [
       configuration.items[0].settings.query,
-      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      formattedStartTime,
+      formattedEndTime,
       logger,
       { itemId: configuration.items[0].id, itemName: configuration.items[0].name }
     ]);
@@ -234,8 +172,9 @@ describe('SouthSQLite', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    mockDatabase.all = mock.fn(() => [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
-    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
+    database.prepare.mock.mockImplementation(
+      statements([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
+    );
 
     const result = await south.queryData(configuration.items[1], startTime, endTime);
     assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
@@ -253,28 +192,25 @@ describe('SouthSQLite', () => {
   it('should manage query error', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
-    mockDatabase.all = mock.fn(() => {
-      throw new Error('query error');
-    });
-    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
+    database.prepare.mock.mockImplementation(() => ({
+      all: () => {
+        throw new Error('query error');
+      }
+    }));
 
     assert.throws(() => south.queryData(configuration.items[1], startTime, endTime), { message: 'query error' });
   });
 
   it("should discover a Configuration Workflow's dedicated metadata query, with no @StartTime/@EndTime substitution", async () => {
-    const mockAll = mock.fn(() => [{ column_name: 'temp', description: 'Temperature' }]);
-    mockDatabase.prepare = mock.fn(() => ({ all: mockAll }));
-    // mockDatabase.close isn't reset in this describe block's beforeEach (unlike prepare/all) - its
-    // call count from earlier tests would otherwise leak into this assertion.
-    mockDatabase.close.mock.resetCalls();
+    database.prepare.mock.mockImplementation(statements([{ column_name: 'temp', description: 'Temperature' }]));
 
     const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
 
     assert.deepStrictEqual(utilsExports.extractDiscoveryQuery.mock.calls[0].arguments[0], {
       query: 'SELECT column_name, description FROM my_metadata_table'
     });
-    assert.strictEqual(mockDatabase.prepare.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
-    assert.strictEqual(mockDatabase.close.mock.calls.length, 1);
+    assert.strictEqual(database.prepare.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
+    assert.strictEqual(database.close.mock.calls.length, 1);
     assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
   });
 
@@ -305,24 +241,21 @@ describe('SouthSQLite', () => {
 
   it('should close the database and rethrow when the discovery query fails', async () => {
     const queryError = new Error('bad query');
-    mockDatabase.prepare = mock.fn(() => {
+    database.prepare.mock.mockImplementation(() => {
       throw queryError;
     });
-    mockDatabase.close.mock.resetCalls();
 
     await assert.rejects(south.discover({ query: 'SELECT 1' }), queryError);
-    assert.strictEqual(mockDatabase.close.mock.calls.length, 1);
+    assert.strictEqual(database.close.mock.calls.length, 1);
   });
 
   it('should test item', async () => {
-    const formattedInstant = '2020-01-01T00:00:00.000Z';
-    utilsExports.formatInstant = mock.fn(() => formattedInstant);
     const queryDataMock = mock.method(south, 'queryData', async () => {
       mock.timers.tick(25);
       return [
         { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ] as Array<Record<string, string | number>>;
+      ];
     });
 
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
@@ -333,14 +266,12 @@ describe('SouthSQLite', () => {
   });
 
   it('should test item without datetimeFields', async () => {
-    const formattedInstant = '2020-01-01T00:00:00.000Z';
-    utilsExports.formatInstant = mock.fn(() => formattedInstant);
     const queryDataMock = mock.method(south, 'queryData', async () => {
       mock.timers.tick(25);
       return [
         { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ] as Array<Record<string, string | number>>;
+      ];
     });
 
     const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
@@ -349,308 +280,189 @@ describe('SouthSQLite', () => {
     assert.strictEqual(result.queryDuration, 25);
     assert.strictEqual(result.connectionDuration, 0);
   });
-});
 
-describe('SouthSQLite test connection', () => {
-  let south: SouthSQLiteClass;
-  const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', connectorSettings, itemSettings);
-  const dbPath = path.resolve(configuration.settings.databasePath);
+  describe('test connection', () => {
+    let access: Mock<typeof fs.access>;
+    let stat: Mock<(path: string) => Promise<unknown>>;
 
-  before(() => {
-    // SouthSQLite is already loaded by the first describe block's before()
-    // No need to reload; module is shared
-  });
-
-  beforeEach(() => {
-    addContentCallback.mock.resetCalls();
-
-    mockDatabase.prepare = mock.fn();
-    mockDatabase.all = mock.fn();
-
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
-
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-  });
-
-  afterEach(() => {
-    mock.timers.reset();
-    mock.restoreAll();
-  });
-
-  it('Database is reachable and has tables', async () => {
-    const tableCountAll = mock.fn(() => [{ table_count: 21 }]);
-    const versionAll = mock.fn(() => [{ version: '3.39.5' }]);
-    let prepareCallCount = 0;
-    mockDatabase.prepare = mock.fn(() => {
-      prepareCallCount++;
-      if (prepareCallCount === 1) return { all: tableCountAll };
-      return { all: versionAll };
+    beforeEach(() => {
+      access = mock.method(fs, 'access', async () => undefined);
+      stat = mock.method(fs, 'stat', async () => ({ size: 2048 }));
     });
-    mock.method(
-      fs,
-      'access',
-      mock.fn(async () => undefined)
-    );
-    mock.method(
-      fs,
-      'stat',
-      mock.fn(async () => ({ size: 10240 }))
-    );
 
-    const testResult = await south.testConnection();
+    it('Database is reachable and has tables', async () => {
+      database.prepare.mock.mockImplementation(statements([{ table_count: 21 }], [{ version: '3.39.5' }]));
+      stat.mock.mockImplementation(async () => ({ size: 10240 }));
 
-    assert.deepStrictEqual(testResult, {
-      items: [
-        { key: 'SQLite Version', value: '3.39.5' },
-        { key: 'Tables', value: '21' },
-        { key: 'File Size', value: '10.0 KB' }
-      ]
+      const testResult = await south.testConnection();
+
+      assert.deepStrictEqual(testResult, {
+        items: [
+          { key: 'SQLite Version', value: '3.39.5' },
+          { key: 'Tables', value: '21' },
+          { key: 'File Size', value: '10.0 KB' }
+        ]
+      });
     });
-  });
 
-  it('Database is reachable but version is unavailable', async () => {
-    const tableCountAll = mock.fn(() => [{ table_count: 5 }]);
-    const versionAll = mock.fn(() => [{}]);
-    let prepareCallCount = 0;
-    mockDatabase.prepare = mock.fn(() => {
-      prepareCallCount++;
-      if (prepareCallCount === 1) return { all: tableCountAll };
-      return { all: versionAll };
+    it('Database is reachable but version is unavailable', async () => {
+      database.prepare.mock.mockImplementation(statements([{ table_count: 5 }], [{}]));
+
+      const testResult = await south.testConnection();
+
+      assert.deepStrictEqual(testResult, {
+        items: [
+          { key: 'Tables', value: '5' },
+          { key: 'File Size', value: '2.0 KB' }
+        ]
+      });
     });
-    mock.method(
-      fs,
-      'access',
-      mock.fn(async () => undefined)
-    );
-    mock.method(
-      fs,
-      'stat',
-      mock.fn(async () => ({ size: 2048 }))
-    );
 
-    const testResult = await south.testConnection();
+    it('Database is reachable but version query throws', async () => {
+      database.prepare.mock.mockImplementation(
+        seq(
+          () => ({ all: () => [{ table_count: 5 }] }),
+          () => {
+            throw new Error('version query error');
+          }
+        )
+      );
 
-    assert.deepStrictEqual(testResult, {
-      items: [
-        { key: 'Tables', value: '5' },
-        { key: 'File Size', value: '2.0 KB' }
-      ]
+      const testResult = await south.testConnection();
+
+      assert.deepStrictEqual(testResult, {
+        items: [
+          { key: 'Tables', value: '5' },
+          { key: 'File Size', value: '2.0 KB' }
+        ]
+      });
     });
-  });
 
-  it('Database is reachable but version query throws', async () => {
-    const tableCountAll = mock.fn(() => [{ table_count: 5 }]);
-    let prepareCallCount = 0;
-    mockDatabase.prepare = mock.fn(() => {
-      prepareCallCount++;
-      if (prepareCallCount === 1) return { all: tableCountAll };
-      throw new Error('version query error');
-    });
-    mock.method(
-      fs,
-      'access',
-      mock.fn(async () => undefined)
-    );
-    mock.method(
-      fs,
-      'stat',
-      mock.fn(async () => ({ size: 2048 }))
-    );
-
-    const testResult = await south.testConnection();
-
-    assert.deepStrictEqual(testResult, {
-      items: [
-        { key: 'Tables', value: '5' },
-        { key: 'File Size', value: '2.0 KB' }
-      ]
-    });
-  });
-
-  it('Database is reachable but file stat throws', async () => {
-    const tableCountAll = mock.fn(() => [{ table_count: 5 }]);
-    const versionAll = mock.fn(() => [{ version: '3.39.5' }]);
-    let prepareCallCount = 0;
-    mockDatabase.prepare = mock.fn(() => {
-      prepareCallCount++;
-      if (prepareCallCount === 1) return { all: tableCountAll };
-      return { all: versionAll };
-    });
-    mock.method(
-      fs,
-      'access',
-      mock.fn(async () => undefined)
-    );
-    mock.method(
-      fs,
-      'stat',
-      mock.fn(async () => {
+    it('Database is reachable but file stat throws', async () => {
+      database.prepare.mock.mockImplementation(statements([{ table_count: 5 }], [{ version: '3.39.5' }]));
+      stat.mock.mockImplementation(async () => {
         throw new Error('stat error');
-      })
-    );
+      });
 
-    const testResult = await south.testConnection();
+      const testResult = await south.testConnection();
 
-    assert.deepStrictEqual(testResult, {
-      items: [
-        { key: 'SQLite Version', value: '3.39.5' },
-        { key: 'Tables', value: '5' }
-      ]
+      assert.deepStrictEqual(testResult, {
+        items: [
+          { key: 'SQLite Version', value: '3.39.5' },
+          { key: 'Tables', value: '5' }
+        ]
+      });
     });
-  });
 
-  it('Database file does not exist', async () => {
-    const errorMessage = 'File does not exist';
-    mock.method(
-      fs,
-      'access',
-      mock.fn(() => {
+    it('Database file does not exist', async () => {
+      const errorMessage = 'File does not exist';
+      access.mock.mockImplementation(async () => {
         throw new Error(errorMessage);
-      })
-    );
+      });
 
-    await assert.rejects(south.testConnection(), { message: `Access error on "${dbPath}". ${errorMessage}` });
-  });
-
-  it('Database connection error', async () => {
-    const errorMessage = `Can't query database`;
-    mock.method(
-      fs,
-      'access',
-      mock.fn(async () => undefined)
-    );
-    mockDatabase.prepare = mock.fn(() => {
-      throw new Error(errorMessage);
+      await assert.rejects(south.testConnection(), { message: `Access error on "${dbPath}". ${errorMessage}` });
     });
 
-    await assert.rejects(south.testConnection(), { message: `Unable to query system table. ${errorMessage}` });
-  });
+    it('Database connection error', async () => {
+      const errorMessage = `Can't query database`;
+      database.prepare.mock.mockImplementation(() => {
+        throw new Error(errorMessage);
+      });
 
-  it('Database has no tables', async () => {
-    mock.method(
-      fs,
-      'access',
-      mock.fn(async () => undefined)
-    );
-    mockDatabase.all = mock.fn(() => [{ table_count: 0 }]);
-    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
-
-    await assert.rejects(south.testConnection(), { message: `Database "${dbPath}" has no tables` });
-  });
-
-  it('Database does not return count of tables', async () => {
-    mock.method(
-      fs,
-      'access',
-      mock.fn(async () => undefined)
-    );
-    mockDatabase.all = mock.fn(() => []);
-    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
-
-    await assert.rejects(south.testConnection(), { message: `Database "${dbPath}" has no tables` });
-  });
-});
-
-describe('SouthSQLite explore', () => {
-  let south: SouthSQLiteClass;
-  const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', connectorSettings, itemSettings);
-
-  before(() => {
-    // SouthSQLite is already loaded by the first describe block's before(); module is shared.
-  });
-
-  beforeEach(() => {
-    mockDatabase.close = mock.fn();
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-  });
-
-  afterEach(() => {
-    mock.restoreAll();
-  });
-
-  it('should list every table at the root, with its column and row counts', async () => {
-    let prepareCallCount = 0;
-    mockDatabase.prepare = mock.fn(() => {
-      prepareCallCount++;
-      switch (prepareCallCount) {
-        case 1: // list tables
-          return { all: mock.fn(() => [{ name: 'sensors' }, { name: 'events' }]) };
-        case 2: // PRAGMA table_info("sensors")
-          return { all: mock.fn(() => [{ name: 'id' }, { name: 'value' }, { name: 'timestamp' }]) };
-        case 3: // SELECT COUNT(*) FROM "sensors"
-          return { all: mock.fn(() => [{ count: 128 }]) };
-        case 4: // PRAGMA table_info("events")
-          return { all: mock.fn(() => [{ name: 'id' }]) };
-        default: // SELECT COUNT(*) FROM "events"
-          return { all: mock.fn(() => [{ count: 0 }]) };
-      }
+      await assert.rejects(south.testConnection(), { message: `Unable to query system table. ${errorMessage}` });
     });
 
-    const entries = await south.explore(null);
+    it('Database has no tables', async () => {
+      database.prepare.mock.mockImplementation(statements([{ table_count: 0 }]));
 
-    assert.deepStrictEqual(entries, [
-      { id: 'sensors', name: 'sensors', metadata: { columns: 3, rows: 128 }, hasChildren: true },
-      { id: 'events', name: 'events', metadata: { columns: 1, rows: 0 }, hasChildren: true }
-    ]);
-    assert.strictEqual(mockDatabase.close.mock.calls.length, 1);
-  });
-
-  it('should list columns with their type, nullability, primary-key flag and default when expanding a table', async () => {
-    mockDatabase.prepare = mock.fn(() => ({
-      all: mock.fn(() => [
-        { name: 'id', type: 'INTEGER', notnull: 1, dflt_value: null, pk: 1 },
-        { name: 'label', type: 'TEXT', notnull: 0, dflt_value: "'unknown'", pk: 0 },
-        { name: 'untyped', type: '', notnull: 0, dflt_value: null, pk: 0 }
-      ])
-    }));
-
-    const entries = await south.explore('sensors');
-
-    assert.deepStrictEqual(entries, [
-      {
-        id: 'sensors.id',
-        name: 'id',
-        metadata: { nullable: 'no', type: 'INTEGER', primaryKey: 'yes' },
-        hasChildren: false
-      },
-      {
-        id: 'sensors.label',
-        name: 'label',
-        metadata: { nullable: 'yes', type: 'TEXT', default: "'unknown'" },
-        hasChildren: false
-      },
-      // SQLite is dynamically typed — a column can have no declared type at all, and this one has
-      // never been given a default, so both are omitted rather than shown as blank/null.
-      { id: 'sensors.untyped', name: 'untyped', metadata: { nullable: 'yes' }, hasChildren: false }
-    ]);
-  });
-
-  it('should still list a table when its row count cannot be read (e.g. a broken table)', async () => {
-    let prepareCallCount = 0;
-    mockDatabase.prepare = mock.fn(() => {
-      prepareCallCount++;
-      if (prepareCallCount === 1) return { all: mock.fn(() => [{ name: 'broken' }]) };
-      if (prepareCallCount === 2) return { all: mock.fn(() => [{ name: 'col' }]) };
-      return {
-        all: mock.fn(() => {
-          throw new Error('database disk image is malformed');
-        })
-      };
+      await assert.rejects(south.testConnection(), { message: `Database "${dbPath}" has no tables` });
     });
 
-    const entries = await south.explore(null);
+    it('Database does not return count of tables', async () => {
+      database.prepare.mock.mockImplementation(statements([]));
 
-    assert.deepStrictEqual(entries, [{ id: 'broken', name: 'broken', metadata: { columns: 1 }, hasChildren: true }]);
+      await assert.rejects(south.testConnection(), { message: `Database "${dbPath}" has no tables` });
+    });
   });
 
-  it('should close the database even when listing columns fails', async () => {
-    mockDatabase.prepare = mock.fn(() => ({
-      all: mock.fn(() => {
-        throw new Error('no such table: missing');
-      })
-    }));
+  describe('explore', () => {
+    it('should list every table at the root, with its column and row counts', async () => {
+      database.prepare.mock.mockImplementation(
+        statements(
+          [{ name: 'sensors' }, { name: 'events' }], // list tables
+          [{ name: 'id' }, { name: 'value' }, { name: 'timestamp' }], // PRAGMA table_info("sensors")
+          [{ count: 128 }], // SELECT COUNT(*) FROM "sensors"
+          [{ name: 'id' }], // PRAGMA table_info("events")
+          [{ count: 0 }] // SELECT COUNT(*) FROM "events"
+        )
+      );
 
-    await assert.rejects(south.explore('missing'), { message: 'no such table: missing' });
-    assert.strictEqual(mockDatabase.close.mock.calls.length, 1);
+      const entries = await south.explore(null);
+
+      assert.deepStrictEqual(entries, [
+        { id: 'sensors', name: 'sensors', metadata: { columns: 3, rows: 128 }, hasChildren: true },
+        { id: 'events', name: 'events', metadata: { columns: 1, rows: 0 }, hasChildren: true }
+      ]);
+      assert.strictEqual(database.close.mock.calls.length, 1);
+    });
+
+    it('should list columns with their type, nullability, primary-key flag and default when expanding a table', async () => {
+      database.prepare.mock.mockImplementation(
+        statements([
+          { name: 'id', type: 'INTEGER', notnull: 1, dflt_value: null, pk: 1 },
+          { name: 'label', type: 'TEXT', notnull: 0, dflt_value: "'unknown'", pk: 0 },
+          { name: 'untyped', type: '', notnull: 0, dflt_value: null, pk: 0 }
+        ])
+      );
+
+      const entries = await south.explore('sensors');
+
+      assert.deepStrictEqual(entries, [
+        {
+          id: 'sensors.id',
+          name: 'id',
+          metadata: { nullable: 'no', type: 'INTEGER', primaryKey: 'yes' },
+          hasChildren: false
+        },
+        {
+          id: 'sensors.label',
+          name: 'label',
+          metadata: { nullable: 'yes', type: 'TEXT', default: "'unknown'" },
+          hasChildren: false
+        },
+        // SQLite is dynamically typed — a column can have no declared type at all, and this one has
+        // never been given a default, so both are omitted rather than shown as blank/null.
+        { id: 'sensors.untyped', name: 'untyped', metadata: { nullable: 'yes' }, hasChildren: false }
+      ]);
+    });
+
+    it('should still list a table when its row count cannot be read (e.g. a broken table)', async () => {
+      database.prepare.mock.mockImplementation(
+        seq(
+          () => ({ all: () => [{ name: 'broken' }] }),
+          () => ({ all: () => [{ name: 'col' }] }),
+          () => ({
+            all: () => {
+              throw new Error('database disk image is malformed');
+            }
+          })
+        )
+      );
+
+      const entries = await south.explore(null);
+
+      assert.deepStrictEqual(entries, [{ id: 'broken', name: 'broken', metadata: { columns: 1 }, hasChildren: true }]);
+    });
+
+    it('should close the database even when listing columns fails', async () => {
+      database.prepare.mock.mockImplementation(() => ({
+        all: () => {
+          throw new Error('no such table: missing');
+        }
+      }));
+
+      await assert.rejects(south.explore('missing'), { message: 'no such table: missing' });
+      assert.strictEqual(database.close.mock.calls.length, 1);
+    });
   });
 });
