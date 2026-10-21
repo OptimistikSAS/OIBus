@@ -1,39 +1,24 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
-import { Readable } from 'stream';
 
-import { applyFilenameVariables, stringToBoolean } from '../../../service/utils';
+import type { CacheMetadataSource } from '../../../model/engine.model';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { assertContains, flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
+import { assertContains, mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import type JSONToCSVTransformerType from './json-to-csv-transformer';
 import jsonToCsvManifest from './manifest';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockPapaparse: Record<string, ReturnType<typeof mock.fn>>;
+const createUnparseMock = () => mock.fn((_data: unknown, _config?: Record<string, unknown>) => 'csv content');
+// Same object for the whole file: the transformer keeps a reference to it, only `unparse` is replaced per test
+const papaparseExports = { unparse: createUnparseMock() };
 let JSONToCSVTransformer: typeof JSONToCSVTransformerType;
 
 before(() => {
-  mockUtils = {
-    convertDateTime: mock.fn((value: unknown) => value),
-    convertDelimiter: mock.fn(() => ';'),
-    injectIndices: mock.fn((path: string, indices: Array<number>) => {
-      let pointer = 0;
-      return path.replace(/\[\*\]/g, () => `[${indices[pointer++]}]`);
-    }),
-    sanitizeFilename: mock.fn((name: string) => name),
-    stringToBoolean: mock.fn(() => true),
-    convertQuoteChar: mock.fn(() => '"'),
-    convertEscapeChar: mock.fn(() => '"'),
-    convertNewline: mock.fn(() => ''),
-    applyFilenameVariables: mock.fn(applyFilenameVariables)
-  };
-  mockPapaparse = { unparse: mock.fn(() => 'csv content') };
-  mockModule(nodeRequire, '../../../service/utils', mockUtils);
-  mockModule(nodeRequire, 'papaparse', mockPapaparse);
+  mockModule(nodeRequire, 'papaparse', papaparseExports);
   const mod = reloadModule<{ default: typeof JSONToCSVTransformerType }>(nodeRequire, './json-to-csv-transformer');
   JSONToCSVTransformer = mod.default;
 });
@@ -41,21 +26,22 @@ before(() => {
 describe('JSONToCSVTransformer', () => {
   let logger: PinoLogger;
 
+  const baseOptions = { regex: '.*\\.json', filename: 'output.csv', delimiter: 'SEMI_COLON', rowIteratorPath: '$[*]' };
+  const nameField = { jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' };
+
+  const transformJson = (options: object, inputData: unknown, source: CacheMetadataSource = { source: 'test' }) =>
+    new JSONToCSVTransformer(logger, testData.transformers.list[0], options).transform(
+      Readable.from(JSON.stringify(inputData)),
+      source,
+      'input.json'
+    );
+  /** The rows given to csv.unparse, and its options */
+  const unparsedRows = () => papaparseExports.unparse.mock.calls[0].arguments[0];
+  const unparseOptions = () => papaparseExports.unparse.mock.calls[0].arguments[1]!;
+
   beforeEach(() => {
     logger = new PinoLogger();
-    mockUtils.convertDateTime = mock.fn((value: unknown) => value);
-    mockUtils.convertDelimiter = mock.fn(() => ';');
-    mockUtils.injectIndices = mock.fn((path: string, indices: Array<number>) => {
-      let pointer = 0;
-      return path.replace(/\[\*\]/g, () => `[${indices[pointer++]}]`);
-    });
-    mockUtils.sanitizeFilename = mock.fn((name: string) => name);
-    mockUtils.stringToBoolean = mock.fn(() => true);
-    mockUtils.convertQuoteChar = mock.fn(() => '"');
-    mockUtils.convertEscapeChar = mock.fn(() => '"');
-    mockUtils.convertNewline = mock.fn(() => '');
-    mockUtils.applyFilenameVariables = mock.fn(applyFilenameVariables);
-    mockPapaparse.unparse = mock.fn(() => 'csv content');
+    papaparseExports.unparse = createUnparseMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -65,36 +51,21 @@ describe('JSONToCSVTransformer', () => {
 
   it('should transform data from a stream and return metadata when regex matches', async () => {
     const options = {
-      regex: '.*\\.json',
+      ...baseOptions,
       filename: 'test-output.csv',
-      delimiter: 'SEMI_COLON',
-      rowIteratorPath: '$[*]',
-      fields: [
-        { jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' },
-        { jsonPath: '$[*].id', columnName: 'ID', dataType: 'number' }
-      ]
+      fields: [nameField, { jsonPath: '$[*].id', columnName: 'ID', dataType: 'number' }]
     };
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const inputData = [
+
+    const result = await transformJson(options, [
       { name: 'Item 1', id: 1 },
       { name: 'Item 2', id: 2 }
-    ];
-    const mockStream = new Readable();
+    ]);
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
-
-    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
-    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [
+    assert.deepStrictEqual(unparsedRows(), [
       { Name: 'Item 1', ID: 1 },
       { Name: 'Item 2', ID: 2 }
     ]);
-    assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
-
+    assertContains(unparseOptions(), { delimiter: ';' });
     assert.deepStrictEqual(result, {
       output: Buffer.from('csv content'),
       metadata: {
@@ -108,50 +79,30 @@ describe('JSONToCSVTransformer', () => {
   });
 
   it('should replace @QueryStartTime and @QueryEndTime with the south history query window', async () => {
-    const options = {
-      regex: '.*\\.json',
-      filename: '@QueryStartTime_@QueryEndTime.csv',
-      delimiter: 'SEMI_COLON',
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-    };
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
+    const options = { ...baseOptions, filename: '@QueryStartTime_@QueryEndTime.csv', fields: [nameField] };
 
-    const promise = transformer.transform(
-      mockStream,
-      {
-        source: 'south',
-        southId: 'south1',
-        southName: 'South 1',
-        queryTime: '2023-01-01T00:00:00.000Z',
-        queryStartTime: '2023-01-01T00:00:00.000Z',
-        queryEndTime: '2023-01-01T01:00:00.000Z',
-        items: []
-      },
-      'input.json'
-    );
-    mockStream.push(JSON.stringify([]));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
+    const result = await transformJson(options, [], {
+      source: 'south',
+      southId: 'south1',
+      southName: 'South 1',
+      queryTime: '2023-01-01T00:00:00.000Z',
+      queryStartTime: '2023-01-01T00:00:00.000Z',
+      queryEndTime: '2023-01-01T01:00:00.000Z',
+      items: []
+    });
 
     assert.strictEqual(result.metadata.contentFile, '2023_01_01_00_00_00_000_2023_01_01_01_00_00_000.csv');
   });
 
   it('should handle complex data types (datetime, boolean, object, array) and missing values', async () => {
     const options = {
-      regex: '.*\\.json',
-      filename: 'complex-test',
-      delimiter: 'SEMI_COLON',
-      rowIteratorPath: '$[*]',
+      ...baseOptions,
       fields: [
         {
           jsonPath: '$[*].createdAt',
           columnName: 'Created At',
           dataType: 'datetime',
-          datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
+          datetimeSettings: { inputType: 'iso-string', inputTimezone: 'UTC', outputType: 'iso-string', outputTimezone: 'UTC' }
         },
         { jsonPath: '$[*].isActive', columnName: 'Active', dataType: 'boolean' },
         { jsonPath: '$[*].details', columnName: 'Details', dataType: 'object' },
@@ -159,64 +110,29 @@ describe('JSONToCSVTransformer', () => {
         { jsonPath: '$[*].ghostField', columnName: 'Ghost', dataType: 'string' }
       ]
     };
-    const inputData = [
+
+    await transformJson(options, [
+      { createdAt: '2023-10-27T10:00:00Z', isActive: 'true', details: { user: 'admin', rights: [1, 2] }, tags: ['urgent', 'work'] }
+    ]);
+
+    assert.deepStrictEqual(unparsedRows(), [
       {
-        createdAt: '2023-10-27T10:00:00Z',
-        isActive: 'yes',
-        details: { user: 'admin', rights: [1, 2] },
-        tags: ['urgent', 'work']
-      }
-    ];
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    mockPapaparse.unparse = mock.fn(() => 'csv result');
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
-
-    await flushPromises();
-    await promise;
-
-    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
-    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [
-      {
-        'Created At': '2023-10-27T10:00:00Z',
+        'Created At': '2023-10-27T10:00:00.000Z',
         Active: 'true',
         Details: '{"user":"admin","rights":[1,2]}',
         Tags: '["urgent","work"]',
         Ghost: ''
       }
     ]);
-    assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
+    assertContains(unparseOptions(), { delimiter: ';' });
   });
 
   it('should convert JSON booleans, numbers and strings of a boolean field', async () => {
-    mockUtils.stringToBoolean = mock.fn(stringToBoolean);
-    const options = {
-      regex: '.*\\.json',
-      filename: 'boolean-test.csv',
-      delimiter: 'SEMI_COLON',
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].isActive', columnName: 'Active', dataType: 'boolean' }]
-    };
-    const inputData = [{ isActive: true }, { isActive: false }, { isActive: 1 }, { isActive: 'true' }];
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
+    const options = { ...baseOptions, fields: [{ jsonPath: '$[*].isActive', columnName: 'Active', dataType: 'boolean' }] };
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
+    await transformJson(options, [{ isActive: true }, { isActive: false }, { isActive: 1 }, { isActive: 'true' }]);
 
-    await flushPromises();
-    await promise;
-
-    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [
-      { Active: 'true' },
-      { Active: 'false' },
-      { Active: 'true' },
-      { Active: 'true' }
-    ]);
+    assert.deepStrictEqual(unparsedRows(), [{ Active: 'true' }, { Active: 'false' }, { Active: 'true' }, { Active: 'true' }]);
   });
 
   it('should return correct manifest settings', () => {
@@ -225,41 +141,25 @@ describe('JSONToCSVTransformer', () => {
   });
 
   it('should resolve nested JSON-stringified field via recursive path traversal', async () => {
-    const options = {
-      regex: '.*\\.json',
-      filename: 'nested-test.csv',
-      delimiter: 'SEMI_COLON',
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].metadata.nestedField', columnName: 'Nested', dataType: 'string' }]
-    };
-    const inputData = [{ metadata: JSON.stringify({ nestedField: 'value' }) }];
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
+    const options = { ...baseOptions, fields: [{ jsonPath: '$[*].metadata.nestedField', columnName: 'Nested', dataType: 'string' }] };
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
+    await transformJson(options, [{ metadata: JSON.stringify({ nestedField: 'value' }) }]);
 
-    await flushPromises();
-    await promise;
-
-    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
-    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [{ Nested: 'value' }]);
+    assert.deepStrictEqual(unparsedRows(), [{ Nested: 'value' }]);
   });
 
   it('should split multiple metrics embedded in a single JSON-stringified MQTT message into separate CSV rows', async () => {
     const options = {
-      regex: '.*\\.json',
-      filename: 'mqtt-test.csv',
-      delimiter: 'SEMI_COLON',
+      ...baseOptions,
       rowIteratorPath: '$[*].message.metrics[*]',
       fields: [
         { jsonPath: '$[*].message.metrics[*].name', columnName: 'Name', dataType: 'string' },
         { jsonPath: '$[*].message.metrics[*].value', columnName: 'Value', dataType: 'number' }
       ]
     };
+
     // A single MQTT message can carry several metrics in its (JSON-stringified) payload.
-    const inputData = [
+    await transformJson(options, [
       {
         message: JSON.stringify({
           metrics: [
@@ -269,19 +169,9 @@ describe('JSONToCSVTransformer', () => {
         })
       },
       { message: JSON.stringify({ metrics: [{ name: 'TAG.C', value: 3.3 }] }) }
-    ];
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
+    ]);
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
-
-    await flushPromises();
-    await promise;
-
-    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
-    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [
+    assert.deepStrictEqual(unparsedRows(), [
       { Name: 'TAG.A', Value: 1.1 },
       { Name: 'TAG.B', Value: 2.2 },
       { Name: 'TAG.C', Value: 3.3 }
@@ -289,221 +179,108 @@ describe('JSONToCSVTransformer', () => {
   });
 
   it('should resolve a numeric field named "length" inside a JSON-stringified message instead of the string length', async () => {
-    const options = {
-      regex: '.*\\.json',
-      filename: 'length-test.csv',
-      delimiter: 'SEMI_COLON',
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].message.length', columnName: 'Length', dataType: 'number' }]
-    };
+    const options = { ...baseOptions, fields: [{ jsonPath: '$[*].message.length', columnName: 'Length', dataType: 'number' }] };
+
     // "message" is a JSON-stringified payload (e.g. MQTT) that itself has a "length" field.
     // Native JSONPath traversal would otherwise resolve "message.length" to the *string's*
     // character count before it gets parsed.
-    const inputData = [{ message: JSON.stringify({ length: 0.04146180441257728 }) }];
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
+    await transformJson(options, [{ message: JSON.stringify({ length: 0.04146180441257728 }) }]);
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
-
-    await flushPromises();
-    await promise;
-
-    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
-    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [{ Length: 0.04146180441257728 }]);
+    assert.deepStrictEqual(unparsedRows(), [{ Length: 0.04146180441257728 }]);
   });
 
   it('should serialize an object resolved from a JSON-stringified message as JSON, not "[object Object]"', async () => {
     const options = {
-      regex: '.*\\.json',
-      filename: 'reject-causes-test.csv',
-      delimiter: 'SEMI_COLON',
-      rowIteratorPath: '$[*]',
+      ...baseOptions,
       fields: [{ jsonPath: '$[*].message.rejectCauses', columnName: 'RejectCauses', dataType: 'string' }]
     };
-    const inputData = [{ message: JSON.stringify({ rejectCauses: {} }) }];
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
+    await transformJson(options, [{ message: JSON.stringify({ rejectCauses: {} }) }]);
 
-    await flushPromises();
-    await promise;
-
-    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
-    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [{ RejectCauses: '{}' }]);
+    assert.deepStrictEqual(unparsedRows(), [{ RejectCauses: '{}' }]);
   });
 
   describe('encoding', () => {
-    it('should prepend a UTF-8 BOM when encoding is UTF_8_BOM', async () => {
-      mockPapaparse.unparse = mock.fn(() => 'csv content');
-      const options = {
-        filename: 'output.csv',
+    const encodingCases = [
+      {
+        title: 'should prepend a UTF-8 BOM when encoding is UTF_8_BOM',
         encoding: 'UTF_8_BOM',
-        rowIteratorPath: '$[*]',
-        fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-      };
-      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-      mockStream.push(JSON.stringify([{ name: 'a' }]));
-      mockStream.push(null);
-      await flushPromises();
-      const result = await promise;
-
-      assert.deepStrictEqual(result.output, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('csv content')]));
-    });
-
-    it('should encode output as latin1 when encoding is LATIN_1', async () => {
-      mockPapaparse.unparse = mock.fn(() => 'csv content');
-      const options = {
-        filename: 'output.csv',
+        expected: Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('csv content')])
+      },
+      {
+        title: 'should encode output as latin1 when encoding is LATIN_1',
         encoding: 'LATIN_1',
-        rowIteratorPath: '$[*]',
-        fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-      };
-      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-      mockStream.push(JSON.stringify([{ name: 'a' }]));
-      mockStream.push(null);
-      await flushPromises();
-      const result = await promise;
-
-      assert.deepStrictEqual(result.output, Buffer.from('csv content', 'latin1'));
-    });
-
-    it('should prepend a UTF-16LE BOM and encode as utf16le when encoding is UTF_16_LE', async () => {
-      mockPapaparse.unparse = mock.fn(() => 'csv content');
-      const options = {
-        filename: 'output.csv',
+        expected: Buffer.from('csv content', 'latin1')
+      },
+      {
+        title: 'should prepend a UTF-16LE BOM and encode as utf16le when encoding is UTF_16_LE',
         encoding: 'UTF_16_LE',
-        rowIteratorPath: '$[*]',
-        fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-      };
-      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-      mockStream.push(JSON.stringify([{ name: 'a' }]));
-      mockStream.push(null);
-      await flushPromises();
-      const result = await promise;
+        expected: Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('csv content', 'utf16le')])
+      }
+    ];
+    for (const { title, encoding, expected } of encodingCases) {
+      it(title, async () => {
+        const result = await transformJson({ ...baseOptions, encoding, fields: [nameField] }, [{ name: 'a' }]);
 
-      assert.deepStrictEqual(result.output, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('csv content', 'utf16le')]));
-    });
+        assert.deepStrictEqual(result.output, expected);
+      });
+    }
   });
 
-  it('should fall back to a double quote char when convertQuoteChar resolves to an empty string', async () => {
-    mockUtils.convertQuoteChar = mock.fn(() => '');
-    const options = {
-      filename: 'output.csv',
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-    };
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify([{ name: 'a' }]));
-    mockStream.push(null);
-    await flushPromises();
-    await promise;
+  it('should fall back to a double quote char when the quote char resolves to an empty string', async () => {
+    await transformJson({ ...baseOptions, quoteChar: 'NONE', fields: [nameField] }, [{ name: 'a' }]);
 
-    assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { quoteChar: '"', quotes: false });
+    assertContains(unparseOptions(), { quoteChar: '"', quotes: false });
   });
 
   describe('fieldProcess', () => {
-    it('should apply fieldProcess expression to the typed value before writing to CSV', async () => {
-      mockPapaparse.unparse = mock.fn(() => 'csv result');
+    const fieldProcessOptions = {
+      ...baseOptions,
+      encoding: 'UTF_8',
+      quoteChar: 'NONE',
+      escapeChar: 'DOUBLE_QUOTE',
+      newline: 'DEFAULT',
+      nullValue: '',
+      header: true
+    };
 
+    it('should apply fieldProcess expression to the typed value before writing to CSV', async () => {
       const options = {
-        filename: 'output.csv',
-        delimiter: 'SEMI_COLON',
-        encoding: 'UTF_8',
-        quoteChar: 'NONE',
-        escapeChar: 'DOUBLE_QUOTE',
-        newline: 'DEFAULT',
-        nullValue: '',
-        header: true,
-        rowIteratorPath: '$[*]',
+        ...fieldProcessOptions,
         fields: [
-          { jsonPath: '$[*].name', columnName: 'Name', dataType: 'string', fieldProcess: 'value.toUpperCase()' },
+          { ...nameField, fieldProcess: 'value.toUpperCase()' },
           { jsonPath: '$[*].score', columnName: 'Score', dataType: 'number', fieldProcess: 'Math.round(value * 100) / 100' },
           { jsonPath: '$[*].tag', columnName: 'Tag', dataType: 'string', fieldProcess: null }
         ]
       };
 
-      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-      mockStream.push(JSON.stringify([{ name: 'hello', score: 3.14159, tag: 'keep-me' }]));
-      mockStream.push(null);
-      await flushPromises();
-      await promise;
+      await transformJson(options, [{ name: 'hello', score: 3.14159, tag: 'keep-me' }]);
 
-      assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-      const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, unknown>>, unknown])[0];
-      assert.deepStrictEqual(callData, [{ Name: 'HELLO', Score: 3.14, Tag: 'keep-me' }]);
-      assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
+      assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+      assert.deepStrictEqual(unparsedRows(), [{ Name: 'HELLO', Score: 3.14, Tag: 'keep-me' }]);
+      assertContains(unparseOptions(), { delimiter: ';' });
     });
 
     it('should skip fieldProcess when it is null or empty', async () => {
-      mockPapaparse.unparse = mock.fn(() => 'csv result');
-
       const options = {
-        filename: 'output.csv',
-        delimiter: 'SEMI_COLON',
-        encoding: 'UTF_8',
-        quoteChar: 'NONE',
-        escapeChar: 'DOUBLE_QUOTE',
-        newline: 'DEFAULT',
-        nullValue: '',
-        header: true,
-        rowIteratorPath: '$[*]',
+        ...fieldProcessOptions,
         fields: [
-          { jsonPath: '$[*].name', columnName: 'Name', dataType: 'string', fieldProcess: '' },
+          { ...nameField, fieldProcess: '' },
           { jsonPath: '$[*].id', columnName: 'ID', dataType: 'number', fieldProcess: '   ' }
         ]
       };
 
-      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-      mockStream.push(JSON.stringify([{ name: 'original', id: 42 }]));
-      mockStream.push(null);
-      await flushPromises();
-      await promise;
+      await transformJson(options, [{ name: 'original', id: 42 }]);
 
-      assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-      const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, unknown>>, unknown])[0];
-      assert.deepStrictEqual(callData, [{ Name: 'original', ID: 42 }]);
-      assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
+      assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+      assert.deepStrictEqual(unparsedRows(), [{ Name: 'original', ID: 42 }]);
+      assertContains(unparseOptions(), { delimiter: ';' });
     });
 
     it('should throw a descriptive error when fieldProcess expression is invalid', async () => {
-      const options = {
-        filename: 'output.csv',
-        delimiter: 'SEMI_COLON',
-        encoding: 'UTF_8',
-        quoteChar: 'NONE',
-        escapeChar: 'DOUBLE_QUOTE',
-        newline: 'DEFAULT',
-        nullValue: '',
-        header: true,
-        rowIteratorPath: '$[*]',
-        fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string', fieldProcess: 'value.nonExistentMethod()' }]
-      };
+      const options = { ...fieldProcessOptions, fields: [{ ...nameField, fieldProcess: 'value.nonExistentMethod()' }] };
 
-      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-      const rejectPromise = assert.rejects(promise, /Field process evaluation failed/);
-      mockStream.push(JSON.stringify([{ name: 'hello' }]));
-      mockStream.push(null);
-      await flushPromises();
-      await rejectPromise;
+      await assert.rejects(transformJson(options, [{ name: 'hello' }]), /Field process evaluation failed/);
     });
 
     it('should expose fieldProcess attribute in the manifest', () => {

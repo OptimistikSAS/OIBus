@@ -1,25 +1,24 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
+import { before, beforeEach, describe, it } from 'node:test';
 
 import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
 
-import { streamToString } from '../../../service/utils';
+import type * as Utils from '../../../service/utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import timeValuesToOianalyticsManifest from './manifest';
 import type OIBusTimeValuesToOIAnalyticsTransformerType from './oibus-time-values-to-oianalytics-transformer';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let OIBusTimeValuesToOIAnalyticsTransformer: typeof OIBusTimeValuesToOIAnalyticsTransformerType;
 
 before(() => {
-  mockUtils = { generateRandomId: mock.fn(() => 'randomId'), streamToString: mock.fn(streamToString) };
-  mockModule(nodeRequire, '../../../service/utils', mockUtils);
+  const utils = nodeRequire('../../../service/utils') as typeof Utils;
+  mockModule(nodeRequire, '../../../service/utils', { ...utils, generateRandomId: () => 'randomId' });
   const mod = reloadModule<{ default: typeof OIBusTimeValuesToOIAnalyticsTransformerType }>(
     nodeRequire,
     './oibus-time-values-to-oianalytics-transformer'
@@ -29,33 +28,21 @@ before(() => {
 
 describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
   let logger: PinoLogger;
+  const createTransformer = (options: object = { precision: 'ms' }) =>
+    new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
 
   beforeEach(() => {
     logger = new PinoLogger();
-    mockUtils.generateRandomId = mock.fn(() => 'randomId');
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
-  });
-
-  afterEach(() => {
-    mock.timers.reset();
   });
 
   it('should transform data from a stream and return metadata', async () => {
-    const options = { precision: 'ms' };
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
+    const transformer = createTransformer();
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } },
       { pointId: 'reference2', timestamp: testData.constants.dates.DATE_2, data: { value: '2', quality: 'good' } },
       { pointId: 'reference3', timestamp: testData.constants.dates.DATE_3, data: { value: 'value1' } }
     ];
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify(dataChunks));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
+    const result = await transformer.transform(Readable.from(JSON.stringify(dataChunks)), { source: 'test' }, null);
 
     assert.deepStrictEqual(result, {
       output: Buffer.from(
@@ -76,8 +63,7 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
   });
 
   it('should transform an in-memory Array<OIBusTimeValue> directly without a stream round-trip', async () => {
-    const options = { precision: 'ms' };
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
+    const transformer = createTransformer();
 
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'p1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } },
@@ -103,8 +89,7 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
   });
 
   it('should tolerate a serialised JSON string passed directly to transformInMemory', async () => {
-    const options = { precision: 'ms' };
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
+    const transformer = createTransformer();
 
     const dataChunks: Array<OIBusTimeValue> = [{ pointId: 'p1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } }];
 
@@ -118,7 +103,7 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
   });
 
   it('should truncate timestamps according to the precision in the compact output', async () => {
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], { precision: 'min' });
+    const transformer = createTransformer({ precision: 'min' });
 
     const result = await transformer.transformInMemory(
       [
@@ -137,7 +122,7 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
   });
 
   it('should apply the reference process to the references', async () => {
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+    const transformer = createTransformer({
       precision: 'ms',
       referenceProcess: "value.replace('plant/', '').toUpperCase()"
     });
@@ -156,7 +141,7 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
   });
 
   it('should throw when the reference process fails', async () => {
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+    const transformer = createTransformer({
       precision: 'ms',
       referenceProcess: 'value.boom()'
     });
@@ -173,8 +158,7 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
   });
 
   it('should properly format instant with precision', () => {
-    const options = { precision: 'ms' };
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
+    const transformer = createTransformer();
 
     assert.strictEqual(transformer.formatInstant('2020-03-15T12:34:56.789Z', 'ms'), '2020-03-15T12:34:56.789Z');
     assert.strictEqual(transformer.formatInstant('2020-03-15T12:34:56.789Z', 's'), '2020-03-15T12:34:56.000Z');
