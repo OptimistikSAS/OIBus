@@ -99,8 +99,11 @@ import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/im
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 
-/** The steps of the history query page, in order: the north step comes after the items, which its transformers pick from */
-export const HISTORY_QUERY_STEPS = ['general', 'south', 'items', 'transformers', 'north', 'review'] as const;
+/**
+ * The steps of the history query page, in order: the north step comes after the items, which its transformers pick from, and the
+ * general settings last, once the connectors are set up and tested
+ */
+export const HISTORY_QUERY_STEPS = ['south', 'items', 'transformers', 'north', 'general', 'review'] as const;
 /** A new history query starts with the connectors it is created from */
 export type HistoryQueryStep = (typeof HISTORY_QUERY_STEPS)[number] | 'connectors';
 
@@ -249,7 +252,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   /** The connectors the form was built with, to rebuild it only when other ones are chosen */
   private appliedChoice: ConnectorChoice | null = null;
   /** The step to open once the chosen connectors are loaded */
-  private stepAfterConnectors: HistoryQueryStep = 'general';
+  private stepAfterConnectors: HistoryQueryStep = HISTORY_QUERY_STEPS[0];
   /** A new history query is saved from the last step, an edited one from any step */
   readonly canSave = computed(() => this.mode() === 'edit' || this.steps.isLast());
 
@@ -475,7 +478,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   /** Opens the next step: the first one, the connectors, loads the chosen connectors before */
   nextStep() {
     if (this.steps.current() === 'connectors') {
-      this.applyConnectors('general');
+      this.applyConnectors(HISTORY_QUERY_STEPS[0]);
     } else {
       this.steps.next();
     }

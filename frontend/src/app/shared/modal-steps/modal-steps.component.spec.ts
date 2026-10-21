@@ -30,7 +30,7 @@ class ModalStepsComponentTester {
   readonly fixture = TestBed.createComponent(TestModalStepsWrapper);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly nav = this.root.getByRole('navigation', { name: 'Item steps' });
-  readonly general = this.root.getByRole('button', { name: '1 General' });
+  readonly general = this.root.getByRole('button', { name: '1 Name & schedule' });
   readonly settings = this.root.getByRole('button', { name: '2 Settings' });
   readonly invalidSettings = this.root.getByRole('button', { name: 'Settings (has errors)' });
 }

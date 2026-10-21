@@ -4,8 +4,8 @@ import { AbstractControl } from '@angular/forms';
 import { compareSettings, countChanges, SettingSummary } from '../../shared/form/oibus-settings-summary/settings-summary';
 import { WizardSteps } from '../../shared/modal-steps/wizard-steps';
 
-/** The steps of the south and history item modals, in order. */
-export const ITEM_MODAL_STEPS = ['general', 'settings', 'review'] as const;
+/** The steps of the south and history item modals, in order: the settings come first, to be tested right away */
+export const ITEM_MODAL_STEPS = ['settings', 'general', 'review'] as const;
 export type ItemModalStep = (typeof ITEM_MODAL_STEPS)[number];
 
 /** An item as summed up in the Review step: its general settings, and the settings of its connector type */

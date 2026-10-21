@@ -2901,7 +2901,7 @@
       "copy-title": "Add a new item to the south connector",
       "steps": "Item steps",
       "step": {
-        "general": "General",
+        "general": "Name & schedule",
         "settings": "Settings",
         "review": "Review & save"
       },
@@ -3592,7 +3592,12 @@
         "delete": "Delete item",
         "audit": "View item audit history"
       },
-      "search-placeholder": "Enter text to filter items"
+      "search-placeholder": "Enter text to filter items",
+      "step": {
+        "settings": "Settings",
+        "general": "Name",
+        "review": "Review & save"
+      }
     },
     "monitoring": {
       "north": {

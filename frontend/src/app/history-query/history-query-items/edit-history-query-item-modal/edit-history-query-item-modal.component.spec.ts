@@ -64,12 +64,14 @@ describe('EditHistoryQueryItemModalComponent', () => {
       const modal = createModal();
       modal.prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
       await expect.element(page.getByRole('heading', { name: 'Add a new item to the south connector' })).toBeInTheDocument();
+      // the settings come first, to be tested right away
+      await expect.element(step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(saveButton).not.toBeInTheDocument();
 
+      await nextButton.click();
+      await expect.element(step('general')).toHaveAttribute('aria-current', 'step');
       await nameInput.fill('new item');
       await enabledInput.click();
-      await expect.element(saveButton).not.toBeInTheDocument();
-      await nextButton.click();
-      await expect.element(step('settings')).toHaveAttribute('aria-current', 'step');
       await nextButton.click();
       const summaryValues = page.getByCss('#item-summary').getByRole('definition');
       await expect.element(summaryValues.nth(0)).toHaveTextContent('new item');
@@ -83,16 +85,18 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
     test('should open the next step when pressing Enter in the name of a new item', async () => {
       createModal().prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+      await step('general').click();
 
       await nameInput.fill('new item');
       await userEvent.keyboard('{Enter}');
 
-      await expect.element(step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(step('review')).toHaveAttribute('aria-current', 'step');
       expect(activeModal.close).not.toHaveBeenCalled();
     });
 
     test('should not open the next step without a name', async () => {
       createModal().prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+      await step('general').click();
 
       await nextButton.click();
 
@@ -101,7 +105,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       await expect.element(page.getByText('This field is required')).toBeInTheDocument();
     });
 
-    test('should go back to the General step to show a missing name on save', async () => {
+    test('should go back to the Name step to show a missing name on save', async () => {
       createModal().prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
       await step('review').click();
       await expect.element(backButton).toBeInTheDocument();
@@ -120,6 +124,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     test('should close with the edited item, keeping its id', async () => {
       createModal().prepareForEdition(itemList, savedItem, historyId, null, testData.south.command, testData.south.manifest, 0);
       await expect.element(nameInput).toHaveValue(savedItem.name);
+      await step('general').click();
 
       await nameInput.fill('renamed');
       // an edited item is saved from any step
@@ -155,6 +160,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       modal.prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
       expect(modal.canDismiss()).toBe(true);
 
+      await step('general').click();
       await nameInput.fill('new item');
 
       await expect(firstValueFrom(modal.canDismiss() as Observable<boolean>)).resolves.toBe(false);
@@ -187,6 +193,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       test('should save the new item and ask for another one', async () => {
         const modal = createModal();
         modal.prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+        await step('general').click();
         await nameInput.fill('new item');
         await step('review').click();
 
@@ -216,6 +223,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
         const modal = createModal();
         modal.directSave.set(false);
         modal.prepareForCreation(itemList, historyId, null, testData.south.command, testData.south.manifest);
+        await step('general').click();
         await nameInput.fill('new item');
         await step('review').click();
 
@@ -236,7 +244,8 @@ describe('EditHistoryQueryItemModalComponent', () => {
           previousItem
         );
 
-        await expect.element(step('general')).toHaveAttribute('aria-current', 'step');
+        await expect.element(step('settings')).toHaveAttribute('aria-current', 'step');
+        await step('general').click();
         await expect.element(nameInput).toHaveValue('');
         await expect.element(enabledInput).not.toBeChecked();
         // nothing typed yet: no confirmation before dismissing
@@ -267,6 +276,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     const mustBeUnique = page.getByText('Must be unique');
 
     const typeName = async (name: string) => {
+      await page.getByCss('#modal-step-general').click();
       await nameInput.fill(name);
       await userEvent.tab();
     };

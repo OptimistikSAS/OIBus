@@ -37,77 +37,7 @@
             [hidden]="steps.current() === 'connectors'"
           >
             <div class="oib-steps-panel">
-              <!-- 1. General settings -->
-              <section [hidden]="steps.current() !== 'general'">
-                <div class="oib-section-title">
-                  <h5 translate="south.general-settings"></h5>
-                  <oib-help [url]="generalSettingsHelpUrl" />
-                </div>
-                <div class="row">
-                  <!-- Name -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="history-query-name" translate="history-query.name"></label>
-                      <input formControlName="name" id="history-query-name" class="form-control" />
-                      <val-errors controlName="name" />
-                    </div>
-                  </div>
-                  <!-- Description -->
-                  <div class="col-5">
-                    <div class="form-group">
-                      <label class="form-label" for="history-query-description" translate="history-query.description"></label>
-                      <input formControlName="description" id="history-query-description" class="form-control" />
-                    </div>
-                  </div>
-                </div>
-
-                <div formGroupName="queryTimeRange">
-                  <!-- Date Range Selector -->
-                  <div class="row">
-                    <div class="col-12">
-                      <div class="form-group">
-                        <oib-date-range-selector
-                          formControlName="dateRange"
-                          [startLabel]="'history-query.query-time-range.start'"
-                          [endLabel]="'history-query.query-time-range.end'"
-                          [defaultRange]="'last-day'"
-                        />
-                        <val-errors controlName="dateRange" />
-                      </div>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <!-- Max read interval -->
-                    <div class="col-3">
-                      <div class="form-group">
-                        <label
-                          class="form-label"
-                          for="max-read-interval"
-                          translate="history-query.query-time-range.max-read-interval"
-                        ></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="maxReadInterval" id="max-read-interval" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.s"></span>
-                        </div>
-                        <val-errors controlName="maxReadInterval" />
-                      </div>
-                    </div>
-                    <!-- Read delay -->
-                    <div class="col-3">
-                      <div class="form-group">
-                        <label class="form-label" for="read-delay" translate="history-query.query-time-range.read-delay"></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="readDelay" id="read-delay" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.ms"></span>
-                        </div>
-                        <val-errors controlName="readDelay" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <!-- 2. South settings -->
+              <!-- 1. South settings -->
               <section [hidden]="steps.current() !== 'south'">
                 <div class="oib-section-title">
                   <h5
@@ -135,7 +65,7 @@
                 </div>
               </section>
 
-              <!-- 5. North settings, with the caching -->
+              <!-- 4. North settings, with the caching -->
               <section [hidden]="steps.current() !== 'north'">
                 <div class="oib-section-title">
                   <h5
@@ -294,7 +224,7 @@
                   </div>
                 </div>
               </section>
-              <!-- 3. Items -->
+              <!-- 2. Items -->
               <section class="oib-south-items" [hidden]="steps.current() !== 'items'">
                 <div class="oib-section-title">
                   <h5>
@@ -369,7 +299,7 @@
                   </oib-item-table>
                 </div>
               </section>
-              <!-- 4. Transformers, applied to the items -->
+              <!-- 3. Transformers, applied to the items -->
               <section [hidden]="steps.current() !== 'transformers'">
                 <oib-history-query-transformers
                   layout="section"
@@ -384,6 +314,76 @@
                   (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
                 />
               </section>
+              <!-- 5. General settings: last, once the connectors are set up and tested -->
+              <section [hidden]="steps.current() !== 'general'">
+                <div class="oib-section-title">
+                  <h5 translate="south.general-settings"></h5>
+                  <oib-help [url]="generalSettingsHelpUrl" />
+                </div>
+                <div class="row">
+                  <!-- Name -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="history-query-name" translate="history-query.name"></label>
+                      <input formControlName="name" id="history-query-name" class="form-control" />
+                      <val-errors controlName="name" />
+                    </div>
+                  </div>
+                  <!-- Description -->
+                  <div class="col-5">
+                    <div class="form-group">
+                      <label class="form-label" for="history-query-description" translate="history-query.description"></label>
+                      <input formControlName="description" id="history-query-description" class="form-control" />
+                    </div>
+                  </div>
+                </div>
+
+                <div formGroupName="queryTimeRange">
+                  <!-- Date Range Selector -->
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="form-group">
+                        <oib-date-range-selector
+                          formControlName="dateRange"
+                          [startLabel]="'history-query.query-time-range.start'"
+                          [endLabel]="'history-query.query-time-range.end'"
+                          [defaultRange]="'last-day'"
+                        />
+                        <val-errors controlName="dateRange" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <!-- Max read interval -->
+                    <div class="col-3">
+                      <div class="form-group">
+                        <label
+                          class="form-label"
+                          for="max-read-interval"
+                          translate="history-query.query-time-range.max-read-interval"
+                        ></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="maxReadInterval" id="max-read-interval" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.s"></span>
+                        </div>
+                        <val-errors controlName="maxReadInterval" />
+                      </div>
+                    </div>
+                    <!-- Read delay -->
+                    <div class="col-3">
+                      <div class="form-group">
+                        <label class="form-label" for="read-delay" translate="history-query.query-time-range.read-delay"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="readDelay" id="read-delay" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.ms"></span>
+                        </div>
+                        <val-errors controlName="readDelay" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               <!-- 6. Review & save: the history query as it will be saved, what changed since it was saved, and what to fix before -->
               <section [hidden]="steps.current() !== 'review'" id="history-query-review">
                 @let summary = reviewSummary();

@@ -40,7 +40,7 @@ import { SelectGroupModalComponent } from '../south-items/select-group-modal/sel
 import { SouthItemGroups } from '../south-items/south-item-groups';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { WorkflowCreationService } from '../south-workflows/workflow-creation.service';
-import { EditSouthComponent, SouthConnectorStep } from './edit-south.component';
+import { EditSouthComponent, SOUTH_CONNECTOR_STEPS, SouthConnectorStep } from './edit-south.component';
 
 const manifest = testData.south.manifest;
 /** A manifest with discovery: its items can be kept in sync with the data source by items synchronisations */
@@ -243,8 +243,10 @@ describe('EditSouthComponent', () => {
     modalService = TestBed.inject(MockModalService);
     TestBed.createComponent(DefaultValidationErrorsComponent);
     const tester = new EditSouthComponentTester();
-    await expect.element(tester.name).toBeVisible();
-    if (step !== 'general') {
+    // the form is built: the page opens on its first step
+    await expect.element(tester.step(SOUTH_CONNECTOR_STEPS[0])).toHaveAttribute('aria-current', 'step');
+    await expect.element(tester.name).toBeInTheDocument();
+    if (step !== SOUTH_CONNECTOR_STEPS[0]) {
       await tester.goTo(step);
     }
     return tester;
@@ -271,9 +273,16 @@ describe('EditSouthComponent', () => {
 
   describe('steps', () => {
     test('should go through the steps of a new connector, the next one opening once the current one is valid', async () => {
-      const tester = await createTester('create');
+      // the settings come first, to be tested right away
+      const tester = await createTester('create', 'settings');
+      await expect.element(tester.testConnectionButton).toBeVisible();
       await expect.element(tester.saveButton).not.toBeInTheDocument();
 
+      await tester.nextButton.click();
+      await expect.element(tester.addItemButton).toBeVisible();
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      // the name is required
       await tester.nextButton.click();
       await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
@@ -281,12 +290,6 @@ describe('EditSouthComponent', () => {
       await tester.name.fill('My south');
       // Enter in a field opens the next step too
       await userEvent.keyboard('{Enter}');
-      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
-      await expect.element(tester.testConnectionButton).toBeVisible();
-
-      await tester.nextButton.click();
-      await expect.element(tester.addItemButton).toBeVisible();
-      await tester.nextButton.click();
       await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.saveButton).toBeVisible();
       await expect.element(tester.nextButton).not.toBeInTheDocument();

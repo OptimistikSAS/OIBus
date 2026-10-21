@@ -93,13 +93,14 @@ or kept up to date by an [items synchronisation](#items-synchronisation).
 
 ### Creating and Editing an Item {#creating-and-editing-an-item}
 
-The item modal walks through three steps, shown in a steps bar at its top:
+The item modal walks through three steps, shown in a steps bar at its top. The settings come first, so that they can
+be tested before the item is named and scheduled:
 
-| Step              | Content                                                                                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **General**       | Name, group, schedule and **Enabled**, then the **History settings** (history-capable connectors) and the **Caching** settings (IoT-family connectors).          |
-| **Settings**      | The connector's own item settings (see each connector's page), with the [test panel](#testing-an-item) right below them, to try the settings as they are edited. |
-| **Review & save** | A read-only summary of the whole item: general, history and caching settings, then its connector settings.                                                       |
+| Step                | Content                                                                                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Settings**        | The connector's own item settings (see each connector's page), with the [test panel](#testing-an-item) right below them, to try the settings as they are edited. |
+| **Name & schedule** | Name, group, schedule and **Enabled**, then the **History settings** (history-capable connectors) and the **Caching** settings (IoT-family connectors).          |
+| **Review & save**   | A read-only summary of the whole item: general, history and caching settings, then its connector settings.                                                       |
 
 **Next** only moves on once the current step is valid. A new item is saved from the last step; an item being edited
 or copied can be saved from any step. When a save fails on an invalid field, the modal opens the first step that has
@@ -114,20 +115,20 @@ together with the connector, hence the **OK** button instead of **Save**.
 
 ### Item Fields {#item-fields}
 
-| Setting               | Step     | Description                                                                                                                                 | Example Value           |
-| --------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| **Name**              | General  | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`   |
-| **Group**             | General  | The group this item belongs to. Leave on **None** for a standalone item with its own schedule.                                              | `Group A`               |
-| **Schedule**          | General  | Scan mode that determines when OIBus collects data. Only shown when the item has no group (the group's schedule is shown otherwise).        | `Every 1 min`           |
-| **Enabled**           | General  | Whether the item is active.                                                                                                                 | Enabled/Disabled        |
-| **Sync with group**   | General  | _(History-capable connectors, grouped items)_ When enabled, the history settings below are inherited from the group.                        | Enabled/Disabled        |
-| **Max read interval** | General  | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                  |
-| **Read delay**        | General  | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                   |
-| **Start time offset** | General  | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.           | `-60000`                |
-| **End time offset**   | General  | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                           | `0`                     |
-| **Recovery strategy** | General  | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.    | `From oldest to newest` |
-| **Caching strategy**  | General  | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy). | `On change`             |
-| **Specific settings** | Settings | Varies by connector type — see each connector's documentation.                                                                              | —                       |
+| Setting               | Step            | Description                                                                                                                                 | Example Value           |
+| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **Name**              | Name & schedule | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`   |
+| **Group**             | Name & schedule | The group this item belongs to. Leave on **None** for a standalone item with its own schedule.                                              | `Group A`               |
+| **Schedule**          | Name & schedule | Scan mode that determines when OIBus collects data. Only shown when the item has no group (the group's schedule is shown otherwise).        | `Every 1 min`           |
+| **Enabled**           | Name & schedule | Whether the item is active.                                                                                                                 | Enabled/Disabled        |
+| **Sync with group**   | Name & schedule | _(History-capable connectors, grouped items)_ When enabled, the history settings below are inherited from the group.                        | Enabled/Disabled        |
+| **Max read interval** | Name & schedule | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                  |
+| **Read delay**        | Name & schedule | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                   |
+| **Start time offset** | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.           | `-60000`                |
+| **End time offset**   | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                           | `0`                     |
+| **Recovery strategy** | Name & schedule | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.    | `From oldest to newest` |
+| **Caching strategy**  | Name & schedule | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy). | `On change`             |
+| **Specific settings** | Settings        | Varies by connector type — see each connector's documentation.                                                                              | —                       |
 
 > For guidance on sizing **Max read interval**, **Read delay**, **Start time offset**, and **End time offset**
 > — with worked examples for large backlogs and sources that don't commit all items at once — see

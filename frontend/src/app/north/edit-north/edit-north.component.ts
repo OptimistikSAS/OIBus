@@ -54,8 +54,8 @@ import { toSourceCommand } from '../../shared/utils/utils';
 import { compareLists, formatTransformerSource, summarizeCaching, transformerName } from '../north-summary';
 import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
 
-/** The steps of the north connector page, in order. */
-export const NORTH_CONNECTOR_STEPS = ['general', 'settings', 'caching', 'transformers', 'review'] as const;
+/** The steps of the north connector page, in order: the general settings come last, once the connector is set up and tested */
+export const NORTH_CONNECTOR_STEPS = ['settings', 'caching', 'transformers', 'general', 'review'] as const;
 export type NorthConnectorStep = (typeof NORTH_CONNECTOR_STEPS)[number];
 
 /** The connector as summed up in the Review step */
