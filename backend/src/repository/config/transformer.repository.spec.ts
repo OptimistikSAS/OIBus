@@ -11,6 +11,8 @@ import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/ut
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
+import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
+import RecordListToCsvTransformer from '../../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
 import IgnoreTransformer from '../../transformers/ignore-transformer';
 import IsoTransformer from '../../transformers/iso-transformer';
 import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
@@ -38,6 +40,20 @@ const standardTransformers: Array<StandardTransformer> = [
   { id: 'ignore', type: 'standard', functionName: IgnoreTransformer.transformerName, inputType: 'any', outputType: 'any' },
   { id: 'iso', type: 'standard', functionName: IsoTransformer.transformerName, inputType: 'any', outputType: 'any' },
   { id: 'jsonToCsv', inputType: 'any', functionName: JSONToCSVTransformer.transformerName, outputType: 'any', type: 'standard' },
+  {
+    id: 'recordListToCsv',
+    inputType: 'record-list',
+    functionName: RecordListToCsvTransformer.transformerName,
+    outputType: 'any',
+    type: 'standard'
+  },
+  {
+    id: 'jsonToOia',
+    inputType: 'any',
+    functionName: JSONToOIAnalyticsTransformer.transformerName,
+    outputType: 'oianalytics',
+    type: 'standard'
+  },
   {
     id: 'oibusTimeValuesToCsv',
     type: 'standard',
@@ -139,6 +155,14 @@ describe('TransformerRepository', () => {
   it('should properly find all transformers', () => {
     const allTransformers = repository.list().map(stripAuditFields);
     // Standard transformers come first, then custom ones from test data
+    // Every seeded standard transformer is listed here, and nothing else
+    assert.deepStrictEqual(
+      allTransformers
+        .filter(t => t.type === 'standard')
+        .map(t => t.functionName)
+        .sort(),
+      standardTransformers.map(t => t.functionName).sort()
+    );
     for (const standard of standardTransformers) {
       const found = allTransformers.find(t => t.type === 'standard' && t.functionName === standard.functionName);
       assert.ok(found, `Standard transformer ${standard.functionName} not found`);
@@ -283,7 +307,7 @@ describe('TransformerRepository', () => {
   it('should skip creating standard transformers that already exist', () => {
     const secondRepo = new TransformerRepository(database, createAuditServiceMock());
     const all = secondRepo.list().filter(t => t.type === 'standard');
-    assert.strictEqual(all.length, 16);
+    assert.strictEqual(all.length, standardTransformers.length);
     // Explicitly pin the last standard transformer registered by createStandardTransformers()
     // (setpoint-to-opcua) to make sure it was not duplicated on this second construction.
     const setpointToOpcuaEntries = all.filter(isSetpointToOpcua);
@@ -294,12 +318,12 @@ describe('TransformerRepository', () => {
     // Remove all standard transformers to force createStandardTransformers() to insert them all
     database.prepare("DELETE FROM transformers WHERE type = 'standard'").run();
     const freshRepo = new TransformerRepository(database, createAuditServiceMock());
-    const standardTransformers = freshRepo.list().filter(t => t.type === 'standard');
-    assert.strictEqual(standardTransformers.length, 16);
+    const created = freshRepo.list().filter(t => t.type === 'standard');
+    assert.deepStrictEqual(created.map(t => t.functionName).sort(), standardTransformers.map(t => t.functionName).sort());
     // Explicitly pin the last standard transformer registered by createStandardTransformers()
     // (setpoint-to-opcua) to make sure the creation branch is exercised for it specifically,
     // not just implicitly via the aggregate count above.
-    const setpointToOpcua = standardTransformers.find(isSetpointToOpcua);
+    const setpointToOpcua = created.find(isSetpointToOpcua);
     assert.ok(setpointToOpcua, 'setpoint-to-opcua standard transformer was not created');
     assert.strictEqual(setpointToOpcua!.inputType, 'setpoint');
     assert.strictEqual(setpointToOpcua!.outputType, 'opcua');

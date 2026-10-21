@@ -156,9 +156,10 @@ describe('NorthConnectorRepository', () => {
 
   it('should properly get full north connectors', () => {
     const result = repository.findAllNorthFull().map(stripAuditFields);
+    assert.strictEqual(result.length, testData.north.list.length);
     for (const expected of testData.north.list.map(stripAuditFields)) {
       const found = result.find(r => r.id === expected.id);
-      assert.ok(found, `North connector ${expected.id} not found`);
+      assert.deepStrictEqual(found, expected);
     }
   });
 
