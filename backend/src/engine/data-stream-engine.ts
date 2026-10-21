@@ -20,7 +20,6 @@ import {
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
 import { Instant, NotFoundError } from '../model/types';
@@ -42,6 +41,7 @@ import { loggerService } from '../service/logger/logger.service';
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
+import type OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 import {
   intervalToMs,
   isActivationWindowExpired,
@@ -93,7 +93,7 @@ export default class DataStreamEngine {
     private southCacheRepository: SouthCacheRepository,
     private certificateRepository: CertificateRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private oianalyticsMessageService: IOIAnalyticsMessageService,
+    private oianalyticsMessageService: OIAnalyticsMessageService,
     private scanModeRepository: ScanModeRepository,
     private configurationWorkflowRepository: ConfigurationWorkflowRepository
   ) {
