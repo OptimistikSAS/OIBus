@@ -1,18 +1,18 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type { SouthItemSettings, SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthOracleClass from './south-oracle';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -39,57 +39,111 @@ class OracleDBError extends Error {
   }
 }
 
+const trackedItemSettings = (query: string): SouthOracleItemSettings => ({
+  query,
+  requestTimeout: 1000,
+  trackingInstant: {
+    trackInstant: true,
+    fieldName: 'timestamp',
+    dateTimeInput: {
+      type: 'string',
+      timezone: 'Europe/Paris',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
+      locale: 'en-US'
+    }
+  }
+});
+
+const buildItem = (
+  id: string,
+  settings: SouthOracleItemSettings,
+  scanMode = testData.scanMode.list[0]
+): SouthConnectorItemEntity<SouthOracleItemSettings> => ({
+  id,
+  name: id.replace('id', 'item'),
+  enabled: true,
+  settings,
+  scanMode,
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: 3600,
+  readDelay: 0,
+  startTimeOffset: 0,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const buildConfiguration = (
+  settings: Partial<SouthOracleSettings>,
+  items: Array<SouthConnectorItemEntity<SouthOracleItemSettings>>
+): SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> => ({
+  id: 'southId',
+  name: 'south',
+  type: 'oracle',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    host: 'localhost',
+    port: 1521,
+    database: 'db',
+    username: 'username',
+    password: 'password',
+    connectionTimeout: 1000,
+    thickMode: false,
+    ...settings
+  },
+  groups: [],
+  items,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const items = [
+  buildItem('id1', trackedItemSettings('query1')),
+  buildItem('id2', { query: 'query2', requestTimeout: 1000, trackingInstant: { trackInstant: false } })
+];
+
 describe('SouthOracle', () => {
   let SouthOracle: typeof SouthOracleClass;
 
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(
-    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-      undefined
-  );
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-
-  const ping = mock.fn();
-  const close = mock.fn();
-  const execute = mock.fn(async () => ({ rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] }));
-  const getConnection = mock.fn(async () => ({ ping, close, execute, callTimeout: 0 }));
-  const initOracleClient = mock.fn();
+  let logger: PinoLogger;
+  let addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  >;
+  let ping: Mock<() => void>;
+  let close: Mock<() => void>;
+  let execute: Mock<(sql: string, params?: unknown) => Promise<unknown>>;
+  let getConnection: Mock<(config: unknown) => Promise<unknown>>;
+  let initOracleClient: Mock<(options: unknown) => void>;
 
   const oracledbExports: Record<string, unknown> = {
     __esModule: true,
-    default: null,
-    getConnection,
-    initOracleClient,
     outFormat: 0,
-    OUT_FORMAT_OBJECT: 4001,
-    oracleClientVersion: undefined
+    OUT_FORMAT_OBJECT: 4001
   };
   oracledbExports.default = oracledbExports;
 
-  const utilsExports = {
-    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
+  const realUtils: typeof Utils = nodeRequire('../../service/utils');
+  const createUtilsMocks = () => ({
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
     formatInstant: mock.fn((instant: unknown) => instant),
     generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
-    extractDiscoveryQuery: mock.fn((scope: Record<string, unknown>) => scope.query as string),
-    getErrorMessage: mock.fn((error: unknown) => {
-      if (error instanceof Error) return error.message;
-      if (typeof error === 'string') return error;
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
-      }
-      return String(error);
-    }),
-    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-      if (items.length === 0) return {};
-      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-      const lead = items[0];
-      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-    })
-  };
+    extractDiscoveryQuery: mock.fn(realUtils.extractDiscoveryQuery)
+  });
+  const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
@@ -99,7 +153,7 @@ describe('SouthOracle', () => {
       encryptionService: new EncryptionServiceMock('', '')
     });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -107,18 +161,15 @@ describe('SouthOracle', () => {
   });
 
   beforeEach(() => {
-    ping.mock.resetCalls();
-    close.mock.resetCalls();
-    execute.mock.resetCalls();
-    addContentCallback.mock.resetCalls();
-    initOracleClient.mock.resetCalls();
-    oracledbExports.getConnection = mock.fn(async () => ({ ping, close, execute, callTimeout: 0 }));
-    oracledbExports.initOracleClient = initOracleClient;
-    oracledbExports.oracleClientVersion = undefined;
-    utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
-    utilsExports.formatInstant = mock.fn((instant: unknown) => instant);
-    utilsExports.generateReplacementParameters = mock.fn(() => []);
-    utilsExports.logQuery = mock.fn();
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
+    ping = mock.fn();
+    close = mock.fn();
+    execute = mock.fn(async () => ({ rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] }));
+    getConnection = mock.fn(async () => ({ ping, close, execute, callTimeout: 0 }));
+    initOracleClient = mock.fn();
+    Object.assign(oracledbExports, { getConnection, initOracleClient, oracleClientVersion: undefined });
+    Object.assign(utilsExports, createUtilsMocks());
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -129,136 +180,13 @@ describe('SouthOracle', () => {
 
   describe('SouthOracle with authentication', () => {
     let south: SouthOracleClass;
-    const configuration: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'oracle',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        thickMode: true,
-        host: 'localhost',
-        port: 1521,
-        database: 'db',
-        username: 'username',
-        password: 'password',
-        connectionTimeout: 1000
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            query: 'query1',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: {
-            query: 'query2',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: false
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id3',
-          name: 'item3',
-          enabled: true,
-          settings: {
-            query: 'query3',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[1],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration({ thickMode: true }, [
+      ...items,
+      buildItem('id3', trackedItemSettings('query3'), testData.scanMode.list[1])
+    ]);
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -271,8 +199,7 @@ describe('SouthOracle', () => {
           { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
         ])
       );
-      utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+      utilsExports.formatInstant.mock.mockImplementation(() => '2020-02-01 00:00:00.000');
 
       const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
@@ -332,7 +259,7 @@ describe('SouthOracle', () => {
       const formattedEnd = '2022-01-01 00:00:00.000';
 
       let formatCallCount = 0;
-      utilsExports.formatInstant = mock.fn(() => {
+      utilsExports.formatInstant.mock.mockImplementation(() => {
         formatCallCount++;
         if (formatCallCount === 1) return formattedStart;
         if (formatCallCount === 2) return formattedEnd;
@@ -340,45 +267,36 @@ describe('SouthOracle', () => {
       });
 
       const replacementParams = { startTime: formattedStart, endTime: formattedEnd };
-      utilsExports.generateReplacementParameters = mock.fn(() => replacementParams);
-
-      const mockExecute = mock.fn(async (_sql: string, _params: unknown) => ({
-        rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-      }));
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+      utilsExports.generateReplacementParameters.mock.mockImplementation(() => replacementParams);
 
       const result = await south.queryData(configuration.items[0], startTime, endTime);
 
-      assert.strictEqual((utilsExports.formatInstant as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
-        configuration.items[0].settings.query
-      );
+      assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 2);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
 
-      assert.strictEqual((oracledbExports.getConnection as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((oracledbExports.getConnection as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.strictEqual(getConnection.mock.calls.length, 1);
+      assert.deepStrictEqual(getConnection.mock.calls[0].arguments[0], {
         user: configuration.settings.username,
         password: 'password',
         connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}?connect_timeout=${configuration.settings.connectionTimeout}ms`
       });
 
-      assert.strictEqual((utilsExports.generateReplacementParameters as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((utilsExports.generateReplacementParameters as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(utilsExports.generateReplacementParameters.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.generateReplacementParameters.mock.calls[0].arguments, [
         configuration.items[0].settings.query,
         formattedStart,
         formattedEnd
       ]);
 
-      assert.strictEqual(mockExecute.mock.calls.length, 1);
+      assert.strictEqual(execute.mock.calls.length, 1);
       assert.deepStrictEqual(
-        mockExecute.mock.calls[0].arguments[0],
+        execute.mock.calls[0].arguments[0],
         configuration.items[0].settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2')
       );
-      assert.deepStrictEqual(mockExecute.mock.calls[0].arguments[1], replacementParams);
+      assert.deepStrictEqual(execute.mock.calls[0].arguments[1], replacementParams);
 
-      assert.strictEqual(mockClose.mock.calls.length, 1);
+      assert.strictEqual(close.mock.calls.length, 1);
       assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
     });
 
@@ -386,33 +304,22 @@ describe('SouthOracle', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      const mockExecute = mock.fn(async () => ({ rows: null }));
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+      execute.mock.mockImplementation(async () => ({ rows: null }));
 
       const result = await south.queryData(configuration.items[0], startTime, endTime);
       assert.deepStrictEqual(result, []);
-      assert.strictEqual(mockClose.mock.calls.length, 1);
+      assert.strictEqual(close.mock.calls.length, 1);
     });
 
     it('should get data from Oracle without datetime reference', async () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      const mockExecute = mock.fn(async (_sql: string, _params: unknown) => ({
-        rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-      }));
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
-
       const result = await south.queryData(configuration.items[1], startTime, endTime);
 
-      assert.strictEqual((utilsExports.formatInstant as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
-        configuration.items[1].settings.query
-      );
+      assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[1].settings.query);
       assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
     });
 
@@ -421,33 +328,23 @@ describe('SouthOracle', () => {
       const endTime = '2022-01-01T00:00:00.000Z';
 
       const replacementParams = { startTime, endTime };
-      utilsExports.generateReplacementParameters = mock.fn(() => replacementParams);
-
-      const mockExecute = mock.fn((_sql: string, _params: unknown) => {
+      utilsExports.generateReplacementParameters.mock.mockImplementation(() => replacementParams);
+      execute.mock.mockImplementation(async () => {
         throw new Error('query error');
       });
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
 
-      let error: unknown;
-      try {
-        await south.queryData(configuration.items[0], startTime, endTime);
-      } catch (err) {
-        error = err;
-      }
+      await assert.rejects(south.queryData(configuration.items[0], startTime, endTime), new Error('query error'));
 
-      assert.strictEqual(mockExecute.mock.calls.length, 1);
+      assert.strictEqual(execute.mock.calls.length, 1);
       assert.deepStrictEqual(
-        mockExecute.mock.calls[0].arguments[0],
+        execute.mock.calls[0].arguments[0],
         configuration.items[0].settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2')
       );
-      assert.deepStrictEqual(mockExecute.mock.calls[0].arguments[1], replacementParams);
-      assert.deepStrictEqual(error, new Error('query error'));
-      assert.strictEqual(mockClose.mock.calls.length, 1);
+      assert.deepStrictEqual(execute.mock.calls[0].arguments[1], replacementParams);
+      assert.strictEqual(close.mock.calls.length, 1);
     });
 
     it('should test item', async () => {
-      const formattedInstant = '2020-01-01T00:00:00.000Z';
       const queryDataMock = mock.method(
         south,
         'queryData',
@@ -459,8 +356,6 @@ describe('SouthOracle', () => {
           ];
         })
       );
-      utilsExports.formatInstant = mock.fn(() => formattedInstant);
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
       const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -470,7 +365,6 @@ describe('SouthOracle', () => {
     });
 
     it('should test item without datetimeFields', async () => {
-      const formattedInstant = '2020-01-01T00:00:00.000Z';
       const queryDataMock = mock.method(
         south,
         'queryData',
@@ -482,8 +376,6 @@ describe('SouthOracle', () => {
           ];
         })
       );
-      utilsExports.formatInstant = mock.fn(() => formattedInstant);
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
       const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -493,25 +385,21 @@ describe('SouthOracle', () => {
     });
 
     it("should discover a Configuration Workflow's dedicated metadata query, with no @StartTime/@EndTime substitution", async () => {
-      const mockClose = mock.fn();
-      const mockExecute = mock.fn(async (_sql: string) => ({ rows: [{ column_name: 'temp', description: 'Temperature' }] }));
-      oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+      execute.mock.mockImplementation(async () => ({ rows: [{ column_name: 'temp', description: 'Temperature' }] }));
 
       const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
 
-      assert.deepStrictEqual((utilsExports.extractDiscoveryQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.deepStrictEqual(utilsExports.extractDiscoveryQuery.mock.calls[0].arguments[0], {
         query: 'SELECT column_name, description FROM my_metadata_table'
       });
-      assert.strictEqual(mockExecute.mock.calls.length, 1);
-      assert.strictEqual(mockExecute.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
-      assert.strictEqual(mockClose.mock.calls.length, 1);
+      assert.strictEqual(execute.mock.calls.length, 1);
+      assert.strictEqual(execute.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
+      assert.strictEqual(close.mock.calls.length, 1);
       assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
     });
 
     it('should discover as an empty array when the metadata query returns no rows', async () => {
-      const mockClose = mock.fn();
-      const mockExecute = mock.fn(async () => ({ rows: null }));
-      oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+      execute.mock.mockImplementation(async () => ({ rows: null }));
 
       const result = await south.discover({ query: 'SELECT 1' });
 
@@ -519,7 +407,7 @@ describe('SouthOracle', () => {
     });
 
     it('should explore the tables of the schema of the user, then the columns of a table', async () => {
-      const exploreExecute = mock.fn(async (query: string, _params?: unknown) =>
+      execute.mock.mockImplementation(async query =>
         query.includes('USER_TABLES')
           ? { rows: [{ tableName: 'PRODUCTION', rowCount: 1200, columnCount: 2 }] }
           : {
@@ -529,8 +417,6 @@ describe('SouthOracle', () => {
               ]
             }
       );
-      const exploreClose = mock.fn(async () => undefined);
-      oracledbExports.getConnection = mock.fn(async () => ({ execute: exploreExecute, close: exploreClose }));
 
       assert.deepStrictEqual(await south.explore(null), [
         { id: 'PRODUCTION', name: 'PRODUCTION', metadata: { columns: 2, rows: 1200 }, hasChildren: true }
@@ -539,9 +425,8 @@ describe('SouthOracle', () => {
         { id: 'PRODUCTION.ID', name: 'ID', metadata: { nullable: 'no', type: 'NUMBER', primaryKey: 'yes' }, hasChildren: false },
         { id: 'PRODUCTION.PRODUCED_AT', name: 'PRODUCED_AT', metadata: { nullable: 'yes', type: 'TIMESTAMP(6)' }, hasChildren: false }
       ]);
-      assert.deepStrictEqual(exploreExecute.mock.calls[1].arguments[1], { tableName: 'PRODUCTION' });
-      assert.strictEqual(exploreClose.mock.calls.length, 2);
-      oracledbExports.getConnection = getConnection;
+      assert.deepStrictEqual(execute.mock.calls[1].arguments[1], { tableName: 'PRODUCTION' });
+      assert.strictEqual(close.mock.calls.length, 2);
     });
 
     it('should discover the item of each table checked in the explore modal, quoted and tracked as Oracle reads them', async () => {
@@ -571,122 +456,29 @@ describe('SouthOracle', () => {
 
     it('should close the connection and rethrow when the discovery query fails', async () => {
       const queryError = new Error('bad query');
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({
-        ping,
-        close: mockClose,
-        execute: mock.fn(async () => {
-          throw queryError;
-        }),
-        callTimeout: 0
-      }));
+      execute.mock.mockImplementation(async () => {
+        throw queryError;
+      });
 
       await assert.rejects(south.discover({ query: 'SELECT 1' }), queryError);
-      assert.strictEqual(mockClose.mock.calls.length, 1);
+      assert.strictEqual(close.mock.calls.length, 1);
     });
   });
 
   describe('SouthOracle without authentication but with thick mode', () => {
     let south: SouthOracleClass;
-    const configuration: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'oracle',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 1521,
-        database: 'db',
-        username: null,
-        password: null,
-        connectionTimeout: 0,
-        thickMode: true,
-        oracleClient: 'path'
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            query: 'query1',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: {
-            query: 'query2',
-            requestTimeout: 1000,
-            trackingInstant: {
-              trackInstant: false
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration(
+      { username: null, password: null, connectionTimeout: 0, thickMode: true, oracleClient: 'path' },
+      items
+    );
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('should call initOracleClient when thick mode is enabled and oracleClientVersion is not set', () => {
-      assert.strictEqual((oracledbExports.initOracleClient as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((oracledbExports.initOracleClient as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.strictEqual(initOracleClient.mock.calls.length, 1);
+      assert.deepStrictEqual(initOracleClient.mock.calls[0].arguments[0], {
         libDir: path.resolve(configuration.settings.oracleClient!)
       });
     });
@@ -695,57 +487,32 @@ describe('SouthOracle', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      oracledbExports.getConnection = mock.fn(() => {
+      getConnection.mock.mockImplementation(() => {
         throw new Error('connection error');
       });
 
-      let error: unknown;
-      try {
-        await south.queryData(configuration.items[0], startTime, endTime);
-      } catch (err) {
-        error = err;
-      }
+      await assert.rejects(south.queryData(configuration.items[0], startTime, endTime), new Error('connection error'));
 
-      assert.strictEqual((oracledbExports.getConnection as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((oracledbExports.getConnection as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.strictEqual(getConnection.mock.calls.length, 1);
+      assert.deepStrictEqual(getConnection.mock.calls[0].arguments[0], {
         user: undefined,
         password: undefined,
         connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}`
       });
-      assert.deepStrictEqual(error, new Error('connection error'));
     });
   });
 
   describe('SouthOracle thick mode initialization failure', () => {
-    const configuration: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'oracle',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 1521,
-        database: 'db',
-        username: null,
-        password: null,
-        connectionTimeout: 0,
-        thickMode: true,
-        oracleClient: 'path'
-      },
-      groups: [],
-      items: [],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-
     it('should log an error and fall back to thin mode when initOracleClient throws', () => {
-      oracledbExports.initOracleClient = mock.fn(() => {
+      initOracleClient.mock.mockImplementation(() => {
         throw new Error('thick mode init error');
       });
-      const south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      const south = new SouthOracle(
+        buildConfiguration({ username: null, password: null, connectionTimeout: 0, thickMode: true, oracleClient: 'path' }, []),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
       assert.ok(south);
       assert.ok(
         logger.error.mock.calls.some(
@@ -759,64 +526,32 @@ describe('SouthOracle', () => {
 
   describe('SouthOracle test connection', () => {
     let south: SouthOracleClass;
-    const configuration: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'oracle',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 1521,
-        database: 'db',
-        username: 'username',
-        password: 'password',
-        connectionTimeout: 1000,
-        thickMode: false
-      },
-      groups: [],
-      items: [],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration({}, []);
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {
-      let executeCallCount = 0;
-      const mockExecute = mock.fn(async () => {
-        executeCallCount++;
-        if (executeCallCount === 1) return { rows: [{ TABLE_COUNT: 21 }] };
-        return { rows: 0 };
-      });
-      const mockPing = mock.fn();
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({ ping: mockPing, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+      execute.mock.mockImplementation(async () => ({ rows: [{ TABLE_COUNT: 21 }] }));
 
       await south.testConnection();
 
-      assert.ok(mockClose.mock.calls.length > 0);
+      assert.ok(close.mock.calls.length > 0);
     });
 
     it('Database is reachable but returns no tables', async () => {
-      const mockExecute = mock.fn(async () => ({ rows: [{ TABLE_COUNT: 0 }] }));
-      const mockPing = mock.fn();
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({ ping: mockPing, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+      execute.mock.mockImplementation(async () => ({ rows: [{ TABLE_COUNT: 0 }] }));
 
       await assert.rejects(south.testConnection(), new Error(`No tables in the "${configuration.settings.username}" schema`));
-      assert.ok(mockClose.mock.calls.length > 0);
+      assert.ok(close.mock.calls.length > 0);
     });
 
     it('Unable to create connection', async () => {
       const errorMessage = 'Error creating connection';
 
       for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-        oracledbExports.getConnection = mock.fn(() => {
+        getConnection.mock.mockImplementation(() => {
           throw new OracleDBError(errorMessage, code);
         });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
@@ -826,67 +561,50 @@ describe('SouthOracle', () => {
     it('Unable to ping database', async () => {
       const errorMessage = 'Error pinging database';
 
-      for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-        const mockClose = mock.fn();
-        oracledbExports.getConnection = mock.fn(async () => ({
-          ping: () => {
-            throw new OracleDBError(errorMessage, code);
-          },
-          close: mockClose,
-          callTimeout: 0
-        }));
+      for (const [index, code] of (Object.keys(ERROR_CODES) as Array<ErrorCodes>).entries()) {
+        ping.mock.mockImplementation(() => {
+          throw new OracleDBError(errorMessage, code);
+        });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
-        assert.ok(mockClose.mock.calls.length > 0);
+        assert.strictEqual(close.mock.calls.length, index + 1);
       }
     });
 
     it('System table unreachable', async () => {
       const errorMessage = 'ALL_TABLES does not exist';
-      const mockExecute = mock.fn(() => {
+      execute.mock.mockImplementation(async () => {
         throw new Error(errorMessage);
       });
-      const mockPing = mock.fn();
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({ ping: mockPing, close: mockClose, execute: mockExecute, callTimeout: 0 }));
 
       await assert.rejects(
         south.testConnection(),
         new Error(`Unable to read tables in database "${configuration.settings.database}": ${errorMessage}`)
       );
-      assert.ok(mockClose.mock.calls.length > 0);
+      assert.ok(close.mock.calls.length > 0);
     });
 
     it('Database does not return count of tables', async () => {
-      const mockExecute = mock.fn(async () => ({ rows: [] }));
-      const mockPing = mock.fn();
-      const mockClose = mock.fn();
-      oracledbExports.getConnection = mock.fn(async () => ({ ping: mockPing, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+      execute.mock.mockImplementation(async () => ({ rows: [] }));
 
       await assert.rejects(south.testConnection(), new Error(`No tables in the "${configuration.settings.username}" schema`));
-      assert.ok(mockClose.mock.calls.length > 0);
+      assert.ok(close.mock.calls.length > 0);
     });
 
     it('Unable to ping database without password', async () => {
-      const savedUsername = configuration.settings.username;
-      const savedPassword = configuration.settings.password;
-      configuration.settings.username = '';
-      configuration.settings.password = '';
+      south = new SouthOracle(
+        buildConfiguration({ username: '', password: '' }, []),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
       const errorMessage = 'Error pinging database';
 
       for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-        const mockClose = mock.fn();
-        oracledbExports.getConnection = mock.fn(async () => ({
-          ping: () => {
-            throw new OracleDBError(errorMessage, code);
-          },
-          close: mockClose,
-          callTimeout: 0
-        }));
+        ping.mock.mockImplementation(() => {
+          throw new OracleDBError(errorMessage, code);
+        });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
       }
-
-      configuration.settings.username = savedUsername;
-      configuration.settings.password = savedPassword;
     });
   });
 });

@@ -2,132 +2,142 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
 
-import type { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/connector/south-settings.model';
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
+import type { OIBusContent } from '../../../shared/model/common/content.model';
+import type {
+  SouthFolderScannerItemSettings,
+  SouthFolderScannerSettings,
+  SouthItemSettings
+} from '../../../shared/model/connector/south-settings.model';
 
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import type * as Utils from '../../service/utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, type Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import type SouthFolderScannerClass from './south-folder-scanner';
 
 const nodeRequire = createRequire(import.meta.url);
 
+const SHARE_FOLDER = '\\\\server\\share\\data';
+const LOCAL_FOLDER = 'C:\\local\\folder';
+
+const buildConfiguration = (
+  settings: Partial<SouthFolderScannerSettings> = {}
+): SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> => ({
+  id: 'southId',
+  name: 'south',
+  type: 'folder-scanner',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    inputFolder: 'inputFolder',
+    compression: false,
+    ...settings
+  },
+  groups: [],
+  items: [
+    {
+      id: 'id1',
+      name: 'item1',
+      enabled: true,
+      settings: {
+        regex: '.*\\.csv',
+        preserveFiles: false,
+        ignoreModifiedDate: false,
+        minAge: 1000,
+        maxFiles: 0,
+        maxSize: 0,
+        recursive: false
+      },
+      scanMode: testData.scanMode.list[0],
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: 'oldest',
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    }
+  ],
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const fileDirent = (name: string) => ({ name, isDirectory: () => false, isFile: () => true });
+const folderDirent = (name: string) => ({ name, isDirectory: () => true, isFile: () => false });
+
+// Forces `process.platform` for the tests of the enclosing describe
+const simulatePlatform = (platform: NodeJS.Platform) => {
+  let originalPlatform: PropertyDescriptor | undefined;
+  beforeEach(() => {
+    originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
+    Object.defineProperty(process, 'platform', { value: platform });
+  });
+  afterEach(() => {
+    if (originalPlatform) {
+      Object.defineProperty(process, 'platform', originalPlatform);
+    }
+  });
+};
+
 describe('SouthFolderScanner', () => {
   let SouthFolderScanner: typeof SouthFolderScannerClass;
   let south: SouthFolderScannerClass;
+  let configuration: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>;
 
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
-  // Recreated fresh in beforeEach (not a shared const) — some tests reassign its methods
-  // (e.g. getItemLastValue), which must not bleed into later tests.
-  let southCacheRepository: SouthCacheRepository;
+  let logger: PinoLogger;
+  let addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  >;
+  let southCacheRepository: Mocked<SouthCacheRepository>;
 
-  const utilsExports = {
-    checkAge: mock.fn(() => true),
-    compress: mock.fn(async () => undefined),
-    delay: mock.fn(async () => undefined),
-    generateIntervals: mock.fn(() => []),
-    groupItemsByGroup: mock.fn(() => []),
-    validateCronExpression: mock.fn(() => ({ expression: '' })),
-    getErrorMessage: mock.fn((error: unknown) => {
-      if (error instanceof Error) return error.message;
-      if (typeof error === 'string') return error;
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
-      }
-      return String(error);
-    }),
-    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-      if (items.length === 0) return {};
-      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-      const lead = items[0];
-      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-    }),
-    sanitizeCommandError: mock.fn((error: unknown, secret: string) => {
-      const message = (error as Error)?.message ?? 'Unknown error';
-      return new Error(secret ? message.split(secret).join('********') : message);
-    })
-  };
+  const realUtils: typeof Utils = nodeRequire('../../service/utils');
+  const createUtilsMocks = () => ({
+    checkAge: mock.fn((..._args: Parameters<typeof Utils.checkAge>) => true),
+    compress: mock.fn(async (_input: string, _output: string): Promise<void> => undefined)
+  });
+  const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
     SouthFolderScanner = reloadModule<{ default: typeof SouthFolderScannerClass }>(nodeRequire, './south-folder-scanner').default;
   });
 
-  let configuration: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>;
+  // Rebuilds the connector (and its configuration) with the given settings
+  const createSouth = (settings: Partial<SouthFolderScannerSettings> = {}) => {
+    configuration = buildConfiguration(settings);
+    south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    return south;
+  };
 
   beforeEach(() => {
-    southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-    utilsExports.checkAge = mock.fn(() => true);
-    utilsExports.compress = mock.fn(async () => undefined);
-    addContentCallback.mock.resetCalls();
-
-    configuration = {
-      id: 'southId',
-      name: 'south',
-      type: 'folder-scanner',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        inputFolder: 'inputFolder',
-        compression: false
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            regex: '.*\\.csv',
-            preserveFiles: false,
-            ignoreModifiedDate: false,
-            minAge: 1000,
-            maxFiles: 0,
-            maxSize: 0,
-            recursive: false
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: null,
-          readDelay: null,
-          startTimeOffset: null,
-          endTimeOffset: null,
-          recoveryStrategy: 'oldest',
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-
-    south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
+    southCacheRepository = createMock<SouthCacheRepository>();
+    Object.assign(utilsExports, createUtilsMocks());
+    createSouth();
   });
 
   afterEach(() => {
@@ -136,11 +146,7 @@ describe('SouthFolderScanner', () => {
 
   describe('testConnection', () => {
     it('should pass testConnection if folder exists, is readable, and is a directory', async () => {
-      const accessMock = mock.method(
-        fs,
-        'access',
-        mock.fn(async () => undefined)
-      );
+      const accessMock = mock.method(fs, 'access', async () => undefined);
       mock.method(
         fs,
         'stat',
@@ -154,37 +160,23 @@ describe('SouthFolderScanner', () => {
     });
 
     it('should throw if folder does not exist', async () => {
-      mock.method(
-        fs,
-        'access',
-        mock.fn(async () => {
-          throw new Error('ENOENT');
-        })
-      );
+      mock.method(fs, 'access', async () => {
+        throw new Error('ENOENT');
+      });
 
       await assert.rejects(south.testConnection(), /Folder ".*inputFolder" does not exist: ENOENT/);
     });
 
     it('should throw if folder is not readable', async () => {
-      let accessCallCount = 0;
-      mock.method(
-        fs,
-        'access',
-        mock.fn(async () => {
-          accessCallCount++;
-          if (accessCallCount === 2) throw new Error('EACCES');
-        })
-      );
+      const accessMock = mock.method(fs, 'access', async () => {
+        if (accessMock.mock.callCount() === 1) throw new Error('EACCES');
+      });
 
       await assert.rejects(south.testConnection(), /Read access error on ".*inputFolder": EACCES/);
     });
 
     it('should throw if folder is a file, not a directory', async () => {
-      mock.method(
-        fs,
-        'access',
-        mock.fn(async () => undefined)
-      );
+      mock.method(fs, 'access', async () => undefined);
       mock.method(
         fs,
         'stat',
@@ -196,99 +188,60 @@ describe('SouthFolderScanner', () => {
   });
 
   describe('testItem', () => {
-    it('should return matched files as time values', async () => {
-      mock.method(
-        fs,
-        'access',
-        mock.fn(async () => undefined)
-      );
-      mock.method(
-        fs,
-        'stat',
-        mock.fn(async (_p: string) => ({ isDirectory: () => true, mtimeMs: 1600000000000, size: 512 }))
-      );
-      mock.method(
-        fs,
-        'readdir',
-        mock.fn(async () => ['file1.csv', 'file2.csv', 'other.txt'])
-      );
-      utilsExports.checkAge = mock.fn(() => true);
-
-      const result = await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
-      assert.strictEqual(result.result.type, 'time-values');
-      assert.strictEqual((result.result as { type: string; content: Array<unknown> }).content.length, 2);
-      assert.strictEqual(typeof result.connectionDuration, 'number');
-      assert.strictEqual(typeof result.queryDuration, 'number');
-    });
-
-    it('should return empty time values when no files match the regex', async () => {
-      mock.method(
-        fs,
-        'access',
-        mock.fn(async () => undefined)
-      );
+    beforeEach(() => {
+      mock.method(fs, 'access', async () => undefined);
       mock.method(
         fs,
         'stat',
         mock.fn(async () => ({ isDirectory: () => true, mtimeMs: 1600000000000, size: 512 }))
       );
-      mock.method(
-        fs,
-        'readdir',
-        mock.fn(async () => ['other.txt', 'another.log'])
-      );
-      utilsExports.checkAge = mock.fn(() => true);
+    });
 
-      const result = await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
-      assert.strictEqual(result.result.type, 'time-values');
-      assert.strictEqual((result.result as { type: string; content: Array<unknown> }).content.length, 0);
+    it('should return matched files as time values', async () => {
+      mock.method(fs, 'readdir', async () => ['file1.csv', 'file2.csv', 'other.txt']);
+
+      const result = await south.testItem(configuration.items[0], { history: undefined });
+      assert.ok(result.result.type === 'time-values');
+      assert.strictEqual(result.result.content.length, 2);
+      assert.strictEqual(typeof result.connectionDuration, 'number');
+      assert.strictEqual(typeof result.queryDuration, 'number');
+    });
+
+    it('should return empty time values when no files match the regex', async () => {
+      mock.method(fs, 'readdir', async () => ['other.txt', 'another.log']);
+
+      const result = await south.testItem(configuration.items[0], { history: undefined });
+      assert.ok(result.result.type === 'time-values');
+      assert.strictEqual(result.result.content.length, 0);
     });
   });
 
   describe('listFilesRecursively', () => {
     it('should list files directly in the base dir without recursion', async () => {
-      const mockDirents = [
-        { name: 'file1.csv', isDirectory: () => false, isFile: () => true },
-        { name: 'subfolder', isDirectory: () => true, isFile: () => false }
-      ];
       mock.method(
         fs,
         'readdir',
-        mock.fn(async () => mockDirents)
+        mock.fn(async () => [fileDirent('file1.csv'), folderDirent('subfolder')])
       );
 
-      const files = await (south as unknown as Record<string, (...args: Array<unknown>) => Promise<Array<string>>>)['listFilesRecursively'](
-        '/base',
-        '',
-        configuration.items[0]
-      );
+      const files = await south['listFilesRecursively']('/base', '', configuration.items[0]);
       assert.deepStrictEqual(files, ['file1.csv']);
     });
 
     it('should list files recursively if enabled in settings', async () => {
       configuration.items[0].settings.recursive = true;
-
-      const rootDirents = [
-        { name: 'file1.csv', isDirectory: () => false, isFile: () => true },
-        { name: 'subfolder', isDirectory: () => true, isFile: () => false }
-      ];
-      const subDirents = [{ name: 'file2.csv', isDirectory: () => false, isFile: () => true }];
-
-      let readdirCallCount = 0;
       mock.method(
         fs,
         'readdir',
-        mock.fn(async () => {
-          readdirCallCount++;
-          return readdirCallCount === 1 ? rootDirents : subDirents;
-        })
+        mock.fn(
+          seq(
+            async () => [fileDirent('file1.csv'), folderDirent('subfolder')],
+            async () => [fileDirent('file2.csv')]
+          )
+        )
       );
 
-      const files = await (south as unknown as Record<string, (...args: Array<unknown>) => Promise<Array<string>>>)['listFilesRecursively'](
-        '/base',
-        '',
-        configuration.items[0]
-      );
+      const files = await south['listFilesRecursively']('/base', '', configuration.items[0]);
       assert.strictEqual(files.length, 2);
       assert.ok(files.includes('file1.csv'));
       assert.ok(files.includes(path.join('subfolder', 'file2.csv')));
@@ -296,36 +249,31 @@ describe('SouthFolderScanner', () => {
   });
 
   describe('directQuery', () => {
-    let sendFileMock: ReturnType<typeof mock.fn>;
+    let sendFile: Mock<SouthFolderScannerClass['sendFile']>;
+    let unlink: Mock<typeof fs.unlink>;
+    let fileSize: number;
 
     beforeEach(() => {
-      (south as unknown as Record<string, unknown>)['listFilesRecursively'] = mock.fn(async () => ['file1.csv', 'file2.csv', 'ignore.txt']);
-      sendFileMock = mock.method(
-        south,
-        'sendFile',
-        mock.fn(async () => undefined)
-      );
+      south['listFilesRecursively'] = mock.fn(async () => ['file1.csv', 'file2.csv', 'ignore.txt']);
+      sendFile = mock.method(south, 'sendFile', async () => undefined);
+      fileSize = 1024;
       mock.method(
         fs,
         'stat',
-        mock.fn(async () => ({ mtimeMs: 1600000000000, size: 1024 }))
+        mock.fn(async () => ({ mtimeMs: 1600000000000, size: fileSize }))
       );
-      mock.method(
-        fs,
-        'unlink',
-        mock.fn(async () => undefined)
-      );
+      unlink = mock.method(fs, 'unlink', async () => undefined);
     });
 
     it('should process matched files, call sendFile, and unlink files if preserveFiles is false', async () => {
       await south.directQuery(configuration.items);
 
-      assert.strictEqual(sendFileMock.mock.calls.length, 2);
+      assert.strictEqual(sendFile.mock.calls.length, 2);
     });
 
     it('should preserve files and return their updated modify times if preserveFiles is true', async () => {
       configuration.items[0].settings.preserveFiles = true;
-      southCacheRepository.getItemLastValue = mock.fn(() => ({
+      southCacheRepository.getItemLastValue.mock.mockImplementation(() => ({
         itemId: 'id1',
         groupId: null,
         queryTime: null,
@@ -335,21 +283,16 @@ describe('SouthFolderScanner', () => {
 
       const result = await south.directQuery(configuration.items);
 
-      const unlinkMock = fs.unlink as unknown as { mock: { calls: Array<unknown> } };
-      assert.strictEqual(unlinkMock.mock.calls.length, 0);
+      assert.strictEqual(unlink.mock.calls.length, 0);
       assert.strictEqual(result.length, 2);
-      assert.strictEqual(result.find((f: { filename: string }) => f.filename === 'file1.csv')?.modifiedTime, 1600000000000);
-      assert.strictEqual(result.find((f: { filename: string }) => f.filename === 'file2.csv')?.modifiedTime, 1600000000000);
+      assert.strictEqual(result.find(f => f.filename === 'file1.csv')?.modifiedTime, 1600000000000);
+      assert.strictEqual(result.find(f => f.filename === 'file2.csv')?.modifiedTime, 1600000000000);
     });
 
     it('should safely log and ignore unlink errors', async () => {
-      mock.method(
-        fs,
-        'unlink',
-        mock.fn(async () => {
-          throw new Error('Cannot delete');
-        })
-      );
+      unlink.mock.mockImplementation(async () => {
+        throw new Error('Cannot delete');
+      });
 
       await south.directQuery(configuration.items);
 
@@ -361,7 +304,7 @@ describe('SouthFolderScanner', () => {
 
       await south.directQuery(configuration.items);
 
-      assert.strictEqual(sendFileMock.mock.calls.length, 1);
+      assert.strictEqual(sendFile.mock.calls.length, 1);
       assert.ok(
         logger.debug.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Max files limit (1) reached'))
       );
@@ -369,16 +312,11 @@ describe('SouthFolderScanner', () => {
 
     it('should stop processing if maxSize limit is reached', async () => {
       configuration.items[0].settings.maxSize = 1;
-
-      mock.method(
-        fs,
-        'stat',
-        mock.fn(async () => ({ mtimeMs: 1600000000000, size: 600 * 1024 }))
-      );
+      fileSize = 600 * 1024;
 
       await south.directQuery(configuration.items);
 
-      assert.strictEqual(sendFileMock.mock.calls.length, 1);
+      assert.strictEqual(sendFile.mock.calls.length, 1);
       assert.ok(
         logger.debug.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Max size limit (1 MB) reached'))
       );
@@ -386,82 +324,67 @@ describe('SouthFolderScanner', () => {
 
     it('should process a single file bigger than maxSize', async () => {
       configuration.items[0].settings.maxSize = 1;
-
-      mock.method(
-        fs,
-        'stat',
-        mock.fn(async () => ({ mtimeMs: 1600000000000, size: 2 * 1024 * 1024 }))
-      );
+      fileSize = 2 * 1024 * 1024;
 
       await south.directQuery(configuration.items);
 
-      assert.strictEqual(sendFileMock.mock.calls.length, 1);
+      assert.strictEqual(sendFile.mock.calls.length, 1);
     });
   });
 
   describe('sendFile', () => {
     const mockQueryTime = DateTime.now().toUTC().toISO()!;
-    let addContentMock: ReturnType<typeof mock.fn>;
+    let addContent: Mock<SouthFolderScannerClass['addContent']>;
+    let unlink: Mock<typeof fs.unlink>;
 
     beforeEach(() => {
-      addContentMock = mock.method(
-        south,
-        'addContent',
-        mock.fn(async () => undefined)
-      );
+      addContent = mock.method(south, 'addContent', async () => undefined);
+      unlink = mock.method(fs, 'unlink', async () => undefined);
     });
 
     it('should send the raw file if compression is disabled', async () => {
       await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
 
-      assert.strictEqual(addContentMock.mock.calls.length, 1);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+      assert.strictEqual(addContent.mock.calls.length, 1);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
         type: 'any',
         filePath: path.resolve('inputFolder', 'file1.csv'),
         filename: 'file1.csv'
       });
-      assert.strictEqual(addContentMock.mock.calls[0].arguments[1], mockQueryTime);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0]]);
+      assert.strictEqual(addContent.mock.calls[0].arguments[1], mockQueryTime);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [configuration.items[0]]);
     });
 
     it('should compress the file and send the gzipped version if compression is enabled', async () => {
       configuration.settings.compression = true;
-      mock.method(
-        fs,
-        'unlink',
-        mock.fn(async () => undefined)
-      );
 
       await south.sendFile(configuration.items[0], path.join('sub', 'file1.csv'), mockQueryTime);
 
-      const safeFilename = 'sub_file1.csv'.replace(/\//g, '_').replace(/\\/g, '_');
-      const expectedGzipPath = path.resolve('cacheFolder', 'tmp', `${safeFilename}.gz`);
-
+      const expectedGzipPath = path.resolve('cacheFolder', 'tmp', 'sub_file1.csv.gz');
       assert.strictEqual(utilsExports.compress.mock.calls.length, 1);
       assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments, [
         path.resolve('inputFolder', 'sub', 'file1.csv'),
         expectedGzipPath
       ]);
-      assert.strictEqual(addContentMock.mock.calls.length, 1);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+      assert.strictEqual(addContent.mock.calls.length, 1);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
         type: 'any',
         filePath: expectedGzipPath,
         filename: path.join('sub', 'file1.csv') + '.gz'
       });
-      const unlinkMock = fs.unlink as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } };
-      assert.ok(unlinkMock.mock.calls.some(c => c.arguments[0] === expectedGzipPath));
+      assert.ok(unlink.mock.calls.some(c => c.arguments[0] === expectedGzipPath));
     });
 
     it('should fallback to sending the raw file if compression fails', async () => {
       configuration.settings.compression = true;
-      utilsExports.compress = mock.fn(async () => {
+      utilsExports.compress.mock.mockImplementation(async () => {
         throw new Error('Zip failure');
       });
 
       await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
 
       assert.ok(logger.error.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error compressing file')));
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
         type: 'any',
         filePath: path.resolve('inputFolder', 'file1.csv'),
         filename: 'file1.csv'
@@ -470,13 +393,9 @@ describe('SouthFolderScanner', () => {
 
     it('should safely log and ignore unlink errors after compressing', async () => {
       configuration.settings.compression = true;
-      mock.method(
-        fs,
-        'unlink',
-        mock.fn(async () => {
-          throw new Error('Cannot delete zip');
-        })
-      );
+      unlink.mock.mockImplementation(async () => {
+        throw new Error('Cannot delete zip');
+      });
 
       await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
 
@@ -489,77 +408,43 @@ describe('SouthFolderScanner', () => {
   });
 
   describe('connect and disconnect', () => {
-    afterEach(() => {
-      logger.trace.mock.resetCalls();
-    });
-
     describe('non-Windows SMB session handling', () => {
-      let originalPlatform: PropertyDescriptor | undefined;
-
-      beforeEach(() => {
-        // These tests assert the "not on Windows" branch specifically, so force the platform
-        // instead of relying on the ambient OS running the test (which is win32 on Windows CI).
-        originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
-        Object.defineProperty(process, 'platform', { value: 'linux' });
-      });
-
-      afterEach(() => {
-        if (originalPlatform) {
-          Object.defineProperty(process, 'platform', originalPlatform);
-        }
-      });
+      // These tests assert the "not on Windows" branch specifically, so force the platform
+      // instead of relying on the ambient OS running the test (which is win32 on Windows CI).
+      simulatePlatform('linux');
 
       it('should log trace and skip SMB session authentication on non-Windows platforms', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.inputFolder = '\\\\server\\share\\data';
-        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-        logger.trace.mock.resetCalls();
-        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-        await (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data');
+        createSouth({ username: 'user', inputFolder: SHARE_FOLDER });
+        await south['mountNetworkShare'](SHARE_FOLDER);
         assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB session authentication')));
       });
 
       it('should log trace and skip SMB session removal on non-Windows platforms', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.inputFolder = '\\\\server\\share\\data';
-        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-        logger.trace.mock.resetCalls();
-        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-        await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
+        createSouth({ username: 'user', inputFolder: SHARE_FOLDER });
+        await south['unmountNetworkShare'](SHARE_FOLDER);
         assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB session removal')));
       });
 
       it('should return without logging when username is empty on non-Windows platforms (mount)', async () => {
-        configuration.settings.username = null;
-        configuration.settings.inputFolder = '\\\\server\\share\\data';
-        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-        logger.trace.mock.resetCalls();
-        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-        await (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data');
+        createSouth({ username: null, inputFolder: SHARE_FOLDER });
+        await south['mountNetworkShare'](SHARE_FOLDER);
         assert.strictEqual(logger.trace.mock.calls.length, 0);
       });
 
       it('should return without logging when username is empty on non-Windows platforms (unmount)', async () => {
-        configuration.settings.username = null;
-        configuration.settings.inputFolder = '\\\\server\\share\\data';
-        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-        logger.trace.mock.resetCalls();
-        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-        await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
+        createSouth({ username: null, inputFolder: SHARE_FOLDER });
+        await south['unmountNetworkShare'](SHARE_FOLDER);
         assert.strictEqual(logger.trace.mock.calls.length, 0);
       });
     });
 
     it('should skip SMB mount when username is empty', async () => {
-      configuration.settings.username = null;
-      configuration.settings.inputFolder = '\\\\server\\share\\data';
+      createSouth({ username: null, inputFolder: SHARE_FOLDER });
       await assert.doesNotReject(south.connect());
     });
 
     it('should skip SMB mount when inputFolder is not a UNC path', async () => {
-      configuration.settings.username = 'user';
-      configuration.settings.password = 'pass';
-      configuration.settings.inputFolder = 'C:\\local\\folder';
+      createSouth({ username: 'user', password: 'pass', inputFolder: LOCAL_FOLDER });
       await assert.doesNotReject(south.connect());
     });
 
@@ -572,28 +457,20 @@ describe('SouthFolderScanner', () => {
         skip: process.platform === 'win32' ? '`net` is a real command on Windows; nothing to simulate here' : false
       },
       () => {
-        let originalPlatform: PropertyDescriptor | undefined;
+        simulatePlatform('win32');
 
-        beforeEach(() => {
-          originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
-          Object.defineProperty(process, 'platform', { value: 'win32' });
-        });
-
-        afterEach(() => {
-          if (originalPlatform) {
-            Object.defineProperty(process, 'platform', originalPlatform);
-          }
-        });
+        // A spy replacing a private method of the connector
+        const spyOn = (method: 'mountNetworkShare' | 'unmountNetworkShare' | 'deleteNetworkSession') => {
+          const spy = mock.fn(async (_folderPath: string) => undefined);
+          Object.assign(south, { [method]: spy });
+          return spy;
+        };
 
         it('should log error and rethrow when authenticating the SMB session fails on Windows', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.password = '';
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+          createSouth({ username: 'user', password: '', inputFolder: SHARE_FOLDER });
           // `net` does not exist on the test runner platform, so execFile rejects and the
           // catch branch (log + rethrow) is exercised.
-          await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+          await assert.rejects(south['mountNetworkShare'](SHARE_FOLDER));
           assert.ok(
             logger.error.mock.calls.some(
               c => typeof c.arguments[0] === 'string' && c.arguments[0].includes('Failed to authenticate SMB session')
@@ -602,24 +479,16 @@ describe('SouthFolderScanner', () => {
         });
 
         it('should skip SMB mount on Windows when inputFolder is not a UNC path', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.inputFolder = 'C:\\local\\folder';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-          await assert.doesNotReject((south as unknown as Private)['mountNetworkShare']('C:\\local\\folder'));
+          createSouth({ username: 'user', inputFolder: LOCAL_FOLDER });
+          await assert.doesNotReject(south['mountNetworkShare'](LOCAL_FOLDER));
         });
 
         it('should use the domain-qualified username when a domain is configured', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.domain = 'MYDOMAIN';
-          configuration.settings.password = '';
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+          createSouth({ username: 'user', domain: 'MYDOMAIN', password: '', inputFolder: SHARE_FOLDER });
           // net use does not exist on the test runner platform, so execFile rejects and the
           // catch branch (log + rethrow) is exercised — this still exercises the domain-qualified
           // username ternary branch before the failure.
-          await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+          await assert.rejects(south['mountNetworkShare'](SHARE_FOLDER));
           assert.ok(
             logger.error.mock.calls.some(
               c => typeof c.arguments[0] === 'string' && c.arguments[0].includes('Failed to authenticate SMB session')
@@ -628,27 +497,18 @@ describe('SouthFolderScanner', () => {
         });
 
         it('should skip SMB mount on Windows when username is empty', async () => {
-          configuration.settings.username = null;
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-          await assert.doesNotReject((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+          createSouth({ username: null, inputFolder: SHARE_FOLDER });
+          await assert.doesNotReject(south['mountNetworkShare'](SHARE_FOLDER));
         });
 
         it('should skip SMB unmount on Windows when username is empty', async () => {
-          configuration.settings.username = null;
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-          await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data'));
+          createSouth({ username: null, inputFolder: SHARE_FOLDER });
+          await assert.doesNotReject(south['unmountNetworkShare'](SHARE_FOLDER));
         });
 
         it('should skip SMB unmount on Windows when inputFolder is not a UNC path', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.inputFolder = 'C:\\local\\folder';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-          await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('C:\\local\\folder'));
+          createSouth({ username: 'user', inputFolder: LOCAL_FOLDER });
+          await assert.doesNotReject(south['unmountNetworkShare'](LOCAL_FOLDER));
         });
 
         // Windows refuses to add a session for a server that already has one under a different
@@ -656,15 +516,12 @@ describe('SouthFolderScanner', () => {
         // before adding the new one makes mounting self-healing regardless of what left a
         // previous session dangling (unclean shutdown, a prior failed attempt, a leftover test).
         it('should clear any existing session before authenticating a new one', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
-          const deleteSpy = mock.method(south as unknown as Private, 'deleteNetworkSession', async () => undefined);
+          createSouth({ username: 'user', inputFolder: SHARE_FOLDER });
+          const deleteSpy = spyOn('deleteNetworkSession');
 
           // `net` is missing on the test runner, so the add still rejects with ENOENT — that's
           // enough to confirm deleteNetworkSession always runs first, before the add is attempted.
-          await assert.rejects(async () => (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+          await assert.rejects(async () => south['mountNetworkShare'](SHARE_FOLDER));
           assert.strictEqual(deleteSpy.mock.calls.length, 1);
           assert.deepStrictEqual(deleteSpy.mock.calls[0].arguments, ['\\\\server\\share']);
         });
@@ -675,15 +532,16 @@ describe('SouthFolderScanner', () => {
         // session out from under it — breaking every read until the next connect/reconnect —
         // which is exactly what happened when this was tried (see commit history).
         it('should not tear down the SMB session after a successful testConnection', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
-          mock.method(south as unknown as Private, 'mountNetworkShare', async () => undefined);
-          const unmountSpy = mock.method(south as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          createSouth({ username: 'user', inputFolder: SHARE_FOLDER });
+          spyOn('mountNetworkShare');
+          const unmountSpy = spyOn('unmountNetworkShare');
           mock.method(fs, 'access', async () => undefined);
-          mock.method(fs, 'stat', async () => ({ isDirectory: () => true }));
-          mock.method(fs, 'readdir', async () => [] as unknown as Array<string>);
+          mock.method(
+            fs,
+            'stat',
+            mock.fn(async () => ({ isDirectory: () => true }))
+          );
+          mock.method(fs, 'readdir', async () => []);
 
           await south.testConnection();
 
@@ -691,12 +549,9 @@ describe('SouthFolderScanner', () => {
         });
 
         it('should not tear down the SMB session after a failed testConnection', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
-          mock.method(south as unknown as Private, 'mountNetworkShare', async () => undefined);
-          const unmountSpy = mock.method(south as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          createSouth({ username: 'user', inputFolder: SHARE_FOLDER });
+          spyOn('mountNetworkShare');
+          const unmountSpy = spyOn('unmountNetworkShare');
           mock.method(fs, 'access', async () => {
             throw new Error('ENOENT');
           });
@@ -710,18 +565,18 @@ describe('SouthFolderScanner', () => {
         // them should tear the session down — same reasoning as above, since testItem() is just
         // as capable of running against an already-connected, actively-running connector.
         it('should not tear down the SMB session during testItem', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
-          const mountSpy = mock.method(south as unknown as Private, 'mountNetworkShare', async () => undefined);
-          const unmountSpy = mock.method(south as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          createSouth({ username: 'user', inputFolder: SHARE_FOLDER });
+          const mountSpy = spyOn('mountNetworkShare');
+          const unmountSpy = spyOn('unmountNetworkShare');
           mock.method(fs, 'access', async () => undefined);
-          mock.method(fs, 'stat', async () => ({ isDirectory: () => true, mtimeMs: 1600000000000, size: 512 }));
+          mock.method(
+            fs,
+            'stat',
+            mock.fn(async () => ({ isDirectory: () => true, mtimeMs: 1600000000000, size: 512 }))
+          );
           mock.method(fs, 'readdir', async () => ['file1.csv']);
-          utilsExports.checkAge = mock.fn(() => true);
 
-          await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
+          await south.testItem(configuration.items[0], { history: undefined });
 
           assert.strictEqual(mountSpy.mock.calls.length, 1);
           assert.strictEqual(unmountSpy.mock.calls.length, 0);
@@ -731,12 +586,9 @@ describe('SouthFolderScanner', () => {
         // connect()) self-heals a session that dropped or was replaced in the meantime, instead
         // of failing every scan until the connector fully reconnects.
         it('should re-authenticate the SMB session before every scan in directQuery', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
-          const mountSpy = mock.method(south as unknown as Private, 'mountNetworkShare', async () => undefined);
-          (south as unknown as Record<string, unknown>)['listFilesRecursively'] = mock.fn(async () => []);
+          createSouth({ username: 'user', inputFolder: SHARE_FOLDER });
+          const mountSpy = spyOn('mountNetworkShare');
+          south['listFilesRecursively'] = mock.fn(async () => []);
 
           await south.directQuery(configuration.items);
 
@@ -744,13 +596,10 @@ describe('SouthFolderScanner', () => {
         });
 
         it('should silently ignore SMB session removal failures on Windows', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.inputFolder = '\\\\server\\share\\data';
-          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
-          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+          createSouth({ username: 'user', inputFolder: SHARE_FOLDER });
           // `net` does not exist on the test runner platform, so execFile rejects, but the
           // catch block swallows the error (session may already be removed).
-          await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data'));
+          await assert.doesNotReject(south['unmountNetworkShare'](SHARE_FOLDER));
         });
       }
     );
@@ -763,23 +612,16 @@ describe('SouthFolderScanner', () => {
     const MTIME_ISO = DateTime.fromMillis(MTIME_MS).toUTC().toISO()!;
 
     it('should list folders and files at the root, with ctime for both, mtime for files only, and a file count for folders', async () => {
-      const mockDirents = [
-        { name: 'subfolder', isDirectory: () => true, isFile: () => false },
-        { name: 'file1.csv', isDirectory: () => false, isFile: () => true },
-        { name: 'socket', isDirectory: () => false, isFile: () => false }
-      ];
       const readdirMock = mock.method(
         fs,
         'readdir',
         mock.fn(async (dir: unknown) => {
           // The top-level listing and the subfolder's own file-count listing share this mock — only the
           // top-level call is for the root, everything else is the nested per-folder readdir.
-          if (String(dir) === path.resolve('inputFolder')) return mockDirents;
-          return [
-            { name: 'nested1.csv', isDirectory: () => false, isFile: () => true },
-            { name: 'nested2.csv', isDirectory: () => false, isFile: () => true },
-            { name: 'nested-subdir', isDirectory: () => true, isFile: () => false }
-          ];
+          if (String(dir) === path.resolve('inputFolder')) {
+            return [folderDirent('subfolder'), fileDirent('file1.csv'), { name: 'socket', isDirectory: () => false, isFile: () => false }];
+          }
+          return [fileDirent('nested1.csv'), fileDirent('nested2.csv'), folderDirent('nested-subdir')];
         })
       );
       mock.method(
@@ -810,11 +652,10 @@ describe('SouthFolderScanner', () => {
     });
 
     it('should browse a sub-folder relative to the input folder', async () => {
-      const mockDirents = [{ name: 'nested.csv', isDirectory: () => false, isFile: () => true }];
       const readdirMock = mock.method(
         fs,
         'readdir',
-        mock.fn(async () => mockDirents)
+        mock.fn(async () => [fileDirent('nested.csv')])
       );
       mock.method(
         fs,
@@ -840,7 +681,7 @@ describe('SouthFolderScanner', () => {
       mock.method(
         fs,
         'readdir',
-        mock.fn(async () => [{ name: 'odd.csv', isDirectory: () => false, isFile: () => true }])
+        mock.fn(async () => [fileDirent('odd.csv')])
       );
       // ctime/size are read before mtime — if mtimeMs is ever missing (never happens with a real
       // fs.Stats, but worth pinning down), the earlier fields already assigned to `metadata` must
@@ -872,15 +713,11 @@ describe('SouthFolderScanner', () => {
       mock.method(
         fs,
         'readdir',
-        mock.fn(async () => [{ name: 'locked.csv', isDirectory: () => false, isFile: () => true }])
+        mock.fn(async () => [fileDirent('locked.csv')])
       );
-      mock.method(
-        fs,
-        'stat',
-        mock.fn(async () => {
-          throw new Error('EACCES: permission denied');
-        })
-      );
+      mock.method(fs, 'stat', async () => {
+        throw new Error('EACCES: permission denied');
+      });
 
       const entries = await south.explore(null);
 
@@ -890,15 +727,17 @@ describe('SouthFolderScanner', () => {
     });
 
     it('should still list a folder without a file count when it cannot be listed (readable enough to stat, not to browse)', async () => {
-      let readdirCallCount = 0;
       mock.method(
         fs,
         'readdir',
-        mock.fn(async () => {
-          readdirCallCount++;
-          if (readdirCallCount === 1) return [{ name: 'restricted', isDirectory: () => true, isFile: () => false }];
-          throw new Error('EACCES: permission denied');
-        })
+        mock.fn(
+          seq(
+            async () => [folderDirent('restricted')],
+            async () => {
+              throw new Error('EACCES: permission denied');
+            }
+          )
+        )
       );
       mock.method(
         fs,

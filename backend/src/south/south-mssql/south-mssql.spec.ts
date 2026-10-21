@@ -1,17 +1,17 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthMSSQLClass from './south-mssql';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -37,57 +37,109 @@ class MSSQLError extends Error {
   }
 }
 
+const trackedItemSettings = (query: string): SouthMSSQLItemSettings => ({
+  query,
+  trackingInstant: {
+    trackInstant: true,
+    fieldName: 'timestamp',
+    dateTimeInput: {
+      type: 'string',
+      timezone: 'Europe/Paris',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
+      locale: 'en-US'
+    }
+  }
+});
+
+const buildItem = (
+  id: string,
+  settings: SouthMSSQLItemSettings,
+  scanMode = testData.scanMode.list[0]
+): SouthConnectorItemEntity<SouthMSSQLItemSettings> => ({
+  id,
+  name: id.replace('id', 'item'),
+  enabled: true,
+  settings,
+  scanMode,
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: 3600,
+  readDelay: 0,
+  startTimeOffset: 0,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const buildConfiguration = (
+  settings: Partial<SouthMSSQLSettings>,
+  items: Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>
+): SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> => ({
+  id: 'southId',
+  name: 'south',
+  type: 'mssql',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    host: 'localhost',
+    port: 1433,
+    database: 'db',
+    username: 'username',
+    password: 'password',
+    domain: 'domain',
+    encryption: false,
+    connectionTimeout: 1000,
+    requestTimeout: 1000,
+    trustServerCertificate: true,
+    ...settings
+  },
+  groups: [],
+  items,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const items = [
+  buildItem('id1', trackedItemSettings('SELECT * FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime')),
+  buildItem('id2', { query: 'query2', trackingInstant: { trackInstant: false } }),
+  buildItem('id3', trackedItemSettings('query3'), testData.scanMode.list[1])
+];
+
 describe('SouthMSSQL', () => {
   let SouthMSSQL: typeof SouthMSSQLClass;
 
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(
-    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-      undefined
-  );
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let logger: PinoLogger;
+  let addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  >;
+  let query: Mock<(sql?: unknown) => unknown>;
+  let input: Mock<(...args: Array<unknown>) => void>;
+  let close: Mock<() => void>;
+  let connect: Mock<() => unknown>;
+  let connectionPool: Mock<(config: unknown) => unknown>;
 
-  const query = mock.fn((_sql?: unknown): unknown => ({
-    recordsets: [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]
-  }));
-  const input = mock.fn();
-  const close = mock.fn();
-  const request = mock.fn(() => ({ input, query }));
-  const connect = mock.fn(() => ({ request, close }));
-
-  const mssqlExports: Record<string, unknown> = {
-    __esModule: true,
-    ConnectionPool: mock.fn(function () {
-      return { connect };
-    })
-  };
+  const mssqlExports: Record<string, unknown> = { __esModule: true };
   mssqlExports.default = mssqlExports;
 
-  const utilsExports = {
-    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
+  const realUtils: typeof Utils = nodeRequire('../../service/utils');
+  const createUtilsMocks = () => ({
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
-    convertDelimiter: mock.fn((d: unknown) => d),
     formatInstant: mock.fn((instant: unknown) => instant),
-    generateReplacementParameters: mock.fn(() => []),
     logQuery: mock.fn(),
-    extractDiscoveryQuery: mock.fn((scope: Record<string, unknown>) => scope.query as string),
-    getErrorMessage: mock.fn((error: unknown) => {
-      if (error instanceof Error) return error.message;
-      if (typeof error === 'string') return error;
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
-      }
-      return String(error);
-    }),
-    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-      if (items.length === 0) return {};
-      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-      const lead = items[0];
-      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-    })
-  };
+    extractDiscoveryQuery: mock.fn(realUtils.extractDiscoveryQuery)
+  });
+  const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
@@ -97,7 +149,7 @@ describe('SouthMSSQL', () => {
       encryptionService: new EncryptionServiceMock('', '')
     });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -105,18 +157,19 @@ describe('SouthMSSQL', () => {
   });
 
   beforeEach(() => {
-    query.mock.resetCalls();
-    input.mock.resetCalls();
-    close.mock.resetCalls();
-    request.mock.resetCalls();
-    connect.mock.resetCalls();
-    addContentCallback.mock.resetCalls();
-    mssqlExports.ConnectionPool = mock.fn(function () {
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
+    query = mock.fn(() => ({
+      recordsets: [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]
+    }));
+    input = mock.fn();
+    close = mock.fn();
+    connect = mock.fn(() => ({ request: () => ({ input, query }), close }));
+    connectionPool = mock.fn(function () {
       return { connect };
     });
-    utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
-    utilsExports.formatInstant = mock.fn((instant: unknown) => instant);
-    utilsExports.logQuery = mock.fn();
+    mssqlExports.ConnectionPool = connectionPool;
+    Object.assign(utilsExports, createUtilsMocks());
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -127,136 +180,10 @@ describe('SouthMSSQL', () => {
 
   describe('SouthMSSQL with authentication', () => {
     let south: SouthMSSQLClass;
-    const configuration: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mssql',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 1433,
-        database: 'db',
-        username: 'username',
-        password: 'password',
-        domain: 'domain',
-        encryption: false,
-        connectionTimeout: 1000,
-        requestTimeout: 1000,
-        trustServerCertificate: true
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            query: 'SELECT * FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime',
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: {
-            query: 'query2',
-            trackingInstant: {
-              trackInstant: false
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: '',
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null
-        },
-        {
-          id: 'id3',
-          name: 'item3',
-          enabled: true,
-          settings: {
-            query: 'query3',
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[1],
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: '',
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration({}, items);
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -269,8 +196,7 @@ describe('SouthMSSQL', () => {
           { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
         ])
       );
-      utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+      utilsExports.formatInstant.mock.mockImplementation(() => '2020-02-01 00:00:00.000');
 
       const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
@@ -327,7 +253,7 @@ describe('SouthMSSQL', () => {
       const endTime = '2022-01-01T00:00:00.000Z';
 
       let formatCallCount = 0;
-      utilsExports.formatInstant = mock.fn(() => {
+      utilsExports.formatInstant.mock.mockImplementation(() => {
         formatCallCount++;
         if (formatCallCount === 1) return '2020-01-01 00:00:00.000';
         if (formatCallCount === 2) return '2022-01-01 00:00:00.000';
@@ -336,15 +262,12 @@ describe('SouthMSSQL', () => {
 
       const result = await south.queryData(configuration.items[0], startTime, endTime);
 
-      assert.strictEqual((utilsExports.formatInstant as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
-        configuration.items[0].settings.query
-      );
+      assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 2);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
 
-      assert.strictEqual((mssqlExports.ConnectionPool as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((mssqlExports.ConnectionPool as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.strictEqual(connectionPool.mock.calls.length, 1);
+      assert.deepStrictEqual(connectionPool.mock.calls[0].arguments[0], {
         user: configuration.settings.username,
         password: 'password',
         server: configuration.settings.host,
@@ -379,8 +302,7 @@ describe('SouthMSSQL', () => {
           ];
         })
       );
-      utilsExports.formatInstant = mock.fn(() => formattedInstant);
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+      utilsExports.formatInstant.mock.mockImplementation(() => formattedInstant);
 
       const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -396,7 +318,7 @@ describe('SouthMSSQL', () => {
 
       const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
 
-      assert.deepStrictEqual((utilsExports.extractDiscoveryQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.deepStrictEqual(utilsExports.extractDiscoveryQuery.mock.calls[0].arguments[0], {
         query: 'SELECT column_name, description FROM my_metadata_table'
       });
       assert.ok(query.mock.calls.some(c => c.arguments[0] === 'SELECT column_name, description FROM my_metadata_table'));
@@ -517,8 +439,7 @@ describe('SouthMSSQL', () => {
           ];
         })
       );
-      utilsExports.formatInstant = mock.fn(() => formattedInstant);
-      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+      utilsExports.formatInstant.mock.mockImplementation(() => formattedInstant);
 
       const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -530,149 +451,22 @@ describe('SouthMSSQL', () => {
 
   describe('SouthMSSQL without authentication', () => {
     let south: SouthMSSQLClass;
-    const configuration: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mssql',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 1433,
-        database: 'db',
-        username: null,
-        password: null,
-        domain: null,
-        encryption: false,
-        connectionTimeout: 1000,
-        requestTimeout: 1000,
-        trustServerCertificate: true
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            query: 'SELECT * FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime',
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: {
-            query: 'query2',
-            trackingInstant: {
-              trackInstant: false
-            }
-          },
-          scanMode: testData.scanMode.list[0],
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: '',
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null
-        },
-        {
-          id: 'id3',
-          name: 'item3',
-          enabled: true,
-          settings: {
-            query: 'query3',
-            trackingInstant: {
-              trackInstant: true,
-              fieldName: 'timestamp',
-              dateTimeInput: {
-                type: 'string',
-                timezone: 'Europe/Paris',
-                format: 'yyyy-MM-dd HH:mm:ss.SSS',
-                locale: 'en-US'
-              }
-            }
-          },
-          scanMode: testData.scanMode.list[1],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration({ username: null, password: null, domain: null }, items);
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('should manage query error', async () => {
       const startTime = testData.constants.dates.DATE_1;
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      query.mock.resetCalls();
       query.mock.mockImplementationOnce(() => {
         throw new Error('query error');
       });
 
       await assert.rejects(south.queryData(configuration.items[1], startTime, endTime), new Error('query error'));
-      assert.deepStrictEqual((mssqlExports.ConnectionPool as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      assert.deepStrictEqual(connectionPool.mock.calls[0].arguments[0], {
         user: undefined,
         password: undefined,
         server: configuration.settings.host,
@@ -694,39 +488,14 @@ describe('SouthMSSQL', () => {
 
   describe('SouthMSSQL test connection', () => {
     let south: SouthMSSQLClass;
-    const configuration: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mssql',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        host: 'localhost',
-        port: 1433,
-        database: 'db',
-        username: 'username',
-        password: 'password',
-        domain: 'domain',
-        encryption: false,
-        connectionTimeout: 1000,
-        requestTimeout: 1000,
-        trustServerCertificate: true
-      },
-      groups: [],
-      items: [],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const configuration = buildConfiguration({}, []);
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {
       let queryCallCount = 0;
-      query.mock.resetCalls();
       query.mock.mockImplementation(() => {
         queryCallCount++;
         if (queryCallCount === 1) return { recordsets: [[{ table_count: 21 }]] };
@@ -745,7 +514,6 @@ describe('SouthMSSQL', () => {
 
     it('Database is reachable but version is unavailable', async () => {
       let queryCallCount = 0;
-      query.mock.resetCalls();
       query.mock.mockImplementation(() => {
         queryCallCount++;
         if (queryCallCount === 1) return { recordsets: [[{ table_count: 5 }]] };
@@ -760,8 +528,7 @@ describe('SouthMSSQL', () => {
     it('Unable to create connection pool', async () => {
       const errorMessage = 'Error creating connection pool';
       for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-        close.mock.resetCalls();
-        mssqlExports.ConnectionPool = mock.fn(function () {
+        connectionPool.mock.mockImplementation(function () {
           throw new MSSQLError(errorMessage, code);
         });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
@@ -770,7 +537,6 @@ describe('SouthMSSQL', () => {
 
     it('System table unreachable', async () => {
       const errorMessage = 'INFORMATION_SCHEMA.TABLES does not exist';
-      query.mock.resetCalls();
       query.mock.mockImplementation(() => {
         throw new Error(errorMessage);
       });
@@ -782,14 +548,12 @@ describe('SouthMSSQL', () => {
     });
 
     it('Database has no tables', async () => {
-      query.mock.resetCalls();
       query.mock.mockImplementation(() => ({ recordsets: [[{ table_count: 0 }]] }));
       await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
       assert.ok(close.mock.calls.length > 0);
     });
 
     it('Database does not return count of tables', async () => {
-      query.mock.resetCalls();
       query.mock.mockImplementation(() => ({ recordsets: [[]] }));
       await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
       assert.ok(close.mock.calls.length > 0);
@@ -798,8 +562,6 @@ describe('SouthMSSQL', () => {
     it('Unable to connect to database without password', async () => {
       const errorMessage = 'Error connecting to database';
       for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-        close.mock.resetCalls();
-        connect.mock.resetCalls();
         connect.mock.mockImplementationOnce(() => {
           throw new MSSQLError(errorMessage, code);
         });
