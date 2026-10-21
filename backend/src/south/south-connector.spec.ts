@@ -550,10 +550,14 @@ describe('SouthConnector', () => {
       assert.strictEqual(key, `group:${group.id}`);
     });
 
-    it('should be properly initialized', () => {
-      assert.ok(logger.trace.mock.calls.length >= 0);
+    it('should not connect a disabled connector on start', async () => {
+      const connect = mock.method(south, 'connect', async () => undefined);
+
+      await south.start();
+
       assert.strictEqual(south.isEnabled(), false);
-      assert.ok(logger.trace.mock.calls.length >= 0);
+      assert.strictEqual(connect.mock.calls.length, 0);
+      assert.ok(!logger.debug.mock.calls.some(c => String(c.arguments[0]).includes('enabled. Starting services')));
     });
 
     it('should report hasExplore() as true now that SouthMSSQL implements explore()', () => {

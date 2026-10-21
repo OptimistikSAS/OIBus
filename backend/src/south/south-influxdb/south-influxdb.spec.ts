@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
@@ -204,22 +203,36 @@ describe('SouthInfluxDB', () => {
       await assert.rejects(south.testConnection(), /is not responding/);
     });
 
-    it('should run historyQuery, write JSON file and call addContent', async () => {
-      const queryDataMock = mock.method(south, 'queryData', async () => [{ time: '2020-02-01T00:00:00Z', value: 1 }]);
+    it('should run historyQuery and send the results as JSON content', async () => {
+      const rows = [
+        { time: '2020-02-01T00:00:00Z', value: 1 },
+        { time: '2020-02-02T00:00:00Z', value: 2 }
+      ];
+      const queryDataMock = mock.method(south, 'queryData', async () => rows);
+
       const result = await south.historyQuery([baseItem], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-      assert.equal(queryDataMock.mock.calls.length, 1);
-      assert.equal(addContentCallback.mock.calls.length, 1);
-      const content = addContentCallback.mock.calls[0].arguments[1] as { type: string; content: string };
-      assert.equal(content.type, 'any-content');
-      assert.ok(content.content.includes(JSON.stringify([{ time: '2020-02-01T00:00:00Z', value: 1 }])));
-      assert.notEqual(result.value, null);
+
+      assert.strictEqual(queryDataMock.mock.calls.length, 1);
+      assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
+        baseItem,
+        testData.constants.dates.DATE_1,
+        testData.constants.dates.DATE_2
+      ]);
+      assert.strictEqual(addContentCallback.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
+        'southId',
+        { type: 'any-content', content: JSON.stringify(rows) },
+        testData.constants.dates.FAKE_NOW,
+        [baseItem],
+        null, // not run by a history query interval
+        null
+      ]);
+      assert.deepStrictEqual(result, { trackedInstant: '2020-02-02T00:00:00Z', value: rows[1] });
     });
 
-    it('should not write file or call addContent when no results', async () => {
-      const writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
+    it('should not call addContent when no results', async () => {
       mock.method(south, 'queryData', async () => []);
       const result = await south.historyQuery([baseItem], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-      assert.equal(writeFileMock.mock.calls.length, 0);
       assert.equal(addContentCallback.mock.calls.length, 0);
       assert.equal(result.trackedInstant, null);
       assert.equal(result.value, null);
