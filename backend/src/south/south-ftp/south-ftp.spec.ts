@@ -572,39 +572,26 @@ describe('SouthFTP', () => {
     });
 
     it('should skip a preserved file of a sub-folder when listing files recursively', async () => {
-      const configRecursive = {
-        ...configuration,
-        items: configuration.items.map(item => ({
-          ...item,
-          settings: { ...item.settings, recursive: true }
-        }))
-      };
-      const southRecursive = new SouthFtp(configRecursive, addContentCallback, southCacheRepository, 'cacheFolder');
-      await southRecursive.start();
-
-      const dirEntry = {
-        ...createMockFileInfo('subdir', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())),
-        isDirectory: true,
-        isFile: false
-      } as FileInfo;
-      const preservedFile = {
-        ...createMockFileInfo('file.log', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())),
-        isDirectory: false,
-        isFile: true
-      } as FileInfo;
-      mockFtpClient.list.mock.mockImplementation(async (remotePath?: string) => (remotePath === 'input' ? [dirEntry] : [preservedFile]));
+      const southRecursive = await startSouthWith({}, { recursive: true });
+      const dirEntry = createFileInfo('subdir', { type: FileType.Directory });
+      const preservedFile = createFileInfo('file.log');
+      ftpClient.list.mock.mockImplementation(async (remotePath?: string) => (remotePath === 'input' ? [dirEntry] : [preservedFile]));
       // Like the real checkAge: a file already sent and unchanged is filtered out
       utilsExports.checkAge.mock.mockImplementation(
-        ((_item: unknown, filename: string, modifiedTime: number, filesPreserved: Array<{ filename: string; modifiedTime: number }>) =>
-          !filesPreserved.some(file => file.filename === filename && file.modifiedTime === modifiedTime)) as () => boolean
+        (_item, filename, modifiedTime, filesPreserved) =>
+          !filesPreserved.some(file => file.filename === filename && file.modifiedTime === modifiedTime)
       );
 
-      const item = configRecursive.items[1]; // preserveFiles: true
+      const item = southRecursive.connectorConfiguration.items[1]; // preserveFiles: true
       // The preserved files are stored by their path from the remote folder
       const filesPreserved = [{ filename: 'subdir/file.log', modifiedTime: preservedFile.modifiedAt!.getTime() }];
       const result = await southRecursive.listFiles(item, filesPreserved);
 
       assert.strictEqual(result.length, 0);
+      assert.deepStrictEqual(utilsExports.checkAge.mock.calls[0].arguments.slice(1, 3), [
+        'subdir/file.log',
+        preservedFile.modifiedAt!.getTime()
+      ]);
     });
 
     it('should query files with file that has zero size', async () => {
