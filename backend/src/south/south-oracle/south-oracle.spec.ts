@@ -535,9 +535,15 @@ describe('SouthOracle', () => {
     it('Database is reachable and has tables', async () => {
       execute.mock.mockImplementation(async () => ({ rows: [{ TABLE_COUNT: 21 }] }));
 
-      await south.testConnection();
+      const result = await south.testConnection();
 
-      assert.ok(close.mock.calls.length > 0);
+      assert.deepStrictEqual(result, { items: [] });
+      assert.deepStrictEqual(getConnection.mock.calls[0].arguments, [
+        { user: 'username', password: 'password', connectString: 'localhost:1521/db?connect_timeout=1000ms' }
+      ]);
+      assert.strictEqual(ping.mock.calls.length, 1);
+      assert.strictEqual(execute.mock.calls.length, 1);
+      assert.strictEqual(close.mock.calls.length, 1);
     });
 
     it('Database is reachable but returns no tables', async () => {
@@ -599,11 +605,16 @@ describe('SouthOracle', () => {
       );
       const errorMessage = 'Error pinging database';
 
-      for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
+      for (const [index, code] of (Object.keys(ERROR_CODES) as Array<ErrorCodes>).entries()) {
         ping.mock.mockImplementation(() => {
           throw new OracleDBError(errorMessage, code);
         });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
+        // An empty username and password are not sent to the driver
+        assert.deepStrictEqual(getConnection.mock.calls[index].arguments, [
+          { user: undefined, password: undefined, connectString: 'localhost:1521/db?connect_timeout=1000ms' }
+        ]);
+        assert.strictEqual(close.mock.calls.length, index + 1);
       }
     });
   });
