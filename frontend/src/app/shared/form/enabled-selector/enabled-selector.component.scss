@@ -1,0 +1,7 @@
+.oib-enabled-selector {
+  // the global .btn-group style whitens the left border of every button which is not a first child, which a label
+  // always is not (its radio button comes first): restore the outer left border of the group
+  > .btn-check:first-child + .btn {
+    border-left-color: var(--bs-btn-border-color);
+  }
+}

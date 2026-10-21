@@ -20,7 +20,7 @@ North connectors.
 | --------------- | -------------------------------------------------------------------------------- | ------------------- |
 | **Name**        | A user-friendly label to identify the connector's purpose.                       | `My MQTT Connector` |
 | **Description** | Optional details about the connection, access rights, or unique characteristics. | `Production broker` |
-| **Enabled**     | Enable or disable the connector (from the list or its display page).             | Enabled/Disabled    |
+| **Status**      | Enable or disable the connector (from the list or its display page).             | Enabled/Disabled    |
 
 :::caution Disabled North Connectors
 A disabled North connector **will not cache any data**.

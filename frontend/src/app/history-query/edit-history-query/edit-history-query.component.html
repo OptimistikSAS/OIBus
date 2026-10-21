@@ -322,18 +322,20 @@
                 </div>
                 <div class="row">
                   <!-- Name -->
-                  <div class="col-4">
+                  <div class="col-8">
                     <div class="form-group">
                       <label class="form-label" for="history-query-name" translate="history-query.name"></label>
                       <input formControlName="name" id="history-query-name" class="form-control" />
                       <val-errors controlName="name" />
                     </div>
                   </div>
+                </div>
+                <div class="row">
                   <!-- Description -->
-                  <div class="col-5">
+                  <div class="col-12">
                     <div class="form-group">
                       <label class="form-label" for="history-query-description" translate="history-query.description"></label>
-                      <input formControlName="description" id="history-query-description" class="form-control" />
+                      <textarea formControlName="description" id="history-query-description" class="form-control" rows="3"></textarea>
                     </div>
                   </div>
                 </div>
