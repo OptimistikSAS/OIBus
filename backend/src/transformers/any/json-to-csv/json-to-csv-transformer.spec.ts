@@ -5,7 +5,7 @@ import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule, assertContains } from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
-import { applyFilenameVariables } from '../../../service/utils';
+import { applyFilenameVariables, stringToBoolean } from '../../../service/utils';
 import type JSONToCSVTransformerType from './json-to-csv-transformer';
 import jsonToCsvManifest from './manifest';
 
@@ -187,6 +187,34 @@ describe('JSONToCSVTransformer', () => {
       }
     ]);
     assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
+  });
+
+  it('should convert JSON booleans, numbers and strings of a boolean field', async () => {
+    mockUtils.stringToBoolean = mock.fn(stringToBoolean);
+    const options = {
+      regex: '.*\\.json',
+      filename: 'boolean-test.csv',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*]',
+      fields: [{ jsonPath: '$[*].isActive', columnName: 'Active', dataType: 'boolean' }]
+    };
+    const inputData = [{ isActive: true }, { isActive: false }, { isActive: 1 }, { isActive: 'true' }];
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
+    mockStream.push(JSON.stringify(inputData));
+    mockStream.push(null);
+
+    await flushPromises();
+    await promise;
+
+    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [
+      { Active: 'true' },
+      { Active: 'false' },
+      { Active: 'true' },
+      { Active: 'true' }
+    ]);
   });
 
   it('should return correct manifest settings', () => {

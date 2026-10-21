@@ -82,7 +82,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
               typedValue = Number(result);
               break;
             case 'boolean':
-              typedValue = stringToBoolean(result).toString();
+              typedValue = (typeof result === 'boolean' ? result : stringToBoolean(String(result))).toString();
               break;
             case 'string':
               // A resolved object/array (e.g. an embedded JSON node) must be serialized, not
