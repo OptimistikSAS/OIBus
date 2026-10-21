@@ -4,8 +4,9 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 import { Database } from 'better-sqlite3';
 
 import { ItemPointMetadataWrite } from '../../model/item-point-metadata.model';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import { createAuditServiceMock } from '../../tests/utils/test-utils';
 import ConfigurationWorkflowRepository from './configuration-workflow.repository';
 import ItemPointMetadataRepository from './item-point-metadata.repository';
 

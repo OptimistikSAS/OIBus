@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
-import { after, before, beforeEach, describe, it, mock } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
 import { ActivationWindow, ScanModeInterval } from '../../../shared/model/domain/scan-mode.model';
 
 import AuditService from '../../service/audit.service';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import ScanModeRepository, { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-scan-mode.db';
@@ -30,13 +31,16 @@ describe('ScanModeRepository with populated database', () => {
   });
 
   let repository: ScanModeRepository;
-  let auditService: AuditService;
+  let auditService: Mocked<AuditService>;
   let createdId: string;
 
   beforeEach(() => {
     auditService = createAuditServiceMock();
     repository = new ScanModeRepository(database, auditService);
   });
+
+  /** The arguments of every audit record made in the test. */
+  const recorded = () => auditService.record.mock.calls.map(call => call.arguments);
 
   it('should properly get all scan modes', () => {
     assert.strictEqual(repository.findAll().length, testData.scanMode.list.length);
@@ -63,9 +67,7 @@ describe('ScanModeRepository with populated database', () => {
     assert.strictEqual(created.interval, null);
     assert.strictEqual(created.activationWindow, null);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['scan_mode', created.id, 'CREATE', null, created, 'userTest']);
+    assert.deepStrictEqual(recorded(), [['scan_mode', created.id, 'CREATE', null, created, 'userTest']]);
   });
 
   it('should preserve a caller-supplied id when creating a scan mode (config import)', () => {
@@ -119,9 +121,7 @@ describe('ScanModeRepository with populated database', () => {
     assert.strictEqual(result.interval, null);
     assert.strictEqual(result.activationWindow, null);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['scan_mode', createdId, 'UPDATE', before, result, 'userTest']);
+    assert.deepStrictEqual(recorded(), [['scan_mode', createdId, 'UPDATE', before, result, 'userTest']]);
   });
 
   it('should update a scan mode to an interval type and back to cron', () => {
@@ -154,9 +154,7 @@ describe('ScanModeRepository with populated database', () => {
     repository.delete(createdId, 'userTest');
     assert.strictEqual(repository.findById(createdId), null);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['scan_mode', createdId, 'DELETE', before, null, 'userTest']);
+    assert.deepStrictEqual(recorded(), [['scan_mode', createdId, 'DELETE', before, null, 'userTest']]);
   });
 });
 

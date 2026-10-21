@@ -8,8 +8,9 @@ import { UserCommandDTO } from '../../../shared/model/api/user.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
 
 import AuditService from '../../service/audit.service';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, flushPromises, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import UserRepository from './user.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-user.db';
@@ -26,7 +27,7 @@ describe('UserRepository', () => {
   });
 
   let repository: UserRepository;
-  let auditService: AuditService;
+  let auditService: Mocked<AuditService>;
   let createdId: string;
 
   beforeEach(() => {
@@ -34,6 +35,9 @@ describe('UserRepository', () => {
     auditService = createAuditServiceMock();
     repository = new UserRepository(database, auditService);
   });
+
+  /** The arguments of every audit record made in the test. */
+  const recorded = () => auditService.record.mock.calls.map(call => call.arguments);
 
   afterEach(() => {
     mock.restoreAll();
@@ -74,40 +78,32 @@ describe('UserRepository', () => {
     assert.ok(createdId);
     assert.deepStrictEqual(stripAuditFields(result), stripAuditFields({ ...testData.users.command, id: createdId }));
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['user', result.id, 'CREATE', null, result, testData.users.list[0].id]);
+    assert.deepStrictEqual(recorded(), [['user', result.id, 'CREATE', null, result, testData.users.list[0].id]]);
   });
 
   it('should preserve a caller-supplied id when creating a user (config import)', async () => {
-    const importedCommand: UserCommandDTO = JSON.parse(JSON.stringify(testData.users.command));
-    importedCommand.login = 'imported-login';
+    const importedCommand: UserCommandDTO = { ...testData.users.command, login: 'imported-login' };
     const result = await repository.create(importedCommand, 'password', 'importUser', 'preserved-user-id');
     assert.strictEqual(result.id, 'preserved-user-id');
     assert.deepStrictEqual(repository.findById('preserved-user-id'), result);
   });
 
   it('should create a user with an already-hashed password (config import)', async () => {
-    const importedCommand: UserCommandDTO = JSON.parse(JSON.stringify(testData.users.command));
-    importedCommand.login = 'imported-login-2';
+    const importedCommand: UserCommandDTO = { ...testData.users.command, login: 'imported-login-2' };
     const result = repository.createWithHashedPassword(importedCommand, 'already-hashed-value', 'importUser', 'preserved-user-id-2');
     assert.strictEqual(result.id, 'preserved-user-id-2');
     assert.strictEqual(repository.getHashedPasswordByLogin('imported-login-2'), 'already-hashed-value');
   });
 
   it('should update a user', async () => {
-    const newCommand: UserCommandDTO = JSON.parse(JSON.stringify(testData.users.command));
-    newCommand.login = 'new login';
-    newCommand.timezone = 'UTC';
+    const newCommand: UserCommandDTO = { ...testData.users.command, login: 'new login', timezone: 'UTC' };
     const before = repository.findById(createdId);
     repository.update(createdId, newCommand, 'updaterUser');
     const result = repository.findById(createdId)!;
     assert.strictEqual(result.login, newCommand.login);
     assert.strictEqual(result.timezone, newCommand.timezone);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['user', createdId, 'UPDATE', before, result, 'updaterUser']);
+    assert.deepStrictEqual(recorded(), [['user', createdId, 'UPDATE', before, result, 'updaterUser']]);
 
     await repository.updatePassword(createdId, 'new password', 'updaterUser');
 
@@ -115,8 +111,8 @@ describe('UserRepository', () => {
     assert.strictEqual(newPassword, 'new password');
 
     // The password change is audited without ever recording the password hash
-    assert.strictEqual(recordMock.mock.calls.length, 2);
-    assert.deepStrictEqual(recordMock.mock.calls[1].arguments, [
+    assert.strictEqual(recorded().length, 2);
+    assert.deepStrictEqual(recorded()[1], [
       'user',
       createdId,
       'UPDATE',
@@ -131,9 +127,7 @@ describe('UserRepository', () => {
     repository.delete(testData.users.list[1].id, 'deleterUser');
     assert.strictEqual(repository.findById(testData.users.list[1].id), null);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['user', testData.users.list[1].id, 'DELETE', before, null, 'deleterUser']);
+    assert.deepStrictEqual(recorded(), [['user', testData.users.list[1].id, 'DELETE', before, null, 'deleterUser']]);
   });
 });
 
