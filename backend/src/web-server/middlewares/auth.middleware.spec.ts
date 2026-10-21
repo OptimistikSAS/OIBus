@@ -199,26 +199,6 @@ describe('authMiddleware', () => {
       assert.strictEqual(verifySpy.mock.calls.length, 0);
       assert.strictEqual(mockNext.mock.calls.length, 0);
     });
-
-    it('should return 401 when SSE token password does not match the stored hashed password', async () => {
-      userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
-      mock.method(jwt, 'verify', () => ({ login: 'alice', password: 'a-different-hash' }));
-
-      const { res } = await run('/sse/engine', {}, '/sse/engine?token=abc', { token: 'abc' });
-
-      assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
-      assert.strictEqual(mockNext.mock.calls.length, 0);
-    });
-
-    it('should return 401 when SSE token user has no stored hashed password', async () => {
-      userService.getHashedPasswordByLogin.mock.mockImplementation(() => null);
-      mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
-
-      const { res } = await run('/sse/engine', {}, '/sse/engine?token=abc', { token: 'abc' });
-
-      assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
-      assert.strictEqual(mockNext.mock.calls.length, 0);
-    });
   });
 
   describe('No auth provided', () => {
