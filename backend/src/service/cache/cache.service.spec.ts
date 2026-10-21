@@ -1,8 +1,10 @@
 import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { Readable } from 'node:stream';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
 import { mockBaseFolders } from '../../tests/utils/test-utils';
@@ -179,34 +181,24 @@ describe('CacheService', () => {
 
   it('should be properly initialized with files in cache', async () => {
     const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
-    readdirMock.mock.mockImplementation(
-      seq(
-        async () => ['file1', 'file2', 'bad'], // Cache folder
-        async () => ['file3', 'file4', 'bad'], // Error folder
-        async () => ['file5', 'file6', 'bad'] // Archive folder
-      )
-    );
-    readFileMock.mock.mockImplementation(
-      seq(
-        async () => JSON.stringify(fileList[0].metadata),
-        async () => JSON.stringify(fileList[1].metadata),
-        async () => {
-          throw new Error('error 1');
-        },
-        async () => JSON.stringify(fileList[2].metadata),
-        async () => JSON.stringify(fileList[3].metadata),
-        async () => {
-          throw new Error('error 2');
-        },
-        async () => JSON.stringify(fileList[4].metadata),
-        async () => JSON.stringify(fileList[5].metadata),
-        async () => {
-          throw new Error('error 3');
-        }
-      )
-    );
+    const files: Record<string, Record<string, CacheMetadata | null>> = {
+      [service.cacheFolder]: { file1: fileList[0].metadata, file2: fileList[1].metadata, bad: null },
+      [service.errorFolder]: { file3: fileList[2].metadata, file4: fileList[3].metadata, bad: null },
+      [service.archiveFolder]: { file5: fileList[4].metadata, file6: fileList[5].metadata, bad: null }
+    };
+    // Every content file has its metadata: nothing to remove
+    readdirMock.mock.mockImplementation(async (folder: string) => Object.keys(files[path.dirname(folder)]));
+    readFileMock.mock.mockImplementation(async (filePath: string) => {
+      const metadata = files[path.dirname(path.dirname(filePath))][path.basename(filePath)];
+      if (!metadata) {
+        throw new Error('read error');
+      }
+      return JSON.stringify(metadata);
+    });
 
     await service.start();
+
+    assert.strictEqual(rmMock.mock.calls.length, 0);
 
     // Check initial queue sort based on date
     const expectedQueueLength = 2; // Only valid files in 'cache' folder
@@ -385,19 +377,66 @@ describe('CacheService', () => {
   });
 
   it('should be properly initialized without files in cache', async () => {
-    readdirMock.mock.mockImplementation(
-      seq(
-        async () => [], // Cache folder
-        async () => [], // Error folder
-        async () => [] // Archive folder
-      )
-    );
+    readdirMock.mock.mockImplementation(async () => []);
 
     await service.start();
 
     assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'No content in cache'));
     assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'No content errored'));
     assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'No content archived'));
+  });
+
+  it('should remove the content files without metadata at startup', async () => {
+    const now = Date.now();
+    const contentFiles: Record<string, Record<string, { mtimeMs: number; size: number }>> = {
+      [service.cacheFolder]: {
+        file1: { mtimeMs: now - 3_600_000, size: 100 },
+        orphan1: { mtimeMs: now - 3_600_000, size: 1024 * 1024 },
+        // Its metadata may still be being written
+        recent: { mtimeMs: now - 1_000, size: 50 },
+        locked: { mtimeMs: now - 3_600_000, size: 200 }
+      },
+      [service.errorFolder]: { orphan2: { mtimeMs: now - 3_600_000, size: 1024 * 1024 } },
+      [service.archiveFolder]: {}
+    };
+    readdirMock.mock.mockImplementation(async (folder: string) => {
+      if (path.basename(folder) === CONTENT_FOLDER) {
+        return Object.keys(contentFiles[path.dirname(folder)]);
+      }
+      return folder === path.join(service.cacheFolder, METADATA_FOLDER) ? ['file1'] : [];
+    });
+    readFileMock.mock.mockImplementation(async () => JSON.stringify(fileList[0].metadata));
+    statMock.mock.mockImplementation(
+      async (filePath: string) => contentFiles[path.dirname(path.dirname(filePath))][path.basename(filePath)]
+    );
+    rmMock.mock.mockImplementation(async (filePath: string) => {
+      if (path.basename(filePath) === 'locked') {
+        throw new Error('EBUSY');
+      }
+    });
+
+    await service.start();
+
+    assert.deepStrictEqual(
+      rmMock.mock.calls.map(c => c.arguments[0]),
+      [
+        path.join(service.cacheFolder, CONTENT_FOLDER, 'orphan1'),
+        path.join(service.cacheFolder, CONTENT_FOLDER, 'locked'),
+        path.join(service.errorFolder, CONTENT_FOLDER, 'orphan2')
+      ]
+    );
+    assert.deepStrictEqual(rmMock.mock.calls[0].arguments[1], { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    assert.deepStrictEqual(
+      logger.warn.mock.calls.map(c => c.arguments[0]),
+      [
+        `Could not remove content file "${path.join(service.cacheFolder, CONTENT_FOLDER, 'locked')}" without metadata: EBUSY`,
+        '1 content file(s) without metadata removed from cache folder (1 MB)',
+        '1 content file(s) without metadata removed from error folder (1 MB)'
+      ]
+    );
+    // The orphans are not part of the cache
+    assert.strictEqual((priv()['queue'] as Array<unknown>).length, 1);
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 100, error: 0, archive: 0 });
   });
 
   it('should search cache content', async () => {
@@ -516,6 +555,57 @@ describe('CacheService', () => {
     const contentSizeCall = emitEventMock.mock.calls.find(c => c.arguments[0] === 'cache-content-size');
     assert.ok(contentSizeCall, 'cache-content-size must be emitted when content is cached');
     assert.strictEqual(contentSizeCall!.arguments[1], output.length);
+  });
+
+  it('should remove the written content when the metadata cannot be written', async () => {
+    generateRandomIdMock.mock.mockImplementation(() => 'random');
+    writeFileMock.mock.mockImplementation(
+      seq(
+        async () => undefined,
+        async () => {
+          throw new Error('ENOSPC');
+        }
+      )
+    );
+    const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
+
+    await assert.rejects(service.addCacheContent(Buffer.from('some content'), { contentType: 'any' }), { message: 'ENOSPC' });
+
+    assert.deepStrictEqual(
+      rmMock.mock.calls.map(c => c.arguments[0]),
+      [path.join(service.cacheFolder, CONTENT_FOLDER, 'random'), path.join(service.cacheFolder, METADATA_FOLDER, 'random')]
+    );
+    assert.strictEqual(service.cacheIsEmpty(), true);
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 0, error: 0, archive: 0 });
+    assert.strictEqual(emitEventMock.mock.calls.length, 0);
+  });
+
+  it('should remove the partial content when the source stream fails', async () => {
+    // Write on a real disk, to check that no partial file is left behind
+    mock.restoreAll();
+    generateRandomIdMock.mock.mockImplementation(() => 'random');
+    const tmpFolder = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-cache-'));
+    try {
+      await fs.mkdir(path.join(tmpFolder, CONTENT_FOLDER));
+      await fs.mkdir(path.join(tmpFolder, METADATA_FOLDER));
+      service = new CacheService(logger, tmpFolder, tmpFolder, tmpFolder);
+      const source = new Readable({
+        read() {
+          this.push(Buffer.alloc(1024));
+          this.destroy(new Error('source error'));
+        }
+      });
+
+      await assert.rejects(service.addCacheContent(source, { contentType: 'any', contentFilename: 'file.csv' }), {
+        message: 'source error'
+      });
+
+      assert.deepStrictEqual(await fs.readdir(path.join(tmpFolder, CONTENT_FOLDER)), []);
+      assert.deepStrictEqual(await fs.readdir(path.join(tmpFolder, METADATA_FOLDER)), []);
+      assert.strictEqual(service.cacheIsEmpty(), true);
+    } finally {
+      await fs.rm(tmpFolder, { recursive: true, force: true });
+    }
   });
 
   describe('Debounce Logging', () => {
@@ -1123,35 +1213,36 @@ describe('CacheService', () => {
     });
   });
 
-  it('should delete cache entry', async () => {
-    rmMock.mock.mockImplementation(
-      seq(
-        async () => undefined,
-        async () => {
-          throw new Error('rm error');
-        }
-      )
+  it('should delete cache entry content before its metadata', async () => {
+    await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string) => Promise<void>)('error', 'file');
+
+    const rmOptions = { recursive: true, force: true, maxRetries: 5, retryDelay: 100 };
+    assert.deepStrictEqual(
+      rmMock.mock.calls.map(c => c.arguments),
+      [
+        [path.join(service.errorFolder, CONTENT_FOLDER, 'file'), rmOptions],
+        [path.join(service.errorFolder, METADATA_FOLDER, 'file'), rmOptions]
+      ]
     );
+    assert.strictEqual(logger.warn.mock.calls.length, 0);
+  });
+
+  it('should keep the metadata when the cache entry content cannot be deleted', async () => {
+    rmMock.mock.mockImplementation(async () => {
+      throw new Error('EBUSY');
+    });
+
     await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string) => Promise<void>)('cache', 'file');
 
-    assert.strictEqual(rmMock.mock.calls.length, 2);
-    assert.ok(
-      rmMock.mock.calls.some(
-        c =>
-          c.arguments[0] === path.join(service.cacheFolder, METADATA_FOLDER, 'file') &&
-          (c.arguments[1] as { recursive: boolean; force: boolean })?.recursive === true &&
-          (c.arguments[1] as { recursive: boolean; force: boolean })?.force === true
-      )
+    // The metadata still tracks the content left on disk
+    assert.deepStrictEqual(
+      rmMock.mock.calls.map(c => c.arguments[0]),
+      [path.join(service.cacheFolder, CONTENT_FOLDER, 'file')]
     );
-    assert.ok(
-      rmMock.mock.calls.some(
-        c =>
-          c.arguments[0] === path.join(service.cacheFolder, CONTENT_FOLDER, 'file') &&
-          (c.arguments[1] as { recursive: boolean; force: boolean })?.recursive === true &&
-          (c.arguments[1] as { recursive: boolean; force: boolean })?.force === true
-      )
+    assert.deepStrictEqual(
+      logger.warn.mock.calls.map(c => c.arguments[0]),
+      ['Could not delete cache entry "file" from cache: EBUSY']
     );
-    assert.ok(logger.trace.mock.calls.some(c => c.arguments[0] === `Error deleting cache entry "file": rm error`));
   });
 
   it('should empty cache', async () => {
