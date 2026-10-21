@@ -100,12 +100,13 @@ déplacés vers un groupe, importés et exportés. Plutôt que de les créer un 
 
 ### Créer et modifier un élément {#creating-and-editing-an-item}
 
-La fenêtre de l'élément se parcourt en trois étapes, affichées dans une barre d'étapes en haut de la fenêtre :
+La fenêtre de l'élément se parcourt en trois étapes, affichées dans une barre d'étapes en haut de la fenêtre. Les
+paramètres viennent en premier, pour être testés avant de nommer et de planifier l'élément :
 
 | Étape                              | Contenu                                                                                                                                                                                                    |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Général**                        | Nom, groupe, planification et **Activé**, puis les **Paramètres d'historique** (connecteurs compatibles historique) et les paramètres de **Mise en cache** (connecteurs de la famille IoT).                |
 | **Paramètres**                     | Les paramètres d'élément propres au connecteur (voir la page de chaque connecteur), avec le [panneau de test](#testing-an-item) juste en dessous, pour essayer les paramètres au fil de leur modification. |
+| **Nom et planification**           | Nom, groupe, planification et **Activé**, puis les **Paramètres d'historique** (connecteurs compatibles historique) et les paramètres de **Mise en cache** (connecteurs de la famille IoT).                |
 | **Vérification et enregistrement** | Un récapitulatif en lecture seule de l'élément complet : paramètres généraux, d'historique et de mise en cache, puis ses paramètres de connecteur.                                                         |
 
 **Suivant** ne passe à l'étape suivante qu'une fois l'étape courante valide. Un nouvel élément s'enregistre depuis la
@@ -123,20 +124,20 @@ points) sont conservés dans la page et enregistrés avec le connecteur, d'où l
 
 ### Champs d'un élément {#item-fields}
 
-| Paramètre                         | Étape      | Description                                                                                                                                                                           | Exemple de valeur               |
-| --------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| **Nom**                           | Général    | Référence unique utilisée par les connecteurs North et les transformateurs pour identifier ce point de données.                                                                       | `Temperature_Sensor1`           |
-| **Groupe**                        | Général    | Le groupe auquel cet élément appartient. Laissez sur **Aucun** pour un élément autonome avec sa propre planification.                                                                 | `Group A`                       |
-| **Planification**                 | Général    | Mode de scan qui détermine quand OIBus collecte les données. Affiché uniquement lorsque l'élément n'a pas de groupe (la planification du groupe est affichée sinon).                  | `Every 1 min`                   |
-| **Activé**                        | Général    | Indique si l'élément est actif.                                                                                                                                                       | Activé/Désactivé                |
-| **Synchroniser avec le groupe**   | Général    | _(connecteurs compatibles historique, éléments groupés)_ Lorsque activé, les paramètres d'historique ci-dessous sont hérités du groupe.                                               | Activé/Désactivé                |
-| **Intervalle de lecture maximal** | Général    | _(connecteurs compatibles historique)_ Durée maximale d'une sous-requête en secondes.                                                                                                 | `3600`                          |
-| **Délai de lecture**              | Général    | _(connecteurs compatibles historique)_ Pause en millisecondes entre les sous-requêtes consécutives.                                                                                   | `200`                           |
-| **Décalage de l'heure de début**  | Général    | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@StartTime`. Des valeurs négatives l'avancent pour capturer les données arrivées en retard.                          | `-60000`                        |
-| **Décalage de l'heure de fin**    | Général    | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@EndTime`. Des valeurs négatives l'avancent.                                                                         | `0`                             |
-| **Stratégie de récupération**     | Général    | _(connecteurs compatibles historique)_ Ordre dans lequel un arriéré de sous-intervalles non interrogés est rattrapé : du plus ancien au plus récent (par défaut) ou l'inverse.        | `Du plus ancien au plus récent` |
-| **Stratégie de mise en cache**    | Général    | _(connecteurs de la famille IoT uniquement)_ Filtre les valeurs collectées qui sont effectivement mises en cache et transmises. Voir [Stratégie de mise en cache](#caching-strategy). | `On change`                     |
-| **Paramètres spécifiques**        | Paramètres | Varie selon le type de connecteur — voir la documentation de chaque connecteur.                                                                                                       | —                               |
+| Paramètre                         | Étape                | Description                                                                                                                                                                           | Exemple de valeur               |
+| --------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **Nom**                           | Nom et planification | Référence unique utilisée par les connecteurs North et les transformateurs pour identifier ce point de données.                                                                       | `Temperature_Sensor1`           |
+| **Groupe**                        | Nom et planification | Le groupe auquel cet élément appartient. Laissez sur **Aucun** pour un élément autonome avec sa propre planification.                                                                 | `Group A`                       |
+| **Planification**                 | Nom et planification | Mode de scan qui détermine quand OIBus collecte les données. Affiché uniquement lorsque l'élément n'a pas de groupe (la planification du groupe est affichée sinon).                  | `Every 1 min`                   |
+| **Activé**                        | Nom et planification | Indique si l'élément est actif.                                                                                                                                                       | Activé/Désactivé                |
+| **Synchroniser avec le groupe**   | Nom et planification | _(connecteurs compatibles historique, éléments groupés)_ Lorsque activé, les paramètres d'historique ci-dessous sont hérités du groupe.                                               | Activé/Désactivé                |
+| **Intervalle de lecture maximal** | Nom et planification | _(connecteurs compatibles historique)_ Durée maximale d'une sous-requête en secondes.                                                                                                 | `3600`                          |
+| **Délai de lecture**              | Nom et planification | _(connecteurs compatibles historique)_ Pause en millisecondes entre les sous-requêtes consécutives.                                                                                   | `200`                           |
+| **Décalage de l'heure de début**  | Nom et planification | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@StartTime`. Des valeurs négatives l'avancent pour capturer les données arrivées en retard.                          | `-60000`                        |
+| **Décalage de l'heure de fin**    | Nom et planification | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@EndTime`. Des valeurs négatives l'avancent.                                                                         | `0`                             |
+| **Stratégie de récupération**     | Nom et planification | _(connecteurs compatibles historique)_ Ordre dans lequel un arriéré de sous-intervalles non interrogés est rattrapé : du plus ancien au plus récent (par défaut) ou l'inverse.        | `Du plus ancien au plus récent` |
+| **Stratégie de mise en cache**    | Nom et planification | _(connecteurs de la famille IoT uniquement)_ Filtre les valeurs collectées qui sont effectivement mises en cache et transmises. Voir [Stratégie de mise en cache](#caching-strategy). | `On change`                     |
+| **Paramètres spécifiques**        | Paramètres           | Varie selon le type de connecteur — voir la documentation de chaque connecteur.                                                                                                       | —                               |
 
 > Pour des conseils sur le dimensionnement de **l'intervalle de lecture maximal**, du **délai de lecture**, du
 > **décalage de l'heure de début** et du **décalage de l'heure de fin** — avec des exemples concrets pour de gros

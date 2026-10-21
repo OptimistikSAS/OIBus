@@ -1923,7 +1923,7 @@
       "copy-title": "向 south 连接器添加新项",
       "steps": "项步骤",
       "step": {
-        "general": "常规",
+        "general": "名称与计划",
         "settings": "设置",
         "review": "检查并保存"
       },
@@ -2998,7 +2998,12 @@
         "delete": "删除项目",
         "audit": "查看项目审计历史"
       },
-      "search-placeholder": "输入文本以筛选项"
+      "search-placeholder": "输入文本以筛选项",
+      "step": {
+        "settings": "设置",
+        "general": "名称",
+        "review": "检查并保存"
+      }
     },
     "monitoring": {
       "north": {
