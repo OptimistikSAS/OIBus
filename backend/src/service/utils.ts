@@ -878,7 +878,8 @@ export const checkGroups = (
 
   const group = groupId ? groups.find(element => element.id === groupId) : groups.find(element => element.name === groupName);
   if (!group) {
-    throw new NotFoundError(`Group "${groupName}" not found`);
+    // Name the group the way it was looked up: by its id when one is given, by its name otherwise
+    throw new NotFoundError(`Group "${groupId || groupName}" not found`);
   }
   return group;
 };

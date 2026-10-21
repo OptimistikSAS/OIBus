@@ -1160,8 +1160,7 @@ describe('South Service', () => {
     assert.strictEqual(engine.reloadSouthItems.mock.calls.length, 0);
   });
 
-  // BUG: checkGroups() builds its message from the group name, null when looking a group up by id: it says 'Group "null" not found'
-  it.skip('should name the non-existent groupId in the error', async () => {
+  it('should name the non-existent groupId in the error', async () => {
     await assert.rejects(
       service.createItem(testData.south.list[0].id, { ...testData.south.itemCommand, groupId: 'non-existent-group-id' }, 'userTest'),
       new NotFoundError('Group "non-existent-group-id" not found')
