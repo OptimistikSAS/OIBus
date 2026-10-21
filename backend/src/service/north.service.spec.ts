@@ -4,6 +4,7 @@ import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'no
 
 import { NorthConnectorCommandDTO } from '../../shared/model/api/north-connector.model';
 import { TransformerDTO } from '../../shared/model/api/transformer.model';
+import { OIBUS_NORTH_TYPES } from '../../shared/model/connector/north-manifest.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import type { NorthConnectorEntityLight } from '../model/north-connector.model';
@@ -193,7 +194,10 @@ describe('North Service', () => {
 
   it('should retrieve a list of north manifest', () => {
     const list = service.listManifest();
-    assert.ok(list !== undefined);
+
+    assert.strictEqual(list, northManifestList);
+    // One manifest per connector type
+    assert.deepStrictEqual(list.map(manifest => manifest.id).sort(), [...OIBUS_NORTH_TYPES].sort());
   });
 
   it('should retrieve a manifest', () => {
