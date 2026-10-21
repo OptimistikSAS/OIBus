@@ -438,16 +438,6 @@ describe('SouthFolderScanner', () => {
       });
     });
 
-    it('should skip SMB mount when username is empty', async () => {
-      createSouth({ username: null, inputFolder: SHARE_FOLDER });
-      await assert.doesNotReject(south.connect());
-    });
-
-    it('should skip SMB mount when inputFolder is not a UNC path', async () => {
-      createSouth({ username: 'user', password: 'pass', inputFolder: LOCAL_FOLDER });
-      await assert.doesNotReject(south.connect());
-    });
-
     describe(
       'windows SMB session handling',
       {
@@ -479,8 +469,13 @@ describe('SouthFolderScanner', () => {
         });
 
         it('should skip SMB mount on Windows when inputFolder is not a UNC path', async () => {
-          createSouth({ username: 'user', inputFolder: LOCAL_FOLDER });
-          await assert.doesNotReject(south['mountNetworkShare'](LOCAL_FOLDER));
+          createSouth({ username: 'user', password: 'pass', inputFolder: LOCAL_FOLDER });
+          const deleteSpy = spyOn('deleteNetworkSession');
+
+          await south.connect();
+
+          assert.strictEqual(deleteSpy.mock.calls.length, 0);
+          assert.strictEqual(logger.error.mock.calls.length, 0);
         });
 
         it('should use the domain-qualified username when a domain is configured', async () => {
@@ -498,17 +493,30 @@ describe('SouthFolderScanner', () => {
 
         it('should skip SMB mount on Windows when username is empty', async () => {
           createSouth({ username: null, inputFolder: SHARE_FOLDER });
-          await assert.doesNotReject(south['mountNetworkShare'](SHARE_FOLDER));
+          const deleteSpy = spyOn('deleteNetworkSession');
+
+          await south.connect();
+
+          assert.strictEqual(deleteSpy.mock.calls.length, 0);
+          assert.strictEqual(logger.error.mock.calls.length, 0);
         });
 
         it('should skip SMB unmount on Windows when username is empty', async () => {
           createSouth({ username: null, inputFolder: SHARE_FOLDER });
-          await assert.doesNotReject(south['unmountNetworkShare'](SHARE_FOLDER));
+          const deleteSpy = spyOn('deleteNetworkSession');
+
+          await south['unmountNetworkShare'](SHARE_FOLDER);
+
+          assert.strictEqual(deleteSpy.mock.calls.length, 0);
         });
 
         it('should skip SMB unmount on Windows when inputFolder is not a UNC path', async () => {
           createSouth({ username: 'user', inputFolder: LOCAL_FOLDER });
-          await assert.doesNotReject(south['unmountNetworkShare'](LOCAL_FOLDER));
+          const deleteSpy = spyOn('deleteNetworkSession');
+
+          await south['unmountNetworkShare'](LOCAL_FOLDER);
+
+          assert.strictEqual(deleteSpy.mock.calls.length, 0);
         });
 
         // Windows refuses to add a session for a server that already has one under a different

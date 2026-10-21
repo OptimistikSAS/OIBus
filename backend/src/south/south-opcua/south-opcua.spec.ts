@@ -948,10 +948,6 @@ describe('SouthOPCUA', () => {
       assert.deepStrictEqual(south.filterHistoryItems(items), [items[0], items[2], items[4]]);
     });
 
-    it('should filter DA items', () => {
-      assert.deepStrictEqual(south.filterHistoryItems(items), [items[0], items[2], items[4]]);
-    });
-
     it('should filter direct items (DA mode only, non-subscription scanMode)', () => {
       assert.deepStrictEqual(south.filterDirectItems(items), [items[8], items[10]]);
     });
@@ -1139,7 +1135,14 @@ describe('SouthOPCUA', () => {
   });
 
   it('should not subscribe if no items', async () => {
-    await assert.doesNotReject(async () => south.subscribe([]));
+    const { createSubscription2, monitor } = mockSubscription();
+
+    await south.subscribe([]);
+
+    assert.strictEqual(southCacheRepository.getItemsLastValues.mock.calls.length, 0);
+    assert.strictEqual(createSubscription2.mock.calls.length, 0);
+    assert.strictEqual(monitor.mock.calls.length, 0);
+    assert.strictEqual(south['subscription'], null);
   });
 
   it('should not subscribe if already subscribe', async () => {
@@ -1230,8 +1233,23 @@ describe('SouthOPCUA', () => {
 
   it('should not flush messages if none in buffer', async () => {
     const addContent = mock.method(south, 'addContent', async () => undefined);
+    const previousTimeout = setTimeout(() => null);
+    south['flushTimeout'] = previousTimeout;
+
     await south.flushMessages();
+
     assert.strictEqual(addContent.mock.calls.length, 0);
+    assert.strictEqual(southCacheRepository.saveItemsLastValues.mock.calls.length, 0);
+    assert.strictEqual(logger.debug.mock.calls.length, 0);
+    assert.deepStrictEqual(south['bufferedValues'], []);
+    // The pending flush is replaced by a new one, which flushes (and re-arms) after flushMessageTimeout
+    const rescheduledTimeout = south['flushTimeout'];
+    assert.ok(rescheduledTimeout);
+    assert.notStrictEqual(rescheduledTimeout, previousTimeout);
+    mock.timers.tick(configuration.settings.flushMessageTimeout - 1);
+    assert.strictEqual(south['flushTimeout'], rescheduledTimeout);
+    mock.timers.tick(1);
+    assert.notStrictEqual(south['flushTimeout'], rescheduledTimeout);
   });
 
   it('should flush messages', async () => {
