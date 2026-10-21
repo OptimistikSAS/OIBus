@@ -453,25 +453,6 @@ describe('SandboxService', () => {
       await assert.rejects(async () => sandboxService.execute('', source, 'circular.txt', transformer, {}, logger), /\[RUNTIME_ERROR\]/);
     });
 
-    it('should catch out-of-memory errors and map them to MEMORY_LIMIT_EXCEEDED', async () => {
-      const transformer = buildTransformer(
-        `
-          function transform() {
-            const hugeArray = [];
-            // Intentionally crash the 256MB V8 heap: arrays of small integers fill it fastest (a typed
-            // array would fail its allocation outside of the heap instead)
-            while(true) {
-              hugeArray.push(new Array(10000000).fill(0));
-            }
-          }
-        `,
-        // Large timeout so OOM always fires before the timer; 256MB heap exhausts in <5s
-        60000
-      );
-
-      await assert.rejects(async () => sandboxService.execute('', source, 'oom.txt', transformer, {}, logger), /\[MEMORY_LIMIT_EXCEEDED\]/);
-    });
-
     it('should throw if the code does not export a transform function (non-function value)', async () => {
       const transformer = buildTransformer(`var transform = "I am a string, not a function!";`, 5000);
 
@@ -540,14 +521,19 @@ describe('SandboxService - failing createContext', () => {
   let SandboxService: typeof SandboxServiceClass;
   let sandboxService: SandboxServiceClass;
   let getHeapStatisticsSync: () => unknown;
+  let createContextError: Error;
+  let isDisposed: boolean;
+  let dispose: ReturnType<typeof mock.fn>;
 
   function MockIsolate() {
     return {
       createContext: async () => {
-        throw new Error('createContext failed');
+        throw createContextError;
       },
-      isDisposed: false,
-      dispose: () => undefined,
+      get isDisposed() {
+        return isDisposed;
+      },
+      dispose: () => dispose(),
       cpuTime: BigInt(0),
       getHeapStatisticsSync: () => getHeapStatisticsSync()
     };
@@ -563,6 +549,9 @@ describe('SandboxService - failing createContext', () => {
 
   beforeEach(() => {
     getHeapStatisticsSync = () => ({ used_heap_size: 0 });
+    createContextError = new Error('createContext failed');
+    isDisposed = false;
+    dispose = mock.fn();
     sandboxService = new SandboxService();
   });
 
@@ -587,6 +576,24 @@ describe('SandboxService - failing createContext', () => {
     );
 
     assert.ok(!hasMetricsLog(logger), 'Expected no "Sandbox Execution Metrics" trace log when heap stats fail');
+  });
+
+  // A real out-of-memory is simulated: when an isolate hits its memory limit, isolated-vm keeps tearing it down on a
+  // background thread after the error, and a process exiting meanwhile (like the test runner after its last test)
+  // aborts with "Assertion failed: (environment != nullptr)".
+  it('should map an isolate killed by its memory limit to MEMORY_LIMIT_EXCEEDED, without disposing it again', async () => {
+    // The error and the state of the isolate as isolated-vm leaves them
+    createContextError = new Error('Isolate was disposed during execution due to memory limit');
+    isDisposed = true;
+    const transformer = buildTransformer('function transform() {}');
+
+    await assert.rejects(
+      async () => sandboxService.execute('', source, 'oom.txt', transformer, {}, logger),
+      new Error('[MEMORY_LIMIT_EXCEEDED] Custom code execution failed: Isolate was disposed during execution due to memory limit')
+    );
+
+    assert.strictEqual(dispose.mock.callCount(), 0);
+    assert.ok(!hasMetricsLog(logger), 'Expected no "Sandbox Execution Metrics" trace log for a disposed isolate');
   });
 });
 
