@@ -5,20 +5,14 @@ import Stream from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
-import {
-  AttributeIds,
-  ClientMonitoredItem,
-  ClientSession,
-  ClientSubscription,
-  DataType,
-  HistoryReadRequest,
-  MessageSecurityMode,
-  NodeClass,
-  NodeId,
-  StatusCodes,
-  TimestampsToReturn,
-  UserTokenType
-} from 'node-opcua';
+import type { ClientMonitoredItem, ClientSession, ClientSubscription } from 'node-opcua';
+// The values come from the node-opcua sub-packages: loading the whole node-opcua costs ~0.7 s
+import { AttributeIds, NodeClass } from 'node-opcua-data-model';
+import { NodeId } from 'node-opcua-nodeid';
+import { TimestampsToReturn } from 'node-opcua-service-read';
+import { StatusCodes } from 'node-opcua-status-code';
+import { HistoryReadRequest, MessageSecurityMode, UserTokenType } from 'node-opcua-types';
+import { DataType } from 'node-opcua-variant';
 
 import type { OIBusTimeValue } from '../../../shared/model/common/content.model';
 import type { Instant } from '../../../shared/model/common/types';

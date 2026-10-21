@@ -4,7 +4,11 @@ import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { ClientSession, OPCUAClient } from 'node-opcua';
-import { AttributeIds, DataType, MessageSecurityMode, StatusCodes, UserTokenType } from 'node-opcua';
+// The enums come from the node-opcua sub-packages: loading the whole node-opcua costs ~0.7 s
+import { AttributeIds } from 'node-opcua-data-model';
+import { StatusCodes } from 'node-opcua-status-code';
+import { MessageSecurityMode, UserTokenType } from 'node-opcua-types';
+import { DataType } from 'node-opcua-variant';
 
 import type { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
