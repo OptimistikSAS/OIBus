@@ -13,9 +13,10 @@ import {
 } from '../../../../../shared/model/connector/south-settings.model';
 
 import { HistoryQueryEntity } from '../../../../model/histor-query.model';
+import { createHistoryQuery, createNorth, createSouth } from '../../../../tests/utils/database-utils';
 import { buildSchemaBefore, createMigrationSchemaHarness } from '../../../../tests/utils/migration-test-utils';
 import testData from '../../../../tests/utils/test-data';
-import { buildNorthEntity, buildSouthEntity, createHistoryQuery, createNorth, createSouth } from '../../../../tests/utils/test-utils';
+import { buildNorthEntity, buildSouthEntity } from '../../../../tests/utils/test-utils';
 import { down, up } from './v3.9.0';
 
 const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');

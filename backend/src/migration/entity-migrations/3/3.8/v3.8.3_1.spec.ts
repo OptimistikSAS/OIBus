@@ -1,36 +1,29 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { after, beforeEach, describe, it } from 'node:test';
+import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
 
-import knex, { Knex } from 'knex';
+import { Knex } from 'knex';
 
-import { buildSchemaBefore } from '../../../../tests/utils/migration-test-utils';
+import { buildSchemaBefore, createMigrationFileCloneHarness } from '../../../../tests/utils/migration-test-utils';
 import { down, up } from './v3.8.3_1';
 
 const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 
-/**
- * Kept on a bare (non-transactional) connection rather than the shared savepoint-based harness:
- * tests below repeatedly toggle `PRAGMA foreign_keys = OFF`/`= ON` mid-test and rely on it actually
- * taking effect, which SQLite turns into a no-op once any transaction (including a savepoint) is
- * active.
- */
-async function buildPreV3831Schema(db: Knex): Promise<void> {
-  await buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.8.3_1.ts', db);
-}
-
 describe('Entity migration v3.8.3_1', () => {
+  // Each test gets its own connection to a copy of a schema built once: the tests toggle
+  // `PRAGMA foreign_keys` mid-test, which SQLite ignores inside a transaction (hence no savepoint harness).
+  const harness = createMigrationFileCloneHarness({
+    buildSchema: db => buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.8.3_1.ts', db)
+  });
   let db: Knex;
 
-  after(async () => {
-    await db?.destroy();
-  });
-
+  before(() => harness.before());
   beforeEach(async () => {
-    await db?.destroy();
-    db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-    await buildPreV3831Schema(db);
+    await harness.beforeEach();
+    db = harness.getDb();
   });
+  afterEach(() => harness.afterEach());
+  after(() => harness.after());
 
   describe('up — time-values-to-oianalytics', () => {
     it('sets precision=ms when options is null', async () => {
