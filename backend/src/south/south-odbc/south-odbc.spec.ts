@@ -520,8 +520,16 @@ describe('SouthODBC', () => {
     });
 
     it('Database is reachable and has tables', async () => {
-      await assert.doesNotReject(south.testConnection());
-      assert.ok(odbcConnection.close.mock.calls.length > 0);
+      const result = await south.testConnection();
+
+      assert.deepStrictEqual(result, { items: [] });
+      assert.strictEqual(loadOdbc.mock.calls.length, 1);
+      assert.strictEqual(odbc.connect.mock.calls.length, 1);
+      // The password is appended to the connection string
+      assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments, [
+        { connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;PWD=password;', connectionTimeout: 1000 }
+      ]);
+      assert.strictEqual(odbcConnection.close.mock.calls.length, 1);
     });
 
     for (const driverTest of flattenedErrors) {
@@ -803,44 +811,56 @@ describe('SouthODBC', () => {
     });
 
     it('should test item with queryRemoteAgentData', async () => {
-      const mockReturnValue = [
-        [
-          {
-            timestamp: '2020-02-01T00:00:00.000Z',
-            table_count: 2
-          },
-          { timestamp: '2020-03-01T00:00:00.000Z' }
-        ]
-      ];
-      const queryRemoteAgentDataMock = mock.method(
-        south,
-        'queryRemoteAgentData',
-        mock.fn(async () => {
-          mock.timers.tick(25);
-          return mockReturnValue;
-        })
-      );
+      const queryRemoteAgentDataMock = mock.method(south, 'queryRemoteAgentData', async () => {
+        mock.timers.tick(25);
+        return { trackedInstant: null, value: 'timestamp,value\n2020-02-01,1\n2020-03-01,2' };
+      });
 
       const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-      assert.ok(queryRemoteAgentDataMock.mock.calls.length > 0);
-      assert.strictEqual(result.queryDuration, 25);
-      assert.strictEqual(result.connectionDuration, 0);
+
+      assert.strictEqual(queryRemoteAgentDataMock.mock.calls.length, 1);
+      assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [
+        configuration.items[1],
+        testData.south.itemTestingSettings.history!.startTime,
+        testData.south.itemTestingSettings.history!.endTime,
+        true
+      ]);
+      // The remote agent already returns CSV content: it is not formatted again
+      assert.strictEqual(utilsExports.generateCsvContent.mock.calls.length, 0);
+      assert.deepStrictEqual(utilsExports.generateFilenameForSerialization.mock.calls[0].arguments, [
+        south['tmpFolder'],
+        configuration.items[1].settings.serialization.filename,
+        configuration.name,
+        configuration.items[1].name
+      ]);
+      assert.deepStrictEqual(result, {
+        result: { type: 'any', filePath: 'filename.csv', content: 'timestamp,value\n2020-02-01,1\n2020-03-01,2' },
+        connectionDuration: 0,
+        queryDuration: 25
+      });
     });
 
     it('QueryRemoteAgentData in case of item test', async () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
+      const content = 'timestamp,value\n2020-02-01,1\n2020-03-01,2';
 
       HTTPRequest.mock.mockImplementation(async () =>
-        createMockResponse(200, {
-          recordCount: 0,
-          content: [],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        })
+        createMockResponse(200, { recordCount: 2, content, maxInstant: '2020-03-01T00:00:00.000Z' })
       );
 
-      await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
-      assert.ok(HTTPRequest.mock.calls.length > 0);
+      const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
+
+      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
+      assert.strictEqual(
+        (HTTPRequest.mock.calls[0].arguments[0] as URL).href,
+        `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`
+      );
+      // A test returns the whole content, and neither persists it nor moves the tracked instant
+      assert.deepStrictEqual(result, { trackedInstant: null, value: content });
+      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
+      assert.strictEqual(utilsExports.extractLastCsvRow.mock.calls.length, 0);
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
     });
   });
 

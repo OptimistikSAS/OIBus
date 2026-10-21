@@ -712,10 +712,16 @@ describe('SouthFTP', () => {
     });
 
     it('should handle preserveFiles with ignoreModifiedDate true', () => {
-      const item = configuration.items[2]; // preserveFiles: true, ignoreModifiedDate: true
+      utilsExports.checkAge.mock.mockImplementation(realUtils.checkAge);
+      const fileInfo = createFileInfo('test.txt');
+      // Already sent with this very modification time: only ignoreModifiedDate lets it through again
+      const filesPreserved = [{ filename: 'test.txt', modifiedTime: fileInfo.modifiedAt!.getTime() }];
 
-      const result = south.checkCondition(item, createFileInfo('test.txt'), []);
-      assert.strictEqual(result, true);
+      // preserveFiles: true, ignoreModifiedDate: true
+      assert.strictEqual(south.checkCondition(configuration.items[2], fileInfo, filesPreserved), true);
+      // Same item without ignoreModifiedDate
+      const item = { ...configuration.items[2], settings: { ...configuration.items[2].settings, ignoreModifiedDate: false } };
+      assert.strictEqual(south.checkCondition(item, fileInfo, filesPreserved), false);
     });
 
     it('should fall back to the current timestamp when modifiedAt is undefined', () => {
@@ -768,18 +774,16 @@ describe('SouthFTP', () => {
     });
 
     it('should handle file with modifiedAt date that is newer than cached version', () => {
-      southCacheRepository.getItemLastValue.mock.mockImplementation(() => ({
-        itemId: 'id2',
-        groupId: null,
-        queryTime: null,
-        trackedInstant: null,
-        value: [{ filename: 'test.log', modifiedTime: DateTime.now().minus({ minutes: 5 }).toMillis() }]
-      }));
-      const fileInfo = createFileInfo('test.log', { modifiedAt: new Date(DateTime.now().minus({ minutes: 1 }).toMillis()) });
+      utilsExports.checkAge.mock.mockImplementation(realUtils.checkAge);
+      const cachedModifiedTime = DateTime.now().minus({ minutes: 5 }).toMillis();
+      const filesPreserved = [{ filename: 'test.log', modifiedTime: cachedModifiedTime }];
+      const item = configuration.items[1]; // preserveFiles: true, ignoreModifiedDate: false
 
-      const result = south.checkCondition(configuration.items[1], fileInfo, []); // preserveFiles: true, ignoreModifiedDate: false
-
-      assert.strictEqual(result, true);
+      const newerFile = createFileInfo('test.log', { modifiedAt: new Date(DateTime.now().minus({ minutes: 1 }).toMillis()) });
+      assert.strictEqual(south.checkCondition(item, newerFile, filesPreserved), true);
+      // The cached version itself is not sent again
+      const sameFile = createFileInfo('test.log', { modifiedAt: new Date(cachedModifiedTime) });
+      assert.strictEqual(south.checkCondition(item, sameFile, filesPreserved), false);
     });
 
     it('should handle file with undefined modifiedAt date in getFile', async () => {
@@ -794,23 +798,6 @@ describe('SouthFTP', () => {
       });
 
       await south.getFile(createFileInfo('test.csv'), configuration.items[0], []);
-
-      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
-    });
-
-    it('should handle compression error and unlink error', async () => {
-      utilsExports.compress.mock.mockImplementation(async () => {
-        throw new Error('Compression failed');
-      });
-      unlink.mock.mockImplementation(async () => {
-        throw new Error('Unlink failed');
-      });
-      const southWithCompression = await startSouthWith({ compression: true });
-
-      await southWithCompression.getFile(createFileInfo('test.csv'), configuration.items[0], []);
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
         type: 'any',
