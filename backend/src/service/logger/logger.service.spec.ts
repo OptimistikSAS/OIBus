@@ -230,9 +230,10 @@ describe('Logger', () => {
   it('should be properly initialized without lokiLog, nor oianalytics nor sqliteLog', async () => {
     mock.method(console, 'error', mock.fn());
 
-    const specificRegistration: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificRegistration.status = 'NOT_REGISTERED';
+    // Only the registration status keeps the OIAnalytics logs out: their level is not silent
+    const specificRegistration: OIAnalyticsRegistration = { ...registration, status: 'NOT_REGISTERED' };
     const specificSettings = consoleAndFileSettings();
+    assert.notStrictEqual(specificSettings.logger.oia.level, 'silent');
 
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificSettings.logger.console.level },

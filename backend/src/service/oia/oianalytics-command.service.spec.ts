@@ -992,7 +992,7 @@ describe('OIAnalytics Command Service', () => {
     assert.deepStrictEqual(oIAnalyticsCommandRepository.findById.mock.calls[0].arguments, [updateVersionCommand.id]);
   });
 
-  it('should properly start and stop service', async () => {
+  it('should complete the update version command when created after an update', () => {
     const updatedVersion = updateVersionCommand.commandContent.version.slice(1);
     assert.strictEqual(oIBusService.getEngineSettings.mock.calls.length, 1);
     assert.deepStrictEqual(oIBusService.updateOIBusVersion.mock.calls[0].arguments, [
@@ -1004,23 +1004,35 @@ describe('OIAnalytics Command Service', () => {
       FAKE_NOW,
       `OIBus updated to version ${updatedVersion}, launcher updated to version ${testData.engine.settings.launcherVersion}`
     ]);
+  });
 
-    // Prevent acknowledgeCommands/checkForCancelledCommands (called by refreshCommands in start())
-    // from doing anything. findFirstToExecute already defaults to undefined so processNextCommand exits immediately.
-    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
-    mock.method(process, 'exit', () => undefined as never);
-    mock.method(process, 'kill', () => true);
+  it('should properly start and stop service', async t => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const refreshCommands = mock.method(service, 'refreshCommands', async () => undefined);
 
     await service.start();
-    await service.stop();
+
+    assert.strictEqual(refreshCommands.mock.calls.length, 1);
+    assert.strictEqual(service['commandEvent'].listenerCount('next'), 1);
+
+    // A registration update refreshes the commands right away, instead of waiting for the scheduled refresh
+    service['refreshCommandsTimeout'] = setTimeout(() => null, 1000);
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
     await flushPromises();
+    assert.strictEqual(refreshCommands.mock.calls.length, 2);
+    assert.strictEqual(service['refreshCommandsTimeout'], null);
 
-    // registrationEvent: REGISTERED -> schedules another timeout
-    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    service['refreshCommandsTimeout'] = setTimeout(() => null, 1000);
+    service.stop();
 
-    // registrationEvent with PENDING status -> no new setTimeout
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.pending);
+    assert.strictEqual(service['refreshCommandsTimeout'], null);
+    assert.strictEqual(service['commandEvent'].listenerCount('next'), 0);
+    assert.deepStrictEqual(logged(logger.debug), ['Stopping OIAnalytics command service...', 'OIAnalytics command service stopped']);
+
+    // Once stopped, a registration update does not refresh the commands anymore
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    await flushPromises();
+    assert.strictEqual(refreshCommands.mock.calls.length, 2);
   });
 
   it('should clear the pending refresh timeout and refresh again when registration is updated while running', async () => {
