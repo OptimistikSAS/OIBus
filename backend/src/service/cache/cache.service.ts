@@ -28,6 +28,10 @@ const DEBOUNCED_SIZE_WARNING_S = 60_000;
 // even when the cache contains tens of thousands of files. Empirical sweet spot
 // for SSDs; very small impact below ~16 and diminishing returns above ~64.
 const STARTUP_SCAN_CONCURRENCY = 32;
+// Content files without metadata younger than this are kept at startup: their metadata may still be being written
+const ORPHAN_CONTENT_MIN_AGE_MS = 60_000;
+// Retry the removals failing because a file is briefly locked (EBUSY, EPERM...), typically by an antivirus on Windows
+const RM_OPTIONS = { recursive: true, force: true, maxRetries: 5, retryDelay: 100 };
 
 /**
  * Run an async mapper over `items` with at most `limit` operations in flight.
@@ -155,7 +159,11 @@ export default class CacheService {
     label: DataFolderType
   ): Promise<{ entries: Array<{ filename: string; metadata: CacheMetadata }>; size: number; totalFilenames: number }> {
     const metadataFolder = path.join(folder, METADATA_FOLDER);
+    const contentFolder = path.join(folder, CONTENT_FOLDER);
+    // List the content before the metadata, so that content added in between is never taken for an orphan
+    const contentFilenames = await fs.readdir(contentFolder);
     const filenames = await fs.readdir(metadataFolder);
+    await this.removeOrphanContent(contentFolder, contentFilenames, filenames, label);
     if (filenames.length === 0) {
       return { entries: [], size: 0, totalFilenames: 0 };
     }
@@ -183,6 +191,47 @@ export default class CacheService {
       }
     }
     return { entries, size, totalFilenames: filenames.length };
+  }
+
+  /**
+   * Remove the content files that have no metadata. Nothing tracks them: they are never sent, searched nor counted in
+   * the cache size, so they would stay on disk forever. They are left behind by a write or a removal interrupted midway
+   * (failing source stream, full disk, file locked by an antivirus...). Recent files are kept: their metadata may still
+   * be being written.
+   */
+  private async removeOrphanContent(
+    contentFolder: string,
+    contentFilenames: Array<string>,
+    metadataFilenames: Array<string>,
+    label: DataFolderType
+  ): Promise<void> {
+    const trackedFilenames = new Set(metadataFilenames);
+    const orphanFilenames = contentFilenames.filter(filename => !trackedFilenames.has(filename));
+    if (orphanFilenames.length === 0) {
+      return;
+    }
+
+    const maxModificationTime = Date.now() - ORPHAN_CONTENT_MIN_AGE_MS;
+    let removedFiles = 0;
+    let removedSize = 0;
+    await parallelMap(orphanFilenames, STARTUP_SCAN_CONCURRENCY, async filename => {
+      const filePath = path.join(contentFolder, filename);
+      try {
+        const fileStat = await fs.stat(filePath);
+        if (fileStat.mtimeMs > maxModificationTime) {
+          return;
+        }
+        await fs.rm(filePath, RM_OPTIONS);
+        removedFiles++;
+        removedSize += fileStat.size;
+      } catch (error: unknown) {
+        this.logger.warn(`Could not remove content file "${filePath}" without metadata: ${(error as Error).message}`);
+      }
+    });
+    if (removedFiles > 0) {
+      const removedSizeMB = Math.floor((removedSize / 1024 / 1024) * 100) / 100;
+      this.logger.warn(`${removedFiles} content file(s) without metadata removed from ${label} folder (${removedSizeMB} MB)`);
+    }
   }
 
   stop(): void {
@@ -452,34 +501,41 @@ export default class CacheService {
     //   - Buffer:  size is already known.
     //   - Stream:  pipe through a counting Transform during the write.
     let contentSize: number;
-    if (Buffer.isBuffer(output)) {
-      await fs.writeFile(contentPath, output, { flag: 'w' });
-      contentSize = output.length;
-    } else {
-      let bytes = 0;
-      const counter = new Transform({
-        transform(chunk: Buffer, _enc, cb) {
-          bytes += chunk.length;
-          cb(null, chunk);
-        }
-      });
-      await pipeline(output, counter, createWriteStream(contentPath, { flags: 'w' }));
-      contentSize = bytes;
-    }
+    let metadata: CacheMetadata;
+    try {
+      if (Buffer.isBuffer(output)) {
+        await fs.writeFile(contentPath, output, { flag: 'w' });
+        contentSize = output.length;
+      } else {
+        let bytes = 0;
+        const counter = new Transform({
+          transform(chunk: Buffer, _enc, cb) {
+            bytes += chunk.length;
+            cb(null, chunk);
+          }
+        });
+        await pipeline(output, counter, createWriteStream(contentPath, { flags: 'w' }));
+        contentSize = bytes;
+      }
 
-    const metadata: CacheMetadata = {
-      contentFile: details.contentFilename || `${filename}.json`,
-      contentSize,
-      // The file was just written, so "now" matches the kernel-reported ctime
-      // we used to fetch via fs.stat — but without the syscall.
-      createdAt: DateTime.now().toUTC().toISO()!,
-      numberOfElement: details.numberOfElement || 0,
-      contentType: details.contentType
-    };
-    await fs.writeFile(path.join(this.cacheFolder, METADATA_FOLDER, filename), JSON.stringify(metadata), {
-      encoding: 'utf-8',
-      flag: 'w'
-    });
+      metadata = {
+        contentFile: details.contentFilename || `${filename}.json`,
+        contentSize,
+        // The file was just written, so "now" matches the kernel-reported ctime
+        // we used to fetch via fs.stat — but without the syscall.
+        createdAt: DateTime.now().toUTC().toISO()!,
+        numberOfElement: details.numberOfElement || 0,
+        contentType: details.contentType
+      };
+      await fs.writeFile(path.join(this.cacheFolder, METADATA_FOLDER, filename), JSON.stringify(metadata), {
+        encoding: 'utf-8',
+        flag: 'w'
+      });
+    } catch (error: unknown) {
+      // Do not leave a partial content file behind: without its metadata, nothing would ever send or remove it
+      await this.deleteCacheEntry('cache', filename);
+      throw error;
+    }
     this.queue.push({ filename, metadata });
     this.incrementQueueCounters(metadata);
     this.cacheSize.cache += contentSize;
@@ -768,11 +824,12 @@ export default class CacheService {
 
   private async deleteCacheEntry(folder: DataFolderType, filename: string): Promise<void> {
     try {
-      await fs.rm(path.join(this.getFolder(folder), METADATA_FOLDER, filename), { recursive: true, force: true });
-      await fs.rm(path.join(this.getFolder(folder), CONTENT_FOLDER, filename), { recursive: true, force: true });
+      // Remove the content first: if it cannot be removed, the metadata kept on disk still tracks it, instead of leaving
+      // an orphan content file that nothing would ever remove
+      await fs.rm(path.join(this.getFolder(folder), CONTENT_FOLDER, filename), RM_OPTIONS);
+      await fs.rm(path.join(this.getFolder(folder), METADATA_FOLDER, filename), RM_OPTIONS);
     } catch (error: unknown) {
-      // Ignore delete errors
-      this.logger.trace(`Error deleting cache entry "${filename}": ${(error as Error).message}`);
+      this.logger.warn(`Could not delete cache entry "${filename}" from ${folder}: ${(error as Error).message}`);
     }
   }
 }
