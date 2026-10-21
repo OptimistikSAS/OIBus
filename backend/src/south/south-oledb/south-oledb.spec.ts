@@ -1,232 +1,126 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
-import type {
-  SouthItemSettings,
-  SouthOLEDBItemSettings,
-  SouthOLEDBItemSettingsDateTimeFields,
-  SouthOLEDBSettings
-} from '../../../shared/model/connector/south-settings.model';
+import type { SouthItemSettings, SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import type { ReqResponse } from '../../service/http-request.utils';
+import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
-import { assertContains, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { assertContains, createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthOLEDBClass from './south-oledb';
 
 const nodeRequire = createRequire(import.meta.url);
+
+const dateTimeFields: SouthOLEDBItemSettings['dateTimeFields'] = [
+  { fieldName: 'anotherTimestamp', useAsReference: false, type: 'unix-epoch-ms' },
+  {
+    fieldName: 'timestamp',
+    useAsReference: true,
+    type: 'string',
+    timezone: 'Europe/Paris',
+    format: 'yyyy-MM-dd HH:mm:ss.SSS',
+    locale: 'en-US'
+  }
+];
+
+const buildItem = (
+  id: string,
+  query: string,
+  itemDateTimeFields: SouthOLEDBItemSettings['dateTimeFields'],
+  scanMode = testData.scanMode.list[0]
+): SouthConnectorItemEntity<SouthOLEDBItemSettings> => ({
+  id,
+  name: id.replace('id', 'item'),
+  enabled: true,
+  settings: {
+    query,
+    dateTimeFields: itemDateTimeFields,
+    serialization: {
+      type: 'csv',
+      filename: 'sql-@CurrentDate.csv',
+      delimiter: 'COMMA',
+      compression: true,
+      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      outputTimezone: 'Europe/Paris'
+    }
+  },
+  scanMode,
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: 3600,
+  readDelay: 0,
+  startTimeOffset: 0,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const configuration: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
+  id: 'southId',
+  name: 'south',
+  type: 'oledb',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    agentUrl: 'http://localhost:2224',
+    connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+    password: 'encrypted-password',
+    connectionTimeout: 1000,
+    retryInterval: 1000,
+    requestTimeout: 1000
+  },
+  groups: [],
+  items: [
+    buildItem('id1', 'query1', dateTimeFields),
+    buildItem('id2', 'query2', null),
+    buildItem('id3', 'query3', dateTimeFields, testData.scanMode.list[1])
+  ],
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+};
+
+const connectionStringWithPassword = 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;Password=encrypted-password;';
 
 describe('SouthOLEDB', () => {
   let SouthOLEDB: typeof SouthOLEDBClass;
   let south: SouthOLEDBClass;
 
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(
-    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-      undefined
-  );
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let logger: PinoLogger;
+  let addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  >;
+  let HTTPRequest: Mock<(url: URL | string, options?: unknown) => Promise<ReqResponse>>;
 
-  const httpRequestExports = {
-    HTTPRequest: mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200))
-  };
+  const httpRequestExports: Record<string, unknown> = {};
 
-  const utilsExports = {
-    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
+  const realUtils: typeof Utils = nodeRequire('../../service/utils');
+  const createUtilsMocks = () => ({
     convertDelimiter: mock.fn((value: unknown) => value),
     extractLastCsvRow: mock.fn((content: unknown) => (Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null)),
     formatInstant: mock.fn((value: unknown) => value),
-    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     logQuery: mock.fn(),
-    persistResults: mock.fn(async () => undefined),
-    getErrorMessage: mock.fn((error: unknown) => {
-      if (error instanceof Error) return error.message;
-      if (typeof error === 'string') return error;
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
-      }
-      return String(error);
-    }),
-    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-      if (items.length === 0) return {};
-      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-      const lead = items[0];
-      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-    })
-  };
-
-  const configuration: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oledb',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      agentUrl: 'http://localhost:2224',
-      connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-      password: 'encrypted-password',
-      connectionTimeout: 1000,
-      retryInterval: 1000,
-      requestTimeout: 1000
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthOLEDBItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        startTimeOffset: 0,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        startTimeOffset: 0,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthOLEDBItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        startTimeOffset: 0,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-
-  const connectionStringWithPassword = 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;Password=encrypted-password;';
+    persistResults: mock.fn(async (..._args: Array<unknown>) => undefined)
+  });
+  const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
@@ -236,7 +130,7 @@ describe('SouthOLEDB', () => {
       encryptionService: new EncryptionServiceMock('', '')
     });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -244,18 +138,13 @@ describe('SouthOLEDB', () => {
   });
 
   beforeEach(() => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
-    utilsExports.convertDelimiter = mock.fn((value: unknown) => value);
-    utilsExports.extractLastCsvRow = mock.fn((content: unknown) =>
-      Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null
-    );
-    utilsExports.formatInstant = mock.fn((value: unknown) => value);
-    utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
-    utilsExports.logQuery = mock.fn();
-    utilsExports.persistResults = mock.fn(async () => undefined);
-    addContentCallback.mock.resetCalls();
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
+    HTTPRequest = mock.fn(async () => createMockResponse(200));
+    httpRequestExports.HTTPRequest = HTTPRequest;
+    Object.assign(utilsExports, createUtilsMocks());
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthOLEDB(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    south = new SouthOLEDB(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
   });
 
   afterEach(() => {
@@ -265,10 +154,10 @@ describe('SouthOLEDB', () => {
 
   it('should properly connect to remote agent and disconnect', async () => {
     await south.connect();
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
       href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/connect`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: connectionStringWithPassword,
@@ -278,30 +167,21 @@ describe('SouthOLEDB', () => {
     });
 
     await south.disconnect();
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[1].arguments[0] as object, {
+    assertContains(HTTPRequest.mock.calls[1].arguments[0] as object, {
       href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/disconnect`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[1].arguments[1], { method: 'DELETE' });
+    assert.deepStrictEqual(HTTPRequest.mock.calls[1].arguments[1], { method: 'DELETE' });
   });
 
   it('should connect without password when not provided', async () => {
-    const configurationWithoutPassword: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
-      ...configuration,
-      settings: { ...configuration.settings, password: null }
-    };
-    const southWithoutPassword = new SouthOLEDB(
-      configurationWithoutPassword,
-      addContentCallback,
-      southCacheRepository,
-
-      'cacheFolder'
-    );
+    const configurationWithoutPassword = { ...configuration, settings: { ...configuration.settings, password: null } };
+    const southWithoutPassword = new SouthOLEDB(configurationWithoutPassword, addContentCallback, createMock(), 'cacheFolder');
 
     await southWithoutPassword.connect();
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
       href: `${configurationWithoutPassword.settings.agentUrl}/api/ole/${configurationWithoutPassword.id}/connect`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: configurationWithoutPassword.settings.connectionString,
@@ -312,24 +192,18 @@ describe('SouthOLEDB', () => {
   });
 
   it('should avoid adding duplicate semicolons when password is provided', async () => {
-    const configurationWithTrailingSemicolon: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
+    const configurationWithTrailingSemicolon = {
       ...configuration,
       settings: { ...configuration.settings, connectionString: `${configuration.settings.connectionString};` }
     };
-    const southWithTrailingSemicolon = new SouthOLEDB(
-      configurationWithTrailingSemicolon,
-      addContentCallback,
-      southCacheRepository,
-
-      'cacheFolder'
-    );
+    const southWithTrailingSemicolon = new SouthOLEDB(configurationWithTrailingSemicolon, addContentCallback, createMock(), 'cacheFolder');
     const expectedConnectionString = `${configurationWithTrailingSemicolon.settings.connectionString}Password=encrypted-password;`;
 
     await southWithTrailingSemicolon.connect();
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
       href: `${configurationWithTrailingSemicolon.settings.agentUrl}/api/ole/${configurationWithTrailingSemicolon.id}/connect`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: expectedConnectionString,
@@ -340,39 +214,35 @@ describe('SouthOLEDB', () => {
   });
 
   it('should properly reconnect when connection fails', async () => {
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) throw new Error('connection failed');
-      return createMockResponse(200);
+    HTTPRequest.mock.mockImplementationOnce(async () => {
+      throw new Error('connection failed');
     });
 
     await south.connect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    assert.strictEqual(HTTPRequest.mock.calls.length, 1);
 
     mock.timers.tick(configuration.settings.retryInterval);
     // flush microtasks so the async connect callback can reach HTTPRequest
     await Promise.resolve();
     await Promise.resolve();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+    assert.strictEqual(HTTPRequest.mock.calls.length, 2);
   });
 
   it('should properly clear reconnect timeout on disconnect', async () => {
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) throw new Error('connection failed');
-      if (callCount === 2) return createMockResponse(200);
+    HTTPRequest.mock.mockImplementationOnce(async () => {
+      throw new Error('connection failed');
+    }, 0);
+    HTTPRequest.mock.mockImplementationOnce(async () => {
       throw new Error('disconnection failed');
-    });
+    }, 2);
 
     await south.connect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    assert.strictEqual(HTTPRequest.mock.calls.length, 1);
 
     await south.connect();
     await south.disconnect();
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 3);
+    assert.strictEqual(HTTPRequest.mock.calls.length, 3);
     assert.ok(
       logger.error.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
@@ -415,30 +285,26 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1)
-        return createMockResponse(200, {
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstant: '2020-03-01T00:00:00.000Z'
-        });
-      return createMockResponse(200, { recordCount: 0, content: [], maxInstant: '2020-03-01T00:00:00.000Z' });
-    });
+    HTTPRequest.mock.mockImplementation(async () =>
+      createMockResponse(200, { recordCount: 0, content: [], maxInstant: '2020-03-01T00:00:00.000Z' })
+    );
+    HTTPRequest.mock.mockImplementationOnce(async () =>
+      createMockResponse(200, {
+        recordCount: 2,
+        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+        maxInstant: '2020-03-01T00:00:00.000Z'
+      })
+    );
 
     const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
 
-    assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual(
-      (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
-      configuration.items[0].settings.query
-    );
+    assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
 
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
       href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: connectionStringWithPassword,
@@ -459,7 +325,7 @@ describe('SouthOLEDB', () => {
       value: { timestamp: '2020-03-01T00:00:00.000Z' }
     });
 
-    const persistCall = (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0];
+    const persistCall = utilsExports.persistResults.mock.calls[0];
     assert.deepStrictEqual(persistCall.arguments[0], [
       { timestamp: '2020-02-01T00:00:00.000Z' },
       { timestamp: '2020-03-01T00:00:00.000Z' }
@@ -487,7 +353,7 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
+    HTTPRequest.mock.mockImplementation(async () =>
       createMockResponse(200, {
         recordCount: 2,
         content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
@@ -497,11 +363,11 @@ describe('SouthOLEDB', () => {
 
     const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
 
-    assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+    assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
       href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: connectionStringWithPassword,
@@ -523,12 +389,8 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) return createMockResponse(400, 'bad request');
-      return createMockResponse(500);
-    });
+    HTTPRequest.mock.mockImplementation(async () => createMockResponse(500));
+    HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(400, 'bad request'));
 
     await assert.rejects(
       south.queryRemoteAgentData(configuration.items[0], startTime, endTime),
@@ -585,25 +447,21 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1)
-        return createMockResponse(200, {
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        });
-      return createMockResponse(200, { recordCount: 0, content: [], maxInstantRetrieved: '2020-03-01T00:00:00.000Z' });
-    });
+    HTTPRequest.mock.mockImplementation(async () =>
+      createMockResponse(200, {
+        recordCount: 2,
+        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+        maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+      })
+    );
 
     await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
 
-    assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+    assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
       href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: connectionStringWithPassword,
@@ -621,7 +479,6 @@ describe('SouthOLEDB', () => {
   });
 
   it('should test connection successfully', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     await assert.doesNotReject(south.testConnection());
     assert.ok(
       logger.info.mock.calls.some((c: { arguments: Array<unknown> }) => (c.arguments[0] as string).includes('Connected to OLE agent'))
@@ -629,12 +486,8 @@ describe('SouthOLEDB', () => {
   });
 
   it('should test connection fail', async () => {
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) return createMockResponse(400, 'bad request');
-      return createMockResponse(500, 'another error');
-    });
+    HTTPRequest.mock.mockImplementation(async () => createMockResponse(500, 'another error'));
+    HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(400, 'bad request'));
 
     await assert.rejects(
       south.testConnection(),
@@ -645,6 +498,6 @@ describe('SouthOLEDB', () => {
 
   it('should disconnect without fetch when not connected', async () => {
     await south.disconnect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 0);
+    assert.strictEqual(HTTPRequest.mock.calls.length, 0);
   });
 });

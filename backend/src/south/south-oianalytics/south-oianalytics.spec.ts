@@ -1,78 +1,34 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import type { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/connector/south-settings.model';
+import type { OIBusContent } from '../../../shared/model/common/content.model';
+import type {
+  SouthItemSettings,
+  SouthOIAnalyticsItemSettings,
+  SouthOIAnalyticsSettings
+} from '../../../shared/model/connector/south-settings.model';
 import type { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type CertificateRepository from '../../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import type { ReqOptions, ReqResponse, ReqURL } from '../../service/http-request.utils';
+import type * as Utils from '../../service/utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthOIAnalyticsClass from './south-oianalytics';
 
 const nodeRequire = createRequire(import.meta.url);
 
-const logger = new PinoLogger();
-const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-const certificateRepository = new CertificateRepositoryMock() as unknown as CertificateRepository;
-const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock() as unknown as OIAnalyticsRegistrationRepository;
-
-const httpRequestExports = {
-  HTTPRequest: mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}))
-};
-
-const utilsOianalyticsExports = {
-  buildHttpOptions: mock.fn(async () => ({ headers: {}, auth: {}, timeout: 30000 })),
-  getHost: mock.fn(() => 'http://mock-host'),
-  getUrl: mock.fn((endpoint: string, host: string) => new URL(endpoint, host)),
-  parseData: mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
-    formattedResult: [],
-    maxInstant: '2023-01-01T00:00:00.000Z'
-  })),
-  testOIAnalyticsConnection: mock.fn(async () => undefined)
-};
-
-const utilsExports = {
-  checkAge: mock.fn(() => true),
-  compress: mock.fn(async () => undefined),
-  delay: mock.fn(async () => undefined),
-  generateIntervals: mock.fn(() => []),
-  groupItemsByGroup: mock.fn(() => []),
-  validateCronExpression: mock.fn(() => ({ expression: '' })),
-  formatQueryParams: mock.fn((): Record<string, string> => ({ formatted: 'query' })),
-  persistResults: mock.fn(async () => undefined),
-  generateReplacementParameters: mock.fn(() => []),
-  formatInstant: mock.fn((inst: unknown) => inst),
-  convertDateTimeToInstant: mock.fn((inst: unknown) => inst),
-  logQuery: mock.fn(),
-  generateCsvContent: mock.fn(() => ''),
-  generateFilenameForSerialization: mock.fn(() => 'file.csv'),
-  getErrorMessage: mock.fn((error: unknown) => {
-    if (error instanceof Error) return error.message;
-    if (typeof error === 'string') return error;
-    if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-      return (error as { message: string }).message;
-    }
-    return String(error);
-  }),
-  // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-  // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-  workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-    if (items.length === 0) return {};
-    if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-    const lead = items[0];
-    return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-  })
-};
+interface ParseDataResult {
+  formattedResult: Array<unknown>;
+  maxInstant?: string;
+}
 
 const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
   id: 'southId',
@@ -117,11 +73,18 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
       readDelay: 0,
       startTimeOffset: 0,
       endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
       updatedAt: ''
-    } as SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>
+    }
   ],
   createdBy: '',
   updatedBy: '',
@@ -129,19 +92,43 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
   updatedAt: ''
 };
 
-let SouthOIAnalytics: typeof SouthOIAnalyticsClass;
-let addContentCallback: ReturnType<
-  typeof mock.fn<(_southId: string, _data: unknown, _queryTime: string, _items: unknown) => Promise<undefined>>
->;
-let south: SouthOIAnalyticsClass;
-
 describe('SouthOIAnalytics', () => {
+  let SouthOIAnalytics: typeof SouthOIAnalyticsClass;
+  let south: SouthOIAnalyticsClass;
+
+  let logger: PinoLogger;
+  let certificateRepository: Mocked<CertificateRepository>;
+  let HTTPRequest: Mock<(url: ReqURL, options?: ReqOptions) => Promise<ReqResponse>>;
+
+  const httpRequestExports: Record<string, unknown> = {};
+
+  // utils-oianalytics pulls the Azure SDK: it stays fully mocked
+  const createUtilsOianalyticsMocks = () => ({
+    buildHttpOptions: mock.fn(async () => ({ headers: {}, auth: {}, timeout: 30000 })),
+    getHost: mock.fn(() => 'http://mock-host'),
+    getUrl: mock.fn((endpoint: string, host: string) => new URL(endpoint, host)),
+    parseData: mock.fn((): ParseDataResult => ({
+      formattedResult: [],
+      maxInstant: '2023-01-01T00:00:00.000Z'
+    })),
+    testOIAnalyticsConnection: mock.fn(async () => undefined)
+  });
+  const utilsOianalyticsExports = createUtilsOianalyticsMocks();
+
+  const realUtils: typeof Utils = nodeRequire('../../service/utils');
+  const createUtilsMocks = () => ({
+    formatQueryParams: mock.fn((): Record<string, string> => ({ formatted: 'query' })),
+    persistResults: mock.fn(async () => undefined),
+    formatInstant: mock.fn((instant: unknown) => instant)
+  });
+  const utilsExports = { ...realUtils, ...createUtilsMocks() };
+
   before(() => {
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
     mockModule(nodeRequire, '../../service/utils-oianalytics', utilsOianalyticsExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -149,36 +136,25 @@ describe('SouthOIAnalytics', () => {
   });
 
   beforeEach(() => {
-    addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
-
-    // Reset mutable exports
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
-    utilsOianalyticsExports.buildHttpOptions = mock.fn(async () => ({ headers: {}, auth: {}, timeout: 30000 }));
-    utilsOianalyticsExports.getHost = mock.fn(() => 'http://mock-host');
-    utilsOianalyticsExports.getUrl = mock.fn((endpoint: string, host: string) => new URL(endpoint, host));
-    utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
-      formattedResult: [],
-      maxInstant: '2023-01-01T00:00:00.000Z'
-    }));
-    utilsOianalyticsExports.testOIAnalyticsConnection = mock.fn(async () => undefined);
-    utilsExports.formatQueryParams = mock.fn((): Record<string, string> => ({ formatted: 'query' }));
-    utilsExports.persistResults = mock.fn(async () => undefined);
-    utilsExports.formatInstant.mock.resetCalls();
-    utilsExports.formatInstant.mock.mockImplementation((inst: unknown) => inst);
-
-    (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get = mock.fn(
-      () => testData.oIAnalytics.registration.completed
-    );
+    logger = new PinoLogger();
+    certificateRepository = createMock<CertificateRepository>();
+    HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = HTTPRequest;
+    Object.assign(utilsOianalyticsExports, createUtilsOianalyticsMocks());
+    Object.assign(utilsExports, createUtilsMocks());
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     south = new SouthOIAnalytics(
       baseConfiguration,
-      addContentCallback,
-      southCacheRepository,
+      mock.fn(
+        async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
+          undefined
+      ),
+      createMock<SouthCacheRepository>(),
       'cacheFolder',
       certificateRepository,
-      oIAnalyticsRegistrationRepository
+      createMock<OIAnalyticsRegistrationRepository>({ get: () => testData.oIAnalytics.registration.completed })
     );
   });
 
@@ -206,8 +182,8 @@ describe('SouthOIAnalytics', () => {
   describe('queryData (Internal)', () => {
     it('should build request correctly and return JSON data', async () => {
       const mockData = [{ val: 1 }];
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, mockData));
-      utilsExports.formatQueryParams = mock.fn((): Record<string, string> => ({ some: 'query' }));
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(200, mockData));
+      utilsExports.formatQueryParams.mock.mockImplementation(() => ({ some: 'query' }));
 
       const result = await south.queryData(baseConfiguration.items[0], 'start', 'end');
 
@@ -216,15 +192,15 @@ describe('SouthOIAnalytics', () => {
         'end',
         baseConfiguration.items[0].settings.queryParams
       ]);
-      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
-      const [urlArg, optionsArg] = httpRequestExports.HTTPRequest.mock.calls[0].arguments as [URL, { query: unknown }];
-      assert.strictEqual(urlArg.href, 'http://mock-host/api/endpoint');
-      assert.deepStrictEqual(optionsArg.query, { some: 'query' });
+      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
+      const [urlArg, optionsArg] = HTTPRequest.mock.calls[0].arguments;
+      assert.strictEqual((urlArg as URL).href, 'http://mock-host/api/endpoint');
+      assert.deepStrictEqual(optionsArg!.query, { some: 'query' });
       assert.deepStrictEqual(result, mockData);
     });
 
     it('should throw if query request fails', async () => {
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(400, 'Bad Request'));
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(400, 'Bad Request'));
 
       await assert.rejects(south.queryData(baseConfiguration.items[0], 'start', 'end'), {
         message: 'HTTP request failed with status code 400 and message: Bad Request'
@@ -237,13 +213,11 @@ describe('SouthOIAnalytics', () => {
       const mockRawData = [{ raw: 'data' }];
       const mockFormatted = [{ pointId: 'p1', value: 10 }];
 
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => {
+      HTTPRequest.mock.mockImplementation(async () => {
         mock.timers.tick(25);
         return createMockResponse(200, mockRawData);
       });
-      utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
-        formattedResult: mockFormatted
-      }));
+      utilsOianalyticsExports.parseData.mock.mockImplementation(() => ({ formattedResult: mockFormatted }));
 
       const testingSettings = {
         history: { startTime: 'start', endTime: 'end' }
@@ -251,7 +225,7 @@ describe('SouthOIAnalytics', () => {
 
       const result = await south.testItem(baseConfiguration.items[0], testingSettings);
 
-      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
       assert.strictEqual(utilsOianalyticsExports.parseData.mock.calls.length, 1);
       assert.deepStrictEqual(utilsOianalyticsExports.parseData.mock.calls[0].arguments, [mockRawData]);
       assert.deepStrictEqual(result, {
@@ -270,15 +244,12 @@ describe('SouthOIAnalytics', () => {
       const maxInstant = '2023-02-01T12:00:00.000Z';
       utilsExports.formatInstant.mock.mockImplementation(() => '2023-02-01');
 
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, mockRaw));
-      utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
-        formattedResult: mockFormatted,
-        maxInstant
-      }));
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(200, mockRaw));
+      utilsOianalyticsExports.parseData.mock.mockImplementation(() => ({ formattedResult: mockFormatted, maxInstant }));
 
       const resultInstant = await south.historyQuery([item], 'start', 'end');
 
-      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
       assert.deepStrictEqual(utilsOianalyticsExports.parseData.mock.calls[0].arguments, [mockRaw]);
       assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
       const persistArgs = utilsExports.persistResults.mock.calls[0].arguments as Array<unknown>;
@@ -295,9 +266,7 @@ describe('SouthOIAnalytics', () => {
       assert.strictEqual(typeof persistArgs[6], 'function');
 
       assert.strictEqual(
-        (logger.info as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[1] as string).includes(`Found ${mockFormatted.length} results`)
-        ),
+        logger.info.mock.calls.some(c => c.arguments[1].includes(`Found ${mockFormatted.length} results`)),
         true
       );
       assert.deepStrictEqual(resultInstant, { trackedInstant: '2023-02-01T12:00:00.000Z', value: mockFormatted[0] });
@@ -306,16 +275,14 @@ describe('SouthOIAnalytics', () => {
     it('should handle empty results gracefully', async () => {
       const item = baseConfiguration.items[0];
 
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, []));
-      utilsOianalyticsExports.parseData = mock.fn(() => ({ formattedResult: [], maxInstant: 'default' }));
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(200, []));
+      utilsOianalyticsExports.parseData.mock.mockImplementation(() => ({ formattedResult: [], maxInstant: 'default' }));
 
       await south.historyQuery([item], 'start', 'end');
 
       assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
       assert.strictEqual(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[1] as string).includes('No result found')
-        ),
+        logger.debug.mock.calls.some(c => c.arguments[1].includes('No result found')),
         true
       );
     });
@@ -326,16 +293,9 @@ describe('SouthOIAnalytics', () => {
         { ...baseConfiguration.items[0], name: 'i2' }
       ];
 
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => {
-        return createMockResponse(200, []);
-      });
-
-      let parseCallCount = 0;
-      utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => {
-        parseCallCount++;
-        if (parseCallCount === 1) return { formattedResult: [], maxInstant: '2023-01-02' };
-        return { formattedResult: [], maxInstant: '2023-01-01' };
-      });
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(200, []));
+      utilsOianalyticsExports.parseData.mock.mockImplementation(() => ({ formattedResult: [], maxInstant: '2023-01-01' }));
+      utilsOianalyticsExports.parseData.mock.mockImplementationOnce(() => ({ formattedResult: [], maxInstant: '2023-01-02' }));
 
       const result = await south.historyQuery(items, 'start', 'end');
 

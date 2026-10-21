@@ -16,82 +16,86 @@ import type {
   SouthOPCUASettings
 } from '../../shared/model/connector/south-settings.model';
 
-import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
+import type * as Utils from '../service/utils';
 import nodeOpcuaMock from '../tests/__mocks__/node-opcua.mock';
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
+import { createMock, flushPromises, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type SouthFolderScannerClass from './south-folder-scanner/south-folder-scanner';
 import type SouthMSSQLClass from './south-mssql/south-mssql';
 import type SouthOPCUAClass from './south-opcua/south-opcua';
 
 const nodeRequire = createRequire(import.meta.url);
 
+const buildGroup = (overrides: Partial<SouthItemGroupEntityLight> = {}): SouthItemGroupEntityLight => ({
+  id: 'groupId1',
+  name: 'group 1',
+  scanMode: testData.scanMode.list[0],
+  startTimeOffset: null,
+  endTimeOffset: null,
+  maxReadInterval: null,
+  readDelay: null,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: '',
+  ...overrides
+});
+
+const buildOpcuaItem = (
+  overrides: Partial<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
+): SouthConnectorItemEntity<SouthOPCUAItemSettings> => ({
+  id: 'southItemId5',
+  name: 'opcua sub',
+  enabled: true,
+  settings: { mode: 'da' } as SouthOPCUAItemSettings,
+  scanMode: testData.scanMode.list[0],
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: null,
+  readDelay: null,
+  startTimeOffset: null,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: '',
+  ...overrides
+});
+
 describe('SouthConnector', () => {
   let SouthFolderScanner: typeof SouthFolderScannerClass;
   let SouthMSSQL: typeof SouthMSSQLClass;
   let SouthOPCUA: typeof SouthOPCUAClass;
 
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(
-    async (_southId: string, _data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-      undefined
-  );
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let logger: PinoLogger;
+  let addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  >;
+  let southCacheRepository: Mocked<SouthCacheRepository>;
 
-  const cronMockInstance = { stop: mock.fn() };
-  const cronExports = {
-    CronJob: mock.fn(function (_cron: unknown, _callback: () => void) {
-      return cronMockInstance;
-    })
-  };
-
-  const utilsExports = {
-    delay: mock.fn(async () => undefined),
+  const realUtils: typeof Utils = nodeRequire('../service/utils');
+  const createUtilsMocks = () => ({
+    delay: mock.fn(async (_timeout: number) => undefined),
     generateIntervals: mock.fn(
-      (_startTime: unknown, _endTime: unknown, _maxReadInterval?: unknown, _strategy?: unknown) =>
-        [] as Array<{ start: string; end: string }>
+      (_startTime: unknown, _endTime: unknown, _maxReadInterval?: unknown, _strategy?: unknown): Array<{ start: string; end: string }> => []
     ),
-    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
-    validateCronExpression: mock.fn(() => ({ expression: '' })),
-    checkAge: mock.fn(() => true),
-    compress: mock.fn(async () => undefined),
-    convertDateTimeToInstant: mock.fn((v: unknown) => v),
-    convertDelimiter: mock.fn((v: unknown) => v),
-    formatInstant: mock.fn((v: unknown) => v),
-    generateCsvContent: mock.fn(() => ''),
-    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
-    generateReplacementParameters: mock.fn(() => []),
-    getErrorMessage: mock.fn((error: unknown) => {
-      if (error instanceof Error) return error.message;
-      if (typeof error === 'string') return error;
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
-      }
-      return String(error);
-    }),
-    logQuery: mock.fn(),
-    persistResults: mock.fn(async () => undefined),
-    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-      if (items.length === 0) return {};
-      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-      const lead = items[0];
-      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-    })
-  };
-
-  const utilsOpcuaExports = {
-    createSessionConfigs: mock.fn(() => []),
-    getHistoryReadRequest: mock.fn(() => ({})),
-    getTimestamp: mock.fn(() => ''),
-    logMessages: mock.fn(),
-    parseOPCUAValue: mock.fn(() => null)
-  };
+    // Every enabled item of a scan mode in one work unit, whatever the connector type
+    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items])
+  });
+  const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
   const mssqlExports: Record<string, unknown> = {
     __esModule: true,
@@ -102,7 +106,6 @@ describe('SouthConnector', () => {
   mssqlExports.default = mssqlExports;
 
   before(() => {
-    mockModule(nodeRequire, 'cron', cronExports);
     mockModule(nodeRequire, '../service/utils', utilsExports);
     mockModule(nodeRequire, '../service/encryption.service', {
       __esModule: true,
@@ -113,9 +116,15 @@ describe('SouthConnector', () => {
       __esModule: true,
       ...nodeOpcuaMock
     });
-    mockModule(nodeRequire, '../service/utils-opcua', utilsOpcuaExports);
+    mockModule(nodeRequire, '../service/utils-opcua', {
+      createSessionConfigs: mock.fn(() => []),
+      getHistoryReadRequest: mock.fn(() => ({})),
+      getTimestamp: mock.fn(() => ''),
+      logMessages: mock.fn(),
+      parseOPCUAValue: mock.fn(() => null)
+    });
     mockModule(nodeRequire, '../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -127,47 +136,29 @@ describe('SouthConnector', () => {
     SouthOPCUA = reloadModule<{ default: typeof SouthOPCUAClass }>(nodeRequire, './south-opcua/south-opcua').default;
   });
 
+  beforeEach(() => {
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
+    southCacheRepository = createMock<SouthCacheRepository>();
+    Object.assign(utilsExports, createUtilsMocks());
+    mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
+  });
+
+  afterEach(() => {
+    mock.timers.reset();
+    mock.restoreAll();
+  });
+
   describe('SouthConnector with file query', () => {
     let south: SouthFolderScannerClass;
 
     beforeEach(async () => {
-      addContentCallback.mock.resetCalls();
-      // southCacheRepository is a single shared instance across every test in this file (unlike the
-      // old per-test southCacheService mock), so its call history must be reset explicitly here.
-      for (const fn of [
-        southCacheRepository.getItemLastValue,
-        southCacheRepository.getGroupLastValue,
-        southCacheRepository.saveItemLastValue,
-        southCacheRepository.saveGroupLastValue,
-        southCacheRepository.deleteItemValue,
-        southCacheRepository.deleteItemsBySouth
-      ]) {
-        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      }
-      for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
-        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      }
-      cronMockInstance.stop.mock.resetCalls();
-      cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
-        return cronMockInstance;
-      });
-      utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
-      utilsExports.validateCronExpression = mock.fn(() => ({ expression: '' }));
-      utilsExports.generateIntervals = mock.fn(() => []);
-
-      mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
-
       const config = JSON.parse(JSON.stringify(testData.south.list[0])) as SouthConnectorEntity<
         SouthFolderScannerSettings,
         SouthFolderScannerItemSettings
       >;
       south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, 'cacheFolder');
       await south.start();
-    });
-
-    afterEach(() => {
-      mock.timers.reset();
-      mock.restoreAll();
     });
 
     it('should properly add to queue a new task and dispatch it immediately', () => {
@@ -185,9 +176,9 @@ describe('SouthConnector', () => {
 
       // Same scan mode again while the first task is still in flight (runTask hasn't resolved yet): backpressure
       south.trigger(testData.scanMode.list[0]);
-      assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.strictEqual(logger.warn.mock.calls.length, 1);
       assert.strictEqual(
-        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0],
+        logger.warn.mock.calls[0].arguments[0],
         `Task job not added in South connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}). The previous cron was still running. The next occurrences will be logged as trace for the next hour`
       );
 
@@ -236,11 +227,7 @@ describe('SouthConnector', () => {
         mock.fn(async () => undefined)
       );
       assert.strictEqual(second, null);
-      assert.ok(
-        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes('Workflow "workflowId1" is already queued or running')
-        )
-      );
+      assert.ok(logger.warn.mock.calls.some(c => c.arguments[0].includes('Workflow "workflowId1" is already queued or running')));
     });
 
     it('should allow a different workflow id to queue independently of one that is already running', async () => {
@@ -265,8 +252,8 @@ describe('SouthConnector', () => {
     });
 
     it('should return null and not queue when the connector is stopping', async () => {
-      const promise = new Promise<void>(resolve => setTimeout(resolve, 1000));
-      south.disconnect = mock.fn(() => promise);
+      // disconnect() never resolves: the connector stays in its stopping state
+      south.disconnect = mock.fn(() => new Promise<void>(() => undefined));
       south.stop();
       const result = south.enqueueWorkflowRun(
         'workflowId1',
@@ -303,11 +290,9 @@ describe('SouthConnector', () => {
       south.trigger(scanMode);
       south.trigger(scanMode);
 
-      const warnMock = logger.warn as Mock<(...args: Array<unknown>) => unknown>;
-      const traceMock = logger.trace as Mock<(...args: Array<unknown>) => unknown>;
       const message = `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`;
-      const backpressureWarns = warnMock.mock.calls.filter(call => (call.arguments[0] as string).startsWith(message));
-      const backpressureTraces = traceMock.mock.calls.filter(call => call.arguments[0] === message);
+      const backpressureWarns = logger.warn.mock.calls.filter(call => call.arguments[0].startsWith(message));
+      const backpressureTraces = logger.trace.mock.calls.filter(call => call.arguments[0] === message);
 
       assert.strictEqual(backpressureWarns.length, 1);
       assert.strictEqual(backpressureWarns[0].arguments[0], `${message}. The next occurrences will be logged as trace for the next hour`);
@@ -316,7 +301,7 @@ describe('SouthConnector', () => {
       // After an hour, the warning is emitted again
       mock.timers.tick(60 * 60 * 1000);
       south.trigger(scanMode);
-      assert.strictEqual(warnMock.mock.calls.filter(call => (call.arguments[0] as string).startsWith(message)).length, 2);
+      assert.strictEqual(logger.warn.mock.calls.filter(call => call.arguments[0].startsWith(message)).length, 2);
     });
 
     it('should prune stale backpressure-warning entries when items/groups are reconfigured', () => {
@@ -359,7 +344,7 @@ describe('SouthConnector', () => {
         undefined
       );
       assert.strictEqual(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
+        logger.error.mock.calls.some(
           call => call.arguments[0] === 'Item "Bad Item" (id: badItem) has no scan mode and no group: skipping it'
         ),
         true
@@ -368,23 +353,13 @@ describe('SouthConnector', () => {
 
     it('should not update subscriptions if not compatible', async () => {
       await south.updateSubscriptions();
-      assert.strictEqual((logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
-      assert.strictEqual(
-        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0],
-        'This connector does not support subscriptions'
-      );
-
-      south.connectorConfiguration = testData.south.list[0] as SouthConnectorEntity<
-        SouthFolderScannerSettings,
-        SouthFolderScannerItemSettings
-      >;
+      assert.strictEqual(logger.trace.mock.calls.length, 1);
+      assert.strictEqual(logger.trace.mock.calls[0].arguments[0], 'This connector does not support subscriptions');
     });
 
     it('should not add to queue if connector is stopping', async () => {
-      const promise = new Promise<void>(resolve => {
-        setTimeout(resolve, 1000);
-      });
-      south.disconnect = mock.fn(() => promise);
+      // disconnect() never resolves: the connector stays in its stopping state
+      south.disconnect = mock.fn(() => new Promise<void>(() => undefined));
       const runTaskMock = mock.fn(async () => undefined);
       south['runTask'] = runTaskMock;
 
@@ -413,10 +388,8 @@ describe('SouthConnector', () => {
       south.trigger(testData.scanMode.list[0]);
       await flushPromises();
       assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            (c.arguments[0] as string).includes('Unhandled error in South task runner') &&
-            (c.arguments[0] as string).includes(runError.message)
+        logger.error.mock.calls.some(
+          c => c.arguments[0].includes('Unhandled error in South task runner') && c.arguments[0].includes(runError.message)
         )
       );
       // The task is still cleaned up (removed from in-flight, item status reset) despite the rejection
@@ -434,8 +407,8 @@ describe('SouthConnector', () => {
 
       assert.strictEqual(runTaskMock.mock.calls.length, 0);
       assert.ok(
-        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
+        logger.trace.mock.calls.some(
+          c =>
             c.arguments[0] ===
             `Connector is disabled. Cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}) not added`
         )
@@ -443,33 +416,29 @@ describe('SouthConnector', () => {
     });
 
     it('should refresh logger on refreshLogger()', async () => {
-      (logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
+      logger.info.mock.resetCalls();
       south.refreshLogger();
       await south.stop();
-      assert.strictEqual((logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.strictEqual(logger.info.mock.calls.length, 1);
     });
 
     it('should reset cache', async () => {
       await south.resetCache();
-      assert.strictEqual((southCacheRepository.deleteItemsBySouth as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.strictEqual(southCacheRepository.deleteItemsBySouth.mock.calls.length, 1);
     });
 
     it('should build a history query snapshot from persisted cache entries', () => {
       const items = testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>;
-      const groupedItem = {
-        ...items[1],
-        syncWithGroup: true,
-        group: { id: 'groupId1', name: 'group 1' }
-      } as unknown as SouthConnectorItemEntity<SouthFolderScannerItemSettings>;
+      const groupedItem = { ...items[1], syncWithGroup: true, group: buildGroup() };
 
-      (southCacheRepository.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.mockImplementationOnce(() => ({
+      southCacheRepository.getItemLastValue.mock.mockImplementationOnce(() => ({
         itemId: items[0].id,
         groupId: null,
         trackedInstant: '2020-02-02T02:02:02.222Z',
         queryTime: '2020-02-02T03:02:02.222Z',
         value: { foo: 'bar' }
       }));
-      (southCacheRepository.getGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.mockImplementationOnce(() => null);
+      southCacheRepository.getGroupLastValue.mock.mockImplementationOnce(() => null);
 
       const snapshot = south.getHistoryQuerySnapshot([items[0], groupedItem]);
 
@@ -492,9 +461,9 @@ describe('SouthConnector', () => {
         ]
       });
 
-      const getItemCalls = (southCacheRepository.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const getItemCalls = southCacheRepository.getItemLastValue.mock.calls;
       assert.strictEqual(getItemCalls[getItemCalls.length - 1].arguments[1], items[0].id);
-      const getGroupCalls = (southCacheRepository.getGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const getGroupCalls = southCacheRepository.getGroupLastValue.mock.calls;
       assert.strictEqual(getGroupCalls[getGroupCalls.length - 1].arguments[1], 'groupId1');
     });
 
@@ -517,19 +486,11 @@ describe('SouthConnector', () => {
       await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
       assert.strictEqual(directQueryMock.mock.calls.length, 1);
       assert.deepStrictEqual(directQueryMock.mock.calls[0].arguments, [testData.south.list[0].items]);
-      assert.ok(
-        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Direct querying 2 items`
-        )
-      );
+      assert.ok(logger.trace.mock.calls.some(c => c.arguments[0] === `Direct querying 2 items`));
 
       await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
-      assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[1] === `Error when querying items with direct access: file query error`
-        )
-      );
+      assert.ok(logger.error.mock.calls.some(c => c.arguments[1] === `Error when querying items with direct access: file query error`));
     });
 
     it('should still save the legacy per-item "last value" cache row via directQueryHandler for a non-IoT-family connector', async () => {
@@ -541,7 +502,7 @@ describe('SouthConnector', () => {
       const items = testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>;
       await south.directQueryHandler(items);
 
-      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const saveCalls = southCacheRepository.saveItemLastValue.mock.calls;
       assert.strictEqual(saveCalls.length, 1);
       assert.strictEqual(saveCalls[0].arguments[0], south.connectorConfiguration.id);
       assert.strictEqual((saveCalls[0].arguments[1] as { itemId: string }).itemId, items[0].id);
@@ -550,44 +511,16 @@ describe('SouthConnector', () => {
 
   describe('SouthConnector disabled', () => {
     let south: SouthMSSQLClass;
+    const mssqlItems = testData.south.list[1].items as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
 
     beforeEach(async () => {
-      addContentCallback.mock.resetCalls();
-      // southCacheRepository is a single shared instance across every test in this file (unlike the
-      // old per-test southCacheService mock), so its call history must be reset explicitly here.
-      for (const fn of [
-        southCacheRepository.getItemLastValue,
-        southCacheRepository.getGroupLastValue,
-        southCacheRepository.saveItemLastValue,
-        southCacheRepository.saveGroupLastValue,
-        southCacheRepository.deleteItemValue,
-        southCacheRepository.deleteItemsBySouth
-      ]) {
-        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      }
-      for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
-        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      }
-      cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
-        return cronMockInstance;
-      });
-      utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
-
-      mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
-
       south = new SouthMSSQL(
         testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
         addContentCallback,
         southCacheRepository,
-
         'cacheFolder'
       );
       await south.start();
-    });
-
-    afterEach(() => {
-      mock.timers.reset();
-      mock.restoreAll();
     });
 
     it('should key two unrelated singleton work-units by item id, not by a shared group id', () => {
@@ -595,26 +528,12 @@ describe('SouthConnector', () => {
       // arrays, even for two items that both declare the same group with syncWithGroup: true. The
       // unit key must distinguish them (by item id) rather than colliding on the group id, since
       // they are functionally independent work-units here.
-      const group = {
-        id: 'sharedGroupId',
-        name: 'shared group',
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      const itemA = { ...testData.south.list[1].items[0], group, syncWithGroup: true };
-      const itemB = { ...testData.south.list[1].items[1], group, syncWithGroup: true };
+      const group = buildGroup({ id: 'sharedGroupId', name: 'shared group' });
+      const itemA = { ...mssqlItems[0], group, syncWithGroup: true };
+      const itemB = { ...mssqlItems[1], group, syncWithGroup: true };
 
-      const keyA = south['getUnitKey']([itemA] as unknown as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>);
-      const keyB = south['getUnitKey']([itemB] as unknown as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>);
+      const keyA = south['getUnitKey']([itemA]);
+      const keyB = south['getUnitKey']([itemB]);
 
       assert.notStrictEqual(keyA, keyB);
       assert.strictEqual(keyA, `item:${itemA.id}`);
@@ -622,34 +541,19 @@ describe('SouthConnector', () => {
     });
 
     it('should key a real multi-item group by its group id', () => {
-      const group = {
-        id: 'sharedGroupId',
-        name: 'shared group',
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      const itemB = { ...testData.south.list[1].items[0], group, syncWithGroup: true };
-      const itemC = { ...testData.south.list[1].items[1], group, syncWithGroup: true };
+      const group = buildGroup({ id: 'sharedGroupId', name: 'shared group' });
+      const itemB = { ...mssqlItems[0], group, syncWithGroup: true };
+      const itemC = { ...mssqlItems[1], group, syncWithGroup: true };
 
-      const key = south['getUnitKey']([itemB, itemC] as unknown as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>);
+      const key = south['getUnitKey']([itemB, itemC]);
 
       assert.strictEqual(key, `group:${group.id}`);
     });
 
     it('should be properly initialized', () => {
-      assert.ok((logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length >= 0);
+      assert.ok(logger.trace.mock.calls.length >= 0);
       assert.strictEqual(south.isEnabled(), false);
-      assert.ok((logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length >= 0);
-      south.historyQueryHandler = mock.fn(async (_items: unknown, _startTime: unknown, _endTime: unknown) => undefined);
+      assert.ok(logger.trace.mock.calls.length >= 0);
     });
 
     it('should report hasExplore() as true now that SouthMSSQL implements explore()', () => {
@@ -663,16 +567,11 @@ describe('SouthConnector', () => {
           SouthMSSQLItemSettings
         >;
       });
-      south.connectorConfiguration = testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>;
     });
 
     it('should ignore history query when not history items', async () => {
       await south.historyQueryHandler([], '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z');
-      assert.ok(
-        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'No history items to read. Ignoring historyQuery'
-        )
-      );
+      assert.ok(logger.trace.mock.calls.some(c => c.arguments[0] === 'No history items to read. Ignoring historyQuery'));
     });
 
     it('should skip the history query when the effective window does not extend past the tracked instant', async () => {
@@ -686,11 +585,7 @@ describe('SouthConnector', () => {
 
       assert.strictEqual(historyQueryMock.mock.calls.length, 0);
       assert.strictEqual(utilsExports.generateIntervals.mock.calls.length, 0);
-      assert.ok(
-        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          String(c.arguments[0]).startsWith('Skipping history query: effective window')
-        )
-      );
+      assert.ok(logger.warn.mock.calls.some(c => String(c.arguments[0]).startsWith('Skipping history query: effective window')));
     });
 
     it('falls back to a maxReadInterval/readDelay of 0 when the item does not configure them', async () => {
@@ -715,11 +610,7 @@ describe('SouthConnector', () => {
       const items = [testData.south.list[1].items[0]] as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
 
-      assert.ok(
-        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          String(c.arguments[0]).startsWith('Interval split in 3 sub-intervals')
-        )
-      );
+      assert.ok(logger.trace.mock.calls.some(c => String(c.arguments[0]).startsWith('Interval split in 3 sub-intervals')));
     });
 
     it('should call historyQuery once per item for single-item connectors', async () => {
@@ -798,13 +689,13 @@ describe('SouthConnector', () => {
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
 
       // getItemLastValue must be called with each item's own id
-      const getCalls = (southCacheRepository.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const getCalls = southCacheRepository.getItemLastValue.mock.calls;
       assert.strictEqual(getCalls.length, 2);
       assert.strictEqual(getCalls[0].arguments[1], items[0].id);
       assert.strictEqual(getCalls[1].arguments[1], items[1].id);
 
       // saveItemLastValue must be called with each item's own id
-      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const saveCalls = southCacheRepository.saveItemLastValue.mock.calls;
       assert.strictEqual(saveCalls.length, 2);
       assert.strictEqual((saveCalls[0].arguments[1] as { itemId: string }).itemId, items[0].id);
       assert.strictEqual((saveCalls[1].arguments[1] as { itemId: string }).itemId, items[1].id);
@@ -831,7 +722,7 @@ describe('SouthConnector', () => {
       >;
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
 
-      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const saveCalls = southCacheRepository.saveItemLastValue.mock.calls;
       // Only interval1's save should happen: interval2's lower max must be rejected, not overwrite it
       assert.strictEqual(saveCalls.length, 1);
       assert.strictEqual((saveCalls[0].arguments[1] as { trackedInstant: string | null }).trackedInstant, '2020-08-01T00:00:00.000Z');
@@ -849,7 +740,7 @@ describe('SouthConnector', () => {
       >;
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', endTime);
 
-      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const saveCalls = southCacheRepository.saveItemLastValue.mock.calls;
       // Must be called exactly once (at end, not per interval)
       assert.strictEqual(saveCalls.length, 1);
       assert.strictEqual((saveCalls[0].arguments[1] as { trackedInstant: string }).trackedInstant, endTime);
@@ -861,7 +752,7 @@ describe('SouthConnector', () => {
       utilsExports.generateIntervals = mock.fn(() => [interval1, interval2]);
       south.historyQuery = mock.fn(async () => {
         // Simulate a stop being requested mid-run
-        (south as unknown as { stopping: boolean }).stopping = true;
+        south['stopping'] = true;
         return { trackedInstant: '2021-02-02T02:02:02.222Z', value: null };
       });
 
@@ -870,57 +761,26 @@ describe('SouthConnector', () => {
       >;
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
 
-      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const saveCalls = southCacheRepository.saveItemLastValue.mock.calls;
       assert.strictEqual(saveCalls.length, 0);
-      // Reset stopping flag for subsequent tests
-      (south as unknown as { stopping: boolean }).stopping = false;
     });
   });
 
   describe('SouthConnector with history and subscription', () => {
     let south: SouthOPCUAClass;
+    const opcuaItems = testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>;
 
     beforeEach(async () => {
-      addContentCallback.mock.resetCalls();
-      // southCacheRepository is a single shared instance across every test in this file (unlike the
-      // old per-test southCacheService mock), so its call history must be reset explicitly here.
-      for (const fn of [
-        southCacheRepository.getItemLastValue,
-        southCacheRepository.getGroupLastValue,
-        southCacheRepository.saveItemLastValue,
-        southCacheRepository.saveGroupLastValue,
-        southCacheRepository.deleteItemValue,
-        southCacheRepository.deleteItemsBySouth
-      ]) {
-        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      }
-      for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
-        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      }
-      cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
-        return cronMockInstance;
-      });
-      utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
-      utilsExports.generateIntervals = mock.fn(() => []);
-
-      mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
-
       south = new SouthOPCUA(
         testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
         addContentCallback,
         southCacheRepository,
-
         'cacheFolder'
       );
 
       south.connect = mock.fn(async (): Promise<void> => undefined);
       south.disconnect = mock.fn(async (): Promise<void> => undefined);
       await south.start();
-    });
-
-    afterEach(() => {
-      mock.timers.reset();
-      mock.restoreAll();
     });
 
     it('should properly run a task', async () => {
@@ -938,7 +798,7 @@ describe('SouthConnector', () => {
       });
       south.directQuery = directQueryMock;
 
-      const items = testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>;
+      const items = opcuaItems;
       await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
       assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 1);
@@ -952,15 +812,10 @@ describe('SouthConnector', () => {
       ]);
       assert.strictEqual(directQueryMock.mock.calls.length, 1);
       assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[1] === `Error when querying items with history capabilities: history query error`
-        )
+        logger.error.mock.calls.some(c => c.arguments[1] === `Error when querying items with history capabilities: history query error`)
       );
       assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[1] === `Error when querying items with direct access: last point query error`
-        )
+        logger.error.mock.calls.some(c => c.arguments[1] === `Error when querying items with direct access: last point query error`)
       );
 
       await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
@@ -982,7 +837,7 @@ describe('SouthConnector', () => {
       south.historyQueryHandler = historyQueryHandlerMock;
       south.directQuery = mock.fn(async (): Promise<null> => null);
 
-      const baseItem = testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>;
+      const baseItem = opcuaItems[0];
       const items = [{ ...baseItem, group: null, syncWithGroup: false, maxReadInterval: null }];
 
       await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
@@ -1007,22 +862,8 @@ describe('SouthConnector', () => {
       });
       south.directQuery = directQueryMock;
 
-      const group = {
-        id: 'groupId1',
-        name: 'group 1',
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: 3600,
-        readDelay: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      const baseItem = testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>;
+      const group = buildGroup({ maxReadInterval: 3600 });
+      const baseItem = opcuaItems[0];
       const items = [
         { ...baseItem, id: 'groupedItem1', group, syncWithGroup: true, settings: { ...baseItem.settings, mode: 'da' as const } },
         { ...baseItem, id: 'groupedItem2', group, syncWithGroup: true, settings: { ...baseItem.settings, mode: 'da' as const } }
@@ -1031,19 +872,19 @@ describe('SouthConnector', () => {
       await south['runTask']({ kind: 'items', scanModeId: testData.scanMode.list[0].id, items });
 
       assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
+        logger.error.mock.calls.some(
+          c =>
             c.arguments[1] === 'Error when querying items with history capabilities: history query error' &&
-            (c.arguments[0] as { groupId?: string; groupName?: string }).groupId === 'groupId1' &&
-            (c.arguments[0] as { groupId?: string; groupName?: string }).groupName === 'group 1'
+            c.arguments[0].groupId === 'groupId1' &&
+            c.arguments[0].groupName === 'group 1'
         )
       );
       assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
+        logger.error.mock.calls.some(
+          c =>
             c.arguments[1] === 'Error when querying items with direct access: last point query error' &&
-            (c.arguments[0] as { groupId?: string; groupName?: string }).groupId === 'groupId1' &&
-            (c.arguments[0] as { groupId?: string; groupName?: string }).groupName === 'group 1'
+            c.arguments[0].groupId === 'groupId1' &&
+            c.arguments[0].groupName === 'group 1'
         )
       );
     });
@@ -1067,8 +908,7 @@ describe('SouthConnector', () => {
       // A third scan mode's items queue up behind the two already in-flight tasks (both slots
       // taken). Routed through the connectorConfiguration setter (rather than mutating `.items`
       // directly) so the scan-mode-grouped cache trigger() reads from is rebuilt to include the
-      // new item; restored the same way afterward since `testData.south.list[2]` is shared across
-      // every test in this describe block.
+      // new item.
       const originalConfig = south.connectorConfiguration;
       const thirdScanMode = { ...testData.scanMode.list[0], id: 'thirdScanModeId' };
       south.connectorConfiguration = {
@@ -1090,7 +930,6 @@ describe('SouthConnector', () => {
       resolvers[1]();
       resolvers[2]();
       await flushPromises();
-      south.connectorConfiguration = originalConfig;
     });
 
     it('should not dispatch queued tasks while stopping', () => {
@@ -1102,8 +941,6 @@ describe('SouthConnector', () => {
       south['dispatch']();
 
       assert.strictEqual(runTaskMock.mock.calls.length, 0);
-      south['stopping'] = false;
-      south['taskQueue'] = [];
     });
 
     it('should clean up the queue and in-flight tasks when runTask() throws unexpectedly', async () => {
@@ -1118,10 +955,8 @@ describe('SouthConnector', () => {
       assert.strictEqual(south['taskQueue'].length, 0);
       assert.strictEqual(south['runningTasks'].size, 0);
       assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            (c.arguments[0] as string).includes('Unhandled error in South task runner') &&
-            (c.arguments[0] as string).includes(runError.message)
+        logger.error.mock.calls.some(
+          c => c.arguments[0].includes('Unhandled error in South task runner') && c.arguments[0].includes(runError.message)
         )
       );
     });
@@ -1129,16 +964,11 @@ describe('SouthConnector', () => {
     it('should properly stop', async () => {
       await south.stop();
       assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] === `Stopping South "${testData.south.list[2].name}" (${testData.south.list[2].id})...`
+        logger.debug.mock.calls.some(
+          c => c.arguments[0] === `Stopping South "${testData.south.list[2].name}" (${testData.south.list[2].id})...`
         )
       );
-      assert.ok(
-        (logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `South connector "${testData.south.list[2].name}" stopped`
-        )
-      );
+      assert.ok(logger.info.mock.calls.some(c => c.arguments[0] === `South connector "${testData.south.list[2].name}" stopped`));
     });
 
     it('should properly stop with running task', async () => {
@@ -1154,16 +984,11 @@ describe('SouthConnector', () => {
 
       south.stop();
       assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] === `Stopping South "${testData.south.list[2].name}" (${testData.south.list[2].id})...`
+        logger.debug.mock.calls.some(
+          c => c.arguments[0] === `Stopping South "${testData.south.list[2].name}" (${testData.south.list[2].id})...`
         )
       );
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Waiting for 1 South task(s) to finish'
-        )
-      );
+      assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'Waiting for 1 South task(s) to finish'));
       assert.strictEqual(disconnectMock.mock.calls.length, 0);
       mock.timers.tick(1000);
       await flushPromises();
@@ -1172,17 +997,13 @@ describe('SouthConnector', () => {
 
     it('should add values', async () => {
       await south.addContent({ type: 'time-values', content: [] }, testData.constants.dates.DATE_1, []);
-      assert.strictEqual((logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.strictEqual(logger.debug.mock.calls.length, 1);
       assert.strictEqual(addContentCallback.mock.calls.length, 0);
-      assert.strictEqual((southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
 
       const values = [{}, {}] as Array<OIBusTimeValue>;
       await south.addContent({ type: 'time-values', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Add 2 values to cache from South "${testData.south.list[2].name}"`
-        )
-      );
+      assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === `Add 2 values to cache from South "${testData.south.list[2].name}"`));
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
@@ -1209,8 +1030,6 @@ describe('SouthConnector', () => {
         interval.start,
         interval.end
       ]);
-
-      south['currentHistoryQueryInterval'] = null;
     });
 
     it('should forward the current history query interval bounds when adding records', async () => {
@@ -1228,8 +1047,6 @@ describe('SouthConnector', () => {
         interval.start,
         interval.end
       ]);
-
-      south['currentHistoryQueryInterval'] = null;
     });
 
     it('should add records', async () => {
@@ -1238,11 +1055,7 @@ describe('SouthConnector', () => {
 
       const records = [{ col: 1 }, { col: 2 }] as Array<OIBusRecord>;
       await south.addContent({ type: 'record-list', content: records }, testData.constants.dates.DATE_1, testData.south.list[2].items);
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Add 2 records to cache from South "${testData.south.list[2].name}"`
-        )
-      );
+      assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === `Add 2 records to cache from South "${testData.south.list[2].name}"`));
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
@@ -1266,10 +1079,7 @@ describe('SouthConnector', () => {
     it('should add file', async () => {
       await south.addContent({ type: 'any', filePath: 'file.csv' }, testData.constants.dates.DATE_1, testData.south.list[2].items);
       assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] === `Add file "file.csv" to cache from South "${testData.south.list[2].name}"`
-        )
+        logger.debug.mock.calls.some(c => c.arguments[0] === `Add file "file.csv" to cache from South "${testData.south.list[2].name}"`)
       );
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
@@ -1295,8 +1105,6 @@ describe('SouthConnector', () => {
         interval.start,
         interval.end
       ]);
-
-      south['currentHistoryQueryInterval'] = null;
     });
 
     it('should add any content', async () => {
@@ -1305,10 +1113,7 @@ describe('SouthConnector', () => {
 
       await south.addContent({ type: 'any-content', content: 'file.csv' }, testData.constants.dates.DATE_1, []);
       assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] === `Add 8 bytes of content to cache from South "${testData.south.list[2].name}"`
-        )
+        logger.debug.mock.calls.some(c => c.arguments[0] === `Add 8 bytes of content to cache from South "${testData.south.list[2].name}"`)
       );
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
@@ -1352,11 +1157,7 @@ describe('SouthConnector', () => {
       const intervalListener = mock.fn();
       south.metricsEvent.on('history-query-interval', intervalListener);
 
-      south.historyQueryHandler(
-        testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
-        '2020-02-02T02:02:02.222Z',
-        '2023-02-02T02:02:02.222Z'
-      );
+      south.historyQueryHandler(opcuaItems, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z');
       south.stop();
 
       mock.timers.tick(10000);
@@ -1364,8 +1165,8 @@ describe('SouthConnector', () => {
       await flushPromises();
 
       assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
+        logger.debug.mock.calls.some(
+          c =>
             c.arguments[0] ===
             `Connector is stopping. Exiting history query at interval 0: [2020-02-02T02:02:02.222Z, 2021-02-02T02:02:02.222Z]`
         )
@@ -1395,11 +1196,7 @@ describe('SouthConnector', () => {
         }
       );
 
-      await south.historyQueryHandler(
-        testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
-        '2020-02-02T02:02:02.222Z',
-        '2023-02-02T02:02:02.222Z'
-      );
+      await south.historyQueryHandler(opcuaItems, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z');
 
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments.slice(-2), [
@@ -1416,24 +1213,10 @@ describe('SouthConnector', () => {
     });
 
     it('should use group historian settings when syncWithGroup is true', async () => {
-      const group = {
-        id: 'group1',
-        name: 'Group 1',
-        scanMode: testData.scanMode.list[0],
-        maxReadInterval: 1800,
-        readDelay: 100,
-        startTimeOffset: 50,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
+      const group = buildGroup({ id: 'group1', name: 'Group 1', maxReadInterval: 1800, readDelay: 100, startTimeOffset: 50 });
       const itemsWithGroup = [
         {
-          ...(testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+          ...opcuaItems[0],
           group,
           syncWithGroup: true
         }
@@ -1456,24 +1239,10 @@ describe('SouthConnector', () => {
       south.historyQueryHandler = historyQueryHandlerMock;
       south.directQuery = mock.fn(async (): Promise<null> => null);
 
-      const group = {
-        id: 'group1',
-        name: 'Group 1',
-        scanMode: testData.scanMode.list[0],
-        maxReadInterval: 999999,
-        readDelay: 0,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
+      const group = buildGroup({ id: 'group1', name: 'Group 1', maxReadInterval: 999999, readDelay: 0 });
       const items = [
         {
-          ...(testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+          ...opcuaItems[0],
           group,
           syncWithGroup: false,
           maxReadInterval: 3600
@@ -1490,28 +1259,14 @@ describe('SouthConnector', () => {
     });
 
     it('should look up and save the shared group cache row (not a per-item row) for a synced group on a batching connector', async () => {
-      const group = {
-        id: 'group1',
-        name: 'Group 1',
-        scanMode: testData.scanMode.list[0],
-        maxReadInterval: 1800,
-        readDelay: 0,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
+      const group = buildGroup({ id: 'group1', name: 'Group 1', maxReadInterval: 1800, readDelay: 0 });
       const itemA = {
-        ...(testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        ...opcuaItems[0],
         group,
         syncWithGroup: true
       };
       const itemB = {
-        ...(testData.south.list[2].items[1] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        ...opcuaItems[1],
         group,
         syncWithGroup: true
       };
@@ -1521,13 +1276,10 @@ describe('SouthConnector', () => {
 
       await south.historyQueryHandler([itemA, itemB], '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z');
 
-      assert.strictEqual((southCacheRepository.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
-      assert.deepStrictEqual(
-        (southCacheRepository.getGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments,
-        [south.connectorConfiguration.id, group.id]
-      );
-      assert.strictEqual((southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
-      const saveCalls = (southCacheRepository.saveGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(southCacheRepository.getItemLastValue.mock.calls.length, 0);
+      assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [south.connectorConfiguration.id, group.id]);
+      assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
+      const saveCalls = southCacheRepository.saveGroupLastValue.mock.calls;
       assert.strictEqual(saveCalls.length, 1);
       assert.strictEqual(saveCalls[0].arguments[0], south.connectorConfiguration.id);
       assert.strictEqual(saveCalls[0].arguments[1], group.id);
@@ -1541,28 +1293,14 @@ describe('SouthConnector', () => {
       // legacy write below (saveGroupLastValue/saveItemLastValue, used by non-IoT direct-query
       // connectors to show a raw "last value" in the UI) would just clobber that dedicated state
       // with an unrelated single value, so directQueryHandler must skip it for these types.
-      const group = {
-        id: 'group2',
-        name: 'Group 2',
-        scanMode: testData.scanMode.list[0],
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
+      const group = buildGroup({ id: 'group2', name: 'Group 2' });
       const itemA = {
-        ...(testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        ...opcuaItems[0],
         group,
         syncWithGroup: true
       };
       const itemB = {
-        ...(testData.south.list[2].items[1] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        ...opcuaItems[1],
         group,
         syncWithGroup: true
       };
@@ -1570,8 +1308,8 @@ describe('SouthConnector', () => {
 
       await south.directQueryHandler([itemA, itemB]);
 
-      assert.strictEqual((southCacheRepository.saveGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
-      assert.strictEqual((southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      assert.strictEqual(southCacheRepository.saveGroupLastValue.mock.calls.length, 0);
+      assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
     });
 
     it('should update subscriptions', async () => {
@@ -1588,108 +1326,21 @@ describe('SouthConnector', () => {
       south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
       south.subscribe = mock.fn(async (): Promise<void> => undefined);
       await south.updateSubscriptions();
-      assert.ok(
-        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Subscribing to 3 new items'
-        )
-      );
+      assert.ok(logger.trace.mock.calls.some(c => c.arguments[0] === 'Subscribing to 3 new items'));
 
       south.connectorConfiguration = { ...south.connectorConfiguration, items: [] };
 
       await south.updateSubscriptions();
 
-      assert.ok(
-        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Unsubscribing from 4 items'
-        )
-      );
-      assert.strictEqual((logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      assert.ok(logger.trace.mock.calls.some(c => c.arguments[0] === 'Unsubscribing from 4 items'));
+      assert.strictEqual(logger.error.mock.calls.length, 0);
     });
 
     it('should update subscriptions and log error', async () => {
       // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
       // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
-      south.connectorConfiguration = {
-        ...south.connectorConfiguration,
-        items: [
-          {
-            id: 'southItemId5',
-            name: 'opcua sub',
-            enabled: true,
-            settings: {
-              mode: 'da'
-            } as SouthOPCUAItemSettings,
-            group: null,
-            syncWithGroup: false,
-            maxReadInterval: null,
-            readDelay: null,
-            startTimeOffset: null,
-            endTimeOffset: null,
-            recoveryStrategy: null,
-            cachingStrategy: null,
-            thresholdType: null,
-            threshold: null,
-            rangeLow: null,
-            rangeHigh: null,
-            maxCachingInterval: null,
-            scanMode: {
-              id: 'subscription',
-              name: 'subscription',
-              description: '',
-              type: 'cron',
-              cron: '',
-              interval: null,
-              activationWindow: null,
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            },
-            createdBy: '',
-            updatedBy: '',
-            createdAt: '',
-            updatedAt: ''
-          },
-          {
-            id: 'southItemId5',
-            name: 'opcua sub',
-            enabled: true,
-            settings: {
-              mode: 'da'
-            } as SouthOPCUAItemSettings,
-            group: null,
-            syncWithGroup: false,
-            maxReadInterval: null,
-            readDelay: null,
-            startTimeOffset: null,
-            endTimeOffset: null,
-            recoveryStrategy: null,
-            cachingStrategy: null,
-            thresholdType: null,
-            threshold: null,
-            rangeLow: null,
-            rangeHigh: null,
-            maxCachingInterval: null,
-            scanMode: {
-              id: 'subscription',
-              name: 'subscription',
-              description: '',
-              type: 'cron',
-              cron: '',
-              interval: null,
-              activationWindow: null,
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            },
-            createdBy: '',
-            updatedBy: '',
-            createdAt: '',
-            updatedAt: ''
-          }
-        ]
-      };
+      const subscriptionItem = buildOpcuaItem({ scanMode: testData.scanMode.list[2] });
+      south.connectorConfiguration = { ...south.connectorConfiguration, items: [subscriptionItem, subscriptionItem] };
       let unsubscribeCallCount = 0;
       south.unsubscribe = mock.fn(async (): Promise<void> => {
         unsubscribeCallCount++;
@@ -1701,245 +1352,104 @@ describe('SouthConnector', () => {
         if (subscribeCallCount === 1) throw new Error('subscribe error');
       });
       await south.updateSubscriptions();
-      assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error when subscribing to new items: subscribe error'
-        )
-      );
+      assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Error when subscribing to new items: subscribe error'));
       await south.updateSubscriptions();
       south.connectorConfiguration = { ...south.connectorConfiguration, items: [] };
 
       await south.updateSubscriptions();
-      assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error when unsubscribing from items: unsubscribe error'
-        )
-      );
+      assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Error when unsubscribing from items: unsubscribe error'));
     });
 
-    it('should subscribe an item whose group scan mode is subscription', async () => {
-      south['subscribedItems'] = [];
+    describe('with a group deciding the subscription', () => {
+      let subscribe: Mock<SouthOPCUAClass['subscribe']>;
+      let unsubscribe: Mock<SouthOPCUAClass['unsubscribe']>;
+
       // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
       // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
-      south.connectorConfiguration = {
-        ...south.connectorConfiguration,
-        items: [
-          {
+      const setItems = (items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>) => {
+        south.connectorConfiguration = { ...south.connectorConfiguration, items };
+      };
+
+      beforeEach(() => {
+        south['subscribedItems'] = [];
+        subscribe = mock.fn(async (): Promise<void> => undefined);
+        unsubscribe = mock.fn(async (): Promise<void> => undefined);
+        south.subscribe = subscribe;
+        south.unsubscribe = unsubscribe;
+      });
+
+      it('should subscribe an item whose group scan mode is subscription', async () => {
+        setItems([
+          buildOpcuaItem({
             id: 'southItemGroupSub',
             name: 'grouped item with subscription group',
-            enabled: true,
-            settings: { mode: 'da' } as SouthOPCUAItemSettings,
             // The item's own scan mode is NOT subscription: the group must be what decides.
             scanMode: testData.scanMode.list[0],
-            group: {
-              id: 'group1',
-              name: 'Group 1',
-              scanMode: testData.scanMode.list[2], // 'subscription'
-              startTimeOffset: null,
-              endTimeOffset: null,
-              maxReadInterval: null,
-              readDelay: null,
-              recoveryStrategy: null,
-              cachingStrategy: null,
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            },
-            syncWithGroup: true,
-            maxReadInterval: null,
-            readDelay: null,
-            startTimeOffset: null,
-            endTimeOffset: null,
-            recoveryStrategy: null,
-            cachingStrategy: null,
-            thresholdType: null,
-            threshold: null,
-            rangeLow: null,
-            rangeHigh: null,
-            maxCachingInterval: null,
-            createdBy: '',
-            updatedBy: '',
-            createdAt: '',
-            updatedAt: ''
-          }
-        ]
-      };
-      south.subscribe = mock.fn(async (): Promise<void> => undefined);
-      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+            group: buildGroup({ id: 'group1', name: 'Group 1', scanMode: testData.scanMode.list[2] }), // 'subscription'
+            syncWithGroup: true
+          })
+        ]);
 
-      await south.updateSubscriptions();
+        await south.updateSubscriptions();
 
-      assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
-      assert.deepStrictEqual(
-        ((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0] as Array<{ id: string }>).map(
-          item => item.id
-        ),
-        ['southItemGroupSub']
-      );
-    });
+        assert.strictEqual(subscribe.mock.calls.length, 1);
+        assert.deepStrictEqual(
+          subscribe.mock.calls[0].arguments[0].map(item => item.id),
+          ['southItemGroupSub']
+        );
+      });
 
-    it('should not subscribe an item whose group scan mode is not subscription, even if its own scan mode is', async () => {
-      south['subscribedItems'] = [];
-      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
-      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
-      south.connectorConfiguration = {
-        ...south.connectorConfiguration,
-        items: [
-          {
+      it('should not subscribe an item whose group scan mode is not subscription, even if its own scan mode is', async () => {
+        setItems([
+          buildOpcuaItem({
             id: 'southItemGroupNotSub',
             name: 'grouped item with non-subscription group',
-            enabled: true,
-            settings: { mode: 'da' } as SouthOPCUAItemSettings,
             // The item's own scan mode IS subscription, but the group must win.
             scanMode: testData.scanMode.list[2],
-            group: {
-              id: 'group1',
-              name: 'Group 1',
-              scanMode: testData.scanMode.list[0], // not 'subscription'
-              startTimeOffset: null,
-              endTimeOffset: null,
-              maxReadInterval: null,
-              readDelay: null,
-              recoveryStrategy: null,
-              cachingStrategy: null,
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            },
-            syncWithGroup: true,
-            maxReadInterval: null,
-            readDelay: null,
-            startTimeOffset: null,
-            endTimeOffset: null,
-            recoveryStrategy: null,
-            cachingStrategy: null,
-            thresholdType: null,
-            threshold: null,
-            rangeLow: null,
-            rangeHigh: null,
-            maxCachingInterval: null,
-            createdBy: '',
-            updatedBy: '',
-            createdAt: '',
-            updatedAt: ''
-          }
-        ]
-      };
-      south.subscribe = mock.fn(async (): Promise<void> => undefined);
-      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+            group: buildGroup({ id: 'group1', name: 'Group 1', scanMode: testData.scanMode.list[0] }), // not 'subscription'
+            syncWithGroup: true
+          })
+        ]);
 
-      await south.updateSubscriptions();
+        await south.updateSubscriptions();
 
-      assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
-    });
+        assert.strictEqual(subscribe.mock.calls.length, 0);
+      });
 
-    it('should not subscribe a disabled item even if its group scan mode is subscription', async () => {
-      south['subscribedItems'] = [];
-      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
-      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
-      south.connectorConfiguration = {
-        ...south.connectorConfiguration,
-        items: [
-          {
+      it('should not subscribe a disabled item even if its group scan mode is subscription', async () => {
+        setItems([
+          buildOpcuaItem({
             id: 'southItemGroupDisabled',
             name: 'disabled grouped item with subscription group',
             enabled: false,
-            settings: { mode: 'da' } as SouthOPCUAItemSettings,
             scanMode: testData.scanMode.list[0],
-            group: {
-              id: 'group1',
-              name: 'Group 1',
-              scanMode: testData.scanMode.list[2], // 'subscription'
-              startTimeOffset: null,
-              endTimeOffset: null,
-              maxReadInterval: null,
-              readDelay: null,
-              recoveryStrategy: null,
-              cachingStrategy: null,
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            },
-            syncWithGroup: true,
-            maxReadInterval: null,
-            readDelay: null,
-            startTimeOffset: null,
-            endTimeOffset: null,
-            recoveryStrategy: null,
-            cachingStrategy: null,
-            thresholdType: null,
-            threshold: null,
-            rangeLow: null,
-            rangeHigh: null,
-            maxCachingInterval: null,
-            createdBy: '',
-            updatedBy: '',
-            createdAt: '',
-            updatedAt: ''
-          }
-        ]
-      };
-      south.subscribe = mock.fn(async (): Promise<void> => undefined);
-      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+            group: buildGroup({ id: 'group1', name: 'Group 1', scanMode: testData.scanMode.list[2] }), // 'subscription'
+            syncWithGroup: true
+          })
+        ]);
 
-      await south.updateSubscriptions();
+        await south.updateSubscriptions();
 
-      assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
-    });
+        assert.strictEqual(subscribe.mock.calls.length, 0);
+      });
 
-    it('should unsubscribe an item whose group scan mode moved away from subscription', async () => {
-      const alreadySubscribedItem = {
-        id: 'southItemGroupSub',
-        name: 'grouped item no longer subscription',
-        enabled: true,
-        settings: { mode: 'da' } as SouthOPCUAItemSettings,
-        scanMode: testData.scanMode.list[0],
-        group: {
-          id: 'group1',
-          name: 'Group 1',
-          scanMode: testData.scanMode.list[0], // group scan mode changed away from subscription
-          startTimeOffset: null,
-          endTimeOffset: null,
-          maxReadInterval: null,
-          readDelay: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        syncWithGroup: true,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      south['subscribedItems'] = [alreadySubscribedItem];
-      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
-      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
-      south.connectorConfiguration = { ...south.connectorConfiguration, items: [alreadySubscribedItem] };
-      south.subscribe = mock.fn(async (): Promise<void> => undefined);
-      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+      it('should unsubscribe an item whose group scan mode moved away from subscription', async () => {
+        const alreadySubscribedItem = buildOpcuaItem({
+          id: 'southItemGroupSub',
+          name: 'grouped item no longer subscription',
+          scanMode: testData.scanMode.list[0],
+          // group scan mode changed away from subscription
+          group: buildGroup({ id: 'group1', name: 'Group 1', scanMode: testData.scanMode.list[0] }),
+          syncWithGroup: true
+        });
+        south['subscribedItems'] = [alreadySubscribedItem];
+        setItems([alreadySubscribedItem]);
 
-      await south.updateSubscriptions();
+        await south.updateSubscriptions();
 
-      assert.strictEqual((south.unsubscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
-      assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+        assert.strictEqual(unsubscribe.mock.calls.length, 1);
+        assert.strictEqual(subscribe.mock.calls.length, 0);
+      });
     });
   });
 });
