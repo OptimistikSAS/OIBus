@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import { setImmediate } from 'node:timers';
+import { setTimeout } from 'node:timers/promises';
 import { after, before, describe, it } from 'node:test';
 
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../migration/migration-service';
@@ -13,7 +13,19 @@ const METRICS_DB = `${TEST_DB_PREFIX}-metrics.db`;
 const CRYPTO_DB = `${TEST_DB_PREFIX}-crypto.db`;
 const CACHE_DB = `${TEST_DB_PREFIX}-cache.db`;
 
-const flushPromises = () => new Promise(setImmediate);
+/**
+ * The UserRepository creates the default admin in the background (its password is hashed first): wait for it, otherwise
+ * the databases are closed under it and the insert fails with "The database connection is not open".
+ */
+const waitForDefaultUser = async (service: RepositoryService) => {
+  for (let attempt = 0; attempt < 500; attempt++) {
+    if (service.userRepository.findByLogin('admin')) {
+      return;
+    }
+    await setTimeout(10);
+  }
+  throw new Error('The default admin user was not created');
+};
 
 const cleanupDbs = async (prefix: string) => {
   for (const name of ['config', 'logs', 'metrics', 'crypto', 'cache']) {
@@ -36,8 +48,7 @@ describe('Repository service', () => {
       migrateSouthCache(CACHE_DB)
     ]);
     repositoryService = new RepositoryService(CONFIG_DB, LOG_DB, METRICS_DB, CRYPTO_DB, CACHE_DB, '3.5.0');
-    // Let async operations (e.g. UserRepository default admin creation) complete
-    await flushPromises();
+    await waitForDefaultUser(repositoryService);
   });
 
   after(async () => {
@@ -70,6 +81,7 @@ describe('Repository service', () => {
     assert.ok(repositoryService.oianalyticsCommandRepository);
     assert.ok(repositoryService.oianalyticsMessageRepository);
     assert.ok(repositoryService.transformerRepository);
+    assert.ok(repositoryService.userRepository.findByLogin('admin'), 'the default admin user must be created');
   });
 
   it('should properly close', () => {
