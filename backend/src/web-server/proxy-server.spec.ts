@@ -138,9 +138,12 @@ describe('ProxyServer', () => {
   });
 
   it("should not stop if webserver wasn't started", () => {
-    const mockClose = mock.fn();
+    proxyServer.start({ ...baseProxySettings, enabled: false });
+
     proxyServer.stop();
-    assert.strictEqual(mockClose.mock.calls.length, 0);
+
+    assert.strictEqual(proxyServer['webServer'], null);
+    assert.strictEqual(webServer.close.mock.calls.length, 0);
   });
 
   it('should allow http requests from whitelisted IPs', async () => {
@@ -236,12 +239,19 @@ describe('ProxyServer', () => {
   });
 
   it('should only call httpProxy if the proxy server has been started', async () => {
-    const mockWeb = mock.fn();
+    const mockHttpProxy = createMock<httpProxy>();
+    httpProxyExports.default.createProxyServer = mock.fn(() => mockHttpProxy);
 
     // httpProxy is null (not started), so web should never be called
-    await proxyServer['handleHttpRequest'](buildRequest('GET', 'example.com:443'), createMock<http.ServerResponse>());
+    await proxyServer['handleHttpRequest'](buildRequest('GET', 'http://example.com'), createMock<http.ServerResponse>());
+    assert.strictEqual(mockHttpProxy.web.mock.calls.length, 0);
 
-    assert.strictEqual(mockWeb.mock.calls.length, 0);
+    proxyServer.start(baseProxySettings);
+    const mockReq = buildRequest('GET', 'http://example.com');
+    await proxyServer['handleHttpRequest'](mockReq, createMock<http.ServerResponse>());
+
+    assert.strictEqual(mockHttpProxy.web.mock.calls.length, 1);
+    assert.strictEqual(mockHttpProxy.web.mock.calls[0].arguments[0], mockReq);
   });
 
   it('should handle https socket errors', async () => {
