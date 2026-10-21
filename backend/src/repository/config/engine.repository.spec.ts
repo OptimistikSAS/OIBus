@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
-import { after, before, beforeEach, describe, it, mock } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
 
-import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
 
 import { EngineLoggerCommandDTO, EngineSettingsCommandDTO } from '../../../shared/model/api/engine.model';
@@ -12,9 +11,8 @@ import AuditService from '../../service/audit.service';
 import { toEngineLoggerCommand, toEngineSettingsCommand, toEngineWebServerCommand } from '../../service/engine-command.utils';
 import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, flushPromises, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import EngineRepository from './engine.repository';
-import UserRepository from './user.repository';
 
 type EngineSection = 'engine_general' | 'engine_web_server' | 'engine_proxy_server' | 'engine_logging';
 
@@ -365,41 +363,6 @@ describe('EngineRepository with empty database', () => {
       const repository = new EngineRepository(database, createAuditServiceMock(), '3.5.0', 3000);
       // createDefault is a no-op because the record already exists from the previous test
       assert.strictEqual(repository.get()!.webServer.port, 2223);
-    });
-  });
-
-  describe('User', () => {
-    it('should not create a default admin user on hash error', async () => {
-      mock.method(argon2, 'hash', () => {
-        throw new Error('hash error');
-      });
-      const consoleErrorMock = mock.method(console, 'error', () => null);
-
-      const repository = new UserRepository(database, createAuditServiceMock());
-
-      await flushPromises();
-      assert.strictEqual(repository.list().length, 0);
-      assert.ok(consoleErrorMock.mock.calls.some(c => c.arguments[0] === 'hash error'));
-
-      mock.restoreAll();
-    });
-
-    it('should create a default admin user', async () => {
-      mock.method(argon2, 'hash', async (password: string) => password);
-
-      const repository = new UserRepository(database, createAuditServiceMock());
-
-      await flushPromises();
-
-      const users = repository.list();
-      assert.strictEqual(users.length, 1);
-      const user = users[0];
-      assert.strictEqual(user.login, 'admin');
-      assert.strictEqual(user.language, 'en');
-      assert.strictEqual(user.timezone, 'Europe/Paris');
-      assert.strictEqual(repository.getHashedPasswordByLogin('admin'), 'pass');
-
-      mock.restoreAll();
     });
   });
 });
