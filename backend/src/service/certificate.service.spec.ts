@@ -95,7 +95,7 @@ describe('Certificate Service', () => {
 
     const result = service.list();
 
-    assert.ok(certificateRepository.list.mock.calls.length > 0);
+    assert.strictEqual(certificateRepository.list.mock.calls.length, 1);
     assert.deepStrictEqual(result, testData.certificates.list);
   });
 

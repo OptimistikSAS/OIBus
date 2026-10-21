@@ -1394,11 +1394,17 @@ describe('Service utils', () => {
     it('should flatten items with scanModes', () => {
       assert.strictEqual(utils.itemToFlattenedCSV([baseItem], ',', emptySchema), 'csv content');
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+      assert.strictEqual(unparsedData()[0].scanMode, scanMode.name);
+      assert.strictEqual(unparsedData()[0].group, '');
     });
 
     it('should flatten items without scanModes', () => {
-      assert.strictEqual(utils.itemToFlattenedCSV([baseItem], ',', emptySchema), 'csv content');
+      const itemWithoutScanMode: SouthConnectorItemDTO = { ...baseItem, scanMode: null };
+
+      assert.strictEqual(utils.itemToFlattenedCSV([itemWithoutScanMode], ',', emptySchema), 'csv content');
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+      assert.strictEqual(unparsedData()[0].scanMode, '');
+      assert.strictEqual(unparsedData()[0].group, '');
     });
 
     it('should flatten history query items with isHistoryQuery=true', () => {
