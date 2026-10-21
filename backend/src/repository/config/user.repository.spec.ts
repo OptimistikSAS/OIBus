@@ -43,16 +43,11 @@ describe('UserRepository', () => {
     mock.restoreAll();
   });
 
-  it('should properly find all certificates', () => {
+  it('should properly list all users', () => {
     assert.deepStrictEqual(repository.list(), testData.users.list);
   });
 
   it('should search users', () => {
-    assert.deepStrictEqual(repository.search({ login: 'second', page: 0 }), createPageFromArray([testData.users.list[1]], 50, 0));
-    assert.strictEqual(repository.search({ login: '', page: 0 }).totalElements, 2);
-  });
-
-  it('should search users without page', () => {
     assert.deepStrictEqual(repository.search({ login: 'second', page: 0 }), createPageFromArray([testData.users.list[1]], 50, 0));
     assert.strictEqual(repository.search({ login: '', page: 0 }).totalElements, 2);
   });
@@ -169,5 +164,53 @@ describe('UserRepository with custom default credentials', () => {
     // Still only one user; createDefault is a no-op when the same login is already present
     const row = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
     assert.strictEqual(row.count, 1);
+  });
+});
+
+describe('UserRepository with empty database', () => {
+  const EMPTY_DB_PATH = 'src/tests/test-config-user-empty.db';
+  let db: Database;
+
+  before(async () => {
+    db = await initDatabase('config', false, EMPTY_DB_PATH);
+  });
+
+  after(async () => {
+    db.close();
+    await emptyDatabase('config', EMPTY_DB_PATH);
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  it('should not create a default admin user on hash error', async () => {
+    mock.method(argon2, 'hash', () => {
+      throw new Error('hash error');
+    });
+    const consoleErrorMock = mock.method(console, 'error', () => null);
+
+    const repository = new UserRepository(db, createAuditServiceMock());
+
+    await flushPromises();
+    assert.strictEqual(repository.list().length, 0);
+    assert.strictEqual(consoleErrorMock.mock.calls.length, 1);
+    assert.deepStrictEqual(consoleErrorMock.mock.calls[0].arguments, ['hash error']);
+  });
+
+  it('should create a default admin user', async () => {
+    mock.method(argon2, 'hash', async (password: string) => password);
+
+    const repository = new UserRepository(db, createAuditServiceMock());
+
+    await flushPromises();
+
+    const users = repository.list();
+    assert.strictEqual(users.length, 1);
+    const user = users[0];
+    assert.strictEqual(user.login, 'admin');
+    assert.strictEqual(user.language, 'en');
+    assert.strictEqual(user.timezone, 'Europe/Paris');
+    assert.strictEqual(repository.getHashedPasswordByLogin('admin'), 'pass');
   });
 });
