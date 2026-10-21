@@ -551,6 +551,34 @@ describe('WebServer', () => {
     }
   });
 
+  it('stop(): clears the fallback timer once the server is closed', async () => {
+    const setTimeoutSpy = mock.method(globalThis, 'setTimeout');
+    const clearTimeoutSpy = mock.method(globalThis, 'clearTimeout');
+    await webServer.init();
+
+    await webServer.stop();
+
+    const fallbackTimer = setTimeoutSpy.mock.calls.find(call => call.arguments[1] === 5000)!.result;
+    assert.ok(clearTimeoutSpy.mock.calls.some(call => call.arguments[0] === fallbackTimer));
+  });
+
+  it('stop(): resolves after 5 s if the server never finishes closing', async () => {
+    mock.timers.enable({ apis: ['setTimeout'] });
+    // A fake server, as below: a real one would be orphaned. Removed at the end so that afterEach's stop() doesn't wait for it
+    const fakeServerHolder = webServer as unknown as { webServer: { closeAllConnections: () => void; close: () => void } | null };
+    fakeServerHolder.webServer = { closeAllConnections: mock.fn(), close: mock.fn() };
+    let stopped = false;
+    const stopPromise = webServer.stop().then(() => (stopped = true));
+
+    mock.timers.tick(4999);
+    await Promise.resolve();
+    assert.equal(stopped, false);
+    mock.timers.tick(1);
+    await stopPromise;
+    assert.equal(stopped, true);
+    fakeServerHolder.webServer = null;
+  });
+
   it('stop(): logs an error if closing the server throws', async () => {
     // Deliberately skip webServer.init() - it would create a real listening socket, and
     // immediately replacing `this.webServer` below would orphan that socket forever (nothing
