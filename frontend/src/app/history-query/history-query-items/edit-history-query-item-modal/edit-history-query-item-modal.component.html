@@ -5,15 +5,29 @@
   [steps]="steps.steps"
   [(current)]="steps.current"
   [invalidSteps]="steps.invalid()"
-  labelPrefix="south.edit-item-modal.step."
+  labelPrefix="history-query.items.step."
   ariaLabel="south.edit-item-modal.steps"
 />
 @if (form(); as form) {
   <div class="modal-body">
     <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onEnter($event)" id="form">
-      <!-- 1. General: what every item has, whatever its connector -->
+      <!-- 1. Settings: those of the connector type -->
+      <div [hidden]="steps.current() !== 'settings'" id="step-settings">
+        <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
+        <ng-container formGroupName="settings">
+          <oib-oibus-object-form-control
+            [scanModes]="[]"
+            [certificates]="[]"
+            [group]="form.controls.settings"
+            [objectAttribute]="itemSettingsAttribute()!"
+            layout="sections"
+          />
+        </ng-container>
+      </div>
+
+      <!-- 2. Name: what every item has, whatever its connector, set once its settings are tested -->
       <div [hidden]="steps.current() !== 'general'" id="step-general">
-        <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
+        <h5 class="oib-section-title" translate="history-query.items.step.general"></h5>
         <div class="row">
           <!-- Name -->
           <div class="col-md-6">
@@ -32,23 +46,9 @@
           </div>
         </div>
       </div>
-
-      <!-- 2. Settings: those of the connector type -->
-      <div [hidden]="steps.current() !== 'settings'" id="step-settings">
-        <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
-        <ng-container formGroupName="settings">
-          <oib-oibus-object-form-control
-            [scanModes]="[]"
-            [certificates]="[]"
-            [group]="form.controls.settings"
-            [objectAttribute]="itemSettingsAttribute()!"
-            layout="sections"
-          />
-        </ng-container>
-      </div>
     </form>
 
-    <!-- 2. Settings, tried out right away: the test panel has its own form, so it sits outside the item one -->
+    <!-- 1. Settings, tried out right away: the test panel has its own form, so it sits outside the item one -->
     <div [hidden]="steps.current() !== 'settings'" class="mt-4" id="step-settings-test">
       <oib-south-item-test
         type="history-south"
@@ -74,7 +74,7 @@
               type="button"
               class="btn btn-sm btn-outline-danger"
               (click)="steps.current.set(step)"
-              [translate]="'south.edit-item-modal.step.' + step"
+              [translate]="'history-query.items.step.' + step"
             ></button>
           }
         </div>
@@ -85,7 +85,7 @@
       } @else if (saved) {
         <div class="alert alert-secondary py-2" id="review-changes" role="status" translate="south.edit-item-modal.review-no-changes"></div>
       }
-      <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
+      <h5 class="oib-section-title" translate="history-query.items.step.general"></h5>
       <oib-oibus-settings-summary id="item-summary" [settings]="summary.general" [previous]="saved?.general ?? null" />
       <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
       <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" [previous]="saved?.settings ?? null" />

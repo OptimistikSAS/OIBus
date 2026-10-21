@@ -38,7 +38,7 @@ import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
-import { EditHistoryQueryComponent, HistoryQueryStep } from './edit-history-query.component';
+import { EditHistoryQueryComponent, HISTORY_QUERY_STEPS, HistoryQueryStep } from './edit-history-query.component';
 
 class EditHistoryQueryComponentTester {
   readonly fixture = TestBed.createComponent(EditHistoryQueryComponent);
@@ -184,8 +184,10 @@ describe('EditHistoryQueryComponent', () => {
   /** Opens the page, on the given step */
   async function createTester(step: HistoryQueryStep = 'general'): Promise<EditHistoryQueryComponentTester> {
     const tester = new EditHistoryQueryComponentTester();
-    await expect.element(tester.name).toBeVisible();
-    if (step !== 'general') {
+    // the form is built: the page opens on its first step
+    await expect.element(tester.step(HISTORY_QUERY_STEPS[0])).toHaveAttribute('aria-current', 'step');
+    await expect.element(tester.name).toBeInTheDocument();
+    if (step !== HISTORY_QUERY_STEPS[0]) {
       await tester.goTo(step);
     }
     return tester;
@@ -560,12 +562,13 @@ describe('EditHistoryQueryComponent', () => {
       await tester.goTo('review');
       await tester.saveButton.click();
       expect(historyQueryService.create).not.toHaveBeenCalled();
-      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      // the first step with an error opens
+      await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
 
-      await tester.name.fill('new query');
-      await tester.goTo('north');
       await tester.schedule.selectOptions(testData.scanMode.list[0].name);
+      await tester.goTo('general');
+      await tester.name.fill('new query');
       await tester.goTo('review');
       await tester.saveButton.click();
 
@@ -581,16 +584,7 @@ describe('EditHistoryQueryComponent', () => {
 
     test('should go through the steps of a new history query, the next one opening once the current one is valid', async () => {
       configure({ queryParams: { southType: 'mssql', northType: 'console' } });
-      const tester = await createTester();
-
-      await tester.nextButton.click();
-      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
-      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
-
-      await tester.name.fill('new query');
-      // Enter in a field opens the next step too
-      await userEvent.keyboard('{Enter}');
-      await expect.element(tester.step('south')).toHaveAttribute('aria-current', 'step');
+      const tester = await createTester('south');
       await expect.element(tester.testSouthButton).toBeVisible();
 
       await tester.nextButton.click();
@@ -601,10 +595,20 @@ describe('EditHistoryQueryComponent', () => {
       await expect.element(tester.testNorthButton).toBeVisible();
       // the schedule is required
       await tester.nextButton.click();
+      await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.step('north')).toHaveClass('modal-step-invalid');
 
       await tester.schedule.selectOptions(testData.scanMode.list[0].name);
       await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      // the name is required
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
+
+      await tester.name.fill('new query');
+      // Enter in a field opens the next step too
+      await userEvent.keyboard('{Enter}');
       await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.saveButton).toBeVisible();
       await expect.element(tester.nextButton).not.toBeInTheDocument();
@@ -627,12 +631,13 @@ describe('EditHistoryQueryComponent', () => {
       await tester.connectorType('north', 'Console').click();
       await tester.nextButton.click();
 
-      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
-      await expect.element(tester.name).toBeVisible();
+      await expect.element(tester.step('south')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.testSouthButton).toBeVisible();
       expect(southConnectorService.getSouthManifest).toHaveBeenCalledWith('mssql');
       expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith('console');
 
       // back to the same connectors: the history query is kept
+      await tester.goTo('general');
       await tester.name.fill('new query');
       await tester.goTo('connectors');
       await tester.goTo('south');
@@ -645,8 +650,9 @@ describe('EditHistoryQueryComponent', () => {
       await tester.connectorType('north', 'File writer').click();
       await tester.nextButton.click();
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.steps.confirm-connectors-change' });
-      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('south')).toHaveAttribute('aria-current', 'step');
       expect(northConnectorService.getNorthManifest).toHaveBeenLastCalledWith('file-writer');
+      await tester.goTo('general');
       await expect.element(tester.name).toHaveValue('');
 
       await tester.name.fill('new query');
@@ -666,7 +672,7 @@ describe('EditHistoryQueryComponent', () => {
       configure({ queryParams: { southType: 'mssql', northType: 'console' } });
       const tester = await createTester('review');
 
-      await expect.element(tester.reviewErrors).toMatchTextContent(/Fix these steps before saving:\s*General\s*North/);
+      await expect.element(tester.reviewErrors).toMatchTextContent(/Fix these steps before saving:\s*North\s*General/);
       await tester.reviewErrors.getByRole('button', { name: 'North' }).click();
 
       await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');

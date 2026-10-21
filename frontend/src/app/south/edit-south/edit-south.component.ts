@@ -73,8 +73,8 @@ function sortValue(item: SouthConnectorItemCommandDTO, column: string): string |
   return column === 'group' ? item.groupName || '' : builtInSortValue(item, column);
 }
 
-/** The steps of the south connector page, in order. */
-export const SOUTH_CONNECTOR_STEPS = ['general', 'settings', 'items', 'review'] as const;
+/** The steps of the south connector page, in order: the general settings come last, once the connector is set up and tested */
+export const SOUTH_CONNECTOR_STEPS = ['settings', 'items', 'general', 'review'] as const;
 export type SouthConnectorStep = (typeof SOUTH_CONNECTOR_STEPS)[number];
 
 /** The connector as summed up in the Review step */

@@ -148,22 +148,20 @@ describe('EditNorthComponent', () => {
 
     test('should go through the steps of a new connector, the next one opening once the current one is valid', async () => {
       const tester = new EditNorthComponentTester();
-      await expect.element(tester.name).toBeVisible();
+      // the settings come first, to be tested right away
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.testButton).toBeVisible();
       await expect.element(tester.saveButton).not.toBeInTheDocument();
       await expect.element(tester.backButton).not.toBeInTheDocument();
 
       await tester.nextButton.click();
-      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
-      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
-
-      await tester.name.fill('New north');
-      // Enter in a field opens the next step too
-      await userEvent.keyboard('{Enter}');
       await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
-      await expect.element(tester.testButton).toBeVisible();
+      await expect.element(tester.step('settings')).toHaveClass('modal-step-invalid');
 
       await tester.outputFolder.fill('/out');
-      await tester.nextButton.click();
+      // Enter in a field opens the next step too
+      await userEvent.keyboard('{Enter}');
+      await expect.element(tester.step('caching')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.numberOfElements).toBeVisible();
       // the schedule is required
       await tester.nextButton.click();
@@ -176,6 +174,14 @@ describe('EditNorthComponent', () => {
       await tester.backButton.click();
       await expect.element(tester.step('caching')).toHaveAttribute('aria-current', 'step');
       await tester.nextButton.click();
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      // the name is required
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
+
+      await tester.name.fill('New north');
       await tester.nextButton.click();
       await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.saveButton).toBeVisible();
@@ -190,7 +196,7 @@ describe('EditNorthComponent', () => {
       const tester = new EditNorthComponentTester();
       await tester.goTo('review');
 
-      await expect.element(tester.reviewErrors).toMatchTextContent(/Fix these steps before saving:\s*General\s*Settings\s*Cache/);
+      await expect.element(tester.reviewErrors).toMatchTextContent(/Fix these steps before saving:\s*Settings\s*Cache\s*General/);
       await tester.reviewErrors.getByRole('button', { name: 'Cache' }).click();
 
       await expect.element(tester.step('caching')).toHaveAttribute('aria-current', 'step');
@@ -203,18 +209,21 @@ describe('EditNorthComponent', () => {
       await tester.saveButton.click();
 
       // the first step with an error opens
-      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
       expect(northConnectorService.create).not.toHaveBeenCalled();
     });
 
     test('should check that the name is unique', async () => {
       const tester = new EditNorthComponentTester();
+      await tester.goTo('general');
 
       await tester.name.fill(' north 2 ');
       await tester.goTo('review');
       await tester.saveButton.click();
 
+      await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
+      await tester.goTo('general');
       await expect.element(tester.root.getByText('Must be unique')).toBeVisible();
       expect(northConnectorService.create).not.toHaveBeenCalled();
     });
@@ -222,12 +231,12 @@ describe('EditNorthComponent', () => {
     test('should create a north connector', async () => {
       const tester = new EditNorthComponentTester();
 
-      await tester.name.fill('New north');
-      await tester.description.fill('my description');
-      await tester.goTo('settings');
       await tester.outputFolder.fill('/out');
       await tester.goTo('caching');
       await tester.scanMode.selectOptions('scanMode1');
+      await tester.goTo('general');
+      await tester.name.fill('New north');
+      await tester.description.fill('my description');
       await tester.goTo('review');
       await tester.saveButton.click();
 
@@ -274,6 +283,7 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.name).toBeInTheDocument();
       expect(tester.fixture.componentInstance.canDeactivate()).toBe(true);
 
+      await tester.goTo('general');
       await tester.name.fill('New north');
 
       const result = tester.fixture.componentInstance.canDeactivate();
@@ -337,6 +347,7 @@ describe('EditNorthComponent', () => {
       const tester = new EditNorthComponentTester();
       await expect.element(tester.name).toHaveValue('North 1');
 
+      await tester.goTo('general');
       await tester.name.fill('north 1');
       await tester.saveButton.click();
 
@@ -401,6 +412,7 @@ describe('EditNorthComponent', () => {
       expect(northConnectorService.findById).toHaveBeenCalledWith('northId1');
       await expect.element(tester.name).toHaveValue('North 1');
       // the duplicated connector's name is already used
+      await tester.goTo('general');
       await tester.name.fill('North 1 copy');
       await tester.goTo('review');
       // a copy is new: nothing to compare with
