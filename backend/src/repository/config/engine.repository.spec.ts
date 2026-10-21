@@ -10,8 +10,9 @@ import { version } from '../../../package.json';
 import { EngineSettings } from '../../model/engine.model';
 import AuditService from '../../service/audit.service';
 import { toEngineLoggerCommand, toEngineSettingsCommand, toEngineWebServerCommand } from '../../service/engine-command.utils';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, flushPromises, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import EngineRepository from './engine.repository';
 import UserRepository from './user.repository';
 
@@ -52,10 +53,6 @@ function auditedSection(settings: EngineSettings | null, section: EngineSection)
   }
 }
 
-function recordCalls(auditService: AuditService): Array<Array<unknown>> {
-  return (auditService.record as unknown as ReturnType<typeof mock.fn>).mock.calls.map(call => call.arguments);
-}
-
 const TEST_DB_PATH = 'src/tests/test-config-engine.db';
 
 let database: Database;
@@ -71,12 +68,15 @@ describe('EngineRepository with populated database', () => {
 
   describe('Engine', () => {
     let repository: EngineRepository;
-    let auditService: AuditService;
+    let auditService: Mocked<AuditService>;
 
     beforeEach(() => {
       auditService = createAuditServiceMock();
       repository = new EngineRepository(database, auditService, '3.5.0');
     });
+
+    /** The arguments of every audit record made in the test. */
+    const recorded = () => auditService.record.mock.calls.map(call => call.arguments);
 
     it('should properly get the engine settings', () => {
       assert.deepStrictEqual(repository.get(), testData.engine.settings);
@@ -115,7 +115,7 @@ describe('EngineRepository with populated database', () => {
       });
 
       // One audit entry per changed section: the web server settings are unchanged, so not recorded
-      const calls = recordCalls(auditService);
+      const calls = recorded();
       assert.deepStrictEqual(
         calls.map(call => call[0]),
         ['engine_general', 'engine_proxy_server', 'engine_logging']
@@ -168,7 +168,7 @@ describe('EngineRepository with populated database', () => {
       const after = repository.get();
       assert.strictEqual(after!.general.name, 'my new name');
 
-      assert.deepStrictEqual(recordCalls(auditService), [
+      assert.deepStrictEqual(recorded(), [
         [
           'engine_general',
           after!.id,
@@ -190,7 +190,7 @@ describe('EngineRepository with populated database', () => {
       assert.strictEqual(after!.webServer.port, testData.engine.webServerCommand.port);
       assert.deepStrictEqual(after!.webServer.https, testData.engine.webServerCommand.https);
 
-      assert.deepStrictEqual(recordCalls(auditService), [
+      assert.deepStrictEqual(recorded(), [
         [
           'engine_web_server',
           after!.id,
@@ -213,7 +213,7 @@ describe('EngineRepository with populated database', () => {
       assert.strictEqual(result.proxyServer.enabled, false);
       assert.strictEqual(result.proxyServer.port, null);
 
-      assert.deepStrictEqual(recordCalls(auditService), [
+      assert.deepStrictEqual(recorded(), [
         [
           'engine_proxy_server',
           result.id,
@@ -244,7 +244,7 @@ describe('EngineRepository with populated database', () => {
       assert.deepStrictEqual(after!.logger, loggerOnly);
       assert.strictEqual(after!.auditRetentionDuration, auditRetentionDuration);
 
-      assert.deepStrictEqual(recordCalls(auditService), [
+      assert.deepStrictEqual(recorded(), [
         [
           'engine_logging',
           after!.id,
@@ -277,7 +277,7 @@ describe('EngineRepository with populated database', () => {
       assert.strictEqual(after!.logger.loki.password, 'super-secret-loki-password');
 
       // ...but never persisted in clear in the audit trail: only its change is
-      const calls = recordCalls(auditService);
+      const calls = recorded();
       assert.strictEqual(calls.length, 1);
       assert.strictEqual(calls[0][0], 'engine_logging');
       assert.deepStrictEqual((calls[0][3] as { loki: { password: string } }).loki.password, '');
@@ -291,13 +291,13 @@ describe('EngineRepository with populated database', () => {
       const current = repository.get()!;
       repository.updateName(current.general.name, testData.users.list[0].id);
       repository.updateWebServer(current.webServer, testData.users.list[0].id);
-      assert.deepStrictEqual(recordCalls(auditService), []);
+      assert.deepStrictEqual(recorded(), []);
     });
 
     it('should record a proxy password only change without the password', () => {
       const current = repository.get()!;
       repository.updateProxy({ ...current.proxyServer, password: 'new-hashed-password' }, testData.users.list[0].id);
-      assert.deepStrictEqual(recordCalls(auditService), [
+      assert.deepStrictEqual(recorded(), [
         [
           'engine_proxy_server',
           current.id,
@@ -311,8 +311,7 @@ describe('EngineRepository with populated database', () => {
 
     it('should not call the audit service when updating the version', () => {
       repository.updateVersion('9.9.100', '9.9.100');
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 0);
+      assert.deepStrictEqual(recorded(), []);
     });
 
     it('should update version', () => {

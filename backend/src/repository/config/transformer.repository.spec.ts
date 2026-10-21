@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
-import { after, before, beforeEach, describe, it, mock } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
-import { CustomTransformer, StandardTransformer } from '../../model/transformer.model';
+import { CustomTransformer, StandardTransformer, Transformer } from '../../model/transformer.model';
 import AuditService from '../../service/audit.service';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
@@ -102,6 +103,16 @@ const standardTransformers: Array<StandardTransformer> = [
   }
 ];
 
+/** A custom transformer cloned from the first fixture. */
+const customTransformer = (id: string, name: string): CustomTransformer => ({
+  ...(JSON.parse(JSON.stringify(testData.transformers.list[0])) as CustomTransformer),
+  id,
+  name
+});
+
+const isSetpointToOpcua = (transformer: Transformer) =>
+  transformer.type === 'standard' && transformer.functionName === OIBusSetpointToOPCUATransformer.transformerName;
+
 let database: Database;
 describe('TransformerRepository', () => {
   before(async () => {
@@ -114,7 +125,7 @@ describe('TransformerRepository', () => {
   });
 
   let repository: TransformerRepository;
-  let auditService: AuditService;
+  let auditService: Mocked<AuditService>;
   let createdTransformerId: string;
 
   beforeEach(() => {
@@ -122,11 +133,14 @@ describe('TransformerRepository', () => {
     repository = new TransformerRepository(database, auditService);
   });
 
+  /** The arguments of every audit record made in the test. */
+  const recorded = () => auditService.record.mock.calls.map(call => call.arguments);
+
   it('should properly find all transformers', () => {
     const allTransformers = repository.list().map(stripAuditFields);
     // Standard transformers come first, then custom ones from test data
     for (const standard of standardTransformers) {
-      const found = allTransformers.find(t => t.type === 'standard' && (t as StandardTransformer).functionName === standard.functionName);
+      const found = allTransformers.find(t => t.type === 'standard' && t.functionName === standard.functionName);
       assert.ok(found, `Standard transformer ${standard.functionName} not found`);
       assert.strictEqual(found.inputType, standard.inputType);
       assert.strictEqual(found.outputType, standard.outputType);
@@ -148,9 +162,7 @@ describe('TransformerRepository', () => {
   });
 
   it('should create a transformer', () => {
-    const createTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    createTransformer.id = '';
-    createTransformer.name = 'new name';
+    const createTransformer = customTransformer('', 'new name');
     repository.save(createTransformer, true);
     createdTransformerId = createTransformer.id;
     assert.ok(createdTransformerId);
@@ -160,22 +172,13 @@ describe('TransformerRepository', () => {
     assert.strictEqual(found.inputType, createTransformer.inputType);
     assert.strictEqual(found.outputType, createTransformer.outputType);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
-      'transformer',
-      createdTransformerId,
-      'CREATE',
-      null,
-      found,
-      (found as CustomTransformer).createdBy
+    assert.deepStrictEqual(recorded(), [
+      ['transformer', createdTransformerId, 'CREATE', null, found, (found as CustomTransformer).createdBy]
     ]);
   });
 
   it('should preserve a caller-supplied id when creating a transformer (config import)', () => {
-    const importedTransformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    importedTransformer.id = 'preserved-transformer-id';
-    importedTransformer.name = 'imported transformer';
+    const importedTransformer = customTransformer('preserved-transformer-id', 'imported transformer');
     repository.save(importedTransformer, true);
 
     assert.strictEqual(importedTransformer.id, 'preserved-transformer-id');
@@ -192,14 +195,10 @@ describe('TransformerRepository', () => {
     // config-import create under a preserved id that happens to collide with any existing row —
     // standard or custom — must fail loudly (a real INSERT constraint error) rather than being
     // reinterpreted as "must be an update" and silently overwriting that unrelated row's columns.
-    const original: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    original.id = 'colliding-transformer-id';
-    original.name = 'original transformer';
+    const original = customTransformer('colliding-transformer-id', 'original transformer');
     repository.save(original, true);
 
-    const colliding: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    colliding.id = 'colliding-transformer-id';
-    colliding.name = 'a completely different transformer';
+    const colliding = customTransformer('colliding-transformer-id', 'a completely different transformer');
 
     assert.throws(() => repository.save(colliding, true));
 
@@ -211,9 +210,7 @@ describe('TransformerRepository', () => {
   });
 
   it('should reject an update whose target id does not exist, instead of silently creating it', () => {
-    const ghost: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    ghost.id = 'transformer-id-that-does-not-exist';
-    ghost.name = 'ghost transformer';
+    const ghost = customTransformer('transformer-id-that-does-not-exist', 'ghost transformer');
 
     assert.throws(() => repository.save(ghost, false));
     assert.strictEqual(repository.findById('transformer-id-that-does-not-exist'), null);
@@ -232,16 +229,7 @@ describe('TransformerRepository', () => {
     assert.strictEqual((result as CustomTransformer).name, 'new name updated');
     assert.strictEqual((result as CustomTransformer).description, 'new description updated');
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
-      'transformer',
-      updateTransformer.id,
-      'UPDATE',
-      existing,
-      result,
-      updateTransformer.updatedBy
-    ]);
+    assert.deepStrictEqual(recorded(), [['transformer', updateTransformer.id, 'UPDATE', existing, result, updateTransformer.updatedBy]]);
   });
 
   it('should delete transformer', () => {
@@ -249,9 +237,7 @@ describe('TransformerRepository', () => {
     repository.delete(createdTransformerId, 'userTest');
     assert.strictEqual(repository.findById(createdTransformerId), null);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['transformer', createdTransformerId, 'DELETE', before, null, 'userTest']);
+    assert.deepStrictEqual(recorded(), [['transformer', createdTransformerId, 'DELETE', before, null, 'userTest']]);
   });
 
   it('should properly search transformers with search params and page them', () => {
@@ -300,9 +286,7 @@ describe('TransformerRepository', () => {
     assert.strictEqual(all.length, 16);
     // Explicitly pin the last standard transformer registered by createStandardTransformers()
     // (setpoint-to-opcua) to make sure it was not duplicated on this second construction.
-    const setpointToOpcuaEntries = all.filter(
-      t => (t as StandardTransformer).functionName === OIBusSetpointToOPCUATransformer.transformerName
-    );
+    const setpointToOpcuaEntries = all.filter(isSetpointToOpcua);
     assert.strictEqual(setpointToOpcuaEntries.length, 1);
   });
 
@@ -315,25 +299,19 @@ describe('TransformerRepository', () => {
     // Explicitly pin the last standard transformer registered by createStandardTransformers()
     // (setpoint-to-opcua) to make sure the creation branch is exercised for it specifically,
     // not just implicitly via the aggregate count above.
-    const setpointToOpcua = standardTransformers.find(
-      t => (t as StandardTransformer).functionName === OIBusSetpointToOPCUATransformer.transformerName
-    );
+    const setpointToOpcua = standardTransformers.find(isSetpointToOpcua);
     assert.ok(setpointToOpcua, 'setpoint-to-opcua standard transformer was not created');
     assert.strictEqual(setpointToOpcua!.inputType, 'setpoint');
-    assert.strictEqual((setpointToOpcua as StandardTransformer).outputType, 'opcua');
+    assert.strictEqual(setpointToOpcua!.outputType, 'opcua');
 
     // And re-constructing once more against the now fully-populated table should skip it again,
     // covering the false branch of that same last if-check without disturbing other tests' state.
     database.prepare('DELETE FROM transformers WHERE function_name = ?').run(OIBusSetpointToOPCUATransformer.transformerName);
     const repoMissingLastOne = new TransformerRepository(database, createAuditServiceMock());
-    const recreated = repoMissingLastOne
-      .list()
-      .filter(t => t.type === 'standard' && (t as StandardTransformer).functionName === OIBusSetpointToOPCUATransformer.transformerName);
+    const recreated = repoMissingLastOne.list().filter(isSetpointToOpcua);
     assert.strictEqual(recreated.length, 1);
     const repoWithAllPresent = new TransformerRepository(database, createAuditServiceMock());
-    const stillOne = repoWithAllPresent
-      .list()
-      .filter(t => t.type === 'standard' && (t as StandardTransformer).functionName === OIBusSetpointToOPCUATransformer.transformerName);
+    const stillOne = repoWithAllPresent.list().filter(isSetpointToOpcua);
     assert.strictEqual(stillOne.length, 1);
   });
 });

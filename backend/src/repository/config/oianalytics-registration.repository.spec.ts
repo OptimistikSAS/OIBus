@@ -1,15 +1,22 @@
 import assert from 'node:assert/strict';
-import { after, before, beforeEach, describe, it, mock } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import AuditService from '../../service/audit.service';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import OianalyticsRegistrationRepository from './oianalytics-registration.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-registration.db';
+
+/** The registration fixture once `overrides` are applied. */
+const expectedRegistration = (overrides: Partial<OIAnalyticsRegistration>): OIAnalyticsRegistration => ({
+  ...JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed)),
+  ...overrides
+});
 
 let database: Database;
 describe('OianalyticsRegistrationRepository with populated database', () => {
@@ -23,24 +30,36 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
   });
 
   let repository: OianalyticsRegistrationRepository;
-  let auditService: AuditService;
+  let auditService: Mocked<AuditService>;
 
   beforeEach(() => {
     auditService = createAuditServiceMock();
     repository = new OianalyticsRegistrationRepository(database, auditService);
   });
 
+  /** Checks the test recorded a single update of the registration, and returns its snapshots. */
+  const onlyRegistrationUpdate = (registrationId: string) => {
+    assert.strictEqual(auditService.record.mock.callCount(), 1);
+    const [entityType, entityId, action, previousState, newState, userId] = auditService.record.mock.calls[0].arguments;
+    assert.strictEqual(entityType, 'oianalytics_registration');
+    assert.strictEqual(entityId, registrationId);
+    assert.strictEqual(action, 'UPDATE');
+    assert.strictEqual(userId, testData.users.list[0].id);
+    return { previousState: previousState!, newState: newState! };
+  };
+
   it('should properly get the registration settings', () => {
     assert.deepStrictEqual(repository.get(), testData.oIAnalytics.registration.completed);
   });
 
   it('should properly register', () => {
-    const expectedResult: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed));
-    expectedResult.status = 'PENDING';
-    expectedResult.activationCode = '123ABC';
-    expectedResult.checkUrl = 'http://localhost:4200/api/oianalytics/oibus/registration?id=id';
-    expectedResult.activationExpirationDate = testData.constants.dates.FAKE_NOW;
-    expectedResult.token = '';
+    const expectedResult = expectedRegistration({
+      status: 'PENDING',
+      activationCode: '123ABC',
+      checkUrl: 'http://localhost:4200/api/oianalytics/oibus/registration?id=id',
+      activationExpirationDate: testData.constants.dates.FAKE_NOW,
+      token: ''
+    });
 
     repository.register(
       testData.oIAnalytics.registration.command,
@@ -56,13 +75,14 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
   });
 
   it('should activate registration', () => {
-    const expectedResult: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed));
-    expectedResult.status = 'REGISTERED';
-    expectedResult.activationExpirationDate = '';
-    expectedResult.checkUrl = '';
-    expectedResult.activationDate = testData.constants.dates.FAKE_NOW;
-    expectedResult.activationCode = '';
-    expectedResult.token = 'token';
+    const expectedResult = expectedRegistration({
+      status: 'REGISTERED',
+      activationExpirationDate: '',
+      checkUrl: '',
+      activationDate: testData.constants.dates.FAKE_NOW,
+      activationCode: '',
+      token: 'token'
+    });
 
     repository.activate(testData.constants.dates.FAKE_NOW, 'token');
 
@@ -70,13 +90,14 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
   });
 
   it('should unregister', () => {
-    const expectedResult: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed));
-    expectedResult.status = 'NOT_REGISTERED';
-    expectedResult.activationExpirationDate = '';
-    expectedResult.checkUrl = '';
-    expectedResult.activationDate = '';
-    expectedResult.activationCode = '';
-    expectedResult.token = '';
+    const expectedResult = expectedRegistration({
+      status: 'NOT_REGISTERED',
+      activationExpirationDate: '',
+      checkUrl: '',
+      activationDate: '',
+      activationCode: '',
+      token: ''
+    });
 
     repository.unregister();
 
@@ -100,20 +121,7 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.strictEqual(result.proxyUsername, specificCommand.proxyUsername);
     assert.strictEqual(result.proxyPassword, specificCommand.proxyPassword);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    const [entityType, entityId, action, previousState, newState, userId] = recordMock.mock.calls[0].arguments as [
-      string,
-      string,
-      string,
-      Record<string, unknown>,
-      Record<string, unknown>,
-      string
-    ];
-    assert.strictEqual(entityType, 'oianalytics_registration');
-    assert.strictEqual(entityId, result.id);
-    assert.strictEqual(action, 'UPDATE');
-    assert.strictEqual(userId, testData.users.list[0].id);
+    const { previousState, newState } = onlyRegistrationUpdate(result.id);
     assert.strictEqual(previousState.publicCipherKey, '');
     assert.strictEqual(previousState.privateCipherKey, '');
     assert.strictEqual(newState.publicCipherKey, '');
@@ -139,20 +147,7 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.strictEqual(result.privateCipherKey, 'new private key');
     assert.strictEqual(result.publicCipherKey, 'new public key');
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    const [entityType, entityId, action, previousState, newState, userId] = recordMock.mock.calls[0].arguments as [
-      string,
-      string,
-      string,
-      Record<string, unknown>,
-      Record<string, unknown>,
-      string
-    ];
-    assert.strictEqual(entityType, 'oianalytics_registration');
-    assert.strictEqual(entityId, result.id);
-    assert.strictEqual(action, 'UPDATE');
-    assert.strictEqual(userId, testData.users.list[0].id);
+    const { previousState, newState } = onlyRegistrationUpdate(result.id);
     assert.strictEqual(previousState.publicCipherKey, '');
     assert.strictEqual(previousState.privateCipherKey, '');
     assert.strictEqual(newState.publicCipherKey, '<changed>');

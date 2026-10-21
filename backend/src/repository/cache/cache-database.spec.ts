@@ -3,7 +3,7 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
-import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import SouthCacheRepository from './south-cache.repository';
 
 const TEST_DB_PATH = 'src/tests/test-cache-db.db';

@@ -5,12 +5,50 @@ import { Database } from 'better-sqlite3';
 
 import { SouthItemGroupCommand } from '../../model/south-connector.model';
 import AuditService from '../../service/audit.service';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, Mocked } from '../../tests/utils/test-utils';
 import SouthConnectorRepository from './south-connector.repository';
 import SouthItemGroupRepository, { toSouthItemGroup } from './south-item-group.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-south-item-group.db';
+
+type GroupUpdate = Omit<SouthItemGroupCommand, 'southId'>;
+
+const groupUpdate = (name: string, overrides: Partial<GroupUpdate> = {}): GroupUpdate => ({
+  name,
+  scanMode: testData.scanMode.list[0],
+  startTimeOffset: null,
+  endTimeOffset: null,
+  maxReadInterval: null,
+  readDelay: 0,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  ...overrides
+});
+
+/** A group of the first south connector. */
+const groupCommand = (name: string, overrides: Partial<GroupUpdate> = {}): SouthItemGroupCommand => ({
+  southId: testData.south.list[0].id,
+  ...groupUpdate(name, overrides)
+});
+
+/** A south_item_groups row joined with its scan mode. */
+const groupRow = (id: string, name: string, columns: Record<string, string | number | null | undefined>) =>
+  ({
+    id,
+    created_at: '2024-01-01 00:00:00',
+    updated_at: '2024-01-01 00:00:00',
+    name,
+    south_id: 'southId1',
+    scan_mode_id: testData.scanMode.list[0].id,
+    ...columns,
+    sm_id: testData.scanMode.list[0].id,
+    sm_name: testData.scanMode.list[0].name,
+    sm_description: testData.scanMode.list[0].description,
+    sm_cron: testData.scanMode.list[0].cron,
+    sm_type: testData.scanMode.list[0].type
+  }) as Record<string, string | number>;
 
 let database: Database;
 describe('South Item Group Repository', () => {
@@ -25,7 +63,7 @@ describe('South Item Group Repository', () => {
 
   describe('South item group operations', () => {
     let repository: SouthItemGroupRepository;
-    let auditService: AuditService;
+    let auditService: Mocked<AuditService>;
 
     beforeEach(() => {
       auditService = createAuditServiceMock();
@@ -33,18 +71,7 @@ describe('South Item Group Repository', () => {
     });
 
     it('should find a group by id', () => {
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Test Group 1',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-      const created = repository.create(groupToCreate, 'userTest');
+      const created = repository.create(groupCommand('Test Group 1'), 'userTest');
 
       const found = repository.findById(created.id);
       assert.ok(found);
@@ -61,31 +88,8 @@ describe('South Item Group Repository', () => {
     });
 
     it('should find groups by south id', () => {
-      const group1: SouthItemGroupCommand = {
-        name: 'Group A',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: 10,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-      const group2: SouthItemGroupCommand = {
-        name: 'Group B',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[1],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-
-      repository.create(group1, 'userTest');
-      repository.create(group2, 'userTest');
+      repository.create(groupCommand('Group A', { startTimeOffset: 10 }), 'userTest');
+      repository.create(groupCommand('Group B', { scanMode: testData.scanMode.list[1] }), 'userTest');
 
       const groups = repository.findBySouthId(testData.south.list[0].id);
       assert.ok(groups.length >= 2);
@@ -100,18 +104,7 @@ describe('South Item Group Repository', () => {
     });
 
     it('should find a group by name and south id', () => {
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Find By Name Group',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-      const created = repository.create(groupToCreate, 'userTest');
+      const created = repository.create(groupCommand('Find By Name Group'), 'userTest');
 
       const found = repository.findByNameAndSouthId('Find By Name Group', testData.south.list[0].id);
       assert.ok(found);
@@ -126,62 +119,28 @@ describe('South Item Group Repository', () => {
     });
 
     it('should return null when finding group by name for different south id', () => {
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Group For Different South',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-      repository.create(groupToCreate, 'userTest');
+      repository.create(groupCommand('Group For Different South'), 'userTest');
 
       const found = repository.findByNameAndSouthId('Group For Different South', 'differentSouthId');
       assert.strictEqual(found, null);
     });
 
     it('should create a group with generated id', () => {
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'New Group',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: 5,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-
-      const created = repository.create(groupToCreate, 'userTest');
+      const created = repository.create(groupCommand('New Group', { startTimeOffset: 5 }), 'userTest');
       assert.ok(created.id);
       assert.strictEqual(created.name, 'New Group');
       assert.strictEqual(created.southId, testData.south.list[0].id);
       assert.strictEqual(created.scanMode.id, testData.scanMode.list[0].id);
       assert.strictEqual(created.startTimeOffset, 5);
 
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['south_item_group', created.id, 'CREATE', null, created, 'userTest']);
+      assert.deepStrictEqual(
+        auditService.record.mock.calls.map(call => call.arguments),
+        [['south_item_group', created.id, 'CREATE', null, created, 'userTest']]
+      );
     });
 
     it('should persist and update a non-null cachingStrategy on a group', () => {
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Group With Caching Strategy',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: 'onChange'
-      };
-
-      const created = repository.create(groupToCreate, 'userTest');
+      const created = repository.create(groupCommand('Group With Caching Strategy', { cachingStrategy: 'onChange' }), 'userTest');
       assert.strictEqual(created.cachingStrategy, 'onChange');
 
       const found = repository.findById(created.id);
@@ -208,19 +167,7 @@ describe('South Item Group Repository', () => {
 
     it('should create a group with custom id', () => {
       const customId = 'customGroupId';
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Custom Group',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-
-      const created = repository.create(groupToCreate, 'userTest', customId);
+      const created = repository.create(groupCommand('Custom Group'), 'userTest', customId);
       assert.strictEqual(created.id, customId);
       assert.strictEqual(created.name, 'Custom Group');
 
@@ -230,56 +177,20 @@ describe('South Item Group Repository', () => {
     });
 
     it('should throw error when create fails to find created group', () => {
+      // The repository is rebuilt for each test: the stub needs no restore
       mock.method(repository, 'findById', () => null);
 
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Group That Will Fail',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-
       assert.throws(
-        () => repository.create(groupToCreate, 'userTest', 'failingGroupId'),
+        () => repository.create(groupCommand('Group That Will Fail'), 'userTest', 'failingGroupId'),
         /Failed to create south item group with id failingGroupId/
       );
-
-      mock.restoreAll();
     });
 
     it('should update a group', () => {
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Original Name',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-
-      const created = repository.create(groupToCreate, 'userTest');
-
-      const updateCommand: Omit<SouthItemGroupCommand, 'southId'> = {
-        name: 'Updated Name',
-        scanMode: testData.scanMode.list[1],
-        startTimeOffset: 15,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
+      const created = repository.create(groupCommand('Original Name'), 'userTest');
 
       const before = repository.findById(created.id);
-      repository.update(created.id, updateCommand, 'userTest');
+      repository.update(created.id, groupUpdate('Updated Name', { scanMode: testData.scanMode.list[1], startTimeOffset: 15 }), 'userTest');
 
       const updated = repository.findById(created.id);
       assert.ok(updated);
@@ -288,28 +199,21 @@ describe('South Item Group Repository', () => {
       assert.strictEqual(updated.startTimeOffset, 15);
       assert.strictEqual(updated.southId, testData.south.list[0].id);
 
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 2); // create + update
-      assert.deepStrictEqual(recordMock.mock.calls[1].arguments, ['south_item_group', created.id, 'UPDATE', before, updated, 'userTest']);
+      assert.strictEqual(auditService.record.mock.callCount(), 2); // create + update
+      assert.deepStrictEqual(auditService.record.mock.calls[1].arguments, [
+        'south_item_group',
+        created.id,
+        'UPDATE',
+        before,
+        updated,
+        'userTest'
+      ]);
     });
 
     it('should cascade a group scan mode change to its synced member items', () => {
       const southConnectorRepository = new SouthConnectorRepository(database, auditService);
 
-      const group = repository.create(
-        {
-          name: 'Cascade Group',
-          southId: testData.south.list[0].id,
-          scanMode: testData.scanMode.list[0],
-          startTimeOffset: null,
-          endTimeOffset: null,
-          maxReadInterval: null,
-          readDelay: 0,
-          recoveryStrategy: null,
-          cachingStrategy: null
-        },
-        'userTest'
-      );
+      const group = repository.create(groupCommand('Cascade Group'), 'userTest');
 
       const existingItems = southConnectorRepository.findAllItemsForSouth(testData.south.list[0].id);
       const itemToSync = existingItems[0];
@@ -319,17 +223,7 @@ describe('South Item Group Repository', () => {
       assert.ok(syncedItemBefore);
       assert.strictEqual(syncedItemBefore.scanMode!.id, testData.scanMode.list[0].id);
 
-      const updateCommand: Omit<SouthItemGroupCommand, 'southId'> = {
-        name: 'Cascade Group',
-        scanMode: testData.scanMode.list[1],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-      repository.update(group.id, updateCommand, 'userTest');
+      repository.update(group.id, groupUpdate('Cascade Group', { scanMode: testData.scanMode.list[1] }), 'userTest');
 
       const syncedItemAfter = southConnectorRepository.findItemById(testData.south.list[0].id, itemToSync.id);
       assert.ok(syncedItemAfter);
@@ -341,32 +235,9 @@ describe('South Item Group Repository', () => {
     });
 
     it('should update a group with null startTimeOffset', () => {
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Group With StartTimeOffset',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: 10,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
+      const created = repository.create(groupCommand('Group With StartTimeOffset', { startTimeOffset: 10 }), 'userTest');
 
-      const created = repository.create(groupToCreate, 'userTest');
-
-      const updateCommand: Omit<SouthItemGroupCommand, 'southId'> = {
-        name: 'Updated Name Null',
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-
-      repository.update(created.id, updateCommand, 'userTest');
+      repository.update(created.id, groupUpdate('Updated Name Null'), 'userTest');
 
       const updated = repository.findById(created.id);
       assert.ok(updated);
@@ -374,47 +245,30 @@ describe('South Item Group Repository', () => {
     });
 
     it('should delete a group', () => {
-      const groupToCreate: SouthItemGroupCommand = {
-        name: 'Group To Delete',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        recoveryStrategy: null,
-        cachingStrategy: null
-      };
-
-      const created = repository.create(groupToCreate, 'userTest');
+      const created = repository.create(groupCommand('Group To Delete'), 'userTest');
       assert.ok(repository.findById(created.id));
 
       repository.delete(created.id, 'userTest');
       assert.strictEqual(repository.findById(created.id), null);
 
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 2); // create + delete
-      assert.deepStrictEqual(recordMock.mock.calls[1].arguments, ['south_item_group', created.id, 'DELETE', created, null, 'userTest']);
+      assert.strictEqual(auditService.record.mock.callCount(), 2); // create + delete
+      assert.deepStrictEqual(auditService.record.mock.calls[1].arguments, [
+        'south_item_group',
+        created.id,
+        'DELETE',
+        created,
+        null,
+        'userTest'
+      ]);
     });
 
     it('should convert database result to SouthItemGroupEntity', () => {
-      const dbResult: Record<string, string | number> = {
-        id: 'testId',
-        created_at: '2024-01-01 00:00:00',
-        updated_at: '2024-01-01 00:00:00',
-        name: 'Test Group',
-        south_id: 'southId1',
-        scan_mode_id: testData.scanMode.list[0].id,
+      const dbResult = groupRow('testId', 'Test Group', {
         start_time_offset: 20,
         end_time_offset: 0,
         max_read_interval: 3600,
-        read_delay: 200,
-        sm_id: testData.scanMode.list[0].id,
-        sm_name: testData.scanMode.list[0].name,
-        sm_description: testData.scanMode.list[0].description,
-        sm_cron: testData.scanMode.list[0].cron,
-        sm_type: testData.scanMode.list[0].type
-      };
+        read_delay: 200
+      });
 
       const converted = toSouthItemGroup(dbResult, [
         {
@@ -448,92 +302,38 @@ describe('South Item Group Repository', () => {
     });
 
     it('should convert database result with null start_time_offset', () => {
-      const dbResult: Record<string, string | number | null> = {
-        id: 'testId2',
-        created_at: '2024-01-01 00:00:00',
-        updated_at: '2024-01-01 00:00:00',
-        name: 'Test Group 2',
-        south_id: 'southId1',
-        scan_mode_id: testData.scanMode.list[0].id,
-        start_time_offset: null,
-        end_time_offset: null,
-        sm_id: testData.scanMode.list[0].id,
-        sm_name: testData.scanMode.list[0].name,
-        sm_description: testData.scanMode.list[0].description,
-        sm_cron: testData.scanMode.list[0].cron,
-        sm_type: testData.scanMode.list[0].type
-      };
-
-      const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
+      const converted = toSouthItemGroup(groupRow('testId2', 'Test Group 2', { start_time_offset: null, end_time_offset: null }), []);
       assert.strictEqual(converted.startTimeOffset, null);
     });
 
     it('should convert database result with undefined start_time_offset', () => {
-      const dbResult: Record<string, string | number | null | undefined> = {
-        id: 'testId3',
-        created_at: '2024-01-01 00:00:00',
-        updated_at: '2024-01-01 00:00:00',
-        name: 'Test Group 3',
-        south_id: 'southId1',
-        scan_mode_id: testData.scanMode.list[0].id,
-        start_time_offset: undefined,
-        end_time_offset: undefined,
-        sm_id: testData.scanMode.list[0].id,
-        sm_name: testData.scanMode.list[0].name,
-        sm_description: testData.scanMode.list[0].description,
-        sm_cron: testData.scanMode.list[0].cron,
-        sm_type: testData.scanMode.list[0].type
-      };
-
-      const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
+      const converted = toSouthItemGroup(
+        groupRow('testId3', 'Test Group 3', { start_time_offset: undefined, end_time_offset: undefined }),
+        []
+      );
       assert.strictEqual(converted.startTimeOffset, null);
     });
 
     it('should convert database result with null max_read_interval', () => {
-      const dbResult: Record<string, string | number | null> = {
-        id: 'testId4',
-        created_at: '2024-01-01 00:00:00',
-        updated_at: '2024-01-01 00:00:00',
-        name: 'Test Group 4',
-        south_id: 'southId1',
-        scan_mode_id: testData.scanMode.list[0].id,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        max_read_interval: null,
-        read_delay: 0,
-        sm_id: testData.scanMode.list[0].id,
-        sm_name: testData.scanMode.list[0].name,
-        sm_description: testData.scanMode.list[0].description,
-        sm_cron: testData.scanMode.list[0].cron,
-        sm_type: testData.scanMode.list[0].type
-      };
-
-      const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
+      const converted = toSouthItemGroup(
+        groupRow('testId4', 'Test Group 4', { startTimeOffset: null, endTimeOffset: null, max_read_interval: null, read_delay: 0 }),
+        []
+      );
       assert.strictEqual(converted.maxReadInterval, null);
       assert.strictEqual(converted.readDelay, 0);
     });
 
     it('should convert database result with a non-null recovery strategy', () => {
-      const dbResult: Record<string, string | number> = {
-        id: 'testId5',
-        created_at: '2024-01-01 00:00:00',
-        updated_at: '2024-01-01 00:00:00',
-        name: 'Test Group 5',
-        south_id: 'southId1',
-        scan_mode_id: testData.scanMode.list[0].id,
-        start_time_offset: 0,
-        end_time_offset: 0,
-        max_read_interval: 3600,
-        read_delay: 200,
-        recovery_strategy: 'oldest',
-        sm_id: testData.scanMode.list[0].id,
-        sm_name: testData.scanMode.list[0].name,
-        sm_description: testData.scanMode.list[0].description,
-        sm_cron: testData.scanMode.list[0].cron,
-        sm_type: testData.scanMode.list[0].type
-      };
-
-      const converted = toSouthItemGroup(dbResult, []);
+      const converted = toSouthItemGroup(
+        groupRow('testId5', 'Test Group 5', {
+          start_time_offset: 0,
+          end_time_offset: 0,
+          max_read_interval: 3600,
+          read_delay: 200,
+          recovery_strategy: 'oldest'
+        }),
+        []
+      );
       assert.strictEqual(converted.recoveryStrategy, 'oldest');
     });
   });

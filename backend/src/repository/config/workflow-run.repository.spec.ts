@@ -4,8 +4,9 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 import { Database } from 'better-sqlite3';
 
 import { WorkflowRunCounts, WorkflowRunPayload, WorkflowRunSearchParam } from '../../model/workflow-run.model';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import { createAuditServiceMock } from '../../tests/utils/test-utils';
 import ConfigurationWorkflowRepository from './configuration-workflow.repository';
 import WorkflowRunRepository from './workflow-run.repository';
 

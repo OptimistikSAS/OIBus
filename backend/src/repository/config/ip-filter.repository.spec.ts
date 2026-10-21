@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { after, before, beforeEach, describe, it, mock } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
 import AuditService from '../../service/audit.service';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import IpFilterRepository from './ip-filter.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-ip-filter.db';
@@ -22,13 +23,16 @@ describe('IpFilterRepository', () => {
   });
 
   let repository: IpFilterRepository;
-  let auditService: AuditService;
+  let auditService: Mocked<AuditService>;
   let createdId: string;
 
   beforeEach(() => {
     auditService = createAuditServiceMock();
     repository = new IpFilterRepository(database, auditService);
   });
+
+  /** The arguments of every audit record made in the test. */
+  const recorded = () => auditService.record.mock.calls.map(call => call.arguments);
 
   it('findAll() should properly get all IP filters', () => {
     const result = repository.list().map(stripAuditFields);
@@ -56,9 +60,7 @@ describe('IpFilterRepository', () => {
     assert.strictEqual(created.address, testData.ipFilters.command.address);
     assert.strictEqual(created.description, testData.ipFilters.command.description);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['ip_filter', created.id, 'CREATE', null, created, 'userTest']);
+    assert.deepStrictEqual(recorded(), [['ip_filter', created.id, 'CREATE', null, created, 'userTest']]);
   });
 
   it('create() should preserve a caller-supplied id (config import)', () => {
@@ -74,9 +76,7 @@ describe('IpFilterRepository', () => {
     assert.strictEqual(result.address, testData.ipFilters.command.address);
     assert.strictEqual(result.updatedBy, 'userTest');
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['ip_filter', createdId, 'UPDATE', before, result, 'userTest']);
+    assert.deepStrictEqual(recorded(), [['ip_filter', createdId, 'UPDATE', before, result, 'userTest']]);
   });
 
   it('delete() should delete an IP filter', () => {
@@ -85,8 +85,6 @@ describe('IpFilterRepository', () => {
     repository.delete(createdId, 'userTest');
     assert.strictEqual(repository.findById(createdId), null);
 
-    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-    assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['ip_filter', createdId, 'DELETE', before, null, 'userTest']);
+    assert.deepStrictEqual(recorded(), [['ip_filter', createdId, 'DELETE', before, null, 'userTest']]);
   });
 });

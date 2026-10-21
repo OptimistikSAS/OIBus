@@ -6,8 +6,8 @@ import { Database } from 'better-sqlite3';
 import { AUDIT_ENTITY_TYPES } from '../../../shared/model/domain/audit.model';
 
 import { AuditLog } from '../../model/audit.model';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import AuditRepository from './audit.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-audit.db';

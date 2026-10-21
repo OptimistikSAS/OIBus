@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
-import { after, before, beforeEach, describe, it, mock } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
 import { ConfigurationWorkflowCommand } from '../../model/configuration-workflow.model';
 import AuditService from '../../service/audit.service';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, Mocked } from '../../tests/utils/test-utils';
 import ConfigurationWorkflowRepository from './configuration-workflow.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-configuration-workflow.db';
@@ -24,7 +25,7 @@ describe('Configuration Workflow Repository', () => {
 
   describe('Configuration workflow operations', () => {
     let repository: ConfigurationWorkflowRepository;
-    let auditService: AuditService;
+    let auditService: Mocked<AuditService>;
 
     const localCommand: ConfigurationWorkflowCommand = {
       name: 'Local (self-scoped) workflow',
@@ -58,8 +59,8 @@ describe('Configuration Workflow Repository', () => {
       const found = repository.findById(created.id);
       assert.deepStrictEqual(found, created);
 
-      assert.strictEqual((auditService.record as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      const call = (auditService.record as unknown as ReturnType<typeof mock.fn>).mock.calls[0];
+      assert.strictEqual(auditService.record.mock.calls.length, 1);
+      const call = auditService.record.mock.calls[0];
       assert.deepStrictEqual(call.arguments.slice(0, 3), ['configuration_workflow', created.id, 'CREATE']);
       assert.strictEqual(call.arguments[3], null);
     });
@@ -149,7 +150,7 @@ describe('Configuration Workflow Repository', () => {
       assert.strictEqual(updated!.enabled, false);
       assert.strictEqual(updated!.updatedBy, 'updateUser');
 
-      const updateCall = (auditService.record as unknown as ReturnType<typeof mock.fn>).mock.calls[1];
+      const updateCall = auditService.record.mock.calls[1];
       assert.deepStrictEqual(updateCall.arguments.slice(0, 3), ['configuration_workflow', created.id, 'UPDATE']);
     });
 
@@ -159,7 +160,7 @@ describe('Configuration Workflow Repository', () => {
       repository.delete(created.id, 'deleteUser');
 
       assert.strictEqual(repository.findById(created.id), null);
-      const deleteCall = (auditService.record as unknown as ReturnType<typeof mock.fn>).mock.calls[1];
+      const deleteCall = auditService.record.mock.calls[1];
       assert.deepStrictEqual(deleteCall.arguments.slice(0, 3), ['configuration_workflow', created.id, 'DELETE']);
       assert.strictEqual(deleteCall.arguments[4], null);
     });
@@ -167,7 +168,7 @@ describe('Configuration Workflow Repository', () => {
     it('should silently no-op deleting a non-existing workflow (no audit record)', () => {
       repository.delete('nonExistingId', 'deleteUser');
 
-      assert.strictEqual((auditService.record as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(auditService.record.mock.calls.length, 0);
     });
 
     it("should sync a south connector's workflows: delete the missing ones, update the known ones, create the others", () => {
