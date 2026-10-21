@@ -74,7 +74,8 @@ import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import {
   SouthConnectorItemDTO,
   SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult
+  SouthConnectorItemTestResult,
+  SouthItemGroupDTO
 } from '../../../shared/model/south-connector.model';
 import { HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
@@ -1204,6 +1205,69 @@ describe('OIAnalytics Command Service', () => {
       testData.oIAnalytics.commands.oIBusList[14].id,
       testData.constants.dates.FAKE_NOW,
       `2 items imported on South connector ${testData.south.list[0].name}`
+    ]);
+  });
+
+  it('should execute create-or-update-south-items-from-csv command and keep the group and history settings of items', async () => {
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
+    southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
+    const [itemWithScanMode, itemInGroup] = testData.south.list[0].items.map(item =>
+      toSouthConnectorItemDTO(item, testData.south.list[0].type, (id: string) => ({ id, friendlyName: id }))
+    ) as Array<SouthConnectorItemDTO>;
+    // checkImportItems only knows the group name of an item, and an item of a group may have no scan mode of its own
+    southService.checkImportItems.mock.mockImplementationOnce(async () => ({
+      items: [
+        { ...itemWithScanMode, maxReadInterval: 3600, readDelay: 200, startTimeOffset: 10, endTimeOffset: 5, recoveryStrategy: 'oldest' },
+        {
+          ...itemInGroup,
+          scanMode: null,
+          group: { id: '', standardSettings: { name: 'group1' } } as SouthItemGroupDTO,
+          syncWithGroup: true
+        }
+      ] as Array<SouthConnectorItemDTO>,
+      errors: [] as Array<{ item: Record<string, string>; error: string }>
+    }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(southService.importItems.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      [
+        {
+          id: itemWithScanMode.id,
+          enabled: itemWithScanMode.enabled,
+          name: itemWithScanMode.name,
+          settings: itemWithScanMode.settings,
+          scanModeId: itemWithScanMode.scanMode!.id,
+          scanModeName: null,
+          groupId: null,
+          groupName: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 200,
+          startTimeOffset: 10,
+          endTimeOffset: 5,
+          recoveryStrategy: 'oldest'
+        },
+        {
+          id: itemInGroup.id,
+          enabled: itemInGroup.enabled,
+          name: itemInGroup.name,
+          settings: itemInGroup.settings,
+          scanModeId: null,
+          scanModeName: null,
+          groupId: null,
+          groupName: 'group1',
+          syncWithGroup: true,
+          maxReadInterval: itemInGroup.maxReadInterval,
+          readDelay: itemInGroup.readDelay,
+          startTimeOffset: itemInGroup.startTimeOffset,
+          endTimeOffset: itemInGroup.endTimeOffset,
+          recoveryStrategy: itemInGroup.recoveryStrategy
+        }
+      ],
+      'oianalytics',
+      false
     ]);
   });
 

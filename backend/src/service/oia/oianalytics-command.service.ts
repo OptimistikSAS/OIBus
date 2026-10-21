@@ -1148,6 +1148,8 @@ export default class OIAnalyticsCommandService {
       throw new Error(stringError);
     }
     // Type assertion is safe because items come from checkImportItems which validates the type
+    // Keep the group (resolved by name, and created if missing) and the history settings of each item: an item of a
+    // group may have no scan mode of its own
     await this.southService.importItems(
       southConnector.id,
       items.map(item => ({
@@ -1156,7 +1158,15 @@ export default class OIAnalyticsCommandService {
         name: item.name,
         settings: item.settings,
         scanModeId: item.scanMode?.id || null,
-        scanModeName: null
+        scanModeName: null,
+        groupId: null,
+        groupName: item.group?.standardSettings.name || null,
+        syncWithGroup: item.syncWithGroup,
+        maxReadInterval: item.maxReadInterval,
+        readDelay: item.readDelay,
+        startTimeOffset: item.startTimeOffset,
+        endTimeOffset: item.endTimeOffset,
+        recoveryStrategy: item.recoveryStrategy
       })) as Array<SouthConnectorItemCommandDTO>,
       'oianalytics',
       command.commandContent.deleteItemsNotPresent
