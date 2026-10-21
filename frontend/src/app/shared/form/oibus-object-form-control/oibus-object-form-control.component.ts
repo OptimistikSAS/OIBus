@@ -8,7 +8,7 @@ import { map } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { isEnabledOnPlatform, OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+import { isEnabledOnPlatform, OIBusArrayAttribute, OIBusControlAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 
 import { EngineService } from '../../../services/engine.service';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
@@ -26,15 +26,10 @@ import { OIBusStringSelectFormControlComponent } from '../oibus-string-select-fo
 import { OIBusTimezoneFormControlComponent } from '../oibus-timezone-form-control/oibus-timezone-form-control.component';
 import { trackControl } from '../tracked-control';
 
-interface FormRow {
-  columns: Array<FormColumn>;
-  wrapInRow: boolean;
-}
-
-interface FormColumn {
-  size: number;
-  attribute: OIBusAttribute;
-}
+/** The simple attributes are laid out in rows of columns, the objects and arrays in rows of their own */
+type FormRow =
+  | { wrapInRow: true; columns: Array<{ size: number; attribute: OIBusControlAttribute }> }
+  | { wrapInRow: false; attribute: OIBusObjectAttribute | OIBusArrayAttribute };
 
 /**
  * Provides the group of the object, bound by the `formGroupName` around the component, as the parent of the `formGroupName`
@@ -109,10 +104,7 @@ export class OIBusObjectFormControlComponent {
       switch (attribute.type) {
         case 'object':
         case 'array':
-          rows.push({
-            columns: [{ attribute: attribute, size: 0 }],
-            wrapInRow: false
-          });
+          rows.push({ wrapInRow: false, attribute });
           break;
         case 'string':
         case 'code':
@@ -123,15 +115,14 @@ export class OIBusObjectFormControlComponent {
         case 'secret':
         case 'scan-mode':
         case 'certificate':
-        case 'timezone':
-          if (!rows[attribute.displayProperties.row]) {
-            rows[attribute.displayProperties.row] = { columns: [], wrapInRow: true };
+        case 'timezone': {
+          const row = (rows[attribute.displayProperties.row] ??= { wrapInRow: true, columns: [] });
+          // A row already taken by an object or an array is not shared
+          if (row.wrapInRow) {
+            row.columns.push({ size: attribute.displayProperties.columns, attribute });
           }
-          rows[attribute.displayProperties.row].columns.push({
-            size: attribute.displayProperties.columns,
-            attribute: attribute
-          });
           break;
+        }
       }
     });
     return rows;
