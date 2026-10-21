@@ -8,13 +8,12 @@ import { RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { NotFoundError } from '../../model/types';
 import type EngineRepository from '../../repository/config/engine.repository';
-import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
-import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import type LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { getErrorMessage } from '../utils';
 import type OIAnalyticsRegistrationServiceType from './oianalytics-registration.service';
@@ -61,19 +60,19 @@ before(() => {
 });
 
 describe('OIAnalytics Registration Service', () => {
-  let oIAnalyticsRegistrationRepository: OianalyticsRegistrationRepositoryMock;
-  let engineRepository: EngineRepositoryMock;
+  let oIAnalyticsRegistrationRepository: Mocked<OIAnalyticsRegistrationRepository>;
+  let engineRepository: Mocked<EngineRepository>;
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsRegistrationServiceType>;
   beforeEach(() => {
-    oIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
-    engineRepository = new EngineRepositoryMock();
+    oIAnalyticsRegistrationRepository = createMock<OIAnalyticsRegistrationRepository>();
+    engineRepository = createMock<EngineRepository>();
     oIAnalyticsClient = new OianalyticsClientMock();
     logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
 
     mockUtils.getOIBusInfo = mock.fn(() => testData.engine.oIBusInfo);
-    engineRepository.get = mock.fn(() => testData.engine.settings);
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     // Reset encryptionService mock fns
     mockEncryptionService.encryptionService = new EncryptionServiceMock('', '');
     mockUtilsOianalytics.testOIAnalyticsConnection = mock.fn();
@@ -97,7 +96,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should start with completed registration', () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(
       seq(
         () => testData.oIAnalytics.registration.completed,
         () => testData.oIAnalytics.registration.pending
@@ -114,21 +113,21 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should get registration settings', () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     assert.deepStrictEqual(service.getRegistrationSettings(), testData.oIAnalytics.registration.completed);
     assert.strictEqual(oIAnalyticsRegistrationRepository.get.mock.calls.length, 1);
   });
 
   it('should not get registration settings if not found', () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => null);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => null);
 
     assert.throws(() => service.getRegistrationSettings(), new NotFoundError('Registration settings not found'));
     assert.strictEqual(oIAnalyticsRegistrationRepository.get.mock.calls.length, 1);
   });
 
   it('should register', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(
       seq(
         () => testData.oIAnalytics.registration.completed,
         () => testData.oIAnalytics.registration.completed
@@ -179,7 +178,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should reject registration when key pair generation fails', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     const keyPairError = new Error('key pair generation failed');
     mock.method(
@@ -292,7 +291,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should edit registration connection settings', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     await service.editRegistrationSettings(testData.oIAnalytics.registration.command, testData.users.list[0].id);
 
@@ -303,7 +302,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should edit registration settings when no proxy nor api gateway is configured (null fields)', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     const command: RegistrationSettingsCommandDTO = {
       ...testData.oIAnalytics.registration.command,
@@ -396,7 +395,7 @@ describe('OIAnalytics Registration Service', () => {
         testCustomTransformer: true
       }
     };
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     await service.editRegistrationSettings(command, testData.users.list[0].id);
 
@@ -410,7 +409,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should unregister and clear interval if it exists', () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
 
     service.start(); // start with pending registration to set interval
     service.unregister();
@@ -419,7 +418,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should stop and clear interval if it exists', () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
 
     service.start(); // start with pending registration to set interval
     service.stop();
@@ -429,7 +428,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should check registration', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(
       seq(
         () => testData.oIAnalytics.registration.pending,
         () => testData.oIAnalytics.registration.pending
@@ -450,7 +449,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should check registration and return because already checking', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
     const result = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
     oIAnalyticsClient.checkRegistration.mock.mockImplementation(async () => result);
 
@@ -462,7 +461,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should check registration but fail because of return status', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
     const result = { status: 'DECLINED', expired: true, accessToken: 'access_token' };
     oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(async () => result);
 
@@ -475,7 +474,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should check registration but fail because of client error', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
     oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(() => {
       throw new Error('error');
     });
@@ -489,7 +488,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should check registration but fail with AggregateError and log proper message', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
     const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
     oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(() => {
       throw networkError;
@@ -503,7 +502,7 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should test connection', async () => {
-    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     await service.testConnection(testData.oIAnalytics.registration.command);
 

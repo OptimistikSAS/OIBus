@@ -1,69 +1,115 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import { NorthConnectorCommandDTO } from '../../shared/model/api/north-connector.model';
 import { TransformerDTO } from '../../shared/model/api/transformer.model';
 
+import type DataStreamEngine from '../engine/data-stream-engine';
+import type { NorthConnectorEntityLight } from '../model/north-connector.model';
+import type { SouthItemGroupEntity } from '../model/south-connector.model';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import type CertificateRepository from '../repository/config/certificate.repository';
+import type NorthConnectorRepository from '../repository/config/north-connector.repository';
+import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import type ScanModeRepository from '../repository/config/scan-mode.repository';
+import type SouthConnectorRepository from '../repository/config/south-connector.repository';
+import type SouthItemGroupRepository from '../repository/config/south-item-group.repository';
+import type LogRepository from '../repository/logs/log.repository';
+import type NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
-import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
-import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
-import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import { createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
+import type JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type NorthConnectorMetricsService from './metrics/north-connector-metrics.service';
 import type NorthServiceType from './north.service';
 import type {
   northManifestList as northManifestListType,
   toNorthConnectorDTO as toNorthConnectorDTOType,
   toNorthConnectorLightDTO as toNorthConnectorLightDTOType
 } from './north.service';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
-import type { toTransformerDTO as toTransformerDTOType } from './transformer.service';
+import type TransformerService from './transformer.service';
+import { toTransformerDTO } from './transformer.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockNorthConnectorFactory: Record<string, ReturnType<typeof mock.fn> | boolean>;
-let mockEncryptionService: Record<string, unknown>;
+const encryptionService = new EncryptionServiceMock('', '');
+const northConnectorFactoryExports: Record<string, unknown> = { __esModule: true, createNorthOrchestrator: mock.fn() };
+const getUserInfo = (id: string) => ({ id, friendlyName: id });
 
-let NorthService: new (...args: Array<unknown>) => InstanceType<typeof NorthServiceType>;
+const otherNorthLight = (name: string): NorthConnectorEntityLight => ({
+  id: name === testData.north.command.name ? 'existing-id' : 'other-id',
+  name,
+  type: 'console',
+  description: '',
+  enabled: true,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+/** A copy of the north command whose first transformer takes its data from a group of its south. */
+const commandWithGroupSource = (groupId: string): NorthConnectorCommandDTO => {
+  const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
+  const firstTransformerSource = command.transformers[0].source;
+  if (firstTransformerSource.type !== 'south') {
+    throw new Error('Expected south source in test data');
+  }
+  command.transformers = [
+    { ...command.transformers[0], source: { type: 'south', southId: firstTransformerSource.southId, groupId, items: [] } }
+  ];
+  return command;
+};
+
+// The south of the first transformer source of the north command
+const groupEntity = (): SouthItemGroupEntity => ({
+  id: 'groupId1',
+  name: '',
+  southId: testData.south.list[0].id,
+  scanMode: testData.scanMode.list[0],
+  startTimeOffset: null,
+  endTimeOffset: null,
+  maxReadInterval: null,
+  readDelay: 0,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: '',
+  items: []
+});
+
+const assertSavedGroupSource = (northConnectorRepository: Mocked<NorthConnectorRepository>) => {
+  const savedSource = northConnectorRepository.saveNorth.mock.calls[0].arguments[0].transformers[0].source;
+  assert.strictEqual(savedSource.type, 'south');
+  if (savedSource.type !== 'south') throw new Error('Expected south source');
+  assert.ok(savedSource.group?.id === 'groupId1');
+  assert.ok(savedSource.group?.name === '');
+  assert.ok(savedSource.group?.createdBy === '');
+  assert.ok(savedSource.group?.updatedBy === '');
+  assert.ok(savedSource.group?.createdAt === '');
+  assert.ok(savedSource.group?.updatedAt === '');
+};
+
+let NorthService: typeof NorthServiceType;
 let northManifestList: typeof northManifestListType;
 let toNorthConnectorDTO: typeof toNorthConnectorDTOType;
 let toNorthConnectorLightDTO: typeof toNorthConnectorLightDTOType;
-let toTransformerDTO: typeof toTransformerDTOType;
-let buildNorth: ReturnType<typeof mock.fn>;
 
 before(() => {
-  mockUtils = {
-    checkScanMode: mock.fn(),
-    resolveBypassingExports: mock.fn()
-  };
-
-  buildNorth = mock.fn();
-  mockNorthConnectorFactory = { __esModule: true, buildNorth, createNorthOrchestrator: mock.fn() };
-
-  const encryptionServiceMock = new EncryptionServiceMock('', '');
-  mockEncryptionService = { __esModule: true, encryptionService: encryptionServiceMock };
-
-  mockModule(nodeRequire, './utils', mockUtils);
-  mockModule(nodeRequire, '../north/north-connector-factory', mockNorthConnectorFactory);
+  mockModule(nodeRequire, '../north/north-connector-factory', northConnectorFactoryExports);
   mockModule(nodeRequire, '../south/south-connector-factory', { __esModule: true, buildSouth: mock.fn() });
-  mockModule(nodeRequire, './encryption.service', mockEncryptionService);
+  mockModule(nodeRequire, './encryption.service', { __esModule: true, encryptionService });
 
   const mod = reloadModule<{
-    default: new (...args: Array<unknown>) => InstanceType<typeof NorthServiceType>;
+    default: typeof NorthServiceType;
     northManifestList: typeof northManifestListType;
     toNorthConnectorDTO: typeof toNorthConnectorDTOType;
     toNorthConnectorLightDTO: typeof toNorthConnectorLightDTOType;
@@ -72,29 +118,20 @@ before(() => {
   northManifestList = mod.northManifestList;
   toNorthConnectorDTO = mod.toNorthConnectorDTO;
   toNorthConnectorLightDTO = mod.toNorthConnectorLightDTO;
-
-  const transformerMod = reloadModule<{
-    toTransformerDTO: typeof toTransformerDTOType;
-  }>(nodeRequire, './transformer.service');
-  toTransformerDTO = transformerMod.toTransformerDTO;
 });
 
 describe('North Service', () => {
-  let service: InstanceType<typeof NorthServiceType>;
-  let northConnectorRepository: NorthConnectorRepositoryMock;
-  let southConnectorRepository: SouthConnectorRepositoryMock;
-  let northMetricsRepository: NorthMetricsRepositoryMock;
-  let scanModeRepository: ScanModeRepositoryMock;
-  let logRepository: LogRepositoryMock;
-  let certificateRepository: CertificateRepositoryMock;
-  let oIAnalyticsRegistrationRepository: OianalyticsRegistrationRepositoryMock;
-  let oIAnalyticsMessageService: OIAnalyticsMessageServiceMock;
-  let engine: DataStreamEngineMock;
-  let transformerService: TransformerServiceMock;
-  let southItemGroupRepository: { findById: ReturnType<typeof mock.fn> };
-  let validator: { validate: ReturnType<typeof mock.fn>; validateSettings: ReturnType<typeof mock.fn> };
-  let logger: LoggerMock;
+  let service: NorthServiceType;
+  let northConnectorRepository: Mocked<NorthConnectorRepository>;
+  let southConnectorRepository: Mocked<SouthConnectorRepository>;
+  let northMetricsRepository: Mocked<NorthConnectorMetricsRepository>;
+  let logRepository: Mocked<LogRepository>;
+  let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+  let engine: Mocked<DataStreamEngine>;
+  let transformerService: Mocked<TransformerService>;
+  let southItemGroupRepository: Mocked<SouthItemGroupRepository>;
   let mockedNorth1: NorthConnectorMock;
+  let buildNorth: Mock<() => NorthConnectorMock>;
 
   beforeEach(() => {
     mock.timers.enable({
@@ -102,57 +139,47 @@ describe('North Service', () => {
       now: new Date(testData.constants.dates.FAKE_NOW).getTime()
     });
 
-    logger = new LoggerMock();
-    northConnectorRepository = new NorthConnectorRepositoryMock();
-    southConnectorRepository = new SouthConnectorRepositoryMock();
-    northMetricsRepository = new NorthMetricsRepositoryMock();
-    scanModeRepository = new ScanModeRepositoryMock();
-    logRepository = new LogRepositoryMock();
-    certificateRepository = new CertificateRepositoryMock();
-    oIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
-    oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-    engine = new DataStreamEngineMock(logger);
-    transformerService = new TransformerServiceMock();
-    southItemGroupRepository = { findById: mock.fn() };
-    validator = {
-      validate: mock.fn(async () => undefined),
-      validateSettings: mock.fn(async () => undefined)
-    };
-
     mockedNorth1 = new NorthConnectorMock(testData.north.list[0]);
-    buildNorth.mock.resetCalls();
-    buildNorth.mock.mockImplementation(() => mockedNorth1);
+    buildNorth = mock.fn(() => mockedNorth1);
+    northConnectorFactoryExports.buildNorth = buildNorth;
 
-    northConnectorRepository.findAllNorth.mock.mockImplementation(() => []);
-    northConnectorRepository.findNorthById.mock.mockImplementation(() => testData.north.list[0]);
-    scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
-    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() =>
-      testData.south.list.map(element => ({
-        id: element.id,
-        name: element.name,
-        type: element.type,
-        description: element.description,
-        enabled: element.enabled,
-        createdBy: element.createdBy,
-        updatedBy: element.updatedBy,
-        createdAt: element.createdAt,
-        updatedAt: element.updatedAt
-      }))
-    );
-    southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0]);
-    southConnectorRepository.findAllItemsForSouth.mock.mockImplementation(() => testData.south.list[0].items);
+    northConnectorRepository = createMock<NorthConnectorRepository>({
+      findAllNorth: () => [],
+      findNorthById: () => testData.north.list[0]
+    });
+    southConnectorRepository = createMock<SouthConnectorRepository>({
+      findAllSouth: () =>
+        testData.south.list.map(element => ({
+          id: element.id,
+          name: element.name,
+          type: element.type,
+          description: element.description,
+          enabled: element.enabled,
+          createdBy: element.createdBy,
+          updatedBy: element.updatedBy,
+          createdAt: element.createdAt,
+          updatedAt: element.updatedAt
+        })),
+      findSouthById: () => testData.south.list[0],
+      findAllItemsForSouth: () => testData.south.list[0].items
+    });
+    northMetricsRepository = createMock<NorthConnectorMetricsRepository>();
+    logRepository = createMock<LogRepository>();
+    oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
+    engine = createMock<DataStreamEngine>({ logger: new LoggerMock() });
+    transformerService = createMock<TransformerService>({ findAll: () => testData.transformers.list });
+    southItemGroupRepository = createMock<SouthItemGroupRepository>();
 
     service = new NorthService(
-      validator,
+      createMock<JoiValidator>(),
       northConnectorRepository,
       southConnectorRepository,
       southItemGroupRepository,
       northMetricsRepository,
-      scanModeRepository,
+      createMock<ScanModeRepository>({ findAll: () => testData.scanMode.list }),
       logRepository,
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
+      createMock<CertificateRepository>(),
+      createMock<OIAnalyticsRegistrationRepository>(),
       oIAnalyticsMessageService,
       transformerService,
       engine
@@ -209,71 +236,20 @@ describe('North Service', () => {
   });
 
   it('should create a north connector with a transformer group', async () => {
-    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
-    const firstTransformerSource = command.transformers[0].source;
-    if (firstTransformerSource.type !== 'south') {
-      throw new Error('Expected south source in test data');
-    }
-    southItemGroupRepository.findById.mock.mockImplementationOnce(() => ({
-      id: 'groupId1',
-      name: '',
-      southId: firstTransformerSource.southId,
-      scanMode: testData.scanMode.list[0],
-      startTimeOffset: null,
-      endTimeOffset: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: '',
-      items: []
-    }));
-    command.transformers = [
-      {
-        ...command.transformers[0],
-        source: {
-          type: 'south',
-          southId: firstTransformerSource.southId,
-          groupId: 'groupId1',
-          items: []
-        }
-      }
-    ];
+    const command = commandWithGroupSource('groupId1');
+    southItemGroupRepository.findById.mock.mockImplementationOnce(() => groupEntity());
     await service.create(command, null, 'userTest');
 
-    const savedEntity = northConnectorRepository.saveNorth.mock.calls[0].arguments[0];
-    const savedSource = savedEntity.transformers[0].source;
-    assert.strictEqual(savedSource.type, 'south');
-    if (savedSource.type !== 'south') throw new Error('Expected south source');
-    assert.ok(savedSource.group?.id === 'groupId1');
-    assert.ok(savedSource.group?.name === '');
-    assert.ok(savedSource.group?.createdBy === '');
-    assert.ok(savedSource.group?.updatedBy === '');
-    assert.ok(savedSource.group?.createdAt === '');
-    assert.ok(savedSource.group?.updatedAt === '');
+    assertSavedGroupSource(northConnectorRepository);
   });
 
   it('should not create a north connector if transformer source group is not found', async () => {
-    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
-    const firstTransformerSource = command.transformers[0].source;
-    if (firstTransformerSource.type !== 'south') {
-      throw new Error('Expected south source in test data');
-    }
     southItemGroupRepository.findById.mock.mockImplementationOnce(() => null);
-    command.transformers = [
-      {
-        ...command.transformers[0],
-        source: {
-          type: 'south',
-          southId: firstTransformerSource.southId,
-          groupId: 'unknownGroupId',
-          items: []
-        }
-      }
-    ];
 
-    await assert.rejects(() => service.create(command, null, 'userTest'), new NotFoundError('Could not find Group "unknownGroupId"'));
+    await assert.rejects(
+      () => service.create(commandWithGroupSource('unknownGroupId'), null, 'userTest'),
+      new NotFoundError('Could not find Group "unknownGroupId"')
+    );
   });
 
   it('should not create a north connector if transformer source item is not found', async () => {
@@ -326,19 +302,7 @@ describe('North Service', () => {
   });
 
   it('should not create a north connector with duplicate name', async () => {
-    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [
-      {
-        id: 'existing-id',
-        name: testData.north.command.name,
-        type: 'console',
-        description: '',
-        enabled: true,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ]);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [otherNorthLight(testData.north.command.name)]);
 
     await assert.rejects(
       () => service.create(testData.north.command, null, 'userTest'),
@@ -348,7 +312,6 @@ describe('North Service', () => {
 
   it('should update a north connector', async () => {
     northConnectorRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
-    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
     await service.update(testData.north.list[0].id, testData.north.command, 'userTest');
 
     assert.strictEqual(northConnectorRepository.saveNorth.mock.calls.length, 1);
@@ -358,57 +321,17 @@ describe('North Service', () => {
 
   it('should update a north connector with a transformer group', async () => {
     northConnectorRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
-    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
-    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
-    const firstTransformerSource = command.transformers[0].source;
-    if (firstTransformerSource.type !== 'south') {
-      throw new Error('Expected south source in test data');
-    }
-    southItemGroupRepository.findById.mock.mockImplementationOnce(() => ({
-      id: 'groupId1',
-      name: '',
-      southId: firstTransformerSource.southId,
-      scanMode: testData.scanMode.list[0],
-      startTimeOffset: null,
-      endTimeOffset: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: '',
-      items: []
-    }));
-    command.transformers = [
-      {
-        ...command.transformers[0],
-        source: {
-          type: 'south',
-          southId: firstTransformerSource.southId,
-          groupId: 'groupId1',
-          items: []
-        }
-      }
-    ];
+    const command = commandWithGroupSource('groupId1');
+    southItemGroupRepository.findById.mock.mockImplementationOnce(() => groupEntity());
     await service.update(testData.north.list[0].id, command, 'userTest');
 
-    const savedEntity = northConnectorRepository.saveNorth.mock.calls[0].arguments[0];
-    const savedSource = savedEntity.transformers[0].source;
-    assert.strictEqual(savedSource.type, 'south');
-    if (savedSource.type !== 'south') throw new Error('Expected south source');
-    assert.ok(savedSource.group?.id === 'groupId1');
-    assert.ok(savedSource.group?.name === '');
-    assert.ok(savedSource.group?.createdBy === '');
-    assert.ok(savedSource.group?.updatedBy === '');
-    assert.ok(savedSource.group?.createdAt === '');
-    assert.ok(savedSource.group?.updatedAt === '');
+    assertSavedGroupSource(northConnectorRepository);
   });
 
   it('should update a north connector with a new unique name', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'Updated North Name';
     northConnectorRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
-    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
 
     await service.update(testData.north.list[0].id, command, 'userTest');
 
@@ -419,20 +342,7 @@ describe('North Service', () => {
   it('should not update a north connector with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'Duplicate Name';
-    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [
-      {
-        id: 'other-id',
-        name: 'Duplicate Name',
-        type: 'console',
-        description: '',
-        enabled: true,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ]);
-    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [otherNorthLight('Duplicate Name')]);
 
     await assert.rejects(
       () => service.update(testData.north.list[0].id, command, 'userTest'),
@@ -454,20 +364,7 @@ describe('North Service', () => {
   it('should not update a north connector if south not found', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'New Name';
-    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [
-      {
-        id: 'other-id',
-        name: 'Duplicate Name',
-        type: 'console',
-        description: '',
-        enabled: true,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ]);
-    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [otherNorthLight('Duplicate Name')]);
     southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => null);
 
     await assert.rejects(
@@ -551,7 +448,7 @@ describe('North Service', () => {
   it('should execute setpoint', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     northMock.isEnabled.mock.mockImplementationOnce(() => true);
-    engine.getNorth.mock.mockImplementation(() => ({ north: northMock, metrics: new NorthConnectorMetricsServiceMock() }));
+    engine.getNorth.mock.mockImplementation(() => ({ north: northMock, metrics: createMock<NorthConnectorMetricsService>() }));
     const callback = mock.fn();
     const commandContent = [{ reference: 'reference', value: '123456' }];
     await service.executeSetpoint('northId', commandContent, callback);
@@ -575,7 +472,7 @@ describe('North Service', () => {
   it('should not execute setpoint if north disabled', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     northMock.isEnabled.mock.mockImplementationOnce(() => false);
-    engine.getNorth.mock.mockImplementation(() => ({ north: northMock, metrics: new NorthConnectorMetricsServiceMock() }));
+    engine.getNorth.mock.mockImplementation(() => ({ north: northMock, metrics: createMock<NorthConnectorMetricsService>() }));
     const callback = mock.fn();
     await assert.rejects(
       () => service.executeSetpoint('northId', [{ reference: 'reference', value: '123456' }], callback),
@@ -600,15 +497,13 @@ describe('North Service', () => {
 
   it('should properly convert to DTOs', () => {
     const northEntity = testData.north.list[0];
-    const getUserInfo = (id: string) => ({ id, friendlyName: id });
-    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
     assert.deepStrictEqual(toNorthConnectorDTO(northEntity, getUserInfo), {
       id: northEntity.id,
       name: northEntity.name,
       type: northEntity.type,
       description: northEntity.description,
       enabled: northEntity.enabled,
-      settings: encryptionMock.filterSecrets(
+      settings: encryptionService.filterSecrets(
         northEntity.settings,
         northManifestList.find(element => element.id === northEntity.type)!.settings
       ),
@@ -697,23 +592,7 @@ describe('North Service', () => {
     if (northEntity.transformers[0].source.type !== 'south') {
       throw new Error('Expected south source in test data');
     }
-    const group = {
-      id: 'group1',
-      name: 'Group 1',
-      southId: northEntity.transformers[0].source.south.id,
-      scanMode: testData.scanMode.list[0],
-      startTimeOffset: null,
-      endTimeOffset: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      recoveryStrategy: null,
-      cachingStrategy: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: '',
-      items: []
-    };
+    const group = { ...groupEntity(), id: 'group1', name: 'Group 1', southId: northEntity.transformers[0].source.south.id };
     northEntity.transformers = [
       {
         ...northEntity.transformers[0],
@@ -723,7 +602,7 @@ describe('North Service', () => {
         }
       }
     ];
-    const dto = toNorthConnectorDTO(northEntity, id => ({ id, friendlyName: id }));
+    const dto = toNorthConnectorDTO(northEntity, getUserInfo);
     assert.strictEqual(dto.transformers[0].source.type, 'south');
     if (dto.transformers[0].source.type !== 'south') {
       throw new Error('Expected south source');

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
@@ -7,15 +8,15 @@ import { DateTime } from 'luxon';
 import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from '../../../shared/model/oia/oianalytics-configuration.model';
 
 import { OIAnalyticsMessageConfigurationWorkflowResult, OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-message.model';
-import OIAnalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-message-repository.mock';
-import ConfigTransferBuilderServiceMock from '../../tests/__mocks__/service/config-transfer/config-transfer-builder-service.mock';
-import type LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
+import type OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
+import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import type ConfigTransferBuilderService from '../config-transfer/config-transfer-builder.service';
 import DeferredPromise from '../deferred-promise';
 import type OIAnalyticsMessageServiceType from './oianalytics-message.service';
+import type OIAnalyticsRegistrationService from './oianalytics-registration.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -41,24 +42,24 @@ before(() => {
 });
 
 describe('OIAnalytics Message Service', () => {
-  let oIAnalyticsMessageRepository: OIAnalyticsMessageRepositoryMock;
-  let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
-  let configTransferBuilderService: ConfigTransferBuilderServiceMock;
+  let oIAnalyticsMessageRepository: Mocked<OIAnalyticsMessageRepository>;
+  let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
+  let configTransferBuilderService: Mocked<ConfigTransferBuilderService>;
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
 
   beforeEach(() => {
-    oIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
-    oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    configTransferBuilderService = new ConfigTransferBuilderServiceMock();
+    oIAnalyticsMessageRepository = createMock<OIAnalyticsMessageRepository>();
+    oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({ registrationEvent: new EventEmitter() });
+    configTransferBuilderService = createMock<ConfigTransferBuilderService>();
     oIAnalyticsClient = new OianalyticsClientMock();
-    logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
+    logger = new LoggerMock();
     activeLogger = logger;
 
-    oIAnalyticsMessageRepository.list = mock.fn(() => testData.oIAnalytics.messages.oIBusList);
-    oIAnalyticsMessageRepository.create = mock.fn(() => testData.oIAnalytics.messages.oIBusList[0]);
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
+    oIAnalyticsMessageRepository.create.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList[0]);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
@@ -85,18 +86,15 @@ describe('OIAnalytics Message Service', () => {
     assert.strictEqual(runMock.mock.calls.length, 1);
     assert.ok(
       oIAnalyticsMessageRepository.list.mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          JSON.stringify(c.arguments[0]) === JSON.stringify({ status: ['PENDING'], types: [], start: undefined, end: undefined })
+        c => JSON.stringify(c.arguments[0]) === JSON.stringify({ status: ['PENDING'], types: [], start: undefined, end: undefined })
       ),
       'Expected list to have been called with { status: ["PENDING"], types: [], start: undefined, end: undefined }'
     );
 
     await service.stop();
     service.resolveDeferredPromise();
-    assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'Stopping OIAnalytics message service...')
-    );
-    assert.ok(logger.debug.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'OIAnalytics message service stopped'));
+    assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'Stopping OIAnalytics message service...'));
+    assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'OIAnalytics message service stopped'));
   });
 
   it('should properly create full config message on registration', () => {
@@ -132,20 +130,16 @@ describe('OIAnalytics Message Service', () => {
       testData.oIAnalytics.messages.oIBusList[0].id,
       DateTime.fromISO(testData.constants.dates.FAKE_NOW).plus({ second: 1 }).toUTC().toISO()!
     ]);
-    assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'Waiting for OIAnalytics message to finish')
-    );
-    assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'Full OIBus configuration sent to OIAnalytics')
-    );
+    assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'Waiting for OIAnalytics message to finish'));
+    assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'Full OIBus configuration sent to OIAnalytics'));
   });
 
   it('should properly build and send the full configuration from the config transfer builder', async () => {
     const builtConfiguration = {
       engine: { settings: { general: { name: 'my oibus' } } }
     } as unknown as OIBusFullConfigurationCommandDTO;
-    configTransferBuilderService.buildFullConfiguration = mock.fn(() => builtConfiguration);
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => ({
+    configTransferBuilderService.buildFullConfiguration.mock.mockImplementation(() => builtConfiguration);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({
       ...testData.oIAnalytics.registration.completed,
       publicCipherKey: null
     }));
@@ -172,13 +166,11 @@ describe('OIAnalytics Message Service', () => {
     service.stop();
     mock.timers.tick(10_000);
 
-    assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'Waiting for OIAnalytics message to finish')
-    );
+    assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'Waiting for OIAnalytics message to finish'));
     mock.timers.tick(20_000);
 
     await service.stop();
-    assert.ok(logger.debug.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'OIAnalytics message service stopped'));
+    assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'OIAnalytics message service stopped'));
   });
 
   it('should properly stop with stop timeout already set', async () => {
@@ -205,7 +197,7 @@ describe('OIAnalytics Message Service', () => {
     assert.ok(logger.error.mock.calls.length >= 1);
     assert.ok(
       logger.error.mock.calls.some(
-        (c: { arguments: Array<string> }) =>
+        c =>
           c.arguments[0] ===
           `Retrying message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type} after error: fetch error`
       )
@@ -283,24 +275,23 @@ describe('OIAnalytics Message Service', () => {
 });
 
 describe('OIAnalytics message service without message', () => {
-  let oIAnalyticsMessageRepository: OIAnalyticsMessageRepositoryMock;
-  let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
-  let configTransferBuilderService: ConfigTransferBuilderServiceMock;
+  let oIAnalyticsMessageRepository: Mocked<OIAnalyticsMessageRepository>;
+  let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
+  let configTransferBuilderService: Mocked<ConfigTransferBuilderService>;
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
 
   beforeEach(() => {
-    oIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
-    oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    configTransferBuilderService = new ConfigTransferBuilderServiceMock();
+    oIAnalyticsMessageRepository = createMock<OIAnalyticsMessageRepository>();
+    oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({ registrationEvent: new EventEmitter() });
+    configTransferBuilderService = createMock<ConfigTransferBuilderService>();
     oIAnalyticsClient = new OianalyticsClientMock();
-    const LoggerMockCtor = (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default;
-    logger = new LoggerMockCtor();
+    logger = new LoggerMock();
     activeLogger = logger;
 
-    oIAnalyticsMessageRepository.list = mock.fn(() => []);
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => []);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
@@ -325,23 +316,23 @@ describe('OIAnalytics message service without message', () => {
 });
 
 describe('OIAnalytics message service without completed registration', () => {
-  let oIAnalyticsMessageRepository: OIAnalyticsMessageRepositoryMock;
-  let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
-  let configTransferBuilderService: ConfigTransferBuilderServiceMock;
+  let oIAnalyticsMessageRepository: Mocked<OIAnalyticsMessageRepository>;
+  let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
+  let configTransferBuilderService: Mocked<ConfigTransferBuilderService>;
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
 
   beforeEach(() => {
-    oIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
-    oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    configTransferBuilderService = new ConfigTransferBuilderServiceMock();
+    oIAnalyticsMessageRepository = createMock<OIAnalyticsMessageRepository>();
+    oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({ registrationEvent: new EventEmitter() });
+    configTransferBuilderService = createMock<ConfigTransferBuilderService>();
     oIAnalyticsClient = new OianalyticsClientMock();
-    logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
+    logger = new LoggerMock();
     activeLogger = logger;
 
-    oIAnalyticsMessageRepository.list = mock.fn(() => testData.oIAnalytics.messages.oIBusList);
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
@@ -356,43 +347,30 @@ describe('OIAnalytics message service without completed registration', () => {
   });
 
   it('should properly start and do nothing', () => {
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(
       seq(
         () => testData.oIAnalytics.registration.pending,
         () => testData.oIAnalytics.registration.pending,
         () => testData.oIAnalytics.registration.pending
       )
     );
-    oIAnalyticsMessageRepository.list = mock.fn(() => testData.oIAnalytics.messages.oIBusList);
+    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
     service.start();
     assert.strictEqual(oIAnalyticsMessageRepository.list.mock.calls.length, 1);
     assert.ok(
-      logger.debug.mock.calls.some(
-        (c: { arguments: Array<string> }) =>
-          c.arguments[0] === "OIBus is not registered to OIAnalytics. Full config message won't be created"
-      )
+      logger.debug.mock.calls.some(c => c.arguments[0] === "OIBus is not registered to OIAnalytics. Full config message won't be created")
     );
     assert.ok(
-      logger.debug.mock.calls.some(
-        (c: { arguments: Array<string> }) =>
-          c.arguments[0] === "OIBus is not registered to OIAnalytics. History query message won't be created"
-      )
+      logger.debug.mock.calls.some(c => c.arguments[0] === "OIBus is not registered to OIAnalytics. History query message won't be created")
     );
-    assert.ok(
-      logger.trace.mock.calls.some(
-        (c: { arguments: Array<string> }) => c.arguments[0] === "OIBus is not registered to OIAnalytics. Messages won't be sent"
-      )
-    );
+    assert.ok(logger.trace.mock.calls.some(c => c.arguments[0] === "OIBus is not registered to OIAnalytics. Messages won't be sent"));
   });
 
   it('should not create save history query message if not register', async () => {
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
     service.createFullHistoryQueriesMessageIfNotPending();
     assert.ok(
-      logger.debug.mock.calls.some(
-        (c: { arguments: Array<string> }) =>
-          c.arguments[0] === "OIBus is not registered to OIAnalytics. History query message won't be created"
-      )
+      logger.debug.mock.calls.some(c => c.arguments[0] === "OIBus is not registered to OIAnalytics. History query message won't be created")
     );
     assert.strictEqual(oIAnalyticsMessageRepository.list.mock.calls.length, 0);
     assert.strictEqual(oIAnalyticsMessageRepository.create.mock.calls.length, 0);
@@ -410,8 +388,8 @@ describe('OIAnalytics message service without completed registration', () => {
       createdAt: '',
       updatedAt: ''
     };
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
-    oIAnalyticsMessageRepository.list = mock.fn(() => [saveHistoryQueryMessage]);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => [saveHistoryQueryMessage]);
     service.createFullHistoryQueriesMessageIfNotPending();
     assert.strictEqual(oIAnalyticsMessageRepository.create.mock.calls.length, 0);
   });
@@ -429,20 +407,20 @@ describe('OIAnalytics message service without completed registration', () => {
       updatedAt: ''
     };
     const builtHistoryQueries = { historyQueries: [{ oIBusInternalId: 'hist1' }] } as unknown as OIBusHistoryQueriesCommandDTO;
-    configTransferBuilderService.buildHistoryQueriesConfiguration = mock.fn(() => builtHistoryQueries);
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.pending);
-    oIAnalyticsMessageRepository.list = mock.fn(() => []);
+    configTransferBuilderService.buildHistoryQueriesConfiguration.mock.mockImplementation(() => builtHistoryQueries);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => []);
     service.start();
 
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(
       seq(
         () => testData.oIAnalytics.registration.completed,
         () => testData.oIAnalytics.registration.completed,
         () => testData.oIAnalytics.registration.completed
       )
     );
-    oIAnalyticsMessageRepository.list = mock.fn(() => []);
-    oIAnalyticsMessageRepository.create = mock.fn(() => saveHistoryQueryMessage);
+    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => []);
+    oIAnalyticsMessageRepository.create.mock.mockImplementation(() => saveHistoryQueryMessage);
     service.createFullHistoryQueriesMessageIfNotPending();
 
     assert.deepStrictEqual(oIAnalyticsMessageRepository.create.mock.calls[0].arguments, [{ type: 'history-queries' }]);
@@ -467,12 +445,12 @@ describe('OIAnalytics message service without completed registration', () => {
       createdAt: '',
       updatedAt: ''
     };
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.pending);
-    oIAnalyticsMessageRepository.list = mock.fn(() => []);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => []);
     service.start(); // wires up the 'next' trigger listener run() relies on
 
-    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
-    oIAnalyticsMessageRepository.create = mock.fn(() => queuedMessage);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsMessageRepository.create.mock.mockImplementation(() => queuedMessage);
 
     service.createConfigurationWorkflowResultMessage('runId1', payload);
 

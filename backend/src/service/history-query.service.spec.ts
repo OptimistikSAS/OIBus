@@ -1,73 +1,68 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { HistoryQueryItemDTO } from '../../shared/model/api/history-query.model';
 import type { TransformerDTO } from '../../shared/model/api/transformer.model';
 
+import type DataStreamEngine from '../engine/data-stream-engine';
 import type { HistoryQueryEntityLight } from '../model/histor-query.model';
 import type { HistoryTransformerWithOptions } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import type HistoryQueryRepository from '../repository/config/history-query.repository';
+import type NorthConnectorRepository from '../repository/config/north-connector.repository';
+import type ScanModeRepository from '../repository/config/scan-mode.repository';
+import type SouthConnectorRepository from '../repository/config/south-connector.repository';
+import type LogRepository from '../repository/logs/log.repository';
+import type HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import manifest from '../south/south-mssql/manifest';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
-import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
-import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
-import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
-import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
+import { createMock, type Mocked, mockModule, reloadModule, seq } from '../tests/utils/test-utils';
+import type JoiValidator from '../web-server/controllers/validators/joi.validator';
 import type HistoryQueryServiceType from './history-query.service';
 import type {
   toHistoryQueryDTO as toHistoryQueryDTOType,
   toHistoryQueryItemDTO as toHistoryQueryItemDTOType,
   toHistoryQueryLightDTO as toHistoryQueryLightDTOType
 } from './history-query.service';
+import type NorthService from './north.service';
 import { northManifestList } from './north-manifests';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
+import type SouthService from './south.service';
 import { southManifestList } from './south-manifests';
+import type TransformerService from './transformer.service';
+import type * as Utils from './utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
 // Looked up by id rather than by position: northManifestList order shifts whenever a connector is added.
 const fileWriterManifest = northManifestList.find(northManifest => northManifest.id === 'file-writer')!;
 
-const logger = new PinoLogger();
-const historyQueryRepository = new HistoryQueryRepositoryMock();
-const northConnectorRepository = new NorthConnectorRepositoryMock();
-const southConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository = new ScanModeRepositoryMock();
-const logRepository = new LogRepositoryMock();
-const historyQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
-const southService = new SouthServiceMock();
-const northService = new NorthServiceMock();
-const oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const engine = new DataStreamEngineMock(logger);
-const transformerService = new TransformerServiceMock();
+const realUtils: typeof Utils = nodeRequire('./utils');
+// Only the CSV parsing is controlled by the tests
+const createParseCsvImportMock = () => mock.fn((_fileContent: string, _delimiter: string): Array<Record<string, unknown>> => []);
+const utilsExports = { ...realUtils, parseCsvImport: createParseCsvImportMock() };
+const toTransformerDTO = mock.fn((transformer: unknown, _getUserInfo: unknown) => transformer);
+const getUserInfo = (id: string) => ({ id, friendlyName: id });
 
-const encryptionService = new EncryptionServiceMock('', '');
-
-const validatorMock = {
-  validateSettings: mock.fn(async (_settings: unknown, _dto: object): Promise<void> => undefined),
-  validate: mock.fn(async () => undefined)
-};
-
-const mockUtils = {
-  stringToBoolean: mock.fn(() => true),
-  checkScanMode: mock.fn((): (typeof testData.scanMode.list)[0] => testData.scanMode.list[0]),
-  checkGroups: mock.fn(),
-  parseCsvImport: mock.fn((_fileContent: string, _delimiter: string): Array<Record<string, unknown>> => [])
-};
-
-const mockTransformerService = {
-  toTransformerDTO: mock.fn((transformer: unknown, _getUserInfo: unknown) => transformer)
+const buildHistoryQueryLight = (): HistoryQueryEntityLight => {
+  const historyQuery = testData.historyQueries.list[0];
+  return {
+    id: historyQuery.id,
+    name: historyQuery.name,
+    description: historyQuery.description,
+    status: historyQuery.status,
+    startTime: historyQuery.queryTimeRange.startTime,
+    endTime: historyQuery.queryTimeRange.endTime,
+    southType: historyQuery.southType,
+    northType: historyQuery.northType,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
+  };
 };
 
 let HistoryQueryService: typeof HistoryQueryServiceType;
@@ -76,24 +71,20 @@ let toHistoryQueryItemDTO: typeof toHistoryQueryItemDTOType;
 let toHistoryQueryLightDTO: typeof toHistoryQueryLightDTOType;
 
 describe('History Query service', () => {
-  let service: InstanceType<typeof HistoryQueryServiceType>;
+  let validator: Mocked<JoiValidator>;
+  let historyQueryRepository: Mocked<HistoryQueryRepository>;
+  let historyQueryMetricsRepository: Mocked<HistoryQueryMetricsRepository>;
+  let southService: Mocked<SouthService>;
+  let northService: Mocked<NorthService>;
+  let transformerService: Mocked<TransformerService>;
+  let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+  let engine: Mocked<DataStreamEngine>;
+  let service: HistoryQueryServiceType;
 
   before(() => {
-    mockModule(nodeRequire, '../service/utils', mockUtils);
-    mockModule(nodeRequire, './utils', mockUtils);
-    mockModule(nodeRequire, '../web-server/controllers/validators/joi.validator', {
-      default: class {
-        validateSettings = validatorMock.validateSettings;
-        validate = validatorMock.validate;
-      }
-    });
-    mockModule(nodeRequire, './encryption.service', {
-      encryptionService
-    });
-    mockModule(nodeRequire, './transformer.service', {
-      default: class {},
-      toTransformerDTO: mockTransformerService.toTransformerDTO
-    });
+    mockModule(nodeRequire, './utils', utilsExports);
+    mockModule(nodeRequire, './encryption.service', { encryptionService: new EncryptionServiceMock('', '') });
+    mockModule(nodeRequire, './transformer.service', { default: class {}, toTransformerDTO });
 
     const mod = reloadModule<{
       default: typeof HistoryQueryServiceType;
@@ -108,74 +99,33 @@ describe('History Query service', () => {
   });
 
   beforeEach(() => {
-    // Reset all mock calls
-    historyQueryRepository.findAllHistoriesLight.mock.resetCalls();
-    historyQueryRepository.findHistoryById.mock.resetCalls();
-    historyQueryRepository.findItemById.mock.resetCalls();
-    historyQueryRepository.saveHistory.mock.resetCalls();
-    historyQueryRepository.updateHistoryStatus.mock.resetCalls();
-    historyQueryRepository.deleteHistory.mock.resetCalls();
-    historyQueryRepository.saveItem.mock.resetCalls();
-    historyQueryRepository.saveAllItems.mock.resetCalls();
-    historyQueryRepository.deleteItem.mock.resetCalls();
-    historyQueryRepository.deleteAllItemsByHistory.mock.resetCalls();
-    historyQueryRepository.enableItem.mock.resetCalls();
-    historyQueryRepository.disableItem.mock.resetCalls();
-    historyQueryRepository.findAllItemsForHistory.mock.resetCalls();
-    historyQueryRepository.searchItems.mock.resetCalls();
-    historyQueryRepository.addOrEditTransformer.mock.resetCalls();
-    historyQueryRepository.removeTransformer.mock.resetCalls();
-    historyQueryMetricsRepository.removeMetrics.mock.resetCalls();
-    oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.resetCalls();
-    engine.createHistoryQuery.mock.resetCalls();
-    engine.reloadHistoryQuery.mock.resetCalls();
-    engine.stopHistoryQuery.mock.resetCalls();
-    engine.deleteHistoryQuery.mock.resetCalls();
-    engine.getHistoryMetrics.mock.resetCalls();
-    northService.getManifest.mock.resetCalls();
-    northService.findById.mock.resetCalls();
-    northService.testNorth.mock.resetCalls();
-    southService.getManifest.mock.resetCalls();
-    southService.findById.mock.resetCalls();
-    southService.testSouth.mock.resetCalls();
-    southService.startExplore.mock.resetCalls();
-    southService.testItem.mock.resetCalls();
-    transformerService.findAll.mock.resetCalls();
-    scanModeRepository.findAll.mock.resetCalls();
-    validatorMock.validateSettings.mock.resetCalls();
-    mockUtils.parseCsvImport.mock.resetCalls();
-    mockUtils.stringToBoolean.mock.resetCalls();
-    mockUtils.checkScanMode.mock.resetCalls();
-    logRepository.deleteLogsByScopeId.mock.resetCalls();
-
-    // Default implementations
-    northService.getManifest.mock.mockImplementation(() => fileWriterManifest); // file-writer
-    northService.findById.mock.mockImplementation(() => testData.north.list[0]);
-    southService.getManifest.mock.mockImplementation(() => southManifestList[0]); // folder-scanner
-    southService.findById.mock.mockImplementation(() => testData.south.list[0]);
-    historyQueryRepository.findHistoryById.mock.mockImplementation(() => testData.historyQueries.list[0]);
-    historyQueryRepository.findItemById.mock.mockImplementation(() => testData.historyQueries.list[0].items[0]);
-    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => []);
-    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
-    scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
-    mockUtils.stringToBoolean.mock.mockImplementation(() => true);
-    mockUtils.checkScanMode.mock.mockImplementation(() => testData.scanMode.list[0]);
-    validatorMock.validateSettings.mock.mockImplementation(async () => undefined);
-    encryptionService.encryptConnectorSecrets.mock.mockImplementation(async <T>(secrets: T): Promise<T> => secrets);
-    encryptionService.decryptConnectorSecrets.mock.mockImplementation(async <T>(secrets: T): Promise<T> => secrets);
-    encryptionService.filterSecrets.mock.mockImplementation(<T>(secrets: T, _formSettings: unknown): T => secrets);
+    utilsExports.parseCsvImport = createParseCsvImportMock();
+    validator = createMock<JoiValidator>();
+    historyQueryRepository = createMock<HistoryQueryRepository>({
+      findHistoryById: () => testData.historyQueries.list[0],
+      findItemById: () => testData.historyQueries.list[0].items[0],
+      findAllHistoriesLight: () => []
+    });
+    historyQueryMetricsRepository = createMock<HistoryQueryMetricsRepository>();
+    southService = createMock<SouthService>({
+      getManifest: () => southManifestList[0], // folder-scanner
+      findById: () => testData.south.list[0]
+    });
+    northService = createMock<NorthService>({
+      getManifest: () => fileWriterManifest,
+      findById: () => testData.north.list[0]
+    });
+    transformerService = createMock<TransformerService>({ findAll: () => testData.transformers.list });
+    oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
+    engine = createMock<DataStreamEngine>({ logger: new PinoLogger() });
 
     service = new HistoryQueryService(
-      validatorMock as unknown as InstanceType<typeof HistoryQueryServiceType>['validator' extends keyof InstanceType<
-        typeof HistoryQueryServiceType
-      >
-        ? never
-        : never],
+      validator,
       historyQueryRepository,
-      northConnectorRepository,
-      southConnectorRepository,
-      scanModeRepository,
-      logRepository,
+      createMock<NorthConnectorRepository>(),
+      createMock<SouthConnectorRepository>(),
+      createMock<ScanModeRepository>({ findAll: () => testData.scanMode.list }),
+      createMock<LogRepository>(),
       historyQueryMetricsRepository,
       southService,
       northService,
@@ -214,10 +164,10 @@ describe('History Query service', () => {
   });
 
   it('should create a history query', async () => {
-    service.retrieveSecrets = mock.fn(() => null);
+    const retrieveSecrets = mock.method(service, 'retrieveSecrets', () => null);
 
     await service.create(testData.historyQueries.command, testData.south.list[0].id, undefined, undefined, 'userTest');
-    assert.strictEqual((service.retrieveSecrets as Mock<typeof service.retrieveSecrets>).mock.calls.length, 1);
+    assert.strictEqual(retrieveSecrets.mock.calls.length, 1);
     assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.strictEqual(engine.createHistoryQuery.mock.calls.length, 1);
@@ -225,7 +175,7 @@ describe('History Query service', () => {
 
   it('should fail to create a history query when transformer is not found', async () => {
     transformerService.findAll.mock.mockImplementationOnce(() => []);
-    service.retrieveSecrets = mock.fn(() => null);
+    mock.method(service, 'retrieveSecrets', () => null);
 
     await assert.rejects(
       async () => service.create(testData.historyQueries.command, undefined, undefined, undefined, 'userTest'),
@@ -234,7 +184,7 @@ describe('History Query service', () => {
   });
 
   it('should not create a history query with duplicate name', async () => {
-    service.retrieveSecrets = mock.fn(() => null);
+    mock.method(service, 'retrieveSecrets', () => null);
     historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => [
       {
         ...testData.historyQueries.listLight[0],
@@ -250,7 +200,7 @@ describe('History Query service', () => {
   });
 
   it('should create a history query with a null south item id and resolve a non-temp northTransformer item', async () => {
-    service.retrieveSecrets = mock.fn(() => null);
+    mock.method(service, 'retrieveSecrets', () => null);
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.items[0].id = null;
     command.northTransformers = [
@@ -272,7 +222,7 @@ describe('History Query service', () => {
   });
 
   it('should fail to create a history query when a non-temp northTransformer item is not found among the history items', async () => {
-    service.retrieveSecrets = mock.fn(() => null);
+    mock.method(service, 'retrieveSecrets', () => null);
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.items[0].id = 'existingItem1';
     command.northTransformers = [
@@ -318,7 +268,6 @@ describe('History Query service', () => {
   it('should update a history query without changing the name', async () => {
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.name = testData.historyQueries.list[0].name;
-    historyQueryRepository.findAllHistoriesLight.mock.resetCalls();
 
     await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
 
@@ -524,7 +473,7 @@ describe('History Query service', () => {
     );
 
     assert.deepStrictEqual(settings, testData.south.command.settings);
-    assert.strictEqual(validatorMock.validateSettings.mock.calls.length, 1);
+    assert.strictEqual(validator.validateSettings.mock.calls.length, 1);
   });
 
   it('should start an explore session in creation mode', async () => {
@@ -828,8 +777,8 @@ describe('History Query service', () => {
         settings_minAge: 100
       }
     ];
-    mockUtils.parseCsvImport.mock.mockImplementationOnce(() => csvData);
-    validatorMock.validateSettings.mock.mockImplementationOnce(async () => {
+    utilsExports.parseCsvImport.mock.mockImplementationOnce(() => csvData);
+    validator.validateSettings.mock.mockImplementationOnce(async () => {
       throw new Error('validation error');
     });
 
@@ -837,7 +786,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       'file content',
       ',',
-      testData.historyQueries.list[0].items as unknown as Array<HistoryQueryItemDTO>
+      testData.historyQueries.list[0].items
     );
     assert.deepStrictEqual(result, {
       items: [
@@ -846,7 +795,7 @@ describe('History Query service', () => {
           name: csvData[3].name,
           enabled: true,
           settings: {
-            ignoreModifiedDate: true,
+            ignoreModifiedDate: false, // converted from 'false'
             minAge: 100,
             preserveFiles: true,
             regex: '*'
@@ -907,7 +856,7 @@ describe('History Query service', () => {
         settings_minAge: ''
       }
     ];
-    mockUtils.parseCsvImport.mock.mockImplementationOnce(() => csvData);
+    utilsExports.parseCsvImport.mock.mockImplementationOnce(() => csvData);
 
     const result = await service.checkImportItems(testData.historyQueries.command.southType, 'file content', ',', []);
 
@@ -919,8 +868,8 @@ describe('History Query service', () => {
         { regex: '*', minAge: undefined }
       ]
     );
-    assert.deepStrictEqual(validatorMock.validateSettings.mock.calls[0].arguments[1], { regex: '*', minAge: 100 });
-    assert.deepStrictEqual(validatorMock.validateSettings.mock.calls[1].arguments[1], { regex: '*', minAge: undefined });
+    assert.deepStrictEqual(validator.validateSettings.mock.calls[0].arguments[1], { regex: '*', minAge: 100 });
+    assert.deepStrictEqual(validator.validateSettings.mock.calls[1].arguments[1], { regex: '*', minAge: undefined });
   });
 
   it('should properly check items with array or object', async () => {
@@ -933,12 +882,12 @@ describe('History Query service', () => {
         settings_trackingInstant: JSON.stringify({ trackInstant: false })
       }
     ];
-    mockUtils.parseCsvImport.mock.mockImplementationOnce(() => csvData);
+    utilsExports.parseCsvImport.mock.mockImplementationOnce(() => csvData);
     const result = await service.checkImportItems(
       testData.historyQueries.command.southType,
       'file content',
       ',',
-      testData.historyQueries.list[1].items as unknown as Array<HistoryQueryItemDTO>
+      testData.historyQueries.list[1].items
     );
     assert.deepStrictEqual(result, {
       items: [
@@ -957,7 +906,7 @@ describe('History Query service', () => {
   });
 
   it('should throw error if delimiter does not match', async () => {
-    mockUtils.parseCsvImport.mock.mockImplementationOnce(() => {
+    utilsExports.parseCsvImport.mock.mockImplementationOnce(() => {
       throw new OIBusValidationError(`The entered delimiter "," does not correspond to the file delimiter ";"`);
     });
 
@@ -965,7 +914,7 @@ describe('History Query service', () => {
       async () => service.checkImportItems(testData.historyQueries.command.southType, 'file content', ',', []),
       new OIBusValidationError(`The entered delimiter "," does not correspond to the file delimiter ";"`)
     );
-    assert.deepStrictEqual(mockUtils.parseCsvImport.mock.calls[0].arguments, ['file content', ',']);
+    assert.deepStrictEqual(utilsExports.parseCsvImport.mock.calls[0].arguments, ['file content', ',']);
   });
 
   it('should import items', async () => {
@@ -1127,7 +1076,6 @@ describe('History Query service', () => {
   });
 
   it('should properly convert to DTO', () => {
-    const getUserInfo = (id: string) => ({ id, friendlyName: id });
     const historyQuery = testData.historyQueries.list[0];
     assert.deepStrictEqual(toHistoryQueryDTO(historyQuery, getUserInfo), {
       id: historyQuery.id,
@@ -1168,7 +1116,7 @@ describe('History Query service', () => {
       items: historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, getUserInfo)),
       northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
         id: transformerWithOptions.id,
-        transformer: mockTransformerService.toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
+        transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
         items: transformerWithOptions.items.map(item => ({
           id: item.id,
@@ -1185,20 +1133,7 @@ describe('History Query service', () => {
       createdAt: historyQuery.createdAt,
       updatedAt: historyQuery.updatedAt
     });
-    const historyQueryLight: HistoryQueryEntityLight = {
-      id: historyQuery.id,
-      name: historyQuery.name,
-      description: historyQuery.description,
-      status: historyQuery.status,
-      startTime: historyQuery.queryTimeRange.startTime,
-      endTime: historyQuery.queryTimeRange.endTime,
-      southType: historyQuery.southType,
-      northType: historyQuery.northType,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const historyQueryLight = buildHistoryQueryLight();
     assert.deepStrictEqual(toHistoryQueryLightDTO(historyQueryLight, getUserInfo), {
       id: historyQuery.id,
       name: historyQuery.name,
@@ -1218,22 +1153,7 @@ describe('History Query service', () => {
   });
 
   it('should include current item progress in light DTO when the history query is currently running', () => {
-    const getUserInfo = (id: string) => ({ id, friendlyName: id });
-    const historyQuery = testData.historyQueries.list[0];
-    const historyQueryLight: HistoryQueryEntityLight = {
-      id: historyQuery.id,
-      name: historyQuery.name,
-      description: historyQuery.description,
-      status: historyQuery.status,
-      startTime: historyQuery.queryTimeRange.startTime,
-      endTime: historyQuery.queryTimeRange.endTime,
-      southType: historyQuery.southType,
-      northType: historyQuery.northType,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const historyQueryLight = buildHistoryQueryLight();
     const runningMetrics = {
       ...testData.historyQueries.metrics,
       historyMetrics: {
@@ -1253,22 +1173,7 @@ describe('History Query service', () => {
   });
 
   it('should omit current item progress in light DTO when the history query is not currently running', () => {
-    const getUserInfo = (id: string) => ({ id, friendlyName: id });
-    const historyQuery = testData.historyQueries.list[0];
-    const historyQueryLight: HistoryQueryEntityLight = {
-      id: historyQuery.id,
-      name: historyQuery.name,
-      description: historyQuery.description,
-      status: historyQuery.status,
-      startTime: historyQuery.queryTimeRange.startTime,
-      endTime: historyQuery.queryTimeRange.endTime,
-      southType: historyQuery.southType,
-      northType: historyQuery.northType,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const historyQueryLight = buildHistoryQueryLight();
     const notRunningMetrics = {
       ...testData.historyQueries.metrics,
       historyMetrics: {
@@ -1287,22 +1192,7 @@ describe('History Query service', () => {
   });
 
   it('should omit current item progress in light DTO when the engine has no metrics for the history query', () => {
-    const getUserInfo = (id: string) => ({ id, friendlyName: id });
-    const historyQuery = testData.historyQueries.list[0];
-    const historyQueryLight: HistoryQueryEntityLight = {
-      id: historyQuery.id,
-      name: historyQuery.name,
-      description: historyQuery.description,
-      status: historyQuery.status,
-      startTime: historyQuery.queryTimeRange.startTime,
-      endTime: historyQuery.queryTimeRange.endTime,
-      southType: historyQuery.southType,
-      northType: historyQuery.northType,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const historyQueryLight = buildHistoryQueryLight();
     const getHistoryMetrics = mock.fn((_historyId: string) => null);
 
     const result = toHistoryQueryLightDTO(historyQueryLight, getUserInfo, getHistoryMetrics);
