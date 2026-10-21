@@ -30,19 +30,19 @@
         <h5 class="oib-section-title" translate="history-query.items.step.general"></h5>
         <div class="row">
           <!-- Name -->
-          <div class="col-md-6">
+          <div class="col-md-8">
             <div class="form-group">
               <label class="form-label" for="name" translate="south.items.name"></label>
               <input formControlName="name" id="name" class="form-control" />
               <val-errors controlName="name" />
             </div>
           </div>
-        </div>
-        <!-- Enabled -->
-        <div class="form-group">
-          <div class="form-check form-switch">
-            <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
-            <label class="form-check-label" for="item-enabled" translate="south.items.enable"></label>
+          <!-- Status -->
+          <div class="col-md-4">
+            <div class="form-group">
+              <div class="form-label" id="item-status" translate="history-query.items.status"></div>
+              <oib-enabled-selector formControlName="enabled" inputId="item-enabled" labelledBy="item-status" />
+            </div>
           </div>
         </div>
       </div>

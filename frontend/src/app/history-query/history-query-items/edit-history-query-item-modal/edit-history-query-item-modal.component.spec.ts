@@ -41,7 +41,9 @@ describe('EditHistoryQueryItemModalComponent', () => {
     const savedItem = testData.historyQueries.list[0].items[0];
     const itemList = testData.historyQueries.list[0].items;
     const nameInput = page.getByLabelText('Name', { exact: true });
-    const enabledInput = page.getByLabelText('Enable');
+    const enabledInput = page.getByLabelText('Enabled');
+    /** The Disabled choice of the status, by its label: its radio button is hidden behind it */
+    const disableButton = page.getByCss('label[for="item-enabled-disabled"]');
     const saveButton = page.getByRole('button', { name: 'Save', exact: true });
     const saveAndAddAnotherButton = page.getByRole('button', { name: 'Save & add another' });
     const nextButton = page.getByRole('button', { name: 'Next' });
@@ -71,7 +73,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       await nextButton.click();
       await expect.element(step('general')).toHaveAttribute('aria-current', 'step');
       await nameInput.fill('new item');
-      await enabledInput.click();
+      await disableButton.click();
       await nextButton.click();
       const summaryValues = page.getByCss('#item-summary').getByRole('definition');
       await expect.element(summaryValues.nth(0)).toHaveTextContent('new item');
