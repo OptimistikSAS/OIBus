@@ -458,9 +458,10 @@ describe('SandboxService', () => {
         `
           function transform() {
             const hugeArray = [];
-            // Intentionally crash the 256MB V8 heap
+            // Intentionally crash the 256MB V8 heap: arrays of small integers fill it fastest (a typed
+            // array would fail its allocation outside of the heap instead)
             while(true) {
-              hugeArray.push(new Array(1000000).fill('memory leak'));
+              hugeArray.push(new Array(10000000).fill(0));
             }
           }
         `,
