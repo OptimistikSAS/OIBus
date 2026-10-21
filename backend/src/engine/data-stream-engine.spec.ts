@@ -385,8 +385,17 @@ describe('DataStreamEngine', () => {
     });
 
     it('should update north configuration', () => {
+      const updatedConfiguration = { ...testData.north.list[0], name: 'updated north' };
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => updatedConfiguration);
+      // start() in beforeEach already looked both norths up: only count the calls made from here
+      const callsBefore = northConnectorRepository.findNorthById.mock.callCount();
+
       engine.updateNorthConfiguration(testData.north.list[0].id);
-      assert.ok(mockedNorth1.connectorConfiguration !== undefined && mockedNorth1.connectorConfiguration !== null);
+
+      const calls = northConnectorRepository.findNorthById.mock.calls.slice(callsBefore);
+      assert.strictEqual(calls.length, 1);
+      assert.deepStrictEqual(calls[0].arguments, [testData.north.list[0].id]);
+      assert.strictEqual(mockedNorth1.connectorConfiguration, updatedConfiguration);
     });
 
     it('should update north transformer by south id', () => {
@@ -418,8 +427,10 @@ describe('DataStreamEngine', () => {
     });
 
     it('should get south metrics', () => {
-      const metrics = engine.getSouthMetrics(testData.south.list[0].id);
-      assert.ok(metrics !== undefined && metrics !== null);
+      Object.assign(southConnectorMetricsService, { metrics: testData.south.metrics });
+
+      assert.strictEqual(engine.getSouthMetrics(testData.south.list[0].id), testData.south.metrics);
+      assert.throws(() => engine.getSouthMetrics('not-registered'), new Error('Could not find South "not-registered" in engine'));
     });
 
     it('should report whether a south connector is present in the engine', () => {
@@ -628,8 +639,9 @@ describe('DataStreamEngine', () => {
     });
 
     it('should get metrics', () => {
-      const metrics = engine.getHistoryMetrics(testData.historyQueries.list[0].id);
-      assert.ok(metrics !== undefined && metrics !== null);
+      Object.assign(historyQueryMetricsService, { metrics: testData.historyQueries.metrics });
+
+      assert.strictEqual(engine.getHistoryMetrics(testData.historyQueries.list[0].id), testData.historyQueries.metrics);
     });
   });
 
@@ -746,12 +758,15 @@ describe('DataStreamEngine', () => {
 
     it('should search cache content (North)', async () => {
       const params = { start: 'now' } as CacheSearchParam;
+      const searchResult = { searchDate: testData.constants.dates.FAKE_NOW, cache: [], error: [], archive: [] };
+      mockedNorth1.searchCacheContent.mock.mockImplementation(async () => searchResult);
+      Object.assign(northConnectorMetricsService, { metrics: testData.north.metrics });
 
       const result = await engine.searchCacheContent('north', testData.north.list[0].id, params);
 
       assert.strictEqual(mockedNorth1.searchCacheContent.mock.calls.length, 1);
       assert.deepStrictEqual(mockedNorth1.searchCacheContent.mock.calls[0].arguments, [params]);
-      assert.ok(result.metrics !== undefined && result.metrics !== null);
+      assert.deepStrictEqual(result, { metrics: testData.north.metrics, ...searchResult });
     });
 
     it('should search cache content (History)', async () => {
