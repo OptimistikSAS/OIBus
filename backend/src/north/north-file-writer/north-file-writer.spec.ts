@@ -211,19 +211,6 @@ describe('NorthFileWriter', () => {
       });
     });
 
-    it('should skip SMB mount when username is empty', async () => {
-      configuration.settings.username = null;
-      configuration.settings.outputFolder = UNC_FOLDER;
-      await assert.doesNotReject(north.connect());
-    });
-
-    it('should skip SMB mount when outputFolder is not a UNC path', async () => {
-      configuration.settings.username = 'user';
-      configuration.settings.password = 'pass';
-      configuration.settings.outputFolder = 'C:\\local\\output';
-      await assert.doesNotReject(north.connect());
-    });
-
     describe(
       'on windows',
       {
@@ -251,28 +238,49 @@ describe('NorthFileWriter', () => {
           assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to authenticate SMB session')));
         });
 
+        // A spy replacing the private method running `net use … /delete`, the first step of both mount and unmount
+        const spyOnDeleteNetworkSession = () => {
+          const spy = mock.fn(async (_shareRoot: string) => undefined);
+          north['deleteNetworkSession'] = spy;
+          return spy;
+        };
+
         it('should skip mountNetworkShare when username is empty on windows', async () => {
           createNorth({ username: null, outputFolder: UNC_FOLDER });
+          const deleteSpy = spyOnDeleteNetworkSession();
 
-          await north['mountNetworkShare'](UNC_FOLDER);
+          await north.connect();
+
+          assert.strictEqual(deleteSpy.mock.calls.length, 0);
+          assert.strictEqual(logger.error.mock.calls.length, 0);
         });
 
         it('should skip mountNetworkShare when outputFolder is not a UNC path on windows', async () => {
-          createNorth({ username: 'user', outputFolder: 'C:\\local\\output' });
+          createNorth({ username: 'user', password: 'pass', outputFolder: 'C:\\local\\output' });
+          const deleteSpy = spyOnDeleteNetworkSession();
 
-          await north['mountNetworkShare']('C:\\local\\output');
+          await north.connect();
+
+          assert.strictEqual(deleteSpy.mock.calls.length, 0);
+          assert.strictEqual(logger.error.mock.calls.length, 0);
         });
 
         it('should skip unmountNetworkShare when username is empty on windows', async () => {
           createNorth({ username: null, outputFolder: UNC_FOLDER });
+          const deleteSpy = spyOnDeleteNetworkSession();
 
           await north['unmountNetworkShare'](UNC_FOLDER);
+
+          assert.strictEqual(deleteSpy.mock.calls.length, 0);
         });
 
         it('should skip unmountNetworkShare when outputFolder is not a UNC path on windows', async () => {
           createNorth({ username: 'user', outputFolder: 'C:\\local\\output' });
+          const deleteSpy = spyOnDeleteNetworkSession();
 
           await north['unmountNetworkShare']('C:\\local\\output');
+
+          assert.strictEqual(deleteSpy.mock.calls.length, 0);
         });
 
         // unmountNetworkShare swallows execFile failures (ENOENT here), so it resolves —
