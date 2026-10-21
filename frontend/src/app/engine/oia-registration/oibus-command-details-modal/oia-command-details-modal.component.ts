@@ -1,4 +1,4 @@
-import { JsonPipe } from '@angular/common';
+import { JsonPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -15,7 +15,7 @@ import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enu
   templateUrl: './oia-command-details-modal.component.html',
   styleUrl: './oia-command-details-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, OibusCommandTypeEnumPipe, DatetimePipe, JsonPipe, BooleanEnumPipe]
+  imports: [TranslateDirective, OibusCommandTypeEnumPipe, DatetimePipe, JsonPipe, BooleanEnumPipe, NgTemplateOutlet]
 })
 export class OiaCommandDetailsModalComponent {
   private readonly activeModal = inject(NgbActiveModal);
