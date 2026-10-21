@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import { writeFileSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -17,13 +18,15 @@ import { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
 import { SouthConnectorItemDTO, SouthConnectorItemTestResult } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
-import { CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
+import { OIBUS_NORTH_TYPES } from '../../../shared/model/connector/north-manifest.model';
+import { OIBUS_SOUTH_TYPES } from '../../../shared/model/connector/south-manifest.model';
+import { CacheSearchResult, FileCacheContent, RegistrationCommandPermissions } from '../../../shared/model/domain/engine.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 import { OIBUS_COMMAND_TYPES } from '../../../shared/model/oia/command.model';
 
 import { version } from '../../../package.json';
-import { EngineSettings } from '../../model/engine.model';
 import {
+  BaseOIBusCommand,
   OIBusCommand,
   OIBusCreateCertificateCommand,
   OIBusCreateCustomTransformerCommand,
@@ -76,119 +79,72 @@ import {
 } from '../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { NotFoundError } from '../../model/types';
-import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
-import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
-import ConfigImportServiceMock from '../../tests/__mocks__/service/config-import-service.mock';
+import type OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
-import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
+import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
-import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import type CertificateService from '../certificate.service';
+import type ConfigImportService from '../config-transfer/config-import.service';
 import { ConfigImportError } from '../config-transfer/config-import.service';
+import type HistoryQueryService from '../history-query.service';
 import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
+import type IPFilterService from '../ip-filter.service';
+import type NorthService from '../north.service';
+import type OIBusService from '../oibus.service';
+import type ScanModeService from '../scan-mode.service';
+import type SouthService from '../south.service';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
-import { getErrorMessage, sanitizeFilename } from '../utils';
+import type TransformerService from '../transformer.service';
+import type * as Utils from '../utils';
 import type OIAnalyticsCommandServiceType from './oianalytics-command.service';
 import type { toOIBusCommandDTO as toOIBusCommandDTOType } from './oianalytics-command.service';
+import type OIAnalyticsMessageService from './oianalytics-message.service';
+import type OIAnalyticsRegistrationService from './oianalytics-registration.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
-// --- mock instances ---
-const logger = new PinoLogger();
-const anotherLogger = new PinoLogger();
-const oIAnalyticsCommandRepository = new OIAnalyticsCommandRepositoryMock();
-const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-const oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const oIBusService = new OibusServiceMock();
-const scanModeService = new ScanModeServiceMock();
-const ipFilterService = new IpFilterServiceMock();
-const certificateService = new CertificateServiceMock();
-const southService = new SouthServiceMock();
-const northService = new NorthServiceMock();
-const historyQueryService = new HistoryQueryServiceMock();
-const transformerService = new TransformerServiceMock();
-const configImportService = new ConfigImportServiceMock();
-const oIAnalyticsClient = new OianalyticsClientMock();
-const encryptionService = new EncryptionServiceMock('', '');
+const realUtils: typeof Utils = nodeRequire('../utils');
+// Only the waits, the OIBus info and the (un)zipping are controlled by the tests
+const createUtilsMocks = () => ({
+  delay: mock.fn<typeof Utils.delay>(async () => undefined),
+  getOIBusInfo: mock.fn<typeof Utils.getOIBusInfo>(() => testData.engine.oIBusInfo),
+  unzip: mock.fn<typeof Utils.unzip>(async () => undefined),
+  zipFile: mock.fn<typeof Utils.zipFile>(async (_input, _entryName, output) => fs.writeFile(output, 'zip'))
+});
+const utilsExports = { ...realUtils, ...createUtilsMocks() };
+const encryptionServiceExports = { encryptionService: new EncryptionServiceMock('', '') };
 
-// --- mocked utility modules (mutated in-place between tests) ---
-const mockUtils = {
-  delay: mock.fn(async () => undefined),
-  getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
-  unzip: mock.fn(),
-  zipFile: mock.fn(async (_input: string, _entryName: string, output: string) => fs.writeFile(output, 'zip')),
-  sanitizeFilename,
-  getErrorMessage
-};
+const FAKE_NOW = testData.constants.dates.FAKE_NOW;
+const TEST_FOLDER = path.join(os.tmpdir(), `oibus-command-service-spec-${process.pid}`);
+const LOGS_DATABASE_PATH = path.join(TEST_FOLDER, 'logs.db');
+const TMP_FOLDER = path.join(TEST_FOLDER, 'tmp');
 
 let OIAnalyticsCommandService: typeof OIAnalyticsCommandServiceType;
 let toOIBusCommandDTO: typeof toOIBusCommandDTOType;
 
+// --- fresh mocks for each test ---
+let logger: LoggerMock;
+let encryptionService: EncryptionServiceMock;
+let oIAnalyticsCommandRepository: Mocked<OIAnalyticsCommandRepository>;
+let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
+let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+let oIBusService: Mocked<OIBusService>;
+let scanModeService: Mocked<ScanModeService>;
+let ipFilterService: Mocked<IPFilterService>;
+let certificateService: Mocked<CertificateService>;
+let southService: Mocked<SouthService>;
+let northService: Mocked<NorthService>;
+let historyQueryService: Mocked<HistoryQueryService>;
+let transformerService: Mocked<TransformerService>;
+let configImportService: Mocked<ConfigImportService>;
+let oIAnalyticsClient: OianalyticsClientMock;
+let service: OIAnalyticsCommandServiceType;
+
 before(() => {
-  // third-party modules that get pulled transitively (must exist in cache before reload)
-  mockModule(nodeRequire, 'undici', {
-    __esModule: true,
-    request: mock.fn(),
-    ProxyAgent: function (options: unknown) {
-      return { options, isMockProxyAgent: true };
-    },
-    Agent: function (options: unknown) {
-      return { options, isMockAgent: true };
-    }
-  });
-
-  mockModule(nodeRequire, 'node-opcua', {
-    OPCUAClient: { createSession: mock.fn(async () => ({})) },
-    ClientSubscription: { create: mock.fn() },
-    ClientMonitoredItem: { create: mock.fn() },
-    DataType: {},
-    StatusCodes: {},
-    SecurityPolicy: {},
-    AttributeIds: {},
-    UserTokenType: {},
-    TimestampsToReturn: {},
-    AggregateFunction: {},
-    HistoryReadRequest: {},
-    ReadRawModifiedDetails: {},
-    ReadProcessedDetails: {},
-    OPCUACertificateManager: function () {
-      return {};
-    },
-    resolveNodeId: mock.fn((nodeId: unknown) => nodeId)
-  });
-
-  mockModule(nodeRequire, 'ssh2-sftp-client', {
-    __esModule: true,
-    default: function () {
-      return {
-        connect: mock.fn(),
-        list: mock.fn(),
-        put: mock.fn(),
-        delete: mock.fn(),
-        end: mock.fn(),
-        exists: mock.fn(),
-        fastGet: mock.fn()
-      };
-    }
-  });
-
-  mockModule(nodeRequire, '../utils', mockUtils);
-  mockModule(nodeRequire, '../../web-server/controllers/validators/joi.validator', {
-    default: class {
-      validateSettings = mock.fn(async () => undefined);
-      validate = mock.fn(async () => undefined);
-    }
-  });
-  mockModule(nodeRequire, '../encryption.service', { encryptionService });
+  mockModule(nodeRequire, '../utils', utilsExports);
+  mockModule(nodeRequire, '../encryption.service', encryptionServiceExports);
 
   const mod = reloadModule<{
     default: typeof OIAnalyticsCommandServiceType;
@@ -199,54 +155,36 @@ before(() => {
   toOIBusCommandDTO = mod.toOIBusCommandDTO;
 });
 
-// Helper to reset ALL mock functions across all mock instances
-function resetAllMocks() {
-  // logger
-  for (const fn of Object.values(logger)) {
-    if (fn && typeof (fn as { mock?: unknown }).mock === 'object') {
-      (fn as { mock: { resetCalls(): void } }).mock.resetCalls();
-    }
-  }
-  for (const fn of Object.values(anotherLogger)) {
-    if (fn && typeof (fn as { mock?: unknown }).mock === 'object') {
-      (fn as { mock: { resetCalls(): void } }).mock.resetCalls();
-    }
-  }
-  // repositories & services
-  const mocks = [
-    oIAnalyticsCommandRepository,
-    oIAnalyticsRegistrationService,
-    oIAnalyticsMessageService,
-    oIBusService,
-    scanModeService,
-    ipFilterService,
-    certificateService,
-    southService,
-    northService,
-    historyQueryService,
-    transformerService,
-    configImportService,
-    oIAnalyticsClient,
-    encryptionService
-  ];
-  for (const m of mocks) {
-    for (const val of Object.values(m as object)) {
-      if (val && typeof val.mock === 'object') {
-        val.mock.resetCalls();
-      }
-    }
-  }
-  // utils
-  for (const val of Object.values(mockUtils)) {
-    if (val && typeof (val as { mock?: unknown }).mock === 'object') {
-      (val as { mock: { resetCalls(): void } }).mock.resetCalls();
-    }
-  }
-}
+beforeEach(() => {
+  mock.method(Date, 'now', () => new Date(FAKE_NOW).getTime());
+  Object.assign(utilsExports, createUtilsMocks());
+  encryptionService = encryptionServiceExports.encryptionService = new EncryptionServiceMock('', '');
+  logger = new LoggerMock();
+  oIAnalyticsCommandRepository = createMock<OIAnalyticsCommandRepository>({
+    list: () => commands,
+    findById: () => updateVersionCommand
+  });
+  oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({
+    registrationEvent: new EventEmitter(),
+    getRegistrationSettings: () => testData.oIAnalytics.registration.completed
+  });
+  oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
+  oIBusService = createMock<OIBusService>({ loggerEvent: new EventEmitter(), getEngineSettings: () => testData.engine.settings });
+  scanModeService = createMock<ScanModeService>();
+  ipFilterService = createMock<IPFilterService>();
+  certificateService = createMock<CertificateService>();
+  // a manifest for each connector type, to decrypt the secrets of the commands
+  southService = createMock<SouthService>({ listManifest: () => OIBUS_SOUTH_TYPES.map(id => ({ ...testData.south.manifest, id })) });
+  northService = createMock<NorthService>({ listManifest: () => OIBUS_NORTH_TYPES.map(id => ({ ...testData.north.manifest, id })) });
+  historyQueryService = createMock<HistoryQueryService>();
+  transformerService = createMock<TransformerService>();
+  configImportService = createMock<ConfigImportService>();
+  oIAnalyticsClient = new OianalyticsClientMock();
+});
 
-const TEST_FOLDER = path.join(os.tmpdir(), `oibus-command-service-spec-${process.pid}`);
-const LOGS_DATABASE_PATH = path.join(TEST_FOLDER, 'logs.db');
-const TMP_FOLDER = path.join(TEST_FOLDER, 'tmp');
+afterEach(() => {
+  mock.restoreAll();
+});
 
 function makeService(ignoreRemoteUpdate = false, launcherVersion = testData.engine.settings.launcherVersion) {
   return new OIAnalyticsCommandService(
@@ -272,67 +210,811 @@ function makeService(ignoreRemoteUpdate = false, launcherVersion = testData.engi
   );
 }
 
+// --- commands ---
+type CommandFields<T extends OIBusCommand> = Omit<T, keyof BaseOIBusCommand> & Pick<T, 'id' | 'type'>;
+/** A retrieved command targeting the current OIBus version */
+const buildCommand = <T extends OIBusCommand>(fields: CommandFields<T>): T =>
+  ({
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
+    targetVersion: testData.engine.settings.version,
+    status: 'RETRIEVED',
+    ack: false,
+    retrievedDate: FAKE_NOW,
+    completedDate: null,
+    result: null,
+    ...fields
+  }) as T;
+
+const commands = testData.oIAnalytics.commands.oIBusList;
+const updateVersionCommand = commands[0] as OIBusUpdateVersionCommand;
+const launcherUpdateCommand: OIBusUpdateVersionCommand = {
+  ...updateVersionCommand,
+  commandContent: { version: 'v3.5.0-beta', assetId: 'assetId', backupFolders: 'cache/*', updateLauncher: true }
+};
+const updateEngineGeneralCommand = commands[1] as OIBusUpdateEngineGeneralCommand;
+const restartCommand = commands[2];
+const updateScanModeCommand = commands[3] as OIBusUpdateScanModeCommand;
+const updateSouthCommand = commands[4] as OIBusUpdateSouthConnectorCommand;
+const updateNorthCommand = commands[5] as OIBusUpdateNorthConnectorCommand;
+const deleteScanModeCommand = commands[6] as OIBusDeleteScanModeCommand;
+const deleteSouthCommand = commands[7] as OIBusDeleteSouthConnectorCommand;
+const deleteNorthCommand = commands[8] as OIBusDeleteNorthConnectorCommand;
+const createScanModeCommand = commands[9] as OIBusCreateScanModeCommand;
+const createSouthCommand = commands[10] as OIBusCreateSouthConnectorCommand;
+const createNorthCommand = commands[11] as OIBusCreateNorthConnectorCommand;
+const regenerateCipherKeysCommand = commands[12];
+const southItemsFromCsvCommand = commands[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand;
+const updateRegistrationCommand = commands[15] as OIBusUpdateRegistrationSettingsCommand;
+
+const testSouthItemCommand = buildCommand<OIBusTestSouthConnectorItemCommand>({
+  id: 'testSouthItemId',
+  type: 'test-south-item',
+  itemId: 'itemId',
+  southConnectorId: 'southConnectorId',
+  commandContent: {
+    southCommand: testData.south.command,
+    itemCommand: testData.south.itemCommand,
+    testingSettings: {} as SouthConnectorItemTestingSettings
+  }
+});
+const testHistoryQuerySouthItemCommand = buildCommand<OIBusTestHistoryQuerySouthItemCommand>({
+  id: 'testHistoryQuerySouthItemId',
+  type: 'test-history-query-south-item',
+  historyQueryId: 'historyId',
+  itemId: 'itemId',
+  southConnectorId: 'southConnectorId',
+  commandContent: {
+    historyCommand: testData.historyQueries.command,
+    itemCommand: testData.historyQueries.itemCommand,
+    testingSettings: {} as SouthConnectorItemTestingSettings
+  }
+});
+const testTransformerWithItemCommand = buildCommand<OIBusTestTransformerCommand>({
+  id: 'testTransformerItemId',
+  type: 'test-transformer',
+  transformerId: 'transformerId',
+  commandContent: {
+    southId: 'southConnectorId',
+    southType: testData.south.command.type,
+    itemName: 'Current',
+    southSettings: testData.south.command.settings,
+    itemSettings: testData.south.itemCommand.settings,
+    testingSettings: {} as SouthConnectorItemTestingSettings
+  }
+});
+const historyItemsFromCsvCommand = buildCommand<OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand>({
+  id: 'createOrUpdateHistoryQuerySouthItemsId',
+  type: 'create-or-update-history-query-south-items-from-csv',
+  historyQueryId: 'h1',
+  commandContent: { deleteItemsNotPresent: false, csvContent: '', delimiter: ',' }
+});
+
+const cacheSearch = { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 };
+const cacheUpdate = {
+  cache: {
+    remove: ['file1.txt', 'file2.txt'],
+    move: [
+      { filename: 'file3.txt', to: 'error' as const },
+      { filename: 'file4.txt', to: 'archive' as const }
+    ]
+  },
+  error: {
+    remove: ['file5.txt', 'file6.txt'],
+    move: [
+      { filename: 'file7.txt', to: 'cache' as const },
+      { filename: 'file8.txt', to: 'archive' as const }
+    ]
+  },
+  archive: {
+    remove: ['file9.txt', 'file10.txt'],
+    move: [
+      { filename: 'file11.txt', to: 'cache' as const },
+      { filename: 'file12.txt', to: 'error' as const }
+    ]
+  }
+};
+const searchNorthCacheCommand = buildCommand<OIBusSearchNorthCacheContentCommand>({
+  id: 'searchNorthCacheContentId',
+  type: 'search-north-cache-content',
+  northConnectorId: 'northId1',
+  commandContent: cacheSearch
+});
+const searchHistoryCacheCommand = buildCommand<OIBusSearchHistoryCacheContentCommand>({
+  id: 'searchHistoryCacheContentId',
+  type: 'search-history-cache-content',
+  historyQueryId: 'historyId1',
+  commandContent: cacheSearch
+});
+const getNorthCacheFileCommand = buildCommand<OIBusGetNorthCacheFileContentCommand>({
+  id: 'getNorthCacheFileContentId',
+  type: 'get-north-cache-file-content',
+  northConnectorId: 'northId1',
+  commandContent: { folder: 'cache', filename: 'file.txt' }
+});
+const getHistoryCacheFileCommand = buildCommand<OIBusGetHistoryCacheFileContentCommand>({
+  id: 'getHistoryCacheFileContentId',
+  type: 'get-history-cache-file-content',
+  historyQueryId: 'historyId1',
+  commandContent: { folder: 'error', filename: 'file.txt' }
+});
+const updateNorthCacheCommand = buildCommand<OIBusUpdateNorthCacheContentCommand>({
+  id: 'updateNorthCacheContentId',
+  type: 'update-north-cache-content',
+  northConnectorId: 'northId1',
+  commandContent: cacheUpdate
+});
+const updateHistoryCacheCommand = buildCommand<OIBusUpdateHistoryCacheContentCommand>({
+  id: 'updateHistoryCacheContentId',
+  type: 'update-history-cache-content',
+  historyQueryId: 'historyId1',
+  commandContent: cacheUpdate
+});
+const cacheSearchResult: CacheSearchResult = { searchDate: FAKE_NOW, metrics: testData.north.metrics, error: [], archive: [], cache: [] };
+const cacheFileContent: FileCacheContent = {
+  content: 'content',
+  contentFilename: 'my_file.txt',
+  contentType: 'raw',
+  truncated: false,
+  totalSize: 7
+};
+
+// --- results of the item tests ---
+const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
+const transformedContent: OIBusContent = { type: 'any-content', content: 'transformed content' };
+const itemTestResult = { raw: rawContent, transformed: transformedContent, connectionDuration: 56, queryDuration: 78 };
+const itemTestResultWithoutTransformer = { raw: rawContent, transformed: null, connectionDuration: 0, queryDuration: 0 };
+const completedItemTest = JSON.stringify({
+  raw: { ...rawContent, truncated: false, totalSize: 0 },
+  transformed: { ...transformedContent, truncated: false, totalSize: 0 },
+  connectionDuration: 56,
+  queryDuration: 78
+});
+const completedItemTestWithoutTransformer = JSON.stringify({
+  raw: { ...rawContent, truncated: false, totalSize: 0 },
+  transformed: null,
+  connectionDuration: 0,
+  queryDuration: 0
+});
+
+// --- helpers ---
+const getUserInfo = (id: string) => ({ id, friendlyName: id });
+const logged = (log: LoggerMock['trace']): Array<string> => log.mock.calls.map(call => call.arguments[0]);
+
+async function executeCommand(command: OIBusCommand) {
+  oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+  await service.processNextCommand();
+}
+
+/** The first markAsCompleted call is the update-version command completed by the constructor */
+function assertCompleted(command: OIBusCommand, result: string) {
+  assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [command.id, FAKE_NOW, result]);
+}
+
+function assertErrored(command: OIBusCommand, error: string) {
+  assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, error]);
+}
+
+function withoutPermission(permission: keyof RegistrationCommandPermissions) {
+  oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
+    ...testData.oIAnalytics.registration.completed,
+    commandPermissions: { ...testData.oIAnalytics.registration.completed.commandPermissions, [permission]: false }
+  }));
+}
+
+function expectedRegistrationEdit(registration: OIAnalyticsRegistration) {
+  return {
+    host: registration.host,
+    useProxy: registration.useProxy,
+    proxyUrl: registration.proxyUrl,
+    proxyUsername: registration.proxyUsername,
+    proxyPassword: '',
+    useApiGateway: registration.useApiGateway,
+    apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
+    apiGatewayHeaderValue: '',
+    apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
+    acceptUnauthorized: registration.acceptUnauthorized,
+    commandRefreshInterval: updateRegistrationCommand.commandContent.commandRefreshInterval,
+    commandRetryInterval: updateRegistrationCommand.commandContent.commandRetryInterval,
+    messageRetryInterval: updateRegistrationCommand.commandContent.messageRetryInterval,
+    commandPermissions: registration.commandPermissions
+  };
+}
+
+/** A command that calls one service method and completes with a result */
+interface ExecutionCase {
+  title?: string;
+  command: OIBusCommand;
+  setup?: () => void;
+  /** Calls of the service method executing the command */
+  calls: () => ReadonlyArray<{ arguments: ReadonlyArray<unknown> }>;
+  args: ReadonlyArray<unknown>;
+  result: string;
+}
+
+const executionCases = (): Array<ExecutionCase> => {
+  const updateEngineWebServerCommand = buildCommand<OIBusUpdateEngineWebServerCommand>({
+    id: 'updateEngineWebServerId',
+    type: 'update-engine-web-server',
+    commandContent: testData.engine.webServerCommand
+  });
+  const updateEngineProxyCommand = buildCommand<OIBusUpdateEngineProxyCommand>({
+    id: 'updateEngineProxyId',
+    type: 'update-engine-proxy',
+    commandContent: testData.engine.proxyCommand
+  });
+  const updateEngineLoggerCommand = buildCommand<OIBusUpdateEngineLoggerCommand>({
+    id: 'updateEngineLoggerId',
+    type: 'update-engine-logger',
+    commandContent: testData.engine.loggerCommand
+  });
+  const createIpFilterCommand = buildCommand<OIBusCreateIPFilterCommand>({
+    id: 'createIpFilterId',
+    type: 'create-ip-filter',
+    commandContent: {} as IPFilterCommandDTO
+  });
+  const updateIpFilterCommand = buildCommand<OIBusUpdateIPFilterCommand>({
+    id: 'updateIpFilterId',
+    type: 'update-ip-filter',
+    ipFilterId: 'ipFilterId',
+    commandContent: {} as IPFilterCommandDTO
+  });
+  const deleteIpFilterCommand = buildCommand<OIBusDeleteIPFilterCommand>({
+    id: 'deleteIpFilterId',
+    type: 'delete-ip-filter',
+    ipFilterId: 'ipFilterId'
+  });
+  const createCertificateCommand = buildCommand<OIBusCreateCertificateCommand>({
+    id: 'createCertificateId',
+    type: 'create-certificate',
+    commandContent: {} as CertificateCommandDTO
+  });
+  const updateCertificateCommand = buildCommand<OIBusUpdateCertificateCommand>({
+    id: 'updateCertificateId',
+    type: 'update-certificate',
+    certificateId: 'certificateId',
+    commandContent: {} as CertificateCommandDTO
+  });
+  const deleteCertificateCommand = buildCommand<OIBusDeleteCertificateCommand>({
+    id: 'deleteCertificateId',
+    type: 'delete-certificate',
+    certificateId: 'certificateId'
+  });
+  const createCustomTransformerCommand = buildCommand<OIBusCreateCustomTransformerCommand>({
+    id: 'createCustomTransformerId',
+    type: 'create-custom-transformer',
+    commandContent: testData.transformers.command
+  });
+  const updateCustomTransformerCommand = buildCommand<OIBusUpdateCustomTransformerCommand>({
+    id: 'updateCustomTransformerId',
+    type: 'update-custom-transformer',
+    transformerId: 'transformerId1',
+    commandContent: testData.transformers.command
+  });
+  const deleteCustomTransformerCommand = buildCommand<OIBusDeleteCustomTransformerCommand>({
+    id: 'deleteCustomTransformerId',
+    type: 'delete-custom-transformer',
+    transformerId: 'transformerId1'
+  });
+  const transformerTestRequest = { inputData: 'raw', options: {} };
+  const transformerTestResult = { output: 'result', metadata: {} };
+  const testCustomTransformerCommand = buildCommand<OIBusTestCustomTransformerCommand>({
+    id: 'testCustomTransformerId',
+    type: 'test-custom-transformer',
+    commandContent: { command: testData.transformers.command, testRequest: transformerTestRequest }
+  });
+  const testTransformerCommand = (id: string, options?: object) =>
+    buildCommand<OIBusTestTransformerCommand>({
+      id,
+      type: 'test-transformer',
+      transformerId: 'transformerId',
+      commandContent: options ? { inputData: 'pasted content', options } : { inputData: 'pasted content' }
+    });
+  const testSouthConnectionCommand = buildCommand<OIBusTestSouthConnectorCommand>({
+    id: 'testSouthConnectorId',
+    type: 'test-south-connection',
+    southConnectorId: 'southConnectorId',
+    commandContent: testData.south.command
+  });
+  const testNorthConnectionCommand = buildCommand<OIBusTestNorthConnectorCommand>({
+    id: 'testNorthConnectorId',
+    type: 'test-north-connection',
+    northConnectorId: 'northConnectorId',
+    commandContent: testData.north.command
+  });
+  const createHistoryQueryCommand = buildCommand<OIBusCreateHistoryQueryCommand>({
+    id: 'createHistoryQueryId',
+    type: 'create-history-query',
+    northConnectorId: undefined,
+    southConnectorId: undefined,
+    historyQueryId: undefined,
+    commandContent: testData.historyQueries.command
+  });
+  const updateHistoryQueryCommand = buildCommand<OIBusUpdateHistoryQueryCommand>({
+    id: 'updateHistoryQueryId',
+    type: 'update-history-query',
+    historyQueryId: 'h1',
+    commandContent: { resetCache: false, historyQuery: testData.historyQueries.command }
+  });
+  const deleteHistoryQueryCommand = buildCommand<OIBusDeleteHistoryQueryCommand>({
+    id: 'deleteHistoryQueryId',
+    type: 'delete-history-query',
+    historyQueryId: 'h1'
+  });
+  const testHistoryNorthConnectionCommand = buildCommand<OIBusTestHistoryQueryNorthConnectionCommand>({
+    id: 'testHistoryNorthConnectorId',
+    type: 'test-history-query-north-connection',
+    northConnectorId: 'northConnectorId',
+    historyQueryId: 'historyId',
+    commandContent: testData.historyQueries.command
+  });
+  const testHistorySouthConnectionCommand = buildCommand<OIBusTestHistoryQuerySouthConnectionCommand>({
+    id: 'testHistorySouthConnectorId',
+    type: 'test-history-query-south-connection',
+    southConnectorId: 'southConnectorId',
+    historyQueryId: 'historyId',
+    commandContent: testData.historyQueries.command
+  });
+  const scanModeCommand = (base: OIBusCreateScanModeCommand | OIBusUpdateScanModeCommand, commandContent: Partial<ScanModeCommandDTO>) => ({
+    ...base,
+    commandContent: commandContent as ScanModeCommandDTO
+  });
+  const explicitCronScanMode: ScanModeCommandDTO = {
+    name: 'my scan mode',
+    description: 'a scan mode',
+    type: 'cron',
+    cron: '0 0 * * * *',
+    interval: null,
+    activationWindow: null
+  };
+
+  return [
+    // engine
+    {
+      command: updateEngineGeneralCommand,
+      calls: () => oIBusService.updateEngineName.mock.calls,
+      args: [updateEngineGeneralCommand.commandContent, 'oianalytics'],
+      result: 'Engine name updated successfully'
+    },
+    {
+      command: updateEngineWebServerCommand,
+      calls: () => oIBusService.updateEngineWebServer.mock.calls,
+      args: [testData.engine.webServerCommand, 'oianalytics'],
+      result: 'Engine web server settings updated successfully'
+    },
+    {
+      command: updateEngineProxyCommand,
+      calls: () => oIBusService.updateEngineProxy.mock.calls,
+      args: [testData.engine.proxyCommand, 'oianalytics'],
+      result: 'Engine proxy settings updated successfully'
+    },
+    {
+      command: updateEngineLoggerCommand,
+      calls: () => oIBusService.updateEngineLogger.mock.calls,
+      args: [testData.engine.loggerCommand, 'oianalytics'],
+      result: 'Engine logger settings updated successfully'
+    },
+    // scan modes
+    {
+      command: createScanModeCommand,
+      calls: () => scanModeService.create.mock.calls,
+      args: [createScanModeCommand.commandContent, 'oianalytics'],
+      result: 'Scan mode created successfully'
+    },
+    {
+      title: 'should execute create-scan-mode command with old-style payload missing type, cron, interval and activationWindow',
+      command: scanModeCommand(createScanModeCommand, { name: 'my new scan mode', description: 'another scan mode' }),
+      calls: () => scanModeService.create.mock.calls,
+      args: [
+        { name: 'my new scan mode', description: 'another scan mode', type: 'cron', cron: '', interval: null, activationWindow: null },
+        'oianalytics'
+      ],
+      result: 'Scan mode created successfully'
+    },
+    {
+      title: 'should execute create-scan-mode command with new-style interval payload, defaulting only the missing cron',
+      command: scanModeCommand(createScanModeCommand, {
+        name: 'my new interval scan mode',
+        description: 'an interval scan mode',
+        type: 'interval',
+        interval: { value: 30, unit: 's' },
+        activationWindow: { dateRange: { start: '2026-08-01T00:00:00.000Z', end: null } }
+      }),
+      calls: () => scanModeService.create.mock.calls,
+      args: [
+        {
+          name: 'my new interval scan mode',
+          description: 'an interval scan mode',
+          type: 'interval',
+          cron: '',
+          interval: { value: 30, unit: 's' },
+          activationWindow: { dateRange: { start: '2026-08-01T00:00:00.000Z', end: null } }
+        },
+        'oianalytics'
+      ],
+      result: 'Scan mode created successfully'
+    },
+    {
+      command: updateScanModeCommand,
+      calls: () => scanModeService.update.mock.calls,
+      args: [updateScanModeCommand.scanModeId, updateScanModeCommand.commandContent, 'oianalytics'],
+      result: 'Scan mode updated successfully'
+    },
+    {
+      title: 'should execute update-scan-mode command with old-style payload missing type, cron, interval and activationWindow',
+      command: scanModeCommand(updateScanModeCommand, { name: 'my scan mode', description: 'a scan mode' }),
+      calls: () => scanModeService.update.mock.calls,
+      args: [
+        updateScanModeCommand.scanModeId,
+        { name: 'my scan mode', description: 'a scan mode', type: 'cron', cron: '', interval: null, activationWindow: null },
+        'oianalytics'
+      ],
+      result: 'Scan mode updated successfully'
+    },
+    {
+      title: 'should execute update-scan-mode command keeping an explicit cron and not defaulting already-present fields',
+      command: scanModeCommand(updateScanModeCommand, explicitCronScanMode),
+      calls: () => scanModeService.update.mock.calls,
+      args: [updateScanModeCommand.scanModeId, { ...explicitCronScanMode }, 'oianalytics'],
+      result: 'Scan mode updated successfully'
+    },
+    {
+      command: deleteScanModeCommand,
+      calls: () => scanModeService.delete.mock.calls,
+      args: [deleteScanModeCommand.scanModeId, 'oianalytics'],
+      result: 'Scan mode deleted successfully'
+    },
+    // IP filters
+    {
+      command: createIpFilterCommand,
+      calls: () => ipFilterService.create.mock.calls,
+      args: [createIpFilterCommand.commandContent, 'oianalytics'],
+      result: 'IP Filter created successfully'
+    },
+    {
+      command: updateIpFilterCommand,
+      calls: () => ipFilterService.update.mock.calls,
+      args: ['ipFilterId', updateIpFilterCommand.commandContent, 'oianalytics'],
+      result: 'IP Filter updated successfully'
+    },
+    {
+      command: deleteIpFilterCommand,
+      calls: () => ipFilterService.delete.mock.calls,
+      args: ['ipFilterId', 'oianalytics'],
+      result: 'IP Filter deleted successfully'
+    },
+    // certificates
+    {
+      command: createCertificateCommand,
+      calls: () => certificateService.create.mock.calls,
+      args: [createCertificateCommand.commandContent, 'oianalytics'],
+      result: 'Certificate created successfully'
+    },
+    {
+      command: updateCertificateCommand,
+      calls: () => certificateService.update.mock.calls,
+      args: ['certificateId', updateCertificateCommand.commandContent, 'oianalytics'],
+      result: 'Certificate updated successfully'
+    },
+    {
+      command: deleteCertificateCommand,
+      calls: () => certificateService.delete.mock.calls,
+      args: ['certificateId', 'oianalytics'],
+      result: 'Certificate deleted successfully'
+    },
+    // custom transformers
+    {
+      command: createCustomTransformerCommand,
+      calls: () => transformerService.create.mock.calls,
+      args: [testData.transformers.command, 'oianalytics'],
+      result: 'Transformer created successfully'
+    },
+    {
+      command: updateCustomTransformerCommand,
+      calls: () => transformerService.update.mock.calls,
+      args: ['transformerId1', testData.transformers.command, 'oianalytics'],
+      result: 'Transformer updated successfully'
+    },
+    {
+      command: deleteCustomTransformerCommand,
+      calls: () => transformerService.delete.mock.calls,
+      args: ['transformerId1', 'oianalytics'],
+      result: 'Transformer deleted successfully'
+    },
+    {
+      command: testCustomTransformerCommand,
+      setup: () => transformerService.test.mock.mockImplementationOnce(async () => transformerTestResult as never),
+      calls: () => transformerService.test.mock.calls,
+      args: [testData.transformers.command, transformerTestRequest],
+      result: JSON.stringify(transformerTestResult)
+    },
+    {
+      title: 'should execute test-transformer command with pasted input data using no explicit options',
+      command: testTransformerCommand('testTransformerNoOptionsId'),
+      setup: () => transformerService.testTransformer.mock.mockImplementationOnce(async () => itemTestResult),
+      calls: () => transformerService.testTransformer.mock.calls,
+      args: ['transformerId', {}, 'pasted content'],
+      result: completedItemTest
+    },
+    {
+      title: 'should execute test-transformer command with pasted input data, keeping both raw and transformed',
+      command: testTransformerCommand('testTransformerPasteId', {}),
+      setup: () => transformerService.testTransformer.mock.mockImplementationOnce(async () => itemTestResult),
+      calls: () => transformerService.testTransformer.mock.calls,
+      args: ['transformerId', {}, 'pasted content'],
+      result: completedItemTest
+    },
+    {
+      title: 'should execute test-transformer command with a south item, keeping both raw and transformed',
+      command: testTransformerWithItemCommand,
+      setup: () => southService.testItem.mock.mockImplementationOnce(async () => itemTestResult),
+      calls: () => southService.testItem.mock.calls,
+      args: [
+        'southConnectorId',
+        testData.south.command.type,
+        'Current',
+        testData.south.command.settings,
+        testData.south.itemCommand.settings,
+        {}
+      ],
+      result: completedItemTest
+    },
+    {
+      title: 'should execute test-transformer command with a south item that has no transformer configured, storing transformed: null',
+      command: testTransformerWithItemCommand,
+      setup: () => southService.testItem.mock.mockImplementationOnce(async () => itemTestResultWithoutTransformer),
+      calls: () => southService.testItem.mock.calls,
+      args: [
+        'southConnectorId',
+        testData.south.command.type,
+        'Current',
+        testData.south.command.settings,
+        testData.south.itemCommand.settings,
+        {}
+      ],
+      result: completedItemTestWithoutTransformer
+    },
+    // south connectors
+    {
+      command: createSouthCommand,
+      calls: () => southService.create.mock.calls,
+      args: [createSouthCommand.commandContent, null, 'oianalytics'],
+      result: 'South connector created successfully'
+    },
+    {
+      command: updateSouthCommand,
+      calls: () => southService.update.mock.calls,
+      args: [updateSouthCommand.southConnectorId, updateSouthCommand.commandContent, 'oianalytics'],
+      result: 'South connector updated successfully'
+    },
+    {
+      command: deleteSouthCommand,
+      calls: () => southService.delete.mock.calls,
+      args: [deleteSouthCommand.southConnectorId, 'oianalytics'],
+      result: 'South connector deleted successfully'
+    },
+    {
+      title: 'should execute south-connection-test command',
+      command: testSouthConnectionCommand,
+      setup: () => southService.testSouth.mock.mockImplementationOnce(async () => ({ items: [] })),
+      calls: () => southService.testSouth.mock.calls,
+      args: ['southConnectorId', testData.south.command.type, testData.south.command.settings],
+      result: JSON.stringify({ items: [] })
+    },
+    {
+      title: 'should execute south-item-test command',
+      command: testSouthItemCommand,
+      setup: () => southService.testItem.mock.mockImplementationOnce(async () => itemTestResult),
+      calls: () => southService.testItem.mock.calls,
+      args: [
+        'southConnectorId',
+        testData.south.command.type,
+        testData.south.itemCommand.name,
+        testData.south.command.settings,
+        testData.south.itemCommand.settings,
+        {}
+      ],
+      result: completedItemTest
+    },
+    {
+      title: 'should execute south-item-test command and store transformed: null when there is no transformer',
+      command: testSouthItemCommand,
+      setup: () => southService.testItem.mock.mockImplementationOnce(async () => itemTestResultWithoutTransformer),
+      calls: () => southService.testItem.mock.calls,
+      args: [
+        'southConnectorId',
+        testData.south.command.type,
+        testData.south.itemCommand.name,
+        testData.south.command.settings,
+        testData.south.itemCommand.settings,
+        {}
+      ],
+      result: completedItemTestWithoutTransformer
+    },
+    // north connectors
+    {
+      command: createNorthCommand,
+      calls: () => northService.create.mock.calls,
+      args: [createNorthCommand.commandContent, null, 'oianalytics'],
+      result: 'North connector created successfully'
+    },
+    {
+      command: updateNorthCommand,
+      calls: () => northService.update.mock.calls,
+      args: [updateNorthCommand.northConnectorId, updateNorthCommand.commandContent, 'oianalytics'],
+      result: 'North connector updated successfully'
+    },
+    {
+      command: deleteNorthCommand,
+      calls: () => northService.delete.mock.calls,
+      args: [deleteNorthCommand.northConnectorId, 'oianalytics'],
+      result: 'North connector deleted successfully'
+    },
+    {
+      title: 'should execute north-connection-test command',
+      command: testNorthConnectionCommand,
+      setup: () => northService.testNorth.mock.mockImplementationOnce(async () => ({ items: [] })),
+      calls: () => northService.testNorth.mock.calls,
+      args: ['northConnectorId', testData.north.command.type, testData.north.command.settings],
+      result: JSON.stringify({ items: [] })
+    },
+    // history queries
+    {
+      command: createHistoryQueryCommand,
+      calls: () => historyQueryService.create.mock.calls,
+      args: [testData.historyQueries.command, undefined, undefined, undefined, 'oianalytics'],
+      result: 'History query created successfully'
+    },
+    {
+      command: updateHistoryQueryCommand,
+      calls: () => historyQueryService.update.mock.calls,
+      args: ['h1', testData.historyQueries.command, false, 'oianalytics'],
+      result: 'History query updated successfully'
+    },
+    {
+      command: deleteHistoryQueryCommand,
+      calls: () => historyQueryService.delete.mock.calls,
+      args: ['h1', 'oianalytics'],
+      result: 'History query deleted successfully'
+    },
+    {
+      command: testHistoryNorthConnectionCommand,
+      setup: () => historyQueryService.testNorth.mock.mockImplementationOnce(async () => ({ items: [] })),
+      calls: () => historyQueryService.testNorth.mock.calls,
+      args: ['historyId', testData.historyQueries.command.northType, 'northConnectorId', testData.historyQueries.command.northSettings],
+      result: JSON.stringify({ items: [] })
+    },
+    {
+      command: testHistorySouthConnectionCommand,
+      setup: () => historyQueryService.testSouth.mock.mockImplementationOnce(async () => ({ items: [] })),
+      calls: () => historyQueryService.testSouth.mock.calls,
+      args: ['historyId', testData.historyQueries.command.southType, 'southConnectorId', testData.historyQueries.command.southSettings],
+      result: JSON.stringify({ items: [] })
+    },
+    {
+      command: testHistoryQuerySouthItemCommand,
+      setup: () => historyQueryService.testItem.mock.mockImplementationOnce(async () => itemTestResult),
+      calls: () => historyQueryService.testItem.mock.calls,
+      args: [
+        'historyId',
+        testData.historyQueries.command.southType,
+        testData.historyQueries.itemCommand.name,
+        'southConnectorId',
+        testData.historyQueries.command.southSettings,
+        testData.historyQueries.itemCommand.settings,
+        {}
+      ],
+      // History query item tests keep the full raw → transformer → output pipeline, same as south-item tests
+      result: completedItemTest
+    },
+    {
+      title: 'should execute test-history-query-south-item command and store transformed: null when there is no transformer',
+      command: testHistoryQuerySouthItemCommand,
+      setup: () => historyQueryService.testItem.mock.mockImplementationOnce(async () => itemTestResultWithoutTransformer),
+      calls: () => historyQueryService.testItem.mock.calls,
+      args: [
+        'historyId',
+        testData.historyQueries.command.southType,
+        testData.historyQueries.itemCommand.name,
+        'southConnectorId',
+        testData.historyQueries.command.southSettings,
+        testData.historyQueries.itemCommand.settings,
+        {}
+      ],
+      result: completedItemTestWithoutTransformer
+    },
+    // caches
+    {
+      command: searchNorthCacheCommand,
+      setup: () => oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => cacheSearchResult),
+      calls: () => oIBusService.searchCacheContent.mock.calls,
+      args: ['north', 'northId1', cacheSearch],
+      result: JSON.stringify(cacheSearchResult)
+    },
+    {
+      command: searchHistoryCacheCommand,
+      setup: () => oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => cacheSearchResult),
+      calls: () => oIBusService.searchCacheContent.mock.calls,
+      args: ['history', 'historyId1', cacheSearch],
+      result: JSON.stringify(cacheSearchResult)
+    },
+    {
+      command: getNorthCacheFileCommand,
+      setup: () => oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => cacheFileContent),
+      calls: () => oIBusService.getFileFromCache.mock.calls,
+      args: ['north', 'northId1', 'cache', 'file.txt'],
+      result: JSON.stringify(cacheFileContent)
+    },
+    {
+      command: getHistoryCacheFileCommand,
+      setup: () => oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => cacheFileContent),
+      calls: () => oIBusService.getFileFromCache.mock.calls,
+      args: ['history', 'historyId1', 'error', 'file.txt'],
+      result: JSON.stringify(cacheFileContent)
+    },
+    {
+      command: updateNorthCacheCommand,
+      calls: () => oIBusService.updateCacheContent.mock.calls,
+      args: ['north', 'northId1', cacheUpdate],
+      result: 'Cache updated successfully'
+    },
+    {
+      command: updateHistoryCacheCommand,
+      calls: () => oIBusService.updateCacheContent.mock.calls,
+      args: ['history', 'historyId1', cacheUpdate],
+      result: 'Cache updated successfully'
+    }
+  ];
+};
+
 describe('OIAnalytics Command Service', () => {
-  let service: InstanceType<typeof OIAnalyticsCommandServiceType>;
-
   beforeEach(() => {
-    resetAllMocks();
-    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
-
-    oIBusService.getEngineSettings.mock.mockImplementation(() => testData.engine.settings);
-    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => testData.oIAnalytics.commands.oIBusList);
-    oIAnalyticsCommandRepository.findById.mock.mockImplementation(() => testData.oIAnalytics.commands.oIBusList[0]);
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
-    mockUtils.getOIBusInfo.mock.mockImplementation(() => testData.engine.oIBusInfo);
-
     service = makeService();
   });
 
-  afterEach(() => {
-    mock.restoreAll();
-  });
-
   it('should get an OIAnalytics command', () => {
-    const result = service.findById(testData.oIAnalytics.commands.oIBusList[0].id);
+    const result = service.findById(updateVersionCommand.id);
 
     assert.strictEqual(oIAnalyticsCommandRepository.findById.mock.calls.length, 1);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.findById.mock.calls[0].arguments, [testData.oIAnalytics.commands.oIBusList[0].id]);
-    assert.deepStrictEqual(result, testData.oIAnalytics.commands.oIBusList[0]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.findById.mock.calls[0].arguments, [updateVersionCommand.id]);
+    assert.deepStrictEqual(result, updateVersionCommand);
   });
 
   it('should throw an error when OIAnalytics command does not exist', () => {
     oIAnalyticsCommandRepository.findById.mock.mockImplementation(() => null);
 
     assert.throws(
-      () => service.findById(testData.oIAnalytics.commands.oIBusList[0].id),
-      new NotFoundError(`OIAnalytics command "${testData.oIAnalytics.commands.oIBusList[0].id}" not found`)
+      () => service.findById(updateVersionCommand.id),
+      new NotFoundError(`OIAnalytics command "${updateVersionCommand.id}" not found`)
     );
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.findById.mock.calls[0].arguments, [testData.oIAnalytics.commands.oIBusList[0].id]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.findById.mock.calls[0].arguments, [updateVersionCommand.id]);
   });
 
   it('should properly start and stop service', async () => {
+    const updatedVersion = updateVersionCommand.commandContent.version.slice(1);
     assert.strictEqual(oIBusService.getEngineSettings.mock.calls.length, 1);
     assert.deepStrictEqual(oIBusService.updateOIBusVersion.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1),
+      updatedVersion,
       testData.engine.settings.launcherVersion
     ]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
-      testData.oIAnalytics.commands.oIBusList[0].id,
-      testData.constants.dates.FAKE_NOW,
-      `OIBus updated to version ${(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)}, launcher updated to version ${testData.engine.settings.launcherVersion}`
+      updateVersionCommand.id,
+      FAKE_NOW,
+      `OIBus updated to version ${updatedVersion}, launcher updated to version ${testData.engine.settings.launcherVersion}`
     ]);
 
     // Prevent acknowledgeCommands/checkForCancelledCommands (called by refreshCommands in start())
-    // from doing anything. findFirstToExecute already defaults to null so processNextCommand exits immediately.
+    // from doing anything. findFirstToExecute already defaults to undefined so processNextCommand exits immediately.
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
     mock.method(process, 'exit', () => undefined as never);
-    mock.method(process, 'kill', () => undefined as unknown as void);
+    mock.method(process, 'kill', () => true);
 
     await service.start();
     await service.stop();
     await flushPromises();
 
-    // After start: one setTimeout scheduled; after stop: clearTimeout called
     // registrationEvent: REGISTERED -> schedules another timeout
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
 
@@ -344,7 +1026,7 @@ describe('OIAnalytics Command Service', () => {
   it('should clear the pending refresh timeout and refresh again when registration is updated while running', async () => {
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
     mock.method(process, 'exit', () => undefined as never);
-    mock.method(process, 'kill', () => undefined as unknown as void);
+    mock.method(process, 'kill', () => true);
 
     await service.start();
     // start() -> refreshCommands() scheduled a refreshCommandsTimeout since registration is REGISTERED
@@ -360,7 +1042,6 @@ describe('OIAnalytics Command Service', () => {
 
   it('should do nothing when processing the next command while stopped', async () => {
     await service.stop();
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.resetCalls();
 
     await service.processNextCommand();
 
@@ -368,7 +1049,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should search commands', () => {
-    const page = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 1, 25);
+    const page = createPageFromArray(commands, 1, 25);
     oIAnalyticsCommandRepository.search.mock.mockImplementation(() => page);
 
     const result = service.search({ types: [], status: [], page: 0, ack: undefined, start: undefined, end: undefined });
@@ -376,8 +1057,8 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should delete command', () => {
-    service.delete(testData.oIAnalytics.commands.oIBusList[0].id);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.delete.mock.calls[0].arguments, [testData.oIAnalytics.commands.oIBusList[0].id]);
+    service.delete(updateVersionCommand.id);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.delete.mock.calls[0].arguments, [updateVersionCommand.id]);
   });
 
   it('should check commands', async () => {
@@ -399,17 +1080,9 @@ describe('OIAnalytics Command Service', () => {
 
     service.refreshCommands();
     await service.refreshCommands();
-    assert.ok(
-      (logger.warn.mock.calls as Array<{ arguments: Array<string> }>).some(c =>
-        c.arguments[0].startsWith('OIBus is already retrieving commands from OIAnalytics')
-      )
-    );
+    assert.ok(logged(logger.warn).some(message => message.startsWith('OIBus is already retrieving commands from OIAnalytics')));
     await service.refreshCommands();
-    assert.ok(
-      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c => c.arguments[0] === "OIAnalytics not registered. OIBus won't retrieve commands"
-      )
-    );
+    assert.ok(logged(logger.trace).includes("OIAnalytics not registered. OIBus won't retrieve commands"));
 
     await flushPromises();
     // Reset fake timers — discards all pending setTimeout callbacks without firing them
@@ -418,96 +1091,59 @@ describe('OIAnalytics Command Service', () => {
 
   it('should not refresh commands when service is stopped', async () => {
     service.stop();
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.resetCalls();
 
     await service.refreshCommands();
 
     assert.strictEqual(oIAnalyticsRegistrationService.getRegistrationSettings.mock.calls.length, 0);
   });
 
-  it('should fail to check commands and retry', async () => {
-    service.fetchNewCommands = mock.fn(async () => {
-      throw new Error('retrieve command error');
+  for (const [title, error, message] of [
+    ['should fail to check commands and retry', new Error('retrieve command error'), 'retrieve command error'],
+    [
+      'should display proper error message on AggregateError in refreshCommands',
+      new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], ''),
+      'connect ECONNREFUSED 127.0.0.1:4200'
+    ],
+    [
+      'should display proper error message for Error with cause in refreshCommands',
+      Object.assign(new TypeError('fetch failed'), { cause: new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '') }),
+      'fetch failed: connect ECONNREFUSED 127.0.0.1:4200'
+    ]
+  ] as const) {
+    it(title, async () => {
+      service.fetchNewCommands = mock.fn(async () => {
+        throw error;
+      });
+      service.checkForCancelledCommands = mock.fn(async () => undefined);
+      const acknowledgeCommandsMock = mock.fn(async () => undefined);
+      service.acknowledgeCommands = acknowledgeCommandsMock;
+
+      await service.refreshCommands();
+
+      assert.strictEqual(acknowledgeCommandsMock.mock.calls.length, 0);
+      assert.ok(logged(logger.error).includes(message));
+      // Cancel the retry timer to prevent async activity after test ends
+      await service.stop();
     });
-    service.checkForCancelledCommands = mock.fn(async () => undefined);
-    const acknowledgeCommandsMock = mock.fn(async () => undefined);
-    service.acknowledgeCommands = acknowledgeCommandsMock;
-
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.completed);
-
-    await service.refreshCommands();
-    assert.strictEqual(acknowledgeCommandsMock.mock.calls.length, 0);
-    assert.ok((logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'retrieve command error'));
-    // Cancel the retry timer to prevent async activity after test ends
-    await service.stop();
-  });
-
-  it('should display proper error message on AggregateError in refreshCommands', async () => {
-    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
-    service.fetchNewCommands = mock.fn(async () => {
-      throw networkError;
-    });
-    service.checkForCancelledCommands = mock.fn(async () => undefined);
-    service.acknowledgeCommands = mock.fn(async () => undefined);
-
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.completed);
-
-    await service.refreshCommands();
-
-    assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'connect ECONNREFUSED 127.0.0.1:4200')
-    );
-    await service.stop();
-  });
-
-  it('should display proper error message for Error with cause in refreshCommands', async () => {
-    const cause = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
-    const fetchError = Object.assign(new TypeError('fetch failed'), { cause });
-    service.fetchNewCommands = mock.fn(async () => {
-      throw fetchError;
-    });
-    service.checkForCancelledCommands = mock.fn(async () => undefined);
-    service.acknowledgeCommands = mock.fn(async () => undefined);
-
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.completed);
-
-    await service.refreshCommands();
-
-    assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c => c.arguments[0] === 'fetch failed: connect ECONNREFUSED 127.0.0.1:4200'
-      )
-    );
-    await service.stop();
-  });
+  }
 
   it('should send ack', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
     await service.acknowledgeCommands(testData.oIAnalytics.registration.completed);
 
-    assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, testData.oIAnalytics.commands.oIBusList.length);
-    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, testData.oIAnalytics.commands.oIBusList.length);
-    assert.ok(
-      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c =>
-          c.arguments[0] ===
-          `Command ${testData.oIAnalytics.commands.oIBusList[0].id} of type ${testData.oIAnalytics.commands.oIBusList[0].type} acknowledged`
-      )
-    );
+    assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, commands.length);
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, commands.length);
+    assert.ok(logged(logger.trace).includes(`Command ${updateVersionCommand.id} of type ${updateVersionCommand.type} acknowledged`));
   });
 
   it('should not send ack if no command to ack', async () => {
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => []);
     await service.acknowledgeCommands(testData.oIAnalytics.registration.completed);
 
-    assert.ok((logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to ack'));
+    assert.ok(logged(logger.trace).includes('No command to ack'));
   });
 
   it('should properly manage ack error', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [
-      testData.oIAnalytics.commands.oIBusList[0],
-      testData.oIAnalytics.commands.oIBusList[1]
-    ]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [updateVersionCommand, updateEngineGeneralCommand]);
     oIAnalyticsClient.updateCommandStatus.mock.mockImplementation(
       seq(
         () => {
@@ -522,56 +1158,46 @@ describe('OIAnalytics Command Service', () => {
     await service.acknowledgeCommands(testData.oIAnalytics.registration.completed);
 
     assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c =>
-          c.arguments[0] ===
-          `Error while acknowledging command ${testData.oIAnalytics.commands.oIBusList[0].id} of type ${testData.oIAnalytics.commands.oIBusList[0].type}: error`
+      logged(logger.error).includes(
+        `Error while acknowledging command ${updateVersionCommand.id} of type ${updateVersionCommand.type}: error`
       )
     );
     assert.strictEqual(logger.error.mock.calls.length, 2);
-    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 1);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls[0].arguments, [
-      testData.oIAnalytics.commands.oIBusList[1].id
-    ]);
+    assert.deepStrictEqual(
+      oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.map(call => call.arguments),
+      [[updateEngineGeneralCommand.id]]
+    );
   });
 
   it('should display proper error message on AggregateError in acknowledgeCommands', async () => {
-    const command = testData.oIAnalytics.commands.oIBusList[0];
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
-    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [updateVersionCommand]);
     oIAnalyticsClient.updateCommandStatus.mock.mockImplementationOnce(async () => {
-      throw networkError;
+      throw new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
     });
 
     await service.acknowledgeCommands(testData.oIAnalytics.registration.completed);
 
     assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c =>
-          c.arguments[0] === `Error while acknowledging command ${command.id} of type ${command.type}: connect ECONNREFUSED 127.0.0.1:4200`
+      logged(logger.error).includes(
+        `Error while acknowledging command ${updateVersionCommand.id} of type ${updateVersionCommand.type}: connect ECONNREFUSED 127.0.0.1:4200`
       )
     );
     assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 0);
   });
 
   it('should check retrieved command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
-    oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => testData.oIAnalytics.commands.oIAnalyticsList);
+    const cancelledCommands = testData.oIAnalytics.commands.oIAnalyticsList;
+    oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => cancelledCommands);
 
     await service.checkForCancelledCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.retrieveCancelledCommands.mock.calls.length, 1);
-    assert.strictEqual(oIAnalyticsCommandRepository.cancel.mock.calls.length, testData.oIAnalytics.commands.oIAnalyticsList.length);
+    assert.strictEqual(oIAnalyticsCommandRepository.cancel.mock.calls.length, cancelledCommands.length);
     assert.ok(
-      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c =>
-          c.arguments[0] ===
-          `${testData.oIAnalytics.commands.oIAnalyticsList.length} commands cancelled among the ${testData.oIAnalytics.commands.oIBusList.length} pending commands`
-      )
+      logged(logger.trace).includes(`${cancelledCommands.length} commands cancelled among the ${commands.length} pending commands`)
     );
 
     // error case
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
     oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => {
       throw new Error('error');
     });
@@ -583,13 +1209,10 @@ describe('OIAnalytics Command Service', () => {
     // empty case
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => []);
     await service.checkForCancelledCommands(testData.oIAnalytics.registration.completed);
-    assert.ok(
-      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command retrieved to check')
-    );
+    assert.ok(logged(logger.trace).includes('No command retrieved to check'));
   });
 
   it('should check retrieved command and cancel nothing', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
     oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => []);
 
     await service.checkForCancelledCommands(testData.oIAnalytics.registration.completed);
@@ -600,17 +1223,14 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should retrieve commands', async () => {
-    oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => testData.oIAnalytics.commands.oIAnalyticsList);
+    const pendingCommands = testData.oIAnalytics.commands.oIAnalyticsList;
+    oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => pendingCommands);
 
     await service.fetchNewCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.retrievePendingCommands.mock.calls.length, 1);
-    assert.strictEqual(oIAnalyticsCommandRepository.create.mock.calls.length, testData.oIAnalytics.commands.oIAnalyticsList.length);
-    assert.ok(
-      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c => c.arguments[0] === `${testData.oIAnalytics.commands.oIAnalyticsList.length} commands to add`
-      )
-    );
+    assert.strictEqual(oIAnalyticsCommandRepository.create.mock.calls.length, pendingCommands.length);
+    assert.ok(logged(logger.trace).includes(`${pendingCommands.length} commands to add`));
 
     oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => {
       throw new Error('error');
@@ -622,8 +1242,6 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should retrieve commands and do nothing', async () => {
-    oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => []);
-
     await service.fetchNewCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.retrievePendingCommands.mock.calls.length, 1);
@@ -632,82 +1250,59 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute update-version command without updating launcher', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
     const exitMock = mock.method(process, 'exit', () => undefined as never);
     mock.method(fs, 'unlink', async () => undefined);
     mock.method(fs, 'writeFile', async () => undefined);
 
-    await service.processNextCommand();
+    await executeCommand(updateVersionCommand);
 
     assert.strictEqual(oIAnalyticsRegistrationService.getRegistrationSettings.mock.calls.length, 2);
     assert.ok(oIAnalyticsCommandRepository.findFirstToExecute.mock.calls.length > 0);
     assert.strictEqual(oIAnalyticsCommandRepository.markAsRunning.mock.calls.length, 1);
     assert.ok(oIBusService.getEngineSettings.mock.calls.length > 0);
     assert.strictEqual(oIAnalyticsClient.downloadFile.mock.calls.length, 1);
-    assert.strictEqual(mockUtils.unzip.mock.calls.length, 1);
-    assert.strictEqual(mockUtils.delay.mock.calls.length, 1);
+    assert.strictEqual(utilsExports.unzip.mock.calls.length, 1);
+    assert.strictEqual(utilsExports.delay.mock.calls.length, 1);
     assert.strictEqual(exitMock.mock.calls.length, 1);
   });
 
   it('should execute update-version command with launcher update', async () => {
-    const launcherCommand: OIBusUpdateVersionCommand = {
-      ...(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand),
-      commandContent: {
-        version: 'v3.5.0-beta',
-        assetId: 'assetId',
-        backupFolders: 'cache/*',
-        updateLauncher: true
-      }
-    };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementation(
-      seq(
-        () => launcherCommand, // first processNextCommand
-        () => launcherCommand // second processNextCommand
-      )
-    );
-    const killMock = mock.method(process, 'kill', () => true as unknown as void);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementation(() => launcherUpdateCommand);
+    const killMock = mock.method(process, 'kill', () => true);
     const osTypeMock = mock.method(
       os,
       'type',
       seq(
-        () => 'linux' as NodeJS.Platform,
-        () => 'Windows_NT' as NodeJS.Platform
+        () => 'linux',
+        () => 'Windows_NT'
       )
     );
-    const fsFsMock = mock.method(fs, 'rename', async () => undefined);
+    const renameMock = mock.method(fs, 'rename', async () => undefined);
     mock.method(fs, 'unlink', async () => undefined);
     mock.method(fs, 'writeFile', async () => undefined);
     mock.method(process, 'exit', () => undefined as never);
+    const renamed = () => renameMock.mock.calls.map(call => call.arguments as Array<string>);
 
     await service.processNextCommand();
 
     assert.strictEqual(oIAnalyticsClient.downloadFile.mock.calls.length, 1);
-    assert.strictEqual(mockUtils.unzip.mock.calls.length, 1);
-    assert.strictEqual(fsFsMock.mock.calls.length, 2);
-    assert.ok(
-      (fsFsMock.mock.calls as Array<{ arguments: [string, string] }>).some(
-        c => c.arguments[0].includes('oibus-launcher') && c.arguments[1].includes('oibus-launcher_backup')
-      )
-    );
+    assert.strictEqual(utilsExports.unzip.mock.calls.length, 1);
+    assert.strictEqual(renameMock.mock.calls.length, 2);
+    assert.ok(renamed().some(([from, to]) => from.includes('oibus-launcher') && to.includes('oibus-launcher_backup')));
     assert.strictEqual(osTypeMock.mock.calls.length, 1);
     assert.strictEqual(killMock.mock.calls.length, 1);
 
     await service.processNextCommand();
-    assert.ok(
-      (fsFsMock.mock.calls as Array<{ arguments: [string, string] }>).some(
-        c => c.arguments[0].includes('oibus-launcher.exe') && c.arguments[1].includes('oibus-launcher_backup.exe')
-      )
-    );
+    assert.ok(renamed().some(([from, to]) => from.includes('oibus-launcher.exe') && to.includes('oibus-launcher_backup.exe')));
   });
 
   it('should delete the zip file even when unzip fails', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
-    mockUtils.unzip.mock.mockImplementationOnce(() => {
+    utilsExports.unzip.mock.mockImplementationOnce(() => {
       throw new Error('unzip error');
     });
 
-    await service.processNextCommand();
+    await executeCommand(updateVersionCommand);
 
     assert.strictEqual(unlinkMock.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls.length, 1);
@@ -715,14 +1310,13 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should clean the update directory and propagate the error when writeFile fails after unzip', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
     mock.method(fs, 'unlink', async () => undefined);
     const rmMock = mock.method(fs, 'rm', async () => undefined);
     mock.method(fs, 'writeFile', async () => {
       throw new Error('disk full');
     });
 
-    await service.processNextCommand();
+    await executeCommand(updateVersionCommand);
 
     assert.strictEqual(rmMock.mock.calls.length, 1);
     assert.ok((rmMock.mock.calls[0].arguments[0] as string).endsWith('update'));
@@ -731,36 +1325,31 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should restore the launcher backup and clean the update directory when the launcher swap fails', async () => {
-    const launcherCommand: OIBusUpdateVersionCommand = {
-      ...(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand),
-      commandContent: {
-        version: 'v3.5.0-beta',
-        assetId: 'assetId',
-        backupFolders: 'cache/*',
-        updateLauncher: true
-      }
-    };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => launcherCommand);
     mock.method(fs, 'unlink', async () => undefined);
     const rmMock = mock.method(fs, 'rm', async () => undefined);
-    mock.method(os, 'type', () => 'Linux' as NodeJS.Platform);
+    mock.method(os, 'type', () => 'Linux');
+    const renameMock = mock.method(
+      fs,
+      'rename',
+      seq(
+        async () => undefined,
+        async () => {
+          throw new Error('rename failed');
+        },
+        async () => undefined
+      )
+    );
 
-    let renameCallCount = 0;
-    const renameMock = mock.method(fs, 'rename', async () => {
-      renameCallCount += 1;
-      if (renameCallCount === 2) throw new Error('rename failed');
-    });
+    await executeCommand(launcherUpdateCommand);
 
-    await service.processNextCommand();
-
-    const renameArgs = renameMock.mock.calls as Array<{ arguments: [string, string] }>;
+    const renameArgs = renameMock.mock.calls.map(call => call.arguments as Array<string>);
     // First rename: current launcher → backup
-    assert.ok(renameArgs[0].arguments[1].includes('oibus-launcher_backup'));
+    assert.ok(renameArgs[0][1].includes('oibus-launcher_backup'));
     // Second rename: update/launcher → launcher (throws)
-    assert.ok(renameArgs[1].arguments[0].includes('update'));
+    assert.ok(renameArgs[1][0].includes('update'));
     // Third rename: restores backup → current launcher
-    assert.ok(renameArgs[2].arguments[0].includes('oibus-launcher_backup'));
-    assert.ok(renameArgs[2].arguments[1].endsWith('oibus-launcher'));
+    assert.ok(renameArgs[2][0].includes('oibus-launcher_backup'));
+    assert.ok(renameArgs[2][1].endsWith('oibus-launcher'));
     // Update directory cleaned up
     assert.strictEqual(rmMock.mock.calls.length, 1);
     assert.ok((rmMock.mock.calls[0].arguments[0] as string).endsWith('update'));
@@ -770,7 +1359,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should not execute update-version command if a command is already being executed', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => updateVersionCommand);
     mock.method(process, 'exit', () => undefined as never);
     // Mock fs operations so they resolve as microtasks rather than real I/O,
     // allowing service1's async chain to reach delay() before we explicitly resolve it.
@@ -780,10 +1369,10 @@ describe('OIAnalytics Command Service', () => {
     // during the assertion, then we drain the microtask queue to confirm it reached
     // delay(), resolve it, and let the in-flight call clean up without leaving a
     // dangling async handle that would stall the test runner.
-    let resolveDelay!: (value: PromiseLike<undefined> | undefined) => void;
-    mockUtils.delay.mock.mockImplementationOnce(
+    let resolveDelay!: () => void;
+    utilsExports.delay.mock.mockImplementationOnce(
       () =>
-        new Promise<undefined>(resolve => {
+        new Promise<void>(resolve => {
           resolveDelay = resolve;
         })
     );
@@ -791,30 +1380,24 @@ describe('OIAnalytics Command Service', () => {
     service.processNextCommand();
     await service.processNextCommand();
 
-    assert.ok(
-      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'A command is already being executed')
-    );
+    assert.ok(logged(logger.trace).includes('A command is already being executed'));
 
     // Drain all pending microtasks so service1's chain reaches delay() and resolveDelay is set.
     await flushPromises();
     // Let the in-flight processNextCommand finish cleanly.
-    resolveDelay(undefined);
+    resolveDelay();
     await flushPromises();
   });
 
   it('should not execute a command if not registered', async () => {
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
-      ...JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed)),
+      ...testData.oIAnalytics.registration.completed,
       status: 'PENDING'
     }));
 
     await service.processNextCommand();
 
-    assert.ok(
-      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c => c.arguments[0] === "OIAnalytics not registered. OIBus won't retrieve commands"
-      )
-    );
+    assert.ok(logged(logger.trace).includes("OIAnalytics not registered. OIBus won't retrieve commands"));
   });
 
   it('should not execute a command if no command found', async () => {
@@ -822,258 +1405,93 @@ describe('OIAnalytics Command Service', () => {
 
     await service.processNextCommand();
 
-    assert.ok((logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to execute'));
+    assert.ok(logged(logger.trace).includes('No command to execute'));
   });
 
-  it('should execute update-engine-general command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[1]);
+  for (const { title, command, setup, calls, args, result } of executionCases()) {
+    it(title ?? `should execute ${command.type} command`, async () => {
+      setup?.();
 
-    await service.processNextCommand();
+      await executeCommand(command);
 
-    assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
-    assert.deepStrictEqual(oIBusService.updateEngineName.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand).commandContent,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[1].id,
-      testData.constants.dates.FAKE_NOW,
-      'Engine name updated successfully'
-    ]);
-  });
-
-  it('should execute update-engine-web-server command', async () => {
-    const command: OIBusUpdateEngineWebServerCommand = {
-      ...(testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand),
-      type: 'update-engine-web-server',
-      commandContent: testData.engine.webServerCommand
-    };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIBusService.updateEngineWebServer.mock.calls[0].arguments, [testData.engine.webServerCommand, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Engine web server settings updated successfully'
-    ]);
-  });
-
-  it('should execute update-engine-proxy command', async () => {
-    const command: OIBusUpdateEngineProxyCommand = {
-      ...(testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand),
-      type: 'update-engine-proxy',
-      commandContent: testData.engine.proxyCommand
-    };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
-    assert.deepStrictEqual(oIBusService.updateEngineProxy.mock.calls[0].arguments, [testData.engine.proxyCommand, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Engine proxy settings updated successfully'
-    ]);
-  });
-
-  it('should execute update-engine-logger command', async () => {
-    const command: OIBusUpdateEngineLoggerCommand = {
-      ...(testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand),
-      type: 'update-engine-logger',
-      commandContent: testData.engine.loggerCommand
-    };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
-    assert.deepStrictEqual(oIBusService.updateEngineLogger.mock.calls[0].arguments, [testData.engine.loggerCommand, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Engine logger settings updated successfully'
-    ]);
-  });
+      assert.deepStrictEqual(
+        calls().map(call => call.arguments),
+        [args]
+      );
+      assertCompleted(command, result);
+      // only the logger command with a loki password decrypts a text with the private key
+      assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
+    });
+  }
 
   it('should execute update-engine-logger command with loki password', async () => {
-    const command: OIBusUpdateEngineLoggerCommand = {
-      ...(testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand),
+    const command = buildCommand<OIBusUpdateEngineLoggerCommand>({
+      id: 'updateEngineLoggerId',
       type: 'update-engine-logger',
-      commandContent: JSON.parse(JSON.stringify(testData.engine.loggerCommand))
-    };
-    command.commandContent.loki.password = 'test';
+      commandContent: { ...testData.engine.loggerCommand, loki: { ...testData.engine.loggerCommand.loki, password: 'test' } }
+    });
 
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
+    await executeCommand(command);
 
     assert.deepStrictEqual(oIBusService.updateEngineLogger.mock.calls[0].arguments, [command.commandContent, 'oianalytics']);
     assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 1);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Engine logger settings updated successfully'
-    ]);
+    assertCompleted(command, 'Engine logger settings updated successfully');
   });
 
   it('should execute update-registration-settings command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[15]);
+    await executeCommand(updateRegistrationCommand);
 
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls[0].arguments, [
-      {
-        host: testData.oIAnalytics.registration.completed.host,
-        useProxy: testData.oIAnalytics.registration.completed.useProxy,
-        proxyUrl: testData.oIAnalytics.registration.completed.proxyUrl,
-        proxyUsername: testData.oIAnalytics.registration.completed.proxyUsername,
-        proxyPassword: '',
-        useApiGateway: testData.oIAnalytics.registration.completed.useApiGateway,
-        apiGatewayHeaderKey: testData.oIAnalytics.registration.completed.apiGatewayHeaderKey,
-        apiGatewayHeaderValue: '',
-        apiGatewayBaseEndpoint: testData.oIAnalytics.registration.completed.apiGatewayBaseEndpoint,
-        acceptUnauthorized: testData.oIAnalytics.registration.completed.acceptUnauthorized,
-        commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-          .commandRefreshInterval,
-        commandRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-          .commandRetryInterval,
-        messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-          .messageRetryInterval,
-        commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions
-      },
-      'oianalytics'
-    ]);
-    assert.strictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls.length, 1);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[15].id,
-      testData.constants.dates.FAKE_NOW,
-      'Registration settings updated successfully'
-    ]);
+    assert.deepStrictEqual(
+      oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls.map(call => call.arguments),
+      [[expectedRegistrationEdit(testData.oIAnalytics.registration.completed), 'oianalytics']]
+    );
+    assertCompleted(updateRegistrationCommand, 'Registration settings updated successfully');
   });
 
   it('should execute update-registration-settings command and not enabling permissions if disabled', async () => {
-    const registration: OIAnalyticsRegistration = {
-      ...testData.oIAnalytics.registration.completed,
-      commandPermissions: {
-        updateVersion: false,
-        restartEngine: false,
-        regenerateCipherKeys: false,
-        updateEngineSettings: false,
-        importConfiguration: false,
-        dumpMemory: false,
-        retrieveLogsDatabase: false,
-        updateRegistrationSettings: false,
-        createScanMode: false,
-        updateScanMode: false,
-        deleteScanMode: false,
-        createIpFilter: false,
-        updateIpFilter: false,
-        deleteIpFilter: false,
-        createCertificate: false,
-        updateCertificate: false,
-        deleteCertificate: false,
-        createHistoryQuery: false,
-        updateHistoryQuery: false,
-        deleteHistoryQuery: false,
-        createOrUpdateHistoryItemsFromCsv: false,
-        testHistoryNorthConnection: false,
-        testHistorySouthConnection: false,
-        testHistorySouthItem: false,
-        createSouth: false,
-        updateSouth: false,
-        deleteSouth: false,
-        createOrUpdateSouthItemsFromCsv: false,
-        testSouthConnection: false,
-        testSouthItem: false,
-        createNorth: false,
-        updateNorth: false,
-        deleteNorth: false,
-        testNorthConnection: false,
-        setpoint: false,
-        searchHistoryCacheContent: false,
-        getHistoryCacheFileContent: false,
-        updateHistoryCacheContent: false,
-        searchNorthCacheContent: false,
-        getNorthCacheFileContent: false,
-        updateNorthCacheContent: false,
-        createCustomTransformer: false,
-        updateCustomTransformer: false,
-        deleteCustomTransformer: false,
-        testCustomTransformer: false
-      }
-    };
+    const commandPermissions = { ...testData.oIAnalytics.registration.completed.commandPermissions };
+    for (const permission of Object.keys(commandPermissions) as Array<keyof RegistrationCommandPermissions>) {
+      commandPermissions[permission] = false;
+    }
+    const registration: OIAnalyticsRegistration = { ...testData.oIAnalytics.registration.completed, commandPermissions };
 
     // Call private method directly
-    await (
-      service as unknown as {
-        executeUpdateRegistrationSettingsCommand(cmd: OIBusUpdateRegistrationSettingsCommand, reg: OIAnalyticsRegistration): Promise<void>;
-      }
-    ).executeUpdateRegistrationSettingsCommand(
-      testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand,
-      registration
-    );
+    await service['executeUpdateRegistrationSettingsCommand'](updateRegistrationCommand, registration);
 
-    assert.deepStrictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls[0].arguments, [
-      {
-        host: registration.host,
-        useProxy: registration.useProxy,
-        proxyUrl: registration.proxyUrl,
-        proxyUsername: registration.proxyUsername,
-        proxyPassword: '',
-        useApiGateway: registration.useApiGateway,
-        apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
-        apiGatewayHeaderValue: '',
-        apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
-        acceptUnauthorized: registration.acceptUnauthorized,
-        commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-          .commandRefreshInterval,
-        commandRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-          .commandRetryInterval,
-        messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-          .messageRetryInterval,
-        commandPermissions: registration.commandPermissions
-      },
-      'oianalytics'
-    ]);
-    assert.strictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls.length, 1);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[15].id,
-      testData.constants.dates.FAKE_NOW,
-      'Registration settings updated successfully'
-    ]);
+    assert.deepStrictEqual(
+      oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls.map(call => call.arguments),
+      [[expectedRegistrationEdit(registration), 'oianalytics']]
+    );
+    assertCompleted(updateRegistrationCommand, 'Registration settings updated successfully');
   });
 
   it('should execute restart-engine command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[2]);
     const exitMock = mock.method(process, 'exit', () => undefined as never);
 
-    await service.processNextCommand();
+    await executeCommand(restartCommand);
 
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[2].id,
-      testData.constants.dates.FAKE_NOW,
-      'OIBus restarted'
-    ]);
-    assert.strictEqual(mockUtils.delay.mock.calls.length, 1);
+    assertCompleted(restartCommand, 'OIBus restarted');
+    assert.strictEqual(utilsExports.delay.mock.calls.length, 1);
     assert.strictEqual(exitMock.mock.calls.length, 1);
   });
 
+  it('should execute regenerate-cipher-keys command', async () => {
+    mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
+
+    await executeCommand(regenerateCipherKeysCommand);
+
+    assert.deepStrictEqual(oIAnalyticsRegistrationService.updateKeys.mock.calls[0].arguments, ['private key', 'public key', 'oianalytics']);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assertCompleted(regenerateCipherKeysCommand, 'OIAnalytics keys reloaded');
+  });
+
   describe('import-configuration command', () => {
-    const command = {
+    const command = buildCommand<OIBusImportConfigurationCommand>({
       id: 'importConfigurationId',
       type: 'import-configuration',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
       commandContent: { fileId: 'fileId' }
-    } as OIBusImportConfigurationCommand;
-    const configuration = { oibusVersion: '3.10.0', exportedAt: testData.constants.dates.FAKE_NOW, config: {} };
+    });
+    const configuration = { oibusVersion: '3.10.0', exportedAt: FAKE_NOW, config: {} };
 
     beforeEach(() => {
       oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
@@ -1099,12 +1517,8 @@ describe('OIAnalytics Command Service', () => {
         'fileId'
       ]);
       assert.deepStrictEqual(configImportService.importConfigurationFromOIAnalytics.mock.calls[0].arguments, [configuration]);
-      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-        command.id,
-        testData.constants.dates.FAKE_NOW,
-        JSON.stringify(result)
-      ]);
-      assert.strictEqual(mockUtils.delay.mock.calls.length, 1);
+      assertCompleted(command, JSON.stringify(result));
+      assert.strictEqual(utilsExports.delay.mock.calls.length, 1);
       assert.strictEqual(exitMock.mock.calls.length, 1);
     });
 
@@ -1114,10 +1528,7 @@ describe('OIAnalytics Command Service', () => {
       await service.processNextCommand();
 
       assert.strictEqual(configImportService.importConfigurationFromOIAnalytics.mock.calls.length, 0);
-      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-        command.id,
-        'Configuration file fileId is not valid JSON'
-      ]);
+      assertErrored(command, 'Configuration file fileId is not valid JSON');
     });
 
     it('should report the validation errors of the configuration', async () => {
@@ -1130,10 +1541,7 @@ describe('OIAnalytics Command Service', () => {
 
       await service.processNextCommand();
 
-      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-        command.id,
-        'Configuration is invalid\n- south "MySouth": host is required\n- engine: port is required'
-      ]);
+      assertErrored(command, 'Configuration is invalid\n- south "MySouth": host is required\n- engine: port is required');
     });
 
     it('should report the error of an import without validation errors', async () => {
@@ -1143,41 +1551,31 @@ describe('OIAnalytics Command Service', () => {
 
       await service.processNextCommand();
 
-      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'Export from a newer OIBus']);
+      assertErrored(command, 'Export from a newer OIBus');
     });
 
     it('should not import the configuration without permission', async () => {
-      oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
-        ...testData.oIAnalytics.registration.completed,
-        commandPermissions: { ...testData.oIAnalytics.registration.completed.commandPermissions, importConfiguration: false }
-      }));
+      withoutPermission('importConfiguration');
 
       await service.processNextCommand();
 
       assert.strictEqual(oIAnalyticsClient.retrieveConfigurationFile.mock.calls.length, 0);
-      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-        command.id,
-        `Command ${command.id} of type ${command.type} is not authorized`
-      ]);
+      assertErrored(command, `Command ${command.id} of type ${command.type} is not authorized`);
     });
   });
 
   describe('commands uploading a file', () => {
-    const baseCommand = {
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null
-    };
-    const dumpMemoryCommand = { ...baseCommand, id: 'dumpMemoryId', type: 'dump-memory' } as OIBusDumpMemoryCommand;
-    const retrieveLogsDatabaseCommand = {
-      ...baseCommand,
+    const dumpMemoryCommand = buildCommand<OIBusDumpMemoryCommand>({ id: 'dumpMemoryId', type: 'dump-memory' });
+    const retrieveLogsDatabaseCommand = buildCommand<OIBusRetrieveLogsDatabaseCommand>({
       id: 'retrieveLogsDatabaseId',
       type: 'retrieve-logs-database'
-    } as OIBusRetrieveLogsDatabaseCommand;
-    const engineName = sanitizeFilename(testData.engine.settings.general.name);
+    });
+    const engineName = realUtils.sanitizeFilename(testData.engine.settings.general.name);
+    const mockHeapSnapshot = () =>
+      mock.method(v8, 'writeHeapSnapshot', (filePath: string) => {
+        writeFileSync(filePath, 'heap snapshot');
+        return filePath;
+      });
 
     beforeEach(async () => {
       await fs.mkdir(TEST_FOLDER, { recursive: true });
@@ -1188,16 +1586,12 @@ describe('OIAnalytics Command Service', () => {
     });
 
     it('should upload a zipped memory dump', async () => {
-      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => dumpMemoryCommand);
-      const writeHeapSnapshot = mock.method(v8, 'writeHeapSnapshot', (filePath: string) => {
-        writeFileSync(filePath, 'heap snapshot');
-        return filePath;
-      });
+      const writeHeapSnapshot = mockHeapSnapshot();
 
-      await service.processNextCommand();
+      await executeCommand(dumpMemoryCommand);
 
       const filename = `heapdump-${engineName}-2021_01_02_00_00_00.zip`;
-      const [snapshotPath, entryName, zipPath] = mockUtils.zipFile.mock.calls[0].arguments;
+      const [snapshotPath, entryName, zipPath] = utilsExports.zipFile.mock.calls[0].arguments;
       assert.deepStrictEqual(writeHeapSnapshot.mock.calls[0].arguments, [snapshotPath]);
       assert.strictEqual(entryName, `heapdump-${engineName}-2021_01_02_00_00_00.heapsnapshot`);
       assert.strictEqual(path.basename(zipPath), filename);
@@ -1207,11 +1601,10 @@ describe('OIAnalytics Command Service', () => {
         zipPath,
         filename
       ]);
-      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-        dumpMemoryCommand.id,
-        testData.constants.dates.FAKE_NOW,
+      assertCompleted(
+        dumpMemoryCommand,
         JSON.stringify({ fileId: 'fileId', filename, compressedSize: 'zip'.length, uncompressedSize: 'heap snapshot'.length })
-      ]);
+      );
       assert.deepStrictEqual(await fs.readdir(TMP_FOLDER), [], 'temporary files removed');
     });
 
@@ -1219,20 +1612,19 @@ describe('OIAnalytics Command Service', () => {
       const logsDatabase = new Database(LOGS_DATABASE_PATH);
       logsDatabase.exec(`CREATE TABLE logs (message TEXT); INSERT INTO logs VALUES ('log message');`);
       logsDatabase.close();
-      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => retrieveLogsDatabaseCommand);
       let copiedLogs: unknown;
-      mockUtils.zipFile.mock.mockImplementationOnce(async (input: string, _entryName: string, output: string) => {
+      utilsExports.zipFile.mock.mockImplementationOnce(async (input, _entryName, output) => {
         const copy = new Database(input, { readonly: true });
         copiedLogs = copy.prepare('SELECT message FROM logs').all();
         copy.close();
         await fs.writeFile(output, 'zip');
       });
 
-      await service.processNextCommand();
+      await executeCommand(retrieveLogsDatabaseCommand);
 
       const filename = `logs-${engineName}-2021_01_02_00_00_00.zip`;
       assert.deepStrictEqual(copiedLogs, [{ message: 'log message' }]);
-      assert.strictEqual(mockUtils.zipFile.mock.calls[0].arguments[1], 'logs.db');
+      assert.strictEqual(utilsExports.zipFile.mock.calls[0].arguments[1], 'logs.db');
       assert.strictEqual(oIAnalyticsClient.uploadCommandFile.mock.calls[0].arguments[3], filename);
       const result = JSON.parse(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments[2] as string);
       assert.strictEqual(result.fileId, 'fileId');
@@ -1243,21 +1635,14 @@ describe('OIAnalytics Command Service', () => {
     });
 
     it('should remove the temporary files when the upload fails', async () => {
-      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => dumpMemoryCommand);
-      mock.method(v8, 'writeHeapSnapshot', (filePath: string) => {
-        writeFileSync(filePath, 'heap snapshot');
-        return filePath;
-      });
+      mockHeapSnapshot();
       oIAnalyticsClient.uploadCommandFile.mock.mockImplementationOnce(async () => {
         throw new Error('413 - Payload Too Large');
       });
 
-      await service.processNextCommand();
+      await executeCommand(dumpMemoryCommand);
 
-      assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-        dumpMemoryCommand.id,
-        '413 - Payload Too Large'
-      ]);
+      assertErrored(dumpMemoryCommand, '413 - Payload Too Large');
       assert.deepStrictEqual(await fs.readdir(TMP_FOLDER), []);
     });
 
@@ -1266,1117 +1651,300 @@ describe('OIAnalytics Command Service', () => {
       [retrieveLogsDatabaseCommand, 'retrieveLogsDatabase']
     ] as const) {
       it(`should not execute ${command.type} command without permission`, async () => {
-        oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-        oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
-          ...testData.oIAnalytics.registration.completed,
-          commandPermissions: { ...testData.oIAnalytics.registration.completed.commandPermissions, [permission]: false }
-        }));
+        withoutPermission(permission);
 
-        await service.processNextCommand();
+        await executeCommand(command);
 
         assert.strictEqual(oIAnalyticsClient.uploadCommandFile.mock.calls.length, 0);
-        assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-          command.id,
-          `Command ${command.id} of type ${command.type} is not authorized`
-        ]);
+        assertErrored(command, `Command ${command.id} of type ${command.type} is not authorized`);
       });
     }
   });
 
-  it('should execute update-scan-mode command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[3]);
+  describe('create-or-update-south-items-from-csv command', () => {
+    const southConnector = testData.south.list[0];
+    const itemDTOs = southConnector.items.map(item =>
+      toSouthConnectorItemDTO(item, southConnector.type, getUserInfo)
+    ) as Array<SouthConnectorItemDTO>;
 
-    await service.processNextCommand();
+    it('should execute create-or-update-south-items-from-csv command', async () => {
+      southService.findById.mock.mockImplementationOnce(() => southConnector);
+      southService.checkImportItems.mock.mockImplementationOnce(async () => ({ items: itemDTOs, errors: [] }));
 
-    assert.deepStrictEqual(scanModeService.update.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
-      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).commandContent,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[3].id,
-      testData.constants.dates.FAKE_NOW,
-      'Scan mode updated successfully'
-    ]);
-  });
+      await executeCommand(southItemsFromCsvCommand);
 
-  it('should execute update-south command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[4]);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent.type
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(southService.update.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).southConnectorId,
-      (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[4].id,
-      testData.constants.dates.FAKE_NOW,
-      'South connector updated successfully'
-    ]);
-  });
-
-  it('should execute update-north command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[5]);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent.type
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(northService.update.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).northConnectorId,
-      (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[5].id,
-      testData.constants.dates.FAKE_NOW,
-      'North connector updated successfully'
-    ]);
-  });
-
-  it('should execute delete-scan-mode command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[6]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(scanModeService.delete.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[6] as OIBusDeleteScanModeCommand).scanModeId,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[6].id,
-      testData.constants.dates.FAKE_NOW,
-      'Scan mode deleted successfully'
-    ]);
-  });
-
-  it('should execute delete-south command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[7]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(southService.delete.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[7] as OIBusDeleteSouthConnectorCommand).southConnectorId,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[7].id,
-      testData.constants.dates.FAKE_NOW,
-      'South connector deleted successfully'
-    ]);
-  });
-
-  it('should execute delete-north command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[8]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(northService.delete.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[8] as OIBusDeleteNorthConnectorCommand).northConnectorId,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[8].id,
-      testData.constants.dates.FAKE_NOW,
-      'North connector deleted successfully'
-    ]);
-  });
-
-  it('should execute create-scan-mode command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[9]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(scanModeService.create.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand).commandContent,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[9].id,
-      testData.constants.dates.FAKE_NOW,
-      'Scan mode created successfully'
-    ]);
-  });
-
-  it('should execute create-scan-mode command with old-style payload missing type, cron, interval and activationWindow', async () => {
-    const oldStyleCommandContent = {
-      name: 'my new scan mode',
-      description: 'another scan mode'
-    } as ScanModeCommandDTO;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => ({
-      ...(testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand),
-      commandContent: oldStyleCommandContent
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(scanModeService.create.mock.calls[0].arguments, [
-      {
-        name: 'my new scan mode',
-        description: 'another scan mode',
-        type: 'cron',
-        cron: '',
-        interval: null,
-        activationWindow: null
-      },
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[9].id,
-      testData.constants.dates.FAKE_NOW,
-      'Scan mode created successfully'
-    ]);
-  });
-
-  it('should execute create-scan-mode command with new-style interval payload, defaulting only the missing cron', async () => {
-    const newStyleCommandContent = {
-      name: 'my new interval scan mode',
-      description: 'an interval scan mode',
-      type: 'interval',
-      interval: { value: 30, unit: 's' },
-      activationWindow: { dateRange: { start: '2026-08-01T00:00:00.000Z', end: null } }
-    } as ScanModeCommandDTO;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => ({
-      ...(testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand),
-      commandContent: newStyleCommandContent
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(scanModeService.create.mock.calls[0].arguments, [
-      {
-        name: 'my new interval scan mode',
-        description: 'an interval scan mode',
-        type: 'interval',
-        cron: '',
-        interval: { value: 30, unit: 's' },
-        activationWindow: { dateRange: { start: '2026-08-01T00:00:00.000Z', end: null } }
-      },
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[9].id,
-      testData.constants.dates.FAKE_NOW,
-      'Scan mode created successfully'
-    ]);
-  });
-
-  it('should execute update-scan-mode command with old-style payload missing type, cron, interval and activationWindow', async () => {
-    const oldStyleCommandContent = {
-      name: 'my scan mode',
-      description: 'a scan mode'
-    } as ScanModeCommandDTO;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => ({
-      ...(testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand),
-      commandContent: oldStyleCommandContent
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(scanModeService.update.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
-      {
-        name: 'my scan mode',
-        description: 'a scan mode',
-        type: 'cron',
-        cron: '',
-        interval: null,
-        activationWindow: null
-      },
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[3].id,
-      testData.constants.dates.FAKE_NOW,
-      'Scan mode updated successfully'
-    ]);
-  });
-
-  it('should execute update-scan-mode command keeping an explicit cron and not defaulting already-present fields', async () => {
-    const explicitCronCommandContent = {
-      name: 'my scan mode',
-      description: 'a scan mode',
-      type: 'cron',
-      cron: '0 0 * * * *',
-      interval: null,
-      activationWindow: null
-    } as ScanModeCommandDTO;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => ({
-      ...(testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand),
-      commandContent: explicitCronCommandContent
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(scanModeService.update.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
-      {
-        name: 'my scan mode',
-        description: 'a scan mode',
-        type: 'cron',
-        cron: '0 0 * * * *',
-        interval: null,
-        activationWindow: null
-      },
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[3].id,
-      testData.constants.dates.FAKE_NOW,
-      'Scan mode updated successfully'
-    ]);
-  });
-
-  it('should execute create-south command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[10]);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent.type
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(southService.create.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent,
-      null,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[10].id,
-      testData.constants.dates.FAKE_NOW,
-      'South connector created successfully'
-    ]);
-  });
-
-  it('should execute create-north command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[11]);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent.type
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(northService.create.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent,
-      null,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[11].id,
-      testData.constants.dates.FAKE_NOW,
-      'North connector created successfully'
-    ]);
-  });
-
-  it('should execute create-or-update-south-items-from-csv command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
-    southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
-    southService.checkImportItems.mock.mockImplementationOnce(async () => ({
-      items: testData.south.list[0].items.map(item =>
-        toSouthConnectorItemDTO(item, testData.south.list[0].type, (id: string) => ({ id, friendlyName: id }))
-      ) as Array<SouthConnectorItemDTO>,
-      errors: [] as Array<{ item: Record<string, string>; error: string }>
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(southService.findById.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId
-    ]);
-    assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [
-      testData.south.list[0].type,
-      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
-      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
-      testData.south.list[0].items.map(item =>
-        toSouthConnectorItemDTO(item, testData.south.list[0].type, (id: string) => ({ id, friendlyName: id }))
-      )
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[14].id,
-      testData.constants.dates.FAKE_NOW,
-      `2 items imported on South connector ${testData.south.list[0].name}`
-    ]);
-  });
-
-  it('should execute create-or-update-south-items-from-csv command and throw an error if south not found', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
-    southService.findById.mock.mockImplementationOnce((southId: string) => {
-      throw new Error(`South connector ${southId} not found`);
+      assert.deepStrictEqual(southService.findById.mock.calls[0].arguments, [southItemsFromCsvCommand.southConnectorId]);
+      assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [
+        southConnector.type,
+        southItemsFromCsvCommand.commandContent.csvContent,
+        southItemsFromCsvCommand.commandContent.delimiter,
+        itemDTOs
+      ]);
+      assertCompleted(southItemsFromCsvCommand, `2 items imported on South connector ${southConnector.name}`);
     });
 
-    await service.processNextCommand();
+    it('should execute create-or-update-south-items-from-csv command and throw an error if south not found', async () => {
+      southService.findById.mock.mockImplementationOnce(southId => {
+        throw new Error(`South connector ${southId} not found`);
+      });
 
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      testData.oIAnalytics.commands.oIBusList[14].id,
-      `South connector ${(testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId} not found`
-    ]);
+      await executeCommand(southItemsFromCsvCommand);
+
+      assertErrored(southItemsFromCsvCommand, `South connector ${southItemsFromCsvCommand.southConnectorId} not found`);
+    });
+
+    it('should execute create-or-update-south-items-from-csv command and error when south connector resolves to a falsy value', async () => {
+      southService.findById.mock.mockImplementationOnce(() => null as never);
+
+      await executeCommand(southItemsFromCsvCommand);
+
+      assertErrored(southItemsFromCsvCommand, `South connector ${southItemsFromCsvCommand.southConnectorId} not found`);
+      assert.strictEqual(southService.checkImportItems.mock.calls.length, 0);
+    });
+
+    it('should execute create-or-update-south-items-from-csv command with an item that has no scan mode', async () => {
+      southService.findById.mock.mockImplementationOnce(() => southConnector);
+      const itemWithoutScanMode = { ...itemDTOs[0], scanMode: null } as unknown as SouthConnectorItemDTO;
+      southService.checkImportItems.mock.mockImplementationOnce(async () => ({ items: [itemWithoutScanMode], errors: [] }));
+
+      await executeCommand(southItemsFromCsvCommand);
+
+      assert.deepStrictEqual(southService.importItems.mock.calls[0].arguments[1], [
+        {
+          id: itemWithoutScanMode.id,
+          enabled: itemWithoutScanMode.enabled,
+          name: itemWithoutScanMode.name,
+          settings: itemWithoutScanMode.settings,
+          scanModeId: null,
+          scanModeName: null
+        }
+      ]);
+    });
+
+    it('should execute create-or-update-south-items-from-csv command with item errors', async () => {
+      const command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand = {
+        ...southItemsFromCsvCommand,
+        commandContent: { ...southItemsFromCsvCommand.commandContent, deleteItemsNotPresent: true }
+      };
+      southService.findById.mock.mockImplementationOnce(() => southConnector);
+      southService.checkImportItems.mock.mockImplementationOnce(async () => ({
+        items: itemDTOs,
+        errors: [
+          { item: { name: 'item1' }, error: 'error1' },
+          { item: { name: 'item2' }, error: 'error2' }
+        ]
+      }));
+
+      await executeCommand(command);
+
+      assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [
+        southConnector.type,
+        command.commandContent.csvContent,
+        command.commandContent.delimiter,
+        []
+      ]);
+      assertErrored(command, `Error when checking csv items:\nitem1: error1\nitem2: error2`);
+    });
   });
 
-  it('should execute create-or-update-south-items-from-csv command and error when south connector resolves to a falsy value', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
-    southService.findById.mock.mockImplementationOnce(() => null as never);
+  describe('create-or-update-history-query-south-items-from-csv command', () => {
+    const historyQuery = testData.historyQueries.list[0];
+    const itemDTOs = historyQuery.items.map(item =>
+      toHistoryQueryItemDTO(item, historyQuery.southType, getUserInfo)
+    ) as Array<HistoryQueryItemDTO>;
 
-    await service.processNextCommand();
+    it('should execute create-or-update-history-query-south-items-from-csv command', async () => {
+      historyQueryService.findById.mock.mockImplementationOnce(() => historyQuery);
+      historyQueryService.checkImportItems.mock.mockImplementationOnce(async () => ({ items: itemDTOs, errors: [] }));
 
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      testData.oIAnalytics.commands.oIBusList[14].id,
-      `South connector ${(testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId} not found`
-    ]);
-    assert.strictEqual(southService.checkImportItems.mock.calls.length, 0);
-  });
+      await executeCommand(historyItemsFromCsvCommand);
 
-  it('should execute create-or-update-south-items-from-csv command with an item that has no scan mode', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
-    southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
-    const itemWithoutScanMode = {
-      ...toSouthConnectorItemDTO(testData.south.list[0].items[0], testData.south.list[0].type, (id: string) => ({
-        id,
-        friendlyName: id
-      })),
-      scanMode: null
-    } as unknown as SouthConnectorItemDTO;
-    southService.checkImportItems.mock.mockImplementationOnce(async () => ({
-      items: [itemWithoutScanMode],
-      errors: [] as Array<{ item: Record<string, string>; error: string }>
-    }));
+      assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments, ['h1']);
+      assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
+        historyQuery.southType,
+        '',
+        ',',
+        historyQuery.items.map(item => ({
+          ...item,
+          updatedBy: { id: '', friendlyName: '' },
+          createdBy: { id: '', friendlyName: '' }
+        }))
+      ]);
+      assertCompleted(historyItemsFromCsvCommand, `2 items imported on History query ${historyQuery.name}`);
+    });
 
-    await service.processNextCommand();
+    it('should execute create-or-update-history-query-south-items-from-csv command and throw an error if history not found', async () => {
+      historyQueryService.findById.mock.mockImplementationOnce(historyId => {
+        throw new Error(`History query ${historyId} not found`);
+      });
 
-    assert.deepStrictEqual((southService.importItems.mock.calls[0].arguments as Array<unknown>)[1], [
-      {
-        id: itemWithoutScanMode.id,
-        enabled: itemWithoutScanMode.enabled,
-        name: itemWithoutScanMode.name,
-        settings: itemWithoutScanMode.settings,
-        scanModeId: null,
-        scanModeName: null
-      }
-    ]);
-  });
+      await executeCommand(historyItemsFromCsvCommand);
 
-  it('should execute create-or-update-south-items-from-csv command with item errors', async () => {
-    const command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand = JSON.parse(
-      JSON.stringify(testData.oIAnalytics.commands.oIBusList[14])
-    );
-    command.commandContent.deleteItemsNotPresent = true;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
-    southService.checkImportItems.mock.mockImplementationOnce(async () => ({
-      items: testData.south.list[0].items.map(item =>
-        toSouthConnectorItemDTO(item, testData.south.list[0].type, (id: string) => ({ id, friendlyName: id }))
-      ) as Array<SouthConnectorItemDTO>,
-      errors: [
-        { item: { name: 'item1' } as Record<string, string>, error: 'error1' },
-        { item: { name: 'item2' } as Record<string, string>, error: 'error2' }
-      ]
-    }));
+      assertErrored(historyItemsFromCsvCommand, 'History query h1 not found');
+    });
 
-    await service.processNextCommand();
+    it('should execute create-or-update-history-query-south-items-from-csv command and error when history query resolves to a falsy value', async () => {
+      historyQueryService.findById.mock.mockImplementationOnce(() => null as never);
 
-    assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [
-      testData.south.list[0].type,
-      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
-      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
-      []
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      testData.oIAnalytics.commands.oIBusList[14].id,
-      `Error when checking csv items:\nitem1: error1\nitem2: error2`
-    ]);
+      await executeCommand(historyItemsFromCsvCommand);
+
+      assertErrored(historyItemsFromCsvCommand, 'History query h1 not found');
+      assert.strictEqual(historyQueryService.checkImportItems.mock.calls.length, 0);
+    });
+
+    it('should execute create-or-update-history-query-south-items-from-csv command with item error', async () => {
+      const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
+        ...historyItemsFromCsvCommand,
+        commandContent: { ...historyItemsFromCsvCommand.commandContent, deleteItemsNotPresent: true }
+      };
+      historyQueryService.findById.mock.mockImplementationOnce(() => historyQuery);
+      historyQueryService.checkImportItems.mock.mockImplementationOnce(async () => ({
+        items: itemDTOs,
+        errors: [
+          { item: { name: 'item1' }, error: 'error1' },
+          { item: { name: 'item2' }, error: 'error2' }
+        ]
+      }));
+
+      await executeCommand(command);
+
+      assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [historyQuery.southType, '', ',', []]);
+      assertErrored(command, `Error when checking csv items:\nitem1: error1\nitem2: error2`);
+    });
   });
 
   it('should catch error when execution fails', async () => {
-    const command = testData.oIAnalytics.commands.oIBusList[11];
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent.type
-      }
-    ]);
     northService.create.mock.mockImplementationOnce(async () => {
       throw new Error('command execution error');
     });
 
-    await service.processNextCommand();
+    await executeCommand(createNorthCommand);
 
     assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c =>
-          c.arguments[0] ===
-          `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: command execution error`
+      logged(logger.error).includes(
+        `Error while executing command ${createNorthCommand.id} (retrieved ${createNorthCommand.retrievedDate}) of type ${createNorthCommand.type}. Error: command execution error`
       )
     );
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'command execution error']);
+    assertErrored(createNorthCommand, 'command execution error');
   });
 
   it('should display proper error message on AggregateError during command execution', async () => {
-    const command = testData.oIAnalytics.commands.oIBusList[11];
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent.type
-      }
-    ]);
-    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
     northService.create.mock.mockImplementationOnce(async () => {
-      throw networkError;
+      throw new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
     });
 
-    await service.processNextCommand();
+    await executeCommand(createNorthCommand);
 
     assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c =>
-          c.arguments[0] ===
-          `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: connect ECONNREFUSED 127.0.0.1:4200`
+      logged(logger.error).includes(
+        `Error while executing command ${createNorthCommand.id} (retrieved ${createNorthCommand.retrievedDate}) of type ${createNorthCommand.type}. Error: connect ECONNREFUSED 127.0.0.1:4200`
       )
     );
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      'connect ECONNREFUSED 127.0.0.1:4200'
-    ]);
+    assertErrored(createNorthCommand, 'connect ECONNREFUSED 127.0.0.1:4200');
   });
 
   it('should display proper error message on AggregateError in sendPendingAcks', async () => {
     // Run a command successfully so it gets enqueued for ack, then fail the ack with AggregateError
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[1]);
-    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
     oIAnalyticsClient.updateCommandStatus.mock.mockImplementationOnce(async () => {
-      throw networkError;
+      throw new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
     });
 
-    await service.processNextCommand();
+    await executeCommand(updateEngineGeneralCommand);
 
-    assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(c =>
-        c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200')
-      )
-    );
+    assert.ok(logged(logger.error).some(message => message.includes('connect ECONNREFUSED 127.0.0.1:4200')));
     assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 0);
     // Cancel the scheduled retry to prevent async activity after the test ends
     await service.stop();
   });
 
   it('sendPendingAcks should do nothing when the service is stopped', async () => {
-    const internal = service as unknown as {
-      sendPendingAcks(): Promise<void>;
-      ackQueue: Map<string, unknown>;
-    };
-    internal.ackQueue.set(testData.oIAnalytics.commands.oIBusList[0].id, testData.oIAnalytics.commands.oIBusList[0]);
+    service['ackQueue'].set(updateVersionCommand.id, updateVersionCommand);
     await service.stop();
 
-    await internal.sendPendingAcks();
+    await service['sendPendingAcks']();
 
     assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, 0);
   });
 
   it('sendPendingAcks should do nothing when the ack queue is empty', async () => {
-    const internal = service as unknown as { sendPendingAcks(): Promise<void> };
-
-    await internal.sendPendingAcks();
+    await service['sendPendingAcks']();
 
     assert.strictEqual(oIAnalyticsRegistrationService.getRegistrationSettings.mock.calls.length, 0);
     assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, 0);
   });
 
+  it('sendPendingAcks should keep the queue while OIAnalytics is not registered', async () => {
+    service['ackQueue'].set(updateVersionCommand.id, updateVersionCommand);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+
+    await service['sendPendingAcks']();
+
+    assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, 0);
+    assert.strictEqual(service['ackQueue'].size, 1);
+  });
+
+  it('sendPendingAcks should drop queued commands that no longer exist locally', async () => {
+    service['ackQueue'].set(updateVersionCommand.id, updateVersionCommand);
+    oIAnalyticsCommandRepository.findById.mock.mockImplementation(() => null);
+
+    await service['sendPendingAcks']();
+
+    assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, 0);
+    assert.strictEqual(service['ackQueue'].size, 0);
+    assert.strictEqual(service['isAckFlushInProgress'], false);
+  });
+
   it('sendPendingAcks should clear a pending retry timeout before flushing', async () => {
-    const internal = service as unknown as {
-      sendPendingAcks(): Promise<void>;
-      ackQueue: Map<string, unknown>;
-      ackRetryTimeout: ReturnType<typeof setTimeout> | null;
-    };
-    internal.ackQueue.set(testData.oIAnalytics.commands.oIBusList[0].id, testData.oIAnalytics.commands.oIBusList[0]);
-    internal.ackRetryTimeout = setTimeout(() => undefined, 100_000);
+    service['ackQueue'].set(updateVersionCommand.id, updateVersionCommand);
+    service['ackRetryTimeout'] = setTimeout(() => undefined, 100_000);
 
-    await internal.sendPendingAcks();
+    await service['sendPendingAcks']();
 
-    assert.strictEqual(internal.ackRetryTimeout, null);
+    assert.strictEqual(service['ackRetryTimeout'], null);
     assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, 1);
   });
 
   it('sendPendingAcks should treat a 404 as already acknowledged and clear the queue', async () => {
-    const internal = service as unknown as {
-      sendPendingAcks(): Promise<void>;
-      ackQueue: Map<string, unknown>;
-    };
-    internal.ackQueue.set(testData.oIAnalytics.commands.oIBusList[0].id, testData.oIAnalytics.commands.oIBusList[0]);
+    service['ackQueue'].set(updateVersionCommand.id, updateVersionCommand);
     oIAnalyticsClient.updateCommandStatus.mock.mockImplementationOnce(async () => {
       throw new Error('404 - not found');
     });
 
-    await internal.sendPendingAcks();
+    await service['sendPendingAcks']();
 
-    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 1);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls[0].arguments, [
-      testData.oIAnalytics.commands.oIBusList[0].id
-    ]);
-    assert.strictEqual(internal.ackQueue.size, 0);
+    assert.deepStrictEqual(
+      oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.map(call => call.arguments),
+      [[updateVersionCommand.id]]
+    );
+    assert.strictEqual(service['ackQueue'].size, 0);
   });
 
   it('should not execute command if target version is not the same', async () => {
-    const command = testData.oIAnalytics.commands.oIBusList[11];
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.getEngineSettings.mock.mockImplementationOnce(() => ({
-      ...testData.engine.settings,
-      version: 'bad version'
-    }));
+    oIBusService.getEngineSettings.mock.mockImplementationOnce(() => ({ ...testData.engine.settings, version: 'bad version' }));
 
-    await service.processNextCommand();
+    await executeCommand(createNorthCommand);
 
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      `Wrong target version: ${command.targetVersion} for OIBus version bad version`
-    ]);
+    assertErrored(createNorthCommand, `Wrong target version: ${createNorthCommand.targetVersion} for OIBus version bad version`);
   });
 
-  it('should not execute command if permission is not right', async () => {
-    const command = testData.oIAnalytics.commands.oIBusList[11];
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
-      ...testData.oIAnalytics.registration.completed,
-      commandPermissions: {
-        ...testData.oIAnalytics.registration.completed.commandPermissions,
-        createNorth: false
-      }
-    }));
+  for (const [title, command, permission] of [
+    ['should not execute command if permission is not right', createNorthCommand, 'createNorth'],
+    ['should not execute cache command if permission is not right', searchNorthCacheCommand, 'searchNorthCacheContent'],
+    ['should not execute get-cache-file-content command if permission is not right', getNorthCacheFileCommand, 'getNorthCacheFileContent'],
+    ['should not execute update-cache-content command if permission is not right', updateNorthCacheCommand, 'updateNorthCacheContent']
+  ] as const) {
+    it(title, async () => {
+      withoutPermission(permission);
 
-    await service.processNextCommand();
+      await executeCommand(command);
 
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      `Command ${command.id} of type ${command.type} is not authorized`
-    ]);
-  });
-
-  it('should execute regenerate-cipher-keys command', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[12]);
-    mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsRegistrationService.updateKeys.mock.calls[0].arguments, ['private key', 'public key', 'oianalytics']);
-    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[12].id,
-      testData.constants.dates.FAKE_NOW,
-      'OIAnalytics keys reloaded'
-    ]);
-  });
-
-  it('should execute create-ip-filter command', async () => {
-    const command: OIBusCreateIPFilterCommand = {
-      id: 'createIpFilterId',
-      type: 'create-ip-filter',
-      targetVersion: testData.engine.settings.version,
-      commandContent: {} as IPFilterCommandDTO
-    } as OIBusCreateIPFilterCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(ipFilterService.create.mock.calls[0].arguments, [command.commandContent, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'IP Filter created successfully'
-    ]);
-  });
-
-  it('should execute update-ip-filter command', async () => {
-    const command: OIBusUpdateIPFilterCommand = {
-      id: 'updateIpFilterId',
-      type: 'update-ip-filter',
-      targetVersion: testData.engine.settings.version,
-      ipFilterId: 'ipFilterId',
-      commandContent: {} as IPFilterCommandDTO
-    } as OIBusUpdateIPFilterCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(ipFilterService.update.mock.calls[0].arguments, [command.ipFilterId, command.commandContent, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'IP Filter updated successfully'
-    ]);
-  });
-
-  it('should execute delete-ip-filter command', async () => {
-    const command: OIBusDeleteIPFilterCommand = {
-      id: 'deleteIpFilterId',
-      type: 'delete-ip-filter',
-      targetVersion: testData.engine.settings.version,
-      ipFilterId: 'ipFilterId'
-    } as OIBusDeleteIPFilterCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(ipFilterService.delete.mock.calls[0].arguments, [command.ipFilterId, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'IP Filter deleted successfully'
-    ]);
-  });
-
-  it('should execute create-certificate command', async () => {
-    const command: OIBusCreateCertificateCommand = {
-      id: 'createCertificateId',
-      type: 'create-certificate',
-      targetVersion: testData.engine.settings.version,
-      commandContent: {} as CertificateCommandDTO
-    } as OIBusCreateCertificateCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(certificateService.create.mock.calls[0].arguments, [command.commandContent, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Certificate created successfully'
-    ]);
-  });
-
-  it('should execute update-certificate command', async () => {
-    const command: OIBusUpdateCertificateCommand = {
-      id: 'updateCertificateId',
-      type: 'update-certificate',
-      targetVersion: testData.engine.settings.version,
-      certificateId: 'certificateId',
-      commandContent: {} as CertificateCommandDTO
-    } as OIBusUpdateCertificateCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(certificateService.update.mock.calls[0].arguments, [
-      command.certificateId,
-      command.commandContent,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Certificate updated successfully'
-    ]);
-  });
-
-  it('should execute delete-certificate command', async () => {
-    const command: OIBusDeleteCertificateCommand = {
-      id: 'deleteCertificateId',
-      type: 'delete-certificate',
-      targetVersion: testData.engine.settings.version,
-      certificateId: 'certificateId'
-    } as OIBusDeleteCertificateCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(certificateService.delete.mock.calls[0].arguments, [command.certificateId, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Certificate deleted successfully'
-    ]);
-  });
-
-  it('should execute south-connection-test command', async () => {
-    const command: OIBusTestSouthConnectorCommand = {
-      id: 'testSouthConnectorId',
-      type: 'test-south-connection',
-      targetVersion: testData.engine.settings.version,
-      southConnectorId: 'southConnectorId',
-      commandContent: testData.south.command
-    } as OIBusTestSouthConnectorCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: command.commandContent.type
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
-      command.southConnectorId,
-      command.commandContent.type,
-      command.commandContent.settings
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ items: [] })
-    ]);
-  });
-
-  it('should execute south-item-test command', async () => {
-    const command: OIBusTestSouthConnectorItemCommand = {
-      id: 'testSouthItemId',
-      type: 'test-south-item',
-      targetVersion: testData.engine.settings.version,
-      itemId: 'itemId',
-      southConnectorId: 'southConnectorId',
-      commandContent: {
-        southCommand: testData.south.command,
-        itemCommand: testData.south.itemCommand,
-        testingSettings: {} as SouthConnectorItemTestingSettings
-      }
-    } as OIBusTestSouthConnectorItemCommand;
-
-    const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
-    const transformedContent: OIBusContent = { type: 'any-content', content: 'transformed content' };
-    const testItemResult = { raw: rawContent, transformed: transformedContent, connectionDuration: 56, queryDuration: 78 };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.testItem.mock.mockImplementationOnce(async () => testItemResult);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: command.commandContent.southCommand.type
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
-      command.southConnectorId,
-      command.commandContent.southCommand.type,
-      command.commandContent.itemCommand.name,
-      command.commandContent.southCommand.settings,
-      command.commandContent.itemCommand.settings,
-      command.commandContent.testingSettings
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { ...rawContent, truncated: false, totalSize: 0 },
-        transformed: { ...transformedContent, truncated: false, totalSize: 0 },
-        connectionDuration: 56,
-        queryDuration: 78
-      })
-    ]);
-  });
-
-  it('should execute south-item-test command and store transformed: null when there is no transformer', async () => {
-    const command: OIBusTestSouthConnectorItemCommand = {
-      id: 'testSouthItemNoTransformId',
-      type: 'test-south-item',
-      targetVersion: testData.engine.settings.version,
-      itemId: 'itemId',
-      southConnectorId: 'southConnectorId',
-      commandContent: {
-        southCommand: testData.south.command,
-        itemCommand: testData.south.itemCommand,
-        testingSettings: {} as SouthConnectorItemTestingSettings
-      }
-    } as OIBusTestSouthConnectorItemCommand;
-
-    const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.testItem.mock.mockImplementationOnce(async () => ({
-      raw: rawContent,
-      transformed: null,
-      connectionDuration: 0,
-      queryDuration: 0
-    }));
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: command.commandContent.southCommand.type
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { ...rawContent, truncated: false, totalSize: 0 },
-        transformed: null,
-        connectionDuration: 0,
-        queryDuration: 0
-      })
-    ]);
-  });
-
-  it('should execute create-custom-transformer command', async () => {
-    const command: OIBusCreateCustomTransformerCommand = {
-      id: 'createCustomTransformerId',
-      type: 'create-custom-transformer',
-      targetVersion: testData.engine.settings.version,
-      commandContent: testData.transformers.command
-    } as OIBusCreateCustomTransformerCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(transformerService.create.mock.calls[0].arguments, [testData.transformers.command, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Transformer created successfully'
-    ]);
-  });
-
-  it('should execute update-custom-transformer command', async () => {
-    const command: OIBusUpdateCustomTransformerCommand = {
-      id: 'updateCustomTransformerId',
-      type: 'update-custom-transformer',
-      targetVersion: testData.engine.settings.version,
-      transformerId: 'transformerId1',
-      commandContent: testData.transformers.command
-    } as OIBusUpdateCustomTransformerCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(transformerService.update.mock.calls[0].arguments, [
-      'transformerId1',
-      testData.transformers.command,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Transformer updated successfully'
-    ]);
-  });
-
-  it('should execute delete-custom-transformer command', async () => {
-    const command: OIBusDeleteCustomTransformerCommand = {
-      id: 'deleteCustomTransformerId',
-      type: 'delete-custom-transformer',
-      targetVersion: testData.engine.settings.version,
-      transformerId: 'transformerId1'
-    } as OIBusDeleteCustomTransformerCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(transformerService.delete.mock.calls[0].arguments, ['transformerId1', 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Transformer deleted successfully'
-    ]);
-  });
-
-  it('should execute test-custom-transformer command', async () => {
-    const testRequest = { inputData: 'raw', options: {} };
-    const command: OIBusTestCustomTransformerCommand = {
-      id: 'testCustomTransformerId',
-      type: 'test-custom-transformer',
-      targetVersion: testData.engine.settings.version,
-      commandContent: { command: testData.transformers.command, testRequest }
-    } as OIBusTestCustomTransformerCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    const testResult = { output: 'result', metadata: {} };
-    transformerService.test.mock.mockImplementationOnce(async () => testResult as never);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(transformerService.test.mock.calls[0].arguments, [testData.transformers.command, testRequest]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify(testResult)
-    ]);
-  });
-
-  it('should execute test-transformer command with pasted input data using no explicit options', async () => {
-    const command: OIBusTestTransformerCommand = {
-      id: 'testTransformerNoOptionsId',
-      type: 'test-transformer',
-      targetVersion: testData.engine.settings.version,
-      transformerId: 'transformerId',
-      commandContent: { inputData: 'pasted content' }
-    } as OIBusTestTransformerCommand;
-
-    const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
-    const transformed: OIBusContent = { type: 'any-content', content: 'transformed content' };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    transformerService.testTransformer.mock.mockImplementationOnce(async () => ({
-      raw,
-      transformed,
-      connectionDuration: 0,
-      queryDuration: 0
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(transformerService.testTransformer.mock.calls[0].arguments, [command.transformerId, {}, 'pasted content']);
-  });
-
-  it('should execute test-transformer command with pasted input data, keeping both raw and transformed', async () => {
-    const command: OIBusTestTransformerCommand = {
-      id: 'testTransformerPasteId',
-      type: 'test-transformer',
-      targetVersion: testData.engine.settings.version,
-      transformerId: 'transformerId',
-      commandContent: { inputData: 'pasted content', options: {} }
-    } as OIBusTestTransformerCommand;
-
-    const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
-    const transformed: OIBusContent = { type: 'any-content', content: 'transformed content' };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    transformerService.testTransformer.mock.mockImplementationOnce(async () => ({
-      raw,
-      transformed,
-      connectionDuration: 0,
-      queryDuration: 0
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(transformerService.testTransformer.mock.calls[0].arguments, [command.transformerId, {}, 'pasted content']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { ...raw, truncated: false, totalSize: 0 },
-        transformed: { ...transformed, truncated: false, totalSize: 0 },
-        connectionDuration: 0,
-        queryDuration: 0
-      })
-    ]);
-  });
-
-  it('should execute test-transformer command with a south item, keeping both raw and transformed', async () => {
-    const command: OIBusTestTransformerCommand = {
-      id: 'testTransformerItemId',
-      type: 'test-transformer',
-      targetVersion: testData.engine.settings.version,
-      transformerId: 'transformerId',
-      commandContent: {
-        southId: 'southConnectorId',
-        southType: testData.south.command.type,
-        itemName: 'Current',
-        southSettings: testData.south.command.settings,
-        itemSettings: testData.south.itemCommand.settings,
-        testingSettings: {} as SouthConnectorItemTestingSettings
-      }
-    } as OIBusTestTransformerCommand;
-
-    const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
-    const transformed: OIBusContent = { type: 'any-content', content: 'transformed content' };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: testData.south.command.type
-      }
-    ]);
-    southService.testItem.mock.mockImplementationOnce(async () => ({ raw, transformed, connectionDuration: 0, queryDuration: 0 }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
-      'southConnectorId',
-      testData.south.command.type,
-      'Current',
-      testData.south.command.settings,
-      testData.south.itemCommand.settings,
-      {}
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { ...raw, truncated: false, totalSize: 0 },
-        transformed: { ...transformed, truncated: false, totalSize: 0 },
-        connectionDuration: 0,
-        queryDuration: 0
-      })
-    ]);
-  });
-
-  it('should execute test-transformer command with a south item that has no transformer configured, storing transformed: null', async () => {
-    const command: OIBusTestTransformerCommand = {
-      id: 'testTransformerItemNoTransformId',
-      type: 'test-transformer',
-      targetVersion: testData.engine.settings.version,
-      transformerId: 'transformerId',
-      commandContent: {
-        southId: 'southConnectorId',
-        southType: testData.south.command.type,
-        itemName: 'Current',
-        southSettings: testData.south.command.settings,
-        itemSettings: testData.south.itemCommand.settings,
-        testingSettings: {} as SouthConnectorItemTestingSettings
-      }
-    } as OIBusTestTransformerCommand;
-
-    const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: testData.south.command.type
-      }
-    ]);
-    southService.testItem.mock.mockImplementationOnce(async () => ({ raw, transformed: null, connectionDuration: 0, queryDuration: 0 }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { ...raw, truncated: false, totalSize: 0 },
-        transformed: null,
-        connectionDuration: 0,
-        queryDuration: 0
-      })
-    ]);
-  });
+      assertErrored(command, `Command ${command.id} of type ${command.type} is not authorized`);
+    });
+  }
 
   describe('withTimeout for test commands', () => {
-    const makeTestSouthItemCommand = (): OIBusTestSouthConnectorItemCommand =>
-      ({
-        id: 'testSouthItemId',
-        type: 'test-south-item',
-        targetVersion: testData.engine.settings.version,
-        itemId: 'itemId',
-        southConnectorId: 'southConnectorId',
-        commandContent: {
-          southCommand: testData.south.command,
-          itemCommand: testData.south.itemCommand,
-          testingSettings: {} as SouthConnectorItemTestingSettings
-        }
-      }) as OIBusTestSouthConnectorItemCommand;
-
     it('should mark command as errored and release the lock when the operation hangs past the timeout', async () => {
       mock.timers.enable({ apis: ['setTimeout'] });
-
-      const command = makeTestSouthItemCommand();
-      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-      southService.listManifest.mock.mockImplementationOnce(() => [
-        { ...testData.south.manifest, id: command.commandContent.southCommand.type }
-      ]);
       // Never-resolving promise simulates a hung MQTT / TCP connection
       southService.testItem.mock.mockImplementationOnce(
         () =>
@@ -2385,7 +1953,7 @@ describe('OIAnalytics Command Service', () => {
           })
       );
 
-      const processPromise = service.processNextCommand();
+      const processPromise = executeCommand(testSouthItemCommand);
       // Let the async preamble (decryptText, listManifest) run before ticking the clock
       await flushPromises();
 
@@ -2396,7 +1964,7 @@ describe('OIAnalytics Command Service', () => {
 
       assert.ok(
         oIAnalyticsCommandRepository.markAsErrored.mock.calls.some(
-          c => c.arguments[0] === command.id && (c.arguments[1] as string).includes('timed out')
+          c => c.arguments[0] === testSouthItemCommand.id && c.arguments[1].includes('timed out')
         ),
         'markAsErrored should be called with a timeout message'
       );
@@ -2404,1129 +1972,149 @@ describe('OIAnalytics Command Service', () => {
       // isExecutingCommand must be reset so subsequent commands are not blocked
       oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => null);
       await service.processNextCommand();
-      assert.ok(
-        (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to execute'),
-        'subsequent processNextCommand call should not be blocked'
-      );
+      assert.ok(logged(logger.trace).includes('No command to execute'), 'subsequent processNextCommand call should not be blocked');
 
       mock.timers.reset();
     });
 
     it('should propagate the real error immediately when the operation rejects before the timeout', async () => {
-      const command = makeTestSouthItemCommand();
-      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-      southService.listManifest.mock.mockImplementationOnce(() => [
-        { ...testData.south.manifest, id: command.commandContent.southCommand.type }
-      ]);
-      const realError = new Error('connection refused');
-      southService.testItem.mock.mockImplementationOnce(() => Promise.reject(realError));
+      southService.testItem.mock.mockImplementationOnce(() => Promise.reject(new Error('connection refused')));
 
-      await service.processNextCommand();
+      await executeCommand(testSouthItemCommand);
 
       // The real error — not a timeout — should be reported
-      const erroredCall = oIAnalyticsCommandRepository.markAsErrored.mock.calls.find(c => c.arguments[0] === command.id);
-      assert.ok(erroredCall, 'markAsErrored should be called');
-      assert.strictEqual(erroredCall!.arguments[1], realError.message);
-      assert.ok(!(erroredCall!.arguments[1] as string).includes('timed out'), 'error message should not mention timeout');
+      assertErrored(testSouthItemCommand, 'connection refused');
     });
-  });
-
-  it('should execute north-connection-test command', async () => {
-    const command: OIBusTestNorthConnectorCommand = {
-      id: 'testNorthConnectorId',
-      type: 'test-north-connection',
-      targetVersion: testData.engine.settings.version,
-      northConnectorId: 'northConnectorId',
-      commandContent: testData.north.command
-    } as OIBusTestNorthConnectorCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: command.commandContent.type
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
-      command.northConnectorId,
-      command.commandContent.type,
-      command.commandContent.settings
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ items: [] })
-    ]);
-  });
-
-  it('should execute create-history-query command', async () => {
-    const command: OIBusCreateHistoryQueryCommand = {
-      id: 'createHistoryQueryId',
-      type: 'create-history-query',
-      targetVersion: testData.engine.settings.version,
-      northConnectorId: undefined,
-      southConnectorId: undefined,
-      historyQueryId: undefined,
-      commandContent: testData.historyQueries.command
-    } as OIBusCreateHistoryQueryCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: testData.historyQueries.command.southType
-      }
-    ]);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: testData.historyQueries.command.northType
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(historyQueryService.create.mock.calls[0].arguments, [
-      command.commandContent,
-      undefined,
-      undefined,
-      undefined,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'History query created successfully'
-    ]);
-  });
-
-  it('should execute update-history-query command', async () => {
-    const command: OIBusUpdateHistoryQueryCommand = {
-      id: 'updateHistoryQueryId',
-      type: 'update-history-query',
-      targetVersion: testData.engine.settings.version,
-      historyQueryId: 'h1',
-      commandContent: { resetCache: false, historyQuery: testData.historyQueries.command }
-    } as OIBusUpdateHistoryQueryCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: testData.historyQueries.command.southType
-      }
-    ]);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: testData.historyQueries.command.northType
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(historyQueryService.update.mock.calls[0].arguments, [
-      command.historyQueryId,
-      command.commandContent.historyQuery,
-      command.commandContent.resetCache,
-      'oianalytics'
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'History query updated successfully'
-    ]);
-  });
-
-  it('should execute delete-history-query command', async () => {
-    const command: OIBusDeleteHistoryQueryCommand = {
-      id: 'deleteHistoryQueryId',
-      type: 'delete-history-query',
-      targetVersion: testData.engine.settings.version,
-      historyQueryId: 'h1'
-    } as OIBusDeleteHistoryQueryCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(historyQueryService.delete.mock.calls[0].arguments, [command.historyQueryId, 'oianalytics']);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'History query deleted successfully'
-    ]);
-  });
-
-  it('should execute create-or-update-history-query-south-items-from-csv command', async () => {
-    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
-      id: 'createOrUpdateHistoryQuerySouthItemsId',
-      type: 'create-or-update-history-query-south-items-from-csv',
-      targetVersion: testData.engine.settings.version,
-      historyQueryId: 'h1',
-      commandContent: {
-        deleteItemsNotPresent: false,
-        csvContent: '',
-        delimiter: ','
-      }
-    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
-    historyQueryService.findById.mock.mockImplementationOnce(() => testData.historyQueries.list[0]);
-    historyQueryService.checkImportItems.mock.mockImplementationOnce(async () => ({
-      items: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, (id: string) => ({ id, friendlyName: id }))
-      ) as Array<HistoryQueryItemDTO>,
-      errors: [] as Array<{ item: Record<string, string>; error: string }>
-    }));
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments, [command.historyQueryId]);
-    assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
-      testData.historyQueries.list[0].southType,
-      command.commandContent.csvContent,
-      command.commandContent.delimiter,
-      testData.historyQueries.list[0].items.map(item => ({
-        ...item,
-        updatedBy: { id: '', friendlyName: '' },
-        createdBy: { id: '', friendlyName: '' }
-      }))
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      `2 items imported on History query ${testData.historyQueries.list[0].name}`
-    ]);
-  });
-
-  it('should execute create-or-update-history-query-south-items-from-csv command and throw an error if history not found', async () => {
-    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
-      id: 'createOrUpdateHistoryQuerySouthItemsId',
-      type: 'create-or-update-history-query-south-items-from-csv',
-      targetVersion: testData.engine.settings.version,
-      historyQueryId: 'h1',
-      commandContent: {
-        deleteItemsNotPresent: false,
-        csvContent: '',
-        delimiter: ','
-      }
-    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
-    historyQueryService.findById.mock.mockImplementationOnce((historyId: string) => {
-      throw new Error(`History query ${historyId} not found`);
-    });
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      `History query ${command.historyQueryId} not found`
-    ]);
-  });
-
-  it('should execute create-or-update-history-query-south-items-from-csv command and error when history query resolves to a falsy value', async () => {
-    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
-      id: 'createOrUpdateHistoryQuerySouthItemsId',
-      type: 'create-or-update-history-query-south-items-from-csv',
-      targetVersion: testData.engine.settings.version,
-      historyQueryId: 'h1',
-      commandContent: {
-        deleteItemsNotPresent: false,
-        csvContent: '',
-        delimiter: ','
-      }
-    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
-    historyQueryService.findById.mock.mockImplementationOnce(() => null as never);
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      `History query ${command.historyQueryId} not found`
-    ]);
-    assert.strictEqual(historyQueryService.checkImportItems.mock.calls.length, 0);
-  });
-
-  it('should execute create-or-update-history-query-south-items-from-csv command with item error', async () => {
-    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
-      id: 'createOrUpdateHistoryQuerySouthItemsId',
-      type: 'create-or-update-history-query-south-items-from-csv',
-      targetVersion: testData.engine.settings.version,
-      historyQueryId: 'h1',
-      commandContent: {
-        deleteItemsNotPresent: true,
-        csvContent: '',
-        delimiter: ','
-      }
-    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
-    historyQueryService.findById.mock.mockImplementationOnce(() => testData.historyQueries.list[0]);
-    historyQueryService.checkImportItems.mock.mockImplementationOnce(async () => ({
-      items: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, (id: string) => ({ id, friendlyName: id }))
-      ) as Array<HistoryQueryItemDTO>,
-      errors: [
-        { item: { name: 'item1' } as Record<string, string>, error: 'error1' },
-        { item: { name: 'item2' } as Record<string, string>, error: 'error2' }
-      ]
-    }));
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
-      testData.historyQueries.list[0].southType,
-      command.commandContent.csvContent,
-      command.commandContent.delimiter,
-      []
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      `Error when checking csv items:\nitem1: error1\nitem2: error2`
-    ]);
-  });
-
-  it('should execute test-history-query-north-connection command', async () => {
-    const command: OIBusTestHistoryQueryNorthConnectionCommand = {
-      id: 'testHistoryNorthConnectorId',
-      type: 'test-history-query-north-connection',
-      targetVersion: testData.engine.settings.version,
-      northConnectorId: 'northConnectorId',
-      historyQueryId: 'historyId',
-      commandContent: testData.historyQueries.command
-    } as OIBusTestHistoryQueryNorthConnectionCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: testData.historyQueries.command.southType
-      }
-    ]);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: testData.historyQueries.command.northType
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [
-      command.historyQueryId,
-      command.commandContent.northType,
-      command.northConnectorId,
-      command.commandContent.northSettings
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ items: [] })
-    ]);
-  });
-
-  it('should execute test-history-query-south-connection command', async () => {
-    const command: OIBusTestHistoryQuerySouthConnectionCommand = {
-      id: 'testHistorySouthConnectorId',
-      type: 'test-history-query-south-connection',
-      targetVersion: testData.engine.settings.version,
-      southConnectorId: 'southConnectorId',
-      historyQueryId: 'historyId',
-      commandContent: testData.historyQueries.command
-    } as OIBusTestHistoryQuerySouthConnectionCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: testData.historyQueries.command.southType
-      }
-    ]);
-    northService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.north.manifest,
-        id: testData.historyQueries.command.northType
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [
-      command.historyQueryId,
-      command.commandContent.southType,
-      command.southConnectorId,
-      command.commandContent.southSettings
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ items: [] })
-    ]);
-  });
-
-  it('should execute test-history-query-south-item command', async () => {
-    const command: OIBusTestHistoryQuerySouthItemCommand = {
-      id: 'testHistoryQuerySouthItemId',
-      type: 'test-history-query-south-item',
-      targetVersion: testData.engine.settings.version,
-      historyQueryId: 'historyId',
-      itemId: 'itemId',
-      southConnectorId: 'southConnectorId',
-      commandContent: {
-        historyCommand: testData.historyQueries.command,
-        itemCommand: testData.historyQueries.itemCommand,
-        testingSettings: {} as SouthConnectorItemTestingSettings
-      }
-    } as OIBusTestHistoryQuerySouthItemCommand;
-
-    const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
-    const transformedContent: OIBusContent = { type: 'any-content', content: 'transformed content' };
-    const testItemResult = { raw: rawContent, transformed: transformedContent, connectionDuration: 56, queryDuration: 78 };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    historyQueryService.testItem.mock.mockImplementationOnce(async () => testItemResult);
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: command.commandContent.historyCommand.southType
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(historyQueryService.testItem.mock.calls[0].arguments, [
-      command.historyQueryId,
-      command.commandContent.historyCommand.southType,
-      command.commandContent.itemCommand.name,
-      command.southConnectorId,
-      command.commandContent.historyCommand.southSettings,
-      command.commandContent.itemCommand.settings,
-      command.commandContent.testingSettings
-    ]);
-    // History query item tests now keep the full raw → transformer → output pipeline, same as
-    // south-item tests, instead of collapsing to a single result.
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { ...rawContent, truncated: false, totalSize: 0 },
-        transformed: { ...transformedContent, truncated: false, totalSize: 0 },
-        connectionDuration: 56,
-        queryDuration: 78
-      })
-    ]);
-  });
-
-  it('should execute test-history-query-south-item command and store transformed: null when there is no transformer', async () => {
-    const command: OIBusTestHistoryQuerySouthItemCommand = {
-      id: 'testHistoryQuerySouthItemNoTransformId',
-      type: 'test-history-query-south-item',
-      targetVersion: testData.engine.settings.version,
-      historyQueryId: 'historyId',
-      itemId: 'itemId',
-      southConnectorId: 'southConnectorId',
-      commandContent: {
-        historyCommand: testData.historyQueries.command,
-        itemCommand: testData.historyQueries.itemCommand,
-        testingSettings: {} as SouthConnectorItemTestingSettings
-      }
-    } as OIBusTestHistoryQuerySouthItemCommand;
-
-    const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    historyQueryService.testItem.mock.mockImplementationOnce(async () => ({
-      raw: rawContent,
-      transformed: null,
-      connectionDuration: 0,
-      queryDuration: 0
-    }));
-    southService.listManifest.mock.mockImplementationOnce(() => [
-      {
-        ...testData.south.manifest,
-        id: command.commandContent.historyCommand.southType
-      }
-    ]);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { ...rawContent, truncated: false, totalSize: 0 },
-        transformed: null,
-        connectionDuration: 0,
-        queryDuration: 0
-      })
-    ]);
   });
 
   it('should execute update-history-query-status command', async () => {
-    const command: OIBusUpdateHistoryQueryStatusCommand = {
+    const command = buildCommand<OIBusUpdateHistoryQueryStatusCommand>({
       id: 'updateHistoryQueryStatusId',
       type: 'update-history-query-status',
-      targetVersion: testData.engine.settings.version,
       historyQueryId: 'historyId',
-      commandContent: {
-        historyQueryStatus: 'RUNNING'
-      }
-    } as OIBusUpdateHistoryQueryStatusCommand;
+      commandContent: { historyQueryStatus: 'RUNNING' }
+    });
 
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
+    await executeCommand(command);
 
     assert.deepStrictEqual(historyQueryService.start.mock.calls[0].arguments, [command.historyQueryId]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'History query started'
-    ]);
+    assertCompleted(command, 'History query started');
 
     command.commandContent.historyQueryStatus = 'PAUSED';
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-
-    await service.processNextCommand();
+    await executeCommand(command);
 
     assert.deepStrictEqual(historyQueryService.pause.mock.calls[0].arguments, [command.historyQueryId]);
-    assert.ok(
-      (oIAnalyticsCommandRepository.markAsCompleted.mock.calls as Array<{ arguments: Array<unknown> }>).some(
-        c => c.arguments[2] === 'History query paused'
-      )
-    );
+    assert.ok(oIAnalyticsCommandRepository.markAsCompleted.mock.calls.some(c => c.arguments[2] === 'History query paused'));
 
     command.commandContent.historyQueryStatus = 'ERRORED';
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    await executeCommand(command);
 
-    await service.processNextCommand();
     assert.ok(
-      (oIAnalyticsCommandRepository.markAsErrored.mock.calls as Array<{ arguments: Array<unknown> }>).some(
-        c =>
-          c.arguments[1] ===
-          `History query status of ${command.historyQueryId} can not be updated to ${command.commandContent.historyQueryStatus}`
+      oIAnalyticsCommandRepository.markAsErrored.mock.calls.some(
+        c => c.arguments[1] === `History query status of ${command.historyQueryId} can not be updated to ERRORED`
       )
     );
   });
 
   it('should execute setpoint command', async () => {
-    const command: OIBusSetpointCommand = {
+    const command = buildCommand<OIBusSetpointCommand>({
       id: 'setpointCommandId',
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: '',
-      targetVersion: testData.engine.settings.version,
       type: 'setpoint',
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
       northConnectorId: 'n1',
       commandContent: [{ reference: 'reference', value: '123456' }]
-    };
+    });
+    northService.executeSetpoint.mock.mockImplementationOnce(async (_northId, _commandContent, callback) => {
+      callback('ok');
+    });
 
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    northService.executeSetpoint.mock.mockImplementationOnce(
-      async (_northId: string, _commandContent: Array<{ reference: string; value: string }>, callback: (s: string) => void) => {
-        callback('ok');
-      }
-    );
-
-    await service.processNextCommand();
+    await executeCommand(command);
 
     assert.strictEqual(northService.executeSetpoint.mock.calls[0].arguments[0], command.northConnectorId);
     assert.deepStrictEqual(northService.executeSetpoint.mock.calls[0].arguments[1], command.commandContent);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'ok'
-    ]);
+    assertCompleted(command, 'ok');
   });
 
-  it('should execute search-north-cache-content command', async () => {
-    const command: OIBusSearchNorthCacheContentCommand = {
-      id: 'searchNorthCacheContentId',
-      type: 'search-north-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
-    } as OIBusSearchNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    const searchResult: CacheSearchResult = {
-      searchDate: testData.constants.dates.FAKE_NOW,
-      metrics: testData.north.metrics,
-      error: [],
-      archive: [],
-      cache: []
-    };
-    oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => searchResult);
+  for (const { title, command, failing, error } of [
+    {
+      title: 'should fail to execute search-north-cache-content if north not found',
+      command: searchNorthCacheCommand,
+      failing: () => oIBusService.searchCacheContent,
+      error: 'North northId1 not found'
+    },
+    {
+      title: 'should handle error in executeGetNorthCacheFileContentCommand',
+      command: getNorthCacheFileCommand,
+      failing: () => oIBusService.getFileFromCache,
+      error: 'File not found'
+    },
+    {
+      title: 'should fail to execute update-north-cache-content command when action returns an error',
+      command: updateNorthCacheCommand,
+      failing: () => oIBusService.updateCacheContent,
+      error: 'error while removing file'
+    },
+    {
+      title: 'should handle error in executeSearchHistoryCacheContentCommand if history not found',
+      command: searchHistoryCacheCommand,
+      failing: () => oIBusService.searchCacheContent,
+      error: 'History historyId1 not found'
+    },
+    {
+      title: 'should handle error in executeGetHistoryCacheFileContentCommand',
+      command: getHistoryCacheFileCommand,
+      failing: () => oIBusService.getFileFromCache,
+      error: 'File not found'
+    },
+    {
+      title: 'should handle error in executeUpdateHistoryCacheContentCommand',
+      command: updateHistoryCacheCommand,
+      failing: () => oIBusService.updateCacheContent,
+      error: 'Update failed'
+    }
+  ]) {
+    it(title, async () => {
+      failing().mock.mockImplementationOnce(async () => {
+        throw new Error(error);
+      });
 
-    await service.processNextCommand();
+      await executeCommand(command);
 
-    assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
-    assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
-      'north',
-      command.northConnectorId,
-      command.commandContent
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify(searchResult)
-    ]);
-  });
-
-  it('should execute search-history-cache-content command', async () => {
-    const command: OIBusSearchHistoryCacheContentCommand = {
-      id: 'searchHistoryCacheContentId',
-      type: 'search-history-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      historyQueryId: 'historyId1',
-      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
-    } as OIBusSearchHistoryCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    const searchResult: CacheSearchResult = {
-      searchDate: testData.constants.dates.FAKE_NOW,
-      metrics: testData.north.metrics,
-      error: [],
-      archive: [],
-      cache: []
-    };
-    oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => searchResult);
-
-    await service.processNextCommand();
-
-    assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
-    assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
-      'history',
-      command.historyQueryId,
-      command.commandContent
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify(searchResult)
-    ]);
-  });
-
-  it('should execute get-north-cache-file-content command', async () => {
-    const command: OIBusGetNorthCacheFileContentCommand = {
-      id: 'getNorthCacheFileContentId',
-      type: 'get-north-cache-file-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: {
-        folder: 'cache',
-        filename: 'file.txt'
-      }
-    } as OIBusGetNorthCacheFileContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    const fileContent: FileCacheContent = {
-      content: 'content',
-      contentFilename: 'my_file.txt',
-      contentType: 'raw',
-      truncated: false,
-      totalSize: 7
-    };
-    oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => fileContent);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIBusService.getFileFromCache.mock.calls[0].arguments, [
-      'north',
-      command.northConnectorId,
-      command.commandContent.folder,
-      command.commandContent.filename
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify(fileContent)
-    ]);
-  });
-
-  it('should execute get-history-cache-file-content command', async () => {
-    const command: OIBusGetHistoryCacheFileContentCommand = {
-      id: 'getHistoryCacheFileContentId',
-      type: 'get-history-cache-file-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      historyQueryId: 'historyId1',
-      commandContent: {
-        folder: 'error',
-        filename: 'file.txt'
-      }
-    } as OIBusGetHistoryCacheFileContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    const fileContent: FileCacheContent = {
-      content: 'content',
-      contentFilename: 'my_file.txt',
-      contentType: 'raw',
-      truncated: false,
-      totalSize: 7
-    };
-    oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => fileContent);
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIBusService.getFileFromCache.mock.calls[0].arguments, [
-      'history',
-      command.historyQueryId,
-      command.commandContent.folder,
-      command.commandContent.filename
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify(fileContent)
-    ]);
-  });
-
-  it('should execute update-north-cache-content command', async () => {
-    const command: OIBusUpdateNorthCacheContentCommand = {
-      id: 'updateNorthCacheContentId',
-      type: 'update-north-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: {
-        cache: {
-          remove: ['file1.txt', 'file2.txt'],
-          move: [
-            { filename: 'file3.txt', to: 'error' },
-            { filename: 'file4.txt', to: 'archive' }
-          ]
-        },
-        error: {
-          remove: ['file5.txt', 'file6.txt'],
-          move: [
-            { filename: 'file7.txt', to: 'cache' },
-            { filename: 'file8.txt', to: 'archive' }
-          ]
-        },
-        archive: {
-          remove: ['file9.txt', 'file10.txt'],
-          move: [
-            { filename: 'file11.txt', to: 'cache' },
-            { filename: 'file12.txt', to: 'error' }
-          ]
-        }
-      }
-    } as OIBusUpdateNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => undefined);
-
-    await service.processNextCommand();
-
-    assert.strictEqual(oIBusService.updateCacheContent.mock.calls.length, 1);
-    assert.deepStrictEqual(oIBusService.updateCacheContent.mock.calls[0].arguments, [
-      'north',
-      command.northConnectorId,
-      command.commandContent
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Cache updated successfully'
-    ]);
-  });
-
-  it('should execute update-history-cache-content command', async () => {
-    const command: OIBusUpdateHistoryCacheContentCommand = {
-      id: 'updateHistoryCacheContentId',
-      type: 'update-history-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      historyQueryId: 'historyId1',
-      commandContent: {
-        cache: {
-          remove: ['file1.txt', 'file2.txt'],
-          move: [
-            { filename: 'file3.txt', to: 'error' },
-            { filename: 'file4.txt', to: 'archive' }
-          ]
-        },
-        error: {
-          remove: ['file5.txt', 'file6.txt'],
-          move: [
-            { filename: 'file7.txt', to: 'cache' },
-            { filename: 'file8.txt', to: 'archive' }
-          ]
-        },
-        archive: {
-          remove: ['file9.txt', 'file10.txt'],
-          move: [
-            { filename: 'file11.txt', to: 'cache' },
-            { filename: 'file12.txt', to: 'error' }
-          ]
-        }
-      }
-    } as OIBusUpdateHistoryCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => undefined);
-
-    await service.processNextCommand();
-
-    assert.strictEqual(oIBusService.updateCacheContent.mock.calls.length, 1);
-    assert.deepStrictEqual(oIBusService.updateCacheContent.mock.calls[0].arguments, [
-      'history',
-      command.historyQueryId,
-      command.commandContent
-    ]);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'Cache updated successfully'
-    ]);
-  });
-
-  it('should not execute cache command if permission is not right', async () => {
-    const command: OIBusSearchNorthCacheContentCommand = {
-      id: 'searchNorthCacheContentId',
-      type: 'search-north-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
-    } as OIBusSearchNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
-      ...testData.oIAnalytics.registration.completed,
-      commandPermissions: {
-        ...testData.oIAnalytics.registration.completed.commandPermissions,
-        searchNorthCacheContent: false
-      }
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      `Command ${command.id} of type ${command.type} is not authorized`
-    ]);
-  });
-
-  it('should not execute get-cache-file-content command if permission is not right', async () => {
-    const command: OIBusGetNorthCacheFileContentCommand = {
-      id: 'getNorthCacheFileContentId',
-      type: 'get-north-cache-file-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: {
-        folder: 'cache',
-        filename: 'file.txt'
-      }
-    } as OIBusGetNorthCacheFileContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
-      ...testData.oIAnalytics.registration.completed,
-      commandPermissions: {
-        ...testData.oIAnalytics.registration.completed.commandPermissions,
-        getNorthCacheFileContent: false
-      }
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      `Command ${command.id} of type ${command.type} is not authorized`
-    ]);
-  });
-
-  it('should not execute update-cache-content command if permission is not right', async () => {
-    const command: OIBusUpdateNorthCacheContentCommand = {
-      id: 'updateNorthCacheContentId',
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: '',
-      type: 'update-north-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: {
-        cache: { remove: [], move: [] },
-        error: { remove: [], move: [] },
-        archive: { remove: [], move: [] }
-      }
-    } as OIBusUpdateNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
-      ...testData.oIAnalytics.registration.completed,
-      commandPermissions: {
-        ...testData.oIAnalytics.registration.completed.commandPermissions,
-        updateNorthCacheContent: false
-      }
-    }));
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      `Command ${command.id} of type ${command.type} is not authorized`
-    ]);
-  });
-
-  it('should fail to execute search-north-cache-content if north not found', async () => {
-    const command: OIBusSearchNorthCacheContentCommand = {
-      id: 'searchNorthCacheContentId',
-      type: 'search-north-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
-    } as OIBusSearchNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => {
-      throw new Error('North northId1 not found');
+      assertErrored(command, error);
     });
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'North northId1 not found']);
-  });
-
-  it('should handle error in executeGetNorthCacheFileContentCommand', async () => {
-    const command: OIBusGetNorthCacheFileContentCommand = {
-      id: 'getNorthCacheFileContentId',
-      type: 'get-north-cache-file-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: {
-        folder: 'error',
-        filename: 'file.txt'
-      }
-    } as OIBusGetNorthCacheFileContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => {
-      throw new Error('File not found');
-    });
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'File not found']);
-  });
-
-  it('should fail to execute update-north-cache-content command when action returns an error', async () => {
-    const command: OIBusUpdateNorthCacheContentCommand = {
-      id: 'updateNorthCacheContentId',
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: '',
-      type: 'update-north-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      northConnectorId: 'northId1',
-      commandContent: {
-        cache: { remove: [], move: [] },
-        error: { remove: [], move: [] },
-        archive: { remove: [], move: [] }
-      }
-    } as OIBusUpdateNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => {
-      throw new Error('error while removing file');
-    });
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'error while removing file']);
-  });
-
-  it('should handle error in executeSearchHistoryCacheContentCommand if history not found', async () => {
-    const command: OIBusSearchHistoryCacheContentCommand = {
-      id: 'searchHistoryCacheContentId',
-      type: 'search-history-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      historyQueryId: 'historyId1',
-      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
-    } as OIBusSearchHistoryCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => {
-      throw new Error('History historyId1 not found');
-    });
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      command.id,
-      'History historyId1 not found'
-    ]);
-  });
-
-  it('should handle error in executeGetHistoryCacheFileContentCommand', async () => {
-    const command: OIBusGetHistoryCacheFileContentCommand = {
-      id: 'getHistoryCacheFileContentId',
-      type: 'get-history-cache-file-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      historyQueryId: 'historyId1',
-      commandContent: {
-        folder: 'error',
-        filename: 'file.txt'
-      }
-    } as OIBusGetHistoryCacheFileContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => {
-      throw new Error('File not found');
-    });
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'File not found']);
-  });
-
-  it('should handle error in executeUpdateHistoryCacheContentCommand', async () => {
-    const command: OIBusUpdateHistoryCacheContentCommand = {
-      id: 'updateHistoryCacheContentId',
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: '',
-      type: 'update-history-cache-content',
-      targetVersion: testData.engine.settings.version,
-      status: 'RETRIEVED',
-      ack: false,
-      retrievedDate: testData.constants.dates.FAKE_NOW,
-      completedDate: null,
-      result: null,
-      historyQueryId: 'historyId1',
-      commandContent: {
-        cache: { remove: [], move: [] },
-        error: { remove: [], move: [] },
-        archive: { remove: [], move: [] }
-      }
-    } as OIBusUpdateHistoryCacheContentCommand;
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => {
-      throw new Error('Update failed');
-    });
-
-    await service.processNextCommand();
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'Update failed']);
-  });
+  }
 });
 
 describe('OIAnalytics Command service with update error', () => {
   beforeEach(() => {
-    resetAllMocks();
-    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
-
-    oIBusService.getEngineSettings.mock.mockImplementation(() => ({
-      ...JSON.parse(JSON.stringify(testData.engine.settings)),
-      version: (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
-    }));
+    const updatedVersion = updateVersionCommand.commandContent.version.slice(1);
+    oIBusService.getEngineSettings.mock.mockImplementation(() => ({ ...testData.engine.settings, version: updatedVersion }));
     const rollbackCommand: OIBusUpdateVersionCommand = {
-      ...(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand),
-      commandContent: {
-        ...(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent,
-        version: (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
-      }
+      ...updateVersionCommand,
+      commandContent: { ...updateVersionCommand.commandContent, version: updatedVersion }
     };
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => [rollbackCommand]);
 
-    makeService();
-  });
-
-  afterEach(() => {
-    mock.restoreAll();
+    service = makeService();
   });
 
   it('should properly start and stop service', () => {
     assert.strictEqual(oIBusService.getEngineSettings.mock.calls.length, 1);
     assert.strictEqual(oIBusService.updateOIBusVersion.mock.calls.length, 0);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
-      testData.oIAnalytics.commands.oIBusList[0].id,
-      `OIBus has not been updated. Rollback to version ${version}`
-    ]);
+    assertErrored(updateVersionCommand, `OIBus has not been updated. Rollback to version ${version}`);
   });
 });
 
 describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
-  let service: InstanceType<typeof OIAnalyticsCommandServiceType>;
-
   beforeEach(() => {
-    resetAllMocks();
-    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
-
-    oIBusService.getEngineSettings.mock.mockImplementation(() => testData.engine.settings);
-    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => testData.oIAnalytics.commands.oIBusList);
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
-
     service = makeService(true, '3.4.0');
   });
 
-  afterEach(() => {
-    mock.restoreAll();
-  });
-
   it('should change logger', async () => {
+    const anotherLogger = new LoggerMock();
     // Prevent background processNextCommand from running real logic
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
     mock.method(process, 'exit', () => undefined as never);
-    mock.method(process, 'kill', () => undefined as unknown as void);
+    mock.method(process, 'kill', () => true);
 
     await service.start();
     oIBusService.loggerEvent.emit('updated', anotherLogger);
@@ -3538,13 +2126,11 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
   });
 
   it('should not run an update', async () => {
-    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
-    await service.processNextCommand();
+    await executeCommand(updateVersionCommand);
+
     assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c =>
-          c.arguments[0] ===
-          `Error while executing command ${testData.oIAnalytics.commands.oIBusList[0].id} (retrieved ${testData.oIAnalytics.commands.oIBusList[0].retrievedDate}) of type ${testData.oIAnalytics.commands.oIBusList[0].type}. Error: OIBus is not set up to execute remote update`
+      logged(logger.error).includes(
+        `Error while executing command ${updateVersionCommand.id} (retrieved ${updateVersionCommand.retrievedDate}) of type ${updateVersionCommand.type}. Error: OIBus is not set up to execute remote update`
       )
     );
   });
@@ -3552,17 +2138,9 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
 
 describe('OIAnalytics Command service with no commands', () => {
   beforeEach(() => {
-    resetAllMocks();
-    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
-
-    oIBusService.getEngineSettings.mock.mockImplementation(() => testData.engine.settings);
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
 
-    makeService(true, '3.4.0');
-  });
-
-  afterEach(() => {
-    mock.restoreAll();
+    service = makeService(true, '3.4.0');
   });
 
   it('should properly start when not registered', () => {
@@ -3574,23 +2152,26 @@ describe('OIAnalytics Command service with no commands', () => {
 });
 
 describe('OIAnalytics Command service with no commands and without update', () => {
-  let service: InstanceType<typeof OIAnalyticsCommandServiceType>;
-
   beforeEach(() => {
-    resetAllMocks();
-    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
-
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
-    const engineSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    engineSettings.version = version;
-    oIBusService.getEngineSettings.mock.mockImplementation(() => engineSettings);
+    oIBusService.getEngineSettings.mock.mockImplementation(() => ({ ...testData.engine.settings, version }));
 
-    service = makeService(true, engineSettings.launcherVersion);
+    service = makeService(true, testData.engine.settings.launcherVersion);
   });
 
-  afterEach(() => {
-    mock.restoreAll();
+  const complete = (result: SouthConnectorItemTestResult) => service['completeDualResultTestCommand'](testSouthItemCommand, result);
+  const completedResults = () => oIAnalyticsCommandRepository.markAsCompleted.mock.calls.map(call => call.arguments);
+  const testResult = (raw: OIBusContent): SouthConnectorItemTestResult => ({
+    raw,
+    transformed: null,
+    connectionDuration: 5,
+    queryDuration: 10
   });
+  const completedResult = (raw: object) => [
+    testSouthItemCommand.id,
+    FAKE_NOW,
+    JSON.stringify({ raw, transformed: null, connectionDuration: 5, queryDuration: 10 })
+  ];
 
   it('should properly start when not registered', () => {
     assert.strictEqual(oIBusService.updateOIBusVersion.mock.calls.length, 0);
@@ -3598,139 +2179,40 @@ describe('OIAnalytics Command service with no commands and without update', () =
   });
 
   it('should complete time values test item command', () => {
-    const command: OIBusTestSouthConnectorItemCommand = {
-      id: 'testSouthItemId',
-      type: 'test-south-item',
-      targetVersion: testData.engine.settings.version,
-      itemId: 'itemId',
-      southConnectorId: 'southConnectorId',
-      commandContent: {
-        southCommand: testData.south.command,
-        itemCommand: testData.south.itemCommand,
-        testingSettings: {} as SouthConnectorItemTestingSettings
-      }
-    } as OIBusTestSouthConnectorItemCommand;
-
     const content = new Array(2000).fill(0);
-    const result: SouthConnectorItemTestResult = {
-      raw: { type: 'time-values', content },
-      transformed: null,
-      connectionDuration: 5,
-      queryDuration: 10
-    };
-    (
-      service as unknown as {
-        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
-      }
-    ).completeDualResultTestCommand(command, result);
-
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { type: 'time-values', content: content.slice(0, 1000), truncated: true, totalSize: 2000 },
-        transformed: null,
-        connectionDuration: 5,
-        queryDuration: 10
-      })
-    ]);
-
     const content2 = new Array(10).fill(0);
-    const result2: SouthConnectorItemTestResult = {
-      raw: { type: 'time-values', content: content2 },
-      transformed: null,
-      connectionDuration: 5,
-      queryDuration: 10
-    };
-    (
-      service as unknown as {
-        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
-      }
-    ).completeDualResultTestCommand(command, result2);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { type: 'time-values', content: content2, truncated: false, totalSize: 10 },
-        transformed: null,
-        connectionDuration: 5,
-        queryDuration: 10
-      })
+
+    complete(testResult({ type: 'time-values', content }));
+    complete(testResult({ type: 'time-values', content: content2 }));
+
+    assert.deepStrictEqual(completedResults(), [
+      completedResult({ type: 'time-values', content: content.slice(0, 1000), truncated: true, totalSize: 2000 }),
+      completedResult({ type: 'time-values', content: content2, truncated: false, totalSize: 10 })
     ]);
   });
 
   it('should complete file test item command', () => {
-    const command: OIBusTestSouthConnectorItemCommand = {
-      id: 'testSouthItemId',
-      type: 'test-south-item',
-      targetVersion: testData.engine.settings.version,
-      itemId: 'itemId',
-      southConnectorId: 'southConnectorId',
-      commandContent: {
-        southCommand: testData.south.command,
-        itemCommand: testData.south.itemCommand,
-        testingSettings: {} as SouthConnectorItemTestingSettings
-      }
-    } as OIBusTestSouthConnectorItemCommand;
-
-    const content: OIBusContent = { type: 'any', filePath: 'file.csv', content: 'content' };
-    const result: SouthConnectorItemTestResult = { raw: content, transformed: null, connectionDuration: 5, queryDuration: 10 };
-    (
-      service as unknown as {
-        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
-      }
-    ).completeDualResultTestCommand(command, result);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { type: 'any', filePath: 'file.csv', content: content.content, truncated: false, totalSize: content.content!.length },
-        transformed: null,
-        connectionDuration: 5,
-        queryDuration: 10
-      })
-    ]);
-
     const content2 = 'A'.repeat(500 * 1025);
-    const fileContent2: OIBusContent = { type: 'any', filePath: 'file.csv', content: content2 };
-    const result2: SouthConnectorItemTestResult = { raw: fileContent2, transformed: null, connectionDuration: 5, queryDuration: 10 };
-    (
-      service as unknown as {
-        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
-      }
-    ).completeDualResultTestCommand(command, result2);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { type: 'any', filePath: 'file.csv', content: content2.slice(0, 1024 * 500), truncated: true, totalSize: 1025 * 500 },
-        transformed: null,
-        connectionDuration: 5,
-        queryDuration: 10
-      })
-    ]);
 
-    const fileContent3: OIBusContent = { type: 'any', filePath: 'file.csv' };
-    const result3: SouthConnectorItemTestResult = { raw: fileContent3, transformed: null, connectionDuration: 5, queryDuration: 10 };
-    (
-      service as unknown as {
-        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
-      }
-    ).completeDualResultTestCommand(command, result3);
-    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[2].arguments, [
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      JSON.stringify({
-        raw: { type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0 },
-        transformed: null,
-        connectionDuration: 5,
-        queryDuration: 10
-      })
+    complete(testResult({ type: 'any', filePath: 'file.csv', content: 'content' }));
+    complete(testResult({ type: 'any', filePath: 'file.csv', content: content2 }));
+    complete(testResult({ type: 'any', filePath: 'file.csv' }));
+
+    assert.deepStrictEqual(completedResults(), [
+      completedResult({ type: 'any', filePath: 'file.csv', content: 'content', truncated: false, totalSize: 'content'.length }),
+      completedResult({
+        type: 'any',
+        filePath: 'file.csv',
+        content: content2.slice(0, 1024 * 500),
+        truncated: true,
+        totalSize: 1025 * 500
+      }),
+      completedResult({ type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0 })
     ]);
   });
 
   it('should properly convert to DTO without audit fields', () => {
-    for (const command of testData.oIAnalytics.commands.oIBusList) {
+    for (const command of commands) {
       const { createdBy: _createdBy, updatedBy: _updatedBy, createdAt: _createdAt, updatedAt: _updatedAt, ...expected } = command;
       assert.deepStrictEqual(toOIBusCommandDTO(command), expected);
     }
@@ -3751,71 +2233,40 @@ describe('OIAnalytics Command service with no commands and without update', () =
       createdAt: testData.constants.dates.DATE_1,
       updatedAt: testData.constants.dates.DATE_2
     };
-    const createCommand: OIBusCreateCustomTransformerCommand = {
-      ...auditFields,
+    const createCommand = {
       ...baseCommand,
       id: 'createCustomTransformerId',
-      type: 'create-custom-transformer',
+      type: 'create-custom-transformer' as const,
       commandContent: testData.transformers.command
     };
-    const updateCommand: OIBusUpdateCustomTransformerCommand = {
-      ...auditFields,
+    const updateCommand = {
       ...baseCommand,
       id: 'updateCustomTransformerId',
-      type: 'update-custom-transformer',
+      type: 'update-custom-transformer' as const,
       transformerId: 'transformerId1',
       commandContent: testData.transformers.command
     };
-    const deleteCommand: OIBusDeleteCustomTransformerCommand = {
-      ...auditFields,
+    const deleteCommand = {
       ...baseCommand,
       id: 'deleteCustomTransformerId',
-      type: 'delete-custom-transformer',
+      type: 'delete-custom-transformer' as const,
       transformerId: 'transformerId1'
     };
-    const testCommand: OIBusTestCustomTransformerCommand = {
-      ...auditFields,
+    const testCommand = {
       ...baseCommand,
       id: 'testCustomTransformerId',
-      type: 'test-custom-transformer',
+      type: 'test-custom-transformer' as const,
       commandContent: { command: testData.transformers.command, testRequest: { inputData: 'raw', options: {} } }
     };
 
-    assert.deepStrictEqual(toOIBusCommandDTO(createCommand), {
-      ...baseCommand,
-      id: 'createCustomTransformerId',
-      type: 'create-custom-transformer',
-      commandContent: testData.transformers.command
-    });
-    assert.deepStrictEqual(toOIBusCommandDTO(updateCommand), {
-      ...baseCommand,
-      id: 'updateCustomTransformerId',
-      type: 'update-custom-transformer',
-      transformerId: 'transformerId1',
-      commandContent: testData.transformers.command
-    });
-    assert.deepStrictEqual(toOIBusCommandDTO(deleteCommand), {
-      ...baseCommand,
-      id: 'deleteCustomTransformerId',
-      type: 'delete-custom-transformer',
-      transformerId: 'transformerId1'
-    });
-    assert.deepStrictEqual(toOIBusCommandDTO(testCommand), {
-      ...baseCommand,
-      id: 'testCustomTransformerId',
-      type: 'test-custom-transformer',
-      commandContent: { command: testData.transformers.command, testRequest: { inputData: 'raw', options: {} } }
-    });
+    for (const dto of [createCommand, updateCommand, deleteCommand, testCommand]) {
+      assert.deepStrictEqual(toOIBusCommandDTO({ ...auditFields, ...dto }), dto);
+    }
   });
 
   it('should never expose audit fields, whatever the command type', () => {
     for (const type of OIBUS_COMMAND_TYPES) {
-      const command = {
-        ...testData.oIAnalytics.commands.oIBusList[0],
-        type,
-        createdBy: 'createdBy',
-        updatedBy: 'updatedBy'
-      } as unknown as OIBusCommand;
+      const command = { ...updateVersionCommand, type, createdBy: 'createdBy', updatedBy: 'updatedBy' } as OIBusCommand;
       const dto = toOIBusCommandDTO(command);
       assert.strictEqual(dto.type, type);
       assert.strictEqual(dto.id, command.id);

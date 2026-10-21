@@ -37,7 +37,7 @@ describe('retryableHttpStatusCodes', () => {
 describe('HTTPRequest Service', () => {
   const testUrl = 'http://example.com/api';
   const testProxyUrl = 'http://proxy.example.com:8080';
-  const mockAbortSignal = 'mock-abort-signal' as unknown as AbortSignal;
+  const mockAbortSignal = new AbortController().signal;
 
   let proxyAgentInstances: Array<{ isMockProxyAgent: boolean; options?: unknown }>;
   let agentInstances: Array<{ isMockAgent: boolean; options?: unknown }>;

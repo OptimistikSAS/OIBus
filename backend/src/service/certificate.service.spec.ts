@@ -5,33 +5,21 @@ import * as forge from 'node-forge';
 
 import { CertificateCommandDTO } from '../../shared/model/api/certificate.model';
 
-import { CertificateImportCommand } from '../model/certificate.model';
-import CertificateRepository from '../repository/config/certificate.repository';
-import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import type { CertificateImportCommand } from '../model/certificate.model';
+import type CertificateRepository from '../repository/config/certificate.repository';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 import testData from '../tests/utils/test-data';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { createMock, type Mocked } from '../tests/utils/test-utils';
+import type JoiValidator from '../web-server/controllers/validators/joi.validator';
 import {
   certificateImportSchema,
   certificatePrivateKeyExportSchema,
   certificateSchema
 } from '../web-server/controllers/validators/oibus-validation-schema';
 import CertificateService, { toCertificateDTO } from './certificate.service';
-import EncryptionService from './encryption.service';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type EncryptionService from './encryption.service';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { certificateContentToPem, certificatePemToDer, readCertificate, splitPemChain } from './utils-certificate';
-
-let validator: { validate: ReturnType<typeof mock.fn> };
-let certificateRepository: CertificateRepositoryMock;
-let encryptionService: EncryptionServiceMock;
-let oIAnalyticsMessageService: OianalyticsMessageServiceMock;
-let logger: LoggerMock;
-let service: CertificateService;
-let certPem: string;
-let privateKeyPem: string;
-let certificateChainPem: string;
 
 const generateSelfSignedCertificate = (commonName: string): { pem: string; privateKeyPem: string } => {
   const keys = forge.pki.rsa.generateKeyPair(1024);
@@ -49,6 +37,32 @@ const generateSelfSignedCertificate = (commonName: string): { pem: string; priva
 };
 
 describe('Certificate Service', () => {
+  let validator: Mocked<JoiValidator>;
+  let certificateRepository: Mocked<CertificateRepository>;
+  let encryptionService: Mocked<EncryptionService>;
+  let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+  let logger: LoggerMock;
+  let service: CertificateService;
+  let certPem: string;
+  let privateKeyPem: string;
+  let certificateChainPem: string;
+
+  const importCommand = (overrides: Partial<CertificateImportCommand> = {}): CertificateImportCommand => ({
+    name: 'Imported certificate',
+    description: 'An imported certificate',
+    certificateContent: Buffer.from(certPem),
+    privateKeyContent: Buffer.from(privateKeyPem),
+    privateKeyPassphrase: null,
+    certificateChainContent: null,
+    ...overrides
+  });
+
+  const storedCertificate = (certificateChain: string | null) => ({
+    ...testData.certificates.list[0],
+    certificate: certPem,
+    certificateChain
+  });
+
   before(() => {
     const generated = generateSelfSignedCertificate('oibus-test');
     certPem = generated.pem;
@@ -57,20 +71,18 @@ describe('Certificate Service', () => {
   });
 
   beforeEach(() => {
-    validator = { validate: mock.fn() };
-    certificateRepository = new CertificateRepositoryMock();
-    encryptionService = new EncryptionServiceMock('', '');
-    oIAnalyticsMessageService = new OianalyticsMessageServiceMock();
+    validator = createMock<JoiValidator>();
+    certificateRepository = createMock<CertificateRepository>();
+    encryptionService = createMock<EncryptionService>({
+      generateSelfSignedCertificate: async () => ({ public: 'public', private: 'private', cert: certPem }),
+      encryptText: async text => text,
+      decryptText: async text => text
+    });
+    oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
     logger = new LoggerMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    service = new CertificateService(
-      validator as unknown as JoiValidator,
-      certificateRepository as unknown as CertificateRepository,
-      encryptionService as unknown as EncryptionService,
-      oIAnalyticsMessageService as unknown as OIAnalyticsMessageService,
-      logger
-    );
+    service = new CertificateService(validator, certificateRepository, encryptionService, oIAnalyticsMessageService, logger);
   });
 
   afterEach(() => {
@@ -109,16 +121,11 @@ describe('Certificate Service', () => {
 
   it('should create a certificate', async () => {
     certificateRepository.create.mock.mockImplementationOnce(() => testData.certificates.list[0]);
-    encryptionService.generateSelfSignedCertificate.mock.mockImplementationOnce(async () => ({
-      public: 'public',
-      private: 'private',
-      cert: certPem
-    }));
 
     const result = await service.create(testData.certificates.command, 'userTest');
 
     assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [certificateSchema, testData.certificates.command]);
-    const createArgs = certificateRepository.create.mock.calls[0].arguments[0] as Record<string, unknown>;
+    const createArgs = certificateRepository.create.mock.calls[0].arguments[0];
     assert.ok(createArgs.id);
     assert.strictEqual(createArgs.name, testData.certificates.command.name);
     assert.strictEqual(createArgs.description, testData.certificates.command.description);
@@ -134,11 +141,6 @@ describe('Certificate Service', () => {
 
   it('should update a certificate', async () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
-    encryptionService.generateSelfSignedCertificate.mock.mockImplementationOnce(async () => ({
-      public: 'public',
-      private: 'private',
-      cert: certPem
-    }));
     const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));
     command.regenerateCertificate = true;
 
@@ -186,14 +188,7 @@ describe('Certificate Service', () => {
 
   it('should import a certificate without a CA chain', async () => {
     certificateRepository.create.mock.mockImplementationOnce(() => testData.certificates.list[0]);
-    const command: CertificateImportCommand = {
-      name: 'Imported certificate',
-      description: 'An imported certificate',
-      certificateContent: Buffer.from(certPem),
-      privateKeyContent: Buffer.from(privateKeyPem),
-      privateKeyPassphrase: null,
-      certificateChainContent: null
-    };
+    const command = importCommand();
 
     const result = await service.import(command, 'userTest');
 
@@ -201,7 +196,7 @@ describe('Certificate Service', () => {
       certificateImportSchema,
       { name: command.name, description: command.description }
     ]);
-    const createArgs = certificateRepository.create.mock.calls[0].arguments[0] as Record<string, unknown>;
+    const createArgs = certificateRepository.create.mock.calls[0].arguments[0];
     assert.ok(createArgs.id);
     assert.strictEqual(createArgs.name, command.name);
     assert.strictEqual(createArgs.description, command.description);
@@ -218,44 +213,23 @@ describe('Certificate Service', () => {
 
   it('should import a certificate with a CA chain', async () => {
     certificateRepository.create.mock.mockImplementationOnce(() => testData.certificates.list[0]);
-    const command: CertificateImportCommand = {
-      name: 'Imported certificate',
-      description: 'An imported certificate',
-      certificateContent: Buffer.from(certPem),
-      privateKeyContent: Buffer.from(privateKeyPem),
-      privateKeyPassphrase: null,
-      certificateChainContent: Buffer.from(certificateChainPem)
-    };
-
-    await service.import(command, 'userTest');
+    await service.import(importCommand({ certificateChainContent: Buffer.from(certificateChainPem) }), 'userTest');
 
     const expectedChain = splitPemChain(certificateContentToPem(Buffer.from(certificateChainPem))).join('\n');
-    const createArgs = certificateRepository.create.mock.calls[0].arguments[0] as Record<string, unknown>;
+    const createArgs = certificateRepository.create.mock.calls[0].arguments[0];
     assert.strictEqual(createArgs.certificateChain, expectedChain);
   });
 
   it('should reject an import when the private key does not match the certificate', async () => {
     const otherKeyPem = generateSelfSignedCertificate('other').privateKeyPem;
-    const command: CertificateImportCommand = {
-      name: 'Imported certificate',
-      description: 'An imported certificate',
-      certificateContent: Buffer.from(certPem),
-      privateKeyContent: Buffer.from(otherKeyPem),
-      privateKeyPassphrase: null,
-      certificateChainContent: null
-    };
 
-    await assert.rejects(service.import(command, 'userTest'), {
+    await assert.rejects(service.import(importCommand({ privateKeyContent: Buffer.from(otherKeyPem) }), 'userTest'), {
       message: 'The private key does not match the certificate public key'
     });
   });
 
   it('should export a certificate in PEM format without the CA chain', () => {
-    certificateRepository.findById.mock.mockImplementationOnce(() => ({
-      ...testData.certificates.list[0],
-      certificate: certPem,
-      certificateChain: certificateChainPem
-    }));
+    certificateRepository.findById.mock.mockImplementationOnce(() => storedCertificate(certificateChainPem));
 
     const result = service.exportCertificate(testData.certificates.list[0].id, 'PEM', false);
 
@@ -264,11 +238,7 @@ describe('Certificate Service', () => {
   });
 
   it('should export a certificate in PEM format including the CA chain', () => {
-    certificateRepository.findById.mock.mockImplementationOnce(() => ({
-      ...testData.certificates.list[0],
-      certificate: certPem,
-      certificateChain: certificateChainPem
-    }));
+    certificateRepository.findById.mock.mockImplementationOnce(() => storedCertificate(certificateChainPem));
 
     const result = service.exportCertificate(testData.certificates.list[0].id, 'PEM', true);
 
@@ -276,11 +246,7 @@ describe('Certificate Service', () => {
   });
 
   it('should export a certificate in DER format', () => {
-    certificateRepository.findById.mock.mockImplementationOnce(() => ({
-      ...testData.certificates.list[0],
-      certificate: certPem,
-      certificateChain: null
-    }));
+    certificateRepository.findById.mock.mockImplementationOnce(() => storedCertificate(null));
 
     const result = service.exportCertificate(testData.certificates.list[0].id, 'DER', false);
 
@@ -289,11 +255,7 @@ describe('Certificate Service', () => {
   });
 
   it('should reject exporting the CA chain in DER format', () => {
-    certificateRepository.findById.mock.mockImplementationOnce(() => ({
-      ...testData.certificates.list[0],
-      certificate: certPem,
-      certificateChain: certificateChainPem
-    }));
+    certificateRepository.findById.mock.mockImplementationOnce(() => storedCertificate(certificateChainPem));
 
     assert.throws(() => service.exportCertificate(testData.certificates.list[0].id, 'DER', true), {
       message: 'The CA chain cannot be exported in DER format'

@@ -1,24 +1,42 @@
 import assert from 'node:assert/strict';
-import { beforeEach, describe, it, mock } from 'node:test';
+import { beforeEach, describe, it } from 'node:test';
 
 import { createPageFromArray } from '../../shared/model/common/types';
 
-import UserRepository from '../repository/config/user.repository';
-import UserRepositoryMock from '../tests/__mocks__/repository/config/user-repository.mock';
+import type { User } from '../model/user.model';
+import type UserRepository from '../repository/config/user.repository';
 import testData from '../tests/utils/test-data';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { createMock, type Mocked } from '../tests/utils/test-utils';
+import type JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import UserService, { toUserDTO } from './user.service';
 
-let validator: { validate: ReturnType<typeof mock.fn> };
-let userRepository: UserRepositoryMock;
-let service: UserService;
+const getUserInfo = (id: string) => ({ id, friendlyName: 'test' });
+
+const expectedUserDTO = (user: User, friendlyName: string) => ({
+  id: user.id,
+  login: user.login,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  email: user.email,
+  language: user.language,
+  timezone: user.timezone,
+  friendlyName,
+  createdBy: getUserInfo(user.createdBy),
+  updatedBy: getUserInfo(user.updatedBy),
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt
+});
 
 describe('User Service', () => {
+  let validator: Mocked<JoiValidator>;
+  let userRepository: Mocked<UserRepository>;
+  let service: UserService;
+
   beforeEach(() => {
-    validator = { validate: mock.fn() };
-    userRepository = new UserRepositoryMock();
-    service = new UserService(validator as unknown as JoiValidator, userRepository as unknown as UserRepository);
+    validator = createMock<JoiValidator>();
+    userRepository = createMock<UserRepository>();
+    service = new UserService(validator, userRepository);
   });
 
   it('should list all users', () => {
@@ -184,44 +202,12 @@ describe('User Service', () => {
 
   it('should properly convert to DTO', () => {
     const user = testData.users.list[0];
-    assert.deepStrictEqual(
-      toUserDTO(user, id => ({ id, friendlyName: 'test' })),
-      {
-        id: user.id,
-        login: user.login,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        language: user.language,
-        timezone: user.timezone,
-        friendlyName: 'Admin',
-        createdBy: { id: user.createdBy, friendlyName: 'test' },
-        updatedBy: { id: user.updatedBy, friendlyName: 'test' },
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      }
-    );
+    assert.deepStrictEqual(toUserDTO(user, getUserInfo), expectedUserDTO(user, 'Admin'));
   });
 
   it('should properly convert non-admin user to DTO with firstName and lastName', () => {
     const user = testData.users.list[1];
-    assert.deepStrictEqual(
-      toUserDTO(user, id => ({ id, friendlyName: 'test' })),
-      {
-        id: user.id,
-        login: user.login,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        language: user.language,
-        timezone: user.timezone,
-        friendlyName: `${user.firstName} ${user.lastName} (${user.login})`,
-        createdBy: { id: user.createdBy, friendlyName: 'test' },
-        updatedBy: { id: user.updatedBy, friendlyName: 'test' },
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      }
-    );
+    assert.deepStrictEqual(toUserDTO(user, getUserInfo), expectedUserDTO(user, `${user.firstName} ${user.lastName} (${user.login})`));
   });
 
   it('should return empty info for null userId', () => {
@@ -259,43 +245,11 @@ describe('User Service', () => {
 
   it('should convert to DTO a user with only a firstName set', () => {
     const user = { ...testData.users.list[1], login: 'onlyfirst', firstName: 'OnlyFirst', lastName: null };
-    assert.deepStrictEqual(
-      toUserDTO(user, id => ({ id, friendlyName: 'test' })),
-      {
-        id: user.id,
-        login: user.login,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        language: user.language,
-        timezone: user.timezone,
-        friendlyName: 'OnlyFirst (onlyfirst)',
-        createdBy: { id: user.createdBy, friendlyName: 'test' },
-        updatedBy: { id: user.updatedBy, friendlyName: 'test' },
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      }
-    );
+    assert.deepStrictEqual(toUserDTO(user, getUserInfo), expectedUserDTO(user, 'OnlyFirst (onlyfirst)'));
   });
 
   it('should convert to DTO a user with only a lastName set', () => {
     const user = { ...testData.users.list[1], login: 'onlylast', firstName: null, lastName: 'OnlyLast' };
-    assert.deepStrictEqual(
-      toUserDTO(user, id => ({ id, friendlyName: 'test' })),
-      {
-        id: user.id,
-        login: user.login,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        language: user.language,
-        timezone: user.timezone,
-        friendlyName: 'OnlyLast (onlylast)',
-        createdBy: { id: user.createdBy, friendlyName: 'test' },
-        updatedBy: { id: user.updatedBy, friendlyName: 'test' },
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      }
-    );
+    assert.deepStrictEqual(toUserDTO(user, getUserInfo), expectedUserDTO(user, 'OnlyLast (onlylast)'));
   });
 });

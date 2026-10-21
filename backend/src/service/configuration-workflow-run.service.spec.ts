@@ -5,21 +5,24 @@ import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configur
 import { OIBusRecord } from '../../shared/model/common/content.model';
 import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
 
+import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { OIBusValidationError } from '../model/types';
 import { WorkflowRunEntity } from '../model/workflow-run.model';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import ItemPointMetadataRepositoryMock from '../tests/__mocks__/repository/config/item-point-metadata-repository.mock';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import WorkflowRunRepositoryMock from '../tests/__mocks__/repository/config/workflow-run-repository.mock';
-import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
+import type ItemPointMetadataRepository from '../repository/config/item-point-metadata.repository';
+import type SouthConnectorRepository from '../repository/config/south-connector.repository';
+import type WorkflowRunRepository from '../repository/config/workflow-run.repository';
+import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import testData from '../tests/utils/test-data';
+import { createMock, Mocked } from '../tests/utils/test-utils';
+import type ConfigurationWorkflowService from './configuration-workflow.service';
 import ConfigurationWorkflowRunService from './configuration-workflow-run.service';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
+import type SouthService from './south.service';
 import { southManifestList } from './south-manifests';
 
 const SOUTH_ID = testData.south.list[0].id;
@@ -86,50 +89,47 @@ const startedRun: WorkflowRunEntity = {
   records: []
 };
 
-let configurationWorkflowService: { findById: ReturnType<typeof mock.fn> };
-let workflowRunRepository: WorkflowRunRepositoryMock;
-let itemPointMetadataRepository: ItemPointMetadataRepositoryMock;
-let southConnectorRepository: SouthConnectorRepositoryMock;
-let southService: SouthServiceMock;
-let engine: DataStreamEngineMock;
+let configurationWorkflowService: Mocked<ConfigurationWorkflowService>;
+let workflowRunRepository: Mocked<WorkflowRunRepository>;
+let itemPointMetadataRepository: Mocked<ItemPointMetadataRepository>;
+let southConnectorRepository: Mocked<SouthConnectorRepository>;
+let southService: Mocked<SouthService>;
+let engine: Mocked<DataStreamEngine>;
 let south: SouthConnectorMock;
-let oIAnalyticsMessageService: OIAnalyticsMessageServiceMock;
-let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
+let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
 let service: ConfigurationWorkflowRunService;
 
 describe('Configuration Workflow Run Service', () => {
   beforeEach(() => {
-    configurationWorkflowService = { findById: mock.fn(() => baseWorkflow) };
-    workflowRunRepository = new WorkflowRunRepositoryMock();
-    itemPointMetadataRepository = new ItemPointMetadataRepositoryMock();
-    southConnectorRepository = new SouthConnectorRepositoryMock();
-    southService = new SouthServiceMock();
-    engine = new DataStreamEngineMock(null);
     south = new SouthConnectorMock(testData.south.list[0]);
-    oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-    oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-
-    workflowRunRepository.start.mock.mockImplementation(() => startedRun);
-    workflowRunRepository.findById.mock.mockImplementation(() => startedRun);
-    engine.hasSouth.mock.mockImplementation(() => true);
-    engine.getSouth.mock.mockImplementation(() => ({ south, metrics: {} }) as never);
     // enqueueWorkflowRun (inherited, unmocked, from the real SouthConnector base class) requires
     // the connector to be enabled to accept anything onto its queue.
     south.isEnabled.mock.mockImplementation(() => true);
     south.hasConfigurationDiscovery.mock.mockImplementation(() => true);
     south.discover.mock.mockImplementation(async () => []);
-    southConnectorRepository.findItemById.mock.mockImplementation(() => runningItem as never);
-    southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0] as never);
-    southService.createItem.mock.mockImplementation(async () => ({ ...runningItem, id: 'createdItemId' }) as never);
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'REGISTERED' }) as never);
+
+    configurationWorkflowService = createMock<ConfigurationWorkflowService>({ findById: () => baseWorkflow });
+    workflowRunRepository = createMock<WorkflowRunRepository>({ start: () => startedRun, findById: () => startedRun });
+    itemPointMetadataRepository = createMock<ItemPointMetadataRepository>({ findAllByWorkflow: () => [] });
+    southConnectorRepository = createMock<SouthConnectorRepository>({
+      findItemById: () => runningItem,
+      findSouthById: () => testData.south.list[0]
+    });
+    southService = createMock<SouthService>({ createItem: async () => ({ ...runningItem, id: 'createdItemId' }) });
+    engine = createMock<DataStreamEngine>({ logger: new LoggerMock(), hasSouth: () => true, getSouth: () => ({ south, metrics: {} }) });
+    oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
+    oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({
+      getRegistrationSettings: () => ({ status: 'REGISTERED' })
+    });
 
     service = new ConfigurationWorkflowRunService(
-      configurationWorkflowService as never,
+      configurationWorkflowService,
       workflowRunRepository,
       itemPointMetadataRepository,
       southConnectorRepository,
-      southService as never,
-      engine as never,
+      southService,
+      engine,
       oIAnalyticsMessageService,
       oIAnalyticsRegistrationService
     );
@@ -152,7 +152,7 @@ describe('Configuration Workflow Run Service', () => {
   });
 
   it('should throw without queuing anything when this workflow is already queued or running', async () => {
-    south.enqueueWorkflowRun = mock.fn(() => null) as never;
+    mock.method(south, 'enqueueWorkflowRun', () => null);
     await assert.rejects(
       service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest'),
       new OIBusValidationError(`Configuration workflow "${baseWorkflow.name}" is already running`)
@@ -537,7 +537,7 @@ describe('Configuration Workflow Run Service', () => {
       assert.strictEqual(workflowRunRepository.complete.mock.calls.length, 1);
       const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { pushedCount: number };
       assert.strictEqual(counts.pushedCount, 0);
-      assert.strictEqual(engine.logger.warn.mock.calls.length, 1);
+      assert.strictEqual((engine.logger as LoggerMock).warn.mock.calls.length, 1);
     });
   });
 
@@ -566,7 +566,7 @@ describe('Configuration Workflow Run Service', () => {
       if (callCount === 2) {
         throw new Error('validation failed');
       }
-      return { ...runningItem, id: 'createdItemId' } as never;
+      return { ...runningItem, id: 'createdItemId' };
     });
 
     await assert.rejects(service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest'), new Error('validation failed'));
@@ -947,7 +947,7 @@ describe('Configuration Workflow Run Service', () => {
   describe('findRunById', () => {
     it('should return the run when it exists and belongs to this workflow', () => {
       const detailedRun = { ...startedRun, workflowId: WORKFLOW_ID, entries: [], records: [] };
-      workflowRunRepository.findById.mock.mockImplementation(() => detailedRun as never);
+      workflowRunRepository.findById.mock.mockImplementation(() => detailedRun);
 
       const result = service.findRunById(SOUTH_ID, WORKFLOW_ID, 'runId1');
 
@@ -965,7 +965,7 @@ describe('Configuration Workflow Run Service', () => {
     });
 
     it('should throw NotFoundError when the run belongs to a different workflow', () => {
-      workflowRunRepository.findById.mock.mockImplementation(() => ({ ...startedRun, workflowId: 'otherWorkflowId' }) as never);
+      workflowRunRepository.findById.mock.mockImplementation(() => ({ ...startedRun, workflowId: 'otherWorkflowId' }));
 
       assert.throws(() => service.findRunById(SOUTH_ID, WORKFLOW_ID, 'runId1'), {
         message: 'Configuration workflow run "runId1" not found'
@@ -996,18 +996,17 @@ describe('Configuration Workflow Run Service', () => {
     });
 
     it('should silently no-op (no throw) when this workflow is already queued or running', async () => {
-      south.enqueueWorkflowRun = mock.fn(() => null) as never;
+      mock.method(south, 'enqueueWorkflowRun', () => null);
       await assert.doesNotReject(service.runScheduled(SOUTH_ID, WORKFLOW_ID));
       assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
     });
 
     it('should silently no-op (no throw) when the south connector is disabled - unlike runNow, a scheduled tick must respect it', async () => {
       south.isEnabled.mock.mockImplementation(() => false);
-      const enqueueWorkflowRun = mock.fn(() => null) as never;
-      south.enqueueWorkflowRun = enqueueWorkflowRun;
+      const enqueueWorkflowRun = mock.method(south, 'enqueueWorkflowRun', () => null);
       await assert.doesNotReject(service.runScheduled(SOUTH_ID, WORKFLOW_ID));
       assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
-      assert.strictEqual((enqueueWorkflowRun as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(enqueueWorkflowRun.mock.calls.length, 0);
     });
   });
 

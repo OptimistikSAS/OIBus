@@ -4,19 +4,20 @@ import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import { DateTime } from 'luxon';
 
 import { EngineSettings } from '../model/engine.model';
-import AuditRepositoryMock from '../tests/__mocks__/repository/config/audit-repository.mock';
-import EngineRepositoryMock from '../tests/__mocks__/repository/config/engine-repository.mock';
+import type AuditRepository from '../repository/config/audit.repository';
+import type EngineRepository from '../repository/config/engine.repository';
 import testData from '../tests/utils/test-data';
+import { createMock, Mocked } from '../tests/utils/test-utils';
 import AuditCleanupService from './audit-cleanup.service';
 
 describe('AuditCleanupService', () => {
   let service: AuditCleanupService;
-  let auditRepository: AuditRepositoryMock;
-  let engineRepository: EngineRepositoryMock;
+  let auditRepository: Mocked<AuditRepository>;
+  let engineRepository: Mocked<EngineRepository>;
 
   beforeEach(() => {
-    auditRepository = new AuditRepositoryMock();
-    engineRepository = new EngineRepositoryMock();
+    auditRepository = createMock<AuditRepository>();
+    engineRepository = createMock<EngineRepository>();
 
     mock.timers.enable({ apis: ['Date', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
 

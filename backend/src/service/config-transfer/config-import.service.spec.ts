@@ -5,20 +5,21 @@ import { ConfigurationWorkflowCommandDTO } from '../../../shared/model/api/confi
 import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../shared/model/oia/config-transfer.model';
 import { OIAnalyticsSouthCommandDTO } from '../../../shared/model/oia/oianalytics-configuration.model';
 
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
-import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
-import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
-import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
-import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import type CertificateRepository from '../../repository/config/certificate.repository';
+import type ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
+import type EngineRepository from '../../repository/config/engine.repository';
+import type HistoryQueryRepository from '../../repository/config/history-query.repository';
+import type IpFilterRepository from '../../repository/config/ip-filter.repository';
+import type NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import type ScanModeRepository from '../../repository/config/scan-mode.repository';
+import type SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import type TransformerRepository from '../../repository/config/transformer.repository';
+import type UserRepository from '../../repository/config/user.repository';
 import testData from '../../tests/utils/test-data';
+import { createMock } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import EncryptionService from '../encryption.service';
+import type OIAnalyticsRegistrationService from '../oia/oianalytics-registration.service';
 import ConfigImportService, { ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
@@ -33,16 +34,16 @@ describe('Config Import Service', () => {
   let exportedFile: ConfigExportDTO;
 
   beforeEach(() => {
-    const engineRepository = new EngineRepositoryMock();
-    const scanModeRepository = new ScanModeRepositoryMock();
-    const ipFilterRepository = new IpFilterRepositoryMock();
-    const certificateRepository = new CertificateRepositoryMock();
-    const userRepository = new UserRepositoryMock();
-    const southRepository = new SouthConnectorRepositoryMock();
-    const northRepository = new NorthConnectorRepositoryMock();
-    const historyQueryRepository = new HistoryQueryRepositoryMock();
-    const transformerRepository = new TransformerRepositoryMock();
-    const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
+    const engineRepository = createMock<EngineRepository>();
+    const scanModeRepository = createMock<ScanModeRepository>();
+    const ipFilterRepository = createMock<IpFilterRepository>();
+    const certificateRepository = createMock<CertificateRepository>();
+    const userRepository = createMock<UserRepository>();
+    const southRepository = createMock<SouthConnectorRepository>();
+    const northRepository = createMock<NorthConnectorRepository>();
+    const historyQueryRepository = createMock<HistoryQueryRepository>();
+    const transformerRepository = createMock<TransformerRepository>();
+    const oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>();
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
@@ -72,7 +73,7 @@ describe('Config Import Service', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
-      new ConfigurationWorkflowRepositoryMock(),
+      createMock<ConfigurationWorkflowRepository>({ findAll: () => [] }),
       encryptionService,
       false,
       false
