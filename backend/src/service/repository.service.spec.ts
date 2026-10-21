@@ -41,6 +41,7 @@ describe('Repository service', () => {
   });
 
   after(async () => {
+    // Already closed when the close test ran: better-sqlite3 ignores closing a closed database
     repositoryService.close();
     await cleanupDbs(TEST_DB_PREFIX);
   });
@@ -71,25 +72,7 @@ describe('Repository service', () => {
     assert.ok(repositoryService.transformerRepository);
   });
 
-  it('should properly close', async () => {
-    const closePrefix = `${TEST_DB_PREFIX}-close`;
-    await Promise.all([
-      migrateEntities(`${closePrefix}-config.db`),
-      migrateLogs(`${closePrefix}-logs.db`),
-      migrateMetrics(`${closePrefix}-metrics.db`),
-      migrateCrypto(`${closePrefix}-crypto.db`),
-      migrateSouthCache(`${closePrefix}-cache.db`)
-    ]);
-    const rs = new RepositoryService(
-      `${closePrefix}-config.db`,
-      `${closePrefix}-logs.db`,
-      `${closePrefix}-metrics.db`,
-      `${closePrefix}-crypto.db`,
-      `${closePrefix}-cache.db`,
-      '3.5.0'
-    );
-    await flushPromises();
-    assert.doesNotThrow(() => rs.close());
-    await cleanupDbs(closePrefix);
+  it('should properly close', () => {
+    assert.doesNotThrow(() => repositoryService.close());
   });
 });
