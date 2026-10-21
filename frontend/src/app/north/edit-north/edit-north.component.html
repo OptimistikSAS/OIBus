@@ -197,27 +197,27 @@
               </div>
               <div class="row">
                 <!-- Name -->
-                <div class="col-4">
+                <div class="col-8">
                   <div class="form-group">
                     <label class="form-label" for="north-name" translate="north.name"></label>
                     <input formControlName="name" id="north-name" class="form-control" />
                     <val-errors controlName="name" />
                   </div>
                 </div>
-                <!-- Description -->
-                <div class="col-5">
+                <!-- Status -->
+                <div class="col-4">
                   <div class="form-group">
-                    <label class="form-label" for="north-description" translate="north.description"></label>
-                    <input formControlName="description" id="north-description" class="form-control" />
+                    <div class="form-label" id="north-status" translate="north.status"></div>
+                    <oib-enabled-selector formControlName="enabled" inputId="north-enabled" labelledBy="north-status" />
                   </div>
                 </div>
-                <!-- Enabled -->
-                <div class="col-3">
+              </div>
+              <div class="row">
+                <!-- Description -->
+                <div class="col-12">
                   <div class="form-group">
-                    <div class="form-check form-switch padded">
-                      <input formControlName="enabled" id="north-enabled" type="checkbox" class="form-check-input" />
-                      <label class="form-check-label" for="north-enabled" translate="north.enabled"></label>
-                    </div>
+                    <label class="form-label" for="north-description" translate="north.description"></label>
+                    <textarea formControlName="description" id="north-description" class="form-control" rows="3"></textarea>
                   </div>
                 </div>
               </div>

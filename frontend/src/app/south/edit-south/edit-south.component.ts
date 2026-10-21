@@ -33,6 +33,7 @@ import { ExploreButtonComponent } from '../../shared/explore-button/explore-butt
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { findItemIndex } from '../../shared/find-item-index';
 import { addAttributeToForm, addEnablingConditions, asFormGroup, extractFormValue } from '../../shared/form/dynamic-form.builder';
+import { EnabledSelectorComponent } from '../../shared/form/enabled-selector/enabled-selector.component';
 import { formDirectives } from '../../shared/form/form-directives';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
@@ -101,6 +102,7 @@ type SouthConnectorForm = FormGroup<{
 @Component({
   selector: 'oib-edit-south',
   imports: [
+    EnabledSelectorComponent,
     NgTemplateOutlet,
     TranslateDirective,
     ...formDirectives,

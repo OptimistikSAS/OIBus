@@ -29,6 +29,7 @@ import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/co
 import { SouthCachingStrategy, SouthCachingThresholdType, SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
 
 import { addAttributeToForm, createMqttValidator, extractFormValue } from '../../../shared/form/dynamic-form.builder';
+import { EnabledSelectorComponent } from '../../../shared/form/enabled-selector/enabled-selector.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
@@ -48,6 +49,7 @@ import SouthItemTestComponent from '../south-item-test/south-item-test.component
   templateUrl: './edit-south-item-modal.component.html',
   styleUrl: './edit-south-item-modal.component.scss',
   imports: [
+    EnabledSelectorComponent,
     TranslateDirective,
     TranslatePipe,
     SaveButtonComponent,
