@@ -5,8 +5,9 @@ import { Database } from 'better-sqlite3';
 
 import { createPageFromArray } from '../../../shared/model/common/types';
 
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, stripAuditFields } from '../../tests/utils/test-utils';
 import ConfigurationWorkflowRepository from './configuration-workflow.repository';
 import OIAnalyticsMessageRepository from './oianalytics-message.repository';
 import WorkflowRunRepository from './workflow-run.repository';

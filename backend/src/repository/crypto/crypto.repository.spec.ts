@@ -3,8 +3,8 @@ import { after, before, describe, it } from 'node:test';
 
 import type { Database } from 'better-sqlite3';
 
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import CryptoRepository from './crypto.repository';
 
 const TEST_DB_PATH = 'src/tests/test-crypto-repo.db';

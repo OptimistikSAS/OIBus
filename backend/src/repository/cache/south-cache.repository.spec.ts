@@ -1,37 +1,30 @@
 import assert from 'node:assert/strict';
-import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+import { beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import { Database, Statement } from 'better-sqlite3';
+import { Database } from 'better-sqlite3';
 
+import { createMock, Mocked } from '../../tests/utils/test-utils';
 import SouthCacheRepository from './south-cache.repository';
 
 describe('SouthCacheRepository', () => {
   let repository: SouthCacheRepository;
-  let runMock: ReturnType<typeof mock.fn>;
-  let getMock: ReturnType<typeof mock.fn>;
-  let prepareMock: ReturnType<typeof mock.fn>;
+  let runMock: Mock<(...args: Array<unknown>) => { changes: number }>;
+  let getMock: Mock<(...args: Array<unknown>) => unknown>;
+  let database: Mocked<Database>;
 
   beforeEach(() => {
     runMock = mock.fn(() => ({ changes: 1 }));
     getMock = mock.fn();
-    prepareMock = mock.fn(() => ({ run: runMock, get: getMock }) as unknown as Statement);
     // better-sqlite3's real `database.transaction(fn)` returns a wrapped function that runs `fn`
     // inside a transaction when called; this mock just returns `fn` itself so calling it invokes
     // the callback synchronously, close enough for unit-testing saveItemsLastValues' chunk loop.
-    const mockDatabase = {
-      prepare: prepareMock,
-      transaction: (fn: (...args: Array<unknown>) => void) => fn
-    } as unknown as Database;
-    repository = new SouthCacheRepository(mockDatabase);
-  });
-
-  afterEach(() => {
-    mock.restoreAll();
+    database = createMock<Database>({ prepare: () => ({ run: runMock, get: getMock }), transaction: fn => fn });
+    repository = new SouthCacheRepository(database);
   });
 
   it('prepares all nine statements once at construction', () => {
     // 9 statements: get, getByGroup, upsert, getCachedValue, upsertCachedValue, updateGroup, insertGroup, delete, deleteAllBySouth
-    assert.strictEqual(prepareMock.mock.calls.length, 9);
+    assert.strictEqual(database.prepare.mock.calls.length, 9);
   });
 
   describe('getItemLastValue', () => {
@@ -44,7 +37,7 @@ describe('SouthCacheRepository', () => {
     it('should query by south_id and item_id', () => {
       getMock.mock.mockImplementationOnce(() => undefined);
       repository.getItemLastValue('south1', 'item1');
-      const sql = prepareMock.mock.calls[0].arguments[0] as string;
+      const sql = database.prepare.mock.calls[0].arguments[0];
       assert.ok(sql.includes('south_id = ?'));
       assert.ok(sql.includes('item_id = ?'));
     });
@@ -84,7 +77,7 @@ describe('SouthCacheRepository', () => {
     it('should query by south_id and group_id', () => {
       getMock.mock.mockImplementationOnce(() => undefined);
       repository.getGroupLastValue('south1', 'grp1');
-      const sql = prepareMock.mock.calls[1].arguments[0] as string;
+      const sql = database.prepare.mock.calls[1].arguments[0];
       assert.ok(sql.includes('south_id = ?'));
       assert.ok(sql.includes('group_id = ?'));
     });
@@ -112,7 +105,7 @@ describe('SouthCacheRepository', () => {
   describe('saveItemLastValue', () => {
     it('should upsert into south_item_cache scoped to its own columns (never a blanket REPLACE, which would wipe cached_value/cached_instant)', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
-      const sql = prepareMock.mock.calls[2].arguments[0] as string;
+      const sql = database.prepare.mock.calls[2].arguments[0];
       assert.ok(sql.includes('INSERT INTO south_item_cache'));
       assert.ok(sql.includes('ON CONFLICT'));
       assert.ok(sql.includes('DO UPDATE'));
@@ -135,7 +128,7 @@ describe('SouthCacheRepository', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'g', value: 1, trackedInstant: 't', queryTime: 't' });
       repository.saveItemLastValue('south2', { itemId: 'item2', groupId: 'g', value: 2, trackedInstant: 't', queryTime: 't' });
       // prepare() still called only 9 times total (constructor) — no new preparations.
-      assert.strictEqual(prepareMock.mock.calls.length, 9);
+      assert.strictEqual(database.prepare.mock.calls.length, 9);
       assert.strictEqual(runMock.mock.calls.length, 2);
       assert.strictEqual(runMock.mock.calls[0].arguments[0], 'south1');
       assert.strictEqual(runMock.mock.calls[1].arguments[0], 'south2');
@@ -148,7 +141,7 @@ describe('SouthCacheRepository', () => {
       repository.saveGroupLastValue('south1', 'group1', { value: 1, trackedInstant: 'now', queryTime: 'now' });
 
       assert.strictEqual(runMock.mock.calls.length, 1);
-      const updateSql = prepareMock.mock.calls[5].arguments[0] as string;
+      const updateSql = database.prepare.mock.calls[5].arguments[0];
       assert.ok(updateSql.includes('UPDATE south_item_cache'));
       assert.ok(updateSql.includes('item_id IS NULL'));
       assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['now', '1', 'now', 'south1', 'group1']);
@@ -161,7 +154,7 @@ describe('SouthCacheRepository', () => {
       repository.saveGroupLastValue('south1', 'group1', { value: 1, trackedInstant: 'now', queryTime: 'now' });
 
       assert.strictEqual(runMock.mock.calls.length, 2);
-      const insertSql = prepareMock.mock.calls[6].arguments[0] as string;
+      const insertSql = database.prepare.mock.calls[6].arguments[0];
       assert.ok(insertSql.includes('INSERT INTO south_item_cache'));
       assert.ok(insertSql.includes('NULL'));
       assert.deepStrictEqual(runMock.mock.calls[1].arguments, ['south1', 'group1', 'now', '1', 'now']);
@@ -186,7 +179,7 @@ describe('SouthCacheRepository', () => {
     it('queries the dedicated cached_value/cached_instant columns by south_id and item_id', () => {
       getMock.mock.mockImplementationOnce(() => undefined);
       repository.getItemCachedValue('south1', 'item1');
-      const sql = prepareMock.mock.calls[3].arguments[0] as string;
+      const sql = database.prepare.mock.calls[3].arguments[0];
       assert.ok(sql.includes('cached_value'));
       assert.ok(sql.includes('cached_instant'));
       assert.ok(sql.includes('south_id = ?'));
@@ -203,7 +196,7 @@ describe('SouthCacheRepository', () => {
   describe('saveItemsLastValues', () => {
     it('upserts into the dedicated cached_value/cached_instant columns, never value/tracked_instant', () => {
       repository.saveItemsLastValues('south1', [{ itemId: 'item1', value: 'v1', instant: 't1' }]);
-      const sql = prepareMock.mock.calls[4].arguments[0] as string;
+      const sql = database.prepare.mock.calls[4].arguments[0];
       assert.ok(sql.includes('cached_value'));
       assert.ok(sql.includes('cached_instant'));
       assert.ok(sql.includes('ON CONFLICT'));
@@ -219,7 +212,7 @@ describe('SouthCacheRepository', () => {
   describe('deleteItemValue', () => {
     it('should delete by south_id and item_id', () => {
       repository.deleteItemValue('south1', 'item1');
-      const sql = prepareMock.mock.calls[7].arguments[0] as string;
+      const sql = database.prepare.mock.calls[7].arguments[0];
       assert.ok(sql.includes('south_id = ?'));
       assert.ok(sql.includes('item_id = ?'));
       assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['south1', 'item1']);
@@ -229,7 +222,7 @@ describe('SouthCacheRepository', () => {
   describe('deleteItemsBySouth', () => {
     it('should delete all rows for the given south_id', () => {
       repository.deleteItemsBySouth('south1');
-      const sql = prepareMock.mock.calls[8].arguments[0] as string;
+      const sql = database.prepare.mock.calls[8].arguments[0];
       assert.ok(sql.includes('south_id = ?'));
       assert.ok(!sql.includes('item_id'));
       assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['south1']);
