@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import type { CacheMetadataSource } from '../model/engine.model';
 import type { CustomTransformer } from '../model/transformer.model';
@@ -471,22 +471,6 @@ describe('SandboxService', () => {
       await assert.rejects(async () => sandboxService.execute('', source, 'oom.txt', transformer, {}, logger), /\[MEMORY_LIMIT_EXCEEDED\]/);
     });
 
-    it('should catch TypeScript transpilation errors and map them to SYNTAX_ERROR', async () => {
-      const transformer = buildTransformer(
-        `
-          function transform() {
-            throw new Error('TypeScript compilation failed: Invalid syntax');
-          }
-        `,
-        5000
-      );
-
-      await assert.rejects(
-        async () => sandboxService.execute('', source, 'ts-err.txt', transformer, {}, logger),
-        /\[SYNTAX_ERROR\] Custom code execution failed: TypeScript compilation failed/
-      );
-    });
-
     it('should throw if the code does not export a transform function (non-function value)', async () => {
       const transformer = buildTransformer(`var transform = "I am a string, not a function!";`, 5000);
 
@@ -504,6 +488,47 @@ describe('SandboxService', () => {
         /Custom code must export a "transform" function/
       );
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite: mocked typescript whose transpileModule throws (the real one reports syntax errors as diagnostics
+// instead of throwing). Uses the real isolated-vm, like the main suite.
+// ---------------------------------------------------------------------------
+describe('SandboxService - TypeScript compilation error', () => {
+  let SandboxService: typeof SandboxServiceClass;
+  let sandboxService: SandboxServiceClass;
+  const realTypescript: unknown = nodeRequire('typescript');
+
+  before(() => {
+    mockModule(nodeRequire, 'typescript', {
+      __esModule: true,
+      default: {
+        ...(realTypescript as object),
+        transpileModule: () => {
+          throw new Error('Unexpected token');
+        }
+      }
+    });
+    SandboxService = reloadModule<{ default: typeof SandboxServiceClass }>(nodeRequire, './sandbox.service').default;
+  });
+
+  after(() => {
+    mockModule(nodeRequire, 'typescript', realTypescript);
+  });
+
+  beforeEach(() => {
+    mock.method(fs, 'readFileSync', fakeReadFileSync);
+    sandboxService = new SandboxService();
+  });
+
+  it('should catch TypeScript transpilation errors and map them to SYNTAX_ERROR', async () => {
+    const transformer = buildTransformer(`function transform() { const a = ; }`, undefined, 'typescript');
+
+    await assert.rejects(
+      async () => sandboxService.execute('', source, 'ts-err.txt', transformer, {}, logger),
+      new Error('[SYNTAX_ERROR] Custom code execution failed: TypeScript compilation failed: Unexpected token')
+    );
   });
 });
 

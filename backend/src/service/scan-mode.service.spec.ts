@@ -53,7 +53,7 @@ describe('Scan Mode Service', () => {
 
     const result = service.list();
 
-    assert.ok(scanModeRepository.findAll.mock.calls.length > 0);
+    assert.strictEqual(scanModeRepository.findAll.mock.calls.length, 1);
     assert.deepStrictEqual(result, testData.scanMode.list);
   });
 
@@ -82,7 +82,7 @@ describe('Scan Mode Service', () => {
     const result = await service.create(testData.scanMode.command, 'userTest');
 
     assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [scanModeSchema, testData.scanMode.command]);
-    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(result, testData.scanMode.list[0]);
     // The engine installs a shared cron for the new scan mode
     assert.deepStrictEqual(dataStreamEngine.createScanMode.mock.calls[0].arguments, [testData.scanMode.list[0]]);
@@ -115,7 +115,7 @@ describe('Scan Mode Service', () => {
       'userTest'
     ]);
     assert.deepStrictEqual(dataStreamEngine.updateScanMode.mock.calls[0].arguments, [testData.scanMode.list[1]]);
-    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('update() should update a scan mode without changing the name', async () => {
@@ -157,7 +157,7 @@ describe('Scan Mode Service', () => {
       'userTest'
     ]);
     assert.strictEqual(dataStreamEngine.updateScanMode.mock.calls.length, 0);
-    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('update() should not update if the scan mode is not found', async () => {
@@ -204,7 +204,7 @@ describe('Scan Mode Service', () => {
 
     assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
     assert.deepStrictEqual(scanModeRepository.delete.mock.calls[0].arguments, [testData.scanMode.list[0].id, 'userTest']);
-    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     // The engine tears down the scan mode's shared cron
     assert.deepStrictEqual(dataStreamEngine.deleteScanMode.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
   });
@@ -223,21 +223,27 @@ describe('Scan Mode Service', () => {
     assert.strictEqual(dataStreamEngine.deleteScanMode.mock.calls.length, 0);
   });
 
-  it('verifyCron() should verify cron expression of a scan mode', async () => {
+  it('verifyCron() should verify cron expression of a scan mode', async t => {
+    t.mock.timers.enable({ apis: ['Date'], now: new Date('2021-01-02T00:00:00.000Z') });
     // Use a real valid cron expression
     const result = await service.verifyCron({ cron: '* * * * * *' });
 
-    assert.strictEqual(result.isValid, true);
-    assert.strictEqual(result.errorMessage, '');
-    assert.ok(result.nextExecutions.length > 0);
-    assert.ok(result.humanReadableForm.length > 0);
+    assert.deepStrictEqual(result, {
+      isValid: true,
+      errorMessage: '',
+      nextExecutions: ['2021-01-02T00:00:01.000Z', '2021-01-02T00:00:02.000Z', '2021-01-02T00:00:03.000Z'],
+      humanReadableForm: 'Every second, every minute, every hour, every day'
+    });
   });
 
   it('verifyCron() should return invalid result when cron is not valid', async () => {
-    // Use an invalid cron expression (too many fields → quartz cron not supported)
     const result = await service.verifyCron({ cron: 'invalid-cron-expression' });
 
-    assert.strictEqual(result.isValid, false);
-    assert.ok(result.errorMessage.length > 0);
+    assert.deepStrictEqual(result, {
+      isValid: false,
+      errorMessage: 'Cron Expression: Expression has only 1 part. At least 5 parts are required.',
+      nextExecutions: [],
+      humanReadableForm: ''
+    });
   });
 });
