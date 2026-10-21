@@ -242,16 +242,19 @@ describe('utils-certificate', () => {
   });
 
   describe('privateKeyToEncryptedPkcs8Pem', () => {
-    it('produces a PEM starting with the encrypted PKCS#8 header, loadable by node crypto with the right passphrase', () => {
-      const encrypted = privateKeyToEncryptedPkcs8Pem(privateKeyPkcs1Pem, 'the-passphrase');
+    let encrypted: string;
 
+    // Its 100 000 PBKDF2 iterations run in JavaScript (~0.4 s): encrypt once for both tests
+    before(() => {
+      encrypted = privateKeyToEncryptedPkcs8Pem(privateKeyPkcs1Pem, 'the-passphrase');
+    });
+
+    it('produces a PEM starting with the encrypted PKCS#8 header, loadable by node crypto with the right passphrase', () => {
       assert.ok(encrypted.startsWith('-----BEGIN ENCRYPTED PRIVATE KEY-----'));
       assert.doesNotThrow(() => crypto.createPrivateKey({ key: encrypted, format: 'pem', passphrase: 'the-passphrase' }));
     });
 
     it('fails to load with node crypto when the passphrase is wrong', () => {
-      const encrypted = privateKeyToEncryptedPkcs8Pem(privateKeyPkcs1Pem, 'the-passphrase');
-
       assert.throws(() => crypto.createPrivateKey({ key: encrypted, format: 'pem', passphrase: 'wrong-passphrase' }));
     });
   });
