@@ -1,20 +1,19 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import HistoryQuery from '../../engine/history-query';
-import HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
+import type HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
 import HistoryQueryMock from '../../tests/__mocks__/history-query.mock';
-import HistoryQueryMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
 import testData from '../../tests/utils/test-data';
+import { createMock, Mocked } from '../../tests/utils/test-utils';
 import HistoryQueryMetricsService from './history-query-metrics.service';
 
-let historyQueryMetricsRepository: HistoryQueryMetricsRepositoryMock;
+let historyQueryMetricsRepository: Mocked<HistoryQueryMetricsRepository>;
 let historyQueryMock: HistoryQueryMock;
 let service: HistoryQueryMetricsService;
 
 describe('HistoryMetricsService', () => {
   beforeEach(() => {
-    historyQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
+    historyQueryMetricsRepository = createMock<HistoryQueryMetricsRepository>();
     historyQueryMock = new HistoryQueryMock(testData.historyQueries.list[0]);
     mock.timers.enable({ apis: ['Date', 'setInterval', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     // The repository returns the persisted subset (no north current* sizes) — mirror that in the mock.
@@ -22,10 +21,7 @@ describe('HistoryMetricsService', () => {
     historyQueryMetricsRepository.getMetrics.mock.mockImplementation(() =>
       JSON.parse(JSON.stringify({ ...testData.historyQueries.metrics, north: northPersisted }))
     );
-    service = new HistoryQueryMetricsService(
-      historyQueryMock as unknown as HistoryQuery,
-      historyQueryMetricsRepository as unknown as HistoryQueryMetricsRepository
-    );
+    service = new HistoryQueryMetricsService(historyQueryMock, historyQueryMetricsRepository);
   });
 
   afterEach(() => {

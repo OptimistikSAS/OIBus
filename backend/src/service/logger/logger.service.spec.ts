@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { EngineSettings } from '../../model/engine.model';
 import type { ILogger } from '../../model/logger.model';
@@ -9,87 +9,87 @@ import type { OIAnalyticsRegistration } from '../../model/oianalytics-registrati
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
+import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type FileCleanupServiceType from './file-cleanup.service';
 import type LoggerServiceType from './logger.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
+class FileCleanupServiceMock {
+  start = mock.fn(async () => undefined);
+  stop = mock.fn();
+}
+
+const isoTime = () => '';
+// Self-referential `child` so subsequent .child() calls (e.g. for node-opcua scope) work too.
+const pinoInstance: { child: () => unknown } = { child: () => pinoInstance };
+
+// Mocked module exports: the same objects for the whole file, their values are replaced before each test
+const pinoExports: { __esModule: true; default: unknown } = { __esModule: true, default: undefined };
+const encryptionExports = { __esModule: true, encryptionService: new EncryptionServiceMock('', '') };
+
 let LoggerService: typeof LoggerServiceType;
-let encryptionMock: EncryptionServiceMock;
-let pinoMock: ReturnType<typeof mock.fn>;
-let pinoTransportMock: ReturnType<typeof mock.fn>;
-let mockTransportFlush: ReturnType<typeof mock.fn>;
-let mockTransportEnd: ReturnType<typeof mock.fn>;
-let mockTransportOn: ReturnType<typeof mock.fn>;
-let isoTimeFn: () => string;
-let service: LoggerServiceType;
 
-before(async () => {
-  isoTimeFn = () => '';
-  // Self-referential `child` so subsequent .child() calls (e.g. for node-opcua scope) work too.
-  // Plain function (not mock.fn) so it survives `mock.restoreAll()` between tests.
-  const mockPinoInstance: { child: (...args: Array<unknown>) => unknown } = { child: () => mockPinoInstance };
-  pinoMock = mock.fn(() => mockPinoInstance);
-  (pinoMock as unknown as { stdTimeFunctions: { isoTime: () => string } }).stdTimeFunctions = { isoTime: isoTimeFn };
-
-  // Mock pino.transport so logger.service can hold a transport reference for proper shutdown.
-  mockTransportFlush = mock.fn((cb?: (err?: Error) => void) => {
-    if (cb) cb();
-  });
-  mockTransportEnd = mock.fn();
-  mockTransportOn = mock.fn();
-  pinoTransportMock = mock.fn((_options: { targets: Array<{ target: string }> }) => ({
-    flush: mockTransportFlush,
-    end: mockTransportEnd,
-    on: mockTransportOn
-  }));
-  (pinoMock as unknown as { transport: typeof pinoTransportMock }).transport = pinoTransportMock;
-
-  // Replace pino in require cache with the mock
-  nodeRequire('pino');
-  const pinoPath = nodeRequire.resolve('pino');
-  nodeRequire.cache[pinoPath]!.exports = pinoMock;
-
-  // Replace encryption service in require cache with a mock instance
-  encryptionMock = new EncryptionServiceMock('', '');
-  nodeRequire('../encryption.service');
-  const encPath = nodeRequire.resolve('../encryption.service');
-  nodeRequire.cache[encPath]!.exports = { __esModule: true, encryptionService: encryptionMock };
-
-  // Replace FileCleanupService in require cache with a mock constructor
-  // mock.fn() cannot be used with `new`, so use a plain constructor function
-  function fileCleanupCtorMock(this: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> }) {
-    this.start = mock.fn(async () => undefined);
-    this.stop = mock.fn();
-  }
-  nodeRequire('./file-cleanup.service');
-  const fcPath = nodeRequire.resolve('./file-cleanup.service');
-  nodeRequire.cache[fcPath]!.exports = { __esModule: true, default: fileCleanupCtorMock };
-
-  // Force logger.service to reload with mocked dependencies
-  const lsPath = nodeRequire.resolve('./logger.service');
-  delete nodeRequire.cache[lsPath];
-  LoggerService = nodeRequire('./logger.service').default;
-});
-
-beforeEach(() => {
-  pinoMock.mock.resetCalls();
-  pinoTransportMock.mock.resetCalls();
-  mockTransportFlush.mock.resetCalls();
-  mockTransportEnd.mock.resetCalls();
-  mockTransportOn.mock.resetCalls();
-  encryptionMock.decryptText.mock.resetCalls();
-  service = new LoggerService();
-  service.init('folder');
-});
-
-afterEach(() => {
-  mock.restoreAll();
+before(() => {
+  mockModule(nodeRequire, 'pino', pinoExports);
+  mockModule(nodeRequire, '../encryption.service', encryptionExports);
+  mockModule(nodeRequire, './file-cleanup.service', { __esModule: true, default: FileCleanupServiceMock });
+  LoggerService = reloadModule<{ default: typeof LoggerServiceType }>(nodeRequire, './logger.service').default;
 });
 
 describe('Logger', () => {
   const engineSettings = testData.engine.settings;
   const registration = testData.oIAnalytics.registration.completed;
+  const syslogTarget = path.join(__dirname, 'syslog-transport.js');
+
+  let service: LoggerServiceType;
+  let encryptionService: EncryptionServiceMock;
+  let transport: {
+    flush: Mock<(cb?: (err?: Error) => void) => void>;
+    end: Mock<() => void>;
+    on: Mock<(event: string, handler: (error: Error) => void) => void>;
+  };
+  let pinoTransport: Mock<(options: { targets: Array<{ target: string }> }) => typeof transport>;
+  let pino: Mock<(options: unknown) => typeof pinoInstance>;
+
+  // Private state of the service, set directly by the proxy and stop tests
+  const internals = () => service as unknown as { _rawLogger: ILogger | null; _transport: typeof transport };
+
+  // Settings with only the console and file transports (no database, loki nor syslog)
+  const consoleAndFileSettings = (): EngineSettings => {
+    const settings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
+    settings.logger.database.maxNumberOfLogs = 0;
+    settings.logger.loki.address = '';
+    settings.logger.syslog.host = '';
+    return settings;
+  };
+
+  const assertPinoCreatedWithLevel = (level: string) => {
+    assert.strictEqual(pino.mock.calls.length, 1);
+    assert.deepStrictEqual(pino.mock.calls[0].arguments[0], { base: undefined, level, timestamp: isoTime });
+  };
+
+  const transportTargets = () => pinoTransport.mock.calls[0].arguments[0].targets;
+
+  beforeEach(() => {
+    transport = {
+      flush: mock.fn((cb?: (err?: Error) => void) => cb?.()),
+      end: mock.fn(),
+      on: mock.fn((_event: string, _handler: (error: Error) => void) => undefined)
+    };
+    pinoTransport = mock.fn((_options: { targets: Array<{ target: string }> }) => transport);
+    pino = mock.fn((_options: unknown) => pinoInstance);
+    pinoExports.default = Object.assign(pino, { transport: pinoTransport, stdTimeFunctions: { isoTime } });
+    encryptionService = new EncryptionServiceMock('', '');
+    encryptionExports.encryptionService = encryptionService;
+
+    service = new LoggerService();
+    service.init('folder');
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
 
   it('should be properly initialized', async () => {
     const expectedTargets = [
@@ -121,7 +121,7 @@ describe('Logger', () => {
         level: engineSettings.logger.oia.level
       },
       {
-        target: path.join(__dirname, 'syslog-transport.js'),
+        target: syslogTarget,
         options: {
           host: engineSettings.logger.syslog.host,
           port: engineSettings.logger.syslog.port,
@@ -144,20 +144,15 @@ describe('Logger', () => {
 
     await service.start(engineSettings, registration);
 
-    assert.strictEqual(pinoTransportMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pinoTransportMock.mock.calls[0].arguments[0], { targets: expectedTargets });
-    assert.strictEqual(pinoMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pinoMock.mock.calls[0].arguments[0], {
-      base: undefined,
-      level: 'info',
-      timestamp: isoTimeFn
-    });
+    assert.strictEqual(pinoTransport.mock.calls.length, 1);
+    assert.deepStrictEqual(pinoTransport.mock.calls[0].arguments[0], { targets: expectedTargets });
+    assertPinoCreatedWithLevel('info');
   });
 
   it('should be properly initialized with loki error and standard file names', async () => {
     const consoleErrorMock = mock.method(console, 'error', mock.fn());
 
-    encryptionMock.decryptText.mock.mockImplementationOnce(() => {
+    encryptionService.decryptText.mock.mockImplementationOnce(() => {
       throw new Error('decrypt-error');
     });
 
@@ -198,7 +193,7 @@ describe('Logger', () => {
         level: specificSettings.logger.oia.level
       },
       {
-        target: path.join(__dirname, 'syslog-transport.js'),
+        target: syslogTarget,
         options: {
           host: specificSettings.logger.syslog.host,
           port: specificSettings.logger.syslog.port,
@@ -227,14 +222,9 @@ describe('Logger', () => {
 
     await service.start(specificSettings, specificRegistration);
 
-    assert.strictEqual(pinoTransportMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pinoTransportMock.mock.calls[0].arguments[0], { targets: expectedTargets });
-    assert.strictEqual(pinoMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pinoMock.mock.calls[0].arguments[0], {
-      base: undefined,
-      level: 'info',
-      timestamp: isoTimeFn
-    });
+    assert.strictEqual(pinoTransport.mock.calls.length, 1);
+    assert.deepStrictEqual(pinoTransport.mock.calls[0].arguments[0], { targets: expectedTargets });
+    assertPinoCreatedWithLevel('info');
   });
 
   it('should be properly initialized without lokiLog, nor oianalytics nor sqliteLog', async () => {
@@ -242,10 +232,7 @@ describe('Logger', () => {
 
     const specificRegistration: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.engine.settings));
     specificRegistration.status = 'NOT_REGISTERED';
-    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logger.database.maxNumberOfLogs = 0;
-    specificSettings.logger.loki.address = '';
-    specificSettings.logger.syslog.host = '';
+    const specificSettings = consoleAndFileSettings();
 
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificSettings.logger.console.level },
@@ -261,20 +248,14 @@ describe('Logger', () => {
 
     await service.start(specificSettings, specificRegistration);
 
-    assert.strictEqual(pinoTransportMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pinoTransportMock.mock.calls[0].arguments[0], { targets: expectedTargets });
-    assert.strictEqual(pinoMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pinoMock.mock.calls[0].arguments[0], {
-      base: undefined,
-      level: 'info',
-      timestamp: isoTimeFn
-    });
+    assert.strictEqual(pinoTransport.mock.calls.length, 1);
+    assert.deepStrictEqual(pinoTransport.mock.calls[0].arguments[0], { targets: expectedTargets });
+    assertPinoCreatedWithLevel('info');
   });
 
   it('should create proxy loggers that route log calls through the root logger', () => {
     const childMock = mock.fn((_bindings: Record<string, unknown>): ILogger => new PinoLogger());
-    const rootLoggerMock: ILogger = { ...new PinoLogger(), child: childMock };
-    (service as unknown as { _rawLogger: ILogger })._rawLogger = rootLoggerMock;
+    internals()._rawLogger = { ...new PinoLogger(), child: childMock };
 
     const proxy = service.createChildLogger('south', 'id1', 'name1');
     proxy.info('test'); // triggers current getter → root.child(bindings)
@@ -285,8 +266,7 @@ describe('Logger', () => {
 
   it('should self-heal proxy loggers after a logger restart', () => {
     const child1 = mock.fn((_bindings: Record<string, unknown>): ILogger => new PinoLogger());
-    const root1: ILogger = { ...new PinoLogger(), child: child1 };
-    (service as unknown as { _rawLogger: ILogger })._rawLogger = root1;
+    internals()._rawLogger = { ...new PinoLogger(), child: child1 };
 
     const proxy = service.createChildLogger('south');
     proxy.info('first log'); // binds to root1
@@ -295,8 +275,7 @@ describe('Logger', () => {
 
     // Simulate restart: swap root logger
     const child2 = mock.fn((_bindings: Record<string, unknown>): ILogger => new PinoLogger());
-    const root2: ILogger = { ...new PinoLogger(), child: child2 };
-    (service as unknown as { _rawLogger: ILogger })._rawLogger = root2;
+    internals()._rawLogger = { ...new PinoLogger(), child: child2 };
 
     proxy.info('second log'); // should re-bind to root2
 
@@ -305,11 +284,10 @@ describe('Logger', () => {
   });
 
   it('should drop log calls silently when the logger is stopped', () => {
-    const root: ILogger = { ...new PinoLogger() };
-    (service as unknown as { _rawLogger: ILogger })._rawLogger = root;
+    internals()._rawLogger = { ...new PinoLogger() };
     const proxy = service.createChildLogger('internal');
 
-    (service as unknown as { _rawLogger: null })._rawLogger = null;
+    internals()._rawLogger = null;
 
     assert.doesNotThrow(() => proxy.info('dropped'));
     assert.strictEqual(proxy.isLevelEnabled('info'), false);
@@ -317,8 +295,7 @@ describe('Logger', () => {
 
   it('should drop log calls silently after a restart sets the root logger back to null', () => {
     const childMock = mock.fn((_bindings: Record<string, unknown>): ILogger => new PinoLogger());
-    const root: ILogger = { ...new PinoLogger(), child: childMock };
-    (service as unknown as { _rawLogger: ILogger })._rawLogger = root;
+    internals()._rawLogger = { ...new PinoLogger(), child: childMock };
     const proxy = service.createChildLogger('internal');
 
     // First call binds the proxy to the non-null root.
@@ -326,7 +303,7 @@ describe('Logger', () => {
     assert.strictEqual(childMock.mock.calls.length, 1);
 
     // Root is cleared (e.g. logger stopped) - the proxy must re-resolve to null and stop calling child().
-    (service as unknown as { _rawLogger: null })._rawLogger = null;
+    internals()._rawLogger = null;
 
     assert.doesNotThrow(() => proxy.info('dropped after restart'));
     assert.strictEqual(childMock.mock.calls.length, 1);
@@ -334,9 +311,7 @@ describe('Logger', () => {
 
   it('should route trace, debug, warn, error and fatal calls through the root logger', () => {
     const childLogger = new PinoLogger();
-    const childMock = mock.fn((_bindings: Record<string, unknown>): ILogger => childLogger);
-    const root: ILogger = { ...new PinoLogger(), child: childMock };
-    (service as unknown as { _rawLogger: ILogger })._rawLogger = root;
+    internals()._rawLogger = { ...new PinoLogger(), child: () => childLogger };
     const proxy = service.createChildLogger('internal');
 
     proxy.trace('trace message');
@@ -355,8 +330,7 @@ describe('Logger', () => {
   it('should return the real isLevelEnabled result when a root logger is set', () => {
     const childLogger = new PinoLogger();
     childLogger.isLevelEnabled.mock.mockImplementation(() => true);
-    const root: ILogger = { ...new PinoLogger(), child: () => childLogger };
-    (service as unknown as { _rawLogger: ILogger })._rawLogger = root;
+    internals()._rawLogger = { ...new PinoLogger(), child: () => childLogger };
     const proxy = service.createChildLogger('internal');
 
     assert.strictEqual(proxy.isLevelEnabled('info'), true);
@@ -367,19 +341,15 @@ describe('Logger', () => {
     await service.stop();
 
     // With fileCleanUpService and a mock transport
-    const stopMock = mock.fn();
-    service.fileCleanUpService = { stop: stopMock } as unknown as FileCleanupServiceType;
-    const flushMock = mock.fn((cb?: (err?: Error) => void) => {
-      if (cb) cb();
-    });
-    const endMock = mock.fn();
-    (service as unknown as { _transport: unknown })._transport = { flush: flushMock, end: endMock };
+    const fileCleanUpService = createMock<FileCleanupServiceType>();
+    service.fileCleanUpService = fileCleanUpService;
+    internals()._transport = transport;
 
     await service.stop();
 
-    assert.strictEqual(stopMock.mock.calls.length, 1);
-    assert.strictEqual(flushMock.mock.calls.length, 1);
-    assert.strictEqual(endMock.mock.calls.length, 1);
+    assert.strictEqual(fileCleanUpService.stop.mock.calls.length, 1);
+    assert.strictEqual(transport.flush.mock.calls.length, 1);
+    assert.strictEqual(transport.end.mock.calls.length, 1);
     assert.strictEqual(service.rootLogger, null);
   });
 
@@ -387,89 +357,71 @@ describe('Logger', () => {
     const consoleErrorMock = mock.method(console, 'error', () => undefined);
     await service.start(engineSettings, null);
 
-    assert.strictEqual(mockTransportOn.mock.calls.length, 1);
-    const [event, handler] = mockTransportOn.mock.calls[0]!.arguments as [string, (error: Error) => void];
+    assert.strictEqual(transport.on.mock.calls.length, 1);
+    const [event, handler] = transport.on.mock.calls[0]!.arguments;
     assert.strictEqual(event, 'error');
     handler(new Error('end() took too long (10s)'));
     assert.deepStrictEqual(consoleErrorMock.mock.calls[0]!.arguments, ['Logger transport error: end() took too long (10s)']);
   });
 
   it('should skip silent targets when computing the most-verbose parent level', async () => {
-    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
+    const specificSettings = consoleAndFileSettings();
     specificSettings.logger.console.level = 'silent';
-    specificSettings.logger.database.maxNumberOfLogs = 0;
-    specificSettings.logger.loki.address = '';
-    specificSettings.logger.syslog.host = '';
 
     await service.start(specificSettings, null);
 
     // console (silent) is skipped, so the parent level falls back to the file level.
-    assert.deepStrictEqual(pinoMock.mock.calls[0]!.arguments[0], {
-      base: undefined,
-      level: specificSettings.logger.file.level,
-      timestamp: isoTimeFn
-    });
+    assertPinoCreatedWithLevel(specificSettings.logger.file.level);
   });
 
   it('should return the same in-flight promise when stop is called concurrently', async () => {
-    const stopMock = mock.fn();
-    service.fileCleanUpService = { stop: stopMock } as unknown as FileCleanupServiceType;
-    const flushMock = mock.fn((cb?: (err?: Error) => void) => {
-      if (cb) cb();
-    });
-    const endMock = mock.fn();
-    (service as unknown as { _transport: unknown })._transport = { flush: flushMock, end: endMock };
+    const fileCleanUpService = createMock<FileCleanupServiceType>();
+    service.fileCleanUpService = fileCleanUpService;
+    internals()._transport = transport;
 
     const firstStop = service.stop();
     const secondStop = service.stop();
     assert.strictEqual(firstStop, secondStop);
 
     await firstStop;
-    assert.strictEqual(stopMock.mock.calls.length, 1);
-    assert.strictEqual(flushMock.mock.calls.length, 1);
+    assert.strictEqual(fileCleanUpService.stop.mock.calls.length, 1);
+    assert.strictEqual(transport.flush.mock.calls.length, 1);
   });
 
   it('should add syslog transport when host is set and level is not silent', async () => {
-    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logger.database.maxNumberOfLogs = 0;
-    specificSettings.logger.loki.address = '';
+    const specificSettings = consoleAndFileSettings();
     specificSettings.logger.syslog.host = 'syslog.example.com';
     specificSettings.logger.syslog.level = 'info';
 
     await service.start(specificSettings, null);
 
-    const targets: Array<{ target: string }> = (pinoTransportMock.mock.calls[0].arguments[0] as { targets: Array<{ target: string }> })
-      .targets;
-    const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
-    assert.ok(syslogTarget !== undefined, 'syslog-transport.js target should be present');
+    assert.ok(
+      transportTargets().find(t => t.target === syslogTarget),
+      'syslog-transport.js target should be present'
+    );
   });
 
   it('should not add syslog transport when host is empty', async () => {
-    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logger.database.maxNumberOfLogs = 0;
-    specificSettings.logger.loki.address = '';
-    specificSettings.logger.syslog.host = '';
+    await service.start(consoleAndFileSettings(), null);
 
-    await service.start(specificSettings, null);
-
-    const targets: Array<{ target: string }> = (pinoTransportMock.mock.calls[0].arguments[0] as { targets: Array<{ target: string }> })
-      .targets;
-    const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
-    assert.strictEqual(syslogTarget, undefined, 'syslog-transport.js target should not be present');
+    assert.strictEqual(
+      transportTargets().find(t => t.target === syslogTarget),
+      undefined,
+      'syslog-transport.js target should not be present'
+    );
   });
 
   it('should not add syslog transport when level is silent', async () => {
-    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logger.database.maxNumberOfLogs = 0;
-    specificSettings.logger.loki.address = '';
+    const specificSettings = consoleAndFileSettings();
     specificSettings.logger.syslog.host = 'syslog.example.com';
     specificSettings.logger.syslog.level = 'silent';
 
     await service.start(specificSettings, null);
 
-    const targets: Array<{ target: string }> = (pinoTransportMock.mock.calls[0].arguments[0] as { targets: Array<{ target: string }> })
-      .targets;
-    const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
-    assert.strictEqual(syslogTarget, undefined, 'syslog-transport.js target should not be present');
+    assert.strictEqual(
+      transportTargets().find(t => t.target === syslogTarget),
+      undefined,
+      'syslog-transport.js target should not be present'
+    );
   });
 });

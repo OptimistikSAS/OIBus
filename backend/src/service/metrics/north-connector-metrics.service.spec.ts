@@ -1,31 +1,25 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
-
-import NorthConnector from '../../north/north-connector';
-import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
+import type NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
 import NorthConnectorMock from '../../tests/__mocks__/north-connector.mock';
-import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
 import testData from '../../tests/utils/test-data';
+import { createMock, Mocked } from '../../tests/utils/test-utils';
 import NorthConnectorMetricsService from './north-connector-metrics.service';
 
-let northConnectorMetricsRepository: NorthMetricsRepositoryMock;
+let northConnectorMetricsRepository: Mocked<NorthConnectorMetricsRepository>;
 let northMock: NorthConnectorMock;
 let service: NorthConnectorMetricsService;
 
 describe('NorthConnectorMetricsService', () => {
   beforeEach(() => {
-    northConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+    northConnectorMetricsRepository = createMock<NorthConnectorMetricsRepository>();
     northMock = new NorthConnectorMock(testData.north.list[0]);
     mock.timers.enable({ apis: ['Date', 'setInterval', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     // The repository returns the persisted subset (no current* sizes) — mirror that in the mock.
     const { currentCacheSize: _c, currentErrorSize: _e, currentArchiveSize: _a, ...persisted } = testData.north.metrics;
     northConnectorMetricsRepository.getMetrics.mock.mockImplementation(() => JSON.parse(JSON.stringify(persisted)));
-    service = new NorthConnectorMetricsService(
-      northMock as unknown as NorthConnector<NorthSettings>,
-      northConnectorMetricsRepository as unknown as NorthConnectorMetricsRepository
-    );
+    service = new NorthConnectorMetricsService(northMock, northConnectorMetricsRepository);
   });
 
   afterEach(() => {

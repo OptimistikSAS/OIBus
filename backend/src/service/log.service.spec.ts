@@ -4,24 +4,22 @@ import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import { DateTime } from 'luxon';
 
 import { createPageFromArray } from '../../shared/model/common/types';
-import { LogSearchParam } from '../../shared/model/domain/logs.model';
+import type { LogSearchParam } from '../../shared/model/domain/logs.model';
 
-import LogRepository from '../repository/logs/log.repository';
-import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
+import type LogRepository from '../repository/logs/log.repository';
 import testData from '../tests/utils/test-data';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { createMock, type Mocked } from '../tests/utils/test-utils';
+import type JoiValidator from '../web-server/controllers/validators/joi.validator';
 import LogService, { toLogDTO } from './log.service';
 
-let validator: { validate: ReturnType<typeof mock.fn> };
-let logRepository: LogRepositoryMock;
-let service: LogService;
-
 describe('Log Service', () => {
+  let logRepository: Mocked<LogRepository>;
+  let service: LogService;
+
   beforeEach(() => {
-    validator = { validate: mock.fn() };
-    logRepository = new LogRepositoryMock();
+    logRepository = createMock<LogRepository>();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    service = new LogService(validator as unknown as JoiValidator, logRepository as unknown as LogRepository);
+    service = new LogService(createMock<JoiValidator>(), logRepository);
   });
 
   afterEach(() => {

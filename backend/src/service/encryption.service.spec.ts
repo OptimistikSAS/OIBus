@@ -6,31 +6,19 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/api/south-connector.model';
 import {
   OIBusArrayAttribute,
   OIBusObjectAttribute,
   OIBusSecretAttribute,
   OIBusStringAttribute
 } from '../../shared/model/connector/form.model';
-import { SouthOPCUASettings } from '../../shared/model/connector/south-settings.model';
 
 import testData from '../tests/utils/test-data';
+import { seq } from '../tests/utils/test-utils';
 import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
 
 const nodeRequire = createRequire(import.meta.url);
 const forgeModule = nodeRequire('node-forge');
-
-// Mock certificate object to spy on methods
-const mockCert = {
-  publicKey: null,
-  serialNumber: null,
-  validity: {},
-  setSubject: mock.fn(),
-  setIssuer: mock.fn(),
-  setExtensions: mock.fn(),
-  sign: mock.fn()
-};
 
 const encryptionService = EncryptionService.getInstance();
 
@@ -105,7 +93,47 @@ const manifest: OIBusObjectAttribute = {
   ]
 } as OIBusObjectAttribute;
 
+// Settings matching the manifest above, with all their secrets set
+const secretSettings = {
+  field1: 'not a secret',
+  field2: 'secret',
+  field3: 'not a secret',
+  field4: [
+    { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
+    { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
+  ],
+  field5: {
+    fieldGroup1: 'not a group secret',
+    fieldGroup2: 'a group secret'
+  }
+};
+// The same settings once their secrets went through a cipher returning 'encrypted secret'
+const encryptedSettings = {
+  field1: 'not a secret',
+  field2: 'encrypted secret',
+  field3: 'not a secret',
+  field4: [
+    { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
+    { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
+  ],
+  field5: {
+    fieldGroup1: 'not a group secret',
+    fieldGroup2: 'encrypted secret'
+  }
+};
+
 const certFolder = 'certFolder';
+
+// Certificate object created by forge, to spy on its methods
+const createCertMock = () => ({
+  publicKey: null,
+  serialNumber: null,
+  validity: {},
+  setSubject: mock.fn(),
+  setIssuer: mock.fn(),
+  setExtensions: mock.fn(),
+  sign: mock.fn()
+});
 
 describe('Encryption Service', () => {
   let statMock: ReturnType<typeof mock.fn>;
@@ -114,6 +142,16 @@ describe('Encryption Service', () => {
   let createCipherivMock: ReturnType<typeof mock.fn>;
   let createDecipherivMock: ReturnType<typeof mock.fn>;
   let privateDecryptMock: ReturnType<typeof mock.fn>;
+  let generateKeyPairMock: ReturnType<typeof mock.fn>;
+  let mockCert: ReturnType<typeof createCertMock>;
+
+  /** Makes the next ciphers or deciphers return `output`. */
+  const mockCipher = (cipherMock: ReturnType<typeof mock.fn>, output: string) => {
+    const update = mock.fn(() => output);
+    const final = mock.fn(() => '');
+    cipherMock.mock.mockImplementation(() => ({ update, final }));
+    return { update, final };
+  };
 
   beforeEach(() => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
@@ -135,13 +173,11 @@ describe('Encryption Service', () => {
     createDecipherivMock = mock.method(crypto, 'createDecipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
     privateDecryptMock = mock.method(crypto, 'privateDecrypt', () => Buffer.from(''));
 
-    // Reset forge mocks
-    mockCert.setSubject = mock.fn();
-    mockCert.setIssuer = mock.fn();
-    mockCert.setExtensions = mock.fn();
-    mockCert.sign = mock.fn();
-
-    mock.method(forgeModule.pki.rsa, 'generateKeyPair', () => ({ privateKey: 'MOCK_PRIV_KEY', publicKey: 'MOCK_PUB_KEY' }));
+    mockCert = createCertMock();
+    generateKeyPairMock = mock.method(forgeModule.pki.rsa, 'generateKeyPair', () => ({
+      privateKey: 'MOCK_PRIV_KEY',
+      publicKey: 'MOCK_PUB_KEY'
+    }));
     mock.method(forgeModule.pki, 'createCertificate', () => mockCert);
     mock.method(forgeModule.pki, 'privateKeyToPem', () => '-----BEGIN PRIVATE KEY-----');
     mock.method(forgeModule.pki, 'publicKeyToPem', () => '-----BEGIN PUBLIC KEY-----');
@@ -212,13 +248,13 @@ describe('Encryption Service', () => {
   });
 
   it('should properly retrieve files', async () => {
-    let readCallCount = 0;
-    readFileMock.mock.mockImplementation(async () => {
-      readCallCount++;
-      if (readCallCount === 1) return 'cert file content';
-      if (readCallCount === 2) return 'private key file content';
-      return 'public key file content';
-    });
+    readFileMock.mock.mockImplementation(
+      seq(
+        async () => 'cert file content',
+        async () => 'private key file content',
+        async () => 'public key file content'
+      )
+    );
 
     assert.strictEqual(await encryptionService.getCert(), 'cert file content');
     assert.strictEqual(await encryptionService.getCert(), 'cert file content');
@@ -232,9 +268,7 @@ describe('Encryption Service', () => {
   });
 
   it('should properly encrypt text', async () => {
-    const update = mock.fn(() => 'encrypted text');
-    const final = mock.fn(() => '');
-    createCipherivMock.mock.mockImplementation(() => ({ update, final }));
+    const { update, final } = mockCipher(createCipherivMock, 'encrypted text');
 
     const encryptedText = await encryptionService.encryptText('text to encrypt');
     assert.strictEqual(encryptedText, 'encrypted text');
@@ -259,10 +293,7 @@ describe('Encryption Service', () => {
   });
 
   it('should properly decrypt text', async () => {
-    encryptionService['initialized'] = true;
-    const update = mock.fn(() => 'decrypted text');
-    const final = mock.fn(() => '');
-    createDecipherivMock.mock.mockImplementation(() => ({ update, final }));
+    const { update, final } = mockCipher(createDecipherivMock, 'decrypted text');
 
     const decryptedText = await encryptionService.decryptText('text to decrypt');
     assert.strictEqual(decryptedText, 'decrypted text');
@@ -276,7 +307,6 @@ describe('Encryption Service', () => {
   });
 
   it('should properly decrypt empty input', async () => {
-    encryptionService['initialized'] = true;
     const decryptedText = await encryptionService.decryptText('');
     assert.strictEqual(decryptedText, '');
     assert.strictEqual(createCipherivMock.mock.calls.length, 0);
@@ -288,243 +318,66 @@ describe('Encryption Service', () => {
   });
 
   it('should properly encrypt connector secrets', async () => {
-    encryptionService['initialized'] = true;
-    const command: SouthConnectorCommandDTO = {
-      name: 'connector',
-      type: 'opcua',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: 'secret',
-        field3: 'not a secret',
-        field4: [
-          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
-          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
-        ],
-        field5: {
-          fieldGroup1: 'not a group secret',
-          fieldGroup2: 'a group secret'
-        }
-      } as unknown as SouthOPCUASettings
-    } as SouthConnectorCommandDTO;
-    const connector: SouthConnectorDTO = {
-      id: 'id1',
-      name: 'connector',
-      type: 'opcua',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: 'secret',
-        field3: 'not a secret'
-      } as unknown as SouthOPCUASettings
-    } as SouthConnectorDTO;
-
-    const update = mock.fn(() => 'encrypted secret');
-    const final = mock.fn(() => '');
-    createCipherivMock.mock.mockImplementation(() => ({ update, final }));
-
-    const expectedCommand = {
-      field1: 'not a secret',
-      field2: 'encrypted secret',
-      field3: 'not a secret',
-      field4: [
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
-      ],
-      field5: {
-        fieldGroup1: 'not a group secret',
-        fieldGroup2: 'encrypted secret'
-      }
-    };
+    const previousSettings = { field1: 'not a secret', field2: 'secret', field3: 'not a secret' };
+    mockCipher(createCipherivMock, 'encrypted secret');
 
     assert.deepStrictEqual(
-      await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest),
-      expectedCommand
+      await encryptionService.encryptConnectorSecrets<Record<string, unknown>>(secretSettings, previousSettings, manifest),
+      encryptedSettings
     );
   });
 
   it('should properly encrypt connector secrets when no secret provided', async () => {
-    encryptionService['initialized'] = true;
-    const command: SouthConnectorCommandDTO = {
-      name: 'connector',
-      type: 'opcua',
-      description: 'my connector',
-      enabled: true,
-      items: [],
-      groups: [],
-      configurationWorkflows: [],
-      settings: {
-        field1: 'not a secret',
-        field2: 'secret',
-        field3: 'not a secret',
-        field4: [
-          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
-          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
-        ],
-        field5: {
-          fieldGroup1: 'not a group secret',
-          fieldGroup2: 'a group secret'
-        }
-      } as unknown as SouthOPCUASettings
-    };
+    mockCipher(createCipherivMock, 'encrypted secret');
 
-    const update = mock.fn(() => 'encrypted secret');
-    const final = mock.fn(() => '');
-    createCipherivMock.mock.mockImplementation(() => ({ update, final }));
-
-    const expectedCommand = {
-      field1: 'not a secret',
-      field2: 'encrypted secret',
-      field3: 'not a secret',
-      field4: [
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
-      ],
-      field5: {
-        fieldGroup1: 'not a group secret',
-        fieldGroup2: 'encrypted secret'
-      }
-    };
-
-    assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(command.settings, null, manifest), expectedCommand);
+    assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(secretSettings, null, manifest), encryptedSettings);
   });
 
   it('should properly keep existing and encrypted connector secrets', async () => {
-    encryptionService['initialized'] = true;
-    const command: SouthConnectorCommandDTO = {
-      name: 'connector',
-      type: 'opcua',
-      description: 'my connector',
-      enabled: true,
-      items: [],
-      groups: [],
-      configurationWorkflows: [],
-      settings: {
-        field1: 'not a secret',
-        field2: '',
-        field3: 'not a secret',
-        field4: [
-          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret', fieldArray3: null },
-          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
-        ],
-        field5: {
-          fieldGroup1: 'not a group secret',
-          fieldGroup2: ''
-        }
-      } as unknown as SouthOPCUASettings
+    const newSettings = {
+      field1: 'not a secret',
+      field2: '',
+      field3: 'not a secret',
+      field4: [
+        { fieldArray1: 'not an array secret', fieldArray2: 'an array secret', fieldArray3: null },
+        { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
+      ],
+      field5: {
+        fieldGroup1: 'not a group secret',
+        fieldGroup2: ''
+      }
     };
-    const connector: SouthConnectorDTO = {
-      id: 'id1',
-      name: 'connector',
-      type: 'opcua',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: 'encrypted secret',
-        field3: 'not a secret',
-        field4: [
-          { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret' },
-          { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret' }
-        ],
-        field5: {
-          fieldGroup1: 'not a group secret',
-          fieldGroup2: 'a group secret'
-        }
-      } as unknown as SouthOPCUASettings
-    } as SouthConnectorDTO;
-    const expectedCommand = {
+    const previousSettings = {
       field1: 'not a secret',
       field2: 'encrypted secret',
       field3: 'not a secret',
       field4: [
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
+        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret' },
+        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret' }
       ],
       field5: {
         fieldGroup1: 'not a group secret',
         fieldGroup2: 'a group secret'
       }
     };
-
-    const update = mock.fn(() => 'encrypted secret');
-    const final = mock.fn(() => '');
-    createCipherivMock.mock.mockImplementation(() => ({ update, final }));
+    mockCipher(createCipherivMock, 'encrypted secret');
 
     assert.deepStrictEqual(
-      await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest),
-      expectedCommand
+      await encryptionService.encryptConnectorSecrets<Record<string, unknown>>(newSettings, previousSettings, manifest),
+      { ...encryptedSettings, field5: { fieldGroup1: 'not a group secret', fieldGroup2: 'a group secret' } }
     );
   });
 
   it('should properly decrypt connector secrets', async () => {
-    encryptionService['initialized'] = true;
-    const command: SouthConnectorCommandDTO = {
-      name: 'connector',
-      type: 'opcua',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: 'secret',
-        field3: 'not a secret',
-        field4: [
-          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
-          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
-        ],
-        field5: {
-          fieldGroup1: 'not a group secret',
-          fieldGroup2: 'a group secret'
-        }
-      } as unknown as SouthOPCUASettings
-    } as SouthConnectorCommandDTO;
+    mockCipher(createDecipherivMock, 'encrypted secret');
 
-    const update = mock.fn(() => 'encrypted secret');
-    const final = mock.fn(() => '');
-    createDecipherivMock.mock.mockImplementation(() => ({ update, final }));
-
-    const expectedCommand = {
-      field1: 'not a secret',
-      field2: 'encrypted secret',
-      field3: 'not a secret',
-      field4: [
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
-      ],
-      field5: {
-        fieldGroup1: 'not a group secret',
-        fieldGroup2: 'encrypted secret'
-      }
-    };
-
-    assert.deepStrictEqual(await encryptionService.decryptConnectorSecrets(command.settings, manifest), expectedCommand);
+    assert.deepStrictEqual(await encryptionService.decryptConnectorSecrets(secretSettings, manifest), encryptedSettings);
   });
 
   it('should properly filter out secret', () => {
-    const connector: SouthConnectorDTO = {
-      id: 'id1',
-      name: 'connector',
-      type: 'opcua',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: 'encrypted secret',
-        field3: 'not a secret',
-        field4: [
-          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
-          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
-        ],
-        field5: {
-          fieldGroup1: 'not a group secret',
-          fieldGroup2: 'a group secret'
-        }
-      } as unknown as SouthOPCUASettings
-    } as SouthConnectorDTO;
+    const settings = { ...secretSettings, field2: 'encrypted secret' };
 
-    assert.deepStrictEqual(encryptionService.filterSecrets(connector.settings, manifest), {
+    assert.deepStrictEqual(encryptionService.filterSecrets(settings, manifest), {
       field1: 'not a secret',
       field2: '',
       field3: 'not a secret',
@@ -540,46 +393,11 @@ describe('Encryption Service', () => {
   });
 
   it('should properly decrypt connector secrets with private key', async () => {
-    const command: SouthConnectorCommandDTO = {
-      name: 'connector',
-      type: 'opcua',
-      description: 'my connector',
-      enabled: true,
-      items: [],
-      groups: [],
-      configurationWorkflows: [],
-      settings: {
-        field1: 'not a secret',
-        field2: 'secret',
-        field3: 'not a secret',
-        field4: [
-          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
-          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
-        ],
-        field5: {
-          fieldGroup1: 'not a group secret',
-          fieldGroup2: 'a group secret'
-        }
-      } as unknown as SouthOPCUASettings
-    };
     privateDecryptMock.mock.mockImplementation(() => Buffer.from('encrypted secret'));
-    const expectedCommand = {
-      field1: 'not a secret',
-      field2: 'encrypted secret',
-      field3: 'not a secret',
-      field4: [
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
-        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
-      ],
-      field5: {
-        fieldGroup1: 'not a group secret',
-        fieldGroup2: 'encrypted secret'
-      }
-    };
 
     assert.deepStrictEqual(
-      await encryptionService.decryptSecretsWithPrivateKey(command.settings, manifest, 'private key'),
-      expectedCommand
+      await encryptionService.decryptSecretsWithPrivateKey(secretSettings, manifest, 'private key'),
+      encryptedSettings
     );
   });
 
@@ -596,8 +414,8 @@ describe('Encryption Service', () => {
 
     const result = await encryptionService.generateSelfSignedCertificate(options);
 
-    assert.strictEqual((forgeModule.pki.rsa.generateKeyPair as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((forgeModule.pki.rsa.generateKeyPair as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [2048]);
+    assert.strictEqual(generateKeyPairMock.mock.calls.length, 1);
+    assert.deepStrictEqual(generateKeyPairMock.mock.calls[0].arguments, [2048]);
 
     const expectedAttrs = [
       { shortName: 'CN', value: 'Test CN' },

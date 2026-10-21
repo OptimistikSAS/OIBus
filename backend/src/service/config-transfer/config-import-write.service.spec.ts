@@ -21,12 +21,13 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import TransformerRepository from '../../repository/config/transformer.repository';
 import UserRepository from '../../repository/config/user.repository';
 import AuditService from '../../service/audit.service';
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, createMock } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import EncryptionService from '../encryption.service';
 import { toEngineLoggerCommand } from '../engine-command.utils';
+import type OIAnalyticsRegistrationService from '../oia/oianalytics-registration.service';
 import ConfigImportService, { ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
@@ -97,7 +98,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       false,
       false
     );
-    const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
+    const oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>();
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
     const transferService = new ConfigTransferService(builderService, engineRepository, oIAnalyticsRegistrationService as never);
 

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';
@@ -9,78 +10,63 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 import { EngineSettingsCommandDTO } from '../../shared/model/api/engine.model';
 import { CacheContentUpdateCommand } from '../../shared/model/domain/engine.model';
 
+import type DataStreamEngine from '../engine/data-stream-engine';
 import { EngineSettings } from '../model/engine.model';
 import { OIBusValidationError } from '../model/types';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import EngineRepositoryMock from '../tests/__mocks__/repository/config/engine-repository.mock';
-import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/engine-metrics-repository.mock';
+import type CertificateRepository from '../repository/config/certificate.repository';
+import type EngineRepository from '../repository/config/engine.repository';
+import type EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
-import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
-import LoggerServiceMock from '../tests/__mocks__/service/logger/logger-service.mock';
-import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
-import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import { createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
+import type JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type HistoryQueryService from './history-query.service';
+import type IPFilterService from './ip-filter.service';
+import type LoggerService from './logger/logger.service';
+import type NorthService from './north.service';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import type OIBusServiceType from './oibus.service';
 import type { toEngineSettingsDTO as toEngineSettingsDTOType } from './oibus.service';
+import type SouthService from './south.service';
+import type UserService from './user.service';
+import type * as Utils from './utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
-// Mocked module exports — mutated in-place between tests
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockProxyServer: Record<string, unknown>;
-let mockEncryptionService: Record<string, unknown>;
-let mockUtilsCertificate: Record<string, ReturnType<typeof mock.fn>>;
+// ProxyServer mock — OIBusService uses `new ProxyServer(...)` in its constructor
+class MockProxyServer {
+  static lastInstance: MockProxyServer;
+  start = mock.fn(async (_settings: unknown) => undefined);
+  stop = mock.fn(async () => undefined);
+  refreshIpFilters = mock.fn();
+  constructor() {
+    MockProxyServer.lastInstance = this;
+  }
+}
 
-// Captured mock proxy instance — set by MockProxyServer constructor in before()
-let lastProxyRefreshIpFilters: ReturnType<typeof mock.fn>;
-let lastProxyStart: ReturnType<typeof mock.fn>;
-let lastProxyStop: ReturnType<typeof mock.fn>;
+// Mocked module exports: the same objects for the whole file, their functions are replaced before each test
+const realUtils: typeof Utils = nodeRequire('./utils');
+const utilsExports = { ...realUtils, getOIBusInfo: mock.fn(realUtils.getOIBusInfo) };
+const utilsCertificateExports = { assertTlsCredentials: mock.fn() };
+const encryptionExports = { __esModule: true, encryptionService: new EncryptionServiceMock('', '') };
 
-let OIBusService: new (...args: Array<unknown>) => InstanceType<typeof OIBusServiceType>;
+let OIBusService: typeof OIBusServiceType;
 let toEngineSettingsDTO: typeof toEngineSettingsDTOType;
 
 before(() => {
-  mockUtils = {
-    getOIBusInfo: mock.fn(),
-    testIPOnFilter: mock.fn(() => true)
-  };
-
-  // ProxyServer mock — OIBusService uses `new ProxyServer(...)` internally
-  class MockProxyServer {
-    start = mock.fn(async () => undefined);
-    stop = mock.fn(async () => undefined);
-    refreshIpFilters = mock.fn();
-    constructor() {
-      lastProxyRefreshIpFilters = this.refreshIpFilters;
-      lastProxyStart = this.start;
-      lastProxyStop = this.stop;
-    }
-  }
-  mockProxyServer = { __esModule: true, default: MockProxyServer };
-
-  const encryptionServiceMock = new EncryptionServiceMock('', '');
-  mockEncryptionService = { __esModule: true, encryptionService: encryptionServiceMock };
-
-  mockUtilsCertificate = { assertTlsCredentials: mock.fn() };
-
-  mockModule(nodeRequire, './utils', mockUtils);
-  mockModule(nodeRequire, './utils-certificate', mockUtilsCertificate);
-  mockModule(nodeRequire, '../web-server/proxy-server', mockProxyServer);
-  mockModule(nodeRequire, './encryption.service', mockEncryptionService);
+  mockModule(nodeRequire, './utils', utilsExports);
+  mockModule(nodeRequire, './utils-certificate', utilsCertificateExports);
+  mockModule(nodeRequire, '../web-server/proxy-server', { __esModule: true, default: MockProxyServer });
+  mockModule(nodeRequire, './encryption.service', encryptionExports);
   mockModule(nodeRequire, 'argon2', {
     __esModule: true,
     default: { hash: mock.fn(async (pass: string) => `argon2hash:${pass}`) }
   });
 
   const mod = reloadModule<{
-    default: new (...args: Array<unknown>) => InstanceType<typeof OIBusServiceType>;
+    default: typeof OIBusServiceType;
     toEngineSettingsDTO: typeof toEngineSettingsDTOType;
   }>(nodeRequire, './oibus.service');
   OIBusService = mod.default;
@@ -88,22 +74,22 @@ before(() => {
 });
 
 describe('OIBus Service', () => {
-  let service: InstanceType<typeof OIBusServiceType>;
-  let engineRepository: EngineRepositoryMock;
-  let engineMetricsRepository: EngineMetricsRepositoryMock;
-  let certificateRepository: CertificateRepositoryMock;
-  let ipFilterService: IpFilterServiceMock;
-  let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
-  let loggerService: LoggerServiceMock;
-  let oIAnalyticsMessageService: OianalyticsMessageServiceMock;
-  let southService: SouthServiceMock;
-  let northService: NorthServiceMock;
-  let historyQueryService: HistoryQueryServiceMock;
-  let userService: UserServiceMock;
+  let service: OIBusServiceType;
+  let engineRepository: Mocked<EngineRepository>;
+  let engineMetricsRepository: Mocked<EngineMetricsRepository>;
+  let certificateRepository: Mocked<CertificateRepository>;
+  let ipFilterService: Mocked<IPFilterService>;
+  let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
+  let loggerService: Mocked<LoggerService>;
+  let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+  let southService: Mocked<SouthService>;
+  let northService: Mocked<NorthService>;
+  let historyQueryService: Mocked<HistoryQueryService>;
   let logger: LoggerMock;
-  let engine: DataStreamEngineMock;
-  let validator: { validate: ReturnType<typeof mock.fn> };
+  let engine: Mocked<DataStreamEngine>;
+  let encryptionService: EncryptionServiceMock;
 
+  // Gives access to the private methods replaced by some tests
   const priv = () => service as unknown as Record<string, unknown>;
 
   beforeEach(() => {
@@ -112,63 +98,31 @@ describe('OIBus Service', () => {
       now: new Date(testData.constants.dates.FAKE_NOW).getTime()
     });
 
-    engineRepository = new EngineRepositoryMock();
-    engineMetricsRepository = new EngineMetricsRepositoryMock();
-    certificateRepository = new CertificateRepositoryMock();
-    ipFilterService = new IpFilterServiceMock();
-    oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    loggerService = new LoggerServiceMock();
-    oIAnalyticsMessageService = new OianalyticsMessageServiceMock();
-    southService = new SouthServiceMock();
-    northService = new NorthServiceMock();
-    historyQueryService = new HistoryQueryServiceMock();
-    userService = new UserServiceMock();
     logger = new LoggerMock();
-    engine = new DataStreamEngineMock(logger);
-    validator = { validate: mock.fn(async () => undefined) };
+    engineRepository = createMock<EngineRepository>({ get: () => testData.engine.settings });
+    engineMetricsRepository = createMock<EngineMetricsRepository>({ getMetrics: () => testData.engine.metrics });
+    certificateRepository = createMock<CertificateRepository>();
+    ipFilterService = createMock<IPFilterService>({ whiteListEvent: new EventEmitter(), list: () => testData.ipFilters.list });
+    oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({ registrationEvent: new EventEmitter() });
+    loggerService = createMock<LoggerService>({ createChildLogger: () => logger });
+    oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
+    southService = createMock<SouthService>();
+    northService = createMock<NorthService>();
+    historyQueryService = createMock<HistoryQueryService>();
+    engine = createMock<DataStreamEngine>({ logger: new LoggerMock() });
 
-    // Reset getOIBusInfo mock in-place
-    mockUtils.getOIBusInfo = mock.fn();
-    mockUtilsCertificate.assertTlsCredentials = mock.fn();
+    utilsExports.getOIBusInfo = mock.fn(realUtils.getOIBusInfo);
+    utilsCertificateExports.assertTlsCredentials = mock.fn();
+    encryptionService = encryptionExports.encryptionService = new EncryptionServiceMock('', '');
 
-    // Reset encryptionService mock in-place
-    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
-    encryptionMock.encryptText.mock.resetCalls();
-    encryptionMock.decryptText.mock.resetCalls();
-
-    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
-    engineMetricsRepository.getMetrics.mock.mockImplementation(() => testData.engine.metrics);
-    loggerService.createChildLogger.mock.mockImplementation(() => logger);
-    ipFilterService.list.mock.mockImplementation(() => testData.ipFilters.list);
-
-    mock.method(
-      process,
-      'cpuUsage',
-      mock.fn(() => ({ user: 1000, system: 1000 }))
-    );
-    mock.method(
-      process,
-      'uptime',
-      mock.fn(() => 10000)
-    );
-    mock.method(
-      os,
-      'freemem',
-      mock.fn(() => 2_000_000)
-    );
-    mock.method(
-      os,
-      'totalmem',
-      mock.fn(() => 16_000_000)
-    );
-    mock.method(
-      process,
-      'memoryUsage',
-      mock.fn(() => ({ rss: 5, heapTotal: 5, heapUsed: 5, external: 5, arrayBuffers: 5 }))
-    );
+    mock.method(process, 'cpuUsage', () => ({ user: 1000, system: 1000 }));
+    mock.method(process, 'uptime', () => 10000);
+    mock.method(os, 'freemem', () => 2_000_000);
+    mock.method(os, 'totalmem', () => 16_000_000);
+    mock.method(process, 'memoryUsage', () => ({ rss: 5, heapTotal: 5, heapUsed: 5, external: 5, arrayBuffers: 5 }));
 
     service = new OIBusService(
-      validator,
+      createMock<JoiValidator>(),
       engineRepository,
       engineMetricsRepository,
       certificateRepository,
@@ -179,7 +133,7 @@ describe('OIBus Service', () => {
       southService,
       northService,
       historyQueryService,
-      userService,
+      createMock<UserService>(),
       engine,
       false,
       false
@@ -218,30 +172,30 @@ describe('OIBus Service', () => {
     const settingsWithoutOIAlog: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     settingsWithoutOIAlog.logger.oia.level = 'silent';
     engineRepository.get.mock.mockImplementation(() => settingsWithoutOIAlog);
-    priv()['resetLogger'] = mock.fn(async () => undefined);
+    const resetLogger = mock.fn(async (_settings: EngineSettings) => undefined);
+    priv().resetLogger = resetLogger;
 
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
-    assert.strictEqual((priv()['resetLogger'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(resetLogger.mock.calls.length, 0);
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
-    assert.strictEqual((priv()['resetLogger'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((priv()['resetLogger'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [testData.engine.settings]);
+    assert.strictEqual(resetLogger.mock.calls.length, 1);
+    assert.deepStrictEqual(resetLogger.mock.calls[0].arguments, [testData.engine.settings]);
 
-    // Reset call counts
-    (logger.info as ReturnType<typeof mock.fn>).mock.resetCalls();
     settingsWithoutOIAlog.proxyServer.enabled = false;
     engineRepository.get.mock.mockImplementation(() => settingsWithoutOIAlog);
     service.getProxyServer();
-    // refreshIpFilters was called once in start() — reset before the new assertions
-    lastProxyRefreshIpFilters.mock.resetCalls();
+    // refreshIpFilters was called once in start()
+    const proxyServer = MockProxyServer.lastInstance;
+    assert.strictEqual(proxyServer.refreshIpFilters.mock.calls.length, 1);
 
     ipFilterService.whiteListEvent.emit('update-white-list');
-    assert.strictEqual(lastProxyRefreshIpFilters.mock.calls.length, 0);
+    assert.strictEqual(proxyServer.refreshIpFilters.mock.calls.length, 1);
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     ipFilterService.whiteListEvent.emit('update-white-list');
-    assert.strictEqual(lastProxyRefreshIpFilters.mock.calls.length, 1);
+    assert.strictEqual(proxyServer.refreshIpFilters.mock.calls.length, 2);
 
     await service.stop();
     assert.strictEqual(engine.stop.mock.calls.length, 1);
@@ -283,17 +237,13 @@ describe('OIBus Service', () => {
     specificCommand.logger.loki.password = 'updated password';
     specificCommand.webServer.port = 999;
 
-    // seq: first get() = old settings (for comparison), second get() = new settings (after update), third get() = new settings again
-    let getCallCount = 0;
-    engineRepository.get.mock.mockImplementation(() => {
-      getCallCount++;
-      if (getCallCount === 1) return testData.engine.settings;
-      return newEngineSettings;
-    });
+    // first get() = old settings (for comparison), the next ones = new settings (after update)
+    engineRepository.get.mock.mockImplementation(() => newEngineSettings);
+    engineRepository.get.mock.mockImplementationOnce(() => testData.engine.settings);
 
     const webServerChangeEmitSpy = mock.method(service.webServerChangeEvent, 'emit', mock.fn());
 
-    // Temporarily use real timers for setImmediate
+    // Real timers for setImmediate
     mock.timers.reset();
 
     const result = await service.updateEngineSettings(specificCommand, testData.users.list[0].id);
@@ -304,8 +254,7 @@ describe('OIBus Service', () => {
       newProtocol: 'http'
     });
     assert.strictEqual(engineRepository.get.mock.calls.length, 3);
-    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
-    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 1);
+    assert.strictEqual(encryptionService.encryptText.mock.calls.length, 1);
     assert.strictEqual(engineRepository.update.mock.calls.length, 1);
     assert.strictEqual(loggerService.stop.mock.calls.length, 1);
     assert.strictEqual(loggerService.start.mock.calls.length, 1);
@@ -318,12 +267,6 @@ describe('OIBus Service', () => {
     // Verify web server change event was emitted
     assert.strictEqual(webServerChangeEmitSpy.mock.calls.length, 1);
     assert.deepStrictEqual(webServerChangeEmitSpy.mock.calls[0].arguments, ['updated', newEngineSettings.webServer]);
-
-    // Restore fake timers
-    mock.timers.enable({
-      apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
-      now: new Date(testData.constants.dates.FAKE_NOW).getTime()
-    });
   });
 
   it('should throw error if bad port configuration', async () => {
@@ -343,12 +286,10 @@ describe('OIBus Service', () => {
     specificTestCommand.logger.loki.password = '';
     specificTestCommand.proxyServer.enabled = false;
 
-    let getCallCount = 0;
-    engineRepository.get.mock.mockImplementation(() => {
-      getCallCount++;
-      if (getCallCount === 1) return testData.engine.settings;
-      return { ...testData.engine.settings, ...specificTestCommand, webServer: testData.engine.settings.webServer } as EngineSettings;
-    });
+    engineRepository.get.mock.mockImplementation(
+      () => ({ ...testData.engine.settings, ...specificTestCommand, webServer: testData.engine.settings.webServer }) as EngineSettings
+    );
+    engineRepository.get.mock.mockImplementationOnce(() => testData.engine.settings);
 
     const result = await service.updateEngineSettings(specificTestCommand, testData.users.list[0].id);
 
@@ -358,8 +299,7 @@ describe('OIBus Service', () => {
       newProtocol: null
     });
     assert.strictEqual(engineRepository.get.mock.calls.length, 3);
-    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
-    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 0);
+    assert.strictEqual(encryptionService.encryptText.mock.calls.length, 0);
     assert.strictEqual(engineRepository.update.mock.calls.length, 1);
   });
 
@@ -376,9 +316,8 @@ describe('OIBus Service', () => {
 
     await service.updateEngineSettings(specificTestCommand, testData.users.list[0].id);
 
-    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
-    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 1);
-    assert.deepStrictEqual(encryptionMock.encryptText.mock.calls[0].arguments, ['new forward password']);
+    assert.strictEqual(encryptionService.encryptText.mock.calls.length, 1);
+    assert.deepStrictEqual(encryptionService.encryptText.mock.calls[0].arguments, ['new forward password']);
     assert.strictEqual(engineRepository.update.mock.calls.length, 1);
     assert.strictEqual(engineRepository.update.mock.calls[0].arguments[0].proxyServer.password, 'argon2hash:new proxy password');
     // the API command itself is left untouched
@@ -428,20 +367,12 @@ describe('OIBus Service', () => {
 
   it('should update engine web server port with redirect when port changed', async () => {
     const newSettings = { ...testData.engine.settings, webServer: { ...testData.engine.settings.webServer, port: 3333 } };
-    let getCallCount = 0;
-    engineRepository.get.mock.mockImplementation(() => {
-      getCallCount++;
-      if (getCallCount === 1) return testData.engine.settings;
-      return newSettings;
-    });
+    engineRepository.get.mock.mockImplementation(() => newSettings);
+    engineRepository.get.mock.mockImplementationOnce(() => testData.engine.settings);
 
     mock.timers.reset();
     const result = await service.updateEngineWebServer(testData.engine.webServerCommand, testData.users.list[0].id);
     await new Promise(resolve => setImmediate(resolve));
-    mock.timers.enable({
-      apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
-      now: new Date(testData.constants.dates.FAKE_NOW).getTime()
-    });
 
     assert.deepStrictEqual(result, { needsRedirect: true, newPort: 3333, newProtocol: 'http' });
   });
@@ -475,7 +406,7 @@ describe('OIBus Service', () => {
 
       assert.deepStrictEqual(credentials, { cert: `${certificate.certificate}\nca chain`, key: 'encrypted key' });
       assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, [certificate.id]);
-      assert.deepStrictEqual(mockUtilsCertificate.assertTlsCredentials.mock.calls[0].arguments, [credentials.cert, credentials.key]);
+      assert.deepStrictEqual(utilsCertificateExports.assertTlsCredentials.mock.calls[0].arguments, [credentials.cert, credentials.key]);
     });
 
     it('should reject a certificate of the store that is not found or has no private key', async () => {
@@ -534,8 +465,8 @@ describe('OIBus Service', () => {
 
     it('should enable https and redirect to it', async () => {
       certificateRepository.findById.mock.mockImplementation(() => certificate);
-      let getCallCount = 0;
-      engineRepository.get.mock.mockImplementation(() => (++getCallCount === 1 ? testData.engine.settings : withHttps(storeHttps)));
+      engineRepository.get.mock.mockImplementation(() => withHttps(storeHttps));
+      engineRepository.get.mock.mockImplementationOnce(() => testData.engine.settings);
       const webServerChangeEmitSpy = mock.method(service.webServerChangeEvent, 'emit', mock.fn());
 
       mock.timers.reset();
@@ -544,13 +475,9 @@ describe('OIBus Service', () => {
         testData.users.list[0].id
       );
       await new Promise(resolve => setImmediate(resolve));
-      mock.timers.enable({
-        apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
-        now: new Date(testData.constants.dates.FAKE_NOW).getTime()
-      });
 
       assert.deepStrictEqual(result, { needsRedirect: true, newPort: testData.engine.settings.webServer.port, newProtocol: 'https' });
-      assert.strictEqual(mockUtilsCertificate.assertTlsCredentials.mock.calls.length, 1);
+      assert.strictEqual(utilsCertificateExports.assertTlsCredentials.mock.calls.length, 1);
       assert.deepStrictEqual(engineRepository.updateWebServer.mock.calls[0].arguments[0].https, storeHttps);
       assert.deepStrictEqual(webServerChangeEmitSpy.mock.calls[0].arguments, ['updated', withHttps(storeHttps).webServer]);
     });
@@ -559,8 +486,8 @@ describe('OIBus Service', () => {
       const previous = withHttps(storeHttps);
       const next = withHttps({ ...storeHttps, certificateId: 'other' });
       certificateRepository.findById.mock.mockImplementation(() => certificate);
-      let getCallCount = 0;
-      engineRepository.get.mock.mockImplementation(() => (++getCallCount === 1 ? previous : next));
+      engineRepository.get.mock.mockImplementation(() => next);
+      engineRepository.get.mock.mockImplementationOnce(() => previous);
       const webServerChangeEmitSpy = mock.method(service.webServerChangeEvent, 'emit', mock.fn());
 
       mock.timers.reset();
@@ -569,10 +496,6 @@ describe('OIBus Service', () => {
         testData.users.list[0].id
       );
       await new Promise(resolve => setImmediate(resolve));
-      mock.timers.enable({
-        apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
-        now: new Date(testData.constants.dates.FAKE_NOW).getTime()
-      });
 
       assert.deepStrictEqual(result, { needsRedirect: false, newPort: null, newProtocol: null });
       assert.deepStrictEqual(webServerChangeEmitSpy.mock.calls[0].arguments, ['updated', next.webServer]);
@@ -669,9 +592,9 @@ describe('OIBus Service', () => {
     await service.updateEngineProxy(settingsWithProxy.proxyServer, testData.users.list[0].id);
 
     assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 1);
-    assert.strictEqual(lastProxyStop.mock.calls.length, 1);
-    assert.strictEqual(lastProxyStart.mock.calls.length, 1);
-    assert.deepStrictEqual(lastProxyStart.mock.calls[0].arguments, [settingsWithProxy.proxyServer]);
+    assert.strictEqual(MockProxyServer.lastInstance.stop.mock.calls.length, 1);
+    assert.strictEqual(MockProxyServer.lastInstance.start.mock.calls.length, 1);
+    assert.deepStrictEqual(MockProxyServer.lastInstance.start.mock.calls[0].arguments, [settingsWithProxy.proxyServer]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
@@ -682,8 +605,7 @@ describe('OIBus Service', () => {
 
     await service.updateEngineLogger(command, testData.users.list[0].id);
 
-    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
-    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 1);
+    assert.strictEqual(encryptionService.encryptText.mock.calls.length, 1);
     assert.strictEqual(engineRepository.updateLogger.mock.calls.length, 1);
     assert.strictEqual(loggerService.stop.mock.calls.length, 1);
     assert.strictEqual(loggerService.start.mock.calls.length, 1);
@@ -697,8 +619,7 @@ describe('OIBus Service', () => {
 
     await service.updateEngineLogger(command, testData.users.list[0].id);
 
-    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
-    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 0);
+    assert.strictEqual(encryptionService.encryptText.mock.calls.length, 0);
     assert.strictEqual(engineRepository.updateLogger.mock.calls.length, 1);
     assert.strictEqual(
       engineRepository.updateLogger.mock.calls[0].arguments[0].loki.password,
@@ -724,8 +645,8 @@ describe('OIBus Service', () => {
     assert.deepStrictEqual(result, { filename: expectedFilename });
     assert.strictEqual(writeHeapSnapshotSpy.mock.calls.length, 1);
     assert.deepStrictEqual(writeHeapSnapshotSpy.mock.calls[0].arguments, [path.resolve(process.cwd(), expectedFilename)]);
-    assert.strictEqual((logger.warn as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((logger.info as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(logger.warn.mock.calls.length, 1);
+    assert.strictEqual(logger.info.mock.calls.length, 1);
   });
 
   it('should log health signal', async () => {
@@ -733,32 +654,16 @@ describe('OIBus Service', () => {
     southService.list.mock.mockImplementation(() => []);
     historyQueryService.list.mock.mockImplementation(() => []);
     await service.start();
-    assert.strictEqual((logger.info as ReturnType<typeof mock.fn>).mock.calls.length, 3); // starting, health info, started
+    assert.strictEqual(logger.info.mock.calls.length, 3); // starting, health info, started
 
     service.logHealthSignal();
-    assert.strictEqual((logger.info as ReturnType<typeof mock.fn>).mock.calls.length, 4);
+    assert.strictEqual(logger.info.mock.calls.length, 4);
 
     mock.timers.tick(1_800_000);
-    assert.strictEqual((logger.info as ReturnType<typeof mock.fn>).mock.calls.length, 5);
+    assert.strictEqual(logger.info.mock.calls.length, 5);
   });
 
   it('should update and reset metrics', async () => {
-    mock.method(
-      process,
-      'uptime',
-      mock.fn(() => 10000)
-    );
-    mock.method(
-      os,
-      'freemem',
-      mock.fn(() => 2_000_000)
-    );
-    mock.method(
-      os,
-      'totalmem',
-      mock.fn(() => 16_000_000)
-    );
-
     let memCallCount = 0;
     mock.method(
       process,
@@ -809,13 +714,14 @@ describe('OIBus Service', () => {
       maxArrayBuffers: 10
     });
 
-    priv()['updateEngineMetrics'] = mock.fn();
+    const updateEngineMetrics = mock.fn();
+    priv().updateEngineMetrics = updateEngineMetrics;
 
     service.resetEngineMetrics();
     assert.strictEqual(engineMetricsRepository.removeMetrics.mock.calls.length, 1);
     assert.deepStrictEqual(engineMetricsRepository.removeMetrics.mock.calls[0].arguments, [testData.engine.settings.id]);
     assert.strictEqual(engineMetricsRepository.initMetrics.mock.calls.length, 2); // once in start(), once in resetEngineMetrics()
-    assert.strictEqual((priv()['updateEngineMetrics'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(updateEngineMetrics.mock.calls.length, 1);
   });
 
   it('should get engine metrics', () => {
@@ -832,7 +738,7 @@ describe('OIBus Service', () => {
   });
 
   it('should get OIBus info', () => {
-    mockUtils.getOIBusInfo = mock.fn(() => testData.engine.oIBusInfo);
+    utilsExports.getOIBusInfo.mock.mockImplementation(() => testData.engine.oIBusInfo);
 
     assert.deepStrictEqual(service.getInfo(), testData.engine.oIBusInfo);
   });

@@ -1,29 +1,23 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
-
-import SouthConnectorMetricsRepository from '../../repository/metrics/south-connector-metrics.repository';
-import SouthConnector from '../../south/south-connector';
-import SouthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
+import type SouthConnectorMetricsRepository from '../../repository/metrics/south-connector-metrics.repository';
 import SouthConnectorMock from '../../tests/__mocks__/south-connector.mock';
 import testData from '../../tests/utils/test-data';
+import { createMock, Mocked } from '../../tests/utils/test-utils';
 import SouthConnectorMetricsService from './south-connector-metrics.service';
 
-let southConnectorMetricsRepository: SouthMetricsRepositoryMock;
+let southConnectorMetricsRepository: Mocked<SouthConnectorMetricsRepository>;
 let southMock: SouthConnectorMock;
 let service: SouthConnectorMetricsService;
 
 describe('SouthConnectorMetricsService', () => {
   beforeEach(() => {
-    southConnectorMetricsRepository = new SouthMetricsRepositoryMock();
+    southConnectorMetricsRepository = createMock<SouthConnectorMetricsRepository>();
     southMock = new SouthConnectorMock(testData.south.list[0]);
     mock.timers.enable({ apis: ['Date', 'setInterval', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     southConnectorMetricsRepository.getMetrics.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.south.metrics)));
-    service = new SouthConnectorMetricsService(
-      southMock as unknown as SouthConnector<SouthSettings, SouthItemSettings>,
-      southConnectorMetricsRepository as unknown as SouthConnectorMetricsRepository
-    );
+    service = new SouthConnectorMetricsService(southMock, southConnectorMetricsRepository);
   });
 
   afterEach(() => {
