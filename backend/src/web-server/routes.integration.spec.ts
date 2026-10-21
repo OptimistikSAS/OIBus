@@ -1,50 +1,38 @@
 import assert from 'node:assert/strict';
-import * as http from 'node:http';
+import type * as http from 'node:http';
+import { createRequire } from 'node:module';
 import os from 'node:os';
-import { after, before, describe, it } from 'node:test';
+import { after, before, describe, it, mock } from 'node:test';
 
+import { ValidateError } from '@tsoa/runtime';
 import express from 'express';
 import multer from 'multer';
-import { ValidateError } from 'tsoa';
 
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
-import type AuditService from '../service/audit.service';
-import type CertificateService from '../service/certificate.service';
-import type ConfigImportService from '../service/config-transfer/config-import.service';
-import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
-import type ConfigurationWorkflowService from '../service/configuration-workflow.service';
-import type ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
 import type HistoryQueryService from '../service/history-query.service';
-import type IPFilterService from '../service/ip-filter.service';
-import type LogService from '../service/log.service';
-import type NorthService from '../service/north.service';
-import type OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
-import type OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
-import type OIBusService from '../service/oibus.service';
-import type ScanModeService from '../service/scan-mode.service';
 import type SouthService from '../service/south.service';
-import type TransformerService from '../service/transformer.service';
-import type UserService from '../service/user.service';
-import AuditServiceMock from '../tests/__mocks__/service/audit-service.mock';
-import CertificateServiceMock from '../tests/__mocks__/service/certificate-service.mock';
-import ConfigImportServiceMock from '../tests/__mocks__/service/config-import-service.mock';
-import ConfigTransferServiceMock from '../tests/__mocks__/service/config-transfer-service.mock';
-import ConfigurationWorkflowRunServiceMock from '../tests/__mocks__/service/configuration-workflow-run-service.mock';
-import ConfigurationWorkflowServiceMock from '../tests/__mocks__/service/configuration-workflow-service.mock';
-import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
-import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
-import LogServiceMock from '../tests/__mocks__/service/log-service.mock';
-import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
-import OIAnalyticsCommandServiceMock from '../tests/__mocks__/service/oia/oianalytics-command-service.mock';
-import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import OIBusServiceMock from '../tests/__mocks__/service/oibus-service.mock';
-import ScanModeServiceMock from '../tests/__mocks__/service/scan-mode-service.mock';
-import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
-import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
-import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 import testData from '../tests/utils/test-data';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule } from '../tests/utils/test-utils';
 import { createInjectServicesMiddleware } from './middlewares/services.middleware';
-import { RegisterRoutes } from './routes';
+import type * as Routes from './routes';
+
+const nodeRequire = createRequire(import.meta.url);
+
+fixTsoaModuleResolution(nodeRequire);
+// The services are all mocks here, so no connector is ever built: don't load the connector factories, which load every
+// connector SDK (seconds of import).
+mockModule(nodeRequire, '../south/south-connector-factory', {
+  buildSouth: mock.fn(),
+  initSouthCache: mock.fn(),
+  deleteSouthCache: mock.fn()
+});
+mockModule(nodeRequire, '../north/north-connector-factory', {
+  buildNorth: mock.fn(),
+  initNorthCache: mock.fn(),
+  deleteNorthCache: mock.fn(),
+  createNorthOrchestrator: mock.fn()
+});
+const { RegisterRoutes } = nodeRequire('./routes') as typeof Routes;
 
 const TEST_PORT = 19997;
 
@@ -54,31 +42,16 @@ interface RouteEntry {
 }
 
 /**
- * Express route layer shapes vary slightly between express versions; keep this loose but scoped
- * to what we actually need to read off `app._router.stack`.
- */
-interface ExpressRouteLayer {
-  route?: {
-    path: string;
-    methods: Record<string, boolean>;
-  };
-}
-
-/**
  * Walks the express router stack and extracts every registered {method, path} pair.
  * This lets us exercise every route RegisterRoutes() wired up without hardcoding paths.
  */
 function collectRoutes(app: express.Express): Array<RouteEntry> {
   const routes: Array<RouteEntry> = [];
-  const stack: Array<ExpressRouteLayer> =
-    (app as unknown as { router: { stack: Array<ExpressRouteLayer> } }).router?.stack ||
-    (app as unknown as { _router: { stack: Array<ExpressRouteLayer> } })._router?.stack ||
-    [];
-
-  for (const layer of stack) {
-    if (layer.route) {
-      const methods = Object.keys(layer.route.methods).filter(m => layer.route!.methods[m]);
-      for (const method of methods) {
+  for (const layer of app.router.stack) {
+    // express's Route has a `methods` map ({ get: true }) that its type definition does not declare
+    if (layer.route && 'methods' in layer.route) {
+      const methods = layer.route.methods as Record<string, boolean>;
+      for (const method of Object.keys(methods).filter(m => methods[m])) {
         routes.push({ method: method.toUpperCase(), path: layer.route.path });
       }
     }
@@ -97,51 +70,36 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
   let app: express.Express;
   let server: http.Server;
   let baseUrl: string;
-  let historyQueryService: HistoryQueryServiceMock;
-  let southService: SouthServiceMock;
+  let historyQueryService: Mocked<HistoryQueryService>;
+  let southService: Mocked<SouthService>;
 
   before(async () => {
     app = express();
 
-    const auditService = new AuditServiceMock();
-    const certificateService = new CertificateServiceMock();
-    const configImportService = new ConfigImportServiceMock();
-    const configTransferService = new ConfigTransferServiceMock();
-    const configurationWorkflowRunService = new ConfigurationWorkflowRunServiceMock();
-    const configurationWorkflowService = new ConfigurationWorkflowServiceMock();
-    historyQueryService = new HistoryQueryServiceMock();
-    const ipFilterService = new IpFilterServiceMock();
-    const logService = new LogServiceMock();
-    const northService = new NorthServiceMock();
-    const oIAnalyticsCommandService = new OIAnalyticsCommandServiceMock();
-    const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    const oIBusService = new OIBusServiceMock();
-    const scanModeService = new ScanModeServiceMock();
-    southService = new SouthServiceMock();
-    const transformerService = new TransformerServiceMock();
-    const userService = new UserServiceMock();
-
     // No auth middleware here on purpose: we want requests to reach the real TSOA-generated
     // handlers in routes.ts directly, so we mount only service injection + body parsing.
+    historyQueryService = createMock<HistoryQueryService>();
+    southService = createMock<SouthService>();
+    const services = createMockServices({ historyQueryService, southService });
     app.use(
       createInjectServicesMiddleware(
-        auditService as unknown as AuditService,
-        certificateService as unknown as CertificateService,
-        configImportService as unknown as ConfigImportService,
-        configTransferService as unknown as ConfigTransferService,
-        configurationWorkflowRunService as unknown as ConfigurationWorkflowRunService,
-        configurationWorkflowService as unknown as ConfigurationWorkflowService,
-        historyQueryService as unknown as HistoryQueryService,
-        ipFilterService as unknown as IPFilterService,
-        logService as unknown as LogService,
-        northService as unknown as NorthService,
-        oIAnalyticsCommandService as unknown as OIAnalyticsCommandService,
-        oIAnalyticsRegistrationService as unknown as OIAnalyticsRegistrationService,
-        oIBusService as unknown as OIBusService,
-        scanModeService as unknown as ScanModeService,
-        southService as unknown as SouthService,
-        transformerService as unknown as TransformerService,
-        userService as unknown as UserService
+        services.auditService,
+        services.certificateService,
+        services.configImportService,
+        services.configTransferService,
+        services.configurationWorkflowRunService,
+        services.configurationWorkflowService,
+        services.historyQueryService,
+        services.ipFilterService,
+        services.logService,
+        services.northService,
+        services.oIAnalyticsCommandService,
+        services.oIAnalyticsRegistrationService,
+        services.oIBusService,
+        services.scanModeService,
+        services.southService,
+        services.transformerService,
+        services.userService
       )
     );
 
@@ -252,78 +210,6 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
     assert.ok(res.status >= 200 && res.status < 500);
   });
 
-  // A connector body used to be validated against the union of every connector type: tsoa piled up the errors of
-  // every item for each type that did not match, which took a time quadratic in the number of items (tens of minutes
-  // for ten thousand items, blocking the whole process).
-  describe('connector bodies with many items', () => {
-    const NUMBER_OF_ITEMS = 11_120;
-    const MAX_DURATION = 5_000;
-
-    const southCommand = (numberOfItems: number) => ({
-      ...testData.south.command,
-      items: Array.from({ length: numberOfItems }, (_, i) => ({ ...testData.south.command.items[0], id: `item${i}`, name: `item ${i}` }))
-    });
-    const historyQueryCommand = (numberOfItems: number) => ({
-      ...testData.historyQueries.command,
-      items: Array.from({ length: numberOfItems }, (_, i) => ({
-        ...testData.historyQueries.command.items[0],
-        id: `item${i}`,
-        name: `item ${i}`
-      }))
-    });
-    const send = async (method: string, path: string, body: unknown) => {
-      const start = performance.now();
-      const res = await fetch(`${baseUrl}${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const responseBody = await res.text();
-      return { status: res.status, body: responseBody, duration: performance.now() - start };
-    };
-
-    it('validates the creation of a south connector in linear time', async () => {
-      southService.create.mock.mockImplementationOnce(async () => testData.south.list[0]);
-      const res = await send('POST', '/api/south', southCommand(NUMBER_OF_ITEMS));
-
-      assert.equal(res.status, 201, res.body);
-      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
-      assert.equal(southService.create.mock.calls.at(-1)!.arguments[0].items.length, NUMBER_OF_ITEMS);
-    });
-
-    it('validates the update of a south connector in linear time', async () => {
-      const res = await send('PUT', '/api/south/test-id', southCommand(NUMBER_OF_ITEMS));
-
-      assert.equal(res.status, 204, res.body);
-      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
-      assert.equal(southService.update.mock.calls.at(-1)!.arguments[1].items.length, NUMBER_OF_ITEMS);
-    });
-
-    it('validates the creation of a history query in linear time', async () => {
-      historyQueryService.create.mock.mockImplementationOnce(async () => testData.historyQueries.list[0]);
-      const res = await send('POST', '/api/history', historyQueryCommand(NUMBER_OF_ITEMS));
-
-      assert.equal(res.status, 201, res.body);
-      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
-      assert.equal(historyQueryService.create.mock.calls.at(-1)!.arguments[0].items.length, NUMBER_OF_ITEMS);
-    });
-
-    it('validates the update of a history query in linear time', async () => {
-      const res = await send('PUT', '/api/history/test-id', historyQueryCommand(NUMBER_OF_ITEMS));
-
-      assert.equal(res.status, 204, res.body);
-      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
-      assert.equal(historyQueryService.update.mock.calls.at(-1)!.arguments[1].items.length, NUMBER_OF_ITEMS);
-    });
-
-    it('still rejects an invalid item, pointing at it', async () => {
-      const command = southCommand(NUMBER_OF_ITEMS);
-      (command.items[5_000] as Record<string, unknown>).enabled = 'not a boolean';
-      const res = await send('PUT', '/api/south/test-id', command);
-
-      assert.equal(res.status, 400);
-      assert.deepEqual(JSON.parse(res.body), {
-        message: { 'items.$5000.enabled': { message: 'invalid boolean value', value: 'not a boolean' } }
-      });
-    });
-  });
-
   // The following routes have a required @Body() or a query/path param backed by an enum ref.
   // TSOA's generated handler wraps `getValidatedArgs` + `apiHandler` in a try/catch that forwards
   // to `next(err)` on failure (the routes.ts "outer catch"). Since `apiHandler` itself swallows any
@@ -401,6 +287,78 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
     it('SouthConnectorController_startExplore: missing body', async () => {
       const res = await fetch(`${baseUrl}/api/south/test-id/explore`, { method: 'POST' });
       assert.equal(res.status, 400);
+    });
+  });
+
+  // A connector body used to be validated against the union of every connector type: tsoa piled up the errors of
+  // every item for each type that did not match, which took a time quadratic in the number of items (tens of minutes
+  // for ten thousand items, blocking the whole process).
+  describe('connector bodies with many items', () => {
+    const NUMBER_OF_ITEMS = 11_120;
+    const MAX_DURATION = 5_000;
+
+    const southCommand = (numberOfItems: number) => ({
+      ...testData.south.command,
+      items: Array.from({ length: numberOfItems }, (_, i) => ({ ...testData.south.command.items[0], id: `item${i}`, name: `item ${i}` }))
+    });
+    const historyQueryCommand = (numberOfItems: number) => ({
+      ...testData.historyQueries.command,
+      items: Array.from({ length: numberOfItems }, (_, i) => ({
+        ...testData.historyQueries.command.items[0],
+        id: `item${i}`,
+        name: `item ${i}`
+      }))
+    });
+    const send = async (method: string, path: string, body: unknown) => {
+      const start = performance.now();
+      const res = await fetch(`${baseUrl}${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const responseBody = await res.text();
+      return { status: res.status, body: responseBody, duration: performance.now() - start };
+    };
+
+    it('validates the creation of a south connector in linear time', async () => {
+      southService.create.mock.mockImplementationOnce(async () => testData.south.list[0]);
+      const res = await send('POST', '/api/south', southCommand(NUMBER_OF_ITEMS));
+
+      assert.equal(res.status, 201, res.body);
+      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
+      assert.equal(southService.create.mock.calls.at(-1)!.arguments[0].items.length, NUMBER_OF_ITEMS);
+    });
+
+    it('validates the update of a south connector in linear time', async () => {
+      const res = await send('PUT', '/api/south/test-id', southCommand(NUMBER_OF_ITEMS));
+
+      assert.equal(res.status, 204, res.body);
+      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
+      assert.equal(southService.update.mock.calls.at(-1)!.arguments[1].items.length, NUMBER_OF_ITEMS);
+    });
+
+    it('validates the creation of a history query in linear time', async () => {
+      historyQueryService.create.mock.mockImplementationOnce(async () => testData.historyQueries.list[0]);
+      const res = await send('POST', '/api/history', historyQueryCommand(NUMBER_OF_ITEMS));
+
+      assert.equal(res.status, 201, res.body);
+      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
+      assert.equal(historyQueryService.create.mock.calls.at(-1)!.arguments[0].items.length, NUMBER_OF_ITEMS);
+    });
+
+    it('validates the update of a history query in linear time', async () => {
+      const res = await send('PUT', '/api/history/test-id', historyQueryCommand(NUMBER_OF_ITEMS));
+
+      assert.equal(res.status, 204, res.body);
+      assert.ok(res.duration < MAX_DURATION, `took ${res.duration} ms`);
+      assert.equal(historyQueryService.update.mock.calls.at(-1)!.arguments[1].items.length, NUMBER_OF_ITEMS);
+    });
+
+    it('still rejects an invalid item, pointing at it', async () => {
+      const command = southCommand(NUMBER_OF_ITEMS);
+      (command.items[5_000] as Record<string, unknown>).enabled = 'not a boolean';
+      const res = await send('PUT', '/api/south/test-id', command);
+
+      assert.equal(res.status, 400);
+      assert.deepEqual(JSON.parse(res.body), {
+        message: { 'items.$5000.enabled': { message: 'invalid boolean value', value: 'not a boolean' } }
+      });
     });
   });
 });
