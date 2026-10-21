@@ -753,6 +753,32 @@ describe('CacheService', () => {
       );
       assert.strictEqual(service['cacheSize'].cache, 1000 - fileList[1].metadata.contentSize);
     });
+
+    it('should stop at content that is not an array without deleting it', async () => {
+      const queueItems = [
+        { filename: 'f1.json', metadata: { ...fileList[0].metadata } },
+        { filename: 'compact.json', metadata: { ...fileList[1].metadata } },
+        { filename: 'f3.json', metadata: { ...fileList[2].metadata } }
+      ];
+      service['queue'] = [...queueItems];
+      readFileMock.mock.mockImplementation(
+        seq(
+          async () => JSON.stringify([{ id: 1 }]),
+          async () => JSON.stringify({ timestamps: ['t'], values: [[1]], references: ['p'] })
+        )
+      );
+      const deleteCacheEntry = mock.fn(async () => undefined);
+      service['deleteCacheEntry'] = deleteCacheEntry;
+
+      const result = await service['accumulateContent'](queueItems, 0);
+
+      assert.deepStrictEqual(result, { newListOfContent: [{ id: 1 }], remainder: [], compactedFiles: [queueItems[0]] });
+      // f3 is not merged before the compact content, to keep the sending order
+      assert.strictEqual(readFileMock.mock.calls.length, 2);
+      assert.strictEqual(deleteCacheEntry.mock.calls.length, 0);
+      assert.deepStrictEqual(service['queue'], queueItems);
+      assert.strictEqual(logger.error.mock.calls.length, 0);
+    });
   });
 
   describe('overwriteCacheFile', () => {
@@ -886,6 +912,24 @@ describe('CacheService', () => {
       // 6. Cache size resynced with what is now on disk
       assert.strictEqual(service['cacheSize'].cache, 21);
       assert.strictEqual(cacheSizeListener.mock.calls.length, 1);
+    });
+
+    it('should leave OIAnalytics compact content untouched', async () => {
+      const queueItems = ['1.json', '2.json', '3.json'].map(filename => ({
+        filename,
+        metadata: { contentType: 'oianalytics', contentSize: 10, numberOfElement: 1 } as CacheMetadata
+      }));
+      service['queue'] = [...queueItems];
+      service['cacheSize'] = { cache: 30, error: 0, archive: 0 };
+      readFileMock.mock.mockImplementation(async () => JSON.stringify({ timestamps: ['t'], values: [[1]], references: ['p'] }));
+
+      assert.strictEqual(await service.getCacheContentToSend(10_000), queueItems[0]);
+
+      assert.strictEqual(writeFileMock.mock.calls.length, 0);
+      assert.strictEqual(rmMock.mock.calls.length, 0);
+      assert.deepStrictEqual(service['queue'], queueItems);
+      assert.strictEqual(service['cacheSize'].cache, 30);
+      assert.strictEqual(logger.error.mock.calls.length, 0);
     });
 
     it('should handle remainder by writing to last file', async () => {

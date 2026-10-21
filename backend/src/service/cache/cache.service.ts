@@ -706,7 +706,12 @@ export default class CacheService {
       try {
         const filePath = path.join(this.cacheFolder, CONTENT_FOLDER, data.filename);
         const fileContent = await fs.readFile(filePath, { encoding: 'utf-8' });
-        const content: Array<object> = JSON.parse(fileContent);
+        const content: unknown = JSON.parse(fileContent);
+        // Only arrays can be merged: other content (e.g. the OIAnalytics compact format) is valid and sent as it is.
+        // Stop there to keep the sending order
+        if (!Array.isArray(content)) {
+          break;
+        }
 
         compactedFiles.push(data);
 
