@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.9.6](https://github.com/OptimistikSAS/OIBus/compare/v3.9.5...v3.9.6) (2026-10-21)
+
+
+### Bug Fixes
+
+* **cache:** never leave north cache content files that nothing tracks ([5c20f1c](https://github.com/OptimistikSAS/OIBus/commit/5c20f1c93262ac2f175c24f9a24d5a01791b80ec))
+* **csv:** use tab and non-breaking space characters for the import and export delimiters ([53785c7](https://github.com/OptimistikSAS/OIBus/commit/53785c71aca62736c900551a1a5eff4e55ad9b91))
+* **ftp:** check preserved files of a recursive scan by relative path ([9540a21](https://github.com/OptimistikSAS/OIBus/commit/9540a214bc685db9812ffdaaf414fb3c8f14d848))
+* **odbc:** pass start and end time in the right order when testing an item ([f5afb7f](https://github.com/OptimistikSAS/OIBus/commit/f5afb7f7a33aeb27a5568fee4e6451de7f03ad1d))
+* **oianalytics:** keep item groups and history settings when importing items from a csv command ([f3aa1ec](https://github.com/OptimistikSAS/OIBus/commit/f3aa1ec1d67a7e8ae98bdcdfc6fa518eaf118e31))
+* **south:** validate connector and history query bodies in linear time ([dd7f2b8](https://github.com/OptimistikSAS/OIBus/commit/dd7f2b80ed6007723c465a133a51b1493353d046))
+* **transformer:** convert json booleans properly in json-to-csv ([492e583](https://github.com/OptimistikSAS/OIBus/commit/492e583c87772f62d6ddda972edc8e84cf481f04))
+* **validator:** build the settings schema of a manifest only once ([4c8daa6](https://github.com/OptimistikSAS/OIBus/commit/4c8daa64b6a966c23741517f7de1be834ae98a72))
+
 ## [3.9.5](https://github.com/OptimistikSAS/OIBus/compare/v3.9.4...v3.9.5) (2026-10-16)
 
 
