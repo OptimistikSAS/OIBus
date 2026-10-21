@@ -1,35 +1,12 @@
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
+import { beforeEach, describe, it } from 'node:test';
 
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
-import type CSVToMQTTTransformerType from './csv-to-mqtt-transformer';
+import CSVToMQTTTransformer from './csv-to-mqtt-transformer';
 import csvToMqttManifest from './manifest';
-
-const nodeRequire = createRequire(import.meta.url);
-
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let CSVToMQTTTransformer: typeof CSVToMQTTTransformerType;
-
-before(() => {
-  mockUtils = {
-    convertDateTime: mock.fn(() => 1698400000000),
-    generateRandomId: mock.fn(() => 'fixed-random-id'),
-    convertDelimiter: mock.fn((val: string) => {
-      if (val === 'COMMA') return ',';
-      if (val === 'SEMI_COLON') return ';';
-      return ',';
-    }),
-    stringToBoolean: mock.fn((val: unknown) => val === 'true' || val === true || val === '1')
-  };
-  mockModule(nodeRequire, '../../../service/utils', mockUtils);
-  const mod = reloadModule<{ default: typeof CSVToMQTTTransformerType }>(nodeRequire, './csv-to-mqtt-transformer');
-  CSVToMQTTTransformer = mod.default;
-});
 
 describe('CSVToMQTTTransformer', () => {
   let logger: PinoLogger;
@@ -41,283 +18,123 @@ describe('CSVToMQTTTransformer', () => {
     hasHeader: true,
     topicColumn: 'topic'
   };
+  const noHeaderOptions = {
+    regex: '.*\\.csv',
+    filename: 'no-header',
+    delimiter: 'COMMA',
+    hasHeader: false,
+    topicColumn: '0',
+    payloadType: 'string'
+  };
+  // '2023-01-01' (UTC) as unix epoch in ms
+  const datetimeSettings = { inputType: 'string', inputTimezone: 'UTC', inputFormat: 'yyyy-MM-dd', outputType: 'unix-epoch-ms' };
+  const EPOCH_MS = 1672531200000;
+
+  /** Transforms `csvContent` and returns the parsed MQTT messages */
+  const transformCsv = async (options: object, csvContent: string): Promise<Array<OIBusMQTTValue>> => {
+    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
+    const result = await transformer.transform(Readable.from(csvContent), { source: 'test' }, 'data.csv');
+    return JSON.parse(result.output.toString());
+  };
 
   beforeEach(() => {
     logger = new PinoLogger();
-    mockUtils.convertDateTime = mock.fn(() => 1698400000000);
-    mockUtils.generateRandomId = mock.fn(() => 'fixed-random-id');
-    mockUtils.convertDelimiter = mock.fn((val: string) => {
-      if (val === 'COMMA') return ',';
-      if (val === 'SEMI_COLON') return ';';
-      return ',';
-    });
-    mockUtils.stringToBoolean = mock.fn((val: unknown) => val === 'true' || val === true || val === '1');
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
-  });
-
-  afterEach(() => {
-    mock.timers.reset();
   });
 
   it('should transform CSV data into a custom OBJECT payload', async () => {
-    const options = {
-      ...baseOptions,
-      payloadType: 'object',
-      objectFields: [
-        { key: 'temp', column: 'temperature', dataType: 'number' },
-        { key: 'active', column: 'isEnabled', dataType: 'boolean' },
-        {
-          key: 'time',
-          column: 'timestamp',
-          dataType: 'datetime',
-          datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-        }
-      ]
-    };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const csvContent = `topic,temperature,isEnabled,timestamp\ndevice/1,25.5,true,2023-01-01`;
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push(csvContent);
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
+    const output = await transformCsv(
+      {
+        ...baseOptions,
+        payloadType: 'object',
+        objectFields: [
+          { key: 'temp', column: 'temperature', dataType: 'number' },
+          { key: 'active', column: 'isEnabled', dataType: 'boolean' },
+          { key: 'time', column: 'timestamp', dataType: 'datetime', datetimeSettings }
+        ]
+      },
+      `topic,temperature,isEnabled,timestamp\ndevice/1,25.5,true,2023-01-01`
+    );
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
-    const payload = JSON.parse(output[0].payload);
-    assert.deepStrictEqual(payload, { temp: 25.5, active: true, time: 1698400000000 });
+    assert.deepStrictEqual(JSON.parse(output[0].payload), { temp: 25.5, active: true, time: EPOCH_MS });
   });
 
-  it('should skip object payload creation if the resulting object is empty', async () => {
-    const options = { ...baseOptions, payloadType: 'object', objectFields: [] };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
+  const payloadTypeCases = [
+    { payloadType: 'string', value: '123', expected: '123' },
+    { payloadType: 'number', value: '45.6', expected: '45.6' },
+    { payloadType: 'boolean', value: 'true', expected: 'true' },
+    { payloadType: 'datetime', value: '2023-01-01', expected: `${EPOCH_MS}`, datetimeSettings },
+    // an unknown type falls back to the raw value in formatValue
+    { payloadType: 'unknown', value: 'raw-content', expected: 'raw-content' }
+  ];
+  for (const { payloadType, value, expected, ...extraOptions } of payloadTypeCases) {
+    it(`should transform CSV data into a ${payloadType.toUpperCase()} payload`, async () => {
+      const output = await transformCsv(
+        { ...baseOptions, payloadType, valueColumn: 'val', ...extraOptions },
+        `topic,val\ndevice/1,${value}`
+      );
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\ndevice/1,100');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output.length, 0);
-  });
-
-  it('should transform CSV data into a STRING payload', async () => {
-    const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\ndevice/s,123');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output[0].payload, '123');
-  });
-
-  it('should transform CSV data into a NUMBER payload', async () => {
-    const options = { ...baseOptions, payloadType: 'number', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\ndevice/n,45.6');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output[0].payload, '45.6');
-  });
-
-  it('should transform CSV data into a BOOLEAN payload', async () => {
-    const options = { ...baseOptions, payloadType: 'boolean', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\ndevice/b,true');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output[0].payload, 'true');
-  });
-
-  it('should transform CSV data into a DATETIME payload', async () => {
-    const options = {
-      ...baseOptions,
-      payloadType: 'datetime',
-      valueColumn: 'val',
-      datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
-    };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\ndevice/d,2023-01-01');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output[0].payload, '1698400000000');
-  });
+      assert.strictEqual(output[0].payload, expected);
+    });
+  }
 
   it('should extract values by INDEX when hasHeader is false', async () => {
-    const options = {
-      regex: '.*\\.csv',
-      filename: 'no-header',
-      delimiter: 'COMMA',
-      hasHeader: false,
-      topicColumn: '0',
-      payloadType: 'string',
-      valueColumn: '1'
-    };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
+    const output = await transformCsv({ ...noHeaderOptions, valueColumn: '1' }, 'device/1,100\ndevice/2,200');
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('device/1,100\ndevice/2,200');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output.length, 2);
-    assert.deepStrictEqual(output[0], { topic: 'device/1', payload: '100' });
-    assert.deepStrictEqual(output[1], { topic: 'device/2', payload: '200' });
+    assert.deepStrictEqual(output, [
+      { topic: 'device/1', payload: '100' },
+      { topic: 'device/2', payload: '200' }
+    ]);
   });
 
   it('should extract values by INDEX when hasHeader is false and null formatted value', async () => {
-    const options = {
-      regex: '.*\\.csv',
-      filename: 'no-header',
-      delimiter: 'COMMA',
-      hasHeader: false,
-      topicColumn: '0',
-      payloadType: 'string',
-      valueColumn: '1'
-    };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
+    const output = await transformCsv({ ...noHeaderOptions, valueColumn: '1' }, 'device/1,{}\ndevice/2,{}');
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('device/1,{}\ndevice/2,{}');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output.length, 2);
-    assert.deepStrictEqual(output[0], { topic: 'device/1', payload: '{}' });
-    assert.deepStrictEqual(output[1], { topic: 'device/2', payload: '{}' });
+    assert.deepStrictEqual(output, [
+      { topic: 'device/1', payload: '{}' },
+      { topic: 'device/2', payload: '{}' }
+    ]);
   });
 
-  it('should extract values by INDEX without valueColumn', async () => {
-    const options = {
-      regex: '.*\\.csv',
-      filename: 'no-header',
-      delimiter: 'COMMA',
-      hasHeader: false,
-      topicColumn: '0',
-      payloadType: 'string'
-    };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('device/1,100\ndevice/2,200');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output.length, 0);
-  });
-
-  it('should return undefined if index is invalid (NaN)', async () => {
-    const options = { ...baseOptions, hasHeader: false, topicColumn: 'not-a-number', payloadType: 'string', valueColumn: '1' };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('device/1,100');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output.length, 0);
-  });
+  const emptyOutputCases = [
+    {
+      title: 'should skip object payload creation if the resulting object is empty',
+      options: { ...baseOptions, payloadType: 'object', objectFields: [] },
+      csvContent: 'topic,val\ndevice/1,100'
+    },
+    { title: 'should extract values by INDEX without valueColumn', options: noHeaderOptions, csvContent: 'device/1,100\ndevice/2,200' },
+    {
+      title: 'should return undefined if index is invalid (NaN)',
+      options: { ...baseOptions, hasHeader: false, topicColumn: 'not-a-number', payloadType: 'string', valueColumn: '1' },
+      csvContent: 'device/1,100'
+    }
+  ];
+  for (const { title, options, csvContent } of emptyOutputCases) {
+    it(title, async () => {
+      assert.deepStrictEqual(await transformCsv(options, csvContent), []);
+    });
+  }
 
   it('should skip rows where TOPIC is missing', async () => {
-    const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\ndevice/1,10\n,20');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output = JSON.parse(result.output.toString());
+    const output = await transformCsv({ ...baseOptions, payloadType: 'string', valueColumn: 'val' }, 'topic,val\ndevice/1,10\n,20');
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
   });
 
   it('should skip rows where VALUE is missing or null', async () => {
-    const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\ndevice/1,10\ndevice/2,');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output = JSON.parse(result.output.toString());
+    const output = await transformCsv({ ...baseOptions, payloadType: 'string', valueColumn: 'val' }, 'topic,val\ndevice/1,10\ndevice/2,');
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
   });
 
   it('should log warning if CSV parsing has errors', async () => {
-    const options = { ...baseOptions, delimiter: 'COMMA', payloadType: 'string', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\n"device/1,10');
-    mockStream.push(null);
-    await flushPromises();
-    await promise;
+    await transformCsv({ ...baseOptions, payloadType: 'string', valueColumn: 'val' }, 'topic,val\n"device/1,10');
 
     assert.ok(logger.warn.mock.calls.length > 0);
     assert.ok((logger.warn.mock.calls[0].arguments[0] as string).includes('Encountered'));
-  });
-
-  it('should default to raw value if type is unknown in formatValue', async () => {
-    const options = { ...baseOptions, payloadType: 'unknown', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
-    mockStream.push('topic,val\ndevice/1,raw-content');
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-    const output = JSON.parse(result.output.toString());
-
-    assert.strictEqual(output[0].payload, 'raw-content');
   });
 
   it('should return correct manifest settings', () => {
