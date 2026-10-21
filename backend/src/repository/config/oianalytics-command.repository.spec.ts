@@ -62,8 +62,9 @@ import {
   OIAnalyticsFetchUpdateSouthConnectorCommandDTO,
   OIAnalyticsFetchUpdateVersionCommandDTO
 } from '../../service/oia/oianalytics.model';
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { stripAuditFields } from '../../tests/utils/test-utils';
 import OIAnalyticsCommandRepository from './oianalytics-command.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-command.db';
