@@ -3457,35 +3457,41 @@
         "command-content": {
           "title": "命令内容",
           "retrieved-date": "获取日期：{{ retrievedDate }}",
+          "json": "JSON 内容",
           "update-version": {
             "version": "更新到版本：{{ version }}",
             "asset-id": "要下载的资源：{{ assetId }}",
             "update-launcher": "更新启动器：{{ updateLauncher }}",
             "backup-folders-patterns": "按照以下模式备份文件夹：{{ backupFoldersPattern }}"
           },
-          "update-engine-settings": {
-            "command-content": "JSON 内容"
-          },
-          "update-registration-settings": {
-            "command-content": "JSON 内容"
-          },
           "import-configuration": {
             "file-id": "配置文件：{{ fileId }}"
           },
           "scan-mode": {
-            "command-content": "JSON 内容",
             "scan-mode-id": "扫描模式 ID：{{ scanModeId }}"
           },
           "south": {
-            "command-content": "JSON 内容",
             "south-id": "South 连接器 ID：{{ southConnectorId }}",
             "delete-items-not-present": "删除不存在的项：{{ deleteItemsNotPresent }}",
             "delimiter": "分隔符：{{ delimiter }}",
-            "csv-content": "CSV 内容：{{ csvContent }}"
+            "csv-content": "CSV 内容：{{ csvContent }}",
+            "item-id": "项 ID：{{ itemId }}"
           },
           "north": {
-            "command-content": "JSON 内容",
             "north-id": "North 连接器 ID：{{ northConnectorId }}"
+          },
+          "ip-filter": {
+            "ip-filter-id": "IP 过滤器 ID：{{ ipFilterId }}"
+          },
+          "certificate": {
+            "certificate-id": "证书 ID：{{ certificateId }}"
+          },
+          "history-query": {
+            "history-query-id": "历史查询 ID：{{ historyQueryId }}",
+            "history-query-status": "历史查询状态：{{ historyQueryStatus }}"
+          },
+          "transformer": {
+            "transformer-id": "转换器 ID：{{ transformerId }}"
           }
         }
       },
