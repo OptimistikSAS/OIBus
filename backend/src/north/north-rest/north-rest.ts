@@ -8,9 +8,9 @@ import { UndiciHeaders } from 'undici/types/dispatcher';
 import { NorthRESTSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CacheService from '../../service/cache/cache.service';
 import { encryptionService } from '../../service/encryption.service';
 import {
   HTTPRequest,
@@ -36,7 +36,7 @@ async function* multipartStream(boundary: string, filename: string, dataStream: 
  * Class Console - display values and file path into the console
  */
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, cacheService: ICacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, cacheService: CacheService) {
     super(configuration, cacheService);
   }
 

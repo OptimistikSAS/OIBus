@@ -14,7 +14,6 @@ import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../shared/m
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { CacheMetadataSource } from '../model/engine.model';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorItemEntityLight, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import { NorthTransformerWithOptions, TransformerSource } from '../model/transformer.model';
@@ -29,6 +28,7 @@ import SouthItemGroupRepository from '../repository/config/south-item-group.repo
 import LogRepository from '../repository/logs/log.repository';
 import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
 import TransformerService, { toTransformerDTO } from './transformer.service';
@@ -45,7 +45,7 @@ export default class NorthService {
     private logRepository: LogRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
+    private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly transformerService: TransformerService,
     private readonly engine: DataStreamEngine
   ) {}

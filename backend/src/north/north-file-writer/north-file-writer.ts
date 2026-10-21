@@ -16,14 +16,14 @@ import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CacheService from '../../service/cache/cache.service';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
  */
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthFileWriterSettings>, cacheService: ICacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthFileWriterSettings>, cacheService: CacheService) {
     super(configuration, cacheService);
   }
 

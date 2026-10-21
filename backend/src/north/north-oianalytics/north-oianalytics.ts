@@ -5,12 +5,12 @@ import zlib from 'node:zlib';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';
 import type { ILogger } from '../../model/logger.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import type CacheService from '../../service/cache/cache.service';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 import { TimeValueLike, toCompactTimeValues } from '../../service/oia/compact-time-values';
 import { getErrorMessage, streamToString } from '../../service/utils';
@@ -91,7 +91,7 @@ function isJsonArray(chunk: Buffer | null): boolean {
 export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
-    cacheService: ICacheService,
+    cacheService: CacheService,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
   ) {
