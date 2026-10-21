@@ -171,13 +171,13 @@
   "allowScripts": {
     "fsevents@2.3.3": true,
     "ssh2@1.17.0": true,
-    "oracledb@7.0.1": true,
     "argon2@0.45.1": true,
     "cpu-features@0.0.10": true,
     "better-sqlite3@13.0.3": true,
     "esbuild@0.28.2": true,
     "isolated-vm@7.0.1": true,
     "protobufjs@7.6.6": true,
-    "odbc@2.6.0": true
+    "odbc@2.6.0": true,
+    "oracledb@26.0.0": true
   }
 }
