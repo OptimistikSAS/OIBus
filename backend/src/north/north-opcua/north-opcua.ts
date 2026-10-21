@@ -14,9 +14,9 @@ import {
 import { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CacheService from '../../service/cache/cache.service';
 import { streamToString } from '../../service/utils';
 import { createOPCUASession, createSessionConfigs } from '../../service/utils-opcua';
 import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
@@ -30,7 +30,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, cacheService: ICacheService) {
+  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, cacheService: CacheService) {
     super(connector, cacheService);
   }
 

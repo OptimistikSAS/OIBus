@@ -2,11 +2,6 @@ import { OIAnalyticsMessageStatus, OIAnalyticsMessageType } from '../../shared/m
 
 import { BaseEntity, Instant } from './types';
 
-export interface IOIAnalyticsMessageService {
-  createFullConfigMessageIfNotPending(): void;
-  createFullHistoryQueriesMessageIfNotPending(): void;
-}
-
 interface BaseOIAnalyticsMessage extends BaseEntity {
   type: OIAnalyticsMessageType;
   status: OIAnalyticsMessageStatus;

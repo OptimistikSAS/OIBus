@@ -41,7 +41,6 @@ import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../shared/m
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowSouthCommand } from '../model/configuration-workflow.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { ScanMode } from '../model/scan-mode.model';
 import {
   SouthConnectorEntity,
@@ -51,7 +50,6 @@ import {
   SouthItemGroupEntity,
   SouthItemGroupEntityLight
 } from '../model/south-connector.model';
-import { Transformer } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -64,15 +62,12 @@ import SouthConnectorMetricsRepository from '../repository/metrics/south-connect
 import { buildSouth } from '../south/south-connector-factory';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import SouthExploreSessionManager from './south-explore-session-manager';
+import type TransformerService from './transformer.service';
 import { checkGroups, checkScanMode, parseCsvImport, stringToBoolean } from './utils';
-
-interface ITransformerService {
-  findById(transformerId: string): Transformer;
-  runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent>;
-}
 
 export default class SouthService {
   private readonly exploreSessionManager = new SouthExploreSessionManager();
@@ -86,10 +81,10 @@ export default class SouthService {
     private readonly scanModeRepository: ScanModeRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
-    private readonly oIAnalyticsMessageService: IOIAnalyticsMessageService,
+    private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly engine: DataStreamEngine,
     private readonly southItemGroupRepository: SouthItemGroupRepository,
-    private readonly transformerService: ITransformerService
+    private readonly transformerService: TransformerService
   ) {}
 
   listManifest(): Array<SouthConnectorManifest> {

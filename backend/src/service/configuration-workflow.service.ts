@@ -8,13 +8,8 @@ import ConfigurationWorkflowRepository from '../repository/config/configuration-
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
+import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import { checkScanMode } from './utils';
-
-/** Minimal slice of OIAnalyticsRegistrationService this service actually calls - see the
- *  IConfigurationWorkflowSouthService/IDataStreamEngine precedent in configuration-workflow-run.service.ts. */
-interface IOIAnalyticsRegistrationService {
-  getRegistrationSettings(): { status: string } | null;
-}
 
 /**
  * Service used for Configuration Workflows: CRUD orchestration only. Running a workflow (discovery, eligibility
@@ -27,7 +22,7 @@ export default class ConfigurationWorkflowService {
     private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly scanModeRepository: ScanModeRepository,
     private readonly engine: DataStreamEngine,
-    private readonly oIAnalyticsRegistrationService: IOIAnalyticsRegistrationService
+    private readonly oIAnalyticsRegistrationService: OIAnalyticsRegistrationService
   ) {}
 
   findById(southId: string, workflowId: string): ConfigurationWorkflowEntity {

@@ -4,11 +4,11 @@ import { IPFilterCommandDTO, IPFilterDTO } from '../../shared/model/api/ip-filte
 import { GetUserInfo } from '../../shared/model/common/types';
 
 import { IPFilter } from '../model/ip-filter.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { NotFoundError } from '../model/types';
 import IpFilterRepository from '../repository/config/ip-filter.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 
 export default class IPFilterService {
   public whiteListEvent: EventEmitter = new EventEmitter(); // Used to trigger white list for Proxy server and Web server
@@ -16,7 +16,7 @@ export default class IPFilterService {
   constructor(
     protected readonly validator: JoiValidator,
     private ipFilterRepository: IpFilterRepository,
-    private oIAnalyticsMessageService: IOIAnalyticsMessageService
+    private oIAnalyticsMessageService: OIAnalyticsMessageService
   ) {}
 
   list(): Array<IPFilter> {

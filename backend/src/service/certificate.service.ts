@@ -3,7 +3,6 @@ import { GetUserInfo } from '../../shared/model/common/types';
 
 import { Certificate, CertificateImportCommand } from '../model/certificate.model';
 import type { ILogger } from '../model/logger.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import CertificateRepository from '../repository/config/certificate.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -13,6 +12,7 @@ import {
   certificateSchema
 } from '../web-server/controllers/validators/oibus-validation-schema';
 import EncryptionService from './encryption.service';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { generateRandomId } from './utils';
 import {
   assertKeyMatchesCertificate,
@@ -29,7 +29,7 @@ export default class CertificateService {
     protected readonly validator: JoiValidator,
     private certificateRepository: CertificateRepository,
     private encryptionService: EncryptionService,
-    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
+    private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private logger: ILogger
   ) {}
 

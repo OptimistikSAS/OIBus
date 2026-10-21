@@ -11,16 +11,16 @@ import { OIBusSouthType } from '../../shared/model/connector/south-manifest.mode
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
 
+import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
-import type { ILogger } from '../model/logger.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunSearchParam, WorkflowRunTriggerType } from '../model/workflow-run.model';
 import ItemPointMetadataRepository from '../repository/config/item-point-metadata.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import WorkflowRunRepository from '../repository/config/workflow-run.repository';
-import type SouthConnector from '../south/south-connector';
+import type ConfigurationWorkflowService from './configuration-workflow.service';
 import {
   checkWorkflowMode,
   computeIdentityKey,
@@ -29,45 +29,10 @@ import {
   resolveIdentityKeyFields
 } from './configuration-workflow.utils';
 import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
+import type SouthService from './south.service';
 import { southManifestList } from './south-manifests';
-
-// Minimal slices of SouthService/DataStreamEngine/OIAnalyticsMessageService/OIAnalyticsRegistrationService
-// this orchestrator actually calls - kept as local interfaces (matching the ISouthService/IHistoryEngine
-// precedent in history-query.service.ts) so a plain mock satisfies them structurally, without extending
-// the real classes just for testing.
-interface IConfigurationWorkflowSouthService {
-  createItem(
-    southId: string,
-    command: SouthConnectorItemCommandDTO,
-    createdBy: string
-  ): Promise<SouthConnectorItemEntity<SouthItemSettings>>;
-  updateItem(southId: string, itemId: string, command: SouthConnectorItemCommandDTO, updatedBy: string): Promise<void>;
-  discover(
-    southId: string,
-    southType: OIBusSouthType,
-    settings: SouthSettings,
-    scope: Record<string, unknown>
-  ): Promise<Array<OIBusRecord>>;
-}
-
-interface IDataStreamEngine {
-  hasSouth(southId: string): boolean;
-  getSouth(southId: string): { south: SouthConnector<SouthSettings, SouthItemSettings> };
-  readonly logger: ILogger;
-}
-
-interface IConfigurationWorkflowService {
-  /** Ownership check included - throws NotFoundError if the workflow doesn't exist or belongs elsewhere. */
-  findById(southId: string, workflowId: string): ConfigurationWorkflowEntity;
-}
-
-interface IOIAnalyticsMessageService {
-  createConfigurationWorkflowResultMessage(workflowRunId: string, payload: string): void;
-}
-
-interface IOIAnalyticsRegistrationService {
-  getRegistrationSettings(): { status: string } | null;
-}
 
 const ZERO_COUNTS: WorkflowRunCounts = {
   discoveredCount: 0,
@@ -117,14 +82,14 @@ const HISTORIAN_ITEM_FIELD_KINDS: Record<string, ItemFieldKind> = {
  */
 export default class ConfigurationWorkflowRunService {
   constructor(
-    private readonly configurationWorkflowService: IConfigurationWorkflowService,
+    private readonly configurationWorkflowService: ConfigurationWorkflowService,
     private readonly workflowRunRepository: WorkflowRunRepository,
     private readonly itemPointMetadataRepository: ItemPointMetadataRepository,
     private readonly southConnectorRepository: SouthConnectorRepository,
-    private readonly southService: IConfigurationWorkflowSouthService,
-    private readonly engine: IDataStreamEngine,
-    private readonly oIAnalyticsMessageService: IOIAnalyticsMessageService,
-    private readonly oIAnalyticsRegistrationService: IOIAnalyticsRegistrationService
+    private readonly southService: SouthService,
+    private readonly engine: DataStreamEngine,
+    private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
+    private readonly oIAnalyticsRegistrationService: OIAnalyticsRegistrationService
   ) {}
 
   /**

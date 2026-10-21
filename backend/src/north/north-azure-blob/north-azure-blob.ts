@@ -8,8 +8,8 @@ import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSha
 import { NorthAzureBlobSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CacheService from '../../service/cache/cache.service';
 import { encryptionService } from '../../service/encryption.service';
 import NorthConnector from '../north-connector';
 
@@ -19,7 +19,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   private blobClient: BlobServiceClient | null = null;
   private dataLakeClient: DataLakeServiceClient | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, cacheService: ICacheService) {
+  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, cacheService: CacheService) {
     super(connector, cacheService);
   }
 

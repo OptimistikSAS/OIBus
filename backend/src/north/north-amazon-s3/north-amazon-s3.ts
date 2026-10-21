@@ -7,8 +7,8 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { NorthAmazonS3Settings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CacheService from '../../service/cache/cache.service';
 import { encryptionService } from '../../service/encryption.service';
 import NorthConnector from '../north-connector';
 
@@ -18,7 +18,7 @@ import NorthConnector from '../north-connector';
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
   private s3: S3Client | undefined;
 
-  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, cacheService: ICacheService) {
+  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, cacheService: CacheService) {
     super(connector, cacheService);
   }
 
