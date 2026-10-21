@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import type { Dirent, Stats } from 'node:fs';
 import fsSync from 'node:fs';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -7,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
 import zlib from 'node:zlib';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import cronstrue from 'cronstrue';
 import { DateTime } from 'luxon';
@@ -15,11 +14,11 @@ import { DateTime } from 'luxon';
 import type { EngineSettingsDTO, OIBusInfo } from '../../shared/model/api/engine.model';
 import type { HistoryQueryItemDTO } from '../../shared/model/api/history-query.model';
 import type { SouthConnectorItemDTO } from '../../shared/model/api/south-connector.model';
-import type { DateTimeType } from '../../shared/model/common/types';
-import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
-import type { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+import type { DateTimeType, SerializationSettings } from '../../shared/model/common/types';
+import type { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import type { SouthFolderScannerItemSettings } from '../../shared/model/connector/south-settings.model';
 
-import type { OIBusError as OIBusErrorType } from '../model/engine.model';
+import type { CacheMetadataSourceOriginSouth, OIBusError as OIBusErrorType } from '../model/engine.model';
 import type { SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/south-connector.model';
 import type { OIBusValidationError as OIBusValidationErrorType } from '../model/types';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -32,8 +31,9 @@ const papaparse: typeof import('papaparse') = nodeRequire('papaparse');
 // the real yazl, kept before it is mocked, to build the archives to unzip
 const realYazl: typeof import('yazl') = nodeRequire('yazl');
 
-// Module-level mock exports for third-party modules
-const minimistExports = mock.fn(() => ({}));
+// Module-level mock exports for third-party modules: the SUT keeps a reference to these objects,
+// so their functions are replaced in beforeEach rather than the objects themselves
+const minimistExports = mock.fn((): Record<string, unknown> => ({}));
 const csvExports = {
   unparse: mock.fn((_data?: unknown, _config?: unknown): string => 'csv content'),
   parse: papaparse.parse
@@ -52,10 +52,40 @@ const yazlExports = {
 // Type for the utils module exports
 type UtilsModule = typeof import('./utils');
 
+// An item schema without any setting
+const emptySchema: OIBusObjectAttribute = {
+  type: 'object',
+  key: 'settings',
+  translationKey: '',
+  validators: [],
+  attributes: [],
+  enablingConditions: [],
+  displayProperties: { visible: true, wrapInBox: false }
+};
+
+const baseGroup: SouthItemGroupEntity = {
+  id: 'g1',
+  name: 'Group 1',
+  southId: 'south1',
+  scanMode: testData.scanMode.list[0],
+  startTimeOffset: null,
+  endTimeOffset: null,
+  maxReadInterval: null,
+  readDelay: 0,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  items: [],
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+};
+
 describe('Service utils', () => {
   let utils: UtilsModule;
   let OIBusError: typeof OIBusErrorType;
   let OIBusValidationError: typeof OIBusValidationErrorType;
+  let logger: PinoLogger;
 
   before(() => {
     mockModule(nodeRequire, 'minimist', minimistExports);
@@ -68,16 +98,19 @@ describe('Service utils', () => {
     OIBusValidationError = nodeRequire('../model/types').OIBusValidationError;
   });
 
+  beforeEach(() => {
+    logger = new PinoLogger();
+    csvExports.unparse = mock.fn((_data?: unknown, _config?: unknown): string => 'csv content');
+  });
+
   afterEach(() => {
     mock.restoreAll();
   });
 
   describe('getCommandLineArguments', () => {
-    let consoleSpy: ReturnType<typeof mock.method>;
+    let consoleSpy: Mock<typeof console.info>;
 
     beforeEach(() => {
-      minimistExports.mock.resetCalls();
-      minimistExports.mock.mockImplementation(() => ({}));
       consoleSpy = mock.method(console, 'info', () => undefined);
     });
 
@@ -123,6 +156,18 @@ describe('Service utils', () => {
     });
   });
 
+  describe('extractDiscoveryQuery', () => {
+    it('should return the query of the discovery scope', () => {
+      assert.strictEqual(utils.extractDiscoveryQuery({ query: 'SELECT * FROM points' }), 'SELECT * FROM points');
+    });
+
+    for (const scope of [{}, { query: 42 }, { query: '   ' }]) {
+      it(`should reject a discovery scope without a non-empty query: ${JSON.stringify(scope)}`, () => {
+        assert.throws(() => utils.extractDiscoveryQuery(scope), /discoveryScope.query is required/);
+      });
+    }
+  });
+
   describe('delay', () => {
     it('should delay', async () => {
       // Just verify delay resolves without hanging (using a tiny timeout)
@@ -131,62 +176,43 @@ describe('Service utils', () => {
   });
 
   describe('generateIntervals', () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const chunk1End = '2020-01-01T01:00:00.000Z';
+    const chunk2End = '2020-01-01T02:00:00.000Z';
+
     it('should return only one interval', () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2020-01-01T01:00:00.000Z';
-      const expectedIntervals = [{ start: startTime, end: endTime }];
-      const intervals = utils.generateIntervals(startTime, endTime, 3600);
-      assert.deepStrictEqual(intervals, expectedIntervals);
+      assert.deepStrictEqual(utils.generateIntervals(startTime, chunk1End, 3600), [{ start: startTime, end: chunk1End }]);
     });
 
     it('should return only one interval when max number of seconds is 0', () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2020-01-01T01:00:00.000Z';
-      const expectedIntervals = [{ start: startTime, end: endTime }];
-      const intervals = utils.generateIntervals(startTime, endTime, 0);
-      assert.deepStrictEqual(intervals, expectedIntervals);
+      assert.deepStrictEqual(utils.generateIntervals(startTime, chunk1End, 0), [{ start: startTime, end: chunk1End }]);
     });
 
     it('should return three intervals', () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const chunk1End = '2020-01-01T01:00:00.000Z';
-      const chunk2End = '2020-01-01T02:00:00.000Z';
       const endTime = '2020-01-01T02:50:00.000Z';
-      const expectedIntervals = [
+      assert.deepStrictEqual(utils.generateIntervals(startTime, endTime, 3600), [
         { start: startTime, end: chunk1End },
         { start: chunk1End, end: chunk2End },
         { start: chunk2End, end: endTime }
-      ];
-      const intervals = utils.generateIntervals(startTime, endTime, 3600);
-      assert.deepStrictEqual(intervals, expectedIntervals);
+      ]);
     });
 
     it('should return single interval when maxNumberOfSecondsInInterval is 0', () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-02T00:00:00.000Z';
-      const intervals = utils.generateIntervals(startTime, endTime, 0);
-      assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
+      assert.deepStrictEqual(utils.generateIntervals(startTime, endTime, 0), [{ start: startTime, end: endTime }]);
     });
 
     it('should reverse intervals for newest strategy', () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const chunk1End = '2020-01-01T01:00:00.000Z';
-      const chunk2End = '2020-01-01T02:00:00.000Z';
       const endTime = '2020-01-01T02:50:00.000Z';
-      const expectedIntervals = [
+      assert.deepStrictEqual(utils.generateIntervals(startTime, endTime, 3600, 'newest'), [
         { start: chunk2End, end: endTime },
         { start: chunk1End, end: chunk2End },
         { start: startTime, end: chunk1End }
-      ];
-      const intervals = utils.generateIntervals(startTime, endTime, 3600, 'newest');
-      assert.deepStrictEqual(intervals, expectedIntervals);
+      ]);
     });
 
     it('should return the single interval unchanged for newest strategy', () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2020-01-01T01:00:00.000Z';
-      const intervals = utils.generateIntervals(startTime, endTime, 3600, 'newest');
-      assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
+      assert.deepStrictEqual(utils.generateIntervals(startTime, chunk1End, 3600, 'newest'), [{ start: startTime, end: chunk1End }]);
     });
   });
 
@@ -208,25 +234,23 @@ describe('Service utils', () => {
 
   describe('createFolder', () => {
     it('should properly create folder when it exists', async () => {
-      const folderToCreate = 'myFolder';
       const mkdirMock = mock.method(fs, 'mkdir', async () => null);
       mock.method(fs, 'stat', async () => null);
 
-      await utils.createFolder(folderToCreate);
+      await utils.createFolder('myFolder');
       assert.strictEqual(mkdirMock.mock.calls.length, 0);
     });
 
     it('should properly create folder when it does not exist', async () => {
-      const folderToCreate = 'myFolder';
       const mkdirMock = mock.method(fs, 'mkdir', async () => null);
       mock.method(fs, 'stat', () => {
         throw new Error('File does not exist');
       });
 
-      await utils.createFolder(folderToCreate);
+      await utils.createFolder('myFolder');
 
       assert.strictEqual(mkdirMock.mock.calls.length, 1);
-      assert.deepStrictEqual(mkdirMock.mock.calls[0].arguments, [path.resolve(folderToCreate), { recursive: true }]);
+      assert.deepStrictEqual(mkdirMock.mock.calls[0].arguments, [path.resolve('myFolder'), { recursive: true }]);
     });
   });
 
@@ -244,12 +268,11 @@ describe('Service utils', () => {
     it('should properly compress file', async () => {
       const source = new PassThrough();
       source.end('some data');
-      const gzip = new PassThrough();
       const dest = new PassThrough();
       dest.resume(); // drain so pipeline finishes
-      const createReadStreamMock = mock.method(fsSync, 'createReadStream', () => source as unknown as fsSync.ReadStream);
-      const createWriteStreamMock = mock.method(fsSync, 'createWriteStream', () => dest as unknown as fsSync.WriteStream);
-      const createGzipMock = mock.method(zlib, 'createGzip', () => gzip as unknown as zlib.Gzip);
+      const createReadStreamMock = mock.method(fsSync, 'createReadStream', () => source);
+      const createWriteStreamMock = mock.method(fsSync, 'createWriteStream', () => dest);
+      const createGzipMock = mock.method(zlib, 'createGzip', () => new PassThrough());
 
       await utils.compress('myInputFile', 'myOutputFile');
 
@@ -262,11 +285,9 @@ describe('Service utils', () => {
 
     it('should properly manage error when compressing file', async () => {
       const source = new PassThrough();
-      const gzip = new PassThrough();
-      const dest = new PassThrough();
-      mock.method(fsSync, 'createReadStream', () => source as unknown as fsSync.ReadStream);
-      mock.method(fsSync, 'createWriteStream', () => dest as unknown as fsSync.WriteStream);
-      mock.method(zlib, 'createGzip', () => gzip as unknown as zlib.Gzip);
+      mock.method(fsSync, 'createReadStream', () => source);
+      mock.method(fsSync, 'createWriteStream', () => new PassThrough());
+      mock.method(zlib, 'createGzip', () => new PassThrough());
 
       // Emit an error on the source after the pipeline has started
       setImmediate(() => source.destroy(new Error('compression error')));
@@ -343,7 +364,7 @@ describe('Service utils', () => {
       const dest = new PassThrough();
       const written: Array<Buffer> = [];
       dest.on('data', chunk => written.push(chunk));
-      const createWriteStreamMock = mock.method(fsSync, 'createWriteStream', () => dest as unknown as fsSync.WriteStream);
+      const createWriteStreamMock = mock.method(fsSync, 'createWriteStream', () => dest);
 
       await utils.zipFile('myInputFile', 'entry.txt', 'myOutputFile.zip');
 
@@ -355,41 +376,30 @@ describe('Service utils', () => {
   });
 
   describe('generateRandomId', () => {
-    it('should properly generate a random ID with a standard size', () => {
-      const randomId = utils.generateRandomId();
-      assert.strictEqual(randomId.length, 16);
-    });
-
-    it('should properly generate a random ID with smaller size', () => {
-      const randomId = utils.generateRandomId(8);
-      assert.strictEqual(randomId.length, 8);
-    });
-
-    it('should properly generate a random ID with bigger size', () => {
-      const randomId = utils.generateRandomId(32);
-      assert.strictEqual(randomId.length, 32);
-    });
+    for (const { label, size, expectedLength } of [
+      { label: 'a standard size', size: undefined, expectedLength: 16 },
+      { label: 'smaller size', size: 8, expectedLength: 8 },
+      { label: 'bigger size', size: 32, expectedLength: 32 }
+    ]) {
+      it(`should properly generate a random ID with ${label}`, () => {
+        assert.strictEqual(utils.generateRandomId(size).length, expectedLength);
+      });
+    }
   });
 
   describe('dirSize', () => {
     it('should properly retrieve dir size', async () => {
-      const firstFolder = [
-        { name: 'file1', isDirectory: () => false, isFile: () => true } as unknown as Dirent,
-        { name: 'file2', isDirectory: () => false, isFile: () => true } as unknown as Dirent,
-        { name: 'dir', isDirectory: () => true, isFile: () => false } as unknown as Dirent
-      ];
-      const secondFolder = [
-        { name: 'file3', isDirectory: () => false, isFile: () => true } as unknown as Dirent,
-        { name: 'file4', isDirectory: () => false, isFile: () => false } as unknown as Dirent,
-        { name: 'file5', isDirectory: () => false, isFile: () => true } as unknown as Dirent
-      ];
-
+      const entry = (name: string, kind: 'file' | 'directory' | 'other') => ({
+        name,
+        isDirectory: () => kind === 'directory',
+        isFile: () => kind === 'file'
+      });
       const readdirMock = mock.method(
         fs,
         'readdir',
         seq(
-          async () => firstFolder as unknown as Awaited<ReturnType<typeof fs.readdir>>,
-          async () => secondFolder as unknown as Awaited<ReturnType<typeof fs.readdir>>
+          async () => [entry('file1', 'file'), entry('file2', 'file'), entry('dir', 'directory')],
+          async () => [entry('file3', 'file'), entry('file4', 'other'), entry('file5', 'file')]
         )
       );
 
@@ -397,12 +407,12 @@ describe('Service utils', () => {
         fs,
         'stat',
         seq(
-          async () => ({ size: 1 }) as Stats,
-          async () => ({ size: 2 }) as Stats,
+          async () => ({ size: 1 }),
+          async () => ({ size: 2 }),
           async () => {
             throw new Error('stat error');
           },
-          async () => ({ size: 8 }) as Stats
+          async () => ({ size: 8 })
         )
       );
 
@@ -424,27 +434,15 @@ describe('Service utils', () => {
       const endTime = '2021-01-01T00:00:00.000Z';
       const query = 'SELECT * FROM table WHERE timestamp > @StartTime && timestamp < @EndTime && @StartTime > timestamp';
 
-      const expectedResult = [startTime, endTime, startTime];
-      const result = utils.generateReplacementParameters(query, startTime, endTime);
-      assert.deepStrictEqual(result, expectedResult);
+      assert.deepStrictEqual(utils.generateReplacementParameters(query, startTime, endTime), [startTime, endTime, startTime]);
     });
   });
 
   describe('logQuery', () => {
-    const logger = new PinoLogger();
-
-    beforeEach(() => {
-      logger.info.mock.resetCalls();
-    });
+    const query = 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime';
 
     it('should properly log a query with string variables', () => {
-      const query = 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime';
-      utils.logQuery(
-        query,
-        '2020-01-01T00:00:00.000Z',
-        '2023-01-01T00:00:00.000Z',
-        logger as unknown as Parameters<typeof utils.logQuery>[3]
-      );
+      utils.logQuery(query, '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
 
       assert.strictEqual(logger.info.mock.calls.length, 1);
       assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [
@@ -454,12 +452,11 @@ describe('Service utils', () => {
     });
 
     it('should properly log a query with number variables', () => {
-      const query = 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime';
       utils.logQuery(
         query,
         DateTime.fromISO('2020-01-01T00:00:00.000Z').toMillis(),
         DateTime.fromISO('2023-01-01T00:00:00.000Z').toMillis(),
-        logger as unknown as Parameters<typeof utils.logQuery>[3]
+        logger
       );
 
       assert.strictEqual(logger.info.mock.calls.length, 1);
@@ -470,121 +467,82 @@ describe('Service utils', () => {
     });
 
     it('should properly log a query without variable', () => {
-      const query = 'SELECT * FROM logs';
-      utils.logQuery(
-        query,
-        '2020-01-01T00:00:00.000Z',
-        '2023-01-01T00:00:00.000Z',
-        logger as unknown as Parameters<typeof utils.logQuery>[3]
-      );
+      utils.logQuery('SELECT * FROM logs', '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
 
       assert.strictEqual(logger.info.mock.calls.length, 1);
-      assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [{}, `Sending "${query}"`]);
+      assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [{}, `Sending "SELECT * FROM logs"`]);
     });
   });
 
   describe('persistResults', () => {
-    const logger = new PinoLogger();
-    const addContent = mock.fn();
-    const dataToWrite = [{ data1: 1 }, { data2: 2 }];
+    const item = testData.south.list[0].items[0];
+    const filePath = path.join('myTmpFolder', 'myFilename.csv');
+    const fileSettings = (compression: boolean): SerializationSettings => ({ type: 'file', filename: 'myFilename.csv', compression });
+    const csvSettings = (compression: boolean): SerializationSettings => ({
+      type: 'csv',
+      delimiter: 'SEMI_COLON',
+      filename: 'myFilename.csv',
+      compression,
+      outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+      outputTimezone: 'UTC'
+    });
+    let addContent: Mock<() => Promise<void>>;
+
+    const persist = (settings: SerializationSettings) =>
+      utils.persistResults(
+        [{ data1: 1 }, { data2: 2 }],
+        settings,
+        'connectorName',
+        item,
+        testData.constants.dates.FAKE_NOW,
+        'myTmpFolder',
+        addContent,
+        logger
+      );
+
+    const assertContentAdded = (sentFilePath: string) => {
+      assert.strictEqual(addContent.mock.calls.length, 1);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+        { type: 'any', filePath: sentFilePath },
+        testData.constants.dates.FAKE_NOW,
+        [item]
+      ]);
+    };
+
+    const throwUnlinkError = () => {
+      throw new Error('unlink error');
+    };
 
     beforeEach(() => {
-      addContent.mock.resetCalls();
-      logger.error.mock.resetCalls();
-      csvExports.unparse.mock.resetCalls();
-      csvExports.unparse.mock.mockImplementation(() => 'csv content');
+      addContent = mock.fn(async () => undefined);
+      mock.method(fs, 'writeFile', async () => null);
     });
 
     describe('without compression', () => {
       it('should properly write results without compression', async () => {
-        mock.method(fs, 'writeFile', async () => null);
         mock.method(fs, 'unlink', async () => null);
 
-        await utils.persistResults(
-          dataToWrite,
-          {
-            type: 'file',
-            filename: 'myFilename.csv',
-            compression: false
-          },
-          'connectorName',
-          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
-          testData.constants.dates.FAKE_NOW,
-          'myTmpFolder',
-          addContent as unknown as Parameters<typeof utils.persistResults>[6],
-          logger as unknown as Parameters<typeof utils.persistResults>[7]
-        );
-        const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-          { type: 'any', filePath },
-          testData.constants.dates.FAKE_NOW,
-          [testData.south.list[0].items[0]]
-        ]);
+        await persist(fileSettings(false));
+
+        assertContentAdded(filePath);
       });
 
       it('should properly write results into CSV without compression', async () => {
-        mock.method(fs, 'writeFile', async () => null);
         const unlinkMock = mock.method(fs, 'unlink', async () => null);
 
-        await utils.persistResults(
-          dataToWrite,
-          {
-            type: 'csv',
-            delimiter: 'SEMI_COLON',
-            filename: 'myFilename.csv',
-            compression: false,
-            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
-            outputTimezone: 'UTC'
-          },
-          'connectorName',
-          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
-          testData.constants.dates.FAKE_NOW,
-          'myTmpFolder',
-          addContent as unknown as Parameters<typeof utils.persistResults>[6],
-          logger as unknown as Parameters<typeof utils.persistResults>[7]
-        );
-        const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-          { type: 'any', filePath },
-          testData.constants.dates.FAKE_NOW,
-          [testData.south.list[0].items[0]]
-        ]);
+        await persist(csvSettings(false));
+
+        assertContentAdded(filePath);
         assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
         assert.strictEqual(unlinkMock.mock.calls.length, 1);
       });
 
       it('should properly write results into CSV without compression and log unlink errors', async () => {
-        mock.method(fs, 'writeFile', async () => null);
-        const unlinkMock = mock.method(fs, 'unlink', () => {
-          throw new Error('unlink error');
-        });
+        const unlinkMock = mock.method(fs, 'unlink', throwUnlinkError);
 
-        await utils.persistResults(
-          dataToWrite,
-          {
-            type: 'csv',
-            delimiter: 'SEMI_COLON',
-            filename: 'myFilename.csv',
-            compression: false,
-            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
-            outputTimezone: 'UTC'
-          },
-          'connectorName',
-          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
-          testData.constants.dates.FAKE_NOW,
-          'myTmpFolder',
-          addContent as unknown as Parameters<typeof utils.persistResults>[6],
-          logger as unknown as Parameters<typeof utils.persistResults>[7]
-        );
-        const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-          { type: 'any', filePath },
-          testData.constants.dates.FAKE_NOW,
-          [testData.south.list[0].items[0]]
-        ]);
+        await persist(csvSettings(false));
+
+        assertContentAdded(filePath);
         assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
         assert.strictEqual(unlinkMock.mock.calls.length, 1);
         assert.strictEqual(logger.error.mock.calls.length, 1);
@@ -595,32 +553,11 @@ describe('Service utils', () => {
       });
 
       it('should properly write results without compression and log unlink errors', async () => {
-        mock.method(fs, 'writeFile', async () => null);
-        const unlinkMock = mock.method(fs, 'unlink', () => {
-          throw new Error('unlink error');
-        });
+        const unlinkMock = mock.method(fs, 'unlink', throwUnlinkError);
 
-        await utils.persistResults(
-          dataToWrite,
-          {
-            type: 'file',
-            filename: 'myFilename.csv',
-            compression: false
-          },
-          'connectorName',
-          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
-          testData.constants.dates.FAKE_NOW,
-          'myTmpFolder',
-          addContent as unknown as Parameters<typeof utils.persistResults>[6],
-          logger as unknown as Parameters<typeof utils.persistResults>[7]
-        );
-        const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-          { type: 'any', filePath },
-          testData.constants.dates.FAKE_NOW,
-          [testData.south.list[0].items[0]]
-        ]);
+        await persist(fileSettings(false));
+
+        assertContentAdded(filePath);
         assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
         assert.strictEqual(unlinkMock.mock.calls.length, 1);
         assert.strictEqual(logger.error.mock.calls.length, 1);
@@ -636,152 +573,47 @@ describe('Service utils', () => {
         mock.method(fsSync, 'createReadStream', () => {
           const source = new PassThrough();
           source.end('some data');
-          return source as unknown as fsSync.ReadStream;
+          return source;
         });
         mock.method(fsSync, 'createWriteStream', () => {
           const dest = new PassThrough();
           dest.resume(); // drain so pipeline finishes
-          return dest as unknown as fsSync.WriteStream;
+          return dest;
         });
-        mock.method(zlib, 'createGzip', () => new PassThrough() as unknown as zlib.Gzip);
-        mock.method(fs, 'writeFile', async () => null);
+        mock.method(zlib, 'createGzip', () => new PassThrough());
       });
 
-      it('should properly persists results into CSV file', async () => {
-        const unlinkMock = mock.method(fs, 'unlink', async () => null);
+      for (const { label, settings } of [
+        { label: 'CSV file', settings: csvSettings(true) },
+        { label: 'file', settings: fileSettings(true) }
+      ]) {
+        it(`should properly persists results into ${label}`, async () => {
+          const unlinkMock = mock.method(fs, 'unlink', async () => null);
 
-        await utils.persistResults(
-          dataToWrite,
-          {
-            type: 'csv',
-            delimiter: 'SEMI_COLON',
-            filename: 'myFilename.csv',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
-            outputTimezone: 'UTC'
-          },
-          'connectorName',
-          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
-          testData.constants.dates.FAKE_NOW,
-          'myTmpFolder',
-          addContent as unknown as Parameters<typeof utils.persistResults>[6],
-          logger as unknown as Parameters<typeof utils.persistResults>[7]
-        );
-        const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-          { type: 'any', filePath: `${filePath}.gz` },
-          testData.constants.dates.FAKE_NOW,
-          [testData.south.list[0].items[0]]
-        ]);
-        const unlinkArgs = unlinkMock.mock.calls.map(c => c.arguments[0]);
-        assert.strictEqual(unlinkArgs.includes(filePath), true);
-        assert.strictEqual(unlinkArgs.includes(`${filePath}.gz`), true);
-        assert.strictEqual(unlinkMock.mock.calls.length, 2);
-      });
+          await persist(settings);
 
-      it('should properly persists results into file', async () => {
-        const unlinkMock = mock.method(fs, 'unlink', async () => null);
-
-        await utils.persistResults(
-          dataToWrite,
-          {
-            type: 'file',
-            filename: 'myFilename.csv',
-            compression: true
-          },
-          'connectorName',
-          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
-          testData.constants.dates.FAKE_NOW,
-          'myTmpFolder',
-          addContent as unknown as Parameters<typeof utils.persistResults>[6],
-          logger as unknown as Parameters<typeof utils.persistResults>[7]
-        );
-        const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-          { type: 'any', filePath: `${filePath}.gz` },
-          testData.constants.dates.FAKE_NOW,
-          [testData.south.list[0].items[0]]
-        ]);
-        const unlinkArgs = unlinkMock.mock.calls.map(c => c.arguments[0]);
-        assert.strictEqual(unlinkArgs.includes(filePath), true);
-        assert.strictEqual(unlinkArgs.includes(`${filePath}.gz`), true);
-        assert.strictEqual(unlinkMock.mock.calls.length, 2);
-      });
-
-      it('should properly persists results into CSV file and log unlink errors', async () => {
-        mock.method(fs, 'unlink', () => {
-          throw new Error('unlink error');
+          assertContentAdded(`${filePath}.gz`);
+          const unlinkArgs = unlinkMock.mock.calls.map(c => c.arguments[0]);
+          assert.strictEqual(unlinkArgs.includes(filePath), true);
+          assert.strictEqual(unlinkArgs.includes(`${filePath}.gz`), true);
+          assert.strictEqual(unlinkMock.mock.calls.length, 2);
         });
 
-        await utils.persistResults(
-          dataToWrite,
-          {
-            type: 'csv',
-            delimiter: 'SEMI_COLON',
-            filename: 'myFilename.csv',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
-            outputTimezone: 'UTC'
-          },
-          'connectorName',
-          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
-          testData.constants.dates.FAKE_NOW,
-          'myTmpFolder',
-          addContent as unknown as Parameters<typeof utils.persistResults>[6],
-          logger as unknown as Parameters<typeof utils.persistResults>[7]
-        );
-        const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        assert.strictEqual(logger.error.mock.calls.length, 2);
-        const errorMessages = logger.error.mock.calls.map(c => c.arguments[1]);
-        assert.strictEqual(errorMessages.includes(`Error when deleting CSV file "${filePath}" after compression: unlink error`), true);
-        assert.strictEqual(
-          errorMessages.includes(`Error when deleting compressed CSV file "${filePath}.gz" after caching it: unlink error`),
-          true
-        );
-        assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-          { type: 'any', filePath: `${filePath}.gz` },
-          testData.constants.dates.FAKE_NOW,
-          [testData.south.list[0].items[0]]
-        ]);
-      });
+        it(`should properly persists results into ${label} and log unlink errors`, async () => {
+          mock.method(fs, 'unlink', throwUnlinkError);
 
-      it('should properly persists results into file and log unlink errors', async () => {
-        mock.method(fs, 'unlink', () => {
-          throw new Error('unlink error');
+          await persist(settings);
+
+          assert.strictEqual(logger.error.mock.calls.length, 2);
+          const errorMessages = logger.error.mock.calls.map(c => c.arguments[1]);
+          assert.strictEqual(errorMessages.includes(`Error when deleting ${label} "${filePath}" after compression: unlink error`), true);
+          assert.strictEqual(
+            errorMessages.includes(`Error when deleting compressed ${label} "${filePath}.gz" after caching it: unlink error`),
+            true
+          );
+          assertContentAdded(`${filePath}.gz`);
         });
-
-        await utils.persistResults(
-          dataToWrite,
-          {
-            type: 'file',
-            filename: 'myFilename.csv',
-            compression: true
-          },
-          'connectorName',
-          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
-          testData.constants.dates.FAKE_NOW,
-          'myTmpFolder',
-          addContent as unknown as Parameters<typeof utils.persistResults>[6],
-          logger as unknown as Parameters<typeof utils.persistResults>[7]
-        );
-        const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        assert.strictEqual(logger.error.mock.calls.length, 2);
-        const errorMessages = logger.error.mock.calls.map(c => c.arguments[1]);
-        assert.strictEqual(errorMessages.includes(`Error when deleting file "${filePath}" after compression: unlink error`), true);
-        assert.strictEqual(
-          errorMessages.includes(`Error when deleting compressed file "${filePath}.gz" after caching it: unlink error`),
-          true
-        );
-        assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-          { type: 'any', filePath: `${filePath}.gz` },
-          testData.constants.dates.FAKE_NOW,
-          [testData.south.list[0].items[0]]
-        ]);
-      });
+      }
     });
   });
 
@@ -789,20 +621,12 @@ describe('Service utils', () => {
     const testInstant = '2020-02-02T02:02:02.222Z';
 
     it('should return empty string', () => {
-      const dateTimeFormat = {
-        type: 'unix-epoch-ms' as DateTimeType
-      };
-      const result = utils.formatInstant(undefined, dateTimeFormat);
-      assert.deepStrictEqual(result, '');
+      assert.deepStrictEqual(utils.formatInstant(undefined, { type: 'unix-epoch-ms' }), '');
     });
 
     it('should return Number of ms', () => {
-      const dateTimeFormat = {
-        type: 'unix-epoch-ms' as DateTimeType
-      };
-      const expectedResult = DateTime.fromISO(testInstant).toMillis();
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, expectedResult);
+      const result = utils.formatInstant(testInstant, { type: 'unix-epoch-ms' });
+      assert.deepStrictEqual(result, DateTime.fromISO(testInstant).toMillis());
       assert.deepStrictEqual(
         DateTime.fromMillis(result as number)
           .toUTC()
@@ -812,12 +636,8 @@ describe('Service utils', () => {
     });
 
     it('should return Number of seconds', () => {
-      const dateTimeFormat = {
-        type: 'unix-epoch' as DateTimeType
-      };
-      const expectedResult = Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000);
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, expectedResult);
+      const result = utils.formatInstant(testInstant, { type: 'unix-epoch' });
+      assert.deepStrictEqual(result, Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000));
       assert.deepStrictEqual(
         DateTime.fromMillis((result as number) * 1000)
           .toUTC()
@@ -826,90 +646,32 @@ describe('Service utils', () => {
       );
     });
 
-    it('should return a formatted String with correct timezone', () => {
-      const dateTimeFormat = {
-        type: 'string' as DateTimeType,
-        timezone: 'Asia/Tokyo',
-        format: 'yyyy-MM-dd HH:mm:ss.SSS',
-        locale: 'en-US'
-      };
-      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, expectedResult);
-      assert.deepStrictEqual(result, '2020-02-02 11:02:02.222');
-    });
-
-    it('should return a formatted ISO String from ISO String', () => {
-      const dateTimeFormat = {
-        type: 'iso-string' as DateTimeType
-      };
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, testInstant);
-    });
-
-    it('should return a formatted Date', () => {
-      const dateTimeFormat = {
-        type: 'date' as DateTimeType,
-        timezone: 'Asia/Tokyo'
-      };
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, '2020-02-02');
-    });
-
-    it('should return a formatted small-date-time', () => {
-      const dateTimeFormat = {
-        type: 'small-date-time' as DateTimeType,
-        timezone: 'Asia/Tokyo'
-      };
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, '2020-02-02 11:02:02');
-    });
-
-    it('should return a formatted DateTime', () => {
-      const dateTimeFormat = {
-        type: 'date-time' as DateTimeType,
-        timezone: 'Asia/Tokyo'
-      };
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, '2020-02-02 11:02:02.222');
-    });
-
-    it('should return a formatted String with correct timezone for locale en-US', () => {
-      const dateTimeFormat = {
-        type: 'string' as DateTimeType,
-        timezone: 'Asia/Tokyo',
-        format: 'dd-MMM-yy HH:mm:ss',
-        locale: 'en-US'
-      };
-      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, expectedResult);
-      assert.deepStrictEqual(result, '02-Feb-20 11:02:02');
-    });
-
-    it('should return a formatted String with correct timezone for locale fr-FR', () => {
-      const dateTimeFormat = {
-        type: 'string' as DateTimeType,
-        timezone: 'Asia/Tokyo',
-        format: 'dd-MMM-yy HH:mm:ss',
-        locale: 'fr-FR'
-      };
-      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
-        locale: dateTimeFormat.locale
+    for (const { label, locale, format, expected } of [
+      { label: 'with correct timezone', locale: 'en-US', format: 'yyyy-MM-dd HH:mm:ss.SSS', expected: '2020-02-02 11:02:02.222' },
+      { label: 'with correct timezone for locale en-US', locale: 'en-US', format: 'dd-MMM-yy HH:mm:ss', expected: '02-Feb-20 11:02:02' },
+      { label: 'with correct timezone for locale fr-FR', locale: 'fr-FR', format: 'dd-MMM-yy HH:mm:ss', expected: '02-févr.-20 11:02:02' }
+    ]) {
+      it(`should return a formatted String ${label}`, () => {
+        const result = utils.formatInstant(testInstant, { type: 'string', timezone: 'Asia/Tokyo', format, locale });
+        assert.deepStrictEqual(result, DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(format, { locale }));
+        assert.deepStrictEqual(result, expected);
       });
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, expectedResult);
-      assert.deepStrictEqual(result, '02-févr.-20 11:02:02');
-    });
+    }
+
+    for (const { label, type, expected } of [
+      { label: 'ISO String from ISO String', type: 'iso-string', expected: testInstant },
+      { label: 'Date', type: 'date', expected: '2020-02-02' },
+      { label: 'small-date-time', type: 'small-date-time', expected: '2020-02-02 11:02:02' },
+      { label: 'DateTime', type: 'date-time', expected: '2020-02-02 11:02:02.222' }
+    ] satisfies Array<{ label: string; type: DateTimeType; expected: string }>) {
+      it(`should return a formatted ${label}`, () => {
+        assert.deepStrictEqual(utils.formatInstant(testInstant, { type, timezone: 'Asia/Tokyo' }), expected);
+      });
+    }
 
     it('should return an ISO String from Date with correct timezone', () => {
-      const dateTimeFormat = {
-        type: 'date-time-offset' as DateTimeType,
-        timezone: 'Asia/Tokyo'
-      };
-      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toUTC().toISO()!;
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
-      assert.deepStrictEqual(result, expectedResult);
+      const result = utils.formatInstant(testInstant, { type: 'date-time-offset', timezone: 'Asia/Tokyo' });
+      assert.deepStrictEqual(result, DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toUTC().toISO()!);
     });
   });
 
@@ -1496,10 +1258,10 @@ describe('Service utils', () => {
   });
 
   describe('checkGroups', () => {
-    const groups = [
-      { id: 'group1', name: 'Group 1' },
-      { id: 'group2', name: 'Group 2' }
-    ] as unknown as Array<SouthItemGroupEntity>;
+    const groups: Array<SouthItemGroupEntity> = [
+      { ...baseGroup, id: 'group1', name: 'Group 1' },
+      { ...baseGroup, id: 'group2', name: 'Group 2' }
+    ];
 
     it('should throw an error when neither groupId nor groupName are specified', () => {
       assert.throws(() => utils.checkGroups(groups, null, null), /Group not specified/);
@@ -1527,10 +1289,33 @@ describe('Service utils', () => {
   });
 
   describe('itemToFlattenedCSV', () => {
-    beforeEach(() => {
-      csvExports.unparse.mock.resetCalls();
-      csvExports.unparse.mock.mockImplementation(() => 'csv content');
+    // Partial DTOs: only the fields read by itemToFlattenedCSV are given
+    const scanMode = { id: 'sm1', name: 'Every 10s', cron: '*/10 * * * * *', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' };
+    const historianGroup = (scanModeDTO: object) => ({
+      id: 'group1',
+      standardSettings: { name: 'My Group', scanMode: scanModeDTO },
+      historySettings: { maxReadInterval: 3600, readDelay: 200, startTimeOffset: 5, endTimeOffset: 6, recoveryStrategy: 'oldest' },
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     });
+    const baseItem = {
+      id: 'item1',
+      connectorId: 'conn1',
+      name: 'Item 1',
+      enabled: true,
+      scanModeId: 'sm1',
+      scanMode,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      startTimeOffset: 0,
+      endTimeOffset: null,
+      settings: { address: '40001' }
+    } as unknown as SouthConnectorItemDTO;
+    const unparsedData = () => csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
 
     it('should properly convert items into csv', () => {
       assert.deepStrictEqual(
@@ -1542,7 +1327,7 @@ describe('Service utils', () => {
             }
           ] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ',',
-          { attributes: [] } as unknown as OIBusObjectAttribute
+          emptySchema
         ),
         'csv content'
       );
@@ -1550,32 +1335,14 @@ describe('Service utils', () => {
 
     it('should use the group scan mode and historian settings when the item is synced with its group', () => {
       const scanModeEntry = testData.scanMode.list[0];
-      const mockScanModeDTO = {
+      const group = historianGroup({
         ...scanModeEntry,
         createdBy: { id: scanModeEntry.createdBy, friendlyName: scanModeEntry.createdBy },
         updatedBy: { id: scanModeEntry.updatedBy, friendlyName: scanModeEntry.updatedBy }
-      };
-      const mockGroup = {
-        id: 'group1',
-        standardSettings: {
-          name: 'My Group',
-          scanMode: mockScanModeDTO
-        },
-        historySettings: {
-          maxReadInterval: 3600,
-          readDelay: 200,
-          startTimeOffset: 5,
-          endTimeOffset: 6,
-          recoveryStrategy: 'oldest'
-        },
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
-      };
+      });
       const item = {
         ...testData.south.list[2].items[0],
-        group: mockGroup,
+        group,
         syncWithGroup: true,
         // The item's own scan mode and historian settings differ from the group's on purpose:
         // the group's values must win since the item is synced with it.
@@ -1587,43 +1354,23 @@ describe('Service utils', () => {
         recoveryStrategy: 'newest'
       } as unknown as SouthConnectorItemDTO;
 
-      utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', {
-        attributes: []
-      } as unknown as OIBusObjectAttribute);
+      utils.itemToFlattenedCSV([item], ',', emptySchema);
 
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
-      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
-      assert.strictEqual(capturedData[0].scanMode, mockGroup.standardSettings.scanMode.name);
-      assert.strictEqual(capturedData[0].group, mockGroup.standardSettings.name);
-      assert.strictEqual(capturedData[0].maxReadInterval, mockGroup.historySettings.maxReadInterval);
-      assert.strictEqual(capturedData[0].readDelay, mockGroup.historySettings.readDelay);
-      assert.strictEqual(capturedData[0].startTimeOffset, mockGroup.historySettings.startTimeOffset);
-      assert.strictEqual(capturedData[0].endTimeOffset, mockGroup.historySettings.endTimeOffset);
-      assert.strictEqual(capturedData[0].recoveryStrategy, mockGroup.historySettings.recoveryStrategy);
+      const capturedData = unparsedData();
+      assert.strictEqual(capturedData[0].scanMode, scanModeEntry.name);
+      assert.strictEqual(capturedData[0].group, group.standardSettings.name);
+      assert.strictEqual(capturedData[0].maxReadInterval, group.historySettings.maxReadInterval);
+      assert.strictEqual(capturedData[0].readDelay, group.historySettings.readDelay);
+      assert.strictEqual(capturedData[0].startTimeOffset, group.historySettings.startTimeOffset);
+      assert.strictEqual(capturedData[0].endTimeOffset, group.historySettings.endTimeOffset);
+      assert.strictEqual(capturedData[0].recoveryStrategy, group.historySettings.recoveryStrategy);
     });
 
     it('should use the group scan mode but keep the item historian settings when the item is not synced with its group', () => {
-      const mockGroup = {
-        id: 'group1',
-        standardSettings: {
-          name: 'My Group',
-          scanMode: { id: 'groupScanModeId', name: 'Group Scan Mode', cron: '', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
-        },
-        historySettings: {
-          maxReadInterval: 3600,
-          readDelay: 200,
-          startTimeOffset: 5,
-          endTimeOffset: 6,
-          recoveryStrategy: 'oldest'
-        },
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
-      };
       const item = {
         ...testData.south.list[2].items[0],
-        group: mockGroup,
+        group: historianGroup({ ...scanMode, id: 'groupScanModeId', name: 'Group Scan Mode', cron: '' }),
         syncWithGroup: false,
         scanMode: testData.scanMode.list[1],
         maxReadInterval: 42,
@@ -1633,12 +1380,10 @@ describe('Service utils', () => {
         recoveryStrategy: 'newest'
       } as unknown as SouthConnectorItemDTO;
 
-      utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', {
-        attributes: []
-      } as unknown as OIBusObjectAttribute);
+      utils.itemToFlattenedCSV([item], ',', emptySchema);
 
-      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
-      assert.strictEqual(capturedData[0].scanMode, mockGroup.standardSettings.scanMode.name);
+      const capturedData = unparsedData();
+      assert.strictEqual(capturedData[0].scanMode, 'Group Scan Mode');
       assert.strictEqual(capturedData[0].maxReadInterval, 42);
       assert.strictEqual(capturedData[0].readDelay, 43);
       assert.strictEqual(capturedData[0].startTimeOffset, 44);
@@ -1647,44 +1392,12 @@ describe('Service utils', () => {
     });
 
     it('should flatten items with scanModes', () => {
-      const baseItem = {
-        id: 'item1',
-        connectorId: 'conn1',
-        name: 'Item 1',
-        enabled: true,
-        scanModeId: 'sm1',
-        scanMode: { id: 'sm1', name: 'Every 10s', cron: '*/10 * * * * *', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        startTimeOffset: 0,
-        endTimeOffset: null,
-        settings: { address: '40001' }
-      } as unknown as SouthConnectorItemDTO;
-      const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
-      assert.strictEqual(result, 'csv content');
+      assert.strictEqual(utils.itemToFlattenedCSV([baseItem], ',', emptySchema), 'csv content');
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
     });
 
     it('should flatten items without scanModes', () => {
-      const baseItem = {
-        id: 'item1',
-        connectorId: 'conn1',
-        name: 'Item 1',
-        enabled: true,
-        scanModeId: 'sm1',
-        scanMode: { id: 'sm1', name: 'Every 10s', cron: '*/10 * * * * *', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        startTimeOffset: 0,
-        endTimeOffset: null,
-        settings: { address: '40001' }
-      } as unknown as SouthConnectorItemDTO;
-      const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
-      assert.strictEqual(result, 'csv content');
+      assert.strictEqual(utils.itemToFlattenedCSV([baseItem], ',', emptySchema), 'csv content');
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
     });
 
@@ -1696,26 +1409,16 @@ describe('Service utils', () => {
         enabled: true,
         settings: { address: '40001' }
       } as unknown as HistoryQueryItemDTO;
-      const result = utils.itemToFlattenedCSV([historyItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute, true);
-      assert.strictEqual(result, 'csv content');
+      assert.strictEqual(utils.itemToFlattenedCSV([historyItem], ',', emptySchema, true), 'csv content');
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
     });
 
     it('should not use group historian settings when the item is not synced with its group, even if its own fields are null', () => {
       const itemWithNulls = {
-        id: 'item1',
-        connectorId: 'conn1',
-        name: 'Item 1',
-        enabled: true,
-        scanModeId: 'sm1',
-        scanMode: { id: 'sm1', name: 'Every 10s', cron: '*/10 * * * * *', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
-        syncWithGroup: false,
+        ...baseItem,
         maxReadInterval: null,
         readDelay: null,
-        startTimeOffset: 0,
-        endTimeOffset: null,
         recoveryStrategy: null,
-        settings: { address: '40001' },
         group: {
           id: 'g1',
           standardSettings: { name: 'Group A', scanMode: { id: 'sm2', name: 'Group Scan Mode', cron: '' } },
@@ -1728,10 +1431,10 @@ describe('Service utils', () => {
           }
         }
       } as unknown as SouthConnectorItemDTO;
-      utils.itemToFlattenedCSV([itemWithNulls], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
+      utils.itemToFlattenedCSV([itemWithNulls], ',', emptySchema);
 
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
-      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
+      const capturedData = unparsedData();
       assert.strictEqual(capturedData[0].scanMode, 'Group Scan Mode');
       assert.strictEqual(capturedData[0].maxReadInterval, null);
       assert.strictEqual(capturedData[0].readDelay, null);
@@ -1741,31 +1444,15 @@ describe('Service utils', () => {
     });
 
     it('should default scanMode to an empty string when the item has no group and no scan mode', () => {
-      const baseItem = {
-        id: 'item1',
-        connectorId: 'conn1',
-        name: 'Item 1',
-        enabled: true,
-        scanModeId: null,
-        scanMode: null,
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 0,
-        readDelay: 0,
-        startTimeOffset: 0,
-        endTimeOffset: 0,
-        settings: { address: '40001' }
-      } as unknown as SouthConnectorItemDTO;
+      utils.itemToFlattenedCSV([{ ...baseItem, scanMode: null }], ',', emptySchema);
 
-      utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
-
-      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
+      const capturedData = unparsedData();
       assert.strictEqual(capturedData[0].scanMode, '');
       assert.strictEqual(capturedData[0].group, '');
     });
 
     it('should flatten settings declared in the schema, stringifying object values', () => {
-      const baseItem = {
+      const historyItem = {
         id: 'item1',
         connectorId: 'conn1',
         name: 'Item 1',
@@ -1775,6 +1462,7 @@ describe('Service utils', () => {
           objectSetting: { nested: 'value' }
         }
       } as unknown as HistoryQueryItemDTO;
+      // partial attributes: only the keys and types are read
       const schema = {
         attributes: [
           {
@@ -1788,10 +1476,10 @@ describe('Service utils', () => {
         ]
       } as unknown as OIBusObjectAttribute;
 
-      utils.itemToFlattenedCSV([baseItem], ',', schema, true);
+      utils.itemToFlattenedCSV([historyItem], ',', schema, true);
 
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
-      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
+      const capturedData = unparsedData();
       assert.strictEqual(capturedData[0].settings_address, '40001');
       assert.strictEqual(capturedData[0].settings_objectSetting, JSON.stringify({ nested: 'value' }));
       const capturedColumns = (csvExports.unparse.mock.calls[0].arguments[1] as { columns: Array<string> }).columns;
@@ -2086,105 +1774,62 @@ describe('Service utils', () => {
   });
 
   describe('applyFilenameVariables', () => {
+    const southSource = (overrides: Partial<CacheMetadataSourceOriginSouth> = {}): CacheMetadataSourceOriginSouth => ({
+      source: 'south',
+      southId: 'south1',
+      southName: 'South 1',
+      queryTime: testData.constants.dates.DATE_1,
+      queryStartTime: null,
+      queryEndTime: null,
+      items: [],
+      ...overrides
+    });
+    const namedItem = (name: string) => ({ ...testData.south.list[0].items[0], name });
+
     beforeEach(() => {
       mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
     });
 
     it('should replace @QueryStartTime and @QueryEndTime with the south query window', () => {
-      const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', {
-        source: 'south',
-        southId: 'south1',
-        southName: 'South 1',
-        queryTime: testData.constants.dates.DATE_1,
-        queryStartTime: '2023-01-01T00:00:00.000Z',
-        queryEndTime: '2023-01-01T01:00:00.000Z',
-        items: []
-      });
+      const result = utils.applyFilenameVariables(
+        'export_@QueryStartTime_@QueryEndTime.csv',
+        southSource({ queryStartTime: '2023-01-01T00:00:00.000Z', queryEndTime: '2023-01-01T01:00:00.000Z' })
+      );
 
       assert.strictEqual(result, 'export_2023_01_01_00_00_00_000_2023_01_01_01_00_00_000.csv');
     });
 
     it('should replace @CurrentDate alongside the query window variables', () => {
-      const result = utils.applyFilenameVariables('@CurrentDate_@QueryStartTime.csv', {
-        source: 'south',
-        southId: 'south1',
-        southName: 'South 1',
-        queryTime: testData.constants.dates.DATE_1,
-        queryStartTime: '2023-01-01T00:00:00.000Z',
-        queryEndTime: null,
-        items: []
-      });
+      const result = utils.applyFilenameVariables(
+        '@CurrentDate_@QueryStartTime.csv',
+        southSource({ queryStartTime: '2023-01-01T00:00:00.000Z' })
+      );
 
       assert.strictEqual(result, '2021_01_02_00_00_00_000_2023_01_01_00_00_00_000.csv');
     });
 
     it('should replace @QueryStartTime/@QueryEndTime with an empty string when the south content is not bound to a query window', () => {
-      const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', {
-        source: 'south',
-        southId: 'south1',
-        southName: 'South 1',
-        queryTime: testData.constants.dates.DATE_1,
-        queryStartTime: null,
-        queryEndTime: null,
-        items: []
-      });
-
-      assert.strictEqual(result, 'export__.csv');
+      assert.strictEqual(utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', southSource()), 'export__.csv');
     });
 
     it('should replace @ConnectorName with the south connector name', () => {
-      const result = utils.applyFilenameVariables('export_@ConnectorName.csv', {
-        source: 'south',
-        southId: 'south1',
-        southName: 'My SQL South',
-        queryTime: testData.constants.dates.DATE_1,
-        queryStartTime: null,
-        queryEndTime: null,
-        items: []
-      });
+      const result = utils.applyFilenameVariables('export_@ConnectorName.csv', southSource({ southName: 'My SQL South' }));
 
       assert.strictEqual(result, 'export_My SQL South.csv');
     });
 
     it('should replace @ItemName with the single item name when the batch has exactly one item', () => {
-      const result = utils.applyFilenameVariables('export_@ItemName.csv', {
-        source: 'south',
-        southId: 'south1',
-        southName: 'South 1',
-        queryTime: testData.constants.dates.DATE_1,
-        queryStartTime: null,
-        queryEndTime: null,
-        items: [{ id: 'item1', name: 'MyItem' } as SouthConnectorItemEntity<SouthItemSettings>]
-      });
+      const result = utils.applyFilenameVariables('export_@ItemName.csv', southSource({ items: [namedItem('MyItem')] }));
 
       assert.strictEqual(result, 'export_MyItem.csv');
     });
 
     it('should replace @ItemName with an empty string when the batch has zero or several items', () => {
-      const resultWithNoItems = utils.applyFilenameVariables('export_@ItemName.csv', {
-        source: 'south',
-        southId: 'south1',
-        southName: 'South 1',
-        queryTime: testData.constants.dates.DATE_1,
-        queryStartTime: null,
-        queryEndTime: null,
-        items: []
-      });
-      assert.strictEqual(resultWithNoItems, 'export_.csv');
-
-      const resultWithSeveralItems = utils.applyFilenameVariables('export_@ItemName.csv', {
-        source: 'south',
-        southId: 'south1',
-        southName: 'South 1',
-        queryTime: testData.constants.dates.DATE_1,
-        queryStartTime: null,
-        queryEndTime: null,
-        items: [
-          { id: 'item1', name: 'Item1' } as SouthConnectorItemEntity<SouthItemSettings>,
-          { id: 'item2', name: 'Item2' } as SouthConnectorItemEntity<SouthItemSettings>
-        ]
-      });
-      assert.strictEqual(resultWithSeveralItems, 'export_.csv');
+      assert.strictEqual(utils.applyFilenameVariables('export_@ItemName.csv', southSource()), 'export_.csv');
+      assert.strictEqual(
+        utils.applyFilenameVariables('export_@ItemName.csv', southSource({ items: [namedItem('Item1'), namedItem('Item2')] })),
+        'export_.csv'
+      );
     });
 
     it('should replace @QueryStartTime/@QueryEndTime with an empty string for a non-south source', () => {
@@ -2196,7 +1841,6 @@ describe('Service utils', () => {
 
   describe('generateCsvContent', () => {
     beforeEach(() => {
-      csvExports.unparse.mock.resetCalls();
       csvExports.unparse.mock.mockImplementation(() => 'mocked,csv,output');
     });
 
@@ -2269,23 +1913,6 @@ describe('Service utils', () => {
   describe('groupItemsByGroup', () => {
     const baseItem = testData.south.list[2].items[0];
 
-    const baseGroup = {
-      id: 'g1',
-      name: 'Group 1',
-      southId: 'south1',
-      scanMode: testData.scanMode.list[0],
-      startTimeOffset: null,
-      endTimeOffset: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      recoveryStrategy: null,
-      cachingStrategy: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-
     it('should put each item in its own group when syncWithGroup is false', () => {
       const item1 = { ...baseItem, id: 'item1', group: null, syncWithGroup: false };
       const item2 = { ...baseItem, id: 'item2', group: null, syncWithGroup: false };
@@ -2334,23 +1961,6 @@ describe('Service utils', () => {
 
   describe('workUnitLogCtx', () => {
     const baseItem = testData.south.list[2].items[0];
-
-    const baseGroup = {
-      id: 'g1',
-      name: 'Group 1',
-      southId: 'south1',
-      scanMode: testData.scanMode.list[0],
-      startTimeOffset: null,
-      endTimeOffset: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      recoveryStrategy: null,
-      cachingStrategy: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
 
     it('should return an empty object for an empty work-unit', () => {
       assert.deepStrictEqual(utils.workUnitLogCtx([]), {});
@@ -2509,17 +2119,19 @@ describe('Service utils', () => {
   });
 
   describe('checkAge', () => {
-    const logger = new PinoLogger();
-
-    const makeItem = (settings: Partial<{ minAge: number; preserveFiles: boolean; ignoreModifiedDate: boolean }>) =>
-      ({
-        settings: {
-          minAge: 0,
-          preserveFiles: false,
-          ignoreModifiedDate: false,
-          ...settings
-        }
-      }) as unknown as Parameters<UtilsModule['checkAge']>[0];
+    const makeItem = (settings: Partial<SouthFolderScannerItemSettings>): SouthConnectorItemEntity<SouthFolderScannerItemSettings> => ({
+      ...testData.south.list[0].items[0],
+      settings: {
+        regex: '.*',
+        minAge: 0,
+        preserveFiles: false,
+        ignoreModifiedDate: false,
+        maxFiles: 0,
+        maxSize: 0,
+        recursive: false,
+        ...settings
+      }
+    });
 
     it('should return false when the file is not old enough', () => {
       const item = makeItem({ minAge: 100_000 });

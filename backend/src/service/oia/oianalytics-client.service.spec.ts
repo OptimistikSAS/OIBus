@@ -7,15 +7,10 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
 import { assertContains, mockModule, reloadModule } from '../../tests/utils/test-utils';
-import { ReqOptions } from '../http-request.utils';
+import type { ReqOptions, ReqResponse } from '../http-request.utils';
 import type OIAnalyticsClientType from './oianalytics-client.service';
 
 const nodeRequire = createRequire(import.meta.url);
-
-// Mocked module exports — mutated in-place between tests
-let mockHttpRequest: Record<string, ReturnType<typeof mock.fn>>;
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockUtilsOianalytics: Record<string, ReturnType<typeof mock.fn>>;
 
 // Default mocked HTTP Options
 const mockHttpOptions = {
@@ -24,41 +19,42 @@ const mockHttpOptions = {
   timeout: 10000
 };
 
-let OIAnalyticsClient: new () => InstanceType<typeof OIAnalyticsClientType>;
+// Mocked module exports: the SUT keeps a reference to these objects, so their functions are replaced in beforeEach
+const createHttpRequestMocks = () => ({
+  HTTPRequest: mock.fn(async (_url: URL, _options: ReqOptions): Promise<ReqResponse> => createMockResponse(200))
+});
+const createUtilsMocks = () => ({ generateRandomId: mock.fn(() => '123ABC') });
+const createUtilsOIAnalyticsMocks = () => ({
+  buildHttpOptions: mock.fn(async (method: string) => ({ ...mockHttpOptions, method })),
+  getHeaders: mock.fn(async () => ({})),
+  getProxyOptions: mock.fn(() => ({ acceptUnauthorized: false, proxy: undefined })),
+  getUrl: mock.fn((endpoint: string, host: string) => new URL(endpoint, host))
+});
+const httpRequestExports = createHttpRequestMocks();
+const utilsExports = createUtilsMocks();
+const utilsOIAnalyticsExports = createUtilsOIAnalyticsMocks();
+
+let OIAnalyticsClient: typeof OIAnalyticsClientType;
 
 before(() => {
-  mockHttpRequest = {
-    HTTPRequest: mock.fn(async () => createMockResponse(200))
-  };
-  mockUtils = {
-    generateRandomId: mock.fn(() => '123ABC')
-  };
-  mockUtilsOianalytics = {
-    buildHttpOptions: mock.fn(async (method: string) => ({ ...mockHttpOptions, method })),
-    getHeaders: mock.fn(async () => ({})),
-    getProxyOptions: mock.fn(() => ({ acceptUnauthorized: false, proxy: undefined })),
-    getUrl: mock.fn((endpoint: string, host: string) => new URL(endpoint, host))
-  };
+  mockModule(nodeRequire, '../http-request.utils', httpRequestExports);
+  mockModule(nodeRequire, '../utils', utilsExports);
+  mockModule(nodeRequire, '../utils-oianalytics', utilsOIAnalyticsExports);
 
-  mockModule(nodeRequire, '../http-request.utils', mockHttpRequest);
-  mockModule(nodeRequire, '../utils', mockUtils);
-  mockModule(nodeRequire, '../utils-oianalytics', mockUtilsOianalytics);
-
-  const mod = reloadModule<{ default: new () => InstanceType<typeof OIAnalyticsClientType> }>(nodeRequire, './oianalytics-client.service');
-  OIAnalyticsClient = mod.default;
+  OIAnalyticsClient = reloadModule<{ default: typeof OIAnalyticsClientType }>(nodeRequire, './oianalytics-client.service').default;
 });
 
 describe('OIAnalytics Client', () => {
-  let service: InstanceType<typeof OIAnalyticsClientType>;
+  let service: OIAnalyticsClientType;
+
+  const respondWith = (statusCode: number, body?: Parameters<typeof createMockResponse>[1]) =>
+    httpRequestExports.HTTPRequest.mock.mockImplementation(async () => createMockResponse(statusCode, body));
+  const sentRequest = () => httpRequestExports.HTTPRequest.mock.calls[0].arguments;
 
   beforeEach(() => {
-    // Reset all mock functions in-place so the SUT picks up the fresh fns
-    mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(200));
-    mockUtils.generateRandomId = mock.fn(() => '123ABC');
-    mockUtilsOianalytics.buildHttpOptions = mock.fn(async (method: string) => ({ ...mockHttpOptions, method }));
-    mockUtilsOianalytics.getHeaders = mock.fn(async () => ({}));
-    mockUtilsOianalytics.getProxyOptions = mock.fn(() => ({ acceptUnauthorized: false, proxy: undefined }));
-    mockUtilsOianalytics.getUrl = mock.fn((endpoint: string, host: string) => new URL(endpoint, host));
+    Object.assign(httpRequestExports, createHttpRequestMocks());
+    Object.assign(utilsExports, createUtilsMocks());
+    Object.assign(utilsOIAnalyticsExports, createUtilsOIAnalyticsMocks());
 
     service = new OIAnalyticsClient();
   });
@@ -71,8 +67,8 @@ describe('OIAnalytics Client', () => {
     it('should call PUT endpoint with correct options', async () => {
       await service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload');
 
-      assert.strictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls.length, 1);
-      assert.deepStrictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls[0].arguments, [
+      assert.strictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
         'PUT',
         true,
         testData.oIAnalytics.registration.completed,
@@ -81,15 +77,15 @@ describe('OIAnalytics Client', () => {
         null
       ]);
 
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/commands/status'));
       assert.strictEqual(calledOptions.body, 'payload');
       assertContains(calledOptions.headers as Record<string, unknown>, { 'Content-Type': 'application/json', 'Existing-Header': 'value' });
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(() => service.updateCommandStatus(testData.oIAnalytics.registration.completed, 'payload'), /400 - Bad Request/);
     });
   });
@@ -98,19 +94,19 @@ describe('OIAnalytics Client', () => {
     const commands = [testData.oIAnalytics.commands.oIBusList[0]];
 
     it('should call GET endpoint with query params', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(200, []));
+      respondWith(200, []);
 
       const result = await service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, commands);
 
       assert.deepStrictEqual(result, []);
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/commands/list-by-ids'));
       assert.deepStrictEqual(calledOptions.query, { ids: ['commandId1'] });
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(
         () => service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, commands),
         /400 - Bad Request/
@@ -120,19 +116,19 @@ describe('OIAnalytics Client', () => {
 
   describe('retrievePendingCommands', () => {
     it('should call GET endpoint', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(200, []));
+      respondWith(200, []);
 
       const result = await service.retrievePendingCommands(testData.oIAnalytics.registration.completed);
 
       assert.deepStrictEqual(result, []);
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/commands/pending'));
       assert.deepStrictEqual(calledOptions, { ...mockHttpOptions, method: 'GET' });
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(() => service.retrievePendingCommands(testData.oIAnalytics.registration.completed), /400 - Bad Request/);
     });
   });
@@ -140,12 +136,12 @@ describe('OIAnalytics Client', () => {
   describe('register', () => {
     it('should post payload', async () => {
       const mockResponse = { redirectUrl: 'url', expirationDate: 'date', activationCode: '123ABC' };
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(200, mockResponse));
+      respondWith(200, mockResponse);
 
       const result = await service.register(testData.oIAnalytics.registration.completed, testData.engine.oIBusInfo, 'public key');
 
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/registration'));
       assert.strictEqual(
         calledOptions.body,
@@ -163,7 +159,7 @@ describe('OIAnalytics Client', () => {
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(
         () => service.register(testData.oIAnalytics.registration.completed, testData.engine.oIBusInfo, 'public key'),
         /400 - Bad Request/
@@ -174,12 +170,12 @@ describe('OIAnalytics Client', () => {
   describe('checkRegistration', () => {
     it('should call checkUrl', async () => {
       const mockResponse = { status: 'REGISTERED', expired: false, accessToken: 'token' };
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(200, mockResponse));
+      respondWith(200, mockResponse);
 
       const result = await service.checkRegistration(testData.oIAnalytics.registration.completed);
 
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes(testData.oIAnalytics.registration.completed.checkUrl!));
       assert.deepStrictEqual(calledOptions, {
         method: 'GET',
@@ -199,7 +195,7 @@ describe('OIAnalytics Client', () => {
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(() => service.checkRegistration(testData.oIAnalytics.registration.completed), /400 - Bad Request/);
     });
   });
@@ -208,15 +204,15 @@ describe('OIAnalytics Client', () => {
     it('should call PUT endpoint', async () => {
       await service.sendConfiguration(testData.oIAnalytics.registration.completed, 'config-payload');
 
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/configuration'));
       assert.strictEqual(calledOptions.method, 'PUT');
       assert.strictEqual(calledOptions.body, 'config-payload');
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(
         () => service.sendConfiguration(testData.oIAnalytics.registration.completed, 'config-payload'),
         /400 - Bad Request/
@@ -228,15 +224,15 @@ describe('OIAnalytics Client', () => {
     it('should call PUT endpoint', async () => {
       await service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'history-payload');
 
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/configuration/history-query'));
       assert.strictEqual(calledOptions.method, 'PUT');
       assert.strictEqual(calledOptions.body, 'history-payload');
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(
         () => service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'history-payload'),
         /400 - Bad Request/
@@ -248,15 +244,15 @@ describe('OIAnalytics Client', () => {
     it('should call PUT endpoint', async () => {
       await service.sendConfigurationWorkflowResult(testData.oIAnalytics.registration.completed, 'workflow-result-payload');
 
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/configuration/configuration-workflow-result'));
       assert.strictEqual(calledOptions.method, 'PUT');
       assert.strictEqual(calledOptions.body, 'workflow-result-payload');
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(
         () => service.sendConfigurationWorkflowResult(testData.oIAnalytics.registration.completed, 'workflow-result-payload'),
         /400 - Bad Request/
@@ -268,8 +264,8 @@ describe('OIAnalytics Client', () => {
     it('should call DELETE endpoint with query param', async () => {
       await service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'hist-1');
 
-      assert.strictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls.length, 1);
-      assert.deepStrictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls[0].arguments, [
+      assert.strictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
         'DELETE',
         true,
         testData.oIAnalytics.registration.completed,
@@ -278,14 +274,14 @@ describe('OIAnalytics Client', () => {
         null
       ]);
 
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/configuration/history-query'));
       assert.deepStrictEqual(calledOptions.query, { historyId: 'hist-1' });
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(() => service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'hist-1'), /400 - Bad Request/);
     });
   });
@@ -299,18 +295,17 @@ describe('OIAnalytics Client', () => {
         mockBuffer.byteOffset,
         mockBuffer.byteOffset + mockBuffer.byteLength
       ) as ArrayBuffer;
-      const mockResponse = createMockResponse(200, isolatedArrayBuffer);
-      mockHttpRequest.HTTPRequest = mock.fn(async () => mockResponse);
+      respondWith(200, isolatedArrayBuffer);
 
       const writtenChunks: Array<Buffer> = [];
       const sink = new PassThrough();
       sink.on('data', (chunk: Buffer) => writtenChunks.push(chunk));
-      mock.method(fsSync, 'createWriteStream', () => sink);
+      const createWriteStreamMock = mock.method(fsSync, 'createWriteStream', () => sink);
 
       await service.downloadFile(testData.oIAnalytics.registration.completed, 'asset-1', 'target.zip');
 
-      assert.strictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls.length, 1);
-      assert.deepStrictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls[0].arguments, [
+      assert.strictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
         'GET',
         true,
         testData.oIAnalytics.registration.completed,
@@ -319,18 +314,18 @@ describe('OIAnalytics Client', () => {
         null
       ]);
 
-      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/upgrade/asset'));
       assert.deepStrictEqual(calledOptions.query, { assetId: 'asset-1' });
 
-      assert.strictEqual((fsSync.createWriteStream as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.strictEqual((fsSync.createWriteStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'target.zip');
+      assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
+      assert.strictEqual(createWriteStreamMock.mock.calls[0].arguments[0], 'target.zip');
       assert.deepStrictEqual(Buffer.concat(writtenChunks), mockBuffer);
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      respondWith(400, 'Bad Request');
       await assert.rejects(
         () => service.downloadFile(testData.oIAnalytics.registration.completed, 'asset-1', 'target.zip'),
         /400 - Bad Request/
@@ -340,12 +335,12 @@ describe('OIAnalytics Client', () => {
 
   describe('retrieveConfigurationFile', () => {
     it('should retrieve the content of a configuration file', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(200, '{"oibusVersion":"3.10.0"}'));
+      respondWith(200, '{"oibusVersion":"3.10.0"}');
 
       const result = await service.retrieveConfigurationFile(testData.oIAnalytics.registration.completed, 'file-1');
 
       assert.strictEqual(result, '{"oibusVersion":"3.10.0"}');
-      assert.deepStrictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls[0].arguments, [
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
         'GET',
         true,
         testData.oIAnalytics.registration.completed,
@@ -353,13 +348,13 @@ describe('OIAnalytics Client', () => {
         900_000,
         null
       ]);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/commands/configuration-file'));
       assert.deepStrictEqual(calledOptions.query, { fileId: 'file-1' });
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(404, 'Not Found'));
+      respondWith(404, 'Not Found');
       await assert.rejects(
         () => service.retrieveConfigurationFile(testData.oIAnalytics.registration.completed, 'file-1'),
         /404 - Not Found/
@@ -369,14 +364,13 @@ describe('OIAnalytics Client', () => {
 
   describe('uploadCommandFile', () => {
     it('should upload the file of a command as multipart', async () => {
-      const response = createMockResponse(200, { fileId: 'file-1' });
-      mockHttpRequest.HTTPRequest = mock.fn(async () => response);
-      mock.method(fsSync, 'createReadStream', () => Readable.from([Buffer.from('zip content')]));
+      respondWith(200, { fileId: 'file-1' });
+      const createReadStreamMock = mock.method(fsSync, 'createReadStream', () => Readable.from([Buffer.from('zip content')]));
 
       const fileId = await service.uploadCommandFile(testData.oIAnalytics.registration.completed, 'command 1', 'path/file.zip', 'file.zip');
 
       assert.strictEqual(fileId, 'file-1');
-      assert.deepStrictEqual(mockUtilsOianalytics.buildHttpOptions.mock.calls[0].arguments, [
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
         'POST',
         true,
         testData.oIAnalytics.registration.completed,
@@ -384,8 +378,8 @@ describe('OIAnalytics Client', () => {
         900_000,
         null
       ]);
-      assert.deepStrictEqual((fsSync.createReadStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['path/file.zip']);
-      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, ReqOptions];
+      assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments, ['path/file.zip']);
+      const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/commands/command%201/file'));
       const contentType = (calledOptions.headers as Record<string, string>)['content-type'];
       const boundary = contentType.replace('multipart/form-data; boundary=', '');
@@ -401,7 +395,7 @@ describe('OIAnalytics Client', () => {
     });
 
     it('should throw on error response', async () => {
-      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(413, 'Payload Too Large'));
+      respondWith(413, 'Payload Too Large');
       mock.method(fsSync, 'createReadStream', () => Readable.from([]));
       await assert.rejects(
         () => service.uploadCommandFile(testData.oIAnalytics.registration.completed, 'command1', 'path/file.zip', 'file.zip'),

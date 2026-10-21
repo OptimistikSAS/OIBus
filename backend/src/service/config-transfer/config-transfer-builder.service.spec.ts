@@ -2,19 +2,20 @@ import assert from 'node:assert/strict';
 import { beforeEach, describe, it } from 'node:test';
 
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
+import type { SouthItemGroupEntity } from '../../model/south-connector.model';
 import { StandardTransformer } from '../../model/transformer.model';
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
-import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
-import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
-import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
-import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import type CertificateRepository from '../../repository/config/certificate.repository';
+import type ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
+import type EngineRepository from '../../repository/config/engine.repository';
+import type HistoryQueryRepository from '../../repository/config/history-query.repository';
+import type IpFilterRepository from '../../repository/config/ip-filter.repository';
+import type NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import type ScanModeRepository from '../../repository/config/scan-mode.repository';
+import type SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import type TransformerRepository from '../../repository/config/transformer.repository';
+import type UserRepository from '../../repository/config/user.repository';
 import testData from '../../tests/utils/test-data';
+import { createMock, Mocked } from '../../tests/utils/test-utils';
 import IsoTransformer from '../../transformers/iso-transformer';
 import EncryptionService from '../encryption.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
@@ -28,31 +29,31 @@ const standardTransformer: StandardTransformer = {
 };
 
 describe('Config Transfer Builder Service', () => {
-  let engineRepository: EngineRepositoryMock;
-  let scanModeRepository: ScanModeRepositoryMock;
-  let ipFilterRepository: IpFilterRepositoryMock;
-  let certificateRepository: CertificateRepositoryMock;
-  let userRepository: UserRepositoryMock;
-  let southRepository: SouthConnectorRepositoryMock;
-  let northRepository: NorthConnectorRepositoryMock;
-  let historyQueryRepository: HistoryQueryRepositoryMock;
-  let transformerRepository: TransformerRepositoryMock;
-  let configurationWorkflowRepository: ConfigurationWorkflowRepositoryMock;
-  let encryptionService: EncryptionServiceMock;
+  let engineRepository: Mocked<EngineRepository>;
+  let scanModeRepository: Mocked<ScanModeRepository>;
+  let ipFilterRepository: Mocked<IpFilterRepository>;
+  let certificateRepository: Mocked<CertificateRepository>;
+  let userRepository: Mocked<UserRepository>;
+  let southRepository: Mocked<SouthConnectorRepository>;
+  let northRepository: Mocked<NorthConnectorRepository>;
+  let historyQueryRepository: Mocked<HistoryQueryRepository>;
+  let transformerRepository: Mocked<TransformerRepository>;
+  let configurationWorkflowRepository: Mocked<ConfigurationWorkflowRepository>;
+  let encryptionService: Mocked<EncryptionService>;
   let service: ConfigTransferBuilderService;
 
   beforeEach(() => {
-    engineRepository = new EngineRepositoryMock();
-    scanModeRepository = new ScanModeRepositoryMock();
-    ipFilterRepository = new IpFilterRepositoryMock();
-    certificateRepository = new CertificateRepositoryMock();
-    userRepository = new UserRepositoryMock();
-    southRepository = new SouthConnectorRepositoryMock();
-    northRepository = new NorthConnectorRepositoryMock();
-    historyQueryRepository = new HistoryQueryRepositoryMock();
-    transformerRepository = new TransformerRepositoryMock();
-    configurationWorkflowRepository = new ConfigurationWorkflowRepositoryMock();
-    encryptionService = new EncryptionServiceMock('', '');
+    engineRepository = createMock<EngineRepository>();
+    scanModeRepository = createMock<ScanModeRepository>();
+    ipFilterRepository = createMock<IpFilterRepository>();
+    certificateRepository = createMock<CertificateRepository>();
+    userRepository = createMock<UserRepository>();
+    southRepository = createMock<SouthConnectorRepository>();
+    northRepository = createMock<NorthConnectorRepository>();
+    historyQueryRepository = createMock<HistoryQueryRepository>();
+    transformerRepository = createMock<TransformerRepository>();
+    configurationWorkflowRepository = createMock<ConfigurationWorkflowRepository>({ findAll: () => [] });
+    encryptionService = createMock<EncryptionService>({ filterSecrets: secrets => secrets });
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
@@ -79,7 +80,7 @@ describe('Config Transfer Builder Service', () => {
       historyQueryRepository,
       transformerRepository,
       configurationWorkflowRepository,
-      encryptionService as unknown as EncryptionService,
+      encryptionService,
       false,
       false
     );
@@ -274,58 +275,47 @@ describe('Config Transfer Builder Service', () => {
   });
 
   it('should build the south connectors command and filter secrets from settings', () => {
-    encryptionService.filterSecrets.mock.mockImplementation(<T>(secrets: T) => secrets);
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
     assert.strictEqual(configuration.southConnectors.length, testData.south.list.length);
     assert.strictEqual(encryptionService.filterSecrets.mock.calls.length > 0, true);
   });
 
   it('should build south connector groups, item scanMode/group ids and north transformer south group id', () => {
+    const group: SouthItemGroupEntity = {
+      id: 'groupId1',
+      name: 'My Group',
+      southId: testData.south.list[0].id,
+      scanMode: testData.scanMode.list[0],
+      startTimeOffset: 1,
+      endTimeOffset: 2,
+      maxReadInterval: 3,
+      readDelay: 4,
+      recoveryStrategy: 'oldest',
+      cachingStrategy: 'onChange',
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
     const customSouth = {
       ...testData.south.list[0],
-      items: [
-        {
-          ...testData.south.list[0].items[0],
-          scanMode: null,
-          group: { id: 'groupId1' }
-        }
-      ],
-      groups: [
-        {
-          id: 'groupId1',
-          name: 'My Group',
-          scanMode: testData.scanMode.list[0],
-          startTimeOffset: 1,
-          endTimeOffset: 2,
-          maxReadInterval: 3,
-          readDelay: 4,
-          recoveryStrategy: 'oldest',
-          cachingStrategy: 'onChange'
-        }
-      ]
+      items: [{ ...testData.south.list[0].items[0], scanMode: null, group }],
+      groups: [group]
     };
-    southRepository.findAllSouth.mock.mockImplementation(() => [customSouth] as unknown as typeof testData.south.list);
-    southRepository.findSouthById.mock.mockImplementation(() => customSouth as unknown as (typeof testData.south.list)[0]);
-    southRepository.findAllSouthFull.mock.mockImplementation(() => [customSouth] as unknown as typeof testData.south.list);
+    southRepository.findAllSouth.mock.mockImplementation(() => [customSouth]);
+    southRepository.findSouthById.mock.mockImplementation(() => customSouth);
+    southRepository.findAllSouthFull.mock.mockImplementation(() => [customSouth]);
 
-    const originalNorthSource = testData.north.list[0].transformers[0].source as { south: unknown };
+    const [northTransformer] = testData.north.list[0].transformers;
+    assert.ok(northTransformer.source.type === 'south');
     const customNorth = {
       ...testData.north.list[0],
-      transformers: [
-        {
-          ...testData.north.list[0].transformers[0],
-          source: {
-            type: 'south',
-            south: originalNorthSource.south,
-            group: { id: 'northGroupId1' },
-            items: []
-          }
-        }
-      ]
+      transformers: [{ ...northTransformer, source: { ...northTransformer.source, group: { ...group, id: 'northGroupId1' }, items: [] } }]
     };
-    northRepository.findAllNorth.mock.mockImplementation(() => [customNorth] as unknown as typeof testData.north.list);
-    northRepository.findNorthById.mock.mockImplementation(() => customNorth as unknown as (typeof testData.north.list)[0]);
-    northRepository.findAllNorthFull.mock.mockImplementation(() => [customNorth] as unknown as typeof testData.north.list);
+    northRepository.findAllNorth.mock.mockImplementation(() => [customNorth]);
+    northRepository.findNorthById.mock.mockImplementation(() => customNorth);
+    northRepository.findAllNorthFull.mock.mockImplementation(() => [customNorth]);
 
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
 
@@ -384,7 +374,7 @@ describe('Config Transfer Builder Service', () => {
     const configuration = service.buildHistoryQueriesConfiguration();
     assert.strictEqual(configuration.historyQueries.length, testData.historyQueries.list.length);
     for (const historyQuery of configuration.historyQueries) {
-      assert.strictEqual((historyQuery.settings as unknown as Record<string, unknown>)['name'] !== undefined, true);
+      assert.notStrictEqual(historyQuery.settings.name, undefined);
     }
   });
 });

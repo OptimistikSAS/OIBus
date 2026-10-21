@@ -5,26 +5,22 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 
 import type SouthConnector from '../south/south-connector';
-import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import testData from '../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
+import type { SouthExplore } from '../south/south-interface';
+import { createMock, flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type SouthExploreSessionManagerType from './south-explore-session-manager';
 
 const nodeRequire = createRequire(import.meta.url);
 
+// Mocked module exports: the same object for the whole file, its function is replaced before each test
+const utilsExports = { generateRandomId: (): string => '' };
+
 let SouthExploreSessionManager: typeof SouthExploreSessionManagerType;
 
-let idCounter = 0;
-const utilsExports = {
-  generateRandomId: mock.fn(() => `session-${(idCounter += 1)}`)
-};
-
-const buildSouth = (): SouthConnector<SouthSettings, SouthItemSettings> => {
-  const south = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnectorMock;
-  (south.hasExplore as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => true);
-  south.explore.mock.mockImplementation(async () => [{ id: 'node1', name: 'Node 1', metadata: { type: 'Object' }, hasChildren: true }]);
-  return south as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
-};
+const buildSouth = (hasExplore = true) =>
+  createMock<SouthConnector<SouthSettings, SouthItemSettings> & SouthExplore>({
+    hasExplore: () => hasExplore,
+    explore: async () => [{ id: 'node1', name: 'Node 1', metadata: { type: 'Object' }, hasChildren: true }]
+  });
 
 describe('SouthExploreSessionManager', () => {
   before(() => {
@@ -36,15 +32,13 @@ describe('SouthExploreSessionManager', () => {
   });
 
   beforeEach(() => {
-    idCounter = 0;
-    utilsExports.generateRandomId.mock.resetCalls();
-    utilsExports.generateRandomId.mock.mockImplementation(() => `session-${(idCounter += 1)}`);
+    let idCounter = 0;
+    utilsExports.generateRandomId = () => `session-${(idCounter += 1)}`;
     mock.timers.enable({ apis: ['setTimeout'] });
   });
 
   afterEach(() => {
     mock.timers.reset();
-    mock.restoreAll();
   });
 
   it('should start a session and return a generated id', async () => {
@@ -64,7 +58,7 @@ describe('SouthExploreSessionManager', () => {
     const entries = await manager.browse(sessionId, 'parent');
 
     assert.deepStrictEqual(entries, [{ id: 'node1', name: 'Node 1', metadata: { type: 'Object' }, hasChildren: true }]);
-    assert.strictEqual((south as unknown as SouthConnectorMock).explore.mock.calls[0].arguments[0], 'parent');
+    assert.strictEqual(south.explore.mock.calls[0].arguments[0], 'parent');
   });
 
   it('should throw when browsing an unknown session', async () => {
@@ -74,9 +68,7 @@ describe('SouthExploreSessionManager', () => {
 
   it('should throw when the connector does not support exploration', async () => {
     const manager = new SouthExploreSessionManager();
-    const south = new SouthConnectorMock(testData.south.list[0]);
-    (south.hasExplore as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => false);
-    const sessionId = await manager.start(south as unknown as SouthConnector<SouthSettings, SouthItemSettings>);
+    const sessionId = await manager.start(buildSouth(false));
 
     await assert.rejects(() => manager.browse(sessionId, null), /does not support exploration/);
   });
@@ -88,7 +80,7 @@ describe('SouthExploreSessionManager', () => {
 
     await manager.close(sessionId);
 
-    assert.strictEqual((south as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
+    assert.strictEqual(south.stop.mock.calls.length, 1);
     await assert.rejects(() => manager.browse(sessionId, null), /not found/);
   });
 
@@ -99,7 +91,7 @@ describe('SouthExploreSessionManager', () => {
 
     await manager.close(sessionId);
 
-    assert.strictEqual((south as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
+    assert.strictEqual(south.stop.mock.calls.length, 0);
     await assert.rejects(() => manager.browse(sessionId, null), /not found/);
   });
 
@@ -117,8 +109,8 @@ describe('SouthExploreSessionManager', () => {
 
     await manager.closeAll();
 
-    assert.strictEqual((south1 as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
-    assert.strictEqual((south2 as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
+    assert.strictEqual(south1.stop.mock.calls.length, 1);
+    assert.strictEqual(south2.stop.mock.calls.length, 1);
   });
 
   it('should close a session after the idle timeout elapses', async () => {
@@ -129,7 +121,7 @@ describe('SouthExploreSessionManager', () => {
     mock.timers.tick(1000);
     await flushPromises();
 
-    assert.strictEqual((south as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
+    assert.strictEqual(south.stop.mock.calls.length, 1);
   });
 
   it('should reset the idle timer on browse', async () => {
@@ -142,11 +134,11 @@ describe('SouthExploreSessionManager', () => {
     mock.timers.tick(600);
     await flushPromises();
     // still open because browse reset the timer
-    assert.strictEqual((south as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
+    assert.strictEqual(south.stop.mock.calls.length, 0);
 
     mock.timers.tick(400);
     await flushPromises();
-    assert.strictEqual((south as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
+    assert.strictEqual(south.stop.mock.calls.length, 1);
   });
 
   it('should evict the oldest session when the maximum is reached', async () => {
@@ -157,8 +149,8 @@ describe('SouthExploreSessionManager', () => {
     await manager.start(south2);
 
     // south1 was evicted (stopped) to make room for south2
-    assert.strictEqual((south1 as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
-    assert.strictEqual((south2 as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
+    assert.strictEqual(south1.stop.mock.calls.length, 1);
+    assert.strictEqual(south2.stop.mock.calls.length, 0);
   });
 
   it('should evict the least-recently-used session, not the oldest', async () => {
@@ -173,8 +165,8 @@ describe('SouthExploreSessionManager', () => {
     await manager.start(south3);
 
     // south2 (LRU) evicted; south1 (recently used) kept
-    assert.strictEqual((south1 as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
-    assert.strictEqual((south2 as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
-    assert.strictEqual((south3 as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
+    assert.strictEqual(south1.stop.mock.calls.length, 0);
+    assert.strictEqual(south2.stop.mock.calls.length, 1);
+    assert.strictEqual(south3.stop.mock.calls.length, 0);
   });
 });

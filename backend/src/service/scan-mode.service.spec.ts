@@ -1,51 +1,46 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+import type { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
 
-import DataStreamEngine from '../engine/data-stream-engine';
-import { ScanMode } from '../model/scan-mode.model';
-import { SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import type DataStreamEngine from '../engine/data-stream-engine';
+import type { ScanMode } from '../model/scan-mode.model';
+import type { SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
+import type SouthCacheRepository from '../repository/cache/south-cache.repository';
+import type ScanModeRepository from '../repository/config/scan-mode.repository';
+import type SouthConnectorRepository from '../repository/config/south-connector.repository';
+import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { createMock, type Mocked } from '../tests/utils/test-utils';
+import type JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import ScanModeService from './scan-mode.service';
 
-let validator: { validate: ReturnType<typeof mock.fn> };
-let scanModeRepository: ScanModeRepositoryMock;
-let southConnectorRepository: SouthConnectorRepositoryMock;
-let southCacheRepository: SouthCacheRepositoryMock;
-let dataStreamEngine: DataStreamEngineMock;
-let oIAnalyticsMessageService: OianalyticsMessageServiceMock;
-let service: ScanModeService;
-
 describe('Scan Mode Service', () => {
+  let validator: Mocked<JoiValidator>;
+  let scanModeRepository: Mocked<ScanModeRepository>;
+  let southConnectorRepository: Mocked<SouthConnectorRepository>;
+  let southCacheRepository: Mocked<SouthCacheRepository>;
+  let dataStreamEngine: Mocked<DataStreamEngine>;
+  let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+  let service: ScanModeService;
+
   beforeEach(() => {
-    validator = { validate: mock.fn() };
-    scanModeRepository = new ScanModeRepositoryMock();
-    southConnectorRepository = new SouthConnectorRepositoryMock();
-    southCacheRepository = new SouthCacheRepositoryMock();
-    dataStreamEngine = new DataStreamEngineMock(null);
-    oIAnalyticsMessageService = new OianalyticsMessageServiceMock();
-    scanModeRepository.findAll.mock.mockImplementation(() => []);
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() => []);
+    validator = createMock<JoiValidator>();
+    scanModeRepository = createMock<ScanModeRepository>({ findAll: () => [] });
+    southConnectorRepository = createMock<SouthConnectorRepository>({ findAllSouth: () => [] });
+    southCacheRepository = createMock<SouthCacheRepository>();
+    dataStreamEngine = createMock<DataStreamEngine>({ logger: new LoggerMock() });
+    oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
 
     service = new ScanModeService(
-      validator as unknown as JoiValidator,
-      scanModeRepository as unknown as ScanModeRepository,
-      southConnectorRepository as unknown as SouthConnectorRepository,
-      southCacheRepository as unknown as SouthCacheRepository,
-      oIAnalyticsMessageService as unknown as OIAnalyticsMessageService,
-      dataStreamEngine as unknown as DataStreamEngine
+      validator,
+      scanModeRepository,
+      southConnectorRepository,
+      southCacheRepository,
+      oIAnalyticsMessageService,
+      dataStreamEngine
     );
   });
 
