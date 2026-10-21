@@ -11,10 +11,10 @@ import {
   EngineWebServerCommandDTO
 } from '../../../shared/model/api/engine.model';
 
-import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type OIBusService from '../../service/oibus.service';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { EngineController as EngineControllerShape } from './engine.controller';
 
@@ -33,13 +33,13 @@ before(() => {
 
 describe('EngineController', () => {
   let controller: EngineControllerShape;
-  let oIBusService: OIBusServiceMock;
-  let userService: UserServiceMock;
+  let oIBusService: Mocked<OIBusService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    oIBusService = new OIBusServiceMock();
-    userService = new UserServiceMock();
+    oIBusService = createMock<OIBusService>();
+    userService = createMock<UserService>();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
       services: createMockServices({ oIBusService, userService })
@@ -50,7 +50,7 @@ describe('EngineController', () => {
 
   it('should return engine settings', async () => {
     const mockSettings = testData.engine.settings;
-    oIBusService.getEngineSettings = mock.fn(() => mockSettings);
+    oIBusService.getEngineSettings.mock.mockImplementation(() => mockSettings);
 
     const result = await controller.getEngineSettings(mockRequest as CustomExpressRequest);
 
@@ -60,7 +60,7 @@ describe('EngineController', () => {
 
   it('should update engine settings', async () => {
     const command: EngineSettingsCommandDTO = testData.engine.command;
-    oIBusService.updateEngineSettings = mock.fn(async () => ({}) as EngineSettingsUpdateResultDTO);
+    oIBusService.updateEngineSettings.mock.mockImplementation(async () => ({}) as EngineSettingsUpdateResultDTO);
 
     await controller.updateEngineSettings(command, mockRequest as CustomExpressRequest);
 
@@ -69,7 +69,7 @@ describe('EngineController', () => {
   });
 
   it('should return engine metrics', async () => {
-    oIBusService.getEngineMetrics = mock.fn(() => testData.engine.metrics);
+    oIBusService.getEngineMetrics.mock.mockImplementation(() => testData.engine.metrics);
 
     const result = controller.getEngineMetrics(mockRequest as CustomExpressRequest);
 
@@ -79,7 +79,7 @@ describe('EngineController', () => {
 
   it('should return home metrics', async () => {
     const homeMetrics = { norths: {}, engine: testData.engine.metrics, souths: {} };
-    oIBusService.getHomeMetrics = mock.fn(() => homeMetrics);
+    oIBusService.getHomeMetrics.mock.mockImplementation(() => homeMetrics);
 
     const result = controller.getHomeMetrics(mockRequest as CustomExpressRequest);
 
@@ -88,7 +88,7 @@ describe('EngineController', () => {
   });
 
   it('should reset engine metrics', async () => {
-    oIBusService.resetEngineMetrics = mock.fn(async () => undefined);
+    oIBusService.resetEngineMetrics.mock.mockImplementation(async () => undefined);
 
     await controller.resetEngineMetrics(mockRequest as CustomExpressRequest);
 
@@ -96,7 +96,7 @@ describe('EngineController', () => {
   });
 
   it('should restart OIBus', async () => {
-    oIBusService.restart = mock.fn(async () => undefined);
+    oIBusService.restart.mock.mockImplementation(async () => undefined);
 
     await controller.restart(mockRequest as CustomExpressRequest);
 
@@ -104,7 +104,7 @@ describe('EngineController', () => {
   });
 
   it('should dump OIBus memory', async () => {
-    oIBusService.dumpMemory = mock.fn(() => ({ filename: 'oibus-memory-dump.heapsnapshot' }));
+    oIBusService.dumpMemory.mock.mockImplementation(() => ({ filename: 'oibus-memory-dump.heapsnapshot' }));
 
     const result = await controller.dumpMemory(mockRequest as CustomExpressRequest);
 
@@ -114,7 +114,7 @@ describe('EngineController', () => {
 
   it('should return OIBus info', async () => {
     const mockInfo = testData.engine.oIBusInfo;
-    oIBusService.getInfo = mock.fn(() => mockInfo);
+    oIBusService.getInfo.mock.mockImplementation(() => mockInfo);
 
     const result = await controller.getInfo(mockRequest as CustomExpressRequest);
 
@@ -128,7 +128,7 @@ describe('EngineController', () => {
 
   it('should update engine name', async () => {
     const command: EngineNameCommandDTO = testData.engine.nameCommand;
-    oIBusService.updateEngineName = mock.fn(async () => undefined);
+    oIBusService.updateEngineName.mock.mockImplementation(async () => undefined);
 
     await controller.updateEngineName(command, mockRequest as CustomExpressRequest);
 
@@ -138,7 +138,7 @@ describe('EngineController', () => {
 
   it('should update engine web server settings', async () => {
     const command: EngineWebServerCommandDTO = testData.engine.webServerCommand;
-    oIBusService.updateEngineWebServer = mock.fn(async () => ({}) as EngineSettingsUpdateResultDTO);
+    oIBusService.updateEngineWebServer.mock.mockImplementation(async () => ({}) as EngineSettingsUpdateResultDTO);
 
     await controller.updateEngineWebServer(command, mockRequest as CustomExpressRequest);
 
@@ -148,7 +148,7 @@ describe('EngineController', () => {
 
   it('should update engine proxy settings', async () => {
     const command: EngineProxyCommandDTO = testData.engine.proxyCommand;
-    oIBusService.updateEngineProxy = mock.fn(async () => undefined);
+    oIBusService.updateEngineProxy.mock.mockImplementation(async () => undefined);
 
     await controller.updateEngineProxy(command, mockRequest as CustomExpressRequest);
 
@@ -158,7 +158,7 @@ describe('EngineController', () => {
 
   it('should update engine logger settings', async () => {
     const command: EngineLoggerCommandDTO = testData.engine.loggerCommand;
-    oIBusService.updateEngineLogger = mock.fn(async () => undefined);
+    oIBusService.updateEngineLogger.mock.mockImplementation(async () => undefined);
 
     await controller.updateEngineLogger(command, mockRequest as CustomExpressRequest);
 
