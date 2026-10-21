@@ -1,99 +1,70 @@
 import assert from 'node:assert/strict';
-import { ReadStream } from 'node:fs';
+import type { ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import type { ClientSession } from 'node-opcua';
-import { AttributeIds, DataType, MessageSecurityMode, SecurityPolicy, StatusCodes, UserTokenType } from 'node-opcua';
+import type { ClientSession, OPCUAClient } from 'node-opcua';
+import { AttributeIds, DataType, MessageSecurityMode, StatusCodes, UserTokenType } from 'node-opcua';
 
 import type { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
+import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
-import type { NorthConnectorEntity } from '../../model/north-connector.model';
-import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import type * as Utils from '../../service/utils';
+import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import testData from '../../tests/utils/test-data';
-import { buildNorthEntity, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import { buildNorthEntity, createMock, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import type { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import type NorthOPCUAClass from './north-opcua';
 
 const nodeRequire = createRequire(import.meta.url);
 
-const resolveNodeIdMock = mock.fn((id: unknown) => id);
-
-const nodeOpcuaExports = {
-  __esModule: true,
-  ...nodeOPCUAMock,
-  DataType,
-  StatusCodes,
-  SecurityPolicy,
-  AttributeIds,
-  MessageSecurityMode,
-  UserTokenType,
-  resolveNodeId: resolveNodeIdMock
+// The stream is only handed to the (mocked) streamToString
+const readStream = {} as ReadStream;
+const metadata: CacheMetadata = {
+  contentFile: 'file.json',
+  contentSize: 100,
+  numberOfElement: 1,
+  createdAt: '2020-02-02T02:02:02.222Z',
+  contentType: 'opcua'
 };
 
-const opcuaOptions = {
-  applicationName: 'OIBus',
-  clientName: 'connectorName-connectorId',
-  connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-  securityMode: 1,
-  securityPolicy: 'none',
-  endpointMustExist: false,
-  keepSessionAlive: false
-};
-const opcuaUserIdentity = { type: 0 };
+type AsyncMock = Mock<(...args: Array<unknown>) => Promise<unknown>>;
 
 describe('NorthOPCUA', () => {
   let NorthOPCUA: typeof NorthOPCUAClass;
   let north: NorthOPCUAClass;
-  let configuration: NorthConnectorEntity<NorthOPCUASettings>;
-  let mockSession: ClientSession;
-  let sessionCloseMock: ReturnType<typeof mock.fn>;
-  let sessionReadMock: ReturnType<typeof mock.fn>;
-  let sessionWriteMock: ReturnType<typeof mock.fn>;
+  let logger: PinoLogger;
+  let session: ClientSession;
+  let sessionClose: AsyncMock;
+  let sessionRead: AsyncMock;
+  let sessionWrite: AsyncMock;
+  let createSessionConfigs: AsyncMock;
+  let createOPCUASession: AsyncMock;
+  let resolveNodeId: Mock<(id: unknown) => unknown>;
+  let createOPCUAClient: Mock<() => unknown>;
+  let streamToString: Mock<typeof Utils.streamToString>;
 
-  const logger = new PinoLogger();
-  const cacheService = new CacheServiceMock();
-  const oiBusTransformer = new OIBusTransformerMock();
-
-  const createSessionConfigsFn = mock.fn(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity }));
-  const streamToStringFn = mock.fn(async () => '[]');
-
-  const transformerExports = {
-    createTransformer: mock.fn(() => oiBusTransformer)
+  // Real enums, mocked client and node id resolution
+  const nodeOpcuaExports: Record<string, unknown> = {
+    __esModule: true,
+    AttributeIds,
+    DataType,
+    MessageSecurityMode,
+    StatusCodes,
+    UserTokenType
   };
-
-  const utilsExports = {
-    streamToString: streamToStringFn,
-    checkAge: mock.fn(() => true),
-    compress: mock.fn(async () => undefined),
-    delay: mock.fn(async () => undefined),
-    generateIntervals: mock.fn(() => []),
-    groupItemsByGroup: mock.fn(() => []),
-    validateCronExpression: mock.fn(() => ({ expression: '' }))
-  };
-
-  const utilsOpcuaExports = {
-    createSessionConfigs: createSessionConfigsFn,
-    createOPCUASession: mock.fn(async (..._args: Array<unknown>): Promise<unknown> => ({}))
-  };
+  const utilsOpcuaExports: Record<string, unknown> = {};
+  const utilsExports: typeof Utils = { ...nodeRequire('../../service/utils') };
 
   before(() => {
     mockModule(nodeRequire, 'node-opcua', nodeOpcuaExports);
-    // crypto is used with randomUUID — mock via mock.method in beforeEach
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/utils-opcua', utilsOpcuaExports);
-    mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
-    mockModule(nodeRequire, '../../service/cache/cache.service', {
-      __esModule: true,
-      default: function () {
-        return cacheService;
-      }
-    });
+    // No transformation here: don't pay for loading every transformer
+    mockModule(nodeRequire, '../../service/transformer.service', {});
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -101,90 +72,75 @@ describe('NorthOPCUA', () => {
   });
 
   beforeEach(() => {
-    // Reset all mock calls
-    resolveNodeIdMock.mock.resetCalls();
-    resolveNodeIdMock.mock.mockImplementation((id: unknown) => id);
+    logger = new PinoLogger();
+    sessionClose = mock.fn(async () => undefined);
+    sessionRead = mock.fn(async () => ({}));
+    sessionWrite = mock.fn(async () => ({ isGood: () => true, name: 'Good' }));
+    session = createMock<ClientSession>({ close: sessionClose, read: sessionRead, write: sessionWrite });
+    createSessionConfigs = mock.fn(async () => ({ options: {}, userIdentity: {} }));
+    createOPCUASession = mock.fn(async () => session);
+    resolveNodeId = mock.fn((id: unknown) => id);
+    createOPCUAClient = mock.fn(() => null);
+    streamToString = mock.fn(async () => '[]');
 
-    createSessionConfigsFn.mock.resetCalls();
-    createSessionConfigsFn.mock.mockImplementation(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity }));
-
-    streamToStringFn.mock.resetCalls();
-    streamToStringFn.mock.mockImplementation(async () => '[]');
-
-    transformerExports.createTransformer.mock.resetCalls();
-    transformerExports.createTransformer.mock.mockImplementation(() => oiBusTransformer);
-
-    utilsOpcuaExports.createOPCUASession.mock.resetCalls();
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => mockSession);
-    nodeOPCUAMock.OPCUAClient.create.mock.resetCalls();
-    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => null as unknown);
-
-    logger.trace.mock.resetCalls();
-    logger.debug.mock.resetCalls();
-    logger.info.mock.resetCalls();
-    logger.warn.mock.resetCalls();
-    logger.error.mock.resetCalls();
-
-    // Mock crypto.randomUUID in-place
-    mock.method(nodeRequire('crypto'), 'randomUUID', () => 'randomUUID');
-
+    Object.assign(nodeOpcuaExports, { resolveNodeId, OPCUAClient: { create: createOPCUAClient } });
+    Object.assign(utilsOpcuaExports, { createSessionConfigs, createOPCUASession });
+    // delay: super.connect() waits for runMinDelay before checking the cache, and setTimeout is mocked
+    Object.assign(utilsExports, { streamToString, delay: async () => undefined });
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    configuration = buildNorthEntity<NorthOPCUASettings>('opcua', {
-      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
-      retryInterval: 10000,
-      authentication: { type: 'none', password: null },
-      securityMode: 'none',
-      securityPolicy: 'none',
-      keepSessionAlive: false
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sessionCloseMock = mock.fn(async (..._args: Array<any>) => undefined);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sessionReadMock = mock.fn(async (..._args: Array<any>) => ({}));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sessionWriteMock = mock.fn(async (..._args: Array<any>) => ({ isGood: () => true, name: 'Good' }));
-    mockSession = {
-      close: sessionCloseMock,
-      read: sessionReadMock,
-      write: sessionWriteMock
-    } as unknown as ClientSession;
-
-    // Re-apply createSession to pick up the new mockSession
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => mockSession);
-
-    north = new NorthOPCUA(configuration, cacheService);
+    north = new NorthOPCUA(
+      buildNorthEntity<NorthOPCUASettings>('opcua', {
+        url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        retryInterval: 10000,
+        authentication: { type: 'none', password: null },
+        securityMode: 'none',
+        securityPolicy: 'none',
+        keepSessionAlive: false
+      }),
+      createCacheServiceMock()
+    );
   });
 
   afterEach(() => {
     mock.timers.reset();
     mock.restoreAll();
-    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
+
+  /** Makes handleContent read these values and write them with the mocked session */
+  const prepareContent = (values: Array<OIBusOPCUAValue>) => {
+    streamToString.mock.mockImplementation(async () => JSON.stringify(values));
+    north.client = session;
+  };
+
+  /** Makes testConnection discover these endpoints */
+  const mockEndpoints = (endpoints: Array<unknown>) => {
+    const endpointClient = createMock<OPCUAClient>({ getEndpoints: async () => endpoints });
+    createOPCUAClient.mock.mockImplementation(() => endpointClient);
+    return endpointClient;
+  };
 
   it('should return correct types', () => {
     assert.deepStrictEqual(north.supportedTypes(), ['opcua']);
   });
 
   it('should properly connect', async () => {
-    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
+    north['reconnectTimeout'] = setTimeout(() => null);
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
     await north.connect();
 
-    assert.strictEqual(createSessionConfigsFn.mock.calls.length, 1);
-    assert.strictEqual(utilsOpcuaExports.createOPCUASession.mock.calls.length, 1);
+    assert.strictEqual(createSessionConfigs.mock.calls.length, 1);
+    assert.strictEqual(createOPCUASession.mock.calls.length, 1);
     assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string).includes('connected')));
     // reconnectTimeout cleared — should be null after successful connect
-    assert.strictEqual((north as unknown as { reconnectTimeout: null })['reconnectTimeout'], null);
+    assert.strictEqual(north['reconnectTimeout'], null);
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
   it('should handle connection error and trigger reconnect', async () => {
-    const error = new Error('Session creation failed');
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementationOnce(async () => {
-      throw error;
+    createOPCUASession.mock.mockImplementationOnce(async () => {
+      throw new Error('Session creation failed');
     });
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
@@ -193,85 +149,61 @@ describe('NorthOPCUA', () => {
     assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Error while connecting to the OPCUA server: Session creation failed'));
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // reconnect timeout should be set
-    assert.notStrictEqual((north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'], null);
+    assert.notStrictEqual(north['reconnectTimeout'], null);
   });
 
   it('should not reconnect if disconnecting', async () => {
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementationOnce(async () => {
+    createOPCUASession.mock.mockImplementationOnce(async () => {
       throw new Error('Fail');
     });
-    (north as unknown as { disconnecting: boolean })['disconnecting'] = true;
+    north['disconnecting'] = true;
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
     await north.connect();
 
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // No reconnect timeout set because disconnecting is true
-    assert.strictEqual((north as unknown as { reconnectTimeout: null })['reconnectTimeout'], null);
+    assert.strictEqual(north['reconnectTimeout'], null);
   });
 
   it('should properly disconnect', async () => {
-    (north as unknown as { client: ClientSession })['client'] = mockSession;
-    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
+    north.client = session;
+    north['reconnectTimeout'] = setTimeout(() => null);
 
     await north.disconnect();
 
-    assert.strictEqual(sessionCloseMock.mock.calls.length, 1);
-    assert.strictEqual((north as unknown as { client: null })['client'], null);
+    assert.strictEqual(sessionClose.mock.calls.length, 1);
+    assert.strictEqual(north.client, null);
   });
 
   it('should throw error if connector is in reconnecting state', async () => {
-    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
-    const readStream = {} as ReadStream;
+    north['reconnectTimeout'] = setTimeout(() => null);
 
-    await assert.rejects(
-      async () =>
-        north.handleContent(readStream, {
-          contentFile: 'file.json',
-          contentSize: 100,
-          numberOfElement: 1,
-          createdAt: '2020-02-02T02:02:02.222Z',
-          contentType: 'opcua'
-        }),
-      /Connector is reconnecting\.\.\./
-    );
+    await assert.rejects(north.handleContent(readStream, metadata), /Connector is reconnecting\.\.\./);
   });
 
   it('should throw error if client is not set', async () => {
-    const values: Array<OIBusOPCUAValue> = [
+    prepareContent([
       { nodeId: 'ns=1;s=Tag1', value: 123 },
       { nodeId: 'ns=1;s=Tag2', value: 456 }
-    ];
-    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
-    const readStream = {} as ReadStream;
+    ]);
+    north.client = null;
 
-    await assert.rejects(
-      async () =>
-        north.handleContent(readStream, {
-          contentFile: 'file.json',
-          contentSize: 100,
-          numberOfElement: 1,
-          createdAt: '2020-02-02T02:02:02.222Z',
-          contentType: 'opcua'
-        }),
-      /OPCUA client not set/
-    );
+    await assert.rejects(north.handleContent(readStream, metadata), /OPCUA client not set/);
   });
 
   it('should handle content success', async () => {
-    const values: Array<OIBusOPCUAValue> = [
+    prepareContent([
       { nodeId: 'ns=1;s=Tag1', value: 123 },
       { nodeId: 'ns=1;s=Tag2', value: 456 },
       { nodeId: 'ns=1;s=Tag3', value: 789 },
       { nodeId: 'ns=1;s=Tag4', value: 111 }
-    ];
-    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
-
+    ]);
     // Tag1: returns {value: 'bad'} → dataValue.value = 'bad', dataValue.value.value = undefined → "Could not read DataType"
     // Tag2: returns value but DataType string not in enum → "Invalid data type"
     // Tag3: valid DataType.Double but write fails
     // Tag4: valid DataType.Double and write succeeds
-    sessionReadMock.mock.mockImplementation(
+    sessionRead.mock.mockImplementation(
       seq<Promise<{ value: unknown }>>(
         async () => ({ value: 'bad' }),
         async () => ({ value: { value: { value: 'Bad' } } }),
@@ -279,35 +211,23 @@ describe('NorthOPCUA', () => {
         async () => ({ value: { value: { value: DataType.Double } } })
       )
     );
-
-    sessionWriteMock.mock.mockImplementation(
+    sessionWrite.mock.mockImplementation(
       seq(
         async () => ({ isGood: () => false, name: 'Bad' }),
         async () => ({ isGood: () => true, name: 'Good' })
       )
     );
 
-    (north as unknown as { client: ClientSession })['client'] = mockSession;
-    const readStream = {} as ReadStream;
-
-    await north.handleContent(readStream, {
-      contentFile: 'file.json',
-      contentSize: 100,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'opcua'
-    });
+    await north.handleContent(readStream, metadata);
 
     // Tag1: read called with correct args
-    assert.deepStrictEqual(sessionReadMock.mock.calls[0].arguments[0], { nodeId: 'ns=1;s=Tag1', attributeId: AttributeIds.DataType });
-
+    assert.deepStrictEqual(sessionRead.mock.calls[0].arguments[0], { nodeId: 'ns=1;s=Tag1', attributeId: AttributeIds.DataType });
     // Tag4: write called with correct args (second write call, index 1)
-    assert.deepStrictEqual(sessionWriteMock.mock.calls[1].arguments[0], {
+    assert.deepStrictEqual(sessionWrite.mock.calls[1].arguments[0], {
       nodeId: 'ns=1;s=Tag4',
       attributeId: AttributeIds.Value,
       value: { value: { dataType: DataType.Double, value: 111 } }
     });
-
     assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Could not read DataType for node ID "ns=1;s=Tag1"')));
     assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Invalid data type for node ID "ns=1;s=Tag2"')));
     assert.ok(
@@ -319,133 +239,87 @@ describe('NorthOPCUA', () => {
   });
 
   it('should handle bad node IDs without disconnecting', async () => {
-    const values = [{ nodeId: 'bad-node', value: 123 }];
-    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
-
-    resolveNodeIdMock.mock.mockImplementationOnce(() => {
+    prepareContent([{ nodeId: 'bad-node', value: 123 }]);
+    resolveNodeId.mock.mockImplementationOnce(() => {
       throw new Error('BadNodeId');
     });
-
-    (north as unknown as { client: ClientSession })['client'] = mockSession;
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
-    await north.handleContent({} as ReadStream, {
-      contentFile: 'f',
-      contentSize: 0,
-      numberOfElement: 0,
-      createdAt: '',
-      contentType: 'opcua'
-    });
+    await north.handleContent(readStream, metadata);
 
     assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error when parsing node ID')));
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
   it('should handle write error without disconnecting', async () => {
-    const values = [{ nodeId: 'bad-node', value: 123 }];
-    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
-
-    sessionReadMock.mock.mockImplementation(async () => {
+    prepareContent([{ nodeId: 'bad-node', value: 123 }]);
+    sessionRead.mock.mockImplementation(async () => {
       throw new Error('BadNodeId');
     });
-    (north as unknown as { client: ClientSession })['client'] = mockSession;
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
-    await north.handleContent({} as ReadStream, {
-      contentFile: 'f',
-      contentSize: 0,
-      numberOfElement: 0,
-      createdAt: '',
-      contentType: 'opcua'
-    });
+    await north.handleContent(readStream, metadata);
 
     assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Write error on node ID "bad-node": BadNodeId')));
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
   it('should handle critical errors and trigger reconnect', async () => {
-    const values = [{ nodeId: 'tag1', value: 123 }];
-    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
-
-    sessionReadMock.mock.mockImplementation(async () => {
+    prepareContent([{ nodeId: 'tag1', value: 123 }]);
+    sessionRead.mock.mockImplementation(async () => {
       throw new Error('Connection Lost');
     });
-
-    (north as unknown as { client: ClientSession })['client'] = mockSession;
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
-    await assert.rejects(
-      async () =>
-        north.handleContent({} as ReadStream, {
-          contentFile: 'f',
-          contentSize: 0,
-          numberOfElement: 0,
-          createdAt: '',
-          contentType: 'opcua'
-        }),
-      /Connection Lost/
-    );
+    await assert.rejects(north.handleContent(readStream, metadata), /Connection Lost/);
 
     assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Unexpected OPCUA error: Connection Lost'));
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // reconnect timeout should be set
-    assert.notStrictEqual((north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'], null);
+    assert.notStrictEqual(north['reconnectTimeout'], null);
   });
 
   it('should properly test connection', async () => {
-    const mockSessionClose = mock.fn(async () => undefined);
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose }));
-
     await north.testConnection();
 
-    assert.strictEqual(utilsOpcuaExports.createOPCUASession.mock.calls.length, 1);
-    assert.strictEqual(mockSessionClose.mock.calls.length, 1);
+    assert.strictEqual(createOPCUASession.mock.calls.length, 1);
+    assert.strictEqual(sessionClose.mock.calls.length, 1);
   });
 
   it('should discover endpoints and populate security info in test connection', async () => {
-    const mockSessionClose = mock.fn(async () => undefined);
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: sessionReadMock }));
-
-    const mockEndpointClient = {
-      connect: mock.fn(async () => undefined),
-      getEndpoints: mock.fn(async () => [
-        {
-          securityMode: MessageSecurityMode.None,
-          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#None',
-          userIdentityTokens: [{ tokenType: UserTokenType.Anonymous }, { tokenType: UserTokenType.UserName }]
-        },
-        {
-          securityMode: MessageSecurityMode.SignAndEncrypt,
-          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
-          userIdentityTokens: [{ tokenType: UserTokenType.Certificate }]
-        }
-      ]),
-      disconnect: mock.fn(async () => undefined)
-    };
-    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => mockEndpointClient as unknown);
+    const endpointClient = mockEndpoints([
+      {
+        securityMode: MessageSecurityMode.None,
+        securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#None',
+        userIdentityTokens: [{ tokenType: UserTokenType.Anonymous }, { tokenType: UserTokenType.UserName }]
+      },
+      {
+        securityMode: MessageSecurityMode.SignAndEncrypt,
+        securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+        userIdentityTokens: [{ tokenType: UserTokenType.Certificate }]
+      }
+    ]);
 
     const result = await north.testConnection();
 
     assert.ok(result.items.some(item => item.key === 'SecurityModes'));
     assert.ok(result.items.some(item => item.key === 'SecurityPolicies'));
     assert.ok(result.items.some(item => item.key === 'AuthenticationModes'));
-    assert.strictEqual(mockEndpointClient.connect.mock.calls.length, 1);
-    assert.strictEqual(mockEndpointClient.getEndpoints.mock.calls.length, 1);
-    assert.strictEqual(mockEndpointClient.disconnect.mock.calls.length, 1);
+    assert.strictEqual(endpointClient.connect.mock.calls.length, 1);
+    assert.strictEqual(endpointClient.getEndpoints.mock.calls.length, 1);
+    assert.strictEqual(endpointClient.disconnect.mock.calls.length, 1);
   });
 
   it('should populate server build info items when dataValues report Good status', async () => {
-    const mockSessionClose = mock.fn(async () => undefined);
     const buildInfoDate = new Date('2024-01-01T00:00:00.000Z');
-    const goodDataValues = [
-      { statusCode: { value: StatusCodes.Good.value }, value: { value: 0 } }, // State -> Running
-      { statusCode: { value: StatusCodes.Good.value }, value: { value: 'Acme Corp' } }, // ManufacturerName
-      { statusCode: { value: StatusCodes.Good.value }, value: { value: 'OIBus Simulation Server' } }, // ProductName
-      { statusCode: { value: StatusCodes.Good.value }, value: { value: buildInfoDate } }, // SoftwareVersion (Date branch)
-      { statusCode: { value: StatusCodes.Good.value }, value: { value: '42' } } // BuildNumber
-    ];
-    const buildInfoReadMock = mock.fn(async () => goodDataValues);
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: buildInfoReadMock }));
+    const good = (value: unknown) => ({ statusCode: { value: StatusCodes.Good.value }, value: { value } });
+    sessionRead.mock.mockImplementation(async () => [
+      good(0), // State -> Running
+      good('Acme Corp'), // ManufacturerName
+      good('OIBus Simulation Server'), // ProductName
+      good(buildInfoDate), // SoftwareVersion (Date branch)
+      good('42') // BuildNumber
+    ]);
 
     const result = await north.testConnection();
 
@@ -459,33 +333,23 @@ describe('NorthOPCUA', () => {
     );
     assert.deepStrictEqual(
       result.items.find(item => item.key === 'ProductName'),
-      {
-        key: 'ProductName',
-        value: 'OIBus Simulation Server'
-      }
+      { key: 'ProductName', value: 'OIBus Simulation Server' }
     );
     assert.deepStrictEqual(
       result.items.find(item => item.key === 'SoftwareVersion'),
-      {
-        key: 'SoftwareVersion',
-        value: buildInfoDate.toISOString()
-      }
+      { key: 'SoftwareVersion', value: buildInfoDate.toISOString() }
     );
     assert.deepStrictEqual(
       result.items.find(item => item.key === 'BuildNumber'),
       { key: 'BuildNumber', value: '42' }
     );
-    assert.strictEqual(buildInfoReadMock.mock.calls.length, 1);
-    assert.strictEqual(mockSessionClose.mock.calls.length, 1);
+    assert.strictEqual(sessionRead.mock.calls.length, 1);
+    assert.strictEqual(sessionClose.mock.calls.length, 1);
   });
 
   it('should fall back to raw value when server state is not in the known labels', async () => {
-    const mockSessionClose = mock.fn(async () => undefined);
-    const unknownStateDataValues = [
-      { statusCode: { value: StatusCodes.Good.value }, value: { value: 42 } } // State -> unknown, falls back to String(raw)
-    ];
-    const buildInfoReadMock = mock.fn(async () => unknownStateDataValues);
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: buildInfoReadMock }));
+    // State -> unknown, falls back to String(raw)
+    sessionRead.mock.mockImplementation(async () => [{ statusCode: { value: StatusCodes.Good.value }, value: { value: 42 } }]);
 
     const result = await north.testConnection();
 
@@ -495,27 +359,23 @@ describe('NorthOPCUA', () => {
     );
   });
 
-  it('should fall back to raw values for endpoint discovery when security mode, policy uri and identity tokens are unmapped or missing', async () => {
-    const mockSessionClose = mock.fn(async () => undefined);
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: sessionReadMock }));
+  it('should still test the connection when the server build info cannot be read', async () => {
+    sessionRead.mock.mockImplementation(async () => {
+      throw new Error('BadNodeIdUnknown');
+    });
 
-    const mockEndpointClient = {
-      connect: mock.fn(async () => undefined),
-      getEndpoints: mock.fn(async () => [
-        {
-          securityMode: MessageSecurityMode.Invalid,
-          securityPolicyUri: undefined,
-          userIdentityTokens: undefined
-        },
-        {
-          securityMode: MessageSecurityMode.None,
-          securityPolicyUri: 'no-hash-policy-uri',
-          userIdentityTokens: [{ tokenType: 99 as unknown as UserTokenType }]
-        }
-      ]),
-      disconnect: mock.fn(async () => undefined)
-    };
-    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => mockEndpointClient as unknown);
+    const result = await north.testConnection();
+
+    const buildInfoKeys = ['State', 'ManufacturerName', 'ProductName', 'SoftwareVersion', 'BuildNumber'];
+    assert.ok(!result.items.some(item => buildInfoKeys.includes(item.key)));
+    assert.strictEqual(sessionRead.mock.calls.length, 1);
+  });
+
+  it('should fall back to raw values for endpoint discovery when security mode, policy uri and identity tokens are unmapped or missing', async () => {
+    mockEndpoints([
+      { securityMode: MessageSecurityMode.Invalid, securityPolicyUri: undefined, userIdentityTokens: undefined },
+      { securityMode: MessageSecurityMode.None, securityPolicyUri: 'no-hash-policy-uri', userIdentityTokens: [{ tokenType: 99 }] }
+    ]);
 
     const result = await north.testConnection();
 
@@ -528,10 +388,10 @@ describe('NorthOPCUA', () => {
   });
 
   it('should throw error if test fails', async () => {
-    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => {
+    createOPCUASession.mock.mockImplementation(async () => {
       throw new Error('Auth failed');
     });
 
-    await assert.rejects(async () => north.testConnection(), /Auth failed/);
+    await assert.rejects(north.testConnection(), /Auth failed/);
   });
 });
