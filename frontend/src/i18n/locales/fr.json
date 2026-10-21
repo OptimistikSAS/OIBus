@@ -3457,35 +3457,41 @@
         "command-content": {
           "title": "Contenu de la commande",
           "retrieved-date": "Date de récupération : {{ retrievedDate }}",
+          "json": "Contenu JSON",
           "update-version": {
             "version": "Mise à jour vers la version : {{ version }}",
             "asset-id": "Élément à télécharger : {{ assetId }}",
             "update-launcher": "Mettre à jour le lanceur : {{ updateLauncher }}",
             "backup-folders-patterns": "Sauvegarder les dossiers selon ce motif : {{ backupFoldersPattern }}"
           },
-          "update-engine-settings": {
-            "command-content": "Contenu JSON"
-          },
-          "update-registration-settings": {
-            "command-content": "Contenu JSON"
-          },
           "import-configuration": {
             "file-id": "Fichier de configuration : {{ fileId }}"
           },
           "scan-mode": {
-            "command-content": "Contenu JSON",
             "scan-mode-id": "ID du mode de scan : {{ scanModeId }}"
           },
           "south": {
-            "command-content": "Contenu JSON",
             "south-id": "ID du connecteur South : {{ southConnectorId }}",
             "delete-items-not-present": "Supprimer les éléments absents : {{ deleteItemsNotPresent }}",
             "delimiter": "Délimiteur : {{ delimiter }}",
-            "csv-content": "Contenu CSV : {{ csvContent }}"
+            "csv-content": "Contenu CSV : {{ csvContent }}",
+            "item-id": "ID de l'élément : {{ itemId }}"
           },
           "north": {
-            "command-content": "Contenu JSON",
             "north-id": "ID du connecteur North : {{ northConnectorId }}"
+          },
+          "ip-filter": {
+            "ip-filter-id": "ID du filtre IP : {{ ipFilterId }}"
+          },
+          "certificate": {
+            "certificate-id": "ID du certificat : {{ certificateId }}"
+          },
+          "history-query": {
+            "history-query-id": "ID de la requête d'historique : {{ historyQueryId }}",
+            "history-query-status": "Statut de la requête d'historique : {{ historyQueryStatus }}"
+          },
+          "transformer": {
+            "transformer-id": "ID du transformateur : {{ transformerId }}"
           }
         }
       },

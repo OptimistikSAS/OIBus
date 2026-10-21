@@ -49,36 +49,16 @@
               ></li>
             }
             @case ('update-engine-general') {
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-engine-web-server') {
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-engine-proxy') {
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-engine-logger') {
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('dump-memory') {}
             @case ('retrieve-logs-database') {}
@@ -89,34 +69,19 @@
               ></li>
             }
             @case ('update-registration-settings') {
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.update-registration-settings.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('restart-engine') {}
             @case ('regenerate-cipher-keys') {}
             @case ('create-scan-mode') {
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.scan-mode.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-scan-mode') {
               <li
                 translate="oia-module.commands.details-modal.command-content.scan-mode.scan-mode-id"
                 [translateParams]="{ scanModeId: cmd.scanModeId }"
               ></li>
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.scan-mode.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('delete-scan-mode') {
               <li
@@ -125,24 +90,14 @@
               ></li>
             }
             @case ('create-south') {
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.south.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-south') {
               <li
                 translate="oia-module.commands.details-modal.command-content.south.south-id"
                 [translateParams]="{ southConnectorId: cmd.southConnectorId }"
               ></li>
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.south.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('delete-south') {
               <li
@@ -169,24 +124,14 @@
               ></li>
             }
             @case ('create-north') {
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.north.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-north') {
               <li
                 translate="oia-module.commands.details-modal.command-content.north.north-id"
                 [translateParams]="{ northConnectorId: cmd.northConnectorId }"
               ></li>
-              <li>
-                <span translate="oia-module.commands.details-modal.command-content.north.command-content"></span>
-                <div class="command-json">
-                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
-                </div>
-              </li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('delete-north') {
               <li
@@ -195,91 +140,241 @@
               ></li>
             }
             @case ('create-ip-filter') {
-              <!-- TODO exhaustive switch missing case -->
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-ip-filter') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.ip-filter.ip-filter-id"
+                [translateParams]="{ ipFilterId: cmd.ipFilterId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('delete-ip-filter') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.ip-filter.ip-filter-id"
+                [translateParams]="{ ipFilterId: cmd.ipFilterId }"
+              ></li>
             }
             @case ('create-certificate') {
-              <!-- TODO exhaustive switch missing case -->
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-certificate') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.certificate.certificate-id"
+                [translateParams]="{ certificateId: cmd.certificateId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('delete-certificate') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.certificate.certificate-id"
+                [translateParams]="{ certificateId: cmd.certificateId }"
+              ></li>
             }
             @case ('test-south-connection') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.south-id"
+                [translateParams]="{ southConnectorId: cmd.southConnectorId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('test-south-item') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.south-id"
+                [translateParams]="{ southConnectorId: cmd.southConnectorId }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.item-id"
+                [translateParams]="{ itemId: cmd.itemId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('test-north-connection') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.north-id"
+                [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('create-history-query') {
-              <!-- TODO exhaustive switch missing case -->
+              @if (cmd.southConnectorId) {
+                <li
+                  translate="oia-module.commands.details-modal.command-content.south.south-id"
+                  [translateParams]="{ southConnectorId: cmd.southConnectorId }"
+                ></li>
+              }
+              @if (cmd.northConnectorId) {
+                <li
+                  translate="oia-module.commands.details-modal.command-content.north.north-id"
+                  [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+                ></li>
+              }
+              @if (cmd.historyQueryId) {
+                <li
+                  translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                  [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+                ></li>
+              }
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-history-query') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('delete-history-query') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
             }
             @case ('test-history-query-north-connection') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              @if (cmd.northConnectorId) {
+                <li
+                  translate="oia-module.commands.details-modal.command-content.north.north-id"
+                  [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+                ></li>
+              }
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('test-history-query-south-connection') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              @if (cmd.southConnectorId) {
+                <li
+                  translate="oia-module.commands.details-modal.command-content.south.south-id"
+                  [translateParams]="{ southConnectorId: cmd.southConnectorId }"
+                ></li>
+              }
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('test-history-query-south-item') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              @if (cmd.southConnectorId) {
+                <li
+                  translate="oia-module.commands.details-modal.command-content.south.south-id"
+                  [translateParams]="{ southConnectorId: cmd.southConnectorId }"
+                ></li>
+              }
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.item-id"
+                [translateParams]="{ itemId: cmd.itemId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('create-or-update-history-query-south-items-from-csv') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.delete-items-not-present"
+                [translateParams]="{ deleteItemsNotPresent: cmd.commandContent.deleteItemsNotPresent }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.delimiter"
+                [translateParams]="{ delimiter: cmd.commandContent.delimiter }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.csv-content"
+                [translateParams]="{ csvContent: cmd.commandContent.csvContent }"
+              ></li>
             }
             @case ('update-history-query-status') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-status"
+                [translateParams]="{ historyQueryStatus: cmd.commandContent.historyQueryStatus }"
+              ></li>
             }
             @case ('setpoint') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.north-id"
+                [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('search-north-cache-content') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.north-id"
+                [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('search-history-cache-content') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('get-north-cache-file-content') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.north-id"
+                [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('get-history-cache-file-content') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-north-cache-content') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.north-id"
+                [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-history-cache-content') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.history-query.history-query-id"
+                [translateParams]="{ historyQueryId: cmd.historyQueryId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('create-custom-transformer') {
-              <!-- TODO exhaustive switch missing case -->
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('update-custom-transformer') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.transformer.transformer-id"
+                [translateParams]="{ transformerId: cmd.transformerId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('delete-custom-transformer') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.transformer.transformer-id"
+                [translateParams]="{ transformerId: cmd.transformerId }"
+              ></li>
             }
             @case ('test-custom-transformer') {
-              <!-- TODO exhaustive switch missing case -->
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @case ('test-transformer') {
-              <!-- TODO exhaustive switch missing case -->
+              <li
+                translate="oia-module.commands.details-modal.command-content.transformer.transformer-id"
+                [translateParams]="{ transformerId: cmd.transformerId }"
+              ></li>
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }
             @default never(cmd);
           }
@@ -288,6 +383,14 @@
     </div>
   }
 </div>
+<ng-template #content let-content>
+  <li>
+    <span translate="oia-module.commands.details-modal.command-content.json"></span>
+    <div class="command-json">
+      <pre><code>{{ content | json }}</code></pre>
+    </div>
+  </li>
+</ng-template>
 <div class="modal-footer">
   <div class="btn-group">
     <button type="button" class="btn btn-primary" (click)="close()" translate="common.close" id="close-button"></button>
