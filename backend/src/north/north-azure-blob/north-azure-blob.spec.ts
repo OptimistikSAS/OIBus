@@ -1,109 +1,90 @@
 import assert from 'node:assert/strict';
-import { ReadStream } from 'node:fs';
+import type { ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
+
+import type { BlobServiceClient, BlockBlobClient, ContainerClient } from '@azure/storage-blob';
+import type { DataLakeFileClient, DataLakeFileSystemClient, DataLakeServiceClient } from '@azure/storage-file-datalake';
 
 import type { NorthAzureBlobSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import type * as Utils from '../../service/utils';
+import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import testData from '../../tests/utils/test-data';
-import { buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { buildNorthEntity, createMock, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type NorthAzureBlobClass from './north-azure-blob';
 
 const nodeRequire = createRequire(import.meta.url);
 
+// The stream is only handed to the (mocked) Azure clients
+const readStream = {} as ReadStream;
+const metadata = (contentSize: number): CacheMetadata => ({
+  contentFile: 'file.csv',
+  contentSize,
+  numberOfElement: 0,
+  createdAt: '',
+  contentType: 'any'
+});
+
+const buildSettings = (settings: Partial<NorthAzureBlobSettings> = {}): NorthAzureBlobSettings => ({
+  useCustomUrl: false,
+  useADLS: false,
+  account: 'account',
+  container: 'container',
+  path: '',
+  authentication: 'sas-token',
+  sasToken: 'sas',
+  accessKey: '',
+  tenantId: '',
+  clientId: '',
+  clientSecret: '',
+  useProxy: false,
+  ...settings
+});
+
+type ConstructorMock = Mock<(...args: Array<unknown>) => object>;
+// The Azure SDK classes are called with `new`: the mocks must be regular functions
+const constructorMock = (): ConstructorMock =>
+  mock.fn(function (..._args: Array<unknown>) {
+    return {};
+  });
+
 describe('NorthAzureBlob', () => {
   let NorthAzureBlob: typeof NorthAzureBlobClass;
   let north: NorthAzureBlobClass;
+  let logger: PinoLogger;
 
-  const logger = new PinoLogger();
-  const cacheService = new CacheServiceMock();
-  const oiBusTransformer = new OIBusTransformerMock();
-  const encryptionServiceMock = new EncryptionServiceMock('', '');
+  let BlobServiceClientMock: ConstructorMock;
+  let StorageSharedKeyCredentialMock: ConstructorMock;
+  let DataLakeServiceClientMock: ConstructorMock;
+  let DataLakeStorageSharedKeyCredentialMock: ConstructorMock;
+  let ClientSecretCredentialMock: ConstructorMock;
+  let DefaultAzureCredentialMock: ConstructorMock;
 
-  const transformerExports = {
-    createTransformer: mock.fn(() => oiBusTransformer)
-  };
+  const azureStorageBlobExports: Record<string, unknown> = {};
+  const azureStorageFileDatalakeExports: Record<string, unknown> = {};
+  const azureIdentityExports: Record<string, unknown> = {};
+  const utilsExports: typeof Utils = { ...nodeRequire('../../service/utils') };
 
-  const utilsExports = {
-    streamToString: mock.fn(async () => '[]'),
-    checkAge: mock.fn(() => true),
-    compress: mock.fn(async () => undefined),
-    delay: mock.fn(async () => undefined),
-    generateIntervals: mock.fn(() => []),
-    groupItemsByGroup: mock.fn(() => []),
-    validateCronExpression: mock.fn(() => ({ expression: '' }))
-  };
-
-  // Azure SDK mock classes (need to be real constructors)
-  const BlobServiceClientMock = mock.fn(function (..._args: Array<unknown>) {
-    return {};
-  });
-  const StorageSharedKeyCredentialMock = mock.fn(function (..._args: Array<unknown>) {
-    return {};
-  });
-  const DataLakeServiceClientMock = mock.fn(function (..._args: Array<unknown>) {
-    return {};
-  });
-  const DataLakeStorageSharedKeyCredentialMock = mock.fn(function (..._args: Array<unknown>) {
-    return {};
-  });
-  const ClientSecretCredentialMock = mock.fn(function (..._args: Array<unknown>) {
-    return {};
-  });
-  const DefaultAzureCredentialMock = mock.fn(function (..._args: Array<unknown>) {
-    return {};
-  });
-
-  const azureStorageBlobExports = {
-    __esModule: true,
-    BlobServiceClient: BlobServiceClientMock,
-    StorageSharedKeyCredential: StorageSharedKeyCredentialMock
-  };
-
-  const azureStorageFileDatalakeExports = {
-    __esModule: true,
-    DataLakeServiceClient: DataLakeServiceClientMock,
-    StorageSharedKeyCredential: DataLakeStorageSharedKeyCredentialMock
-  };
-
-  const azureIdentityExports = {
-    __esModule: true,
-    ClientSecretCredential: ClientSecretCredentialMock,
-    DefaultAzureCredential: DefaultAzureCredentialMock
-  };
-
-  const cronMockInstance = { stop: mock.fn(), start: mock.fn() };
-  const cronExports = {
-    CronJob: mock.fn(function () {
-      return cronMockInstance;
-    })
+  const createNorth = (settings: Partial<NorthAzureBlobSettings> = {}) => {
+    north = new NorthAzureBlob(buildNorthEntity<NorthAzureBlobSettings>('azure-blob', buildSettings(settings)), createCacheServiceMock());
   };
 
   before(() => {
-    mockModule(nodeRequire, 'cron', cronExports);
-    mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
-    mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '../../service/encryption.service', {
-      __esModule: true,
-      encryptionService: encryptionServiceMock
-    });
-    mockModule(nodeRequire, '../../service/cache/cache.service', {
-      __esModule: true,
-      default: function () {
-        return cacheService;
-      }
-    });
     mockModule(nodeRequire, '@azure/storage-blob', azureStorageBlobExports);
     mockModule(nodeRequire, '@azure/storage-file-datalake', azureStorageFileDatalakeExports);
     mockModule(nodeRequire, '@azure/identity', azureIdentityExports);
-    mockModule(nodeRequire, 'node:fs/promises', { __esModule: true });
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, '../../service/encryption.service', {
+      __esModule: true,
+      encryptionService: { decryptText: async (text: string) => text }
+    });
+    // No transformation here: don't pay for loading every transformer
+    mockModule(nodeRequire, '../../service/transformer.service', {});
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -111,45 +92,60 @@ describe('NorthAzureBlob', () => {
   });
 
   beforeEach(() => {
-    transformerExports.createTransformer.mock.resetCalls();
-    logger.trace.mock.resetCalls();
-    logger.debug.mock.resetCalls();
-    logger.info.mock.resetCalls();
-    logger.warn.mock.resetCalls();
-    logger.error.mock.resetCalls();
-    BlobServiceClientMock.mock.resetCalls();
-    StorageSharedKeyCredentialMock.mock.resetCalls();
-    DataLakeServiceClientMock.mock.resetCalls();
-    DataLakeStorageSharedKeyCredentialMock.mock.resetCalls();
-    ClientSecretCredentialMock.mock.resetCalls();
-    DefaultAzureCredentialMock.mock.resetCalls();
-    encryptionServiceMock.decryptText.mock.resetCalls();
+    logger = new PinoLogger();
+    BlobServiceClientMock = constructorMock();
+    StorageSharedKeyCredentialMock = constructorMock();
+    DataLakeServiceClientMock = constructorMock();
+    DataLakeStorageSharedKeyCredentialMock = constructorMock();
+    ClientSecretCredentialMock = constructorMock();
+    DefaultAzureCredentialMock = constructorMock();
+    Object.assign(azureStorageBlobExports, {
+      BlobServiceClient: BlobServiceClientMock,
+      StorageSharedKeyCredential: StorageSharedKeyCredentialMock
+    });
+    Object.assign(azureStorageFileDatalakeExports, {
+      DataLakeServiceClient: DataLakeServiceClientMock,
+      StorageSharedKeyCredential: DataLakeStorageSharedKeyCredentialMock
+    });
+    Object.assign(azureIdentityExports, {
+      ClientSecretCredential: ClientSecretCredentialMock,
+      DefaultAzureCredential: DefaultAzureCredentialMock
+    });
+    // start() waits for runMinDelay before checking the cache
+    Object.assign(utilsExports, { delay: async () => undefined });
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    north = new NorthAzureBlob(
-      buildNorthEntity<NorthAzureBlobSettings>('azure-blob', {
-        useCustomUrl: false,
-        useADLS: false,
-        account: 'account',
-        container: 'container',
-        path: '',
-        authentication: 'sas-token',
-        sasToken: 'sas',
-        accessKey: '',
-        tenantId: '',
-        clientId: '',
-        clientSecret: '',
-        useProxy: false
-      }),
-      cacheService
-    );
+    createNorth();
   });
 
   afterEach(() => {
     mock.timers.reset();
     mock.restoreAll();
-    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
+
+  /** Gives the connector a Blob Storage client whose containers return this block blob client */
+  const setBlobClient = (blockBlobClient: Mocked<BlockBlobClient>) => {
+    const containerClient = createMock<ContainerClient>({ getBlockBlobClient: () => blockBlobClient });
+    const blobClient = createMock<BlobServiceClient>({ getContainerClient: () => containerClient });
+    north['blobClient'] = blobClient;
+    return blobClient;
+  };
+
+  /** Gives the connector a Data Lake client whose file systems return this file client */
+  const setDataLakeClient = (fileClient: Mocked<DataLakeFileClient>) => {
+    const fileSystemClient = createMock<DataLakeFileSystemClient>({ getFileClient: () => fileClient });
+    const dataLakeClient = createMock<DataLakeServiceClient>({ getFileSystemClient: () => fileSystemClient });
+    north['dataLakeClient'] = dataLakeClient;
+    return { dataLakeClient, fileSystemClient };
+  };
+
+  const assertConnectingLog = (storage: string, settings: NorthAzureBlobSettings) => {
+    assert.ok(
+      (logger.info.mock.calls[0].arguments[0] as string).includes(
+        `Connecting to ${storage} for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
+      )
+    );
+  };
 
   it('should retrieve supported types', () => {
     assert.deepStrictEqual(north.supportedTypes(), ['any']);
@@ -164,17 +160,13 @@ describe('NorthAzureBlob', () => {
 
   it('should properly test connection with Azure Blob Storage', async () => {
     const prepareConnectionMock = mock.method(north, 'prepareConnection', async () => undefined);
-    const fileClient = {
-      upload: mock.fn(async () => undefined),
-      exists: mock.fn(async () => true),
-      deleteIfExists: mock.fn(async () => {
+    const fileClient = createMock<BlockBlobClient>({
+      exists: async () => true,
+      deleteIfExists: async () => {
         throw new Error('delete error');
-      })
-    };
-    const blobServiceClient = {
-      getContainerClient: mock.fn(() => ({ getBlockBlobClient: mock.fn(() => fileClient) }))
-    };
-    north['blobClient'] = blobServiceClient as unknown as (typeof north)['blobClient'];
+      }
+    });
+    const blobServiceClient = setBlobClient(fileClient);
     const testResult = await north.testConnection();
     assert.strictEqual(prepareConnectionMock.mock.calls.length, 1);
     assert.deepStrictEqual(prepareConnectionMock.mock.calls[0].arguments, [north.connectorConfiguration.settings]);
@@ -196,15 +188,8 @@ describe('NorthAzureBlob', () => {
 
   it('should properly test connection with Azure Blob Storage and successful delete', async () => {
     const prepareConnectionMock = mock.method(north, 'prepareConnection', async () => undefined);
-    const fileClient = {
-      upload: mock.fn(async () => undefined),
-      exists: mock.fn(async () => true),
-      deleteIfExists: mock.fn(async () => undefined)
-    };
-    const blobServiceClient = {
-      getContainerClient: mock.fn(() => ({ getBlockBlobClient: mock.fn(() => fileClient) }))
-    };
-    north['blobClient'] = blobServiceClient as unknown as (typeof north)['blobClient'];
+    const fileClient = createMock<BlockBlobClient>({ exists: async () => true });
+    setBlobClient(fileClient);
     const testResult = await north.testConnection();
     assert.strictEqual(prepareConnectionMock.mock.calls.length, 1);
     assert.strictEqual(fileClient.deleteIfExists.mock.calls.length, 1);
@@ -219,36 +204,18 @@ describe('NorthAzureBlob', () => {
   });
 
   it('should properly test connection with Azure Data Lake Storage', async () => {
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: true,
-      account: 'account',
-      container: 'container',
-      path: 'oibus',
-      authentication: 'sas-token',
-      sasToken: 'sas',
-      accessKey: '',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
-      useProxy: false
-    };
-    north.connectorConfiguration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', settings);
+    createNorth({ useADLS: true, path: 'oibus' });
+    const settings = north.connectorConfiguration.settings;
     const prepareConnectionMock = mock.method(north, 'prepareConnection', async () => undefined);
-    const fileClient = {
-      createIfNotExists: mock.fn(async () => undefined),
-      exists: mock.fn(async () => false),
-      delete: mock.fn(async () => {
+    const fileClient = createMock<DataLakeFileClient>({
+      exists: async () => false,
+      delete: async () => {
         throw new Error('delete error');
-      })
-    };
-    const fileSystemClient = { getFileClient: mock.fn(() => fileClient) };
-    const dataLakeClient = {
-      getFileSystemClient: mock.fn(() => fileSystemClient)
-    };
-    north['dataLakeClient'] = dataLakeClient as unknown as (typeof north)['dataLakeClient'];
+      }
+    });
+    const { dataLakeClient, fileSystemClient } = setDataLakeClient(fileClient);
     await assert.rejects(
-      async () => north.testConnection(),
+      north.testConnection(),
       new Error(`Container ${settings.container} and path "oibus/oibus-azure-test.txt" does not exist`)
     );
     assert.strictEqual(prepareConnectionMock.mock.calls.length, 1);
@@ -266,32 +233,9 @@ describe('NorthAzureBlob', () => {
   });
 
   it('should properly test connection with Azure Data Lake Storage success and undefined account', async () => {
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: true,
-      account: undefined,
-      container: 'mycontainer',
-      path: '',
-      authentication: 'external',
-      sasToken: '',
-      accessKey: '',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
-      useProxy: false
-    };
-    north.connectorConfiguration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', settings);
+    createNorth({ useADLS: true, account: undefined, container: 'mycontainer', authentication: 'external', sasToken: '' });
     mock.method(north, 'prepareConnection', async () => undefined);
-    const fileClient = {
-      createIfNotExists: mock.fn(async () => undefined),
-      exists: mock.fn(async () => true),
-      delete: mock.fn(async () => undefined)
-    };
-    const fileSystemClient = { getFileClient: mock.fn(() => fileClient) };
-    const dataLakeClient = {
-      getFileSystemClient: mock.fn(() => fileSystemClient)
-    };
-    north['dataLakeClient'] = dataLakeClient as unknown as (typeof north)['dataLakeClient'];
+    setDataLakeClient(createMock<DataLakeFileClient>({ exists: async () => true }));
 
     const testResult = await north.testConnection();
 
@@ -334,26 +278,9 @@ describe('NorthAzureBlob', () => {
 
   it('should properly prepare Azure Blob Storage connection without proxy and standard url', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: false,
-      account: 'account',
-      container: 'container',
-      path: '',
-      authentication: 'sas-token',
-      sasToken: 'my token',
-      accessKey: '',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
-      useProxy: false
-    };
+    const settings = buildSettings({ sasToken: 'my token' });
     await north.prepareConnection(settings);
-    assert.ok(
-      (logger.info.mock.calls[0].arguments[0] as string).includes(
-        `Connecting to Azure Blob Storage for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
-      )
-    );
+    assertConnectingLog('Azure Blob Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(BlobServiceClientMock.mock.calls.length, 1);
     assert.deepStrictEqual(
@@ -364,30 +291,18 @@ describe('NorthAzureBlob', () => {
 
   it('should properly prepare Azure Data Lake Storage connection with proxy and custom url', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: 'localhost', proxyPort: 8080 }));
-    const settings: NorthAzureBlobSettings = {
+    const settings = buildSettings({
       useCustomUrl: true,
       useADLS: true,
-      account: 'account',
-      container: 'container',
       customUrl: 'https://custom-url',
-      path: '',
-      authentication: 'sas-token',
       sasToken: 'my token',
-      accessKey: '',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
       useProxy: true,
       proxyUrl: 'http://localhost:8080',
       proxyUsername: '',
       proxyPassword: ''
-    };
+    });
     await north.prepareConnection(settings);
-    assert.ok(
-      (logger.info.mock.calls[0].arguments[0] as string).includes(
-        `Connecting to Azure Data Lake Storage for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
-      )
-    );
+    assertConnectingLog('Azure Data Lake Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 1);
     assert.deepStrictEqual(parseProxyUrlMock.mock.calls[0].arguments, [settings.proxyUrl]);
     assert.strictEqual(DataLakeServiceClientMock.mock.calls.length, 1);
@@ -404,30 +319,19 @@ describe('NorthAzureBlob', () => {
 
   it('should properly prepare Azure Data Lake Storage connection with proxy, standard url and access token', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: 'localhost', proxyPort: 8080 }));
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
+    const settings = buildSettings({
       useADLS: true,
-      account: 'account',
-      container: 'container',
       customUrl: 'custom-url',
-      path: '',
       authentication: 'access-key',
       sasToken: '',
       accessKey: 'my access key',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
       useProxy: true,
       proxyUrl: 'http://localhost:8080',
       proxyUsername: 'username',
       proxyPassword: 'password'
-    };
+    });
     await north.prepareConnection(settings);
-    assert.ok(
-      (logger.info.mock.calls[0].arguments[0] as string).includes(
-        `Connecting to Azure Data Lake Storage for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
-      )
-    );
+    assertConnectingLog('Azure Data Lake Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 1);
     assert.deepStrictEqual(parseProxyUrlMock.mock.calls[0].arguments, [settings.proxyUrl]);
     assert.strictEqual(DataLakeStorageSharedKeyCredentialMock.mock.calls.length, 1);
@@ -446,27 +350,15 @@ describe('NorthAzureBlob', () => {
 
   it('should properly prepare Azure Blob Storage connection without proxy, custom url and access token', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
-    const settings: NorthAzureBlobSettings = {
+    const settings = buildSettings({
       useCustomUrl: true,
-      useADLS: false,
-      account: 'account',
-      container: 'container',
       customUrl: 'https://custom-url',
-      path: '',
       authentication: 'access-key',
       sasToken: '',
-      accessKey: 'my access key',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
-      useProxy: false
-    };
+      accessKey: 'my access key'
+    });
     await north.prepareConnection(settings);
-    assert.ok(
-      (logger.info.mock.calls[0].arguments[0] as string).includes(
-        `Connecting to Azure Blob Storage for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
-      )
-    );
+    assertConnectingLog('Azure Blob Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(StorageSharedKeyCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(StorageSharedKeyCredentialMock.mock.calls[0].arguments, [settings.account, settings.accessKey]);
@@ -474,29 +366,20 @@ describe('NorthAzureBlob', () => {
     assert.deepStrictEqual(BlobServiceClientMock.mock.calls[0].arguments[0], `https://custom-url`);
   });
 
+  const aadSettings: Partial<NorthAzureBlobSettings> = {
+    customUrl: 'custom-url',
+    authentication: 'aad',
+    sasToken: '',
+    tenantId: 'tenantId',
+    clientId: 'clientId',
+    clientSecret: 'secret'
+  };
+
   it('should properly prepare Azure Blob Storage connection without proxy, standard url and aad', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: false,
-      account: 'account',
-      container: 'container',
-      customUrl: 'custom-url',
-      path: '',
-      authentication: 'aad',
-      sasToken: '',
-      accessKey: '',
-      tenantId: 'tenantId',
-      clientId: 'clientId',
-      clientSecret: 'secret',
-      useProxy: false
-    };
+    const settings = buildSettings(aadSettings);
     await north.prepareConnection(settings);
-    assert.ok(
-      (logger.info.mock.calls[0].arguments[0] as string).includes(
-        `Connecting to Azure Blob Storage for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
-      )
-    );
+    assertConnectingLog('Azure Blob Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, [
@@ -510,27 +393,9 @@ describe('NorthAzureBlob', () => {
 
   it('should properly prepare Azure Data Lake Storage connection without proxy, standard url and aad', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: true,
-      account: 'account',
-      container: 'container',
-      customUrl: 'custom-url',
-      path: '',
-      authentication: 'aad',
-      sasToken: '',
-      accessKey: '',
-      tenantId: 'tenantId',
-      clientId: 'clientId',
-      clientSecret: 'secret',
-      useProxy: false
-    };
+    const settings = buildSettings({ ...aadSettings, useADLS: true });
     await north.prepareConnection(settings);
-    assert.ok(
-      (logger.info.mock.calls[0].arguments[0] as string).includes(
-        `Connecting to Azure Data Lake Storage for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
-      )
-    );
+    assertConnectingLog('Azure Data Lake Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, [
@@ -544,27 +409,9 @@ describe('NorthAzureBlob', () => {
 
   it('should properly prepare Azure Blob Storage connection without proxy, standard url and external', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: false,
-      account: 'account',
-      container: 'container',
-      customUrl: 'custom-url',
-      path: '',
-      authentication: 'external',
-      sasToken: '',
-      accessKey: '',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
-      useProxy: false
-    };
+    const settings = buildSettings({ customUrl: 'custom-url', authentication: 'external', sasToken: '' });
     await north.prepareConnection(settings);
-    assert.ok(
-      (logger.info.mock.calls[0].arguments[0] as string).includes(
-        `Connecting to Azure Blob Storage for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
-      )
-    );
+    assertConnectingLog('Azure Blob Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
     assert.strictEqual(BlobServiceClientMock.mock.calls.length, 1);
@@ -573,27 +420,9 @@ describe('NorthAzureBlob', () => {
 
   it('should properly prepare Azure Data Lake Storage connection without proxy, standard url and external', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: true,
-      account: 'account',
-      container: 'container',
-      customUrl: 'custom-url',
-      path: '',
-      authentication: 'external',
-      sasToken: '',
-      accessKey: '',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
-      useProxy: false
-    };
+    const settings = buildSettings({ useADLS: true, customUrl: 'custom-url', authentication: 'external', sasToken: '' });
     await north.prepareConnection(settings);
-    assert.ok(
-      (logger.info.mock.calls[0].arguments[0] as string).includes(
-        `Connecting to Azure Data Lake Storage for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
-      )
-    );
+    assertConnectingLog('Azure Data Lake Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
     assert.strictEqual(DataLakeServiceClientMock.mock.calls.length, 1);
@@ -601,107 +430,46 @@ describe('NorthAzureBlob', () => {
   });
 
   it('should properly handle content with Azure Blob Storage', async () => {
-    const readStream = {} as ReadStream;
-    const metadata = { contentFile: 'file.csv', contentSize: 123 } as CacheMetadata;
-    const fileClient = {
-      upload: mock.fn(async () => ({ requestId: 'requestId1' }))
-    };
-    const blobServiceClient = {
-      getContainerClient: mock.fn(() => ({ getBlockBlobClient: mock.fn(() => fileClient) }))
-    };
-    north['blobClient'] = blobServiceClient as unknown as (typeof north)['blobClient'];
-    await north.handleContent(readStream, metadata);
+    const fileClient = createMock<BlockBlobClient>({ upload: async () => ({ requestId: 'requestId1' }) });
+    const blobServiceClient = setBlobClient(fileClient);
+    await north.handleContent(readStream, metadata(123));
     assert.strictEqual(blobServiceClient.getContainerClient.mock.calls.length, 1);
     assert.deepStrictEqual(blobServiceClient.getContainerClient.mock.calls[0].arguments, [north.connectorConfiguration.settings.container]);
     assert.strictEqual(fileClient.upload.mock.calls.length, 1);
-    assert.deepStrictEqual(fileClient.upload.mock.calls[0].arguments, [readStream, metadata.contentSize]);
-    assert.ok(
-      (logger.info.mock.calls.find(c => (c.arguments[0] as string).includes('requestId1')) as { arguments: Array<unknown> } | undefined) !==
-        undefined
-    );
+    assert.deepStrictEqual(fileClient.upload.mock.calls[0].arguments, [readStream, 123]);
+    assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string).includes('requestId1')));
   });
 
   it('should properly handle content with Azure Data Lake Storage', async () => {
-    const readStream = {} as ReadStream;
-    const metadata = { contentFile: 'file.csv', contentSize: 123 } as CacheMetadata;
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: true,
-      account: 'account',
-      container: 'container',
-      path: 'oibus',
-      authentication: 'sas-token',
-      sasToken: 'sas',
-      accessKey: '',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
-      useProxy: false
-    };
-    north.connectorConfiguration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', settings);
-    const fileClient = {
-      createIfNotExists: mock.fn(async () => ({ requestId: 'requestId1' })),
-      append: mock.fn(async () => undefined),
-      flush: mock.fn(async () => ({ requestId: 'requestId2' }))
-    };
-    const fileSystemClient = { getFileClient: mock.fn(() => fileClient) };
-    const dataLakeClient = {
-      getFileSystemClient: mock.fn(() => fileSystemClient)
-    };
-    north['dataLakeClient'] = dataLakeClient as unknown as (typeof north)['dataLakeClient'];
-    await north.handleContent(readStream, metadata);
+    createNorth({ useADLS: true, path: 'oibus' });
+    const fileClient = createMock<DataLakeFileClient>({
+      createIfNotExists: async () => ({ requestId: 'requestId1' }),
+      flush: async () => ({ requestId: 'requestId2' })
+    });
+    const { dataLakeClient, fileSystemClient } = setDataLakeClient(fileClient);
+    await north.handleContent(readStream, metadata(123));
     assert.strictEqual(dataLakeClient.getFileSystemClient.mock.calls.length, 1);
-    assert.deepStrictEqual(dataLakeClient.getFileSystemClient.mock.calls[0].arguments, [settings.container]);
+    assert.deepStrictEqual(dataLakeClient.getFileSystemClient.mock.calls[0].arguments, ['container']);
     assert.strictEqual(fileSystemClient.getFileClient.mock.calls.length, 1);
-    assert.deepStrictEqual(fileSystemClient.getFileClient.mock.calls[0].arguments, [`oibus/${metadata.contentFile}`]);
+    assert.deepStrictEqual(fileSystemClient.getFileClient.mock.calls[0].arguments, ['oibus/file.csv']);
     assert.strictEqual(fileClient.createIfNotExists.mock.calls.length, 1);
     assert.strictEqual(fileClient.append.mock.calls.length, 1);
     assert.strictEqual(fileClient.flush.mock.calls.length, 1);
-    assert.ok(
-      (logger.info.mock.calls.find(c => (c.arguments[0] as string).includes('requestId2')) as { arguments: Array<unknown> } | undefined) !==
-        undefined
-    );
+    assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string).includes('requestId2')));
   });
 
   it('should properly handle content with Azure Data Lake Storage with empty content', async () => {
-    const readStream = {} as ReadStream;
-    const metadata = { contentFile: 'file.csv', contentSize: 0 } as CacheMetadata;
-    const settings: NorthAzureBlobSettings = {
-      useCustomUrl: false,
-      useADLS: true,
-      account: 'account',
-      container: 'container',
-      path: '',
-      authentication: 'sas-token',
-      sasToken: 'sas',
-      accessKey: '',
-      tenantId: '',
-      clientId: '',
-      clientSecret: '',
-      useProxy: false
-    };
-    north.connectorConfiguration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', settings);
-    const fileClient = {
-      createIfNotExists: mock.fn(async () => ({ requestId: 'requestId1' })),
-      append: mock.fn(async () => undefined),
-      flush: mock.fn(async () => undefined)
-    };
-    const fileSystemClient = { getFileClient: mock.fn(() => fileClient) };
-    const dataLakeClient = {
-      getFileSystemClient: mock.fn(() => fileSystemClient)
-    };
-    north['dataLakeClient'] = dataLakeClient as unknown as (typeof north)['dataLakeClient'];
-    await north.handleContent(readStream, metadata);
+    createNorth({ useADLS: true });
+    const fileClient = createMock<DataLakeFileClient>({ createIfNotExists: async () => ({ requestId: 'requestId1' }) });
+    const { dataLakeClient, fileSystemClient } = setDataLakeClient(fileClient);
+    await north.handleContent(readStream, metadata(0));
     assert.strictEqual(dataLakeClient.getFileSystemClient.mock.calls.length, 1);
-    assert.deepStrictEqual(dataLakeClient.getFileSystemClient.mock.calls[0].arguments, [settings.container]);
+    assert.deepStrictEqual(dataLakeClient.getFileSystemClient.mock.calls[0].arguments, ['container']);
     assert.strictEqual(fileSystemClient.getFileClient.mock.calls.length, 1);
-    assert.deepStrictEqual(fileSystemClient.getFileClient.mock.calls[0].arguments, [metadata.contentFile]);
+    assert.deepStrictEqual(fileSystemClient.getFileClient.mock.calls[0].arguments, ['file.csv']);
     assert.strictEqual(fileClient.createIfNotExists.mock.calls.length, 1);
     assert.strictEqual(fileClient.append.mock.calls.length, 0);
     assert.strictEqual(fileClient.flush.mock.calls.length, 0);
-    assert.ok(
-      (logger.info.mock.calls.find(c => (c.arguments[0] as string).includes('requestId1')) as { arguments: Array<unknown> } | undefined) !==
-        undefined
-    );
+    assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string).includes('requestId1')));
   });
 });

@@ -1,90 +1,71 @@
 import assert from 'node:assert/strict';
-import type { ReadStream } from 'node:fs';
+import nodeFs, { type ReadStream, type WriteStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import streamPromises from 'node:stream/promises';
+import { after, afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
 
 import type { NorthFileWriterSettings } from '../../../shared/model/connector/north-settings.model';
+import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
 import type { NorthConnectorEntity } from '../../model/north-connector.model';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import type CacheService from '../../service/cache/cache.service';
+import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import testData from '../../tests/utils/test-data';
-import { buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { buildNorthEntity, createMock, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type NorthFileWriterClass from './north-file-writer';
 
 const nodeRequire = createRequire(import.meta.url);
 
-// Load these via CJS require so we can use mock.method on the shared module objects
-const streamPromises = nodeRequire('node:stream/promises') as { pipeline: (...args: Array<unknown>) => Promise<void> };
-const nodeFs = nodeRequire('node:fs') as { createWriteStream: (...args: Array<unknown>) => unknown };
+const readStream = {} as ReadStream;
+const metadata = (contentFile: string, contentSize = 1234): CacheMetadata => ({
+  contentFile,
+  contentSize,
+  numberOfElement: 1,
+  createdAt: '2020-02-02T02:02:02.222Z',
+  contentType: 'any'
+});
+const UNC_FOLDER = '\\\\server\\share\\out';
 
 describe('NorthFileWriter', () => {
   let NorthFileWriter: typeof NorthFileWriterClass;
   let north: NorthFileWriterClass;
 
-  const logger = new PinoLogger();
-  const cacheService = new CacheServiceMock();
-  const oiBusTransformer = new OIBusTransformerMock();
-
-  const mockWriteStream = { write: mock.fn(), end: mock.fn() };
-
-  const transformerExports = {
-    createTransformer: mock.fn(() => oiBusTransformer)
-  };
-
-  // node:child_process's `execFile` is captured (via promisify) into a local `execFile` const at
-  // module-load time, so it must be mocked BEFORE the SUT is loaded — mutating it afterwards
-  // (like the in-place fs/stream mocks above) would not reach the already-captured reference.
-  const execFileMock = mock.fn(
-    (_cmd: string, _args: Array<string>, callback: (error: Error | null, stdout?: string, stderr?: string) => void) => {
-      callback(new Error('ENOENT: cmdkey not found'));
-    }
-  );
-  const decryptTextMock = mock.fn(async (_value: string) => 'decrypted-password');
+  let logger: PinoLogger;
+  let cacheService: Mocked<CacheService>;
+  let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
+  let writeStream: WriteStream;
+  let createWriteStreamMock: Mock<typeof nodeFs.createWriteStream>;
+  let pipelineMock: Mock<typeof streamPromises.pipeline>;
 
   before(() => {
-    mockModule(nodeRequire, 'node:child_process', { execFile: execFileMock });
-    mockModule(nodeRequire, '../../service/encryption.service', { encryptionService: { decryptText: decryptTextMock } });
-    mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
-    mockModule(nodeRequire, '../../service/cache/cache.service', {
-      __esModule: true,
-      default: function () {
-        return cacheService;
-      }
-    });
+    mockModule(nodeRequire, '../../service/encryption.service', { encryptionService: { decryptText: async () => 'decrypted-password' } });
+    // No transformation here: don't pay for loading every transformer
+    mockModule(nodeRequire, '../../service/transformer.service', {});
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
     NorthFileWriter = reloadModule<{ default: typeof NorthFileWriterClass }>(nodeRequire, './north-file-writer').default;
   });
 
-  let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
+  /** Creates the connector with the given settings on top of the default ones */
+  const createNorth = (settings: Partial<NorthFileWriterSettings> = {}) => {
+    Object.assign(configuration.settings, settings);
+    north = new NorthFileWriter(configuration, cacheService);
+  };
 
   beforeEach(() => {
-    transformerExports.createTransformer.mock.resetCalls();
-    logger.trace.mock.resetCalls();
-    logger.debug.mock.resetCalls();
-    logger.info.mock.resetCalls();
-    logger.warn.mock.resetCalls();
-    logger.error.mock.resetCalls();
-
-    // Reset execFile/decryptText mocks to their default (failing) behaviour
-    execFileMock.mock.resetCalls();
-    execFileMock.mock.mockImplementation(
-      (_cmd: string, _args: Array<string>, callback: (error: Error | null, stdout?: string, stderr?: string) => void) => {
-        callback(new Error('ENOENT: cmdkey not found'));
-      }
-    );
-    decryptTextMock.mock.resetCalls();
-    decryptTextMock.mock.mockImplementation(async () => 'decrypted-password');
-
+    logger = new PinoLogger();
+    cacheService = createCacheServiceMock();
+    writeStream = createMock<WriteStream>();
+    createWriteStreamMock = mock.method(nodeFs, 'createWriteStream', () => writeStream);
+    pipelineMock = mock.method(streamPromises, 'pipeline', async () => undefined);
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     configuration = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
@@ -92,14 +73,12 @@ describe('NorthFileWriter', () => {
       prefix: 'prefix_',
       suffix: '_suffix'
     });
-
-    north = new NorthFileWriter(configuration, cacheService);
+    createNorth();
   });
 
   afterEach(() => {
     mock.timers.reset();
     mock.restoreAll();
-    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should retrieve supported types', () => {
@@ -107,115 +86,56 @@ describe('NorthFileWriter', () => {
   });
 
   it('should properly handle files with prefix and suffix', async () => {
-    const readStream = {} as ReadStream;
-    const metadata = {
-      contentFile: 'file-123456789.txt',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any'
-    };
+    await north.handleContent(readStream, metadata('file-123456789.txt'));
 
-    const expectedFilename = `prefix_file-123456789_suffix.txt`;
-    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    const expectedPath = path.join(expectedOutputFolder, expectedFilename);
-
-    const createWriteStreamMock = mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
-    const pipelineMock = mock.method(streamPromises, 'pipeline', async () => undefined);
-
-    await north.handleContent(readStream, metadata);
-
+    const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), 'prefix_file-123456789_suffix.txt');
     assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
     assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, [expectedPath]);
     assert.strictEqual(pipelineMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, mockWriteStream]);
+    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, writeStream]);
   });
 
   it('should properly handle files with dynamic replacements in prefix/suffix', async () => {
-    configuration.settings.prefix = 'pre_@ConnectorName_';
-    configuration.settings.suffix = '_@CurrentDate_suf';
-    north = new NorthFileWriter(configuration, cacheService);
+    createNorth({ prefix: 'pre_@ConnectorName_', suffix: '_@CurrentDate_suf' });
 
-    const readStream = {} as ReadStream;
-    const metadata = {
-      contentFile: 'data.csv',
-      contentSize: 100,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any'
-    };
+    await north.handleContent(readStream, metadata('data.csv', 100));
 
     const nowDate = DateTime.fromMillis(new Date(testData.constants.dates.FAKE_NOW).getTime()).toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
-
-    const p = `pre_${configuration.name}_`;
-    const s = `_${nowDate}_suf`;
-    const finalName = `${p}data${s}.csv`;
-    const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), finalName);
-
-    const createWriteStreamMock = mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
-    const pipelineMock = mock.method(streamPromises, 'pipeline', async () => undefined);
-
-    await north.handleContent(readStream, metadata);
-
+    const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), `pre_${configuration.name}_data_${nowDate}_suf.csv`);
     assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
     assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, [expectedPath]);
     assert.strictEqual(pipelineMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, mockWriteStream]);
+    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, writeStream]);
   });
 
   it('should properly catch handle file error (pipeline failure)', async () => {
-    const error = new Error('Pipeline failed');
-    mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
-    mock.method(streamPromises, 'pipeline', async () => {
-      throw error;
+    pipelineMock.mock.mockImplementation(async () => {
+      throw new Error('Pipeline failed');
     });
-    const readStream = {} as ReadStream;
 
-    await assert.rejects(async () => {
-      await north.handleContent(readStream, {
-        contentFile: 'example.file',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any'
-      });
-    }, /Pipeline failed/);
+    await assert.rejects(north.handleContent(readStream, metadata('example.file')), /Pipeline failed/);
   });
 
   it('should properly handle files (direct naming)', async () => {
-    const readStream = {} as ReadStream;
-    const metadata = {
-      contentFile: 'example-123.file',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any'
-    };
-
     north.connectorConfiguration = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
       outputFolder: 'outputFolder',
       prefix: '',
       suffix: ''
     });
 
-    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    const expectedPath = path.join(expectedOutputFolder, 'example-123.file');
+    await north.handleContent(readStream, metadata('example-123.file'));
 
-    const createWriteStreamMock = mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
-    const pipelineMock = mock.method(streamPromises, 'pipeline', async () => undefined);
-
-    await north.handleContent(readStream, metadata);
-
+    const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), 'example-123.file');
     assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
     assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, [expectedPath]);
     assert.strictEqual(pipelineMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, mockWriteStream]);
+    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, writeStream]);
   });
 
   it('should have access to output folder (Test Connection)', async () => {
     const writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
-    mock.method(fs, 'readdir', async () => ['file1.txt', 'file2.csv', 'file3.json'] as unknown as Array<string>);
+    mock.method(fs, 'readdir', async () => ['file1.txt', 'file2.csv', 'file3.json']);
 
     const testResult = await north.testConnection();
 
@@ -230,37 +150,19 @@ describe('NorthFileWriter', () => {
     });
   });
 
-  it('should handle folder not existing (Test Connection)', async () => {
-    const outputFolder = path.resolve(configuration.settings.outputFolder);
-    const errorMessage = 'ENOENT: no such file or directory';
+  for (const [testCase, errorMessage] of [
+    ['folder not existing', 'ENOENT: no such file or directory'],
+    ['not having write access on folder', 'EPERM: operation not permitted']
+  ]) {
+    it(`should handle ${testCase} (Test Connection)`, async () => {
+      mock.method(fs, 'writeFile', async () => {
+        throw new Error(errorMessage);
+      });
 
-    mock.method(fs, 'writeFile', async () => {
-      throw new Error(errorMessage);
+      const outputFolder = path.resolve(configuration.settings.outputFolder);
+      await assert.rejects(north.testConnection(), new Error(`Write access error on "${outputFolder}": ${errorMessage}`));
     });
-
-    await assert.rejects(
-      async () => {
-        await north.testConnection();
-      },
-      new Error(`Write access error on "${outputFolder}": ${errorMessage}`)
-    );
-  });
-
-  it('should handle not having write access on folder (Test Connection)', async () => {
-    const outputFolder = path.resolve(configuration.settings.outputFolder);
-    const errorMessage = 'EPERM: operation not permitted';
-
-    mock.method(fs, 'writeFile', async () => {
-      throw new Error(errorMessage);
-    });
-
-    await assert.rejects(
-      async () => {
-        await north.testConnection();
-      },
-      new Error(`Write access error on "${outputFolder}": ${errorMessage}`)
-    );
-  });
+  }
 
   it('should ignore a readdir failure when counting files (Test Connection)', async () => {
     const writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
@@ -281,7 +183,6 @@ describe('NorthFileWriter', () => {
   describe('connect and disconnect (SMB)', () => {
     afterEach(async () => {
       await north.stop().catch(_e => undefined);
-      logger.trace.mock.resetCalls();
     });
 
     describe('on non-windows', () => {
@@ -298,29 +199,21 @@ describe('NorthFileWriter', () => {
       });
 
       it('should log trace and skip SMB session authentication on non-Windows platforms', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.outputFolder = '\\\\server\\share\\out';
-        north = new NorthFileWriter(configuration, cacheService);
-        logger.trace.mock.resetCalls();
-        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-        await (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out');
+        createNorth({ username: 'user', outputFolder: UNC_FOLDER });
+        await north['mountNetworkShare'](UNC_FOLDER);
         assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB session authentication')));
       });
 
       it('should log trace and skip SMB session removal on non-Windows platforms', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.outputFolder = '\\\\server\\share\\out';
-        north = new NorthFileWriter(configuration, cacheService);
-        logger.trace.mock.resetCalls();
-        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-        await (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out');
+        createNorth({ username: 'user', outputFolder: UNC_FOLDER });
+        await north['unmountNetworkShare'](UNC_FOLDER);
         assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB session removal')));
       });
     });
 
     it('should skip SMB mount when username is empty', async () => {
       configuration.settings.username = null;
-      configuration.settings.outputFolder = '\\\\server\\share\\out';
+      configuration.settings.outputFolder = UNC_FOLDER;
       await assert.doesNotReject(north.connect());
     });
 
@@ -341,7 +234,6 @@ describe('NorthFileWriter', () => {
       },
       () => {
         const originalPlatform = process.platform;
-        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
 
         before(() => {
           Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
@@ -351,68 +243,52 @@ describe('NorthFileWriter', () => {
           Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
         });
 
-        // `net` does not exist on the (non-Windows) test runner, so execFile rejects with
-        // ENOENT — which drives the catch branch (logger.error + rethrow) of mountNetworkShare.
+        // execFile rejects with ENOENT, which drives the catch branch (logger.error + rethrow) of mountNetworkShare.
         it('should throw and log an error when mountNetworkShare execFile fails', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.domain = 'DOMAIN';
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
+          createNorth({ username: 'user', domain: 'DOMAIN', outputFolder: UNC_FOLDER });
 
-          await assert.rejects(async () => (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out'));
+          await assert.rejects(north['mountNetworkShare'](UNC_FOLDER));
           assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to authenticate SMB session')));
         });
 
         it('should skip mountNetworkShare when username is empty on windows', async () => {
-          configuration.settings.username = null;
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
+          createNorth({ username: null, outputFolder: UNC_FOLDER });
 
-          await (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out');
+          await north['mountNetworkShare'](UNC_FOLDER);
         });
 
         it('should skip mountNetworkShare when outputFolder is not a UNC path on windows', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.outputFolder = 'C:\\local\\output';
-          north = new NorthFileWriter(configuration, cacheService);
+          createNorth({ username: 'user', outputFolder: 'C:\\local\\output' });
 
-          await (north as unknown as Private)['mountNetworkShare']('C:\\local\\output');
+          await north['mountNetworkShare']('C:\\local\\output');
         });
 
         it('should skip unmountNetworkShare when username is empty on windows', async () => {
-          configuration.settings.username = null;
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
+          createNorth({ username: null, outputFolder: UNC_FOLDER });
 
-          await (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out');
+          await north['unmountNetworkShare'](UNC_FOLDER);
         });
 
         it('should skip unmountNetworkShare when outputFolder is not a UNC path on windows', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.outputFolder = 'C:\\local\\output';
-          north = new NorthFileWriter(configuration, cacheService);
+          createNorth({ username: 'user', outputFolder: 'C:\\local\\output' });
 
-          await (north as unknown as Private)['unmountNetworkShare']('C:\\local\\output');
+          await north['unmountNetworkShare']('C:\\local\\output');
         });
 
         // unmountNetworkShare swallows execFile failures (ENOENT here), so it resolves —
         // covering its try + catch branch.
         it('should silently ignore unmountNetworkShare execFile failures', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
+          createNorth({ username: 'user', outputFolder: UNC_FOLDER });
 
-          await assert.doesNotReject(async () => (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out'));
+          await assert.doesNotReject(north['unmountNetworkShare'](UNC_FOLDER));
         });
 
-        // testConnection mounts the share first; on the test runner `net` is missing so the
-        // mount rejects and testConnection propagates the failure.
+        // testConnection mounts the share first; execFile fails so the mount rejects and testConnection propagates
+        // the failure.
         it('should propagate SMB mount failure from testConnection', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
+          createNorth({ username: 'user', outputFolder: UNC_FOLDER });
 
-          await assert.rejects(async () => north.testConnection());
+          await assert.rejects(north.testConnection());
         });
 
         // Windows refuses to add a session for a server that already has one under a different
@@ -420,14 +296,13 @@ describe('NorthFileWriter', () => {
         // before adding the new one makes mounting self-healing regardless of what left a
         // previous session dangling (unclean shutdown, a prior failed attempt, a leftover test).
         it('should clear any existing session before authenticating a new one', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
-          const deleteSpy = mock.method(north as unknown as Private, 'deleteNetworkSession', async () => undefined);
+          createNorth({ username: 'user', outputFolder: UNC_FOLDER });
+          const deleteSpy = mock.fn(async (_shareRoot: string) => undefined);
+          north['deleteNetworkSession'] = deleteSpy;
 
-          // `net` is missing on the test runner, so the add still rejects with ENOENT — that's
-          // enough to confirm deleteNetworkSession always runs first, before the add is attempted.
-          await assert.rejects(async () => (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out'));
+          // The add still rejects with ENOENT — that's enough to confirm deleteNetworkSession always runs first,
+          // before the add is attempted.
+          await assert.rejects(north['mountNetworkShare'](UNC_FOLDER));
           assert.strictEqual(deleteSpy.mock.calls.length, 1);
           assert.deepStrictEqual(deleteSpy.mock.calls[0].arguments, ['\\\\server\\share']);
         });
@@ -438,14 +313,13 @@ describe('NorthFileWriter', () => {
         // session out from under it — breaking every write until the next connect/reconnect —
         // which is exactly what happened when this was tried (see commit history).
         it('should not tear down the SMB session after a successful testConnection', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
-          mock.method(north as unknown as Private, 'mountNetworkShare', async () => undefined);
-          const unmountSpy = mock.method(north as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          createNorth({ username: 'user', outputFolder: UNC_FOLDER });
+          north['mountNetworkShare'] = mock.fn(async (_folderPath: string) => undefined);
+          const unmountSpy = mock.fn(async (_folderPath: string) => undefined);
+          north['unmountNetworkShare'] = unmountSpy;
           mock.method(fs, 'writeFile', async () => undefined);
           mock.method(fs, 'unlink', async () => undefined);
-          mock.method(fs, 'readdir', async () => [] as unknown as Array<string>);
+          mock.method(fs, 'readdir', async () => []);
 
           await north.testConnection();
 
@@ -453,16 +327,15 @@ describe('NorthFileWriter', () => {
         });
 
         it('should not tear down the SMB session after a failed testConnection', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
-          mock.method(north as unknown as Private, 'mountNetworkShare', async () => undefined);
-          const unmountSpy = mock.method(north as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          createNorth({ username: 'user', outputFolder: UNC_FOLDER });
+          north['mountNetworkShare'] = mock.fn(async (_folderPath: string) => undefined);
+          const unmountSpy = mock.fn(async (_folderPath: string) => undefined);
+          north['unmountNetworkShare'] = unmountSpy;
           mock.method(fs, 'writeFile', async () => {
             throw new Error('EACCES');
           });
 
-          await assert.rejects(async () => north.testConnection());
+          await assert.rejects(north.testConnection());
 
           assert.strictEqual(unmountSpy.mock.calls.length, 0);
         });
@@ -471,20 +344,11 @@ describe('NorthFileWriter', () => {
         // connect()) self-heals a session that dropped or was replaced in the meantime, instead
         // of failing every write until the connector fully reconnects.
         it('should re-authenticate the SMB session before every write in handleContent', async () => {
-          configuration.settings.username = 'user';
-          configuration.settings.outputFolder = '\\\\server\\share\\out';
-          north = new NorthFileWriter(configuration, cacheService);
-          const mountSpy = mock.method(north as unknown as Private, 'mountNetworkShare', async () => undefined);
-          mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
-          mock.method(streamPromises, 'pipeline', async () => undefined);
+          createNorth({ username: 'user', outputFolder: UNC_FOLDER });
+          const mountSpy = mock.fn(async (_folderPath: string) => undefined);
+          north['mountNetworkShare'] = mountSpy;
 
-          await north.handleContent({} as ReadStream, {
-            contentFile: 'file.txt',
-            contentSize: 10,
-            numberOfElement: 1,
-            createdAt: '2020-02-02T02:02:02.222Z',
-            contentType: 'any'
-          });
+          await north.handleContent(readStream, metadata('file.txt', 10));
 
           assert.strictEqual(mountSpy.mock.calls.length, 1);
         });

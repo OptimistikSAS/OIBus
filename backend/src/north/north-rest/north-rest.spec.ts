@@ -1,15 +1,14 @@
 import assert from 'node:assert/strict';
-import { EventEmitter } from 'node:events';
 import { ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
 import { Readable } from 'node:stream';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { NorthRESTSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
-import type { ReqOptions } from '../../service/http-request.utils';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import type * as HttpRequestUtils from '../../service/http-request.utils';
+import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import { assertContains, buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
@@ -17,72 +16,66 @@ import type NorthRESTClass from './north-rest';
 
 const nodeRequire = createRequire(import.meta.url);
 
-class MockReadStream extends EventEmitter {
-  closed = false;
-  destroyed = false;
-  path: string;
+// The stream is only handed to the (mocked) HTTP request, never read
+const fileStream = {} as ReadStream;
+const metadata = (contentFile: string): CacheMetadata => ({
+  contentFile,
+  contentSize: 0,
+  numberOfElement: 0,
+  createdAt: '',
+  contentType: 'any'
+});
 
-  constructor(filePath: string) {
-    super();
-    this.path = filePath;
-  }
-
-  pipe<T>(dest: T): T {
-    return dest;
-  }
-  destroy(): void {
-    this.destroyed = true;
-  }
-}
+const buildConfiguration = (settings: Partial<NorthRESTSettings> = {}) =>
+  buildNorthEntity<NorthRESTSettings>('rest', {
+    host: 'https://api.example.com/',
+    endpoint: '/upload',
+    method: 'POST',
+    timeout: 30,
+    acceptUnauthorized: true,
+    authentication: {
+      type: 'basic',
+      username: 'user',
+      password: 'password',
+      token: 'token',
+      apiKey: 'api-key',
+      apiValue: 'encrypted-value',
+      addTo: 'header'
+    },
+    headers: [],
+    queryParams: [],
+    successCode: 200,
+    proxy: { useProxy: false },
+    sendAs: 'file',
+    test: {
+      testEndpoint: '/health',
+      testMethod: 'GET',
+      testSuccessCode: 200
+    },
+    ...settings
+  });
 
 describe('NorthREST', () => {
   let NorthREST: typeof NorthRESTClass;
   let north: NorthRESTClass;
 
-  const logger = new PinoLogger();
-  const cacheService = new CacheServiceMock();
+  let HTTPRequest: Mock<typeof HttpRequestUtils.HTTPRequest>;
+  const httpRequestExports: typeof HttpRequestUtils = { ...nodeRequire('../../service/http-request.utils') };
 
-  const httpRequestMock = mock.fn(async (_url: URL, _options: ReqOptions) => createMockResponse(200, 'OK'));
-  const streamToStringMock = mock.fn(async (_stream: unknown) => '');
-  const encryptionDecryptTextMock = mock.fn(async (text: string) => text);
-
-  const httpRequestExports = {
-    __esModule: true,
-    HTTPRequest: httpRequestMock,
-    retryableHttpStatusCodes: [429, 500, 502, 503, 504]
-  };
-
-  const utilsExports = {
-    __esModule: true,
-    streamToString: streamToStringMock
-  };
-
-  const encryptionExports = {
-    __esModule: true,
-    encryptionService: {
-      decryptText: encryptionDecryptTextMock
-    }
-  };
-
-  const cronExports = {
-    CronJob: mock.fn(function () {
-      return { stop: mock.fn(), start: mock.fn() };
-    })
+  const createNorth = (settings: Partial<NorthRESTSettings> = {}) => {
+    north = new NorthREST(buildConfiguration(settings), createCacheServiceMock());
   };
 
   before(() => {
-    mockModule(nodeRequire, 'cron', cronExports);
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
-    mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '../../service/encryption.service', encryptionExports);
-    mockModule(nodeRequire, '../../service/cache/cache.service', {
+    mockModule(nodeRequire, '../../service/encryption.service', {
       __esModule: true,
-      default: function () {
-        return cacheService;
-      }
+      encryptionService: { decryptText: async (text: string) => text }
     });
+    // No transformation here: don't pay for loading every transformer
+    mockModule(nodeRequire, '../../service/transformer.service', {});
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => new PinoLogger() },
       default: class {}
     });
 
@@ -90,51 +83,13 @@ describe('NorthREST', () => {
   });
 
   beforeEach(() => {
-    logger.trace.mock.resetCalls();
-    logger.debug.mock.resetCalls();
-    logger.info.mock.resetCalls();
-    logger.warn.mock.resetCalls();
-    logger.error.mock.resetCalls();
-    httpRequestMock.mock.resetCalls();
-    streamToStringMock.mock.resetCalls();
-    encryptionDecryptTextMock.mock.resetCalls();
-
-    httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(200, 'OK'));
-    encryptionDecryptTextMock.mock.mockImplementation(async (text: string) => text);
-
-    const configuration = buildNorthEntity<NorthRESTSettings>('rest', {
-      host: 'https://api.example.com/',
-      endpoint: '/upload',
-      method: 'POST',
-      timeout: 30,
-      acceptUnauthorized: true,
-      authentication: {
-        type: 'basic',
-        username: 'user',
-        password: 'password',
-        token: 'token',
-        apiKey: 'api-key',
-        apiValue: 'encrypted-value',
-        addTo: 'header'
-      },
-      headers: [],
-      queryParams: [],
-      successCode: 200,
-      proxy: { useProxy: false },
-      sendAs: 'file',
-      test: {
-        testEndpoint: '/health',
-        testMethod: 'GET',
-        testSuccessCode: 200
-      }
-    });
-
-    north = new NorthREST(configuration, cacheService);
+    HTTPRequest = mock.fn(async () => createMockResponse(200, 'OK'));
+    httpRequestExports.HTTPRequest = HTTPRequest;
+    createNorth();
   });
 
   afterEach(() => {
     mock.restoreAll();
-    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should return any', () => {
@@ -144,9 +99,9 @@ describe('NorthREST', () => {
   it('should test connection successfully', async () => {
     const testResult = await north.testConnection();
 
-    const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+    const [url, options] = HTTPRequest.mock.calls[0].arguments;
     assert.strictEqual(url.toString(), 'https://api.example.com/health');
-    assert.strictEqual(options.method, 'GET');
+    assert.strictEqual(options?.method, 'GET');
     assert.deepStrictEqual(testResult, {
       items: [
         { key: 'URL', value: 'https://api.example.com/health' },
@@ -159,207 +114,110 @@ describe('NorthREST', () => {
     north.connectorConfiguration.settings.test.testSuccessCode = 200;
     north.connectorConfiguration.settings.test.testMethod = 'POST';
     north.connectorConfiguration.settings.test.body = 'test';
-    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(500, 'Error'));
+    HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(500, 'Error'));
 
-    await assert.rejects(async () => north.testConnection(), /HTTP request failed with status code 500/);
+    await assert.rejects(north.testConnection(), /HTTP request failed with status code 500/);
   });
 
   it('should fail test connection on fetch error', async () => {
-    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => {
+    HTTPRequest.mock.mockImplementationOnce(async () => {
       throw new Error('Network error');
     });
-    await assert.rejects(async () => north.testConnection(), /Fetch error: Network error/);
+    await assert.rejects(north.testConnection(), /Fetch error: Network error/);
   });
 
   it('should use Basic Auth', async () => {
-    const configuration = buildNorthEntity<NorthRESTSettings>('rest', {
-      host: 'https://api.example.com/',
-      endpoint: '/upload',
-      method: 'POST',
-      timeout: 30,
-      acceptUnauthorized: true,
-      authentication: { type: 'basic', username: 'u', password: 'p' },
-      headers: [],
-      queryParams: [],
-      successCode: 200,
-      proxy: { useProxy: false },
-      sendAs: 'file',
-      test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
-    });
-    north = new NorthREST(configuration, cacheService);
+    createNorth({ authentication: { type: 'basic', username: 'u', password: 'p' } });
 
     await north.testConnection();
 
-    const options = httpRequestMock.mock.calls[0].arguments[1] as ReqOptions;
-    assert.deepStrictEqual(options.auth, { type: 'basic', username: 'u', password: 'p' });
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1]?.auth, { type: 'basic', username: 'u', password: 'p' });
   });
 
   it('should use Bearer Token', async () => {
-    const configuration = buildNorthEntity<NorthRESTSettings>('rest', {
-      host: 'https://api.example.com/',
-      endpoint: '/upload',
-      method: 'POST',
-      timeout: 30,
-      acceptUnauthorized: true,
-      authentication: { type: 'bearer', token: 'my-token' },
-      headers: [],
-      queryParams: [],
-      successCode: 200,
-      proxy: { useProxy: false },
-      sendAs: 'file',
-      test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
-    });
-    north = new NorthREST(configuration, cacheService);
+    createNorth({ authentication: { type: 'bearer', token: 'my-token' } });
 
     await north.testConnection();
 
-    const options = httpRequestMock.mock.calls[0].arguments[1] as ReqOptions;
-    assert.deepStrictEqual(options.auth, { type: 'bearer', token: 'my-token' });
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1]?.auth, { type: 'bearer', token: 'my-token' });
   });
 
   it('should handle API Key in Header', async () => {
-    const configuration = buildNorthEntity<NorthRESTSettings>('rest', {
-      host: 'https://api.example.com/',
-      endpoint: '/upload',
-      method: 'POST',
-      timeout: 30,
-      acceptUnauthorized: true,
-      authentication: { type: 'api-key', apiKey: 'X-API-Key', apiValue: 'secret', addTo: 'header' },
-      headers: [],
-      queryParams: [],
-      successCode: 200,
-      proxy: { useProxy: false },
-      sendAs: 'file',
-      test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
-    });
-    north = new NorthREST(configuration, cacheService);
+    createNorth({ authentication: { type: 'api-key', apiKey: 'X-API-Key', apiValue: 'secret', addTo: 'header' } });
 
     await north.testConnection();
 
-    const options = httpRequestMock.mock.calls[0].arguments[1] as ReqOptions;
-    assertContains(options.headers as Record<string, unknown>, { 'X-API-Key': 'secret' });
+    assertContains(HTTPRequest.mock.calls[0].arguments[1]?.headers, { 'X-API-Key': 'secret' });
   });
 
   it('should handle API Key in Query Params', async () => {
-    const configuration = buildNorthEntity<NorthRESTSettings>('rest', {
-      host: 'https://api.example.com/',
-      endpoint: '/upload',
-      method: 'POST',
-      timeout: 30,
-      acceptUnauthorized: true,
-      authentication: { type: 'api-key', apiKey: 'api_key', apiValue: 'secret', addTo: 'query-params' },
-      headers: [],
-      queryParams: [],
-      successCode: 200,
-      proxy: { useProxy: false },
-      sendAs: 'file',
-      test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
-    });
-    north = new NorthREST(configuration, cacheService);
+    createNorth({ authentication: { type: 'api-key', apiKey: 'api_key', apiValue: 'secret', addTo: 'query-params' } });
 
     await north.testConnection();
 
-    const url = httpRequestMock.mock.calls[0].arguments[0] as URL;
-    assert.strictEqual((url as URL).searchParams.get('api_key'), 'secret');
+    const url = HTTPRequest.mock.calls[0].arguments[0] as URL;
+    assert.strictEqual(url.searchParams.get('api_key'), 'secret');
   });
 
   it('should upload file successfully via multipart stream', async () => {
-    const configuration = buildNorthEntity<NorthRESTSettings>('rest', {
-      host: 'https://api.example.com/',
-      endpoint: '/upload',
-      method: 'POST',
-      timeout: 30,
-      acceptUnauthorized: true,
+    createNorth({
       authentication: { type: 'none' },
       headers: [{ key: 'X-Custom', value: 'custom' }],
-      queryParams: [{ key: 'q1', value: 'v1' }],
-      successCode: 200,
-      proxy: { useProxy: false },
-      sendAs: 'file',
-      test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
+      queryParams: [{ key: 'q1', value: 'v1' }]
     });
-    north = new NorthREST(configuration, cacheService);
+    HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(201, 'Created'));
 
-    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
+    await north.handleContent(fileStream, metadata('file.txt'));
 
-    const mockStream = new MockReadStream('path/to/file.txt') as unknown as ReadStream;
-
-    await north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.txt' } as CacheMetadata);
-
-    const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+    const [url, options] = HTTPRequest.mock.calls[0].arguments;
     assert.strictEqual(url.toString(), 'https://api.example.com/upload');
-    assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
-    assertContains(options.headers as Record<string, unknown>, { 'X-Custom': 'custom' });
-    assertContains(options.query as Record<string, unknown>, { q1: 'v1' });
+    assert.ok((options?.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
+    assertContains(options?.headers, { 'X-Custom': 'custom' });
+    assertContains(options?.query, { q1: 'v1' });
   });
 
-  it('should upload file successfully via raw body (JSON)', async () => {
-    north.connectorConfiguration.settings.sendAs = 'body';
+  for (const [format, contentFile, contentType] of [
+    ['JSON', 'file.json', 'application/json'],
+    ['TXT', 'file.txt', 'text/plain'],
+    ['CSV', 'file.csv', 'text/csv']
+  ]) {
+    it(`should upload file successfully via raw body (${format})`, async () => {
+      north.connectorConfiguration.settings.sendAs = 'body';
+      HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(201, 'Created'));
 
-    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
-    const mockStream = new MockReadStream('file.json') as unknown as ReadStream;
+      await north.handleContent(fileStream, metadata(contentFile));
 
-    await north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.json' } as CacheMetadata);
-
-    const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-    assert.strictEqual(url.toString(), 'https://api.example.com/upload');
-    assertContains(options.headers as Record<string, unknown>, { 'content-type': 'application/json' });
-  });
+      const [url, options] = HTTPRequest.mock.calls[0].arguments;
+      assert.strictEqual(url.toString(), 'https://api.example.com/upload');
+      assertContains(options?.headers, { 'content-type': contentType });
+    });
+  }
 
   it('should upload file via raw body (XML) and manage http error', async () => {
     north.connectorConfiguration.settings.sendAs = 'body';
-
-    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => {
+    HTTPRequest.mock.mockImplementationOnce(async () => {
       throw new Error('http error');
     });
-    const mockStream = new MockReadStream('file.xml') as unknown as ReadStream;
 
     await assert.rejects(
-      async () => north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.xml' } as CacheMetadata),
+      north.handleContent(fileStream, metadata('file.xml')),
       new Error('Failed to reach file endpoint "https://api.example.com/upload": http error')
     );
 
-    const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+    const [url, options] = HTTPRequest.mock.calls[0].arguments;
     assert.strictEqual(url.toString(), 'https://api.example.com/upload');
-    assertContains(options.headers as Record<string, unknown>, { 'content-type': 'application/xml' });
-  });
-
-  it('should upload file successfully via raw body (TXT)', async () => {
-    north.connectorConfiguration.settings.sendAs = 'body';
-
-    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
-    const mockStream = new MockReadStream('file.txt') as unknown as ReadStream;
-
-    await north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.txt' } as CacheMetadata);
-
-    const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-    assert.strictEqual(url.toString(), 'https://api.example.com/upload');
-    assertContains(options.headers as Record<string, unknown>, { 'content-type': 'text/plain' });
-  });
-
-  it('should upload file successfully via raw body (CSV)', async () => {
-    north.connectorConfiguration.settings.sendAs = 'body';
-
-    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
-    const mockStream = new MockReadStream('file.csv') as unknown as ReadStream;
-
-    await north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.csv' } as CacheMetadata);
-
-    const options = httpRequestMock.mock.calls[0].arguments[1] as ReqOptions;
-    assertContains(options.headers as Record<string, unknown>, { 'content-type': 'text/csv' });
+    assertContains(options?.headers, { 'content-type': 'application/xml' });
   });
 
   it('should actually stream file content through the multipart generator', async () => {
-    // MockReadStream's pipe() is a no-op and its content is never consumed by the mocked
-    // HTTPRequest, so the multipart async-generator body never actually iterates the source
-    // stream. Use a real async-iterable stream and drain the resulting body manually.
+    // The mocked HTTPRequest never consumes the body, so the multipart async-generator never
+    // iterates the source stream by itself. Use a real async-iterable stream and drain the resulting body manually.
     const realFileStream = Readable.from([Buffer.from('chunk-a'), Buffer.from('chunk-b')]) as unknown as ReadStream;
 
-    await north.handleContent(realFileStream, { contentType: 'any', contentFile: 'real-file.txt' } as CacheMetadata);
+    await north.handleContent(realFileStream, metadata('real-file.txt'));
 
-    const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
     const chunks: Array<Buffer> = [];
-    for await (const chunk of options.body as AsyncIterable<Buffer>) {
+    for await (const chunk of HTTPRequest.mock.calls[0].arguments[1]?.body as AsyncIterable<Buffer>) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
     const full = Buffer.concat(chunks).toString();
@@ -368,13 +226,9 @@ describe('NorthREST', () => {
   });
 
   it('should handle upload failures (HTTP 500)', async () => {
-    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(500, 'Server Error'));
-    const mockStream = new MockReadStream('file.txt') as unknown as ReadStream;
+    HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(500, 'Server Error'));
 
-    await assert.rejects(
-      async () => north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.txt' } as CacheMetadata),
-      /HTTP request failed with status code 500/
-    );
+    await assert.rejects(north.handleContent(fileStream, metadata('file.txt')), /HTTP request failed with status code 500/);
   });
 
   it('should properly handle api key with existing headers', async () => {

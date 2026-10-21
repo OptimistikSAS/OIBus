@@ -1,17 +1,18 @@
 import assert from 'node:assert/strict';
 import EventEmitter from 'node:events';
-import { ReadStream } from 'node:fs';
+import type { ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { MqttClient } from 'mqtt';
 
 import type { NorthMQTTSettings } from '../../../shared/model/connector/north-settings.model';
+import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
 import type { NorthConnectorEntity } from '../../model/north-connector.model';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import type * as Utils from '../../service/utils';
+import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import testData from '../../tests/utils/test-data';
 import { buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type { OIBusMQTTValue } from '../../transformers/connector-types.model';
@@ -19,67 +20,51 @@ import type NorthMQTTClass from './north-mqtt';
 
 const nodeRequire = createRequire(import.meta.url);
 
+// A real emitter: the connector reacts to the client's 'connect', 'error' and 'close' events
 class MockMqttClient extends EventEmitter {
   connected = true;
-  publishAsync = mock.fn(async () => undefined);
-  end = mock.fn(() => undefined);
+  publishAsync = mock.fn(async (..._args: Array<unknown>) => undefined);
+  end = mock.fn((..._args: Array<unknown>) => undefined);
   removeAllListeners = mock.fn(() => this);
 }
+
+// The stream is only handed to the (mocked) streamToString
+const readStream = {} as ReadStream;
+const metadata: CacheMetadata = {
+  contentFile: 'file.json',
+  contentSize: 100,
+  numberOfElement: 1,
+  createdAt: '2020-02-02T02:02:02.222Z',
+  contentType: 'mqtt'
+};
+const values: Array<OIBusMQTTValue> = [
+  { topic: 'topic1', payload: '123' },
+  { topic: 'topic2', payload: 'abc' }
+];
 
 describe('NorthMQTT', () => {
   let NorthMQTT: typeof NorthMQTTClass;
   let north: NorthMQTTClass;
   let configuration: NorthConnectorEntity<NorthMQTTSettings>;
-  let mockMqttClient: MockMqttClient;
+  let logger: PinoLogger;
+  let mqttClient: MockMqttClient;
+  let connectAsync: Mock<(url: string, ...args: Array<unknown>) => Promise<MockMqttClient>>;
+  let connect: Mock<(url: string, ...args: Array<unknown>) => MockMqttClient>;
+  let createConnectionOptions: Mock<(id: string, ...args: Array<unknown>) => Promise<object>>;
+  let streamToString: Mock<typeof Utils.streamToString>;
 
-  const logger = new PinoLogger();
-  const cacheService = new CacheServiceMock();
-  const oiBusTransformer = new OIBusTransformerMock();
-
-  const connectAsyncFn = mock.fn(async (_url: string, ..._args: Array<unknown>) => mockMqttClient);
-  const connectFn = mock.fn((_url: string) => mockMqttClient);
-  const streamToStringFn = mock.fn(async () => '[]');
-  const createConnectionOptionsFn = mock.fn(async (_id: string) => ({}));
-
-  const mqttExports = {
-    __esModule: true,
-    default: {
-      connectAsync: connectAsyncFn,
-      connect: connectFn
-    }
-  };
-
-  const transformerExports = {
-    createTransformer: mock.fn(() => oiBusTransformer)
-  };
-
-  const utilsExports = {
-    streamToString: streamToStringFn,
-    checkAge: mock.fn(() => true),
-    compress: mock.fn(async () => undefined),
-    delay: mock.fn(async () => undefined),
-    generateIntervals: mock.fn(() => []),
-    groupItemsByGroup: mock.fn(() => []),
-    validateCronExpression: mock.fn(() => ({ expression: '' }))
-  };
-
-  const utilsMqttExports = {
-    createConnectionOptions: createConnectionOptionsFn
-  };
+  const mqttExports = { __esModule: true, default: {} };
+  const utilsMqttExports: Record<string, unknown> = {};
+  const utilsExports: typeof Utils = { ...nodeRequire('../../service/utils') };
 
   before(() => {
     mockModule(nodeRequire, 'mqtt', mqttExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/utils-mqtt', utilsMqttExports);
-    mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
-    mockModule(nodeRequire, '../../service/cache/cache.service', {
-      __esModule: true,
-      default: function () {
-        return cacheService;
-      }
-    });
+    // No transformation here: don't pay for loading every transformer
+    mockModule(nodeRequire, '../../service/transformer.service', {});
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -87,23 +72,16 @@ describe('NorthMQTT', () => {
   });
 
   beforeEach(() => {
-    mockMqttClient = new MockMqttClient();
-
-    transformerExports.createTransformer.mock.resetCalls();
-    connectAsyncFn.mock.resetCalls();
-    connectAsyncFn.mock.mockImplementation(async () => mockMqttClient);
-    connectFn.mock.resetCalls();
-    connectFn.mock.mockImplementation((_url: string) => mockMqttClient);
-    streamToStringFn.mock.resetCalls();
-    streamToStringFn.mock.mockImplementation(async () => '[]');
-    createConnectionOptionsFn.mock.resetCalls();
-    createConnectionOptionsFn.mock.mockImplementation(async () => ({}));
-    logger.trace.mock.resetCalls();
-    logger.debug.mock.resetCalls();
-    logger.info.mock.resetCalls();
-    logger.warn.mock.resetCalls();
-    logger.error.mock.resetCalls();
-
+    logger = new PinoLogger();
+    mqttClient = new MockMqttClient();
+    connectAsync = mock.fn(async () => mqttClient);
+    connect = mock.fn(() => mqttClient);
+    createConnectionOptions = mock.fn(async () => ({}));
+    streamToString = mock.fn(async () => '[]');
+    Object.assign(mqttExports.default, { connectAsync, connect });
+    Object.assign(utilsMqttExports, { createConnectionOptions });
+    // delay: super.connect() waits for runMinDelay before checking the cache, and setTimeout is mocked
+    Object.assign(utilsExports, { streamToString, delay: async () => undefined });
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     configuration = buildNorthEntity<NorthMQTTSettings>('mqtt', {
@@ -122,15 +100,26 @@ describe('NorthMQTT', () => {
       reconnectPeriod: 1000,
       rejectUnauthorized: false
     });
-
-    north = new NorthMQTT(configuration, cacheService);
+    north = new NorthMQTT(configuration, createCacheServiceMock());
   });
 
   afterEach(() => {
     mock.timers.reset();
     mock.restoreAll();
-    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
+
+  /** Gives the connector the mocked MQTT client */
+  const setClient = () => {
+    north['client'] = mqttClient as unknown as MqttClient;
+  };
+
+  /** Makes mqtt.connect() return the client, which then emits this event */
+  const emitOnTestConnection = (event: string, payload: unknown) => {
+    connect.mock.mockImplementation(() => {
+      setImmediate(() => mqttClient.emit(event, payload));
+      return mqttClient;
+    });
+  };
 
   it('should retrieve supported types', () => {
     assert.deepStrictEqual(north.supportedTypes(), ['mqtt']);
@@ -141,26 +130,25 @@ describe('NorthMQTT', () => {
 
     await north.start();
 
-    assert.strictEqual(createConnectionOptionsFn.mock.calls.length, 1);
-    assert.deepStrictEqual(createConnectionOptionsFn.mock.calls[0].arguments[0], configuration.id);
-    assert.strictEqual(connectAsyncFn.mock.calls.length, 1);
-    assert.deepStrictEqual(connectAsyncFn.mock.calls[0].arguments[0], configuration.settings.url);
+    assert.strictEqual(createConnectionOptions.mock.calls.length, 1);
+    assert.deepStrictEqual(createConnectionOptions.mock.calls[0].arguments[0], configuration.id);
+    assert.strictEqual(connectAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(connectAsync.mock.calls[0].arguments[0], configuration.settings.url);
     assert.ok(logger.info.mock.calls.some(c => c.arguments[0] === `MQTT North connector "${configuration.name}" connected`));
   });
 
   it('should properly connect and clear existing timeout', async () => {
-    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
+    north['reconnectTimeout'] = setTimeout(() => null);
 
     await north.start();
 
     // Timeout was cleared — reconnectTimeout should be null after successful connect
-    assert.strictEqual((north as unknown as { reconnectTimeout: null })['reconnectTimeout'], null);
+    assert.strictEqual(north['reconnectTimeout'], null);
   });
 
   it('should handle connection error and trigger reconnect', async () => {
-    const error = new Error('Connection failed');
-    connectAsyncFn.mock.mockImplementationOnce(async () => {
-      throw error;
+    connectAsync.mock.mockImplementationOnce(async () => {
+      throw new Error('Connection failed');
     });
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
@@ -171,9 +159,8 @@ describe('NorthMQTT', () => {
   });
 
   it('should not reconnect if disabled on error', async () => {
-    const error = new Error('Connection failed');
-    connectAsyncFn.mock.mockImplementationOnce(async () => {
-      throw error;
+    connectAsync.mock.mockImplementationOnce(async () => {
+      throw new Error('Connection failed');
     });
     north.connectorConfiguration.enabled = false;
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
@@ -182,15 +169,14 @@ describe('NorthMQTT', () => {
 
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // No reconnect timeout should be set
-    assert.strictEqual((north as unknown as { reconnectTimeout: null })['reconnectTimeout'], null);
+    assert.strictEqual(north['reconnectTimeout'], null);
   });
 
   it('should handle runtime MQTT error events', async () => {
     await north.connect();
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
-    // Simulate 'error' event
-    mockMqttClient.emit('error', new Error('Runtime error'));
+    mqttClient.emit('error', new Error('Runtime error'));
 
     assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'MQTT Client error: Runtime error'));
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
@@ -199,9 +185,9 @@ describe('NorthMQTT', () => {
   it('should handle unintentional close event', async () => {
     await north.connect();
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
-    (north as unknown as { disconnecting: boolean })['disconnecting'] = false;
+    north['disconnecting'] = false;
 
-    mockMqttClient.emit('close');
+    mqttClient.emit('close');
 
     assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'MQTT Client closed unintentionally'));
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
@@ -209,42 +195,38 @@ describe('NorthMQTT', () => {
 
   it('should handle intentional close event', async () => {
     await north.connect();
-    (north as unknown as { disconnecting: boolean })['disconnecting'] = true;
+    north['disconnecting'] = true;
 
-    mockMqttClient.emit('close');
+    mqttClient.emit('close');
 
     assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === 'MQTT Client intentionally disconnected'));
   });
 
   it('should properly disconnect', async () => {
-    (north as unknown as { client: MqttClient })['client'] = mockMqttClient as unknown as MqttClient;
-    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
+    setClient();
+    north['reconnectTimeout'] = setTimeout(() => null);
 
     await north.disconnect();
 
-    assert.strictEqual(mockMqttClient.removeAllListeners.mock.calls.length, 1);
-    assert.strictEqual(mockMqttClient.end.mock.calls.length, 1);
-    assert.deepStrictEqual(mockMqttClient.end.mock.calls[0].arguments, [true]);
-    assert.strictEqual((north as unknown as { client: null })['client'], null);
+    assert.strictEqual(mqttClient.removeAllListeners.mock.calls.length, 1);
+    assert.strictEqual(mqttClient.end.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttClient.end.mock.calls[0].arguments, [true]);
+    assert.strictEqual(north['client'], null);
   });
 
   it('should properly test connection', async () => {
-    const connackPacket = { sessionPresent: false };
-    connectFn.mock.mockImplementation((_url: string) => {
-      setImmediate(() => mockMqttClient.emit('connect', connackPacket));
-      return mockMqttClient;
-    });
+    emitOnTestConnection('connect', { sessionPresent: false });
 
     const testResult = await north.testConnection();
 
-    assert.strictEqual(connectFn.mock.calls.length, 1);
-    assert.deepStrictEqual(connectFn.mock.calls[0].arguments[0], configuration.settings.url);
-    assert.strictEqual(mockMqttClient.end.mock.calls.length, 1);
+    assert.strictEqual(connect.mock.calls.length, 1);
+    assert.deepStrictEqual(connect.mock.calls[0].arguments[0], configuration.settings.url);
+    assert.strictEqual(mqttClient.end.mock.calls.length, 1);
     assert.deepStrictEqual(testResult, { items: [{ key: 'SessionPresent', value: 'false' }] });
   });
 
   it('should populate all properties from connack in test connection', async () => {
-    const connackPacket = {
+    emitOnTestConnection('connect', {
       sessionPresent: true,
       properties: {
         maximumQoS: 1,
@@ -255,10 +237,6 @@ describe('NorthMQTT', () => {
         serverKeepAlive: 30,
         topicAliasMaximum: 10
       }
-    };
-    connectFn.mock.mockImplementation((_url: string) => {
-      setImmediate(() => mockMqttClient.emit('connect', connackPacket));
-      return mockMqttClient;
     });
 
     const testResult = await north.testConnection();
@@ -272,97 +250,48 @@ describe('NorthMQTT', () => {
 
   it('should reject test connection when the MQTT client emits an error', async () => {
     const error = new Error('Connection refused');
-    connectFn.mock.mockImplementation((_url: string) => {
-      setImmediate(() => mockMqttClient.emit('error', error));
-      return mockMqttClient;
-    });
+    emitOnTestConnection('error', error);
 
-    await assert.rejects(async () => north.testConnection(), error);
+    await assert.rejects(north.testConnection(), error);
 
-    assert.strictEqual(mockMqttClient.end.mock.calls.length, 1);
-    assert.deepStrictEqual(mockMqttClient.end.mock.calls[0].arguments, [true]);
+    assert.strictEqual(mqttClient.end.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttClient.end.mock.calls[0].arguments, [true]);
   });
 
   it('should throw error if connector is in reconnecting state', async () => {
-    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
-    const readStream = {} as ReadStream;
+    north['reconnectTimeout'] = setTimeout(() => null);
 
-    await assert.rejects(async () => {
-      await north.handleContent(readStream, {
-        contentFile: 'file.json',
-        contentSize: 100,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt'
-      });
-    }, /Connector is reconnecting\.\.\./);
+    await assert.rejects(north.handleContent(readStream, metadata), /Connector is reconnecting\.\.\./);
   });
 
   it('should throw error if client is not set/connected', async () => {
-    (north as unknown as { client: null })['client'] = null;
-    const readStream = {} as ReadStream;
-    const values: Array<OIBusMQTTValue> = [
-      { topic: 'topic1', payload: '123' },
-      { topic: 'topic2', payload: 'abc' }
-    ];
-    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
+    north['client'] = null;
+    streamToString.mock.mockImplementation(async () => JSON.stringify(values));
 
-    await assert.rejects(async () => {
-      await north.handleContent(readStream, {
-        contentFile: 'file.json',
-        contentSize: 100,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt'
-      });
-    }, /MQTT client not set\. The connector cannot write values/);
+    await assert.rejects(north.handleContent(readStream, metadata), /MQTT client not set\. The connector cannot write values/);
   });
 
   it('should handle content success', async () => {
-    const values: Array<OIBusMQTTValue> = [
-      { topic: 'topic1', payload: '123' },
-      { topic: 'topic2', payload: 'abc' }
-    ];
-    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
+    streamToString.mock.mockImplementation(async () => JSON.stringify(values));
+    setClient();
 
-    (north as unknown as { client: MqttClient })['client'] = mockMqttClient as unknown as MqttClient;
-    const readStream = {} as ReadStream;
+    await north.handleContent(readStream, metadata);
 
-    await north.handleContent(readStream, {
-      contentFile: 'file.json',
-      contentSize: 100,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'mqtt'
-    });
-
-    assert.strictEqual(streamToStringFn.mock.calls.length, 1);
-    assert.deepStrictEqual(streamToStringFn.mock.calls[0].arguments, [readStream]);
-    assert.strictEqual(mockMqttClient.publishAsync.mock.calls.length, 2);
-    assert.deepStrictEqual(mockMqttClient.publishAsync.mock.calls[0].arguments, ['topic1', '123', { qos: 1 }]);
+    assert.strictEqual(streamToString.mock.calls.length, 1);
+    assert.deepStrictEqual(streamToString.mock.calls[0].arguments, [readStream]);
+    assert.strictEqual(mqttClient.publishAsync.mock.calls.length, 2);
+    assert.deepStrictEqual(mqttClient.publishAsync.mock.calls[0].arguments, ['topic1', '123', { qos: 1 }]);
   });
 
   it('should handle publish errors and trigger reconnect', async () => {
-    const values: Array<OIBusMQTTValue> = [{ topic: 'topic1', payload: '123' }];
-    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
-
-    (north as unknown as { client: MqttClient })['client'] = mockMqttClient as unknown as MqttClient;
-    mockMqttClient.publishAsync.mock.mockImplementationOnce(async () => {
+    streamToString.mock.mockImplementation(async () => JSON.stringify([values[0]]));
+    setClient();
+    mqttClient.publishAsync.mock.mockImplementationOnce(async () => {
       throw new Error('Publish failed');
     });
-
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
-    const readStream = {} as ReadStream;
 
-    await assert.rejects(async () => {
-      await north.handleContent(readStream, {
-        contentFile: 'file.json',
-        contentSize: 100,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'mqtt'
-      });
-    }, /Publish failed/);
+    await assert.rejects(north.handleContent(readStream, metadata), /Publish failed/);
 
     assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'MQTT Publish error: Publish failed'));
     assert.strictEqual(disconnectMock.mock.calls.length, 1);

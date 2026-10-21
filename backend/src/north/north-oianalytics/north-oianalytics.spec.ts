@@ -3,82 +3,65 @@ import { ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
 import { PassThrough, Readable } from 'node:stream';
 import zlib from 'node:zlib';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { NorthOIAnalyticsSettings } from '../../../shared/model/connector/north-settings.model';
 
 import type CertificateRepository from '../../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import type { ReqOptions } from '../../service/http-request.utils';
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import type * as HttpRequestUtils from '../../service/http-request.utils';
+import type * as UtilsOIAnalytics from '../../service/utils-oianalytics';
+import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
-import { assertContains, buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { assertContains, buildNorthEntity, createMock, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type NorthOIAnalyticsClass from './north-oianalytics';
 
 const nodeRequire = createRequire(import.meta.url);
+
+const toReadStream = (stream: Readable) => stream as ReadStream;
+const fileStreamOf = (content: string) => toReadStream(Readable.from([Buffer.from(content)]));
+const readBody = async (body: unknown): Promise<string> => {
+  const chunks: Array<Buffer> = [];
+  for await (const chunk of body as AsyncIterable<Buffer>) {
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks).toString('utf8');
+};
 
 describe('NorthOIAnalytics', () => {
   let NorthOIAnalytics: typeof NorthOIAnalyticsClass;
   let north: NorthOIAnalyticsClass;
 
-  const logger = new PinoLogger();
-  const cacheService = new CacheServiceMock();
-  const certificateRepository = new CertificateRepositoryMock() as unknown as CertificateRepository;
-  const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock() as unknown as OIAnalyticsRegistrationRepository;
-
-  // Real streams — gzipStream() now wires the source into the gzip Transform via
-  // pipeline(), which needs genuine stream objects (not plain fake objects with a mocked
-  // .pipe()) to work. Fresh instances are created per test in beforeEach() since pipeline()
-  // actually attaches listeners/consumes these, so they can't safely be reused across tests.
-  let mockGzipStream: PassThrough;
-  let mockReadStream: ReadStream;
-
-  const httpRequestMock = mock.fn(async (_url: URL, _options: ReqOptions) => createMockResponse(200));
-
-  const buildHttpOptionsMock = mock.fn(async () => ({
-    headers: { 'custom-header': 'val' },
-    auth: { type: 'basic' },
-    timeout: 30000
-  }));
-  const getHostMock = mock.fn(() => 'https://mock-host');
-  const getUrlMock = mock.fn((endpoint: string, host: string) => new URL(endpoint, host));
-  const testOIAnalyticsConnectionMock = mock.fn(async () => undefined);
-
-  const createGzipMock = mock.fn(() => mockGzipStream);
-  const gzipSyncMock = mock.fn(() => Buffer.from('gzipped-content'));
-
-  const httpRequestExports = {
-    __esModule: true,
-    HTTPRequest: httpRequestMock,
-    retryableHttpStatusCodes: [429, 500, 502, 503, 504]
-  };
-
-  const utilsOIAnalyticsExports = {
-    __esModule: true,
-    buildHttpOptions: buildHttpOptionsMock,
-    getHost: getHostMock,
-    getUrl: getUrlMock,
-    testOIAnalyticsConnection: testOIAnalyticsConnectionMock
-  };
-
+  let certificateRepository: Mocked<CertificateRepository>;
   let configuration: ReturnType<typeof buildNorthEntity<NorthOIAnalyticsSettings>>;
+  let HTTPRequest: Mock<typeof HttpRequestUtils.HTTPRequest>;
+  let createGzipMock: Mock<typeof zlib.createGzip>;
+  let gzipSyncMock: Mock<typeof zlib.gzipSync>;
+
+  // Real streams: gzipStream() wires the source into the gzip Transform via pipeline(), which needs genuine stream
+  // objects. Fresh instances are created per test since pipeline() attaches listeners to / consumes them.
+  let gzipStream: PassThrough;
+  let fileStream: ReadStream;
+
+  const httpRequestExports: typeof HttpRequestUtils = { ...nodeRequire('../../service/http-request.utils') };
+  let utilsOIAnalyticsExports: typeof UtilsOIAnalytics;
+  const createUtilsOIAnalyticsMocks = () => ({
+    buildHttpOptions: mock.fn(async () => ({ headers: { 'custom-header': 'val' }, auth: { type: 'basic' as const }, timeout: 30000 })),
+    testOIAnalyticsConnection: mock.fn(async () => undefined)
+  });
+  let utilsOIAnalyticsMocks: ReturnType<typeof createUtilsOIAnalyticsMocks>;
 
   before(() => {
-    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    mockModule(nodeRequire, '@azure/identity', {});
+    utilsOIAnalyticsExports = { ...nodeRequire('../../service/utils-oianalytics') };
     mockModule(nodeRequire, '../../service/utils-oianalytics', utilsOIAnalyticsExports);
-    mockModule(nodeRequire, 'node:fs', { __esModule: true });
-    mockModule(nodeRequire, '../../service/cache/cache.service', {
-      __esModule: true,
-      default: function () {
-        return cacheService;
-      }
-    });
+    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    // No transformation here: don't pay for loading every transformer
+    mockModule(nodeRequire, '../../service/transformer.service', {});
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => new PinoLogger() },
       default: class {}
     });
 
@@ -86,38 +69,16 @@ describe('NorthOIAnalytics', () => {
   });
 
   beforeEach(() => {
-    logger.trace.mock.resetCalls();
-    logger.debug.mock.resetCalls();
-    logger.info.mock.resetCalls();
-    logger.warn.mock.resetCalls();
-    logger.error.mock.resetCalls();
-    httpRequestMock.mock.resetCalls();
-    buildHttpOptionsMock.mock.resetCalls();
-    getHostMock.mock.resetCalls();
-    getUrlMock.mock.resetCalls();
-    testOIAnalyticsConnectionMock.mock.resetCalls();
-    createGzipMock.mock.resetCalls();
-    gzipSyncMock.mock.resetCalls();
-    (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get.mock.resetCalls();
+    HTTPRequest = mock.fn(async () => createMockResponse(200));
+    httpRequestExports.HTTPRequest = HTTPRequest;
+    utilsOIAnalyticsMocks = createUtilsOIAnalyticsMocks();
+    Object.assign(utilsOIAnalyticsExports, utilsOIAnalyticsMocks);
 
-    mockGzipStream = new PassThrough();
-    mockReadStream = new PassThrough() as unknown as ReadStream;
-
+    gzipStream = new PassThrough();
+    fileStream = toReadStream(new PassThrough());
     // node:zlib is a built-in module and cannot be patched via mockModule; use mock.method instead
-    mock.method(zlib, 'createGzip', createGzipMock as unknown as typeof zlib.createGzip);
-    mock.method(zlib, 'gzipSync', gzipSyncMock as unknown as typeof zlib.gzipSync);
-
-    buildHttpOptionsMock.mock.mockImplementation(async () => ({
-      headers: { 'custom-header': 'val' },
-      auth: { type: 'basic' },
-      timeout: 30000
-    }));
-    getHostMock.mock.mockImplementation(() => 'https://mock-host');
-    getUrlMock.mock.mockImplementation((endpoint: string, host: string) => new URL(endpoint, host));
-    httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(200));
-    (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get.mock.mockImplementation(
-      () => testData.oIAnalytics.registration.completed
-    );
+    createGzipMock = mock.method(zlib, 'createGzip', () => gzipStream as zlib.Gzip);
+    gzipSyncMock = mock.method(zlib, 'gzipSync', () => Buffer.from('gzipped-content'));
 
     configuration = buildNorthEntity<NorthOIAnalyticsSettings>('oianalytics', {
       useOiaModule: false,
@@ -132,20 +93,32 @@ describe('NorthOIAnalytics', () => {
         useProxy: false
       }
     });
-
-    north = new NorthOIAnalytics(configuration, cacheService, certificateRepository, oIAnalyticsRegistrationRepository);
+    certificateRepository = createMock<CertificateRepository>();
+    north = new NorthOIAnalytics(
+      configuration,
+      createCacheServiceMock(),
+      certificateRepository,
+      createMock<OIAnalyticsRegistrationRepository>({ get: () => testData.oIAnalytics.registration.completed })
+    );
   });
 
   afterEach(() => {
+    mock.timers.reset();
     mock.restoreAll();
-    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
+
+  /** The single HTTP request sent */
+  const sentRequest = () => {
+    assert.strictEqual(HTTPRequest.mock.calls.length, 1);
+    const [url, options] = HTTPRequest.mock.calls[0].arguments;
+    return { url: url as URL, options: options! };
+  };
 
   it('should properly call test utils function', async () => {
     await north.testConnection();
 
-    assert.strictEqual(testOIAnalyticsConnectionMock.mock.calls.length, 1);
-    assert.deepStrictEqual(testOIAnalyticsConnectionMock.mock.calls[0].arguments, [
+    assert.strictEqual(utilsOIAnalyticsMocks.testOIAnalyticsConnection.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsOIAnalyticsMocks.testOIAnalyticsConnection.mock.calls[0].arguments, [
       configuration.settings.useOiaModule,
       testData.oIAnalytics.registration.completed,
       configuration.settings.specificSettings,
@@ -178,38 +151,27 @@ describe('NorthOIAnalytics', () => {
       references: ['ref1', 'ref2']
     };
 
-    const fileStreamOf = (content: string): ReadStream => Readable.from([Buffer.from(content)]) as unknown as ReadStream;
-    const readBody = async (body: unknown): Promise<string> => {
-      const chunks: Array<Buffer> = [];
-      for await (const chunk of body as AsyncIterable<Buffer>) {
-        chunks.push(Buffer.from(chunk));
-      }
-      return Buffer.concat(chunks).toString('utf8');
-    };
-
     it('should convert time values into the compact format and send them without compression', async () => {
       await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata);
 
       assert.strictEqual(createGzipMock.mock.calls.length, 0);
-
-      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      const { url, options } = sentRequest();
       assert.strictEqual(url.pathname, '/api/oianalytics/oibus/time-values/compact');
       assert.deepStrictEqual(JSON.parse(await readBody(options.body)), compactTimeValues);
-      assertContains(options.headers as Record<string, unknown>, { 'Content-Type': 'application/json' });
+      assertContains(options.headers, { 'Content-Type': 'application/json' });
       assert.strictEqual(options.query, undefined);
     });
 
     it('should stream compact oianalytics content as is', async () => {
       const content = `  ${JSON.stringify(compactTimeValues)}`;
-      const fileStream = fileStreamOf(content);
+      const compactFileStream = fileStreamOf(content);
 
-      await north.handleContent(fileStream, oianalyticsMetadata);
+      await north.handleContent(compactFileStream, oianalyticsMetadata);
 
-      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      const { url, options } = sentRequest();
       assert.strictEqual(url.pathname, '/api/oianalytics/oibus/time-values/compact');
       // The file stream itself is sent (not buffered), and the peeked chunk is not lost
-      assert.strictEqual(options.body, fileStream);
+      assert.strictEqual(options.body, compactFileStream);
       assert.strictEqual(await readBody(options.body), content);
     });
 
@@ -222,37 +184,34 @@ describe('NorthOIAnalytics', () => {
 
       await north.handleContent(fileStreamOf(`\n${JSON.stringify(legacy)}`), oianalyticsMetadata);
 
-      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.deepStrictEqual(JSON.parse(await readBody(options.body)), compactTimeValues);
+      assert.deepStrictEqual(JSON.parse(await readBody(sentRequest().options.body)), compactTimeValues);
     });
 
     it('should stream empty oianalytics content as is', async () => {
-      const fileStream = fileStreamOf('');
-      await north.handleContent(fileStream, oianalyticsMetadata);
+      const emptyFileStream = fileStreamOf('');
+      await north.handleContent(emptyFileStream, oianalyticsMetadata);
 
-      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.strictEqual(options.body, fileStream);
+      assert.strictEqual(sentRequest().options.body, emptyFileStream);
     });
 
     it('should reject when the oianalytics content cannot be read', async () => {
-      const fileStream = new PassThrough() as unknown as ReadStream;
-      const promise = north.handleContent(fileStream, oianalyticsMetadata);
-      fileStream.destroy(new Error('read error'));
+      const source = new PassThrough();
+      const promise = north.handleContent(toReadStream(source), oianalyticsMetadata);
+      source.destroy(new Error('read error'));
 
       await assert.rejects(promise, /read error/);
-      assert.strictEqual(httpRequestMock.mock.calls.length, 0);
+      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
     });
 
     it('should wait for data before peeking oianalytics content', async () => {
-      const fileStream = new PassThrough() as unknown as ReadStream;
-      const promise = north.handleContent(fileStream, oianalyticsMetadata);
+      const source = new PassThrough();
+      const promise = north.handleContent(toReadStream(source), oianalyticsMetadata);
       // Let the peek subscribe before any data is available
       await new Promise(resolve => setImmediate(resolve));
-      (fileStream as unknown as PassThrough).end(JSON.stringify(compactTimeValues));
+      source.end(JSON.stringify(compactTimeValues));
       await promise;
 
-      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.deepStrictEqual(JSON.parse(await readBody(options.body)), compactTimeValues);
+      assert.deepStrictEqual(JSON.parse(await readBody(sentRequest().options.body)), compactTimeValues);
     });
 
     it('should send values with compression if enabled', async () => {
@@ -264,39 +223,38 @@ describe('NorthOIAnalytics', () => {
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
       assert.strictEqual(gzipSyncMock.mock.calls.length, 0);
 
-      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      const { url, options } = sentRequest();
       assert.strictEqual(url.pathname, '/api/oianalytics/oibus/time-values/compact/compressed');
-      assertContains(options, { body: mockGzipStream });
-      assert.deepStrictEqual(JSON.parse(await readBody(mockGzipStream)), compactTimeValues);
+      assertContains(options, { body: gzipStream });
+      assert.deepStrictEqual(JSON.parse(await readBody(gzipStream)), compactTimeValues);
     });
 
     it('should throw an error when time values content is not valid JSON', async () => {
-      await assert.rejects(async () => north.handleContent(fileStreamOf('not json'), timeValuesMetadata), SyntaxError);
-      assert.strictEqual(httpRequestMock.mock.calls.length, 0);
+      await assert.rejects(north.handleContent(fileStreamOf('not json'), timeValuesMetadata), SyntaxError);
+      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
     });
 
     it('should throw OIBusError on fetch failure', async () => {
-      httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => {
+      HTTPRequest.mock.mockImplementation(async () => {
         throw new Error('Network Error');
       });
       await assert.rejects(
-        async () => north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata),
+        north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata),
         /Fail to reach values endpoint/
       );
     });
 
     it('should throw OIBusError on non-ok response', async () => {
-      httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(500, 'Internal Server Error'));
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(500, 'Internal Server Error'));
       await assert.rejects(
-        async () => north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata),
+        north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata),
         /Error 500: Internal Server Error/
       );
     });
   });
 
   it('should resolve without doing anything for an unsupported content type', async () => {
-    await north.handleContent(mockReadStream, {
+    await north.handleContent(fileStream, {
       contentFile: 'file.bin',
       contentSize: 10,
       numberOfElement: 1,
@@ -304,7 +262,7 @@ describe('NorthOIAnalytics', () => {
       contentType: 'opcua'
     });
 
-    assert.strictEqual(httpRequestMock.mock.calls.length, 0);
+    assert.strictEqual(HTTPRequest.mock.calls.length, 0);
   });
 
   describe('handleFile (any)', () => {
@@ -319,86 +277,64 @@ describe('NorthOIAnalytics', () => {
     it('should upload file using multipart stream', async () => {
       mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-      await north.handleContent(mockReadStream, metadata);
+      await north.handleContent(fileStream, metadata);
 
-      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      const { url, options } = sentRequest();
       assert.strictEqual(url.pathname, '/api/oianalytics/oibus/file');
       assert.strictEqual(options.query, undefined);
       assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
-
-      mock.timers.reset();
     });
 
     it('should compress file if enabled and not .gz', async () => {
       north['connector'].settings.compress = true;
 
-      await north.handleContent(mockReadStream, metadata);
+      await north.handleContent(fileStream, metadata);
 
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
       assert.deepStrictEqual(createGzipMock.mock.calls[0].arguments, [{ level: 9 }]);
-
-      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      const { url, options } = sentRequest();
       assert.strictEqual(url.pathname, '/api/oianalytics/oibus/file');
       assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
     });
 
     it('should NOT compress file if enabled but already .gz', async () => {
       north['connector'].settings.compress = true;
-      const gzMetadata = { ...metadata, contentFile: 'archive.tar.gz' };
 
-      await north.handleContent(mockReadStream, gzMetadata);
+      await north.handleContent(fileStream, { ...metadata, contentFile: 'archive.tar.gz' });
 
       assert.strictEqual(createGzipMock.mock.calls.length, 0);
-
-      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/file');
+      assert.strictEqual(sentRequest().url.pathname, '/api/oianalytics/oibus/file');
     });
 
     it('should throw OIBusError on fetch failure', async () => {
-      httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => {
+      HTTPRequest.mock.mockImplementation(async () => {
         throw new Error('Network Error');
       });
-      await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Fail to reach file endpoint/);
+      await assert.rejects(north.handleContent(fileStream, metadata), /Fail to reach file endpoint/);
     });
 
     it('should throw OIBusError on non-ok response', async () => {
-      httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(400, 'Bad Request'));
-      await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Error 400: Bad Request/);
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(400, 'Bad Request'));
+      await assert.rejects(north.handleContent(fileStream, metadata), /Error 400: Bad Request/);
     });
 
     it('should actually stream the file content through the multipart generator', async () => {
-      // mockReadStream never gets iterated by the mocked HTTPRequest, so the multipart
-      // async-generator body is never driven. Use a real async-iterable stream here and
-      // manually drain the resulting body to force the generator to run to completion.
-      const realFileStream = Readable.from([Buffer.from('chunk-a'), Buffer.from('chunk-b')]) as unknown as ReadStream;
+      // The mocked HTTPRequest never iterates the body, so the multipart async-generator is never driven.
+      // Use a real async-iterable stream here and manually drain the resulting body to force the generator to run.
+      await north.handleContent(toReadStream(Readable.from([Buffer.from('chunk-a'), Buffer.from('chunk-b')])), {
+        ...metadata,
+        contentFile: 'real-file.txt'
+      });
 
-      await north.handleContent(realFileStream, { ...metadata, contentFile: 'real-file.txt' });
-
-      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      const chunks: Array<Buffer> = [];
-      for await (const chunk of options.body as AsyncIterable<Buffer>) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-      }
-      const full = Buffer.concat(chunks).toString();
+      const full = await readBody(sentRequest().options.body);
       assert.ok(full.includes('chunk-a'));
       assert.ok(full.includes('chunk-b'));
     });
 
     it('should produce a valid multipart body even for an empty file stream', async () => {
-      const emptyFileStream = Readable.from([]) as unknown as ReadStream;
+      await north.handleContent(toReadStream(Readable.from([])), { ...metadata, contentFile: 'empty-file.txt' });
 
-      await north.handleContent(emptyFileStream, { ...metadata, contentFile: 'empty-file.txt' });
-
-      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      const chunks: Array<Buffer> = [];
-      for await (const chunk of options.body as AsyncIterable<Buffer>) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-      }
-      const full = Buffer.concat(chunks).toString();
+      const full = await readBody(sentRequest().options.body);
       assert.ok(full.includes('Content-Disposition'));
       assert.ok(full.includes('--\r\n'));
     });
