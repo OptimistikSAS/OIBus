@@ -499,7 +499,7 @@ describe('SouthMySQL', () => {
           { key: 'Tables', value: '21' }
         ]
       });
-      assert.ok(end.mock.calls.length > 0);
+      assert.strictEqual(end.mock.calls.length, 1);
     });
 
     it('Database is reachable but version is unavailable', async () => {
@@ -575,11 +575,22 @@ describe('SouthMySQL', () => {
       );
       const errorMessage = 'Error pinging database';
 
-      for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
+      for (const [index, code] of (Object.keys(ERROR_CODES) as Array<ErrorCodes>).entries()) {
         ping.mock.mockImplementation(() => {
           throw new MYSQL2Error(errorMessage, code);
         });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
+        // An empty password is not sent to the driver
+        assert.deepStrictEqual(createConnection.mock.calls[index].arguments[0], {
+          host: 'localhost',
+          port: 3306,
+          user: 'username',
+          password: undefined,
+          database: 'db',
+          connectTimeout: 1000,
+          timezone: 'Z'
+        });
+        assert.strictEqual(end.mock.calls.length, index + 1);
       }
     });
   });
