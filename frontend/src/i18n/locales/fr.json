@@ -1923,7 +1923,7 @@
       "copy-title": "Ajouter un nouvel élément au connecteur South",
       "steps": "Étapes de l'élément",
       "step": {
-        "general": "Général",
+        "general": "Nom et planification",
         "settings": "Paramètres",
         "review": "Vérification et enregistrement"
       },
@@ -2998,7 +2998,12 @@
         "delete": "Supprimer l'élément",
         "audit": "Voir l'historique d'audit de l'élément"
       },
-      "search-placeholder": "Saisir du texte pour filtrer les éléments"
+      "search-placeholder": "Saisir du texte pour filtrer les éléments",
+      "step": {
+        "settings": "Paramètres",
+        "general": "Nom",
+        "review": "Vérification et enregistrement"
+      }
     },
     "monitoring": {
       "north": {

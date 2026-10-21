@@ -11,7 +11,21 @@
 @if (manifest(); as manifest) {
   <div class="modal-body">
     <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onEnter($event)" id="form">
-      <!-- 1. General: what every item has, whatever its connector -->
+      <!-- 1. Settings: those of the connector type -->
+      <div [hidden]="steps.current() !== 'settings'" id="step-settings">
+        <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
+        <ng-container formGroupName="settings">
+          <oib-oibus-object-form-control
+            [scanModes]="scanModes()"
+            [certificates]="certificates()"
+            [group]="form.controls.settings"
+            [objectAttribute]="itemSettingsAttribute()!"
+            layout="sections"
+          />
+        </ng-container>
+      </div>
+
+      <!-- 2. Name & schedule: what every item has, whatever its connector, set once its settings are tested -->
       <div [hidden]="steps.current() !== 'general'" id="step-general">
         <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
         <div class="row">
@@ -274,23 +288,9 @@
           }
         }
       </div>
-
-      <!-- 2. Settings: those of the connector type -->
-      <div [hidden]="steps.current() !== 'settings'" id="step-settings">
-        <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
-        <ng-container formGroupName="settings">
-          <oib-oibus-object-form-control
-            [scanModes]="scanModes()"
-            [certificates]="certificates()"
-            [group]="form.controls.settings"
-            [objectAttribute]="itemSettingsAttribute()!"
-            layout="sections"
-          />
-        </ng-container>
-      </div>
     </form>
 
-    <!-- 2. Settings, tried out right away: the test panel has its own form, so it sits outside the item one -->
+    <!-- 1. Settings, tried out right away: the test panel has its own form, so it sits outside the item one -->
     <div [hidden]="steps.current() !== 'settings'" class="mt-4" id="step-settings-test">
       <oib-south-item-test
         type="south"

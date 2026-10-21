@@ -19,7 +19,7 @@ import { DefaultValidationErrorsComponent } from '../../../shared/default-valida
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
-import { ItemModalStep } from '../item-modal-steps';
+import { ITEM_MODAL_STEPS, ItemModalStep } from '../item-modal-steps';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../south-item-groups.testing';
 import EditSouthItemModalComponent from './edit-south-item-modal.component';
 
@@ -157,11 +157,21 @@ describe('EditSouthItemModalComponent', () => {
     tableIndex?: number;
     directSave?: boolean;
     previousItem?: SouthConnectorItemCommandDTO;
+    /** The step to open: the name & schedule one by default, where most of the item is edited */
+    step?: ItemModalStep;
   }
 
-  /** Opens the modal like its openers do: for creation, or for edition / copy of `item`. */
-  function open(mode: 'create' | 'edit' | 'copy', options: OpenOptions = {}) {
-    const { item = savedItem1, itemList = [], itemManifest = manifest, tableIndex = 0, directSave = true, previousItem = null } = options;
+  /** Opens the modal like its openers do: for creation, or for edition / copy of `item`, on the given step. */
+  async function open(mode: 'create' | 'edit' | 'copy', options: OpenOptions = {}) {
+    const {
+      item = savedItem1,
+      itemList = [],
+      itemManifest = manifest,
+      tableIndex = 0,
+      directSave = true,
+      previousItem = null,
+      step = 'general'
+    } = options;
     const tester = new EditSouthItemModalComponentTester();
     const component = tester.fixture.componentInstance;
     component.directSave = directSave;
@@ -176,6 +186,9 @@ describe('EditSouthItemModalComponent', () => {
         component.prepareForCopy(itemList, scanModes, [], groups, itemManifest, item, southId, southConnectorCommand);
         break;
     }
+    if (step !== ITEM_MODAL_STEPS[0]) {
+      await tester.step(step).click();
+    }
     return tester;
   }
 
@@ -184,10 +197,10 @@ describe('EditSouthItemModalComponent', () => {
   }
 
   test('should populate the form in edit mode', async () => {
-    const tester = open('edit');
+    const tester = await open('edit');
 
     await expect.element(tester.title).toHaveTextContent('Edit item');
-    await expect.element(tester.root.getByRole('heading', { level: 5, name: 'General' })).toBeInTheDocument();
+    await expect.element(tester.root.getByRole('heading', { level: 5, name: 'Name & schedule' })).toBeInTheDocument();
     await expect.element(tester.name).toHaveValue(savedItem1.name);
     await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[0].name);
     await expect.element(tester.enabled).toBeChecked();
@@ -207,7 +220,7 @@ describe('EditSouthItemModalComponent', () => {
       endTimeOffset: null,
       recoveryStrategy: null
     };
-    const tester = open(mode, { item: itemWithNullHistorianFields });
+    const tester = await open(mode, { item: itemWithNullHistorianFields });
 
     await expect.element(tester.title).toHaveTextContent(title);
     await expect.element(tester.maxReadInterval).toHaveValue(3600);
@@ -218,14 +231,14 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   test('should only offer polling schedules to a polling connector', async () => {
-    const tester = open('create');
+    const tester = await open('create');
 
     await expect.element(tester.scanMode.getByRole('option')).toHaveLength(3);
     await expect.element(tester.scanMode.getByRole('option', { name: 'Subscription' })).not.toBeInTheDocument();
   });
 
   test('should create an item', async () => {
-    const tester = open('create');
+    const tester = await open('create');
 
     await tester.name.fill('new item');
     await tester.scanMode.selectOptions(scanModes[1].name);
@@ -256,7 +269,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   test('should save the edited item with its id', async () => {
-    const tester = open('edit');
+    const tester = await open('edit');
 
     await tester.name.fill('renamed');
     await tester.saveButton.click();
@@ -265,7 +278,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   test('should not save an invalid item, and show the step to fix', async () => {
-    const tester = open('create');
+    const tester = await open('create');
 
     await tester.save();
 
@@ -281,7 +294,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('steps', () => {
     test('should open the next step when pressing Enter in a field of a new item', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.scanMode.selectOptions(scanModes[0].name);
 
       // not from a checkbox, nor before the step is valid
@@ -294,12 +307,12 @@ describe('EditSouthItemModalComponent', () => {
       await tester.name.fill('new item');
       await userEvent.keyboard('{Enter}');
 
-      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
       expect(activeModal.close).not.toHaveBeenCalled();
     });
 
     test('should save an edited item once when pressing Enter in a field', async () => {
-      const tester = open('edit');
+      const tester = await open('edit');
 
       await tester.name.fill('renamed');
       await userEvent.keyboard('{Enter}');
@@ -309,10 +322,16 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should only open the next step once the current one is valid', async () => {
-      const tester = open('create');
+      const tester = await open('create', { step: 'settings' });
+      // the settings come first, tested right where they are edited
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.runTestButton).toBeVisible();
       await expect.element(tester.saveButton).not.toBeInTheDocument();
       await expect.element(tester.backButton).not.toBeInTheDocument();
 
+      await tester.nextButton.click();
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.runTestButton).not.toBeVisible();
       await tester.nextButton.click();
       await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.step('general')).toHaveClass('modal-step-invalid');
@@ -321,22 +340,16 @@ describe('EditSouthItemModalComponent', () => {
       await tester.name.fill('new item');
       await tester.scanMode.selectOptions(scanModes[0].name);
       await tester.nextButton.click();
-      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
-      // the settings are tested right where they are edited
-      await expect.element(tester.runTestButton).toBeVisible();
-
-      await tester.nextButton.click();
       await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
-      await expect.element(tester.runTestButton).not.toBeVisible();
       await expect.element(tester.nextButton).not.toBeInTheDocument();
       await expect.element(tester.saveButton).toBeInTheDocument();
 
       await tester.backButton.click();
-      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
     });
 
     test('should save an edited item from any step', async () => {
-      const tester = open('edit');
+      const tester = await open('edit');
 
       await expect.element(tester.saveButton).toBeInTheDocument();
       await tester.step('settings').click();
@@ -347,7 +360,7 @@ describe('EditSouthItemModalComponent', () => {
 
     test('should sum the item up on the last step', async () => {
       const item: SouthConnectorItemDTO = { ...savedItem1, group: groupA, syncWithGroup: true, enabled: false };
-      const tester = open('edit', { item });
+      const tester = await open('edit', { item });
 
       await tester.step('review').click();
 
@@ -366,7 +379,7 @@ describe('EditSouthItemModalComponent', () => {
 
     test('should sum the caching strategy up for an IoT connector', async () => {
       const item: SouthConnectorItemDTO = { ...savedItem1, cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 };
-      const tester = open('edit', { item, itemManifest: opcuaManifest });
+      const tester = await open('edit', { item, itemManifest: opcuaManifest });
 
       await tester.step('review').click();
 
@@ -375,7 +388,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should show what changed since the edited item was saved', async () => {
-      const tester = open('edit');
+      const tester = await open('edit');
       await tester.step('review').click();
       await expect.element(tester.reviewChanges).toHaveTextContent('No change since the item was saved');
 
@@ -392,7 +405,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should not compare a new item with anything', async () => {
-      const tester = open('copy', { itemList: [] });
+      const tester = await open('copy', { itemList: [] });
 
       await tester.step('review').click();
 
@@ -402,19 +415,19 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should list the steps to fix, and open them', async () => {
-      const tester = open('create');
+      const tester = await open('create');
 
       await tester.step('review').click();
 
       await expect.element(tester.reviewErrors.getByText('Fix these steps before saving:')).toBeInTheDocument();
       await expect.element(tester.reviewedEntry('Name')).toHaveClass('oib-summary-invalid');
-      await tester.reviewErrors.getByRole('button', { name: 'General' }).click();
+      await tester.reviewErrors.getByRole('button', { name: 'Name & schedule' }).click();
       await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
     });
   });
 
   test('should save a subscription item without schedule selection', async () => {
-    const tester = open('create', { itemManifest: subscriptionManifest });
+    const tester = await open('create', { itemManifest: subscriptionManifest });
 
     await tester.name.fill('new item');
     await expect.element(tester.scanMode).not.toBeInTheDocument();
@@ -424,7 +437,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   test('should prefill a copy of the item, without its id', async () => {
-    const tester = open('copy', { itemList: [savedItem1] });
+    const tester = await open('copy', { itemList: [savedItem1] });
 
     await expect.element(tester.title).toHaveTextContent('Add a new item to the south connector');
     await expect.element(tester.name).toHaveValue(`${savedItem1.name}-copy`);
@@ -436,7 +449,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('groups', () => {
     test('should apply the selected group and sync the item with it', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.name.fill('new item');
 
       await tester.selectGroup('GroupA');
@@ -479,7 +492,7 @@ describe('EditSouthItemModalComponent', () => {
         recoveryStrategy: null,
         cachingStrategy: null
       };
-      const tester = open('create');
+      const tester = await open('create');
 
       await tester.selectGroup('GroupA');
 
@@ -491,7 +504,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should keep the item own historian values when it is not synced with its group', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.name.fill('new item');
       await tester.selectGroup('GroupA');
 
@@ -506,7 +519,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should keep sync-with-group on when switching from one group to another', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.selectGroup('GroupA');
 
       await tester.selectGroup('GroupB');
@@ -516,7 +529,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should keep sync-with-group off when switching from one group to another, but apply its schedule', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.name.fill('new item');
       await tester.selectGroup('GroupA');
       await tester.syncWithGroup.click();
@@ -529,7 +542,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should turn sync-with-group off and restore the item own fields when the group is deselected', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.selectGroup('GroupA');
 
       await tester.selectGroup('None');
@@ -542,7 +555,7 @@ describe('EditSouthItemModalComponent', () => {
 
     test('should apply the group of an edited item', async () => {
       const item: SouthConnectorItemDTO = { ...savedItem1, group: groupA, syncWithGroup: true };
-      const tester = open('edit', { item });
+      const tester = await open('edit', { item });
 
       await expect.element(tester.groupToggle).toHaveTextContent('GroupA');
       await expect.element(tester.syncWithGroup).toBeChecked();
@@ -551,7 +564,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should create a group through the groups of the page and select it', async () => {
-      const tester = open('create', { directSave: false });
+      const tester = await open('create', { directSave: false });
       const command = buildSouthItemGroupCommand(null, 'GroupC', scanModes[1].id);
       const groupModal = createMock(EditSouthItemGroupModalComponent);
       TestBed.inject(MockModalService).mockClosedModal(groupModal, { mode: 'create', group: command });
@@ -574,7 +587,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should edit the selected group and apply its new values', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.selectGroup('GroupA');
       await tester.syncWithGroup.click();
       await tester.syncWithGroup.click();
@@ -594,7 +607,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should delete the selected group through the groups of the page and deselect it', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.selectGroup('GroupA');
 
       await tester.groupToggle.click();
@@ -610,14 +623,14 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('caching strategy', () => {
     test('should not be offered to a connector outside the IoT family', async () => {
-      const tester = open('create');
+      const tester = await open('create');
 
       await expect.element(tester.name).toBeInTheDocument();
       await expect.element(tester.cachingStrategy).not.toBeInTheDocument();
     });
 
     test('should require a threshold for the threshold strategy', async () => {
-      const tester = open('create', { itemManifest: opcuaManifest });
+      const tester = await open('create', { itemManifest: opcuaManifest });
       await tester.name.fill('new item');
       await tester.scanMode.selectOptions(scanModes[0].name);
 
@@ -635,7 +648,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should require a range high above the range low for a percentage threshold', async () => {
-      const tester = open('create', { itemManifest: opcuaManifest });
+      const tester = await open('create', { itemManifest: opcuaManifest });
       await tester.name.fill('new item');
       await tester.scanMode.selectOptions(scanModes[0].name);
       await tester.cachingStrategy.selectOptions('Threshold');
@@ -653,7 +666,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should hide the threshold fields for the other strategies', async () => {
-      const tester = open('create', { itemManifest: opcuaManifest });
+      const tester = await open('create', { itemManifest: opcuaManifest });
 
       await tester.cachingStrategy.selectOptions('On change');
 
@@ -665,7 +678,7 @@ describe('EditSouthItemModalComponent', () => {
 
     test('should not offer nor accept the threshold strategy for MQTT', async () => {
       const item: SouthConnectorItemDTO = { ...savedItem1, cachingStrategy: 'threshold', threshold: 5, thresholdType: 'absolute' };
-      const tester = open('edit', { item, itemManifest: mqttManifest });
+      const tester = await open('edit', { item, itemManifest: mqttManifest });
 
       await expect.element(tester.cachingStrategy.getByRole('option', { name: 'Threshold' })).not.toBeInTheDocument();
       await tester.saveButton.click();
@@ -688,7 +701,7 @@ describe('EditSouthItemModalComponent', () => {
     }
 
     test('create mode should reject the name of any existing item', async () => {
-      const tester = open('create', { itemList });
+      const tester = await open('create', { itemList });
 
       await typeName(tester, 'brand new');
       await expect.element(tester.mustBeUnique).not.toBeInTheDocument();
@@ -701,7 +714,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('copy mode should reject the name of the copied item', async () => {
-      const tester = open('copy', { itemList });
+      const tester = await open('copy', { itemList });
 
       await typeName(tester, `${savedItem1.name}-copy`);
       await expect.element(tester.mustBeUnique).not.toBeInTheDocument();
@@ -712,7 +725,7 @@ describe('EditSouthItemModalComponent', () => {
 
     test('edit mode should identify a saved item by its id rather than its table index', async () => {
       // the table index points to another item: only the id must be used to exclude the edited item
-      const tester = open('edit', { item: savedItem2, itemList, tableIndex: 0 });
+      const tester = await open('edit', { item: savedItem2, itemList, tableIndex: 0 });
 
       await typeName(tester, savedItem2.name);
       await expect.element(tester.mustBeUnique).not.toBeInTheDocument();
@@ -722,14 +735,14 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('edit mode should reject the name of an unsaved item when editing a saved item', async () => {
-      const tester = open('edit', { item: savedItem1, itemList, tableIndex: 0 });
+      const tester = await open('edit', { item: savedItem1, itemList, tableIndex: 0 });
 
       await typeName(tester, unsavedItem1.name);
       await expect.element(tester.mustBeUnique).toBeInTheDocument();
     });
 
     test('edit mode should identify an unsaved item by its table index', async () => {
-      const tester = open('edit', { item: unsavedItem2, itemList, tableIndex: 3 });
+      const tester = await open('edit', { item: unsavedItem2, itemList, tableIndex: 3 });
 
       await typeName(tester, unsavedItem2.name);
       await expect.element(tester.mustBeUnique).not.toBeInTheDocument();
@@ -744,7 +757,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('save and add another', () => {
     test('should only be offered on the last step of a new item', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await expect.element(tester.nextButton).toBeInTheDocument();
       await expect.element(tester.saveAndAddAnotherButton).not.toBeInTheDocument();
 
@@ -754,7 +767,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test.each(['edit' as const, 'copy' as const])('should not be offered in %s mode', async mode => {
-      const tester = open(mode);
+      const tester = await open(mode);
       await tester.step('review').click();
 
       await expect.element(tester.saveButton).toBeInTheDocument();
@@ -762,7 +775,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should save the new item and ask for another one', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.name.fill('new item');
       await tester.scanMode.selectOptions(scanModes[1].name);
       await tester.step('review').click();
@@ -774,7 +787,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should not ask for another item when saved with the main action', async () => {
-      const tester = open('create');
+      const tester = await open('create');
       await tester.scanMode.selectOptions(scanModes[1].name);
       // an invalid attempt first, without a name: the main action must not reuse it
       await tester.step('review').click();
@@ -789,7 +802,7 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     test('should be worded like the main action when the item is added in memory', async () => {
-      const tester = open('create', { directSave: false });
+      const tester = await open('create', { directSave: false });
       await tester.name.fill('new item');
       await tester.scanMode.selectOptions(scanModes[1].name);
       await tester.step('review').click();
@@ -814,10 +827,11 @@ describe('EditSouthItemModalComponent', () => {
         cachingStrategy: 'onChange',
         maxCachingInterval: 1000
       };
-      const tester = open('create', { itemManifest: opcuaManifest, previousItem, itemList: [previousItem] });
+      const tester = await open('create', { itemManifest: opcuaManifest, previousItem, itemList: [previousItem], step: 'settings' });
 
-      // a fresh item to name, from the first step
-      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      // a fresh item, from the first step
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await tester.step('general').click();
       await expect.element(tester.name).toHaveValue('');
       await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[1].name);
       await expect.element(tester.enabled).not.toBeChecked();
@@ -864,7 +878,7 @@ describe('EditSouthItemModalComponent', () => {
         readDelay: null,
         recoveryStrategy: null
       };
-      const tester = open('create', { previousItem });
+      const tester = await open('create', { previousItem });
 
       await expect.element(tester.groupToggle).toHaveTextContent('GroupA');
       await expect.element(tester.groupScanMode).toHaveTextContent(`Schedule ${scanModes[0].name} (from the group)`);
@@ -881,7 +895,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   test('should dismiss on cancel', async () => {
-    const tester = open('create');
+    const tester = await open('create');
 
     await tester.cancelButton.click();
 
@@ -889,7 +903,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   test('should only ask for confirmation before dismissing when there are unsaved changes', async () => {
-    const tester = open('edit');
+    const tester = await open('edit');
     await expect.element(tester.name).toHaveValue(savedItem1.name);
     expect(tester.fixture.componentInstance.canDismiss()).toBe(true);
 
