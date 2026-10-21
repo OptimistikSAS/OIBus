@@ -1,30 +1,25 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import IpFilterRepository from '../repository/config/ip-filter.repository';
-import IpFilterRepositoryMock from '../tests/__mocks__/repository/config/ip-filter-repository.mock';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import type IpFilterRepository from '../repository/config/ip-filter.repository';
 import testData from '../tests/utils/test-data';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { createMock, type Mocked } from '../tests/utils/test-utils';
+import type JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import IPFilterService, { toIPFilterDTO } from './ip-filter.service';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-
-let validator: { validate: ReturnType<typeof mock.fn> };
-let ipFilterRepository: IpFilterRepositoryMock;
-let oIAnalyticsMessageService: OianalyticsMessageServiceMock;
-let service: IPFilterService;
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 
 describe('IP Filter Service', () => {
+  let validator: Mocked<JoiValidator>;
+  let ipFilterRepository: Mocked<IpFilterRepository>;
+  let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+  let service: IPFilterService;
+
   beforeEach(() => {
-    validator = { validate: mock.fn() };
-    ipFilterRepository = new IpFilterRepositoryMock();
-    oIAnalyticsMessageService = new OianalyticsMessageServiceMock();
-    service = new IPFilterService(
-      validator as unknown as JoiValidator,
-      ipFilterRepository as unknown as IpFilterRepository,
-      oIAnalyticsMessageService as unknown as OIAnalyticsMessageService
-    );
+    validator = createMock<JoiValidator>();
+    ipFilterRepository = createMock<IpFilterRepository>();
+    oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
+    service = new IPFilterService(validator, ipFilterRepository, oIAnalyticsMessageService);
   });
 
   afterEach(() => {

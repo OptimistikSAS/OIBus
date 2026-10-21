@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import type DataStreamEngine from '../engine/data-stream-engine';
 import { CustomTransformer, StandardTransformer } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
-import type LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import type TransformerRepository from '../repository/config/transformer.repository';
+import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import { createMock, Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
 import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
@@ -41,6 +41,7 @@ import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values
 import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-values-to-opcua/manifest';
 import OIBusTimeValuesToOPCUATransformer from '../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import type TransformerServiceType from './transformer.service';
 import type {
   createTransformer as createTransformerType,
@@ -52,13 +53,15 @@ import type {
 
 const nodeRequire = createRequire(import.meta.url);
 
-// Mocked module exports — mutated in-place between tests
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockPapaparse: Record<string, ReturnType<typeof mock.fn>>;
-let mockIsolatedVm: Record<string, unknown>;
-let mockCustomTransformer: Record<string, unknown>;
+// OIBusCustomTransformer is used with `new`: each instance gets a fresh transform mock
+class MockOIBusCustomTransformer {
+  transform = mock.fn(async () => ({
+    metadata: { contentType: 'any', numberOfElement: 1 },
+    output: JSON.stringify({ data: [{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }] })
+  }));
+}
 
-let TransformerService: new (...args: Array<unknown>) => InstanceType<typeof TransformerServiceType>;
+let TransformerService: typeof TransformerServiceType;
 let createTransformer: typeof createTransformerType;
 let getStandardManifest: typeof getStandardManifestType;
 let runTransformerOnContent: typeof runTransformerOnContentType;
@@ -66,35 +69,11 @@ let toTransformedContent: typeof toTransformedContentType;
 let toTransformerDTO: typeof toTransformerDTOType;
 
 before(() => {
-  mockUtils = {
-    generateRandomId: mock.fn(() => 'random-id')
-  };
-  mockPapaparse = {
-    parse: mock.fn(),
-    unparse: mock.fn()
-  };
-  mockIsolatedVm = { default: { Isolate: mock.fn() } };
-  // OIBusCustomTransformer is used with `new`, so the mock must be a class.
-  // We keep a stable class that delegates to a replaceable factory so that
-  // in-place mutation of mockCustomTransformer.default works across tests.
-  class MockOIBusCustomTransformer {
-    transform: ReturnType<typeof mock.fn>;
-    constructor() {
-      this.transform = mock.fn(async () => ({
-        metadata: { contentType: 'any', numberOfElement: 1 },
-        output: JSON.stringify({ data: [{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }] })
-      }));
-    }
-  }
-  mockCustomTransformer = { __esModule: true, default: MockOIBusCustomTransformer };
-
-  mockModule(nodeRequire, './utils', mockUtils);
-  mockModule(nodeRequire, 'papaparse', mockPapaparse);
-  mockModule(nodeRequire, 'isolated-vm', mockIsolatedVm);
-  mockModule(nodeRequire, '../transformers/oibus-custom-transformer', mockCustomTransformer);
+  mockModule(nodeRequire, './utils', { generateRandomId: () => 'random-id' });
+  mockModule(nodeRequire, '../transformers/oibus-custom-transformer', { __esModule: true, default: MockOIBusCustomTransformer });
 
   const mod = reloadModule<{
-    default: new (...args: Array<unknown>) => InstanceType<typeof TransformerServiceType>;
+    default: typeof TransformerServiceType;
     createTransformer: typeof createTransformerType;
     getStandardManifest: typeof getStandardManifestType;
     runTransformerOnContent: typeof runTransformerOnContentType;
@@ -110,19 +89,20 @@ before(() => {
 });
 
 describe('Transformer Service', () => {
-  let service: InstanceType<typeof TransformerServiceType>;
-  let transformerRepository: TransformerRepositoryMock;
-  let oiAnalyticsMessageService: OianalyticsMessageServiceMock;
-  let engine: DataStreamEngineMock;
+  const customTransformer = testData.transformers.list[0] as CustomTransformer;
+  let service: TransformerServiceType;
+  let transformerRepository: Mocked<TransformerRepository>;
+  let oiAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+  let engine: Mocked<DataStreamEngine>;
   // JoiValidator is not mocked as a module — its validate method is a no-op (async, returns undefined)
   // We use a real instance but spy on it via mock.method
   let validator: JoiValidator;
   let validatorValidateMock: ReturnType<typeof mock.method>;
 
   beforeEach(() => {
-    transformerRepository = new TransformerRepositoryMock();
-    oiAnalyticsMessageService = new OianalyticsMessageServiceMock();
-    engine = new DataStreamEngineMock(null);
+    transformerRepository = createMock<TransformerRepository>();
+    oiAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
+    engine = createMock<DataStreamEngine>({ logger: new LoggerMock() });
     validator = new JoiValidator();
     validatorValidateMock = mock.method(validator, 'validate', async () => undefined);
 
@@ -226,16 +206,16 @@ describe('Transformer Service', () => {
       ...testData.transformers.command,
       id: testData.transformers.list[0].id,
       type: 'custom',
-      createdBy: (testData.transformers.list[0] as CustomTransformer).createdBy,
+      createdBy: customTransformer.createdBy,
       updatedBy: 'userTest',
-      createdAt: (testData.transformers.list[0] as CustomTransformer).createdAt,
-      updatedAt: (testData.transformers.list[0] as CustomTransformer).updatedAt
+      createdAt: customTransformer.createdAt,
+      updatedAt: customTransformer.updatedAt
     });
   });
 
   it('should update a transformer without changing the name', async () => {
     const command = JSON.parse(JSON.stringify(testData.transformers.command));
-    command.name = (testData.transformers.list[0] as CustomTransformer).name;
+    command.name = customTransformer.name;
     transformerRepository.findById.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.transformers.list[0])));
 
     await service.update(testData.transformers.list[0].id, command, 'userTest');
@@ -245,10 +225,10 @@ describe('Transformer Service', () => {
       ...command,
       id: testData.transformers.list[0].id,
       type: 'custom',
-      createdBy: (testData.transformers.list[0] as CustomTransformer).createdBy,
+      createdBy: customTransformer.createdBy,
       updatedBy: 'userTest',
-      createdAt: (testData.transformers.list[0] as CustomTransformer).createdAt,
-      updatedAt: (testData.transformers.list[0] as CustomTransformer).updatedAt
+      createdAt: customTransformer.createdAt,
+      updatedAt: customTransformer.updatedAt
     });
     // list should not be called when name is unchanged
     assert.strictEqual(transformerRepository.list.mock.calls.length, 0);
@@ -267,10 +247,10 @@ describe('Transformer Service', () => {
       ...command,
       id: testData.transformers.list[0].id,
       type: 'custom',
-      createdBy: (testData.transformers.list[0] as CustomTransformer).createdBy,
+      createdBy: customTransformer.createdBy,
       updatedBy: 'userTest',
-      createdAt: (testData.transformers.list[0] as CustomTransformer).createdAt,
-      updatedAt: (testData.transformers.list[0] as CustomTransformer).updatedAt
+      createdAt: customTransformer.createdAt,
+      updatedAt: customTransformer.updatedAt
     });
   });
 
@@ -320,7 +300,7 @@ describe('Transformer Service', () => {
 
   it('should call reloadTransformer when custom code changes', async () => {
     const command = JSON.parse(JSON.stringify(testData.transformers.command));
-    command.name = (testData.transformers.list[0] as CustomTransformer).name;
+    command.name = customTransformer.name;
     command.customCode = 'console.log("updated code");';
     transformerRepository.findById.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.transformers.list[0])));
 
@@ -334,7 +314,7 @@ describe('Transformer Service', () => {
 
   it('should call removeAndReloadTransformer when manifest changes', async () => {
     const command = JSON.parse(JSON.stringify(testData.transformers.command));
-    command.name = (testData.transformers.list[0] as CustomTransformer).name;
+    command.name = customTransformer.name;
     command.customManifest = { ...command.customManifest, key: 'transformers.updated' };
     transformerRepository.findById.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.transformers.list[0])));
 
@@ -348,7 +328,7 @@ describe('Transformer Service', () => {
 
   it('should not call engine reload when only name or description changes', async () => {
     const command = JSON.parse(JSON.stringify(testData.transformers.command));
-    command.name = (testData.transformers.list[0] as CustomTransformer).name;
+    command.name = customTransformer.name;
     command.description = 'Updated description only';
     transformerRepository.findById.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.transformers.list[0])));
 
@@ -403,144 +383,42 @@ describe('Transformer Service', () => {
   });
 
   it('should create standard transformers', () => {
-    const PinoLogger = nodeRequire('../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock };
-    const logger = new PinoLogger.default();
-
+    const logger = new LoggerMock();
     const transformer: StandardTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
     transformer.type = 'standard';
-
-    transformer.functionName = 'csv-to-mqtt';
-    assert.ok(
+    const create = () =>
       createTransformer(
         { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
         testData.north.list[0],
         logger
-      ) instanceof CSVToMQTTTransformer
-    );
+      );
 
-    transformer.functionName = 'csv-to-time-values';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof CSVToTimeValuesTransformer
-    );
-
-    transformer.functionName = 'json-to-csv';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof JSONToCSVTransformer
-    );
-
-    transformer.functionName = 'json-to-oianalytics';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof JSONToOIAnalyticsTransformer
-    );
-
-    transformer.functionName = 'time-values-to-csv';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusTimeValuesToCsvTransformer
-    );
-
-    transformer.functionName = 'time-values-to-json';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusTimeValuesToJSONTransformer
-    );
-
-    transformer.functionName = 'time-values-to-modbus';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusTimeValuesToModbusTransformer
-    );
-
-    transformer.functionName = 'time-values-to-mqtt';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusTimeValuesToMQTTTransformer
-    );
-
-    transformer.functionName = 'time-values-to-oianalytics';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusTimeValuesToOIAnalyticsTransformer
-    );
-
-    transformer.functionName = 'time-values-to-opcua';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusTimeValuesToOPCUATransformer
-    );
-
-    transformer.functionName = 'setpoint-to-modbus';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusSetpointToModbusTransformer
-    );
-
-    transformer.functionName = 'setpoint-to-mqtt';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusSetpointToMQTTTransformer
-    );
-
-    transformer.functionName = 'setpoint-to-opcua';
-    assert.ok(
-      createTransformer(
-        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-        testData.north.list[0],
-        logger
-      ) instanceof OIBusSetpointToOPCUATransformer
-    );
+    const expectedClasses: Array<[string, abstract new (...args: Array<never>) => unknown]> = [
+      ['csv-to-mqtt', CSVToMQTTTransformer],
+      ['csv-to-time-values', CSVToTimeValuesTransformer],
+      ['json-to-csv', JSONToCSVTransformer],
+      ['json-to-oianalytics', JSONToOIAnalyticsTransformer],
+      ['time-values-to-csv', OIBusTimeValuesToCsvTransformer],
+      ['time-values-to-json', OIBusTimeValuesToJSONTransformer],
+      ['time-values-to-modbus', OIBusTimeValuesToModbusTransformer],
+      ['time-values-to-mqtt', OIBusTimeValuesToMQTTTransformer],
+      ['time-values-to-oianalytics', OIBusTimeValuesToOIAnalyticsTransformer],
+      ['time-values-to-opcua', OIBusTimeValuesToOPCUATransformer],
+      ['setpoint-to-modbus', OIBusSetpointToModbusTransformer],
+      ['setpoint-to-mqtt', OIBusSetpointToMQTTTransformer],
+      ['setpoint-to-opcua', OIBusSetpointToOPCUATransformer]
+    ];
+    for (const [functionName, expectedClass] of expectedClasses) {
+      transformer.functionName = functionName;
+      assert.ok(create() instanceof expectedClass, functionName);
+    }
 
     transformer.functionName = 'bad-id';
-    assert.throws(
-      () =>
-        createTransformer(
-          { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
-          testData.north.list[0],
-          logger
-        ),
-      /not implemented/
-    );
+    assert.throws(() => create(), /not implemented/);
   });
 
   it('createTransformer() should create a custom transformer', () => {
-    const PinoLogger = nodeRequire('../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock };
-    const logger = new PinoLogger.default();
+    const logger = new LoggerMock();
 
     const transformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
 
@@ -608,40 +486,26 @@ describe('Transformer Service', () => {
     });
 
     it('streams any file content through transform', async () => {
-      const fsModule = nodeRequire('node:fs') as Record<string, unknown>;
-      const orig = fsModule['createReadStream'];
-      const createReadStreamMock = mock.fn((_path: string) => 'stream');
-      fsModule['createReadStream'] = createReadStreamMock;
-      try {
-        const t = buildTransformer();
-        const results = await run()(t, { type: 'any', filePath: '/tmp/data.csv' }, { source: 'test' });
-        assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
-        assert.strictEqual(createReadStreamMock.mock.calls[0].arguments[0], '/tmp/data.csv');
-        assert.strictEqual(t.transform.mock.calls.length, 1);
-        assert.strictEqual(t.transform.mock.calls[0].arguments[0], 'stream');
-        assert.ok((t.transform.mock.calls[0].arguments[2] as string).includes('random-id'));
-        assert.strictEqual(results.length, 1);
-      } finally {
-        fsModule['createReadStream'] = orig;
-      }
+      const createReadStreamMock = mock.method(fs, 'createReadStream', (_path: string) => 'stream');
+      const t = buildTransformer();
+      const results = await run()(t, { type: 'any', filePath: '/tmp/data.csv' }, { source: 'test' });
+      assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
+      assert.strictEqual(createReadStreamMock.mock.calls[0].arguments[0], '/tmp/data.csv');
+      assert.strictEqual(t.transform.mock.calls.length, 1);
+      assert.strictEqual(t.transform.mock.calls[0].arguments[0], 'stream');
+      assert.ok((t.transform.mock.calls[0].arguments[2] as string).includes('random-id'));
+      assert.strictEqual(results.length, 1);
     });
 
     it('runs any content in memory when no file was written to filePath', async () => {
-      const fsModule = nodeRequire('node:fs') as Record<string, unknown>;
-      const orig = fsModule['createReadStream'];
-      const createReadStreamMock = mock.fn(() => 'stream');
-      fsModule['createReadStream'] = createReadStreamMock;
-      try {
-        const t = buildTransformer();
-        const results = await run()(t, { type: 'any', filePath: 'does-not-exist.csv', content: 'a;b\n1;2' }, { source: 'test' });
-        assert.strictEqual(createReadStreamMock.mock.calls.length, 0);
-        assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
-        assert.strictEqual(t.transformInMemory.mock.calls[0].arguments[0], 'a;b\n1;2');
-        assert.ok((t.transformInMemory.mock.calls[0].arguments[2] as string).includes('random-id'));
-        assert.strictEqual(results.length, 1);
-      } finally {
-        fsModule['createReadStream'] = orig;
-      }
+      const createReadStreamMock = mock.method(fs, 'createReadStream', () => 'stream');
+      const t = buildTransformer();
+      const results = await run()(t, { type: 'any', filePath: 'does-not-exist.csv', content: 'a;b\n1;2' }, { source: 'test' });
+      assert.strictEqual(createReadStreamMock.mock.calls.length, 0);
+      assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
+      assert.strictEqual(t.transformInMemory.mock.calls[0].arguments[0], 'a;b\n1;2');
+      assert.ok((t.transformInMemory.mock.calls[0].arguments[2] as string).includes('random-id'));
+      assert.strictEqual(results.length, 1);
     });
   });
 
@@ -909,7 +773,7 @@ describe('Transformer Service', () => {
 
   it('should properly convert to DTO with empty createdBy/updatedBy', () => {
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
-    const customTransformerNoAudit = { ...(testData.transformers.list[0] as CustomTransformer), createdBy: '', updatedBy: '' };
+    const customTransformerNoAudit = { ...customTransformer, createdBy: '', updatedBy: '' };
     const result = toTransformerDTO(customTransformerNoAudit, getUserInfo);
     assert.ok(result.type === 'custom');
     assert.deepStrictEqual(result.createdBy, { id: '', friendlyName: '' });
@@ -918,7 +782,7 @@ describe('Transformer Service', () => {
 
   it('should properly convert to DTO with non-empty createdBy/updatedBy', () => {
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
-    const customTransformerWithAudit = { ...(testData.transformers.list[0] as CustomTransformer), createdBy: 'user1', updatedBy: 'user2' };
+    const customTransformerWithAudit = { ...customTransformer, createdBy: 'user1', updatedBy: 'user2' };
     const result = toTransformerDTO(customTransformerWithAudit, getUserInfo);
     assert.ok(result.type === 'custom');
     assert.deepStrictEqual(result.createdBy, { id: 'user1', friendlyName: 'user1' });

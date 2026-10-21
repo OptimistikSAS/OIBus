@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/connector/north-settings.model';
 
@@ -9,8 +9,9 @@ import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model
 import CertificateRepository from '../repository/config/certificate.repository';
 import { createMockResponse } from '../tests/__mocks__/undici.mock';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import { createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import { encryptionService } from './encryption.service';
+import type { ReqResponse } from './http-request.utils';
 import type { OIATimeValues } from './utils-oianalytics';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -18,8 +19,8 @@ const undiciModule = nodeRequire('undici');
 
 // Mutable refs so the mocked azure/identity constructors below always call the mock.fn()
 // currently in effect for the running test (reassigned in beforeEach).
-let mockGetTokenCSC: ReturnType<typeof mock.fn>;
-let mockGetTokenCCC: ReturnType<typeof mock.fn>;
+let mockGetTokenCSC: Mock<(scope: string) => Promise<{ token: string }>>;
+let mockGetTokenCCC: Mock<(scope: string) => Promise<{ token: string }>>;
 
 // @azure/identity's published commonjs build re-exports its classes via non-configurable getters,
 // so they can't be monkey-patched with Object.defineProperty on the real module. Replace the whole
@@ -27,10 +28,10 @@ let mockGetTokenCCC: ReturnType<typeof mock.fn>;
 mockModule(nodeRequire, '@azure/identity', {
   __esModule: true,
   ClientSecretCredential: function MockClientSecretCredential(this: { getToken: unknown }) {
-    this.getToken = (...args: Array<unknown>) => mockGetTokenCSC(...args);
+    this.getToken = (scope: string) => mockGetTokenCSC(scope);
   },
   ClientCertificateCredential: function MockClientCertificateCredential(this: { getToken: unknown }) {
-    this.getToken = (...args: Array<unknown>) => mockGetTokenCCC(...args);
+    this.getToken = (scope: string) => mockGetTokenCCC(scope);
   }
 });
 
@@ -47,20 +48,14 @@ const {
 } = reloadModule<typeof import('./utils-oianalytics')>(nodeRequire, './utils-oianalytics');
 
 describe('utils-oianalytics', () => {
-  let mockCertRepo: { findById: ReturnType<typeof mock.fn> };
-
-  let encryptTextMock: ReturnType<typeof mock.fn>;
-  let decryptTextMock: ReturnType<typeof mock.fn>;
+  let certificateRepository: Mocked<CertificateRepository>;
+  let encryptTextMock: Mock<typeof encryptionService.encryptText>;
+  let decryptTextMock: Mock<typeof encryptionService.decryptText>;
 
   beforeEach(() => {
-    encryptTextMock = mock.method(encryptionService, 'encryptText', async (_text: unknown) => 'encrypted-token') as ReturnType<
-      typeof mock.fn
-    >;
-    decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => `decrypted-${text}`) as ReturnType<
-      typeof mock.fn
-    >;
-
-    mockCertRepo = { findById: mock.fn() };
+    encryptTextMock = mock.method(encryptionService, 'encryptText', (_plainText?: string | null) => 'encrypted-token');
+    decryptTextMock = mock.method(encryptionService, 'decryptText', (encryptedText?: string | null) => `decrypted-${encryptedText}`);
+    certificateRepository = createMock<CertificateRepository>();
 
     mockGetTokenCSC = mock.fn(async () => ({ token: 'azure-token' }));
     mockGetTokenCCC = mock.fn(async () => ({ token: 'azure-token' }));
@@ -75,19 +70,19 @@ describe('utils-oianalytics', () => {
     const mockRegistration: OIAnalyticsRegistration = { token: 'reg-token' } as OIAnalyticsRegistration;
 
     it('should return bearer token from registration settings if useOIAnalyticsRegistration is true', async () => {
-      const result = await getAuthorizationOptions(true, mockRegistration, null, mockCertRepo as unknown as CertificateRepository);
+      const result = await getAuthorizationOptions(true, mockRegistration, null, certificateRepository);
       assert.deepStrictEqual(result, { type: 'bearer', token: 'reg-token' });
     });
 
     it('should return basic auth options', async () => {
       const settings = { authentication: 'basic', accessKey: 'user', secretKey: 'pass' } as NorthOIAnalyticsSettingsSpecificSettings;
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, mockCertRepo as unknown as CertificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
       assert.deepStrictEqual(result, { type: 'basic', username: 'user', password: 'pass' });
     });
 
     it('should return undefined for basic auth if accessKey is missing', async () => {
       const settings = { authentication: 'basic', accessKey: '' } as NorthOIAnalyticsSettingsSpecificSettings;
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, mockCertRepo as unknown as CertificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
       assert.strictEqual(result, undefined);
     });
 
@@ -100,7 +95,7 @@ describe('utils-oianalytics', () => {
         scope: 'scope'
       } as NorthOIAnalyticsSettingsSpecificSettings;
 
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, mockCertRepo as unknown as CertificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
 
       assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['secret']);
       assert.strictEqual(mockGetTokenCSC.mock.calls.length, 1);
@@ -118,11 +113,11 @@ describe('utils-oianalytics', () => {
         scope: 'scope'
       } as NorthOIAnalyticsSettingsSpecificSettings;
 
-      mockCertRepo.findById.mock.mockImplementation(() => ({ certificate: 'cert-content', privateKey: 'pk' }) as Certificate);
+      certificateRepository.findById.mock.mockImplementation(() => ({ certificate: 'cert-content', privateKey: 'pk' }) as Certificate);
 
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, mockCertRepo as unknown as CertificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
 
-      assert.deepStrictEqual(mockCertRepo.findById.mock.calls[0].arguments, ['cert-1']);
+      assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, ['cert-1']);
       assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['pk']);
       assert.strictEqual(mockGetTokenCCC.mock.calls.length, 1);
       assert.deepStrictEqual(mockGetTokenCCC.mock.calls[0].arguments, ['scope']);
@@ -132,9 +127,9 @@ describe('utils-oianalytics', () => {
 
     it('should return undefined for aad-certificate if certificate is not found', async () => {
       const settings = { authentication: 'aad-certificate', certificateId: 'missing' } as NorthOIAnalyticsSettingsSpecificSettings;
-      mockCertRepo.findById.mock.mockImplementation(() => null);
+      certificateRepository.findById.mock.mockImplementation(() => null);
 
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, mockCertRepo as unknown as CertificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
       assert.strictEqual(result, undefined);
     });
   });
@@ -241,7 +236,7 @@ describe('utils-oianalytics', () => {
         acceptUnauthorized: false
       } as OIAnalyticsRegistration;
 
-      const result = await buildHttpOptions('POST', true, reg, null, 5000, mockCertRepo as unknown as CertificateRepository);
+      const result = await buildHttpOptions('POST', true, reg, null, 5000, certificateRepository);
 
       assert.deepStrictEqual(result, {
         method: 'POST',
@@ -323,14 +318,12 @@ describe('utils-oianalytics', () => {
   });
 
   describe('testOIAnalyticsConnection', () => {
-    const mockRegistration = testData.oIAnalytics.registration.completed as OIAnalyticsRegistration;
+    const mockRegistration = testData.oIAnalytics.registration.completed;
     const mockSpecificSettings = { host: 'https://spec-host' } as NorthOIAnalyticsSettingsSpecificSettings;
-    let requestMock: ReturnType<typeof mock.fn>;
+    let requestMock: Mock<(url: string | URL) => Promise<ReqResponse>>;
 
     beforeEach(() => {
-      requestMock = mock.method(undiciModule, 'request', async (_url: string | URL) => createMockResponse(200, 'OK')) as ReturnType<
-        typeof mock.fn
-      >;
+      requestMock = mock.method(undiciModule, 'request', async (_url: string | URL) => createMockResponse(200, 'OK'));
     });
 
     it('should succeed when API returns 200', async () => {

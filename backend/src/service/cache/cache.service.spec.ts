@@ -8,56 +8,33 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/domain/engine.model';
 
-import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
+import { CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { mockBaseFolders } from '../../tests/utils/test-utils';
+import { createMock, mockBaseFolders, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import DeferredPromise from '../deferred-promise';
+import type LoggerService from '../logger/logger.service';
+import type * as Utils from '../utils';
 import type CacheServiceType from './cache.service';
 
 const nodeRequire = createRequire(import.meta.url);
+
+// Mocked module exports: the same objects for the whole file, their functions are replaced before each test
+const realUtils: typeof Utils = nodeRequire('../utils');
+const createUtilsMocks = () => ({
+  determineContentTypeFromFilename: mock.fn<typeof Utils.determineContentTypeFromFilename>(),
+  generateRandomId: mock.fn<typeof Utils.generateRandomId>(),
+  processCacheFileContent: mock.fn<typeof Utils.processCacheFileContent>()
+});
+const utilsExports = { ...realUtils, ...createUtilsMocks() };
+const loggerServiceExports = { __esModule: true, loggerService: createMock<LoggerService>() };
+
 let CacheService: typeof CacheServiceType;
 
-let determineContentTypeFromFilenameMock: ReturnType<typeof mock.fn>;
-let generateRandomIdMock: ReturnType<typeof mock.fn>;
-let processCacheFileContentMock: ReturnType<typeof mock.fn>;
-
-// Holds the mutable exports object injected into cache.service at load time.
-let utilsExports: Record<string, unknown>;
-
-/**
- * Creates a FIFO sequential mock implementation.
- * node:test's mockImplementationOnce only stores one "once" impl (overwrites prior ones),
- * so this helper provides Jest-compatible sequential behaviour.
- */
-function seq<T>(...impls: Array<() => T>): () => T {
-  let i = 0;
-  return () => (i < impls.length ? impls[i++]() : (undefined as unknown as T));
-}
-
 before(() => {
-  determineContentTypeFromFilenameMock = mock.fn();
-  generateRandomIdMock = mock.fn();
-  processCacheFileContentMock = mock.fn();
-
-  // Load utils first to warm the cache
-  nodeRequire('../utils');
-  const utilsPath = nodeRequire.resolve('../utils');
-  const origExports = nodeRequire.cache[utilsPath]!.exports;
-  // tsx compiles TypeScript ES module exports as non-configurable/non-writable properties,
-  // so we must replace the whole exports object to inject mocks.
-  // We capture the new object so beforeEach can mutate it in-place (not replace it),
-  // keeping cache.service's import_utils binding valid across tests.
-  utilsExports = Object.assign({}, origExports, {
-    determineContentTypeFromFilename: determineContentTypeFromFilenameMock,
-    generateRandomId: generateRandomIdMock,
-    processCacheFileContent: processCacheFileContentMock
-  });
-  nodeRequire.cache[utilsPath]!.exports = utilsExports;
-
-  // Load CacheService fresh with mocked utils
-  delete nodeRequire.cache[nodeRequire.resolve('./cache.service')];
-  CacheService = nodeRequire('./cache.service').default;
+  mockModule(nodeRequire, '../utils', utilsExports);
+  mockModule(nodeRequire, '../logger/logger.service', loggerServiceExports);
+  CacheService = reloadModule<{ default: typeof CacheServiceType }>(nodeRequire, './cache.service').default;
 });
 
 const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
@@ -134,44 +111,22 @@ describe('CacheService', () => {
   let renameMock: ReturnType<typeof mock.fn>;
   let rmMock: ReturnType<typeof mock.fn>;
 
-  /** Cast service to a plain record for accessing private fields. */
-  const priv = () => service as unknown as Record<string, unknown>;
-  /** Cast a private field value to a mock function for .mock.calls access. */
-  const privMock = (key: string) => priv()[key] as ReturnType<typeof mock.fn>;
-
   beforeEach(() => {
-    // Recreate utils mocks (clears implementations and call history)
-    determineContentTypeFromFilenameMock = mock.fn();
-    generateRandomIdMock = mock.fn();
-    processCacheFileContentMock = mock.fn();
-    // Mutate the SAME object that cache.service's import_utils variable references.
-    // Replacing the cache entry would create a new object that cache.service never sees.
-    utilsExports.determineContentTypeFromFilename = determineContentTypeFromFilenameMock;
-    utilsExports.generateRandomId = generateRandomIdMock;
-    utilsExports.processCacheFileContent = processCacheFileContentMock;
+    Object.assign(utilsExports, createUtilsMocks());
+    loggerServiceExports.loggerService = createMock<LoggerService>();
 
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
 
     logger = new PinoLogger();
-    service = new CacheService(
-      logger,
-      mockBaseFolders('northId').cache,
-      mockBaseFolders('northId').error,
-      mockBaseFolders('northId').archive
-    );
+    const folders = mockBaseFolders('northId');
+    service = new CacheService(logger, folders.cache, folders.error, folders.archive);
 
-    readFileMock = mock.fn();
-    mock.method(fs, 'readFile', readFileMock);
-    readdirMock = mock.fn();
-    mock.method(fs, 'readdir', readdirMock);
-    writeFileMock = mock.fn();
-    mock.method(fs, 'writeFile', writeFileMock);
-    statMock = mock.fn();
-    mock.method(fs, 'stat', statMock);
-    renameMock = mock.fn();
-    mock.method(fs, 'rename', renameMock);
-    rmMock = mock.fn();
-    mock.method(fs, 'rm', rmMock);
+    readFileMock = mock.method(fs, 'readFile', mock.fn());
+    readdirMock = mock.method(fs, 'readdir', mock.fn());
+    writeFileMock = mock.method(fs, 'writeFile', mock.fn());
+    statMock = mock.method(fs, 'stat', mock.fn());
+    renameMock = mock.method(fs, 'rename', mock.fn());
+    rmMock = mock.method(fs, 'rm', mock.fn());
   });
 
   afterEach(() => {
@@ -203,13 +158,13 @@ describe('CacheService', () => {
 
     // Check initial queue sort based on date
     const expectedQueueLength = 2; // Only valid files in 'cache' folder
-    assert.strictEqual((priv()['queue'] as Array<unknown>).length, expectedQueueLength);
+    assert.strictEqual(service['queue'].length, expectedQueueLength);
     assert.ok(service.getCacheSize() > 0);
     // The freshly-scanned folder sizes must be published so the metrics services
     // reflect pre-existing backlog immediately after startup.
     const startEmit = emitEventMock.mock.calls.find(c => c.arguments[0] === 'cache-size');
     assert.ok(startEmit, 'cache-size must be emitted after the initial folder scan');
-    assert.deepStrictEqual(startEmit!.arguments[1], priv()['cacheSize']);
+    assert.deepStrictEqual(startEmit!.arguments[1], service['cacheSize']);
 
     assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while reading cache file')));
     assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while reading errored file')));
@@ -221,24 +176,22 @@ describe('CacheService', () => {
 
   it('should refresh logger', () => {
     const newLogger = new PinoLogger();
-    const { loggerService: ls } = nodeRequire('../logger/logger.service') as {
-      loggerService: { createChildLogger: (...args: Array<unknown>) => unknown };
-    };
-    const createChildLoggerMock = mock.method(ls, 'createChildLogger', () => newLogger);
+    const createChildLoggerMock = loggerServiceExports.loggerService.createChildLogger;
+    createChildLoggerMock.mock.mockImplementation(() => newLogger);
     service.refreshLogger('north', 'id', 'name');
     assert.strictEqual(createChildLoggerMock.mock.calls[0].arguments[0], 'north');
     assert.strictEqual(createChildLoggerMock.mock.calls[0].arguments[1], 'id');
     assert.strictEqual(createChildLoggerMock.mock.calls[0].arguments[2], 'name');
-    assert.strictEqual(priv()['logger'], newLogger);
+    assert.strictEqual(service['logger'], newLogger);
   });
 
   it('should not clear timeouts, reset flags, and remove listeners when stopping', () => {
     const clearTimeoutMock = mock.method(global, 'clearTimeout', mock.fn());
 
-    priv()['cacheSizeWarningDebounceTimeout'] = null;
-    priv()['cacheLogDebounceTimeout'] = null;
-    priv()['cacheSizeWarningDebounceFlag'] = true;
-    priv()['cacheLogDebounceFlag'] = true;
+    service['cacheSizeWarningDebounceTimeout'] = null;
+    service['cacheLogDebounceTimeout'] = null;
+    service['cacheSizeWarningDebounceFlag'] = true;
+    service['cacheLogDebounceFlag'] = true;
 
     const removeAllListenersMock = mock.method(service.cacheSizeEventEmitter, 'removeAllListeners', mock.fn());
 
@@ -246,10 +199,10 @@ describe('CacheService', () => {
 
     assert.strictEqual(clearTimeoutMock.mock.calls.length, 0);
 
-    assert.strictEqual(priv()['cacheSizeWarningDebounceTimeout'], null);
-    assert.strictEqual(priv()['cacheLogDebounceTimeout'], null);
-    assert.strictEqual(priv()['cacheSizeWarningDebounceFlag'], false);
-    assert.strictEqual(priv()['cacheLogDebounceFlag'], false);
+    assert.strictEqual(service['cacheSizeWarningDebounceTimeout'], null);
+    assert.strictEqual(service['cacheLogDebounceTimeout'], null);
+    assert.strictEqual(service['cacheSizeWarningDebounceFlag'], false);
+    assert.strictEqual(service['cacheLogDebounceFlag'], false);
     assert.ok(removeAllListenersMock.mock.calls.length > 0);
   });
 
@@ -263,10 +216,10 @@ describe('CacheService', () => {
       // Do nothing
     }, 10000);
 
-    priv()['cacheSizeWarningDebounceTimeout'] = mockSizeTimeout;
-    priv()['cacheLogDebounceTimeout'] = mockLogTimeout;
-    priv()['cacheSizeWarningDebounceFlag'] = true;
-    priv()['cacheLogDebounceFlag'] = true;
+    service['cacheSizeWarningDebounceTimeout'] = mockSizeTimeout;
+    service['cacheLogDebounceTimeout'] = mockLogTimeout;
+    service['cacheSizeWarningDebounceFlag'] = true;
+    service['cacheLogDebounceFlag'] = true;
 
     const removeAllListenersMock = mock.method(service.cacheSizeEventEmitter, 'removeAllListeners', mock.fn());
 
@@ -275,10 +228,10 @@ describe('CacheService', () => {
     assert.ok(clearTimeoutMock.mock.calls.some(c => c.arguments[0] === mockSizeTimeout));
     assert.ok(clearTimeoutMock.mock.calls.some(c => c.arguments[0] === mockLogTimeout));
 
-    assert.strictEqual(priv()['cacheSizeWarningDebounceTimeout'], null);
-    assert.strictEqual(priv()['cacheLogDebounceTimeout'], null);
-    assert.strictEqual(priv()['cacheSizeWarningDebounceFlag'], false);
-    assert.strictEqual(priv()['cacheLogDebounceFlag'], false);
+    assert.strictEqual(service['cacheSizeWarningDebounceTimeout'], null);
+    assert.strictEqual(service['cacheLogDebounceTimeout'], null);
+    assert.strictEqual(service['cacheSizeWarningDebounceFlag'], false);
+    assert.strictEqual(service['cacheLogDebounceFlag'], false);
     assert.ok(removeAllListenersMock.mock.calls.length > 0);
   });
 
@@ -288,10 +241,10 @@ describe('CacheService', () => {
       resolveUpdate = resolve;
     });
 
-    priv()['updateCache$'] = { promise: updatePromise } as DeferredPromise;
+    service['updateCache$'] = { promise: updatePromise } as DeferredPromise;
 
     let isFinished = false;
-    const waitCall = (priv()['waitCacheUpdateTasks'] as () => Promise<void>)().then(() => {
+    const waitCall = service['waitCacheUpdateTasks']().then(() => {
       isFinished = true;
     });
 
@@ -303,47 +256,50 @@ describe('CacheService', () => {
 
   it('should resolve immediately if no tasks are pending', async () => {
     // Setup: Ensure properties are null
-    priv()['updateCache$'] = null;
+    service['updateCache$'] = null;
 
     // Execute
-    await assert.doesNotReject((priv()['waitCacheUpdateTasks'] as () => Promise<void>)());
+    await assert.doesNotReject(service['waitCacheUpdateTasks']());
   });
 
   it('should wait for tasks and return null if queue is empty', async () => {
-    priv()['waitCacheUpdateTasks'] = mock.fn();
-    priv()['queue'] = [];
+    const waitCacheUpdateTasks = mock.fn(async () => undefined);
+    service['waitCacheUpdateTasks'] = waitCacheUpdateTasks;
+    service['queue'] = [];
 
     const result = await service.getCacheContentToSend(100);
 
-    assert.ok(privMock('waitCacheUpdateTasks').mock.calls.length > 0);
+    assert.ok(waitCacheUpdateTasks.mock.calls.length > 0);
     assert.strictEqual(result, null);
   });
 
   it('should return item directly if content type is "any"', async () => {
     const item = { filename: 'file1.txt', metadata: { contentType: 'any' } as CacheMetadata };
-    priv()['queue'] = [item];
-    priv()['waitCacheUpdateTasks'] = mock.fn();
-    priv()['compactQueue'] = mock.fn();
+    service['queue'] = [item];
+    const waitCacheUpdateTasks = mock.fn(async () => undefined);
+    service['waitCacheUpdateTasks'] = waitCacheUpdateTasks;
+    const compactQueue = mock.method(service, 'compactQueue', () => undefined);
 
     const result = await service.getCacheContentToSend(100);
 
-    assert.ok(privMock('waitCacheUpdateTasks').mock.calls.length > 0);
-    assert.strictEqual(privMock('compactQueue').mock.calls.length, 0);
+    assert.ok(waitCacheUpdateTasks.mock.calls.length > 0);
+    assert.strictEqual(compactQueue.mock.calls.length, 0);
     assert.deepStrictEqual(result, item);
   });
 
   it('should compact queue and return item if content type is not "any"', async () => {
     const item = { filename: 'data.json', metadata: { contentType: 'time-values' } as CacheMetadata };
-    priv()['queue'] = [item];
+    service['queue'] = [item];
 
-    priv()['waitCacheUpdateTasks'] = mock.fn();
-    priv()['compactQueue'] = mock.fn();
+    const waitCacheUpdateTasks = mock.fn(async () => undefined);
+    service['waitCacheUpdateTasks'] = waitCacheUpdateTasks;
+    const compactQueue = mock.method(service, 'compactQueue', () => undefined);
 
     const maxGroupCount = 50;
     const result = await service.getCacheContentToSend(maxGroupCount);
 
-    assert.ok(privMock('waitCacheUpdateTasks').mock.calls.length > 0);
-    assert.deepStrictEqual(privMock('compactQueue').mock.calls[0].arguments, [maxGroupCount, 'time-values']);
+    assert.ok(waitCacheUpdateTasks.mock.calls.length > 0);
+    assert.deepStrictEqual(compactQueue.mock.calls[0].arguments, [maxGroupCount, 'time-values']);
     assert.deepStrictEqual(result, item);
   });
 
@@ -358,7 +314,9 @@ describe('CacheService', () => {
   it('should test if cache is full ', () => {
     assert.strictEqual(service.cacheIsFull(0), false);
 
-    priv()['getCacheSize'] = mock.fn(
+    mock.method(
+      service,
+      'getCacheSize',
       seq(
         () => 1024 * 1024,
         () => 1024 * 1024 * 3,
@@ -367,14 +325,14 @@ describe('CacheService', () => {
     );
 
     assert.strictEqual(service.cacheIsFull(2), false);
-    assert.strictEqual(priv()['cacheSizeWarningDebounceTimeout'], null);
+    assert.strictEqual(service['cacheSizeWarningDebounceTimeout'], null);
     assert.strictEqual(service.cacheIsFull(2), true);
-    assert.notStrictEqual(priv()['cacheSizeWarningDebounceTimeout'], null);
+    assert.notStrictEqual(service['cacheSizeWarningDebounceTimeout'], null);
     assert.strictEqual(service.cacheIsFull(2), true);
-    assert.notStrictEqual(priv()['cacheSizeWarningDebounceTimeout'], null);
-    assert.ok(priv()['cacheSizeWarningDebounceFlag']);
+    assert.notStrictEqual(service['cacheSizeWarningDebounceTimeout'], null);
+    assert.ok(service['cacheSizeWarningDebounceFlag']);
     mock.timers.tick(60_000);
-    assert.ok(!priv()['cacheSizeWarningDebounceFlag']);
+    assert.ok(!service['cacheSizeWarningDebounceFlag']);
   });
 
   it('should be properly initialized without files in cache', async () => {
@@ -436,7 +394,7 @@ describe('CacheService', () => {
       ]
     );
     // The orphans are not part of the cache
-    assert.strictEqual((priv()['queue'] as Array<unknown>).length, 1);
+    assert.strictEqual(service['queue'].length, 1);
     assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 100, error: 0, archive: 0 });
   });
 
@@ -508,12 +466,12 @@ describe('CacheService', () => {
       mock.fn(() => null)
     );
     readFileMock.mock.mockImplementation(async () => JSON.stringify(fileList[0].metadata));
-    determineContentTypeFromFilenameMock.mock.mockImplementation(() => 'json');
+    utilsExports.determineContentTypeFromFilename.mock.mockImplementation(() => 'json');
     const cacheFileContentResult = { content: 'content', truncated: false, contentFilename: 'file1-123456.json' };
-    processCacheFileContentMock.mock.mockImplementation(
+    utilsExports.processCacheFileContent.mock.mockImplementation(
       seq(
-        () => cacheFileContentResult,
-        () => {
+        async () => cacheFileContentResult,
+        async () => {
           throw new Error('should not be called twice');
         }
       )
@@ -553,7 +511,7 @@ describe('CacheService', () => {
       mock.fn(() => writeStream)
     );
     writeFileMock.mock.mockImplementation(async () => undefined);
-    generateRandomIdMock.mock.mockImplementation(() => 'random-stream');
+    utilsExports.generateRandomId.mock.mockImplementation(() => 'random-stream');
     const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
 
     const input = Readable.from([Buffer.from('hello '), Buffer.from('world')]);
@@ -569,15 +527,15 @@ describe('CacheService', () => {
 
   it('should return a snapshot copy of the current cache content sizes', () => {
     const sizes = service.getCacheContentSizes();
-    assert.deepStrictEqual(sizes, priv()['cacheSize']);
-    assert.notStrictEqual(sizes, priv()['cacheSize']);
+    assert.deepStrictEqual(sizes, service['cacheSize']);
+    assert.notStrictEqual(sizes, service['cacheSize']);
   });
 
   it('should properly add cache content and log state', async () => {
     const output = Buffer.from('some content');
     writeFileMock.mock.mockImplementation(async () => undefined);
     statMock.mock.mockImplementation(async () => ({ size: 1024, ctimeMs: Date.now() }));
-    generateRandomIdMock.mock.mockImplementation(() => 'random');
+    utilsExports.generateRandomId.mock.mockImplementation(() => 'random');
     const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
 
     await service.addCacheContent(output, { contentType: 'any' });
@@ -595,7 +553,7 @@ describe('CacheService', () => {
   });
 
   it('should remove the written content when the metadata cannot be written', async () => {
-    generateRandomIdMock.mock.mockImplementation(() => 'random');
+    utilsExports.generateRandomId.mock.mockImplementation(() => 'random');
     writeFileMock.mock.mockImplementation(
       seq(
         async () => undefined,
@@ -620,7 +578,7 @@ describe('CacheService', () => {
   it('should remove the partial content when the source stream fails', async () => {
     // Write on a real disk, to check that no partial file is left behind
     mock.restoreAll();
-    generateRandomIdMock.mock.mockImplementation(() => 'random');
+    utilsExports.generateRandomId.mock.mockImplementation(() => 'random');
     const tmpFolder = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-cache-'));
     try {
       await fs.mkdir(path.join(tmpFolder, CONTENT_FOLDER));
@@ -650,32 +608,32 @@ describe('CacheService', () => {
       const metadata = fileList[0].metadata;
 
       // First log
-      (priv()['logCacheState'] as unknown as (m: CacheMetadata) => void)(metadata);
+      service['logCacheState'](metadata);
       assert.strictEqual(logger.debug.mock.calls.length, 1);
-      assert.strictEqual(priv()['cacheLogDebounceFlag'], true);
+      assert.strictEqual(service['cacheLogDebounceFlag'], true);
 
       // Second log immediately (should be skipped)
-      (priv()['logCacheState'] as unknown as (m: CacheMetadata) => void)(metadata);
+      service['logCacheState'](metadata);
       assert.strictEqual(logger.debug.mock.calls.length, 1);
 
       // Advance timer
       mock.timers.tick(10000); // DEBOUNCED_LOG_S
-      assert.strictEqual(priv()['cacheLogDebounceFlag'], false);
+      assert.strictEqual(service['cacheLogDebounceFlag'], false);
 
       // Third log (should go through)
-      (priv()['logCacheState'] as unknown as (m: CacheMetadata) => void)(metadata);
+      service['logCacheState'](metadata);
       assert.strictEqual(logger.debug.mock.calls.length, 2);
     });
   });
 
   it('should check if cache is full and log warning with debounce', () => {
-    priv()['cacheSize'] = { cache: 1024 * 1024 * 100, error: 0, archive: 0 }; // 100MB
+    service['cacheSize'] = { cache: 1024 * 1024 * 100, error: 0, archive: 0 }; // 100MB
     const maxSize = 50; // 50MB
 
     // First check
     assert.strictEqual(service.cacheIsFull(maxSize), true);
     assert.ok(logger.warn.mock.calls.some(c => String(c.arguments[0]).includes('exceeding the maximum allowed size')));
-    assert.strictEqual(priv()['cacheSizeWarningDebounceFlag'], true);
+    assert.strictEqual(service['cacheSizeWarningDebounceFlag'], true);
 
     // Second check immediately (should return true but NOT log)
     assert.strictEqual(service.cacheIsFull(maxSize), true);
@@ -683,7 +641,7 @@ describe('CacheService', () => {
 
     // Advance timer
     mock.timers.tick(60000); // DEBOUNCED_SIZE_WARNING_S
-    assert.strictEqual(priv()['cacheSizeWarningDebounceFlag'], false);
+    assert.strictEqual(service['cacheSizeWarningDebounceFlag'], false);
 
     // Third check (should log again)
     assert.strictEqual(service.cacheIsFull(maxSize), true);
@@ -691,8 +649,10 @@ describe('CacheService', () => {
   });
 
   it('should update cache content (move/remove)', async () => {
-    priv()['removeContent'] = mock.fn();
-    priv()['moveContent'] = mock.fn();
+    const removeContent = mock.fn(async () => undefined);
+    service['removeContent'] = removeContent;
+    const moveContent = mock.fn(async () => undefined);
+    service['moveContent'] = moveContent;
     const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
 
     const updateCommand = {
@@ -703,13 +663,13 @@ describe('CacheService', () => {
 
     await service.updateCacheContent(updateCommand);
 
-    assert.strictEqual(privMock('removeContent').mock.calls.length, 3);
-    assert.strictEqual(privMock('moveContent').mock.calls.length, 3);
+    assert.strictEqual(removeContent.mock.calls.length, 3);
+    assert.strictEqual(moveContent.mock.calls.length, 3);
     assert.ok(emitEventMock.mock.calls.length > 0);
   });
 
   it('should get number of raw files', () => {
-    priv()['queue'] = [
+    service['queue'] = [
       { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
       { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
       { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 1 } }
@@ -730,7 +690,7 @@ describe('CacheService', () => {
 
   it('should maintain queue counters incrementally as content is added and removed', async () => {
     writeFileMock.mock.mockImplementation(async () => undefined);
-    generateRandomIdMock.mock.mockImplementation(() => 'counter-test');
+    utilsExports.generateRandomId.mock.mockImplementation(() => 'counter-test');
 
     // Initial state: empty queue → both counters zero.
     assert.strictEqual(service.getNumberOfElementsInQueue(), 0);
@@ -742,7 +702,7 @@ describe('CacheService', () => {
     assert.strictEqual(service.getNumberOfRawFilesInQueue(), 0);
 
     // Add a raw file (numberOfElement omitted/zero) → rawFiles bumps.
-    generateRandomIdMock.mock.mockImplementationOnce(() => 'counter-test-2');
+    utilsExports.generateRandomId.mock.mockImplementationOnce(() => 'counter-test-2');
     await service.addCacheContent(Buffer.from('payload-2'), { contentType: 'any' });
     assert.strictEqual(service.getNumberOfElementsInQueue(), 10);
     assert.strictEqual(service.getNumberOfRawFilesInQueue(), 1);
@@ -755,7 +715,7 @@ describe('CacheService', () => {
 
   it('should properly filter files', () => {
     assert.deepStrictEqual(
-      (priv()['filterFile'] as unknown as (files: Array<unknown>, filter: unknown) => Array<unknown>)(
+      service['filterFile'](
         [
           { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
           { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
@@ -767,7 +727,7 @@ describe('CacheService', () => {
     );
 
     assert.deepStrictEqual(
-      (priv()['filterFile'] as unknown as (files: Array<unknown>, filter: unknown) => Array<unknown>)(
+      service['filterFile'](
         [
           { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
           { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
@@ -797,16 +757,7 @@ describe('CacheService', () => {
         )
       );
 
-      const result = await (
-        priv()['accumulateContent'] as unknown as (
-          items: Array<unknown>,
-          max: number
-        ) => Promise<{
-          newListOfContent: Array<unknown>;
-          remainder: Array<unknown>;
-          compactedFiles: Array<unknown>;
-        }>
-      )(queueItems, 0);
+      const result = await service['accumulateContent'](queueItems, 0);
 
       assert.deepStrictEqual(result.newListOfContent, [{ id: 1 }, { id: 2 }, { id: 3 }]);
       assert.deepStrictEqual(result.remainder, []);
@@ -828,16 +779,7 @@ describe('CacheService', () => {
         )
       );
 
-      const result = await (
-        priv()['accumulateContent'] as unknown as (
-          items: Array<unknown>,
-          max: number
-        ) => Promise<{
-          newListOfContent: Array<unknown>;
-          remainder: Array<unknown>;
-          compactedFiles: Array<unknown>;
-        }>
-      )(queueItems, maxGroupCount);
+      const result = await service['accumulateContent'](queueItems, maxGroupCount);
 
       assert.deepStrictEqual(result.newListOfContent, [{ id: 1 }, { id: 2 }, { id: 3 }]); // First 3
       assert.deepStrictEqual(result.remainder, [{ id: 4 }]); // The 4th item
@@ -854,16 +796,7 @@ describe('CacheService', () => {
 
       readFileMock.mock.mockImplementation(seq(async () => JSON.stringify([{ id: 1 }, { id: 2 }])));
 
-      const result = await (
-        priv()['accumulateContent'] as unknown as (
-          items: Array<unknown>,
-          max: number
-        ) => Promise<{
-          newListOfContent: Array<unknown>;
-          remainder: Array<unknown>;
-          compactedFiles: Array<unknown>;
-        }>
-      )(queueItems, maxGroupCount);
+      const result = await service['accumulateContent'](queueItems, maxGroupCount);
 
       assert.deepStrictEqual(result.newListOfContent, [{ id: 1 }]);
       assert.deepStrictEqual(result.remainder, [{ id: 2 }]);
@@ -880,8 +813,8 @@ describe('CacheService', () => {
       ];
 
       // Inject queue into service so removeCacheContentFromQueue works
-      priv()['queue'] = [...queueItems];
-      priv()['cacheSize'] = { cache: 1000, error: 0, archive: 0 };
+      service['queue'] = [...queueItems];
+      service['cacheSize'] = { cache: 1000, error: 0, archive: 0 };
 
       readFileMock.mock.mockImplementation(
         seq(
@@ -893,30 +826,22 @@ describe('CacheService', () => {
         )
       );
 
-      priv()['deleteCacheEntry'] = mock.fn();
+      const deleteCacheEntry = mock.fn(async () => undefined);
+      service['deleteCacheEntry'] = deleteCacheEntry;
 
-      const result = await (
-        priv()['accumulateContent'] as unknown as (
-          items: Array<unknown>,
-          max: number
-        ) => Promise<{
-          newListOfContent: Array<unknown>;
-          remainder: Array<unknown>;
-          compactedFiles: Array<unknown>;
-        }>
-      )(queueItems, 0);
+      const result = await service['accumulateContent'](queueItems, 0);
 
       assert.deepStrictEqual(result.newListOfContent, [{ id: 1 }, { id: 3 }]);
       assert.strictEqual(result.compactedFiles.length, 2); // f1 and f3
 
       // Verify Error Handling
       assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while reading file')));
-      assert.deepStrictEqual(privMock('deleteCacheEntry').mock.calls[0].arguments, ['cache', 'bad.json']);
+      assert.deepStrictEqual(deleteCacheEntry.mock.calls[0].arguments, ['cache', 'bad.json']);
       assert.strictEqual(
-        (priv()['queue'] as Array<{ filename: string }>).find(f => f.filename === 'bad.json'),
+        service['queue'].find(f => f.filename === 'bad.json'),
         undefined
       );
-      assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 1000 - fileList[1].metadata.contentSize);
+      assert.strictEqual(service['cacheSize'].cache, 1000 - fileList[1].metadata.contentSize);
     });
   });
 
@@ -929,14 +854,11 @@ describe('CacheService', () => {
       const newContent = [{ id: 'new' }];
       const newSize = 500;
 
-      priv()['queue'] = [fileData]; // Put in queue to check in-memory update
+      service['queue'] = [fileData]; // Put in queue to check in-memory update
       writeFileMock.mock.mockImplementation(async () => undefined);
       statMock.mock.mockImplementation(async () => ({ size: newSize }));
 
-      const writtenSize = await (priv()['overwriteCacheFile'] as unknown as (file: unknown, content: Array<unknown>) => Promise<number>)(
-        fileData,
-        newContent
-      );
+      const writtenSize = await service['overwriteCacheFile'](fileData, newContent);
 
       assert.strictEqual(writtenSize, newSize);
       assert.ok(writeFileMock.mock.calls.some(c => String(c.arguments[0]).includes(path.join('content', 'test.json'))));
@@ -961,14 +883,14 @@ describe('CacheService', () => {
       const newContent = [{ id: 'new' }];
       const newSize = 500;
 
-      priv()['queue'] = [{ filename: 'another_file.json', metadata: fileData.metadata }]; // Put in queue a wrong filename
+      service['queue'] = [{ filename: 'another_file.json', metadata: fileData.metadata }]; // Put in queue a wrong filename
       writeFileMock.mock.mockImplementation(async () => undefined);
       statMock.mock.mockImplementation(async () => ({ size: newSize }));
 
-      await (priv()['overwriteCacheFile'] as unknown as (file: unknown, content: Array<unknown>) => Promise<void>)(fileData, newContent);
+      await service['overwriteCacheFile'](fileData, newContent);
 
       assert.strictEqual(writeFileMock.mock.calls.length, 2);
-      assert.deepStrictEqual(priv()['queue'], [{ filename: 'another_file.json', metadata: fileData.metadata }]);
+      assert.deepStrictEqual(service['queue'], [{ filename: 'another_file.json', metadata: fileData.metadata }]);
     });
 
     it('should handled missing queue element', async () => {
@@ -978,13 +900,11 @@ describe('CacheService', () => {
       };
       const newContent = [{ id: 'new' }];
 
-      priv()['queue'] = []; // Empty queue
+      service['queue'] = []; // Empty queue
       writeFileMock.mock.mockImplementation(async () => undefined);
       statMock.mock.mockImplementation(async () => ({ size: 500 }));
 
-      await assert.doesNotReject(
-        (priv()['overwriteCacheFile'] as unknown as (file: unknown, content: Array<unknown>) => Promise<void>)(fileData, newContent)
-      );
+      await assert.doesNotReject(service['overwriteCacheFile'](fileData, newContent));
     });
   });
 
@@ -995,10 +915,10 @@ describe('CacheService', () => {
         resolveCompact = resolve;
       });
 
-      priv()['updateCache$'] = { promise: compactPromise } as DeferredPromise;
+      service['updateCache$'] = { promise: compactPromise } as DeferredPromise;
 
       let isFinished = false;
-      const waitCall = (priv()['compactQueue'] as unknown as (max: number, type: string) => Promise<void>)(1, 'time-values').then(() => {
+      const waitCall = service['compactQueue'](1, 'time-values').then(() => {
         isFinished = true;
       });
 
@@ -1010,109 +930,116 @@ describe('CacheService', () => {
 
     it('should orchestrate accumulation, writing, and cleanup', async () => {
       // Setup: 2 items in queue, merge them into 1
-      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10 } };
-      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 12 } };
-      priv()['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
-      priv()['cacheSize'] = { cache: 22, error: 0, archive: 0 };
+      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10 } as CacheMetadata };
+      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 12 } as CacheMetadata };
+      service['queue'] = [item1, item2];
+      service['cacheSize'] = { cache: 22, error: 0, archive: 0 };
       const cacheSizeListener = mock.fn();
       service.cacheSizeEventEmitter.on('cache-size', cacheSizeListener);
 
       // Mocks for helper methods
-      priv()['accumulateContent'] = mock.fn(async () => ({
+      const accumulateContent = mock.fn(async () => ({
         newListOfContent: [{ a: 1 }, { b: 2 }],
         remainder: [],
         compactedFiles: [item1, item2] // Both processed
       }));
+      service['accumulateContent'] = accumulateContent;
       // Merged file is smaller than the sum of its parts: one pair of JSON brackets is gone
-      priv()['overwriteCacheFile'] = mock.fn(async () => 21);
-      priv()['deleteCacheEntry'] = mock.fn(async () => undefined);
+      const overwriteCacheFile = mock.fn<CacheServiceType['overwriteCacheFile']>(async () => 21);
+      service['overwriteCacheFile'] = overwriteCacheFile;
+      const deleteCacheEntry = mock.fn<CacheServiceType['deleteCacheEntry']>(async () => undefined);
+      service['deleteCacheEntry'] = deleteCacheEntry;
 
       await service.compactQueue(100, 'typeB'); // nothing to do on this type
-      assert.strictEqual(privMock('overwriteCacheFile').mock.calls.length, 0);
-      assert.strictEqual(privMock('deleteCacheEntry').mock.calls.length, 0);
+      assert.strictEqual(overwriteCacheFile.mock.calls.length, 0);
+      assert.strictEqual(deleteCacheEntry.mock.calls.length, 0);
 
       await service.compactQueue(100, 'typeA');
 
       // Verify Flow
       // 1. Accumulate called
-      assert.ok(privMock('accumulateContent').mock.calls.length > 0);
+      assert.ok(accumulateContent.mock.calls.length > 0);
 
       // 2. Write Main called with FIRST element (item1)
-      assert.deepStrictEqual(privMock('overwriteCacheFile').mock.calls[0].arguments, [item1, [{ a: 1 }, { b: 2 }]]);
+      assert.deepStrictEqual(overwriteCacheFile.mock.calls[0].arguments, [item1, [{ a: 1 }, { b: 2 }]]);
 
       // 3. Write Remainder NOT called (remainder empty)
-      assert.strictEqual(privMock('overwriteCacheFile').mock.calls.length, 1);
+      assert.strictEqual(overwriteCacheFile.mock.calls.length, 1);
 
       // 4. Delete intermediate called for BOTH (logic says we clean up intermediate files)
-      assert.ok(privMock('deleteCacheEntry').mock.calls.some(c => c.arguments[0] === 'cache' && c.arguments[1] === '2.json'));
+      assert.ok(deleteCacheEntry.mock.calls.some(c => c.arguments[0] === 'cache' && c.arguments[1] === '2.json'));
 
       // 5. Queue updated: should remove '2.json' (intermediate) but keep '1.json' (reused)
-      assert.strictEqual((priv()['queue'] as Array<unknown>).length, 1);
-      assert.strictEqual((priv()['queue'] as Array<unknown>)[0], item1);
+      assert.strictEqual(service['queue'].length, 1);
+      assert.strictEqual(service['queue'][0], item1);
 
       // 6. Cache size resynced with what is now on disk
-      assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 21);
+      assert.strictEqual(service['cacheSize'].cache, 21);
       assert.strictEqual(cacheSizeListener.mock.calls.length, 1);
     });
 
     it('should handle remainder by writing to last file', async () => {
-      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10 } };
-      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 12 } };
-      priv()['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
-      priv()['cacheSize'] = { cache: 22, error: 0, archive: 0 };
+      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10 } as CacheMetadata };
+      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 12 } as CacheMetadata };
+      service['queue'] = [item1, item2];
+      service['cacheSize'] = { cache: 22, error: 0, archive: 0 };
       const cacheSizeListener = mock.fn();
       service.cacheSizeEventEmitter.on('cache-size', cacheSizeListener);
 
-      priv()['accumulateContent'] = mock.fn(async () => ({
+      service['accumulateContent'] = mock.fn(async () => ({
         newListOfContent: [{ a: 1 }],
         remainder: [{ b: 2 }],
         compactedFiles: [item1, item2]
       }));
-      priv()['overwriteCacheFile'] = mock.fn(
+      const overwriteCacheFile = mock.fn<CacheServiceType['overwriteCacheFile']>(
         seq(
           async () => 11,
           async () => 11
         )
       );
-      priv()['deleteCacheEntry'] = mock.fn(async () => undefined);
+      service['overwriteCacheFile'] = overwriteCacheFile;
+      service['deleteCacheEntry'] = mock.fn(async () => undefined);
 
       await service.compactQueue(1, 'typeA');
 
       // Verify two writes
-      assert.deepStrictEqual(privMock('overwriteCacheFile').mock.calls[0].arguments, [item1, [{ a: 1 }]]); // Main batch -> First file
-      assert.deepStrictEqual(privMock('overwriteCacheFile').mock.calls[1].arguments, [item2, [{ b: 2 }]]); // Remainder -> Last file
+      assert.deepStrictEqual(overwriteCacheFile.mock.calls[0].arguments, [item1, [{ a: 1 }]]); // Main batch -> First file
+      assert.deepStrictEqual(overwriteCacheFile.mock.calls[1].arguments, [item2, [{ b: 2 }]]); // Remainder -> Last file
 
       // Queue update: Both should remain in queue because shift() removed item1 and pop() removed item2 from the list to delete
-      assert.strictEqual((priv()['queue'] as Array<unknown>).length, 2);
+      assert.strictEqual(service['queue'].length, 2);
       // Same bytes, split differently: size unchanged, no event
-      assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 22);
+      assert.strictEqual(service['cacheSize'].cache, 22);
       assert.strictEqual(cacheSizeListener.mock.calls.length, 0);
     });
 
     it('should orchestrate accumulation with no file compacted', async () => {
       // Setup: 2 items in queue, merge them into 1
-      const item1 = { filename: '1.json', metadata: { contentType: 'typeA' } };
-      const item2 = { filename: '2.json', metadata: { contentType: 'typeA' } };
-      priv()['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
+      const item1 = { filename: '1.json', metadata: { contentType: 'typeA' } as CacheMetadata };
+      const item2 = { filename: '2.json', metadata: { contentType: 'typeA' } as CacheMetadata };
+      service['queue'] = [item1, item2];
 
       // Mocks for helper methods
-      priv()['accumulateContent'] = mock.fn(async () => ({
+      const accumulateContent = mock.fn(async () => ({
         newListOfContent: [],
         remainder: [],
         compactedFiles: []
       }));
-      priv()['overwriteCacheFile'] = mock.fn();
-      priv()['deleteCacheEntry'] = mock.fn();
+      service['accumulateContent'] = accumulateContent;
+      const overwriteCacheFile = mock.fn(async () => 0);
+      service['overwriteCacheFile'] = overwriteCacheFile;
+      const deleteCacheEntry = mock.fn(async () => undefined);
+      service['deleteCacheEntry'] = deleteCacheEntry;
 
       await service.compactQueue(100, 'typeA');
 
-      assert.ok(privMock('accumulateContent').mock.calls.length > 0);
-      assert.strictEqual(privMock('overwriteCacheFile').mock.calls.length, 0);
-      assert.strictEqual(privMock('deleteCacheEntry').mock.calls.length, 0);
+      assert.ok(accumulateContent.mock.calls.length > 0);
+      assert.strictEqual(overwriteCacheFile.mock.calls.length, 0);
+      assert.strictEqual(deleteCacheEntry.mock.calls.length, 0);
 
-      assert.strictEqual((priv()['queue'] as Array<unknown>).length, 2);
-      assert.strictEqual((priv()['queue'] as Array<unknown>)[0], item1);
-      assert.strictEqual((priv()['queue'] as Array<unknown>)[1], item2);
+      assert.strictEqual(service['queue'].length, 2);
+      assert.strictEqual(service['queue'][0], item1);
+      assert.strictEqual(service['queue'][1], item2);
     });
   });
 
@@ -1123,18 +1050,14 @@ describe('CacheService', () => {
       const metadata = { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'any', contentFile: 'file' };
 
       // Inject initial state
-      priv()['queue'] = [{ filename, metadata }];
-      priv()['cacheSize'] = { cache: 100, error: 0, archive: 0 };
+      service['queue'] = [{ filename, metadata }];
+      service['cacheSize'] = { cache: 100, error: 0, archive: 0 };
 
-      priv()['readCacheMetadataFile'] = mock.fn(async () => metadata);
-      priv()['removeCacheContentFromQueue'] = mock.fn();
+      service['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      const removeCacheContentFromQueue = mock.method(service, 'removeCacheContentFromQueue', () => undefined);
       renameMock.mock.mockImplementation(async () => undefined);
 
-      await (priv()['moveContent'] as unknown as (from: string, to: string, filename: string) => Promise<void>)(
-        'cache',
-        'archive',
-        filename
-      );
+      await service['moveContent']('cache', 'archive', filename);
 
       assert.strictEqual(renameMock.mock.calls.length, 2); // Content + Metadata
       assert.ok(
@@ -1145,37 +1068,37 @@ describe('CacheService', () => {
         )
       );
 
-      assert.ok(privMock('removeCacheContentFromQueue').mock.calls.some(c => c.arguments[0] === filename));
-      assert.strictEqual((priv()['cacheSize'] as { cache: number; error: number; archive: number }).cache, 0);
-      assert.strictEqual((priv()['cacheSize'] as { cache: number; error: number; archive: number }).archive, 100);
+      assert.ok(removeCacheContentFromQueue.mock.calls.some(c => c.arguments[0] === filename));
+      assert.strictEqual(service['cacheSize'].cache, 0);
+      assert.strictEqual(service['cacheSize'].archive, 100);
       assert.ok(logger.trace.mock.calls.some(c => String(c.arguments[0]).includes('moved from cache to archive')));
     });
 
     it('should add to queue if moving TO cache', async () => {
       const filename = 'file2.json';
-      const metadata = { contentSize: 50 };
-      priv()['cacheSize'] = { cache: 0, error: 50, archive: 0 };
+      const metadata = { contentSize: 50 } as CacheMetadata;
+      service['cacheSize'] = { cache: 0, error: 50, archive: 0 };
 
-      priv()['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      service['readCacheMetadataFile'] = mock.fn(async () => metadata);
       renameMock.mock.mockImplementation(async () => undefined);
 
-      await (priv()['moveContent'] as unknown as (from: string, to: string, filename: string) => Promise<void>)('error', 'cache', filename);
+      await service['moveContent']('error', 'cache', filename);
 
-      const queue = priv()['queue'] as Array<{ filename: string }>;
+      const queue = service['queue'] as Array<{ filename: string }>;
       assert.strictEqual(queue.length, 1);
       assert.strictEqual(queue[0].filename, filename);
-      assert.strictEqual((priv()['cacheSize'] as { cache: number; error: number; archive: number }).cache, 50);
+      assert.strictEqual(service['cacheSize'].cache, 50);
     });
 
     it('should handle errors during move', async () => {
       const filename = 'bad-file.json';
       const metadata = { contentSize: 200 } as CacheMetadata;
-      priv()['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      service['readCacheMetadataFile'] = mock.fn(async () => metadata);
       renameMock.mock.mockImplementation(async () => {
         throw new Error('Read Error');
       });
 
-      await (priv()['moveContent'] as unknown as (from: string, to: string, filename: string) => Promise<void>)('cache', 'error', filename);
+      await service['moveContent']('cache', 'error', filename);
 
       assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while moving files')));
     });
@@ -1183,9 +1106,9 @@ describe('CacheService', () => {
     it('should handle empty metadata', async () => {
       const filename = 'file.json';
 
-      priv()['readCacheMetadataFile'] = mock.fn(async () => null);
+      service['readCacheMetadataFile'] = mock.fn(async () => null);
 
-      await (priv()['moveContent'] as unknown as (from: string, to: string, filename: string) => Promise<void>)('cache', 'error', filename);
+      await service['moveContent']('cache', 'error', filename);
 
       assert.strictEqual(renameMock.mock.calls.length, 0);
     });
@@ -1198,14 +1121,14 @@ describe('CacheService', () => {
       const metadata = { contentSize: 200 } as CacheMetadata;
 
       // Inject initial state
-      priv()['queue'] = [{ filename, metadata }];
-      priv()['cacheSize'] = { cache: 200, error: 0, archive: 0 };
+      service['queue'] = [{ filename, metadata }];
+      service['cacheSize'] = { cache: 200, error: 0, archive: 0 };
 
-      priv()['readCacheMetadataFile'] = mock.fn(async () => metadata);
-      priv()['removeCacheContentFromQueue'] = mock.fn();
+      service['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      const removeCacheContentFromQueue = mock.method(service, 'removeCacheContentFromQueue', () => undefined);
 
       // Execute: Remove from 'cache'
-      await (priv()['removeContent'] as unknown as (folder: string, filename: string) => Promise<void>)('cache', filename);
+      await service['removeContent']('cache', filename);
 
       // Verify FS operations
       assert.strictEqual(rmMock.mock.calls.length, 2); // Content + Metadata
@@ -1219,21 +1142,21 @@ describe('CacheService', () => {
       );
 
       // Verify State Updates
-      assert.ok(privMock('removeCacheContentFromQueue').mock.calls.some(c => c.arguments[0] === filename));
-      assert.strictEqual((priv()['cacheSize'] as { cache: number; error: number; archive: number }).cache, 0);
+      assert.ok(removeCacheContentFromQueue.mock.calls.some(c => c.arguments[0] === filename));
+      assert.strictEqual(service['cacheSize'].cache, 0);
       assert.ok(logger.trace.mock.calls.some(c => String(c.arguments[0]).includes('removed from cache')));
     });
 
     it('should handle errors during removal', async () => {
       const filename = 'file.json';
-      const metadata = { contentSize: 100 };
+      const metadata = { contentSize: 100 } as CacheMetadata;
 
-      priv()['readCacheMetadataFile'] = mock.fn(async () => metadata);
-      priv()['deleteCacheEntry'] = mock.fn(async () => {
+      service['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      service['deleteCacheEntry'] = mock.fn(async () => {
         throw new Error('Rm Error');
       });
 
-      await (priv()['removeContent'] as unknown as (folder: string, filename: string) => Promise<void>)('archive', filename);
+      await service['removeContent']('archive', filename);
 
       assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while removing file')));
     });
@@ -1241,17 +1164,18 @@ describe('CacheService', () => {
     it('should handle empty metadata', async () => {
       const filename = 'file.json';
 
-      priv()['readCacheMetadataFile'] = mock.fn(async () => null);
-      priv()['deleteCacheEntry'] = mock.fn();
+      service['readCacheMetadataFile'] = mock.fn(async () => null);
+      const deleteCacheEntry = mock.fn(async () => undefined);
+      service['deleteCacheEntry'] = deleteCacheEntry;
 
-      await (priv()['removeContent'] as unknown as (folder: string, filename: string) => Promise<void>)('archive', filename);
+      await service['removeContent']('archive', filename);
 
-      assert.strictEqual(privMock('deleteCacheEntry').mock.calls.length, 0);
+      assert.strictEqual(deleteCacheEntry.mock.calls.length, 0);
     });
   });
 
   it('should delete cache entry content before its metadata', async () => {
-    await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string) => Promise<void>)('error', 'file');
+    await service['deleteCacheEntry']('error', 'file');
 
     const rmOptions = { recursive: true, force: true, maxRetries: 5, retryDelay: 100 };
     assert.deepStrictEqual(
@@ -1269,7 +1193,7 @@ describe('CacheService', () => {
       throw new Error('EBUSY');
     });
 
-    await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string) => Promise<void>)('cache', 'file');
+    await service['deleteCacheEntry']('cache', 'file');
 
     // The metadata still tracks the content left on disk
     assert.deepStrictEqual(
@@ -1313,14 +1237,14 @@ describe('CacheService', () => {
 
     await assert.rejects(service.removeAllCacheContent(), /readdir error/);
 
-    assert.strictEqual(priv()['updateCache$'], null);
+    assert.strictEqual(service['updateCache$'], null);
     // The next send is not blocked behind the failed reset
-    priv()['queue'] = [];
+    service['queue'] = [];
     assert.strictEqual(await service.getCacheContentToSend(100), null);
   });
 
   it('should release the update lock when a cache update fails', async () => {
-    priv()['removeContent'] = mock.fn(async () => {
+    service['removeContent'] = mock.fn(async () => {
       throw new Error('remove error');
     });
 
@@ -1333,8 +1257,8 @@ describe('CacheService', () => {
       /remove error/
     );
 
-    assert.strictEqual(priv()['updateCache$'], null);
-    priv()['queue'] = [];
+    assert.strictEqual(service['updateCache$'], null);
+    service['queue'] = [];
     assert.strictEqual(await service.getCacheContentToSend(100), null);
   });
 });

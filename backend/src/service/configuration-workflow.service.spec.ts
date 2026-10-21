@@ -1,23 +1,25 @@
 import assert from 'node:assert/strict';
-import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+import { beforeEach, describe, it } from 'node:test';
 
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
 
+import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import ConfigurationWorkflowRepositoryMock from '../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import type ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
+import type ScanModeRepository from '../repository/config/scan-mode.repository';
+import type SouthConnectorRepository from '../repository/config/south-connector.repository';
+import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
+import { createMock, Mocked } from '../tests/utils/test-utils';
 import ConfigurationWorkflowService from './configuration-workflow.service';
+import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 
-let configurationWorkflowRepository: ConfigurationWorkflowRepositoryMock;
-let southConnectorRepository: SouthConnectorRepositoryMock;
-let scanModeRepository: ScanModeRepositoryMock;
-let engine: DataStreamEngineMock;
-let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
+let configurationWorkflowRepository: Mocked<ConfigurationWorkflowRepository>;
+let southConnectorRepository: Mocked<SouthConnectorRepository>;
+let scanModeRepository: Mocked<ScanModeRepository>;
+let engine: Mocked<DataStreamEngine>;
+let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
 let service: ConfigurationWorkflowService;
 
 const localCommand: ConfigurationWorkflowCommandDTO = {
@@ -51,23 +53,18 @@ const existingWorkflow: ConfigurationWorkflowEntity = {
 
 describe('Configuration Workflow Service', () => {
   beforeEach(() => {
-    configurationWorkflowRepository = new ConfigurationWorkflowRepositoryMock();
-    southConnectorRepository = new SouthConnectorRepositoryMock();
-    scanModeRepository = new ScanModeRepositoryMock();
-    engine = new DataStreamEngineMock(null);
-    oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
+    configurationWorkflowRepository = createMock<ConfigurationWorkflowRepository>();
+    southConnectorRepository = createMock<SouthConnectorRepository>({ findSouthById: () => testData.south.list[0] });
+    scanModeRepository = createMock<ScanModeRepository>();
+    engine = createMock<DataStreamEngine>({ logger: new LoggerMock() });
+    oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>();
     service = new ConfigurationWorkflowService(
       configurationWorkflowRepository,
       southConnectorRepository,
       scanModeRepository,
-      engine as never,
+      engine,
       oIAnalyticsRegistrationService
     );
-    southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0]);
-  });
-
-  afterEach(() => {
-    mock.restoreAll();
   });
 
   describe('findById', () => {
@@ -146,7 +143,7 @@ describe('Configuration Workflow Service', () => {
       );
       assert.strictEqual(created, existingWorkflow);
       assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 1);
-      assert.strictEqual(engine.logger.warn.mock.calls.length, 1);
+      assert.strictEqual((engine.logger as LoggerMock).warn.mock.calls.length, 1);
     });
 
     it('should throw when a local workflow has no identity key field', () => {
@@ -175,7 +172,7 @@ describe('Configuration Workflow Service', () => {
       oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'REGISTERED' }) as never);
       service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true }, 'userTest');
       assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 1);
-      assert.strictEqual(engine.logger.warn.mock.calls.length, 0);
+      assert.strictEqual((engine.logger as LoggerMock).warn.mock.calls.length, 0);
     });
 
     it('should throw when a workflow with the same name already exists for this south connector', () => {
