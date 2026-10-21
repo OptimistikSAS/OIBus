@@ -1,308 +1,144 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import type { MqttClient } from 'mqtt';
-
-import type { OIBusContent } from '../../../shared/model/common/content.model';
-import type { Instant } from '../../../shared/model/common/types';
-import type { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/connector/south-settings.model';
+import type { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthMQTTClass from './south-mqtt';
 
 const nodeRequire = createRequire(import.meta.url);
 
-class MqttStreamMock extends EventEmitter {
-  subscribeAsync = mock.fn(async () => undefined);
-  unsubscribeAsync = mock.fn(async () => undefined);
-  end = mock.fn(() => undefined);
+class MqttClientMock extends EventEmitter {
+  subscribeAsync = mock.fn(async (..._args: Array<unknown>) => undefined);
+  unsubscribeAsync = mock.fn(async (..._args: Array<unknown>) => undefined);
+  end = mock.fn((..._args: Array<unknown>) => undefined);
 }
 
-const mqttStream = new MqttStreamMock();
-
-const mqttExports = {
-  __esModule: true,
-  default: {
-    connectAsync: mock.fn(async () => mqttStream),
-    connect: mock.fn((_url: string) => mqttStream)
-  } as { connectAsync: ReturnType<typeof mock.fn>; connect: ReturnType<typeof mock.fn>; default?: unknown }
-};
-mqttExports.default.default = mqttExports.default;
-
-const utilsMqttExports = {
-  createConnectionOptions: mock.fn(async () => ({})),
-  getItem: mock.fn(() => undefined as unknown)
-};
-
-describe('SouthMQTT', () => {
-  let SouthMQTT: typeof SouthMQTTClass;
-  let south: SouthMQTTClass;
-
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-
-  const configuration: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'mqtt',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      url: 'mqtt://localhost:1883',
-      qos: '1',
-      persistent: true,
-      authentication: {
-        type: 'none',
-        username: '',
-        password: '',
-        caFilePath: '',
-        certFilePath: '',
-        keyFilePath: ''
-      },
-      connectTimeout: 1000,
-      reconnectPeriod: 1000,
-      rejectUnauthorized: false,
-      maxNumberOfMessages: 1,
-      flushMessageTimeout: 1000
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: { topic: 'my/first/topic' },
-        scanMode: {
-          id: 'subscription',
-          name: 'subscription',
-          description: '',
-          type: 'cron',
-          cron: '',
-          interval: null,
-          activationWindow: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: '',
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: { topic: 'my/+/+/topic/with/wildcard/#' },
-        scanMode: {
-          id: 'subscription',
-          name: 'subscription',
-          description: '',
-          type: 'cron',
-          cron: '',
-          interval: null,
-          activationWindow: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: '',
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: { topic: 'my/wrong/topic////' },
-        scanMode: {
-          id: 'subscription',
-          name: 'subscription',
-          description: '',
-          type: 'cron',
-          cron: '',
-          interval: null,
-          activationWindow: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: '',
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null
-      },
-      {
-        id: 'id4',
-        name: 'item4',
-        enabled: true,
-        settings: { topic: 'json/topic' },
-        scanMode: {
-          id: 'subscription',
-          name: 'subscription',
-          description: '',
-          type: 'cron',
-          cron: '',
-          interval: null,
-          activationWindow: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: '',
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null
-      },
-      {
-        id: 'id5',
-        name: 'item5',
-        enabled: true,
-        settings: { topic: 'json/topic' },
-        scanMode: {
-          id: 'subscription',
-          name: 'subscription',
-          description: '',
-          type: 'cron',
-          cron: '',
-          interval: null,
-          activationWindow: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: '',
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null
-      },
-      {
-        id: 'id6',
-        name: 'item6',
-        enabled: true,
-        settings: { topic: 'json/topic' },
-        scanMode: {
-          id: 'subscription',
-          name: 'subscription',
-          description: '',
-          type: 'cron',
-          cron: '',
-          interval: null,
-          activationWindow: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: '',
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: null,
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null
-      }
-    ],
+const buildItem = (
+  id: string,
+  topic: string,
+  overrides: Partial<SouthConnectorItemEntity<SouthMQTTItemSettings>> = {}
+): SouthConnectorItemEntity<SouthMQTTItemSettings> => ({
+  id,
+  name: id.replace('id', 'item'),
+  enabled: true,
+  settings: { topic },
+  scanMode: {
+    id: 'subscription',
+    name: 'subscription',
+    description: '',
+    type: 'cron',
+    cron: '',
+    interval: null,
+    activationWindow: null,
     createdBy: '',
     updatedBy: '',
     createdAt: '',
     updatedAt: ''
-  };
+  },
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: '',
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: null,
+  readDelay: null,
+  startTimeOffset: null,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: 'allValues',
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
+  ...overrides
+});
+
+const buildConfiguration = (): SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> => ({
+  id: 'southId',
+  name: 'south',
+  type: 'mqtt',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    url: 'mqtt://localhost:1883',
+    qos: '1',
+    persistent: true,
+    authentication: {
+      type: 'none',
+      username: '',
+      password: '',
+      caFilePath: '',
+      certFilePath: '',
+      keyFilePath: ''
+    },
+    connectTimeout: 1000,
+    reconnectPeriod: 1000,
+    rejectUnauthorized: false,
+    maxNumberOfMessages: 1,
+    flushMessageTimeout: 1000
+  },
+  groups: [],
+  items: [
+    buildItem('id1', 'my/first/topic'),
+    buildItem('id2', 'my/+/+/topic/with/wildcard/#'),
+    buildItem('id3', 'my/wrong/topic////'),
+    buildItem('id4', 'json/topic'),
+    buildItem('id5', 'json/topic'),
+    buildItem('id6', 'json/topic', { cachingStrategy: null })
+  ],
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+// The value cached for an item by a previous flush
+const lastValue = (itemId: string, value: string, instant: string) => ({
+  itemId,
+  groupId: null,
+  queryTime: instant,
+  value,
+  trackedInstant: instant
+});
+
+const logged = (logMock: Mock<(...args: Array<unknown>) => unknown>, message: string, argumentIndex = 0) =>
+  logMock.mock.calls.some(c => c.arguments[argumentIndex] === message);
+
+describe('SouthMQTT', () => {
+  let SouthMQTT: typeof SouthMQTTClass;
+  let south: SouthMQTTClass;
+  let configuration: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>;
+
+  let logger: PinoLogger;
+  let addContentCallback: Mock<ConstructorParameters<typeof SouthMQTTClass>[1]>;
+  let southCacheRepository: Mocked<SouthCacheRepository>;
+  let mqttClient: MqttClientMock;
+  let connectAsync: Mock<(...args: Array<unknown>) => Promise<MqttClientMock>>;
+  let connect: Mock<(url: string) => MqttClientMock>;
+
+  // `mqtt` is used through its default export: its functions are set on that object per test
+  const mqttDefault: Record<string, unknown> = {};
+  mqttDefault.default = mqttDefault;
+  const createUtilsMqttMocks = () => ({
+    createConnectionOptions: mock.fn(async () => ({})),
+    getItem: mock.fn((_topic: string, _items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>>) => configuration.items[0])
+  });
+  const utilsMqttExports = createUtilsMqttMocks();
 
   before(() => {
-    mockModule(nodeRequire, 'mqtt', mqttExports);
+    mockModule(nodeRequire, 'mqtt', { __esModule: true, default: mqttDefault });
     mockModule(nodeRequire, '../../service/utils-mqtt', utilsMqttExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
@@ -310,19 +146,15 @@ describe('SouthMQTT', () => {
   });
 
   beforeEach(() => {
-    mqttStream.removeAllListeners();
-    mqttStream.subscribeAsync = mock.fn(async () => undefined);
-    mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
-    mqttStream.end = mock.fn(() => undefined);
-    mqttExports.default.connectAsync = mock.fn(async () => mqttStream);
-    mqttExports.default.connect = mock.fn((_url: string) => mqttStream);
-    utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
-    utilsMqttExports.getItem = mock.fn(() => undefined as unknown);
-    addContentCallback.mock.resetCalls();
-    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
-    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
-    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
-    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
+    configuration = buildConfiguration();
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
+    southCacheRepository = createMock<SouthCacheRepository>({ getItemsLastValues: () => new Map() });
+    mqttClient = new MqttClientMock();
+    connectAsync = mock.fn(async () => mqttClient);
+    connect = mock.fn((_url: string) => mqttClient);
+    Object.assign(mqttDefault, { connectAsync, connect });
+    Object.assign(utilsMqttExports, createUtilsMqttMocks());
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
@@ -333,115 +165,79 @@ describe('SouthMQTT', () => {
   });
 
   it('should properly connect', async () => {
-    mock.method(
-      south,
-      'subscribe',
-      mock.fn(async () => undefined)
-    );
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
-    const flushMessagesMock = mock.method(
-      south,
-      'flushMessages',
-      mock.fn(async () => undefined)
-    );
-    utilsMqttExports.getItem = mock.fn(() => configuration.items[0] as unknown);
+    mock.method(south, 'subscribe', async () => undefined);
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
+    const flushMessages = mock.method(south, 'flushMessages', async () => undefined);
 
     await south.connect();
 
-    assert.strictEqual(mqttExports.default.connectAsync.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttExports.default.connectAsync.mock.calls[0].arguments, [configuration.settings.url, {}]);
+    assert.strictEqual(connectAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(connectAsync.mock.calls[0].arguments, [configuration.settings.url, {}]);
     assert.ok(
-      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) =>
+      logger.info.mock.calls.some(c =>
         (c.arguments[0] as string).startsWith(`MQTT South connector "south" connected to "${configuration.settings.url}" in`)
       )
     );
 
     // maxNumberOfMessages = 1, first message should NOT flush yet (message count < max before buffering)
     configuration.settings.maxNumberOfMessages = 10;
-    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
+    mqttClient.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises();
-    assert.strictEqual(flushMessagesMock.mock.calls.length, 0);
+    assert.strictEqual(flushMessages.mock.calls.length, 0);
 
     configuration.settings.maxNumberOfMessages = 1;
-    utilsMqttExports.getItem = mock.fn(() => configuration.items[0] as unknown);
-    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
+    mqttClient.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises();
-    assert.ok(
-      logger.trace.mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT message for topic myTopic: myMessage, dup:false, qos:1, retain:false'
-      )
-    );
-    assert.strictEqual(flushMessagesMock.mock.calls.length, 1);
+    assert.ok(logged(logger.trace, 'MQTT message for topic myTopic: myMessage, dup:false, qos:1, retain:false'));
+    assert.strictEqual(flushMessages.mock.calls.length, 1);
 
-    utilsMqttExports.getItem = mock.fn(() => {
+    utilsMqttExports.getItem.mock.mockImplementation(() => {
       throw new Error('getItem error');
     });
-    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
+    mqttClient.emit('message', 'myTopic', 'myMessage', { dup: false });
     await flushPromises();
-    assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error for topic myTopic: getItem error')
-    );
+    assert.ok(logged(logger.error, 'Error for topic myTopic: getItem error'));
 
-    mqttStream.emit('error', new Error('error'));
+    mqttClient.emit('error', new Error('error'));
     await flushPromises();
-    assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => (c.arguments[0] as string).includes(`MQTT Client error: `))
-    );
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes(`MQTT Client error: `)));
+    assert.strictEqual(disconnect.mock.calls.length, 1);
   });
 
   it('should properly connect and clear timeout', async () => {
-    const priv = south as unknown as Record<string, unknown>;
-    priv['reconnectTimeout'] = setTimeout(() => null, 60000);
-    priv['flushTimeout'] = setTimeout(() => null, 60000);
-    mock.method(
-      south,
-      'subscribe',
-      mock.fn(async () => undefined)
-    );
+    south['reconnectTimeout'] = setTimeout(() => null, 60000);
+    south['flushTimeout'] = setTimeout(() => null, 60000);
+    mock.method(south, 'subscribe', async () => undefined);
 
-    utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
     await south.start();
 
-    assert.strictEqual(mqttExports.default.connectAsync.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttExports.default.connectAsync.mock.calls[0].arguments, [configuration.settings.url, {}]);
+    assert.strictEqual(connectAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(connectAsync.mock.calls[0].arguments, [configuration.settings.url, {}]);
     // After start(), timeouts should have been cleared (set to null by connect())
-    assert.strictEqual(priv['reconnectTimeout'], null);
+    assert.strictEqual(south['reconnectTimeout'], null);
   });
 
   it('should properly connect and manage unintentional close event', async () => {
-    mock.method(
-      south,
-      'subscribe',
-      mock.fn(async () => undefined)
-    );
-    utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
+    mock.method(south, 'subscribe', async () => undefined);
     await south.connect();
 
-    assert.strictEqual(mqttExports.default.connectAsync.mock.calls.length, 1);
-    const priv = south as unknown as Record<string, unknown>;
-    assert.strictEqual(priv['reconnectTimeout'], null);
+    assert.strictEqual(connectAsync.mock.calls.length, 1);
+    assert.strictEqual(south['reconnectTimeout'], null);
 
-    mqttStream.emit('close');
-    assert.ok(logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT Client closed unintentionally'));
-    assert.notStrictEqual(priv['reconnectTimeout'], null);
+    mqttClient.emit('close');
+    assert.ok(logged(logger.debug, 'MQTT Client closed unintentionally'));
+    assert.notStrictEqual(south['reconnectTimeout'], null);
   });
 
   it('should properly flush queued messages and reset the queue', async () => {
-    const priv = south as unknown as Record<string, unknown>;
-    priv['flushTimeout'] = setTimeout(() => null, 10000);
-
+    south['flushTimeout'] = setTimeout(() => null, 10000);
     const mockPayload = {
       topic: 'myTopic',
       message: 'myMessage',
       item: configuration.items[0],
       timestamp: testData.constants.dates.FAKE_NOW
     };
-    (priv['bufferedMessages'] as Array<unknown>) = [mockPayload];
+    south['bufferedMessages'] = [mockPayload];
 
     await south.flushMessages();
 
@@ -464,16 +260,14 @@ describe('SouthMQTT', () => {
       null
     ]);
 
-    assert.deepStrictEqual(priv['bufferedMessages'], []);
+    assert.deepStrictEqual(south['bufferedMessages'], []);
     // flushMessages always reschedules flushTimeout at the end
-    assert.notStrictEqual(priv['flushTimeout'], null);
+    assert.notStrictEqual(south['flushTimeout'], null);
   });
 
   it('should flush one content per item when several items are buffered', async () => {
-    const priv = south as unknown as Record<string, unknown>;
-    priv['flushTimeout'] = setTimeout(() => null, 10000);
-
-    (priv['bufferedMessages'] as Array<unknown>) = [
+    south['flushTimeout'] = setTimeout(() => null, 10000);
+    south['bufferedMessages'] = [
       { topic: 'topic1', message: 'a', item: configuration.items[0], timestamp: testData.constants.dates.FAKE_NOW },
       { topic: 'topic2', message: 'b', item: configuration.items[1], timestamp: testData.constants.dates.FAKE_NOW },
       { topic: 'topic1', message: 'c', item: configuration.items[0], timestamp: testData.constants.dates.FAKE_NOW }
@@ -484,14 +278,17 @@ describe('SouthMQTT', () => {
     // One addContent per item: item1 gets its two messages, item2 gets its one.
     assert.strictEqual(addContentCallback.mock.calls.length, 2);
 
-    assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [configuration.items[0]]);
-    assert.deepStrictEqual(JSON.parse((addContentCallback.mock.calls[0].arguments[1] as { content: string }).content), [
+    const [firstCall, secondCall] = addContentCallback.mock.calls;
+    assert.deepStrictEqual(firstCall.arguments[3], [configuration.items[0]]);
+    assert.ok(firstCall.arguments[1].type === 'any-content');
+    assert.deepStrictEqual(JSON.parse(firstCall.arguments[1].content), [
       { message: 'a', timestamp: testData.constants.dates.FAKE_NOW, item: { id: 'id1', name: 'item1', topic: 'my/first/topic' } },
       { message: 'c', timestamp: testData.constants.dates.FAKE_NOW, item: { id: 'id1', name: 'item1', topic: 'my/first/topic' } }
     ]);
 
-    assert.deepStrictEqual(addContentCallback.mock.calls[1].arguments[3], [configuration.items[1]]);
-    assert.deepStrictEqual(JSON.parse((addContentCallback.mock.calls[1].arguments[1] as { content: string }).content), [
+    assert.deepStrictEqual(secondCall.arguments[3], [configuration.items[1]]);
+    assert.ok(secondCall.arguments[1].type === 'any-content');
+    assert.deepStrictEqual(JSON.parse(secondCall.arguments[1].content), [
       {
         message: 'b',
         timestamp: testData.constants.dates.FAKE_NOW,
@@ -499,225 +296,119 @@ describe('SouthMQTT', () => {
       }
     ]);
 
-    assert.deepStrictEqual(priv['bufferedMessages'], []);
+    assert.deepStrictEqual(south['bufferedMessages'], []);
   });
 
   it('should not trigger callback if there are no messages to flush', async () => {
-    const priv = south as unknown as Record<string, unknown>;
-    priv['flushTimeout'] = setTimeout(() => null, 10000);
-    (priv['bufferedMessages'] as Array<unknown>) = [];
+    south['flushTimeout'] = setTimeout(() => null, 10000);
+    south['bufferedMessages'] = [];
 
     await south.flushMessages();
 
     assert.strictEqual(addContentCallback.mock.calls.length, 0);
     // flushMessages always reschedules flushTimeout at the end
-    assert.notStrictEqual(priv['flushTimeout'], null);
+    assert.notStrictEqual(south['flushTimeout'], null);
   });
 
   it('should log error if fail to add content', async () => {
-    const priv = south as unknown as Record<string, unknown>;
-    const mockPayload = {
-      topic: 'myTopic',
-      message: 'myMessage',
-      item: configuration.items[0],
-      timestamp: testData.constants.dates.FAKE_NOW
-    };
-    (priv['bufferedMessages'] as Array<unknown>) = [mockPayload];
-    mock.method(
-      south,
-      'addContent',
-      mock.fn(async () => {
-        throw new Error('add content error');
-      })
-    );
+    south['bufferedMessages'] = [
+      { topic: 'myTopic', message: 'myMessage', item: configuration.items[0], timestamp: testData.constants.dates.FAKE_NOW }
+    ];
+    mock.method(south, 'addContent', async () => {
+      throw new Error('add content error');
+    });
 
     await south.flushMessages();
 
-    assert.ok(
-      logger.error.mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error when flushing messages: add content error'
-      )
-    );
+    assert.ok(logged(logger.error, 'Error when flushing messages: add content error'));
   });
 
   describe('caching strategy filtering', () => {
-    const buildItem = (
-      id: string,
-      name: string,
-      overrides: Partial<SouthConnectorItemEntity<SouthMQTTItemSettings>> = {}
-    ): SouthConnectorItemEntity<SouthMQTTItemSettings> => ({
-      ...configuration.items[0],
-      id,
-      name,
-      cachingStrategy: 'allValues',
-      thresholdType: null,
-      threshold: null,
-      rangeLow: null,
-      rangeHigh: null,
-      maxCachingInterval: null,
-      ...overrides
+    let addContent: Mock<SouthMQTTClass['addContent']>;
+
+    beforeEach(() => {
+      addContent = mock.method(south, 'addContent', async () => undefined);
     });
 
+    // Buffers one message per [item, message] pair
+    const bufferMessages = (...messages: Array<[SouthConnectorItemEntity<SouthMQTTItemSettings>, string]>) => {
+      south['bufferedMessages'] = messages.map(([item, message]) => ({
+        topic: item.settings.topic,
+        message,
+        item,
+        timestamp: testData.constants.dates.FAKE_NOW
+      }));
+    };
+
     it('should suppress a no-change value under cachingStrategy=onChange', async () => {
-      const priv = south as unknown as Record<string, unknown>;
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const item = buildItem('id1', 'item1', { cachingStrategy: 'onChange' });
-      priv['bufferedMessages'] = [{ topic: item.settings.topic, message: '42', item, timestamp: testData.constants.dates.FAKE_NOW }];
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () =>
-          new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '42',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ]
-          ])
+      bufferMessages([buildItem('id1', 'my/first/topic', { cachingStrategy: 'onChange' }), '42']);
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(
+        () => new Map([['id1', lastValue('id1', '42', '2021-01-01T00:00:00.000Z')]])
       );
 
       await south.flushMessages();
 
-      assert.strictEqual(addContentMock.mock.calls.length, 0);
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
-        'southId',
-        []
-      ]);
+      assert.strictEqual(addContent.mock.calls.length, 0);
+      assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments, ['southId', []]);
     });
 
     it('should cache a threshold-exceeding change', async () => {
-      const priv = south as unknown as Record<string, unknown>;
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const item = buildItem('id1', 'item1', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
-      priv['bufferedMessages'] = [{ topic: item.settings.topic, message: '42', item, timestamp: testData.constants.dates.FAKE_NOW }];
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () =>
-          new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '30',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ]
-          ])
+      const item = buildItem('id1', 'my/first/topic', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
+      bufferMessages([item, '42']);
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(
+        () => new Map([['id1', lastValue('id1', '30', '2021-01-01T00:00:00.000Z')]])
       );
 
       await south.flushMessages();
 
-      assert.strictEqual(addContentMock.mock.calls.length, 1);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
-      assert.deepStrictEqual(
-        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
-        [{ itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }]
-      );
+      assert.strictEqual(addContent.mock.calls.length, 1);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [item]);
+      assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments[1], [
+        { itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }
+      ]);
     });
 
     it('should cache when maxCachingInterval elapses even without a qualifying change', async () => {
-      const priv = south as unknown as Record<string, unknown>;
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const item = buildItem('id1', 'item1', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
-      priv['bufferedMessages'] = [{ topic: item.settings.topic, message: '42', item, timestamp: testData.constants.dates.FAKE_NOW }];
+      const item = buildItem('id1', 'my/first/topic', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
+      bufferMessages([item, '42']);
       // previous cached value is identical (no onChange-qualifying diff), but 2h have elapsed since trackedInstant
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () =>
-          new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T22:00:00.000Z',
-                value: '42',
-                trackedInstant: '2021-01-01T22:00:00.000Z'
-              }
-            ]
-          ])
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(
+        () => new Map([['id1', lastValue('id1', '42', '2021-01-01T22:00:00.000Z')]])
       );
 
       await south.flushMessages();
 
-      assert.strictEqual(addContentMock.mock.calls.length, 1);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
+      assert.strictEqual(addContent.mock.calls.length, 1);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [item]);
     });
 
     it('should always cache the very first read for an item regardless of strategy', async () => {
-      const priv = south as unknown as Record<string, unknown>;
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const item = buildItem('id1', 'item1', { cachingStrategy: 'onChange' });
-      priv['bufferedMessages'] = [{ topic: item.settings.topic, message: '42', item, timestamp: testData.constants.dates.FAKE_NOW }];
+      const item = buildItem('id1', 'my/first/topic', { cachingStrategy: 'onChange' });
+      bufferMessages([item, '42']);
       // getItemsLastValues default mock (set in beforeEach) returns an empty Map — no prior cached state
 
       await south.flushMessages();
 
-      assert.strictEqual(addContentMock.mock.calls.length, 1);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
+      assert.strictEqual(addContent.mock.calls.length, 1);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [item]);
     });
 
     it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
-      const priv = south as unknown as Record<string, unknown>;
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
+      bufferMessages(
+        [buildItem('id1', 'my/first/topic', { cachingStrategy: 'onChange' }), '42'],
+        [buildItem('id2', 'my/first/topic', { cachingStrategy: 'onChange' }), '7']
       );
-      south.addContent = addContentMock;
-      const suppressedItem = buildItem('id1', 'item1', { cachingStrategy: 'onChange' });
-      const cachedItem = buildItem('id2', 'item2', { cachingStrategy: 'onChange' });
-      priv['bufferedMessages'] = [
-        { topic: suppressedItem.settings.topic, message: '42', item: suppressedItem, timestamp: testData.constants.dates.FAKE_NOW },
-        { topic: cachedItem.settings.topic, message: '7', item: cachedItem, timestamp: testData.constants.dates.FAKE_NOW }
-      ];
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(
         () =>
           new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '42',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ],
-            [
-              'id2',
-              {
-                itemId: 'id2',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '1',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ]
+            ['id1', lastValue('id1', '42', '2021-01-01T00:00:00.000Z')],
+            ['id2', lastValue('id2', '1', '2021-01-01T00:00:00.000Z')]
           ])
       );
 
       await south.flushMessages();
 
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments, [
         'southId',
         [{ itemId: 'id2', value: '7', instant: testData.constants.dates.FAKE_NOW }]
       ]);
@@ -725,132 +416,92 @@ describe('SouthMQTT', () => {
   });
 
   it('should properly connect and manage intentional close event', async () => {
-    mock.method(
-      south,
-      'subscribe',
-      mock.fn(async () => undefined)
-    );
-    utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
+    mock.method(south, 'subscribe', async () => undefined);
     await south.connect();
 
-    const priv = south as unknown as Record<string, unknown>;
-    priv['disconnecting'] = true;
-    mqttStream.emit('close');
-    assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT Client intentionally disconnected')
-    );
-    assert.strictEqual(priv['reconnectTimeout'], null);
+    south['disconnecting'] = true;
+    mqttClient.emit('close');
+    assert.ok(logged(logger.debug, 'MQTT Client intentionally disconnected'));
+    assert.strictEqual(south['reconnectTimeout'], null);
   });
 
   it('should properly manage connect error and reconnect', async () => {
-    mqttExports.default.connectAsync = mock.fn(async () => {
+    connectAsync.mock.mockImplementation(async () => {
       throw new Error('connect error');
     });
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
 
     await south.start();
 
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
-    const priv = south as unknown as Record<string, unknown>;
-    assert.notStrictEqual(priv['reconnectTimeout'], null);
+    assert.strictEqual(disconnect.mock.calls.length, 1);
+    assert.notStrictEqual(south['reconnectTimeout'], null);
   });
 
   it('should properly manage connect error and not reconnect if disabled', async () => {
-    mqttExports.default.connectAsync = mock.fn(async () => {
+    connectAsync.mock.mockImplementation(async () => {
       throw new Error('connect error');
     });
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
-    (south as unknown as Record<string, unknown>)['connector'] = { ...configuration, enabled: false };
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
+    south['connector'] = { ...configuration, enabled: false };
 
     await south.connect();
 
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
-    const priv = south as unknown as Record<string, unknown>;
-    assert.strictEqual(priv['reconnectTimeout'], null);
+    assert.strictEqual(disconnect.mock.calls.length, 1);
+    assert.strictEqual(south['reconnectTimeout'], null);
   });
 
   it('should not flush message if limit is not triggered', async () => {
     configuration.settings.maxNumberOfMessages = 2;
-    mock.method(
-      south,
-      'subscribe',
-      mock.fn(async () => undefined)
-    );
-    const flushMessagesMock = mock.method(
-      south,
-      'flushMessages',
-      mock.fn(async () => undefined)
-    );
-    utilsMqttExports.getItem = mock.fn(() => configuration.items[0] as unknown);
+    mock.method(south, 'subscribe', async () => undefined);
+    const flushMessages = mock.method(south, 'flushMessages', async () => undefined);
 
     south.connect();
     await flushPromises();
-    mqttStream.emit('connect');
-    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
+    mqttClient.emit('connect');
+    mqttClient.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises();
-    assert.strictEqual(flushMessagesMock.mock.calls.length, 0);
+    assert.strictEqual(flushMessages.mock.calls.length, 0);
 
-    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
+    mqttClient.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises();
-    assert.strictEqual(flushMessagesMock.mock.calls.length, 1);
-    configuration.settings.maxNumberOfMessages = 1;
+    assert.strictEqual(flushMessages.mock.calls.length, 1);
   });
 
   it('should properly disconnect', async () => {
-    const priv = south as unknown as Record<string, unknown>;
-    priv['reconnectTimeout'] = setTimeout(() => null, 60000);
-    priv['client'] = mqttStream as unknown as MqttClient;
+    south['reconnectTimeout'] = setTimeout(() => null, 60000);
+    // A client the connector believes connected (MqttClientMock is not a full MqttClient)
+    Object.assign(south, { client: mqttClient });
 
     await south.disconnect();
 
-    assert.ok(
-      !logger.info.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'Disconnecting from mqtt://localhost:1883...')
-    );
+    assert.ok(!logged(logger.info, 'Disconnecting from mqtt://localhost:1883...'));
     // After disconnect, reconnectTimeout should be null; flushTimeout cleared by disconnect after flushMessages
-    assert.strictEqual(priv['reconnectTimeout'], null);
-    assert.strictEqual(priv['flushTimeout'], null);
+    assert.strictEqual(south['reconnectTimeout'], null);
+    assert.strictEqual(south['flushTimeout'], null);
 
     // Second disconnect: flushMessages replaced with a no-op, so no new flushTimeout is set
-    mock.method(
-      south,
-      'flushMessages',
-      mock.fn(async () => undefined)
-    );
+    mock.method(south, 'flushMessages', async () => undefined);
     await south.disconnect();
-    assert.strictEqual(priv['reconnectTimeout'], null);
-    assert.strictEqual(priv['flushTimeout'], null);
+    assert.strictEqual(south['reconnectTimeout'], null);
+    assert.strictEqual(south['flushTimeout'], null);
   });
 
   it('should not subscribe if client is not set', async () => {
     await south.subscribe(configuration.items);
-    assert.ok(
-      logger.error.mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT client could not subscribe to items: client not set'
-      )
-    );
+    assert.ok(logged(logger.error, 'MQTT client could not subscribe to items: client not set'));
   });
 
   it('should properly subscribe when client is set', async () => {
-    mqttStream.subscribeAsync = mock.fn(async () => {
+    mqttClient.subscribeAsync.mock.mockImplementation(async () => {
       throw new Error('subscription error');
     });
 
     south.connect();
     await flushPromises();
     await south.subscribe(configuration.items);
-    assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === `Subscription error: subscription error`)
-    );
-    assert.strictEqual(mqttStream.subscribeAsync.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.subscribeAsync.mock.calls[0].arguments, [
+    assert.ok(logged(logger.error, `Subscription error: subscription error`, 1));
+    assert.strictEqual(mqttClient.subscribeAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttClient.subscribeAsync.mock.calls[0].arguments, [
       configuration.items.map(item => item.settings.topic),
       { qos: parseInt(configuration.settings.qos) }
     ]);
@@ -858,77 +509,60 @@ describe('SouthMQTT', () => {
 
   it('should not unsubscribe if client is not set', async () => {
     await south.unsubscribe(configuration.items);
-    assert.ok(
-      logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT client is not set. Nothing to unsubscribe')
-    );
+    assert.ok(logged(logger.warn, 'MQTT client is not set. Nothing to unsubscribe'));
   });
 
   it('should properly unsubscribe when client is set', async () => {
-    mqttStream.unsubscribeAsync = mock.fn(async () => {
+    mqttClient.unsubscribeAsync.mock.mockImplementation(async () => {
       throw new Error('unsubscription error');
     });
 
     south.connect();
     await flushPromises();
     await south.unsubscribe(configuration.items);
-    assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === `Unsubscription error: unsubscription error`)
-    );
-    assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items.map(item => item.settings.topic)]);
+    assert.ok(logged(logger.error, `Unsubscription error: unsubscription error`, 1));
+    assert.strictEqual(mqttClient.unsubscribeAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttClient.unsubscribeAsync.mock.calls[0].arguments, [configuration.items.map(item => item.settings.topic)]);
   });
 
   it('should subscribe successfully without error when client is set', async () => {
-    mqttStream.subscribeAsync = mock.fn(async () => undefined);
-    // logger.error's call history is never reset between tests in this file, so only calls made
-    // after this point (not leftover calls from earlier error-path tests) are relevant here.
-    logger.error.mock.resetCalls();
-
     south.connect();
     await flushPromises();
     await south.subscribe(configuration.items);
-    assert.strictEqual(mqttStream.subscribeAsync.mock.calls.length, 1);
-    assert.ok(!logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => String(c.arguments[0]).startsWith('Subscription error')));
+    assert.strictEqual(mqttClient.subscribeAsync.mock.calls.length, 1);
+    assert.ok(!logger.error.mock.calls.some(c => String(c.arguments[0]).startsWith('Subscription error')));
   });
 
   it('should unsubscribe successfully without error when client is set', async () => {
-    mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
-    // logger.error's call history is never reset between tests in this file, so only calls made
-    // after this point (not leftover calls from earlier error-path tests) are relevant here.
-    logger.error.mock.resetCalls();
-
     south.connect();
     await flushPromises();
     await south.unsubscribe(configuration.items);
-    assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
-    assert.ok(
-      !logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => String(c.arguments[0]).startsWith('Unsubscription error'))
-    );
+    assert.strictEqual(mqttClient.unsubscribeAsync.mock.calls.length, 1);
+    assert.ok(!logger.error.mock.calls.some(c => String(c.arguments[0]).startsWith('Unsubscription error')));
   });
 
   it('should properly test connection', async () => {
-    const connackPacket = { sessionPresent: false };
-    mqttExports.default.connect = mock.fn((_url: string) => {
-      setImmediate(() => mqttStream.emit('connect', connackPacket));
-      return mqttStream;
+    connect.mock.mockImplementation(() => {
+      setImmediate(() => mqttClient.emit('connect', { sessionPresent: false }));
+      return mqttClient;
     });
 
     const testResult = await south.testConnection();
 
-    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
+    assert.strictEqual(mqttClient.end.mock.calls.length, 1);
     assert.deepStrictEqual(testResult, { items: [{ key: 'SessionPresent', value: 'false' }] });
   });
 
   it('should reject test connection when client emits an error', async () => {
     const connectionError = new Error('connection refused');
-    mqttExports.default.connect = mock.fn((_url: string) => {
-      setImmediate(() => mqttStream.emit('error', connectionError));
-      return mqttStream;
+    connect.mock.mockImplementation(() => {
+      setImmediate(() => mqttClient.emit('error', connectionError));
+      return mqttClient;
     });
 
     await assert.rejects(south.testConnection(), connectionError);
-    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
+    assert.strictEqual(mqttClient.end.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttClient.end.mock.calls[0].arguments, [true]);
   });
 
   it('should properly test connection and populate all connack properties', async () => {
@@ -944,9 +578,9 @@ describe('SouthMQTT', () => {
         topicAliasMaximum: 10
       }
     };
-    mqttExports.default.connect = mock.fn((_url: string) => {
-      setImmediate(() => mqttStream.emit('connect', connackPacket));
-      return mqttStream;
+    connect.mock.mockImplementation(() => {
+      setImmediate(() => mqttClient.emit('connect', connackPacket));
+      return mqttClient;
     });
 
     const testResult = await south.testConnection();
@@ -965,173 +599,132 @@ describe('SouthMQTT', () => {
     });
   });
 
-  it('should properly test item', async () => {
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
-    mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
+  describe('testItem', () => {
+    let disconnect: Mock<SouthMQTTClass['disconnect']>;
 
-    const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
-
-    await flushPromises();
-    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
-    await flushPromises();
-
-    await testItemPromise;
-
-    assert.strictEqual(mqttStream.subscribeAsync.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.subscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
-    assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
-    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
-    // testItem() must never invoke the connector's own disconnect() lifecycle method: it would tear
-    // down this.client, the connector's persistent connection, instead of just the local test client.
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-  });
-
-  it('should decode Buffer message as string when testing item', async () => {
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
-    mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
-    mqttExports.default.connectAsync = mock.fn(async () => {
-      mock.timers.tick(15);
-      return mqttStream;
+    beforeEach(() => {
+      disconnect = mock.method(south, 'disconnect', async () => undefined);
     });
 
-    const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
+    // Runs testItem() on the first item, emitting `message` (if any) once the test client subscribed
+    const testFirstItem = async (message?: string | Buffer, client = mqttClient) => {
+      const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
+      // Marked as handled: it may reject before the caller awaits it
+      testItemPromise.catch(() => undefined);
+      await flushPromises();
+      if (message !== undefined) {
+        client.emit('message', 'myTopic', message, { dup: false });
+        await flushPromises();
+      }
+      return testItemPromise;
+    };
 
-    await flushPromises();
-    mock.timers.tick(25);
-    mqttStream.emit('message', 'myTopic', Buffer.from('hello from PLC'), { dup: false });
-    await flushPromises();
+    it('should properly test item', async () => {
+      await testFirstItem('myMessage');
 
-    const result = await testItemPromise;
-    const parsed = JSON.parse(result.result.content as string);
-    assert.strictEqual(parsed[0].message, 'hello from PLC');
-    assert.strictEqual(result.connectionDuration, 15);
-    assert.strictEqual(result.queryDuration, 25);
-    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-  });
-
-  it('should properly test item and manage unsubscribe error', async () => {
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
-    mqttStream.unsubscribeAsync = mock.fn(async () => {
-      throw new Error('unsubscribe error');
+      assert.strictEqual(mqttClient.subscribeAsync.mock.calls.length, 1);
+      assert.deepStrictEqual(mqttClient.subscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
+      assert.strictEqual(mqttClient.unsubscribeAsync.mock.calls.length, 1);
+      assert.deepStrictEqual(mqttClient.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
+      assert.strictEqual(mqttClient.end.mock.calls.length, 1);
+      assert.deepStrictEqual(mqttClient.end.mock.calls[0].arguments, [true]);
+      // testItem() must never invoke the connector's own disconnect() lifecycle method: it would tear
+      // down this.client, the connector's persistent connection, instead of just the local test client.
+      assert.strictEqual(disconnect.mock.calls.length, 0);
     });
 
-    let error: unknown;
-    const testItemPromise = south.testItem(configuration.items[0], { history: undefined }).catch(err => {
-      error = err;
+    it('should decode Buffer message as string when testing item', async () => {
+      connectAsync.mock.mockImplementation(async () => {
+        mock.timers.tick(15);
+        return mqttClient;
+      });
+
+      const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
+      await flushPromises();
+      mock.timers.tick(25);
+      mqttClient.emit('message', 'myTopic', Buffer.from('hello from PLC'), { dup: false });
+      await flushPromises();
+
+      const result = await testItemPromise;
+      assert.ok(result.result.type === 'any-content');
+      const parsed = JSON.parse(result.result.content);
+      assert.strictEqual(parsed[0].message, 'hello from PLC');
+      assert.strictEqual(result.connectionDuration, 15);
+      assert.strictEqual(result.queryDuration, 25);
+      assert.strictEqual(mqttClient.end.mock.calls.length, 1);
+      assert.strictEqual(disconnect.mock.calls.length, 0);
     });
 
-    await flushPromises();
-    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
-    await flushPromises();
-    await testItemPromise;
+    it('should properly test item and manage unsubscribe error', async () => {
+      mqttClient.unsubscribeAsync.mock.mockImplementation(async () => {
+        throw new Error('unsubscribe error');
+      });
 
-    assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
-    // Even on the message-handling error path, the local test client must still be closed exactly once.
-    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.strictEqual(
-      error,
-      `Error when testing item ${configuration.items[0].settings.topic} (received message "myMessage"): unsubscribe error`
-    );
-  });
+      await assert.rejects(
+        testFirstItem('myMessage'),
+        (error: unknown) =>
+          error === `Error when testing item ${configuration.items[0].settings.topic} (received message "myMessage"): unsubscribe error`
+      );
 
-  it('should properly test item and manage subscribe error', async () => {
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
-    mqttStream.subscribeAsync = mock.fn(async () => {
-      throw new Error('subscribe error');
+      assert.strictEqual(mqttClient.unsubscribeAsync.mock.calls.length, 1);
+      assert.deepStrictEqual(mqttClient.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
+      // Even on the message-handling error path, the local test client must still be closed exactly once.
+      assert.strictEqual(mqttClient.end.mock.calls.length, 1);
+      assert.deepStrictEqual(mqttClient.end.mock.calls[0].arguments, [true]);
+      assert.strictEqual(disconnect.mock.calls.length, 0);
     });
 
-    let error: unknown;
-    const testItemPromise = south.testItem(configuration.items[0], { history: undefined }).catch(err => {
-      error = err;
+    it('should properly test item and manage subscribe error', async () => {
+      mqttClient.subscribeAsync.mock.mockImplementation(async () => {
+        throw new Error('subscribe error');
+      });
+
+      await assert.rejects(
+        testFirstItem(),
+        (error: unknown) => error === `Error when testing item ${configuration.items[0].settings.topic}: subscribe error`
+      );
+
+      // The local client was connected before subscribeAsync failed, so it must still be closed.
+      assert.strictEqual(mqttClient.end.mock.calls.length, 1);
+      assert.deepStrictEqual(mqttClient.end.mock.calls[0].arguments, [true]);
+      assert.strictEqual(disconnect.mock.calls.length, 0);
     });
 
-    await flushPromises();
-    await testItemPromise;
+    it('should not close any client when testing item fails to connect', async () => {
+      connectAsync.mock.mockImplementation(async () => {
+        throw new Error('connect error');
+      });
 
-    // The local client was connected before subscribeAsync failed, so it must still be closed.
-    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
-    assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.strictEqual(error, `Error when testing item ${configuration.items[0].settings.topic}: subscribe error`);
-  });
+      await assert.rejects(
+        testFirstItem(),
+        (error: unknown) => error === `Error when testing item ${configuration.items[0].settings.topic}: connect error`
+      );
 
-  it('should not close any client when testing item fails to connect', async () => {
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
-    mqttExports.default.connectAsync = mock.fn(async () => {
-      throw new Error('connect error');
+      // No client was ever created, so there is nothing to close and disconnect() must not be called.
+      assert.strictEqual(mqttClient.end.mock.calls.length, 0);
+      assert.strictEqual(disconnect.mock.calls.length, 0);
     });
 
-    let error: unknown;
-    const testItemPromise = south.testItem(configuration.items[0], { history: undefined }).catch(err => {
-      error = err;
+    it('should not touch or disconnect the connector own live client when testing item', async () => {
+      // Establish the connector's own persistent connection first, on a client distinct from the one
+      // testItem() will create, so a mix-up between the two is observable.
+      const liveClient = mqttClient;
+      await south.connect();
+      assert.strictEqual(south['client'], liveClient);
+
+      const testClient = new MqttClientMock();
+      connectAsync.mock.mockImplementation(async () => testClient);
+
+      await testFirstItem('myMessage', testClient);
+
+      // The connector's live client must be left completely alone: not ended, not disconnected, still set.
+      assert.strictEqual(liveClient.end.mock.calls.length, 0);
+      assert.strictEqual(disconnect.mock.calls.length, 0);
+      assert.strictEqual(south['client'], liveClient);
+
+      // Only the local test client created inside testItem() gets closed.
+      assert.strictEqual(testClient.end.mock.calls.length, 1);
+      assert.deepStrictEqual(testClient.end.mock.calls[0].arguments, [true]);
     });
-    await flushPromises();
-    await testItemPromise;
-
-    // No client was ever created, so there is nothing to close and disconnect() must not be called.
-    assert.strictEqual(mqttStream.end.mock.calls.length, 0);
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.strictEqual(error, `Error when testing item ${configuration.items[0].settings.topic}: connect error`);
-  });
-
-  it('should not touch or disconnect the connector own live client when testing item', async () => {
-    const disconnectMock = mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
-
-    // Establish the connector's own persistent connection first, on a client distinct from the one
-    // testItem() will create, so a mix-up between the two is observable.
-    const liveClient = new MqttStreamMock();
-    mqttExports.default.connectAsync = mock.fn(async () => liveClient);
-    await south.connect();
-
-    const priv = south as unknown as { client: MqttClient | null };
-    assert.strictEqual(priv.client, liveClient);
-
-    const testClient = new MqttStreamMock();
-    mqttExports.default.connectAsync = mock.fn(async () => testClient);
-
-    const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
-    await flushPromises();
-    testClient.emit('message', 'myTopic', 'myMessage', { dup: false });
-    await flushPromises();
-    await testItemPromise;
-
-    // The connector's live client must be left completely alone: not ended, not disconnected, still set.
-    assert.strictEqual(liveClient.end.mock.calls.length, 0);
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.strictEqual(priv.client, liveClient);
-
-    // Only the local test client created inside testItem() gets closed.
-    assert.strictEqual(testClient.end.mock.calls.length, 1);
-    assert.deepStrictEqual(testClient.end.mock.calls[0].arguments, [true]);
   });
 });

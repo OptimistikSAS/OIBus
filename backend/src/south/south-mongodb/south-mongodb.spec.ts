@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type {
@@ -11,16 +11,11 @@ import type {
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
-import type {
-  default as SouthMongoDBClass,
-  substituteQueryPlaceholders as substituteQueryPlaceholdersType,
-  toOIBusRecord as toOIBusRecordType
-} from './south-mongodb';
+import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import type * as SouthMongoDBModule from './south-mongodb';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -59,131 +54,128 @@ class ObjectId {
   }
 }
 
+const buildItem = (id: string, settings: SouthMongoDBItemSettings): SouthConnectorItemEntity<SouthMongoDBItemSettings> => ({
+  id,
+  name: id.replace('id', 'item'),
+  enabled: true,
+  settings,
+  scanMode: testData.scanMode.list[0],
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: 3600,
+  readDelay: 0,
+  startTimeOffset: 0,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
+const buildConfiguration = (
+  settings: Partial<SouthMongoDBSettings>,
+  items: Array<SouthConnectorItemEntity<SouthMongoDBItemSettings>> = []
+): SouthConnectorEntity<SouthMongoDBSettings, SouthMongoDBItemSettings> => ({
+  id: 'southId',
+  name: 'south',
+  type: 'mongodb',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    connectionString: 'mongodb://localhost:27017/db',
+    connectionTimeout: 1000,
+    username: 'username',
+    password: 'password',
+    ...settings
+  },
+  groups: [],
+  items,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
 describe('SouthMongoDB', () => {
-  let SouthMongoDB: typeof SouthMongoDBClass;
-  let substituteQueryPlaceholders: typeof substituteQueryPlaceholdersType;
-  let toOIBusRecord: typeof toOIBusRecordType;
+  let SouthMongoDB: typeof SouthMongoDBModule.default;
+  let substituteQueryPlaceholders: typeof SouthMongoDBModule.substituteQueryPlaceholders;
+  let toOIBusRecord: typeof SouthMongoDBModule.toOIBusRecord;
 
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(
-    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-      undefined
-  );
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let logger: PinoLogger;
+  let addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  >;
 
-  const clientConnect = mock.fn(async () => undefined);
-  const clientClose = mock.fn(async () => undefined);
-
-  const listCollectionsToArray = mock.fn(async () => [{ name: 'readings' }]);
-  const dbListCollections = mock.fn(() => ({ toArray: listCollectionsToArray }));
-  const buildInfo = mock.fn(async () => ({ version: '7.0.0' }));
-  const dbAdmin = mock.fn(() => ({ buildInfo }));
-
-  const findToArray = mock.fn(async (): Promise<Array<unknown>> => []);
-  const findSort = mock.fn((_spec: unknown) => ({ toArray: findToArray }));
-  const collectionFind = mock.fn((_query: unknown) => ({ sort: findSort }));
-  const aggregateToArray = mock.fn(async (): Promise<Array<unknown>> => []);
-  const collectionAggregate = mock.fn((_pipeline: unknown) => ({ toArray: aggregateToArray }));
-  const dbCollection = mock.fn((_name: string) => ({ find: collectionFind, aggregate: collectionAggregate }));
-
-  const clientDb = mock.fn(() => ({ collection: dbCollection, admin: dbAdmin, listCollections: dbListCollections }));
+  let clientConnect: Mock<() => Promise<void>>;
+  let clientClose: Mock<() => Promise<void>>;
+  let listCollectionsToArray: Mock<() => Promise<Array<{ name: string }>>>;
+  let buildInfo: Mock<() => Promise<{ version: string }>>;
+  let findToArray: Mock<() => Promise<Array<unknown>>>;
+  let findSort: Mock<(spec: unknown) => unknown>;
+  let collectionFind: Mock<(query: unknown) => unknown>;
+  let aggregateToArray: Mock<() => Promise<Array<unknown>>>;
+  let collectionAggregate: Mock<(pipeline: unknown) => unknown>;
+  let dbCollection: Mock<(name: string) => unknown>;
+  let MongoClient: Mock<(connectionString: string, options: unknown) => unknown>;
 
   const mongodbExports: Record<string, unknown> = {
     __esModule: true,
-    MongoClient: mock.fn(function (_connectionString: string, _options: unknown) {
-      return { connect: clientConnect, close: clientClose, db: clientDb };
-    }),
     MongoServerError,
     MongoNetworkError,
     MongoServerSelectionError,
     ObjectId
   };
 
-  const utilsExports = {
-    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
-    // Mirrors the real implementation in service/utils.ts for the DateTimeType variants this connector
-    // actually uses ('timestamp' for native BSON Date fields, plus the epoch/iso-string variants).
-    convertDateTimeToInstant: mock.fn((dateTime: unknown, options: { type?: string }) => {
-      if (dateTime === null || dateTime === undefined) return '';
-      switch (options.type) {
-        case 'timestamp':
-          return (dateTime as Date).toISOString();
-        case 'unix-epoch':
-          return new Date((dateTime as number) * 1000).toISOString();
-        case 'unix-epoch-ms':
-          return new Date(dateTime as number).toISOString();
-        case 'iso-string':
-          return new Date(dateTime as string).toISOString();
-        default:
-          return String(dateTime);
-      }
-    }),
-    getErrorMessage: mock.fn((error: unknown) => {
-      if (error instanceof Error) return error.message;
-      if (typeof error === 'string') return error;
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
-      }
-      return String(error);
-    }),
-    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-      if (items.length === 0) return {};
-      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-      const lead = items[0];
-      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-    })
-  };
-
   before(() => {
-    mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, 'mongodb', mongodbExports);
     mockModule(nodeRequire, '../../service/encryption.service', {
       __esModule: true,
       encryptionService: new EncryptionServiceMock('', '')
     });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
-    const southMongoDBModule = reloadModule<{
-      default: typeof SouthMongoDBClass;
-      substituteQueryPlaceholders: typeof substituteQueryPlaceholdersType;
-      toOIBusRecord: typeof toOIBusRecordType;
-    }>(nodeRequire, './south-mongodb');
+    const southMongoDBModule = reloadModule<typeof SouthMongoDBModule>(nodeRequire, './south-mongodb');
     SouthMongoDB = southMongoDBModule.default;
     substituteQueryPlaceholders = southMongoDBModule.substituteQueryPlaceholders;
     toOIBusRecord = southMongoDBModule.toOIBusRecord;
   });
 
   beforeEach(() => {
-    clientConnect.mock.resetCalls();
-    clientClose.mock.resetCalls();
-    listCollectionsToArray.mock.resetCalls();
-    dbListCollections.mock.resetCalls();
-    buildInfo.mock.resetCalls();
-    dbAdmin.mock.resetCalls();
-    findToArray.mock.resetCalls();
-    findSort.mock.resetCalls();
-    collectionFind.mock.resetCalls();
-    aggregateToArray.mock.resetCalls();
-    collectionAggregate.mock.resetCalls();
-    dbCollection.mock.resetCalls();
-    clientDb.mock.resetCalls();
-    addContentCallback.mock.resetCalls();
+    logger = new PinoLogger();
+    addContentCallback = mock.fn(async () => undefined);
 
-    clientConnect.mock.mockImplementation(async () => undefined);
-    clientClose.mock.mockImplementation(async () => undefined);
-    listCollectionsToArray.mock.mockImplementation(async () => [{ name: 'readings' }]);
-    buildInfo.mock.mockImplementation(async () => ({ version: '7.0.0' }));
-    findToArray.mock.mockImplementation(async () => []);
-    aggregateToArray.mock.mockImplementation(async () => []);
-
-    mongodbExports.MongoClient = mock.fn(function () {
-      return { connect: clientConnect, close: clientClose, db: clientDb };
+    clientConnect = mock.fn(async () => undefined);
+    clientClose = mock.fn(async () => undefined);
+    listCollectionsToArray = mock.fn(async () => [{ name: 'readings' }]);
+    buildInfo = mock.fn(async () => ({ version: '7.0.0' }));
+    findToArray = mock.fn(async () => []);
+    findSort = mock.fn(() => ({ toArray: findToArray }));
+    collectionFind = mock.fn(() => ({ sort: findSort }));
+    aggregateToArray = mock.fn(async () => []);
+    collectionAggregate = mock.fn(() => ({ toArray: aggregateToArray }));
+    dbCollection = mock.fn(() => ({ find: collectionFind, aggregate: collectionAggregate }));
+    MongoClient = mock.fn(function () {
+      return {
+        connect: clientConnect,
+        close: clientClose,
+        db: () => ({
+          collection: dbCollection,
+          admin: () => ({ buildInfo }),
+          listCollections: () => ({ toArray: listCollectionsToArray })
+        })
+      };
     });
+    mongodbExports.MongoClient = MongoClient;
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
@@ -193,103 +185,39 @@ describe('SouthMongoDB', () => {
     mock.restoreAll();
   });
 
+  const createSouth = (configuration: SouthConnectorEntity<SouthMongoDBSettings, SouthMongoDBItemSettings>) =>
+    new SouthMongoDB(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+
   describe('SouthMongoDB with authentication', () => {
-    let south: SouthMongoDBClass;
-    const configuration: SouthConnectorEntity<SouthMongoDBSettings, SouthMongoDBItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mongodb',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        connectionString: 'mongodb://localhost:27017/db',
-        connectionTimeout: 1000,
-        username: 'username',
-        password: 'password'
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            collection: 'readings',
-            queryType: 'find',
-            query: '{"timestamp": {"$gt": "@StartTime", "$lte": "@EndTime"}}',
-            sort: '{"timestamp": 1}',
-            trackingInstant: { trackInstant: true, jsonPath: '$[*].timestamp', dateTimeInput: { type: 'timestamp' } }
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: {
-            collection: 'readings',
-            queryType: 'aggregation',
-            query: '[{"$match": {"timestamp": {"$gt": "@StartTime"}}}]',
-            sort: '{"timestamp": 1}',
-            trackingInstant: null
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    let south: SouthMongoDBModule.default;
+    const configuration = buildConfiguration({}, [
+      buildItem('id1', {
+        collection: 'readings',
+        queryType: 'find',
+        query: '{"timestamp": {"$gt": "@StartTime", "$lte": "@EndTime"}}',
+        sort: '{"timestamp": 1}',
+        trackingInstant: { trackInstant: true, jsonPath: '$[*].timestamp', dateTimeInput: { type: 'timestamp' } }
+      }),
+      buildItem('id2', {
+        collection: 'readings',
+        queryType: 'aggregation',
+        query: '[{"$match": {"timestamp": {"$gt": "@StartTime"}}}]',
+        sort: '{"timestamp": 1}',
+        trackingInstant: null
+      })
+    ]);
 
     beforeEach(() => {
-      south = new SouthMongoDB(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(configuration);
     });
 
     it('should properly run historyQuery', async () => {
       const startTime = testData.constants.dates.DATE_1;
-      const fetchDocumentsMock = mock.method(
-        south as unknown as { fetchDocuments: (...args: Array<unknown>) => Promise<Array<unknown>> },
-        'fetchDocuments',
-        mock.fn(async () => [
-          { timestamp: new Date('2020-03-01T00:00:00.000Z'), anotherTimestamp: new Date('2023-02-01T00:00:00.000Z'), value: 456 },
-          { timestamp: new Date('2020-02-01T00:00:00.000Z'), anotherTimestamp: new Date('2023-02-01T00:00:00.000Z'), value: 123 }
-        ])
-      );
+      const fetchDocumentsMock = mock.fn(async () => [
+        { timestamp: new Date('2020-03-01T00:00:00.000Z'), anotherTimestamp: new Date('2023-02-01T00:00:00.000Z'), value: 456 },
+        { timestamp: new Date('2020-02-01T00:00:00.000Z'), anotherTimestamp: new Date('2023-02-01T00:00:00.000Z'), value: 123 }
+      ]);
+      south['fetchDocuments'] = fetchDocumentsMock;
 
       const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
@@ -311,20 +239,15 @@ describe('SouthMongoDB', () => {
         trackedInstant: '2020-03-01T00:00:00.000Z',
         value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
       });
-      const foundLog = logger.info.mock.calls.find(
-        (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Found 2 results')
-      );
+      const foundLog = logger.info.mock.calls.find(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Found 2 results'));
       assert.ok(foundLog);
       assert.deepStrictEqual(foundLog.arguments[0], { itemId: configuration.items[0].id, itemName: configuration.items[0].name });
     });
 
     it('should properly run historyQuery without result', async () => {
       const startTime = testData.constants.dates.DATE_1;
-      const fetchDocumentsMock = mock.method(
-        south as unknown as { fetchDocuments: (...args: Array<unknown>) => Promise<Array<unknown>> },
-        'fetchDocuments',
-        mock.fn(async () => [])
-      );
+      const fetchDocumentsMock = mock.fn(async () => []);
+      south['fetchDocuments'] = fetchDocumentsMock;
 
       const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
       assert.strictEqual(addContentCallback.mock.calls.length, 0);
@@ -336,7 +259,7 @@ describe('SouthMongoDB', () => {
       ]);
       assert.deepStrictEqual(result, { trackedInstant: null, value: null });
       const noResultLog = logger.debug.mock.calls.find(
-        (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
+        c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
       );
       assert.ok(noResultLog);
       assert.deepStrictEqual(noResultLog.arguments[0], { itemId: configuration.items[0].id, itemName: configuration.items[0].name });
@@ -344,11 +267,7 @@ describe('SouthMongoDB', () => {
 
     it('should not track an instant when the item has no trackingInstant configured', async () => {
       const startTime = testData.constants.dates.DATE_1;
-      mock.method(
-        south as unknown as { fetchDocuments: (...args: Array<unknown>) => Promise<Array<unknown>> },
-        'fetchDocuments',
-        mock.fn(async () => [{ timestamp: new Date('2020-03-01T00:00:00.000Z'), value: 456 }])
-      );
+      south['fetchDocuments'] = mock.fn(async () => [{ timestamp: new Date('2020-03-01T00:00:00.000Z'), value: 456 }]);
 
       // item2 (aggregation) has trackingInstant: null
       const result = await south.historyQuery([configuration.items[1]], startTime, testData.constants.dates.FAKE_NOW);
@@ -364,8 +283,8 @@ describe('SouthMongoDB', () => {
 
       const result = await south.queryData(configuration.items[0], startTime, endTime);
 
-      assert.strictEqual((mongodbExports.MongoClient as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((mongodbExports.MongoClient as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(MongoClient.mock.calls.length, 1);
+      assert.deepStrictEqual(MongoClient.mock.calls[0].arguments, [
         configuration.settings.connectionString,
         {
           connectTimeoutMS: configuration.settings.connectionTimeout,
@@ -458,7 +377,7 @@ describe('SouthMongoDB', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      mongodbExports.MongoClient = mock.fn(function () {
+      MongoClient.mock.mockImplementation(function () {
         throw new Error('connection error');
       });
 
@@ -467,17 +386,13 @@ describe('SouthMongoDB', () => {
     });
 
     it('should test item', async () => {
-      const queryDataMock = mock.method(
-        south,
-        'queryData',
-        mock.fn(async () => {
-          mock.timers.tick(25);
-          return [
-            { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-            { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-          ];
-        })
-      );
+      const queryDataMock = mock.method(south, 'queryData', async () => {
+        mock.timers.tick(25);
+        return [
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+        ];
+      });
 
       const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
@@ -495,60 +410,19 @@ describe('SouthMongoDB', () => {
   });
 
   describe('SouthMongoDB without authentication', () => {
-    let south: SouthMongoDBClass;
-    const configuration: SouthConnectorEntity<SouthMongoDBSettings, SouthMongoDBItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mongodb',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        connectionString: 'mongodb://localhost:27017/db',
-        connectionTimeout: 1000,
-        username: null,
-        password: null
-      },
-      groups: [],
-      items: [
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          settings: {
-            collection: 'readings',
-            queryType: 'find',
-            query: '{"timestamp": {"$gt": "@StartTime", "$lte": "@EndTime"}}',
-            sort: '{"timestamp": 1}',
-            trackingInstant: null
-          },
-          scanMode: testData.scanMode.list[0],
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          cachingStrategy: null,
-          thresholdType: null,
-          threshold: null,
-          rangeLow: null,
-          rangeHigh: null,
-          maxCachingInterval: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    let south: SouthMongoDBModule.default;
+    const configuration = buildConfiguration({ username: null, password: null }, [
+      buildItem('id1', {
+        collection: 'readings',
+        queryType: 'find',
+        query: '{"timestamp": {"$gt": "@StartTime", "$lte": "@EndTime"}}',
+        sort: '{"timestamp": 1}',
+        trackingInstant: null
+      })
+    ]);
 
     beforeEach(() => {
-      south = new SouthMongoDB(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(configuration);
     });
 
     it('should build client options without auth when username is not set', async () => {
@@ -557,7 +431,7 @@ describe('SouthMongoDB', () => {
 
       await south.queryData(configuration.items[0], startTime, endTime);
 
-      assert.deepStrictEqual((mongodbExports.MongoClient as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.deepStrictEqual(MongoClient.mock.calls[0].arguments, [
         configuration.settings.connectionString,
         {
           connectTimeoutMS: configuration.settings.connectionTimeout,
@@ -569,29 +443,10 @@ describe('SouthMongoDB', () => {
   });
 
   describe('SouthMongoDB test connection', () => {
-    let south: SouthMongoDBClass;
-    const configuration: SouthConnectorEntity<SouthMongoDBSettings, SouthMongoDBItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mongodb',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        connectionString: 'mongodb://localhost:27017/db',
-        connectionTimeout: 1000,
-        username: 'username',
-        password: 'password'
-      },
-      groups: [],
-      items: [],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    let south: SouthMongoDBModule.default;
 
     beforeEach(() => {
-      south = new SouthMongoDB(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(buildConfiguration({}));
     });
 
     it('Database is reachable and has collections, with version', async () => {
@@ -672,7 +527,7 @@ describe('SouthMongoDB', () => {
     });
 
     it('Unable to create client: does not attempt to close an unopened connection', async () => {
-      mongodbExports.MongoClient = mock.fn(function () {
+      MongoClient.mock.mockImplementation(function () {
         throw new Error('unable to build client');
       });
 
@@ -743,121 +598,44 @@ describe('SouthMongoDB', () => {
   });
 
   describe('trackMaxInstant', () => {
-    let south: SouthMongoDBClass;
-    const baseConfiguration: SouthConnectorEntity<SouthMongoDBSettings, SouthMongoDBItemSettings> = {
-      id: 'southId',
-      name: 'south',
-      type: 'mongodb',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
-        connectionString: 'mongodb://localhost:27017/db',
-        connectionTimeout: 1000,
-        username: null,
-        password: null
-      },
-      groups: [],
-      items: [],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-    const baseItem: SouthConnectorItemEntity<SouthMongoDBItemSettings> = {
-      id: 'id1',
-      name: 'item1',
-      enabled: true,
-      settings: {
-        collection: 'readings',
-        queryType: 'find',
-        query: '{}',
-        sort: '{}',
-        trackingInstant: null
-      },
-      scanMode: testData.scanMode.list[0],
-      group: null,
-      syncWithGroup: false,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      startTimeOffset: 0,
-      endTimeOffset: null,
-      recoveryStrategy: null,
-      cachingStrategy: null,
-      thresholdType: null,
-      threshold: null,
-      rangeLow: null,
-      rangeHigh: null,
-      maxCachingInterval: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-
-    function callTrackMaxInstant(item: SouthConnectorItemEntity<SouthMongoDBItemSettings>, docs: Array<unknown>): string | null {
-      return (south as unknown as { trackMaxInstant: (i: unknown, d: Array<unknown>) => string | null }).trackMaxInstant(item, docs);
-    }
+    let south: SouthMongoDBModule.default;
+    const baseItem = buildItem('id1', { collection: 'readings', queryType: 'find', query: '{}', sort: '{}', trackingInstant: null });
+    const withTracking = (jsonPath: string, type: 'timestamp' | 'unix-epoch-ms', sort = baseItem.settings.sort) => ({
+      ...baseItem,
+      settings: { ...baseItem.settings, sort, trackingInstant: { trackInstant: true, jsonPath, dateTimeInput: { type } } }
+    });
 
     beforeEach(() => {
-      south = new SouthMongoDB(baseConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(buildConfiguration({ username: null, password: null }));
     });
 
     it('should return null when trackInstant is false', () => {
       const item = { ...baseItem, settings: { ...baseItem.settings, trackingInstant: null } };
-      const result = callTrackMaxInstant(item, [{ timestamp: new Date('2020-01-01T00:00:00.000Z') }]);
+      const result = south['trackMaxInstant'](item, [{ timestamp: new Date('2020-01-01T00:00:00.000Z') }]);
       assert.strictEqual(result, null);
     });
 
     it('should reach a nested field via jsonPath across multiple documents', () => {
-      const item = {
-        ...baseItem,
-        settings: {
-          ...baseItem.settings,
-          trackingInstant: { trackInstant: true, jsonPath: '$[*].metadata.recordedAt', dateTimeInput: { type: 'timestamp' as const } }
-        }
-      };
       const docs = [
         { metadata: { recordedAt: new Date('2020-01-01T00:00:00.000Z') } },
         { metadata: { recordedAt: new Date('2020-06-01T00:00:00.000Z') } }
       ];
-      assert.strictEqual(callTrackMaxInstant(item, docs), '2020-06-01T00:00:00.000Z');
+      assert.strictEqual(south['trackMaxInstant'](withTracking('$[*].metadata.recordedAt', 'timestamp'), docs), '2020-06-01T00:00:00.000Z');
     });
 
     it('should convert unix-epoch-ms values before comparing (not lexicographic string comparison)', () => {
-      const item = {
-        ...baseItem,
-        settings: {
-          ...baseItem.settings,
-          trackingInstant: { trackInstant: true, jsonPath: '$[*].epoch', dateTimeInput: { type: 'unix-epoch-ms' as const } }
-        }
-      };
       // 999999999 < 1000000000 numerically, but "999999999" > "1000000000" lexicographically as strings
       const docs = [{ epoch: 1000000000 }, { epoch: 999999999 }];
-      assert.strictEqual(callTrackMaxInstant(item, docs), new Date(1000000000).toISOString());
+      assert.strictEqual(south['trackMaxInstant'](withTracking('$[*].epoch', 'unix-epoch-ms'), docs), new Date(1000000000).toISOString());
     });
 
     it('should return null when the jsonPath finds no matches', () => {
-      const item = {
-        ...baseItem,
-        settings: {
-          ...baseItem.settings,
-          trackingInstant: { trackInstant: true, jsonPath: '$[*].doesNotExist', dateTimeInput: { type: 'timestamp' as const } }
-        }
-      };
-      assert.strictEqual(callTrackMaxInstant(item, [{ timestamp: new Date() }]), null);
+      assert.strictEqual(south['trackMaxInstant'](withTracking('$[*].doesNotExist', 'timestamp'), [{ timestamp: new Date() }]), null);
     });
 
     it('should track correctly even when sort is empty, proving sort and tracking are decoupled', () => {
-      const item = {
-        ...baseItem,
-        settings: {
-          ...baseItem.settings,
-          sort: '{}',
-          trackingInstant: { trackInstant: true, jsonPath: '$[*].timestamp', dateTimeInput: { type: 'timestamp' as const } }
-        }
-      };
       const docs = [{ timestamp: new Date('2020-01-01T00:00:00.000Z') }, { timestamp: new Date('2020-02-01T00:00:00.000Z') }];
-      assert.strictEqual(callTrackMaxInstant(item, docs), '2020-02-01T00:00:00.000Z');
+      assert.strictEqual(south['trackMaxInstant'](withTracking('$[*].timestamp', 'timestamp', '{}'), docs), '2020-02-01T00:00:00.000Z');
     });
   });
 });
