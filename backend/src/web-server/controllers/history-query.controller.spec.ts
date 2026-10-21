@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import type express from 'express';
+
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/api/history-query.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../shared/model/api/transformer.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
@@ -11,12 +13,13 @@ import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '
 import { HistoryQueryItemSearchParam } from '../../../shared/model/domain/history-query.model';
 
 import { OIBusTestingError } from '../../model/types';
-import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
-import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
-import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type ConfigurationWorkflowRunService from '../../service/configuration-workflow-run.service';
+import type HistoryQueryService from '../../service/history-query.service';
+import type OIBusService from '../../service/oibus.service';
+import type SouthService from '../../service/south.service';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { HistoryQueryController as HistoryQueryControllerShape } from './history-query.controller';
 
@@ -33,93 +36,59 @@ interface HistorySouthItemTestRequest {
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockHistoryQueryServiceModule: Record<string, ReturnType<typeof mock.fn>>;
-let mockUtilsModule: Record<string, ReturnType<typeof mock.fn>>;
+// The DTO mappers return the entity as is, after asking for the user info like the real ones
+const createHistoryQueryServiceModuleMocks = () => ({
+  toHistoryQueryDTO: mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
+    getUserInfo('');
+    return query;
+  }),
+  toHistoryQueryLightDTO: mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
+    getUserInfo('');
+    return query;
+  }),
+  toHistoryQueryItemDTO: mock.fn((item: unknown, _southType: unknown, getUserInfo: (id: string) => void) => {
+    getUserInfo('');
+    return item;
+  })
+});
+// Same objects for the whole file (the controller keeps them): their functions are replaced in beforeEach
+const historyQueryServiceModule = createHistoryQueryServiceModuleMocks();
+const utilsModule = { itemToFlattenedCSV: mock.fn(() => 'csv content') };
 let HistoryQueryController: typeof HistoryQueryControllerShape;
 
 before(() => {
   fixTsoaModuleResolution(nodeRequire);
-  mockHistoryQueryServiceModule = {
-    toHistoryQueryDTO: mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return query;
-    }),
-    toHistoryQueryLightDTO: mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return query;
-    }),
-    toHistoryQueryItemDTO: mock.fn((item: unknown, southType: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return item;
-    })
-  };
-  mockUtilsModule = {
-    itemToFlattenedCSV: mock.fn(() => 'csv content')
-  };
-  mockModule(nodeRequire, '../../service/history-query.service', mockHistoryQueryServiceModule);
-  mockModule(nodeRequire, '../../service/utils', mockUtilsModule);
+  mockModule(nodeRequire, '../../service/history-query.service', historyQueryServiceModule);
+  mockModule(nodeRequire, '../../service/utils', utilsModule);
   const mod = reloadModule<{ HistoryQueryController: typeof HistoryQueryControllerShape }>(nodeRequire, './history-query.controller');
   HistoryQueryController = mod.HistoryQueryController;
 });
 
 describe('HistoryQueryController', () => {
   let controller: HistoryQueryControllerShape;
-  let historyQueryService: HistoryQueryServiceMock;
-  let oIBusService: OIBusServiceMock;
-  let userService: UserServiceMock;
+  let historyQueryService: Mocked<HistoryQueryService>;
+  let oIBusService: Mocked<OIBusService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
-  let mockRes: {
-    attachment: ReturnType<typeof mock.fn>;
-    contentType: ReturnType<typeof mock.fn>;
-    status: ReturnType<typeof mock.fn>;
-    send: ReturnType<typeof mock.fn>;
-    setHeader: ReturnType<typeof mock.fn>;
-    pipe: ReturnType<typeof mock.fn>;
-  };
+  let southService: Mocked<SouthService>;
+  let configurationWorkflowRunService: Mocked<ConfigurationWorkflowRunService>;
+  let mockRes: Mocked<express.Response>;
 
   beforeEach(() => {
-    historyQueryService = new HistoryQueryServiceMock();
-    oIBusService = new OIBusServiceMock();
-    userService = new UserServiceMock();
-    mockRes = {
-      attachment: mock.fn(),
-      contentType: mock.fn(),
-      send: mock.fn(),
-      setHeader: mock.fn(),
-      pipe: mock.fn(),
-      status: mock.fn()
-    };
-    mockRes.status = mock.fn(() => mockRes);
+    historyQueryService = createMock<HistoryQueryService>();
+    oIBusService = createMock<OIBusService>();
+    userService = createMock<UserService>();
+    southService = createMock<SouthService>({ getManifest: () => testData.south.manifest });
+    configurationWorkflowRunService = createMock<ConfigurationWorkflowRunService>();
+    mockRes = createMock<express.Response>();
+    mockRes.status.mock.mockImplementation(() => mockRes);
     mockRequest = {
-      services: createMockServices({
-        historyQueryService,
-        southService: {
-          getInstalledSouthManifests: mock.fn(() => [{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }]),
-          getManifest: mock.fn(() => testData.south.manifest),
-          browseExplore: mock.fn(async () => ({ entries: [] })),
-          closeExplore: mock.fn(async () => undefined)
-        } as unknown as CustomExpressRequest['services']['southService'],
-        oIBusService,
-        userService
-      }),
+      services: createMockServices({ historyQueryService, southService, oIBusService, userService, configurationWorkflowRunService }),
       user: { id: 'test', login: 'testUser' },
-      res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
-    } as Partial<CustomExpressRequest>;
-    mockHistoryQueryServiceModule.toHistoryQueryDTO = mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return query;
-    });
-    mockHistoryQueryServiceModule.toHistoryQueryLightDTO = mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return query;
-    });
-    mockHistoryQueryServiceModule.toHistoryQueryItemDTO = mock.fn(
-      (item: unknown, southType: unknown, getUserInfo: (id: string) => void) => {
-        getUserInfo('');
-        return item;
-      }
-    );
-    mockUtilsModule.itemToFlattenedCSV = mock.fn(() => 'csv content');
+      res: mockRes
+    };
+    Object.assign(historyQueryServiceModule, createHistoryQueryServiceModuleMocks());
+    utilsModule.itemToFlattenedCSV = mock.fn(() => 'csv content');
     controller = new HistoryQueryController();
   });
 
@@ -129,7 +98,7 @@ describe('HistoryQueryController', () => {
 
   it('should return a list of history queries', async () => {
     const mockHistoryQueries = testData.historyQueries.listLight;
-    historyQueryService.list = mock.fn(() => mockHistoryQueries);
+    historyQueryService.list.mock.mockImplementation(() => mockHistoryQueries);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
 
@@ -140,7 +109,7 @@ describe('HistoryQueryController', () => {
   it('should return a history query by ID', async () => {
     const mockHistoryQuery = testData.historyQueries.list[0];
     const historyId = mockHistoryQuery.id;
-    historyQueryService.findById = mock.fn(() => mockHistoryQuery);
+    historyQueryService.findById.mock.mockImplementation(() => mockHistoryQuery);
 
     const result = await controller.findById(historyId, mockRequest as CustomExpressRequest);
 
@@ -152,7 +121,7 @@ describe('HistoryQueryController', () => {
   it('should create a new history query', async () => {
     const command: HistoryQueryCommandDTO = testData.historyQueries.command;
     const createdHistoryQuery = testData.historyQueries.list[0];
-    historyQueryService.create = mock.fn(async () => createdHistoryQuery);
+    historyQueryService.create.mock.mockImplementation(async () => createdHistoryQuery);
 
     const result = await controller.create(command, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -164,7 +133,7 @@ describe('HistoryQueryController', () => {
   it('should update an existing history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const command: HistoryQueryCommandDTO = testData.historyQueries.command;
-    historyQueryService.update = mock.fn(async () => undefined);
+    historyQueryService.update.mock.mockImplementation(async () => undefined);
 
     await controller.update(historyId, command, undefined, mockRequest as CustomExpressRequest);
 
@@ -174,7 +143,7 @@ describe('HistoryQueryController', () => {
 
   it('should delete a history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    historyQueryService.delete = mock.fn(async () => undefined);
+    historyQueryService.delete.mock.mockImplementation(async () => undefined);
 
     await controller.delete(historyId, mockRequest as CustomExpressRequest);
 
@@ -184,7 +153,7 @@ describe('HistoryQueryController', () => {
 
   it('should start a history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    historyQueryService.start = mock.fn(async () => undefined);
+    historyQueryService.start.mock.mockImplementation(async () => undefined);
 
     await controller.start(historyId, mockRequest as CustomExpressRequest);
 
@@ -194,7 +163,7 @@ describe('HistoryQueryController', () => {
 
   it('should pause a history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    historyQueryService.pause = mock.fn(async () => undefined);
+    historyQueryService.pause.mock.mockImplementation(async () => undefined);
 
     await controller.pause(historyId, mockRequest as CustomExpressRequest);
 
@@ -204,7 +173,7 @@ describe('HistoryQueryController', () => {
 
   it('should get history query metrics', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    historyQueryService.getHistoryMetric = mock.fn(() => testData.historyQueries.metrics);
+    historyQueryService.getHistoryMetric.mock.mockImplementation(() => testData.historyQueries.metrics);
 
     const result = controller.getMetrics(historyId, mockRequest as CustomExpressRequest);
 
@@ -217,7 +186,7 @@ describe('HistoryQueryController', () => {
     const northType = testData.north.command.type;
     const fromNorth = testData.north.list[0].id;
     const settings = testData.north.command.settings;
-    historyQueryService.testNorth = mock.fn(async () => ({ items: [] }));
+    historyQueryService.testNorth.mock.mockImplementation(async () => ({ items: [] }));
 
     await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
 
@@ -230,7 +199,7 @@ describe('HistoryQueryController', () => {
     const northType = testData.north.command.type;
     const fromNorth = testData.north.list[0].id;
     const settings = testData.north.command.settings;
-    historyQueryService.testNorth = mock.fn(async () => {
+    historyQueryService.testNorth.mock.mockImplementation(async () => {
       throw new Error('North test failure');
     });
 
@@ -250,7 +219,7 @@ describe('HistoryQueryController', () => {
     const northType = testData.north.command.type;
     const fromNorth = testData.north.list[0].id;
     const settings = testData.north.command.settings;
-    historyQueryService.testNorth = mock.fn(async () => {
+    historyQueryService.testNorth.mock.mockImplementation(async () => {
       throw new Error('north test failed');
     });
 
@@ -268,7 +237,7 @@ describe('HistoryQueryController', () => {
     const southType = testData.south.command.type;
     const fromSouth = testData.south.list[0].id;
     const settings = testData.south.command.settings;
-    historyQueryService.testSouth = mock.fn(async () => ({ items: [] }));
+    historyQueryService.testSouth.mock.mockImplementation(async () => ({ items: [] }));
 
     await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
 
@@ -281,7 +250,7 @@ describe('HistoryQueryController', () => {
     const southType = testData.south.command.type;
     const fromSouth = testData.south.list[0].id;
     const settings = testData.south.command.settings;
-    historyQueryService.testSouth = mock.fn(async () => {
+    historyQueryService.testSouth.mock.mockImplementation(async () => {
       throw new Error('South test failure');
     });
 
@@ -302,7 +271,7 @@ describe('HistoryQueryController', () => {
     const fromSouth = testData.south.list[0].id;
     const settings = testData.south.command.settings;
     const mockResult = { sessionId: 'sessionId', entries: [] };
-    historyQueryService.startExplore = mock.fn(async () => mockResult);
+    historyQueryService.startExplore.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.startExplore(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
 
@@ -316,7 +285,7 @@ describe('HistoryQueryController', () => {
     const southType = testData.south.command.type;
     const fromSouth = testData.south.list[0].id;
     const settings = testData.south.command.settings;
-    historyQueryService.startExplore = mock.fn(async () => {
+    historyQueryService.startExplore.mock.mockImplementation(async () => {
       throw new Error('Explore start failure');
     });
 
@@ -340,9 +309,8 @@ describe('HistoryQueryController', () => {
     };
     const resolvedSettings = { ...testData.south.command.settings };
     const discovered = [testData.south.itemCommand];
-    historyQueryService.southSettingsToTest = mock.fn(async () => resolvedSettings);
-    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
-    workflowRunService.discoverItems.mock.mockImplementation(async () => discovered);
+    historyQueryService.southSettingsToTest.mock.mockImplementation(async () => resolvedSettings);
+    configurationWorkflowRunService.discoverItems.mock.mockImplementation(async () => discovered);
 
     const result = await controller.discoverItems(historyId, southType, fromSouth, command, mockRequest as CustomExpressRequest);
 
@@ -352,7 +320,7 @@ describe('HistoryQueryController', () => {
       fromSouth,
       command.southSettings
     ]);
-    assert.deepStrictEqual(workflowRunService.discoverItems.mock.calls[0].arguments, [
+    assert.deepStrictEqual(configurationWorkflowRunService.discoverItems.mock.calls[0].arguments, [
       'history',
       southType,
       resolvedSettings,
@@ -363,7 +331,7 @@ describe('HistoryQueryController', () => {
   });
 
   it('should wrap errors when discovering items', async () => {
-    historyQueryService.southSettingsToTest = mock.fn(async () => {
+    historyQueryService.southSettingsToTest.mock.mockImplementation(async () => {
       throw new Error('Invalid settings');
     });
 
@@ -383,22 +351,18 @@ describe('HistoryQueryController', () => {
     const historyId = testData.historyQueries.list[0].id;
     const sessionId = 'sessionId';
     const mockResult = { entries: [] };
-    (mockRequest.services!.southService as unknown as Record<string, unknown>).browseExplore = mock.fn(async () => mockResult);
+    southService.browseExplore.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.browseExplore(historyId, sessionId, { parentId: null }, mockRequest as CustomExpressRequest);
 
-    assert.deepStrictEqual(
-      (mockRequest.services!.southService as unknown as { browseExplore: ReturnType<typeof mock.fn> }).browseExplore.mock.calls[0]
-        .arguments,
-      [sessionId, null]
-    );
+    assert.deepStrictEqual(southService.browseExplore.mock.calls[0].arguments, [sessionId, null]);
     assert.deepStrictEqual(result, mockResult);
   });
 
   it('should wrap errors when browsing an explore session', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const sessionId = 'sessionId';
-    (mockRequest.services!.southService as unknown as Record<string, unknown>).browseExplore = mock.fn(async () => {
+    southService.browseExplore.mock.mockImplementation(async () => {
       throw new Error('Browse failure');
     });
 
@@ -414,12 +378,10 @@ describe('HistoryQueryController', () => {
   it('should close an explore session', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const sessionId = 'sessionId';
-    const closeExplore = mock.fn(async () => undefined);
-    (mockRequest.services!.southService as unknown as Record<string, unknown>).closeExplore = closeExplore;
 
     await controller.closeExplore(historyId, sessionId, mockRequest as CustomExpressRequest);
 
-    assert.deepStrictEqual(closeExplore.mock.calls[0].arguments, [sessionId]);
+    assert.deepStrictEqual(southService.closeExplore.mock.calls[0].arguments, [sessionId]);
   });
 
   it('should test a history query item', async () => {
@@ -444,7 +406,7 @@ describe('HistoryQueryController', () => {
       connectionDuration: 12,
       queryDuration: 34
     };
-    historyQueryService.testItem = mock.fn(async () => mockResult);
+    historyQueryService.testItem.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.testItem(
       historyId,
@@ -487,7 +449,7 @@ describe('HistoryQueryController', () => {
         }
       }
     };
-    historyQueryService.testItem = mock.fn(async () => {
+    historyQueryService.testItem.mock.mockImplementation(async () => {
       throw new Error('Item test failure');
     });
 
@@ -513,8 +475,8 @@ describe('HistoryQueryController', () => {
   it('should return a list of history query items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const mockItems = testData.historyQueries.list[0].items;
-    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
-    historyQueryService.listItems = mock.fn(() => mockItems);
+    historyQueryService.findById.mock.mockImplementation(() => testData.historyQueries.list[0]);
+    historyQueryService.listItems.mock.mockImplementation(() => mockItems);
 
     const result = await controller.listItems(historyId, mockRequest as CustomExpressRequest);
 
@@ -544,8 +506,8 @@ describe('HistoryQueryController', () => {
       number: page,
       totalPages: 1
     };
-    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
-    historyQueryService.searchItems = mock.fn(() => mockPageResult);
+    historyQueryService.findById.mock.mockImplementation(() => testData.historyQueries.list[0]);
+    historyQueryService.searchItems.mock.mockImplementation(() => mockPageResult);
 
     const result = await controller.searchItems(historyId, name, enabled, page, mockRequest as CustomExpressRequest);
 
@@ -566,8 +528,8 @@ describe('HistoryQueryController', () => {
       number: 0,
       totalPages: 1
     };
-    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
-    historyQueryService.searchItems = mock.fn(() => mockPageResult);
+    historyQueryService.findById.mock.mockImplementation(() => testData.historyQueries.list[0]);
+    historyQueryService.searchItems.mock.mockImplementation(() => mockPageResult);
 
     const result = await controller.searchItems(historyId, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -586,8 +548,8 @@ describe('HistoryQueryController', () => {
     const itemId = testData.historyQueries.list[0].items[0].id;
     const mockItem = testData.historyQueries.list[0].items[0];
 
-    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
-    historyQueryService.findItemById = mock.fn(() => mockItem);
+    historyQueryService.findById.mock.mockImplementation(() => testData.historyQueries.list[0]);
+    historyQueryService.findItemById.mock.mockImplementation(() => mockItem);
 
     const result = await controller.findItemById(historyId, itemId, mockRequest as CustomExpressRequest);
 
@@ -603,8 +565,8 @@ describe('HistoryQueryController', () => {
     const command: HistoryQueryItemCommandDTO = testData.historyQueries.itemCommand;
     const createdItem = testData.historyQueries.list[0].items[0];
 
-    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
-    historyQueryService.createItem = mock.fn(async () => createdItem);
+    historyQueryService.findById.mock.mockImplementation(() => testData.historyQueries.list[0]);
+    historyQueryService.createItem.mock.mockImplementation(async () => createdItem);
 
     const result = await controller.createItem(historyId, command, mockRequest as CustomExpressRequest);
 
@@ -619,7 +581,7 @@ describe('HistoryQueryController', () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
     const command: HistoryQueryItemCommandDTO = testData.historyQueries.itemCommand;
-    historyQueryService.updateItem = mock.fn(async () => undefined);
+    historyQueryService.updateItem.mock.mockImplementation(async () => undefined);
 
     await controller.updateItem(historyId, itemId, command, mockRequest as CustomExpressRequest);
 
@@ -630,7 +592,7 @@ describe('HistoryQueryController', () => {
   it('should enable a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
-    historyQueryService.enableItem = mock.fn(async () => undefined);
+    historyQueryService.enableItem.mock.mockImplementation(async () => undefined);
 
     await controller.enableItem(historyId, itemId, mockRequest as CustomExpressRequest);
 
@@ -641,7 +603,7 @@ describe('HistoryQueryController', () => {
   it('should disable a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
-    historyQueryService.disableItem = mock.fn(async () => undefined);
+    historyQueryService.disableItem.mock.mockImplementation(async () => undefined);
 
     await controller.disableItem(historyId, itemId, mockRequest as CustomExpressRequest);
 
@@ -652,7 +614,7 @@ describe('HistoryQueryController', () => {
   it('should enable a list of history query items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
-    historyQueryService.enableItems = mock.fn(async () => undefined);
+    historyQueryService.enableItems.mock.mockImplementation(async () => undefined);
 
     await controller.enableItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
 
@@ -663,7 +625,7 @@ describe('HistoryQueryController', () => {
   it('should disable a list of history query items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
-    historyQueryService.disableItems = mock.fn(async () => undefined);
+    historyQueryService.disableItems.mock.mockImplementation(async () => undefined);
 
     await controller.disableItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
 
@@ -674,7 +636,7 @@ describe('HistoryQueryController', () => {
   it('should delete a list of history query items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
-    historyQueryService.deleteItems = mock.fn(async () => undefined);
+    historyQueryService.deleteItems.mock.mockImplementation(async () => undefined);
 
     await controller.deleteItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
 
@@ -685,7 +647,7 @@ describe('HistoryQueryController', () => {
   it('should delete a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
-    historyQueryService.deleteItem = mock.fn(async () => undefined);
+    historyQueryService.deleteItem.mock.mockImplementation(async () => undefined);
 
     await controller.deleteItem(historyId, itemId, mockRequest as CustomExpressRequest);
 
@@ -695,7 +657,7 @@ describe('HistoryQueryController', () => {
 
   it('should delete all items from a history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    historyQueryService.deleteAllItems = mock.fn(async () => undefined);
+    historyQueryService.deleteAllItems.mock.mockImplementation(async () => undefined);
 
     await controller.deleteAllItems(historyId, mockRequest as CustomExpressRequest);
 
@@ -710,7 +672,6 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    (mockRequest.services!.southService as unknown as Record<string, unknown>).getManifest = mock.fn(() => testData.south.manifest);
     const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -733,7 +694,6 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    (mockRequest.services!.southService as unknown as Record<string, unknown>).getManifest = mock.fn(() => testData.south.manifest);
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => {
       throw new Error('unlink error');
@@ -756,7 +716,7 @@ describe('HistoryQueryController', () => {
     const delimiter = ',';
     const command = { delimiter };
 
-    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
+    historyQueryService.findById.mock.mockImplementation(() => testData.historyQueries.list[0]);
 
     await controller.exportItems(historyId, command, mockRequest as CustomExpressRequest);
 
@@ -792,7 +752,7 @@ describe('HistoryQueryController', () => {
       errors: []
     };
 
-    historyQueryService.checkImportItems = mock.fn(async () => mockResult);
+    historyQueryService.checkImportItems.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.checkImportItems(
       southType,
@@ -850,7 +810,7 @@ describe('HistoryQueryController', () => {
       items: [testData.historyQueries.itemCommand as HistoryQueryItemDTO],
       errors: []
     };
-    historyQueryService.checkImportItems = mock.fn(async () => mockResult);
+    historyQueryService.checkImportItems.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.checkImportItems(
       southType,
@@ -882,7 +842,7 @@ describe('HistoryQueryController', () => {
     mock.method(fs, 'unlink', async () => {
       throw new Error('unlink error');
     });
-    historyQueryService.checkImportItems = mock.fn(async () => ({ items: [], errors: [] }));
+    historyQueryService.checkImportItems.mock.mockImplementation(async () => ({ items: [], errors: [] }));
 
     await assert.doesNotReject(
       controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, currentItemsFile, mockRequest as CustomExpressRequest)
@@ -895,7 +855,7 @@ describe('HistoryQueryController', () => {
       path: 'myFile.json'
     } as Express.Multer.File;
 
-    historyQueryService.importItems = mock.fn(async () => undefined);
+    historyQueryService.importItems.mock.mockImplementation(async () => undefined);
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => undefined);
 
@@ -939,7 +899,7 @@ describe('HistoryQueryController', () => {
       options: {},
       items: []
     };
-    historyQueryService.addOrEditTransformer = mock.fn(async () => undefined);
+    historyQueryService.addOrEditTransformer.mock.mockImplementation(async () => undefined);
 
     await controller.addOrEditTransformer(historyId, command, mockRequest as CustomExpressRequest);
 
@@ -950,7 +910,7 @@ describe('HistoryQueryController', () => {
   it('should remove a transformer', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const transformerId = testData.transformers.list[0].id;
-    historyQueryService.removeTransformer = mock.fn(async () => undefined);
+    historyQueryService.removeTransformer.mock.mockImplementation(async () => undefined);
 
     await controller.removeTransformer(historyId, transformerId, mockRequest as CustomExpressRequest);
 
@@ -962,7 +922,7 @@ describe('HistoryQueryController', () => {
     const northId = testData.north.list[0].id;
 
     const mockCacheResult: CacheSearchResult = {} as CacheSearchResult;
-    oIBusService.searchCacheContent = mock.fn(async () => mockCacheResult);
+    oIBusService.searchCacheContent.mock.mockImplementation(async () => mockCacheResult);
 
     const result = await controller.searchCacheContent(
       northId,
@@ -989,7 +949,7 @@ describe('HistoryQueryController', () => {
     const end = '2023-01-02';
 
     const mockCacheResult: CacheSearchResult = {} as CacheSearchResult;
-    oIBusService.searchCacheContent = mock.fn(async () => mockCacheResult);
+    oIBusService.searchCacheContent.mock.mockImplementation(async () => mockCacheResult);
 
     const result = await controller.searchCacheContent(historyId, nameContains, start, end, 1000, mockRequest as CustomExpressRequest);
 
@@ -1008,7 +968,7 @@ describe('HistoryQueryController', () => {
     const folder = 'cache';
 
     const mockFileContent: FileCacheContent = {} as FileCacheContent;
-    oIBusService.getFileFromCache = mock.fn(async () => mockFileContent);
+    oIBusService.getFileFromCache.mock.mockImplementation(async () => mockFileContent);
 
     await controller.getCacheFileContent(historyId, filename, folder, mockRequest as CustomExpressRequest);
 
@@ -1018,7 +978,7 @@ describe('HistoryQueryController', () => {
 
   it('should update cache content', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    oIBusService.updateCacheContent = mock.fn(async () => undefined);
+    oIBusService.updateCacheContent.mock.mockImplementation(async () => undefined);
 
     await controller.updateCacheContent(historyId, {} as CacheContentUpdateCommand, mockRequest as CustomExpressRequest);
 

@@ -1,15 +1,17 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type express from 'express';
 
 import { ConfigExportDTO, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../shared/model/oia/config-transfer.model';
 
+import type ConfigImportService from '../../service/config-transfer/config-import.service';
 import { ConfigImportError } from '../../service/config-transfer/config-import.service';
-import ConfigImportServiceMock from '../../tests/__mocks__/service/config-import-service.mock';
-import ConfigTransferServiceMock from '../../tests/__mocks__/service/config-transfer-service.mock';
-import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import type ConfigTransferService from '../../service/config-transfer/config-transfer.service';
+import type OIBusService from '../../service/oibus.service';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { ConfigTransferController as ConfigTransferControllerShape } from './config-transfer.controller';
 
@@ -25,34 +27,28 @@ before(() => {
 
 describe('ConfigTransferController', () => {
   let controller: ConfigTransferControllerShape;
-  let configTransferService: ConfigTransferServiceMock;
-  let configImportService: ConfigImportServiceMock;
-  let oIBusService: OIBusServiceMock;
+  let configTransferService: Mocked<ConfigTransferService>;
+  let configImportService: Mocked<ConfigImportService>;
+  let oIBusService: Mocked<OIBusService>;
   let mockRequest: Partial<CustomExpressRequest>;
-  let mockRes: {
-    attachment: ReturnType<typeof mock.fn>;
-    contentType: ReturnType<typeof mock.fn>;
-    status: ReturnType<typeof mock.fn>;
-    send: ReturnType<typeof mock.fn>;
-  };
+  let mockRes: Mocked<express.Response>;
 
   beforeEach(() => {
     controller = new ConfigTransferController();
-    configTransferService = new ConfigTransferServiceMock();
-    configImportService = new ConfigImportServiceMock();
-    oIBusService = new OIBusServiceMock();
-    mockRes = {
-      attachment: mock.fn(),
-      contentType: mock.fn(),
-      send: mock.fn(),
-      status: mock.fn()
-    };
-    mockRes.status = mock.fn(() => mockRes);
+    configTransferService = createMock<ConfigTransferService>();
+    configImportService = createMock<ConfigImportService>();
+    oIBusService = createMock<OIBusService>();
+    mockRes = createMock<express.Response>();
+    mockRes.status.mock.mockImplementation(() => mockRes);
     mockRequest = {
       services: createMockServices({ configTransferService, configImportService, oIBusService }),
       user: { id: 'test', login: 'testUser' },
-      res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
-    } as Partial<CustomExpressRequest>;
+      res: mockRes
+    };
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('should export the configuration as a downloadable, secret-free JSON file', () => {
@@ -61,7 +57,7 @@ describe('ConfigTransferController', () => {
       exportedAt: '2026-08-25T00:00:00.000Z',
       config: {} as ConfigExportDTO['config']
     };
-    configTransferService.exportConfiguration = mock.fn(() => envelope);
+    configTransferService.exportConfiguration.mock.mockImplementation(() => envelope);
 
     controller.exportConfiguration(mockRequest as CustomExpressRequest);
 
@@ -73,8 +69,9 @@ describe('ConfigTransferController', () => {
   });
 
   describe('previewConfiguration', () => {
+    const file = { path: 'previewPath' } as Express.Multer.File;
+
     it('should preview a well-formed export file, clean up the temp file and not restart', async () => {
-      const file = { path: 'previewPath' } as Express.Multer.File;
       const parsedEnvelope = { oibusVersion: '3.10.0' };
       const preview: ConfigImportPreviewDTO = {
         fromVersion: '3.10.0',
@@ -96,14 +93,12 @@ describe('ConfigTransferController', () => {
     });
 
     it('should reject with a validation error when the file is missing', async () => {
-      await assert.rejects(
-        controller.previewConfiguration(undefined as unknown as Express.Multer.File, mockRequest as CustomExpressRequest),
-        { message: 'Missing file "file"' }
-      );
+      await assert.rejects(controller.previewConfiguration(undefined!, mockRequest as CustomExpressRequest), {
+        message: 'Missing file "file"'
+      });
     });
 
     it('should reject with a validation error when the file is not valid JSON', async () => {
-      const file = { path: 'previewPath' } as Express.Multer.File;
       mock.method(fs, 'readFile', async () => 'not json{');
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -115,8 +110,9 @@ describe('ConfigTransferController', () => {
   });
 
   describe('importConfiguration', () => {
+    const file = { path: 'importPath' } as Express.Multer.File;
+
     it('should import a well-formed export file and clean up the temp file', async () => {
-      const file = { path: 'importPath' } as Express.Multer.File;
       const parsedEnvelope = { oibusVersion: '3.10.0' };
       const response: ConfigImportResponseDTO = {
         fromVersion: '3.10.0',
@@ -144,14 +140,12 @@ describe('ConfigTransferController', () => {
     });
 
     it('should reject with a validation error when the file is missing', async () => {
-      await assert.rejects(
-        controller.importConfiguration(undefined as unknown as Express.Multer.File, mockRequest as CustomExpressRequest),
-        { message: 'Missing file "file"' }
-      );
+      await assert.rejects(controller.importConfiguration(undefined!, mockRequest as CustomExpressRequest), {
+        message: 'Missing file "file"'
+      });
     });
 
     it('should reject with a validation error when the file is not valid JSON', async () => {
-      const file = { path: 'importPath' } as Express.Multer.File;
       mock.method(fs, 'readFile', async () => 'not json{');
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -163,7 +157,6 @@ describe('ConfigTransferController', () => {
     });
 
     it('should propagate a ConfigImportError (e.g. format-too-new / failed validation) without swallowing it', async () => {
-      const file = { path: 'importPath' } as Express.Multer.File;
       mock.method(fs, 'readFile', async () => '{}');
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
       const importError = new ConfigImportError('Unsupported export format version 2', []);
@@ -178,7 +171,6 @@ describe('ConfigTransferController', () => {
     });
 
     it('should still unlink the temp file when import fails for a reason other than ConfigImportError', async () => {
-      const file = { path: 'importPath' } as Express.Multer.File;
       mock.method(fs, 'readFile', async () => '{}');
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
       configImportService.importConfiguration.mock.mockImplementation(async () => {
@@ -190,7 +182,6 @@ describe('ConfigTransferController', () => {
     });
 
     it('should not fail the request if unlinking the temp file itself throws', async () => {
-      const file = { path: 'importPath' } as Express.Multer.File;
       mock.method(fs, 'readFile', async () => '{}');
       mock.method(fs, 'unlink', async () => {
         throw new Error('unlink failed');

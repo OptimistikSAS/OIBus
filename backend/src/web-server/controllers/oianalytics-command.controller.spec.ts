@@ -5,9 +5,9 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 import { createPageFromArray } from '../../../shared/model/common/types';
 import { CommandSearchParam } from '../../../shared/model/oia/command.model';
 
-import OIAnalyticsCommandServiceMock from '../../tests/__mocks__/service/oia/oianalytics-command-service.mock';
+import type OIAnalyticsCommandService from '../../service/oia/oianalytics-command.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { OIAnalyticsCommandController as OIAnalyticsCommandControllerShape } from './oianalytics-command.controller';
 
@@ -29,11 +29,11 @@ before(() => {
 
 describe('OIAnalyticsCommandController', () => {
   let controller: OIAnalyticsCommandControllerShape;
-  let commandService: OIAnalyticsCommandServiceMock;
+  let commandService: Mocked<OIAnalyticsCommandService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    commandService = new OIAnalyticsCommandServiceMock();
+    commandService = createMock<OIAnalyticsCommandService>();
     mockRequest = {
       services: createMockServices({ oIAnalyticsCommandService: commandService })
     } as Partial<CustomExpressRequest>;
@@ -59,7 +59,7 @@ describe('OIAnalyticsCommandController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 1);
-    commandService.search = mock.fn(() => expectedResult);
+    commandService.search.mock.mockImplementation(() => expectedResult);
 
     const result = await controller.search(types, status, start, end, ack, page, mockRequest as CustomExpressRequest);
 
@@ -79,7 +79,7 @@ describe('OIAnalyticsCommandController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 0);
-    commandService.search = mock.fn(() => expectedResult);
+    commandService.search.mock.mockImplementation(() => expectedResult);
 
     const result = await controller.search(
       undefined,
@@ -98,7 +98,7 @@ describe('OIAnalyticsCommandController', () => {
 
   it('should delete a command', async () => {
     const commandId = 'id';
-    commandService.delete = mock.fn(async () => undefined);
+    commandService.delete.mock.mockImplementation(async () => undefined);
 
     await controller.delete(commandId, mockRequest as CustomExpressRequest);
 

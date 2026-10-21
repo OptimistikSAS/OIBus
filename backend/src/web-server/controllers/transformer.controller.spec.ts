@@ -14,72 +14,71 @@ import { InputType, TransformerManifest } from '../../../shared/model/connector/
 import { TransformerSearchParam } from '../../../shared/model/domain/transformer.model';
 
 import type { CustomTransformer } from '../../model/transformer.model';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type TransformerService from '../../service/transformer.service';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { TransformerController as TransformerControllerShape } from './transformer.controller';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockTransformerServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+// The DTO mapper returns the entity as is, after asking for the user info like the real one
+const createTransformerServiceModuleMocks = () => ({
+  toTransformerDTO: mock.fn((transformer: unknown, getUserInfo: (id: string) => void) => {
+    getUserInfo('');
+    return transformer;
+  })
+});
+// Same object for the whole file (the controller keeps it): its functions are replaced in beforeEach
+const transformerServiceModule = createTransformerServiceModuleMocks();
 let TransformerController: typeof TransformerControllerShape;
 
 before(() => {
   fixTsoaModuleResolution(nodeRequire);
-  mockTransformerServiceModule = {
-    toTransformerDTO: mock.fn((transformer: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return transformer;
-    })
-  };
-  mockModule(nodeRequire, '../../service/transformer.service', mockTransformerServiceModule);
+  mockModule(nodeRequire, '../../service/transformer.service', transformerServiceModule);
   const mod = reloadModule<{ TransformerController: typeof TransformerControllerShape }>(nodeRequire, './transformer.controller');
   TransformerController = mod.TransformerController;
 });
 
+const isoManifest: TransformerManifest = {
+  id: 'iso',
+  inputType: 'any',
+  outputType: 'any',
+  settings: {
+    type: 'object',
+    key: 'options',
+    translationKey: 'configuration.oibus.manifest.transformers.options',
+    attributes: [],
+    enablingConditions: [],
+    validators: [],
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
+    }
+  }
+};
+
 describe('TransformerController', () => {
   let controller: TransformerControllerShape;
-  let transformerService: TransformerServiceMock;
-  let userService: UserServiceMock;
+  let transformerService: Mocked<TransformerService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    transformerService = new TransformerServiceMock();
-    userService = new UserServiceMock();
+    transformerService = createMock<TransformerService>();
+    userService = createMock<UserService>();
     mockRequest = {
       services: createMockServices({ transformerService, userService }),
       user: { id: 'test', login: 'testUser' }
-    } as Partial<CustomExpressRequest>;
-    mockTransformerServiceModule.toTransformerDTO = mock.fn((transformer: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return transformer;
-    });
+    };
+    Object.assign(transformerServiceModule, createTransformerServiceModuleMocks());
     controller = new TransformerController();
   });
 
   it('should return transformer types', async () => {
-    const mockManifests: Array<TransformerManifest> = [
-      {
-        id: 'iso',
-        inputType: 'any',
-        outputType: 'any',
-        settings: {
-          type: 'object',
-          key: 'options',
-          translationKey: 'configuration.oibus.manifest.transformers.options',
-          attributes: [],
-          enablingConditions: [],
-          validators: [],
-          displayProperties: {
-            visible: true,
-            wrapInBox: false
-          }
-        }
-      }
-    ];
-    transformerService.listManifest = mock.fn(() => mockManifests);
+    const mockManifests = [isoManifest];
+    transformerService.listManifest.mock.mockImplementation(() => mockManifests);
 
     const result = await controller.listManifest(mockRequest as CustomExpressRequest);
 
@@ -88,25 +87,9 @@ describe('TransformerController', () => {
   });
 
   it('should return a transformer manifest', async () => {
-    const mockManifest: TransformerManifest = {
-      id: 'iso',
-      inputType: 'any',
-      outputType: 'any',
-      settings: {
-        type: 'object',
-        key: 'options',
-        translationKey: 'configuration.oibus.manifest.transformers.options',
-        attributes: [],
-        enablingConditions: [],
-        validators: [],
-        displayProperties: {
-          visible: true,
-          wrapInBox: false
-        }
-      }
-    };
+    const mockManifest = isoManifest;
     const type = 'iso';
-    transformerService.getManifest = mock.fn(() => mockManifest);
+    transformerService.getManifest.mock.mockImplementation(() => mockManifest);
 
     const result = await controller.getManifest(type, mockRequest as CustomExpressRequest);
 
@@ -124,7 +107,7 @@ describe('TransformerController', () => {
     const searchParams: TransformerSearchParam = { type, inputType, outputType, page };
 
     const expectedResult = createPageFromArray(testData.transformers.list, 25, 0);
-    transformerService.search = mock.fn(() => expectedResult);
+    transformerService.search.mock.mockImplementation(() => expectedResult);
 
     const result = await controller.search(type, inputType, outputType, page, mockRequest as CustomExpressRequest);
 
@@ -142,7 +125,7 @@ describe('TransformerController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.transformers.list, 25, 0);
-    transformerService.search = mock.fn(() => expectedResult);
+    transformerService.search.mock.mockImplementation(() => expectedResult);
 
     const result = await controller.search(undefined, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -153,7 +136,7 @@ describe('TransformerController', () => {
 
   it('should return a list of all transformers', async () => {
     const mockTransformers = testData.transformers.list;
-    transformerService.findAll = mock.fn(() => mockTransformers);
+    transformerService.findAll.mock.mockImplementation(() => mockTransformers);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
 
@@ -164,7 +147,7 @@ describe('TransformerController', () => {
   it('should return a transformer by ID', async () => {
     const mockTransformer = testData.transformers.list[0];
     const transformerId = mockTransformer.id;
-    transformerService.findById = mock.fn(() => mockTransformer);
+    transformerService.findById.mock.mockImplementation(() => mockTransformer);
 
     const result = await controller.findById(transformerId, mockRequest as CustomExpressRequest);
 
@@ -176,7 +159,7 @@ describe('TransformerController', () => {
   it('should create a new custom transformer', async () => {
     const command: CustomTransformerCommandDTO = testData.transformers.command;
     const createdTransformer = testData.transformers.list[0] as CustomTransformer;
-    transformerService.create = mock.fn(async () => createdTransformer);
+    transformerService.create.mock.mockImplementation(async () => createdTransformer);
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
@@ -188,7 +171,7 @@ describe('TransformerController', () => {
   it('should update an existing transformer', async () => {
     const transformerId = testData.transformers.list[0].id;
     const command: CustomTransformerCommandDTO = testData.transformers.command;
-    transformerService.update = mock.fn(async () => undefined);
+    transformerService.update.mock.mockImplementation(async () => undefined);
 
     await controller.update(transformerId, command, mockRequest as CustomExpressRequest);
 
@@ -198,7 +181,7 @@ describe('TransformerController', () => {
 
   it('should delete a transformer', async () => {
     const transformerId = testData.transformers.list[0].id;
-    transformerService.delete = mock.fn(async () => undefined);
+    transformerService.delete.mock.mockImplementation(async () => undefined);
 
     await controller.delete(transformerId, mockRequest as CustomExpressRequest);
 
@@ -208,9 +191,9 @@ describe('TransformerController', () => {
 
   it('should test a transformer', async () => {
     const testRequest: TransformerTestRequest = { inputData: 'time-values', options: {} };
-    const transformerCommand = testData.transformers.list[0] as unknown as CustomTransformerCommandDTO;
+    const transformerCommand: CustomTransformerCommandDTO = testData.transformers.command;
     const body = { transformer: transformerCommand, testRequest };
-    transformerService.test = mock.fn(
+    transformerService.test.mock.mockImplementation(
       async (_command: CustomTransformerCommandDTO, _testRequest: TransformerTestRequest): Promise<TransformerTestResponse> =>
         ({}) as TransformerTestResponse
     );
@@ -223,9 +206,9 @@ describe('TransformerController', () => {
 
   it('should wrap a transformer test failure in an OIBusTestingError', async () => {
     const testRequest: TransformerTestRequest = { inputData: 'time-values', options: {} };
-    const transformerCommand = testData.transformers.list[0] as unknown as CustomTransformerCommandDTO;
+    const transformerCommand: CustomTransformerCommandDTO = testData.transformers.command;
     const body = { transformer: transformerCommand, testRequest };
-    transformerService.test = mock.fn(async () => {
+    transformerService.test.mock.mockImplementation(async () => {
       throw new Error('transformer failed');
     });
 
@@ -240,7 +223,7 @@ describe('TransformerController', () => {
       connectionDuration: 0,
       queryDuration: 0
     };
-    transformerService.testTransformer = mock.fn(async () => testResult as never);
+    transformerService.testTransformer.mock.mockImplementation(async () => testResult as never);
 
     const result = await controller.testTransformer('transformer-id', testRequest, mockRequest as CustomExpressRequest);
 
@@ -250,7 +233,7 @@ describe('TransformerController', () => {
   });
 
   it('should wrap testTransformer errors in an OIBusTestingError', async () => {
-    transformerService.testTransformer = mock.fn(async () => {
+    transformerService.testTransformer.mock.mockImplementation(async () => {
       throw new Error('boom');
     });
 
@@ -262,7 +245,7 @@ describe('TransformerController', () => {
 
   it('should get a template for transformer', async () => {
     const inputType = 'time-values';
-    transformerService.generateTemplate = mock.fn((_inputType: InputType): InputTemplate => ({}) as InputTemplate);
+    transformerService.generateTemplate.mock.mockImplementation((_inputType: InputType): InputTemplate => ({}) as InputTemplate);
 
     await controller.getInputTemplate(inputType, mockRequest as CustomExpressRequest);
 

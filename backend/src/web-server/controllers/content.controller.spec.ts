@@ -3,8 +3,8 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import type OIBusService from '../../service/oibus.service';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { ContentController as ContentControllerShape } from './content.controller';
 
@@ -20,11 +20,11 @@ before(() => {
 
 describe('ContentController', () => {
   let controller: ContentControllerShape;
-  let oIBusService: OIBusServiceMock;
+  let oIBusService: Mocked<OIBusService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    oIBusService = new OIBusServiceMock();
+    oIBusService = createMock<OIBusService>();
     mockRequest = {
       services: createMockServices({ oIBusService })
     } as Partial<CustomExpressRequest>;
@@ -39,7 +39,7 @@ describe('ContentController', () => {
     const northId = 'northId1,northId2';
     const dataSourceId = 'dataSourceId';
     const body = { type: 'time-values', content: [] };
-    oIBusService.addExternalContent = mock.fn(async () => undefined);
+    oIBusService.addExternalContent.mock.mockImplementation(async () => undefined);
 
     await controller.addContent(northId, dataSourceId, body, mockRequest as CustomExpressRequest);
 
@@ -53,7 +53,7 @@ describe('ContentController', () => {
     const northId = 'northId1';
     const dataSourceId = 'dataSourceId';
     const mockFile = { path: 'filePath' } as Express.Multer.File;
-    oIBusService.addExternalContent = mock.fn(async () => undefined);
+    oIBusService.addExternalContent.mock.mockImplementation(async () => undefined);
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
     await controller.addFile(northId, dataSourceId, mockFile, mockRequest as CustomExpressRequest);
@@ -72,7 +72,7 @@ describe('ContentController', () => {
     const northId = 'northId1';
     const dataSourceId = 'dataSourceId';
     const mockFile = { path: 'filePath' } as Express.Multer.File;
-    oIBusService.addExternalContent = mock.fn(async () => undefined);
+    oIBusService.addExternalContent.mock.mockImplementation(async () => undefined);
     const unlinkMock = mock.method(fs, 'unlink', async () => {
       throw new Error('unlink error');
     });

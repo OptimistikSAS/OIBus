@@ -8,11 +8,11 @@ import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.m
 import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
 
 import { OIBusTestingError } from '../../model/types';
-import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
-import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type NorthService from '../../service/north.service';
+import type OIBusService from '../../service/oibus.service';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { NorthConnectorController as NorthConnectorControllerShape } from './north-connector.controller';
 
@@ -40,15 +40,15 @@ before(() => {
 
 describe('NorthConnectorController', () => {
   let controller: NorthConnectorControllerShape;
-  let northService: NorthServiceMock;
-  let oIBusService: OIBusServiceMock;
-  let userService: UserServiceMock;
+  let northService: Mocked<NorthService>;
+  let oIBusService: Mocked<OIBusService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    northService = new NorthServiceMock();
-    oIBusService = new OIBusServiceMock();
-    userService = new UserServiceMock();
+    northService = createMock<NorthService>();
+    oIBusService = createMock<OIBusService>();
+    userService = createMock<UserService>();
     mockRequest = {
       services: createMockServices({ northService, oIBusService, userService }),
       user: { id: 'test', login: 'testUser' }
@@ -66,7 +66,7 @@ describe('NorthConnectorController', () => {
 
   it('should return north connector types', async () => {
     const mockManifests = [testData.north.manifest];
-    northService.listManifest = mock.fn(() => mockManifests);
+    northService.listManifest.mock.mockImplementation(() => mockManifests);
 
     const result = controller.listManifest(mockRequest as CustomExpressRequest);
 
@@ -83,7 +83,7 @@ describe('NorthConnectorController', () => {
 
   it('should return north connector types with beta flag carried through', async () => {
     const mockManifests = [{ ...testData.north.manifest, beta: true }];
-    northService.listManifest = mock.fn(() => mockManifests);
+    northService.listManifest.mock.mockImplementation(() => mockManifests);
 
     const result = controller.listManifest(mockRequest as CustomExpressRequest);
 
@@ -100,7 +100,7 @@ describe('NorthConnectorController', () => {
   it('should return a north connector manifest', async () => {
     const mockManifest = testData.north.manifest;
     const type = testData.north.manifest.id;
-    northService.getManifest = mock.fn(() => mockManifest);
+    northService.getManifest.mock.mockImplementation(() => mockManifest);
 
     const result = controller.getManifest(type, mockRequest as CustomExpressRequest);
 
@@ -110,7 +110,7 @@ describe('NorthConnectorController', () => {
 
   it('should return a list of north connectors', async () => {
     const mockNorthConnectors = testData.north.list;
-    northService.list = mock.fn(() => mockNorthConnectors);
+    northService.list.mock.mockImplementation(() => mockNorthConnectors);
 
     const result = controller.list(mockRequest as CustomExpressRequest);
 
@@ -121,7 +121,7 @@ describe('NorthConnectorController', () => {
   it('should return a north connector by ID', async () => {
     const mockNorthConnector = testData.north.list[0];
     const northId = mockNorthConnector.id;
-    northService.findById = mock.fn(() => mockNorthConnector);
+    northService.findById.mock.mockImplementation(() => mockNorthConnector);
 
     const result = await controller.findById(northId, mockRequest as CustomExpressRequest);
 
@@ -133,7 +133,7 @@ describe('NorthConnectorController', () => {
   it('should create a new north connector', async () => {
     const command: NorthConnectorCommandDTO = testData.north.command;
     const createdNorthConnector = testData.north.list[0];
-    northService.create = mock.fn(async () => createdNorthConnector);
+    northService.create.mock.mockImplementation(async () => createdNorthConnector);
 
     const result = await controller.create(command, undefined, mockRequest as CustomExpressRequest);
 
@@ -145,7 +145,7 @@ describe('NorthConnectorController', () => {
   it('should update an existing north connector', async () => {
     const northId = testData.north.list[0].id;
     const command: NorthConnectorCommandDTO = testData.north.command;
-    northService.update = mock.fn(async () => undefined);
+    northService.update.mock.mockImplementation(async () => undefined);
 
     await controller.update(northId, command, mockRequest as CustomExpressRequest);
 
@@ -155,7 +155,7 @@ describe('NorthConnectorController', () => {
 
   it('should delete a north connector', async () => {
     const northId = testData.north.list[0].id;
-    northService.delete = mock.fn(async () => undefined);
+    northService.delete.mock.mockImplementation(async () => undefined);
 
     await controller.delete(northId, mockRequest as CustomExpressRequest);
 
@@ -165,7 +165,7 @@ describe('NorthConnectorController', () => {
 
   it('should start a north connector', async () => {
     const northId = testData.north.list[0].id;
-    northService.start = mock.fn(async () => undefined);
+    northService.start.mock.mockImplementation(async () => undefined);
 
     await controller.start(northId, mockRequest as CustomExpressRequest);
 
@@ -175,7 +175,7 @@ describe('NorthConnectorController', () => {
 
   it('should stop a north connector', async () => {
     const northId = testData.north.list[0].id;
-    northService.stop = mock.fn(async () => undefined);
+    northService.stop.mock.mockImplementation(async () => undefined);
 
     await controller.stop(northId, mockRequest as CustomExpressRequest);
 
@@ -185,7 +185,7 @@ describe('NorthConnectorController', () => {
 
   it('should get north connector metrics', async () => {
     const northId = testData.north.list[0].id;
-    northService.getNorthMetric = mock.fn(() => testData.north.metrics);
+    northService.getNorthMetric.mock.mockImplementation(() => testData.north.metrics);
 
     const result = controller.getMetrics(northId, mockRequest as CustomExpressRequest);
 
@@ -195,7 +195,7 @@ describe('NorthConnectorController', () => {
 
   it('should reset north connector metrics', async () => {
     const northId = testData.north.list[0].id;
-    oIBusService.resetNorthMetrics = mock.fn(async () => undefined);
+    oIBusService.resetNorthMetrics.mock.mockImplementation(async () => undefined);
 
     await controller.resetMetrics(northId, mockRequest as CustomExpressRequest);
 
@@ -207,7 +207,7 @@ describe('NorthConnectorController', () => {
     const northId = testData.north.list[0].id;
     const northType: OIBusNorthType = testData.north.command.type;
     const settings = testData.north.command.settings;
-    northService.testNorth = mock.fn(async () => ({ items: [] }));
+    northService.testNorth.mock.mockImplementation(async () => ({ items: [] }));
 
     await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
 
@@ -219,7 +219,7 @@ describe('NorthConnectorController', () => {
     const northId = testData.north.list[0].id;
     const northType: OIBusNorthType = testData.north.command.type;
     const settings = testData.north.command.settings;
-    northService.testNorth = mock.fn(async () => {
+    northService.testNorth.mock.mockImplementation(async () => {
       throw new Error('North connection failure');
     });
 
@@ -242,7 +242,7 @@ describe('NorthConnectorController', () => {
       options: {},
       source: { type: 'oianalytics-setpoint' }
     };
-    northService.addOrEditTransformer = mock.fn(async () => undefined);
+    northService.addOrEditTransformer.mock.mockImplementation(async () => undefined);
 
     await controller.addOrEditTransformer(northId, transformer, mockRequest as CustomExpressRequest);
 
@@ -253,7 +253,7 @@ describe('NorthConnectorController', () => {
   it('should remove a transformer', async () => {
     const northId = testData.north.list[0].id;
     const transformerId = testData.transformers.list[0].id;
-    northService.removeTransformer = mock.fn(async () => undefined);
+    northService.removeTransformer.mock.mockImplementation(async () => undefined);
 
     await controller.removeTransformer(northId, transformerId, mockRequest as CustomExpressRequest);
 
@@ -264,7 +264,7 @@ describe('NorthConnectorController', () => {
   it('should search cache content with default params', async () => {
     const northId = testData.north.list[0].id;
     const mockCacheResult: CacheSearchResult = {} as CacheSearchResult;
-    oIBusService.searchCacheContent = mock.fn(async () => mockCacheResult);
+    oIBusService.searchCacheContent.mock.mockImplementation(async () => mockCacheResult);
 
     const result = await controller.searchCacheContent(
       northId,
@@ -290,7 +290,7 @@ describe('NorthConnectorController', () => {
     const start = testData.constants.dates.DATE_1;
     const end = testData.constants.dates.DATE_2;
     const mockCacheResult: CacheSearchResult = {} as CacheSearchResult;
-    oIBusService.searchCacheContent = mock.fn(async () => mockCacheResult);
+    oIBusService.searchCacheContent.mock.mockImplementation(async () => mockCacheResult);
 
     const result = await controller.searchCacheContent(northId, nameContains, start, end, 10000, mockRequest as CustomExpressRequest);
 
@@ -308,7 +308,7 @@ describe('NorthConnectorController', () => {
     const folder = 'cache';
     const filename = 'test-file';
     const mockFileContent: FileCacheContent = {} as FileCacheContent;
-    oIBusService.getFileFromCache = mock.fn(async () => mockFileContent);
+    oIBusService.getFileFromCache.mock.mockImplementation(async () => mockFileContent);
 
     await controller.getCacheFileContent(northId, filename, folder, mockRequest as CustomExpressRequest);
 
@@ -318,7 +318,7 @@ describe('NorthConnectorController', () => {
 
   it('should update cache content', async () => {
     const northId = testData.north.list[0].id;
-    oIBusService.updateCacheContent = mock.fn(async () => undefined);
+    oIBusService.updateCacheContent.mock.mockImplementation(async () => undefined);
 
     await controller.updateCacheContent(northId, {} as CacheContentUpdateCommand, mockRequest as CustomExpressRequest);
 

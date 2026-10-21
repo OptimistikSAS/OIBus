@@ -1,17 +1,17 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { before, beforeEach, describe, it, mock } from 'node:test';
+import { before, beforeEach, describe, it } from 'node:test';
 
 import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/api/configuration-workflow.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
 
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import { WorkflowRunEntity } from '../../model/workflow-run.model';
-import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
-import ConfigurationWorkflowServiceMock from '../../tests/__mocks__/service/configuration-workflow-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type ConfigurationWorkflowService from '../../service/configuration-workflow.service';
+import type ConfigurationWorkflowRunService from '../../service/configuration-workflow-run.service';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { ConfigurationWorkflowController as ConfigurationWorkflowControllerShape } from './configuration-workflow.controller';
 
@@ -80,15 +80,15 @@ const runEntity: WorkflowRunEntity = {
 
 describe('ConfigurationWorkflowController', () => {
   let controller: ConfigurationWorkflowControllerShape;
-  let configurationWorkflowService: ConfigurationWorkflowServiceMock;
-  let configurationWorkflowRunService: ConfigurationWorkflowRunServiceMock;
-  let userService: UserServiceMock;
+  let configurationWorkflowService: Mocked<ConfigurationWorkflowService>;
+  let configurationWorkflowRunService: Mocked<ConfigurationWorkflowRunService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    configurationWorkflowService = new ConfigurationWorkflowServiceMock();
-    configurationWorkflowRunService = new ConfigurationWorkflowRunServiceMock();
-    userService = new UserServiceMock();
+    configurationWorkflowService = createMock<ConfigurationWorkflowService>();
+    configurationWorkflowRunService = createMock<ConfigurationWorkflowRunService>();
+    userService = createMock<UserService>();
     userService.getUserInfo.mock.mockImplementation((userId: string) => ({ id: userId, friendlyName: `Friendly ${userId}` }));
     mockRequest = {
       services: createMockServices({ configurationWorkflowService, configurationWorkflowRunService, userService }),
@@ -99,7 +99,7 @@ describe('ConfigurationWorkflowController', () => {
 
   describe('list()', () => {
     it('should list workflows for a south connector', () => {
-      configurationWorkflowService.findBySouthId = mock.fn(() => [workflowEntity]);
+      configurationWorkflowService.findBySouthId.mock.mockImplementation(() => [workflowEntity]);
 
       const result = controller.list(SOUTH_ID, mockRequest as CustomExpressRequest);
 
@@ -114,7 +114,7 @@ describe('ConfigurationWorkflowController', () => {
 
   describe('get()', () => {
     it('should get a workflow by id', () => {
-      configurationWorkflowService.findById = mock.fn(() => workflowEntity);
+      configurationWorkflowService.findById.mock.mockImplementation(() => workflowEntity);
 
       const result = controller.get(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest);
 
@@ -123,7 +123,7 @@ describe('ConfigurationWorkflowController', () => {
     });
 
     it('should resolve scanMode to a DTO when set', () => {
-      configurationWorkflowService.findById = mock.fn(() => ({ ...workflowEntity, scanMode: testData.scanMode.list[0] }));
+      configurationWorkflowService.findById.mock.mockImplementation(() => ({ ...workflowEntity, scanMode: testData.scanMode.list[0] }));
 
       const result = controller.get(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest);
 
@@ -133,7 +133,7 @@ describe('ConfigurationWorkflowController', () => {
 
   describe('create()', () => {
     it('should create a workflow using the authenticated user as creator', () => {
-      configurationWorkflowService.create = mock.fn(() => workflowEntity);
+      configurationWorkflowService.create.mock.mockImplementation(() => workflowEntity);
 
       const result = controller.create(SOUTH_ID, command, mockRequest as CustomExpressRequest);
 
@@ -144,7 +144,7 @@ describe('ConfigurationWorkflowController', () => {
 
   describe('update()', () => {
     it('should update a workflow and return the refreshed DTO', () => {
-      configurationWorkflowService.update = mock.fn(() => ({ ...workflowEntity, name: 'Updated name' }));
+      configurationWorkflowService.update.mock.mockImplementation(() => ({ ...workflowEntity, name: 'Updated name' }));
 
       const result = controller.update(SOUTH_ID, 'workflowId1', command, mockRequest as CustomExpressRequest);
 
@@ -155,7 +155,7 @@ describe('ConfigurationWorkflowController', () => {
 
   describe('delete()', () => {
     it('should delete a workflow', () => {
-      configurationWorkflowService.delete = mock.fn(() => undefined);
+      configurationWorkflowService.delete.mock.mockImplementation(() => undefined);
 
       controller.delete(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest);
 
@@ -165,7 +165,7 @@ describe('ConfigurationWorkflowController', () => {
 
   describe('run()', () => {
     it('should run a workflow now and return the resulting run DTO', async () => {
-      configurationWorkflowRunService.runNow = mock.fn(async () => runEntity);
+      configurationWorkflowRunService.runNow.mock.mockImplementation(async () => runEntity);
 
       const result = await controller.run(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest);
 
@@ -177,7 +177,7 @@ describe('ConfigurationWorkflowController', () => {
     });
 
     it('should leave triggeredBy null for a scheduled run', async () => {
-      configurationWorkflowRunService.runNow = mock.fn(async () => ({
+      configurationWorkflowRunService.runNow.mock.mockImplementation(async () => ({
         ...runEntity,
         triggerType: 'scheduled' as const,
         triggeredBy: null
@@ -198,7 +198,7 @@ describe('ConfigurationWorkflowController', () => {
         entries: [{ key: 'nodeId=x', status: 'new', record: { nodeId: 'x' }, previousMetadata: null }],
         records: []
       };
-      configurationWorkflowRunService.preview = mock.fn(async () => previewResult);
+      configurationWorkflowRunService.preview.mock.mockImplementation(async () => previewResult);
 
       const result = await controller.preview(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest);
 
@@ -210,7 +210,7 @@ describe('ConfigurationWorkflowController', () => {
   describe('listRuns()', () => {
     it('should list a workflow run history page', () => {
       const page = createPageFromArray([runEntity], 50, 0);
-      configurationWorkflowRunService.findRuns = mock.fn(() => page);
+      configurationWorkflowRunService.findRuns.mock.mockImplementation(() => page);
 
       const result = controller.listRuns(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest, 1);
 
@@ -225,7 +225,7 @@ describe('ConfigurationWorkflowController', () => {
     });
 
     it('should default page to 0 and every filter to empty', () => {
-      configurationWorkflowRunService.findRuns = mock.fn(() => createPageFromArray([], 50, 0));
+      configurationWorkflowRunService.findRuns.mock.mockImplementation(() => createPageFromArray([], 50, 0));
 
       controller.listRuns(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest);
 
@@ -239,7 +239,7 @@ describe('ConfigurationWorkflowController', () => {
     });
 
     it('should parse comma-separated status/triggerType filters and pass the date range through as-is', () => {
-      configurationWorkflowRunService.findRuns = mock.fn(() => createPageFromArray([], 50, 0));
+      configurationWorkflowRunService.findRuns.mock.mockImplementation(() => createPageFromArray([], 50, 0));
 
       controller.listRuns(
         SOUTH_ID,
@@ -268,7 +268,7 @@ describe('ConfigurationWorkflowController', () => {
         ...runEntity,
         entries: [{ key: 'nodeId=x', status: 'new', record: { nodeId: 'x' }, previousMetadata: null }]
       };
-      configurationWorkflowRunService.findRunById = mock.fn(() => withPayload);
+      configurationWorkflowRunService.findRunById.mock.mockImplementation(() => withPayload);
 
       const result = controller.getRun(SOUTH_ID, 'workflowId1', 'runId1', mockRequest as CustomExpressRequest);
 

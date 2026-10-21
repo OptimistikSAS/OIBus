@@ -4,9 +4,9 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
 
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import type OIAnalyticsRegistrationService from '../../service/oia/oianalytics-registration.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { OIAnalyticsRegistrationController as OIAnalyticsRegistrationControllerShape } from './oianalytics-registration.controller';
 
@@ -33,11 +33,11 @@ before(() => {
 
 describe('OIAnalyticsRegistrationController', () => {
   let controller: OIAnalyticsRegistrationControllerShape;
-  let registrationService: OIAnalyticsRegistrationServiceMock;
+  let registrationService: Mocked<OIAnalyticsRegistrationService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    registrationService = new OIAnalyticsRegistrationServiceMock();
+    registrationService = createMock<OIAnalyticsRegistrationService>();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
       services: createMockServices({ oIAnalyticsRegistrationService: registrationService })
@@ -51,7 +51,7 @@ describe('OIAnalyticsRegistrationController', () => {
 
   it('should return registration settings', async () => {
     const mockSettings = testData.oIAnalytics.registration.completed;
-    registrationService.getRegistrationSettings = mock.fn(() => mockSettings);
+    registrationService.getRegistrationSettings.mock.mockImplementation(() => mockSettings);
 
     const result = await controller.getRegistrationSettings(mockRequest as CustomExpressRequest);
 
@@ -61,7 +61,7 @@ describe('OIAnalyticsRegistrationController', () => {
 
   it('should register with OIAnalytics service', async () => {
     const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
-    registrationService.register = mock.fn(async () => undefined);
+    registrationService.register.mock.mockImplementation(async () => undefined);
 
     await controller.register(command, mockRequest as CustomExpressRequest);
 
@@ -71,7 +71,7 @@ describe('OIAnalyticsRegistrationController', () => {
 
   it('should update registration settings', async () => {
     const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
-    registrationService.editRegistrationSettings = mock.fn(async () => undefined);
+    registrationService.editRegistrationSettings.mock.mockImplementation(async () => undefined);
 
     await controller.editRegistrationSettings(command, mockRequest as CustomExpressRequest);
 
@@ -80,7 +80,7 @@ describe('OIAnalyticsRegistrationController', () => {
   });
 
   it('should unregister from OIAnalytics service', async () => {
-    registrationService.unregister = mock.fn(async () => undefined);
+    registrationService.unregister.mock.mockImplementation(async () => undefined);
 
     await controller.unregister(mockRequest as CustomExpressRequest);
 
@@ -89,7 +89,7 @@ describe('OIAnalyticsRegistrationController', () => {
 
   it('should test connection', async () => {
     const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
-    registrationService.testConnection = mock.fn(async () => undefined);
+    registrationService.testConnection.mock.mockImplementation(async () => undefined);
 
     await controller.testConnection(command, mockRequest as CustomExpressRequest);
 

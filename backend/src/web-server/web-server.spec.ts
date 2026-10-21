@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
@@ -8,6 +9,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import { ValidateError } from '@tsoa/runtime';
+import type express from 'express';
 import Joi from 'joi';
 import * as forge from 'node-forge';
 
@@ -33,31 +36,12 @@ import type ScanModeService from '../service/scan-mode.service';
 import type SouthService from '../service/south.service';
 import type TransformerService from '../service/transformer.service';
 import type UserService from '../service/user.service';
-import AuditServiceMock from '../tests/__mocks__/service/audit-service.mock';
-import CertificateServiceMock from '../tests/__mocks__/service/certificate-service.mock';
-import ConfigImportServiceMock from '../tests/__mocks__/service/config-import-service.mock';
-import ConfigTransferServiceMock from '../tests/__mocks__/service/config-transfer-service.mock';
-import ConfigurationWorkflowRunServiceMock from '../tests/__mocks__/service/configuration-workflow-run-service.mock';
-import ConfigurationWorkflowServiceMock from '../tests/__mocks__/service/configuration-workflow-service.mock';
-import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
-import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
-import LogServiceMock from '../tests/__mocks__/service/log-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
-import OIAnalyticsCommandServiceMock from '../tests/__mocks__/service/oia/oianalytics-command-service.mock';
-import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import OIBusServiceMock from '../tests/__mocks__/service/oibus-service.mock';
-import ScanModeServiceMock from '../tests/__mocks__/service/scan-mode-service.mock';
-import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
-import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
-import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 import testData from '../tests/utils/test-data';
-import { fixTsoaModuleResolution, mockModule, reloadModule } from '../tests/utils/test-utils';
+import { createMock, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type WebServerClass from './web-server';
 
 const nodeRequire = createRequire(import.meta.url);
-// ValidateError is resolved after fixTsoaModuleResolution() in the before() hook.
-let ValidateError: typeof import('tsoa').ValidateError;
 
 const TEST_PORT = 19998;
 
@@ -84,6 +68,7 @@ const documentationDir = path.join(path.dirname(fileURLToPath(import.meta.url)),
 const documentationMarkerPath = path.join(documentationDir, '__oibus_test_placeholder__.html');
 const documentationMarker = '<!doctype html><html><body>documentation placeholder</body></html>';
 let createdDocumentationMarker = false;
+const realSetTimeout = setTimeout;
 
 const HTTPS_SETTINGS: WebServerHttpsSettings = {
   enabled: true,
@@ -119,26 +104,25 @@ function httpsGetStatus(url: string): Promise<number> {
   });
 }
 
-function buildEncryptionMock() {
-  return {
-    generateRSAKey: mock.fn(),
-    encryptText: mock.fn(),
-    decryptText: mock.fn(),
-    getCertPath: mock.fn(() => ''),
-    getKeyPath: mock.fn(() => ''),
-    init: mock.fn()
-  };
+// A response whose status() can be chained (res.status(…).json(…))
+function buildResponse(): Mocked<express.Response> {
+  const res = createMock<express.Response>();
+  res.status.mock.mockImplementation(() => res);
+  return res;
 }
 
 describe('WebServer', () => {
   let WebServer: typeof WebServerClass;
   let webServer: WebServerClass;
-  let ipFilterService: IpFilterServiceMock;
-  let oIBusService: OIBusServiceMock;
-  let encryptionMock: ReturnType<typeof buildEncryptionMock>;
-  const loggerMock = new PinoLogger();
+  let ipFilterService: Mocked<IPFilterService>;
+  let oIBusService: Mocked<OIBusService>;
+  let loggerMock: PinoLogger;
 
   before(() => {
+    // WebServer.stop() leaves a 5 s safety timer pending even once the server is closed: unref the timers so that this
+    // test process does not stay alive 5 more seconds after the last test.
+    globalThis.setTimeout = ((...args: Parameters<typeof setTimeout>) => realSetTimeout(...args).unref()) as typeof setTimeout;
+
     if (!fs.existsSync(frontendIndexPath)) {
       fs.mkdirSync(frontendIndexDir, { recursive: true });
       fs.writeFileSync(frontendIndexPath, '<!doctype html><html><body>test placeholder</body></html>');
@@ -155,7 +139,6 @@ describe('WebServer', () => {
     }
 
     fixTsoaModuleResolution(nodeRequire);
-    ValidateError = (nodeRequire('tsoa') as { ValidateError: typeof import('tsoa').ValidateError }).ValidateError;
 
     // RegisterRoutes injects test error-throwing routes so the inline error handler can be tested via HTTP.
     mockModule(nodeRequire, './routes', {
@@ -177,6 +160,7 @@ describe('WebServer', () => {
   });
 
   after(() => {
+    globalThis.setTimeout = realSetTimeout;
     fs.rmSync(frontendChunkPath, { force: true });
     if (createdFrontendIndex) {
       fs.rmSync(frontendIndexDir, { recursive: true, force: true });
@@ -195,33 +179,33 @@ describe('WebServer', () => {
   function buildWebServer(port: number, httpsSettings = testData.engine.settings.webServer.https): WebServerClass {
     return new WebServer(
       { ...testData.engine.settings.webServer, port, https: httpsSettings },
-      encryptionMock as unknown as EncryptionService,
-      new AuditServiceMock() as unknown as AuditService,
-      new ScanModeServiceMock() as unknown as ScanModeService,
-      ipFilterService as unknown as IPFilterService,
-      new CertificateServiceMock() as unknown as CertificateService,
-      new LogServiceMock() as unknown as LogService,
-      new UserServiceMock() as unknown as UserService,
-      new OIAnalyticsRegistrationServiceMock() as unknown as OIAnalyticsRegistrationService,
-      new OIAnalyticsCommandServiceMock() as unknown as OIAnalyticsCommandService,
-      oIBusService as unknown as OIBusService,
-      new SouthServiceMock() as unknown as SouthService,
-      new NorthServiceMock() as unknown as NorthService,
-      new TransformerServiceMock() as unknown as TransformerService,
-      new HistoryQueryServiceMock() as unknown as HistoryQueryService,
-      new ConfigurationWorkflowServiceMock() as unknown as ConfigurationWorkflowService,
-      new ConfigurationWorkflowRunServiceMock() as unknown as ConfigurationWorkflowRunService,
-      new ConfigTransferServiceMock() as unknown as ConfigTransferService,
-      new ConfigImportServiceMock() as unknown as ConfigImportService,
+      createMock<EncryptionService>(),
+      createMock<AuditService>(),
+      createMock<ScanModeService>(),
+      ipFilterService,
+      createMock<CertificateService>(),
+      createMock<LogService>(),
+      createMock<UserService>(),
+      createMock<OIAnalyticsRegistrationService>(),
+      createMock<OIAnalyticsCommandService>(),
+      oIBusService,
+      createMock<SouthService>(),
+      createMock<NorthService>(),
+      createMock<TransformerService>(),
+      createMock<HistoryQueryService>(),
+      createMock<ConfigurationWorkflowService>(),
+      createMock<ConfigurationWorkflowRunService>(),
+      createMock<ConfigTransferService>(),
+      createMock<ConfigImportService>(),
       false,
       loggerMock
     );
   }
 
   beforeEach(() => {
-    ipFilterService = new IpFilterServiceMock();
-    oIBusService = new OIBusServiceMock();
-    encryptionMock = buildEncryptionMock();
+    ipFilterService = createMock<IPFilterService>({ list: () => [], whiteListEvent: new EventEmitter() });
+    oIBusService = createMock<OIBusService>({ loggerEvent: new EventEmitter(), webServerChangeEvent: new EventEmitter() });
+    loggerMock = new PinoLogger();
 
     webServer = buildWebServer(TEST_PORT);
   });
@@ -239,29 +223,7 @@ describe('WebServer', () => {
 
   it('should populate whiteList from ipFilterService.list() on construction', () => {
     ipFilterService.list.mock.mockImplementation(() => [{ address: '192.168.1.1' }] as never);
-    const ws = new WebServer(
-      { ...testData.engine.settings.webServer, port: TEST_PORT + 1 },
-      encryptionMock as unknown as EncryptionService,
-      new AuditServiceMock() as unknown as AuditService,
-      new ScanModeServiceMock() as unknown as ScanModeService,
-      ipFilterService as unknown as IPFilterService,
-      new CertificateServiceMock() as unknown as CertificateService,
-      new LogServiceMock() as unknown as LogService,
-      new UserServiceMock() as unknown as UserService,
-      new OIAnalyticsRegistrationServiceMock() as unknown as OIAnalyticsRegistrationService,
-      new OIAnalyticsCommandServiceMock() as unknown as OIAnalyticsCommandService,
-      oIBusService as unknown as OIBusService,
-      new SouthServiceMock() as unknown as SouthService,
-      new NorthServiceMock() as unknown as NorthService,
-      new TransformerServiceMock() as unknown as TransformerService,
-      new HistoryQueryServiceMock() as unknown as HistoryQueryService,
-      new ConfigurationWorkflowServiceMock() as unknown as ConfigurationWorkflowService,
-      new ConfigurationWorkflowRunServiceMock() as unknown as ConfigurationWorkflowRunService,
-      new ConfigTransferServiceMock() as unknown as ConfigTransferService,
-      new ConfigImportServiceMock() as unknown as ConfigImportService,
-      false,
-      loggerMock
-    );
+    const ws = buildWebServer(TEST_PORT + 1);
     assert.deepEqual(ws.whiteList, ['192.168.1.1']);
   });
 
@@ -428,66 +390,47 @@ describe('WebServer', () => {
   });
 
   describe('error handling middleware', () => {
-    it('handleBodyParserErrors: SyntaxError with body → 422, other → next', async () => {
-      await webServer.init();
-      type ErrFn = (
-        err: unknown,
-        req: unknown,
-        res: { status: (c: number) => { json: (b: unknown) => void }; end: () => void },
-        next: (e?: unknown) => void
-      ) => void;
-      const handleBodyParserErrors = (webServer as unknown as Record<string, ErrFn>).handleBodyParserErrors;
-
+    it('handleBodyParserErrors: SyntaxError with body → 422, other → next', () => {
       const syntaxErr = new SyntaxError('bad json') as SyntaxError & { body: string };
       syntaxErr.body = '{}';
-      const mockRes = { status: mock.fn((_code: number) => mockRes), json: mock.fn() };
+      const mockRes = buildResponse();
 
       // SyntaxError with body → 422
-      handleBodyParserErrors.call(webServer, syntaxErr, {}, mockRes as never, mock.fn());
+      webServer['handleBodyParserErrors'](syntaxErr, createMock<express.Request>(), mockRes, mock.fn());
       assert.equal(mockRes.status.mock.calls[0]?.arguments[0], 422);
 
       // Non-syntax error → next(err)
       const genericErr = new Error('other');
       const nextFn = mock.fn();
-      handleBodyParserErrors.call(webServer, genericErr, {}, mockRes as never, nextFn);
+      webServer['handleBodyParserErrors'](genericErr, createMock<express.Request>(), mockRes, nextFn);
       assert.equal(nextFn.mock.calls.length, 1);
       assert.strictEqual(nextFn.mock.calls[0]?.arguments[0], genericErr);
     });
 
-    it('setupErrorHandling: handles various error types correctly', async () => {
-      await webServer.init();
-      type SetupFn = () => (
-        err: Error,
-        req: unknown,
-        res: { status: (c: number) => { json: (b: unknown) => void } },
-        next: unknown
-      ) => void;
-      const errMiddleware = (webServer as unknown as Record<string, SetupFn>).setupErrorHandling.call(webServer);
-      const mockRes = { status: mock.fn((_code: number) => mockRes), json: mock.fn() };
+    it('setupErrorHandling: handles various error types correctly', () => {
+      const errMiddleware = webServer['setupErrorHandling']();
+      const statusOf = (error: unknown) => {
+        const mockRes = buildResponse();
+        errMiddleware(error, createMock<express.Request>(), mockRes, mock.fn());
+        return mockRes.status.mock.calls[0]?.arguments[0];
+      };
 
       // err.name === 'ValidationError' → 400
       const valErr = new Error('validation');
       valErr.name = 'ValidationError';
-      errMiddleware(valErr, {}, mockRes as never, mock.fn());
-      assert.equal(mockRes.status.mock.calls[0]?.arguments[0], 400);
+      assert.equal(statusOf(valErr), 400);
 
       // Generic error → 500
-      mockRes.status.mock.resetCalls();
-      errMiddleware(new Error('internal'), {}, mockRes as never, mock.fn());
-      assert.equal(mockRes.status.mock.calls[0]?.arguments[0], 500);
+      assert.equal(statusOf(new Error('internal')), 500);
 
       // Development mode: includes error message in response
       const origEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
-      mockRes.status.mock.resetCalls();
-      errMiddleware(new Error('dev-msg'), {}, mockRes as never, mock.fn());
-      assert.equal(mockRes.status.mock.calls[0]?.arguments[0], 500);
+      assert.equal(statusOf(new Error('dev-msg')), 500);
       process.env.NODE_ENV = origEnv;
 
       // Non-Error truthy → 500
-      mockRes.status.mock.resetCalls();
-      errMiddleware('string-error' as never, {}, mockRes as never, mock.fn());
-      assert.equal(mockRes.status.mock.calls[0]?.arguments[0], 500);
+      assert.equal(statusOf('string-error'), 500);
     });
 
     it('inline error handler via HTTP: routes throw OIBus error types → correct status codes', async () => {
@@ -614,12 +557,11 @@ describe('WebServer', () => {
     // would ever be able to close it). Only `this.webServer` needs to be truthy for stop() to
     // proceed into its try/catch.
     const closeError = new Error('close failed');
-    (webServer as unknown as { webServer: { closeAllConnections: () => void; close: () => void } }).webServer = {
+    webServer['webServer'] = createMock<http.Server>({
       closeAllConnections: () => {
         throw closeError;
-      },
-      close: mock.fn()
-    };
+      }
+    });
 
     await webServer.stop();
 

@@ -3,64 +3,59 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import type express from 'express';
+
 import { CertificateCommandDTO, CertificatePrivateKeyExportCommandDTO } from '../../../shared/model/api/certificate.model';
 
-import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type CertificateService from '../../service/certificate.service';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { CertificateController as CertificateControllerShape } from './certificate.controller';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockCertServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+// The DTO mapper returns the entity as is, after asking for the user info like the real one
+const createCertificateServiceModuleMocks = () => ({
+  toCertificateDTO: mock.fn((cert: unknown, getUserInfo: (id: string) => void) => {
+    getUserInfo('');
+    return cert;
+  })
+});
+// Same object for the whole file (the controller keeps it): its functions are replaced in beforeEach
+const certificateServiceModule = createCertificateServiceModuleMocks();
 let CertificateController: typeof CertificateControllerShape;
 
 before(() => {
   fixTsoaModuleResolution(nodeRequire);
-  mockCertServiceModule = {
-    toCertificateDTO: mock.fn((cert: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return cert;
-    })
-  };
-  mockModule(nodeRequire, '../../service/certificate.service', mockCertServiceModule);
+  mockModule(nodeRequire, '../../service/certificate.service', certificateServiceModule);
   const mod = reloadModule<{ CertificateController: typeof CertificateControllerShape }>(nodeRequire, './certificate.controller');
   CertificateController = mod.CertificateController;
 });
 
+const certificateFile = { path: 'certPath' } as Express.Multer.File;
+const privateKeyFile = { path: 'keyPath' } as Express.Multer.File;
+const certificateChainFile = { path: 'chainPath' } as Express.Multer.File;
+
 describe('CertificateController', () => {
   let controller: CertificateControllerShape;
-  let certificateService: CertificateServiceMock;
-  let userService: UserServiceMock;
+  let certificateService: Mocked<CertificateService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
-  let mockRes: {
-    attachment: ReturnType<typeof mock.fn>;
-    contentType: ReturnType<typeof mock.fn>;
-    status: ReturnType<typeof mock.fn>;
-    send: ReturnType<typeof mock.fn>;
-  };
+  let mockRes: Mocked<express.Response>;
 
   beforeEach(() => {
-    certificateService = new CertificateServiceMock();
-    userService = new UserServiceMock();
-    mockRes = {
-      attachment: mock.fn(),
-      contentType: mock.fn(),
-      send: mock.fn(),
-      status: mock.fn()
-    };
-    mockRes.status = mock.fn(() => mockRes);
+    certificateService = createMock<CertificateService>();
+    userService = createMock<UserService>();
+    mockRes = createMock<express.Response>();
+    mockRes.status.mock.mockImplementation(() => mockRes);
     mockRequest = {
       services: createMockServices({ certificateService, userService }),
       user: { id: 'test', login: 'testUser' },
-      res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
-    } as Partial<CustomExpressRequest>;
-    mockCertServiceModule.toCertificateDTO = mock.fn((cert: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return cert;
-    });
+      res: mockRes
+    };
+    Object.assign(certificateServiceModule, createCertificateServiceModuleMocks());
     controller = new CertificateController();
   });
 
@@ -70,7 +65,7 @@ describe('CertificateController', () => {
 
   it('should return a list of certificates', async () => {
     const mockCertificates = testData.certificates.list;
-    certificateService.list = mock.fn(() => mockCertificates);
+    certificateService.list.mock.mockImplementation(() => mockCertificates);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
 
@@ -81,7 +76,7 @@ describe('CertificateController', () => {
   it('should return a certificate by ID', async () => {
     const mockCertificate = testData.certificates.list[0];
     const certificateId = 'test-id';
-    certificateService.findById = mock.fn(() => mockCertificate);
+    certificateService.findById.mock.mockImplementation(() => mockCertificate);
 
     const result = await controller.findById(certificateId, mockRequest as CustomExpressRequest);
 
@@ -93,7 +88,7 @@ describe('CertificateController', () => {
   it('should create a new certificate', async () => {
     const command: CertificateCommandDTO = testData.certificates.command;
     const createdCertificate = testData.certificates.list[0];
-    certificateService.create = mock.fn(async () => createdCertificate);
+    certificateService.create.mock.mockImplementation(async () => createdCertificate);
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
@@ -105,7 +100,7 @@ describe('CertificateController', () => {
   it('should update an existing certificate', async () => {
     const certificateId = 'test-id';
     const command: CertificateCommandDTO = testData.certificates.command;
-    certificateService.update = mock.fn(async () => undefined);
+    certificateService.update.mock.mockImplementation(async () => undefined);
 
     await controller.update(certificateId, command, mockRequest as CustomExpressRequest);
 
@@ -115,7 +110,7 @@ describe('CertificateController', () => {
 
   it('should delete a certificate', async () => {
     const certificateId = 'test-id';
-    certificateService.delete = mock.fn(async () => undefined);
+    certificateService.delete.mock.mockImplementation(async () => undefined);
 
     await controller.delete(certificateId, mockRequest as CustomExpressRequest);
 
@@ -124,11 +119,8 @@ describe('CertificateController', () => {
   });
 
   it('should import a certificate', async () => {
-    const certificateFile = { path: 'certPath' } as Express.Multer.File;
-    const privateKeyFile = { path: 'keyPath' } as Express.Multer.File;
-    const certificateChainFile = { path: 'chainPath' } as Express.Multer.File;
     const importedCertificate = testData.certificates.list[0];
-    certificateService.import = mock.fn(async () => importedCertificate);
+    certificateService.import.mock.mockImplementation(async () => importedCertificate);
     const readFileMock = mock.method(fs, 'readFile', async (path: string) => Buffer.from(`content-of-${path}`));
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -160,9 +152,7 @@ describe('CertificateController', () => {
   });
 
   it('should import a certificate without a CA chain and default the passphrase to null', async () => {
-    const certificateFile = { path: 'certPath' } as Express.Multer.File;
-    const privateKeyFile = { path: 'keyPath' } as Express.Multer.File;
-    certificateService.import = mock.fn(async () => testData.certificates.list[0]);
+    certificateService.import.mock.mockImplementation(async () => testData.certificates.list[0]);
     mock.method(fs, 'readFile', async (path: string) => Buffer.from(`content-of-${path}`));
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -188,32 +178,20 @@ describe('CertificateController', () => {
   });
 
   it('should not import a certificate if the certificate file is missing', async () => {
-    const privateKeyFile = { path: 'keyPath' } as Express.Multer.File;
-
     await assert.rejects(
-      controller.import(
-        'my cert',
-        'my description',
-        undefined,
-        undefined as unknown as Express.Multer.File,
-        privateKeyFile,
-        undefined,
-        mockRequest as CustomExpressRequest
-      ),
+      controller.import('my cert', 'my description', undefined, undefined!, privateKeyFile, undefined, mockRequest as CustomExpressRequest),
       { message: 'Missing file "certificate"' }
     );
   });
 
   it('should not import a certificate if the private key file is missing', async () => {
-    const certificateFile = { path: 'certPath' } as Express.Multer.File;
-
     await assert.rejects(
       controller.import(
         'my cert',
         'my description',
         undefined,
         certificateFile,
-        undefined as unknown as Express.Multer.File,
+        undefined!,
         undefined,
         mockRequest as CustomExpressRequest
       ),
@@ -222,9 +200,7 @@ describe('CertificateController', () => {
   });
 
   it('should unlink uploaded files even if the import fails', async () => {
-    const certificateFile = { path: 'certPath' } as Express.Multer.File;
-    const privateKeyFile = { path: 'keyPath' } as Express.Multer.File;
-    certificateService.import = mock.fn(async () => {
+    certificateService.import.mock.mockImplementation(async () => {
       throw new Error('import error');
     });
     mock.method(fs, 'readFile', async (path: string) => Buffer.from(`content-of-${path}`));
@@ -247,10 +223,7 @@ describe('CertificateController', () => {
   });
 
   it('should swallow unlink errors for all uploaded files during cleanup', async () => {
-    const certificateFile = { path: 'certPath' } as Express.Multer.File;
-    const privateKeyFile = { path: 'keyPath' } as Express.Multer.File;
-    const certificateChainFile = { path: 'chainPath' } as Express.Multer.File;
-    certificateService.import = mock.fn(async () => testData.certificates.list[0]);
+    certificateService.import.mock.mockImplementation(async () => testData.certificates.list[0]);
     mock.method(fs, 'readFile', async (path: string) => Buffer.from(`content-of-${path}`));
     const unlinkMock = mock.method(fs, 'unlink', async () => {
       throw new Error('unlink failed');
@@ -271,8 +244,8 @@ describe('CertificateController', () => {
   });
 
   it('should export a certificate', () => {
-    certificateService.findById = mock.fn(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
-    certificateService.exportCertificate = mock.fn(() => ({
+    certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
+    certificateService.exportCertificate.mock.mockImplementation(() => ({
       extension: 'pem',
       content: 'pem-content'
     }));
@@ -287,8 +260,8 @@ describe('CertificateController', () => {
   });
 
   it('should export a certificate in DER format', () => {
-    certificateService.findById = mock.fn(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
-    certificateService.exportCertificate = mock.fn(() => ({
+    certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
+    certificateService.exportCertificate.mock.mockImplementation(() => ({
       extension: 'cer',
       content: Buffer.from('der-content')
     }));
@@ -303,8 +276,8 @@ describe('CertificateController', () => {
 
   it('should export the private key of a certificate', async () => {
     const command: CertificatePrivateKeyExportCommandDTO = { passphrase: 'a-strong-passphrase' };
-    certificateService.findById = mock.fn(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
-    certificateService.exportPrivateKey = mock.fn(async () => 'encrypted-key-content');
+    certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
+    certificateService.exportPrivateKey.mock.mockImplementation(async () => 'encrypted-key-content');
 
     await controller.exportPrivateKey('test-id', command, mockRequest as CustomExpressRequest);
 
