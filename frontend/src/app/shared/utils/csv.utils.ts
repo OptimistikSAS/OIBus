@@ -16,9 +16,9 @@ export const convertCsvDelimiter = (delimiter: CsvCharacter): string => {
     case 'SLASH':
       return '/';
     case 'TAB':
-      return '  ';
+      return '\t';
     case 'NON_BREAKING_SPACE':
-      return ' ';
+      return '\u00a0';
     case 'PIPE':
       return '|';
   }

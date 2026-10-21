@@ -53,9 +53,9 @@ describe('csv.utils', () => {
       expect(convertCsvDelimiter('SEMI_COLON')).toBe(';');
       expect(convertCsvDelimiter('COLON')).toBe(':');
       expect(convertCsvDelimiter('COMMA')).toBe(',');
-      expect(convertCsvDelimiter('NON_BREAKING_SPACE')).toBe(' ');
+      expect(convertCsvDelimiter('NON_BREAKING_SPACE')).toBe('\u00a0');
       expect(convertCsvDelimiter('SLASH')).toBe('/');
-      expect(convertCsvDelimiter('TAB')).toBe('  ');
+      expect(convertCsvDelimiter('TAB')).toBe('\t');
       expect(convertCsvDelimiter('PIPE')).toBe('|');
     });
   });

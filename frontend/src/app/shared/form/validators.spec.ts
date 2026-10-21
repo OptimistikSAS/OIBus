@@ -8,6 +8,7 @@ import {
   validateCsvMqttTopics
 } from './validators';
 import { describe, expect, test } from 'vitest';
+import { convertCsvDelimiter } from '../utils/csv.utils';
 
 describe('Custom Validators', () => {
   describe('uniqueFieldNamesValidator', () => {
@@ -210,6 +211,17 @@ describe('Custom Validators', () => {
       test('should return null', async () => {
         const file = createMockFile('header1,header2\nvalue1,value2');
         const result = await validateCsvHeaders(file, ',', []);
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('when file uses a whitespace delimiter', () => {
+      test.each([
+        { delimiter: 'TAB', separator: '\t' },
+        { delimiter: 'NON_BREAKING_SPACE', separator: '\u00a0' }
+      ] as const)('should accept the headers of a file separated with $delimiter', async ({ delimiter, separator }) => {
+        const file = createMockFile(`name${separator}enabled${separator}scanMode\nitem1${separator}true${separator}Every second`);
+        const result = await validateCsvHeaders(file, convertCsvDelimiter(delimiter), ['name', 'enabled', 'scanMode']);
         expect(result).toBeNull();
       });
     });
