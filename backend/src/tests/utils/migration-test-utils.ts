@@ -151,8 +151,8 @@ export interface MigrationFileCloneHarness {
 
 /**
  * Builds a pre-migration schema ONCE into a template SQLite file, then hands each test a fresh,
- * ordinary (non-transactional) connection to a byte-for-byte copy of that file, instead of
- * replaying the whole migration history for every single test.
+ * ordinary (non-transactional) connection to an in-memory, byte-for-byte copy of that file, instead
+ * of replaying the whole migration history for every single test.
  *
  * Unlike createMigrationSchemaHarness, each test's `db` is a genuinely new connection — not a
  * shared transaction/savepoint — so specs that toggle `PRAGMA foreign_keys` mid-test (which is a
@@ -160,36 +160,33 @@ export interface MigrationFileCloneHarness {
  * bare-connection-per-test setup. Use this harness for those specs instead.
  *
  * Building the template pays the same cost as today's per-test rebuild, but only once per file;
- * each test then pays only the cost of one small file copy. This matters most on Windows, where
- * every individual DDL statement's implicit commit against a real file is dramatically slower than
- * on Linux/macOS — collapsing dozens of migrations' worth of file commits into a single file copy
- * per test removes nearly all of that cost. Safe because better-sqlite3 defaults to the `delete`
- * (rollback) journal mode, not WAL, so a cleanly closed connection leaves the template file with no
- * sidecar `-wal`/`-shm` state that a plain file copy could miss.
+ * each test then pays only the cost of deserializing it. Running each test's migration in memory
+ * also spares the implicit commit of every DDL statement against a real file, which is slow (most of
+ * all on Windows). Safe because better-sqlite3 defaults to the `delete` (rollback) journal mode, not
+ * WAL, so a cleanly closed connection leaves the template file with no sidecar `-wal`/`-shm` state
+ * that reading the file could miss, and because knex keeps a single connection to a SQLite database:
+ * a second connection would get a fresh copy of the template.
  */
 export function createMigrationFileCloneHarness(options: { buildSchema: (db: Knex) => Promise<void> }): MigrationFileCloneHarness {
   let tmpDir: string;
-  let templateFile: string;
-  let testFile: string;
+  let template: Buffer;
   let testDb: Knex;
-  let counter = 0;
 
   return {
     async before(): Promise<void> {
       tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-migration-spec-'));
-      templateFile = path.join(tmpDir, 'template.db');
+      const templateFile = path.join(tmpDir, 'template.db');
       const templateDb = knexFactory({ client: 'better-sqlite3', connection: { filename: templateFile }, useNullAsDefault: true });
       await options.buildSchema(templateDb);
       await templateDb.destroy();
+      template = await fs.readFile(templateFile);
     },
     async beforeEach(): Promise<void> {
-      testFile = path.join(tmpDir, `test-${counter++}.db`);
-      await fs.copyFile(templateFile, testFile);
-      testDb = knexFactory({ client: 'better-sqlite3', connection: { filename: testFile }, useNullAsDefault: true });
+      // better-sqlite3 opens a Buffer as an in-memory database, which knex's types don't declare
+      testDb = knexFactory({ client: 'better-sqlite3', connection: { filename: template as unknown as string }, useNullAsDefault: true });
     },
     async afterEach(): Promise<void> {
       await testDb.destroy();
-      await fs.rm(testFile, { force: true });
     },
     async after(): Promise<void> {
       await fs.rm(tmpDir, { recursive: true, force: true });
