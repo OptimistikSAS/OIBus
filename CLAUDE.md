@@ -196,11 +196,22 @@ existing binary. This is what enables remote upgrades triggered from OIAnalytics
 ### Backend (Node test runner)
 
 Tests use Node's native `node:test` module with `assert/strict`. Mocking uses `mock.fn()`, `mock.method()`,
-`mock.module()`. There is no Jest/Sinon. Key helpers are in `backend/src/tests/utils/test-utils.ts` (`mockModule`,
-`reloadModule`, `seq`).
+`mock.module()`. There is no Jest/Sinon. Key helpers are in `backend/src/tests/utils/test-utils.ts` (`createMock`,
+`mockModule`, `reloadModule`, `seq`); database helpers (`initDatabase`, `emptyDatabase`) are in
+`backend/src/tests/utils/database-utils.ts`. Keep `test-utils.ts` light (type-only imports): most specs load it.
+
+- Mock services, repositories and SDK clients with `createMock<RealClass>(overrides)` — no hand-written mock classes, no
+  `as unknown as` casts: a `Mocked<T>` is assignable to `T`, so constructors take the real classes (no `I*Service`
+  interfaces). Every method is a lazy `mock.fn()` returning `undefined`; `overrides` give defaults and property values.
+- Create mocks (and the system under test) in `beforeEach` instead of resetting them with `resetCalls()`.
+- When mocking an internal module, spread the real one and override only what a test controls or asserts
+  (`{ ...nodeRequire('../service/utils'), generateRandomId: mock.fn(() => 'id') }`); never re-implement real functions.
 
 Because tsx compiles ES module `import` statements as namespace access, module-level mocks must be installed **before**
-the module under test is loaded — use `mockModule()` then `reloadModule()`.
+the module under test is loaded — use `mockModule()` then `reloadModule()`. `mockModule()` does not load the real
+module (mocking an SDK must not pay its import cost) and refuses Node built-ins (`require` never reads them from the
+require cache): use `mock.method(fs, 'readFile', …)` for those. The objects passed to `mockModule()` must stay the same
+for the whole file — change their functions per test with `Object.assign`.
 
 ### Frontend (Vitest + Playwright)
 

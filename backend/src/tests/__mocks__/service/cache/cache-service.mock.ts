@@ -1,51 +1,24 @@
-import { ReadStream } from 'node:fs';
-import { Readable } from 'node:stream';
-import { mock } from 'node:test';
-
-import {
-  CacheContentUpdateCommand,
-  CacheMetadata,
-  CacheSearchParam,
-  CacheSearchResult,
-  DataFolderType,
-  FileCacheContent
-} from '../../../../../shared/model/domain/engine.model';
-import type { ScopeType } from '../../../../../shared/model/domain/logs.model';
-
-import type { CacheSizeEvents, ICacheService } from '../../../../model/cache.service.model';
-import type { CacheSize } from '../../../../model/engine.model';
+import type { CacheSizeEvents } from '../../../../model/cache.service.model';
+import type CacheService from '../../../../service/cache/cache.service';
 import TypedEventEmitter from '../../../../service/typed-event-emitter';
+import { createMock, type Mocked } from '../../../utils/test-utils';
 
-export default class CacheServiceMock implements ICacheService {
-  refreshLogger = mock.fn((_scopeType: ScopeType, _id: string, _name: string): void => undefined);
-  start = mock.fn(async (): Promise<void> => undefined);
-  stop = mock.fn((): void => undefined);
-  getCacheContentToSend = mock.fn(async (_maxGroupCount: number): Promise<{ filename: string; metadata: CacheMetadata } | null> => null);
-  removeCacheContentFromQueue = mock.fn((_filename: string): void => undefined);
-  compactQueue = mock.fn(async (_maxGroupCount: number, _contentType: string): Promise<void> => undefined);
-  getNumberOfElementsInQueue = mock.fn((): number => 0);
-  getNumberOfRawFilesInQueue = mock.fn((): number => 0);
-  cacheIsEmpty = mock.fn((): boolean => true);
-  cacheIsFull = mock.fn((_maxSize: number): boolean => false);
-  getCacheSize = mock.fn((): number => 0);
-  getCacheContentSizes = mock.fn((): CacheSize => ({ cache: 0, error: 0, archive: 0 }));
-  searchCacheContent = mock.fn(async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({
-    searchDate: '',
-    error: [],
-    archive: [],
-    cache: []
-  }));
-  getFileFromCache = mock.fn(async (_folder: DataFolderType, _filename: string): Promise<FileCacheContent> => ({}) as FileCacheContent);
-  updateCacheContent = mock.fn(async (_updateCommand: CacheContentUpdateCommand): Promise<void> => undefined);
-  addCacheContent = mock.fn(
-    async (
-      _output: Buffer | ReadStream | Readable,
-      _details: { contentFilename?: string; numberOfElement?: number; contentType: string }
-    ): Promise<void> => undefined
-  );
-  removeAllCacheContent = mock.fn(async (): Promise<void> => undefined);
-  errorFolder = 'cache';
-  archiveFolder = 'error';
-  cacheFolder = 'cache';
-  cacheSizeEventEmitter = new TypedEventEmitter<CacheSizeEvents>();
+/**
+ * A CacheService mock describing an empty cache, which is what most north connector specs need
+ */
+export function createCacheServiceMock(): Mocked<CacheService> {
+  return createMock<CacheService>({
+    getCacheContentToSend: async () => null,
+    getNumberOfElementsInQueue: () => 0,
+    getNumberOfRawFilesInQueue: () => 0,
+    cacheIsEmpty: () => true,
+    cacheIsFull: () => false,
+    getCacheSize: () => 0,
+    getCacheContentSizes: () => ({ cache: 0, error: 0, archive: 0 }),
+    searchCacheContent: async () => ({ searchDate: '', error: [], archive: [], cache: [] }),
+    errorFolder: 'error',
+    archiveFolder: 'archive',
+    cacheFolder: 'cache',
+    cacheSizeEventEmitter: new TypedEventEmitter<CacheSizeEvents>()
+  });
 }
