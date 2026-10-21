@@ -1280,7 +1280,7 @@ describe('Service utils', () => {
     });
 
     it('should throw a not found error when the group id cannot be found', () => {
-      assert.throws(() => utils.checkGroups(groups, 'unknown-id', null), /Group "null" not found/);
+      assert.throws(() => utils.checkGroups(groups, 'unknown-id', null), /Group "unknown-id" not found/);
     });
 
     it('should throw a not found error when the group name cannot be found', () => {
