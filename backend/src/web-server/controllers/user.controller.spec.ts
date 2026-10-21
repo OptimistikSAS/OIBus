@@ -6,9 +6,9 @@ import { ChangePasswordCommand, UserCommandDTO } from '../../../shared/model/api
 import { createPageFromArray } from '../../../shared/model/common/types';
 import { UserSearchParam } from '../../../shared/model/domain/user.model';
 
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { UserController as UserControllerShape } from './user.controller';
 
@@ -32,11 +32,11 @@ before(() => {
 
 describe('UserController', () => {
   let controller: UserControllerShape;
-  let userService: UserServiceMock;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    userService = new UserServiceMock();
+    userService = createMock<UserService>();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
       services: createMockServices({ userService })
@@ -53,7 +53,7 @@ describe('UserController', () => {
     const page = 10;
     const searchParams: UserSearchParam = { page, login };
     const expectedResult = createPageFromArray(testData.users.list, 25, page);
-    userService.search = mock.fn(() => expectedResult);
+    userService.search.mock.mockImplementation(() => expectedResult);
 
     const result = await controller.search(login, page, mockRequest as CustomExpressRequest);
 
@@ -65,7 +65,7 @@ describe('UserController', () => {
   it('should search for users with default parameters', async () => {
     const searchParams: UserSearchParam = { page: 0, login: undefined };
     const expectedResult = createPageFromArray(testData.users.list, 25, 0);
-    userService.search = mock.fn(() => expectedResult);
+    userService.search.mock.mockImplementation(() => expectedResult);
 
     const result = await controller.search(undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -77,7 +77,7 @@ describe('UserController', () => {
   it('should return a user by ID', async () => {
     const mockUser = testData.users.list[0];
     const userId = mockUser.id;
-    userService.findById = mock.fn(() => mockUser);
+    userService.findById.mock.mockImplementation(() => mockUser);
 
     const result = await controller.findById(userId, mockRequest as CustomExpressRequest);
 
@@ -90,7 +90,7 @@ describe('UserController', () => {
     const command: UserCommandDTO = testData.users.command;
     const userWithPassword = { user: command, password: 'password' };
     const createdUser = testData.users.list[0];
-    userService.create = mock.fn(async () => createdUser);
+    userService.create.mock.mockImplementation(async () => createdUser);
 
     const result = await controller.create(userWithPassword, mockRequest as CustomExpressRequest);
 
@@ -102,7 +102,7 @@ describe('UserController', () => {
   it('should update an existing user', async () => {
     const userId = testData.users.list[0].id;
     const command: UserCommandDTO = testData.users.command;
-    userService.update = mock.fn(async () => undefined);
+    userService.update.mock.mockImplementation(async () => undefined);
 
     await controller.update(userId, command, mockRequest as CustomExpressRequest);
 
@@ -116,7 +116,7 @@ describe('UserController', () => {
       newPassword: 'newPassword',
       currentPassword: 'currentPassword'
     };
-    userService.updatePassword = mock.fn(async () => undefined);
+    userService.updatePassword.mock.mockImplementation(async () => undefined);
 
     await controller.updatePassword(userId, command, mockRequest as CustomExpressRequest);
 
@@ -126,7 +126,7 @@ describe('UserController', () => {
 
   it('should delete a user', async () => {
     const userId = testData.users.list[0].id;
-    userService.delete = mock.fn(async () => undefined);
+    userService.delete.mock.mockImplementation(async () => undefined);
 
     await controller.delete(userId, mockRequest as CustomExpressRequest);
 

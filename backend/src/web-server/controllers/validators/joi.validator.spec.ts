@@ -18,6 +18,7 @@ import {
   OIBusTimezoneAttribute
 } from '../../../../shared/model/connector/form.model';
 
+import { createMock } from '../../../tests/utils/test-utils';
 import JoiValidator from './joi.validator';
 
 const validator = new JoiValidator();
@@ -50,6 +51,9 @@ class JoiValidatorExtend extends JoiValidator {
 }
 
 const extendedValidator = new JoiValidatorExtend();
+
+// Only helpers.message() is used by the custom validators under test
+const buildHelpers = (message: unknown) => createMock<Joi.CustomHelpers>({ message: () => message });
 
 afterEach(() => {
   mock.restoreAll();
@@ -750,12 +754,10 @@ describe('Joi validator', () => {
   });
 
   it('generateSingleTrueValidator should manage single true fields', async () => {
-    // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
-    const messageMock = mock.fn((_messages: Joi.LanguageMessages, _local?: Joi.Context) => 'error');
-    const helpers = { message: messageMock } as unknown as Joi.CustomHelpers;
+    const helpers = buildHelpers('error');
     const test = extendedValidator.generateSingleTrueValidator('singleTrueField');
     assert.deepStrictEqual(test([{ singleTrueField: true }, { singleTrueField: true }, { singleTrueField: true }], helpers), 'error');
-    assert.deepStrictEqual(messageMock.mock.calls[0].arguments[0], {
+    assert.deepStrictEqual(helpers.message.mock.calls[0].arguments[0], {
       custom: `Only one item in the array can have "singleTrueField" set to true`
     });
 
@@ -1037,67 +1039,57 @@ describe('Joi validator', () => {
 
     describe('mqttTopicOverlapValidator', () => {
       it('should pass validation when no overlaps exist', () => {
-        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
-        const messageMock = mock.fn((_messages: Joi.LanguageMessages, _local?: Joi.Context) => undefined);
-        const mockHelpers = { message: messageMock } as unknown as Joi.CustomHelpers;
+        const mockHelpers = buildHelpers(undefined);
 
         const topics = [{ topic: '/oibus/counter' }, { topic: '/other/topic' }, { topic: '/different/path' }];
 
         const result = extendedValidator.mqttTopicOverlapValidatorFn(topics, mockHelpers);
         assert.strictEqual(result, topics);
-        assert.strictEqual(messageMock.mock.calls.length, 0);
+        assert.strictEqual(mockHelpers.message.mock.calls.length, 0);
       });
 
       it('should fail validation when overlaps exist', () => {
-        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
-        const messageMock = mock.fn((_messages: Joi.LanguageMessages, _local?: Joi.Context) => 'error message');
-        const mockHelpers = { message: messageMock } as unknown as Joi.CustomHelpers;
+        const mockHelpers = buildHelpers('error message');
 
         const topics = [{ topic: '/oibus/counter' }, { topic: '/oibus/#' }];
 
         const result = extendedValidator.mqttTopicOverlapValidatorFn(topics, mockHelpers);
 
-        assert.deepStrictEqual(messageMock.mock.calls[0].arguments[0], {
+        assert.deepStrictEqual(mockHelpers.message.mock.calls[0].arguments[0], {
           custom: 'MQTT topic subscriptions cannot overlap. Conflicting topics: "/oibus/counter" and "/oibus/#"'
         });
         assert.strictEqual(result, 'error message');
       });
 
       it('should handle non-array input', () => {
-        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
-        const messageMock = mock.fn((_messages: Joi.LanguageMessages, _local?: Joi.Context) => undefined);
-        const mockHelpers = { message: messageMock } as unknown as Joi.CustomHelpers;
+        const mockHelpers = buildHelpers(undefined);
 
         const nonArrayValue = 'not-an-array';
         // intentional wrong-type input to test defensive behavior — Joi.CustomValidator accepts value: any
         const result = extendedValidator.mqttTopicOverlapValidatorFn(nonArrayValue, mockHelpers);
         assert.strictEqual(result, nonArrayValue);
-        assert.strictEqual(messageMock.mock.calls.length, 0);
+        assert.strictEqual(mockHelpers.message.mock.calls.length, 0);
       });
 
       it('should filter out empty topics', () => {
-        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
-        const messageMock = mock.fn((_messages: Joi.LanguageMessages, _local?: Joi.Context) => undefined);
-        const mockHelpers = { message: messageMock } as unknown as Joi.CustomHelpers;
+        const mockHelpers = buildHelpers(undefined);
 
         const topics = [{ topic: '/oibus/counter' }, { topic: '' }, { topic: '   ' }, { topic: '/other/topic' }];
 
         const result = extendedValidator.mqttTopicOverlapValidatorFn(topics, mockHelpers);
         assert.strictEqual(result, topics);
-        assert.strictEqual(messageMock.mock.calls.length, 0);
+        assert.strictEqual(mockHelpers.message.mock.calls.length, 0);
       });
 
       it('should handle multiple overlaps', () => {
-        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
-        const messageMock = mock.fn((_messages: Joi.LanguageMessages, _local?: Joi.Context) => 'error message');
-        const mockHelpers = { message: messageMock } as unknown as Joi.CustomHelpers;
+        const mockHelpers = buildHelpers('error message');
 
         const topics = [{ topic: '/oibus/counter' }, { topic: '/oibus/+' }, { topic: '/oibus/#' }];
 
         const result = extendedValidator.mqttTopicOverlapValidatorFn(topics, mockHelpers);
 
-        assert.strictEqual(messageMock.mock.calls.length, 1);
-        assert.ok(String(messageMock.mock.calls[0].arguments[0].custom).includes('MQTT topic subscriptions cannot overlap'));
+        assert.strictEqual(mockHelpers.message.mock.calls.length, 1);
+        assert.ok(String(mockHelpers.message.mock.calls[0].arguments[0].custom).includes('MQTT topic subscriptions cannot overlap'));
         assert.strictEqual(result, 'error message');
       });
     });

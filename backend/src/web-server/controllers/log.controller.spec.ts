@@ -7,9 +7,9 @@ import { DateTime } from 'luxon';
 import { createPageFromArray } from '../../../shared/model/common/types';
 import { Group, Item, LogSearchParam, Scope } from '../../../shared/model/domain/logs.model';
 
-import LogServiceMock from '../../tests/__mocks__/service/log-service.mock';
+import type LogService from '../../service/log.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { LogController as LogControllerShape } from './log.controller';
 
@@ -28,12 +28,12 @@ before(() => {
 
 describe('LogController', () => {
   let controller: LogControllerShape;
-  let logService: LogServiceMock;
+  let logService: Mocked<LogService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    logService = new LogServiceMock();
+    logService = createMock<LogService>();
     mockRequest = {
       services: createMockServices({ logService })
     } as Partial<CustomExpressRequest>;
@@ -69,7 +69,7 @@ describe('LogController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
-    logService.search = mock.fn(() => expectedResult);
+    logService.search.mock.mockImplementation(() => expectedResult);
 
     const result = await controller.search(
       start,
@@ -106,7 +106,7 @@ describe('LogController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
-    logService.search = mock.fn(() => expectedResult);
+    logService.search.mock.mockImplementation(() => expectedResult);
 
     const result = await controller.search(
       undefined,
@@ -129,7 +129,7 @@ describe('LogController', () => {
   it('should suggest scopes by name', async () => {
     const scopes: Array<Scope> = [{ scopeId: 'id', scopeName: 'name' }];
     const name = 'name';
-    logService.suggestScopes = mock.fn(() => scopes);
+    logService.suggestScopes.mock.mockImplementation(() => scopes);
 
     const result = await controller.suggestScopes(name, mockRequest as CustomExpressRequest);
 
@@ -140,7 +140,7 @@ describe('LogController', () => {
 
   it('should suggest scopes by name with default parameter', async () => {
     const scopes: Array<Scope> = [{ scopeId: 'id', scopeName: 'name' }];
-    logService.suggestScopes = mock.fn(() => scopes);
+    logService.suggestScopes.mock.mockImplementation(() => scopes);
 
     const result = await controller.suggestScopes(undefined, mockRequest as CustomExpressRequest);
 
@@ -152,7 +152,7 @@ describe('LogController', () => {
   it('should get scope by its ID', async () => {
     const scope: Scope = { scopeId: 'id', scopeName: 'name' };
     const scopeId = 'id';
-    logService.getScopeById = mock.fn(() => scope);
+    logService.getScopeById.mock.mockImplementation(() => scope);
 
     const result = await controller.getScopeById(scopeId, mockRequest as CustomExpressRequest);
 
@@ -164,7 +164,7 @@ describe('LogController', () => {
   it('should suggest items by name', async () => {
     const items: Array<Item> = [{ itemId: 'item-id', itemName: 'Item Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
     const name = 'Item';
-    logService.suggestItems = mock.fn(() => items);
+    logService.suggestItems.mock.mockImplementation(() => items);
 
     const result = await controller.suggestItems(name, undefined, mockRequest as CustomExpressRequest);
 
@@ -175,7 +175,7 @@ describe('LogController', () => {
 
   it('should suggest items by name with default parameter', async () => {
     const items: Array<Item> = [{ itemId: 'item-id', itemName: 'Item Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
-    logService.suggestItems = mock.fn(() => items);
+    logService.suggestItems.mock.mockImplementation(() => items);
 
     const result = await controller.suggestItems(undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -186,7 +186,7 @@ describe('LogController', () => {
 
   it('should suggest items restricted to a scope', async () => {
     const items: Array<Item> = [{ itemId: 'item-id', itemName: 'Item Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
-    logService.suggestItems = mock.fn(() => items);
+    logService.suggestItems.mock.mockImplementation(() => items);
 
     const result = await controller.suggestItems('Item', 'scope-id', mockRequest as CustomExpressRequest);
 
@@ -198,7 +198,7 @@ describe('LogController', () => {
   it('should get item by its ID', async () => {
     const item: Item = { itemId: 'item-id', itemName: 'Item Name', scopeId: 'scope-id', scopeName: 'Scope Name' };
     const itemId = 'item-id';
-    logService.getItemById = mock.fn(() => item);
+    logService.getItemById.mock.mockImplementation(() => item);
 
     const result = await controller.getItemById(itemId, mockRequest as CustomExpressRequest);
 
@@ -210,7 +210,7 @@ describe('LogController', () => {
   it('should suggest groups by name', async () => {
     const groups: Array<Group> = [{ groupId: 'group-id', groupName: 'Group Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
     const name = 'Group';
-    logService.suggestGroups = mock.fn(() => groups);
+    logService.suggestGroups.mock.mockImplementation(() => groups);
 
     const result = await controller.suggestGroups(name, undefined, mockRequest as CustomExpressRequest);
 
@@ -221,7 +221,7 @@ describe('LogController', () => {
 
   it('should suggest groups by name with default parameter', async () => {
     const groups: Array<Group> = [{ groupId: 'group-id', groupName: 'Group Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
-    logService.suggestGroups = mock.fn(() => groups);
+    logService.suggestGroups.mock.mockImplementation(() => groups);
 
     const result = await controller.suggestGroups(undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -232,7 +232,7 @@ describe('LogController', () => {
 
   it('should suggest groups restricted to a scope', async () => {
     const groups: Array<Group> = [{ groupId: 'group-id', groupName: 'Group Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
-    logService.suggestGroups = mock.fn(() => groups);
+    logService.suggestGroups.mock.mockImplementation(() => groups);
 
     const result = await controller.suggestGroups('Group', 'scope-id', mockRequest as CustomExpressRequest);
 
@@ -244,7 +244,7 @@ describe('LogController', () => {
   it('should get group by its ID', async () => {
     const group: Group = { groupId: 'group-id', groupName: 'Group Name', scopeId: 'scope-id', scopeName: 'Scope Name' };
     const groupId = 'group-id';
-    logService.getGroupById = mock.fn(() => group);
+    logService.getGroupById.mock.mockImplementation(() => group);
 
     const result = await controller.getGroupById(groupId, mockRequest as CustomExpressRequest);
 

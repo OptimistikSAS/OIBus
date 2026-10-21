@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { before, beforeEach, describe, it, mock } from 'node:test';
+import { before, beforeEach, describe, it } from 'node:test';
 
 import { createPageFromArray } from '../../../shared/model/common/types';
 
 import { AuditLog, AuditSearchParam } from '../../model/audit.model';
-import AuditServiceMock from '../../tests/__mocks__/service/audit-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import type AuditService from '../../service/audit.service';
+import type UserService from '../../service/user.service';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { AuditController as AuditControllerShape } from './audit.controller';
 
@@ -52,15 +52,15 @@ function toExpectedDTO(auditLog: AuditLog) {
 
 describe('AuditController', () => {
   let controller: AuditControllerShape;
-  let auditService: AuditServiceMock;
-  let userService: UserServiceMock;
+  let auditService: Mocked<AuditService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    auditService = new AuditServiceMock();
-    auditService.getEntityInfo = mock.fn(() => entityInfo);
-    userService = new UserServiceMock();
-    userService.getUserInfo = mock.fn(() => userInfo);
+    auditService = createMock<AuditService>();
+    auditService.getEntityInfo.mock.mockImplementation(() => entityInfo);
+    userService = createMock<UserService>();
+    userService.getUserInfo.mock.mockImplementation(() => userInfo);
     mockRequest = {
       services: createMockServices({ auditService, userService })
     } as Partial<CustomExpressRequest>;
@@ -70,7 +70,7 @@ describe('AuditController', () => {
   describe('search()', () => {
     it('should pass parsed query params through to auditService.search() and map results', () => {
       const expectedResult = createPageFromArray([auditLog1, auditLog2], 50, 0);
-      auditService.search = mock.fn(() => expectedResult);
+      auditService.search.mock.mockImplementation(() => expectedResult);
 
       const result = controller.search(
         mockRequest as CustomExpressRequest,
@@ -108,7 +108,7 @@ describe('AuditController', () => {
 
     it('should default page to 0 and forward undefined filters when none are provided', () => {
       const expectedResult = createPageFromArray([], 50, 0);
-      auditService.search = mock.fn(() => expectedResult);
+      auditService.search.mock.mockImplementation(() => expectedResult);
 
       const result = controller.search(mockRequest as CustomExpressRequest);
 
@@ -127,7 +127,7 @@ describe('AuditController', () => {
 
   describe('history()', () => {
     it('should pass entityType/entityId through to auditService.findByEntity() and map results', () => {
-      auditService.findByEntity = mock.fn(() => [auditLog2, auditLog1]);
+      auditService.findByEntity.mock.mockImplementation(() => [auditLog2, auditLog1]);
 
       const result = controller.history(mockRequest as CustomExpressRequest, 'south_connector', 'south1');
 

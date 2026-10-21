@@ -4,10 +4,10 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 
 import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../shared/model/api/scan-mode.model';
 
-import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type ScanModeService from '../../service/scan-mode.service';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { ScanModeController as ScanModeControllerShape } from './scan-mode.controller';
 
@@ -31,13 +31,13 @@ before(() => {
 
 describe('ScanModeController', () => {
   let controller: ScanModeControllerShape;
-  let scanModeService: ScanModeServiceMock;
-  let userService: UserServiceMock;
+  let scanModeService: Mocked<ScanModeService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    scanModeService = new ScanModeServiceMock();
-    userService = new UserServiceMock();
+    scanModeService = createMock<ScanModeService>();
+    userService = createMock<UserService>();
     mockRequest = {
       services: createMockServices({ scanModeService, userService }),
       user: { id: 'test', login: 'testUser' }
@@ -51,7 +51,7 @@ describe('ScanModeController', () => {
 
   it('should return a list of scan modes', async () => {
     const mockScanModes = testData.scanMode.list;
-    scanModeService.list = mock.fn(() => mockScanModes);
+    scanModeService.list.mock.mockImplementation(() => mockScanModes);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
 
@@ -62,7 +62,7 @@ describe('ScanModeController', () => {
   it('should return a scan mode by ID', async () => {
     const mockScanMode = testData.scanMode.list[0];
     const scanModeId = mockScanMode.id;
-    scanModeService.findById = mock.fn(() => mockScanMode);
+    scanModeService.findById.mock.mockImplementation(() => mockScanMode);
 
     const result = await controller.findById(scanModeId, mockRequest as CustomExpressRequest);
 
@@ -74,7 +74,7 @@ describe('ScanModeController', () => {
   it('should create a new scan mode', async () => {
     const command: ScanModeCommandDTO = testData.scanMode.command;
     const createdScanMode = testData.scanMode.list[0];
-    scanModeService.create = mock.fn(async () => createdScanMode);
+    scanModeService.create.mock.mockImplementation(async () => createdScanMode);
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
@@ -86,7 +86,7 @@ describe('ScanModeController', () => {
   it('should update an existing scan mode', async () => {
     const scanModeId = testData.scanMode.list[0].id;
     const command: ScanModeCommandDTO = testData.scanMode.command;
-    scanModeService.update = mock.fn(async () => undefined);
+    scanModeService.update.mock.mockImplementation(async () => undefined);
 
     await controller.update(scanModeId, command, mockRequest as CustomExpressRequest);
 
@@ -96,7 +96,7 @@ describe('ScanModeController', () => {
 
   it('should delete a scan mode', async () => {
     const scanModeId = testData.scanMode.list[0].id;
-    scanModeService.delete = mock.fn(async () => undefined);
+    scanModeService.delete.mock.mockImplementation(async () => undefined);
 
     await controller.delete(scanModeId, mockRequest as CustomExpressRequest);
 
@@ -112,7 +112,7 @@ describe('ScanModeController', () => {
       nextExecutions: [],
       humanReadableForm: ''
     };
-    scanModeService.verifyCron = mock.fn(async () => validatedCronExpression);
+    scanModeService.verifyCron.mock.mockImplementation(() => validatedCronExpression);
 
     const result = await controller.verifyCron(command, mockRequest as CustomExpressRequest);
 
@@ -129,7 +129,7 @@ describe('ScanModeController', () => {
       nextExecutions: [],
       humanReadableForm: ''
     };
-    scanModeService.verifyCron = mock.fn(async () => validatedCronExpression);
+    scanModeService.verifyCron.mock.mockImplementation(() => validatedCronExpression);
 
     const result = await controller.verifyCron(command, mockRequest as CustomExpressRequest);
 
