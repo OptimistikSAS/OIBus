@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import * as bacnetJs from '@bacnet-js/client';
 
@@ -10,10 +10,9 @@ import type { SouthBACnetItemSettings, SouthBACnetSettings } from '../../../shar
 import type { ScanMode } from '../../model/scan-mode.model';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthBACnetClass from './south-bacnet';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -94,14 +93,12 @@ class BACnetClientMock extends EventEmitter {
 }
 
 let lastCreatedClient: BACnetClientMock;
-const bacnetExports = {
-  ...bacnetJs,
-  __esModule: true,
-  default: mock.fn(function BACnetClientCtorMock(_options: unknown) {
+const createClientConstructor = () =>
+  mock.fn(function BACnetClientCtorMock(_options: unknown) {
     lastCreatedClient = new BACnetClientMock();
     return lastCreatedClient;
-  })
-};
+  });
+const bacnetExports = { ...bacnetJs, __esModule: true, default: createClientConstructor() };
 
 /** Sets up the next client before it is created, for a request it sends before the test could reach it. */
 function setUpNextClient(setUp: (client: BACnetClientMock) => void): void {
@@ -143,6 +140,14 @@ function iAm(address: string, deviceId: number, forwardedFrom: string | null = n
   };
 }
 
+/** An I-Am from a device behind the router at `address` (127.0.0.1:47809 by default), on network 2. */
+function routedIAm(adr: Array<number>, deviceId: number, address = '127.0.0.1:47809') {
+  return {
+    header: { apduType: 0x10, expectingReply: false, sender: { address, forwardedFrom: null, net: 2, adr } },
+    payload: { deviceId, maxApdu: 480, segmentation: 3, vendorId: 0 }
+  };
+}
+
 function buildItem(overrides: {
   id: string;
   name: string;
@@ -175,151 +180,138 @@ function buildItem(overrides: {
   };
 }
 
+const item1 = buildItem({
+  id: 'id1',
+  name: 'item1',
+  settings: {
+    deviceAddress: '192.168.1.10',
+    deviceInstance: 10,
+    objectType: 'analog-input',
+    objectInstance: 1,
+    propertyIdentifier: 'present-value',
+    routed: false
+  }
+});
+const item2 = buildItem({ id: 'id2', name: 'item2', settings: { ...item1.settings, objectInstance: 2 } });
+const item3 = buildItem({
+  id: 'id3',
+  name: 'item3',
+  settings: { ...item1.settings, deviceAddress: '192.168.1.11', deviceInstance: 11, objectType: 'binary-input' }
+});
+const subscriptionItem = buildItem({
+  id: 'id4',
+  name: 'item4',
+  scanMode: subscriptionScanMode,
+  settings: { ...item1.settings, objectType: 'analog-value', objectInstance: 5 }
+});
+// A property that SubscribeCOV does not report
+const reliabilityItem = buildItem({
+  id: 'id7',
+  name: 'item7',
+  scanMode: subscriptionScanMode,
+  settings: { ...subscriptionItem.settings, propertyIdentifier: 'reliability' }
+});
+
+// Two MS/TP devices behind the same BACnet router (192.168.1.20), on network 2.
+const routedItem1 = buildItem({
+  id: 'routed1',
+  name: 'routed1',
+  settings: {
+    deviceAddress: '192.168.1.20',
+    deviceInstance: 2005,
+    objectType: 'analog-input',
+    objectInstance: 1,
+    propertyIdentifier: 'present-value',
+    routed: true,
+    networkNumber: 2,
+    macAddress: '5'
+  }
+});
+const routedItem2 = buildItem({
+  id: 'routed2',
+  name: 'routed2',
+  settings: { ...routedItem1.settings, deviceInstance: 2006, macAddress: '6' }
+});
+
+const configuration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
+  id: 'southId',
+  name: 'south',
+  type: 'bacnet',
+  description: 'test bacnet connector',
+  enabled: true,
+  settings: {
+    localInterface: '',
+    discoveryMode: 'broadcast',
+    port: 47809,
+    apduTimeout: 100,
+    broadcastAddress: '255.255.255.255',
+    retryInterval: 1000,
+    maxParallelRun: 1,
+    covDefaultLifetime: 300,
+    covRenewalMargin: 60,
+    maxObjectsPerRequest: 2,
+    maxNumberOfMessages: 1000,
+    flushMessageTimeout: 1000,
+    bbmd: { enabled: false }
+  },
+  groups: [],
+  items: [item1, item2, item3, subscriptionItem],
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+};
+const withSettings = (
+  settings: Partial<SouthBACnetSettings>,
+  baseConfiguration = configuration
+): SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> => ({
+  ...baseConfiguration,
+  settings: { ...baseConfiguration.settings, ...settings }
+});
+const withBbmd = (baseConfiguration = configuration) =>
+  withSettings({ bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }, baseConfiguration);
+const targetDeviceConfiguration = withSettings({
+  discoveryMode: 'target-device',
+  discoveryTargetAddress: '172.16.32.20',
+  discoveryTargetDeviceInstance: 201
+});
+const routerConfiguration = withSettings({ discoveryMode: 'router', discoveryRouterAddress: '127.0.0.1:47809' });
+
+const noHistory = { history: undefined as never };
+
+/** Whether `logMock` logged a message (second argument, after the log context) containing all `texts` */
+const logged = (logMock: Mock<(...args: Array<unknown>) => unknown>, ...texts: Array<string>) =>
+  logMock.mock.calls.some(
+    call => typeof call.arguments[1] === 'string' && texts.every(text => (call.arguments[1] as string).includes(text))
+  );
+
 describe('SouthBACnet', () => {
   let SouthBACnet: typeof SouthBACnetClass;
   let south: SouthBACnetClass;
-
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-
-  const item1 = buildItem({
-    id: 'id1',
-    name: 'item1',
-    settings: {
-      deviceAddress: '192.168.1.10',
-      deviceInstance: 10,
-      objectType: 'analog-input',
-      objectInstance: 1,
-      propertyIdentifier: 'present-value',
-      routed: false
-    }
-  });
-  const item2 = buildItem({
-    id: 'id2',
-    name: 'item2',
-    settings: {
-      deviceAddress: '192.168.1.10',
-      deviceInstance: 10,
-      objectType: 'analog-input',
-      objectInstance: 2,
-      propertyIdentifier: 'present-value',
-      routed: false
-    }
-  });
-  const item3 = buildItem({
-    id: 'id3',
-    name: 'item3',
-    settings: {
-      deviceAddress: '192.168.1.11',
-      deviceInstance: 11,
-      objectType: 'binary-input',
-      objectInstance: 1,
-      propertyIdentifier: 'present-value',
-      routed: false
-    }
-  });
-  const subscriptionItem = buildItem({
-    id: 'id4',
-    name: 'item4',
-    scanMode: subscriptionScanMode,
-    settings: {
-      deviceAddress: '192.168.1.10',
-      deviceInstance: 10,
-      objectType: 'analog-value',
-      objectInstance: 5,
-      propertyIdentifier: 'present-value',
-      routed: false
-    }
-  });
-
-  // Two MS/TP devices behind the same BACnet router (192.168.1.20), on network 2.
-  const routedItem1 = buildItem({
-    id: 'routed1',
-    name: 'routed1',
-    settings: {
-      deviceAddress: '192.168.1.20',
-      deviceInstance: 2005,
-      objectType: 'analog-input',
-      objectInstance: 1,
-      propertyIdentifier: 'present-value',
-      routed: true,
-      networkNumber: 2,
-      macAddress: '5'
-    }
-  });
-  const routedItem2 = buildItem({
-    id: 'routed2',
-    name: 'routed2',
-    settings: { ...routedItem1.settings, deviceInstance: 2006, macAddress: '6' }
-  });
-
-  const configuration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'bacnet',
-    description: 'test bacnet connector',
-    enabled: true,
-    settings: {
-      localInterface: '',
-      discoveryMode: 'broadcast',
-      port: 47809,
-      apduTimeout: 100,
-      broadcastAddress: '255.255.255.255',
-      retryInterval: 1000,
-      maxParallelRun: 1,
-      covDefaultLifetime: 300,
-      covRenewalMargin: 60,
-      maxObjectsPerRequest: 2,
-      maxNumberOfMessages: 1000,
-      flushMessageTimeout: 1000,
-      bbmd: { enabled: false }
-    },
-    groups: [],
-    items: [item1, item2, item3, subscriptionItem],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-  const targetDeviceConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
-    ...configuration,
-    settings: {
-      ...configuration.settings,
-      discoveryMode: 'target-device',
-      discoveryTargetAddress: '172.16.32.20',
-      discoveryTargetDeviceInstance: 201
-    }
-  };
-  const routerConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
-    ...configuration,
-    settings: { ...configuration.settings, discoveryMode: 'router', discoveryRouterAddress: '127.0.0.1:47809' }
-  };
-  /** An I-Am from a device behind the router at 127.0.0.1:47809, on network 2. */
-  const routedIAm = (adr: Array<number>, deviceId: number) => ({
-    header: { apduType: 0x10, expectingReply: false, sender: { address: '127.0.0.1:47809', forwardedFrom: null, net: 2, adr } },
-    payload: { deviceId, maxApdu: 480, segmentation: 3, vendorId: 0 }
-  });
+  let logger: PinoLogger;
+  let addContentCallback: Mock<(southId: string, data: unknown, queryTime: string, items: unknown) => Promise<void>>;
+  let southCacheRepository: Mocked<SouthCacheRepository>;
 
   before(() => {
     mockModule(nodeRequire, '@bacnet-js/client', bacnetExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
     SouthBACnet = reloadModule<{ default: typeof SouthBACnetClass }>(nodeRequire, './south-bacnet').default;
   });
 
+  const createSouth = (southConfiguration = configuration) =>
+    new SouthBACnet(southConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+
   beforeEach(() => {
-    bacnetExports.default.mock.resetCalls();
-    addContentCallback.mock.resetCalls();
-    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
-    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
-    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
-    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
+    logger = new PinoLogger();
+    bacnetExports.default = createClientConstructor();
+    addContentCallback = mock.fn(async () => undefined);
+    southCacheRepository = createMock<SouthCacheRepository>({ getItemsLastValues: () => new Map() });
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthBACnet(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    south = createSouth();
   });
 
   afterEach(async () => {
@@ -336,11 +328,14 @@ describe('SouthBACnet', () => {
     return lastCreatedClient;
   }
 
+  /** The time values sent to the engine by the first addContent call */
+  const publishedValues = () =>
+    (addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; timestamp: string; data: { value: unknown } }> })
+      .content;
+
   describe('connect / disconnect', () => {
     it('should properly connect and open a BACnet/IP client', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
+      await connectSouth();
 
       assert.strictEqual(bacnetExports.default.mock.calls.length, 1);
       assert.deepStrictEqual(bacnetExports.default.mock.calls[0].arguments[0], {
@@ -352,81 +347,57 @@ describe('SouthBACnet', () => {
     });
 
     it('should register as a foreign device and schedule renewal when BBMD is enabled', async () => {
-      const bbmdConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
-        ...configuration,
-        settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
-      };
-      south = new SouthBACnet(bbmdConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
+      south = createSouth(withBbmd());
+      const client = await connectSouth();
 
-      assert.strictEqual(lastCreatedClient.registerForeignDevice.mock.calls.length, 1);
-      assert.deepStrictEqual(lastCreatedClient.registerForeignDevice.mock.calls[0].arguments, [{ address: '10.0.0.1:47808' }, 900]);
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 1);
+      assert.deepStrictEqual(client.registerForeignDevice.mock.calls[0].arguments, [{ address: '10.0.0.1:47808' }, 900]);
 
-      lastCreatedClient.registerForeignDevice.mock.resetCalls();
       mock.timers.tick(900 * 500);
       await flushPromises();
-      assert.strictEqual(lastCreatedClient.registerForeignDevice.mock.calls.length, 1);
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 2);
     });
 
     it('should reconnect after a transport error', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      bacnetExports.default.mock.resetCalls();
+      const client = await connectSouth();
 
-      lastCreatedClient.emit('error', new Error('ENETUNREACH'));
+      client.emit('error', new Error('ENETUNREACH'));
       await flushPromises();
       mock.timers.tick(1000);
       await flushPromises();
 
-      assert.strictEqual(bacnetExports.default.mock.calls.length, 1);
+      assert.strictEqual(bacnetExports.default.mock.calls.length, 2);
     });
 
     it('should close the client on disconnect', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
 
       await south.disconnect();
       assert.strictEqual(client.close.mock.calls.length, 1);
     });
 
     it('should retry a failed BBMD registration renewal every retryInterval', async () => {
-      south = new SouthBACnet(
-        {
-          ...configuration,
-          settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
-        },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
+      south = createSouth(withBbmd());
       const client = await connectSouth();
-      client.registerForeignDevice.mock.resetCalls();
       client.registerForeignDevice.mock.mockImplementation(async () => {
         throw new Error('ERR_TIMEOUT');
       });
 
+      // The first call is the registration on connect
       mock.timers.tick(900 * 500);
       await flushPromises();
-      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 1);
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 2);
 
       client.registerForeignDevice.mock.mockImplementation(async () => undefined);
       mock.timers.tick(1000);
       await flushPromises();
-      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 2);
+      assert.strictEqual(client.registerForeignDevice.mock.calls.length, 3);
     });
   });
 
   describe('testConnection', () => {
     it('should discover devices via whoIs and reuse a live client', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
 
       const testPromise = south.testConnection();
       await flushPromises();
@@ -445,10 +416,7 @@ describe('SouthBACnet', () => {
       const testPromise = south.testConnection();
       await flushPromises();
       client.emit('iAm', iAm('192.168.1.20', 1000));
-      client.emit('iAm', {
-        header: { apduType: 0x10, expectingReply: false, sender: { address: '192.168.1.20', forwardedFrom: null, net: 2, adr: [5] } },
-        payload: { deviceId: 2005, maxApdu: 480, segmentation: 3, vendorId: 0 }
-      });
+      client.emit('iAm', routedIAm([5], 2005, '192.168.1.20'));
       mock.timers.tick(3000);
       const result = await testPromise;
 
@@ -479,20 +447,13 @@ describe('SouthBACnet', () => {
     });
 
     it('should register as a foreign device, then use whoIsThroughBBMD when BBMD is enabled', async () => {
-      const bbmdConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
-        ...configuration,
-        settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
-      };
-      south = new SouthBACnet(bbmdConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(withBbmd());
       let registrationsBeforeWhoIs: number | null = null;
-      bacnetExports.default.mock.mockImplementationOnce(function BACnetClientCtorMock(_options: unknown) {
-        const created = new BACnetClientMock();
+      setUpNextClient(created =>
         created.whoIsThroughBBMD.mock.mockImplementation(() => {
           registrationsBeforeWhoIs = created.registerForeignDevice.mock.calls.length;
-        });
-        lastCreatedClient = created;
-        return created;
-      });
+        })
+      );
 
       const testPromise = south.testConnection();
       await flushPromises();
@@ -512,23 +473,12 @@ describe('SouthBACnet', () => {
     });
 
     it('should fail the test when the BBMD refuses the foreign device registration', async () => {
-      south = new SouthBACnet(
-        {
-          ...configuration,
-          settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
-        },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
-      bacnetExports.default.mock.mockImplementationOnce(function BACnetClientCtorMock(_options: unknown) {
-        const created = new BACnetClientMock();
+      south = createSouth(withBbmd());
+      setUpNextClient(created =>
         created.registerForeignDevice.mock.mockImplementation(async () => {
           throw new Error('BacnetError - Class:7 - Code:0 - Result:48');
-        });
-        lastCreatedClient = created;
-        return created;
-      });
+        })
+      );
 
       await assert.rejects(south.testConnection(), {
         message: 'Could not register as a foreign device with BBMD 10.0.0.1:47808: BacnetError - Class:7 - Code:0 - Result:48'
@@ -538,7 +488,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should read the target device directly, without any Who-Is', async () => {
-      south = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(targetDeviceConfiguration);
 
       const result = await south.testConnection();
 
@@ -558,7 +508,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should fail the test when the target device does not answer', async () => {
-      south = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(targetDeviceConfiguration);
       setUpNextClient(client =>
         client.readProperty.mock.mockImplementation(async () => {
           throw new Error('ERR_TIMEOUT');
@@ -570,7 +520,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should decode the refusal when the target device is not the configured device instance', async () => {
-      south = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(targetDeviceConfiguration);
       setUpNextClient(client =>
         client.readProperty.mock.mockImplementation(async () => {
           throw new Error('BacnetError - Class:1 - Code:31');
@@ -581,15 +531,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should still register with the BBMD, but not discover through it, when a target device is set', async () => {
-      south = new SouthBACnet(
-        {
-          ...targetDeviceConfiguration,
-          settings: { ...targetDeviceConfiguration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
-        },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
+      south = createSouth(withBbmd(targetDeviceConfiguration));
 
       await south.testConnection();
 
@@ -603,7 +545,7 @@ describe('SouthBACnet', () => {
   describe('shared socket', () => {
     it('should test other settings through the socket of a connector running on the same port', async () => {
       const liveClient = await connectSouth();
-      const tested = new SouthBACnet(routerConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      const tested = createSouth(routerConfiguration);
 
       const testPromise = tested.testConnection();
       await flushPromises();
@@ -623,7 +565,7 @@ describe('SouthBACnet', () => {
 
     it('should close the socket when its last connector releases it', async () => {
       const liveClient = await connectSouth();
-      const explorer = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      const explorer = createSouth(targetDeviceConfiguration);
       await explorer.connect();
 
       await south.disconnect();
@@ -635,12 +577,7 @@ describe('SouthBACnet', () => {
 
     it('should open one socket per port', async () => {
       await connectSouth();
-      const otherPort = new SouthBACnet(
-        { ...configuration, settings: { ...configuration.settings, port: 47810 } },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
+      const otherPort = createSouth(withSettings({ port: 47810 }));
       await otherPort.connect();
 
       assert.deepStrictEqual(
@@ -655,7 +592,7 @@ describe('SouthBACnet', () => {
       failedClient.emit('error', new Error('socket failure'));
       await flushPromises();
 
-      const tested = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      const tested = createSouth(targetDeviceConfiguration);
       await tested.testConnection();
 
       assert.strictEqual(bacnetExports.default.mock.calls.length, 2);
@@ -666,7 +603,7 @@ describe('SouthBACnet', () => {
 
   describe('testConnection with a router', () => {
     it('should send a global Who-Is to the router alone, and list the router and the devices behind it', async () => {
-      south = new SouthBACnet(routerConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(routerConfiguration);
 
       const testPromise = south.testConnection();
       await flushPromises();
@@ -688,15 +625,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should send the Who-Is to the router, not through the BBMD, when BBMD is enabled', async () => {
-      south = new SouthBACnet(
-        {
-          ...routerConfiguration,
-          settings: { ...routerConfiguration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
-        },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
+      south = createSouth(withBbmd(routerConfiguration));
 
       const testPromise = south.testConnection();
       await flushPromises();
@@ -712,7 +641,7 @@ describe('SouthBACnet', () => {
 
   describe('testItem', () => {
     it('should read the configured property and return one time value', async () => {
-      const testPromise = south.testItem(item1, { history: undefined as never });
+      const testPromise = south.testItem(item1, noHistory);
       await flushPromises();
       const result = await testPromise;
 
@@ -727,17 +656,9 @@ describe('SouthBACnet', () => {
     });
 
     it('should register as a foreign device before testing an item when BBMD is enabled', async () => {
-      south = new SouthBACnet(
-        {
-          ...configuration,
-          settings: { ...configuration.settings, bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 } }
-        },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
+      south = createSouth(withBbmd());
 
-      const testPromise = south.testItem(item1, { history: undefined as never });
+      const testPromise = south.testItem(item1, noHistory);
       await flushPromises();
       const client = lastCreatedClient;
       mock.timers.tick(3000);
@@ -748,7 +669,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should read the item device directly, without any Who-Is', async () => {
-      await south.testItem(item1, { history: undefined as never });
+      await south.testItem(item1, noHistory);
 
       const client = lastCreatedClient;
       assert.strictEqual(client.whoIs.mock.calls.length, 0);
@@ -759,7 +680,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should read a routed item through its router', async () => {
-      await south.testItem(routedItem1, { history: undefined as never });
+      await south.testItem(routedItem1, noHistory);
 
       assert.deepStrictEqual(lastCreatedClient.readProperty.mock.calls[0].arguments[0], { address: '192.168.1.20', net: 2, adr: [5] });
     });
@@ -771,7 +692,7 @@ describe('SouthBACnet', () => {
         })
       );
 
-      await assert.rejects(south.testItem(item1, { history: undefined as never }), {
+      await assert.rejects(south.testItem(item1, noHistory), {
         message: 'Device 192.168.1.10 refused to read present-value of analog-input 1: OBJECT/UNKNOWN_OBJECT'
       });
       assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
@@ -784,7 +705,7 @@ describe('SouthBACnet', () => {
         })
       );
 
-      await assert.rejects(south.testItem(item1, { history: undefined as never }), { message: 'ERR_TIMEOUT' });
+      await assert.rejects(south.testItem(item1, noHistory), { message: 'ERR_TIMEOUT' });
     });
   });
 
@@ -795,12 +716,7 @@ describe('SouthBACnet', () => {
         [50, 16],
         [0, 1]
       ]) {
-        const parallel = new SouthBACnet(
-          { ...configuration, settings: { ...configuration.settings, maxParallelRun } },
-          addContentCallback,
-          southCacheRepository,
-          'cacheFolder'
-        );
+        const parallel = createSouth(withSettings({ maxParallelRun }));
         assert.strictEqual(parallel['getMaxParallelRun'](), expected);
       }
     });
@@ -838,10 +754,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should batch reads per device, respecting maxObjectsPerRequest, and cache the results', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
       client.readPropertyMultiple.mock.mockImplementation(
         async (_address: unknown, specs: Array<{ objectId: { type: number; instance: number } }>) => ({
           len: 0,
@@ -858,15 +771,12 @@ describe('SouthBACnet', () => {
       // and 192.168.1.11 (item3 - 1 request).
       assert.strictEqual(client.readPropertyMultiple.mock.calls.length, 2);
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string }> };
-      assert.strictEqual(content.content.length, 3);
+      const content = publishedValues();
+      assert.strictEqual(content.length, 3);
     });
 
     it('should skip a device that returns a device-scoped error without affecting other devices', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
       client.readPropertyMultiple.mock.mockImplementation(async (address: { address: string }) => {
         if (address.address === '192.168.1.10') {
           throw new Error('ERR_TIMEOUT');
@@ -880,20 +790,16 @@ describe('SouthBACnet', () => {
       await south.directQuery([item1, item2, item3]);
 
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string }> };
-      assert.strictEqual(content.content.length, 1);
-      assert.strictEqual(content.content[0].pointId, 'item3');
+      const content = publishedValues();
+      assert.strictEqual(content.length, 1);
+      assert.strictEqual(content[0].pointId, 'item3');
     });
 
     it('should trigger a reconnect on a non-device-scoped error', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
       client.readPropertyMultiple.mock.mockImplementation(async () => {
         throw new Error('ERR_CLOSED');
       });
-      bacnetExports.default.mock.resetCalls();
 
       await assert.rejects(south.directQuery([item1]));
       await flushPromises();
@@ -927,9 +833,9 @@ describe('SouthBACnet', () => {
           { address: '192.168.1.10' }
         ]
       );
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string }> };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => value.pointId),
+        content.map(value => value.pointId),
         ['routed1', 'routed2', 'routed3', 'item1']
       );
     });
@@ -946,23 +852,15 @@ describe('SouthBACnet', () => {
           }
         ]
       }));
-      logger.warn.mock.resetCalls();
 
       await south.directQuery([item1, item2]);
 
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.data.value]),
         [['item1', 21.5]]
       );
-      assert.ok(
-        logger.warn.mock.calls.some(
-          call =>
-            typeof call.arguments[1] === 'string' &&
-            call.arguments[1].includes('"item2"') &&
-            call.arguments[1].includes('OBJECT/UNKNOWN_OBJECT')
-        )
-      );
+      assert.ok(logged(logger.warn, '"item2"', 'OBJECT/UNKNOWN_OBJECT'));
     });
 
     it('should read several properties of the same object into their own items', async () => {
@@ -992,9 +890,9 @@ describe('SouthBACnet', () => {
           ]
         }
       ]);
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.data.value]),
         [
           ['item1', 21.5],
           ['item5', '1001']
@@ -1011,24 +909,16 @@ describe('SouthBACnet', () => {
         if (objectId.instance === 2) throw new Error('BacnetError - Class:1 - Code:31');
         return { len: 0, objectId, property: { id: 85, index: bacnetJs.ASN1_ARRAY_ALL }, values: [{ type: 4, value: 21.5 }] };
       });
-      logger.warn.mock.resetCalls();
 
       await south.directQuery([item1, item2]);
 
       assert.strictEqual(client.readProperty.mock.calls.length, 2);
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.data.value]),
         [['item1', 21.5]]
       );
-      assert.ok(
-        logger.warn.mock.calls.some(
-          call =>
-            typeof call.arguments[1] === 'string' &&
-            call.arguments[1].includes('"item2"') &&
-            call.arguments[1].includes('OBJECT/UNKNOWN_OBJECT')
-        )
-      );
+      assert.ok(logged(logger.warn, '"item2"', 'OBJECT/UNKNOWN_OBJECT'));
     });
 
     it('should skip the device when ReadProperty times out during the fallback', async () => {
@@ -1100,11 +990,9 @@ describe('SouthBACnet', () => {
           [{ type: 20, instance: 1 }, 2, -2]
         ]
       );
-      const content = addContentCallback.mock.calls[0].arguments[1] as {
-        content: Array<{ pointId: string; timestamp: string; data: { value: unknown } }>;
-      };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => [value.pointId, value.timestamp, value.data.value]),
+        content.map(value => [value.pointId, value.timestamp, value.data.value]),
         [
           ['trendLog1', '2026-10-14T11:58:00.000Z', 20],
           ['trendLog1', '2026-10-14T11:59:00.000Z', 21]
@@ -1136,16 +1024,15 @@ describe('SouthBACnet', () => {
         if (address.address === '192.168.1.10') throw new Error('ERR_TIMEOUT');
         return { len: 0, objectId, property: { id: propertyId, index: bacnetJs.ASN1_ARRAY_ALL }, values: [{ type: 2, value: 1 }] };
       });
-      logger.warn.mock.resetCalls();
 
       await south.historyQuery([trendLogItem, otherTrendLog], '2026-10-14T11:00:00.000Z', '2026-10-14T12:00:00.000Z');
 
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string }> };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => value.pointId),
+        content.map(value => value.pointId),
         ['trendLog2']
       );
-      assert.ok(logger.warn.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('"trendLog1"')));
+      assert.ok(logged(logger.warn, '"trendLog1"'));
     });
 
     it("should read record timestamps in the item's time zone", async () => {
@@ -1177,9 +1064,9 @@ describe('SouthBACnet', () => {
 
       await south.historyQuery([trendLogItem, parisTrendLog], '2026-10-14T09:00:00.000Z', '2026-10-14T13:00:00.000Z');
 
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; timestamp: string }> };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => [value.pointId, value.timestamp]),
+        content.map(value => [value.pointId, value.timestamp]),
         [
           ['trendLog1', '2026-10-14T12:00:00.000Z'],
           ['trendLog2', '2026-10-14T10:00:00.000Z']
@@ -1189,7 +1076,6 @@ describe('SouthBACnet', () => {
 
     it('should leave trend logs out of polling and COV subscriptions', async () => {
       const client = await connectSouth();
-      logger.warn.mock.resetCalls();
 
       assert.strictEqual(await south.directQuery([trendLogItem]), null);
       await south.subscribe([buildItem({ ...trendLogItem, scanMode: subscriptionScanMode, settings: trendLogItem.settings })]);
@@ -1198,18 +1084,13 @@ describe('SouthBACnet', () => {
       assert.deepStrictEqual(south.filterHistoryItems([trendLogItem, item1]), [trendLogItem]);
       assert.strictEqual(client.readPropertyMultiple.mock.calls.length, 0);
       assert.strictEqual(client.subscribeCov.mock.calls.length, 0);
-      assert.ok(
-        logger.warn.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('cannot be subscribed'))
-      );
+      assert.ok(logged(logger.warn, 'cannot be subscribed'));
     });
   });
 
   describe('subscribe / unsubscribe', () => {
     it('should subscribe with a fresh subscriberProcessId per item and schedule renewal', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
 
       await south.subscribe([subscriptionItem]);
 
@@ -1220,17 +1101,13 @@ describe('SouthBACnet', () => {
       assert.strictEqual(lifetime, 300);
       assert.strictEqual(typeof subscriberProcessId, 'number');
 
-      client.subscribeCov.mock.resetCalls();
       mock.timers.tick((300 - 60) * 1000);
       await flushPromises();
-      assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 2);
     });
 
     it('should buffer and flush COV notifications', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
 
       await south.subscribe([subscriptionItem]);
       const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2];
@@ -1249,9 +1126,9 @@ describe('SouthBACnet', () => {
       await flushPromises();
 
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
-      assert.strictEqual(content.content[0].pointId, 'item4');
-      assert.strictEqual(content.content[0].data.value, 12.5);
+      const content = publishedValues();
+      assert.strictEqual(content[0].pointId, 'item4');
+      assert.strictEqual(content[0].data.value, 12.5);
     });
 
     it('should publish status flags from a SubscribeCOV notification for a status-flags item', async () => {
@@ -1282,20 +1159,14 @@ describe('SouthBACnet', () => {
       mock.timers.tick(1000);
       await flushPromises();
 
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.data.value]),
         [['item6', '0100']]
       );
     });
 
     it('should use SubscribeCOVProperty for a property that SubscribeCOV does not report', async () => {
-      const reliabilityItem = buildItem({
-        id: 'id7',
-        name: 'item7',
-        scanMode: subscriptionScanMode,
-        settings: { ...subscriptionItem.settings, propertyIdentifier: 'reliability' }
-      });
       const client = await connectSouth();
 
       await south.subscribe([reliabilityItem]);
@@ -1323,9 +1194,9 @@ describe('SouthBACnet', () => {
       mock.timers.tick(1000);
       await flushPromises();
 
-      const content = addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; data: { value: unknown } }> };
+      const content = publishedValues();
       assert.deepStrictEqual(
-        content.content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.data.value]),
         [['item7', 7]]
       );
 
@@ -1341,12 +1212,6 @@ describe('SouthBACnet', () => {
     });
 
     it('should cancel SubscribeCOVProperty subscriptions on disconnect', async () => {
-      const reliabilityItem = buildItem({
-        id: 'id7',
-        name: 'item7',
-        scanMode: subscriptionScanMode,
-        settings: { ...subscriptionItem.settings, propertyIdentifier: 'reliability' }
-      });
       const client = await connectSouth();
       await south.subscribe([reliabilityItem, subscriptionItem]);
 
@@ -1364,62 +1229,41 @@ describe('SouthBACnet', () => {
       client.subscribeCov.mock.mockImplementation(async () => {
         throw new Error('ERR_TIMEOUT');
       });
-      logger.warn.mock.resetCalls();
 
       await south.subscribe([routedSubscription]);
 
       assert.deepStrictEqual(client.subscribeCov.mock.calls[0].arguments[0], { address: '192.168.1.20', net: 2, adr: [5] });
-      assert.ok(
-        logger.warn.mock.calls.some(
-          call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('devices behind a router are not supported yet')
-        )
-      );
+      assert.ok(logged(logger.warn, 'devices behind a router are not supported yet'));
     });
 
     it('should hint at polling when a device refuses SubscribeCOVProperty', async () => {
-      const reliabilityItem = buildItem({
-        id: 'id7',
-        name: 'item7',
-        scanMode: subscriptionScanMode,
-        settings: { ...subscriptionItem.settings, propertyIdentifier: 'reliability' }
-      });
       const client = await connectSouth();
       client.subscribeProperty.mock.mockImplementation(async () => {
         throw new Error('BacnetAbort - Reason:9');
       });
-      logger.warn.mock.resetCalls();
 
       await south.subscribe([reliabilityItem]);
 
-      assert.ok(
-        logger.warn.mock.calls.some(
-          call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('may not support SubscribeCOVProperty')
-        )
-      );
+      assert.ok(logged(logger.warn, 'may not support SubscribeCOVProperty'));
     });
 
     it('should cancel the COV subscription and clear bookkeeping on unsubscribe', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
 
       await south.subscribe([subscriptionItem]);
       const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2];
-      client.subscribeCov.mock.resetCalls();
 
       await south.unsubscribe([subscriptionItem]);
 
-      assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
-      const [, , cancelledProcessId, cancel] = client.subscribeCov.mock.calls[0].arguments;
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 2);
+      const [, , cancelledProcessId, cancel] = client.subscribeCov.mock.calls[1].arguments;
       assert.strictEqual(cancelledProcessId, subscriberProcessId);
       assert.strictEqual(cancel, true);
 
       // No pending renewal timer left over: advancing time triggers no further calls.
-      client.subscribeCov.mock.resetCalls();
       mock.timers.tick(3600 * 1000);
       await flushPromises();
-      assert.strictEqual(client.subscribeCov.mock.calls.length, 0);
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 2);
     });
 
     it('should ignore a COV notification whose monitored object does not match the subscription', async () => {
@@ -1466,9 +1310,6 @@ describe('SouthBACnet', () => {
       client.subscribeCov.mock.mockImplementation(async () => {
         throw new Error('BacnetError - Class:5 - Code:29');
       });
-      logger.warn.mock.resetCalls();
-      logger.debug.mock.resetCalls();
-      logger.info.mock.resetCalls();
 
       await south.subscribe([subscriptionItem]);
       for (const [delayMs, expectedCalls] of [
@@ -1488,28 +1329,21 @@ describe('SouthBACnet', () => {
       );
       assert.strictEqual(covWarnings.length, 1);
       assert.ok((covWarnings[0].arguments[1] as string).includes('SERVICES/SERVICE_REQUEST_DENIED'));
-      assert.ok(
-        logger.debug.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('attempt 3 failed'))
-      );
+      assert.ok(logged(logger.debug, 'attempt 3 failed'));
 
       // Back on its feet: logged once, then renewed on the usual schedule.
       client.subscribeCov.mock.mockImplementation(async () => undefined);
       mock.timers.tick(8000);
       await flushPromises();
       assert.strictEqual(client.subscribeCov.mock.calls.length, 5);
-      assert.ok(logger.info.mock.calls.some(call => typeof call.arguments[1] === 'string' && call.arguments[1].includes('after 4 failed')));
+      assert.ok(logged(logger.info, 'after 4 failed'));
       mock.timers.tick((300 - 60) * 1000);
       await flushPromises();
       assert.strictEqual(client.subscribeCov.mock.calls.length, 6);
     });
 
     it('should never renew a COV subscription sooner than halfway through its lifetime', async () => {
-      south = new SouthBACnet(
-        { ...configuration, settings: { ...configuration.settings, covDefaultLifetime: 100, covRenewalMargin: 80 } },
-        addContentCallback,
-        southCacheRepository,
-        'cacheFolder'
-      );
+      south = createSouth(withSettings({ covDefaultLifetime: 100, covRenewalMargin: 80 }));
       const client = await connectSouth();
       await south.subscribe([subscriptionItem]);
 
@@ -1544,11 +1378,11 @@ describe('SouthBACnet', () => {
       });
       await south.subscribe([subscriptionItem]);
       await south.unsubscribe([subscriptionItem]);
-      client.subscribeCov.mock.resetCalls();
+      const callsAfterUnsubscribe = client.subscribeCov.mock.calls.length;
 
       mock.timers.tick(3600 * 1000);
       await flushPromises();
-      assert.strictEqual(client.subscribeCov.mock.calls.length, 0);
+      assert.strictEqual(client.subscribeCov.mock.calls.length, callsAfterUnsubscribe);
     });
 
     it('should keep the subscriber process id of an item across a reconnect, without cancelling on the device', async () => {
@@ -1572,12 +1406,11 @@ describe('SouthBACnet', () => {
       const client = await connectSouth();
       await south.subscribe([subscriptionItem]);
       const subscriberProcessId = client.subscribeCov.mock.calls[0].arguments[2];
-      client.subscribeCov.mock.resetCalls();
 
       await south.disconnect();
 
-      assert.strictEqual(client.subscribeCov.mock.calls.length, 1);
-      const [, , cancelledProcessId, cancel] = client.subscribeCov.mock.calls[0].arguments;
+      assert.strictEqual(client.subscribeCov.mock.calls.length, 2);
+      const [, , cancelledProcessId, cancel] = client.subscribeCov.mock.calls[1].arguments;
       assert.strictEqual(cancelledProcessId, subscriberProcessId);
       assert.strictEqual(cancel, true);
       assert.strictEqual(client.close.mock.calls.length, 1);
@@ -1613,7 +1446,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should list the router and the devices behind it, with the item settings to reach them', async () => {
-      south = new SouthBACnet(routerConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(routerConfiguration);
 
       const explorePromise = south.explore(null);
       await flushPromises();
@@ -1632,7 +1465,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should list the target device without any Who-Is', async () => {
-      south = new SouthBACnet(targetDeviceConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+      south = createSouth(targetDeviceConfiguration);
       setUpNextClient(client =>
         client.readProperty.mock.mockImplementation(async (_address, objectId, propertyId) => ({
           len: 0,
@@ -1659,10 +1492,7 @@ describe('SouthBACnet', () => {
       const explorePromise = south.explore(null);
       await flushPromises();
       const client = lastCreatedClient;
-      client.emit('iAm', {
-        header: { apduType: 0x10, expectingReply: false, sender: { address: '192.168.1.20', forwardedFrom: null, net: 2, adr: [5] } },
-        payload: { deviceId: 2005, maxApdu: 480, segmentation: 3, vendorId: 0 }
-      });
+      client.emit('iAm', routedIAm([5], 2005, '192.168.1.20'));
       mock.timers.tick(3000);
       const [device] = await explorePromise;
 
@@ -1690,10 +1520,7 @@ describe('SouthBACnet', () => {
     });
 
     it('should list a device objects but the device itself, and degrade gracefully when enrichment fails', async () => {
-      const connectPromise = south.connect();
-      await flushPromises();
-      await connectPromise;
-      const client = lastCreatedClient;
+      const client = await connectSouth();
       client.readProperty.mock.mockImplementation(async () => ({
         len: 0,
         objectId: { type: 8, instance: 10 },

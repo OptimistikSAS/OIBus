@@ -2,25 +2,22 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import net from 'node:net';
 import Stream from 'node:stream';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 
-import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type {
-  SouthItemSettings,
   SouthModbusItemSettings,
   SouthModbusItemSettingsModbusType,
   SouthModbusSettings
 } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { Instant } from '../../model/types';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import type * as UtilsModbus from '../../service/utils-modbus';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthModbusClass from './south-modbus';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -62,335 +59,165 @@ class CustomStream extends Stream {
   }
 }
 
+const buildItem = (
+  id: string,
+  name: string,
+  settings: SouthModbusItemSettings,
+  overrides: Partial<SouthConnectorItemEntity<SouthModbusItemSettings>> = {}
+): SouthConnectorItemEntity<SouthModbusItemSettings> => ({
+  id,
+  name,
+  enabled: true,
+  settings,
+  scanMode: testData.scanMode.list[0],
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: null,
+  readDelay: null,
+  startTimeOffset: null,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: 'allValues',
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: '',
+  ...overrides
+});
+
+const holdingRegister = (address: string): SouthModbusItemSettings => ({
+  address,
+  modbusType: 'holding-register',
+  data: { dataType: 'uint16', multiplierCoefficient: 1 }
+});
+const coil = (address: string): SouthModbusItemSettings => ({ address, modbusType: 'coil' });
+
+const configuration: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings> = {
+  id: 'southId',
+  name: 'south',
+  type: 'modbus',
+  description: 'my test connector',
+  enabled: true,
+  settings: {
+    port: 502,
+    host: '127.0.0.1',
+    slaveId: 1,
+    addressOffset: 'modbus',
+    endianness: 'big-endian',
+    swapBytesInWords: false,
+    swapWordsInDWords: false,
+    retryInterval: 10000,
+    connectTimeout: 30000,
+    networkTimeout: 15000,
+    batchQuery: false,
+    groupingGap: 0
+  },
+  groups: [],
+  items: [
+    buildItem('id1', 'HoldingRegister', holdingRegister('0x4E80')),
+    buildItem('id2', 'HoldingRegister', holdingRegister('20097')),
+    buildItem('id3', 'InputRegister', {
+      address: '0x3E81',
+      modbusType: 'input-register',
+      data: { dataType: 'uint16', multiplierCoefficient: 1 }
+    }),
+    buildItem('id4', 'DiscreteInput', { address: '0x1E82', modbusType: 'discrete-input' }),
+    buildItem('id5', 'Coil', coil('0x0E83')),
+    buildItem('id6', 'HoldingRegister', {
+      address: '0x0E88',
+      modbusType: 'holding-register',
+      data: { dataType: 'bit', bitIndex: 1, multiplierCoefficient: 1 }
+    })
+  ],
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+};
+
+const withSettings = (settings: Partial<SouthModbusSettings>) => ({
+  ...configuration,
+  settings: { ...configuration.settings, ...settings }
+});
+
+const lastValues = (...values: Array<[itemId: string, value: string, instant: string]>) =>
+  new Map(
+    values.map(([itemId, value, instant]) => [itemId, { itemId, groupId: null, queryTime: instant, value, trackedInstant: instant }])
+  );
+
+const registersResponse = async (_addr: number, count: number) => ({ response: { body: { valuesAsBuffer: Buffer.alloc(count * 2) } } });
+const bitsResponse = (bit: number) => async (_addr: number, count: number) => ({
+  response: { body: { valuesAsArray: Array(count).fill(bit) } }
+});
+const modbusError = async (): Promise<never> => {
+  throw new Error('modbus function error');
+};
+
+const logged = (logMock: Mock<(...args: Array<unknown>) => unknown>, message: string) =>
+  logMock.mock.calls.some(c => (c.arguments[0] as string).includes(message));
+
 describe('South Modbus', () => {
   let SouthModbus: typeof SouthModbusClass;
   let south: SouthModbusClass;
-
-  const logger = new PinoLogger();
-  const addContentCallback = mock.fn(
-    async (
-      _southId: string,
-      _data: OIBusContent,
-      _queryTime: Instant,
-      _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-    ): Promise<void> => undefined
-  );
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let logger: PinoLogger;
+  let southCacheRepository: Mocked<SouthCacheRepository>;
+  let addContent: Mock<SouthModbusClass['addContent']>;
   let mockedEmitter: CustomStream;
-
-  // Track the current Socket mock — updated in beforeEach via mock.method
   let socketMock: ReturnType<typeof mock.method>;
+  const mockedClient = createMock<ModbusTCPClient>();
 
-  // jsmodbus mock — SUT does `import { client } from 'jsmodbus'` so we need client at top level
-  // TCP must use a regular function (not arrow) since the SUT calls it with `new`
-  const jsmdbExports: {
-    __esModule: boolean;
-    client: { TCP: ReturnType<typeof mock.fn> };
-    default: { client: { TCP: ReturnType<typeof mock.fn> } };
-  } = {
-    __esModule: true,
-    client: {
-      TCP: mock.fn(function () {
-        return {};
-      })
-    },
-    default: {
-      client: {
-        TCP: mock.fn(function () {
-          return {};
-        })
-      }
-    }
-  };
-
-  // utils-modbus mock
-  const utilsModbusExports = {
+  const realUtilsModbus: typeof UtilsModbus = nodeRequire('../../service/utils-modbus');
+  const createUtilsModbusMocks = () => ({
     connectSocket: mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => undefined),
-    readCoil: mock.fn(async (): Promise<string | undefined> => undefined),
-    readDiscreteInputRegister: mock.fn(async (): Promise<string | undefined> => undefined),
-    readHoldingRegister: mock.fn(async (): Promise<string | undefined> => undefined),
-    readInputRegister: mock.fn(async (): Promise<string | undefined> => undefined),
-    // parseAddress and getNumberOfWords use real implementations so address/grouping logic works correctly in tests
-    parseAddress: (address: string): number => (/^0x[0-9a-f]+$/i.test(address) ? parseInt(address, 16) : parseInt(address, 10)),
-    getNumberOfWords: (dataType: string): number => {
-      if (['uint32', 'int32', 'float'].includes(dataType)) return 2;
-      if (['big-uint64', 'big-int64', 'double'].includes(dataType)) return 4;
-      return 1;
-    },
-    getValueFromBuffer: mock.fn((): string => '42')
-  };
-
-  // utils mock
-  const utilsExports = {
-    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
-    generateIntervals: mock.fn(() => []),
-    validateCronExpression: mock.fn(() => ({ expression: '' })),
-    delay: mock.fn(async () => undefined),
-    getErrorMessage: mock.fn((error: unknown) => {
-      if (error instanceof Error) return error.message;
-      if (typeof error === 'string') return error;
-      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
-      }
-      return String(error);
-    }),
-    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
-    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
-    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
-      if (items.length === 0) return {};
-      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
-      const lead = items[0];
-      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
-    })
-  };
+    readCoil: mock.fn(async (..._args: Array<unknown>): Promise<string | undefined> => undefined),
+    readDiscreteInputRegister: mock.fn(async (..._args: Array<unknown>): Promise<string | undefined> => undefined),
+    readHoldingRegister: mock.fn(async (..._args: Array<unknown>): Promise<string | undefined> => undefined),
+    readInputRegister: mock.fn(async (..._args: Array<unknown>): Promise<string | undefined> => undefined)
+  });
+  const utilsModbusExports = { ...realUtilsModbus, ...createUtilsModbusMocks() };
 
   before(() => {
-    mockModule(nodeRequire, 'jsmodbus', jsmdbExports);
+    // SUT does `new client.TCP(...)`: a regular function is required
+    mockModule(nodeRequire, 'jsmodbus', {
+      __esModule: true,
+      client: {
+        TCP: function () {
+          return {};
+        }
+      }
+    });
     mockModule(nodeRequire, '../../service/utils-modbus', utilsModbusExports);
-    mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => logger) },
+      loggerService: { createChildLogger: () => logger },
       default: class {}
     });
 
     SouthModbus = reloadModule<{ default: typeof SouthModbusClass }>(nodeRequire, './south-modbus').default;
   });
 
-  const configuration: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'modbus',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      port: 502,
-      host: '127.0.0.1',
-      slaveId: 1,
-      addressOffset: 'modbus',
-      endianness: 'big-endian',
-      swapBytesInWords: false,
-      swapWordsInDWords: false,
-      retryInterval: 10000,
-      connectTimeout: 30000,
-      networkTimeout: 15000,
-      batchQuery: false,
-      groupingGap: 0
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'HoldingRegister',
-        enabled: true,
-        settings: {
-          address: '0x4E80',
-          modbusType: 'holding-register',
-          data: {
-            dataType: 'uint16',
-            multiplierCoefficient: 1
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'HoldingRegister',
-        enabled: true,
-        settings: {
-          address: '20097',
-          modbusType: 'holding-register',
-          data: {
-            dataType: 'uint16',
-            multiplierCoefficient: 1
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'InputRegister',
-        enabled: true,
-        settings: {
-          address: '0x3E81',
-          modbusType: 'input-register',
-          data: {
-            dataType: 'uint16',
-            multiplierCoefficient: 1
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id4',
-        name: 'DiscreteInput',
-        enabled: true,
-        settings: {
-          address: '0x1E82',
-          modbusType: 'discrete-input'
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id5',
-        name: 'Coil',
-        enabled: true,
-        settings: {
-          address: '0x0E83',
-          modbusType: 'coil'
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id6',
-        name: 'HoldingRegister',
-        enabled: true,
-        settings: {
-          address: '0x0E88',
-          modbusType: 'holding-register',
-          data: {
-            dataType: 'bit',
-            bitIndex: 1,
-            multiplierCoefficient: 1
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        recoveryStrategy: null,
-        cachingStrategy: 'allValues',
-        thresholdType: null,
-        threshold: null,
-        rangeLow: null,
-        rangeHigh: null,
-        maxCachingInterval: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-
   beforeEach(() => {
+    logger = new PinoLogger();
     mockedEmitter = new CustomStream();
-    // Mock net.Socket on the real builtin — both test and SUT share the same module reference
-    // Must use a regular function (not arrow) since Socket is called with `new`
+    // net.Socket is mocked on the real builtin, shared with the SUT. Called with `new`: a regular function is required
     const emitter = mockedEmitter;
     socketMock = mock.method(net, 'Socket', function () {
       return emitter;
     });
-    jsmdbExports.client.TCP = mock.fn(function () {
-      return {};
-    });
-    jsmdbExports.default.client.TCP = mock.fn(function () {
-      return {};
-    });
-    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => undefined);
-    utilsModbusExports.readCoil = mock.fn(async (): Promise<string | undefined> => undefined);
-    utilsModbusExports.readDiscreteInputRegister = mock.fn(async (): Promise<string | undefined> => undefined);
-    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string | undefined> => undefined);
-    utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string | undefined> => undefined);
-    utilsModbusExports.getValueFromBuffer = mock.fn((): string => '42');
-    addContentCallback.mock.resetCalls();
-    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
-    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
-    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
-    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
+    Object.assign(utilsModbusExports, createUtilsModbusMocks());
+    southCacheRepository = createMock<SouthCacheRepository>({ getItemsLastValues: () => new Map() });
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    south = new SouthModbus(
+      configuration,
+      mock.fn(async () => undefined),
+      southCacheRepository,
+      'cacheFolder'
+    );
+    addContent = mock.method(south, 'addContent', async () => undefined);
   });
 
   afterEach(() => {
@@ -399,9 +226,8 @@ describe('South Modbus', () => {
   });
 
   it('should properly connect', async () => {
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
-    (south as unknown as Record<string, unknown>)['reconnectTimeout'] = setTimeout(() => null, 1000);
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
+    south['reconnectTimeout'] = setTimeout(() => null, 1000);
     const setKeepAliveMock = mock.method(mockedEmitter, 'setKeepAlive');
 
     await south.connect();
@@ -409,24 +235,15 @@ describe('South Modbus', () => {
     assert.strictEqual(socketMock.mock.calls.length, 1);
     assert.strictEqual(utilsModbusExports.connectSocket.mock.calls.length, 1);
     assert.deepStrictEqual(utilsModbusExports.connectSocket.mock.calls[0].arguments[1], configuration.settings);
-    assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes(`Connecting Modbus socket into ${configuration.settings.host}:${configuration.settings.port}`)
-      )
-    );
-    assert.ok(
-      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes(`Modbus socket connected to ${configuration.settings.host}:${configuration.settings.port}`)
-      )
-    );
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.ok(logged(logger.debug, `Connecting Modbus socket into ${configuration.settings.host}:${configuration.settings.port}`));
+    assert.ok(logged(logger.info, `Modbus socket connected to ${configuration.settings.host}:${configuration.settings.port}`));
+    assert.strictEqual(disconnect.mock.calls.length, 0);
     assert.strictEqual(setKeepAliveMock.mock.calls.length, 1);
     assert.deepStrictEqual(setKeepAliveMock.mock.calls[0].arguments, [true, configuration.settings.networkTimeout]);
   });
 
   it('should reconnect when socket closes unexpectedly between scans', async () => {
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
 
     await south.connect();
 
@@ -436,12 +253,8 @@ describe('South Modbus', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
-    assert.ok(
-      logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes('Modbus socket closed unexpectedly')
-      )
-    );
+    assert.strictEqual(disconnect.mock.calls.length, 1);
+    assert.ok(logged(logger.warn, 'Modbus socket closed unexpectedly'));
 
     // Ticking the retry interval should trigger a new connect (new Socket creation)
     mock.timers.tick(configuration.settings.retryInterval);
@@ -449,9 +262,8 @@ describe('South Modbus', () => {
   });
 
   it('should not reconnect when socket closes during an explicit disconnect', async () => {
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
-    (south as unknown as Record<string, unknown>)['disconnecting'] = true;
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
+    south['disconnecting'] = true;
 
     await south.connect();
 
@@ -461,47 +273,38 @@ describe('South Modbus', () => {
     await Promise.resolve();
 
     // The close handler must be a no-op when disconnecting
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(disconnect.mock.calls.length, 0);
     mock.timers.tick(configuration.settings.retryInterval);
     assert.strictEqual(socketMock.mock.calls.length, 1);
   });
 
   it('should properly reconnect on connect error when not disconnecting', async () => {
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
-
-    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => {
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
+    utilsModbusExports.connectSocket.mock.mockImplementationOnce(async () => {
       throw new Error('connect error');
     });
 
     // With disconnecting=false and connector.enabled=true, a retry timer should be set
     await south.connect();
 
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
-    assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes('Modbus socket error: connect error')
-      )
-    );
+    assert.strictEqual(disconnect.mock.calls.length, 1);
+    assert.ok(logged(logger.error, 'Modbus socket error: connect error'));
 
     // Tick the retry interval — should trigger another connect attempt
-    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => undefined);
     mock.timers.tick(configuration.settings.retryInterval);
     assert.strictEqual(socketMock.mock.calls.length, 2);
   });
 
   it('should not set retry timer when disconnecting is true', async () => {
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
-    (south as unknown as Record<string, unknown>)['disconnecting'] = true;
-
-    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => {
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
+    south['disconnecting'] = true;
+    utilsModbusExports.connectSocket.mock.mockImplementation(async () => {
       throw new Error('connect error');
     });
 
     await south.connect();
 
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.strictEqual(disconnect.mock.calls.length, 1);
 
     // No timer should have been set — ticking should NOT trigger another Socket creation
     mock.timers.tick(configuration.settings.retryInterval);
@@ -514,10 +317,9 @@ describe('South Modbus', () => {
   });
 
   it('should properly disconnect with active socket and timeout', async () => {
-    // Set up a reconnect timeout and socket
-    (south as unknown as Record<string, unknown>)['reconnectTimeout'] = setTimeout(() => null, 1000);
-    const mockedSocket = { removeAllListeners: mock.fn(), destroy: mock.fn() };
-    (south as unknown as Record<string, unknown>)['socket'] = mockedSocket;
+    south['reconnectTimeout'] = setTimeout(() => null, 1000);
+    const mockedSocket = createMock<net.Socket>();
+    south['socket'] = mockedSocket;
 
     await south.disconnect();
 
@@ -526,8 +328,7 @@ describe('South Modbus', () => {
 
     // Timer was cleared — ticking should not cause further side-effects
     mock.timers.tick(configuration.settings.retryInterval);
-    // disconnect clears the timeout: after disconnect, reconnectTimeout should be null
-    assert.strictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], null);
+    assert.strictEqual(south['reconnectTimeout'], null);
   });
 
   it('should query items via directQuery with batched requests when batchQuery is true', async () => {
@@ -544,66 +345,44 @@ describe('South Modbus', () => {
     //   input-register:   [id3@16001, 1word]                                → 1 request
     //   discrete-input:   [id4@7810, count=1]                               → 1 request
     //   coil:             [id5@3715, count=1]                               → 1 request
-    const readHoldingRegistersMock = mock.fn(async (_addr: number, count: number) => ({
-      response: { body: { valuesAsBuffer: Buffer.alloc(count * 2) } }
-    }));
-    const readInputRegistersMock = mock.fn(async (_addr: number, count: number) => ({
-      response: { body: { valuesAsBuffer: Buffer.alloc(count * 2) } }
-    }));
-    const readCoilsMock = mock.fn(async (_addr: number, count: number) => ({
-      response: { body: { valuesAsArray: Array(count).fill(0) } }
-    }));
-    const readDiscreteInputsMock = mock.fn(async (_addr: number, count: number) => ({
-      response: { body: { valuesAsArray: Array(count).fill(1) } }
-    }));
-
-    (south as unknown as Record<string, unknown>)['modbusClient'] = {
-      readHoldingRegisters: readHoldingRegistersMock,
-      readInputRegisters: readInputRegistersMock,
-      readCoils: readCoilsMock,
-      readDiscreteInputs: readDiscreteInputsMock
-    };
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true }
-    };
-
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    const addContentMock = mock.fn(
-      async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-        undefined
-    );
-    south.disconnect = disconnectMock;
-    south.addContent = addContentMock;
+    const modbusClient = createMock<ModbusTCPClient>({
+      readHoldingRegisters: registersResponse,
+      readInputRegisters: registersResponse,
+      readCoils: bitsResponse(0),
+      readDiscreteInputs: bitsResponse(1)
+    });
+    south['modbusClient'] = modbusClient;
+    south['connector'] = withSettings({ batchQuery: true });
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
 
     await south.directQuery(configuration.items);
 
     // holding-register: 2 batches
-    assert.strictEqual(readHoldingRegistersMock.mock.calls.length, 2);
-    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[0].arguments, [3720, 1]); // id6 alone
-    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[1].arguments, [20096, 2]); // id1 + id2 merged
+    assert.strictEqual(modbusClient.readHoldingRegisters.mock.calls.length, 2);
+    assert.deepStrictEqual(modbusClient.readHoldingRegisters.mock.calls[0].arguments, [3720, 1]); // id6 alone
+    assert.deepStrictEqual(modbusClient.readHoldingRegisters.mock.calls[1].arguments, [20096, 2]); // id1 + id2 merged
 
     // input-register: 1 batch
-    assert.strictEqual(readInputRegistersMock.mock.calls.length, 1);
-    assert.deepStrictEqual(readInputRegistersMock.mock.calls[0].arguments, [16001, 1]);
+    assert.strictEqual(modbusClient.readInputRegisters.mock.calls.length, 1);
+    assert.deepStrictEqual(modbusClient.readInputRegisters.mock.calls[0].arguments, [16001, 1]);
 
     // coil: 1 batch
-    assert.strictEqual(readCoilsMock.mock.calls.length, 1);
-    assert.deepStrictEqual(readCoilsMock.mock.calls[0].arguments, [3715, 1]);
+    assert.strictEqual(modbusClient.readCoils.mock.calls.length, 1);
+    assert.deepStrictEqual(modbusClient.readCoils.mock.calls[0].arguments, [3715, 1]);
 
     // discrete-input: 1 batch
-    assert.strictEqual(readDiscreteInputsMock.mock.calls.length, 1);
-    assert.deepStrictEqual(readDiscreteInputsMock.mock.calls[0].arguments, [7810, 1]);
+    assert.strictEqual(modbusClient.readDiscreteInputs.mock.calls.length, 1);
+    assert.deepStrictEqual(modbusClient.readDiscreteInputs.mock.calls[0].arguments, [7810, 1]);
 
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    assert.strictEqual(disconnect.mock.calls.length, 0);
+    assert.strictEqual(addContent.mock.calls.length, 1);
     // All 6 items produce one value each
-    assert.strictEqual(addContentMock.mock.calls[0].arguments[0].content!.length, 6);
+    assert.strictEqual(addContent.mock.calls[0].arguments[0].content!.length, 6);
     // Single shared timestamp for the whole scan cycle
-    assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
+    assert.strictEqual(addContent.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
     // Item order now follows the grouped-read order (caching-strategy filtering builds itemsToCache
     // alongside the values as they're produced), not the original items array order — compare as a set.
-    const cachedItems = addContentMock.mock.calls[0].arguments[2] as Array<SouthConnectorItemEntity<SouthItemSettings>>;
+    const cachedItems = addContent.mock.calls[0].arguments[2];
     assert.deepStrictEqual(
       [...cachedItems].sort((a, b) => a.id.localeCompare(b.id)),
       [...configuration.items].sort((a, b) => a.id.localeCompare(b.id))
@@ -613,17 +392,11 @@ describe('South Modbus', () => {
   it('should query each item individually when batchQuery is false', async () => {
     // configuration.settings.batchQuery is already false — individual mode is the default.
     // Each of the 6 items must produce exactly one util-function call, regardless of address proximity.
-    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '100');
-    utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string> => '200');
-    utilsModbusExports.readCoil = mock.fn(async (): Promise<string> => '1');
-    utilsModbusExports.readDiscreteInputRegister = mock.fn(async (): Promise<string> => '0');
-
-    (south as unknown as Record<string, unknown>)['modbusClient'] = {};
-    const addContentMock = mock.fn(
-      async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-        undefined
-    );
-    south.addContent = addContentMock;
+    utilsModbusExports.readHoldingRegister.mock.mockImplementation(async () => '100');
+    utilsModbusExports.readInputRegister.mock.mockImplementation(async () => '200');
+    utilsModbusExports.readCoil.mock.mockImplementation(async () => '1');
+    utilsModbusExports.readDiscreteInputRegister.mock.mockImplementation(async () => '0');
+    south['modbusClient'] = mockedClient;
 
     await south.directQuery(configuration.items);
 
@@ -636,103 +409,63 @@ describe('South Modbus', () => {
     // 1 discrete-input (id4)
     assert.strictEqual(utilsModbusExports.readDiscreteInputRegister.mock.calls.length, 1);
 
-    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    assert.strictEqual(addContent.mock.calls.length, 1);
     // All 6 items produce a value
-    assert.strictEqual(addContentMock.mock.calls[0].arguments[0].content!.length, 6);
+    assert.strictEqual(addContent.mock.calls[0].arguments[0].content!.length, 6);
     // All values share the single scan-cycle timestamp (modbusFunction's own timestamp is overridden)
-    for (const v of addContentMock.mock.calls[0].arguments[0].content as Array<{ timestamp: string }>) {
+    for (const v of addContent.mock.calls[0].arguments[0].content as Array<{ timestamp: string }>) {
       assert.strictEqual(v.timestamp, testData.constants.dates.FAKE_NOW);
     }
   });
 
   it('should apply jbus address offset (offset = -1)', async () => {
-    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
-    (south as unknown as Record<string, unknown>)['modbusClient'] = {};
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
-    configuration.settings.addressOffset = 'jbus';
+    utilsModbusExports.readHoldingRegister.mock.mockImplementation(async () => '42');
+    south['modbusClient'] = mockedClient;
+    south['connector'] = withSettings({ addressOffset: 'jbus' });
 
     await south.directQuery([configuration.items[0]]);
 
     assert.strictEqual(utilsModbusExports.readHoldingRegister.mock.calls.length, 1);
-    configuration.settings.addressOffset = 'modbus'; // restore
+    // 0x4E80 = 20096, minus the jbus offset
+    assert.strictEqual(utilsModbusExports.readHoldingRegister.mock.calls[0].arguments[1], 20095);
   });
 
   it('should merge non-consecutive items into one request when groupingGap covers the gap', async () => {
     // Three holding-register uint16 items at addresses 1, 3, 5 (gap of 2 between each).
     // With groupingGap = 2 all three should be merged into readHoldingRegisters(1, 5).
     // With groupingGap = 0 each item is its own request.
-    const makeItem = (id: string, address: string) => ({
-      id,
-      name: id,
-      enabled: true,
-      settings: { address, modbusType: 'holding-register' as const, data: { dataType: 'uint16' as const, multiplierCoefficient: 1 } },
-      scanMode: testData.scanMode.list[0],
-      group: null,
-      syncWithGroup: false,
-      maxReadInterval: null,
-      readDelay: null,
-      startTimeOffset: null,
-      endTimeOffset: null,
-      recoveryStrategy: null,
-      cachingStrategy: 'allValues' as const,
-      thresholdType: null,
-      threshold: null,
-      rangeLow: null,
-      rangeHigh: null,
-      maxCachingInterval: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    });
-    const gapItems = [makeItem('var1', '0x0001'), makeItem('var2', '0x0003'), makeItem('var3', '0x0005')];
-
-    const readHoldingRegistersMock = mock.fn(async (_addr: number, count: number) => ({
-      response: { body: { valuesAsBuffer: Buffer.alloc(count * 2) } }
-    }));
-    (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    const gapItems = [
+      buildItem('var1', 'var1', holdingRegister('0x0001')),
+      buildItem('var2', 'var2', holdingRegister('0x0003')),
+      buildItem('var3', 'var3', holdingRegister('0x0005'))
+    ];
+    const modbusClient = createMock<ModbusTCPClient>({ readHoldingRegisters: registersResponse });
+    south['modbusClient'] = modbusClient;
 
     // groupingGap = 0: gap of 2 exceeds tolerance → 3 separate requests
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true, groupingGap: 0 }
-    };
+    south['connector'] = withSettings({ batchQuery: true, groupingGap: 0 });
     await south.directQuery(gapItems);
-    assert.strictEqual(readHoldingRegistersMock.mock.calls.length, 3);
-    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[0].arguments, [1, 1]);
-    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[1].arguments, [3, 1]);
-    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[2].arguments, [5, 1]);
-
-    readHoldingRegistersMock.mock.resetCalls();
+    assert.strictEqual(modbusClient.readHoldingRegisters.mock.calls.length, 3);
+    assert.deepStrictEqual(modbusClient.readHoldingRegisters.mock.calls[0].arguments, [1, 1]);
+    assert.deepStrictEqual(modbusClient.readHoldingRegisters.mock.calls[1].arguments, [3, 1]);
+    assert.deepStrictEqual(modbusClient.readHoldingRegisters.mock.calls[2].arguments, [5, 1]);
 
     // groupingGap = 2: gap of 2 is within tolerance → 1 merged request covering addresses 1–5
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true, groupingGap: 2 }
-    };
+    south['connector'] = withSettings({ batchQuery: true, groupingGap: 2 });
     await south.directQuery(gapItems);
-    assert.strictEqual(readHoldingRegistersMock.mock.calls.length, 1);
-    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[0].arguments, [1, 5]); // 5 words: addr 1..5
+    assert.strictEqual(modbusClient.readHoldingRegisters.mock.calls.length, 4);
+    assert.deepStrictEqual(modbusClient.readHoldingRegisters.mock.calls[3].arguments, [1, 5]); // 5 words: addr 1..5
   });
 
   it('should handle directQuery error when disconnecting is true', async () => {
     // Use a single holding-register item to trigger readHoldingRegisters, which will throw
-    const readHoldingRegistersMock = mock.fn(async (): Promise<never> => {
-      throw new Error('modbus function error');
-    });
-    (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true }
-    };
-    (south as unknown as Record<string, unknown>)['disconnecting'] = true;
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    south['modbusClient'] = createMock<ModbusTCPClient>({ readHoldingRegisters: modbusError });
+    south['connector'] = withSettings({ batchQuery: true });
+    south['disconnecting'] = true;
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
 
     await assert.rejects(south.directQuery([configuration.items[1]]), new Error('modbus function error'));
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.strictEqual(disconnect.mock.calls.length, 1);
 
     // No retry timer set when disconnecting
     mock.timers.tick(configuration.settings.retryInterval);
@@ -741,21 +474,13 @@ describe('South Modbus', () => {
 
   it('should handle directQuery error when not disconnecting', async () => {
     // Use a single holding-register item to trigger readHoldingRegisters, which will throw
-    const readHoldingRegistersMock = mock.fn(async (): Promise<never> => {
-      throw new Error('modbus function error');
-    });
-    (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true }
-    };
-    (south as unknown as Record<string, unknown>)['disconnecting'] = false;
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    south['modbusClient'] = createMock<ModbusTCPClient>({ readHoldingRegisters: modbusError });
+    south['connector'] = withSettings({ batchQuery: true });
+    south['disconnecting'] = false;
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
 
     await assert.rejects(south.directQuery([configuration.items[1]]), new Error('modbus function error'));
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.strictEqual(disconnect.mock.calls.length, 1);
 
     // Retry timer should have been set — tick triggers a connect (net.Socket call)
     mock.timers.tick(configuration.settings.retryInterval);
@@ -773,24 +498,17 @@ describe('South Modbus', () => {
     // "Modbus client not set" because the connector is already disconnected — kept cancelling and
     // recreating the timer, so connect() was never actually retried: the query failed forever at
     // scan-mode rate without ever reconnecting.
-    const readHoldingRegistersMock = mock.fn(async (): Promise<never> => {
-      throw new Error('modbus function error');
-    });
-    (south as unknown as Record<string, unknown>)['socket'] = mockedEmitter;
-    (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true }
-    };
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    south['socket'] = mockedEmitter as unknown as net.Socket;
+    south['modbusClient'] = createMock<ModbusTCPClient>({ readHoldingRegisters: modbusError });
+    south['connector'] = withSettings({ batchQuery: true });
     const disconnectSpy = mock.method(south, 'disconnect');
 
     // First failure: the connection was actually live (socket/modbusClient set), so disconnect()
     // runs for real and a reconnect timer is scheduled.
     await assert.rejects(south.directQuery([configuration.items[1]]), new Error('modbus function error'));
     assert.strictEqual(disconnectSpy.mock.calls.length, 1);
-    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], null);
-    assert.notStrictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], null);
+    assert.strictEqual(south['modbusClient'], null);
+    assert.notStrictEqual(south['reconnectTimeout'], null);
 
     // Simulate more scan-mode ticks firing before retryInterval elapses. Each hits the
     // "Modbus client not set" fast-fail path since the connector is still disconnected/reconnecting —
@@ -811,42 +529,32 @@ describe('South Modbus', () => {
   });
 
   it('should call readCoil method', async () => {
-    const mockedClient = {} as unknown as ModbusTCPClient;
-    utilsModbusExports.readCoil = mock.fn(async (): Promise<string | undefined> => '123');
+    utilsModbusExports.readCoil.mock.mockImplementation(async () => '123');
 
     const values = await south.modbusFunction(mockedClient, configuration.items[4]);
     assert.strictEqual(utilsModbusExports.readCoil.mock.calls.length, 1);
     assert.deepStrictEqual(utilsModbusExports.readCoil.mock.calls[0].arguments, [mockedClient, 3715]);
     assert.deepStrictEqual(values, [
-      {
-        pointId: configuration.items[4].name,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '123' }
-      }
+      { pointId: configuration.items[4].name, timestamp: testData.constants.dates.FAKE_NOW, data: { value: '123' } }
     ]);
   });
 
   it('should call readDiscreteInputRegister method', async () => {
-    const mockedClient = {} as unknown as ModbusTCPClient;
-    utilsModbusExports.readDiscreteInputRegister = mock.fn(async (): Promise<string | undefined> => '123');
+    utilsModbusExports.readDiscreteInputRegister.mock.mockImplementation(async () => '123');
 
     const values = await south.modbusFunction(mockedClient, configuration.items[3]);
     assert.strictEqual(utilsModbusExports.readDiscreteInputRegister.mock.calls.length, 1);
     assert.deepStrictEqual(utilsModbusExports.readDiscreteInputRegister.mock.calls[0].arguments, [mockedClient, 7810]);
     assert.deepStrictEqual(values, [
-      {
-        pointId: configuration.items[3].name,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '123' }
-      }
+      { pointId: configuration.items[3].name, timestamp: testData.constants.dates.FAKE_NOW, data: { value: '123' } }
     ]);
   });
 
   it('should call readInputRegister method', async () => {
-    const mockedClient = {} as unknown as ModbusTCPClient;
-    utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string | undefined> => '123');
+    utilsModbusExports.readInputRegister.mock.mockImplementation(async () => '123');
 
-    const values = await south.modbusFunction(mockedClient, configuration.items[2]);
+    const item = configuration.items[2];
+    const values = await south.modbusFunction(mockedClient, item);
     assert.strictEqual(utilsModbusExports.readInputRegister.mock.calls.length, 1);
     assert.deepStrictEqual(utilsModbusExports.readInputRegister.mock.calls[0].arguments, [
       mockedClient,
@@ -854,24 +562,18 @@ describe('South Modbus', () => {
       configuration.settings.swapWordsInDWords,
       configuration.settings.swapBytesInWords,
       configuration.settings.endianness,
-      configuration.items[2].settings.data!.multiplierCoefficient,
-      configuration.items[2].settings.data!.dataType,
-      configuration.items[2].settings.data!.bitIndex
+      item.settings.data!.multiplierCoefficient,
+      item.settings.data!.dataType,
+      item.settings.data!.bitIndex
     ]);
-    assert.deepStrictEqual(values, [
-      {
-        pointId: configuration.items[2].name,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '123' }
-      }
-    ]);
+    assert.deepStrictEqual(values, [{ pointId: item.name, timestamp: testData.constants.dates.FAKE_NOW, data: { value: '123' } }]);
   });
 
   it('should call readHoldingRegister method', async () => {
-    const mockedClient = {} as unknown as ModbusTCPClient;
-    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string | undefined> => '123');
+    utilsModbusExports.readHoldingRegister.mock.mockImplementation(async () => '123');
 
-    const values = await south.modbusFunction(mockedClient, configuration.items[1]);
+    const item = configuration.items[1];
+    const values = await south.modbusFunction(mockedClient, item);
     assert.strictEqual(utilsModbusExports.readHoldingRegister.mock.calls.length, 1);
     assert.deepStrictEqual(utilsModbusExports.readHoldingRegister.mock.calls[0].arguments, [
       mockedClient,
@@ -879,55 +581,19 @@ describe('South Modbus', () => {
       configuration.settings.swapWordsInDWords,
       configuration.settings.swapBytesInWords,
       configuration.settings.endianness,
-      configuration.items[1].settings.data!.multiplierCoefficient,
-      configuration.items[1].settings.data!.dataType,
-      configuration.items[1].settings.data!.bitIndex
+      item.settings.data!.multiplierCoefficient,
+      item.settings.data!.dataType,
+      item.settings.data!.bitIndex
     ]);
-    assert.deepStrictEqual(values, [
-      {
-        pointId: configuration.items[1].name,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '123' }
-      }
-    ]);
+    assert.deepStrictEqual(values, [{ pointId: item.name, timestamp: testData.constants.dates.FAKE_NOW, data: { value: '123' } }]);
   });
 
   it('should throw an error on wrong modbus type', async () => {
-    const mockedClient = {} as unknown as ModbusTCPClient;
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
-    configuration.settings.addressOffset = 'jbus';
-    const item: SouthConnectorItemEntity<SouthModbusItemSettings> = {
-      id: 'bad',
-      enabled: true,
-      name: 'Bad Item',
-      scanMode: testData.scanMode.list[0],
-      settings: {
-        modbusType: 'bad type' as SouthModbusItemSettingsModbusType,
-        address: '1010'
-      },
-      group: null,
-      syncWithGroup: false,
-      maxReadInterval: null,
-      readDelay: null,
-      startTimeOffset: null,
-      endTimeOffset: null,
-      recoveryStrategy: null,
-      cachingStrategy: 'allValues' as const,
-      thresholdType: null,
-      threshold: null,
-      rangeLow: null,
-      rangeHigh: null,
-      maxCachingInterval: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
+    const item = buildItem('bad', 'Bad Item', { modbusType: 'bad type' as SouthModbusItemSettingsModbusType, address: '1010' });
     await assert.rejects(
       south.modbusFunction(mockedClient, item),
       new Error(`Wrong Modbus type "${item.settings.modbusType}" for point "${item.name}"`)
     );
-    configuration.settings.addressOffset = 'modbus'; // restore
   });
 
   it('should properly test connection', async () => {
@@ -940,7 +606,7 @@ describe('South Modbus', () => {
     const errorMessage = 'Error creating connection to socket';
 
     for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-      utilsModbusExports.connectSocket = mock.fn(async () => {
+      utilsModbusExports.connectSocket.mock.mockImplementation(async () => {
         throw new ModbusError(errorMessage, code);
       });
       await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]}: ${errorMessage}`));
@@ -948,10 +614,10 @@ describe('South Modbus', () => {
   });
 
   it('should properly test item', async () => {
-    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => {
+    utilsModbusExports.connectSocket.mock.mockImplementation(async () => {
       mock.timers.tick(15);
     });
-    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string | undefined> => {
+    utilsModbusExports.readHoldingRegister.mock.mockImplementation(async () => {
       mock.timers.tick(25);
       return undefined;
     });
@@ -967,7 +633,7 @@ describe('South Modbus', () => {
     const errorMessage = 'Error creating connection to socket';
 
     for (const code of Object.keys(ERROR_CODES) as Array<ErrorCodes>) {
-      utilsModbusExports.connectSocket = mock.fn(async () => {
+      utilsModbusExports.connectSocket.mock.mockImplementation(async () => {
         throw new ModbusError(errorMessage, code);
       });
       await assert.rejects(
@@ -977,59 +643,52 @@ describe('South Modbus', () => {
     }
   });
 
-  it('should close its own local socket on test item success without touching the connector live socket', async () => {
-    // Simulate a running connector with its own live socket/modbusClient
-    const liveSocket = { removeAllListeners: mock.fn(), destroy: mock.fn() };
-    const liveModbusClient = {};
-    (south as unknown as Record<string, unknown>)['socket'] = liveSocket;
-    (south as unknown as Record<string, unknown>)['modbusClient'] = liveModbusClient;
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
-    const destroyMock = mock.method(mockedEmitter, 'destroy');
+  describe('testItem with a running connector', () => {
+    let liveSocket: Mocked<net.Socket>;
+    let disconnect: Mock<SouthModbusClass['disconnect']>;
+    let destroyMock: Mock<CustomStream['destroy']>;
 
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-
-    // testItem's own local socket (the mocked net.Socket instance) must be destroyed
-    assert.strictEqual(destroyMock.mock.calls.length, 1);
-    // The connector's own disconnect() must never be invoked by testItem
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    // The connector's live socket/modbusClient must be left untouched
-    assert.strictEqual((south as unknown as Record<string, unknown>)['socket'], liveSocket);
-    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], liveModbusClient);
-    assert.strictEqual(liveSocket.destroy.mock.calls.length, 0);
-    assert.strictEqual(liveSocket.removeAllListeners.mock.calls.length, 0);
-  });
-
-  it('should close its own local socket on test item failure without touching the connector live socket', async () => {
-    const liveSocket = { removeAllListeners: mock.fn(), destroy: mock.fn() };
-    const liveModbusClient = {};
-    (south as unknown as Record<string, unknown>)['socket'] = liveSocket;
-    (south as unknown as Record<string, unknown>)['modbusClient'] = liveModbusClient;
-    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
-    south.disconnect = disconnectMock;
-    const destroyMock = mock.method(mockedEmitter, 'destroy');
-
-    utilsModbusExports.connectSocket = mock.fn(async () => {
-      throw new ModbusError('Error creating connection to socket', 'ECONNREFUSED');
+    beforeEach(() => {
+      // Simulate a running connector with its own live socket/modbusClient
+      liveSocket = createMock<net.Socket>();
+      south['socket'] = liveSocket;
+      south['modbusClient'] = mockedClient;
+      disconnect = mock.method(south, 'disconnect', async () => undefined);
+      destroyMock = mock.method(mockedEmitter, 'destroy');
     });
 
-    await assert.rejects(south.testItem(configuration.items[0], testData.south.itemTestingSettings));
+    const assertLiveConnectionUntouched = () => {
+      // testItem's own local socket (the mocked net.Socket instance) must be destroyed
+      assert.strictEqual(destroyMock.mock.calls.length, 1);
+      // The connector's own disconnect() must never be invoked by testItem
+      assert.strictEqual(disconnect.mock.calls.length, 0);
+      // The connector's live socket/modbusClient must be left untouched
+      assert.strictEqual(south['socket'], liveSocket);
+      assert.strictEqual(south['modbusClient'], mockedClient);
+      assert.strictEqual(liveSocket.destroy.mock.calls.length, 0);
+      assert.strictEqual(liveSocket.removeAllListeners.mock.calls.length, 0);
+    };
 
-    assert.strictEqual(destroyMock.mock.calls.length, 1);
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.strictEqual((south as unknown as Record<string, unknown>)['socket'], liveSocket);
-    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], liveModbusClient);
-    assert.strictEqual(liveSocket.destroy.mock.calls.length, 0);
-    assert.strictEqual(liveSocket.removeAllListeners.mock.calls.length, 0);
+    it('should close its own local socket on test item success without touching the connector live socket', async () => {
+      await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+
+      assertLiveConnectionUntouched();
+    });
+
+    it('should close its own local socket on test item failure without touching the connector live socket', async () => {
+      utilsModbusExports.connectSocket.mock.mockImplementation(async () => {
+        throw new ModbusError('Error creating connection to socket', 'ECONNREFUSED');
+      });
+
+      await assert.rejects(south.testItem(configuration.items[0], testData.south.itemTestingSettings));
+
+      assertLiveConnectionUntouched();
+    });
   });
 
   it('should return null from directQuery when no items are queried', async () => {
-    (south as unknown as Record<string, unknown>)['modbusClient'] = {};
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true }
-    };
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    south['modbusClient'] = mockedClient;
+    south['connector'] = withSettings({ batchQuery: true });
 
     const result = await south.directQuery([]);
 
@@ -1037,383 +696,145 @@ describe('South Modbus', () => {
   });
 
   it('should merge consecutive coils into a single request and chunk within MAX_COIL_READ_COUNT', async () => {
-    const makeBitItem = (id: string, address: string) => ({
-      id,
-      name: id,
-      enabled: true,
-      settings: { address, modbusType: 'coil' as const },
-      scanMode: testData.scanMode.list[0],
-      group: null,
-      syncWithGroup: false,
-      maxReadInterval: null,
-      readDelay: null,
-      startTimeOffset: null,
-      endTimeOffset: null,
-      recoveryStrategy: null,
-      cachingStrategy: 'allValues' as const,
-      thresholdType: null,
-      threshold: null,
-      rangeLow: null,
-      rangeHigh: null,
-      maxCachingInterval: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    });
     // Three consecutive coils (addresses 10, 11, 12) merge into one run (groupingGap = 0, gap of 1
     // is within tolerance) which is then chunked without exceeding MAX_COIL_READ_COUNT (2000).
-    const bitItems = [makeBitItem('bit1', '10'), makeBitItem('bit2', '11'), makeBitItem('bit3', '12')];
-
-    const readCoilsMock = mock.fn(async (_addr: number, count: number) => ({
-      response: { body: { valuesAsArray: Array(count).fill(0) } }
-    }));
-    (south as unknown as Record<string, unknown>)['modbusClient'] = { readCoils: readCoilsMock };
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true, groupingGap: 0, addressOffset: 'modbus' as const }
-    };
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    const bitItems = [buildItem('bit1', 'bit1', coil('10')), buildItem('bit2', 'bit2', coil('11')), buildItem('bit3', 'bit3', coil('12'))];
+    const modbusClient = createMock<ModbusTCPClient>({ readCoils: bitsResponse(0) });
+    south['modbusClient'] = modbusClient;
+    south['connector'] = withSettings({ batchQuery: true, groupingGap: 0, addressOffset: 'modbus' });
 
     await south.directQuery(bitItems);
 
-    assert.strictEqual(readCoilsMock.mock.calls.length, 1);
-    assert.deepStrictEqual(readCoilsMock.mock.calls[0].arguments, [10, 3]);
+    assert.strictEqual(modbusClient.readCoils.mock.calls.length, 1);
+    assert.deepStrictEqual(modbusClient.readCoils.mock.calls[0].arguments, [10, 3]);
   });
 
   it('should split a merged coil run into multiple requests when the span exceeds MAX_COIL_READ_COUNT', async () => {
-    const makeBitItem = (id: string, address: string) => ({
-      id,
-      name: id,
-      enabled: true,
-      settings: { address, modbusType: 'coil' as const },
-      scanMode: testData.scanMode.list[0],
-      group: null,
-      syncWithGroup: false,
-      maxReadInterval: null,
-      readDelay: null,
-      startTimeOffset: null,
-      endTimeOffset: null,
-      recoveryStrategy: null,
-      cachingStrategy: 'allValues' as const,
-      thresholdType: null,
-      threshold: null,
-      rangeLow: null,
-      rangeHigh: null,
-      maxCachingInterval: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    });
     // With a large groupingGap the two coils (addresses 0 and 2500) are merged into a single run,
     // but the address span (2501) exceeds MAX_COIL_READ_COUNT (2000), forcing the chunking loop to
     // split them into two separate requests.
-    const bitItems = [makeBitItem('bit1', '0'), makeBitItem('bit2', '2500')];
-
-    const readCoilsMock = mock.fn(async (_addr: number, count: number) => ({
-      response: { body: { valuesAsArray: Array(count).fill(0) } }
-    }));
-    (south as unknown as Record<string, unknown>)['modbusClient'] = { readCoils: readCoilsMock };
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true, groupingGap: 3000, addressOffset: 'modbus' as const }
-    };
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    const bitItems = [buildItem('bit1', 'bit1', coil('0')), buildItem('bit2', 'bit2', coil('2500'))];
+    const modbusClient = createMock<ModbusTCPClient>({ readCoils: bitsResponse(0) });
+    south['modbusClient'] = modbusClient;
+    south['connector'] = withSettings({ batchQuery: true, groupingGap: 3000, addressOffset: 'modbus' });
 
     await south.directQuery(bitItems);
 
-    assert.strictEqual(readCoilsMock.mock.calls.length, 2);
-    assert.deepStrictEqual(readCoilsMock.mock.calls[0].arguments, [0, 1]);
-    assert.deepStrictEqual(readCoilsMock.mock.calls[1].arguments, [2500, 1]);
+    assert.strictEqual(modbusClient.readCoils.mock.calls.length, 2);
+    assert.deepStrictEqual(modbusClient.readCoils.mock.calls[0].arguments, [0, 1]);
+    assert.deepStrictEqual(modbusClient.readCoils.mock.calls[1].arguments, [2500, 1]);
   });
 
   it('should split a merged register run into multiple requests when the span exceeds MAX_REGISTER_WORD_COUNT', async () => {
-    const makeItem = (id: string, address: string) => ({
-      id,
-      name: id,
-      enabled: true,
-      settings: { address, modbusType: 'holding-register' as const, data: { dataType: 'uint16' as const, multiplierCoefficient: 1 } },
-      scanMode: testData.scanMode.list[0],
-      group: null,
-      syncWithGroup: false,
-      maxReadInterval: null,
-      readDelay: null,
-      startTimeOffset: null,
-      endTimeOffset: null,
-      recoveryStrategy: null,
-      cachingStrategy: 'allValues' as const,
-      thresholdType: null,
-      threshold: null,
-      rangeLow: null,
-      rangeHigh: null,
-      maxCachingInterval: null,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    });
     // With a large groupingGap the two registers (addresses 0 and 200) are merged into a single run,
     // but the span (201 words) exceeds MAX_REGISTER_WORD_COUNT (125), forcing the chunking loop to
     // split them into two separate requests.
-    const registerItems = [makeItem('reg1', '0'), makeItem('reg2', '200')];
-
-    const readHoldingRegistersMock = mock.fn(async (_addr: number, count: number) => ({
-      response: { body: { valuesAsBuffer: Buffer.alloc(count * 2) } }
-    }));
-    (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
-    (south as unknown as Record<string, unknown>)['connector'] = {
-      ...configuration,
-      settings: { ...configuration.settings, batchQuery: true, groupingGap: 300, addressOffset: 'modbus' as const }
-    };
-    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    const registerItems = [buildItem('reg1', 'reg1', holdingRegister('0')), buildItem('reg2', 'reg2', holdingRegister('200'))];
+    const modbusClient = createMock<ModbusTCPClient>({ readHoldingRegisters: registersResponse });
+    south['modbusClient'] = modbusClient;
+    south['connector'] = withSettings({ batchQuery: true, groupingGap: 300, addressOffset: 'modbus' });
 
     await south.directQuery(registerItems);
 
-    assert.strictEqual(readHoldingRegistersMock.mock.calls.length, 2);
-    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[0].arguments, [0, 1]);
-    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[1].arguments, [200, 1]);
+    assert.strictEqual(modbusClient.readHoldingRegisters.mock.calls.length, 2);
+    assert.deepStrictEqual(modbusClient.readHoldingRegisters.mock.calls[0].arguments, [0, 1]);
+    assert.deepStrictEqual(modbusClient.readHoldingRegisters.mock.calls[1].arguments, [200, 1]);
   });
 
   describe('caching strategy filtering', () => {
-    const buildItem = (
-      id: string,
-      name: string,
-      overrides: Partial<SouthConnectorItemEntity<SouthModbusItemSettings>> = {}
-    ): SouthConnectorItemEntity<SouthModbusItemSettings> => ({
-      ...configuration.items[0],
-      id,
-      name,
-      cachingStrategy: 'allValues',
-      thresholdType: null,
-      threshold: null,
-      rangeLow: null,
-      rangeHigh: null,
-      maxCachingInterval: null,
-      ...overrides
+    const inputRegister = {
+      address: '0x3E81',
+      modbusType: 'input-register',
+      data: { dataType: 'uint16', multiplierCoefficient: 1 }
+    } as const;
+    const cachedValue = (value: string) => ({ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value } });
+
+    beforeEach(() => {
+      south['modbusClient'] = mockedClient;
+      utilsModbusExports.readHoldingRegister.mock.mockImplementation(async () => '42');
     });
 
     it('should suppress a no-change value under cachingStrategy=onChange', async () => {
-      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
-      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () =>
-          new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '42',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ]
-          ])
-      );
+      const item = buildItem('id1', 'Var1', holdingRegister('0x4E80'), { cachingStrategy: 'onChange' });
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(() => lastValues(['id1', '42', '2021-01-01T00:00:00.000Z']));
 
       await south.directQuery([item]);
 
-      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
-      assert.deepStrictEqual(content.content, []);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
-      assert.deepStrictEqual(
-        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
-        []
-      );
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0].content, []);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], []);
+      assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments[1], []);
     });
 
     it('should cache a threshold-exceeding change', async () => {
-      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
-      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const item = buildItem('id1', 'Var1', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () =>
-          new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '30',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ]
-          ])
-      );
+      const item = buildItem('id1', 'Var1', holdingRegister('0x4E80'), {
+        cachingStrategy: 'threshold',
+        thresholdType: 'absolute',
+        threshold: 5
+      });
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(() => lastValues(['id1', '30', '2021-01-01T00:00:00.000Z']));
 
       await south.directQuery([item]);
 
-      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
-      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
-      assert.deepStrictEqual(
-        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
-        [{ itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }]
-      );
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0].content, [cachedValue('42')]);
+      assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments[1], [
+        { itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }
+      ]);
     });
 
     it('should compute a percentage-of-span threshold correctly, caching the value above it and suppressing the one below it', async () => {
-      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
       // rangeLow=0, rangeHigh=100 -> span=100; threshold=10% -> 10 absolute units
-      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42'); // diff from 20 = 22 > 10
-      utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string> => '25'); // diff from 20 = 5 < 10
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const overItem = buildItem('id1', 'Var1', {
+      // holding register: 42, diff from 20 = 22 > 10
+      utilsModbusExports.readInputRegister.mock.mockImplementation(async () => '25'); // diff from 20 = 5 < 10
+      const thresholdSettings = {
         cachingStrategy: 'threshold',
         thresholdType: 'percentage',
         threshold: 10,
         rangeLow: 0,
         rangeHigh: 100
-      });
-      const underItem = buildItem('id2', 'Var2', {
-        settings: { address: '0x3E81', modbusType: 'input-register', data: { dataType: 'uint16', multiplierCoefficient: 1 } },
-        cachingStrategy: 'threshold',
-        thresholdType: 'percentage',
-        threshold: 10,
-        rangeLow: 0,
-        rangeHigh: 100
-      });
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () =>
-          new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '20',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ],
-            [
-              'id2',
-              {
-                itemId: 'id2',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '20',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ]
-          ])
+      } as const;
+      const overItem = buildItem('id1', 'Var1', holdingRegister('0x4E80'), thresholdSettings);
+      const underItem = buildItem('id2', 'Var2', inputRegister, thresholdSettings);
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(() =>
+        lastValues(['id1', '20', '2021-01-01T00:00:00.000Z'], ['id2', '20', '2021-01-01T00:00:00.000Z'])
       );
 
       await south.directQuery([overItem, underItem]);
 
-      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
-      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [overItem]);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0].content, [cachedValue('42')]);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [overItem]);
     });
 
     it('should cache when maxCachingInterval elapses even without a qualifying change', async () => {
-      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
-      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
+      const item = buildItem('id1', 'Var1', holdingRegister('0x4E80'), { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
       // previous cached value is identical (no onChange-qualifying diff), but 2h have elapsed since trackedInstant
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () =>
-          new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T22:00:00.000Z',
-                value: '42',
-                trackedInstant: '2021-01-01T22:00:00.000Z'
-              }
-            ]
-          ])
-      );
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(() => lastValues(['id1', '42', '2021-01-01T22:00:00.000Z']));
 
       await south.directQuery([item]);
 
-      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
-      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0].content, [cachedValue('42')]);
     });
 
     it('should always cache the very first read for an item regardless of strategy', async () => {
-      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
-      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
+      const item = buildItem('id1', 'Var1', holdingRegister('0x4E80'), { cachingStrategy: 'onChange' });
       // getItemsLastValues default mock (set in beforeEach) returns an empty Map — no prior cached state
 
       await south.directQuery([item]);
 
-      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
-      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0].content, [cachedValue('42')]);
     });
 
     it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
-      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
-      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42'); // unchanged from previous -> suppressed
-      utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string> => '7'); // changed from previous -> cached
-      const addContentMock = mock.fn(
-        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
-          undefined
-      );
-      south.addContent = addContentMock;
-      const suppressedItem = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
-      const cachedItem = buildItem('id2', 'Var2', {
-        settings: { address: '0x3E81', modbusType: 'input-register', data: { dataType: 'uint16', multiplierCoefficient: 1 } },
-        cachingStrategy: 'onChange'
-      });
-      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () =>
-          new Map([
-            [
-              'id1',
-              {
-                itemId: 'id1',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '42',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ],
-            [
-              'id2',
-              {
-                itemId: 'id2',
-                groupId: null,
-                queryTime: '2021-01-01T00:00:00.000Z',
-                value: '1',
-                trackedInstant: '2021-01-01T00:00:00.000Z'
-              }
-            ]
-          ])
+      // holding register: 42, unchanged from previous -> suppressed
+      utilsModbusExports.readInputRegister.mock.mockImplementation(async () => '7'); // changed from previous -> cached
+      const suppressedItem = buildItem('id1', 'Var1', holdingRegister('0x4E80'), { cachingStrategy: 'onChange' });
+      const cachedItem = buildItem('id2', 'Var2', inputRegister, { cachingStrategy: 'onChange' });
+      southCacheRepository.getItemsLastValues.mock.mockImplementation(() =>
+        lastValues(['id1', '42', '2021-01-01T00:00:00.000Z'], ['id2', '1', '2021-01-01T00:00:00.000Z'])
       );
 
       await south.directQuery([suppressedItem, cachedItem]);
 
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments, [
         'southId',
         [{ itemId: 'id2', value: '7', instant: testData.constants.dates.FAKE_NOW }]
       ]);
