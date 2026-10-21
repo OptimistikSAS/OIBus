@@ -59,12 +59,6 @@
                 @case ('timezone') {
                   <oib-oibus-timezone-form-control [timezoneAttribute]="column.attribute" />
                 }
-                @case ('object') {
-                  <!-- TODO exhaustive switch missing case -->
-                }
-                @case ('array') {
-                  <!-- TODO exhaustive switch missing case -->
-                }
                 @default never(column.attribute);
               }
             </div>
@@ -72,16 +66,16 @@
         }
       </div>
     } @else {
-      @if (enabledKeys().has(row.columns[0].attribute.key)) {
-        @switch (row.columns[0].attribute.type) {
+      @if (enabledKeys().has(row.attribute.key)) {
+        @switch (row.attribute.type) {
           @case ('object') {
             <ng-container oibObjectFormGroup>
-              <ng-container [formGroupName]="row.columns[0].attribute.key">
+              <ng-container [formGroupName]="row.attribute.key">
                 <oib-oibus-object-form-control
                   [scanModes]="scanModes()"
                   [certificates]="certificates()"
-                  [group]="asFormGroup(group().controls[row.columns[0].attribute.key])"
-                  [objectAttribute]="row.columns[0].attribute"
+                  [group]="asFormGroup(group().controls[row.attribute.key])"
+                  [objectAttribute]="row.attribute"
                   [layout]="layout()"
                   [nested]="true"
                 />
@@ -93,41 +87,11 @@
               [scanModes]="scanModes()"
               [certificates]="certificates()"
               [parentGroup]="group()"
-              [control]="asFormControl(group().controls[row.columns[0].attribute.key])"
-              [arrayAttribute]="row.columns[0].attribute"
+              [control]="asFormControl(group().controls[row.attribute.key])"
+              [arrayAttribute]="row.attribute"
             />
           }
-          @case ('string') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('code') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('string-select') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('secret') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('number') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('boolean') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('instant') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('scan-mode') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('certificate') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @case ('timezone') {
-            <!-- TODO exhaustive switch missing case -->
-          }
-          @default never(row.columns[0].attribute);
+          @default never(row.attribute);
         }
       }
     }
