@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import type express from 'express';
+
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
@@ -16,98 +18,75 @@ import { SouthConnectorItemSearchParam } from '../../../shared/model/domain/sout
 
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
 import { OIBusTestingError } from '../../model/types';
-import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
-import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type ConfigurationWorkflowRunService from '../../service/configuration-workflow-run.service';
+import type OIBusService from '../../service/oibus.service';
+import type ScanModeService from '../../service/scan-mode.service';
+import type SouthService from '../../service/south.service';
+import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
-import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import { CustomExpressRequest } from '../express';
 import type { SouthConnectorController as SouthConnectorControllerShape } from './south-connector.controller';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockSouthServiceModule: Record<string, ReturnType<typeof mock.fn>>;
-let mockUtilsModule: Record<string, ReturnType<typeof mock.fn>>;
+// The DTO mappers return the entity as is, after asking for the user info like the real ones
+const createSouthServiceModuleMocks = () => ({
+  toSouthConnectorDTO: mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
+    getUserInfo('');
+    return connector;
+  }),
+  toSouthConnectorLightDTO: mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
+    getUserInfo('');
+    return connector;
+  }),
+  toSouthConnectorItemDTO: mock.fn((item: unknown, _southType: unknown, getUserInfo?: (id: string) => void) => {
+    if (getUserInfo) getUserInfo('');
+    return item;
+  }),
+  toSouthItemGroupDTO: mock.fn((group: unknown, getUserInfo?: (id: string) => void) => {
+    if (getUserInfo) getUserInfo('');
+    return group;
+  })
+});
+// Same objects for the whole file (the controller keeps them): their functions are replaced in beforeEach
+const southServiceModule = createSouthServiceModuleMocks();
+const utilsModule = { itemToFlattenedCSV: mock.fn(() => 'csv content') };
 let SouthConnectorController: typeof SouthConnectorControllerShape;
 
 before(() => {
   fixTsoaModuleResolution(nodeRequire);
-  mockSouthServiceModule = {
-    toSouthConnectorDTO: mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return connector;
-    }),
-    toSouthConnectorLightDTO: mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return connector;
-    }),
-    toSouthConnectorItemDTO: mock.fn((item: unknown, southType: unknown, getUserInfo?: (id: string) => void) => {
-      if (getUserInfo) getUserInfo('');
-      return item;
-    }),
-    toSouthItemGroupDTO: mock.fn((group: unknown, getUserInfo?: (id: string) => void) => {
-      if (getUserInfo) getUserInfo('');
-      return group;
-    })
-  };
-  mockUtilsModule = { itemToFlattenedCSV: mock.fn(() => 'csv content') };
-  mockModule(nodeRequire, '../../service/south.service', mockSouthServiceModule);
-  mockModule(nodeRequire, '../../service/utils', mockUtilsModule);
+  mockModule(nodeRequire, '../../service/south.service', southServiceModule);
+  mockModule(nodeRequire, '../../service/utils', utilsModule);
   const mod = reloadModule<{ SouthConnectorController: typeof SouthConnectorControllerShape }>(nodeRequire, './south-connector.controller');
   SouthConnectorController = mod.SouthConnectorController;
 });
 
 describe('SouthConnectorController', () => {
   let controller: SouthConnectorControllerShape;
-  let southService: SouthServiceMock;
-  let scanModeService: ScanModeServiceMock;
-  let oIBusService: OIBusServiceMock;
-  let userService: UserServiceMock;
+  let southService: Mocked<SouthService>;
+  let scanModeService: Mocked<ScanModeService>;
+  let oIBusService: Mocked<OIBusService>;
+  let userService: Mocked<UserService>;
   let mockRequest: Partial<CustomExpressRequest>;
-  let mockRes: {
-    attachment: ReturnType<typeof mock.fn>;
-    contentType: ReturnType<typeof mock.fn>;
-    status: ReturnType<typeof mock.fn>;
-    send: ReturnType<typeof mock.fn>;
-  };
+  let configurationWorkflowRunService: Mocked<ConfigurationWorkflowRunService>;
+  let mockRes: Mocked<express.Response>;
 
   beforeEach(() => {
-    southService = new SouthServiceMock();
-    scanModeService = new ScanModeServiceMock();
-    oIBusService = new OIBusServiceMock();
-    userService = new UserServiceMock();
-    mockRes = {
-      attachment: mock.fn(),
-      contentType: mock.fn(),
-      send: mock.fn(),
-      status: mock.fn()
-    };
-    mockRes.status = mock.fn(() => mockRes);
+    southService = createMock<SouthService>();
+    scanModeService = createMock<ScanModeService>();
+    oIBusService = createMock<OIBusService>();
+    userService = createMock<UserService>();
+    configurationWorkflowRunService = createMock<ConfigurationWorkflowRunService>();
+    mockRes = createMock<express.Response>();
+    mockRes.status.mock.mockImplementation(() => mockRes);
     mockRequest = {
-      services: createMockServices({ southService, scanModeService, oIBusService, userService }),
+      services: createMockServices({ southService, scanModeService, oIBusService, userService, configurationWorkflowRunService }),
       user: { id: 'test', login: 'testUser' },
-      res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
-    } as Partial<CustomExpressRequest>;
-    // Reset module-level mock fns
-    mockSouthServiceModule.toSouthConnectorDTO = mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return connector;
-    });
-    mockSouthServiceModule.toSouthConnectorLightDTO = mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
-      getUserInfo('');
-      return connector;
-    });
-    mockSouthServiceModule.toSouthConnectorItemDTO = mock.fn((item: unknown, southType: unknown, getUserInfo?: (id: string) => void) => {
-      if (getUserInfo) getUserInfo('');
-      return item;
-    });
-    mockSouthServiceModule.toSouthItemGroupDTO = mock.fn((group: unknown, getUserInfo?: (id: string) => void) => {
-      if (getUserInfo) getUserInfo('');
-      return group;
-    });
-    mockUtilsModule.itemToFlattenedCSV = mock.fn(() => 'csv content');
+      res: mockRes
+    };
+    Object.assign(southServiceModule, createSouthServiceModuleMocks());
+    utilsModule.itemToFlattenedCSV = mock.fn(() => 'csv content');
     controller = new SouthConnectorController();
   });
 
@@ -117,7 +96,7 @@ describe('SouthConnectorController', () => {
 
   it('should return south connector types', async () => {
     const mockManifests = [testData.south.manifest];
-    southService.listManifest = mock.fn(() => mockManifests);
+    southService.listManifest.mock.mockImplementation(() => mockManifests);
 
     const result = await controller.listManifest(mockRequest as CustomExpressRequest);
 
@@ -134,7 +113,7 @@ describe('SouthConnectorController', () => {
 
   it('should return south connector types with beta flag carried through', async () => {
     const mockManifests = [{ ...testData.south.manifest, beta: true }];
-    southService.listManifest = mock.fn(() => mockManifests);
+    southService.listManifest.mock.mockImplementation(() => mockManifests);
 
     const result = await controller.listManifest(mockRequest as CustomExpressRequest);
 
@@ -151,7 +130,7 @@ describe('SouthConnectorController', () => {
   it('should return a south connector manifest', async () => {
     const mockManifest = testData.south.manifest;
     const type = testData.south.manifest.id;
-    southService.getManifest = mock.fn(() => mockManifest);
+    southService.getManifest.mock.mockImplementation(() => mockManifest);
 
     const result = await controller.getManifest(type, mockRequest as CustomExpressRequest);
 
@@ -161,7 +140,7 @@ describe('SouthConnectorController', () => {
 
   it('should return a list of south connectors', async () => {
     const mockSouthConnectors = testData.south.list;
-    southService.list = mock.fn(() => mockSouthConnectors);
+    southService.list.mock.mockImplementation(() => mockSouthConnectors);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
 
@@ -172,7 +151,7 @@ describe('SouthConnectorController', () => {
   it('should return a south connector by ID', async () => {
     const mockSouthConnector = testData.south.list[0];
     const southId = mockSouthConnector.id;
-    southService.findById = mock.fn(() => mockSouthConnector);
+    southService.findById.mock.mockImplementation(() => mockSouthConnector);
 
     const result = await controller.findById(southId, mockRequest as CustomExpressRequest);
 
@@ -184,7 +163,7 @@ describe('SouthConnectorController', () => {
   it('should create a new south connector', async () => {
     const command: SouthConnectorCommandDTO = testData.south.command;
     const createdSouthConnector = testData.south.list[0];
-    southService.create = mock.fn(async () => createdSouthConnector);
+    southService.create.mock.mockImplementation(async () => createdSouthConnector);
 
     const result = await controller.create(command, undefined, mockRequest as CustomExpressRequest);
 
@@ -196,7 +175,7 @@ describe('SouthConnectorController', () => {
   it('should update an existing south connector', async () => {
     const southId = testData.south.list[0].id;
     const command: SouthConnectorCommandDTO = testData.south.command;
-    southService.update = mock.fn(async () => undefined);
+    southService.update.mock.mockImplementation(async () => undefined);
 
     await controller.update(southId, command, mockRequest as CustomExpressRequest);
 
@@ -206,7 +185,7 @@ describe('SouthConnectorController', () => {
 
   it('should delete a south connector', async () => {
     const southId = testData.south.list[0].id;
-    southService.delete = mock.fn(async () => undefined);
+    southService.delete.mock.mockImplementation(async () => undefined);
 
     await controller.delete(southId, mockRequest as CustomExpressRequest);
 
@@ -216,7 +195,7 @@ describe('SouthConnectorController', () => {
 
   it('should start a south connector', async () => {
     const southId = testData.south.list[0].id;
-    southService.start = mock.fn(async () => undefined);
+    southService.start.mock.mockImplementation(async () => undefined);
 
     await controller.start(southId, mockRequest as CustomExpressRequest);
 
@@ -226,7 +205,7 @@ describe('SouthConnectorController', () => {
 
   it('should stop a south connector', async () => {
     const southId = testData.south.list[0].id;
-    southService.stop = mock.fn(async () => undefined);
+    southService.stop.mock.mockImplementation(async () => undefined);
 
     await controller.stop(southId, mockRequest as CustomExpressRequest);
 
@@ -236,7 +215,7 @@ describe('SouthConnectorController', () => {
 
   it('should get south connector metrics', async () => {
     const southId = testData.south.list[0].id;
-    southService.getSouthMetric = mock.fn(() => testData.south.metrics);
+    southService.getSouthMetric.mock.mockImplementation(() => testData.south.metrics);
 
     const result = controller.getMetrics(southId, mockRequest as CustomExpressRequest);
 
@@ -246,7 +225,7 @@ describe('SouthConnectorController', () => {
 
   it('should reset south connector metrics', async () => {
     const southId = testData.south.list[0].id;
-    oIBusService.resetSouthMetrics = mock.fn(async () => undefined);
+    oIBusService.resetSouthMetrics.mock.mockImplementation(async () => undefined);
 
     await controller.resetSouthMetrics(southId, mockRequest as CustomExpressRequest);
 
@@ -258,7 +237,7 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const southType = testData.south.command.type;
     const settings = testData.south.command.settings;
-    southService.testSouth = mock.fn(async () => ({ items: [] }));
+    southService.testSouth.mock.mockImplementation(async () => ({ items: [] }));
 
     await controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest);
 
@@ -270,7 +249,7 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const southType = testData.south.command.type;
     const settings = testData.south.command.settings;
-    southService.testSouth = mock.fn(async () => {
+    southService.testSouth.mock.mockImplementation(async () => {
       throw new Error('South connection failure');
     });
 
@@ -301,7 +280,7 @@ describe('SouthConnectorController', () => {
       connectionDuration: 12,
       queryDuration: 34
     };
-    southService.testItem = mock.fn(async () => mockResult);
+    southService.testItem.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.testItem(southId, southType, itemName, requestBody, mockRequest as CustomExpressRequest);
 
@@ -326,7 +305,7 @@ describe('SouthConnectorController', () => {
       itemSettings: testData.south.itemCommand.settings,
       testingSettings: testData.south.itemTestingSettings
     };
-    southService.testItem = mock.fn(async () => {
+    southService.testItem.mock.mockImplementation(async () => {
       throw new Error('South item failure');
     });
 
@@ -353,7 +332,7 @@ describe('SouthConnectorController', () => {
     const southType = testData.south.command.type;
     const requestBody = { southSettings: testData.south.command.settings, query: 'SELECT 1' };
     const mockResult = [{ name: 'sensor1', unit: 'C' }];
-    southService.testDiscoveryQuery = mock.fn(async () => mockResult);
+    southService.testDiscoveryQuery.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.testDiscoveryQuery(southId, southType, requestBody, mockRequest as CustomExpressRequest);
 
@@ -371,7 +350,7 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const southType = testData.south.command.type;
     const requestBody = { southSettings: testData.south.command.settings, query: 'SELECT 1' };
-    southService.testDiscoveryQuery = mock.fn(async () => {
+    southService.testDiscoveryQuery.mock.mockImplementation(async () => {
       throw new Error('Discovery query failure');
     });
 
@@ -386,7 +365,6 @@ describe('SouthConnectorController', () => {
   });
 
   it('should preview a configuration workflow as currently edited', async () => {
-    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
     const requestBody = {
       southSettings: testData.south.command.settings,
       workflowId: 'workflowId1',
@@ -403,7 +381,7 @@ describe('SouthConnectorController', () => {
       }
     };
     const previewResult = { discoveredCount: 1, eligibleCount: 1, entries: [], records: [{ name: 'sensor1' }] };
-    workflowRunService.previewCommand.mock.mockImplementation(async () => previewResult);
+    configurationWorkflowRunService.previewCommand.mock.mockImplementation(async () => previewResult);
 
     const result = await controller.testWorkflowPreview(
       testData.south.list[0].id,
@@ -412,7 +390,7 @@ describe('SouthConnectorController', () => {
       mockRequest as CustomExpressRequest
     );
 
-    assert.deepStrictEqual(workflowRunService.previewCommand.mock.calls[0].arguments, [
+    assert.deepStrictEqual(configurationWorkflowRunService.previewCommand.mock.calls[0].arguments, [
       testData.south.list[0].id,
       testData.south.command.type,
       requestBody.southSettings,
@@ -423,9 +401,8 @@ describe('SouthConnectorController', () => {
   });
 
   it('should map what a discovery scope finds to new items', async () => {
-    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
-    const items = [{ ...testData.south.itemCommand, id: null }] as unknown as Array<SouthConnectorItemCommandDTO>;
-    workflowRunService.discoverItems.mock.mockImplementation(async () => items);
+    const items: Array<SouthConnectorItemCommandDTO> = [{ ...testData.south.itemCommand, id: null }];
+    configurationWorkflowRunService.discoverItems.mock.mockImplementation(async () => items);
     const requestBody = {
       southSettings: testData.south.command.settings,
       discoveryScope: { nodeIds: ['ns=1;s=Reactor'] },
@@ -434,7 +411,7 @@ describe('SouthConnectorController', () => {
 
     const result = await controller.discoverItems('create', testData.south.command.type, requestBody, mockRequest as CustomExpressRequest);
 
-    assert.deepStrictEqual(workflowRunService.discoverItems.mock.calls[0].arguments, [
+    assert.deepStrictEqual(configurationWorkflowRunService.discoverItems.mock.calls[0].arguments, [
       'create',
       testData.south.command.type,
       requestBody.southSettings,
@@ -445,8 +422,7 @@ describe('SouthConnectorController', () => {
   });
 
   it('should wrap errors when mapping what a discovery scope finds to new items', async () => {
-    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
-    workflowRunService.discoverItems.mock.mockImplementation(async () => {
+    configurationWorkflowRunService.discoverItems.mock.mockImplementation(async () => {
       throw new Error('Discovery failure');
     });
 
@@ -462,8 +438,7 @@ describe('SouthConnectorController', () => {
   });
 
   it('should wrap errors when previewing a configuration workflow as currently edited', async () => {
-    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
-    workflowRunService.previewCommand.mock.mockImplementation(async () => {
+    configurationWorkflowRunService.previewCommand.mock.mockImplementation(async () => {
       throw new Error('Preview failure');
     });
 
@@ -486,7 +461,7 @@ describe('SouthConnectorController', () => {
       sessionId: 'sessionId',
       entries: [{ id: 'n1', name: 'N1', metadata: { type: 'Object' }, hasChildren: true }]
     };
-    southService.startExplore = mock.fn(async () => startResult);
+    southService.startExplore.mock.mockImplementation(async () => startResult);
 
     const result = await controller.startExplore(southId, southType, settings, mockRequest as CustomExpressRequest);
 
@@ -496,7 +471,7 @@ describe('SouthConnectorController', () => {
   });
 
   it('should wrap errors when starting a south explore session', async () => {
-    southService.startExplore = mock.fn(async () => {
+    southService.startExplore.mock.mockImplementation(async () => {
       throw new Error('Explore start failure');
     });
 
@@ -518,7 +493,7 @@ describe('SouthConnectorController', () => {
     const browseResult: SouthExploreBrowseResult = {
       entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }]
     };
-    southService.browseExplore = mock.fn(async () => browseResult);
+    southService.browseExplore.mock.mockImplementation(async () => browseResult);
 
     const result = await controller.browseExplore(
       testData.south.list[0].id,
@@ -533,7 +508,7 @@ describe('SouthConnectorController', () => {
   });
 
   it('should wrap errors when browsing a south explore session', async () => {
-    southService.browseExplore = mock.fn(async () => {
+    southService.browseExplore.mock.mockImplementation(async () => {
       throw new Error('Explore browse failure');
     });
 
@@ -547,7 +522,7 @@ describe('SouthConnectorController', () => {
   });
 
   it('should close a south explore session', async () => {
-    southService.closeExplore = mock.fn(async () => undefined);
+    southService.closeExplore.mock.mockImplementation(async () => undefined);
 
     await controller.closeExplore(testData.south.list[0].id, 'sessionId', mockRequest as CustomExpressRequest);
 
@@ -558,8 +533,8 @@ describe('SouthConnectorController', () => {
   it('should return a list of south connector items', async () => {
     const southId = testData.south.list[0].id;
     const mockItems = testData.south.list[0].items;
-    southService.findById = mock.fn(() => testData.south.list[0]);
-    southService.listItems = mock.fn(() => mockItems);
+    southService.findById.mock.mockImplementation(() => testData.south.list[0]);
+    southService.listItems.mock.mockImplementation(() => mockItems);
 
     const result = await controller.listItems(southId, mockRequest as CustomExpressRequest);
 
@@ -591,8 +566,8 @@ describe('SouthConnectorController', () => {
       number: page,
       totalPages: 1
     };
-    southService.findById = mock.fn(() => testData.south.list[0]);
-    southService.searchItems = mock.fn(() => mockPageResult);
+    southService.findById.mock.mockImplementation(() => testData.south.list[0]);
+    southService.searchItems.mock.mockImplementation(() => mockPageResult);
 
     const result = await controller.searchItems(southId, name, scanModeId, enabled, page, mockRequest as CustomExpressRequest);
 
@@ -613,8 +588,8 @@ describe('SouthConnectorController', () => {
       number: 0,
       totalPages: 1
     };
-    southService.findById = mock.fn(() => testData.south.list[0]);
-    southService.searchItems = mock.fn(() => mockPageResult);
+    southService.findById.mock.mockImplementation(() => testData.south.list[0]);
+    southService.searchItems.mock.mockImplementation(() => mockPageResult);
 
     const result = await controller.searchItems(southId, undefined, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -636,8 +611,8 @@ describe('SouthConnectorController', () => {
     const itemId = testData.south.list[0].items[0].id;
     const mockItem = testData.south.list[0].items[0];
 
-    southService.findById = mock.fn(() => testData.south.list[0]);
-    southService.findItemById = mock.fn(() => mockItem);
+    southService.findById.mock.mockImplementation(() => testData.south.list[0]);
+    southService.findItemById.mock.mockImplementation(() => mockItem);
 
     const result = await controller.findItemById(southId, itemId, mockRequest as CustomExpressRequest);
 
@@ -663,7 +638,7 @@ describe('SouthConnectorController', () => {
       },
       groupLastValue: null
     };
-    southService.getItemLastValue = mock.fn(() => mockLastValue);
+    southService.getItemLastValue.mock.mockImplementation(() => mockLastValue);
 
     const result = await controller.getItemLastValue(southId, itemId, mockRequest as CustomExpressRequest);
 
@@ -677,8 +652,8 @@ describe('SouthConnectorController', () => {
     const command: SouthConnectorItemCommandDTO = testData.south.itemCommand;
     const createdItem = testData.south.list[0].items[0];
 
-    southService.findById = mock.fn(() => testData.south.list[0]);
-    southService.createItem = mock.fn(async () => createdItem);
+    southService.findById.mock.mockImplementation(() => testData.south.list[0]);
+    southService.createItem.mock.mockImplementation(async () => createdItem);
 
     const result = await controller.createItem(southId, command, mockRequest as CustomExpressRequest);
 
@@ -693,7 +668,7 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const itemId = testData.south.list[0].items[0].id;
     const command: SouthConnectorItemCommandDTO = testData.south.itemCommand;
-    southService.updateItem = mock.fn(async () => undefined);
+    southService.updateItem.mock.mockImplementation(async () => undefined);
 
     await controller.updateItem(southId, itemId, command, mockRequest as CustomExpressRequest);
 
@@ -704,7 +679,7 @@ describe('SouthConnectorController', () => {
   it('should enable a south connector item', async () => {
     const southId = testData.south.list[0].id;
     const itemId = testData.south.list[0].items[0].id;
-    southService.enableItem = mock.fn(async () => undefined);
+    southService.enableItem.mock.mockImplementation(async () => undefined);
 
     await controller.enableItem(southId, itemId, mockRequest as CustomExpressRequest);
 
@@ -715,7 +690,7 @@ describe('SouthConnectorController', () => {
   it('should disable a south connector item', async () => {
     const southId = testData.south.list[0].id;
     const itemId = testData.south.list[0].items[0].id;
-    southService.disableItem = mock.fn(async () => undefined);
+    southService.disableItem.mock.mockImplementation(async () => undefined);
 
     await controller.disableItem(southId, itemId, mockRequest as CustomExpressRequest);
 
@@ -726,7 +701,7 @@ describe('SouthConnectorController', () => {
   it('should enable a list of items', async () => {
     const southId = testData.south.list[0].id;
     const itemIds = testData.south.list[0].items.map(item => item.id);
-    southService.enableItems = mock.fn(async () => undefined);
+    southService.enableItems.mock.mockImplementation(async () => undefined);
 
     await controller.enableItems(southId, { itemIds }, mockRequest as CustomExpressRequest);
 
@@ -737,7 +712,7 @@ describe('SouthConnectorController', () => {
   it('should disable a list of items', async () => {
     const southId = testData.south.list[0].id;
     const itemIds = testData.south.list[0].items.map(item => item.id);
-    southService.disableItems = mock.fn(async () => undefined);
+    southService.disableItems.mock.mockImplementation(async () => undefined);
 
     await controller.disableItems(southId, { itemIds }, mockRequest as CustomExpressRequest);
 
@@ -748,7 +723,7 @@ describe('SouthConnectorController', () => {
   it('should delete a list of items', async () => {
     const southId = testData.south.list[0].id;
     const itemIds = testData.south.list[0].items.map(item => item.id);
-    southService.deleteItems = mock.fn(async () => undefined);
+    southService.deleteItems.mock.mockImplementation(async () => undefined);
 
     await controller.deleteItems(southId, { itemIds }, mockRequest as CustomExpressRequest);
 
@@ -759,7 +734,7 @@ describe('SouthConnectorController', () => {
   it('should delete an item', async () => {
     const southId = testData.south.list[0].id;
     const itemId = testData.south.list[0].items[0].id;
-    southService.deleteItem = mock.fn(async () => undefined);
+    southService.deleteItem.mock.mockImplementation(async () => undefined);
 
     await controller.deleteItem(southId, itemId, mockRequest as CustomExpressRequest);
 
@@ -769,7 +744,7 @@ describe('SouthConnectorController', () => {
 
   it('should delete all items from a south connector', async () => {
     const southId = testData.south.list[0].id;
-    southService.deleteAllItems = mock.fn(async () => undefined);
+    southService.deleteAllItems.mock.mockImplementation(async () => undefined);
 
     await controller.deleteAllItems(southId, mockRequest as CustomExpressRequest);
 
@@ -784,7 +759,7 @@ describe('SouthConnectorController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    southService.getManifest = mock.fn(() => testData.south.manifest);
+    southService.getManifest.mock.mockImplementation(() => testData.south.manifest);
     const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -807,7 +782,7 @@ describe('SouthConnectorController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    southService.getManifest = mock.fn(() => testData.south.manifest);
+    southService.getManifest.mock.mockImplementation(() => testData.south.manifest);
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => {
       throw new Error('unlink error');
@@ -830,9 +805,9 @@ describe('SouthConnectorController', () => {
     const delimiter = ',';
     const command = { delimiter };
 
-    southService.findById = mock.fn(() => testData.south.list[0]);
-    southService.getManifest = mock.fn(() => testData.south.manifest);
-    scanModeService.list = mock.fn(() => []);
+    southService.findById.mock.mockImplementation(() => testData.south.list[0]);
+    southService.getManifest.mock.mockImplementation(() => testData.south.manifest);
+    scanModeService.list.mock.mockImplementation(() => []);
 
     await controller.exportItems(southId, command, mockRequest as CustomExpressRequest);
 
@@ -867,7 +842,7 @@ describe('SouthConnectorController', () => {
       items: [{ id: '1', name: 'item1' }] as Array<SouthConnectorItemDTO>,
       errors: []
     };
-    southService.checkImportItems = mock.fn(async () => mockResult);
+    southService.checkImportItems.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.checkImportItems(
       southType,
@@ -925,7 +900,7 @@ describe('SouthConnectorController', () => {
       items: [{ id: '1', name: 'item1' }] as Array<SouthConnectorItemDTO>,
       errors: []
     };
-    southService.checkImportItems = mock.fn(async () => mockResult);
+    southService.checkImportItems.mock.mockImplementation(async () => mockResult);
 
     const result = await controller.checkImportItems(
       southType,
@@ -957,7 +932,7 @@ describe('SouthConnectorController', () => {
     mock.method(fs, 'unlink', async () => {
       throw new Error('unlink error');
     });
-    southService.checkImportItems = mock.fn(async () => ({ items: [], errors: [] }));
+    southService.checkImportItems.mock.mockImplementation(async () => ({ items: [], errors: [] }));
 
     await assert.doesNotReject(
       controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, currentItemsFile, mockRequest as CustomExpressRequest)
@@ -970,7 +945,7 @@ describe('SouthConnectorController', () => {
       path: 'myFile.json'
     } as Express.Multer.File;
 
-    southService.importItems = mock.fn(async () => undefined);
+    southService.importItems.mock.mockImplementation(async () => undefined);
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => undefined);
 
@@ -1027,7 +1002,7 @@ describe('SouthConnectorController', () => {
         items: []
       }
     ];
-    southService.getGroups = mock.fn(() => mockGroups);
+    southService.getGroups.mock.mockImplementation(() => mockGroups);
 
     const result = await controller.listGroups(southId, mockRequest as CustomExpressRequest);
 
@@ -1056,7 +1031,7 @@ describe('SouthConnectorController', () => {
       cachingStrategy: null,
       items: []
     };
-    southService.getGroup = mock.fn(() => mockGroup);
+    southService.getGroup.mock.mockImplementation(() => mockGroup);
 
     const result = await controller.getGroup(southId, groupId, mockRequest as CustomExpressRequest);
 
@@ -1099,7 +1074,7 @@ describe('SouthConnectorController', () => {
       cachingStrategy: null,
       items: []
     };
-    southService.createGroup = mock.fn(() => mockCreatedGroup);
+    southService.createGroup.mock.mockImplementation(() => mockCreatedGroup);
 
     const result = await controller.createGroup(southId, command, mockRequest as CustomExpressRequest);
 
@@ -1126,7 +1101,7 @@ describe('SouthConnectorController', () => {
         cachingStrategy: null
       }
     };
-    southService.updateGroup = mock.fn(() => ({}) as SouthItemGroupEntity);
+    southService.updateGroup.mock.mockImplementation(async () => ({}) as SouthItemGroupEntity);
 
     await controller.updateGroup(southId, groupId, command, mockRequest as CustomExpressRequest);
 
@@ -1137,7 +1112,7 @@ describe('SouthConnectorController', () => {
   it('should delete a group', async () => {
     const southId = testData.south.list[0].id;
     const groupId = 'group1';
-    southService.deleteGroup = mock.fn(async () => undefined);
+    southService.deleteGroup.mock.mockImplementation(async () => undefined);
 
     await controller.deleteGroup(southId, groupId, mockRequest as CustomExpressRequest);
 
@@ -1151,7 +1126,7 @@ describe('SouthConnectorController', () => {
       itemIds: [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id],
       groupId: 'group1'
     };
-    southService.moveItemsToGroup = mock.fn(async () => undefined);
+    southService.moveItemsToGroup.mock.mockImplementation(async () => undefined);
 
     await controller.moveItemsToGroup(southId, body, mockRequest as CustomExpressRequest);
 
@@ -1165,7 +1140,7 @@ describe('SouthConnectorController', () => {
       itemIds: [testData.south.list[0].items[0].id],
       groupId: null
     };
-    southService.moveItemsToGroup = mock.fn(async () => undefined);
+    southService.moveItemsToGroup.mock.mockImplementation(async () => undefined);
 
     await controller.moveItemsToGroup(southId, body, mockRequest as CustomExpressRequest);
 

@@ -1,49 +1,35 @@
 import assert from 'node:assert/strict';
-import * as http from 'node:http';
+import type * as http from 'node:http';
+import { createRequire } from 'node:module';
 import os from 'node:os';
-import { after, before, describe, it } from 'node:test';
+import { after, before, describe, it, mock } from 'node:test';
 
+import { ValidateError } from '@tsoa/runtime';
 import express from 'express';
 import multer from 'multer';
-import { ValidateError } from 'tsoa';
 
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
-import type AuditService from '../service/audit.service';
-import type CertificateService from '../service/certificate.service';
-import type ConfigImportService from '../service/config-transfer/config-import.service';
-import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
-import type ConfigurationWorkflowService from '../service/configuration-workflow.service';
-import type ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
-import type HistoryQueryService from '../service/history-query.service';
-import type IPFilterService from '../service/ip-filter.service';
-import type LogService from '../service/log.service';
-import type NorthService from '../service/north.service';
-import type OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
-import type OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
-import type OIBusService from '../service/oibus.service';
-import type ScanModeService from '../service/scan-mode.service';
-import type SouthService from '../service/south.service';
-import type TransformerService from '../service/transformer.service';
-import type UserService from '../service/user.service';
-import AuditServiceMock from '../tests/__mocks__/service/audit-service.mock';
-import CertificateServiceMock from '../tests/__mocks__/service/certificate-service.mock';
-import ConfigImportServiceMock from '../tests/__mocks__/service/config-import-service.mock';
-import ConfigTransferServiceMock from '../tests/__mocks__/service/config-transfer-service.mock';
-import ConfigurationWorkflowRunServiceMock from '../tests/__mocks__/service/configuration-workflow-run-service.mock';
-import ConfigurationWorkflowServiceMock from '../tests/__mocks__/service/configuration-workflow-service.mock';
-import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
-import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
-import LogServiceMock from '../tests/__mocks__/service/log-service.mock';
-import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
-import OIAnalyticsCommandServiceMock from '../tests/__mocks__/service/oia/oianalytics-command-service.mock';
-import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import OIBusServiceMock from '../tests/__mocks__/service/oibus-service.mock';
-import ScanModeServiceMock from '../tests/__mocks__/service/scan-mode-service.mock';
-import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
-import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
-import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
+import { createMockServices, fixTsoaModuleResolution, mockModule } from '../tests/utils/test-utils';
 import { createInjectServicesMiddleware } from './middlewares/services.middleware';
-import { RegisterRoutes } from './routes';
+import type * as Routes from './routes';
+
+const nodeRequire = createRequire(import.meta.url);
+
+fixTsoaModuleResolution(nodeRequire);
+// The services are all mocks here, so no connector is ever built: don't load the connector factories, which load every
+// connector SDK (seconds of import).
+mockModule(nodeRequire, '../south/south-connector-factory', {
+  buildSouth: mock.fn(),
+  initSouthCache: mock.fn(),
+  deleteSouthCache: mock.fn()
+});
+mockModule(nodeRequire, '../north/north-connector-factory', {
+  buildNorth: mock.fn(),
+  initNorthCache: mock.fn(),
+  deleteNorthCache: mock.fn(),
+  createNorthOrchestrator: mock.fn()
+});
+const { RegisterRoutes } = nodeRequire('./routes') as typeof Routes;
 
 const TEST_PORT = 19997;
 
@@ -53,31 +39,16 @@ interface RouteEntry {
 }
 
 /**
- * Express route layer shapes vary slightly between express versions; keep this loose but scoped
- * to what we actually need to read off `app._router.stack`.
- */
-interface ExpressRouteLayer {
-  route?: {
-    path: string;
-    methods: Record<string, boolean>;
-  };
-}
-
-/**
  * Walks the express router stack and extracts every registered {method, path} pair.
  * This lets us exercise every route RegisterRoutes() wired up without hardcoding paths.
  */
 function collectRoutes(app: express.Express): Array<RouteEntry> {
   const routes: Array<RouteEntry> = [];
-  const stack: Array<ExpressRouteLayer> =
-    (app as unknown as { router: { stack: Array<ExpressRouteLayer> } }).router?.stack ||
-    (app as unknown as { _router: { stack: Array<ExpressRouteLayer> } })._router?.stack ||
-    [];
-
-  for (const layer of stack) {
-    if (layer.route) {
-      const methods = Object.keys(layer.route.methods).filter(m => layer.route!.methods[m]);
-      for (const method of methods) {
+  for (const layer of app.router.stack) {
+    // express's Route has a `methods` map ({ get: true }) that its type definition does not declare
+    if (layer.route && 'methods' in layer.route) {
+      const methods = layer.route.methods as Record<string, boolean>;
+      for (const method of Object.keys(methods).filter(m => methods[m])) {
         routes.push({ method: method.toUpperCase(), path: layer.route.path });
       }
     }
@@ -100,45 +71,28 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
   before(async () => {
     app = express();
 
-    const auditService = new AuditServiceMock();
-    const certificateService = new CertificateServiceMock();
-    const configImportService = new ConfigImportServiceMock();
-    const configTransferService = new ConfigTransferServiceMock();
-    const configurationWorkflowRunService = new ConfigurationWorkflowRunServiceMock();
-    const configurationWorkflowService = new ConfigurationWorkflowServiceMock();
-    const historyQueryService = new HistoryQueryServiceMock();
-    const ipFilterService = new IpFilterServiceMock();
-    const logService = new LogServiceMock();
-    const northService = new NorthServiceMock();
-    const oIAnalyticsCommandService = new OIAnalyticsCommandServiceMock();
-    const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    const oIBusService = new OIBusServiceMock();
-    const scanModeService = new ScanModeServiceMock();
-    const southService = new SouthServiceMock();
-    const transformerService = new TransformerServiceMock();
-    const userService = new UserServiceMock();
-
     // No auth middleware here on purpose: we want requests to reach the real TSOA-generated
     // handlers in routes.ts directly, so we mount only service injection + body parsing.
+    const services = createMockServices();
     app.use(
       createInjectServicesMiddleware(
-        auditService as unknown as AuditService,
-        certificateService as unknown as CertificateService,
-        configImportService as unknown as ConfigImportService,
-        configTransferService as unknown as ConfigTransferService,
-        configurationWorkflowRunService as unknown as ConfigurationWorkflowRunService,
-        configurationWorkflowService as unknown as ConfigurationWorkflowService,
-        historyQueryService as unknown as HistoryQueryService,
-        ipFilterService as unknown as IPFilterService,
-        logService as unknown as LogService,
-        northService as unknown as NorthService,
-        oIAnalyticsCommandService as unknown as OIAnalyticsCommandService,
-        oIAnalyticsRegistrationService as unknown as OIAnalyticsRegistrationService,
-        oIBusService as unknown as OIBusService,
-        scanModeService as unknown as ScanModeService,
-        southService as unknown as SouthService,
-        transformerService as unknown as TransformerService,
-        userService as unknown as UserService
+        services.auditService,
+        services.certificateService,
+        services.configImportService,
+        services.configTransferService,
+        services.configurationWorkflowRunService,
+        services.configurationWorkflowService,
+        services.historyQueryService,
+        services.ipFilterService,
+        services.logService,
+        services.northService,
+        services.oIAnalyticsCommandService,
+        services.oIAnalyticsRegistrationService,
+        services.oIBusService,
+        services.scanModeService,
+        services.southService,
+        services.transformerService,
+        services.userService
       )
     );
 

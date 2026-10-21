@@ -1,91 +1,79 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import type express from 'express';
+
+import { createMock, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import type WebClientMiddleware from './web-client.middleware';
 
 const nodeRequire = createRequire(import.meta.url);
 
-const staticMiddlewareMock = mock.fn();
-const staticFactoryMock = mock.fn(() => staticMiddlewareMock);
-let webClientMiddleware: () => (req: unknown, res: unknown, next: unknown) => void;
+let staticMiddleware: Mock<express.RequestHandler>;
+let webClientMiddleware: typeof WebClientMiddleware;
 
 before(() => {
-  mockModule(nodeRequire, 'express', { static: staticFactoryMock });
-  const mod = reloadModule<{ default: typeof webClientMiddleware }>(nodeRequire, './web-client.middleware');
-  webClientMiddleware = mod.default;
+  mockModule(nodeRequire, 'express', { static: () => staticMiddleware });
+  webClientMiddleware = reloadModule<{ default: typeof WebClientMiddleware }>(nodeRequire, './web-client.middleware').default;
 });
 
 describe('webClientMiddleware', () => {
-  let mockNext: ReturnType<typeof mock.fn>;
-  let mockRes: { sendFile: ReturnType<typeof mock.fn> };
+  let middleware: ReturnType<typeof WebClientMiddleware>;
+  let mockNext: Mock<express.NextFunction>;
+  let mockRes: Mocked<express.Response>;
 
   beforeEach(() => {
+    staticMiddleware = mock.fn();
     mockNext = mock.fn();
-    mockRes = { sendFile: mock.fn() };
-    staticMiddlewareMock.mock.resetCalls();
+    mockRes = createMock<express.Response>();
     // Every request path logs (console.info for static/index.html, console.trace otherwise) —
     // mock both here so the real messages don't leak into the test run.
     mock.method(console, 'info', () => undefined);
     mock.method(console, 'trace', () => undefined);
+    middleware = webClientMiddleware();
   });
 
   afterEach(() => {
     mock.restoreAll();
   });
 
-  const makeReq = (method: string, path: string) => ({ method, path });
+  const makeReq = (method: string, path: string) => createMock<express.Request>({ method, path });
 
   it('should delegate static file requests to express.static', () => {
-    const middleware = webClientMiddleware();
-    const req = makeReq('GET', '/assets/app.js');
+    middleware(makeReq('GET', '/assets/app.js'), mockRes, mockNext);
 
-    middleware(req, mockRes, mockNext);
-
-    assert.strictEqual(staticMiddlewareMock.mock.calls.length, 1);
+    assert.strictEqual(staticMiddleware.mock.calls.length, 1);
     assert.strictEqual(mockRes.sendFile.mock.calls.length, 0);
     assert.strictEqual(mockNext.mock.calls.length, 0);
   });
 
   it('should serve index.html for non-API GET requests', () => {
-    const middleware = webClientMiddleware();
-    const req = makeReq('GET', '/south/connectors');
-
-    middleware(req, mockRes, mockNext);
+    middleware(makeReq('GET', '/south/connectors'), mockRes, mockNext);
 
     assert.strictEqual(mockRes.sendFile.mock.calls.length, 1);
-    assert.ok((mockRes.sendFile.mock.calls[0].arguments[0] as string).endsWith('index.html'));
+    assert.ok(mockRes.sendFile.mock.calls[0].arguments[0].endsWith('index.html'));
     assert.strictEqual(mockNext.mock.calls.length, 0);
   });
 
   it('should call next() for API paths', () => {
-    const middleware = webClientMiddleware();
-    const req = makeReq('GET', '/api/engine');
-
-    middleware(req, mockRes, mockNext);
+    middleware(makeReq('GET', '/api/engine'), mockRes, mockNext);
 
     assert.strictEqual(mockNext.mock.calls.length, 1);
     assert.strictEqual(mockRes.sendFile.mock.calls.length, 0);
   });
 
   it('should call next() for non-GET requests to non-static paths', () => {
-    const middleware = webClientMiddleware();
-    const req = makeReq('POST', '/some-path');
-
-    middleware(req, mockRes, mockNext);
+    middleware(makeReq('POST', '/some-path'), mockRes, mockNext);
 
     assert.strictEqual(mockNext.mock.calls.length, 1);
   });
 
   it('should serve static files matching various extensions', () => {
-    const middleware = webClientMiddleware();
     const extensions = ['app.css', 'logo.png', 'icon.ico', 'font.woff2', 'app.js.map'];
 
-    for (const ext of extensions) {
-      const req = makeReq('GET', `/${ext}`);
-      staticMiddlewareMock.mock.resetCalls();
-      middleware(req, mockRes, mockNext);
-      assert.strictEqual(staticMiddlewareMock.mock.calls.length, 1, `Expected static for ${ext}`);
-    }
+    extensions.forEach((ext, index) => {
+      middleware(makeReq('GET', `/${ext}`), mockRes, mockNext);
+      assert.strictEqual(staticMiddleware.mock.calls.length, index + 1, `Expected static for ${ext}`);
+    });
   });
 });
