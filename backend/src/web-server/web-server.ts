@@ -413,8 +413,12 @@ export default class WebServer {
     try {
       this.webServer.closeAllConnections();
       await new Promise<void>(resolve => {
-        this.webServer!.close(() => resolve());
-        setTimeout(() => resolve(), 5000);
+        // Fallback in case close() never calls back, cleared otherwise so it doesn't keep the process alive 5 more seconds
+        const timeout = setTimeout(() => resolve(), 5000);
+        this.webServer!.close(() => {
+          clearTimeout(timeout);
+          resolve();
+        });
       });
     } catch (error) {
       this.logger.error(error);
