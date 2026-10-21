@@ -1,57 +1,45 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
 import zlib from 'node:zlib';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
-import { Readable } from 'stream';
 
 import { OIBusRecord } from '../../../../shared/model/common/content.model';
 
-import { applyFilenameVariables, streamToString } from '../../../service/utils';
+import type * as Utils from '../../../service/utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import recordListToCsvManifest from './manifest';
 import type RecordListToCsvTransformerType from './record-list-to-csv-transformer';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockPapaparse: Record<string, ReturnType<typeof mock.fn>>;
+const createUnparseMock = () => mock.fn((_data: unknown, _config?: Record<string, unknown>) => 'csv content');
+// Same objects for the whole file: the transformer keeps a reference to them, their mocks are replaced per test
+const papaparseExports = { unparse: createUnparseMock() };
+let utils: typeof Utils;
+let utilsExports: typeof Utils;
 let RecordListToCsvTransformer: typeof RecordListToCsvTransformerType;
 
 before(() => {
-  mockUtils = {
-    sanitizeFilename: mock.fn((name: string) => name),
-    convertDateTime: mock.fn((value: unknown) => value),
-    stringToBoolean: mock.fn((value: string) => value === 'true'),
-    convertDelimiter: mock.fn(() => ';'),
-    convertQuoteChar: mock.fn(() => '"'),
-    convertEscapeChar: mock.fn(() => '"'),
-    convertNewline: mock.fn(() => ''),
-    streamToString: mock.fn(streamToString),
-    applyFilenameVariables: mock.fn(applyFilenameVariables)
-  };
-  mockPapaparse = { unparse: mock.fn(() => 'csv content') };
-  mockModule(nodeRequire, '../../../service/utils', mockUtils);
-  mockModule(nodeRequire, 'papaparse', mockPapaparse);
+  utils = nodeRequire('../../../service/utils') as typeof Utils;
+  utilsExports = { ...utils };
+  mockModule(nodeRequire, '../../../service/utils', utilsExports);
+  mockModule(nodeRequire, 'papaparse', papaparseExports);
   const mod = reloadModule<{ default: typeof RecordListToCsvTransformerType }>(nodeRequire, './record-list-to-csv-transformer');
   RecordListToCsvTransformer = mod.default;
 });
 
 describe('RecordListToCsvTransformer', () => {
   let logger: PinoLogger;
+  let convertDateTime: ReturnType<typeof mock.fn<typeof Utils.convertDateTime>>;
 
   beforeEach(() => {
     logger = new PinoLogger();
-    mockUtils.sanitizeFilename = mock.fn((name: string) => name);
-    mockUtils.convertDateTime = mock.fn((value: unknown) => value);
-    mockUtils.stringToBoolean = mock.fn((value: string) => value === 'true');
-    mockUtils.convertDelimiter = mock.fn(() => ';');
-    mockUtils.convertQuoteChar = mock.fn(() => '"');
-    mockUtils.convertEscapeChar = mock.fn(() => '"');
-    mockUtils.convertNewline = mock.fn(() => '');
-    mockUtils.applyFilenameVariables = mock.fn(applyFilenameVariables);
-    mockPapaparse.unparse = mock.fn(() => 'csv content');
+    convertDateTime = mock.fn(utils.convertDateTime);
+    Object.assign(utilsExports, { convertDateTime });
+    papaparseExports.unparse = createUnparseMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -72,23 +60,30 @@ describe('RecordListToCsvTransformer', () => {
     fields: null
   };
 
+  const field = (fieldName: string, dataType: string, extra: object = {}) => ({
+    fieldName,
+    columnName: null,
+    dataType,
+    fieldProcess: null,
+    datetimeSettings: null,
+    ...extra
+  });
+  const transformRows = (options: object, rows: Array<OIBusRecord>) =>
+    new RecordListToCsvTransformer(logger, testData.transformers.list[0], options).transformInMemory(rows, { source: 'test' }, null);
+  /** The rows given to csv.unparse, and its options */
+  const unparsedRows = () => papaparseExports.unparse.mock.calls[0].arguments[0];
+  const unparseOptions = () => papaparseExports.unparse.mock.calls[0].arguments[1]!;
+
   it('should transform record-list data from a stream and return metadata', async () => {
     const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], baseOptions);
     const rows: Array<OIBusRecord> = [
       { id: 1, name: 'sensor1', value: 23.5 },
       { id: 2, name: 'sensor2', value: 65.2 }
     ];
-    const mockStream = new Readable();
+    const result = await transformer.transform(Readable.from(JSON.stringify(rows)), { source: 'test' }, null);
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify(rows));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
-
-    assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], rows);
+    assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+    assert.deepStrictEqual(unparsedRows(), rows);
     assert.deepStrictEqual(result, {
       output: Buffer.from('csv content'),
       metadata: {
@@ -102,52 +97,38 @@ describe('RecordListToCsvTransformer', () => {
   });
 
   it('should transform an in-memory array of rows directly (no stream round-trip)', async () => {
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], baseOptions);
     const rows: Array<OIBusRecord> = [{ id: 1, name: 'sensor1', value: 23.5 }];
 
-    const result = await transformer.transformInMemory(rows, { source: 'test' }, null);
+    const result = await transformRows(baseOptions, rows);
 
-    assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], rows);
+    assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+    assert.deepStrictEqual(unparsedRows(), rows);
     assert.deepStrictEqual(result.output, Buffer.from('csv content'));
   });
 
   it('should leave every column untouched when no fields are configured', async () => {
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], baseOptions);
     const rows: Array<OIBusRecord> = [{ id: 1, timestamp: '2024-01-01T00:00:00Z', value: 42 }];
 
-    await transformer.transformInMemory(rows, { source: 'test' }, null);
+    await transformRows(baseOptions, rows);
 
-    assert.strictEqual(mockUtils.convertDateTime.mock.calls.length, 0);
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], rows);
+    assert.strictEqual(convertDateTime.mock.calls.length, 0);
+    assert.deepStrictEqual(unparsedRows(), rows);
   });
 
   it('should leave columns not covered by a field configuration untouched', async () => {
-    const options = {
-      ...baseOptions,
-      fields: [{ fieldName: 'id', columnName: null, dataType: 'number', fieldProcess: null, datetimeSettings: null }]
-    };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const options = { ...baseOptions, fields: [field('id', 'number')] };
     const rows: Array<OIBusRecord> = [{ id: 1, timestamp: '2024-01-01T00:00:00Z', value: 42 }];
 
-    await transformer.transformInMemory(rows, { source: 'test' }, null);
+    await transformRows(options, rows);
 
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [
-      { timestamp: '2024-01-01T00:00:00Z', value: 42, id: 1 }
-    ]);
+    assert.deepStrictEqual(unparsedRows(), [{ timestamp: '2024-01-01T00:00:00Z', value: 42, id: 1 }]);
   });
 
   it('should re-render a configured datetime field via convertDateTime', async () => {
-    mockUtils.convertDateTime = mock.fn(() => '2024-01-01 00:00:00');
-
     const options = {
       ...baseOptions,
       fields: [
-        {
-          fieldName: 'timestamp',
-          columnName: null,
-          dataType: 'datetime',
-          fieldProcess: null,
+        field('timestamp', 'datetime', {
           datetimeSettings: {
             inputType: 'iso-string',
             inputTimezone: 'UTC',
@@ -158,100 +139,68 @@ describe('RecordListToCsvTransformer', () => {
             outputFormat: 'yyyy-MM-dd HH:mm:ss',
             outputLocale: null
           }
-        }
+        })
       ]
     };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
     const rows: Array<OIBusRecord> = [{ id: 1, timestamp: '2024-01-01T00:00:00Z', value: 42 }];
 
-    await transformer.transformInMemory(rows, { source: 'test' }, null);
+    await transformRows(options, rows);
 
-    assert.strictEqual(mockUtils.convertDateTime.mock.calls.length, 1);
-    assert.deepStrictEqual(mockUtils.convertDateTime.mock.calls[0].arguments, [
+    assert.strictEqual(convertDateTime.mock.calls.length, 1);
+    assert.deepStrictEqual(convertDateTime.mock.calls[0].arguments, [
       '2024-01-01T00:00:00Z',
       { type: 'iso-string', timezone: 'UTC', format: null, locale: null },
       { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss', locale: null }
     ]);
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [
-      { id: 1, value: 42, timestamp: '2024-01-01 00:00:00' }
-    ]);
+    assert.deepStrictEqual(unparsedRows(), [{ id: 1, value: 42, timestamp: '2024-01-01 01:00:00' }]);
     // The original row array must not be mutated in place.
     assert.strictEqual(rows[0].timestamp, '2024-01-01T00:00:00Z');
   });
 
   it('should rename a field to its configured column name', async () => {
-    const options = {
-      ...baseOptions,
-      fields: [{ fieldName: 'id', columnName: 'identifier', dataType: 'number', fieldProcess: null, datetimeSettings: null }]
-    };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const options = { ...baseOptions, fields: [field('id', 'number', { columnName: 'identifier' })] };
     const rows: Array<OIBusRecord> = [{ id: 1, value: 42 }];
 
-    await transformer.transformInMemory(rows, { source: 'test' }, null);
+    await transformRows(options, rows);
 
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [{ value: 42, identifier: 1 }]);
+    assert.deepStrictEqual(unparsedRows(), [{ value: 42, identifier: 1 }]);
   });
 
   it('should cast a field to string/number/boolean/object per its configured data type', async () => {
-    const options = {
-      ...baseOptions,
-      fields: [
-        { fieldName: 'a', columnName: null, dataType: 'string', fieldProcess: null, datetimeSettings: null },
-        { fieldName: 'b', columnName: null, dataType: 'number', fieldProcess: null, datetimeSettings: null },
-        { fieldName: 'c', columnName: null, dataType: 'boolean', fieldProcess: null, datetimeSettings: null },
-        { fieldName: 'd', columnName: null, dataType: 'object', fieldProcess: null, datetimeSettings: null }
-      ]
-    };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const options = { ...baseOptions, fields: [field('a', 'string'), field('b', 'number'), field('c', 'boolean'), field('d', 'object')] };
     const rows: Array<OIBusRecord> = [{ a: 42, b: '3.14', c: true, d: '{"nested":true}' }];
 
-    await transformer.transformInMemory(rows, { source: 'test' }, null);
+    await transformRows(options, rows);
 
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [
-      { a: '42', b: 3.14, c: 'true', d: '"{\\"nested\\":true}"' }
-    ]);
+    assert.deepStrictEqual(unparsedRows(), [{ a: '42', b: 3.14, c: 'true', d: '"{\\"nested\\":true}"' }]);
   });
 
   it('should use the configured null value when a field is null or undefined', async () => {
-    const options = {
-      ...baseOptions,
-      nullValue: 'N/A',
-      fields: [{ fieldName: 'timestamp', columnName: null, dataType: 'string', fieldProcess: null, datetimeSettings: null }]
-    };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const options = { ...baseOptions, nullValue: 'N/A', fields: [field('timestamp', 'string')] };
     const rows: Array<OIBusRecord> = [{ id: 1, timestamp: null }];
 
-    await transformer.transformInMemory(rows, { source: 'test' }, null);
+    await transformRows(options, rows);
 
-    assert.strictEqual(mockUtils.convertDateTime.mock.calls.length, 0);
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [{ id: 1, timestamp: 'N/A' }]);
+    assert.strictEqual(convertDateTime.mock.calls.length, 0);
+    assert.deepStrictEqual(unparsedRows(), [{ id: 1, timestamp: 'N/A' }]);
   });
 
   it('should apply the field process expression after casting', async () => {
-    const options = {
-      ...baseOptions,
-      fields: [{ fieldName: 'name', columnName: null, dataType: 'string', fieldProcess: 'value.toUpperCase()', datetimeSettings: null }]
-    };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const options = { ...baseOptions, fields: [field('name', 'string', { fieldProcess: 'value.toUpperCase()' })] };
     const rows: Array<OIBusRecord> = [{ name: 'sensor1' }];
 
-    await transformer.transformInMemory(rows, { source: 'test' }, null);
+    await transformRows(options, rows);
 
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [{ name: 'SENSOR1' }]);
+    assert.deepStrictEqual(unparsedRows(), [{ name: 'SENSOR1' }]);
   });
 
   it('should pass quoteChar, escapeChar, newline and header to csv.unparse', async () => {
-    mockUtils.convertQuoteChar = mock.fn(() => "'");
-    mockUtils.convertEscapeChar = mock.fn(() => '\\');
-    mockUtils.convertNewline = mock.fn(() => '\r\n');
+    await transformRows({ ...baseOptions, header: false, newline: 'CRLF', quoteChar: 'SINGLE_QUOTE', escapeChar: 'BACKSLASH' }, [
+      { id: 1 }
+    ]);
 
-    const options = { ...baseOptions, header: false, newline: 'CRLF', quoteChar: 'SINGLE_QUOTE', escapeChar: 'BACKSLASH' };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
-
-    await transformer.transformInMemory([{ id: 1 }], { source: 'test' }, null);
-
-    assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-    const callOpts = (mockPapaparse.unparse.mock.calls[0].arguments as [unknown, Record<string, unknown>])[1];
+    assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+    const callOpts = unparseOptions();
     assert.strictEqual(callOpts.quoteChar, "'");
     assert.strictEqual(callOpts.escapeChar, '\\');
     assert.strictEqual(callOpts.newline, '\r\n');
@@ -260,24 +209,15 @@ describe('RecordListToCsvTransformer', () => {
   });
 
   it('should disable quoting when quoteChar is NONE', async () => {
-    mockUtils.convertQuoteChar = mock.fn(() => '');
+    await transformRows({ ...baseOptions, quoteChar: 'NONE' }, [{ id: 1 }]);
 
-    const options = { ...baseOptions, quoteChar: 'NONE' };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
-
-    await transformer.transformInMemory([{ id: 1 }], { source: 'test' }, null);
-
-    const callOpts = (mockPapaparse.unparse.mock.calls[0].arguments as [unknown, Record<string, unknown>])[1];
-    assert.strictEqual(callOpts.quotes, false);
+    assert.strictEqual(unparseOptions().quotes, false);
   });
 
   it('should prepend UTF-8 BOM when encoding is UTF_8_BOM', async () => {
-    const options = { ...baseOptions, encoding: 'UTF_8_BOM' };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const result = await transformRows({ ...baseOptions, encoding: 'UTF_8_BOM' }, [{ id: 1 }]);
 
-    const result = await transformer.transformInMemory([{ id: 1 }], { source: 'test' }, null);
-
-    const buf = result.output as Buffer;
+    const buf = result.output;
     assert.strictEqual(buf[0], 0xef);
     assert.strictEqual(buf[1], 0xbb);
     assert.strictEqual(buf[2], 0xbf);
@@ -285,40 +225,29 @@ describe('RecordListToCsvTransformer', () => {
   });
 
   it('should encode as Latin-1 Buffer when encoding is LATIN_1', async () => {
-    const options = { ...baseOptions, encoding: 'LATIN_1' };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const result = await transformRows({ ...baseOptions, encoding: 'LATIN_1' }, [{ id: 1 }]);
 
-    const result = await transformer.transformInMemory([{ id: 1 }], { source: 'test' }, null);
-
-    assert.strictEqual((result.output as Buffer).toString('latin1'), 'csv content');
+    assert.strictEqual(result.output.toString('latin1'), 'csv content');
   });
 
   it('should encode as UTF-16 LE Buffer with BOM when encoding is UTF_16_LE', async () => {
-    const options = { ...baseOptions, encoding: 'UTF_16_LE' };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const result = await transformRows({ ...baseOptions, encoding: 'UTF_16_LE' }, [{ id: 1 }]);
 
-    const result = await transformer.transformInMemory([{ id: 1 }], { source: 'test' }, null);
-
-    const buf = result.output as Buffer;
+    const buf = result.output;
     assert.strictEqual(buf[0], 0xff);
     assert.strictEqual(buf[1], 0xfe);
     assert.strictEqual(buf.subarray(2).toString('utf16le'), 'csv content');
   });
 
   it('should gzip the output and append .gz to the filename when compression is enabled', async () => {
-    const options = { ...baseOptions, compression: true };
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
-
-    const result = await transformer.transformInMemory([{ id: 1 }], { source: 'test' }, null);
+    const result = await transformRows({ ...baseOptions, compression: true }, [{ id: 1 }]);
 
     assert.ok(result.metadata.contentFile.endsWith('.gz'));
     assert.strictEqual(zlib.gunzipSync(result.output).toString('utf-8'), 'csv content');
   });
 
   it('should not gzip the output when compression is disabled', async () => {
-    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], baseOptions);
-
-    const result = await transformer.transformInMemory([{ id: 1 }], { source: 'test' }, null);
+    const result = await transformRows(baseOptions, [{ id: 1 }]);
 
     assert.ok(!result.metadata.contentFile.endsWith('.gz'));
     assert.strictEqual(result.output.toString('utf-8'), 'csv content');

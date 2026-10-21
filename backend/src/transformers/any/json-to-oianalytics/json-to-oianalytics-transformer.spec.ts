@@ -1,29 +1,22 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
-import { Readable } from 'stream';
 
-import { injectIndices, streamToString } from '../../../service/utils';
+import type * as Utils from '../../../service/utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import type JSONToOIAnalyticsTransformerType from './json-to-oianalytics-transformer';
 import jsonToOianalyticsManifest from './manifest';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let JSONToOIAnalyticsTransformer: typeof JSONToOIAnalyticsTransformerType;
 
 before(() => {
-  mockUtils = {
-    generateRandomId: mock.fn(() => 'randomId'),
-    streamToString: mock.fn(streamToString),
-    injectIndices: mock.fn(injectIndices),
-    // iso-string input is already an instant; the real conversion is exercised in utils' own tests.
-    convertDateTime: mock.fn((value: unknown) => value)
-  };
-  mockModule(nodeRequire, '../../../service/utils', mockUtils);
+  const utils = nodeRequire('../../../service/utils') as typeof Utils;
+  mockModule(nodeRequire, '../../../service/utils', { ...utils, generateRandomId: () => 'randomId' });
   const mod = reloadModule<{ default: typeof JSONToOIAnalyticsTransformerType }>(nodeRequire, './json-to-oianalytics-transformer');
   JSONToOIAnalyticsTransformer = mod.default;
 });
@@ -38,12 +31,11 @@ describe('JSONToOIAnalyticsTransformer', () => {
     timestamp: '$[*].ts',
     datetimeSettings: { inputType: 'iso-string', inputTimezone: 'UTC', outputPrecision: 'ms' }
   };
+  const createTransformer = (transformerOptions: object = options) =>
+    new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], transformerOptions);
 
   beforeEach(() => {
     logger = new PinoLogger();
-    mockUtils.generateRandomId = mock.fn(() => 'randomId');
-    mockUtils.injectIndices = mock.fn(injectIndices);
-    mockUtils.convertDateTime = mock.fn((value: unknown) => value);
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -52,19 +44,12 @@ describe('JSONToOIAnalyticsTransformer', () => {
   });
 
   it('should transform a JSON array from a stream into the OIAnalytics compact format', async () => {
-    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
+    const transformer = createTransformer();
     const inputData = [
       { id: 'point-1', ts: '2020-01-01T00:00:00.000Z', val: 42 },
       { id: 'point-2', ts: '2020-01-02T00:00:00.000Z', val: 'on' }
     ];
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
+    const result = await transformer.transform(Readable.from(JSON.stringify(inputData)), { source: 'test' }, null);
 
     assert.deepStrictEqual(JSON.parse(result.output.toString()), {
       timestamps: ['2020-01-01T00:00:00.000Z', '2020-01-02T00:00:00.000Z'],
@@ -81,7 +66,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
   });
 
   it('should transform an in-memory payload and round the timestamp with precision', async () => {
-    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+    const transformer = createTransformer({
       ...options,
       datetimeSettings: { ...options.datetimeSettings, outputPrecision: 'min' }
     });
@@ -99,7 +84,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
   });
 
   it('should parse a JSON-stringified intermediate node (e.g. an MQTT message payload)', async () => {
-    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+    const transformer = createTransformer({
       ...options,
       pointId: '$[*].item.name',
       value: '$[*].message.temperature',
@@ -120,7 +105,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
   });
 
   it('should split multiple metrics embedded in a single JSON-stringified MQTT message into separate rows', async () => {
-    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+    const transformer = createTransformer({
       ...options,
       rowIteratorPath: '$[*].message.metrics[*]',
       pointId: '$[*].message.metrics[*].name',
@@ -151,7 +136,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
   });
 
   it('should fall back to the current date when no timestamp can be resolved', async () => {
-    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], { ...options, timestamp: '$[*].missing' });
+    const transformer = createTransformer({ ...options, timestamp: '$[*].missing' });
     const inputData = [{ id: 'point-1', ts: '2020-01-01T00:00:00.000Z', val: 1 }];
 
     const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
@@ -162,7 +147,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
   });
 
   it('should fall back to plain ISO parsing and "ms" precision when no datetimeSettings are configured', async () => {
-    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+    const transformer = createTransformer({
       rowIteratorPath: '$[*]',
       pointId: '$[*].id',
       value: '$[*].val',
@@ -178,7 +163,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
   });
 
   it('should apply the reference process to the references', async () => {
-    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+    const transformer = createTransformer({
       ...options,
       referenceProcess: "'plant/' + value"
     });
@@ -193,7 +178,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
   });
 
   it('should properly format instant with precision', () => {
-    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
+    const transformer = createTransformer();
 
     assert.strictEqual(transformer.formatInstant('2020-03-15T12:34:56.789Z', 'ms'), '2020-03-15T12:34:56.789Z');
     assert.strictEqual(transformer.formatInstant('2020-03-15T12:34:56.789Z', 's'), '2020-03-15T12:34:56.000Z');

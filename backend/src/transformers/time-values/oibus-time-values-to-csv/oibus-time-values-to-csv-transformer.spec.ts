@@ -1,37 +1,26 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
-import { Readable } from 'stream';
 
 import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
 
-import { applyFilenameVariables, streamToString } from '../../../service/utils';
+import type { CacheMetadataSource } from '../../../model/engine.model';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import timeValuesToCsvManifest from './manifest';
 import type OIBusTimeValuesToCsvTransformerType from './oibus-time-values-to-csv-transformer';
 
 const nodeRequire = createRequire(import.meta.url);
 
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockPapaparse: Record<string, ReturnType<typeof mock.fn>>;
+const createUnparseMock = () => mock.fn((_data: unknown, _config?: Record<string, unknown>) => 'csv content');
+// Same object for the whole file: the transformer keeps a reference to it, only `unparse` is replaced per test
+const papaparseExports = { unparse: createUnparseMock() };
 let OIBusTimeValuesToCsvTransformer: typeof OIBusTimeValuesToCsvTransformerType;
 
 before(() => {
-  mockUtils = {
-    sanitizeFilename: mock.fn((name: string) => name),
-    formatInstant: mock.fn((value: string) => value),
-    convertDelimiter: mock.fn(() => ';'),
-    convertQuoteChar: mock.fn(() => '"'),
-    convertEscapeChar: mock.fn(() => '"'),
-    convertNewline: mock.fn(() => ''),
-    streamToString: mock.fn(streamToString),
-    applyFilenameVariables: mock.fn(applyFilenameVariables)
-  };
-  mockPapaparse = { unparse: mock.fn(() => 'csv content') };
-  mockModule(nodeRequire, '../../../service/utils', mockUtils);
-  mockModule(nodeRequire, 'papaparse', mockPapaparse);
+  mockModule(nodeRequire, 'papaparse', papaparseExports);
   const mod = reloadModule<{ default: typeof OIBusTimeValuesToCsvTransformerType }>(nodeRequire, './oibus-time-values-to-csv-transformer');
   OIBusTimeValuesToCsvTransformer = mod.default;
 });
@@ -39,16 +28,34 @@ before(() => {
 describe('OIBusTimeValuesToCsvTransformer', () => {
   let logger: PinoLogger;
 
+  const baseOptions = {
+    filename: 'output.csv',
+    encoding: 'UTF_8',
+    header: true,
+    delimiter: 'SEMI_COLON',
+    newline: 'DEFAULT',
+    quoteChar: 'DOUBLE_QUOTE',
+    escapeChar: 'DOUBLE_QUOTE',
+    pointIdColumnTitle: 'Ref',
+    valueColumnTitle: 'Val',
+    timestampColumnTitle: 'TS',
+    timestampType: 'iso-string'
+  };
+  const timeValue: OIBusTimeValue = { pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } };
+
+  const transformTimeValues = (options: object, timeValues: Array<OIBusTimeValue>, source: CacheMetadataSource = { source: 'test' }) =>
+    new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options).transform(
+      Readable.from(JSON.stringify(timeValues)),
+      source,
+      null
+    );
+  /** The rows given to csv.unparse, and its options */
+  const unparsedRows = () => papaparseExports.unparse.mock.calls[0].arguments[0];
+  const unparseOptions = () => papaparseExports.unparse.mock.calls[0].arguments[1]!;
+
   beforeEach(() => {
     logger = new PinoLogger();
-    mockUtils.sanitizeFilename = mock.fn((name: string) => name);
-    mockUtils.formatInstant = mock.fn((value: string) => value);
-    mockUtils.convertDelimiter = mock.fn(() => ';');
-    mockUtils.convertQuoteChar = mock.fn(() => '"');
-    mockUtils.convertEscapeChar = mock.fn(() => '"');
-    mockUtils.convertNewline = mock.fn(() => '');
-    mockUtils.applyFilenameVariables = mock.fn(applyFilenameVariables);
-    mockPapaparse.unparse = mock.fn(() => 'csv content');
+    papaparseExports.unparse = createUnparseMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -58,29 +65,18 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
 
   it('should transform data from a stream and return metadata', async () => {
     const options = {
+      ...baseOptions,
       filename: '@CurrentDate.csv',
-      delimiter: 'SEMI_COLON',
-      pointIdColumnTitle: 'Reference',
-      valueColumnTitle: 'Value',
-      timestampColumnTitle: 'Timestamp',
       timestampType: 'string',
       timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
       timezone: 'Europe/Paris'
     };
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-    const dataChunks: Array<OIBusTimeValue> = [
+
+    const result = await transformTimeValues(options, [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } },
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, data: { value: 'value2', quality: 'good' } },
       { pointId: 'reference2', timestamp: testData.constants.dates.DATE_3, data: { value: 'value1' } }
-    ];
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify(dataChunks));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
+    ]);
 
     assert.deepStrictEqual(result, {
       output: Buffer.from('csv content'),
@@ -95,71 +91,26 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
   });
 
   it('should replace @QueryStartTime and @QueryEndTime with the south history query window', async () => {
-    const options = {
-      filename: '@QueryStartTime_@QueryEndTime.csv',
-      delimiter: 'SEMI_COLON',
-      pointIdColumnTitle: 'Reference',
-      valueColumnTitle: 'Value',
-      timestampColumnTitle: 'Timestamp',
-      timestampType: 'string',
-      timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      timezone: 'Europe/Paris'
-    };
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-
-    const promise = transformer.transform(
-      mockStream,
-      {
-        source: 'south',
-        southId: 'south1',
-        southName: 'South 1',
-        queryTime: testData.constants.dates.DATE_1,
-        queryStartTime: '2023-01-01T00:00:00.000Z',
-        queryEndTime: '2023-01-01T01:00:00.000Z',
-        items: []
-      },
-      null
-    );
-    mockStream.push(JSON.stringify([]));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
+    const result = await transformTimeValues({ ...baseOptions, filename: '@QueryStartTime_@QueryEndTime.csv' }, [], {
+      source: 'south',
+      southId: 'south1',
+      southName: 'South 1',
+      queryTime: testData.constants.dates.DATE_1,
+      queryStartTime: '2023-01-01T00:00:00.000Z',
+      queryEndTime: '2023-01-01T01:00:00.000Z',
+      items: []
+    });
 
     assert.strictEqual(result.metadata.contentFile, '2023_01_01_00_00_00_000_2023_01_01_01_00_00_000.csv');
   });
 
   it('should pass quoteChar, escapeChar, newline and header to csv.unparse', async () => {
-    mockUtils.convertQuoteChar = mock.fn(() => "'");
-    mockUtils.convertEscapeChar = mock.fn(() => '\\');
-    mockUtils.convertNewline = mock.fn(() => '\r\n');
-    mockPapaparse.unparse = mock.fn(() => 'csv result');
+    await transformTimeValues({ ...baseOptions, header: false, newline: 'CRLF', quoteChar: 'SINGLE_QUOTE', escapeChar: 'BACKSLASH' }, [
+      timeValue
+    ]);
 
-    const options = {
-      filename: 'output.csv',
-      encoding: 'UTF_8',
-      header: false,
-      delimiter: 'SEMI_COLON',
-      newline: 'CRLF',
-      quoteChar: 'SINGLE_QUOTE',
-      escapeChar: 'BACKSLASH',
-      pointIdColumnTitle: 'Ref',
-      valueColumnTitle: 'Val',
-      timestampColumnTitle: 'TS',
-      timestampType: 'iso-string'
-    };
-
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
-    mockStream.push(null);
-    await flushPromises();
-    await promise;
-
-    assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-    const callOpts = (mockPapaparse.unparse.mock.calls[0].arguments as [unknown, Record<string, unknown>])[1];
+    assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+    const callOpts = unparseOptions();
     assert.strictEqual(callOpts.quoteChar, "'");
     assert.strictEqual(callOpts.escapeChar, '\\');
     assert.strictEqual(callOpts.newline, '\r\n');
@@ -168,155 +119,44 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
   });
 
   it('should disable quoting when quoteChar is NONE', async () => {
-    mockUtils.convertQuoteChar = mock.fn(() => '');
-    mockPapaparse.unparse = mock.fn(() => 'csv result');
+    await transformTimeValues({ ...baseOptions, quoteChar: 'NONE' }, [timeValue]);
 
-    const options = {
-      filename: 'output.csv',
-      encoding: 'UTF_8',
-      header: true,
-      delimiter: 'SEMI_COLON',
-      newline: 'DEFAULT',
-      quoteChar: 'NONE',
-      escapeChar: 'DOUBLE_QUOTE',
-      pointIdColumnTitle: 'Ref',
-      valueColumnTitle: 'Val',
-      timestampColumnTitle: 'TS',
-      timestampType: 'iso-string'
-    };
-
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
-    mockStream.push(null);
-    await flushPromises();
-    await promise;
-
-    assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-    const callOpts = (mockPapaparse.unparse.mock.calls[0].arguments as [unknown, Record<string, unknown>])[1];
-    assert.strictEqual(callOpts.quotes, false);
+    assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+    assert.strictEqual(unparseOptions().quotes, false);
   });
 
-  it('should prepend UTF-8 BOM when encoding is UTF_8_BOM', async () => {
-    mockPapaparse.unparse = mock.fn(() => 'csv content');
-
-    const options = {
-      filename: 'output.csv',
+  const encodingCases = [
+    {
+      title: 'should prepend UTF-8 BOM when encoding is UTF_8_BOM',
       encoding: 'UTF_8_BOM',
-      header: true,
-      delimiter: 'SEMI_COLON',
-      newline: 'DEFAULT',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      pointIdColumnTitle: 'Ref',
-      valueColumnTitle: 'Val',
-      timestampColumnTitle: 'TS',
-      timestampType: 'iso-string'
-    };
-
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    assert.ok(result.output instanceof Buffer);
-    const buf = result.output as Buffer;
-    assert.strictEqual(buf[0], 0xef);
-    assert.strictEqual(buf[1], 0xbb);
-    assert.strictEqual(buf[2], 0xbf);
-    assert.strictEqual(buf.subarray(3).toString('utf-8'), 'csv content');
-  });
-
-  it('should encode as Latin-1 Buffer when encoding is LATIN_1', async () => {
-    mockPapaparse.unparse = mock.fn(() => 'csv content');
-
-    const options = {
-      filename: 'output.csv',
+      expected: Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('csv content')])
+    },
+    {
+      title: 'should encode as Latin-1 Buffer when encoding is LATIN_1',
       encoding: 'LATIN_1',
-      header: true,
-      delimiter: 'SEMI_COLON',
-      newline: 'DEFAULT',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      pointIdColumnTitle: 'Ref',
-      valueColumnTitle: 'Val',
-      timestampColumnTitle: 'TS',
-      timestampType: 'iso-string'
-    };
-
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    assert.ok(result.output instanceof Buffer);
-    assert.strictEqual((result.output as Buffer).toString('latin1'), 'csv content');
-  });
-
-  it('should encode as UTF-16 LE Buffer with BOM when encoding is UTF_16_LE', async () => {
-    mockPapaparse.unparse = mock.fn(() => 'csv content');
-
-    const options = {
-      filename: 'output.csv',
+      expected: Buffer.from('csv content', 'latin1')
+    },
+    {
+      title: 'should encode as UTF-16 LE Buffer with BOM when encoding is UTF_16_LE',
       encoding: 'UTF_16_LE',
-      header: true,
-      delimiter: 'SEMI_COLON',
-      newline: 'DEFAULT',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      pointIdColumnTitle: 'Ref',
-      valueColumnTitle: 'Val',
-      timestampColumnTitle: 'TS',
-      timestampType: 'iso-string'
-    };
+      expected: Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('csv content', 'utf16le')])
+    }
+  ];
+  for (const { title, encoding, expected } of encodingCases) {
+    it(title, async () => {
+      const result = await transformTimeValues({ ...baseOptions, encoding }, [timeValue]);
 
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    assert.ok(result.output instanceof Buffer);
-    const buf = result.output as Buffer;
-    assert.strictEqual(buf[0], 0xff);
-    assert.strictEqual(buf[1], 0xfe);
-    assert.strictEqual(buf.subarray(2).toString('utf16le'), 'csv content');
-  });
+      assert.deepStrictEqual(result.output, expected);
+    });
+  }
 
   it('should parse jsonData from a JSON string when transformInMemory receives non-array data', async () => {
-    mockPapaparse.unparse = mock.fn(() => 'csv content');
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], baseOptions);
 
-    const options = {
-      filename: 'output.csv',
-      encoding: 'UTF_8',
-      header: true,
-      delimiter: 'SEMI_COLON',
-      newline: 'DEFAULT',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      pointIdColumnTitle: 'Ref',
-      valueColumnTitle: 'Val',
-      timestampColumnTitle: 'TS',
-      timestampType: 'iso-string'
-    };
+    const result = await transformer.transformInMemory(JSON.stringify([timeValue]), { source: 'test' }, null);
 
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-    const dataChunks: Array<OIBusTimeValue> = [{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } }];
-
-    const result = await transformer.transformInMemory(JSON.stringify(dataChunks), { source: 'test' }, null);
-
-    assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-    const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, string>>, unknown])[0];
-    assert.deepStrictEqual(callData, [{ Ref: 'ref-1', Val: '42', TS: '2024-01-01T00:00:00Z' }]);
+    assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+    assert.deepStrictEqual(unparsedRows(), [{ Ref: 'ref-1', Val: '42', TS: '2024-01-01T00:00:00Z' }]);
     assert.ok(result.output instanceof Buffer);
   });
 
@@ -329,101 +169,36 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
 
   describe('fieldProcess', () => {
     it('should apply pointIdProcess, valueProcess and timestampProcess to their respective columns', async () => {
-      mockUtils.formatInstant = mock.fn(() => '2024-01-01 00:00:00');
-      mockPapaparse.unparse = mock.fn(() => 'csv result');
-
       const options = {
-        filename: 'output.csv',
-        encoding: 'UTF_8',
-        header: true,
-        delimiter: 'SEMI_COLON',
-        newline: 'DEFAULT',
+        ...baseOptions,
         quoteChar: 'NONE',
-        escapeChar: 'DOUBLE_QUOTE',
-        pointIdColumnTitle: 'Ref',
-        valueColumnTitle: 'Val',
-        timestampColumnTitle: 'TS',
-        timestampType: 'iso-string',
+        timestampType: 'string',
+        timestampFormat: 'yyyy-MM-dd HH:mm:ss',
+        timezone: 'UTC',
         pointIdProcess: 'value.toUpperCase()',
         valueProcess: 'String(value).replace(".", ",")',
         timestampProcess: 'value.slice(0, 10)'
       };
 
-      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, null);
-      mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '3.14' } }]));
-      mockStream.push(null);
-      await flushPromises();
-      await promise;
+      await transformTimeValues(options, [{ ...timeValue, data: { value: '3.14' } }]);
 
-      assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-      const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, string>>, unknown])[0];
-      assert.deepStrictEqual(callData, [{ Ref: 'REF-1', Val: '3.14', TS: '2024-01-01 00:00:00' }]);
+      assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+      assert.deepStrictEqual(unparsedRows(), [{ Ref: 'REF-1', Val: '3.14', TS: '2024-01-01 00:00:00' }]);
     });
 
     it('should leave column values unchanged when process fields are null', async () => {
-      mockUtils.formatInstant = mock.fn(() => '2024-01-01T00:00:00.000Z');
-      mockPapaparse.unparse = mock.fn(() => 'csv result');
+      const options = { ...baseOptions, quoteChar: 'NONE', pointIdProcess: null, valueProcess: null, timestampProcess: null };
 
-      const options = {
-        filename: 'output.csv',
-        encoding: 'UTF_8',
-        header: true,
-        delimiter: 'SEMI_COLON',
-        newline: 'DEFAULT',
-        quoteChar: 'NONE',
-        escapeChar: 'DOUBLE_QUOTE',
-        pointIdColumnTitle: 'Ref',
-        valueColumnTitle: 'Val',
-        timestampColumnTitle: 'TS',
-        timestampType: 'iso-string',
-        pointIdProcess: null,
-        valueProcess: null,
-        timestampProcess: null
-      };
+      await transformTimeValues(options, [timeValue]);
 
-      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, null);
-      mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } }]));
-      mockStream.push(null);
-      await flushPromises();
-      await promise;
-
-      assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
-      const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, string>>, unknown])[0];
-      assert.deepStrictEqual(callData, [{ Ref: 'ref-1', Val: '42', TS: '2024-01-01T00:00:00.000Z' }]);
+      assert.strictEqual(papaparseExports.unparse.mock.calls.length, 1);
+      assert.deepStrictEqual(unparsedRows(), [{ Ref: 'ref-1', Val: '42', TS: '2024-01-01T00:00:00Z' }]);
     });
 
     it('should throw a descriptive error when a process expression is invalid', async () => {
-      mockUtils.formatInstant = mock.fn(() => '2024-01-01T00:00:00.000Z');
+      const options = { ...baseOptions, quoteChar: 'NONE', pointIdProcess: 'value.boom()', valueProcess: null, timestampProcess: null };
 
-      const options = {
-        filename: 'output.csv',
-        encoding: 'UTF_8',
-        header: true,
-        delimiter: 'SEMI_COLON',
-        newline: 'DEFAULT',
-        quoteChar: 'NONE',
-        escapeChar: 'DOUBLE_QUOTE',
-        pointIdColumnTitle: 'Ref',
-        valueColumnTitle: 'Val',
-        timestampColumnTitle: 'TS',
-        timestampType: 'iso-string',
-        pointIdProcess: 'value.boom()',
-        valueProcess: null,
-        timestampProcess: null
-      };
-
-      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
-      const mockStream = new Readable();
-      const promise = transformer.transform(mockStream, { source: 'test' }, null);
-      const rejectPromise = assert.rejects(promise, /Field process evaluation failed/);
-      mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } }]));
-      mockStream.push(null);
-      await flushPromises();
-      await rejectPromise;
+      await assert.rejects(transformTimeValues(options, [timeValue]), /Field process evaluation failed/);
     });
 
     it('should expose process attributes in the manifest', () => {
