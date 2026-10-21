@@ -4,109 +4,88 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { OIBusContent } from '../../shared/model/common/content.model';
-import type { Instant } from '../../shared/model/common/types';
-import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/connector/north-settings.model';
-import type { SouthItemSettings, SouthModbusSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
 
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
-import type { HistoryQueryEntity, HistoryQueryItemEntity } from '../model/histor-query.model';
-import type { Transformer } from '../model/transformer.model';
+import type NorthConnector from '../north/north-connector';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
 import type CertificateRepository from '../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import type CacheServiceType from '../service/cache/cache.service';
+import type CacheService from '../service/cache/cache.service';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
-import { assertContains, mockModule, reloadModule } from '../tests/utils/test-utils';
-import type {
-  buildHistoryQuery as BuildHistoryQueryFn,
-  createHistoryQueryOrchestrator as CreateHistoryQueryOrchestratorFn,
-  deleteHistoryQueryCache as DeleteHistoryQueryCacheFn,
-  initHistoryQueryCache as InitHistoryQueryCacheFn
-} from './history-query-factory';
+import { assertContains, createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
+import type * as HistoryQueryFactory from './history-query-factory';
 
 const nodeRequire = createRequire(import.meta.url);
 
+type SouthCallback = (
+  southId: string,
+  data: unknown,
+  queryTime: string,
+  items: Array<unknown>,
+  queryStartTime?: string | null,
+  queryEndTime?: string | null
+) => Promise<void>;
+
 describe('HistoryQueryFactory', () => {
-  // Type-only placeholders — passed to mocked factory functions that are never actually invoked
-  const mockLogger = new PinoLogger();
-  const mockSouthCacheRepository = {} as SouthCacheRepository;
-  const mockCertificateRepository = {} as CertificateRepository;
-  const mockOIAnalyticsRegistrationRepository = {} as OIAnalyticsRegistrationRepository;
-  const mockOrchestrator = {} as CacheServiceType;
   const baseFolder = '/tmp/oibus';
+  const id = 'hq-1';
+  const historyPath = `history-${id}`;
 
-  let buildHistoryQuery: typeof BuildHistoryQueryFn;
-  let initHistoryQueryCache: typeof InitHistoryQueryCacheFn;
-  let createHistoryQueryOrchestrator: typeof CreateHistoryQueryOrchestratorFn;
-  let deleteHistoryQueryCache: typeof DeleteHistoryQueryCacheFn;
+  let factory: typeof HistoryQueryFactory;
+  let southCacheRepository: SouthCacheRepository;
+  let certificateRepository: CertificateRepository;
+  let oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository;
+  let orchestrator: CacheService;
 
-  // Mutable exports objects — SUT holds references to these objects, so property mutation is picked up
-  const utilsExports = { createFolder: mock.fn(async (_path: string) => undefined) };
-  const northFactoryExports: Record<string, unknown> = {
-    buildNorth: mock.fn(() => null),
-    initNorthCache: mock.fn(async () => undefined),
-    deleteNorthCache: mock.fn(async () => undefined),
-    createNorthOrchestrator: mock.fn(() => null)
-  };
-  const southFactoryExports: Record<string, unknown> = {
-    buildSouth: mock.fn(() => null),
-    initSouthCache: mock.fn(async () => undefined),
-    deleteSouthCache: mock.fn(async () => undefined)
-  };
+  // The SUT keeps references to these exports objects: their functions are replaced in place in beforeEach
+  const createFactoryMocks = () => ({
+    utils: { createFolder: mock.fn(async (_path: string) => undefined) },
+    north: { buildNorth: mock.fn((..._args: Array<unknown>): unknown => null) },
+    south: { buildSouth: mock.fn((..._args: Array<unknown>): unknown => null) }
+  });
+  const mocks = createFactoryMocks();
 
   // Constructor tracking for CacheService and HistoryQuery
-  let cacheServiceCtorArgs: Array<unknown> | null = null;
-  let historyQueryCtorCalls: Array<Array<unknown>> = [];
-  let MockHistoryQuery: new (...args: Array<unknown>) => object;
+  let cacheServiceCtorArgs: Array<unknown> | null;
+  let historyQueryCtorCalls: Array<Array<unknown>>;
+  class MockHistoryQuery {
+    constructor(...args: Array<unknown>) {
+      historyQueryCtorCalls.push(args);
+    }
+  }
 
   before(() => {
-    mockModule(nodeRequire, '../service/utils', utilsExports);
-
-    const cacheServiceExports = {
+    mockModule(nodeRequire, '../service/utils', mocks.utils);
+    mockModule(nodeRequire, '../service/cache/cache.service', {
       __esModule: true,
       default: function MockCacheService(...args: Array<unknown>) {
-        cacheServiceCtorArgs = [...args];
+        cacheServiceCtorArgs = args;
       }
-    };
-    mockModule(nodeRequire, '../service/cache/cache.service', cacheServiceExports);
-
-    MockHistoryQuery = class {
-      constructor(...args: Array<unknown>) {
-        historyQueryCtorCalls.push([...args]);
-      }
-    };
+    });
     mockModule(nodeRequire, './history-query', { __esModule: true, default: MockHistoryQuery });
-    mockModule(nodeRequire, '../north/north-connector-factory', northFactoryExports);
-    mockModule(nodeRequire, '../south/south-connector-factory', southFactoryExports);
+    mockModule(nodeRequire, '../north/north-connector-factory', mocks.north);
+    mockModule(nodeRequire, '../south/south-connector-factory', mocks.south);
     mockModule(nodeRequire, '../service/logger/logger.service', {
-      loggerService: { createChildLogger: mock.fn(() => mockLogger) },
+      loggerService: { createChildLogger: () => new PinoLogger() },
       default: class {}
     });
 
-    const factory = reloadModule<{
-      buildHistoryQuery: typeof BuildHistoryQueryFn;
-      initHistoryQueryCache: typeof InitHistoryQueryCacheFn;
-      createHistoryQueryOrchestrator: typeof CreateHistoryQueryOrchestratorFn;
-      deleteHistoryQueryCache: typeof DeleteHistoryQueryCacheFn;
-    }>(nodeRequire, './history-query-factory');
-    buildHistoryQuery = factory.buildHistoryQuery;
-    initHistoryQueryCache = factory.initHistoryQueryCache;
-    createHistoryQueryOrchestrator = factory.createHistoryQueryOrchestrator;
-    deleteHistoryQueryCache = factory.deleteHistoryQueryCache;
+    factory = reloadModule<typeof HistoryQueryFactory>(nodeRequire, './history-query-factory');
   });
 
   beforeEach(() => {
     cacheServiceCtorArgs = null;
     historyQueryCtorCalls = [];
-    utilsExports.createFolder.mock.resetCalls();
-    (northFactoryExports.buildNorth as { mock: { resetCalls(): void } }).mock.resetCalls();
-    (northFactoryExports.initNorthCache as { mock: { resetCalls(): void } }).mock.resetCalls();
-    (northFactoryExports.deleteNorthCache as { mock: { resetCalls(): void } }).mock.resetCalls();
-    (southFactoryExports.buildSouth as { mock: { resetCalls(): void } }).mock.resetCalls();
-    (southFactoryExports.initSouthCache as { mock: { resetCalls(): void } }).mock.resetCalls();
-    (southFactoryExports.deleteSouthCache as { mock: { resetCalls(): void } }).mock.resetCalls();
+    const fresh = createFactoryMocks();
+    Object.assign(mocks.utils, fresh.utils);
+    Object.assign(mocks.north, fresh.north);
+    Object.assign(mocks.south, fresh.south);
+    southCacheRepository = createMock<SouthCacheRepository>();
+    certificateRepository = createMock<CertificateRepository>();
+    oIAnalyticsRegistrationRepository = createMock<OIAnalyticsRegistrationRepository>();
+    orchestrator = createMock<CacheService>();
   });
 
   afterEach(() => {
@@ -114,222 +93,116 @@ describe('HistoryQueryFactory', () => {
   });
 
   describe('buildHistoryQuery', () => {
-    const mockSettings = {
-      id: 'hq-1',
-      name: 'History Query 1',
-      description: 'Test HQ',
-      status: 'RUNNING',
-      queryTimeRange: {
-        startTime: testData.constants.dates.DATE_1,
-        endTime: testData.constants.dates.DATE_2,
-        maxReadInterval: 3600,
-        readDelay: 200
-      },
-      southType: 'modbus',
-      southSettings: { someSouthSetting: true } as unknown as SouthModbusSettings,
-      northType: 'file-writer',
-      northSettings: { someNorthSetting: true } as unknown as NorthFileWriterSettings,
-      throttling: { maxReadInterval: 0, readDelay: 0 },
-      caching: {
-        trigger: {
-          scanMode: { id: 'manual', name: 'Manual', description: '', cron: '' },
-          numberOfElements: 100,
-          numberOfFiles: 10
-        },
-        throttling: { runMinDelay: 1000, maxSize: 1000, maxNumberOfElements: 1000 },
-        error: { retryInterval: 5000, retryCount: 3, retentionDuration: 86400 },
-        archive: { enabled: true, retentionDuration: 604800 }
-      },
-      items: [],
-      northTransformers: [{ id: 't1', transformer: {} as Transformer, options: {}, inputType: 'time-values', items: [] }]
-    } as unknown as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
+    const settings = { ...testData.historyQueries.list[0], id };
+    const southConnector = {};
+    let northConnector: Mocked<NorthConnector<NorthSettings>>;
 
-    const mockNorthConnector = { cacheContent: mock.fn() };
-    const mockSouthConnector = {};
+    const build = () =>
+      factory.buildHistoryQuery(
+        settings,
+        mock.fn(async () => undefined),
+        baseFolder,
+        southCacheRepository,
+        certificateRepository,
+        oIAnalyticsRegistrationRepository,
+        orchestrator
+      );
 
     beforeEach(() => {
-      northFactoryExports.buildNorth = mock.fn(() => mockNorthConnector);
-      southFactoryExports.buildSouth = mock.fn(() => mockSouthConnector);
-      mockNorthConnector.cacheContent = mock.fn();
+      northConnector = createMock<NorthConnector<NorthSettings>>();
+      mocks.north.buildNorth.mock.mockImplementation(() => northConnector);
+      mocks.south.buildSouth.mock.mockImplementation(() => southConnector);
     });
 
     it('should build north and south connectors and return HistoryQuery instance', () => {
-      const mockAddContent = mock.fn(
-        async (
-          _southId: string,
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<HistoryQueryItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
-      );
-      const result = buildHistoryQuery(
-        mockSettings,
-        mockAddContent,
-        baseFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository,
-        mockOrchestrator
-      );
+      const result = build();
 
       // Verify buildNorth args
-      const buildNorthMock = northFactoryExports.buildNorth as { mock: { calls: Array<{ arguments: Array<unknown> }> } };
-      assert.strictEqual(buildNorthMock.mock.calls.length, 1);
-      const northArg = buildNorthMock.mock.calls[0].arguments[0] as Record<string, unknown>;
-      assertContains(northArg, {
-        id: mockSettings.id,
-        name: mockSettings.name,
+      assert.strictEqual(mocks.north.buildNorth.mock.calls.length, 1);
+      const [northArg, ...northRepositories] = mocks.north.buildNorth.mock.calls[0].arguments;
+      assertContains(northArg as Record<string, unknown>, {
+        id: settings.id,
+        name: settings.name,
         enabled: true,
-        type: mockSettings.northType,
-        settings: mockSettings.northSettings,
-        caching: mockSettings.caching
+        type: settings.northType,
+        settings: settings.northSettings,
+        caching: settings.caching
       });
       assert.ok(
-        (northArg.transformers as Array<{ id: string }>).some(t => t.id === 't1'),
-        'transformers should contain entry with id "t1"'
+        (northArg as { transformers: Array<{ id: string }> }).transformers.some(t => t.id === settings.northTransformers[0].id),
+        'transformers should contain the history query transformer'
       );
-      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[1], mockCertificateRepository);
-      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[2], mockOIAnalyticsRegistrationRepository);
-      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[3], mockOrchestrator);
+      assert.deepStrictEqual(northRepositories, [certificateRepository, oIAnalyticsRegistrationRepository, orchestrator]);
 
       // Verify buildSouth args
-      const buildSouthMock = southFactoryExports.buildSouth as { mock: { calls: Array<{ arguments: Array<unknown> }> } };
-      assert.strictEqual(buildSouthMock.mock.calls.length, 1);
-      const southArg = buildSouthMock.mock.calls[0].arguments[0] as Record<string, unknown>;
-      assertContains(southArg, {
-        id: mockSettings.id,
-        name: mockSettings.name,
+      assert.strictEqual(mocks.south.buildSouth.mock.calls.length, 1);
+      const [southArg, callback, southCachePath, ...southRepositories] = mocks.south.buildSouth.mock.calls[0].arguments;
+      assertContains(southArg as Record<string, unknown>, {
+        id: settings.id,
+        name: settings.name,
         enabled: true,
-        type: mockSettings.southType,
-        settings: mockSettings.southSettings,
+        type: settings.southType,
+        settings: settings.southSettings,
         items: []
       });
-      assert.strictEqual(
-        typeof buildSouthMock.mock.calls[0].arguments[1],
-        'function',
-        'second arg to buildSouth should be addContent callback'
-      );
-      assert.deepStrictEqual(
-        buildSouthMock.mock.calls[0].arguments[2],
-        path.join(baseFolder, 'cache', `history-${mockSettings.id}`, 'south')
-      );
-      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[3], mockSouthCacheRepository);
-      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[4], mockCertificateRepository);
-      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[5], mockOIAnalyticsRegistrationRepository);
+      assert.strictEqual(typeof callback, 'function', 'second arg to buildSouth should be addContent callback');
+      assert.strictEqual(southCachePath, path.join(baseFolder, 'cache', historyPath, 'south'));
+      assert.deepStrictEqual(southRepositories, [southCacheRepository, certificateRepository, oIAnalyticsRegistrationRepository]);
 
       // Verify HistoryQuery constructor call and result type
-      assert.strictEqual(historyQueryCtorCalls.length, 1);
-      assert.deepStrictEqual(historyQueryCtorCalls[0], [mockSettings, mockNorthConnector, mockSouthConnector]);
+      assert.deepStrictEqual(historyQueryCtorCalls, [[settings, northConnector, southConnector]]);
       assert.ok(result instanceof MockHistoryQuery);
     });
 
     it('should handle north caching callback inside south connector', async () => {
-      const mockAddContent = mock.fn(
-        async (
-          _southId: string,
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<HistoryQueryItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
-      );
-      buildHistoryQuery(
-        mockSettings,
-        mockAddContent,
-        baseFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository,
-        mockOrchestrator
-      );
+      build();
 
-      const buildSouthMock = southFactoryExports.buildSouth as { mock: { calls: Array<{ arguments: Array<unknown> }> } };
-      const southCallback = buildSouthMock.mock.calls[0].arguments[1] as (
-        southId: string,
-        data: unknown,
-        queryTime: string,
-        itemIds: Array<unknown>
-      ) => Promise<void>;
-      assert.strictEqual(typeof southCallback, 'function');
+      const southCallback = mocks.south.buildSouth.mock.calls[0].arguments[1] as SouthCallback;
+      await southCallback('southId', { type: 'data' }, '2023-01-01', ['item1']);
 
-      const mockData = { type: 'data' };
-      const mockQueryTime = '2023-01-01';
-      const mockItemIds = ['item1'];
-
-      await southCallback('southId', mockData, mockQueryTime, mockItemIds);
-
-      assert.strictEqual(mockNorthConnector.cacheContent.mock.calls.length, 1);
-      assert.deepStrictEqual(mockNorthConnector.cacheContent.mock.calls[0].arguments, [
-        mockData,
+      assert.strictEqual(northConnector.cacheContent.mock.calls.length, 1);
+      assert.deepStrictEqual(northConnector.cacheContent.mock.calls[0].arguments, [
+        { type: 'data' },
         {
           source: 'south',
-          southId: mockSettings.id,
-          southName: mockSettings.name,
-          queryTime: mockQueryTime,
+          southId: settings.id,
+          southName: settings.name,
+          queryTime: '2023-01-01',
           queryStartTime: undefined,
           queryEndTime: undefined,
-          items: mockItemIds
+          items: ['item1']
         }
       ]);
     });
 
     it('should forward the queried interval bounds to the north caching callback', async () => {
-      const mockAddContent = mock.fn(
-        async (
-          _southId: string,
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<HistoryQueryItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
-      );
-      buildHistoryQuery(
-        mockSettings,
-        mockAddContent,
-        baseFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository,
-        mockOrchestrator
-      );
+      build();
 
-      const buildSouthMock = southFactoryExports.buildSouth as { mock: { calls: Array<{ arguments: Array<unknown> }> } };
-      const southCallback = buildSouthMock.mock.calls[0].arguments[1] as (
-        southId: string,
-        data: unknown,
-        queryTime: string,
-        items: Array<unknown>,
-        queryStartTime?: string | null,
-        queryEndTime?: string | null
-      ) => Promise<void>;
+      const southCallback = mocks.south.buildSouth.mock.calls[0].arguments[1] as SouthCallback;
+      await southCallback('southId', { type: 'data' }, '2023-01-01', ['item1'], '2023-01-01T00:00:00.000Z', '2023-01-01T01:00:00.000Z');
 
-      const mockData = { type: 'data' };
-      const mockQueryTime = '2023-01-01';
-      const mockItemIds = ['item1'];
-
-      await southCallback('southId', mockData, mockQueryTime, mockItemIds, '2023-01-01T00:00:00.000Z', '2023-01-01T01:00:00.000Z');
-
-      assert.deepStrictEqual(mockNorthConnector.cacheContent.mock.calls[0].arguments, [
-        mockData,
+      assert.deepStrictEqual(northConnector.cacheContent.mock.calls[0].arguments, [
+        { type: 'data' },
         {
           source: 'south',
-          southId: mockSettings.id,
-          southName: mockSettings.name,
-          queryTime: mockQueryTime,
+          southId: settings.id,
+          southName: settings.name,
+          queryTime: '2023-01-01',
           queryStartTime: '2023-01-01T00:00:00.000Z',
           queryEndTime: '2023-01-01T01:00:00.000Z',
-          items: mockItemIds
+          items: ['item1']
         }
       ]);
     });
   });
 
   describe('initHistoryQueryCache', () => {
-    const id = 'hq-1';
+    const createdFolders = () => mocks.utils.createFolder.mock.calls.map(c => c.arguments[0]);
 
     it('should create all necessary folders for standard types', async () => {
-      await initHistoryQueryCache(id, 'file-writer', 'modbus', baseFolder);
+      await factory.initHistoryQueryCache(id, 'file-writer', 'modbus', baseFolder);
 
-      const historyPath = `history-${id}`;
-      const calledPaths = utilsExports.createFolder.mock.calls.map(c => c.arguments[0] as string);
+      const calledPaths = createdFolders();
 
       // North cache folders
       assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', historyPath, 'north')));
@@ -357,11 +230,9 @@ describe('HistoryQueryFactory', () => {
     });
 
     it('should create opcua specific folders if types are opcua', async () => {
-      await initHistoryQueryCache(id, 'opcua', 'opcua', baseFolder);
+      await factory.initHistoryQueryCache(id, 'opcua', 'opcua', baseFolder);
 
-      const historyPath = `history-${id}`;
-      const calledPaths = utilsExports.createFolder.mock.calls.map(c => c.arguments[0] as string);
-
+      const calledPaths = createdFolders();
       assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', historyPath, 'north', 'opcua')));
       assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', historyPath, 'south', 'opcua')));
     });
@@ -369,12 +240,10 @@ describe('HistoryQueryFactory', () => {
 
   describe('createHistoryQueryOrchestrator', () => {
     it('should instantiate CacheService with correct paths', () => {
-      const id = 'hq-1';
-      createHistoryQueryOrchestrator(baseFolder, id, 'test-name');
+      factory.createHistoryQueryOrchestrator(baseFolder, id, 'test-name');
 
-      const historyPath = `history-${id}`;
       assert.ok(cacheServiceCtorArgs !== null, 'CacheService constructor should have been called');
-      const [, cachePath, errorPath, archivePath] = cacheServiceCtorArgs!;
+      const [, cachePath, errorPath, archivePath] = cacheServiceCtorArgs;
       assert.strictEqual(cachePath, path.join(baseFolder, 'cache', historyPath, 'north'));
       assert.strictEqual(errorPath, path.join(baseFolder, 'error', historyPath, 'north'));
       assert.strictEqual(archivePath, path.join(baseFolder, 'archive', historyPath, 'north'));
@@ -383,16 +252,9 @@ describe('HistoryQueryFactory', () => {
 
   describe('deleteHistoryQueryCache', () => {
     it('should remove all history cache folders', async () => {
-      const rmMock = mock.method(
-        fs,
-        'rm',
-        mock.fn(async () => undefined)
-      );
-      const id = 'hq-1';
-      await deleteHistoryQueryCache(id, baseFolder);
+      const rmMock = mock.method(fs, 'rm', async () => undefined);
+      await factory.deleteHistoryQueryCache(id, baseFolder);
 
-      const historyPath = `history-${id}`;
-      assert.strictEqual(rmMock.mock.calls.length, 3);
       assert.deepStrictEqual(
         rmMock.mock.calls.map(c => [c.arguments[0], c.arguments[1]]),
         [
