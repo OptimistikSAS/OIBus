@@ -13,18 +13,18 @@ import type {
   OIBusConnectionTestResult
 } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import type { CacheSize } from '../../model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ScanMode } from '../../model/scan-mode.model';
 import NorthConnector from '../../north/north-connector';
+import type CacheService from '../../service/cache/cache.service';
 
 /**
  * Create a mock object for North Connector
  */
 export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   constructor(connector: NorthConnectorEntity<NorthSettings>) {
-    super(connector, null! as ICacheService);
+    super(connector, null! as CacheService);
   }
 
   override start = mock.fn(async (): Promise<void> => undefined);
