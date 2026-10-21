@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import { after, beforeEach, describe, it } from 'node:test';
+import path from 'node:path';
+import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
 
-import knex, { Knex } from 'knex';
+import { Knex } from 'knex';
 
-import { buildPreMigrationSchema } from '../../../../tests/utils/test-utils';
+import { buildSchemaBefore, createMigrationFileCloneHarness } from '../../../../tests/utils/migration-test-utils';
 import { down, up } from './v3.10.0';
 
 const NOW = '2024-01-01T00:00:00.000Z';
@@ -14,17 +15,20 @@ async function columnNames(db: Knex, table: string): Promise<Array<string>> {
 }
 
 describe('Entity migration v3.10.0', () => {
+  // The pre-migration schema is built once, each test gets its own copy of it
+  const harness = createMigrationFileCloneHarness({
+    buildSchema: db => buildSchemaBefore(path.resolve(__dirname, '..', '..'), 'v3.10.0', db)
+  });
+  before(() => harness.before());
+  beforeEach(() => harness.beforeEach());
+  afterEach(() => harness.afterEach());
+  after(() => harness.after());
+
   describe('scan modes scheduling / certificate chain', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-      await buildPreMigrationSchema(db, 'v3.10.0');
+      db = harness.getDb();
       await db('scan_modes').insert([
         { id: 'sm1', name: 'Every minute', description: 'Trigger every minute', cron: '0 * * * * *' },
         { id: 'sm2', name: 'Every hour', description: 'Trigger every hour', cron: '0 0 * * * *' },
@@ -131,14 +135,8 @@ describe('Entity migration v3.10.0', () => {
   describe('SQL-family souths record-list refactor', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-      await buildPreMigrationSchema(db, 'v3.10.0');
+      db = harness.getDb();
 
       await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
 
@@ -777,14 +775,8 @@ describe('Entity migration v3.10.0', () => {
   describe('audit trail', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-      await buildPreMigrationSchema(db, 'v3.10.0');
+      db = harness.getDb();
 
       await db('engines').insert({
         id: 'test-engine-id',
@@ -876,15 +868,9 @@ describe('Entity migration v3.10.0', () => {
   describe('configuration workflows table', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
+      db = harness.getDb();
       await db.raw('PRAGMA foreign_keys = ON');
-      await buildPreMigrationSchema(db, 'v3.10.0');
 
       await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
       await db('south_connectors').insert({
@@ -1028,15 +1014,9 @@ describe('Entity migration v3.10.0', () => {
   describe('south_items workflow columns', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
+      db = harness.getDb();
       await db.raw('PRAGMA foreign_keys = ON');
-      await buildPreMigrationSchema(db, 'v3.10.0');
 
       await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
       await db('south_connectors').insert({
@@ -1157,15 +1137,9 @@ describe('Entity migration v3.10.0', () => {
   describe('workflow_runs table', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
+      db = harness.getDb();
       await db.raw('PRAGMA foreign_keys = ON');
-      await buildPreMigrationSchema(db, 'v3.10.0');
 
       await db('south_connectors').insert({
         id: 'south1',
@@ -1313,15 +1287,9 @@ describe('Entity migration v3.10.0', () => {
   describe('item_point_metadata table', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
+      db = harness.getDb();
       await db.raw('PRAGMA foreign_keys = ON');
-      await buildPreMigrationSchema(db, 'v3.10.0');
 
       await db('south_connectors').insert({
         id: 'south1',
@@ -1485,15 +1453,9 @@ describe('Entity migration v3.10.0', () => {
   describe('oianalytics_messages workflow columns', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
+      db = harness.getDb();
       await db.raw('PRAGMA foreign_keys = ON');
-      await buildPreMigrationSchema(db, 'v3.10.0');
 
       await db('south_connectors').insert({
         id: 'south1',
@@ -1606,14 +1568,8 @@ describe('Entity migration v3.10.0', () => {
   describe('caching strategy columns', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-      await buildPreMigrationSchema(db, 'v3.10.0');
+      db = harness.getDb();
     });
 
     async function insertScanMode(id = 'scan-mode-1') {
@@ -1819,14 +1775,8 @@ describe('Entity migration v3.10.0', () => {
   describe('OIAnalytics transformers referenceProcess option', () => {
     let db: Knex;
 
-    after(async () => {
-      await db?.destroy();
-    });
-
     beforeEach(async () => {
-      await db?.destroy();
-      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-      await buildPreMigrationSchema(db, 'v3.10.0');
+      db = harness.getDb();
 
       await db('scan_modes').insert({ id: 'sm1', name: 'sm1', description: '', cron: '* * * * * *' });
       const cachingDefaults = {
