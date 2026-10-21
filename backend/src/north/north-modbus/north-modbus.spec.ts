@@ -250,8 +250,20 @@ describe('NorthModbus', () => {
   });
 
   it('should properly test connection', async () => {
-    await assert.doesNotReject(north.testConnection());
-    assert.ok(connectSocket.mock.calls.some(c => c.arguments[1] === configuration.settings));
+    let destroy: Mock<net.Socket['destroy']> | undefined;
+    connectSocket.mock.mockImplementationOnce(async socket => {
+      // What a connected socket exposes
+      Object.defineProperties(socket, { remoteAddress: { value: '127.0.0.1' }, remotePort: { value: 502 } });
+      destroy = mock.method(socket, 'destroy');
+    });
+
+    const result = await north.testConnection();
+
+    assert.deepStrictEqual(result, { items: [{ key: 'RemoteAddress', value: '127.0.0.1:502' }] });
+    assert.strictEqual(connectSocket.mock.calls.length, 1);
+    assert.strictEqual(connectSocket.mock.calls[0].arguments[1], configuration.settings);
+    // The test socket is always closed
+    assert.strictEqual(destroy!.mock.calls.length, 1);
   });
 
   it('should properly manage error on test connection failure', async () => {

@@ -69,14 +69,12 @@ describe('NorthConnector', () => {
   const utilsExports = { ...realUtils, ...createUtilsMocks() };
   // The real transformer.service (runTransformerOnContent...): only the transformer creation is controlled
   const transformerServiceExports: Record<string, unknown> = {};
+  const loggerService = { createChildLogger: (..._args: Array<unknown>): PinoLogger => logger };
   let createTransformer: Mock<() => OIBusTransformerMock>;
 
   before(() => {
     mockModule(nodeRequire, '../service/utils', utilsExports);
-    mockModule(nodeRequire, '../service/logger/logger.service', {
-      loggerService: { createChildLogger: () => logger },
-      default: class {}
-    });
+    mockModule(nodeRequire, '../service/logger/logger.service', { loggerService, default: class {} });
     // Loaded after the utils mock, so that it uses the mocked generateRandomId
     Object.assign(transformerServiceExports, reloadModule(nodeRequire, '../service/transformer.service'));
     mockModule(nodeRequire, '../service/transformer.service', transformerServiceExports);
@@ -359,10 +357,23 @@ describe('NorthConnector', () => {
   });
 
   it('should refresh logger on refreshLogger()', async () => {
+    const refreshedLogger = new PinoLogger();
+    const createChildLogger = mock.method(loggerService, 'createChildLogger', () => refreshedLogger);
+
     north.refreshLogger();
-    logger.debug.mock.resetCalls();
+
+    assert.strictEqual(createChildLogger.mock.calls.length, 1);
+    assert.deepStrictEqual(createChildLogger.mock.calls[0].arguments, ['north', testData.north.list[0].id, testData.north.list[0].name]);
+    assert.strictEqual(cacheService.refreshLogger.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.refreshLogger.mock.calls[0].arguments, [
+      'north',
+      testData.north.list[0].id,
+      testData.north.list[0].name
+    ]);
+    // The connector now logs with the new child logger
     await north.stop();
-    assert.strictEqual(logger.debug.mock.calls.length, 1);
+    assert.strictEqual(refreshedLogger.debug.mock.calls.length, 1);
+    assert.strictEqual(logger.debug.mock.calls.length, 0);
   });
 
   it('should trigger run if necessary because of retry', async () => {
