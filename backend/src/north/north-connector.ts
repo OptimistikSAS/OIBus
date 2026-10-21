@@ -18,12 +18,12 @@ import {
   OIBusConnectionTestResult
 } from '../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../model/cache.service.model';
 import { CacheMetadataSource, CacheSize, CONTENT_FOLDER } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
+import type CacheService from '../service/cache/cache.service';
 import DeferredPromise from '../service/deferred-promise';
 import { loggerService } from '../service/logger/logger.service';
 import { createTransformer, runTransformerOnContent } from '../service/transformer.service';
@@ -98,7 +98,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
-    private cacheService: ICacheService
+    private cacheService: CacheService
   ) {
     this.logger = loggerService.createChildLogger('north', this.connector.id, this.connector.name);
   }

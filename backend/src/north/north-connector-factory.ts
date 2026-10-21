@@ -17,7 +17,6 @@ import {
   NorthSFTPSettings
 } from '../../shared/model/connector/north-settings.model';
 
-import type { ICacheService } from '../model/cache.service.model';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -42,7 +41,7 @@ export const buildNorth = (
   settings: NorthConnectorEntity<NorthSettings>,
   certificateRepository: CertificateRepository,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-  orchestrator: ICacheService
+  orchestrator: CacheService
 ): NorthConnector<NorthSettings> => {
   switch (settings.type) {
     case 'aws-s3':
@@ -105,7 +104,7 @@ export const deleteNorthCache = async (id: string, baseFolder: string) => {
   await fs.rm(path.join(baseFolder, 'archive', `north-${id}`), { recursive: true, force: true });
 };
 
-export const createNorthOrchestrator = (baseFolder: string, id: string, name: string): ICacheService => {
+export const createNorthOrchestrator = (baseFolder: string, id: string, name: string): CacheService => {
   const logger = loggerService.createChildLogger('north', id, name);
   return new CacheService(
     logger,

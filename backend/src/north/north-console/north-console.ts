@@ -4,8 +4,8 @@ import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/cont
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CacheService from '../../service/cache/cache.service';
 import { streamToString } from '../../service/utils';
 import NorthConnector from '../north-connector';
 
@@ -13,7 +13,7 @@ import NorthConnector from '../north-connector';
  * Class Console - display values and file path into the console
  */
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, cacheService: ICacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, cacheService: CacheService) {
     super(configuration, cacheService);
   }
 

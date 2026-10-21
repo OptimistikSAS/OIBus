@@ -1,7 +1,6 @@
 import { ScanModeCommandDTO, ValidatedCronExpression } from '../../shared/model/api/scan-mode.model';
 
 import DataStreamEngine from '../engine/data-stream-engine';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -9,6 +8,7 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { hasScheduleChanged } from './scan-mode.utils';
 import { validateCronExpression } from './utils';
 export { toScanModeDTO } from './scan-mode-dto.utils';
@@ -19,7 +19,7 @@ export default class ScanModeService {
     private scanModeRepository: ScanModeRepository,
     private southConnectorRepository: SouthConnectorRepository,
     private southCacheRepository: SouthCacheRepository,
-    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
+    private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private dataStreamEngine: DataStreamEngine
   ) {}
 

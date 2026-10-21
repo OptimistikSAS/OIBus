@@ -8,8 +8,8 @@ import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import { NorthSFTPSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CacheService from '../../service/cache/cache.service';
 import { encryptionService } from '../../service/encryption.service';
 import NorthConnector from '../north-connector';
 
@@ -17,7 +17,7 @@ import NorthConnector from '../north-connector';
  * Class NorthSFTP - Write files in an output folder
  */
 export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthSFTPSettings>, cacheService: ICacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthSFTPSettings>, cacheService: CacheService) {
     super(configuration, cacheService);
   }
 
