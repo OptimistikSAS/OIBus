@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
+import { before, beforeEach, describe, it } from 'node:test';
 
 import { OIBusTimeValue } from '../../shared/model/common/content.model';
 
 import { CustomTransformer } from '../model/transformer.model';
-import { streamToString } from '../service/utils';
+import type SandboxService from '../service/sandbox.service';
+import type * as Utils from '../service/utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
+import { createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type OIBusCustomTransformerType from './oibus-custom-transformer';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -26,71 +27,53 @@ const sandboxOutput = {
   }
 };
 
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockSandboxServiceObj: { execute: ReturnType<typeof mock.fn> };
+// Same object for the whole file: the transformer keeps a reference to it, only its `sandboxService` is replaced per test
+const sandboxExports: { sandboxService: Mocked<SandboxService> } = { sandboxService: createMock<SandboxService>() };
 let OIBusCustomTransformer: typeof OIBusCustomTransformerType;
 
 before(() => {
-  mockUtils = { generateRandomId: mock.fn(() => 'randomId'), streamToString: mock.fn(streamToString) };
-  mockSandboxServiceObj = { execute: mock.fn(async () => sandboxOutput) };
-  mockModule(nodeRequire, '../service/utils', mockUtils);
-  mockModule(nodeRequire, '../service/sandbox.service', {
-    __esModule: true,
-    default: class MockSandboxService {},
-    sandboxService: mockSandboxServiceObj
-  });
+  const utils = nodeRequire('../service/utils') as typeof Utils;
+  mockModule(nodeRequire, '../service/utils', { ...utils, generateRandomId: () => 'randomId' });
+  mockModule(nodeRequire, '../service/sandbox.service', sandboxExports);
   const mod = reloadModule<{ default: typeof OIBusCustomTransformerType }>(nodeRequire, './oibus-custom-transformer');
   OIBusCustomTransformer = mod.default;
 });
 
 describe('OIBusCustomTransformer', () => {
   let logger: PinoLogger;
+  let transformer: OIBusCustomTransformerType;
 
   beforeEach(() => {
     logger = new PinoLogger();
-    mockUtils.generateRandomId = mock.fn(() => 'randomId');
-    mockSandboxServiceObj.execute = mock.fn(async () => sandboxOutput);
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
-  });
-
-  afterEach(() => {
-    mock.timers.reset();
+    sandboxExports.sandboxService = createMock<SandboxService>({ execute: async () => sandboxOutput });
+    transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
   });
 
   it('transformInMemory should pass a string directly to runSandbox without re-stringifying', async () => {
-    const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
     const text = '{"key":"value"}';
     const result = await transformer.transformInMemory(text, { source: 'test' }, 'test.json');
     assert.deepStrictEqual(result, sandboxOutput);
-    assert.strictEqual(mockSandboxServiceObj.execute.mock.calls[0].arguments[0], text);
+    assert.strictEqual(sandboxExports.sandboxService.execute.mock.calls[0].arguments[0], text);
   });
 
   it('transformInMemory should JSON.stringify non-string data before calling runSandbox', async () => {
-    const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
     const data = [{ key: 'value' }];
     await transformer.transformInMemory(data, { source: 'test' }, null);
-    assert.strictEqual(mockSandboxServiceObj.execute.mock.calls[0].arguments[0], JSON.stringify(data));
-    assert.strictEqual(mockSandboxServiceObj.execute.mock.calls[0].arguments[2], 'randomId.json');
+    assert.strictEqual(sandboxExports.sandboxService.execute.mock.calls[0].arguments[0], JSON.stringify(data));
+    assert.strictEqual(sandboxExports.sandboxService.execute.mock.calls[0].arguments[2], 'randomId.json');
   });
 
   it('should transform data from a stream and return sandbox result', async () => {
-    const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } },
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, data: { value: 'value2', quality: 'good' } },
       { pointId: 'reference2', timestamp: testData.constants.dates.DATE_3, data: { value: 'value1' } }
     ];
-    const mockStream = new Readable();
 
-    const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(JSON.stringify(dataChunks));
-    mockStream.push(null);
-
-    await flushPromises();
-    const result = await promise;
+    const result = await transformer.transform(Readable.from(JSON.stringify(dataChunks)), { source: 'test' }, null);
 
     assert.deepStrictEqual(result, sandboxOutput);
-    const args = mockSandboxServiceObj.execute.mock.calls[0].arguments;
+    const args = sandboxExports.sandboxService.execute.mock.calls[0].arguments;
     assert.strictEqual(args[0], JSON.stringify(dataChunks));
     assert.deepStrictEqual(args[1], { source: 'test' });
     assert.strictEqual(args[2], 'randomId.json');
@@ -99,23 +82,11 @@ describe('OIBusCustomTransformer', () => {
   });
 
   it('should convert a string sandbox output to a UTF-8 Buffer', async () => {
-    const stringSandboxOutput = {
-      output: 'plain text output',
-      metadata: {
-        contentFile: '',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 0,
-        contentType: '',
-        source: { source: 'test' }
-      }
-    };
-    mockSandboxServiceObj.execute = mock.fn(async () => stringSandboxOutput);
+    sandboxExports.sandboxService.execute.mock.mockImplementation(async () => ({ ...sandboxOutput, output: 'plain text output' }));
 
-    const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
     const result = await transformer.transformInMemory('some text', { source: 'test' }, 'test.txt');
 
     assert.ok(result.output instanceof Buffer);
-    assert.strictEqual((result.output as Buffer).toString('utf8'), 'plain text output');
+    assert.strictEqual(result.output.toString('utf8'), 'plain text output');
   });
 });
