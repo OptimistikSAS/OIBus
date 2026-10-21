@@ -5,8 +5,8 @@ import { Database } from 'better-sqlite3';
 
 import { createPageFromArray } from '../../../shared/model/common/types';
 
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import LogRepository from './log.repository';
 
 const TEST_DB_PATH = 'src/tests/test-logs-db.db';

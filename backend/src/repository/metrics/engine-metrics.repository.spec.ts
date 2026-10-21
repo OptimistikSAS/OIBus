@@ -5,8 +5,8 @@ import { Database } from 'better-sqlite3';
 
 import { EngineMetrics } from '../../../shared/model/domain/engine.model';
 
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import EngineMetricsRepository from './engine-metrics.repository';
 
 const TEST_DB_PATH = 'src/tests/test-metrics-engine.db';

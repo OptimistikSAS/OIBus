@@ -4,8 +4,8 @@ import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:t
 
 import { Database } from 'better-sqlite3';
 
+import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
-import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import CryptoRepository from './crypto.repository';
 
 const TEST_DB_PATH = 'src/tests/test-crypto-db.db';
