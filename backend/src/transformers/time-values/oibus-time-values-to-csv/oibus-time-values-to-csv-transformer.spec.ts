@@ -168,16 +168,15 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
   });
 
   describe('fieldProcess', () => {
-    it('should apply pointIdProcess, valueProcess and timestampProcess to their respective columns', async () => {
+    // Only the point id has a process: the value and the timestamp are written as they are (timestamp formatted)
+    it('should apply pointIdProcess to the point id column only', async () => {
       const options = {
         ...baseOptions,
         quoteChar: 'NONE',
         timestampType: 'string',
         timestampFormat: 'yyyy-MM-dd HH:mm:ss',
         timezone: 'UTC',
-        pointIdProcess: 'value.toUpperCase()',
-        valueProcess: 'String(value).replace(".", ",")',
-        timestampProcess: 'value.slice(0, 10)'
+        pointIdProcess: 'value.toUpperCase()'
       };
 
       await transformTimeValues(options, [{ ...timeValue, data: { value: '3.14' } }]);
@@ -186,8 +185,8 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       assert.deepStrictEqual(unparsedRows(), [{ Ref: 'REF-1', Val: '3.14', TS: '2024-01-01 00:00:00' }]);
     });
 
-    it('should leave column values unchanged when process fields are null', async () => {
-      const options = { ...baseOptions, quoteChar: 'NONE', pointIdProcess: null, valueProcess: null, timestampProcess: null };
+    it('should leave the point id unchanged when pointIdProcess is null', async () => {
+      const options = { ...baseOptions, quoteChar: 'NONE', pointIdProcess: null };
 
       await transformTimeValues(options, [timeValue]);
 
@@ -196,7 +195,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     });
 
     it('should throw a descriptive error when a process expression is invalid', async () => {
-      const options = { ...baseOptions, quoteChar: 'NONE', pointIdProcess: 'value.boom()', valueProcess: null, timestampProcess: null };
+      const options = { ...baseOptions, quoteChar: 'NONE', pointIdProcess: 'value.boom()' };
 
       await assert.rejects(transformTimeValues(options, [timeValue]), /Field process evaluation failed/);
     });

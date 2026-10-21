@@ -66,39 +66,68 @@ describe('CSVToTimeValuesTransformer', () => {
     const result = await transformParsed(headerOptions, {
       errors: [],
       data: [
-        { SensorID: 'S1', Time: '2023-01-01', Reading: 10 },
-        { SensorID: 'S2', Time: '2023-01-02', Reading: 20 }
+        // ISO strings carry their offset: the timezone setting only applies to the 'string' type
+        { SensorID: 'S1', Time: '2023-01-01T00:00:00Z', Reading: 10 },
+        { SensorID: 'S2', Time: '2023-01-02T02:00:00+02:00', Reading: 20 }
       ]
     });
     const output = JSON.parse(result.output.toString());
 
-    assert.ok(papaparseExports.parse.mock.calls.length > 0);
+    assert.strictEqual(papaparseExports.parse.mock.calls.length, 1);
     const parseOptions0 = papaparseExports.parse.mock.calls[0].arguments[1]!;
     assert.strictEqual(parseOptions0.header, true);
     assert.strictEqual(parseOptions0.delimiter, ';');
-    assert.strictEqual(output.length, 2);
-    assert.strictEqual(output[0].pointId, 'S1');
-    assert.strictEqual(output[1].data.value, 20);
-    assert.strictEqual(result.metadata.contentFile, 'fixed-random-id.json');
+    assert.deepStrictEqual(output, [
+      { pointId: 'S1', data: { value: 10 }, timestamp: '2023-01-01T00:00:00.000Z' },
+      { pointId: 'S2', data: { value: 20 }, timestamp: '2023-01-02T00:00:00.000Z' }
+    ]);
+    assert.deepStrictEqual(result.metadata, {
+      contentFile: 'fixed-random-id.json',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 2,
+      contentType: 'time-values'
+    });
   });
 
   it('should transform valid CSV without headers (using indices)', async () => {
     const result = await transformParsed(indexOptions, {
       errors: [],
       data: [
-        ['S1', '2023-01-01', 10],
-        ['S2', '2023-01-02', 20]
+        ['S1', '2023-01-01T00:00:00Z', 10],
+        ['S2', '2023-01-02T02:00:00+02:00', 20]
       ]
     });
     const output = JSON.parse(result.output.toString());
 
-    assert.ok(papaparseExports.parse.mock.calls.length > 0);
+    assert.strictEqual(papaparseExports.parse.mock.calls.length, 1);
     const parseOptions1 = papaparseExports.parse.mock.calls[0].arguments[1]!;
     assert.strictEqual(parseOptions1.header, false);
     assert.strictEqual(parseOptions1.delimiter, ',');
-    assert.strictEqual(output.length, 2);
-    assert.strictEqual(output[0].pointId, 'S1');
-    assert.strictEqual(output[1].pointId, 'S2');
+    assert.deepStrictEqual(output, [
+      { pointId: 'S1', data: { value: 10 }, timestamp: '2023-01-01T00:00:00.000Z' },
+      { pointId: 'S2', data: { value: 20 }, timestamp: '2023-01-02T00:00:00.000Z' }
+    ]);
+  });
+
+  it('should convert the timestamps with the timestamp settings', async () => {
+    const result = await transformParsed(
+      { ...headerOptions, timestampSettings: { type: 'string', timezone: 'Europe/Paris', format: 'dd/MM/yyyy HH:mm:ss', locale: 'en' } },
+      {
+        errors: [],
+        data: [
+          { SensorID: 'S1', Time: '01/01/2023 10:30:00', Reading: 10 },
+          { SensorID: 'S2', Time: '01/07/2023 10:30:00', Reading: 20 }
+        ]
+      }
+    );
+    const output = JSON.parse(result.output.toString());
+
+    // Paris local times, in UTC: winter (UTC+1) then summer (UTC+2) time
+    assert.deepStrictEqual(
+      output.map((timeValue: { timestamp: string }) => timeValue.timestamp),
+      ['2023-01-01T09:30:00.000Z', '2023-07-01T08:30:00.000Z']
+    );
   });
 
   it('should skip rows with missing or invalid required fields', async () => {
@@ -136,8 +165,10 @@ describe('CSVToTimeValuesTransformer', () => {
       data: []
     });
 
-    assert.ok(logger.warn.mock.calls.length > 0);
-    assert.ok((logger.warn.mock.calls[0].arguments[0] as string).includes('Encountered 1 errors while parsing'));
+    assert.strictEqual(logger.warn.mock.calls.length, 1);
+    assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, [
+      '[CSVToTimeValues] Encountered 1 errors while parsing "data.csv". First error: Unclosed quote'
+    ]);
   });
 
   it('should correctly expose the manifest settings', () => {
