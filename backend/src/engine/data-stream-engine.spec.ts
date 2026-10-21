@@ -7,274 +7,181 @@ import { DateTime } from 'luxon';
 import type { OIBusContent } from '../../shared/model/common/content.model';
 import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
-import type { CacheContentUpdateCommand, CacheSearchParam, CacheSearchResult } from '../../shared/model/domain/engine.model';
+import type { CacheContentUpdateCommand, CacheSearchParam, HistoryQueryMetrics } from '../../shared/model/domain/engine.model';
 
 import type { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import type { HistoryQueryEntity, HistoryQueryEntityLight } from '../model/histor-query.model';
 import type { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import type { ScanMode } from '../model/scan-mode.model';
 import type { SouthConnectorEntity, SouthConnectorEntityLight } from '../model/south-connector.model';
+import type SouthCacheRepository from '../repository/cache/south-cache.repository';
+import type CertificateRepository from '../repository/config/certificate.repository';
+import type ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
+import type HistoryQueryRepository from '../repository/config/history-query.repository';
+import type NorthConnectorRepository from '../repository/config/north-connector.repository';
+import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import type ScanModeRepository from '../repository/config/scan-mode.repository';
+import type SouthConnectorRepository from '../repository/config/south-connector.repository';
+import type HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
+import type NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
+import type SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
+import type HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
+import type NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
+import type SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
+import type OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 import HistoryQueryMock from '../tests/__mocks__/history-query.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
-import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import ConfigurationWorkflowRepositoryMock from '../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
-import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
-import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';
-import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
-import SouthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/south-connector-metrics-service.mock';
-import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import testData from '../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
+import { createMock, flushPromises, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type DataStreamEngineType from './data-stream-engine';
 
 const nodeRequire = createRequire(import.meta.url);
 
-// --- Module-level mutable exports objects (mutated per test rather than replaced) ---
-const northFactoryExports: Record<string, unknown> = {
-  buildNorth: mock.fn(),
-  createNorthOrchestrator: mock.fn(),
-  deleteNorthCache: mock.fn(),
-  initNorthCache: mock.fn()
-};
-
-const southFactoryExports: Record<string, unknown> = {
-  buildSouth: mock.fn(),
-  deleteSouthCache: mock.fn(),
-  initSouthCache: mock.fn()
-};
-
-const historyFactoryExports: Record<string, unknown> = {
-  buildHistoryQuery: mock.fn(),
-  createHistoryQueryOrchestrator: mock.fn(),
-  deleteHistoryQueryCache: mock.fn(),
-  initHistoryQueryCache: mock.fn()
-};
-
-// --- 'cron' module: stub CronJob so scan-mode crons in tests never start a real timer ---
-const cronMockInstance = { stop: mock.fn() };
-const cronExports = {
-  CronJob: mock.fn(function (_cron: unknown, _callback: () => void) {
-    return cronMockInstance;
-  })
-};
-
-// --- Metrics service constructor closures (reassigned in beforeEach) ---
-let northConnectorMetricsService: NorthConnectorMetricsServiceMock;
-let southConnectorMetricsService: SouthConnectorMetricsServiceMock;
-let historyQueryMetricsService: HistoryQueryMetricsServiceMock;
-
-const northMetricsExports = {
-  __esModule: true,
-  default: function () {
-    return northConnectorMetricsService;
-  }
-};
-const southMetricsExports = {
-  __esModule: true,
-  default: function () {
-    return southConnectorMetricsService;
-  }
-};
-const historyMetricsExports = {
-  __esModule: true,
-  default: function () {
-    return historyQueryMetricsService;
-  }
-};
-
-// --- HistoryQuery constructor closure (reassigned in beforeEach) ---
+// Fresh per test: the module mocks below return them through closures
+let logger: PinoLogger;
+let cronJob: { stop: ReturnType<typeof mock.fn> };
+let northConnectorMetricsService: Mocked<NorthConnectorMetricsService>;
+let southConnectorMetricsService: Mocked<SouthConnectorMetricsService>;
+let historyQueryMetricsService: Mocked<HistoryQueryMetricsService>;
+let mockedNorth1: NorthConnectorMock;
+let mockedNorth2: NorthConnectorMock;
+let mockedSouth1: SouthConnectorMock;
+let mockedSouth2: SouthConnectorMock;
 let mockedHistoryQuery1: HistoryQueryMock;
 let mockedHistoryQuery2: HistoryQueryMock;
 
-const historyQueryClassExports = {
-  __esModule: true,
-  default: function (configuration: unknown) {
-    const id = (configuration as { id: string }).id;
-    if (id === testData.historyQueries.list[0].id) return mockedHistoryQuery1;
-    if (id === testData.historyQueries.list[1].id) return mockedHistoryQuery2;
-    return null;
+/** The mock built for the entity of the given id, or null when the id is unknown */
+const byId = <T>(id: string, entities: Array<{ id: string }>, mocks: Array<T>): T | null =>
+  mocks[entities.findIndex(entity => entity.id === id)] ?? null;
+
+// The SUT keeps references to these exports objects: their functions are replaced in place in beforeEach
+const createModuleMocks = () => ({
+  north: {
+    buildNorth: mock.fn((conf: { id: string }) => byId(conf.id, testData.north.list, [mockedNorth1, mockedNorth2])),
+    createNorthOrchestrator: mock.fn(() => ({})),
+    deleteNorthCache: mock.fn(),
+    initNorthCache: mock.fn()
+  },
+  south: {
+    buildSouth: mock.fn((conf: { id: string }) => byId(conf.id, testData.south.list, [mockedSouth1, mockedSouth2])),
+    deleteSouthCache: mock.fn(),
+    initSouthCache: mock.fn()
+  },
+  history: {
+    buildHistoryQuery: mock.fn((conf: { id: string }) =>
+      byId(conf.id, testData.historyQueries.list, [mockedHistoryQuery1, mockedHistoryQuery2])
+    ),
+    createHistoryQueryOrchestrator: mock.fn(() => ({})),
+    deleteHistoryQueryCache: mock.fn(),
+    initHistoryQueryCache: mock.fn()
+  },
+  // Scan-mode crons never start a real timer
+  cron: {
+    CronJob: mock.fn(function (_cron: string, _onTick: () => void) {
+      return cronJob;
+    })
   }
-};
+});
+const mocks = createModuleMocks();
 
-// --- Fixed repositories (created once) ---
-const northConnectorRepository = new NorthConnectorRepositoryMock();
-const southConnectorRepository = new SouthConnectorRepositoryMock();
-const historyQueryRepository = new HistoryQueryRepositoryMock();
-const northConnectorMetricsRepository = new NorthMetricsRepositoryMock();
-const southConnectorMetricsRepository = new SouthMetricsRepositoryMock();
-const historyQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
-// SouthCacheRepository uses SouthConnectorRepositoryMock as a structural stand-in
-const southCacheRepository = new SouthConnectorRepositoryMock();
-const certificateRepository = new CertificateRepositoryMock();
-const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
-const oianalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const scanModeRepository = new ScanModeRepositoryMock();
-const configurationWorkflowRepository = new ConfigurationWorkflowRepositoryMock();
+let northConnectorRepository: Mocked<NorthConnectorRepository>;
+let southConnectorRepository: Mocked<SouthConnectorRepository>;
+let historyQueryRepository: Mocked<HistoryQueryRepository>;
+let oianalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+let scanModeRepository: Mocked<ScanModeRepository>;
+let configurationWorkflowRepository: Mocked<ConfigurationWorkflowRepository>;
 
-let DataStreamEngine: new (...args: Array<unknown>) => DataStreamEngineType;
+let DataStreamEngine: typeof DataStreamEngineType;
 let engine: DataStreamEngineType;
-const logger = new PinoLogger();
+
+const northList: Array<NorthConnectorEntityLight> = testData.north.list;
+const southList: Array<SouthConnectorEntityLight> = testData.south.list.slice(0, 2);
+const historyList: Array<HistoryQueryEntityLight> = testData.historyQueries.listLight;
+
+const loggedError = (text: string) => logger.error.mock.calls.some(c => String(c.arguments[0]).includes(text));
+const givenScanModes = (...scanModes: Array<ScanMode>) => scanModeRepository.findAll.mock.mockImplementation(() => scanModes);
+const fireCron = () => mocks.cron.CronJob.mock.calls[0].arguments[1]();
 
 before(() => {
-  // south-mqtt: no-op default export class
-  mockModule(nodeRequire, '../south/south-mqtt/south-mqtt', { default: class {} });
-  // service/utils: stub createFolder + validateCronExpression (used by start()/createCronJob)
-  mockModule(nodeRequire, '../service/utils', {
-    createFolder: mock.fn(),
-    validateCronExpression: mock.fn(() => ({ expression: '' }))
-  });
-  // cron: stub CronJob so scan-mode crons never start a real timer
-  mockModule(nodeRequire, 'cron', cronExports);
-  // node:fs/promises: stub rm
-  mockModule(nodeRequire, 'node:fs/promises', { rm: mock.fn(), ...nodeRequire('node:fs/promises') });
-  // http-request utils: stub clearProxyAgentCache
+  mockModule(nodeRequire, 'cron', mocks.cron);
   mockModule(nodeRequire, '../service/http-request.utils', { clearProxyAgentCache: mock.fn() });
-
-  // Metrics service constructors
-  mockModule(nodeRequire, '../service/metrics/north-connector-metrics.service', northMetricsExports);
-  mockModule(nodeRequire, '../service/metrics/south-connector-metrics.service', southMetricsExports);
-  mockModule(nodeRequire, '../service/metrics/history-query-metrics.service', historyMetricsExports);
-
-  // Factory modules
-  mockModule(nodeRequire, '../north/north-connector-factory', northFactoryExports);
-  mockModule(nodeRequire, '../south/south-connector-factory', southFactoryExports);
-  mockModule(nodeRequire, './history-query-factory', historyFactoryExports);
-
-  // HistoryQuery class
-  mockModule(nodeRequire, './history-query', historyQueryClassExports);
-
-  // Mock loggerService so the engine uses the test logger
+  mockModule(nodeRequire, '../service/metrics/north-connector-metrics.service', {
+    __esModule: true,
+    default: function () {
+      return northConnectorMetricsService;
+    }
+  });
+  mockModule(nodeRequire, '../service/metrics/south-connector-metrics.service', {
+    __esModule: true,
+    default: function () {
+      return southConnectorMetricsService;
+    }
+  });
+  mockModule(nodeRequire, '../service/metrics/history-query-metrics.service', {
+    __esModule: true,
+    default: function () {
+      return historyQueryMetricsService;
+    }
+  });
+  mockModule(nodeRequire, '../north/north-connector-factory', mocks.north);
+  mockModule(nodeRequire, '../south/south-connector-factory', mocks.south);
+  mockModule(nodeRequire, './history-query-factory', mocks.history);
   mockModule(nodeRequire, '../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
+    loggerService: { createChildLogger: () => logger },
     default: class {}
   });
 
-  // Load the SUT
-  const mod = reloadModule<{ default: new (...args: Array<unknown>) => DataStreamEngineType }>(nodeRequire, './data-stream-engine');
-  DataStreamEngine = mod.default;
+  DataStreamEngine = reloadModule<{ default: typeof DataStreamEngineType }>(nodeRequire, './data-stream-engine').default;
 });
 
 describe('DataStreamEngine', () => {
-  let mockedNorth1: NorthConnectorMock;
-  let mockedNorth2: NorthConnectorMock;
-  let mockedSouth1: SouthConnectorMock;
-  let mockedSouth2: SouthConnectorMock;
-
-  const northList: Array<NorthConnectorEntityLight> = [
-    { id: testData.north.list[0].id, type: testData.north.list[0].type, name: testData.north.list[0].name } as NorthConnectorEntityLight,
-    { id: testData.north.list[1].id, type: testData.north.list[1].type, name: testData.north.list[1].name } as NorthConnectorEntityLight
-  ];
-  const southList: Array<SouthConnectorEntityLight> = [
-    { id: testData.south.list[0].id, type: testData.south.list[0].type, name: testData.south.list[0].name } as SouthConnectorEntityLight,
-    { id: testData.south.list[1].id, type: testData.south.list[1].type, name: testData.south.list[1].name } as SouthConnectorEntityLight
-  ];
-  const historyList: Array<HistoryQueryEntityLight> = [
-    {
-      id: testData.historyQueries.list[0].id,
-      northType: testData.historyQueries.list[0].northType,
-      southType: testData.historyQueries.list[0].southType,
-      name: testData.historyQueries.list[0].name
-    } as HistoryQueryEntityLight,
-    {
-      id: testData.historyQueries.list[1].id,
-      northType: testData.historyQueries.list[1].northType,
-      southType: testData.historyQueries.list[1].southType,
-      name: testData.historyQueries.list[1].name
-    } as HistoryQueryEntityLight
-  ];
-
   beforeEach(() => {
     mock.timers.enable({ apis: ['Date', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    // Reset all mock call history on repositories
-    northConnectorRepository.findNorthById.mock.resetCalls();
-    southConnectorRepository.findSouthById.mock.resetCalls();
-    historyQueryRepository.findHistoryById.mock.resetCalls();
-    historyQueryRepository.updateHistoryStatus.mock.resetCalls();
-    northConnectorRepository.removeTransformersByTransformerId.mock.resetCalls();
-    historyQueryRepository.removeTransformersByTransformerId.mock.resetCalls();
-    oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.resetCalls();
-    scanModeRepository.findAll = mock.fn((): Array<ScanMode> => []);
-    configurationWorkflowRepository.findBySouthId = mock.fn((_southId: string): Array<ConfigurationWorkflowEntity> => []);
-    cronMockInstance.stop.mock.resetCalls();
-    cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
-      return cronMockInstance;
-    });
+    logger = new PinoLogger();
+    cronJob = { stop: mock.fn() };
+    const fresh = createModuleMocks();
+    Object.assign(mocks.north, fresh.north);
+    Object.assign(mocks.south, fresh.south);
+    Object.assign(mocks.history, fresh.history);
+    Object.assign(mocks.cron, fresh.cron);
 
-    logger.trace.mock.resetCalls();
-    logger.debug.mock.resetCalls();
-    logger.info.mock.resetCalls();
-    logger.warn.mock.resetCalls();
-    logger.error.mock.resetCalls();
-    logger.child = mock.fn(() => logger);
+    northConnectorMetricsService = createMock<NorthConnectorMetricsService>();
+    southConnectorMetricsService = createMock<SouthConnectorMetricsService>();
+    historyQueryMetricsService = createMock<HistoryQueryMetricsService>({ metrics: { north: {} } as HistoryQueryMetrics });
 
-    // Fresh metrics service instances
-    northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
-    southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
-    historyQueryMetricsService = new HistoryQueryMetricsServiceMock();
-
-    // Fresh history query instances
-    mockedHistoryQuery1 = new HistoryQueryMock(testData.historyQueries.list[0]);
-    mockedHistoryQuery2 = new HistoryQueryMock(testData.historyQueries.list[1]);
-
-    // Fresh connector instances
     mockedNorth1 = new NorthConnectorMock(testData.north.list[0]);
     mockedNorth2 = new NorthConnectorMock(testData.north.list[1]);
     mockedSouth1 = new SouthConnectorMock(testData.south.list[0]);
     mockedSouth2 = new SouthConnectorMock(testData.south.list[1]);
+    mockedHistoryQuery1 = new HistoryQueryMock(testData.historyQueries.list[0]);
+    mockedHistoryQuery2 = new HistoryQueryMock(testData.historyQueries.list[1]);
 
-    // Repository mock implementations
-    northConnectorRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(el => el.id === id) ?? null);
-    southConnectorRepository.findSouthById = mock.fn((id: string) => testData.south.list.find(el => el.id === id) ?? null);
-    historyQueryRepository.findHistoryById = mock.fn((id: string) => testData.historyQueries.list.find(el => el.id === id) ?? null);
-
-    // Factory mock implementations (mutate in-place so the SUT's reference stays valid)
-    northFactoryExports.buildNorth = mock.fn((conf: { id: string }) => {
-      if (conf.id === testData.north.list[0].id) return mockedNorth1;
-      if (conf.id === testData.north.list[1].id) return mockedNorth2;
-      return null;
+    northConnectorRepository = createMock<NorthConnectorRepository>({
+      findNorthById: id => testData.north.list.find(el => el.id === id) ?? null
     });
-    northFactoryExports.createNorthOrchestrator = mock.fn(() => ({}));
-    northFactoryExports.deleteNorthCache = mock.fn();
-    northFactoryExports.initNorthCache = mock.fn();
-
-    southFactoryExports.buildSouth = mock.fn((conf: { id: string }) => {
-      if (conf.id === testData.south.list[0].id) return mockedSouth1;
-      if (conf.id === testData.south.list[1].id) return mockedSouth2;
-      return null;
+    southConnectorRepository = createMock<SouthConnectorRepository>({
+      findSouthById: id => testData.south.list.find(el => el.id === id) ?? null
     });
-    southFactoryExports.deleteSouthCache = mock.fn();
-    southFactoryExports.initSouthCache = mock.fn();
-
-    historyFactoryExports.buildHistoryQuery = mock.fn((conf: { id: string }) => {
-      if (conf.id === testData.historyQueries.list[0].id) return mockedHistoryQuery1;
-      if (conf.id === testData.historyQueries.list[1].id) return mockedHistoryQuery2;
-      return null;
+    historyQueryRepository = createMock<HistoryQueryRepository>({
+      findHistoryById: id => testData.historyQueries.list.find(el => el.id === id) ?? null
     });
-    historyFactoryExports.createHistoryQueryOrchestrator = mock.fn(() => ({}));
-    historyFactoryExports.deleteHistoryQueryCache = mock.fn();
-    historyFactoryExports.initHistoryQueryCache = mock.fn();
+    oianalyticsMessageService = createMock<OIAnalyticsMessageService>();
+    scanModeRepository = createMock<ScanModeRepository>({ findAll: () => [] });
+    configurationWorkflowRepository = createMock<ConfigurationWorkflowRepository>({ findBySouthId: () => [] });
 
-    // Create a fresh engine instance
     engine = new DataStreamEngine(
-      northConnectorRepository, // structural mock — satisfies NorthConnectorRepository interface
-      northConnectorMetricsRepository,
-      southConnectorRepository, // structural mock — satisfies SouthConnectorRepository interface
-      southConnectorMetricsRepository,
+      northConnectorRepository,
+      createMock<NorthConnectorMetricsRepository>(),
+      southConnectorRepository,
+      createMock<SouthConnectorMetricsRepository>(),
       historyQueryRepository,
-      historyQueryMetricsRepository,
-      southCacheRepository, // structural mock — satisfies SouthCacheRepository interface
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
+      createMock<HistoryQueryMetricsRepository>(),
+      createMock<SouthCacheRepository>(),
+      createMock<CertificateRepository>(),
+      createMock<OIAnalyticsRegistrationRepository>(),
       oianalyticsMessageService,
       scanModeRepository,
       configurationWorkflowRepository
@@ -283,12 +190,6 @@ describe('DataStreamEngine', () => {
 
   afterEach(() => {
     mock.timers.reset();
-    mock.restoreAll();
-    // Remove south connector event listeners to prevent inter-test leakage
-    mockedSouth1.connectedEvent.removeAllListeners();
-    mockedSouth2.connectedEvent.removeAllListeners();
-    mockedHistoryQuery1.finishEvent.removeAllListeners();
-    mockedHistoryQuery2.finishEvent.removeAllListeners();
   });
 
   describe('Lifecycle (Start/Stop)', () => {
@@ -307,24 +208,18 @@ describe('DataStreamEngine', () => {
       await engine.start([northList[0]], [southList[0]], [historyList[0]]);
 
       assert.ok(
-        logger.error.mock.calls.some(c =>
-          (c.arguments[0] as string).includes(
-            `Error while creating North connector "${northList[0].name}" of type "${northList[0].type}" (${northList[0].id}): north creation error`
-          )
+        loggedError(
+          `Error while creating North connector "${northList[0].name}" of type "${northList[0].type}" (${northList[0].id}): north creation error`
         )
       );
       assert.ok(
-        logger.error.mock.calls.some(c =>
-          (c.arguments[0] as string).includes(
-            `Error while creating South connector "${southList[0].name}" of type "${southList[0].type}" (${southList[0].id}): south creation error`
-          )
+        loggedError(
+          `Error while creating South connector "${southList[0].name}" of type "${southList[0].type}" (${southList[0].id}): south creation error`
         )
       );
       assert.ok(
-        logger.error.mock.calls.some(c =>
-          (c.arguments[0] as string).includes(
-            `Error while creating History query "${historyList[0].name}" of South type "${historyList[0].southType}" and North type "${historyList[0].northType}" (${historyList[0].id}): history creation error`
-          )
+        loggedError(
+          `Error while creating History query "${historyList[0].name}" of South type "${historyList[0].southType}" and North type "${historyList[0].northType}" (${historyList[0].id}): history creation error`
         )
       );
 
@@ -345,21 +240,9 @@ describe('DataStreamEngine', () => {
 
       await engine.stop();
 
-      assert.ok(
-        logger.error.mock.calls.some(c =>
-          (c.arguments[0] as string).includes(`Error while stopping North "${northList[0].id}": north stop error`)
-        )
-      );
-      assert.ok(
-        logger.error.mock.calls.some(c =>
-          (c.arguments[0] as string).includes(`Error while stopping South "${southList[0].id}": south stop error`)
-        )
-      );
-      assert.ok(
-        logger.error.mock.calls.some(c =>
-          (c.arguments[0] as string).includes(`Error while stopping History query "${historyList[0].id}": history stop error`)
-        )
-      );
+      assert.ok(loggedError(`Error while stopping North "${northList[0].id}": north stop error`));
+      assert.ok(loggedError(`Error while stopping South "${southList[0].id}": south stop error`));
+      assert.ok(loggedError(`Error while stopping History query "${historyList[0].id}": history stop error`));
     });
 
     it('should properly manage entity creation errors', async () => {
@@ -376,12 +259,12 @@ describe('DataStreamEngine', () => {
 
       await engine.start(northList, southList, historyList);
 
-      assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string) === 'OIBus engine started'));
+      assert.ok(logger.info.mock.calls.some(c => c.arguments[0] === 'OIBus engine started'));
       assert.strictEqual(logger.error.mock.calls.length, 3); // 3 start failures
 
-      assert.strictEqual((northFactoryExports.initNorthCache as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.strictEqual((southFactoryExports.initSouthCache as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.strictEqual((historyFactoryExports.initHistoryQueryCache as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+      assert.strictEqual(mocks.north.initNorthCache.mock.calls.length, 2);
+      assert.strictEqual(mocks.south.initSouthCache.mock.calls.length, 2);
+      assert.strictEqual(mocks.history.initHistoryQueryCache.mock.calls.length, 2);
 
       await engine.stop();
 
@@ -400,35 +283,26 @@ describe('DataStreamEngine', () => {
         southType: 'opcua',
         northType: 'opcua'
       };
-
-      northConnectorRepository.findNorthById = mock.fn((_id: string): NorthConnectorEntity<NorthSettings> | null => northConfig);
-      southConnectorRepository.findSouthById = mock.fn(
-        (_id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null => southConfig
-      );
-      historyQueryRepository.findHistoryById = mock.fn(
-        (_id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null => historyConfig
-      );
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => northConfig);
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => southConfig);
+      historyQueryRepository.findHistoryById.mock.mockImplementation(() => historyConfig);
 
       await engine.createNorth(northConfig.id);
       await engine.createSouth(southConfig.id);
       await engine.createHistoryQuery(historyConfig.id);
 
-      const initNorthCacheFn = northFactoryExports.initNorthCache as ReturnType<typeof mock.fn>;
-      const initSouthCacheFn = southFactoryExports.initSouthCache as ReturnType<typeof mock.fn>;
-      const initHistoryQueryCacheFn = historyFactoryExports.initHistoryQueryCache as ReturnType<typeof mock.fn>;
+      assert.strictEqual(mocks.north.initNorthCache.mock.calls.length, 1);
+      assert.strictEqual(mocks.north.initNorthCache.mock.calls[0].arguments[0], northConfig.id);
+      assert.strictEqual(mocks.north.initNorthCache.mock.calls[0].arguments[1], 'opcua');
 
-      assert.strictEqual(initNorthCacheFn.mock.calls.length, 1);
-      assert.strictEqual(initNorthCacheFn.mock.calls[0].arguments[0], northConfig.id);
-      assert.strictEqual(initNorthCacheFn.mock.calls[0].arguments[1], 'opcua');
+      assert.strictEqual(mocks.south.initSouthCache.mock.calls.length, 1);
+      assert.strictEqual(mocks.south.initSouthCache.mock.calls[0].arguments[0], southConfig.id);
+      assert.strictEqual(mocks.south.initSouthCache.mock.calls[0].arguments[1], 'opcua');
 
-      assert.strictEqual(initSouthCacheFn.mock.calls.length, 1);
-      assert.strictEqual(initSouthCacheFn.mock.calls[0].arguments[0], southConfig.id);
-      assert.strictEqual(initSouthCacheFn.mock.calls[0].arguments[1], 'opcua');
-
-      assert.strictEqual(initHistoryQueryCacheFn.mock.calls.length, 1);
-      assert.strictEqual(initHistoryQueryCacheFn.mock.calls[0].arguments[0], historyConfig.id);
-      assert.strictEqual(initHistoryQueryCacheFn.mock.calls[0].arguments[1], 'opcua');
-      assert.strictEqual(initHistoryQueryCacheFn.mock.calls[0].arguments[2], 'opcua');
+      assert.strictEqual(mocks.history.initHistoryQueryCache.mock.calls.length, 1);
+      assert.strictEqual(mocks.history.initHistoryQueryCache.mock.calls[0].arguments[0], historyConfig.id);
+      assert.strictEqual(mocks.history.initHistoryQueryCache.mock.calls[0].arguments[1], 'opcua');
+      assert.strictEqual(mocks.history.initHistoryQueryCache.mock.calls[0].arguments[2], 'opcua');
     });
 
     it('should clean up old metrics when recreating connectors', async () => {
@@ -480,7 +354,7 @@ describe('DataStreamEngine', () => {
       await engine.deleteNorth(testData.north.list[0]);
 
       assert.strictEqual(spyStop.mock.calls.length, 1);
-      assert.strictEqual((northFactoryExports.deleteNorthCache as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(mocks.north.deleteNorthCache.mock.calls.length, 1);
       assert.strictEqual(northConnectorMetricsService.destroy.mock.calls.length, 1);
       assert.throws(() => engine.getNorth(testData.north.list[0].id));
     });
@@ -491,7 +365,7 @@ describe('DataStreamEngine', () => {
     });
 
     it('should add external content (API)', async () => {
-      mockedNorth1.isEnabled = mock.fn(() => true);
+      mockedNorth1.isEnabled.mock.mockImplementation(() => true);
       const mockContent: OIBusContent = { type: 'any', filePath: 'file' };
       await engine.addExternalContent(testData.north.list[0].id, 'dataSourceId', mockContent);
 
@@ -503,7 +377,7 @@ describe('DataStreamEngine', () => {
     });
 
     it('should not add external content (API) when disabled', async () => {
-      mockedNorth1.isEnabled = mock.fn(() => false);
+      mockedNorth1.isEnabled.mock.mockImplementation(() => false);
       const mockContent: OIBusContent = { type: 'any', filePath: 'file' };
       await engine.addExternalContent(testData.north.list[0].id, 'dataSourceId', mockContent);
 
@@ -520,14 +394,16 @@ describe('DataStreamEngine', () => {
         ...testData.north.list[0],
         transformers: [{ source: { type: 'south', south: { id: 'south-1' } } }]
       } as NorthConnectorEntity<NorthSettings>;
-      northConnectorRepository.findNorthById = mock.fn(() => northConfig);
-
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => northConfig);
       mockedNorth1.connectorConfiguration = northConfig;
+      // start() in beforeEach already looked both norths up: only count the calls made from here
+      const callsBefore = northConnectorRepository.findNorthById.mock.callCount();
 
       engine.updateNorthTransformerBySouth('south-1');
 
-      assert.strictEqual(northConnectorRepository.findNorthById.mock.calls.length, 1);
-      assert.deepStrictEqual(northConnectorRepository.findNorthById.mock.calls[0].arguments, [northConfig.id]);
+      const calls = northConnectorRepository.findNorthById.mock.calls.slice(callsBefore);
+      assert.strictEqual(calls.length, 1);
+      assert.deepStrictEqual(calls[0].arguments, [northConfig.id]);
     });
   });
 
@@ -552,17 +428,16 @@ describe('DataStreamEngine', () => {
     });
 
     it('should reload south connector and update cache/cron/subs', async () => {
-      const southEntity = testData.south.list[0];
-
-      mockedSouth1.hasHistoryQuery = mock.fn(() => true) as unknown as typeof mockedSouth1.hasHistoryQuery;
-      mockedSouth1.hasDirectQuery = mock.fn(() => true) as unknown as typeof mockedSouth1.hasDirectQuery;
-      mockedSouth1.hasSubscription = mock.fn(() => true) as unknown as typeof mockedSouth1.hasSubscription;
-      mockedSouth1.isEnabled = mock.fn(() => true);
-
+      Object.assign(mockedSouth1, {
+        hasHistoryQuery: mock.fn(() => true),
+        hasDirectQuery: mock.fn(() => true),
+        hasSubscription: mock.fn(() => true)
+      });
+      mockedSouth1.isEnabled.mock.mockImplementation(() => true);
       const spyStop = mock.method(engine, 'stopSouth');
       const spyStart = mock.method(engine, 'startSouth');
 
-      await engine.reloadSouth(southEntity);
+      await engine.reloadSouth(testData.south.list[0]);
 
       assert.strictEqual(spyStop.mock.calls.length, 1);
       assert.strictEqual(spyStart.mock.calls.length, 1);
@@ -570,28 +445,23 @@ describe('DataStreamEngine', () => {
     });
 
     it('should reload south connector and not update cache history', async () => {
-      const southEntity = testData.south.list[0];
-
-      mockedSouth1.hasHistoryQuery = mock.fn(() => false) as unknown as typeof mockedSouth1.hasHistoryQuery;
-
+      Object.assign(mockedSouth1, { hasHistoryQuery: mock.fn(() => false) });
       const spyStop = mock.method(engine, 'stopSouth');
       const spyStart = mock.method(engine, 'startSouth');
 
-      await engine.reloadSouth(southEntity);
+      await engine.reloadSouth(testData.south.list[0]);
 
       assert.strictEqual(spyStop.mock.calls.length, 1);
       assert.strictEqual(spyStart.mock.calls.length, 1);
     });
 
     it('should manage south connect event', async () => {
-      engine.getSouth = mock.fn((_southId: string) => ({ south: mockedSouth1, metrics: southConnectorMetricsService }));
-
       let hasSubscriptionCall = 0;
       const hasSubscriptionMock = mock.fn(() => {
         hasSubscriptionCall++;
         return hasSubscriptionCall % 2 === 0; // false on 1st call, true on 2nd
       });
-      mockedSouth1.hasSubscription = hasSubscriptionMock as unknown as typeof mockedSouth1.hasSubscription;
+      Object.assign(mockedSouth1, { hasSubscription: hasSubscriptionMock });
 
       await engine.startSouth(testData.south.list[0].id);
 
@@ -605,33 +475,27 @@ describe('DataStreamEngine', () => {
     });
 
     it('should reload south items', async () => {
-      const southEntity = testData.south.list[0];
+      Object.assign(mockedSouth1, { hasSubscription: mock.fn(() => true) });
+      mockedSouth1.isEnabled.mock.mockImplementation(() => true);
 
-      mockedSouth1.hasSubscription = mock.fn(() => true) as unknown as typeof mockedSouth1.hasSubscription;
-      mockedSouth1.isEnabled = mock.fn(() => true);
-
-      await engine.reloadSouthItems(southEntity);
+      await engine.reloadSouthItems(testData.south.list[0]);
 
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 1);
     });
 
     it('should reload south items and manage connector type', async () => {
-      const southEntity = testData.south.list[0];
+      Object.assign(mockedSouth1, { hasSubscription: mock.fn(() => false) });
+      mockedSouth1.isEnabled.mock.mockImplementation(() => true);
 
-      mockedSouth1.hasSubscription = mock.fn(() => false) as unknown as typeof mockedSouth1.hasSubscription;
-      mockedSouth1.isEnabled = mock.fn(() => true);
-
-      await engine.reloadSouthItems(southEntity);
+      await engine.reloadSouthItems(testData.south.list[0]);
 
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 0);
     });
 
     it('should reload south items when not enabled', async () => {
-      const southEntity = testData.south.list[0];
+      mockedSouth1.isEnabled.mock.mockImplementation(() => false);
 
-      mockedSouth1.isEnabled = mock.fn(() => false);
-
-      await engine.reloadSouthItems(southEntity);
+      await engine.reloadSouthItems(testData.south.list[0]);
 
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 0);
     });
@@ -641,7 +505,7 @@ describe('DataStreamEngine', () => {
       await engine.deleteSouth(testData.south.list[0]);
 
       assert.strictEqual(spyStop.mock.calls.length, 1);
-      assert.strictEqual((southFactoryExports.deleteSouthCache as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(mocks.south.deleteSouthCache.mock.calls.length, 1);
       assert.strictEqual(southConnectorMetricsService.destroy.mock.calls.length, 1);
       assert.throws(() => engine.getSouth(testData.south.list[0].id));
     });
@@ -652,7 +516,7 @@ describe('DataStreamEngine', () => {
     });
 
     it('should handle addContent callback from South', async () => {
-      mockedNorth1.isEnabled = mock.fn(() => true);
+      mockedNorth1.isEnabled.mock.mockImplementation(() => true);
 
       // Start norths so they can receive content
       await engine.start(northList, [], []);
@@ -677,7 +541,7 @@ describe('DataStreamEngine', () => {
 
       assert.ok(mockedNorth1.cacheContent.mock.calls.length > 0);
       assert.ok(mockedNorth2.cacheContent.mock.calls.length > 0);
-      assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('North1 boom')));
+      assert.ok(loggedError('North1 boom'));
     });
 
     it('should run North caches concurrently (not sequentially)', async () => {
@@ -758,14 +622,13 @@ describe('DataStreamEngine', () => {
       await engine.deleteHistoryQuery(config);
 
       assert.strictEqual(spyStop.mock.calls.length, 1);
-      assert.strictEqual((historyFactoryExports.deleteHistoryQueryCache as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(mocks.history.deleteHistoryQueryCache.mock.calls.length, 1);
       assert.strictEqual(historyQueryMetricsService.destroy.mock.calls.length, 1);
       assert.throws(() => engine.getHistoryQuery(config.id));
     });
 
     it('should get metrics', () => {
-      const id = testData.historyQueries.list[0].id;
-      const metrics = engine.getHistoryMetrics(id);
+      const metrics = engine.getHistoryMetrics(testData.historyQueries.list[0].id);
       assert.ok(metrics !== undefined && metrics !== null);
     });
   });
@@ -781,11 +644,10 @@ describe('DataStreamEngine', () => {
     describe('reloadTransformer', () => {
       it('should reload north connector configuration when transformer is in use', async () => {
         mock.method(engine, 'reloadHistoryQuery', async () => undefined);
-        northConnectorRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(el => el.id === id) ?? null);
 
         await engine.reloadTransformer(transformerId);
 
-        assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes(testData.north.list[0].name)));
+        assert.ok(logger.debug.mock.calls.some(c => String(c.arguments[0]).includes(testData.north.list[0].name)));
         assert.strictEqual(northConnectorRepository.findNorthById.mock.calls.length, 1);
         assert.deepStrictEqual(northConnectorRepository.findNorthById.mock.calls[0].arguments, [testData.north.list[0].id]);
       });
@@ -795,7 +657,7 @@ describe('DataStreamEngine', () => {
 
         await engine.reloadTransformer(transformerId);
 
-        assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes(testData.historyQueries.list[0].name)));
+        assert.ok(logger.debug.mock.calls.some(c => String(c.arguments[0]).includes(testData.historyQueries.list[0].name)));
         assert.strictEqual(spyReloadHistoryQuery.mock.calls.length, 1);
         assert.deepStrictEqual(spyReloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
       });
@@ -817,7 +679,7 @@ describe('DataStreamEngine', () => {
 
         await engine.removeAndReloadTransformer(transformerId, 'user1');
 
-        assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes(transformerId)));
+        assert.ok(logger.debug.mock.calls.some(c => String(c.arguments[0]).includes(transformerId)));
         assert.strictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls.length, 1);
         assert.deepStrictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [
           transformerId,
@@ -855,6 +717,12 @@ describe('DataStreamEngine', () => {
   });
 
   describe('Engine Wide Operations', () => {
+    const cmd: CacheContentUpdateCommand = {
+      cache: { remove: [], move: [] },
+      error: { remove: [], move: [] },
+      archive: { remove: [], move: [] }
+    };
+
     beforeEach(async () => {
       await engine.start(northList, southList, historyList);
     });
@@ -865,14 +733,14 @@ describe('DataStreamEngine', () => {
       // a fresh cron, not a replace of a pre-existing one.
       await engine.updateScanMode(scanMode);
 
-      assert.strictEqual(cronExports.CronJob.mock.calls.length, 1);
-      assert.strictEqual(cronExports.CronJob.mock.calls[0].arguments[0], scanMode.cron);
+      assert.strictEqual(mocks.cron.CronJob.mock.calls.length, 1);
+      assert.strictEqual(mocks.cron.CronJob.mock.calls[0].arguments[0], scanMode.cron);
       assert.strictEqual(engine['cronByScanModeId'].size, 1);
       assert.ok(engine['cronByScanModeId'].has(scanMode.id));
 
       // Updating again replaces the same entry — the old job is stopped, exactly one job remains
       await engine.updateScanMode(scanMode);
-      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 1);
+      assert.strictEqual(cronJob.stop.mock.calls.length, 1);
       assert.strictEqual(engine['cronByScanModeId'].size, 1);
     });
 
@@ -889,11 +757,6 @@ describe('DataStreamEngine', () => {
     it('should search cache content (History)', async () => {
       const params = { start: 'now' } as CacheSearchParam;
 
-      mockedHistoryQuery1.searchCacheContent = mock.fn(async (_params: CacheSearchParam) => ({}) as Omit<CacheSearchResult, 'metrics'>);
-      engine.getHistoryQuery = mock.fn((_historyId: string) => ({
-        historyQuery: mockedHistoryQuery1,
-        metrics: historyQueryMetricsService
-      }));
       const result = await engine.searchCacheContent('history', testData.historyQueries.list[0].id, params);
 
       assert.strictEqual(mockedHistoryQuery1.searchCacheContent.mock.calls.length, 1);
@@ -902,39 +765,24 @@ describe('DataStreamEngine', () => {
     });
 
     it('should get file from cache (North)', async () => {
-      engine.getNorth = mock.fn((_northId: string) => ({ north: mockedNorth1, metrics: northConnectorMetricsService }));
       await engine.getFileFromCache('north', testData.north.list[0].id, 'cache', 'file.json');
       assert.strictEqual(mockedNorth1.getFileFromCache.mock.calls.length, 1);
       assert.deepStrictEqual(mockedNorth1.getFileFromCache.mock.calls[0].arguments, ['cache', 'file.json']);
     });
 
     it('should get file from cache (History)', async () => {
-      engine.getHistoryQuery = mock.fn((_historyId: string) => ({
-        historyQuery: mockedHistoryQuery1,
-        metrics: historyQueryMetricsService
-      }));
       await engine.getFileFromCache('history', testData.historyQueries.list[0].id, 'cache', 'file.json');
       assert.strictEqual(mockedHistoryQuery1.getFileFromCache.mock.calls.length, 1);
       assert.deepStrictEqual(mockedHistoryQuery1.getFileFromCache.mock.calls[0].arguments, ['cache', 'file.json']);
     });
 
     it('should update cache content (North)', async () => {
-      const cmd: CacheContentUpdateCommand = {
-        cache: { remove: [], move: [] },
-        error: { remove: [], move: [] },
-        archive: { remove: [], move: [] }
-      };
       await engine.updateCacheContent('north', testData.north.list[0].id, cmd);
       assert.strictEqual(mockedNorth1.updateCacheContent.mock.calls.length, 1);
       assert.deepStrictEqual(mockedNorth1.updateCacheContent.mock.calls[0].arguments, [cmd]);
     });
 
     it('should update cache content (History)', async () => {
-      const cmd: CacheContentUpdateCommand = {
-        cache: { remove: [], move: [] },
-        error: { remove: [], move: [] },
-        archive: { remove: [], move: [] }
-      };
       await engine.updateCacheContent('history', testData.historyQueries.list[0].id, cmd);
       assert.strictEqual(mockedHistoryQuery1.updateCacheContent.mock.calls.length, 1);
       assert.deepStrictEqual(mockedHistoryQuery1.updateCacheContent.mock.calls[0].arguments, [cmd]);
@@ -952,19 +800,18 @@ describe('DataStreamEngine', () => {
 
     it('should schedule an interval scan mode without creating a cron', async () => {
       const scanMode = intervalScanMode();
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      givenScanModes(scanMode);
 
       await engine.start(northList, southList, historyList);
 
-      assert.strictEqual(cronExports.CronJob.mock.calls.length, 0);
+      assert.strictEqual(mocks.cron.CronJob.mock.calls.length, 0);
       assert.strictEqual(engine['cronByScanModeId'].size, 0);
       assert.strictEqual(engine['intervalByScanModeId'].size, 1);
       assert.ok(engine['intervalByScanModeId'].has(scanMode.id));
     });
 
     it('should fan out on each interval tick', async () => {
-      const scanMode = intervalScanMode();
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      givenScanModes(intervalScanMode());
       await engine.start(northList, southList, historyList);
 
       mock.timers.tick(30_000);
@@ -978,7 +825,7 @@ describe('DataStreamEngine', () => {
 
     it('should switch a scan mode between cron and interval without leaking a timer', async () => {
       const scanMode = intervalScanMode();
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      givenScanModes(scanMode);
       await engine.start(northList, southList, historyList);
       assert.strictEqual(engine['intervalByScanModeId'].size, 1);
 
@@ -989,14 +836,14 @@ describe('DataStreamEngine', () => {
 
       // cron -> interval again
       await engine.updateScanMode(scanMode);
-      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 1);
+      assert.strictEqual(cronJob.stop.mock.calls.length, 1);
       assert.strictEqual(engine['cronByScanModeId'].size, 0);
       assert.strictEqual(engine['intervalByScanModeId'].size, 1);
     });
 
     it('should stop ticking once the scan mode is deleted', async () => {
       const scanMode = intervalScanMode();
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      givenScanModes(scanMode);
       await engine.start(northList, southList, historyList);
 
       engine.deleteScanMode(scanMode.id);
@@ -1007,11 +854,11 @@ describe('DataStreamEngine', () => {
     });
 
     it('should refuse an interval outside the accepted bounds', async () => {
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [
+      givenScanModes(
         { ...intervalScanMode(), id: 'tooShort', interval: { value: 5, unit: 'ms' } },
         // Past 2^31-1 ms Node would wrap the delay back to 1 ms, turning this into a hot loop.
         { ...intervalScanMode(), id: 'tooLong', interval: { value: 1000, unit: 'hour' } }
-      ]);
+      );
 
       await engine.start(northList, southList, historyList);
 
@@ -1019,7 +866,7 @@ describe('DataStreamEngine', () => {
     });
 
     it('should refuse an interval scan mode with no interval configured', async () => {
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [{ ...intervalScanMode(), interval: null }]);
+      givenScanModes({ ...intervalScanMode(), interval: null });
 
       await engine.start(northList, southList, historyList);
 
@@ -1028,7 +875,7 @@ describe('DataStreamEngine', () => {
     });
 
     it('should clear both cron and interval maps on stop', async () => {
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0], intervalScanMode()]);
+      givenScanModes(testData.scanMode.list[0], intervalScanMode());
       await engine.start(northList, southList, historyList);
       assert.strictEqual(engine['cronByScanModeId'].size, 1);
       assert.strictEqual(engine['intervalByScanModeId'].size, 1);
@@ -1049,11 +896,8 @@ describe('DataStreamEngine', () => {
       activationWindow
     });
 
-    const fireCron = () => (cronExports.CronJob.mock.calls[0].arguments[1] as () => void)();
-
     it('should fan out when the tick falls inside the window', async () => {
-      const scanMode = withWindow({ dateRange: { start: fakeNow.minus({ days: 1 }).toISO(), end: fakeNow.plus({ days: 1 }).toISO() } });
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      givenScanModes(withWindow({ dateRange: { start: fakeNow.minus({ days: 1 }).toISO(), end: fakeNow.plus({ days: 1 }).toISO() } }));
       await engine.start(northList, southList, historyList);
 
       fireCron();
@@ -1062,8 +906,7 @@ describe('DataStreamEngine', () => {
     });
 
     it('should silently skip a tick outside the window, recording no run anywhere', async () => {
-      const scanMode = withWindow({ dateRange: { end: fakeNow.minus({ days: 1 }).toISO() } });
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      givenScanModes(withWindow({ dateRange: { end: fakeNow.minus({ days: 1 }).toISO() } }));
       await engine.start(northList, southList, historyList);
 
       fireCron();
@@ -1075,13 +918,12 @@ describe('DataStreamEngine', () => {
     });
 
     it('should gate interval scan modes the same way', async () => {
-      const scanMode: ScanMode = {
+      givenScanModes({
         ...withWindow({ dateRange: { end: fakeNow.minus({ days: 1 }).toISO() } }),
         type: 'interval',
         cron: '',
         interval: { value: 1, unit: 's' }
-      };
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      });
       await engine.start(northList, southList, historyList);
 
       mock.timers.tick(5_000);
@@ -1090,8 +932,7 @@ describe('DataStreamEngine', () => {
     });
 
     it('should still install a schedule for a window that can never fire again', async () => {
-      const scanMode = withWindow({ recurring: { timezone: 'Europe/Paris', timeOfDay: { start: '08:00', end: '08:00' } } });
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      givenScanModes(withWindow({ recurring: { timezone: 'Europe/Paris', timeOfDay: { start: '08:00', end: '08:00' } } }));
 
       await engine.start(northList, southList, historyList);
 
@@ -1102,16 +943,40 @@ describe('DataStreamEngine', () => {
   });
 
   describe('Scan mode crons', () => {
+    const buildWorkflow = (overrides: Partial<ConfigurationWorkflowEntity> = {}): ConfigurationWorkflowEntity => ({
+      id: 'workflowId1',
+      name: 'Reactor discovery',
+      southId: testData.south.list[0].id,
+      discoveryScope: {},
+      identityKeyFields: [],
+      eligibilityFilter: [],
+      itemFieldMapping: { name: '{{name}}' },
+      pushToOIAnalytics: false,
+      scanMode: testData.scanMode.list[0],
+      enabled: true,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
+      ...overrides
+    });
+    /** The first south connector has these workflows, the others none */
+    const givenSouth1Workflows = (...workflows: Array<ConfigurationWorkflowEntity>) =>
+      configurationWorkflowRepository.findBySouthId.mock.mockImplementation(southId =>
+        southId === testData.south.list[0].id ? workflows : []
+      );
+
     it('should create one shared cron per scan mode at startup, excluding the subscription sentinel', async () => {
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [
-        testData.scanMode.list[0],
-        testData.scanMode.list[1],
-        { ...testData.scanMode.list[0], id: 'subscription', name: 'Subscription', cron: '' }
-      ]);
+      givenScanModes(testData.scanMode.list[0], testData.scanMode.list[1], {
+        ...testData.scanMode.list[0],
+        id: 'subscription',
+        name: 'Subscription',
+        cron: ''
+      });
 
       await engine.start(northList, southList, historyList);
 
-      assert.strictEqual(cronExports.CronJob.mock.calls.length, 2);
+      assert.strictEqual(mocks.cron.CronJob.mock.calls.length, 2);
       assert.strictEqual(engine['cronByScanModeId'].size, 2);
       assert.ok(engine['cronByScanModeId'].has(testData.scanMode.list[0].id));
       assert.ok(engine['cronByScanModeId'].has(testData.scanMode.list[1].id));
@@ -1119,11 +984,10 @@ describe('DataStreamEngine', () => {
     });
 
     it('should fan out a scan-mode tick to every south and north connector', async () => {
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      givenScanModes(testData.scanMode.list[0]);
       await engine.start(northList, southList, historyList);
 
-      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
-      cronCallback();
+      fireCron();
 
       assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 1);
       assert.deepStrictEqual(mockedSouth1.trigger.mock.calls[0].arguments, [testData.scanMode.list[0]]);
@@ -1138,97 +1002,38 @@ describe('DataStreamEngine', () => {
     });
 
     it('should fan out a scan-mode tick to a scheduled configuration workflow via the wired run callback', async () => {
-      const workflow: ConfigurationWorkflowEntity = {
-        id: 'workflowId1',
-        name: 'Reactor discovery',
-        southId: testData.south.list[0].id,
-        discoveryScope: {},
-        identityKeyFields: ['nodeId'],
-        eligibilityFilter: [],
-        itemFieldMapping: { name: '{{name}}' },
-        pushToOIAnalytics: false,
-        scanMode: testData.scanMode.list[0],
-        enabled: true,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
-        southId === testData.south.list[0].id ? [workflow] : []
-      );
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      givenSouth1Workflows(buildWorkflow({ identityKeyFields: ['nodeId'] }));
+      givenScanModes(testData.scanMode.list[0]);
       await engine.start(northList, southList, historyList);
 
       const callback = mock.fn(async () => undefined);
       engine.setWorkflowRunCallback(callback);
 
-      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
-      cronCallback();
+      fireCron();
 
       assert.strictEqual(callback.mock.calls.length, 1);
       assert.deepStrictEqual(callback.mock.calls[0].arguments, [testData.south.list[0].id, 'workflowId1']);
     });
 
     it('should not fan out to a workflow with no scan mode (manual-only) or a disabled workflow', async () => {
-      const manualOnly: ConfigurationWorkflowEntity = {
-        id: 'workflowId1',
-        name: 'Manual only',
-        southId: testData.south.list[0].id,
-        discoveryScope: {},
-        identityKeyFields: [],
-        eligibilityFilter: [],
-        itemFieldMapping: { name: '{{name}}' },
-        pushToOIAnalytics: false,
-        scanMode: null,
-        enabled: true,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      const disabled: ConfigurationWorkflowEntity = {
-        ...manualOnly,
-        id: 'workflowId2',
-        scanMode: testData.scanMode.list[0],
-        enabled: false
-      };
-      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
-        southId === testData.south.list[0].id ? [manualOnly, disabled] : []
+      givenSouth1Workflows(
+        buildWorkflow({ name: 'Manual only', scanMode: null }),
+        buildWorkflow({ id: 'workflowId2', name: 'Manual only', enabled: false })
       );
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      givenScanModes(testData.scanMode.list[0]);
       await engine.start(northList, southList, historyList);
 
       const callback = mock.fn(async () => undefined);
       engine.setWorkflowRunCallback(callback);
 
-      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
-      cronCallback();
+      fireCron();
 
       assert.strictEqual(callback.mock.calls.length, 0);
     });
 
     it('should log rather than throw when the wired run callback rejects', async () => {
-      const workflow: ConfigurationWorkflowEntity = {
-        id: 'workflowId1',
-        name: 'Reactor discovery',
-        southId: testData.south.list[0].id,
-        discoveryScope: {},
-        identityKeyFields: [],
-        eligibilityFilter: [],
-        itemFieldMapping: { name: '{{name}}' },
-        pushToOIAnalytics: false,
-        scanMode: testData.scanMode.list[0],
-        enabled: true,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
-        southId === testData.south.list[0].id ? [workflow] : []
-      );
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      givenSouth1Workflows(buildWorkflow());
+      givenScanModes(testData.scanMode.list[0]);
       await engine.start(northList, southList, historyList);
       engine.setWorkflowRunCallback(
         mock.fn(async () => {
@@ -1236,74 +1041,33 @@ describe('DataStreamEngine', () => {
         })
       );
 
-      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
-      assert.doesNotThrow(() => cronCallback());
+      assert.doesNotThrow(() => fireCron());
       await flushPromises();
 
-      assert.ok(
-        logger.error.mock.calls.some(c =>
-          String(c.arguments[0]).includes('Error running scheduled configuration workflow "Reactor discovery"')
-        )
-      );
+      assert.ok(loggedError('Error running scheduled configuration workflow "Reactor discovery"'));
     });
 
     it('should be a silent no-op when no run callback has been wired yet', async () => {
-      const workflow: ConfigurationWorkflowEntity = {
-        id: 'workflowId1',
-        name: 'Reactor discovery',
-        southId: testData.south.list[0].id,
-        discoveryScope: {},
-        identityKeyFields: [],
-        eligibilityFilter: [],
-        itemFieldMapping: { name: '{{name}}' },
-        pushToOIAnalytics: false,
-        scanMode: testData.scanMode.list[0],
-        enabled: true,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
-        southId === testData.south.list[0].id ? [workflow] : []
-      );
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      givenSouth1Workflows(buildWorkflow());
+      givenScanModes(testData.scanMode.list[0]);
       await engine.start(northList, southList, historyList);
 
-      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
-      assert.doesNotThrow(() => cronCallback());
+      assert.doesNotThrow(() => fireCron());
     });
 
     it("reloadWorkflows should replace only the calling south connector's contribution to the schedule", async () => {
       await engine.start(northList, southList, historyList);
       assert.strictEqual(engine['workflowsByScanModeId'].size, 0);
 
-      const workflowForSouth1: ConfigurationWorkflowEntity = {
-        id: 'workflowId1',
-        name: 'South 1 workflow',
-        southId: testData.south.list[0].id,
-        discoveryScope: {},
-        identityKeyFields: [],
-        eligibilityFilter: [],
-        itemFieldMapping: { name: '{{name}}' },
-        pushToOIAnalytics: false,
-        scanMode: testData.scanMode.list[0],
-        enabled: true,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
-        southId === testData.south.list[0].id ? [workflowForSouth1] : []
-      );
+      const workflowForSouth1 = buildWorkflow({ name: 'South 1 workflow' });
+      givenSouth1Workflows(workflowForSouth1);
 
       engine.reloadWorkflows(testData.south.list[0].id);
       assert.deepStrictEqual(engine['workflowsByScanModeId'].get(testData.scanMode.list[0].id), [workflowForSouth1]);
 
       // Reloading again with an empty list for that south removes its contribution entirely,
       // without needing to touch any other south's entries in the same scan-mode bucket.
-      configurationWorkflowRepository.findBySouthId = mock.fn((_southId: string): Array<ConfigurationWorkflowEntity> => []);
+      givenSouth1Workflows();
       engine.reloadWorkflows(testData.south.list[0].id);
       assert.strictEqual(engine['workflowsByScanModeId'].has(testData.scanMode.list[0].id), false);
     });
@@ -1314,36 +1078,36 @@ describe('DataStreamEngine', () => {
 
       await engine.createScanMode(scanMode);
 
-      assert.strictEqual(cronExports.CronJob.mock.calls.length, 1);
+      assert.strictEqual(mocks.cron.CronJob.mock.calls.length, 1);
       assert.ok(engine['cronByScanModeId'].has(scanMode.id));
     });
 
     it('deleteScanMode should stop and remove the cron', async () => {
       const scanMode = testData.scanMode.list[0];
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      givenScanModes(scanMode);
       await engine.start(northList, southList, historyList);
       assert.ok(engine['cronByScanModeId'].has(scanMode.id));
 
       engine.deleteScanMode(scanMode.id);
 
-      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 1);
+      assert.strictEqual(cronJob.stop.mock.calls.length, 1);
       assert.ok(!engine['cronByScanModeId'].has(scanMode.id));
     });
 
     it('deleteScanMode should no-op for a scan mode with no cron', () => {
       assert.doesNotThrow(() => engine.deleteScanMode('never-had-a-cron'));
-      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 0);
+      assert.strictEqual(cronJob.stop.mock.calls.length, 0);
     });
 
     it('should tear down every scan-mode cron on stop()', async () => {
-      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0], testData.scanMode.list[1]]);
+      givenScanModes(testData.scanMode.list[0], testData.scanMode.list[1]);
       await engine.start(northList, southList, historyList);
       assert.strictEqual(engine['cronByScanModeId'].size, 2);
 
       await engine.stop();
 
       assert.strictEqual(engine['cronByScanModeId'].size, 0);
-      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 2);
+      assert.strictEqual(cronJob.stop.mock.calls.length, 2);
     });
   });
 });
