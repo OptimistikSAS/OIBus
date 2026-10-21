@@ -31,7 +31,7 @@ describe('IP Filter Service', () => {
 
     const result = service.list();
 
-    assert.ok(ipFilterRepository.list.mock.calls.length > 0);
+    assert.strictEqual(ipFilterRepository.list.mock.calls.length, 1);
     assert.deepStrictEqual(result, testData.ipFilters.list);
   });
 
@@ -60,7 +60,7 @@ describe('IP Filter Service', () => {
     const result = await service.create(testData.ipFilters.command, 'userTest');
 
     assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [ipFilterSchema, testData.ipFilters.command]);
-    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(result, testData.ipFilters.list[0]);
   });
 
@@ -72,13 +72,13 @@ describe('IP Filter Service', () => {
 
     assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [ipFilterSchema, testData.ipFilters.command]);
     assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
-    assert.ok(ipFilterRepository.list.mock.calls.length > 0);
+    assert.strictEqual(ipFilterRepository.list.mock.calls.length, 1);
     assert.deepStrictEqual(ipFilterRepository.update.mock.calls[0].arguments, [
       testData.ipFilters.list[0].id,
       testData.ipFilters.command,
       'userTest'
     ]);
-    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should not update if the ip filter is not found', async () => {
@@ -101,7 +101,7 @@ describe('IP Filter Service', () => {
 
     assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
     assert.deepStrictEqual(ipFilterRepository.delete.mock.calls[0].arguments, [testData.ipFilters.list[0].id, 'userTest']);
-    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should not delete if the IP filter is not found', () => {

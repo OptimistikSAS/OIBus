@@ -44,7 +44,7 @@ describe('User Service', () => {
 
     const result = service.list();
 
-    assert.ok(userRepository.list.mock.calls.length > 0);
+    assert.strictEqual(userRepository.list.mock.calls.length, 1);
     assert.deepStrictEqual(result, testData.users.list);
   });
 
