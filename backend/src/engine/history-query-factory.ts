@@ -7,7 +7,6 @@ import { NorthSettings } from '../../shared/model/connector/north-settings.model
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 
-import type { ICacheService } from '../model/cache.service.model';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../model/histor-query.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
@@ -34,7 +33,7 @@ export const buildHistoryQuery = (
   southCacheRepository: SouthCacheRepository,
   certificateRepository: CertificateRepository,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-  orchestrator: ICacheService
+  orchestrator: CacheService
 ): HistoryQuery => {
   const north = buildNorth(
     {
@@ -141,7 +140,7 @@ export const initHistoryQueryCache = async (id: string, northType: OIBusNorthTyp
   }
 };
 
-export const createHistoryQueryOrchestrator = (baseFolder: string, historyId: string, name: string): ICacheService => {
+export const createHistoryQueryOrchestrator = (baseFolder: string, historyId: string, name: string): CacheService => {
   const logger = loggerService.createChildLogger('history-query', historyId, name);
   return new CacheService(
     logger,

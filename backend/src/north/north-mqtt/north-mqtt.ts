@@ -6,9 +6,9 @@ import { IConnackPacket, QoS } from 'mqtt-packet';
 import { NorthMQTTSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CacheService from '../../service/cache/cache.service';
 import { streamToString } from '../../service/utils';
 import { createConnectionOptions } from '../../service/utils-mqtt';
 import { OIBusMQTTValue } from '../../transformers/connector-types.model';
@@ -22,7 +22,7 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(configuration: NorthConnectorEntity<NorthMQTTSettings>, cacheService: ICacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthMQTTSettings>, cacheService: CacheService) {
     super(configuration, cacheService);
   }
 

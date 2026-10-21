@@ -35,7 +35,6 @@ import {
 import DataStreamEngine from '../engine/data-stream-engine';
 import { EngineSettings } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { OIBusValidationError } from '../model/types';
 import CertificateRepository from '../repository/config/certificate.repository';
 import EngineRepository from '../repository/config/engine.repository';
@@ -55,6 +54,7 @@ import HistoryQueryService from './history-query.service';
 import IPFilterService from './ip-filter.service';
 import LoggerService from './logger/logger.service';
 import NorthService from './north.service';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import SouthService from './south.service';
 import UserService from './user.service';
@@ -88,7 +88,7 @@ export default class OIBusService {
     private ipFilterService: IPFilterService,
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private loggerService: LoggerService,
-    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
+    private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private southService: SouthService,
     private northService: NorthService,
     private historyQueryService: HistoryQueryService,

@@ -23,7 +23,6 @@ import { TransformerSearchParam } from '../../shared/model/domain/transformer.mo
 import { CacheMetadataSource } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { CustomTransformer, NorthTransformerWithOptions, Transformer } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import TransformerRepository from '../repository/config/transformer.repository';
@@ -61,6 +60,7 @@ import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-va
 import OIBusTimeValuesToOPCUATransformer from '../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { generateRandomId } from './utils';
 
 interface TransformerReloadEngine {
@@ -127,7 +127,7 @@ export default class TransformerService {
   constructor(
     protected readonly validator: JoiValidator,
     private transformerRepository: TransformerRepository,
-    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
+    private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private engine: TransformerReloadEngine
   ) {}
 

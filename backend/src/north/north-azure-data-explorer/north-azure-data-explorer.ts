@@ -9,9 +9,9 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { NorthAzureDataExplorerSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
-import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepository from '../../repository/config/certificate.repository';
+import type CacheService from '../../service/cache/cache.service';
 import { encryptionService } from '../../service/encryption.service';
 import NorthConnector from '../north-connector';
 
@@ -31,7 +31,7 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
 
   constructor(
     connector: NorthConnectorEntity<NorthAzureDataExplorerSettings>,
-    cacheService: ICacheService,
+    cacheService: CacheService,
     private readonly certificateRepository: CertificateRepository
   ) {
     super(connector, cacheService);
