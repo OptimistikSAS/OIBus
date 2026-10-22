@@ -1974,12 +1974,11 @@
       "updated": "South 连接器项已成功更新",
       "created": "South 连接器项已成功创建",
       "deleted": "South 连接器项已删除",
-      "view-last-value": "查看最新值",
+      "view-item": "查看项",
       "last-value-error": "获取最新值时出错：{{ error }}",
       "last-value-not-available-in-create-mode": "创建模式下无法查看最新值",
-      "last-value-modal": {
-        "title": "项的最新缓存值",
-        "item-name": "项名称",
+      "view-item-modal": {
+        "cache": "缓存",
         "query-time": "最近查询时间",
         "tracked-instant": "跟踪的时刻",
         "value": "缓存值",
