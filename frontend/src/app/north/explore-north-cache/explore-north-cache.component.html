@@ -1,69 +1,66 @@
 @if (northConnector(); as northConnector) {
   <div class="oib-padded-container">
-    <div class="row justify-content-center align-items-center">
+    <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
-        <div class="oib-header-container">
-          <h1 class="d-flex justify-content-between">
-            <div class="title-container me-2">
-              <span
-                [ngbTooltip]="fullTitle()"
-                placement="bottom-end"
-                translate="explore-cache.title"
-                [translateParams]="{ name: northConnector.name }"
-                id="title"
-              ></span>
+        <div class="oib-page-header">
+          <div>
+            <h1 id="title" translate="explore-cache.title" [translateParams]="{ name: northConnector.name }"></h1>
+            <div class="oib-page-meta">
+              <span id="north-type">{{ northConnector.type | oIBusNorthTypeEnum }}</span>
+              <span class="oib-status-badge" id="north-status">
+                @if (northConnector.enabled) {
+                  <span class="fa-solid fa-check-circle status-green" aria-hidden="true"></span>
+                  <span translate="north.enabled"></span>
+                } @else {
+                  <span class="fa-solid fa-minus-circle status-grey" aria-hidden="true"></span>
+                  <span translate="north.disabled"></span>
+                }
+              </span>
             </div>
-          </h1>
+          </div>
         </div>
 
-        <form [formGroup]="form" (ngSubmit)="submit()" id="cache-form" class="oib-search-form px-3 mb-3 pb-2">
-          <div class="row gx-2 pt-1 pb-3">
-            <!-- From -->
-            <div class="col">
-              <label for="start-date" class="col-auto col-form-label" translate="explore-cache.search.start"></label>
-              <oib-datetimepicker formControlName="start" id="start-date" />
-            </div>
-
-            <!-- To -->
-            <div class="col">
-              <label for="end-date" class="col-auto col-form-label" translate="explore-cache.search.end"></label>
-              <oib-datetimepicker formControlName="end" id="end-date" />
-              <val-errors [control]="form" />
-            </div>
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="common.search"></h5>
           </div>
-          <div class="row gx-2 pb-3">
-            <!-- Filename contains -->
-            <div class="col">
-              <label for="filename-contains" class="col-auto col-form-label" translate="explore-cache.search.filename-contains"></label>
-              <input type="text" class="form-control" id="filename-contains" formControlName="nameContains" />
-            </div>
-
-            <!-- Max number of files returned -->
-            <div class="col">
-              <label
-                for="max-number-of-files-returned"
-                class="col-auto col-form-label"
-                translate="explore-cache.search.max-number-of-files-returned"
-              ></label>
-              <input type="number" class="form-control" id="max-number-of-files-returned" formControlName="maxNumberOfFilesReturned" />
-            </div>
-          </div>
-          <div class="row gx-2 pb-1">
-            <div class="col">
-              <div class="d-flex gap-2 pull-right">
-                <button
-                  type="submit"
-                  [oib-save-button]="state"
-                  class="btn btn-primary"
-                  form="cache-form"
-                  id="search-button"
-                  iconClass="fa-search"
-                  translationKey="common.search"
-                ></button>
+          <form [formGroup]="form" (ngSubmit)="submit()" id="cache-form">
+            <div class="row g-3">
+              <div class="col-lg-6">
+                <label for="start-date" class="form-label" translate="explore-cache.search.start"></label>
+                <oib-datetimepicker formControlName="start" id="start-date" />
+              </div>
+              <div class="col-lg-6">
+                <label for="end-date" class="form-label" translate="explore-cache.search.end"></label>
+                <oib-datetimepicker formControlName="end" id="end-date" />
+                <val-errors [control]="form" />
+              </div>
+              <div class="col-lg-6">
+                <label for="filename-contains" class="form-label" translate="explore-cache.search.filename-contains"></label>
+                <input type="text" class="form-control" id="filename-contains" formControlName="nameContains" />
+              </div>
+              <div class="col-lg-6">
+                <label
+                  for="max-number-of-files-returned"
+                  class="form-label"
+                  translate="explore-cache.search.max-number-of-files-returned"
+                ></label>
+                <input type="number" class="form-control" id="max-number-of-files-returned" formControlName="maxNumberOfFilesReturned" />
               </div>
             </div>
-          </div>
-        </form>
+            <div class="d-flex justify-content-end mt-3">
+              <button
+                type="submit"
+                [oib-save-button]="state"
+                class="btn btn-primary"
+                id="search-button"
+                iconClass="fa-search"
+                translationKey="common.search"
+              ></button>
+            </div>
+          </form>
+        </section>
+
         @if (cacheContent(); as cacheContent) {
           <oib-cache-explore
             [cacheContent]="cacheContent"

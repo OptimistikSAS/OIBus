@@ -3698,6 +3698,7 @@
     "snapshot-warning": "The displayed data is a snapshot from {{ snapshotDate }}. The state of the cache may have changed in OIBus since the search.",
     "unsaved-changes": "You have unsaved changes.",
     "save-changes": "Save changes",
+    "discard-changes": "Discard changes",
     "cache-updated": "Cache updated",
     "select-all": "Select all",
     "unselect-all": "Unselect all",

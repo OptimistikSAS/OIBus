@@ -3104,6 +3104,7 @@
     "snapshot-warning": "所显示的数据是 {{ snapshotDate }} 时的快照。自搜索以来，OIBus 中的缓存状态可能已发生变化。",
     "unsaved-changes": "您有未保存的更改。",
     "save-changes": "保存更改",
+    "discard-changes": "放弃更改",
     "cache-updated": "缓存已更新",
     "select-all": "全选",
     "unselect-all": "取消全选",

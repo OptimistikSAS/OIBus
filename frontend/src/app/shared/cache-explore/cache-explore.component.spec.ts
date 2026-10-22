@@ -71,9 +71,10 @@ class CacheExploreComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
   readonly host = this.fixture.componentInstance;
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly snapshotWarning = this.root.getByCss('.alert-info');
-  readonly dirtyWarning = this.root.getByCss('.alert-warning');
+  readonly snapshotWarning = this.root.getByCss('#snapshot-date');
+  readonly dirtyWarning = this.root.getByCss('#unsaved-changes');
   readonly saveButton = this.root.getByRole('button', { name: 'Save changes' });
+  readonly discardButton = this.root.getByRole('button', { name: 'Discard changes' });
   readonly cacheContents = this.root.getByCss('oib-cache-content');
   readonly cache = this.root.getByCss('#cache');
   readonly error = this.root.getByCss('#error');
@@ -81,7 +82,7 @@ class CacheExploreComponentTester {
   readonly spinner = this.root.getByCss('.fa-spinner');
 
   folderTitle(folder: 'cache' | 'error' | 'archive') {
-    return this[folder].getByCss('.oib-box-title');
+    return this[folder].getByCss('.oib-section-title');
   }
 }
 
@@ -103,8 +104,8 @@ describe('CacheExploreComponent', () => {
         'The displayed data is a snapshot from 1 Jan 2025, 00:00:00. The state of the cache may have changed in OIBus since the search.'
       );
     await expect.element(tester.cacheContents).toHaveLength(3);
-    await expect.element(tester.folderTitle('cache')).toMatchTextContent(/^Cache folder100 B/);
-    await expect.element(tester.folderTitle('error')).toMatchTextContent(/^Error folder50 B/);
+    await expect.element(tester.folderTitle('cache')).toMatchTextContent(/^Cache folder\(1\)100 B/);
+    await expect.element(tester.folderTitle('error')).toMatchTextContent(/^Error folder\(1\)50 B/);
     await expect.element(tester.folderTitle('archive')).toMatchTextContent(/^Archive folder200 B/);
     await expect.element(tester.dirtyWarning).not.toBeInTheDocument();
     await expect.element(tester.saveButton).not.toBeInTheDocument();
@@ -146,9 +147,9 @@ describe('CacheExploreComponent', () => {
     // the file retried from the error folder is the most recent one of the cache folder
     await tester.cache.getByRole('button', { name: 'Archive content' }).nth(1).click();
 
-    await expect.element(tester.folderTitle('cache')).toMatchTextContent(/^Cache folder50 B/);
+    await expect.element(tester.folderTitle('cache')).toMatchTextContent(/^Cache folder\(1\)50 B/);
     await expect.element(tester.folderTitle('error')).toMatchTextContent(/^Error folder0 B/);
-    await expect.element(tester.folderTitle('archive')).toMatchTextContent(/^Archive folder100 B/);
+    await expect.element(tester.folderTitle('archive')).toMatchTextContent(/^Archive folder\(1\)100 B/);
 
     await tester.saveButton.click();
 
@@ -175,6 +176,17 @@ describe('CacheExploreComponent', () => {
     await expect.element(tester.dirtyWarning).not.toBeInTheDocument();
   });
 
+  test('should discard the local changes', async () => {
+    await tester.cache.getByRole('button', { name: 'Remove content' }).click();
+    await expect.element(tester.folderTitle('cache')).toMatchTextContent(/^Cache folder0 B/);
+
+    await tester.discardButton.click();
+
+    await expect.element(tester.dirtyWarning).not.toBeInTheDocument();
+    await expect.element(tester.folderTitle('cache')).toMatchTextContent(/^Cache folder\(1\)100 B/);
+    expect(tester.host.updateCommands()).toEqual([]);
+  });
+
   test('should disable the save button while saving', async () => {
     await tester.cache.getByRole('button', { name: 'Remove content' }).click();
     await expect.element(tester.saveButton).toBeEnabled();
@@ -182,6 +194,7 @@ describe('CacheExploreComponent', () => {
     tester.host.state.isPending.next(true);
 
     await expect.element(tester.saveButton).toBeDisabled();
+    await expect.element(tester.discardButton).toBeDisabled();
     await expect.element(tester.spinner).toBeInTheDocument();
   });
 });
