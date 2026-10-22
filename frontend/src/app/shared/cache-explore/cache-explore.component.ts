@@ -82,6 +82,10 @@ export class CacheExploreComponent {
     });
   }
 
+  discardModifications() {
+    this.localResult.set(this.cacheContent());
+  }
+
   saveModifications() {
     if (!this.isDirty()) return;
 

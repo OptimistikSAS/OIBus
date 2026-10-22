@@ -1261,7 +1261,10 @@ val-errors > div {
   }
 }
 
-.oib-south-items {
+// A table whose rows can be selected to act on them at once (the items of a south connector, the files of a cache folder): the
+// selection controls, and the dropdown of the actions on the selected rows
+.oib-south-items,
+.oib-cache-content {
   .form-check-input {
     opacity: 1 !important;
     cursor: pointer;
