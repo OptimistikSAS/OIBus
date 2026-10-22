@@ -930,10 +930,11 @@ describe('NorthConnector', () => {
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 2);
   });
 
-  it('should cache without transform with any-content', async () => {
+  it('should cache without transform with any-content as a file', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
     await north['cacheWithoutTransform']({ type: 'any-content', content: '' } as OIBusContent);
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], { contentType: 'any' });
   });
 
   it('should cache without transform', async () => {

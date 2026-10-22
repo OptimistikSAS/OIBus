@@ -12,6 +12,7 @@ import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from '@oibus/shared/api/south-connector.model';
 import { SourceOriginSouthDTO, TransformerDTO, TransformerDTOWithOptions, TransformerSourceDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+import { InputType } from '@oibus/shared/connector/transformer-manifest.model';
 import { DataSourceType } from '@oibus/shared/domain/transformer.model';
 
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -25,7 +26,7 @@ import { PillComponent } from '../../../shared/pill/pill.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { getAssociatedInputType } from '../../../shared/utils/utils';
+import { getAssociatedInputType, isTransformerApplicable } from '../../../shared/utils/utils';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
 
 interface TransformerSourceOption {
@@ -351,33 +352,24 @@ export class EditNorthTransformerModalComponent {
     // Keep the embedded test panel's source in sync (only south sources can run an item).
     this.transformerTestSource.set(source.south ? { kind: 'south', id: source.south.id, southType: source.south.type } : { kind: 'none' });
 
+    const dataType = this.getSourceDataType(source);
     this.selectableOutputs.set(
-      this.allTransformers.filter(element => {
-        if (!this.supportedOutputTypes().includes(element.outputType)) {
-          return false;
-        }
-
-        if (element.type === 'standard' && element.functionName === 'ignore') return true;
-        if (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes().includes(element.inputType))
-          return true;
-
-        if (source.dataSourceType === 'oianalytics-setpoint') {
-          return element.inputType === 'setpoint';
-        }
-
-        if (source.dataSourceType === 'south' && source.south) {
-          return (
-            (element.inputType === 'any-content' && getAssociatedInputType(source.south.type) === 'any') ||
-            element.inputType === getAssociatedInputType(source.south.type)
-          );
-        }
-
-        if (source.dataSourceType === 'oibus-api') {
-          return element.inputType === 'any-content' || element.inputType === 'any';
-        }
-        return true;
-      })
+      this.allTransformers.filter(element => isTransformerApplicable(element, dataType, this.supportedOutputTypes()))
     );
+  }
+
+  /** The type of the data the source sends, `null` when no source is selected. */
+  private getSourceDataType(source: TransformerSourceOption): InputType | null {
+    switch (source.dataSourceType) {
+      case 'south':
+        return source.south ? getAssociatedInputType(source.south.type) : null;
+      case 'oianalytics-setpoint':
+        return 'setpoint';
+      case 'oibus-api':
+        return 'any';
+      default:
+        return null;
+    }
   }
 
   toggleItem(item: ItemLightDTO) {

@@ -10,7 +10,7 @@ import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.m
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { Instant } from '../../model/types';
+import { Instant, OIBusTestingError } from '../../model/types';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { encryptionService } from '../../service/encryption.service';
 import { checkAge, compress, getErrorMessage, workUnitLogCtx } from '../../service/utils';
@@ -152,7 +152,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthSFTPItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings
+    testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
     // Fully local client, opened and closed within this method — see testConnection() above for why.
     const client = new sftpClient();
@@ -168,6 +168,24 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
 
       const queryStart = DateTime.now().toMillis();
       const filesInFolder = await this.listFilesWithClient(client, item, []);
+
+      // A transformer runs on the files the connector sends: give it the most recent matching file
+      if (testingSettings.transformer) {
+        const lastFile = filesInFolder.reduce<FileInfo | null>(
+          (last, file) => (!last || file.modifyTime > last.modifyTime ? file : last),
+          null
+        );
+        if (!lastFile) {
+          throw new OIBusTestingError(`No file matching "${item.settings.regex}" in "${item.settings.remoteFolder}" to transform`);
+        }
+        const content = (await client.get(`${item.settings.remoteFolder}/${lastFile.name}`)) as Buffer;
+        return {
+          result: { type: 'any', filePath: lastFile.name, filename: lastFile.name, content: content.toString('utf-8') },
+          connectionDuration,
+          queryDuration: DateTime.now().toMillis() - queryStart
+        };
+      }
+
       const queryDuration = DateTime.now().toMillis() - queryStart;
 
       const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({

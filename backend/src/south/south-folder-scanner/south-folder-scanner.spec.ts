@@ -214,6 +214,36 @@ describe('SouthFolderScanner', () => {
       assert.ok(result.result.type === 'time-values');
       assert.strictEqual(result.result.content.length, 0);
     });
+
+    it('should return the content of the most recent matching file to transform', async () => {
+      mock.method(fs, 'readdir', async () => ['file1.csv', 'file2.csv', 'other.txt']);
+      mock.method(fs, 'stat', async (filePath: string) => ({
+        isDirectory: () => true,
+        mtimeMs: filePath.endsWith('file2.csv') ? 1600000000000 : 1500000000000,
+        size: 512
+      }));
+      const readFile = mock.method(fs, 'readFile', async () => 'a;b');
+
+      const result = await south.testItem(configuration.items[0], {
+        history: undefined,
+        transformer: { transformerId: 'transformerId', options: {} }
+      });
+
+      assert.deepStrictEqual(result.result, { type: 'any', filePath: 'file2.csv', filename: 'file2.csv', content: 'a;b' });
+      assert.deepStrictEqual(readFile.mock.calls[0].arguments, [
+        path.join(path.resolve(configuration.settings.inputFolder), 'file2.csv'),
+        'utf-8'
+      ]);
+    });
+
+    it('should throw when no file matches the regex to transform', async () => {
+      mock.method(fs, 'readdir', async () => ['other.txt']);
+
+      await assert.rejects(
+        south.testItem(configuration.items[0], { history: undefined, transformer: { transformerId: 'transformerId', options: {} } }),
+        /No file matching .* to transform/
+      );
+    });
   });
 
   describe('listFilesRecursively', () => {

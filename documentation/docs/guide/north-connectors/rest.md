@@ -5,7 +5,8 @@ integrating with custom APIs, webhooks, and cloud services that accept JSON payl
 
 OIBus can transmit:
 
-- **Time-value payloads**: Serialized as a JSON body or a JSON file sent via FormData.
+- **Time-value payloads**: Converted into a JSON file by the [JSON transformer](../engine/transformers.mdx#json), then
+  sent as a JSON body or a JSON file via FormData.
 - **Files**: Forwarded as-is (compressed or uncompressed) via FormData.
 
 **Example Use Cases**:
