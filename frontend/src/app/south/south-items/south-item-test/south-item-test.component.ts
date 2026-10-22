@@ -141,7 +141,8 @@ class SouthItemTestComponent {
     }
     const historyTransformers =
       this.inMemoryTransformers() ?? (this.historyTransformersResource.hasValue() ? this.historyTransformersResource.value() : []);
-    return toTransformerChoices(historyTransformers);
+    const itemName = this.item().name;
+    return toTransformerChoices(historyTransformers.filter(t => t.items.length === 0 || t.items.some(item => item.name === itemName)));
   });
   /** The transformer currently selected (drives the options form + pipeline display). */
   readonly selectedTransformer = signal<TransformerDTO | null>(null);
@@ -271,7 +272,19 @@ class SouthItemTestComponent {
     this.northConnectorService
       .findById(northId)
       .pipe(catchError(() => of(null)))
-      .subscribe(north => this.transformerChoices.set(toTransformerChoices(north?.transformers ?? [])));
+      .subscribe(north =>
+        this.transformerChoices.set(toTransformerChoices((north?.transformers ?? []).filter(t => this.appliesToItem(t))))
+      );
+  }
+
+  /** Whether a north transformer is attached to the tested item: its south, and all its items or a list containing it. */
+  private appliesToItem(transformer: TransformerDTOWithOptions): boolean {
+    const source = transformer.source;
+    return (
+      source.type === 'south' &&
+      source.south.id === this.entityId() &&
+      (source.items.length === 0 || source.items.some(item => item.name === this.item().name))
+    );
   }
 
   private onTransformerChange(transformerId: string | null) {

@@ -25,7 +25,7 @@ import { PillComponent } from '../../../shared/pill/pill.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { getAssociatedInputType } from '../../../shared/utils/utils';
+import { getAssociatedInputType, isTransformerApplicable } from '../../../shared/utils/utils';
 
 @Component({
   selector: 'oib-edit-history-query-transformer-modal',
@@ -268,20 +268,9 @@ export class EditHistoryQueryTransformerModalComponent {
   }
 
   private updateSelectableOutput(southType: OIBusSouthType) {
-    const supportedOutputTypes = this.supportedOutputTypes();
+    const dataType = getAssociatedInputType(southType);
     this.selectableOutputs.set(
-      this.allTransformers.filter(element => {
-        if (!supportedOutputTypes.includes(element.outputType)) {
-          return false;
-        }
-
-        if (element.type === 'standard' && element.functionName === 'ignore') return true;
-        if (element.type === 'standard' && element.functionName === 'iso' && supportedOutputTypes.includes(element.inputType)) return true;
-
-        return (
-          element.inputType === 'any-content' || element.inputType === 'any' || element.inputType === getAssociatedInputType(southType)
-        );
-      })
+      this.allTransformers.filter(element => isTransformerApplicable(element, dataType, this.supportedOutputTypes()))
     );
   }
 

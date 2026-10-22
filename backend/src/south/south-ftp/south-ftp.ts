@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { Writable } from 'node:stream';
 
 import { AccessOptions, Client as FTPClient, FileInfo } from 'basic-ftp';
 import { DateTime } from 'luxon';
@@ -10,7 +11,7 @@ import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.m
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { Instant } from '../../model/types';
+import { Instant, OIBusTestingError } from '../../model/types';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { encryptionService } from '../../service/encryption.service';
 import { checkAge, compress, getErrorMessage, workUnitLogCtx } from '../../service/utils';
@@ -113,7 +114,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthFTPItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings
+    testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
     // Fully local client, opened and closed within this method — see testConnection() above for why.
     const client = new FTPClient();
@@ -128,6 +129,33 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
 
       const queryStart = DateTime.now().toMillis();
       const filesInFolder = await this.listFilesWithClient(client, item, []);
+
+      // A transformer runs on the files the connector sends: give it the most recent matching file
+      if (testingSettings.transformer) {
+        const lastFile = filesInFolder.reduce<FileInfo | null>(
+          (last, file) => (!last || (file.modifiedAt?.getTime() ?? 0) > (last.modifiedAt?.getTime() ?? 0) ? file : last),
+          null
+        );
+        if (!lastFile) {
+          throw new OIBusTestingError(`No file matching "${item.settings.regex}" in "${item.settings.remoteFolder}" to transform`);
+        }
+        const chunks: Array<Buffer> = [];
+        await client.downloadTo(
+          new Writable({
+            write(chunk: Buffer, _encoding, callback) {
+              chunks.push(chunk);
+              callback();
+            }
+          }),
+          `${item.settings.remoteFolder}/${lastFile.name}`
+        );
+        return {
+          result: { type: 'any', filePath: lastFile.name, filename: lastFile.name, content: Buffer.concat(chunks).toString('utf-8') },
+          connectionDuration,
+          queryDuration: DateTime.now().toMillis() - queryStart
+        };
+      }
+
       const queryDuration = DateTime.now().toMillis() - queryStart;
 
       const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
