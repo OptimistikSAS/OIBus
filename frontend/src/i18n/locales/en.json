@@ -610,6 +610,17 @@
     }
   },
   "about": {
+    "title": "About OIBus",
+    "description": "The open-source agent that collects industrial data and sends it where it is needed.",
+    "instance": "Instance",
+    "system": "System",
+    "folders": "Folders",
+    "name": "Name",
+    "id": "ID",
+    "launch-options": "Launch options",
+    "copy-info": "Copy system information",
+    "copy-info-success": "System information copied into clipboard",
+    "copy-info-error": "Error while copying system information into clipboard",
     "official-site": "Official site",
     "version": "Version",
     "launcher-version": "Launcher version",
