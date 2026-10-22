@@ -68,6 +68,13 @@ export function auditEntityLink(entry: AuditLogDTO): Array<string> | null {
   }
 }
 
+/** The icon of each audited action, its shape and color telling them apart */
+const AUDIT_ACTION_ICONS: Record<AuditAction, string> = {
+  CREATE: 'fa-solid fa-circle-plus status-green',
+  UPDATE: 'fa-solid fa-pen-to-square status-blue',
+  DELETE: 'fa-solid fa-trash-can status-red'
+};
+
 /**
  * Standalone, server-paginated page listing every recorded audit log entry, with filters on
  * entity type, action and a date range. Clicking a row opens the full history for that entity
@@ -106,6 +113,7 @@ export class AuditListComponent implements OnInit {
   readonly entityTypes: ReadonlyArray<AuditEntityType> = AUDIT_ENTITY_TYPES;
   readonly actions: ReadonlyArray<AuditAction> = AUDIT_ACTIONS;
   readonly entityLink = auditEntityLink;
+  readonly actionIcon = (action: AuditAction) => AUDIT_ACTION_ICONS[action];
 
   readonly searchForm = this.fb.group(
     {
