@@ -701,7 +701,7 @@ export class SouthDetailComponent {
   viewItem(item: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(ViewSouthItemModalComponent, { size: 'lg' });
     const component: ViewSouthItemModalComponent = modalRef.componentInstance;
-    component.prepare(item, this.manifest()!, this.scanModes(), this.certificates());
+    component.prepare(item, this.southConnector()!, this.manifest()!, this.scanModes(), this.certificates());
 
     this.southConnectorService.getItemLastValue(this.southConnector()!.id, item.id).subscribe({
       next: response => component.setData(response),

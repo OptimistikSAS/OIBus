@@ -1180,6 +1180,14 @@ val-errors > div {
   }
 }
 
+// the description of the entity of a page, under its meta line: it can be long, and keeps the lines it was written with
+.oib-page-description {
+  margin: 0.5rem 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: $new-link-color;
+}
+
 // the icon of the category of a connector type, next to the type
 .oib-type-image {
   height: 1.25rem;
