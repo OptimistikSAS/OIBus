@@ -1,11 +1,9 @@
 <div class="oib-padded-container">
-  <div class="oib-header-container">
-    <div class="row mb-3">
-      <div class="col">
-        <h1 id="title" translate="audit.title"></h1>
-      </div>
-    </div>
+  <div class="oib-page-header">
+    <h1 id="title" translate="audit.title"></h1>
+  </div>
 
+  <section class="oib-panel">
     <form class="p-3 oib-search-form mb-3" id="audit-form" [formGroup]="searchForm" (ngSubmit)="triggerSearch()">
       <div class="d-flex flex-wrap align-items-center gap-3">
         <div class="d-flex align-items-center gap-2">
@@ -41,89 +39,86 @@
           </div>
         </div>
 
-        <div class="search-buttons ms-auto d-flex gap-2 align-items-center flex-shrink-0">
+        <div class="ms-auto flex-shrink-0">
           <button type="submit" class="btn btn-primary" id="search-button" [disabled]="loading()">
             @if (loading()) {
-              <span class="fa-solid fa-spin fa-spinner"></span>
+              <span class="fa-solid fa-spin fa-spinner me-1" aria-hidden="true"></span>
             } @else {
-              <span translate="common.search"></span>
+              <span class="fa-solid fa-search me-1" aria-hidden="true"></span>
             }
+            <span translate="common.search"></span>
           </button>
         </div>
       </div>
     </form>
 
-    @if (entries().totalElements !== 0) {
-      <div class="d-flex justify-content-end mb-2">
-        <oib-pagination [page]="entries()" [navigate]="true" />
-      </div>
-    }
-    @if (entries().totalElements !== 0) {
-      <div class="table-container">
-        <table class="table table-sm table-hover oib-table">
-          <thead>
+    @let page = entries();
+    @if (page.totalElements !== 0) {
+      @if (page.totalPages > 1) {
+        <div class="d-flex justify-content-end mb-2">
+          <oib-pagination [page]="page" [navigate]="true" />
+        </div>
+      }
+      <table class="table table-sm table-hover oib-table mb-0">
+        <thead>
+          <tr>
+            <th class="action-column" translate="audit.action-date"></th>
+            <th class="user-column" translate="audit.user"></th>
+            <th translate="audit.entity"></th>
+            <th class="oib-actions-column-1"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of page.content; track entry.id) {
             <tr>
-              <th translate="audit.action-date"></th>
-              <th translate="audit.user"></th>
-              <th translate="audit.entity"></th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (entry of entries().content; track entry.id) {
-              <tr class="data">
-                <td class="text-nowrap">
-                  <span
-                    class="badge me-2"
-                    [class.bg-success]="entry.action === 'CREATE'"
-                    [class.bg-primary]="entry.action === 'UPDATE'"
-                    [class.bg-danger]="entry.action === 'DELETE'"
-                    [translate]="'audit.actions.' + entry.action"
-                  ></span>
-                  <span>{{ entry.createdAt | datetime: 'ff' }}</span>
-                </td>
-                <td>{{ entry.user | auditUser }}</td>
-                <td>
-                  <span class="entity-type">{{ entry.entityType | auditEntityTypesEnum }}{{ 'common.colon-separator' | translate }}</span>
-                  @let entityName = entry.entity.name || entry.entityId;
-                  @let link = entityLink(entry);
-                  @if (link) {
-                    <a
-                      class="entity-link"
-                      [routerLink]="link"
-                      [ngbTooltip]="'audit.tooltips.entity-id' | translate: { id: entry.entityId }"
-                      >{{ entityName }}</a
-                    >
-                  } @else {
-                    <span
-                      class="entity-name"
-                      [class.text-muted]="!entry.entity.exists"
-                      [ngbTooltip]="
-                        (entry.entity.exists ? 'audit.tooltips.entity-id' : 'audit.tooltips.deleted-entity')
-                          | translate: { id: entry.entityId }
-                      "
-                      >{{ entityName }}</span
-                    >
-                  }
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    class="btn btn-link"
-                    [ngbTooltip]="'audit.tooltips.view' | translate"
-                    [attr.aria-label]="'audit.tooltips.view' | translate"
-                    (click)="showHistory(entry)"
+              <td class="text-nowrap">
+                <span class="audit-action me-2">
+                  <span [class]="actionIcon(entry.action)" aria-hidden="true"></span>
+                  <span [translate]="'audit.actions.' + entry.action"></span>
+                </span>
+                <span>{{ entry.createdAt | datetime: 'ff' }}</span>
+              </td>
+              <td>{{ entry.user | auditUser }}</td>
+              <td class="text-truncate">
+                <span class="entity-type">{{ entry.entityType | auditEntityTypesEnum }}{{ 'common.colon-separator' | translate }}</span>
+                @let entityName = entry.entity.name || entry.entityId;
+                @let link = entityLink(entry);
+                @if (link) {
+                  <a
+                    class="entity-link"
+                    [routerLink]="link"
+                    [ngbTooltip]="'audit.tooltips.entity-id' | translate: { id: entry.entityId }"
+                    >{{ entityName }}</a
                   >
-                    <span class="fa-solid fa-search" aria-hidden="true"></span>
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+                } @else {
+                  <span
+                    class="entity-name"
+                    [class.text-muted]="!entry.entity.exists"
+                    [ngbTooltip]="
+                      (entry.entity.exists ? 'audit.tooltips.entity-id' : 'audit.tooltips.deleted-entity')
+                        | translate: { id: entry.entityId }
+                    "
+                    >{{ entityName }}</span
+                  >
+                }
+              </td>
+              <td class="oib-actions">
+                <button
+                  type="button"
+                  class="btn btn-link"
+                  [ngbTooltip]="'audit.tooltips.view' | translate"
+                  [attr.aria-label]="'audit.tooltips.view' | translate"
+                  (click)="showHistory(entry)"
+                >
+                  <span class="fa-solid fa-search" aria-hidden="true"></span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     } @else {
-      <div class="oi-details empty" translate="audit.none"></div>
+      <div class="oib-grey-container empty" id="no-audit-log" translate="audit.none"></div>
     }
-  </div>
+  </section>
 </div>

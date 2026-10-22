@@ -124,7 +124,10 @@ describe('AuditListComponent', () => {
     });
     await expect.element(tester.rows).toHaveLength(3);
     // action and date in the same column
-    await expect.element(tester.cells(0).nth(0).getByCss('.badge')).toHaveTextContent('Create');
+    await expect.element(tester.cells(0).nth(0).getByCss('.audit-action')).toHaveTextContent('Create');
+    await expect.element(tester.cells(0).nth(0).getByCss('.audit-action .status-green')).toBeInTheDocument();
+    await expect.element(tester.cells(1).nth(0).getByCss('.audit-action')).toHaveTextContent('Update');
+    await expect.element(tester.cells(1).nth(0).getByCss('.audit-action .status-blue')).toBeInTheDocument();
     await expect.element(tester.cells(0).nth(0)).toMatchTextContent(/Create.*2023/);
     await expect.element(tester.cells(0).nth(1)).toHaveTextContent('John Doe (john)');
     // entity type and entity name in the same column
