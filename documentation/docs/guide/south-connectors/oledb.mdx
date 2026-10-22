@@ -2,7 +2,7 @@
 sidebar_position: 9
 ---
 
-import ItemSettings from './_south-sql-item-settings.mdx';
+import ItemSettings from './_south-record-list-item-settings.mdx';
 
 # OLEDB
 
@@ -30,7 +30,7 @@ Connect to OLEDB data sources through a remote [OIBus Agent](../oibus-agent/oled
 <ItemSettings />
 
 :::note OLEDB datetime field types
-The following **Type** values are available for datetime field configuration:
+The following **Type** values are available for the tracking instant's datetime field:
 
 | Type            | Description                                       |
 | --------------- | ------------------------------------------------- |
@@ -39,4 +39,11 @@ The following **Type** values are available for datetime field configuration:
 | UNIX epoch (s)  | Unix timestamp in seconds                         |
 | UNIX epoch (ms) | Unix timestamp in milliseconds                    |
 
+:::
+
+:::info Through the OIBus Agent
+The agent returns the rows as text: the tracked field comes as an ISO 8601 string in UTC (e.g.
+`2024-01-15T10:30:00.000Z`), every other column as the database driver renders it, and empty or null values as
+`null`. Use a [record-list transformer](../engine/transformers.mdx) to format them downstream (e.g. CSV from
+Record list).
 :::

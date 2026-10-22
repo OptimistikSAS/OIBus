@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import path from 'node:path';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
@@ -19,39 +18,22 @@ import type SouthOLEDBClass from './south-oledb';
 
 const nodeRequire = createRequire(import.meta.url);
 
-const dateTimeFields: SouthOLEDBItemSettings['dateTimeFields'] = [
-  { fieldName: 'anotherTimestamp', useAsReference: false, type: 'unix-epoch-ms' },
-  {
-    fieldName: 'timestamp',
-    useAsReference: true,
-    type: 'string',
-    timezone: 'Europe/Paris',
-    format: 'yyyy-MM-dd HH:mm:ss.SSS',
-    locale: 'en-US'
-  }
-];
+const trackingInstant: SouthOLEDBItemSettings['trackingInstant'] = {
+  trackInstant: true,
+  fieldName: 'timestamp',
+  dateTimeInput: { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+};
 
 const buildItem = (
   id: string,
   query: string,
-  itemDateTimeFields: SouthOLEDBItemSettings['dateTimeFields'],
+  itemTrackingInstant: SouthOLEDBItemSettings['trackingInstant'],
   scanMode = testData.scanMode.list[0]
 ): SouthConnectorItemEntity<SouthOLEDBItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
   enabled: true,
-  settings: {
-    query,
-    dateTimeFields: itemDateTimeFields,
-    serialization: {
-      type: 'csv',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: 'COMMA',
-      compression: true,
-      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      outputTimezone: 'Europe/Paris'
-    }
-  },
+  settings: { query, trackingInstant: itemTrackingInstant },
   scanMode,
   group: null,
   syncWithGroup: false,
@@ -88,9 +70,9 @@ const configuration: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSett
   },
   groups: [],
   items: [
-    buildItem('id1', 'query1', dateTimeFields),
+    buildItem('id1', 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp <= @EndTime', trackingInstant),
     buildItem('id2', 'query2', null),
-    buildItem('id3', 'query3', dateTimeFields, testData.scanMode.list[1])
+    buildItem('id3', 'query3', trackingInstant, testData.scanMode.list[1])
   ],
   createdBy: '',
   updatedBy: '',
@@ -114,11 +96,9 @@ describe('SouthOLEDB', () => {
 
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
   const createUtilsMocks = () => ({
-    convertDelimiter: mock.fn((value: unknown) => value),
-    extractLastCsvRow: mock.fn((content: unknown) => (Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null)),
-    formatInstant: mock.fn((value: unknown) => value),
-    logQuery: mock.fn(),
-    persistResults: mock.fn(async (..._args: Array<unknown>) => undefined)
+    convertDateTimeToInstant: mock.fn((instant: unknown, _options: unknown) => instant),
+    formatInstant: mock.fn((instant: unknown, _options: unknown) => `formatted ${instant}`),
+    logQuery: mock.fn()
   });
   const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
@@ -257,91 +237,49 @@ describe('SouthOLEDB', () => {
     );
   });
 
-  it('should properly run historyQuery', async () => {
-    const startTime = testData.constants.dates.DATE_1;
-    const queryRemoteAgentDataMock = mock.method(
-      south,
-      'queryRemoteAgentData',
-      mock.fn(async () => ({
-        trackedInstant: '2020-03-01T00:00:00.000Z',
-        value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-      }))
-    );
+  it('should send the records of historyQuery and track the max instant from the ISO strings of the agent', async () => {
+    const records = [
+      { value: '1', timestamp: '2020-02-01T00:00:00.000Z' },
+      { value: '2', timestamp: '2020-03-01T00:00:00.000Z' },
+      { value: '3', timestamp: null }
+    ];
+    const queryMock = mock.method(south, 'queryRemoteAgentData', async () => records);
 
-    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    assert.strictEqual(queryRemoteAgentDataMock.mock.calls.length, 1);
-    assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [
+    const result = await south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+
+    assert.deepStrictEqual(queryMock.mock.calls[0].arguments, [
       configuration.items[0],
       testData.constants.dates.DATE_1,
       testData.constants.dates.FAKE_NOW
     ]);
-    assert.deepStrictEqual(result, {
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-    });
+    assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments.slice(0, 4), [
+      'southId',
+      { type: 'record-list', content: records },
+      testData.constants.dates.FAKE_NOW,
+      [configuration.items[0]]
+    ]);
+    assert.deepStrictEqual(utilsExports.convertDateTimeToInstant.mock.calls[0].arguments, [
+      '2020-02-01T00:00:00.000Z',
+      { type: 'iso-string' }
+    ]);
+    assert.deepStrictEqual(result, { trackedInstant: '2020-03-01T00:00:00.000Z', value: records[2] });
   });
 
-  it('should get data from Remote agent', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
+  it('should not track an instant without tracking field', async () => {
+    mock.method(south, 'queryRemoteAgentData', async () => [{ value: '1' }]);
 
-    HTTPRequest.mock.mockImplementation(async () =>
-      createMockResponse(200, { recordCount: 0, content: [], maxInstant: '2020-03-01T00:00:00.000Z' })
-    );
-    HTTPRequest.mock.mockImplementationOnce(async () =>
-      createMockResponse(200, {
-        recordCount: 2,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-        maxInstant: '2020-03-01T00:00:00.000Z'
-      })
-    );
+    const result = await south.historyQuery([configuration.items[1]], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
 
-    const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
+    assert.deepStrictEqual(result, { trackedInstant: null, value: { value: '1' } });
+  });
 
-    assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-    assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
+  it('should not send anything when there is no result', async () => {
+    mock.method(south, 'queryRemoteAgentData', async () => []);
 
-    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
-    });
-    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: connectionStringWithPassword,
-        sql: 'query1',
-        readTimeout: 1000,
-        timeColumn: 'timestamp',
-        datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        datasourceTimezone: 'Europe/Paris',
-        delimiter: 'COMMA',
-        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const result = await south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
 
-    assert.deepStrictEqual(result, {
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-03-01T00:00:00.000Z' }
-    });
-
-    const persistCall = utilsExports.persistResults.mock.calls[0];
-    assert.deepStrictEqual(persistCall.arguments[0], [
-      { timestamp: '2020-02-01T00:00:00.000Z' },
-      { timestamp: '2020-03-01T00:00:00.000Z' }
-    ]);
-    assert.deepStrictEqual(persistCall.arguments[1], {
-      type: 'file',
-      filename: configuration.items[0].settings.serialization.filename,
-      compression: configuration.items[0].settings.serialization.compression
-    });
-    assert.strictEqual(persistCall.arguments[2], configuration.name);
-    assert.strictEqual(persistCall.arguments[3], configuration.items[0]);
-    assert.strictEqual(persistCall.arguments[4], testData.constants.dates.FAKE_NOW);
-    assert.strictEqual(persistCall.arguments[5], path.resolve('cacheFolder', 'tmp'));
-    assert.ok(typeof persistCall.arguments[6] === 'function');
-
-    await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
+    assert.deepStrictEqual(result, { trackedInstant: null, value: null });
+    assert.strictEqual(addContentCallback.mock.calls.length, 0);
     assert.ok(
       logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
@@ -349,133 +287,90 @@ describe('SouthOLEDB', () => {
     );
   });
 
-  it('should get data from Remote agent without datetime reference', async () => {
+  it('should get data from the remote agent', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
-
+    const content = ['value\u001Ftimestamp', '1\u001F2020-02-01T00:00:00.000Z', ''].join('\r\n');
     HTTPRequest.mock.mockImplementation(async () =>
-      createMockResponse(200, {
-        recordCount: 2,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-        maxInstant: startTime
-      })
+      createMockResponse(200, { recordCount: 1, content, maxInstant: '2020-02-01T00:00:00Z' })
     );
 
-    const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
+    const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
 
-    assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
-    });
+    const adaptedQuery = `SELECT * FROM logs WHERE timestamp > formatted ${startTime} AND timestamp <= formatted ${endTime}`;
+    assert.deepStrictEqual(utilsExports.formatInstant.mock.calls[0].arguments, [startTime, trackingInstant!.dateTimeInput]);
+    assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments.slice(0, 3), [
+      adaptedQuery,
+      `formatted ${startTime}`,
+      `formatted ${endTime}`
+    ]);
+    assert.strictEqual(
+      (HTTPRequest.mock.calls[0].arguments[0] as URL).href,
+      `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
+    );
     assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
       method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         connectionString: connectionStringWithPassword,
-        sql: 'query2',
-        readTimeout: 1000,
-        delimiter: 'COMMA',
-        outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
-        outputTimezone: configuration.items[1].settings.serialization.outputTimezone
-      }),
-      headers: { 'Content-Type': 'application/json' }
+        sql: adaptedQuery,
+        readTimeout: configuration.settings.requestTimeout,
+        timeColumn: 'timestamp',
+        datasourceTimestampFormat: trackingInstant!.dateTimeInput!.format,
+        datasourceTimezone: trackingInstant!.dateTimeInput!.timezone,
+        delimiter: '\u001F',
+        outputTimestampFormat: "uuuu'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
+        outputTimezone: 'UTC'
+      })
     });
-    assert.deepStrictEqual(result, {
-      trackedInstant: null,
-      value: { timestamp: '2020-03-01T00:00:00.000Z' }
+    assert.deepStrictEqual(result, [{ value: '1', timestamp: '2020-02-01T00:00:00.000Z' }]);
+  });
+
+  it('should not send the time column to the remote agent without tracking field', async () => {
+    HTTPRequest.mock.mockImplementation(async () => createMockResponse(200, { recordCount: 0, content: 'value', maxInstant: '' }));
+
+    const result = await south.queryRemoteAgentData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
+
+    assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
+    assert.deepStrictEqual(JSON.parse((HTTPRequest.mock.calls[0].arguments[1] as { body: string }).body), {
+      connectionString: connectionStringWithPassword,
+      sql: 'query2',
+      readTimeout: configuration.settings.requestTimeout,
+      delimiter: '\u001F',
+      outputTimestampFormat: "uuuu'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
+      outputTimezone: 'UTC'
     });
+    assert.deepStrictEqual(result, []);
   });
 
   it('should manage query error', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
     HTTPRequest.mock.mockImplementation(async () => createMockResponse(500));
     HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(400, 'bad request'));
 
-    await assert.rejects(
-      south.queryRemoteAgentData(configuration.items[0], startTime, endTime),
-      new Error('Error occurred when querying remote agent with status 400: bad request')
-    );
-
-    await assert.rejects(
-      south.queryRemoteAgentData(configuration.items[0], startTime, endTime),
-      new Error('Error occurred when querying remote agent with status 500')
-    );
+    await assert.rejects(south.queryRemoteAgentData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
+      message: 'Error occurred when querying remote agent with status 400: bad request'
+    });
+    await assert.rejects(south.queryRemoteAgentData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
+      message: 'Error occurred when querying remote agent with status 500'
+    });
   });
 
-  it('should test item', async () => {
-    const queryRemoteAgentDataMock = mock.method(
-      south,
-      'queryRemoteAgentData',
-      mock.fn(async () => {
-        mock.timers.tick(25);
-        return [
-          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-        ];
-      })
-    );
+  it('should test an item', async () => {
+    const records = [{ value: '1' }];
+    const queryMock = mock.method(south, 'queryRemoteAgentData', async () => {
+      mock.timers.tick(25);
+      return records;
+    });
 
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime, true]);
-    assert.strictEqual(result.queryDuration, 25);
-    assert.strictEqual(result.connectionDuration, 0);
-  });
 
-  it('should test item without datetimeFields', async () => {
-    const queryRemoteAgentDataMock = mock.method(
-      south,
-      'queryRemoteAgentData',
-      mock.fn(async () => {
-        mock.timers.tick(25);
-        return [
-          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-        ];
-      })
-    );
-
-    const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime, true]);
-    assert.strictEqual(result.queryDuration, 25);
-    assert.strictEqual(result.connectionDuration, 0);
-  });
-
-  it('QueryRemoteAgentData in case of item test', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    HTTPRequest.mock.mockImplementation(async () =>
-      createMockResponse(200, {
-        recordCount: 2,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-        maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-      })
-    );
-
-    await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
-
-    assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-    assertContains(HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
-    });
-    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({
-        connectionString: connectionStringWithPassword,
-        sql: 'query1',
-        readTimeout: 1000,
-        timeColumn: 'timestamp',
-        datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        datasourceTimezone: 'Europe/Paris',
-        delimiter: 'COMMA',
-        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    assert.deepStrictEqual(queryMock.mock.calls[0].arguments, [
+      configuration.items[0],
+      testData.south.itemTestingSettings.history!.startTime,
+      testData.south.itemTestingSettings.history!.endTime
+    ]);
+    assert.deepStrictEqual(result, { result: { type: 'record-list', content: records }, connectionDuration: 0, queryDuration: 25 });
+    assert.strictEqual(addContentCallback.mock.calls.length, 0);
   });
 
   it('should test connection successfully', async () => {

@@ -3,8 +3,8 @@ import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { InputType } from '@oibus/shared/connector/transformer-manifest.model';
 
 /**
- * The type of the data a south sends to the norths at runtime (e.g. OIAnalytics and ODBC serialize their results into
- * CSV files, so they send files, not time-values).
+ * The type of the data a south sends to the norths at runtime (e.g. OIAnalytics serializes its results into CSV
+ * files, so it sends files, not time-values).
  */
 export const getAssociatedInputType = (southType: OIBusSouthType): InputType => {
   switch (southType) {
@@ -16,12 +16,15 @@ export const getAssociatedInputType = (southType: OIBusSouthType): InputType => 
     case 'osisoft-pi':
     case 's7':
       return 'time-values';
-    case 'mysql':
-    case 'postgresql':
-    case 'mssql':
-    case 'oracle':
-    case 'sqlite':
+    case 'influxdb':
     case 'mongodb':
+    case 'mssql':
+    case 'mysql':
+    case 'odbc':
+    case 'oledb':
+    case 'oracle':
+    case 'postgresql':
+    case 'sqlite':
       return 'record-list';
     default:
       return 'any';

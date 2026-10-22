@@ -8024,7 +8024,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthODBCItemSettingsDateTimeFieldsType": {
+			"SouthODBCItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -8033,16 +8033,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthODBCItemSettingsDateTimeFields": {
+			"SouthODBCItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthODBCItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthODBCItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -8055,61 +8049,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthODBCItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthODBCItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthODBCItemSettingsSerialization": {
+			"SouthODBCItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthODBCItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthODBCItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthODBCItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8119,21 +8082,18 @@
 					"query": {
 						"type": "string"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthODBCItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthODBCItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthODBCItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9235,7 +9195,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOLEDBItemSettingsDateTimeFieldsType": {
+			"SouthOLEDBItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -9244,16 +9204,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthOLEDBItemSettingsDateTimeFields": {
+			"SouthOLEDBItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthOLEDBItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthOLEDBItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -9266,61 +9220,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOLEDBItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthOLEDBItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthOLEDBItemSettingsSerialization": {
+			"SouthOLEDBItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthOLEDBItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthOLEDBItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthOLEDBItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9330,21 +9253,18 @@
 					"query": {
 						"type": "string"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthOLEDBItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthOLEDBItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthOLEDBItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false

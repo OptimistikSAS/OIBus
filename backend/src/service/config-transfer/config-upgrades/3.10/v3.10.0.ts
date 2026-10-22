@@ -18,10 +18,17 @@ import {
  * 3.10.0 pre-release is upgraded by it too, and may already have (part of) the new one.
  */
 
-// The SQL-family souths reworked to emit 'record-list' content instead of pre-serialized CSV.
-// south-odbc and south-oledb are intentionally excluded (their CSV building happens in an external
-// .NET agent, outside this refactor's scope).
-export const SQL_SOUTH_TYPES = ['mysql', 'postgresql', 'mssql', 'oracle', 'sqlite'];
+// The SQL-family souths reworked to emit 'record-list' content instead of pre-serialized CSV. With a remote agent
+// (always for OLEDB, optional for ODBC), the agent still builds a CSV, which the connector parses back into records.
+export const SQL_SOUTH_TYPES = ['mysql', 'postgresql', 'mssql', 'oracle', 'sqlite', 'odbc', 'oledb'];
+
+/**
+ * Whether the south queries its database through the OIBus remote agent. The agent only formats the reference date
+ * time field (now sent as an ISO string), and leaves the other fields as they are.
+ */
+export function usesRemoteAgent(southType: string, southSettings: { remoteAgent?: unknown } | null | undefined): boolean {
+  return southType === 'oledb' || (southType === 'odbc' && southSettings?.remoteAgent === true);
+}
 
 // "IoT family" south connector types at 3.10.0: the only ones for which a per-item caching strategy
 // is meaningful, defaulted to 'allValues'.
@@ -86,9 +93,13 @@ export function toNewSqlItemSettings(oldSettings: OldSqlItemSettings): Record<st
  * reference one — the original code rendered all of them) becomes a `fields` entry with
  * `dataType: 'datetime'`, sharing the item's old `outputTimestampFormat`/`outputTimezone`. Columns
  * with no entry in `fields` pass through unchanged, same as before.
+ * Through a remote agent, only the reference field was formatted, and it now comes as an ISO string.
  */
-export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings): Record<string, unknown> {
+export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings, viaRemoteAgent = false): Record<string, unknown> {
   const serialization = oldSettings.serialization;
+  const dateTimeFields = (oldSettings.dateTimeFields ?? [])
+    .filter(field => !viaRemoteAgent || field.useAsReference)
+    .map(field => (viaRemoteAgent ? { ...field, type: 'iso-string', timezone: null, format: null, locale: null } : field));
   return {
     filename: serialization?.filename ?? '@CurrentDate.csv',
     encoding: 'UTF_8',
@@ -99,7 +110,7 @@ export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings): Re
     quoteChar: 'NONE',
     escapeChar: 'DOUBLE_QUOTE',
     nullValue: '',
-    fields: (oldSettings.dateTimeFields ?? []).map(field => ({
+    fields: dateTimeFields.map(field => ({
       fieldName: field.fieldName,
       columnName: null,
       dataType: 'datetime',
@@ -232,6 +243,7 @@ function migrateSqlSouthItems(config: JsonObject, catalog: ReturnType<typeof tra
       };
     });
 
+    const viaRemoteAgent = usesRemoteAgent(south.type as string, (south.settings as JsonObject).settings as JsonObject);
     for (const item of items) {
       const oldSettings = item.settings as OldSqlItemSettings;
       for (const { north, resolve } of resolutions) {
@@ -242,7 +254,7 @@ function migrateSqlSouthItems(config: JsonObject, catalog: ReturnType<typeof tra
           {
             id: generateRandomId(6),
             transformerId: catalog.recordListToCsvId(),
-            options: buildRecordListToCsvOptions(oldSettings),
+            options: buildRecordListToCsvOptions(oldSettings, viaRemoteAgent),
             source: { type: 'south', southId: south.oIBusInternalId, items: [itemLight(item)] }
           }
         ];
@@ -273,6 +285,7 @@ function migrateSqlHistoryQueryItems(config: JsonObject, catalog: ReturnType<typ
       }
     }
 
+    const viaRemoteAgent = usesRemoteAgent(settings.southType as string, settings.southSettings as JsonObject);
     for (const item of items) {
       const oldSettings = item.settings as OldSqlItemSettings;
       const resolved = itemLevel.get(item.id) ?? historyLevel;
@@ -282,7 +295,7 @@ function migrateSqlHistoryQueryItems(config: JsonObject, catalog: ReturnType<typ
           {
             id: generateRandomId(6),
             transformerId: catalog.recordListToCsvId(),
-            options: buildRecordListToCsvOptions(oldSettings),
+            options: buildRecordListToCsvOptions(oldSettings, viaRemoteAgent),
             items: [itemLight(item)]
           }
         ];

@@ -135,9 +135,8 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     const queryStart = DateTime.now().toMillis();
     const result = await this.queryData(item, startTime, endTime);
     const queryDuration = DateTime.now().toMillis() - queryStart;
-    const content = JSON.stringify(result);
     return {
-      result: { type: 'any-content', content },
+      result: { type: 'record-list', content: result },
       // No separate connection step in testItem() for this connector — the call above does
       // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
@@ -164,7 +163,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
 
     this.logger.info(logCtx, `Found ${result.length} results in ${requestDuration} ms`);
     const maxInstant = this.extractMaxInstant(result);
-    await this.addContent({ type: 'any-content', content: JSON.stringify(result) }, startRequest.toUTC().toISO(), [item]);
+    await this.addContent({ type: 'record-list', content: result }, startRequest.toUTC().toISO(), [item]);
     return { trackedInstant: maxInstant, value: result[result.length - 1] };
   }
 
