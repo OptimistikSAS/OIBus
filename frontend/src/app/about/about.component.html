@@ -1,109 +1,118 @@
 <div class="oib-padded-container">
-  <h1 class="visually-hidden" translate="login.title"></h1>
-
-  <div class="row">
-    <div class="col-xs-12 col-sm-8 offset-sm-2 col-md-6 offset-md-3 col-lg-6 offset-lg-3">
-      <div class="oib-inner-form bg-light row py-5">
-        <div class="col-6">
-          <div class="d-flex flex-column align-items-center">
-            <img src="/oibus_white.svg" alt="" class="img-fluid mb-4" />
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="oib-page-header">
+        <div class="d-flex align-items-center gap-3">
+          <img src="/oibus_white.svg" alt="" class="about-logo" />
+          <div>
+            <h1 translate="about.title"></h1>
+            <p class="about-description" translate="about.description"></p>
+            <div class="oib-page-meta">
+              <span id="license">
+                <span translate="about.license"></span>
+                <span translate="common.colon-separator"></span>
+                <a target="_blank" rel="noopener" href="https://github.com/OptimistikSAS/OIBus/blob/main/LICENSE">EUPL-1.2-or-later</a>
+              </span>
+            </div>
           </div>
         </div>
-        <div class="col-6">
-          <div id="version">
-            <strong translate="about.version"></strong>
-            <span translate="common.colon-separator"></span>
-            @if (oibusInfo(); as oibusInfo) {
-              <span>{{ oibusInfo.version }}</span>
-            } @else {
-              <span id="version-spinner" class="fa-solid fa-spinner fa-spin"></span>
-            }
-          </div>
-          <div id="launcher-version">
-            <strong translate="about.launcher-version"></strong>
-            <span translate="common.colon-separator"></span>
-            @if (oibusInfo(); as oibusInfo) {
-              <span>{{ oibusInfo.launcherVersion }}</span>
-            } @else {
-              <span id="launcher-version-spinner" class="fa-solid fa-spinner fa-spin"></span>
-            }
-          </div>
-
-          <div id="executable">
-            <strong translate="about.executable"></strong>
-            <span translate="common.colon-separator"></span>
-            @if (oibusInfo(); as oibusInfo) {
-              <span class="text-wrap text-break">{{ oibusInfo.binaryDirectory }}</span>
-            } @else {
-              <span class="fa-solid fa-spinner fa-spin"></span>
-            }
-          </div>
-
-          <div id="data-folder">
-            <strong translate="about.data-folder"></strong>
-            <span translate="common.colon-separator"></span>
-            @if (oibusInfo(); as oibusInfo) {
-              <span class="text-wrap text-break">{{ oibusInfo.dataDirectory }}</span>
-            } @else {
-              <span class="fa-solid fa-spinner fa-spin"></span>
-            }
-          </div>
-
-          <div id="operating-system">
-            <strong translate="about.operating-system"></strong>
-            <span translate="common.colon-separator"></span>
-            @if (oibusInfo(); as oibusInfo) {
-              <span>{{ oibusInfo.operatingSystem }}</span>
-            } @else {
-              <span class="fa-solid fa-spinner fa-spin"></span>
-            }
-          </div>
-
-          <div id="architecture">
-            <strong translate="about.architecture"></strong>
-            <span translate="common.colon-separator"></span>
-            @if (oibusInfo(); as oibusInfo) {
-              <span>{{ oibusInfo.architecture }}</span>
-            } @else {
-              <span class="fa-solid fa-spinner fa-spin"></span>
-            }
-          </div>
-
-          <div id="process-id">
-            <strong translate="about.process-id"></strong>
-            <span translate="common.colon-separator"></span>
-            @if (oibusInfo(); as oibusInfo) {
-              <span>{{ oibusInfo.processId }}</span>
-            } @else {
-              <span class="fa-solid fa-spinner fa-spin"></span>
-            }
-          </div>
-
-          <div id="hostname">
-            <strong translate="about.hostname"></strong>
-            <span translate="common.colon-separator"></span>
-            @if (oibusInfo(); as oibusInfo) {
-              <span>{{ oibusInfo.hostname }}</span>
-            } @else {
-              <span class="fa-solid fa-spinner fa-spin"></span>
-            }
-          </div>
-
-          <div id="license">
-            <strong translate="about.license"></strong>
-            <span translate="common.colon-separator"></span>
-            <a target="_blank" href="https://github.com/OptimistikSAS/OIBus/blob/main/LICENSE">EUPL-1.2-or-later</a>
-          </div>
-        </div>
-      </div>
-      <div class="row mt-2">
-        <h5 id="official-site" class="mt-2 text-center">
-          <a target="_blank" href="https://oibus.optimistik.com/">
+        <div class="oib-page-actions">
+          @if (oibusInfo()) {
+            <button
+              type="button"
+              class="btn btn-subtle"
+              id="copy-info"
+              [cdkCopyToClipboard]="systemInfo()"
+              (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+            >
+              <i class="fa-solid fa-copy me-1" aria-hidden="true"></i>
+              <span translate="about.copy-info"></span>
+            </button>
+          }
+          <a class="btn btn-subtle" id="official-site" target="_blank" rel="noopener" href="https://oibus.optimistik.com/">
             <span translate="about.official-site"></span>
-            <span class="ms-2 fa-solid fa-up-right-from-square" aria-hidden="true"></span>
+            <i class="fa-solid fa-up-right-from-square ms-1" aria-hidden="true"></i>
           </a>
-        </h5>
+        </div>
       </div>
+
+      @if (oibusInfo(); as oibusInfo) {
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="about.instance"></h5>
+          </div>
+          <dl class="oib-summary">
+            <div class="oib-summary-entry" id="name">
+              <dt translate="about.name"></dt>
+              <dd>{{ oibusInfo.oibusName }}</dd>
+            </div>
+            <div class="oib-summary-entry" id="oibus-id">
+              <dt translate="about.id"></dt>
+              <dd>{{ oibusInfo.oibusId }}</dd>
+            </div>
+            <div class="oib-summary-entry" id="version">
+              <dt translate="about.version"></dt>
+              <dd>{{ oibusInfo.version }}</dd>
+            </div>
+            <div class="oib-summary-entry" id="launcher-version">
+              <dt translate="about.launcher-version"></dt>
+              <dd>{{ oibusInfo.launcherVersion }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="about.system"></h5>
+          </div>
+          <dl class="oib-summary">
+            <div class="oib-summary-entry" id="hostname">
+              <dt translate="about.hostname"></dt>
+              <dd>{{ oibusInfo.hostname }}</dd>
+            </div>
+            <div class="oib-summary-entry" id="operating-system">
+              <dt translate="about.operating-system"></dt>
+              <dd>{{ oibusInfo.operatingSystem }}</dd>
+            </div>
+            <div class="oib-summary-entry" id="architecture">
+              <dt translate="about.architecture"></dt>
+              <dd>{{ oibusInfo.architecture }}</dd>
+            </div>
+            <div class="oib-summary-entry" id="process-id">
+              <dt translate="about.process-id"></dt>
+              <dd>{{ oibusInfo.processId }}</dd>
+            </div>
+            @if (launchOptions(); as launchOptions) {
+              <div class="oib-summary-entry" id="launch-options">
+                <dt translate="about.launch-options"></dt>
+                <dd>
+                  <code>{{ launchOptions }}</code>
+                </dd>
+              </div>
+            }
+          </dl>
+        </section>
+
+        <section class="oib-panel">
+          <div class="oib-section-title">
+            <h5 translate="about.folders"></h5>
+          </div>
+          <dl class="oib-summary">
+            <div class="oib-summary-entry oib-summary-wide" id="executable">
+              <dt translate="about.executable"></dt>
+              <dd>{{ oibusInfo.binaryDirectory }}</dd>
+            </div>
+            <div class="oib-summary-entry oib-summary-wide" id="data-folder">
+              <dt translate="about.data-folder"></dt>
+              <dd>{{ oibusInfo.dataDirectory }}</dd>
+            </div>
+          </dl>
+        </section>
+      } @else {
+        <oib-loading-spinner />
+      }
+
+      <p class="about-copyright" id="copyright" translate="about.copyright" [translateParams]="{ nowYear: copyrightYear }"></p>
     </div>
   </div>
 </div>

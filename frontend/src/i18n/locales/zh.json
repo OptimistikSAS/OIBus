@@ -3513,6 +3513,17 @@
     "reload-now": "立即重新加载"
   },
   "about": {
+    "title": "关于 OIBus",
+    "description": "开源代理，采集工业数据并将其发送到需要的地方。",
+    "instance": "实例",
+    "system": "系统",
+    "folders": "文件夹",
+    "name": "名称",
+    "id": "ID",
+    "launch-options": "启动选项",
+    "copy-info": "复制系统信息",
+    "copy-info-success": "系统信息已复制到剪贴板",
+    "copy-info-error": "复制系统信息到剪贴板时出错",
     "official-site": "官方网站",
     "version": "版本",
     "launcher-version": "启动器版本",
