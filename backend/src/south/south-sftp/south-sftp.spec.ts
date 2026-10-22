@@ -773,6 +773,34 @@ describe('SouthSFTP', () => {
       });
     });
 
+    it('should test item with the content of the most recent matching file to transform', async () => {
+      sftpClient.list.mock.mockImplementation(async () => [
+        { name: 'old.csv', modifyTime: 1000 } as FileInfo,
+        { name: 'recent.csv', modifyTime: 2000 } as FileInfo
+      ]);
+      sftpClient.get.mock.mockImplementation(async () => Buffer.from('a;b'));
+
+      const result = await south.testItem(configuration.items[0], {
+        ...testData.south.itemTestingSettings,
+        transformer: { transformerId: 'transformerId', options: {} }
+      });
+
+      assert.deepStrictEqual(result.result, { type: 'any', filePath: 'recent.csv', filename: 'recent.csv', content: 'a;b' });
+      assert.strictEqual(sftpClient.get.mock.calls[0].arguments[0], `${configuration.items[0].settings.remoteFolder}/recent.csv`);
+    });
+
+    it('should throw when no file matches to transform', async () => {
+      sftpClient.list.mock.mockImplementation(async () => []);
+
+      await assert.rejects(
+        south.testItem(configuration.items[0], {
+          ...testData.south.itemTestingSettings,
+          transformer: { transformerId: 'transformerId', options: {} }
+        }),
+        /No file matching .* to transform/
+      );
+    });
+
     it('should test item and throw error', async () => {
       const error = new Error('Could not list files');
       sftpClient.list.mock.mockImplementation(async () => {

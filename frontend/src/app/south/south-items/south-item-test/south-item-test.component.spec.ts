@@ -7,7 +7,12 @@ import { page } from 'vitest/browser';
 
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
-import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
+import {
+  HistoryTransformerDTOWithOptions,
+  SourceOriginSouthDTO,
+  TransformerDTO,
+  TransformerDTOWithOptions
+} from '@oibus/shared/api/transformer.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -30,12 +35,17 @@ const transformer: TransformerDTO = {
   ...testData.north.list[0].transformers[0].transformer,
   manifest: { ...testData.north.list[0].transformers[0].transformer.manifest, attributes: [manifest.items.rootAttribute.attributes[0]] }
 };
-const north: NorthConnectorDTO = {
-  ...testData.north.list[0],
-  transformers: [{ ...testData.north.list[0].transformers[0], transformer, options: { name: 'configured' } }]
+// attached to all the items of the tested south (southId1)
+const northTransformer: TransformerDTOWithOptions = {
+  ...testData.north.list[0].transformers[0],
+  source: { ...(testData.north.list[0].transformers[0].source as SourceOriginSouthDTO), items: [] },
+  transformer,
+  options: { name: 'configured' }
 };
+const north: NorthConnectorDTO = { ...testData.north.list[0], transformers: [northTransformer] };
 const historyTransformer: HistoryTransformerDTOWithOptions = {
   ...testData.historyQueries.list[0].northTransformers[0],
+  items: [],
   transformer,
   options: { name: 'history' }
 };
@@ -277,6 +287,34 @@ describe('SouthItemTestComponent', () => {
     expect(result$.observed).toBe(false);
   });
 
+  test('should only offer the transformers of the north attached to the tested item', async () => {
+    const southSource = northTransformer.source as SourceOriginSouthDTO;
+    const named = (name: string, source: SourceOriginSouthDTO): TransformerDTOWithOptions => ({
+      ...northTransformer,
+      id: name,
+      transformer: { ...testData.transformers.customList[0], id: name, name },
+      source
+    });
+    northConnectorService.findById.mockReturnValue(
+      of({
+        ...north,
+        transformers: [
+          northTransformer,
+          named('other south', { ...southSource, south: { ...southSource.south, id: 'southId2' } }),
+          named('other item', { ...southSource, items: [{ ...southSource.items[0], name: 'other item' }] }),
+          named('listed item', { ...southSource, items: [{ ...southSource.items[0], name: item.name }] })
+        ]
+      })
+    );
+    const tester = new SouthItemTestComponentTester();
+
+    await tester.northSelect.selectOptions('North 1');
+
+    await expect.element(tester.transformerSelect.getByRole('option')).toHaveLength(3);
+    await expect.element(tester.transformerSelect.getByRole('option', { name: 'my transformer 1' })).toBeInTheDocument();
+    await expect.element(tester.transformerSelect.getByRole('option', { name: 'listed item' })).toBeInTheDocument();
+  });
+
   test('should offer the history query transformers in a history context', async () => {
     const tester = new SouthItemTestComponentTester({ type: 'history-south', entityId: 'historyId1' });
 
@@ -296,6 +334,28 @@ describe('SouthItemTestComponent', () => {
       { history: undefined, transformer: { transformerId: 'transformerId1', options: { name: 'history' } } }
     );
     await expect.element(tester.pipelineTransformer).toMatchTextContent(/^\s*my transformer 1/);
+  });
+
+  test('should only offer the history query transformers attached to the tested item', async () => {
+    const tester = new SouthItemTestComponentTester({
+      type: 'history-south',
+      entityId: 'create',
+      inMemoryTransformers: [
+        {
+          ...historyTransformer,
+          id: 'other',
+          items: [{ ...testData.historyQueries.list[0].northTransformers[0].items[0], name: 'other item' }]
+        },
+        {
+          ...historyTransformer,
+          id: 'listed',
+          items: [{ ...testData.historyQueries.list[0].northTransformers[0].items[0], name: item.name }]
+        }
+      ]
+    });
+
+    // the "Raw (no transformer)" option and the transformer listing the tested item
+    await expect.element(tester.transformerSelect.getByRole('option')).toHaveLength(2);
   });
 
   test('should use the in-memory transformer list in a history context instead of fetching', async () => {

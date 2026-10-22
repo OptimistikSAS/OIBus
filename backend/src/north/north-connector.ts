@@ -670,8 +670,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         contentFilename: data.filename ?? path.basename(data.filePath)
       });
     } else if (data.type === 'any-content') {
+      // The serialised payload (JSON from MQTT, InfluxDB or the OIBus API) is cached as a JSON file: no North accepts
+      // `any-content` itself
       await this.cacheService.addCacheContent(Readable.from(data.content), {
-        contentType: data.type
+        contentType: 'any'
       });
     } else {
       if (this.connector.caching.throttling.maxNumberOfElements > 0) {

@@ -595,6 +595,26 @@ describe('Transformer Service', () => {
       assert.strictEqual(result.content, JSON.stringify(content.content));
     });
 
+    it('returns the content unchanged for the iso transformer', async () => {
+      transformerRepository.findById.mock.mockImplementation(
+        () => ({ id: 'iso', type: 'standard', inputType: 'any', outputType: 'any', functionName: 'iso' }) as StandardTransformer
+      );
+      const content = { type: 'any-content' as const, content: '{"a":1}' };
+
+      assert.strictEqual(await service.runTransformer('iso', {}, content), content);
+    });
+
+    it('returns empty content for the ignore transformer', async () => {
+      transformerRepository.findById.mock.mockImplementation(
+        () => ({ id: 'ignore', type: 'standard', inputType: 'any', outputType: 'any', functionName: 'ignore' }) as StandardTransformer
+      );
+
+      assert.deepStrictEqual(await service.runTransformer('ignore', {}, { type: 'any-content', content: '{"a":1}' }), {
+        type: 'any-content',
+        content: ''
+      });
+    });
+
     it('throws a NotFoundError when the transformer to run does not exist', async () => {
       transformerRepository.findById.mock.mockImplementation(() => null);
 

@@ -36,7 +36,9 @@ import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytic
 import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
 import recordListToCsvManifest from '../transformers/any/record-list-to-csv/manifest';
 import RecordListToCsvTransformer from '../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
+import IgnoreTransformer from '../transformers/ignore-transformer';
 import ignoreManifest from '../transformers/ignore-transformer/manifest';
+import IsoTransformer from '../transformers/iso-transformer';
 import isoManifest from '../transformers/iso-transformer/manifest';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import OibusTransformer from '../transformers/oibus-transformer';
@@ -246,15 +248,24 @@ export default class TransformerService {
    * south/history item test (#4773) and the transformer test-with-input feature (#4774).
    */
   async runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent> {
+    const transformer = this.findById(transformerId);
+    // iso and ignore are handled by the North itself (cached as is / dropped), they have no implementation to run
+    if (transformer.type === 'standard' && transformer.functionName === IsoTransformer.transformerName) {
+      return content;
+    }
+    if (transformer.type === 'standard' && transformer.functionName === IgnoreTransformer.transformerName) {
+      return { type: 'any-content', content: '' };
+    }
     const transformerToRun: NorthTransformerWithOptions = {
       id: 'test',
-      transformer: this.findById(transformerId),
+      transformer,
       options,
       // `source` drives north-side routing only; it is unused when the transformer is run directly.
       source: { type: 'oianalytics-setpoint' }
     };
-    const transformer = createTransformer(transformerToRun, null, this.engine.logger);
-    const results = await runTransformerOnContent(transformer, content, { source: 'test' });
+    const results = await runTransformerOnContent(createTransformer(transformerToRun, null, this.engine.logger), content, {
+      source: 'test'
+    });
     const output = Buffer.concat(results.map(result => result.output)).toString('utf-8');
     const metadata = results[0]?.metadata;
     return toTransformedContent(output, metadata?.contentType, metadata?.contentFile);

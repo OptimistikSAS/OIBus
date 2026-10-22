@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { OIBusContent } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import {
   SouthItemSettings,
@@ -15,7 +15,14 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { HTTPRequest } from '../../service/http-request.utils';
-import { formatInstant, formatQueryParams, persistResults, workUnitLogCtx } from '../../service/utils';
+import {
+  formatInstant,
+  formatQueryParams,
+  generateCsvContent,
+  generateFilenameForSerialization,
+  persistResults,
+  workUnitLogCtx
+} from '../../service/utils';
 import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
@@ -66,8 +73,14 @@ export default class SouthOIAnalytics
     const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
     const queryDuration = DateTime.now().toMillis() - queryStart;
     const { formattedResult } = parseData(result);
+    // The values are sent as a CSV file: test with the same content
+    const filePath = generateFilenameForSerialization(this.tmpFolder, item.settings.serialization.filename, this.connector.name, item.name);
     return {
-      result: { type: 'time-values', content: formattedResult },
+      result: {
+        type: 'any',
+        filePath,
+        content: generateCsvContent(this.toRows(item, formattedResult), item.settings.serialization.delimiter)
+      },
       // No separate connection step in testItem() for this connector — the call above does
       // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
@@ -92,20 +105,8 @@ export default class SouthOIAnalytics
 
     if (formattedResult.length > 0) {
       this.logger.info(logCtx, `Found ${formattedResult.length} results in ${requestDuration} ms`);
-      // One CSV column per field: the value and unit are nested in `data`, and the timestamp follows the output settings
-      const rows = formattedResult.map(({ pointId, timestamp, data }) => ({
-        pointId,
-        timestamp: formatInstant(timestamp, {
-          type: 'string',
-          format: item.settings.serialization.outputTimestampFormat,
-          timezone: item.settings.serialization.outputTimezone,
-          locale: 'en-En'
-        }),
-        value: data.value,
-        unit: data.unit
-      }));
       await persistResults(
-        rows,
+        this.toRows(item, formattedResult),
         item.settings.serialization,
         this.connector.name,
         item,
@@ -119,6 +120,23 @@ export default class SouthOIAnalytics
     }
 
     return { trackedInstant: maxInstant, value: formattedResult.length > 0 ? formattedResult[formattedResult.length - 1] : null };
+  }
+
+  /**
+   * One CSV column per field: the value and unit are nested in `data`, and the timestamp follows the output settings
+   */
+  private toRows(item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>, values: Array<OIBusTimeValue>) {
+    return values.map(({ pointId, timestamp, data }) => ({
+      pointId,
+      timestamp: formatInstant(timestamp, {
+        type: 'string',
+        format: item.settings.serialization.outputTimestampFormat,
+        timezone: item.settings.serialization.outputTimezone,
+        locale: 'en-En'
+      }),
+      value: data.value,
+      unit: data.unit
+    }));
   }
 
   async queryData(
