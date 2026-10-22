@@ -1,9 +1,9 @@
 import { OIBusObjectAttribute } from './form.model';
 
-export const INPUT_TYPES = ['any', 'time-values', 'setpoint', 'record-list'];
+export const INPUT_TYPES = ['any', 'time-values', 'setpoint', 'record-list'] as const;
 export type InputType = (typeof INPUT_TYPES)[number];
 
-export const OUTPUT_TYPES = ['any', 'time-values', 'opcua', 'mqtt', 'modbus', 'oianalytics'];
+export const OUTPUT_TYPES = ['any', 'time-values', 'opcua', 'mqtt', 'modbus', 'oianalytics'] as const;
 export type OutputType = (typeof OUTPUT_TYPES)[number];
 
 /**
