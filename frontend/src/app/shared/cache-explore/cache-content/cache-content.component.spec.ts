@@ -43,13 +43,13 @@ class CacheContentComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
   readonly host = this.fixture.componentInstance;
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly title = this.root.getByCss('.oib-box-title');
+  readonly title = this.root.getByCss('.oib-section-title');
   readonly rows = this.root.getByCss('tbody tr');
   readonly filenames = this.root.getByCss('tbody td.filename');
   readonly emptyContainer = this.root.getByCss('.oib-grey-container');
   readonly selectAllButton = this.root.getByRole('button', { name: 'Select all' });
   readonly unselectAllButton = this.root.getByRole('button', { name: 'Unselect all' });
-  readonly selectedCounter = this.root.getByCss('.counter-badge');
+  readonly selectedCounter = this.root.getByCss('#mass-actions-dropdown');
   readonly removeSelectedButton = this.root.getByRole('button', { name: 'Remove selected content' });
   readonly sortByDate = this.root.getByRole('button', { name: 'Creation date' });
   readonly sortByName = this.root.getByRole('button', { name: 'Filename' });
@@ -110,7 +110,7 @@ describe('CacheContentComponent', () => {
     tester.host.files.set(files);
     tester.host.size.set(600);
 
-    await expect.element(tester.title).toMatchTextContent(/^Cache folder600 B/);
+    await expect.element(tester.title).toMatchTextContent(/^Cache folder\(3\)600 B/);
     await tester.expectFilenames(['c.csv', 'a.csv', 'b.csv']);
     await expect.element(tester.rows.nth(0)).toMatchTextContent(/100 B/);
     await expect.element(tester.pages).not.toBeInTheDocument();
@@ -169,18 +169,17 @@ describe('CacheContentComponent', () => {
     beforeEach(() => tester.host.files.set(files));
 
     test('should select individual files', async () => {
-      await expect.element(tester.removeSelectedButton).toBeDisabled();
+      await expect.element(tester.selectedCounter).not.toBeInTheDocument();
       await expect.element(tester.unselectAllButton).toBeDisabled();
 
       await tester.checkbox('a.csv').click();
 
       await expect.element(tester.checkbox('a.csv')).toBeChecked();
       await expect.element(tester.selectedCounter).toHaveTextContent('1 selected');
-      await expect.element(tester.removeSelectedButton).toBeEnabled();
+      await expect.element(tester.unselectAllButton).toBeEnabled();
 
       await tester.checkbox('a.csv').click();
       await expect.element(tester.selectedCounter).not.toBeInTheDocument();
-      await expect.element(tester.removeSelectedButton).toBeDisabled();
     });
 
     test('should select and unselect all files', async () => {
@@ -233,6 +232,8 @@ describe('CacheContentComponent', () => {
     await tester.checkbox('a.csv').click();
     await tester.checkbox('b.csv').click();
 
+    // the actions on the selected files are in the dropdown of the selection counter
+    await tester.selectedCounter.click();
     await tester.root.getByRole('button', { name: button, exact: true }).click();
 
     expect(tester.host.operations()).toEqual([{ ...operation, filenames: ['file-3.json', 'file-1.json'] }]);

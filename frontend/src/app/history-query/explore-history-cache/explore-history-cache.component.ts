@@ -1,15 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { of, switchMap, tap } from 'rxjs';
 
 import { Instant } from '@oibus/shared/common/types';
 import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/domain/engine.model';
+import { HistoryQueryStatus } from '@oibus/shared/domain/history-query.model';
 
 import { HistoryQueryService } from '../../services/history-query.service';
 import { FileContentModalComponent } from '../../shared/cache-explore/cache-content/file-content-modal/file-content-modal.component';
@@ -19,28 +19,30 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation
 import { ascendingDates } from '../../shared/form/validators';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { HISTORY_QUERY_STATUS_ICONS } from '../history-query-status';
 
 @Component({
   selector: 'oib-explore-history-cache',
   templateUrl: './explore-history-cache.component.html',
-  styleUrl: './explore-history-cache.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TranslateDirective,
     ReactiveFormsModule,
-    NgbTooltip,
     DatetimepickerComponent,
     OI_FORM_VALIDATION_DIRECTIVES,
     SaveButtonComponent,
-    CacheExploreComponent
+    CacheExploreComponent,
+    OIBusSouthTypeEnumPipe,
+    OIBusNorthTypeEnumPipe
   ]
 })
 export class ExploreHistoryCacheComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly historyQueryService = inject(HistoryQueryService);
   private readonly notificationService = inject(NotificationService);
-  private readonly translateService = inject(TranslateService);
   private readonly modalService = inject(ModalService);
   private readonly fb = inject(NonNullableFormBuilder);
 
@@ -58,7 +60,7 @@ export class ExploreHistoryCacheComponent {
   );
   readonly cacheContent = signal<CacheSearchResult | null>(null);
   readonly state = new ObservableState();
-  readonly fullTitle = computed(() => this.translateService.instant('explore-cache.title', { name: this.historyQuery()?.name }));
+  readonly statusIcon = (status: HistoryQueryStatus) => HISTORY_QUERY_STATUS_ICONS[status];
 
   readonly form = this.fb.group(
     {

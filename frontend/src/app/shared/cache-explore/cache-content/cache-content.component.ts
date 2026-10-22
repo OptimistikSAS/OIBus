@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { switchMap } from 'rxjs';
 
@@ -9,7 +9,6 @@ import { CacheOperation } from '@oibus/shared/api/engine.model';
 import { createPageFromArray } from '@oibus/shared/common/types';
 import { CacheMetadata, DataFolderType } from '@oibus/shared/domain/engine.model';
 
-import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
 import { DatetimePipe } from '../../datetime.pipe';
 import { FileSizePipe } from '../../file-size.pipe';
 import { PaginationComponent } from '../../pagination/pagination.component';
@@ -30,12 +29,14 @@ const enum ColumnSortState {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TranslateDirective,
-    BoxComponent,
-    BoxTitleDirective,
-    FileSizePipe,
-    NgbTooltipModule,
     TranslatePipe,
+    FileSizePipe,
     DatetimePipe,
+    NgbTooltip,
+    NgbDropdown,
+    NgbDropdownToggle,
+    NgbDropdownMenu,
+    NgbDropdownItem,
     PaginationComponent
   ]
 })
@@ -136,6 +137,20 @@ export class CacheContentComponent {
   }
 
   // --- Sorting Logic ---
+
+  sortIcon(columnName: keyof CacheMetadata): string {
+    if (columnName !== this.currentColumnSort()) {
+      return 'fa-sort';
+    }
+    switch (this.currentColumnOrder()) {
+      case ColumnSortState.ASCENDING:
+        return 'fa-sort-up';
+      case ColumnSortState.DESCENDING:
+        return 'fa-sort-down';
+      default:
+        return 'fa-sort';
+    }
+  }
 
   toggleColumnSort(columnName: keyof CacheMetadata) {
     if (columnName === this.currentColumnSort()) {

@@ -3104,6 +3104,7 @@
     "snapshot-warning": "Les données affichées correspondent à un instantané du {{ snapshotDate }}. L'état du cache a pu changer dans OIBus depuis la recherche.",
     "unsaved-changes": "Vous avez des modifications non enregistrées.",
     "save-changes": "Enregistrer les modifications",
+    "discard-changes": "Annuler les modifications",
     "cache-updated": "Cache mis à jour",
     "select-all": "Tout sélectionner",
     "unselect-all": "Tout désélectionner",
