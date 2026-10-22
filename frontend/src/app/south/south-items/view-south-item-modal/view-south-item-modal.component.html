@@ -112,6 +112,19 @@
       <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
       <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" />
     }
+
+    <!-- Test: the item as saved, as in the Settings step of the edit modal -->
+    @if (southConnector(); as southConnector) {
+      <div class="mt-4" id="item-test">
+        <oib-south-item-test
+          type="south"
+          [entityId]="southConnector.id"
+          [item]="item"
+          [connectorCommand]="southConnector"
+          [manifest]="manifest()!"
+        />
+      </div>
+    }
   </div>
 
   <div class="modal-footer">

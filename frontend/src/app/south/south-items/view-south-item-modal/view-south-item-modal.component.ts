@@ -6,23 +6,24 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorItemDTO, SouthItemLastValueResponse } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO, SouthItemLastValueResponse } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthItemLastValue } from '@oibus/shared/domain/south-connector.model';
 
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
 import { getItemSettingsAttribute, summarizeSouthItem, toSouthItemSummaryValues } from '../south-item-summary';
+import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
 /**
- * Displays a south item like the connector page displays its connector: what its cache holds, then its settings. Closes when the
- * user chooses to edit the item, so that the opener opens the edit modal.
+ * Displays a south item like the connector page displays its connector: what its cache holds, then its settings, and lets the
+ * user test it. Closes when the user chooses to edit the item, so that the opener opens the edit modal.
  */
 @Component({
   selector: 'oib-view-south-item-modal',
   templateUrl: './view-south-item-modal.component.html',
   styleUrl: './view-south-item-modal.component.scss',
-  imports: [TranslateDirective, TranslatePipe, DatetimePipe, JsonPipe, OIBusSettingsSummaryComponent],
+  imports: [TranslateDirective, TranslatePipe, DatetimePipe, JsonPipe, OIBusSettingsSummaryComponent, SouthItemTestComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ViewSouthItemModalComponent {
@@ -30,7 +31,8 @@ export class ViewSouthItemModalComponent {
   private readonly translateService = inject(TranslateService);
 
   readonly item = signal<SouthConnectorItemDTO | null>(null);
-  private readonly manifest = signal<SouthConnectorManifest | null>(null);
+  readonly southConnector = signal<SouthConnectorDTO | null>(null);
+  readonly manifest = signal<SouthConnectorManifest | null>(null);
   private scanModes: Array<ScanModeDTO> = [];
   private certificates: Array<CertificateDTO> = [];
   /** The item's own last cached value/instant, or null when nothing has been cached yet for it. */
@@ -65,12 +67,14 @@ export class ViewSouthItemModalComponent {
    */
   prepare(
     item: SouthConnectorItemDTO,
+    southConnector: SouthConnectorDTO,
     manifest: SouthConnectorManifest,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>
   ) {
     this.scanModes = scanModes;
     this.certificates = certificates;
+    this.southConnector.set(southConnector);
     this.manifest.set(manifest);
     this.item.set(item);
   }
