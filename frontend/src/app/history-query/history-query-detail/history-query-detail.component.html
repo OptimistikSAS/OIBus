@@ -23,9 +23,6 @@
                 <img class="oib-type-image" [src]="'/' + northManifest()!.category + '.svg'" alt="" />
                 {{ historyQuery.northType | oIBusNorthTypeEnum }}
               </span>
-              @if (historyQuery.description) {
-                <span id="history-query-description">{{ historyQuery.description }}</span>
-              }
               <span>
                 {{ historyQuery.id }}
                 <button
@@ -40,6 +37,9 @@
                 </button>
               </span>
             </div>
+            @if (historyQuery.description) {
+              <p class="oib-page-description" id="history-query-description">{{ historyQuery.description }}</p>
+            }
           </div>
           <div class="oib-page-actions">
             <button

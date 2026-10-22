@@ -20,9 +20,6 @@
                     <span translate="north.disabled"></span>
                   }
                 </span>
-                @if (northConnector.description) {
-                  <span id="north-description">{{ northConnector.description }}</span>
-                }
                 @if (oibusInfo(); as oibusInfo) {
                   <span>
                     <span translate="north.copy-cache-path" [translateParams]="{ id: northConnector.id }"></span>
@@ -39,6 +36,9 @@
                   </span>
                 }
               </div>
+              @if (northConnector.description) {
+                <p class="oib-page-description" id="north-description">{{ northConnector.description }}</p>
+              }
             </div>
             <div class="oib-page-actions">
               <button

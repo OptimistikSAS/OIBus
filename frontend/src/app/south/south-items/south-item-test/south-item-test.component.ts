@@ -90,8 +90,10 @@ class SouthItemTestComponent {
   /** Either southId or historyId (or 'create') */
   readonly entityId = input.required<string>();
   readonly fromSouth = input<string | null>(null);
-  readonly item = input.required<SouthConnectorItemCommandDTO | HistoryQueryItemCommandDTO>();
-  readonly connectorCommand = input.required<SouthConnectorCommandDTO>();
+  /** The item tested: as edited, or as saved */
+  readonly item = input.required<Pick<SouthConnectorItemCommandDTO | HistoryQueryItemCommandDTO, 'name' | 'settings'>>();
+  /** The connector of the item: as edited, or as saved */
+  readonly connectorCommand = input.required<Pick<SouthConnectorCommandDTO, 'type' | 'settings'>>();
   readonly manifest = input.required<SouthConnectorManifest>();
   /**
    * History context only. When the history query's transformers are still being edited in memory

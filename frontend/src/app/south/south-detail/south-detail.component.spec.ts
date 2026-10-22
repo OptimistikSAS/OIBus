@@ -664,7 +664,7 @@ describe('SouthDetailComponent', () => {
 
       await tester.itemAction(2, 'View item').click();
 
-      expect(viewModal.prepare).toHaveBeenCalledWith(itemC, manifest, scanModes, []);
+      expect(viewModal.prepare).toHaveBeenCalledWith(itemC, southConnector, manifest, scanModes, []);
       expect(southConnectorService.getItemLastValue).toHaveBeenCalledWith('southId1', 'itemC');
       expect(viewModal.setData).toHaveBeenCalledWith(response);
     });
@@ -677,7 +677,7 @@ describe('SouthDetailComponent', () => {
 
       await tester.itemAction(0, 'View item').click();
 
-      expect(viewModal.prepare).toHaveBeenCalledWith(itemB, manifest, scanModes, []);
+      expect(viewModal.prepare).toHaveBeenCalledWith(itemB, southConnector, manifest, scanModes, []);
       expect(viewModal.setError).toHaveBeenCalledWith('boom');
     });
 
