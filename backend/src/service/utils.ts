@@ -359,34 +359,6 @@ export const parseCsvImport = (fileContent: string, delimiter: string): Array<Re
   return csvContent.data;
 };
 
-/**
- * Extract the last data row of a CSV string as an object keyed by the header line.
- *
- * Used to keep a lightweight "last value" in the South cache for connectors whose remote agent
- * returns the whole result set as CSV content — storing the full content on every scan bloats the
- * cache and forces a parse of the entire blob on each read. Returns null when there is no data row.
- */
-export const extractLastCsvRow = (content: string, delimiter: string): Record<string, string> | null => {
-  if (typeof content !== 'string' || content.length === 0) {
-    return null;
-  }
-  const trimmed = content.replace(/[\r\n]+$/, '');
-  const firstBreak = trimmed.search(/\r?\n/);
-  if (firstBreak === -1) {
-    // Header only (or a single line) — no data row to keep
-    return null;
-  }
-  const headers = trimmed.slice(0, firstBreak).split(delimiter);
-  const values = trimmed.slice(trimmed.lastIndexOf('\n') + 1).split(delimiter);
-  return headers.reduce(
-    (row, header, index) => {
-      row[header] = values[index] ?? '';
-      return row;
-    },
-    {} as Record<string, string>
-  );
-};
-
 export const convertQuoteChar = (quoteChar: 'DOUBLE_QUOTE' | 'SINGLE_QUOTE' | 'NONE'): string => {
   switch (quoteChar) {
     case 'DOUBLE_QUOTE':
@@ -432,42 +404,6 @@ export const persistResults = async (
 ): Promise<void> => {
   const logCtx = workUnitLogCtx([item]);
   switch (serializationSettings.type) {
-    case 'file':
-      const filePath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, item.name);
-      logger.debug(logCtx, `Writing ${data.length} bytes into file at "${filePath}"`);
-      await fs.writeFile(filePath, data as string);
-
-      if (serializationSettings.compression) {
-        // Compress and send the compressed file
-        const gzipPath = `${filePath}.gz`;
-        await compress(filePath, gzipPath);
-
-        try {
-          await fs.unlink(filePath);
-          logger.info(logCtx, `File "${filePath}" compressed and deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting file "${filePath}" after compression: ${getErrorMessage(unlinkError)}`);
-        }
-
-        logger.debug(logCtx, `Sending compressed file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
-        try {
-          await fs.unlink(gzipPath);
-          logger.trace(logCtx, `File "${gzipPath}" deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting compressed file "${gzipPath}" after caching it: ${getErrorMessage(unlinkError)}`);
-        }
-      } else {
-        logger.debug(logCtx, `Sending file "${filePath}" to Engine`);
-        await addContentFn({ type: 'any', filePath }, queryTime, [item]);
-        try {
-          await fs.unlink(filePath);
-          logger.trace(logCtx, `File ${filePath} deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting file "${filePath}" after caching it: ${getErrorMessage(unlinkError)}`);
-        }
-      }
-      break;
     case 'csv':
       const csvPath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, item.name);
       const csvContent = generateCsvContent(data as Array<Record<string, string>>, serializationSettings.delimiter);

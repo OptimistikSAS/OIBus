@@ -247,7 +247,7 @@ export type CsvCharacter = (typeof ALL_CSV_CHARACTERS)[number];
 /**
  * List of supported serialization types.
  */
-export const SERIALIZATION_TYPES = ['csv', 'file'] as const;
+export const SERIALIZATION_TYPES = ['csv'] as const;
 
 /**
  * Type representing a supported serialization type.
@@ -306,13 +306,7 @@ export interface CSVSerializationSettings extends BaseSerializationSettings {
   delimiter: CsvCharacter;
 }
 
-export interface FileSerializationSettings extends BaseSerializationSettings {
-  type: 'file';
-  filename: string;
-  compression: boolean;
-}
-
 /**
  * Union type representing all possible serialization settings.
  */
-export type SerializationSettings = CSVSerializationSettings | FileSerializationSettings;
+export type SerializationSettings = CSVSerializationSettings;

@@ -221,7 +221,7 @@ describe('SouthInfluxDB', () => {
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         'southId',
-        { type: 'any-content', content: JSON.stringify(rows) },
+        { type: 'record-list', content: rows },
         testData.constants.dates.FAKE_NOW,
         [baseItem],
         null, // not run by a history query interval
@@ -244,7 +244,7 @@ describe('SouthInfluxDB', () => {
       assert.equal(result.trackedInstant, testData.constants.dates.DATE_2);
     });
 
-    it('should return JSON content in testItem', async () => {
+    it('should return the rows in testItem', async () => {
       mock.method(south, 'queryData', async () => {
         mock.timers.tick(25);
         return [{ time: '2020-02-01T00:00:00Z', value: 1 }];
@@ -252,9 +252,7 @@ describe('SouthInfluxDB', () => {
       const result = await south.testItem(baseItem, {
         history: { startTime: testData.constants.dates.DATE_1, endTime: testData.constants.dates.DATE_2 }
       });
-      assert.equal(result.result.type, 'any-content');
-      assert.ok(result.result.content?.startsWith('['));
-      assert.ok(JSON.parse(result.result.content!).length === 1);
+      assert.deepStrictEqual(result.result, { type: 'record-list', content: [{ time: '2020-02-01T00:00:00Z', value: 1 }] });
       assert.strictEqual(result.queryDuration, 25);
       assert.strictEqual(result.connectionDuration, 0);
     });

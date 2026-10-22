@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import path from 'node:path';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
@@ -19,39 +18,22 @@ import type SouthODBCClass from './south-odbc';
 
 const nodeRequire = createRequire(import.meta.url);
 
-const dateTimeFields: SouthODBCItemSettings['dateTimeFields'] = [
-  { fieldName: 'anotherTimestamp', useAsReference: false, type: 'unix-epoch-ms' },
-  {
-    fieldName: 'timestamp',
-    useAsReference: true,
-    type: 'string',
-    timezone: 'Europe/Paris',
-    format: 'yyyy-MM-dd HH:mm:ss.SSS',
-    locale: 'en-US'
-  }
-];
+const trackingInstant: SouthODBCItemSettings['trackingInstant'] = {
+  trackInstant: true,
+  fieldName: 'timestamp',
+  dateTimeInput: { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+};
 
 const buildItem = (
   id: string,
   query: string,
-  itemDateTimeFields: SouthODBCItemSettings['dateTimeFields'],
+  itemTrackingInstant: SouthODBCItemSettings['trackingInstant'],
   scanMode = testData.scanMode.list[0]
 ): SouthConnectorItemEntity<SouthODBCItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
   enabled: true,
-  settings: {
-    query,
-    dateTimeFields: itemDateTimeFields,
-    serialization: {
-      type: 'csv',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: 'COMMA',
-      compression: true,
-      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      outputTimezone: 'Europe/Paris'
-    }
-  },
+  settings: { query, trackingInstant: itemTrackingInstant },
   scanMode,
   group: null,
   syncWithGroup: false,
@@ -89,9 +71,9 @@ const buildConfiguration = (settings: Partial<SouthODBCSettings>): SouthConnecto
   },
   groups: [],
   items: [
-    buildItem('id1', 'query1', dateTimeFields),
+    buildItem('id1', 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp <= @EndTime', trackingInstant),
     buildItem('id2', 'query2', null),
-    buildItem('id3', 'query3', dateTimeFields, testData.scanMode.list[1])
+    buildItem('id3', 'query3', trackingInstant, testData.scanMode.list[1])
   ],
   createdBy: '',
   updatedBy: '',
@@ -118,14 +100,9 @@ describe('SouthODBC', () => {
 
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
   const createUtilsMocks = () => ({
-    convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
-    convertDelimiter: mock.fn((delimiter: unknown) => delimiter),
-    extractLastCsvRow: mock.fn((content: unknown) => (Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null)),
-    formatInstant: mock.fn((instant: unknown) => instant),
-    generateCsvContent: mock.fn(() => ''),
-    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
-    logQuery: mock.fn(),
-    persistResults: mock.fn(async (..._args: Array<unknown>) => undefined)
+    convertDateTimeToInstant: mock.fn((instant: unknown, _options: unknown) => instant),
+    formatInstant: mock.fn((instant: unknown, _options: unknown) => `formatted ${instant}`),
+    logQuery: mock.fn()
   });
   const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
@@ -189,43 +166,72 @@ describe('SouthODBC', () => {
       });
     });
 
-    it('should properly run historyQuery', async () => {
-      const startTime = testData.constants.dates.DATE_1;
-      const mockReturnValue = {
-        trackedInstant: '2020-03-01T00:00:00.000Z',
-        value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-      };
-      const queryOdbcDataMock = mock.method(
-        south,
-        'queryOdbcData',
-        mock.fn(async () => mockReturnValue)
-      );
+    it('should send the records of historyQuery and track the max instant', async () => {
+      const records = [
+        { value: 1, timestamp: '2020-02-01T00:00:00.000Z' },
+        { value: 2, timestamp: '2020-03-01T00:00:00.000Z' },
+        { value: 3, timestamp: null }
+      ];
+      const queryDataMock = mock.method(south, 'queryData', async () => records);
 
-      const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-      assert.strictEqual(queryOdbcDataMock.mock.calls.length, 1);
-      assert.deepStrictEqual(queryOdbcDataMock.mock.calls[0].arguments, [
+      const result = await south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+
+      assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
         configuration.items[0],
         testData.constants.dates.DATE_1,
         testData.constants.dates.FAKE_NOW
       ]);
-      assert.deepStrictEqual(result, mockReturnValue);
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments.slice(0, 4), [
+        'southId',
+        { type: 'record-list', content: records },
+        testData.constants.dates.FAKE_NOW,
+        [configuration.items[0]]
+      ]);
+      assert.deepStrictEqual(utilsExports.convertDateTimeToInstant.mock.calls[0].arguments, [
+        '2020-02-01T00:00:00.000Z',
+        trackingInstant!.dateTimeInput
+      ]);
+      assert.deepStrictEqual(result, { trackedInstant: '2020-03-01T00:00:00.000Z', value: records[2] });
+    });
+
+    it('should not track an instant without tracking field', async () => {
+      mock.method(south, 'queryData', async () => [{ value: 1 }]);
+
+      const result = await south.historyQuery([configuration.items[1]], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+
+      assert.deepStrictEqual(result, { trackedInstant: null, value: { value: 1 } });
+      assert.strictEqual(utilsExports.convertDateTimeToInstant.mock.calls.length, 0);
+    });
+
+    it('should not send anything when there is no result', async () => {
+      mock.method(south, 'queryData', async () => []);
+
+      const result = await south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+
+      assert.deepStrictEqual(result, { trackedInstant: null, value: null });
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
+      assert.ok(
+        logger.debug.mock.calls.some(
+          (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
+        )
+      );
     });
 
     it('should get data from ODBC', async () => {
-      odbcConnection.query.mock.mockImplementationOnce(() => [
-        { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
-        { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
-      ]);
-
+      const rows = Object.assign([{ value: 1, timestamp: '2020-02-01 00:00:00.000' }], { count: 1, columns: [] });
+      odbcConnection.query.mock.mockImplementationOnce(() => rows);
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
+      const result = await south.queryData(configuration.items[0], startTime, endTime);
 
-      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
-
-      assert.strictEqual(odbc.connect.mock.calls.length, 1);
+      const adaptedQuery = `SELECT * FROM logs WHERE timestamp > formatted ${startTime} AND timestamp <= formatted ${endTime}`;
+      assert.deepStrictEqual(utilsExports.formatInstant.mock.calls[0].arguments, [startTime, trackingInstant!.dateTimeInput]);
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments.slice(0, 3), [
+        adaptedQuery,
+        `formatted ${startTime}`,
+        `formatted ${endTime}`
+      ]);
       assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
         connectionString: `${configuration.settings.connectionString};PWD=password;`,
         connectionTimeout: configuration.settings.connectionTimeout
@@ -235,57 +241,18 @@ describe('SouthODBC', () => {
           (c.arguments[0] as string).includes(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`)
         )
       );
-      assert.strictEqual(odbcConnection.query.mock.calls.length, 1);
-      assert.deepStrictEqual(odbcConnection.query.mock.calls[0].arguments[0], configuration.items[0].settings.query);
+      assert.deepStrictEqual(odbcConnection.query.mock.calls[0].arguments[0], adaptedQuery);
       assert.strictEqual(odbcConnection.close.mock.calls.length, 1);
-
-      assert.deepStrictEqual(result, {
-        trackedInstant: '2020-03-01T00:00:00.000Z',
-        value: { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
-      });
-
-      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[0], [
-        { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
-        { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
-      ]);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[1], configuration.items[0].settings.serialization);
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[3], configuration.items[0]);
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[4], testData.constants.dates.FAKE_NOW);
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[5], path.resolve('cacheFolder', 'tmp'));
-
-      const noResult = await south.queryOdbcData(configuration.items[0], startTime, endTime);
-      assert.ok(
-        logger.debug.mock.calls.some(
-          (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
-        )
-      );
-      assert.deepStrictEqual(noResult, { trackedInstant: null, value: null });
+      // Only the rows are kept, not the statement metadata the driver adds to the array
+      assert.deepStrictEqual(result, [{ value: 1, timestamp: '2020-02-01 00:00:00.000' }]);
+      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
     });
 
-    it('should get data from ODBC without datetime reference', async () => {
-      odbcConnection.query.mock.mockImplementation(() => [
-        { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
-        { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
-      ]);
+    it('should not format the query times without tracking field', async () => {
+      await south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-
-      const result = await south.queryOdbcData(configuration.items[1], startTime, endTime);
-
-      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[1].settings.query);
-
-      assert.deepStrictEqual(result, {
-        trackedInstant: null,
-        value: {
-          anotherTimestamp: '2020-03-01T00:00:00.000Z',
-          timestamp: '2020-03-01T00:00:00.000Z',
-          value: 2
-        }
-      });
+      assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
+      assert.deepStrictEqual(odbcConnection.query.mock.calls[0].arguments[0], 'query2');
     });
 
     it('should manage query error', async () => {
@@ -293,12 +260,9 @@ describe('SouthODBC', () => {
         throw new Error('query error');
       });
 
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-
-      await assert.rejects(south.queryOdbcData(configuration.items[0], startTime, endTime), { message: 'query error' });
-      assert.strictEqual(odbcConnection.query.mock.calls.length, 1);
-      assert.deepStrictEqual(odbcConnection.query.mock.calls[0].arguments[0], configuration.items[0].settings.query);
+      await assert.rejects(south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
+        message: 'query error'
+      });
       assert.strictEqual(odbcConnection.close.mock.calls.length, 1);
     });
 
@@ -310,92 +274,38 @@ describe('SouthODBC', () => {
         };
       });
 
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-
-      await assert.rejects(south.queryOdbcData(configuration.items[0], startTime, endTime), { message: 'odbc error' });
+      await assert.rejects(south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
+        message: 'odbc error'
+      });
 
       assert.ok(logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'Error from ODBC driver: error1'));
       assert.ok(logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'Error from ODBC driver: error2'));
     });
 
-    it('queryOdbcData should throw error if ODBC library not loaded', async () => {
+    it('should throw an error if the ODBC library is not loaded', async () => {
       loadOdbc.mock.mockImplementation(() => null);
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-      await assert.rejects(south.queryOdbcData(configuration.items[0], startTime, endTime), { message: 'ODBC library not available' });
-    });
 
-    it('should test item with queryOdbcData', async () => {
-      const mockReturnValue = {
-        trackedInstant: null,
-        value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-      };
-      const queryOdbcDataMock = mock.method(
-        south,
-        'queryOdbcData',
-        mock.fn(async () => {
-          mock.timers.tick(25);
-          return mockReturnValue;
-        })
-      );
-
-      const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-      assert.strictEqual(queryOdbcDataMock.mock.calls.length, 1);
-      assert.deepStrictEqual(queryOdbcDataMock.mock.calls[0].arguments, [
-        configuration.items[1],
-        testData.south.itemTestingSettings.history!.startTime,
-        testData.south.itemTestingSettings.history!.endTime,
-        true
-      ]);
-      assert.strictEqual(utilsExports.convertDateTimeToInstant.mock.calls.length, 0);
-      assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
-      assert.strictEqual(result.queryDuration, 25);
-      assert.strictEqual(result.connectionDuration, 0);
-    });
-
-    it('should test item with queryOdbcData and dateTimeFields', async () => {
-      const mockReturnValue = {
-        trackedInstant: null,
-        value: [
-          { timestamp: '2020-02-01 00:00:00.000', anotherTimestamp: 1580515200000 },
-          { timestamp: '2020-03-01 00:00:00.000', anotherTimestamp: 1583020800000 }
-        ]
-      };
-      mock.method(
-        south,
-        'queryOdbcData',
-        mock.fn(async () => mockReturnValue)
-      );
-
-      await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-      assert.ok(utilsExports.convertDateTimeToInstant.mock.calls.length > 0);
-    });
-
-    it('QueryOdbcData in case of item test', async () => {
-      odbcConnection.query.mock.mockImplementation(() => [
-        { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
-        { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
-      ]);
-
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-
-      await south.queryOdbcData(configuration.items[0], startTime, endTime, true);
-
-      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.strictEqual(odbc.connect.mock.calls.length, 1);
-      assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
-        connectionString: `${configuration.settings.connectionString};PWD=password;`,
-        connectionTimeout: configuration.settings.connectionTimeout
+      await assert.rejects(south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
+        message: 'ODBC library not available'
       });
-      assert.ok(
-        logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`)
-        )
-      );
-      assert.deepStrictEqual(odbcConnection.query.mock.calls[0].arguments[0], configuration.items[0].settings.query);
-      assert.strictEqual(odbcConnection.close.mock.calls.length, 1);
+    });
+
+    it('should test an item', async () => {
+      const records = [{ value: 1, timestamp: '2020-02-01 00:00:00.000' }];
+      const queryDataMock = mock.method(south, 'queryData', async () => {
+        mock.timers.tick(25);
+        return records;
+      });
+
+      const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+
+      assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
+        configuration.items[0],
+        testData.south.itemTestingSettings.history!.startTime,
+        testData.south.itemTestingSettings.history!.endTime
+      ]);
+      assert.deepStrictEqual(result, { result: { type: 'record-list', content: records }, connectionDuration: 0, queryDuration: 25 });
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
     });
   });
 
@@ -407,17 +317,8 @@ describe('SouthODBC', () => {
     });
 
     it('should get data from ODBC without auth', async () => {
-      odbcConnection.query.mock.mockImplementation(() => [
-        { timestamp: '2020-02-01T00:00:00.000Z' },
-        { timestamp: '2020-03-01T00:00:00.000Z' }
-      ]);
+      await south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-
-      const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
-
-      assert.strictEqual(odbc.connect.mock.calls.length, 1);
       assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
         connectionString: configuration.settings.connectionString,
         connectionTimeout: configuration.settings.connectionTimeout
@@ -427,18 +328,6 @@ describe('SouthODBC', () => {
           (c.arguments[0] as string).includes(`Connecting with connection string ${configuration.settings.connectionString}`)
         )
       );
-
-      assert.deepStrictEqual(result, { trackedInstant: '2020-03-01T00:00:00.000Z', value: { timestamp: '2020-03-01T00:00:00.000Z' } });
-      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[0], [
-        { timestamp: '2020-02-01T00:00:00.000Z' },
-        { timestamp: '2020-03-01T00:00:00.000Z' }
-      ]);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[1], configuration.items[0].settings.serialization);
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[3], configuration.items[0]);
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[4], testData.constants.dates.FAKE_NOW);
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[5], path.resolve('cacheFolder', 'tmp'));
     });
 
     it('should manage connection error', async () => {
@@ -449,7 +338,7 @@ describe('SouthODBC', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      await assert.rejects(south.queryOdbcData(configuration.items[0], startTime, endTime), new Error('connection error'));
+      await assert.rejects(south.queryData(configuration.items[0], startTime, endTime), new Error('connection error'));
       assert.strictEqual(odbc.connect.mock.calls.length, 1);
       assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
         connectionString: configuration.settings.connectionString,
@@ -670,203 +559,82 @@ describe('SouthODBC', () => {
       );
     });
 
-    it('should properly run historyQuery', async () => {
-      const startTime = testData.constants.dates.DATE_1;
-      const mockReturnValue = {
-        trackedInstant: '2020-03-01T00:00:00.000Z',
-        value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-      };
-      const queryRemoteAgentDataMock = mock.method(
-        south,
-        'queryRemoteAgentData',
-        mock.fn(async () => mockReturnValue)
-      );
-
-      const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-      assert.strictEqual(queryRemoteAgentDataMock.mock.calls.length, 1);
-      assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [
-        configuration.items[0],
-        testData.constants.dates.DATE_1,
-        testData.constants.dates.FAKE_NOW
-      ]);
-      assert.deepStrictEqual(result, mockReturnValue);
-    });
-
-    it('should get data from Remote agent', async () => {
+    it('should get data from the remote agent', async () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
-
+      const content = ['value\u001Ftimestamp', '1\u001F2020-02-01T00:00:00.000Z', '2\u001F', ''].join('\r\n');
       HTTPRequest.mock.mockImplementation(async () =>
-        createMockResponse(200, { recordCount: 0, content: [], maxInstant: '2020-03-01T00:00:00.000Z' })
-      );
-      HTTPRequest.mock.mockImplementationOnce(async () =>
-        createMockResponse(200, {
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstant: '2020-03-01T00:00:00.000Z'
-        })
+        createMockResponse(200, { recordCount: 2, content, maxInstant: '2020-02-01T00:00:00Z' })
       );
 
-      const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
+      const result = await south.queryData(configuration.items[0], startTime, endTime);
 
-      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
-
-      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
-      assert.ok(
-        (HTTPRequest.mock.calls[0].arguments[0] as URL).href === `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`
-      );
-      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
-          sql: configuration.items[0].settings.query,
-          readTimeout: configuration.settings.requestTimeout,
-          timeColumn: configuration.items[0].settings.dateTimeFields![1].fieldName,
-          datasourceTimestampFormat: configuration.items[0].settings.dateTimeFields![1].format,
-          datasourceTimezone: configuration.items[0].settings.dateTimeFields![1].timezone,
-          delimiter: configuration.items[0].settings.serialization.delimiter,
-          outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-          outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      assert.deepStrictEqual(result, {
-        trackedInstant: '2020-03-01T00:00:00.000Z',
-        value: { timestamp: '2020-03-01T00:00:00.000Z' }
-      });
-      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[0], [
-        { timestamp: '2020-02-01T00:00:00.000Z' },
-        { timestamp: '2020-03-01T00:00:00.000Z' }
-      ]);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[1], {
-        type: 'file',
-        filename: configuration.items[0].settings.serialization.filename,
-        compression: configuration.items[0].settings.serialization.compression
-      });
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
-      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[3], configuration.items[0]);
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[4], testData.constants.dates.FAKE_NOW);
-      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[5], path.resolve('cacheFolder', 'tmp'));
-
-      await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
-      assert.ok(
-        logger.debug.mock.calls.some(
-          (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
-        )
-      );
-    });
-
-    it('should get data from Remote agent without datetime reference', async () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-
-      HTTPRequest.mock.mockImplementation(async () =>
-        createMockResponse(200, {
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstantRetrieved: startTime
-        })
-      );
-
-      const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
-
-      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[1].settings.query);
-
-      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
-      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
-          sql: configuration.items[1].settings.query,
-          readTimeout: configuration.settings.requestTimeout,
-          delimiter: configuration.items[1].settings.serialization.delimiter,
-          outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
-          outputTimezone: configuration.items[1].settings.serialization.outputTimezone
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      assert.deepStrictEqual(result, {
-        trackedInstant: null,
-        value: { timestamp: '2020-03-01T00:00:00.000Z' }
-      });
-    });
-
-    it('should manage query error', async () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-
-      HTTPRequest.mock.mockImplementation(async () => createMockResponse(500));
-      HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(400, 'bad request'));
-
-      await assert.rejects(south.queryRemoteAgentData(configuration.items[0], startTime, endTime), {
-        message: `Error occurred when querying remote agent with status 400: bad request`
-      });
-
-      await assert.rejects(south.queryRemoteAgentData(configuration.items[0], startTime, endTime), {
-        message: `Error occurred when querying remote agent with status 500`
-      });
-    });
-
-    it('should test item with queryRemoteAgentData', async () => {
-      const queryRemoteAgentDataMock = mock.method(south, 'queryRemoteAgentData', async () => {
-        mock.timers.tick(25);
-        return { trackedInstant: null, value: 'timestamp,value\n2020-02-01,1\n2020-03-01,2' };
-      });
-
-      const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-
-      assert.strictEqual(queryRemoteAgentDataMock.mock.calls.length, 1);
-      assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [
-        configuration.items[1],
-        testData.south.itemTestingSettings.history!.startTime,
-        testData.south.itemTestingSettings.history!.endTime,
-        true
-      ]);
-      // The remote agent already returns CSV content: it is not formatted again
-      assert.strictEqual(utilsExports.generateCsvContent.mock.calls.length, 0);
-      assert.deepStrictEqual(utilsExports.generateFilenameForSerialization.mock.calls[0].arguments, [
-        south['tmpFolder'],
-        configuration.items[1].settings.serialization.filename,
-        configuration.name,
-        configuration.items[1].name
-      ]);
-      assert.deepStrictEqual(result, {
-        result: { type: 'any', filePath: 'filename.csv', content: 'timestamp,value\n2020-02-01,1\n2020-03-01,2' },
-        connectionDuration: 0,
-        queryDuration: 25
-      });
-    });
-
-    it('QueryRemoteAgentData in case of item test', async () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-      const content = 'timestamp,value\n2020-02-01,1\n2020-03-01,2';
-
-      HTTPRequest.mock.mockImplementation(async () =>
-        createMockResponse(200, { recordCount: 2, content, maxInstant: '2020-03-01T00:00:00.000Z' })
-      );
-
-      const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
-
-      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
+      const adaptedQuery = `SELECT * FROM logs WHERE timestamp > formatted ${startTime} AND timestamp <= formatted ${endTime}`;
       assert.strictEqual(
         (HTTPRequest.mock.calls[0].arguments[0] as URL).href,
         `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`
       );
-      // A test returns the whole content, and neither persists it nor moves the tracked instant
-      assert.deepStrictEqual(result, { trackedInstant: null, value: content });
-      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
-      assert.strictEqual(utilsExports.extractLastCsvRow.mock.calls.length, 0);
-      assert.strictEqual(addContentCallback.mock.calls.length, 0);
+      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          sql: adaptedQuery,
+          readTimeout: configuration.settings.requestTimeout,
+          timeColumn: 'timestamp',
+          datasourceTimestampFormat: trackingInstant!.dateTimeInput!.format,
+          datasourceTimezone: trackingInstant!.dateTimeInput!.timezone,
+          delimiter: '\u001F',
+          outputTimestampFormat: "uuuu'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
+          outputTimezone: 'UTC'
+        }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      assert.deepStrictEqual(result, [
+        { value: '1', timestamp: '2020-02-01T00:00:00.000Z' },
+        { value: '2', timestamp: null }
+      ]);
+      assert.strictEqual(odbc.connect.mock.calls.length, 0);
+    });
+
+    it('should not send the time column to the remote agent without tracking field', async () => {
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(200, { recordCount: 0, content: 'value', maxInstant: '' }));
+
+      const result = await south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
+
+      assert.deepStrictEqual(JSON.parse((HTTPRequest.mock.calls[0].arguments[1] as { body: string }).body), {
+        connectionString: configuration.settings.connectionString,
+        sql: 'query2',
+        readTimeout: configuration.settings.requestTimeout,
+        delimiter: '\u001F',
+        outputTimestampFormat: "uuuu'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
+        outputTimezone: 'UTC'
+      });
+      assert.deepStrictEqual(result, []);
+    });
+
+    it('should track the max instant from the ISO strings sent by the remote agent', async () => {
+      mock.method(south, 'queryData', async () => [{ timestamp: '2020-02-01T00:00:00.000Z' }]);
+
+      const result = await south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+
+      assert.deepStrictEqual(utilsExports.convertDateTimeToInstant.mock.calls[0].arguments, [
+        '2020-02-01T00:00:00.000Z',
+        { type: 'iso-string' }
+      ]);
+      assert.strictEqual(result.trackedInstant, '2020-02-01T00:00:00.000Z');
+    });
+
+    it('should manage query error', async () => {
+      HTTPRequest.mock.mockImplementation(async () => createMockResponse(500));
+      HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(400, 'bad request'));
+
+      await assert.rejects(south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
+        message: `Error occurred when querying remote agent with status 400: bad request`
+      });
+
+      await assert.rejects(south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
+        message: `Error occurred when querying remote agent with status 500`
+      });
     });
   });
 
