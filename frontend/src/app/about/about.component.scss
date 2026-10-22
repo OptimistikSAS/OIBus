@@ -1,0 +1,18 @@
+@import '../../common.scss';
+
+.about-logo {
+  flex: none;
+  height: 7.5rem;
+}
+
+.about-description {
+  margin: 0.375rem 0 0;
+  color: $darkGrey;
+}
+
+.about-copyright {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: $new-link-color;
+}
