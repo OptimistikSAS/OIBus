@@ -96,7 +96,7 @@ describe('shared model type constants', () => {
     assert.equal(ALL_CSV_CHARACTERS.length, 8);
   });
 
-  it('SERIALIZATION_TYPES contains csv and file', () => {
-    assert.deepEqual(SERIALIZATION_TYPES, ['csv', 'file']);
+  it('SERIALIZATION_TYPES contains csv', () => {
+    assert.deepEqual(SERIALIZATION_TYPES, ['csv']);
   });
 });

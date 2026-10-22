@@ -1446,42 +1446,23 @@
             },
             "odbc": {
               "query": "查询",
-              "date-time-fields": {
-                "date-time-field": "日期时间字段",
+              "tracking-instant": {
+                "title": "跟踪时间戳",
+                "track-instant": "跟踪时间戳",
                 "field-name": "字段名",
-                "use-as-reference": "参考字段",
-                "type": {
-                  "title": "类型",
-                  "iso-string": "ISO 字符串",
-                  "unix-epoch": "UNIX 纪元（秒）",
-                  "unix-epoch-ms": "UNIX 纪元（毫秒）",
-                  "string": "字符串"
-                },
-                "timezone": "时区",
-                "format": "格式",
-                "locale": "区域设置"
-              },
-              "serialization": {
-                "title": "序列化",
-                "type": {
-                  "title": "类型",
-                  "csv": "CSV"
-                },
-                "filename": "文件名",
-                "delimiter": {
-                  "title": "分隔符",
-                  "DOT": "点 .",
-                  "SEMI_COLON": "分号 ;",
-                  "COLON": "冒号 :",
-                  "COMMA": "逗号 ,",
-                  "SLASH": "斜杠 /",
-                  "TAB": "制表符",
-                  "NON_BREAKING_SPACE": "空格",
-                  "PIPE": "竖线 |"
-                },
-                "compression": "压缩",
-                "output-timestamp-format": "输出日期时间格式",
-                "output-timezone": "输出时区"
+                "date-time-input": {
+                  "title": "日期时间输入",
+                  "type": {
+                    "title": "类型",
+                    "string": "字符串",
+                    "iso-string": "ISO 字符串",
+                    "unix-epoch": "UNIX 纪元（秒）",
+                    "unix-epoch-ms": "UNIX 纪元（毫秒）"
+                  },
+                  "timezone": "时区",
+                  "format": "格式",
+                  "locale": "区域设置"
+                }
               }
             },
             "oianalytics": {
@@ -1516,42 +1497,23 @@
             },
             "oledb": {
               "query": "查询",
-              "date-time-fields": {
-                "date-time-field": "日期时间字段",
+              "tracking-instant": {
+                "title": "跟踪时间戳",
+                "track-instant": "跟踪时间戳",
                 "field-name": "字段名",
-                "use-as-reference": "参考字段",
-                "type": {
-                  "title": "类型",
-                  "iso-string": "ISO 字符串",
-                  "unix-epoch": "UNIX 纪元（秒）",
-                  "unix-epoch-ms": "UNIX 纪元（毫秒）",
-                  "string": "字符串"
-                },
-                "timezone": "时区",
-                "format": "格式",
-                "locale": "区域设置"
-              },
-              "serialization": {
-                "title": "序列化",
-                "type": {
-                  "title": "类型",
-                  "csv": "CSV"
-                },
-                "filename": "文件名",
-                "delimiter": {
-                  "title": "分隔符",
-                  "DOT": "点 .",
-                  "SEMI_COLON": "分号 ;",
-                  "COLON": "冒号 :",
-                  "COMMA": "逗号 ,",
-                  "SLASH": "斜杠 /",
-                  "TAB": "制表符",
-                  "NON_BREAKING_SPACE": "空格",
-                  "PIPE": "竖线 |"
-                },
-                "compression": "压缩",
-                "output-timestamp-format": "输出日期时间格式",
-                "output-timezone": "输出时区"
+                "date-time-input": {
+                  "title": "日期时间输入",
+                  "type": {
+                    "title": "类型",
+                    "string": "字符串",
+                    "iso-string": "ISO 字符串",
+                    "unix-epoch": "UNIX 纪元（秒）",
+                    "unix-epoch-ms": "UNIX 纪元（毫秒）"
+                  },
+                  "timezone": "时区",
+                  "format": "格式",
+                  "locale": "区域设置"
+                }
               }
             },
             "opc": {

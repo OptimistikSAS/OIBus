@@ -180,14 +180,12 @@ If no results are returned, `@StartTime` is not advanced and the next scan retri
 
 1. OIBus substitutes `@StartTime` and `@EndTime` into the query string.
 2. The query is sent to the InfluxDB server via the appropriate client library for the configured version.
-3. Results are collected as a JSON array of row objects.
+3. Results are collected as a list of rows.
 4. OIBus extracts the maximum value of the timestamp column (`time` for v1/v3, `_time` for v2) and
    stores it as the `@StartTime` for the next scan cycle.
-5. The JSON array is written to a file and forwarded to configured North connectors as a raw JSON
-   payload.
+5. The rows are forwarded to configured North connectors as a record list, like the SQL connectors.
 
 :::note Output format
-Unlike SQL connectors (which produce CSV files), the InfluxDB connector always outputs a **JSON
-file**. Use a North connector that accepts raw file payloads — OIAnalytics, Azure Blob, S3, File
-Writer — or add a JSON-to-CSV transformer if your downstream system requires CSV.
+The rows are sent as they are returned. Add a transformer on the North connector to shape them, e.g. **CSV (from
+Record list)** to write CSV files.
 :::

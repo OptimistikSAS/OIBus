@@ -60,13 +60,13 @@ the transformer's position in the list.
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
 
-| South connector type                                                                               | Compatible standard transformers                                                           |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI** (PLC / historian)                     | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
-| **MQTT, InfluxDB, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB, OIAnalytics** (file / query-based) | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB** (query-based, row-list output)               | CSV (from Record list)                                                                     |
-| **OIBus API**                                                                                      | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **OIAnalytics Setpoint**                                                                           | MQTT payloads, Modbus values, OPCUA values                                                 |
+| South connector type                                                                                        | Compatible standard transformers                                                           |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI** (PLC / historian)                              | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                         | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (query-based, row-list output) | CSV (from Record list)                                                                     |
+| **OIBus API**                                                                                               | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **OIAnalytics Setpoint**                                                                                    | MQTT payloads, Modbus values, OPCUA values                                                 |
 
 Custom transformers are also shown in this list and are always named by the user. In addition, **Ignore** is
 available for every source type, and **No transform** (see below) when the North connector accepts the source's data
@@ -86,7 +86,7 @@ Standard transformers are built-in and require only configuration — no coding.
 
 These two require no configuration. **Ignore** is available for every source type; **No transform** only when the
 North connector accepts the source's data as is (e.g. time-values for the Console, File Writer or OIAnalytics North,
-files for any file-based North). MQTT, InfluxDB and OIBus API JSON payloads are cached as JSON files.
+files for any file-based North). MQTT and OIBus API JSON payloads are cached as JSON files.
 
 | Transformer      | Behavior                                                                                                                                                                                                         |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -581,7 +581,7 @@ handles a single-metric message and a multi-metric message alike.
 
 ### For SQL database and MongoDB South connectors {#for-sql-database-and-mongodb-south-connectors}
 
-MySQL, PostgreSQL, MSSQL, Oracle, SQLite, and MongoDB South connectors don't serialize their query results
+MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB and InfluxDB South connectors don't serialize their query results
 themselves — each row (or document) is sent downstream exactly as the database returned it, as
 **record-list** content (an array of flat row objects). Rendering that data into any other shape, including
 CSV, is the transformer's job.

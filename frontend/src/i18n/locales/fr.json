@@ -1446,42 +1446,23 @@
             },
             "odbc": {
               "query": "Requête",
-              "date-time-fields": {
-                "date-time-field": "Champs date/heure",
+              "tracking-instant": {
+                "title": "Suivi de l'instant",
+                "track-instant": "Suivre l'instant",
                 "field-name": "Nom du champ",
-                "use-as-reference": "Champ de référence",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "Chaîne ISO",
-                  "unix-epoch": "Époque UNIX (s)",
-                  "unix-epoch-ms": "Époque UNIX (ms)",
-                  "string": "Chaîne"
-                },
-                "timezone": "Fuseau horaire",
-                "format": "Format",
-                "locale": "Paramètres régionaux"
-              },
-              "serialization": {
-                "title": "Sérialisation",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Nom du fichier",
-                "delimiter": {
-                  "title": "Délimiteur",
-                  "DOT": "Point .",
-                  "SEMI_COLON": "Point-virgule ;",
-                  "COLON": "Deux-points :",
-                  "COMMA": "Virgule ,",
-                  "SLASH": "Barre oblique /",
-                  "TAB": "Tabulation",
-                  "NON_BREAKING_SPACE": "Espace",
-                  "PIPE": "Barre verticale |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Format de date/heure de sortie",
-                "output-timezone": "Fuseau horaire de sortie"
+                "date-time-input": {
+                  "title": "Entrée date/heure",
+                  "type": {
+                    "title": "Type",
+                    "string": "Chaîne",
+                    "iso-string": "Chaîne ISO",
+                    "unix-epoch": "Époque UNIX (s)",
+                    "unix-epoch-ms": "Époque UNIX (ms)"
+                  },
+                  "timezone": "Fuseau horaire",
+                  "format": "Format",
+                  "locale": "Paramètres régionaux"
+                }
               }
             },
             "oianalytics": {
@@ -1516,42 +1497,23 @@
             },
             "oledb": {
               "query": "Requête",
-              "date-time-fields": {
-                "date-time-field": "Champs date/heure",
+              "tracking-instant": {
+                "title": "Suivi de l'instant",
+                "track-instant": "Suivre l'instant",
                 "field-name": "Nom du champ",
-                "use-as-reference": "Champ de référence",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "Chaîne ISO",
-                  "unix-epoch": "Époque UNIX (s)",
-                  "unix-epoch-ms": "Époque UNIX (ms)",
-                  "string": "Chaîne"
-                },
-                "timezone": "Fuseau horaire",
-                "format": "Format",
-                "locale": "Paramètres régionaux"
-              },
-              "serialization": {
-                "title": "Sérialisation",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Nom du fichier",
-                "delimiter": {
-                  "title": "Délimiteur",
-                  "DOT": "Point .",
-                  "SEMI_COLON": "Point-virgule ;",
-                  "COLON": "Deux-points :",
-                  "COMMA": "Virgule ,",
-                  "SLASH": "Barre oblique /",
-                  "TAB": "Tabulation",
-                  "NON_BREAKING_SPACE": "Espace",
-                  "PIPE": "Barre verticale |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Format de date/heure de sortie",
-                "output-timezone": "Fuseau horaire de sortie"
+                "date-time-input": {
+                  "title": "Entrée date/heure",
+                  "type": {
+                    "title": "Type",
+                    "string": "Chaîne",
+                    "iso-string": "Chaîne ISO",
+                    "unix-epoch": "Époque UNIX (s)",
+                    "unix-epoch-ms": "Époque UNIX (ms)"
+                  },
+                  "timezone": "Fuseau horaire",
+                  "format": "Format",
+                  "locale": "Paramètres régionaux"
+                }
               }
             },
             "opc": {

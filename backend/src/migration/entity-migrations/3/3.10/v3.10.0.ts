@@ -9,7 +9,8 @@ import {
   OldSqlItemSettings,
   RECORD_LIST_TO_CSV_FUNCTION_NAME,
   SQL_SOUTH_TYPES,
-  toNewSqlItemSettings
+  toNewSqlItemSettings,
+  usesRemoteAgent
 } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
 import { generateRandomId } from '../../../../service/utils';
 
@@ -39,7 +40,7 @@ const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
  *
  *  1. Scan modes gain a second scheduling mechanism (fixed interval, alongside cron) plus an optional
  *     activation window; certificates gain an optional certificate_chain for externally-issued certs.
- *  2. SQL-family souths (mysql/postgresql/mssql/oracle/sqlite) stop serializing rows into CSV
+ *  2. SQL-family souths (mysql/postgresql/mssql/oracle/sqlite/odbc/oledb) stop serializing rows into CSV
  *     themselves, moving that responsibility to a north-side `record-list-to-csv` transformer.
  *  3. Introduces the audit trail feature (`audit_logs` + `engines.audit_retention_duration`).
  *  4-7. Introduces Configuration Workflows (discover a data source, then either create/update south
@@ -87,7 +88,7 @@ export async function up(knex: Knex): Promise<void> {
 
   // --- 2. SQL-family souths: record-list refactor -----------------------------------------------
   //
-  // SQL-family souths (mysql/postgresql/mssql/oracle/sqlite) stopped serializing rows into CSV
+  // SQL-family souths (mysql/postgresql/mssql/oracle/sqlite/odbc/oledb) stopped serializing rows into CSV
   // themselves — they now emit `record-list` content (raw rows) and rely on a north-side
   // `record-list-to-csv` transformer to do the CSV encoding that `item.settings.serialization` used
   // to do inline. This step:
@@ -95,7 +96,9 @@ export async function up(knex: Knex): Promise<void> {
   //  1. Rewrites every affected item's settings: `dateTimeFields` + `serialization` are replaced by a
   //     single `trackingInstant` (mirroring south-rest's own trackingInstant shape), used only to
   //     compute the incremental query cursor. The CSV-rendering config itself (filename, delimiter,
-  //     compression, per-column datetime formatting) moves to a transformer.
+  //     compression, per-column datetime formatting) moves to a transformer. Through the remote agent (OLEDB, or ODBC
+  //     with `remoteAgent`), only the reference field was formatted (by the agent): it alone becomes a datetime field
+  //     of the transformer, read from the ISO string the connector now asks the agent for.
   //  2. For every north connector — enabled or not, so a currently-disabled one is already correctly
   //     wired up whenever it's re-enabled later; content fans out to every north connector
   //     unconditionally once enabled, see `DataStreamEngine.addContent` — and every affected item,
@@ -124,9 +127,12 @@ export async function up(knex: Knex): Promise<void> {
   const northIds = (await knex(NORTH_CONNECTORS_TABLE).select('id')).map(n => n.id as string);
 
   for (const southType of SQL_SOUTH_TYPES) {
-    const souths: Array<{ id: string }> = await knex(SOUTH_CONNECTORS_TABLE).select('id').where('type', southType);
+    const souths: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
+      .select('id', 'settings')
+      .where('type', southType);
     for (const south of souths) {
-      await migrateSouthConnectorItems(knex, south.id, northIds, recordListToCsvTransformerId);
+      const viaRemoteAgent = usesRemoteAgent(southType, JSON.parse(south.settings));
+      await migrateSouthConnectorItems(knex, south.id, northIds, recordListToCsvTransformerId, viaRemoteAgent);
     }
   }
 
@@ -509,7 +515,8 @@ async function migrateSouthConnectorItems(
   knex: Knex,
   southId: string,
   northIds: Array<string>,
-  recordListToCsvTransformerId: string
+  recordListToCsvTransformerId: string,
+  viaRemoteAgent: boolean
 ): Promise<void> {
   const items: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
     .select('id', 'settings')
@@ -532,7 +539,7 @@ async function migrateSouthConnectorItems(
     const oldSettings: OldSqlItemSettings = JSON.parse(item.settings);
     settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewSqlItemSettings(oldSettings)) });
 
-    const transformerOptions = buildRecordListToCsvOptions(oldSettings);
+    const transformerOptions = buildRecordListToCsvOptions(oldSettings, viaRemoteAgent);
     const groupId = groupIdByItemId.get(item.id) ?? null;
 
     for (const northId of northIds) {
@@ -574,7 +581,9 @@ async function migrateSouthConnectorItems(
  * resolution is item-level vs. history-level fallback only - no group level.
  */
 async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: string): Promise<void> {
-  const historyQueries: Array<{ id: string }> = await knex(HISTORY_QUERIES_TABLE).select('id').whereIn('south_type', SQL_SOUTH_TYPES);
+  const historyQueries: Array<{ id: string; south_type: string; south_settings: string }> = await knex(HISTORY_QUERIES_TABLE)
+    .select('id', 'south_type', 'south_settings')
+    .whereIn('south_type', SQL_SOUTH_TYPES);
   if (historyQueries.length === 0) return;
 
   const settingsUpdates: Array<{ id: string; settings: string }> = [];
@@ -586,6 +595,7 @@ async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: s
       .select('id', 'settings')
       .where('history_id', historyQuery.id);
     if (items.length === 0) continue;
+    const viaRemoteAgent = usesRemoteAgent(historyQuery.south_type, JSON.parse(historyQuery.south_settings));
 
     const existingRows: Array<{ id: string; function_name: string }> = await knex(`${HISTORY_QUERY_TRANSFORMERS_TABLE} as ht`)
       .join(`${TRANSFORMERS_TABLE} as t`, 't.id', 'ht.transformer_id')
@@ -629,7 +639,7 @@ async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: s
         id,
         history_id: historyQuery.id,
         transformer_id: recordListToCsvTransformerId,
-        options: JSON.stringify(buildRecordListToCsvOptions(oldSettings))
+        options: JSON.stringify(buildRecordListToCsvOptions(oldSettings, viaRemoteAgent))
       });
       newTransformerItemLinks.push({ id, item_id: item.id });
     }

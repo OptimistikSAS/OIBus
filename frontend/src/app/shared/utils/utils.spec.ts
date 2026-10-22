@@ -23,7 +23,10 @@ describe('utils', () => {
       expect(getAssociatedInputType('bacnet')).toBe('time-values');
       expect(getAssociatedInputType('sqlite')).toBe('record-list');
       expect(getAssociatedInputType('mysql')).toBe('record-list');
-      expect(getAssociatedInputType('odbc')).toBe('any');
+      expect(getAssociatedInputType('odbc')).toBe('record-list');
+      expect(getAssociatedInputType('oledb')).toBe('record-list');
+      expect(getAssociatedInputType('influxdb')).toBe('record-list');
+      expect(getAssociatedInputType('folder-scanner')).toBe('any');
       // OIAnalytics values are serialized into CSV files
       expect(getAssociatedInputType('oianalytics')).toBe('any');
     });

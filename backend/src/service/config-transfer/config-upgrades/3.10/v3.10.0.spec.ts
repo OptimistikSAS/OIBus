@@ -10,7 +10,8 @@ import {
   keepsResolvedTransformer,
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
-  upgrade
+  upgrade,
+  usesRemoteAgent
 } from './v3.10.0';
 
 const fixtureConfig = (version: string): JsonObject =>
@@ -154,5 +155,72 @@ describe('3.10.0 config upgrade', () => {
       ]
     );
     assert.deepStrictEqual(toNewSqlItemSettings({ query: 'SELECT *' }), { query: 'SELECT *', trackingInstant: { trackInstant: false } });
+  });
+
+  describe('ODBC and OLEDB items', () => {
+    const oldSettings = {
+      query: 'SELECT *',
+      dateTimeFields: [
+        { fieldName: 'timestamp', useAsReference: true, type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd', locale: 'en-US' },
+        { fieldName: 'other', useAsReference: false, type: 'unix-epoch', timezone: null, format: null, locale: null }
+      ],
+      serialization: {
+        type: 'csv' as const,
+        filename: 'odbc.csv',
+        delimiter: 'COMMA',
+        compression: false,
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm',
+        outputTimezone: 'UTC'
+      }
+    };
+    const fieldInputs = (options: Record<string, unknown>) =>
+      (options.fields as Array<JsonObject>).map(field => [field.fieldName, (field.datetimeSettings as JsonObject).inputType]);
+
+    it('tells which souths query their database through the remote agent', () => {
+      assert.strictEqual(usesRemoteAgent('oledb', {}), true);
+      assert.strictEqual(usesRemoteAgent('odbc', { remoteAgent: true }), true);
+      assert.strictEqual(usesRemoteAgent('odbc', { remoteAgent: false }), false);
+      assert.strictEqual(usesRemoteAgent('odbc', undefined), false);
+      assert.strictEqual(usesRemoteAgent('mysql', { remoteAgent: true }), false);
+    });
+
+    it('only formats the reference field, sent as an ISO string, through the remote agent', () => {
+      assert.deepStrictEqual(fieldInputs(buildRecordListToCsvOptions(oldSettings, true)), [['timestamp', 'iso-string']]);
+      assert.deepStrictEqual(fieldInputs(buildRecordListToCsvOptions(oldSettings)), [
+        ['timestamp', 'string'],
+        ['other', 'unix-epoch']
+      ]);
+    });
+
+    it('converts the items of ODBC souths and history queries', () => {
+      const item = () => ({ id: 'itemId', name: 'item', enabled: true, settings: structuredClone(oldSettings) });
+      const config: JsonObject = {
+        transformers: [],
+        northConnectors: [{ oIBusInternalId: 'northId', type: 'file-writer', settings: { transformers: [] } }],
+        southConnectors: [
+          { oIBusInternalId: 'agentId', type: 'odbc', settings: { settings: { remoteAgent: true }, items: [item()], groups: [] } },
+          { oIBusInternalId: 'localId', type: 'odbc', settings: { settings: { remoteAgent: false }, items: [item()], groups: [] } }
+        ],
+        historyQueries: [{ settings: { southType: 'oledb', southSettings: {}, items: [item()], northTransformers: [] } }]
+      };
+
+      upgrade.apply(config);
+
+      const links = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
+      const linkOf = (southId: string) => links.find(link => (link.source as JsonObject).southId === southId)!;
+      assert.deepStrictEqual(fieldInputs(linkOf('agentId').options as JsonObject), [['timestamp', 'iso-string']]);
+      assert.deepStrictEqual(fieldInputs(linkOf('localId').options as JsonObject), [
+        ['timestamp', 'string'],
+        ['other', 'unix-epoch']
+      ]);
+      const historyQuery = (config.historyQueries as Array<JsonObject>)[0].settings as JsonObject;
+      const [historyLink] = historyQuery.northTransformers as Array<JsonObject>;
+      assert.deepStrictEqual(fieldInputs(historyLink.options as JsonObject), [['timestamp', 'iso-string']]);
+      assert.deepStrictEqual(((historyQuery.items as Array<JsonObject>)[0].settings as JsonObject).trackingInstant, {
+        trackInstant: true,
+        fieldName: 'timestamp',
+        dateTimeInput: { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd', locale: 'en-US' }
+      });
+    });
   });
 });
