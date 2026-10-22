@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { OIBusContent } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
@@ -11,20 +11,17 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { encryptionService } from '../../service/encryption.service';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import {
-  convertDelimiter,
-  extractLastCsvRow,
-  formatInstant,
-  generateFilenameForSerialization,
-  getErrorMessage,
-  logQuery,
-  persistResults,
-  workUnitLogCtx
-} from '../../service/utils';
+  parseRemoteAgentRecords,
+  REMOTE_AGENT_DELIMITER,
+  REMOTE_AGENT_TIMESTAMP_FORMAT,
+  REMOTE_AGENT_TIMEZONE
+} from '../../service/remote-agent.utils';
+import { convertDateTimeToInstant, formatInstant, getErrorMessage, logQuery, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
 
 /**
- * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.
+ * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as record-list content.
  */
 
 export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, SouthOLEDBItemSettings> implements SouthHistoryQuery {
@@ -135,24 +132,10 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const queryStart = DateTime.now().toMillis();
-    const result = await this.queryRemoteAgentData(item, startTime, endTime, true);
+    const result = await this.queryRemoteAgentData(item, startTime, endTime);
     const queryDuration = DateTime.now().toMillis() - queryStart;
-
-    let oibusContent: OIBusContent;
-    switch (item.settings.serialization.type) {
-      case 'csv': {
-        const filePath = generateFilenameForSerialization(
-          this.tmpFolder,
-          item.settings.serialization.filename,
-          this.connector.name,
-          item.name
-        );
-        oibusContent = { type: 'any', filePath, content: result.value as string };
-        break;
-      }
-    }
     return {
-      result: oibusContent,
+      result: { type: 'record-list', content: result },
       // Connect + query happen together inside the query call above — splitting them would mean
       // refactoring a method the scheduled query path also uses, so connectionDuration stays 0 and
       // queryDuration covers the whole call.
@@ -162,32 +145,70 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   }
 
   /**
-   * Get entries from the database between startTime and endTime (if used in the SQL query)
-   * and write them into a CSV file and send it to the engine.
+   * Get entries from the database between startTime and endTime (if used in the SQL query) and send
+   * them to the cache as record-list content.
    */
   async historyQuery(
     items: Array<SouthConnectorItemEntity<SouthOLEDBItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
-    return await this.queryRemoteAgentData(items[0], startTime, endTime);
+  ): Promise<{ trackedInstant: Instant | null; value: OIBusRecord | null }> {
+    const item = items[0];
+    const logCtx = workUnitLogCtx(items);
+
+    const startRequest = DateTime.now();
+    const result = await this.queryRemoteAgentData(item, startTime, endTime);
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
+
+    let updatedStartTime: Instant | null = null;
+    if (result.length > 0) {
+      this.logger.info(logCtx, `Found ${result.length} results in ${requestDuration} ms`);
+      updatedStartTime = this.trackMaxInstant(item, result);
+      await this.addContent({ type: 'record-list', content: result }, startRequest.toUTC().toISO(), items);
+    } else {
+      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
+    }
+
+    return { trackedInstant: updatedStartTime, value: result.length > 0 ? result[result.length - 1] : null };
   }
 
+  /**
+   * Scan the rows for the configured tracking field and return the max Instant found, used as the
+   * cursor for the next incremental query. The agent sends the tracking field as an ISO string in UTC.
+   */
+  private trackMaxInstant(item: SouthConnectorItemEntity<SouthOLEDBItemSettings>, rows: Array<OIBusRecord>): Instant | null {
+    if (!item.settings.trackingInstant?.trackInstant) return null;
+
+    const fieldName = item.settings.trackingInstant.fieldName!;
+    let updatedStartTime: Instant | null = null;
+    for (const row of rows) {
+      const rawValue = row[fieldName];
+      if (rawValue === null || rawValue === undefined) continue;
+      const instant = convertDateTimeToInstant(rawValue as string | number, { type: 'iso-string' });
+      if (instant && (!updatedStartTime || instant > updatedStartTime)) {
+        updatedStartTime = instant;
+      }
+    }
+    return updatedStartTime;
+  }
+
+  /**
+   * Apply the SQL query through the remote agent, which returns a CSV text parsed back into records.
+   * Only `@StartTime`/`@EndTime` query parameters are formatted, using the tracking field's
+   * `dateTimeInput` config so they match the source column's native representation. The agent formats
+   * the tracking field as an ISO string in UTC (see `REMOTE_AGENT_TIMESTAMP_FORMAT`).
+   */
   async queryRemoteAgentData(
     item: SouthConnectorItemEntity<SouthOLEDBItemSettings>,
     startTime: Instant,
-    endTime: Instant,
-    test?: boolean
-  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
-    const logCtx = workUnitLogCtx([item]);
-    let updatedStartTime: Instant | null = null;
-    const startRequest = DateTime.now();
-
-    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
-    const oleStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
-    const oleEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
+    endTime: Instant
+  ): Promise<Array<OIBusRecord>> {
+    const trackingInstant = item.settings.trackingInstant?.trackInstant ? item.settings.trackingInstant : null;
+    const dateTimeInput = trackingInstant?.dateTimeInput ?? null;
+    const oleStartTime = dateTimeInput == null ? startTime : formatInstant(startTime, dateTimeInput);
+    const oleEndTime = dateTimeInput == null ? endTime : formatInstant(endTime, dateTimeInput);
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${oleStartTime}`).replace(/@EndTime/g, `${oleEndTime}`);
-    logQuery(adaptedQuery, oleStartTime, oleEndTime, this.logger, logCtx);
+    logQuery(adaptedQuery, oleStartTime, oleEndTime, this.logger, workUnitLogCtx([item]));
     const { connectionString } = await this.buildConnectionString(this.connector.settings);
 
     const fetchOptions: ReqOptions = {
@@ -197,63 +218,31 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
         connectionString,
         sql: adaptedQuery,
         readTimeout: this.connector.settings.requestTimeout,
-        timeColumn: referenceTimestampField?.fieldName,
-        datasourceTimestampFormat: referenceTimestampField?.format,
-        datasourceTimezone: referenceTimestampField?.timezone,
-        delimiter: convertDelimiter(item.settings.serialization.delimiter),
-        outputTimestampFormat: item.settings.serialization.outputTimestampFormat,
-        outputTimezone: item.settings.serialization.outputTimezone
+        timeColumn: trackingInstant?.fieldName,
+        datasourceTimestampFormat: dateTimeInput?.format,
+        datasourceTimezone: dateTimeInput?.timezone,
+        delimiter: REMOTE_AGENT_DELIMITER,
+        outputTimestampFormat: REMOTE_AGENT_TIMESTAMP_FORMAT,
+        outputTimezone: REMOTE_AGENT_TIMEZONE
       })
     };
 
     const requestUrl = new URL(`/api/ole/${this.connector.id}/read`, this.connector.settings.agentUrl);
     const response = await HTTPRequest(requestUrl, fetchOptions);
-    let result: { recordCount: number; content: string; maxInstant: Instant };
     if (response.statusCode === 200) {
-      result = (await response.body.json()) as {
-        recordCount: number;
-        content: string;
-        maxInstant: Instant;
-      };
-      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-      this.logger.info(logCtx, `Found ${result.recordCount} results in ${requestDuration} ms`);
-
-      if (!test) {
-        if (result.recordCount > 0) {
-          await persistResults(
-            result.content,
-            { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
-            this.connector.name,
-            item,
-            startRequest.toUTC().toISO(),
-            this.tmpFolder,
-            this.addContent.bind(this),
-            this.logger
-          );
-          if (result.maxInstant > startTime) {
-            updatedStartTime = result.maxInstant;
-          }
-        } else {
-          this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
-        }
-      }
-    } else if (response.statusCode === 400) {
+      const result = (await response.body.json()) as { recordCount: number; content: string; maxInstant: Instant };
+      return parseRemoteAgentRecords(result.content);
+    }
+    if (response.statusCode === 400) {
       // No log here: the base class's runTask() already logs this error with this item's context
       // when it's thrown from the scheduled historyQuery() path; testItem() has no separate logging
       // for its own errors either, consistent with every other connector.
       const errorMessage = await response.body.text();
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
-    } else {
-      // Drain the response body so undici can return the connection to its pool.
-      await response.body.dump();
-      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
-    // For the data stream we only keep the last row as the cached "last value"; the full CSV content
-    // is only needed for the item test, where it is returned to the UI as-is.
-    return {
-      trackedInstant: updatedStartTime,
-      value: test ? result.content : extractLastCsvRow(result.content, convertDelimiter(item.settings.serialization.delimiter))
-    };
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
+    throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
   }
 
   private async buildConnectionString(settings: SouthOLEDBSettings): Promise<{ connectionString: string; logValue: string }> {

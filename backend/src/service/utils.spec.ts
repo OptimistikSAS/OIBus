@@ -477,7 +477,6 @@ describe('Service utils', () => {
   describe('persistResults', () => {
     const item = testData.south.list[0].items[0];
     const filePath = path.join('myTmpFolder', 'myFilename.csv');
-    const fileSettings = (compression: boolean): SerializationSettings => ({ type: 'file', filename: 'myFilename.csv', compression });
     const csvSettings = (compression: boolean): SerializationSettings => ({
       type: 'csv',
       delimiter: 'SEMI_COLON',
@@ -519,14 +518,6 @@ describe('Service utils', () => {
     });
 
     describe('without compression', () => {
-      it('should properly write results without compression', async () => {
-        mock.method(fs, 'unlink', async () => null);
-
-        await persist(fileSettings(false));
-
-        assertContentAdded(filePath);
-      });
-
       it('should properly write results into CSV without compression', async () => {
         const unlinkMock = mock.method(fs, 'unlink', async () => null);
 
@@ -551,21 +542,6 @@ describe('Service utils', () => {
           `Error when deleting CSV file "${filePath}" after caching it: unlink error`
         );
       });
-
-      it('should properly write results without compression and log unlink errors', async () => {
-        const unlinkMock = mock.method(fs, 'unlink', throwUnlinkError);
-
-        await persist(fileSettings(false));
-
-        assertContentAdded(filePath);
-        assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
-        assert.strictEqual(unlinkMock.mock.calls.length, 1);
-        assert.strictEqual(logger.error.mock.calls.length, 1);
-        assert.strictEqual(
-          logger.error.mock.calls[0].arguments[1],
-          `Error when deleting file "${filePath}" after caching it: unlink error`
-        );
-      });
     });
 
     describe('with compression', () => {
@@ -583,10 +559,7 @@ describe('Service utils', () => {
         mock.method(zlib, 'createGzip', () => new PassThrough());
       });
 
-      for (const { label, settings } of [
-        { label: 'CSV file', settings: csvSettings(true) },
-        { label: 'file', settings: fileSettings(true) }
-      ]) {
+      for (const { label, settings } of [{ label: 'CSV file', settings: csvSettings(true) }]) {
         it(`should properly persists results into ${label}`, async () => {
           const unlinkMock = mock.method(fs, 'unlink', async () => null);
 
@@ -723,38 +696,6 @@ describe('Service utils', () => {
         () => utils.parseCsvImport('name;value\na;1', '"'),
         new OIBusValidationError('The entered delimiter """ does not correspond to the file delimiter ";"')
       );
-    });
-  });
-
-  describe('extractLastCsvRow', () => {
-    it('should return the last data row as an object keyed by the header', () => {
-      const content = 'Name;TS;Value\r\nKBS2T1;16-Jun-26 10:06:01;5\r\nLOURDS1C;16-Jun-26 10:07:00;7';
-      assert.deepStrictEqual(utils.extractLastCsvRow(content, ';'), {
-        Name: 'LOURDS1C',
-        TS: '16-Jun-26 10:07:00',
-        Value: '7'
-      });
-    });
-
-    it('should handle a trailing newline and a single data row', () => {
-      assert.deepStrictEqual(utils.extractLastCsvRow('Name,Value\nA,1\n', ','), { Name: 'A', Value: '1' });
-    });
-
-    it('should handle LF-only line endings', () => {
-      assert.deepStrictEqual(utils.extractLastCsvRow('a;b\n1;2\n3;4', ';'), { a: '3', b: '4' });
-    });
-
-    it('should return null when there is only a header', () => {
-      assert.strictEqual(utils.extractLastCsvRow('Name;TS;Value', ';'), null);
-    });
-
-    it('should return null for empty or non-string content', () => {
-      assert.strictEqual(utils.extractLastCsvRow('', ';'), null);
-      assert.strictEqual(utils.extractLastCsvRow(undefined as unknown as string, ';'), null);
-    });
-
-    it('should pad missing trailing columns with empty strings', () => {
-      assert.deepStrictEqual(utils.extractLastCsvRow('a;b;c\n1;2', ';'), { a: '1', b: '2', c: '' });
     });
   });
 

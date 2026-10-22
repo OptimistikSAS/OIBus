@@ -766,6 +766,135 @@ describe('Entity migration v3.10.0', () => {
       assert.ok(JSON.parse(item1.settings).trackingInstant);
     });
 
+    describe('ODBC and OLEDB items', () => {
+      const dateTimeFields = [
+        { fieldName: 'other', useAsReference: false, type: 'unix-epoch-ms', timezone: null, format: null, locale: null },
+        {
+          fieldName: 'timestamp',
+          useAsReference: true,
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss',
+          locale: 'en-US'
+        }
+      ];
+      const serialization = {
+        type: 'csv',
+        filename: 'odbc.csv',
+        delimiter: 'SEMI_COLON',
+        compression: false,
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm',
+        outputTimezone: 'UTC'
+      };
+      const isoReferenceField = {
+        fieldName: 'timestamp',
+        columnName: null,
+        dataType: 'datetime',
+        fieldProcess: null,
+        datetimeSettings: {
+          inputType: 'iso-string',
+          inputTimezone: null,
+          inputFormat: null,
+          inputLocale: null,
+          outputType: 'string',
+          outputTimezone: 'UTC',
+          outputFormat: 'yyyy-MM-dd HH:mm',
+          outputLocale: null
+        }
+      };
+      const transformerFieldsOf = async (itemId: string): Promise<Array<{ fieldName: string }>> => {
+        const row = await db('north_transformers as nt')
+          .join('north_transformers_items as nti', 'nti.id', 'nt.id')
+          .where({ 'nt.north_id': 'north1', 'nti.item_id': itemId })
+          .first('nt.options');
+        return JSON.parse(row.options).fields;
+      };
+
+      beforeEach(async () => {
+        await db('south_connectors').insert([
+          { id: 'odbc-agent', name: 'ODBC agent', type: 'odbc', enabled: true, settings: JSON.stringify({ remoteAgent: true }) },
+          { id: 'odbc-local', name: 'ODBC local', type: 'odbc', enabled: true, settings: JSON.stringify({ remoteAgent: false }) },
+          { id: 'oledb', name: 'OLEDB', type: 'oledb', enabled: true, settings: JSON.stringify({ agentUrl: 'http://localhost:2224' }) }
+        ]);
+        await db('south_items').insert(
+          ['odbc-agent', 'odbc-local', 'oledb'].map(southId => ({
+            id: `${southId}-item`,
+            connector_id: southId,
+            scan_mode_id: 'sm1',
+            name: `${southId}-item`,
+            enabled: true,
+            settings: JSON.stringify({ query: 'SELECT * FROM t', dateTimeFields, serialization })
+          }))
+        );
+      });
+
+      it('should rewrite their settings into trackingInstant', async () => {
+        await up(db);
+
+        for (const southId of ['odbc-agent', 'odbc-local', 'oledb']) {
+          const item = await db('south_items').where('id', `${southId}-item`).first();
+          assert.deepStrictEqual(JSON.parse(item.settings), {
+            query: 'SELECT * FROM t',
+            trackingInstant: {
+              trackInstant: true,
+              fieldName: 'timestamp',
+              dateTimeInput: { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss', locale: 'en-US' }
+            }
+          });
+        }
+      });
+
+      it('should only format the reference field, sent as an ISO string, when queried through the remote agent', async () => {
+        await up(db);
+
+        assert.deepStrictEqual(await transformerFieldsOf('odbc-agent-item'), [isoReferenceField]);
+        assert.deepStrictEqual(await transformerFieldsOf('oledb-item'), [isoReferenceField]);
+      });
+
+      it('should format every date time field of an ODBC item queried locally', async () => {
+        await up(db);
+
+        assert.deepStrictEqual(
+          (await transformerFieldsOf('odbc-local-item')).map(field => field.fieldName),
+          ['other', 'timestamp']
+        );
+      });
+
+      it('should only format the reference field of an ODBC history query through the remote agent', async () => {
+        await db('history_queries').insert({
+          id: 'hq-odbc',
+          name: 'HQ ODBC',
+          start_time: NOW,
+          end_time: NOW,
+          south_type: 'odbc',
+          north_type: 'file-writer',
+          south_settings: JSON.stringify({ remoteAgent: true }),
+          north_settings: JSON.stringify({}),
+          caching_trigger_schedule: 'sm1',
+          caching_trigger_number_of_elements: 1000,
+          caching_trigger_number_of_files: 1,
+          caching_throttling_cache_max_size: 0,
+          caching_throttling_max_number_of_elements: 10_000,
+          caching_error_retry_interval: 5000,
+          caching_error_retry_count: 3,
+          caching_archive_enabled: false,
+          caching_archive_retention_duration: 0
+        });
+        await db('history_items').insert({
+          id: 'hitem-odbc',
+          history_id: 'hq-odbc',
+          name: 'hitem-odbc',
+          enabled: true,
+          settings: JSON.stringify({ query: 'SELECT * FROM t', dateTimeFields, serialization })
+        });
+
+        await up(db);
+
+        const row = await db('history_query_transformers').where('history_id', 'hq-odbc').first();
+        assert.deepStrictEqual(JSON.parse(row.options).fields, [isoReferenceField]);
+      });
+    });
+
     it('down() is a no-op (irreversible)', async () => {
       await up(db);
       await assert.doesNotReject(down(db));
