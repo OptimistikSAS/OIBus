@@ -63,12 +63,19 @@ if not ERRORLEVEL 1 (
     exit /b 1
 )
 
-rem -port is embedded as a raw (unquoted) JSON number below, so it must be digits only.
-echo %OIBUS_PORT%| findstr /r "^[0-9]*$" >nul
-if ERRORLEVEL 1 (
-    echo ERROR: Port "%OIBUS_PORT%" must contain digits only.
-    exit /b 1
-)
+rem -port is embedded as a raw (unquoted) JSON number below, so it must be a plain number
+rem (JSON forbids leading zeros). Only checked when given: with an empty value, "echo|"
+rem would print "ECHO is off." and fail the check.
+if not defined OIBUS_PORT goto PORT_OK
+echo %OIBUS_PORT%| findstr /r "^[1-9][0-9]*$" >nul
+if ERRORLEVEL 1 goto PORT_INVALID
+if not "%OIBUS_PORT:~5%"=="" goto PORT_INVALID
+if %OIBUS_PORT% GTR 65535 goto PORT_INVALID
+goto PORT_OK
+:PORT_INVALID
+echo ERROR: Port "%OIBUS_PORT%" must be a number between 1 and 65535.
+exit /b 1
+:PORT_OK
 
 goto CHECK
 :INPUT

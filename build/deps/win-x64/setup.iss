@@ -50,6 +50,10 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 UsePreviousAppDir=no
 UserInfoPage=no
+; nssm registers itself as an event source (EventMessageFile = {app}\nssm.exe), so the Windows
+; Event Log service keeps it open: the Restart Manager would then ask to close "Windows Event Log".
+; OIBus processes running from {app} are stopped by PrepareToInstall instead.
+CloseApplicationsFilterExcludes=nssm.exe
 
 ; Visuals
 SetupIconFile=..\..\..\frontend\public\favicon.ico
@@ -69,7 +73,8 @@ Name: {app}\backup
 
 [Files]
 Source: "..\..\bin\win-x64\binaries\oibus.exe"; DestDir: "{app}\binaries"; Flags: ignoreversion
-Source: "..\..\bin\win-x64\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
+; nssm.exe never changes and may be held open by the Windows Event Log service: keep the existing one
+Source: "..\..\bin\win-x64\nssm.exe"; DestDir: "{app}"; Flags: onlyifdoesntexist
 Source: "..\..\bin\win-x64\oibus-launcher.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win-x64\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 #ifdef EnableSigning
@@ -140,17 +145,31 @@ end;
 
 // --- Helper Functions ---
 
-function ExecCmd(Prog: string; Params: string; WorkingDir: string): Boolean;
+// Runs Prog and waits for it. Returns True only if it ran AND exited with code 0; otherwise
+// ErrorMsg describes what went wrong.
+function RunCmd(const Prog, Params, WorkingDir: String; var ErrorMsg: String): Boolean;
 var
   ResultCode: Integer;
 begin
-  if ShellExec('', Prog, Params, WorkingDir, SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-    Result := True
+  Log('Running: ' + Prog + ' ' + Params);
+  if not Exec(Prog, Params, WorkingDir, SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    ErrorMsg := SysErrorMessage(ResultCode)
+  else if ResultCode <> 0 then
+    ErrorMsg := 'exited with code ' + IntToStr(ResultCode)
   else
-  begin
-    MsgBox('ERROR: Failed to execute: ' + Prog + ' ' + Params + #13#10 + 'Error-message: ' + SysErrorMessage(ResultCode), mbError, MB_OK);
-    Result := False;
-  end;
+    ErrorMsg := '';
+  Result := ErrorMsg = '';
+  if not Result then
+    Log('Failed: ' + ErrorMsg);
+end;
+
+function ExecCmd(Prog: string; Params: string; WorkingDir: string): Boolean;
+var
+  ErrorMsg: String;
+begin
+  Result := RunCmd(Prog, Params, WorkingDir, ErrorMsg);
+  if not Result then
+    SuppressibleMsgBox('ERROR: Failed to execute: ' + Prog + ' ' + Params + #13#10 + 'Error-message: ' + ErrorMsg, mbError, MB_OK, IDOK);
 end;
 
 // --- Instance Isolation ---
@@ -574,6 +593,21 @@ begin
   Result := Escaped;
 end;
 
+function IsValidPort(const S: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := (Length(S) > 0) and (Length(S) <= 5);
+  if not Result then Exit;
+  for I := 1 to Length(S) do
+    if (S[I] < '0') or (S[I] > '9') then
+    begin
+      Result := False;
+      Exit;
+    end;
+  Result := (StrToInt(S) >= 1) and (StrToInt(S) <= 65535);
+end;
+
 // Hide the AdminPage when upgrading over an existing database.
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
@@ -593,28 +627,30 @@ begin
 
   if (CurPageID = ConfigPage.ID) then
   begin
-    // 1. Capture values
+    // 1. Capture values, forgetting what was found for a data directory chosen before going Back
     FinalServiceName := ServiceNameEdit.Text;
     FinalDataDir := DataDirEdit.Text;
+    ConfExists := False;
+    OverwriteConfig := False;
 
     // 2. Validation
     if Length(FinalServiceName) = 0 then
     begin
-      MsgBox('You must enter a Service Name.', mbError, MB_OK);
+      SuppressibleMsgBox('You must enter a Service Name.', mbError, MB_OK, IDOK);
       Result := False;
       Exit;
     end;
 
     if not IsValidServiceName(FinalServiceName) then
     begin
-      MsgBox('The service name may only contain letters, digits, spaces, dots, hyphens and underscores.', mbError, MB_OK);
+      SuppressibleMsgBox('The service name may only contain letters, digits, spaces, dots, hyphens and underscores.', mbError, MB_OK, IDOK);
       Result := False;
       Exit;
     end;
 
     if Length(FinalDataDir) = 0 then
     begin
-      MsgBox('You must enter a Data Directory.', mbError, MB_OK);
+      SuppressibleMsgBox('You must enter a Data Directory.', mbError, MB_OK, IDOK);
       Result := False;
       Exit;
     end;
@@ -624,7 +660,7 @@ begin
     // rejecting it costs nothing legitimate.
     if Pos('"', FinalDataDir) > 0 then
     begin
-      MsgBox('The data directory must not contain a " character.', mbError, MB_OK);
+      SuppressibleMsgBox('The data directory must not contain a " character.', mbError, MB_OK, IDOK);
       Result := False;
       Exit;
     end;
@@ -634,8 +670,8 @@ begin
     // below gets a chance to offer reusing data that actually belongs to another service.
     if FindConflictingInstance('DataDir', FinalDataDir, FinalServiceName, ConflictOwner) then
     begin
-      MsgBox('The data directory "' + FinalDataDir + '" is already used by another OIBus instance ("' + ConflictOwner + '").' + #13#10 +
-             'Each OIBus instance must have its own data directory. Please choose a different one.', mbError, MB_OK);
+      SuppressibleMsgBox('The data directory "' + FinalDataDir + '" is already used by another OIBus instance ("' + ConflictOwner + '").' + #13#10 +
+             'Each OIBus instance must have its own data directory. Please choose a different one.', mbError, MB_OK, IDOK);
       Result := False;
       Exit;
     end;
@@ -645,9 +681,9 @@ begin
     if FileExists(SettingsFile) then
     begin
       ConfExists := True;
-      if MsgBox('A configuration file was found at ' + FinalDataDir + '. Do you want to use it?', mbInformation, MB_YESNO) = IDNO then
+      if SuppressibleMsgBox('A configuration file was found at ' + FinalDataDir + '. Do you want to use it?', mbInformation, MB_YESNO, IDYES) = IDNO then
       begin
-        if MsgBox('WARNING: Overwriting the current setup will delete all credentials, logs and data.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO) = IDNO then
+        if SuppressibleMsgBox('WARNING: Overwriting the current setup will delete all credentials, logs and data.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO, IDNO) = IDNO then
           OverwriteConfig := False
         else
           OverwriteConfig := True
@@ -674,8 +710,8 @@ begin
     // folder is fine (FindConflictingInstance ignores the entry matching FinalServiceName).
     if FindConflictingInstance('AppDir', ExpandConstant('{app}'), FinalServiceName, ConflictOwner) then
     begin
-      MsgBox('The folder "' + ExpandConstant('{app}') + '" is already used by another OIBus instance ("' + ConflictOwner + '").' + #13#10 +
-             'Each OIBus instance must have its own installation folder. Please choose a different one.', mbError, MB_OK);
+      SuppressibleMsgBox('The folder "' + ExpandConstant('{app}') + '" is already used by another OIBus instance ("' + ConflictOwner + '").' + #13#10 +
+             'Each OIBus instance must have its own installation folder. Please choose a different one.', mbError, MB_OK, IDOK);
       Result := False;
       Exit;
     end;
@@ -687,8 +723,17 @@ begin
     if Length(FinalAdminUsername) = 0 then FinalAdminUsername := 'admin';
     FinalAdminPassword := AdminPasswordEdit.Text;
     if Length(FinalAdminPassword) = 0 then FinalAdminPassword := 'pass';
-    FinalPort := PortEdit.Text;
+    FinalPort := Trim(PortEdit.Text);
     if Length(FinalPort) = 0 then FinalPort := '2223';
+    // The port is embedded as a raw JSON number in oibus.init.json: an invalid one would make
+    // OIBus ignore the whole file, admin credentials included.
+    if not IsValidPort(FinalPort) then
+    begin
+      SuppressibleMsgBox('The port must be a number between 1 and 65535.', mbError, MB_OK, IDOK);
+      Result := False;
+      Exit;
+    end;
+    FinalPort := IntToStr(StrToInt(FinalPort)); // no leading zeros, which JSON forbids
   end;
 end;
 
@@ -716,7 +761,7 @@ end;
 
 function InstallProgram(): Boolean;
 var
-  LogPath, AppDir, NssmPath, LauncherPath: string;
+  LogPath, AppDir, NssmPath, LauncherPath, ErrorMsg: string;
 begin
   Result := False;
   AppDir := ExpandConstant('{app}');
@@ -742,9 +787,9 @@ begin
   ExecCmd(NssmPath, 'set "' + FinalServiceName + '" AppNoConsole 1', AppDir);
 
   // 3. Start Service
-  if not ExecCmd(NssmPath, 'start "' + FinalServiceName + '"', AppDir) then
+  if not RunCmd(NssmPath, 'start "' + FinalServiceName + '"', AppDir, ErrorMsg) then
   begin
-     MsgBox('Warning: The OIBus service failed to start automatically. Please try starting it from Windows Services.', mbError, MB_OK);
+     SuppressibleMsgBox('Warning: The OIBus service failed to start automatically (' + ErrorMsg + '). Please try starting it from Windows Services.', mbError, MB_OK, IDOK);
   end;
 
   Result := True;
@@ -847,7 +892,7 @@ begin
     AddServiceNameToManifest(FinalServiceName);
 
     if not CreateDataDir then
-      MsgBox('ERROR : OIBus data directory Setup failed.', mbCriticalError, MB_OK)
+      SuppressibleMsgBox('ERROR : OIBus data directory Setup failed.', mbCriticalError, MB_OK, IDOK)
     else begin
       // Write init config file only when no existing database is present
       if not FileExists(AddBackslash(FinalDataDir) + 'oibus.db') then
@@ -858,9 +903,9 @@ begin
         );
 
       if not CreateLauncherFile() then
-        MsgBox('ERROR : Launcher file creation failed', mbCriticalError, MB_OK)
+        SuppressibleMsgBox('ERROR : Launcher file creation failed', mbCriticalError, MB_OK, IDOK)
       else if not InstallProgram() then
-        MsgBox('ERROR : Installation has failed', mbCriticalError, MB_OK);
+        SuppressibleMsgBox('ERROR : Installation has failed', mbCriticalError, MB_OK, IDOK);
     end;
 
     // Other instances sharing this (legacy) install folder had to be stopped as well
@@ -892,7 +937,7 @@ begin
         Msg := Msg + '   - ' + Names[I] + #13#10;
       Msg := Msg + #13#10 + 'Uninstalling removes the program files shared by ALL of them: every ' +
         'instance listed above will be stopped and deleted. Continue?';
-      if MsgBox(Msg, mbConfirmation, MB_YESNO) = IDNO then
+      if SuppressibleMsgBox(Msg, mbConfirmation, MB_YESNO, IDYES) = IDNO then
         Result := False;
     end;
   finally
@@ -917,7 +962,7 @@ begin
       // deleted while OIBus still runs.
       StopError := StopOIBusInFolder(ExpandConstant('{app}'), Names, WasRunning);
       if StopError <> '' then
-        MsgBox(StopError + #13#10 + 'Some files may not be removed.', mbError, MB_OK);
+        SuppressibleMsgBox(StopError + #13#10 + 'Some files may not be removed.', mbError, MB_OK, IDOK);
 
       for I := 0 to Names.Count - 1 do
       begin
@@ -925,7 +970,7 @@ begin
         if Length(SvcName) = 0 then Continue;
 
         // 2. Data Removal
-        if MsgBox('Do you wish to remove all data for service "' + SvcName + '" (cache, logs...)?', mbInformation, MB_YESNO) = IDYES then
+        if SuppressibleMsgBox('Do you wish to remove all data for service "' + SvcName + '" (cache, logs...)?', mbInformation, MB_YESNO, IDNO) = IDYES then
         begin
           // Look up data dir in the specific registry key for this service
           if RegQueryStringValue(HKLM, 'SYSTEM\CurrentControlSet\Services\' + SvcName, 'DataDir', DirToDelete) then
@@ -935,8 +980,9 @@ begin
           end;
         end;
 
-        // 3. Delete Service
-        ExecCmd('sc.exe', 'delete "' + SvcName + '"', '');
+        // 3. Delete Service (the manifest may list one that no longer exists, see LoadServiceManifest)
+        if ServiceExists(SvcName) then
+          ExecCmd('sc.exe', 'delete "' + SvcName + '"', '');
       end;
     finally
       Names.Free;
