@@ -1,4 +1,5 @@
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { InputType, OutputType } from '../../shared/model/connector/transformer-manifest.model';
 import { DataSourceType, TransformerLanguage } from '../../shared/model/domain/transformer.model';
 
 import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntity } from './south-connector.model';
@@ -6,8 +7,8 @@ import { BaseEntity } from './types';
 
 export interface BaseTransformer {
   id: string;
-  inputType: string;
-  outputType: string;
+  inputType: InputType;
+  outputType: OutputType;
   type: 'custom' | 'standard';
 }
 

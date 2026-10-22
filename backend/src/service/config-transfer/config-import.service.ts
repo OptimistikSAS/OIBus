@@ -791,8 +791,8 @@ export default class ConfigImportService {
       const settings = transformer.settings as {
         name: string;
         description: string;
-        inputType: string;
-        outputType: string;
+        inputType: CustomTransformer['inputType'];
+        outputType: CustomTransformer['outputType'];
         language: CustomTransformer['language'];
         timeout: number;
         customCode: string;
