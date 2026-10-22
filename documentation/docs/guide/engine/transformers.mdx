@@ -60,16 +60,17 @@ the transformer's position in the list.
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
 
-| South connector type                                                                 | Compatible standard transformers                                                           |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, OSIsoft PI, OIAnalytics** (PLC / historian)  | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB** (file / query-based)          | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB** (query-based, row-list output) | CSV (from Record list)                                                                     |
-| **OIBus API**                                                                        | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **OIAnalytics Setpoint**                                                             | MQTT payloads, Modbus values, OPCUA values                                                 |
+| South connector type                                                                               | Compatible standard transformers                                                           |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI** (PLC / historian)                     | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
+| **MQTT, InfluxDB, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB, OIAnalytics** (file / query-based) | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB** (query-based, row-list output)               | CSV (from Record list)                                                                     |
+| **OIBus API**                                                                                      | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **OIAnalytics Setpoint**                                                                           | MQTT payloads, Modbus values, OPCUA values                                                 |
 
-Custom transformers are also shown in this list and are always named by the user. In addition, **Ignore** and
-**No transform** (see below) are available for every source type.
+Custom transformers are also shown in this list and are always named by the user. In addition, **Ignore** is
+available for every source type, and **No transform** (see below) when the North connector accepts the source's data
+as is.
 
 After choosing a transformer, its settings form appears directly in the modal.
 
@@ -83,7 +84,9 @@ Standard transformers are built-in and require only configuration — no coding.
 
 ### Ignore and No transform {#ignore-and-no-transform}
 
-These two are available for **every** source type, regardless of content type, and require no configuration.
+These two require no configuration. **Ignore** is available for every source type; **No transform** only when the
+North connector accepts the source's data as is (e.g. time-values for the Console, File Writer or OIAnalytics North,
+files for any file-based North). MQTT, InfluxDB and OIBus API JSON payloads are cached as JSON files.
 
 | Transformer      | Behavior                                                                                                                                                                                                         |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -770,6 +773,11 @@ standard or custom — end-to-end against real, freshly-collected data from the 
 3. Run the test. The modal shows the full pipeline: **Raw result → Transformer (+ options) → Transformed
    output**, so you can validate a transformer against the item's actual data before it ever reaches the
    North's cache.
+
+Only the transformers of that North applied to the tested item are listed: those of the item's South connector,
+scoped to all its items or to a selection containing it. For file-based connectors (Folder Scanner, FTP, SFTP), the raw
+result lists the matching files; when a transformer is selected, it runs on the content of the most recent matching
+file, as it would at runtime.
 
 ---
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import type { Writable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import { type Client as FTPClient, FileInfo, FileType } from 'basic-ftp';
@@ -427,6 +428,37 @@ describe('SouthFTP', () => {
 
       assert.ok(result.result.type === 'time-values');
       assert.strictEqual(result.result.content.length, 1);
+    });
+
+    it('should test item with the content of the most recent matching file to transform', async () => {
+      ftpClient.list.mock.mockImplementation(async () => [
+        createFileInfo('old.csv', { modifiedAt: new Date(DateTime.now().minus({ minutes: 5 }).toMillis()) }),
+        createFileInfo('recent.csv'),
+        createFileInfo('undated.csv', { modifiedAt: undefined })
+      ]);
+      ftpClient.downloadTo.mock.mockImplementation(async (destination: string | Writable) => {
+        (destination as Writable).write(Buffer.from('a;b'));
+        return { code: 226, message: 'done' };
+      });
+
+      const result = await south.testItem(configuration.items[0], {
+        history: undefined,
+        transformer: { transformerId: 'transformerId', options: {} }
+      });
+
+      assert.deepStrictEqual(result.result, { type: 'any', filePath: 'recent.csv', filename: 'recent.csv', content: 'a;b' });
+      assert.strictEqual(ftpClient.downloadTo.mock.calls[0].arguments[1], 'input/recent.csv');
+      assert.strictEqual(ftpClient.close.mock.calls.length, 1);
+    });
+
+    it('should throw when no file matches to transform', async () => {
+      ftpClient.list.mock.mockImplementation(async () => []);
+
+      await assert.rejects(
+        south.testItem(configuration.items[0], { history: undefined, transformer: { transformerId: 'transformerId', options: {} } }),
+        /No file matching ".*\.csv" in "input" to transform/
+      );
+      assert.strictEqual(ftpClient.close.mock.calls.length, 1);
     });
   });
 

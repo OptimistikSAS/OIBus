@@ -165,7 +165,7 @@ export default class SouthFolderScanner
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings
+    testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
     const connectStart = DateTime.now().toMillis();
     await this.testConnection();
@@ -174,17 +174,35 @@ export default class SouthFolderScanner
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     const filesInFolder = await fs.readdir(inputFolder);
     const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
-    const matchedFiles: Array<{ name: string; modifyTime: Instant }> = [];
+    const matchedFiles: Array<{ name: string; modifyTime: number }> = [];
     for (const file of filteredFiles) {
       const stats = await fs.stat(path.join(inputFolder, file));
       if (checkAge(item, file, stats.mtimeMs, [], this.logger)) {
-        matchedFiles.push({ name: file, modifyTime: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()! });
+        matchedFiles.push({ name: file, modifyTime: stats.mtimeMs });
       }
     }
+
+    // A transformer runs on the files the connector sends: give it the most recent matching file
+    if (testingSettings.transformer) {
+      const lastFile = matchedFiles.reduce<(typeof matchedFiles)[number] | null>(
+        (last, file) => (!last || file.modifyTime > last.modifyTime ? file : last),
+        null
+      );
+      if (!lastFile) {
+        throw new OIBusTestingError(`No file matching "${item.settings.regex}" in "${inputFolder}" to transform`);
+      }
+      const content = await fs.readFile(path.join(inputFolder, lastFile.name), 'utf-8');
+      return {
+        result: { type: 'any', filePath: lastFile.name, filename: lastFile.name, content },
+        connectionDuration,
+        queryDuration: DateTime.now().toMillis() - queryStart
+      };
+    }
+
     const queryDuration = DateTime.now().toMillis() - queryStart;
     const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
       pointId: item.name,
-      timestamp: file.modifyTime,
+      timestamp: DateTime.fromMillis(file.modifyTime).toUTC().toISO()!,
       data: { value: file.name }
     }));
     return {

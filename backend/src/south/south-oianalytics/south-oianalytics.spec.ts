@@ -209,15 +209,16 @@ describe('SouthOIAnalytics', () => {
   });
 
   describe('testItem', () => {
-    it('should parse and return formatted content', async () => {
+    it('should return the CSV content sent by the connector', async () => {
       const mockRawData = [{ raw: 'data' }];
-      const mockFormatted = [{ pointId: 'p1', value: 10 }];
+      const mockFormatted = [{ pointId: 'p1', timestamp: '2023-02-01T12:00:00.000Z', data: { value: 12, unit: '°C' } }];
 
       HTTPRequest.mock.mockImplementation(async () => {
         mock.timers.tick(25);
         return createMockResponse(200, mockRawData);
       });
       utilsOianalyticsExports.parseData.mock.mockImplementation(() => ({ formattedResult: mockFormatted }));
+      utilsExports.formatInstant.mock.mockImplementation(() => '2023-02-01');
 
       const testingSettings = {
         history: { startTime: 'start', endTime: 'end' }
@@ -226,13 +227,12 @@ describe('SouthOIAnalytics', () => {
       const result = await south.testItem(baseConfiguration.items[0], testingSettings);
 
       assert.strictEqual(HTTPRequest.mock.calls.length, 1);
-      assert.strictEqual(utilsOianalyticsExports.parseData.mock.calls.length, 1);
       assert.deepStrictEqual(utilsOianalyticsExports.parseData.mock.calls[0].arguments, [mockRawData]);
-      assert.deepStrictEqual(result, {
-        result: { type: 'time-values', content: mockFormatted },
-        connectionDuration: 0,
-        queryDuration: 25
-      });
+      assert.ok(result.result.type === 'any');
+      assert.match(result.result.filePath, /sql-.*\.csv$/);
+      assert.strictEqual(result.result.content, 'pointId,timestamp,value,unit\r\np1,2023-02-01,12,°C');
+      assert.strictEqual(result.connectionDuration, 0);
+      assert.strictEqual(result.queryDuration, 25);
     });
   });
 
