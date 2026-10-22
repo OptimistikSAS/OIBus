@@ -65,6 +65,47 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
     });
   });
 
+  it('should convert the values of an array in memory, and skip the values a Modbus cannot hold', async () => {
+    const options = {
+      mapping: [
+        { pointId: 'coil1', address: 0x0001, modbusType: 'coil' },
+        { pointId: 'coil2', address: 0x0002, modbusType: 'coil' },
+        { pointId: 'register1', address: 0x0003, modbusType: 'register' },
+        { pointId: 'register2', address: 0x0004, modbusType: 'register' }
+      ]
+    };
+    const transformer = new OIBusTimeValuesToModbusTransformer(logger, testData.transformers.list[0], options);
+    const values: Array<OIBusTimeValue> = [
+      { pointId: 'coil1', timestamp: testData.constants.dates.DATE_1, data: { value: 'false' } },
+      { pointId: 'coil2', timestamp: testData.constants.dates.DATE_1, data: { value: '0' } },
+      { pointId: 'register1', timestamp: testData.constants.dates.DATE_1, data: { value: 12.7 } },
+      { pointId: 'register2', timestamp: testData.constants.dates.DATE_1, data: { value: 'abc' } }
+    ];
+
+    const result = await transformer.transformInMemory(values, { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [
+      { address: 1, value: false, modbusType: 'coil' },
+      { address: 2, value: false, modbusType: 'coil' },
+      { address: 3, value: 12, modbusType: 'register' }
+    ]);
+    assert.strictEqual(result.metadata.numberOfElement, 3);
+    assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, [
+      'Value "abc" of point "register2" cannot be written into a Modbus register'
+    ]);
+  });
+
+  it('should parse values when transformInMemory receives a JSON string instead of an array', async () => {
+    const transformer = new OIBusTimeValuesToModbusTransformer(logger, testData.transformers.list[0], {
+      mapping: [{ pointId: 'coil1', address: 0x0001, modbusType: 'coil' }]
+    });
+    const values: Array<OIBusTimeValue> = [{ pointId: 'coil1', timestamp: testData.constants.dates.DATE_1, data: { value: 'true' } }];
+
+    const result = await transformer.transformInMemory(JSON.stringify(values), { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [{ address: 1, value: true, modbusType: 'coil' }]);
+  });
+
   it('should return manifest', () => {
     assert.deepStrictEqual(timeValuesToModbusManifest.settings, {
       type: 'object',

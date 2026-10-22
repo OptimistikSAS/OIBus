@@ -101,6 +101,8 @@ export class EditNorthTransformerModalComponent {
   private allTransformers: Array<TransformerDTO> = [];
   readonly selectableOutputs = signal<Array<TransformerDTO>>([]);
   readonly supportedOutputTypes = signal<Array<string>>([]);
+  /** The type of the data of the selected source (`null` when none is selected). */
+  readonly sourceDataType = signal<InputType | null>(null);
   readonly manifest = signal<OIBusObjectAttribute | null>(null);
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
@@ -353,6 +355,7 @@ export class EditNorthTransformerModalComponent {
     this.transformerTestSource.set(source.south ? { kind: 'south', id: source.south.id, southType: source.south.type } : { kind: 'none' });
 
     const dataType = this.getSourceDataType(source);
+    this.sourceDataType.set(dataType);
     this.selectableOutputs.set(
       this.allTransformers.filter(element => isTransformerApplicable(element, dataType, this.supportedOutputTypes()))
     );

@@ -12,6 +12,7 @@ import { ItemLightDTO } from '@oibus/shared/api/south-connector.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { InputType } from '@oibus/shared/connector/transformer-manifest.model';
 
 import {
   NorthTransformerTestComponent,
@@ -81,6 +82,8 @@ export class EditHistoryQueryTransformerModalComponent {
   private allTransformers: Array<TransformerDTO> = [];
   readonly selectableOutputs = signal<Array<TransformerDTO>>([]);
   readonly supportedOutputTypes = signal<Array<string>>([]);
+  /** The type of the data of the history query's south (`null` until it is known). */
+  readonly sourceDataType = signal<InputType | null>(null);
   readonly manifest = signal<OIBusObjectAttribute | null>(null);
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
@@ -269,6 +272,7 @@ export class EditHistoryQueryTransformerModalComponent {
 
   private updateSelectableOutput(southType: OIBusSouthType) {
     const dataType = getAssociatedInputType(southType);
+    this.sourceDataType.set(dataType);
     this.selectableOutputs.set(
       this.allTransformers.filter(element => isTransformerApplicable(element, dataType, this.supportedOutputTypes()))
     );

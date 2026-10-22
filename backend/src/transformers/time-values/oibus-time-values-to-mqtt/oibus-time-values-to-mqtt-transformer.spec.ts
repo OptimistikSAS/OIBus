@@ -68,6 +68,24 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
     });
   });
 
+  it('should transform the values of an array or of a JSON string in memory', async () => {
+    const transformer = new OIBusTimeValuesToMQTTTransformer(logger, testData.transformers.list[0], {
+      mapping: [{ pointId: 'reference1', topic: 'topic1' }]
+    });
+    const values: Array<OIBusTimeValue> = [
+      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 1 } },
+      { pointId: 'reference2', timestamp: testData.constants.dates.DATE_1, data: { value: 2 } }
+    ];
+    const expected = [{ topic: 'topic1', payload: JSON.stringify({ value: 1, timestamp: testData.constants.dates.DATE_1 }) }];
+
+    const fromArray = await transformer.transformInMemory(values, { source: 'test' }, null);
+    const fromString = await transformer.transformInMemory(JSON.stringify(values), { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(fromArray.output.toString()), expected);
+    assert.deepStrictEqual(JSON.parse(fromString.output.toString()), expected);
+    assert.strictEqual(fromArray.metadata.numberOfElement, 1);
+  });
+
   it('should return manifest', () => {
     assert.deepStrictEqual(timeValuesToMqttManifest.settings, {
       type: 'object',
