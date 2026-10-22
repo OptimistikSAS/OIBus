@@ -2952,12 +2952,11 @@
       "updated": "South connector item successfully updated",
       "created": "South connector item successfully created",
       "deleted": "South connector item deleted",
-      "view-last-value": "View Last Value",
+      "view-item": "View item",
       "last-value-error": "Error fetching last value: {{ error }}",
       "last-value-not-available-in-create-mode": "Last value not available in create mode",
-      "last-value-modal": {
-        "title": "Item Last Cached Value",
-        "item-name": "Item Name",
+      "view-item-modal": {
+        "cache": "Cache",
         "query-time": "Last Query Time",
         "tracked-instant": "Tracked Instant",
         "value": "Cached Value",
