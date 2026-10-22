@@ -50,7 +50,7 @@ import { ImportSouthItemsModalComponent } from '../south-items/import-south-item
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import { SaveGroupCommand, SouthItemGroup, SouthItemGroups } from '../south-items/south-item-groups';
-import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
+import { ViewSouthItemModalComponent } from '../south-items/view-south-item-modal/view-south-item-modal.component';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { exploreCheckedActions, WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
@@ -697,19 +697,17 @@ export class SouthDetailComponent {
     });
   }
 
-  getGroupName(item: SouthConnectorItemDTO): string {
-    return item.group?.standardSettings.name || this.translateService.instant('south.items.group-none');
-  }
+  /** Displays the item, with what its cache holds, and edits it if the user chooses to */
+  viewItem(item: SouthConnectorItemDTO) {
+    const modalRef = this.modalService.open(ViewSouthItemModalComponent, { size: 'lg' });
+    const component: ViewSouthItemModalComponent = modalRef.componentInstance;
+    component.prepare(item, this.manifest()!, this.scanModes(), this.certificates());
 
-  viewItemLastValue(item: SouthConnectorItemDTO) {
-    const modalRef = this.modalService.open(ViewItemValueModalComponent, { size: 'lg' });
-    const component: ViewItemValueModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector()!.type, item.name, this.getGroupName(item));
-
-    this.southConnectorService.getItemLastValue(this.southConnector()!.id, item.id!).subscribe({
+    this.southConnectorService.getItemLastValue(this.southConnector()!.id, item.id).subscribe({
       next: response => component.setData(response),
       error: error => component.setError(error.message)
     });
+    modalRef.result.subscribe(() => this.editItem(item));
   }
 
   testConnection() {

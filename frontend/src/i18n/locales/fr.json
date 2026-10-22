@@ -1974,12 +1974,11 @@
       "updated": "Élément du connecteur South mis à jour avec succès",
       "created": "Élément du connecteur South créé avec succès",
       "deleted": "Élément du connecteur South supprimé",
-      "view-last-value": "Voir la dernière valeur",
+      "view-item": "Voir l'élément",
       "last-value-error": "Erreur lors de la récupération de la dernière valeur : {{ error }}",
       "last-value-not-available-in-create-mode": "Dernière valeur non disponible en mode création",
-      "last-value-modal": {
-        "title": "Dernière valeur mise en cache de l'élément",
-        "item-name": "Nom de l'élément",
+      "view-item-modal": {
+        "cache": "Cache",
         "query-time": "Heure de la dernière requête",
         "tracked-instant": "Instant suivi",
         "value": "Valeur mise en cache",

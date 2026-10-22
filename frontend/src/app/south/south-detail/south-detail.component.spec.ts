@@ -39,7 +39,7 @@ import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/ed
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
-import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
+import { ViewSouthItemModalComponent } from '../south-items/view-south-item-modal/view-south-item-modal.component';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 import { SouthDetailComponent } from './south-detail.component';
@@ -122,7 +122,7 @@ class SouthDetailComponentTester {
     return this.rows.nth(index);
   }
 
-  itemAction(index: number, action: 'Edit item' | 'View Last Value' | 'Copy item' | 'Delete item' | 'View item audit history') {
+  itemAction(index: number, action: 'Edit item' | 'View item' | 'Copy item' | 'Delete item' | 'View item audit history') {
     return this.row(index).getByRole('button', { name: action });
   }
 
@@ -655,28 +655,53 @@ describe('SouthDetailComponent', () => {
       await expect.element(tester.noItems).toBeVisible();
     });
 
-    test('should view the last value of an item', async () => {
+    test('should view an item', async () => {
       const tester = await createTester();
-      const viewModal = mockModal(createMock(ViewItemValueModalComponent));
+      const viewModal = createMock(ViewSouthItemModalComponent);
+      modalService.mockDismissedModal(viewModal);
       const response: SouthItemLastValueResponse = { itemLastValue: null, groupLastValue: null };
       southConnectorService.getItemLastValue.mockReturnValue(of(response));
 
-      await tester.itemAction(2, 'View Last Value').click();
+      await tester.itemAction(2, 'View item').click();
 
-      expect(viewModal.prepare).toHaveBeenCalledWith('folder-scanner', 'item c', 'Group A');
+      expect(viewModal.prepare).toHaveBeenCalledWith(itemC, manifest, scanModes, []);
       expect(southConnectorService.getItemLastValue).toHaveBeenCalledWith('southId1', 'itemC');
       expect(viewModal.setData).toHaveBeenCalledWith(response);
     });
 
-    test('should display the error when the last value of an item cannot be fetched', async () => {
+    test('should display the error when the cache of an item cannot be fetched', async () => {
       const tester = await createTester();
-      const viewModal = mockModal(createMock(ViewItemValueModalComponent));
+      const viewModal = createMock(ViewSouthItemModalComponent);
+      modalService.mockDismissedModal(viewModal);
       southConnectorService.getItemLastValue.mockReturnValue(throwError(() => new Error('boom')));
 
-      await tester.itemAction(0, 'View Last Value').click();
+      await tester.itemAction(0, 'View item').click();
 
-      expect(viewModal.prepare).toHaveBeenCalledWith('folder-scanner', 'item b', 'None');
+      expect(viewModal.prepare).toHaveBeenCalledWith(itemB, manifest, scanModes, []);
       expect(viewModal.setError).toHaveBeenCalledWith('boom');
+    });
+
+    test('should edit an item from its view', async () => {
+      const tester = await createTester();
+      const viewModal = mockModal(createMock(ViewSouthItemModalComponent));
+      const editModal = createMock(EditSouthItemModalComponent);
+      // the edit modal opens once the view modal is closed
+      viewModal.prepare.mockImplementation(() => modalService.mockDismissedModal(editModal));
+      southConnectorService.getItemLastValue.mockReturnValue(of({ itemLastValue: null, groupLastValue: null }));
+
+      await tester.itemAction(1, 'View item').click();
+
+      expect(editModal.prepareForEdition).toHaveBeenCalledWith(
+        southConnector.items,
+        scanModes,
+        [],
+        expect.anything(),
+        manifest,
+        itemA,
+        'southId1',
+        expect.objectContaining({ id: 'southId1' }),
+        1
+      );
     });
 
     test('should export the items', async () => {

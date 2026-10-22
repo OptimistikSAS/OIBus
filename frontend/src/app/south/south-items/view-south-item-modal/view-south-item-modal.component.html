@@ -1,0 +1,124 @@
+@if (item(); as item) {
+  <div class="modal-header">
+    <h4 class="modal-title" id="item-name">{{ item.name }}</h4>
+    <button type="button" class="btn-close" [attr.aria-label]="'common.close' | translate" (click)="close()"></button>
+  </div>
+
+  <div class="modal-body">
+    <!-- Cache: what the item last retrieved, in place of the metrics of the connector page -->
+    <section id="item-cache">
+      <h5 class="oib-section-title" translate="south.items.view-item-modal.cache"></h5>
+      @if (loading()) {
+        <div class="text-center py-4">
+          <div class="spinner-border" role="status"></div>
+        </div>
+      } @else if (error(); as errorMessage) {
+        <div class="alert alert-danger" role="alert">
+          <strong translate="south.items.view-item-modal.error-title"></strong>
+          <hr />
+          <div class="error-message">{{ errorMessage }}</div>
+        </div>
+      } @else {
+        @let lastValue = itemLastValue();
+        <dl class="oib-summary">
+          <div class="oib-summary-entry">
+            <dt translate="south.items.view-item-modal.query-time"></dt>
+            <dd>
+              @if (lastValue?.queryTime; as queryTime) {
+                {{ queryTime | datetime: 'mediumWithSeconds' }}
+              } @else {
+                <span class="oib-summary-empty" translate="south.items.view-item-modal.no-value"></span>
+              }
+            </dd>
+          </div>
+          <div class="oib-summary-entry">
+            <dt translate="south.items.view-item-modal.tracked-instant"></dt>
+            <dd>
+              @if (lastValue?.trackedInstant; as trackedInstant) {
+                {{ trackedInstant | datetime: 'mediumWithSeconds' }}
+              } @else {
+                <span class="oib-summary-empty">–</span>
+              }
+            </dd>
+          </div>
+          <div class="oib-summary-entry oib-summary-wide">
+            <dt translate="south.items.view-item-modal.value"></dt>
+            <dd>
+              @if (!hasValue()) {
+                <span class="oib-summary-empty" translate="south.items.view-item-modal.no-value"></span>
+              } @else if (isFileArray()) {
+                <div class="table-responsive">
+                  <table class="table table-sm mb-0">
+                    <thead>
+                      <tr>
+                        <th translate="south.items.view-item-modal.filename"></th>
+                        <th translate="south.items.view-item-modal.modified-time"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (file of fileArray(); track file) {
+                        <tr>
+                          <td>{{ file.filename }}</td>
+                          <td>{{ file.modifiedTime | datetime: 'mediumWithSeconds' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="oib-summary-note">
+                  {{ 'south.items.view-item-modal.files-tracked' | translate: { count: fileArray().length } }}
+                </div>
+              } @else {
+                <pre class="oib-summary-code">{{ lastValue!.value | json }}</pre>
+              }
+            </dd>
+          </div>
+
+          @if (groupLastValue(); as groupLastValue) {
+            <div class="oib-summary-group" id="group-cache">
+              <div class="oib-summary-group-title" translate="south.items.view-item-modal.group-section-title"></div>
+              <dl class="oib-summary">
+                <div class="oib-summary-entry">
+                  <dt translate="south.items.view-item-modal.tracked-instant"></dt>
+                  <dd>
+                    @if (groupLastValue.trackedInstant; as trackedInstant) {
+                      {{ trackedInstant | datetime: 'mediumWithSeconds' }}
+                    } @else {
+                      <span class="oib-summary-empty">–</span>
+                    }
+                  </dd>
+                </div>
+                <div class="oib-summary-entry oib-summary-wide">
+                  <dt translate="south.items.view-item-modal.value"></dt>
+                  <dd>
+                    @if (groupHasValue()) {
+                      <pre class="oib-summary-code">{{ groupLastValue.value | json }}</pre>
+                    } @else {
+                      <span class="oib-summary-empty" translate="south.items.view-item-modal.no-value"></span>
+                    }
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          }
+        </dl>
+      }
+    </section>
+
+    <!-- Settings: as summed up in the Review step of the edit modal -->
+    @if (summary(); as summary) {
+      <h5 class="oib-section-title" translate="south.edit-item-modal.step.general"></h5>
+      <oib-oibus-settings-summary id="item-summary" [settings]="summary.general" />
+      <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
+      <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" />
+    }
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="close()" translate="common.close"></button>
+    <button type="button" class="btn btn-primary" id="edit-item" (click)="edit()">
+      <span class="fa-solid fa-pencil me-1" aria-hidden="true"></span>
+      <span translate="common.edit"></span>
+    </button>
+  </div>
+}
