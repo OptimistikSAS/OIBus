@@ -261,10 +261,24 @@
 				"additionalProperties": false
 			},
 			"InputType": {
-				"type": "string"
+				"type": "string",
+				"enum": [
+					"any",
+					"time-values",
+					"setpoint",
+					"record-list"
+				]
 			},
 			"OutputType": {
-				"type": "string"
+				"type": "string",
+				"enum": [
+					"any",
+					"time-values",
+					"opcua",
+					"mqtt",
+					"modbus",
+					"oianalytics"
+				]
 			},
 			"OIBusObjectAttribute": {
 				"description": "Object-type attribute that groups related attributes.\nUsed to create nested form structures.",
@@ -1351,14 +1365,14 @@
 						"description": "The type of the transformer (always 'custom' for this interface)."
 					},
 					"inputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
-						"example": "string"
+						"example": "time-values"
 					},
 					"outputType": {
-						"type": "string",
+						"$ref": "#/components/schemas/OutputType",
 						"description": "The output data type that the transformer produces.",
-						"example": "number"
+						"example": "any"
 					},
 					"name": {
 						"type": "string",
@@ -45193,12 +45207,12 @@
 					"inputType": {
 						"type": "string",
 						"description": "The input data type that the transformer accepts.",
-						"example": "string"
+						"example": "time-values"
 					},
 					"outputType": {
 						"type": "string",
 						"description": "The output data type that the transformer produces.",
-						"example": "number"
+						"example": "any"
 					}
 				},
 				"required": [

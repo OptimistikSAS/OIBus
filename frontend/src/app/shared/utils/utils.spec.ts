@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
 
 import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { InputType, OutputType } from '@oibus/shared/connector/transformer-manifest.model';
 
 import testData from '../../../test/test-data';
 import { getAssociatedInputType, isTransformerApplicable } from './utils';
 
-const standard = (functionName: string, inputType: string, outputType: string): TransformerDTO => ({
+const standard = (functionName: string, inputType: InputType, outputType: OutputType): TransformerDTO => ({
   id: functionName,
   type: 'standard',
   functionName,

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 
@@ -7,9 +7,11 @@ import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { HistoryQueryLightDTO } from '@oibus/shared/api/history-query.model';
 import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
 import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { InputType } from '@oibus/shared/connector/transformer-manifest.model';
 
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { NorthConnectorService } from '../../../services/north-connector.service';
+import { isTransformerApplicable } from '../../utils/utils';
 
 interface SelectableAttachment {
   id: string;
@@ -40,6 +42,8 @@ export class SelectExistingTransformerComponent {
   readonly sourceKind = input.required<'north' | 'history-query'>();
   /** Only transformers whose output type is in this list are selectable. */
   readonly supportedOutputTypes = input.required<Array<string>>();
+  /** The type of the data of the source the transformer is attached to (`null` when none is selected yet). */
+  readonly dataType = input<InputType | null>(null);
 
   readonly transformerPicked = output<{ transformer: TransformerDTO; options: Record<string, unknown> }>();
 
@@ -48,7 +52,13 @@ export class SelectExistingTransformerComponent {
 
   readonly selectedSourceId = signal<string | null>(null);
   readonly selectedAttachmentId = signal<string | null>(null);
-  readonly attachments = signal<Array<SelectableAttachment>>([]);
+  private readonly sourceAttachments = signal<Array<SelectableAttachment>>([]);
+  /** The transformers of the selected north / history query that can be applied to the data of the source. */
+  readonly attachments = computed(() =>
+    this.sourceAttachments().filter(attachment =>
+      isTransformerApplicable(attachment.transformer, this.dataType(), this.supportedOutputTypes())
+    )
+  );
   readonly loading = signal(false);
 
   constructor() {
@@ -57,13 +67,13 @@ export class SelectExistingTransformerComponent {
       this.sourceKind();
       this.selectedSourceId.set(null);
       this.selectedAttachmentId.set(null);
-      this.attachments.set([]);
+      this.sourceAttachments.set([]);
     });
   }
 
   onSourceChange() {
     this.selectedAttachmentId.set(null);
-    this.attachments.set([]);
+    this.sourceAttachments.set([]);
     const selectedSourceId = this.selectedSourceId();
     if (!selectedSourceId) {
       return;
@@ -73,32 +83,28 @@ export class SelectExistingTransformerComponent {
     if (this.sourceKind() === 'north') {
       this.northConnectorService.findById(selectedSourceId).subscribe(northConnector => {
         this.loading.set(false);
-        this.attachments.set(
-          northConnector.transformers
-            .filter(transformerWithOptions => this.supportedOutputTypes().includes(transformerWithOptions.transformer.outputType))
-            .map(transformerWithOptions => ({
-              id: transformerWithOptions.id,
-              label:
-                transformerWithOptions.source.type === 'south'
-                  ? `${this.transformerLabel(transformerWithOptions.transformer)} (${transformerWithOptions.source.south.name})`
-                  : this.transformerLabel(transformerWithOptions.transformer),
-              transformer: transformerWithOptions.transformer,
-              options: transformerWithOptions.options
-            }))
+        this.sourceAttachments.set(
+          northConnector.transformers.map(transformerWithOptions => ({
+            id: transformerWithOptions.id,
+            label:
+              transformerWithOptions.source.type === 'south'
+                ? `${this.transformerLabel(transformerWithOptions.transformer)} (${transformerWithOptions.source.south.name})`
+                : this.transformerLabel(transformerWithOptions.transformer),
+            transformer: transformerWithOptions.transformer,
+            options: transformerWithOptions.options
+          }))
         );
       });
     } else {
       this.historyQueryService.findById(selectedSourceId).subscribe(historyQuery => {
         this.loading.set(false);
-        this.attachments.set(
-          historyQuery.northTransformers
-            .filter(transformerWithOptions => this.supportedOutputTypes().includes(transformerWithOptions.transformer.outputType))
-            .map(transformerWithOptions => ({
-              id: transformerWithOptions.id,
-              label: this.transformerLabel(transformerWithOptions.transformer),
-              transformer: transformerWithOptions.transformer,
-              options: transformerWithOptions.options
-            }))
+        this.sourceAttachments.set(
+          historyQuery.northTransformers.map(transformerWithOptions => ({
+            id: transformerWithOptions.id,
+            label: this.transformerLabel(transformerWithOptions.transformer),
+            transformer: transformerWithOptions.transformer,
+            options: transformerWithOptions.options
+          }))
         );
       });
     }

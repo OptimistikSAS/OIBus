@@ -74,6 +74,26 @@ describe('OIBusSetpointToModbusTransformer', () => {
     assert.deepStrictEqual(JSON.parse(result.output.toString()), [{ address: 1, value: true, modbusType: 'coil' }]);
   });
 
+  it('should skip the setpoints a Modbus cannot hold', async () => {
+    const transformer = new OIBusSetpointToModbusTransformer(logger, testData.transformers.list[0], {
+      mapping: [
+        { reference: 'coil1', address: 0x0001, modbusType: 'coil' },
+        { reference: 'register1', address: 0x0002, modbusType: 'register' }
+      ]
+    });
+    const setpoints: Array<OIBusSetpoint> = [
+      { reference: 'coil1', value: 'false' },
+      { reference: 'register1', value: 'on' }
+    ];
+
+    const result = await transformer.transformInMemory(setpoints, { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [{ address: 1, value: false, modbusType: 'coil' }]);
+    assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, [
+      'Value "on" of setpoint "register1" cannot be written into a Modbus register'
+    ]);
+  });
+
   it('should return manifest', () => {
     assert.deepStrictEqual(setpointToModbusManifest.settings, {
       type: 'object',

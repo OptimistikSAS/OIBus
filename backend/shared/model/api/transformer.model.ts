@@ -351,15 +351,15 @@ export interface CustomTransformerCommandDTO {
 
   /**
    * The input data type that the transformer accepts.
-   * @example "string"
+   * @example "time-values"
    */
-  inputType: string;
+  inputType: InputType;
 
   /**
    * The output data type that the transformer produces.
-   * @example "number"
+   * @example "any"
    */
-  outputType: string;
+  outputType: OutputType;
 
   /**
    * The name of the custom transformer.

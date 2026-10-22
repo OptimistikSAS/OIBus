@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import { DateTime } from 'luxon';
 
+import { INPUT_TYPES, OUTPUT_TYPES } from '../../../../shared/model/connector/transformer-manifest.model';
 import { AUTH_TOKEN_DURATIONS, WEB_SERVER_CERTIFICATE_SOURCES } from '../../../../shared/model/domain/engine.model';
 import { INTERVAL_UNITS, SCAN_MODE_TYPES, ScanModeInterval } from '../../../../shared/model/domain/scan-mode.model';
 
@@ -252,8 +253,12 @@ const transformerSchema: Joi.ObjectSchema = Joi.object({
   type: Joi.string().required().allow('custom'),
   name: Joi.string().required(),
   description: Joi.string().required().allow(null, ''),
-  inputType: Joi.string().required(),
-  outputType: Joi.string().required(),
+  inputType: Joi.string()
+    .required()
+    .valid(...INPUT_TYPES),
+  outputType: Joi.string()
+    .required()
+    .valid(...OUTPUT_TYPES),
   language: Joi.string().required(),
   customCode: Joi.string().required(),
   customManifest: Joi.object().required(),

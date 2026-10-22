@@ -65,6 +65,23 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
     });
   });
 
+  it('should transform the values of an array or of a JSON string in memory', async () => {
+    const transformer = new OIBusTimeValuesToOPCUATransformer(logger, testData.transformers.list[0], {
+      mapping: [{ pointId: 'reference1', nodeId: 'ns=1;s=node1' }]
+    });
+    const values: Array<OIBusTimeValue> = [
+      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 1 } },
+      { pointId: 'reference2', timestamp: testData.constants.dates.DATE_1, data: { value: 2 } }
+    ];
+
+    const fromArray = await transformer.transformInMemory(values, { source: 'test' }, null);
+    const fromString = await transformer.transformInMemory(JSON.stringify(values), { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(fromArray.output.toString()), [{ nodeId: 'ns=1;s=node1', value: 1 }]);
+    assert.deepStrictEqual(JSON.parse(fromString.output.toString()), [{ nodeId: 'ns=1;s=node1', value: 1 }]);
+    assert.strictEqual(fromArray.metadata.numberOfElement, 1);
+  });
+
   it('should return manifest', () => {
     assert.deepStrictEqual(timeValuesToOpcuaManifest.settings, {
       type: 'object',

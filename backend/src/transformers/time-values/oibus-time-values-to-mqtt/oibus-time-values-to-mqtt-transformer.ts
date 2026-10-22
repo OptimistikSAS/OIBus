@@ -1,49 +1,47 @@
 import { ReadStream } from 'node:fs';
-import { pipeline, Readable, Transform } from 'node:stream';
-import { promisify } from 'node:util';
+import { Readable } from 'node:stream';
 
 import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
 import { TransformerTimeValuesToMqttSettings } from '../../../../shared/model/connector/transformer-settings.model';
 import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
-import { generateRandomId } from '../../../service/utils';
+import { generateRandomId, streamToString } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
 import OIBusTransformer from '../../oibus-transformer';
-
-const pipelineAsync = promisify(pipeline);
 
 export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-mqtt';
 
   async transform(
     data: ReadStream | Readable,
+    source: CacheMetadataSource,
+    filename: string | null
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
+    const text = await streamToString(data);
+    return this.transformInMemory(JSON.parse(text) as Array<OIBusTimeValue>, source, filename);
+  }
+
+  override transformInMemory(
+    data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
-    // Collect the data from the stream
-    const chunks: Array<Buffer> = [];
-    await pipelineAsync(
-      data,
-      new Transform({
-        transform(chunk, encoding, callback) {
-          chunks.push(chunk);
-          callback();
-        }
-      })
-    );
-    const stringContent = Buffer.concat(chunks).toString('utf-8');
-    // Combine the chunks into a single buffer
-    const content: Array<OIBusMQTTValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>)
-      .map(element => {
-        const mappedElement = this.options.mapping.find(matchingElement => matchingElement.pointId === element.pointId);
-        if (!mappedElement) return null;
-        return {
-          topic: mappedElement.topic,
-          payload: JSON.stringify({ ...element.data, timestamp: element.timestamp })
-        };
-      })
-      .filter((mappedElement): mappedElement is OIBusMQTTValue => mappedElement !== null);
+    const values: Array<OIBusTimeValue> = Array.isArray(data)
+      ? (data as Array<OIBusTimeValue>)
+      : (JSON.parse(String(data)) as Array<OIBusTimeValue>);
+
+    const mappingByPointId = new Map(this.options.mapping.map(m => [m.pointId, m]));
+
+    const content: Array<OIBusMQTTValue> = [];
+    for (const element of values) {
+      const mapped = mappingByPointId.get(element.pointId);
+      if (!mapped) continue;
+      content.push({
+        topic: mapped.topic,
+        payload: JSON.stringify({ ...element.data, timestamp: element.timestamp })
+      });
+    }
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,
@@ -52,10 +50,10 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
       numberOfElement: content.length,
       contentType: 'mqtt'
     };
-    return {
+    return Promise.resolve({
       output: Buffer.from(JSON.stringify(content)),
       metadata
-    };
+    });
   }
 
   get options(): TransformerTimeValuesToMqttSettings {

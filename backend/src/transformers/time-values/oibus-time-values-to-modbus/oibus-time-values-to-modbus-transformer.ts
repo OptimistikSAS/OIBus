@@ -1,51 +1,52 @@
 import { ReadStream } from 'node:fs';
-import { pipeline, Readable, Transform } from 'node:stream';
-import { promisify } from 'node:util';
+import { Readable } from 'node:stream';
 
 import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
 import { TransformerTimeValuesToModbusSettings } from '../../../../shared/model/connector/transformer-settings.model';
 import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
-import { generateRandomId } from '../../../service/utils';
+import { generateRandomId, streamToString } from '../../../service/utils';
 import { OIBusModbusValue } from '../../connector-types.model';
+import { toModbusValue } from '../../modbus-value';
 import OIBusTransformer from '../../oibus-transformer';
-
-const pipelineAsync = promisify(pipeline);
 
 export default class OIBusTimeValuesToModbusTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-modbus';
 
   async transform(
     data: ReadStream | Readable,
+    source: CacheMetadataSource,
+    filename: string | null
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
+    const text = await streamToString(data);
+    return this.transformInMemory(JSON.parse(text) as Array<OIBusTimeValue>, source, filename);
+  }
+
+  override transformInMemory(
+    data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
-    // Collect the data from the stream
-    const chunks: Array<Buffer> = [];
-    await pipelineAsync(
-      data,
-      new Transform({
-        transform(chunk, encoding, callback) {
-          chunks.push(chunk);
-          callback();
-        }
-      })
-    );
-    const stringContent = Buffer.concat(chunks).toString('utf-8');
-    // Combine the chunks into a single buffer
-    const content: Array<OIBusModbusValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>)
-      .map(element => {
-        const mappedElement = this.options.mapping.find(matchingElement => matchingElement.pointId === element.pointId);
-        if (!mappedElement) return null;
+    const values: Array<OIBusTimeValue> = Array.isArray(data)
+      ? (data as Array<OIBusTimeValue>)
+      : (JSON.parse(String(data)) as Array<OIBusTimeValue>);
 
-        return {
-          address: mappedElement.address,
-          value: mappedElement.modbusType === 'coil' ? Boolean(element.data.value) : parseInt(element.data.value as string),
-          modbusType: mappedElement.modbusType
-        };
-      })
-      .filter((mappedElement): mappedElement is OIBusModbusValue => mappedElement !== null);
+    const mappingByPointId = new Map(this.options.mapping.map(m => [m.pointId, m]));
+
+    const content: Array<OIBusModbusValue> = [];
+    for (const element of values) {
+      const mapped = mappingByPointId.get(element.pointId);
+      if (!mapped) continue;
+      const value = toModbusValue(element.data.value, mapped.modbusType);
+      if (value === null) {
+        this.logger.warn(
+          `Value "${element.data.value}" of point "${element.pointId}" cannot be written into a Modbus ${mapped.modbusType}`
+        );
+        continue;
+      }
+      content.push({ address: mapped.address, value, modbusType: mapped.modbusType });
+    }
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,
@@ -54,10 +55,10 @@ export default class OIBusTimeValuesToModbusTransformer extends OIBusTransformer
       numberOfElement: content.length,
       contentType: 'modbus'
     };
-    return {
+    return Promise.resolve({
       output: Buffer.from(JSON.stringify(content)),
       metadata
-    };
+    });
   }
 
   get options(): TransformerTimeValuesToModbusSettings {

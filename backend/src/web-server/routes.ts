@@ -131,12 +131,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InputType": {
         "dataType": "refAlias",
-        "type": {"dataType":"string","validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["time-values"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OutputType": {
         "dataType": "refAlias",
-        "type": {"dataType":"string","validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["time-values"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusObjectAttribute": {
@@ -427,8 +427,8 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "type": {"dataType":"enum","enums":["custom"],"required":true},
-            "inputType": {"dataType":"string","required":true},
-            "outputType": {"dataType":"string","required":true},
+            "inputType": {"ref":"InputType","required":true},
+            "outputType": {"ref":"OutputType","required":true},
             "name": {"dataType":"string","required":true},
             "description": {"dataType":"string","required":true},
             "customCode": {"dataType":"string","required":true},

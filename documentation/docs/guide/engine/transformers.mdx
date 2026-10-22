@@ -218,7 +218,13 @@ Mapping: `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pre
 #### Modbus values {#modbus-values}
 
 Maps each reading to a Modbus write command using a **point ID → address** mapping table. The value is cast to the
-appropriate type: booleans for coils, integers for holding registers. Readings with no match are dropped.
+appropriate type (see [Modbus value conversion](#modbus-value-conversion)). Readings with no match are dropped.
+
+##### Modbus value conversion {#modbus-value-conversion}
+
+Booleans, numbers and their text forms (`true`, `false`, `1`, `0`, `12.5`...) are accepted. A coil is set for `true`
+or any non-zero number, and cleared for `false` or `0`. A register receives the integer part of the number (`12.7` →
+`12`), and `1` / `0` for `true` / `false`. Any other value (e.g. `on`, an empty text) is skipped with a warning.
 
 ##### Settings {#settings-2}
 
@@ -699,8 +705,8 @@ Mapping: `pump1/setSpeed → control/pump1/speed`
 
 #### Modbus values {#modbus-values-1}
 
-Converts setpoint commands into Modbus write commands. Boolean values are written as coils; numeric values are
-parsed as integers and written as holding registers.
+Converts setpoint commands into Modbus write commands, writing each value into the coil or holding register of
+its mapping (see [Modbus value conversion](#modbus-value-conversion)).
 
 ##### Settings {#settings-11}
 

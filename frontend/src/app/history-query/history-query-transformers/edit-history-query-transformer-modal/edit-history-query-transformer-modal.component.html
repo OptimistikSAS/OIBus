@@ -79,6 +79,7 @@
             <oib-select-existing-transformer
               [sourceKind]="creationMode() === 'from-north' ? 'north' : 'history-query'"
               [supportedOutputTypes]="supportedOutputTypes()"
+              [dataType]="sourceDataType()"
               (transformerPicked)="applyExistingTransformer($event)"
             />
           </div>

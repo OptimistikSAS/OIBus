@@ -8,6 +8,7 @@ import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { generateRandomId, streamToString } from '../../../service/utils';
 import { OIBusModbusValue } from '../../connector-types.model';
+import { toModbusValue } from '../../modbus-value';
 import OIBusTransformer from '../../oibus-transformer';
 
 export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
@@ -40,11 +41,14 @@ export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
     for (const element of setpoints) {
       const mapped = mappingByRef.get(element.reference);
       if (!mapped) continue;
-      content.push({
-        address: mapped.address,
-        value: mapped.modbusType === 'coil' ? Boolean(element.value) : parseInt(element.value as string),
-        modbusType: mapped.modbusType
-      });
+      const value = toModbusValue(element.value, mapped.modbusType);
+      if (value === null) {
+        this.logger.warn(
+          `Value "${element.value}" of setpoint "${element.reference}" cannot be written into a Modbus ${mapped.modbusType}`
+        );
+        continue;
+      }
+      content.push({ address: mapped.address, value, modbusType: mapped.modbusType });
     }
 
     const metadata: CacheMetadata = {

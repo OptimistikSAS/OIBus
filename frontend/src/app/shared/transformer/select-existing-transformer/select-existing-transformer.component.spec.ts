@@ -7,6 +7,7 @@ import { page } from 'vitest/browser';
 import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { StandardTransformerDTO, TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { OutputType } from '@oibus/shared/connector/transformer-manifest.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
@@ -15,7 +16,7 @@ import { HistoryQueryService } from '../../../services/history-query.service';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { SelectExistingTransformerComponent } from './select-existing-transformer.component';
 
-const standardTransformer = (id: string, functionName: string, outputType: string): StandardTransformerDTO => ({
+const standardTransformer = (id: string, functionName: string, outputType: OutputType): StandardTransformerDTO => ({
   id,
   type: 'standard',
   functionName,
@@ -141,6 +142,20 @@ describe('SelectExistingTransformerComponent', () => {
     await tester.transformer.selectOptions('Ignore');
 
     expect(tester.picked).toEqual([{ transformer: compatibleTransformer, options: { key: 'history' } }]);
+  });
+
+  test('should only list the transformers applicable to the data of the source', async () => {
+    const tester = new SelectExistingTransformerComponentTester('north', ['any']);
+    tester.fixture.componentRef.setInput('dataType', 'record-list');
+
+    await tester.source.selectOptions(norths[0].name);
+
+    // the custom transformer takes time-values: it cannot be applied to record lists
+    expect(tester.optionLabels(tester.transformer)).toEqual(['', `Ignore (${testData.south.listLight[0].name})`]);
+
+    tester.fixture.componentRef.setInput('dataType', 'time-values');
+
+    await expect.element(tester.transformer.getByRole('option')).toHaveLength(3);
   });
 
   test('should tell when the source has no compatible transformer', async () => {
