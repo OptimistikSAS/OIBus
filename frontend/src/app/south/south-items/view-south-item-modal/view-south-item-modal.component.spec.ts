@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -12,12 +13,17 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup } from '../../../../test/builders';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { EngineService } from '../../../services/engine.service';
+import { HistoryQueryService } from '../../../services/history-query.service';
+import { NorthConnectorService } from '../../../services/north-connector.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 import { provideCurrentUser } from '../../../shared/current-user-testing';
 import { ViewSouthItemModalComponent } from './view-south-item-modal.component';
 
 const manifest = testData.south.manifest;
 const scanModes = testData.scanMode.list;
-const [savedItem] = testData.south.list[0].items;
+const southConnector = testData.south.list[0];
+const [savedItem] = southConnector.items;
 
 class ViewSouthItemModalComponentTester {
   readonly fixture = TestBed.createComponent(ViewSouthItemModalComponent);
@@ -30,9 +36,10 @@ class ViewSouthItemModalComponentTester {
   readonly groupCache = this.root.getByCss('#group-cache');
   readonly closeButton = this.root.getByRole('button', { name: 'Close' });
   readonly editButton = this.root.getByRole('button', { name: 'Edit' });
+  readonly test = this.root.getByCss('#item-test');
 
   constructor(item: SouthConnectorItemDTO = savedItem, itemManifest: SouthConnectorManifest = manifest) {
-    this.fixture.componentInstance.prepare(item, itemManifest, scanModes, []);
+    this.fixture.componentInstance.prepare(item, southConnector, itemManifest, scanModes, []);
   }
 
   /** The value of an entry of the cache, by its label */
@@ -72,7 +79,15 @@ describe('ViewSouthItemModalComponent', () => {
     activeModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideCurrentUser(), { provide: NgbActiveModal, useValue: activeModal }]
+      providers: [
+        provideI18nTesting(),
+        provideCurrentUser(),
+        { provide: NgbActiveModal, useValue: activeModal },
+        { provide: SouthConnectorService, useValue: createMock(SouthConnectorService) },
+        { provide: NorthConnectorService, useValue: createMock(NorthConnectorService, { list: () => of([]) }) },
+        { provide: HistoryQueryService, useValue: createMock(HistoryQueryService) },
+        { provide: EngineService, useValue: createMock(EngineService, { getInfo: () => of(testData.engine.oIBusInfo) }) }
+      ]
     });
   });
 
@@ -87,6 +102,8 @@ describe('ViewSouthItemModalComponent', () => {
     await expect.element(tester.setting('Schedule')).toHaveTextContent('scanMode1');
     await expect.element(tester.setting('Start time offset')).toHaveTextContent('0 ms');
     await expect.element(tester.root.getByCss('#settings-summary')).toBeInTheDocument();
+    await expect.element(tester.test.getByText('Testing item')).toBeVisible();
+    await expect.element(tester.test.getByRole('button', { name: 'Run test' })).toBeVisible();
   });
 
   test('should display the history settings of the group the item is synced with', async () => {

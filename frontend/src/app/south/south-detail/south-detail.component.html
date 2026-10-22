@@ -20,9 +20,6 @@
                     <span translate="south.disabled"></span>
                   }
                 </span>
-                @if (southConnector.description) {
-                  <span id="south-description">{{ southConnector.description }}</span>
-                }
                 <span>
                   <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
                   <button
@@ -37,6 +34,9 @@
                   </button>
                 </span>
               </div>
+              @if (southConnector.description) {
+                <p class="oib-page-description" id="south-description">{{ southConnector.description }}</p>
+              }
             </div>
             <div class="oib-page-actions">
               <button
@@ -315,16 +315,6 @@
                   </button>
                 </ng-template>
                 <ng-template [oibItemTableActions]="items()" let-item>
-                  <!-- Edit button -->
-                  <button
-                    type="button"
-                    class="btn btn-link edit-south-item"
-                    [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
-                    [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
-                    (click)="editItem(item)"
-                  >
-                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                  </button>
                   <!-- View button -->
                   <button
                     type="button"
@@ -334,6 +324,16 @@
                     (click)="viewItem(item)"
                   >
                     <span class="fa-solid fa-search" aria-hidden="true"></span>
+                  </button>
+                  <!-- Edit button -->
+                  <button
+                    type="button"
+                    class="btn btn-link edit-south-item"
+                    [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
+                    [attr.aria-label]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
+                    (click)="editItem(item)"
+                  >
+                    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
                   </button>
                   <!-- Duplicate button -->
                   <button
