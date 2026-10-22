@@ -76,6 +76,8 @@ describe('ExploreNorthCacheComponent', () => {
     const tester = new ExploreNorthCacheComponentTester();
 
     await expect.element(tester.title).toHaveTextContent(`Cache of ${northConnector.name}`);
+    await expect.element(tester.root.getByCss('#north-type')).toHaveTextContent('File writer');
+    await expect.element(tester.root.getByCss('#north-status')).toHaveTextContent('Enabled');
     expect(northConnectorService.findById).toHaveBeenCalledWith(northConnector.id);
     await expect.element(tester.cacheExplore).not.toBeInTheDocument();
 

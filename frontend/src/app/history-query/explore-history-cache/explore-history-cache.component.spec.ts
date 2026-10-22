@@ -76,6 +76,8 @@ describe('ExploreHistoryCacheComponent', () => {
     const tester = new ExploreHistoryCacheComponentTester();
 
     await expect.element(tester.title).toHaveTextContent(`Cache of ${historyQuery.name}`);
+    await expect.element(tester.root.getByCss('#history-query-status')).toHaveTextContent('Running');
+    await expect.element(tester.root.getByCss('#history-query-connectors')).toHaveTextContent('Microsoft SQL Server™ OIAnalytics®');
     expect(historyQueryService.findById).toHaveBeenCalledWith(historyQuery.id);
     await expect.element(tester.cacheExplore).not.toBeInTheDocument();
 

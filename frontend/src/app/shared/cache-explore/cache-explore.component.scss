@@ -1,13 +1,25 @@
 @import '../../../common';
 
-$containerMinHeight: 30vh;
-
-#test-result-container {
-  min-height: $containerMinHeight;
-  outline: solid 1px $mediumGrey;
+.snapshot-date {
+  margin-bottom: 0.75rem;
+  color: $new-link-color;
 }
 
-#loading-spinner-container,
-#message-container {
-  min-height: $containerMinHeight;
+// the unsaved changes stick to the top of the page, under the menu bar, so that they can be saved from any folder
+.unsaved-changes {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border: 1px solid $yellow;
+  border-radius: 1rem;
+  background-color: tint-color($yellow, 88%);
+  color: $darkGrey;
+  font-weight: 600;
 }
