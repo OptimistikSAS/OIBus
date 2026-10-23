@@ -3,12 +3,6 @@
   <div class="oib-section-title">
     <h5 translate="north.transformers.title" id="title"></h5>
     <button type="button" class="btn btn-primary btn-sm" (click)="addTransformer()" translate="north.transformers.add"></button>
-    <button
-      type="button"
-      class="btn btn-outline-primary btn-sm show-routing"
-      (click)="showRouting()"
-      translate="north.transformers.routing.show"
-    ></button>
     <oib-help [url]="helpUrl" />
   </div>
   <ng-container [ngTemplateOutlet]="list" />
@@ -26,12 +20,6 @@
             (click)="addTransformer()"
             translate="north.transformers.add"
           ></button>
-          <button
-            type="button"
-            class="btn btn-outline-primary btn-sm oib-box-btn show-routing"
-            (click)="showRouting()"
-            translate="north.transformers.routing.show"
-          ></button>
           <oib-help [url]="helpUrl" />
         </div>
       </div>
@@ -41,124 +29,186 @@
 }
 
 <ng-template #list>
-  @if (uncoveredSouths().length) {
-    <div class="alert alert-warning mx-2 py-2" id="uncovered-souths">
-      <div class="d-flex justify-content-between align-items-center">
-        <span translate="north.transformers.uncovered.summary" [translateParams]="{ count: uncoveredSouths().length }"></span>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 px-2">
+    <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'north.transformers.list.filter' | translate">
+      @for (sourceFilter of filters; track sourceFilter) {
         <button
           type="button"
-          class="btn btn-link btn-sm alert-link"
-          id="toggle-uncovered-souths"
-          (click)="showUncoveredSouths.set(!showUncoveredSouths())"
-          [translate]="showUncoveredSouths() ? 'north.transformers.uncovered.hide' : 'north.transformers.uncovered.show'"
-        ></button>
-      </div>
-      @if (showUncoveredSouths()) {
-        <ul class="list-unstyled mb-0 mt-2">
-          @for (uncovered of uncoveredSouths(); track uncovered.south.id) {
-            <li class="d-flex justify-content-between align-items-center uncovered-south">
-              <span>
-                {{ uncovered.south.name }} ({{ uncovered.south.type | oIBusSouthTypeEnum }}):
-                {{ 'north.transformers.uncovered.' + uncovered.coverage | translate }}
-              </span>
-              @if (uncovered.coverage === 'none') {
-                <button
-                  type="button"
-                  class="btn btn-link btn-sm alert-link"
-                  (click)="addTransformer(uncovered.south)"
-                  translate="north.transformers.add"
-                ></button>
-              } @else {
-                <button
-                  type="button"
-                  class="btn btn-link btn-sm alert-link"
-                  (click)="showRouting(uncovered.south)"
-                  translate="north.transformers.routing.show"
-                ></button>
-              }
-            </li>
-          }
-        </ul>
+          class="btn btn-outline-secondary source-filter"
+          [class.active]="filter() === sourceFilter"
+          [attr.aria-pressed]="filter() === sourceFilter"
+          (click)="filter.set(sourceFilter)"
+        >
+          {{ 'north.transformers.list.filters.' + sourceFilter | translate }} ({{ counts()[sourceFilter] }})
+        </button>
       }
     </div>
-  }
-  @if (transformersWithOptions().length) {
-    <div class="mb-3 px-2">
-      <table class="table table-sm table-hover oib-table">
-        <thead class="light">
-          <tr>
-            <th translate="north.transformers.source"></th>
-            <th translate="north.transformers.output"></th>
-            <th class="oib-actions-column-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (transformerWithOptions of transformersWithOptions(); track transformerWithOptions.id) {
-            <tr>
-              <td>
-                @let parts = getSourceParts(transformerWithOptions);
-                @if (parts) {
-                  {{ parts.prefix }}[<span
-                    [ngbTooltip]="getSourceTooltip(transformerWithOptions)"
-                    tooltipClass="items-tooltip"
-                    container="body"
-                    >{{ parts.itemLabel }}</span
-                  >]
-                } @else {
-                  {{ formatTransformerSource(transformerWithOptions) }}
-                }
-              </td>
-              <td>
-                @if (transformerWithOptions.transformer.type === 'standard') {
-                  <span>{{
-                    'configuration.oibus.manifest.transformers.standard.' + transformerWithOptions.transformer.functionName | translate
-                  }}</span>
-                } @else {
-                  <span>{{ transformerWithOptions.transformer.name }}</span>
-                }
-              </td>
-              <td class="oib-actions">
-                <button
-                  type="button"
-                  class="btn btn-link edit-transformer"
-                  [ngbTooltip]="'north.transformers.tooltips.edit' | translate"
-                  [attr.aria-label]="'north.transformers.tooltips.edit' | translate"
-                  (click)="editTransformer(transformerWithOptions)"
-                >
-                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-link delete-transformer"
-                  [ngbTooltip]="'north.transformers.tooltips.delete' | translate"
-                  [attr.aria-label]="'north.transformers.tooltips.delete' | translate"
-                  (click)="deleteTransformer(transformerWithOptions)"
-                >
-                  <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
-                </button>
-                <!-- Audit history button: only for saved transformers (the edit page works on unsaved ones) -->
-                @if (saveChangesDirectly()) {
-                  <button
-                    type="button"
-                    class="btn btn-link show-audit-transformer"
-                    [ngbTooltip]="'north.transformers.tooltips.audit' | translate"
-                    [attr.aria-label]="'north.transformers.tooltips.audit' | translate"
-                    (click)="showAudit(transformerWithOptions)"
-                  >
-                    <span class="fa-solid fa-history" aria-hidden="true"></span>
-                  </button>
-                }
-              </td>
-            </tr>
+    <input
+      class="form-control form-control-sm w-auto"
+      id="source-search"
+      [attr.aria-label]="'north.transformers.list.search' | translate"
+      [placeholder]="'north.transformers.list.search' | translate"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+    />
+  </div>
+  <div class="mb-3 px-2" id="north-sources">
+    <div class="routing-row routing-header">
+      <div translate="north.transformers.source"></div>
+      <div translate="north.transformers.list.transformer"></div>
+      <div></div>
+    </div>
+    @for (source of filteredSources(); track source.key) {
+      <div class="routing-row source-row" [class.routing-incompatible]="source.status === 'incompatible'">
+        <div>
+          @if (source.south && source.status !== 'incompatible') {
+            <button
+              type="button"
+              class="btn btn-sm routing-toggle"
+              [attr.aria-label]="
+                (expandedSouths().has(source.key) ? 'north.transformers.list.collapse' : 'north.transformers.list.expand') | translate
+              "
+              [attr.aria-expanded]="expandedSouths().has(source.key)"
+              (click)="toggleSouth(source)"
+            >
+              <span
+                [class]="expandedSouths().has(source.key) ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right'"
+                aria-hidden="true"
+              ></span>
+            </button>
+          } @else {
+            <span class="d-inline-block routing-toggle-placeholder"></span>
           }
-        </tbody>
-      </table>
-    </div>
-  } @else if (layout() === 'section') {
-    <p class="text-muted" id="no-transformer" translate="north.transformers.none"></p>
-  } @else {
-    <div>
-      <div class="mb-3 oib-grey-container" id="no-transformer" translate="north.transformers.none"></div>
-    </div>
+          @if (source.south) {
+            <span [class]="source.south.enabled ? 'green-dot me-2 d-inline-block' : 'grey-dot me-2 d-inline-block'"></span>
+            <span class="source-name">{{ source.south.name }}</span>
+            <small class="text-body-secondary ms-1"
+              >{{ source.south.type | oIBusSouthTypeEnum
+              }}{{ source.south.enabled ? '' : ' — ' + ('north.transformers.list.paused' | translate) }}</small
+            >
+          } @else {
+            <span
+              [class]="source.dataSourceType === 'oibus-api' ? 'fa-solid fa-plug me-2' : 'fa-solid fa-bolt me-2'"
+              aria-hidden="true"
+            ></span>
+            <span class="source-name">{{ sourceName(source) }}</span>
+          }
+        </div>
+        <div class="routing-transformer">
+          @for (transformer of source.transformers; track transformer.id) {
+            <span>
+              <span
+                class="routing-chip"
+                [class.routing-unused]="unusedTransformerIds().has(transformer.id)"
+                [ngbTooltip]="unusedTransformerIds().has(transformer.id) ? ('north.transformers.list.unused' | translate) : null"
+                >{{ name(transformer) }}</span
+              >
+              <small class="text-body-secondary ms-1">{{ scope(transformer) }}</small>
+            </span>
+          } @empty {
+            @switch (source.status) {
+              @case ('incompatible') {
+                <small translate="north.transformers.list.incompatible"></small>
+              }
+              @case ('partial') {
+                <span class="routing-chip routing-dropped" translate="north.transformers.list.partly-dropped"></span>
+              }
+              @default {
+                <span class="routing-chip routing-dropped" translate="north.transformers.list.dropped"></span>
+              }
+            }
+          }
+          @if (source.south && source.otherTransformers.length) {
+            <small
+              class="text-body-secondary"
+              translate="north.transformers.list.on-groups-or-items"
+              [translateParams]="{ count: source.otherTransformers.length }"
+            ></small>
+          }
+        </div>
+        <div class="routing-actions">
+          @for (transformer of source.transformers; track transformer.id) {
+            <ng-container [ngTemplateOutlet]="transformerActions" [ngTemplateOutletContext]="{ $implicit: transformer }" />
+          }
+          @if (source.status !== 'incompatible') {
+            @if (!source.transformers.length && source.quickTransformer; as quickTransformer) {
+              <button type="button" class="btn btn-sm btn-outline-primary quick-add" (click)="quickAdd(source)">
+                <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>{{ name(quickTransformer) }}
+              </button>
+            }
+            @if (!source.transformers.length || source.dataSourceType === 'oibus-api') {
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary add-for-source"
+                (click)="addTransformer({ dataSourceType: source.dataSourceType, south: source.south ?? undefined })"
+                [translate]="source.transformers.length ? 'north.transformers.list.add-data-source' : 'north.transformers.list.other'"
+              ></button>
+            }
+          }
+        </div>
+      </div>
+      @if (source.south && expandedSouths().has(source.key)) {
+        <oib-north-south-transformers
+          [south]="source.south"
+          [transformers]="transformersWithOptions()"
+          [unusedTransformerIds]="unusedTransformerIds()"
+          [canAudit]="saveChangesDirectly()"
+          (add)="addTransformer($event)"
+          (edit)="editTransformer($event)"
+          (remove)="deleteTransformer($event)"
+          (audit)="showAudit($event)"
+          (exclude)="excludeItem($event)"
+          (removeItem)="removeItem($event)"
+        />
+      }
+      @if (source.dataSourceType === 'oibus-api') {
+        @for (transformer of source.otherTransformers; track transformer.id) {
+          <div class="routing-row routing-indent-1 data-source-row">
+            <div><span class="fa-solid fa-tag me-2" aria-hidden="true"></span>{{ scope(transformer) }}</div>
+            <div class="routing-transformer">
+              <span class="routing-chip" [class.routing-unused]="unusedTransformerIds().has(transformer.id)">{{ name(transformer) }}</span>
+            </div>
+            <div class="routing-actions">
+              <ng-container [ngTemplateOutlet]="transformerActions" [ngTemplateOutletContext]="{ $implicit: transformer }" />
+            </div>
+          </div>
+        }
+      }
+    } @empty {
+      <p class="text-muted mt-2" id="no-source" translate="north.transformers.list.no-source"></p>
+    }
+  </div>
+</ng-template>
+
+<ng-template #transformerActions let-transformer>
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-secondary edit-transformer"
+    [ngbTooltip]="'north.transformers.tooltips.edit' | translate"
+    [attr.aria-label]="'north.transformers.tooltips.edit' | translate"
+    (click)="editTransformer(transformer)"
+  >
+    <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+  </button>
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-secondary delete-transformer"
+    [ngbTooltip]="'north.transformers.tooltips.delete' | translate"
+    [attr.aria-label]="'north.transformers.tooltips.delete' | translate"
+    (click)="deleteTransformer(transformer)"
+  >
+    <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+  </button>
+  <!-- Audit history button: only for saved transformers (the edit page works on unsaved ones) -->
+  @if (saveChangesDirectly()) {
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary show-audit-transformer"
+      [ngbTooltip]="'north.transformers.tooltips.audit' | translate"
+      [attr.aria-label]="'north.transformers.tooltips.audit' | translate"
+      (click)="showAudit(transformer)"
+    >
+      <span class="fa-solid fa-history" aria-hidden="true"></span>
+    </button>
   }
 </ng-template>
