@@ -456,6 +456,11 @@ export default class ConfigTransferBuilderService {
                 transformerWithOptions.source.type === 'south'
                   ? transformerWithOptions.source.items.map(item => ({ id: item.id, name: item.name, enabled: item.enabled }))
                   : undefined,
+              // Only exported when some items are left out, as in the exports of the versions without exclusions
+              excludedItems:
+                transformerWithOptions.source.type === 'south' && transformerWithOptions.source.excludedItems?.length
+                  ? transformerWithOptions.source.excludedItems.map(item => ({ id: item.id, name: item.name, enabled: item.enabled }))
+                  : undefined,
               dataSourceId: transformerWithOptions.source.type === 'oibus-api' ? transformerWithOptions.source.dataSourceId : undefined
             },
             options: transformerWithOptions.options

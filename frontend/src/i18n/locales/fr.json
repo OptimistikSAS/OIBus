@@ -296,11 +296,13 @@
           "one-item-selected": "1 élément",
           "several-items-selected": "{{ numberOfItems }} éléments",
           "all-items-selected": "Tous les éléments",
+          "except-items": ", sauf {{ numberOfItems }} items",
           "oibus-api-selected": "API OIBus (dataSourceId : {{ dataSourceId }})",
           "oibus-api-all-selected": "API OIBus (toutes les sources de données)",
           "oianalytics-setpoint-selected": "Consignes OIAnalytics",
           "all-items": "Tous les éléments",
           "specific-items": "Éléments spécifiques",
+          "exclude-items": "Sauf certains items",
           "search-items": "Rechercher des éléments...",
           "no-items-found": "Aucun élément trouvé",
           "search-results-count": "{{ count }} résultats",
@@ -3248,6 +3250,32 @@
         "edit": "Modifier le transformateur",
         "delete": "Supprimer le transformateur",
         "audit": "Voir l'historique d'audit du transformateur"
+      },
+      "routing": {
+        "show": "Voir le routage",
+        "title": "Routage des données",
+        "description": "Le transformateur par lequel passe chaque item d'un connecteur South vers ce connecteur North : d'abord le sien, puis celui de son groupe, puis celui de tous les items. Les items sans transformateur sont ignorés.",
+        "only-dropped": "Seulement les items ignorés",
+        "summary": "{{ total }} items, dont {{ dropped }} ignorés",
+        "item": "Item",
+        "transformer": "Transformateur",
+        "level": "S'applique à",
+        "levels": {
+          "item": "Cet item",
+          "group": "Son groupe",
+          "south": "Tous les items"
+        },
+        "no-group": "Sans groupe",
+        "dropped": "Ignoré : aucun transformateur",
+        "no-item": "Aucun item à afficher",
+        "send-dropped": "Envoyer les items ignorés"
+      },
+      "uncovered": {
+        "summary": "{{ count }} source(s) envoient des données que ce connecteur North ignore, faute de transformateur.",
+        "show": "Afficher",
+        "hide": "Masquer",
+        "none": "aucun transformateur, toutes ses données sont ignorées",
+        "some": "seuls certains de ses items ont un transformateur, les autres sont ignorés"
       }
     },
     "monitoring": {

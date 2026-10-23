@@ -8,7 +8,7 @@ import { OIBUS_NORTH_TYPES } from '../../shared/model/connector/north-manifest.m
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import type { NorthConnectorEntityLight } from '../model/north-connector.model';
-import type { SouthItemGroupEntity } from '../model/south-connector.model';
+import type { SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../model/south-connector.model';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import type CertificateRepository from '../repository/config/certificate.repository';
@@ -501,6 +501,15 @@ describe('North Service', () => {
 
   it('should properly convert to DTOs', () => {
     const northEntity = testData.north.list[0];
+    const toItemDTO = (item: SouthConnectorItemEntityLight) => ({
+      id: item.id,
+      name: item.name,
+      enabled: item.enabled,
+      createdBy: getUserInfo(item.createdBy),
+      updatedBy: getUserInfo(item.updatedBy),
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
+    });
     assert.deepStrictEqual(toNorthConnectorDTO(northEntity, getUserInfo), {
       id: northEntity.id,
       name: northEntity.name,
@@ -561,15 +570,8 @@ describe('North Service', () => {
                       updatedAt: transformerWithOptions.source.group.updatedAt
                     }
                   : undefined,
-                items: transformerWithOptions.source.items.map(item => ({
-                  id: item.id,
-                  name: item.name,
-                  enabled: item.enabled,
-                  createdBy: getUserInfo(item.createdBy),
-                  updatedBy: getUserInfo(item.updatedBy),
-                  createdAt: item.createdAt,
-                  updatedAt: item.updatedAt
-                }))
+                items: transformerWithOptions.source.items.map(toItemDTO),
+                excludedItems: (transformerWithOptions.source.excludedItems ?? []).map(toItemDTO)
               }
             : transformerWithOptions.source
       })),
@@ -615,6 +617,37 @@ describe('North Service', () => {
       id: group.id,
       name: group.name
     });
+  });
+
+  it('should only keep the items left out of a transformer applying to all the items', () => {
+    const south = testData.south.list[0];
+    const item = south.items[0];
+    const itemLight = { id: item.id, name: item.name, enabled: item.enabled };
+
+    const allItems = service.transformerSourceFromCommand({ type: 'south', southId: south.id, items: [], excludedItems: [itemLight] });
+    const someItems = service.transformerSourceFromCommand({
+      type: 'south',
+      southId: south.id,
+      items: [itemLight],
+      excludedItems: [itemLight]
+    });
+
+    assert.ok(allItems.type === 'south' && someItems.type === 'south');
+    assert.deepStrictEqual(
+      allItems.excludedItems?.map(excludedItem => excludedItem.id),
+      [item.id]
+    );
+    assert.deepStrictEqual(someItems.excludedItems, []);
+    assert.throws(
+      () =>
+        service.transformerSourceFromCommand({
+          type: 'south',
+          southId: south.id,
+          items: [],
+          excludedItems: [{ id: 'unknownItemId', name: 'unknown item', enabled: true }]
+        }),
+      new NotFoundError('Could not find South connector item "unknown item" (unknownItemId)')
+    );
   });
 
   it('should return oianalytics-setpoint source command as-is from transformerSourceFromCommand', () => {

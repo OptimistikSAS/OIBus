@@ -50,6 +50,11 @@ export interface SourceOriginSouth extends BaseSourceOrigin {
    * The list of items associated to the transformer
    */
   items: Array<SouthConnectorItemEntityLight>;
+
+  /**
+   * The items left out of a transformer applying to all the items of the south, or of the group
+   */
+  excludedItems?: Array<SouthConnectorItemEntityLight>;
 }
 
 export interface SourceOriginOIAnalytics extends BaseSourceOrigin {

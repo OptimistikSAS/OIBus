@@ -348,6 +348,18 @@ describe('Config Transfer Builder Service', () => {
     assert.strictEqual(configuration.northConnectors.length, testData.north.list.length);
   });
 
+  it('should only export the items left out of a transformer when there are some', () => {
+    const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
+
+    const [withoutExclusion, , withExclusion] = configuration.northConnectors[0].settings.transformers.map(
+      transformer => transformer.source
+    );
+    assert.ok(withoutExclusion.type === 'south' && withExclusion.type === 'south');
+    assert.strictEqual(withoutExclusion.excludedItems, undefined);
+    const excludedItem = testData.south.list[1].items[0];
+    assert.deepStrictEqual(withExclusion.excludedItems, [{ id: excludedItem.id, name: excludedItem.name, enabled: excludedItem.enabled }]);
+  });
+
   it('should build the transformers command for both standard and custom transformers', () => {
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
     assert.strictEqual(configuration.transformers.length, testData.transformers.list.length + 1);

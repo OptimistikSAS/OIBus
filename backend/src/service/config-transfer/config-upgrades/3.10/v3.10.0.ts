@@ -644,23 +644,22 @@ function replaceIsoAndIgnoreTransformers(config: JsonObject): void {
         }),
         items.map(item => item.id as string),
         defaultPassthrough !== undefined,
-        isoPassthrough !== undefined
+        isoPassthrough !== undefined,
+        true
       );
+      const itemsOf = (itemIds: Array<string>) => items.filter(item => itemIds.includes(item.id as string)).map(itemLight);
+      // Only the links listing items are narrowed: they keep listing some of them
       links = applyPlan(links, plan, isoPassthrough, (link, itemIds) => {
-        const { groupId: _groupId, ...source } = sourceOf(link);
-        link.source = { ...source, items: items.filter(item => itemIds.includes(item.id as string)).map(itemLight) };
+        link.source = { ...sourceOf(link), items: itemsOf(itemIds) };
       });
+      for (const link of links) {
+        const excludedItemIds = plan.excluded.get(link.id as string);
+        if (excludedItemIds) link.source = { ...sourceOf(link), excludedItems: itemsOf(excludedItemIds) };
+      }
       if (plan.added) {
-        links.push({
-          id: generateRandomId(6),
-          transformerId: passthroughId(defaultPassthrough!),
-          source: {
-            type: 'south',
-            southId: south.oIBusInternalId,
-            items: items.filter(item => plan.added!.itemIds.includes(item.id as string)).map(itemLight)
-          },
-          options: {}
-        });
+        const source: JsonObject = { type: 'south', southId: south.oIBusInternalId, items: itemsOf(plan.added.itemIds) };
+        if (plan.added.excludedItemIds.length > 0) source.excludedItems = itemsOf(plan.added.excludedItemIds);
+        links.push({ id: generateRandomId(6), transformerId: passthroughId(defaultPassthrough!), source, options: {} });
       }
     }
 
@@ -719,7 +718,8 @@ function replaceIsoAndIgnoreTransformers(config: JsonObject): void {
       ),
       items.map(item => item.id as string),
       defaultPassthrough !== undefined,
-      isoPassthrough !== undefined
+      isoPassthrough !== undefined,
+      false
     );
     const newLinks = applyPlan(links, plan, isoPassthrough, (link, itemIds) => {
       link.items = items.filter(item => itemIds.includes(item.id as string)).map(itemLight);

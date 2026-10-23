@@ -218,6 +218,7 @@ const transformerSourceSchema = Joi.object({
   southId: Joi.when('type', { is: 'south', then: Joi.string().required() }),
   groupId: Joi.string(),
   items: Joi.when('type', { is: 'south', then: Joi.array().items(itemLight).required() }),
+  excludedItems: Joi.array().items(itemLight),
   dataSourceId: Joi.string()
 }).required();
 

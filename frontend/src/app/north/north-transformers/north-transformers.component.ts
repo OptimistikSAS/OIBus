@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 
@@ -10,6 +10,7 @@ import { firstValueFrom, of, switchMap } from 'rxjs';
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
 import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 
@@ -22,8 +23,12 @@ import { DocsUrlService } from '../../shared/docs-url.service';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { getAssociatedInputType, isTransformerApplicable } from '../../shared/utils/utils';
 import { formatTransformerSource } from '../north-summary';
 import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal/edit-north-transformer-modal.component';
+import { SouthCoverage, southCoverage } from './transformer-routing';
+import { TransformerRoutingModalComponent } from './transformer-routing-modal/transformer-routing-modal.component';
 
 @Component({
   selector: 'oib-north-transformers',
@@ -35,7 +40,8 @@ import { EditNorthTransformerModalComponent } from './edit-north-transformer-mod
     TranslatePipe,
     BoxTitleDirective,
     OibHelpComponent,
-    NgbTooltip
+    NgbTooltip,
+    OIBusSouthTypeEnumPipe
   ],
   templateUrl: './north-transformers.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -71,8 +77,25 @@ export class NorthTransformersComponent {
   });
   private readonly southConnectors = toSignal(this.southConnectorService.list(), { initialValue: [] });
 
-  addTransformer(e: Event) {
-    e.preventDefault();
+  /**
+   * The souths whose data (all of it, or that of some items) reaches no transformer, and is therefore dropped by the North.
+   * Only the souths whose data some transformer could send to the North are listed.
+   */
+  readonly uncoveredSouths = computed<Array<{ south: SouthConnectorLightDTO; coverage: Exclude<SouthCoverage, 'all'> }>>(() => {
+    const northTypes = this.northManifest().types;
+    const result: Array<{ south: SouthConnectorLightDTO; coverage: Exclude<SouthCoverage, 'all'> }> = [];
+    for (const south of this.southConnectors()) {
+      const coverage = southCoverage(this.transformersWithOptions(), south.id);
+      const dataType = getAssociatedInputType(south.type);
+      if (coverage !== 'all' && this.transformers().some(transformer => isTransformerApplicable(transformer, dataType, northTypes))) {
+        result.push({ south, coverage });
+      }
+    }
+    return result;
+  });
+  readonly showUncoveredSouths = signal(false);
+
+  addTransformer(south: SouthConnectorLightDTO | null = null) {
     const modalRef = this.modalService.open(EditNorthTransformerModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -89,9 +112,18 @@ export class NorthTransformersComponent {
       this.scanModes(),
       this.certificates(),
       this.transformers(),
-      this.northManifest().types
+      this.northManifest().types,
+      south
     );
     this.refreshAfterAddModalClosed(modalRef);
+  }
+
+  /** Shows the transformer each item of a south is routed to, offering to send the dropped items */
+  showRouting(south: SouthConnectorLightDTO | null = null) {
+    const modalRef = this.modalService.open(TransformerRoutingModalComponent, { size: 'xl' });
+    const component: TransformerRoutingModalComponent = modalRef.componentInstance;
+    component.prepare(this.southConnectors(), this.transformersWithOptions(), south);
+    modalRef.result.subscribe((southToSend: SouthConnectorLightDTO) => this.addTransformer(southToSend));
   }
 
   private refreshAfterAddModalClosed(modalRef: Modal<EditNorthTransformerModalComponent>) {

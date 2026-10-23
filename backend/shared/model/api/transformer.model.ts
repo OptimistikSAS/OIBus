@@ -151,6 +151,11 @@ export interface SourceOriginSouthDTO extends BaseSourceOrigin {
    * The list of items associated to the transformer
    */
   items: Array<ItemLightDTO>;
+
+  /**
+   * The items left out of a transformer applying to all the items of the south, or of the group
+   */
+  excludedItems?: Array<ItemLightDTO>;
 }
 
 export interface SourceOriginOIAnalyticsDTO extends BaseSourceOrigin {
@@ -187,6 +192,30 @@ export interface SourceOriginSouthCommandDTO extends BaseSourceOrigin {
    * The list of items associated to the transformer
    */
   items: Array<{
+    /**
+     * The item ID
+     */
+    id: string;
+
+    /**
+     * The name of the item.
+     *
+     * @example "Temperature Logs"
+     */
+    name: string;
+
+    /**
+     * Whether this item is enabled.
+     *
+     * @example true
+     */
+    enabled: boolean;
+  }>;
+
+  /**
+   * The items left out of a transformer applying to all the items of the south, or of the group
+   */
+  excludedItems?: Array<{
     /**
      * The item ID
      */

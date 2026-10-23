@@ -477,9 +477,13 @@ describe('3.10.0 config upgrade', () => {
         {
           transformerId: 'csv',
           options: { kept: true, keepOtherFields: true },
-          source: { type: 'south', southId: 'opcua', items: lightItems('i1') }
+          source: { type: 'south', southId: 'opcua', groupId: 'g1', items: [], excludedItems: lightItems('i2') }
         },
-        { transformerId: 'json', options: {}, source: { type: 'south', southId: 'opcua', items: lightItems('i3') } },
+        {
+          transformerId: 'json',
+          options: {},
+          source: { type: 'south', southId: 'opcua', items: [], excludedItems: lightItems('i2') }
+        },
         { transformerId: fileId, options: {}, source: { type: 'oibus-api' } }
       ]);
       assert.deepStrictEqual(linksOf(config, 1), [

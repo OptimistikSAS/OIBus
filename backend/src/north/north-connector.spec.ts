@@ -1030,4 +1030,36 @@ describe('NorthConnector', () => {
 
     assert.strictEqual(found?.id, 'later');
   });
+
+  it('should leave the excluded items out of the group and south level transformers', async () => {
+    setConnectorTransformers([
+      timeValuesTransformer('group', 'tr-group', {
+        south: { id: 'southX' },
+        group: { id: 'g1', items: [{ id: 'i1' }, { id: 'i2' }] },
+        excludedItems: [{ id: 'i1', name: 'point-1' }]
+      }),
+      timeValuesTransformer('southWithout2', 'tr-south-1', { south: { id: 'southX' }, excludedItems: [{ id: 'i2', name: 'point-2' }] }),
+      timeValuesTransformer('southWithout3', 'tr-south-2', { south: { id: 'southX' }, excludedItems: [{ id: 'i3', name: 'point-3' }] }),
+      timeValuesTransformer('southWithout1', 'tr-south-3', { south: { id: 'southY' }, excludedItems: [{ id: 'i1', name: 'point-1' }] })
+    ]);
+    const find = (southId: string, itemIds: Array<string>) =>
+      north['findTransformer']({ source: 'south', southId, items: itemIds.map(id => ({ id })) } as unknown as CacheMetadataSource)?.id;
+
+    // i1 is left out of its group: it falls back to the first south level transformer not leaving it out
+    assert.strictEqual(find('southX', ['i1']), 'southWithout2');
+    assert.strictEqual(find('southX', ['i2']), 'group');
+    assert.strictEqual(find('southX', ['i3']), 'southWithout2');
+    assert.strictEqual(find('southY', ['i1']), undefined);
+    assert.strictEqual(find('southY', []), 'southWithout1');
+
+    await north.cacheContent(
+      { type: 'record-list', content: [timeValue('point-1', 1), timeValue('point-2', 2)] },
+      southXSource([
+        { id: 'i1', name: 'point-1' },
+        { id: 'i2', name: 'point-2' }
+      ])
+    );
+    // Split between the south level transformer (point-1) and the group one (point-2)
+    assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls.length, 2);
+  });
 });

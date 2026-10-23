@@ -27,6 +27,7 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { getAssociatedInputType, isTransformerApplicable } from '../../../shared/utils/utils';
+import { findDefaultTransformer } from '../transformer-routing';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
 
 interface TransformerSourceOption {
@@ -111,6 +112,8 @@ export class EditNorthTransformerModalComponent {
 
   readonly selectedItems = signal<Array<ItemLightDTO>>([]);
   readonly selectionType = signal<'all' | 'group' | 'items'>('all');
+  /** Whether the selected items are left out of a transformer applying to all the items (of the south or of the group) */
+  readonly excludeItems = signal(false);
   readonly searchResults = signal<Array<ItemLightDTO>>([]);
   readonly filteredItems = signal<Array<ItemLightDTO>>([]);
   readonly totalSearchResults = signal(0);
@@ -152,7 +155,8 @@ export class EditNorthTransformerModalComponent {
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
     transformers: Array<TransformerDTO>,
-    supportedOutputTypes: Array<string>
+    supportedOutputTypes: Array<string>,
+    south: SouthConnectorLightDTO | null = null
   ) {
     this.mode.set('create');
     this.southConnectors.set(southConnectors);
@@ -161,6 +165,9 @@ export class EditNorthTransformerModalComponent {
     this.allTransformers = transformers;
     this.supportedOutputTypes.set(supportedOutputTypes);
     this.buildForm();
+    if (south) {
+      this.form.controls.source.setValue({ dataSourceType: 'south', south });
+    }
   }
 
   prepareForEdition(
@@ -186,6 +193,11 @@ export class EditNorthTransformerModalComponent {
         this.availableGroups.set(groups.map(group => ({ id: group.id, name: group.standardSettings.name })));
       });
       this.selectedItems.set(transformerWithOptionsToEdit.source.items);
+      const excludedItems = transformerWithOptionsToEdit.source.excludedItems ?? [];
+      if (transformerWithOptionsToEdit.source.items.length === 0 && excludedItems.length > 0) {
+        this.excludeItems.set(true);
+        this.selectedItems.set(excludedItems);
+      }
       if (transformerWithOptionsToEdit.source.group) {
         this.selectionType.set('group');
         this.selectedGroup.set(transformerWithOptionsToEdit.source.group);
@@ -220,16 +232,19 @@ export class EditNorthTransformerModalComponent {
 
   buildForm() {
     this.form.controls.source.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(source => {
+      this.updateSelectableOutput(source);
       // In 'from-north'/'from-history' mode the transformer/options come from the copy-picker, not from the Output
-      // select below, so changing the source shouldn't wipe them out.
+      // select below, so changing the source shouldn't wipe them out. Otherwise, the obvious transformer for the data of
+      // the source is proposed.
       if (this.creationMode() === 'new') {
         this.form.patchValue({
-          transformer: null,
+          transformer: findDefaultTransformer(this.selectableOutputs(), this.sourceDataType(), this.supportedOutputTypes()),
           options: {}
         });
       }
-      this.updateSelectableOutput(source);
       this.selectionType.set('all');
+      this.excludeItems.set(false);
+      this.selectedItems.set([]);
       this.selectedGroup.set(null);
       this.availableGroups.set([]);
       if (source.south) {
@@ -296,6 +311,15 @@ export class EditNorthTransformerModalComponent {
     let source: TransformerSourceDTO;
     if (sourceType === 'south') {
       const selectedGroup = this.selectedGroup();
+      const toItemLight = (item: ItemLightDTO): ItemLightDTO => ({
+        id: item.id,
+        name: item.name,
+        enabled: item.enabled,
+        createdBy: item.createdBy,
+        updatedBy: item.updatedBy,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt
+      });
       source = {
         type: 'south',
         south: this.existingTransformerWithOptions
@@ -308,18 +332,8 @@ export class EditNorthTransformerModalComponent {
                 name: selectedGroup.name
               }
             : undefined,
-        items:
-          this.selectionType() === 'items'
-            ? this.selectedItems().map(item => ({
-                id: item.id,
-                name: item.name,
-                enabled: item.enabled,
-                createdBy: item.createdBy,
-                updatedBy: item.updatedBy,
-                createdAt: item.createdAt,
-                updatedAt: item.updatedAt
-              }))
-            : []
+        items: this.selectionType() === 'items' ? this.selectedItems().map(toItemLight) : [],
+        excludedItems: this.selectionType() !== 'items' && this.excludeItems() ? this.selectedItems().map(toItemLight) : []
       };
     } else if (sourceType === 'oibus-api') {
       // Without data source, the transformer applies to every data source
@@ -399,6 +413,7 @@ export class EditNorthTransformerModalComponent {
 
   setSelectionType(type: 'all' | 'group' | 'items') {
     this.selectionType.set(type);
+    this.excludeItems.set(false);
     if (type !== 'items') {
       this.selectedItems.set([]);
       this.searchInteracted.set(false);
@@ -410,6 +425,16 @@ export class EditNorthTransformerModalComponent {
     }
     if (type !== 'group') {
       this.selectedGroup.set(null);
+    }
+  }
+
+  /** Leaves (or no longer leaves) some items out of the transformer applying to all the items */
+  setExcludeItems(exclude: boolean) {
+    this.excludeItems.set(exclude);
+    this.selectedItems.set([]);
+    this.searchInteracted.set(false);
+    if (exclude) {
+      this.filterItems();
     }
   }
 

@@ -66,13 +66,14 @@ describe('Entity migration v3.10.0_5', () => {
       .where('nt.north_id', northId);
     const result = [];
     for (const link of links) {
-      const items = await db('north_transformers_items').where('id', link.id).whereNotNull('item_id').orderBy('item_id').pluck('item_id');
+      const itemRows = await db('north_transformers_items').where('id', link.id).whereNotNull('item_id').orderBy('item_id');
       result.push({
         transformer: link.function_name ?? link.name,
         options: JSON.parse(link.options),
         source: link.source_south_south_id ?? link.source_api_data_source_id ?? link.source_type,
         group: link.source_south_group_id,
-        items
+        items: itemRows.filter(row => !row.excluded).map(row => row.item_id),
+        excludedItems: itemRows.filter(row => row.excluded).map(row => row.item_id)
       });
     }
     return result.sort((a, b) => `${a.source}${a.transformer}`.localeCompare(`${b.source}${b.transformer}`));
@@ -167,15 +168,19 @@ describe('Entity migration v3.10.0_5', () => {
   it('should add the passthroughs of the data the North received without transformer, and remove iso and ignore', async () => {
     await up(db);
 
+    const columns = await db('north_transformers_items').columnInfo();
+    assert.strictEqual(columns.excluded.defaultValue, "'0'");
+    assert.strictEqual(columns.excluded.nullable, false);
+
     assert.deepStrictEqual(await northLinks('console'), [
-      { transformer: 'file', options: {}, source: 'folder', group: null, items: [] },
-      { transformer: 'setpoint-to-json', options: {}, source: 'oianalytics-setpoint', group: null, items: [] },
-      { transformer: 'file', options: {}, source: 'oibus-api', group: null, items: [] },
-      { transformer: 'record-list-to-json', options: {}, source: 'opcua', group: null, items: [] }
+      { transformer: 'file', options: {}, source: 'folder', group: null, items: [], excludedItems: [] },
+      { transformer: 'setpoint-to-json', options: {}, source: 'oianalytics-setpoint', group: null, items: [], excludedItems: [] },
+      { transformer: 'file', options: {}, source: 'oibus-api', group: null, items: [], excludedItems: [] },
+      { transformer: 'record-list-to-json', options: {}, source: 'opcua', group: null, items: [], excludedItems: [] }
     ]);
     assert.deepStrictEqual(await northLinks('s3'), [
-      { transformer: 'file', options: {}, source: 'folder', group: null, items: [] },
-      { transformer: 'file', options: {}, source: 'oibus-api', group: null, items: [] }
+      { transformer: 'file', options: {}, source: 'folder', group: null, items: [], excludedItems: [] },
+      { transformer: 'file', options: {}, source: 'oibus-api', group: null, items: [], excludedItems: [] }
     ]);
     assert.deepStrictEqual(await northLinks('mqttNorth'), []);
     assert.deepStrictEqual(await historyLinks('hqConsole'), [{ transformer: 'record-list-to-json', items: [] }]);
@@ -193,7 +198,7 @@ describe('Entity migration v3.10.0_5', () => {
     });
   });
 
-  it('should narrow the transformers ignored items fall back to', async () => {
+  it('should leave the ignored items out of the transformers they fall back to', async () => {
     await db('north_transformers').insert([
       southLink('ignoreI2', 'console', 'ignore', 'opcua'),
       southLink('groupCsv', 'console', 'csv', 'opcua', 'g1'),
@@ -207,12 +212,12 @@ describe('Entity migration v3.10.0_5', () => {
     await up(db);
 
     assert.deepStrictEqual(await northLinks('console'), [
-      { transformer: 'setpoint-to-json', options: {}, source: 'oianalytics-setpoint', group: null, items: [] },
-      { transformer: 'file', options: {}, source: 'oibus-api', group: null, items: [] },
-      { transformer: 'record-list-to-csv', options: { kept: true }, source: 'opcua', group: null, items: ['i1'] },
-      { transformer: 'record-list-to-json', options: {}, source: 'opcua', group: null, items: ['i3'] }
+      { transformer: 'setpoint-to-json', options: {}, source: 'oianalytics-setpoint', group: null, items: [], excludedItems: [] },
+      { transformer: 'file', options: {}, source: 'oibus-api', group: null, items: [], excludedItems: [] },
+      { transformer: 'record-list-to-csv', options: { kept: true }, source: 'opcua', group: 'g1', items: [], excludedItems: ['i2'] },
+      { transformer: 'record-list-to-json', options: {}, source: 'opcua', group: null, items: [], excludedItems: ['i2'] }
     ]);
-    assert.strictEqual(await db('north_transformers_items').where('id', 'groupCsv').whereNotNull('group_id').first(), undefined);
+    assert.ok(await db('north_transformers_items').where('id', 'groupCsv').whereNotNull('group_id').first());
   });
 
   it('should replace iso by the passthrough the North accepts, and drop the ignored sources', async () => {
@@ -229,9 +234,9 @@ describe('Entity migration v3.10.0_5', () => {
     await up(db);
 
     assert.deepStrictEqual(await northLinks('s3'), [
-      { transformer: 'file', options: {}, source: 'ds1', group: null, items: [] },
-      { transformer: 'custom', options: { kept: true }, source: 'folder', group: null, items: [] },
-      { transformer: 'file', options: {}, source: 'mqtt', group: null, items: [] }
+      { transformer: 'file', options: {}, source: 'ds1', group: null, items: [], excludedItems: [] },
+      { transformer: 'custom', options: { kept: true }, source: 'folder', group: null, items: [], excludedItems: [] },
+      { transformer: 'file', options: {}, source: 'mqtt', group: null, items: [], excludedItems: [] }
     ]);
     assert.deepStrictEqual(
       (await northLinks('console')).filter(link => link.source === 'oianalytics-setpoint'),

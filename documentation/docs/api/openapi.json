@@ -28409,6 +28409,34 @@
 						},
 						"type": "array",
 						"description": "The list of items associated to the transformer"
+					},
+					"excludedItems": {
+						"items": {
+							"properties": {
+								"enabled": {
+									"type": "boolean",
+									"description": "Whether this item is enabled.",
+									"example": true
+								},
+								"name": {
+									"type": "string",
+									"description": "The name of the item.",
+									"example": "Temperature Logs"
+								},
+								"id": {
+									"type": "string",
+									"description": "The item ID"
+								}
+							},
+							"required": [
+								"enabled",
+								"name",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array",
+						"description": "The items left out of a transformer applying to all the items of the south, or of the group"
 					}
 				},
 				"required": [
@@ -36475,6 +36503,13 @@
 						},
 						"type": "array",
 						"description": "The list of items associated to the transformer"
+					},
+					"excludedItems": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The items left out of a transformer applying to all the items of the south, or of the group"
 					}
 				},
 				"required": [
