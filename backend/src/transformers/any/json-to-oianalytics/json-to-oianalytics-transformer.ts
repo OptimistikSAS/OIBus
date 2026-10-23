@@ -3,16 +3,15 @@ import { Readable } from 'node:stream';
 
 import { DateTime } from 'luxon';
 
-import { DateTimeType } from '../../../../shared/model/common/types';
 import { TransformerJsonToOianalyticsSettings } from '../../../../shared/model/connector/transformer-settings.model';
 import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { Instant } from '../../../model/types';
 import { toCompactTimeValues } from '../../../service/oia/compact-time-values';
-import { convertDateTime, generateRandomId, injectIndices, streamToString } from '../../../service/utils';
+import { generateRandomId, streamToString } from '../../../service/utils';
 import { createStringFieldProcess } from '../../field-process';
-import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
+import { extractJsonTimeValues } from '../../json-time-values';
 import OIBusTransformer from '../../oibus-transformer';
 
 export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
@@ -34,8 +33,8 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
   /**
    * In-memory fast path. The any-content payload reaching the North is already a serialised JSON
    * string, so tolerate both a parsed object and the raw string. Each row matched by
-   * `rowIteratorPath` is mapped to an OIAnalytics time-value, and the result is sent in the OIAnalytics compact format
-   * `{ timestamps, values, references }`.
+   * `rowIteratorPath` is mapped to an OIAnalytics time-value (see `extractJsonTimeValues`), and the result is sent in
+   * the OIAnalytics compact format `{ timestamps, values, references }`.
    */
   override transformInMemory(
     data: unknown,
@@ -43,21 +42,12 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     const content: object = typeof data === 'string' ? (JSON.parse(data) as object) : (data as object);
-
-    const rows = resolveJsonPathRows(this.options.rowIteratorPath, content);
+    const precision = this.options.datetimeSettings?.outputPrecision ?? 'ms';
+    const values = extractJsonTimeValues(content, this.options).map(value => ({
+      ...value,
+      timestamp: this.formatInstant(value.timestamp, precision)
+    }));
     const referenceProcess = createStringFieldProcess(this.options.referenceProcess);
-
-    const values = rows.map(row => {
-      const pointId = resolveJsonPath(injectIndices(this.options.pointId, row.indices), content);
-      const value = resolveJsonPath(injectIndices(this.options.value, row.indices), content);
-      const rawTimestamp = resolveJsonPath(injectIndices(this.options.timestamp, row.indices), content);
-
-      return {
-        pointId: String(pointId),
-        timestamp: this.formatInstant(this.toInstant(rawTimestamp), this.options.datetimeSettings?.outputPrecision ?? 'ms'),
-        data: { value }
-      };
-    });
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,
@@ -70,30 +60,6 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
       output: Buffer.from(JSON.stringify(toCompactTimeValues(values, undefined, referenceProcess))),
       metadata
     });
-  }
-
-  /**
-   * Parse the raw timestamp extracted from the payload into an ISO instant using the configured
-   * datetime settings. Falls back to "now" when no timestamp could be resolved.
-   */
-  private toInstant(rawTimestamp: unknown): Instant {
-    if (rawTimestamp === undefined || rawTimestamp === null) {
-      return DateTime.now().toUTC().toISO()!;
-    }
-    const datetimeSettings = this.options.datetimeSettings;
-    if (!datetimeSettings) {
-      return DateTime.fromISO(String(rawTimestamp)).toUTC().toISO() ?? (DateTime.now().toUTC().toISO() as Instant);
-    }
-    return convertDateTime(
-      rawTimestamp as string | number,
-      {
-        type: datetimeSettings.inputType as DateTimeType,
-        timezone: datetimeSettings.inputTimezone,
-        format: datetimeSettings.inputFormat,
-        locale: datetimeSettings.inputLocale
-      },
-      { type: 'iso-string', timezone: 'UTC' }
-    ) as Instant;
   }
 
   get options(): TransformerJsonToOianalyticsSettings {

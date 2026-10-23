@@ -34,8 +34,12 @@ import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-tr
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
+import JSONToTimeValuesTransformer from '../transformers/any/json-to-time-values/json-to-time-values-transformer';
+import jsonToTimeValuesManifest from '../transformers/any/json-to-time-values/manifest';
 import recordListToCsvManifest from '../transformers/any/record-list-to-csv/manifest';
 import RecordListToCsvTransformer from '../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
+import recordListToTimeValuesManifest from '../transformers/any/record-list-to-time-values/manifest';
+import RecordListToTimeValuesTransformer from '../transformers/any/record-list-to-time-values/record-list-to-time-values-transformer';
 import IgnoreTransformer from '../transformers/ignore-transformer';
 import ignoreManifest from '../transformers/ignore-transformer/manifest';
 import IsoTransformer from '../transformers/iso-transformer';
@@ -77,7 +81,9 @@ export const transformerManifestList: Array<TransformerManifest> = [
   csvToMqttManifest,
   csvToTimeValuesManifest,
   jsonToCsvManifest,
+  jsonToTimeValuesManifest,
   recordListToCsvManifest,
+  recordListToTimeValuesManifest,
   jsonToOianalyticsManifest,
   timeValuesToCsvManifest,
   timeValuesToJsonManifest,
@@ -477,8 +483,14 @@ export const createTransformer = (
       case JSONToCSVTransformer.transformerName: {
         return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
+      case JSONToTimeValuesTransformer.transformerName: {
+        return new JSONToTimeValuesTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      }
       case RecordListToCsvTransformer.transformerName: {
         return new RecordListToCsvTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      }
+      case RecordListToTimeValuesTransformer.transformerName: {
+        return new RecordListToTimeValuesTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case JSONToOIAnalyticsTransformer.transformerName: {
         return new JSONToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
@@ -593,8 +605,14 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     case jsonToCsvManifest.id: {
       return jsonToCsvManifest.settings;
     }
+    case jsonToTimeValuesManifest.id: {
+      return jsonToTimeValuesManifest.settings;
+    }
     case recordListToCsvManifest.id: {
       return recordListToCsvManifest.settings;
+    }
+    case recordListToTimeValuesManifest.id: {
+      return recordListToTimeValuesManifest.settings;
     }
     case jsonToOianalyticsManifest.id: {
       return jsonToOianalyticsManifest.settings;

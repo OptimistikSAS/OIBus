@@ -18,6 +18,12 @@ import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-tr
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
+import JSONToTimeValuesTransformer from '../transformers/any/json-to-time-values/json-to-time-values-transformer';
+import jsonToTimeValuesManifest from '../transformers/any/json-to-time-values/manifest';
+import recordListToCsvManifest from '../transformers/any/record-list-to-csv/manifest';
+import RecordListToCsvTransformer from '../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
+import recordListToTimeValuesManifest from '../transformers/any/record-list-to-time-values/manifest';
+import RecordListToTimeValuesTransformer from '../transformers/any/record-list-to-time-values/record-list-to-time-values-transformer';
 import ignoreManifest from '../transformers/ignore-transformer/manifest';
 // Import transformer manifests
 import isoManifest from '../transformers/iso-transformer/manifest';
@@ -398,6 +404,9 @@ describe('Transformer Service', () => {
       ['csv-to-time-values', CSVToTimeValuesTransformer],
       ['json-to-csv', JSONToCSVTransformer],
       ['json-to-oianalytics', JSONToOIAnalyticsTransformer],
+      ['json-to-time-values', JSONToTimeValuesTransformer],
+      ['record-list-to-csv', RecordListToCsvTransformer],
+      ['record-list-to-time-values', RecordListToTimeValuesTransformer],
       ['time-values-to-csv', OIBusTimeValuesToCsvTransformer],
       ['time-values-to-json', OIBusTimeValuesToJSONTransformer],
       ['time-values-to-modbus', OIBusTimeValuesToModbusTransformer],
@@ -779,6 +788,9 @@ describe('Transformer Service', () => {
     assert.deepStrictEqual(getStandardManifest('ignore'), ignoreManifest.settings);
     assert.deepStrictEqual(getStandardManifest('json-to-csv'), jsonToCsvManifest.settings);
     assert.deepStrictEqual(getStandardManifest('json-to-oianalytics'), jsonToOianalyticsManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('json-to-time-values'), jsonToTimeValuesManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('record-list-to-csv'), recordListToCsvManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('record-list-to-time-values'), recordListToTimeValuesManifest.settings);
     assert.deepStrictEqual(getStandardManifest('time-values-to-csv'), timeValuesToCsvManifest.settings);
     assert.deepStrictEqual(getStandardManifest('time-values-to-json'), timeValuesToJsonManifest.settings);
     assert.deepStrictEqual(getStandardManifest('time-values-to-modbus'), timeValuesToModbusManifest.settings);

@@ -12,7 +12,9 @@ import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
+import JSONToTimeValuesTransformer from '../../transformers/any/json-to-time-values/json-to-time-values-transformer';
 import RecordListToCsvTransformer from '../../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
+import RecordListToTimeValuesTransformer from '../../transformers/any/record-list-to-time-values/record-list-to-time-values-transformer';
 import IgnoreTransformer from '../../transformers/ignore-transformer';
 import IsoTransformer from '../../transformers/iso-transformer';
 import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
@@ -45,6 +47,20 @@ const standardTransformers: Array<StandardTransformer> = [
     inputType: 'record-list',
     functionName: RecordListToCsvTransformer.transformerName,
     outputType: 'any',
+    type: 'standard'
+  },
+  {
+    id: 'jsonToTimeValues',
+    inputType: 'any',
+    functionName: JSONToTimeValuesTransformer.transformerName,
+    outputType: 'time-values',
+    type: 'standard'
+  },
+  {
+    id: 'recordListToTimeValues',
+    inputType: 'record-list',
+    functionName: RecordListToTimeValuesTransformer.transformerName,
+    outputType: 'time-values',
     type: 'standard'
   },
   {
@@ -279,7 +295,7 @@ describe('TransformerRepository', () => {
 
   it('should properly search transformers and page them', () => {
     const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-    assert.strictEqual(result.totalElements, 19);
+    assert.strictEqual(result.totalElements, 21);
     // First page contains standard transformers (10 per page)
     for (const t of result.content.map(stripAuditFields)) {
       assert.strictEqual(t.type, 'standard');

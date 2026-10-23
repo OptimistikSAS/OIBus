@@ -323,7 +323,9 @@
             "iso": "Pas de transformation",
             "json-to-csv": "CSV (depuis JSON)",
             "json-to-oianalytics": "OIAnalytics (depuis JSON)",
+            "json-to-time-values": "Valeurs temporelles (depuis JSON)",
             "record-list-to-csv": "CSV (depuis liste d'enregistrements)",
+            "record-list-to-time-values": "Valeurs temporelles (depuis liste d'enregistrements)",
             "time-values-to-csv": "CSV",
             "time-values-to-json": "JSON",
             "time-values-to-modbus": "Valeurs Modbus",
@@ -702,6 +704,24 @@
               }
             }
           },
+          "record-list-to-time-values": {
+            "point-id-column": "Colonne ID du point",
+            "timestamp-column": "Colonne d'horodatage",
+            "value-column": "Colonne de valeur",
+            "timestamp-settings": {
+              "title": "Paramètres d'horodatage",
+              "type": {
+                "title": "Type d'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "timezone": "Fuseau horaire",
+              "format": "Format",
+              "locale": "Paramètres régionaux"
+            }
+          },
           "setpoint-to-modbus": {
             "mapping": {
               "title": "Table de mappage",
@@ -845,6 +865,25 @@
                 "min": "Minute",
                 "hr": "Heure"
               }
+            }
+          },
+          "json-to-time-values": {
+            "row-iterator-path": "JSONPath de l'itérateur de ligne",
+            "point-id": "JSONPath de l'ID du point",
+            "value": "JSONPath de la valeur",
+            "timestamp": "JSONPath de l'horodatage",
+            "datetime-settings": {
+              "title": "Paramètres de date/heure",
+              "input-type": {
+                "title": "Type d'entrée de l'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "timezone": "Fuseau horaire",
+              "format": "Format",
+              "locale": "Paramètres régionaux"
             }
           },
           "time-values-to-oianalytics": {

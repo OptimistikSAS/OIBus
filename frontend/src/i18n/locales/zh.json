@@ -323,7 +323,9 @@
             "iso": "不转换",
             "json-to-csv": "CSV（来自 JSON）",
             "json-to-oianalytics": "OIAnalytics（来自 JSON）",
+            "json-to-time-values": "时间值（来自 JSON）",
             "record-list-to-csv": "CSV（来自记录列表）",
+            "record-list-to-time-values": "时间值（来自记录列表）",
             "time-values-to-csv": "CSV",
             "time-values-to-json": "JSON",
             "time-values-to-modbus": "Modbus 值",
@@ -702,6 +704,24 @@
               }
             }
           },
+          "record-list-to-time-values": {
+            "point-id-column": "点位 ID 列",
+            "timestamp-column": "时间戳列",
+            "value-column": "值列",
+            "timestamp-settings": {
+              "title": "时间戳设置",
+              "type": {
+                "title": "时间戳类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "timezone": "时区",
+              "format": "格式",
+              "locale": "区域设置"
+            }
+          },
           "setpoint-to-modbus": {
             "mapping": {
               "title": "映射表",
@@ -845,6 +865,25 @@
                 "min": "分钟",
                 "hr": "小时"
               }
+            }
+          },
+          "json-to-time-values": {
+            "row-iterator-path": "行迭代器 JSONPath",
+            "point-id": "点位 ID JSONPath",
+            "value": "值 JSONPath",
+            "timestamp": "时间戳 JSONPath",
+            "datetime-settings": {
+              "title": "日期时间设置",
+              "input-type": {
+                "title": "时间戳输入类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "timezone": "时区",
+              "format": "格式",
+              "locale": "区域设置"
             }
           },
           "time-values-to-oianalytics": {

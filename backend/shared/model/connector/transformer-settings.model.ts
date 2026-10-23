@@ -137,6 +137,15 @@ export const TRANSFORMER_JSON_TO_OIANALYTICS_SETTINGS_DATETIME_SETTINGS_OUTPUT_P
 export type TransformerJsonToOianalyticsSettingsDatetimeSettingsOutputPrecision =
   (typeof TRANSFORMER_JSON_TO_OIANALYTICS_SETTINGS_DATETIME_SETTINGS_OUTPUT_PRECISIONS)[number];
 
+export const TRANSFORMER_JSON_TO_TIME_VALUES_SETTINGS_DATETIME_SETTINGS_INPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type TransformerJsonToTimeValuesSettingsDatetimeSettingsInputType =
+  (typeof TRANSFORMER_JSON_TO_TIME_VALUES_SETTINGS_DATETIME_SETTINGS_INPUT_TYPES)[number];
+
 export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES = [
   'iso-string',
   'unix-epoch',
@@ -188,6 +197,15 @@ export type TransformerRecordListToCsvSettingsQuoteChar = (typeof TRANSFORMER_RE
 
 export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
 export type TransformerRecordListToCsvSettingsEscapeChar = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_TIME_VALUES_SETTINGS_TIMESTAMP_SETTINGS_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type TransformerRecordListToTimeValuesSettingsTimestampSettingsType =
+  (typeof TRANSFORMER_RECORD_LIST_TO_TIME_VALUES_SETTINGS_TIMESTAMP_SETTINGS_TYPES)[number];
 
 export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerSetpointToModbusSettingsMappingModbusType =
@@ -291,6 +309,13 @@ export interface TransformerJsonToOianalyticsSettingsDatetimeSettings {
   outputPrecision: TransformerJsonToOianalyticsSettingsDatetimeSettingsOutputPrecision;
 }
 
+export interface TransformerJsonToTimeValuesSettingsDatetimeSettings {
+  inputType: TransformerJsonToTimeValuesSettingsDatetimeSettingsInputType;
+  inputTimezone?: Timezone;
+  inputFormat?: string;
+  inputLocale?: string;
+}
+
 export interface TransformerRecordListToCsvSettingsFieldsDatetimeSettings {
   inputType: TransformerRecordListToCsvSettingsFieldsDatetimeSettingsInputType;
   inputTimezone?: Timezone;
@@ -308,6 +333,13 @@ export interface TransformerRecordListToCsvSettingsFields {
   dataType: TransformerRecordListToCsvSettingsFieldsDataType;
   fieldProcess: string | null;
   datetimeSettings?: TransformerRecordListToCsvSettingsFieldsDatetimeSettings | null;
+}
+
+export interface TransformerRecordListToTimeValuesSettingsTimestampSettings {
+  type: TransformerRecordListToTimeValuesSettingsTimestampSettingsType;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
 }
 
 export interface TransformerSetpointToModbusSettingsMapping {
@@ -383,6 +415,14 @@ export interface TransformerJsonToOianalyticsSettings {
   datetimeSettings: TransformerJsonToOianalyticsSettingsDatetimeSettings | null;
 }
 
+export interface TransformerJsonToTimeValuesSettings {
+  rowIteratorPath: string;
+  pointId: string;
+  value: string;
+  timestamp: string;
+  datetimeSettings: TransformerJsonToTimeValuesSettingsDatetimeSettings | null;
+}
+
 export interface TransformerRecordListToCsvSettings {
   filename: string;
   encoding: TransformerRecordListToCsvSettingsEncoding;
@@ -394,6 +434,13 @@ export interface TransformerRecordListToCsvSettings {
   escapeChar: TransformerRecordListToCsvSettingsEscapeChar;
   nullValue: string | null;
   fields: Array<TransformerRecordListToCsvSettingsFields> | null;
+}
+
+export interface TransformerRecordListToTimeValuesSettings {
+  pointIdColumn: string;
+  timestampColumn: string;
+  valueColumn: string;
+  timestampSettings: TransformerRecordListToTimeValuesSettingsTimestampSettings;
 }
 
 export type TransformerIgnoreSettings = object;
@@ -453,7 +500,9 @@ export type TransformerSettings =
   | TransformerCsvToTimeValuesSettings
   | TransformerJsonToCsvSettings
   | TransformerJsonToOianalyticsSettings
+  | TransformerJsonToTimeValuesSettings
   | TransformerRecordListToCsvSettings
+  | TransformerRecordListToTimeValuesSettings
   | TransformerIgnoreSettings
   | TransformerIsoSettings
   | TransformerSetpointToModbusSettings

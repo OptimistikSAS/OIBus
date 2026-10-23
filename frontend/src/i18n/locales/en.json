@@ -1312,7 +1312,9 @@
             "iso": "No transform",
             "json-to-csv": "CSV (from JSON)",
             "json-to-oianalytics": "OIAnalytics (from JSON)",
+            "json-to-time-values": "Time Values (from JSON)",
             "record-list-to-csv": "CSV (from Record list)",
+            "record-list-to-time-values": "Time Values (from Record list)",
             "time-values-to-csv": "CSV",
             "time-values-to-json": "JSON",
             "time-values-to-modbus": "Modbus values",
@@ -1691,6 +1693,24 @@
               }
             }
           },
+          "record-list-to-time-values": {
+            "point-id-column": "Point ID Column",
+            "timestamp-column": "Timestamp Column",
+            "value-column": "Value Column",
+            "timestamp-settings": {
+              "title": "Timestamp Settings",
+              "type": {
+                "title": "Timestamp type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            }
+          },
           "setpoint-to-modbus": {
             "mapping": {
               "title": "Mapping table",
@@ -1834,6 +1854,25 @@
                 "min": "Minute",
                 "hr": "Hour"
               }
+            }
+          },
+          "json-to-time-values": {
+            "row-iterator-path": "Row Iterator JSONPath",
+            "point-id": "Point ID JSONPath",
+            "value": "Value JSONPath",
+            "timestamp": "Timestamp JSONPath",
+            "datetime-settings": {
+              "title": "Datetime Settings",
+              "input-type": {
+                "title": "Timestamp input type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
             }
           },
           "time-values-to-oianalytics": {

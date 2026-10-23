@@ -13,7 +13,9 @@ import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
+import JSONToTimeValuesTransformer from '../../transformers/any/json-to-time-values/json-to-time-values-transformer';
 import RecordListToCsvTransformer from '../../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
+import RecordListToTimeValuesTransformer from '../../transformers/any/record-list-to-time-values/record-list-to-time-values-transformer';
 import IgnoreTransformer from '../../transformers/ignore-transformer';
 import IsoTransformer from '../../transformers/iso-transformer';
 import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
@@ -247,6 +249,26 @@ export default class TransformerRepository {
         functionName: RecordListToCsvTransformer.transformerName,
         inputType: 'record-list',
         outputType: 'any'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(JSONToTimeValuesTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: JSONToTimeValuesTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'time-values'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(RecordListToTimeValuesTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: RecordListToTimeValuesTransformer.transformerName,
+        inputType: 'record-list',
+        outputType: 'time-values'
       };
       this.createStandardTransformer(standardTransformer);
     }
