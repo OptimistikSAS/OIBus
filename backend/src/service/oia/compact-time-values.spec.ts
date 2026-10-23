@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { afterEach, describe, it } from 'node:test';
 
-import { toCompactTimeValues } from './compact-time-values';
+import { Settings } from 'luxon';
+
+import { toCompactTimeValues, truncateInstant } from './compact-time-values';
 
 describe('toCompactTimeValues', () => {
   it('should convert time values into three parallel arrays', () => {
@@ -38,5 +40,28 @@ describe('toCompactTimeValues', () => {
 
   it('should convert an empty array', () => {
     assert.deepStrictEqual(toCompactTimeValues([]), { timestamps: [], values: [], references: [] });
+  });
+});
+
+describe('truncateInstant', () => {
+  const defaultZone = Settings.defaultZone;
+
+  afterEach(() => {
+    Settings.defaultZone = defaultZone;
+  });
+
+  it('should truncate an instant with each precision', () => {
+    assert.strictEqual(truncateInstant('2024-01-01T10:12:13.456Z', 'ms'), '2024-01-01T10:12:13.456Z');
+    assert.strictEqual(truncateInstant('2024-01-01T10:12:13.456Z', 's'), '2024-01-01T10:12:13.000Z');
+    assert.strictEqual(truncateInstant('2024-01-01T10:12:13.456Z', 'min'), '2024-01-01T10:12:00.000Z');
+    assert.strictEqual(truncateInstant('2024-01-01T10:12:13.456Z', 'hr'), '2024-01-01T10:00:00.000Z');
+  });
+
+  it('should truncate in UTC whatever the time zone of the server', () => {
+    // UTC+05:30: truncating in the local time zone would give 09:30Z
+    Settings.defaultZone = 'Asia/Kolkata';
+
+    assert.strictEqual(truncateInstant('2024-01-01T10:12:13.456Z', 'hr'), '2024-01-01T10:00:00.000Z');
+    assert.strictEqual(truncateInstant('2024-01-01T10:12:13.456+05:30', 'hr'), '2024-01-01T04:00:00.000Z');
   });
 });

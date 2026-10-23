@@ -93,6 +93,26 @@ describe('Data folder migration v3.10.0 (cached time-values to record lists)', (
     }
   });
 
+  it('should turn the cached time values of OIAnalytics norths and history queries into oianalytics content', async () => {
+    // The North connectors and history queries sending to OIAnalytics, as read from the configuration database
+    const oiaIds: Record<string, Array<{ id: string }>> = { north_connectors: [{ id: 'oia' }], history_queries: [{ id: 'h1' }] };
+    const knex = ((table: string) => ({ select: () => ({ where: async () => oiaIds[table] }) })) as unknown as Knex;
+    const oiaFolders = [path.join(tmpRoot, 'cache', 'north-oia'), path.join(tmpRoot, 'archive', 'history-h1', 'north')];
+    for (const folder of oiaFolders) {
+      await writeCacheFile(folder, 'file1', 'time-values', timeValues);
+    }
+    await writeCacheFile(path.join(tmpRoot, 'cache', 'north-n1'), 'file1', 'time-values', timeValues);
+
+    await migration.up(knex);
+
+    for (const folder of oiaFolders) {
+      const { content, metadata } = await readCacheFile(folder, 'file1');
+      assert.deepStrictEqual(content, timeValues);
+      assert.strictEqual(metadata.contentType, 'oianalytics');
+    }
+    assert.deepStrictEqual((await readCacheFile(path.join(tmpRoot, 'cache', 'north-n1'), 'file1')).content, records);
+  });
+
   it('should leave the other content types and folders untouched', async () => {
     const north = path.join(tmpRoot, 'cache', 'north-n1');
     await writeCacheFile(north, 'file1', 'any', timeValues);

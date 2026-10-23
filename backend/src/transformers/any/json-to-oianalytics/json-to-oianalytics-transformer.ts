@@ -9,7 +9,7 @@ import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { Instant } from '../../../model/types';
-import { toCompactTimeValues } from '../../../service/oia/compact-time-values';
+import { PointValueLike, toCompactTimeValues, truncateInstant } from '../../../service/oia/compact-time-values';
 import { convertDateTime, generateRandomId, injectIndices, streamToString } from '../../../service/utils';
 import { createStringFieldProcess } from '../../field-process';
 import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
@@ -47,17 +47,19 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
     const rows = resolveJsonPathRows(this.options.rowIteratorPath, content);
     const referenceProcess = createStringFieldProcess(this.options.referenceProcess);
 
-    const values = rows.map(row => {
+    const values: Array<PointValueLike> = [];
+    for (const row of rows) {
       const pointId = resolveJsonPath(injectIndices(this.options.pointId, row.indices), content);
       const value = resolveJsonPath(injectIndices(this.options.value, row.indices), content);
+      // A row without point or value cannot be sent (it would be referenced as "undefined")
+      if (pointId === undefined || pointId === null || value === undefined || value === null) continue;
       const rawTimestamp = resolveJsonPath(injectIndices(this.options.timestamp, row.indices), content);
-
-      return {
+      values.push({
         pointId: String(pointId),
-        timestamp: this.formatInstant(this.toInstant(rawTimestamp), this.options.datetimeSettings?.outputPrecision ?? 'ms'),
+        timestamp: truncateInstant(this.toInstant(rawTimestamp), this.options.datetimeSettings?.outputPrecision ?? 'ms'),
         value
-      };
-    });
+      });
+    }
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,
@@ -98,19 +100,5 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
 
   get options(): TransformerJsonToOianalyticsSettings {
     return this._options as TransformerJsonToOianalyticsSettings;
-  }
-
-  formatInstant(timestamp: Instant, precision: 'ms' | 's' | 'min' | 'hr'): Instant {
-    switch (precision) {
-      case 'hr':
-        return DateTime.fromISO(timestamp).set({ minute: 0, second: 0, millisecond: 0 }).toUTC().toISO()!;
-      case 'min':
-        return DateTime.fromISO(timestamp).set({ second: 0, millisecond: 0 }).toUTC().toISO()!;
-      case 's':
-        return DateTime.fromISO(timestamp).set({ millisecond: 0 }).toUTC().toISO()!;
-      case 'ms':
-      default:
-        return timestamp;
-    }
   }
 }

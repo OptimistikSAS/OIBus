@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 import { Instant } from '../../model/types';
 
 /**
@@ -42,4 +44,23 @@ export const toCompactTimeValues = (
     compact.references[i] = formatReference(value.pointId);
   }
   return compact;
+};
+
+/**
+ * Truncates an ISO instant to the given precision, in UTC: truncating in the server time zone would shift the hours of
+ * time zones with a sub-hour offset (e.g. UTC+05:30).
+ */
+export const truncateInstant = (timestamp: Instant, precision: 'ms' | 's' | 'min' | 'hr'): Instant => {
+  const instant = DateTime.fromISO(timestamp, { zone: 'utc' });
+  switch (precision) {
+    case 'hr':
+      return instant.startOf('hour').toISO()!;
+    case 'min':
+      return instant.startOf('minute').toISO()!;
+    case 's':
+      return instant.startOf('second').toISO()!;
+    case 'ms':
+    default:
+      return timestamp;
+  }
 };

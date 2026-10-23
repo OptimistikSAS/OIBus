@@ -4,7 +4,7 @@ The **OIAnalytics® North Connector** sends files and values to the **OIAnalytic
 
 OIAnalytics® can process:
 
-- **JSON values payloads**: The point records of South protocols (e.g., OPC UA, Modbus), or values built by a transformer.
+- **JSON values payloads**: Values built by the OIAnalytics transformers from the records of South connectors (e.g., OPC UA, Modbus, SQL).
 - **Files**: Transmitted as-is (compressed or uncompressed). Supported formats include CSV, TXT, and XLSX.
 
 OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-processing. Parsing is configured directly in the SaaS application.
@@ -91,7 +91,7 @@ The password is **only displayed once** during API key generation. If lost, you 
 
 ## Data Format {#data-format}
 
-- OIBus **point records** (`pointId`, `timestamp`, `value`) are sent as **JSON payloads** to OIAnalytics®. Records without
-  `pointId` or `timestamp` (e.g. SQL rows sent without transformer) are not sent: use the OIAnalytics transformer to
-  read their columns.
+- Records are sent as **JSON payloads** to OIAnalytics® through the
+  [OIAnalytics transformer](../engine/transformers.mdx#oianalytics-select-time-precision), which reads their point ID,
+  timestamp and value columns. Without transformer, record lists are not sent to OIAnalytics®.
 - OIAnalytics® directly references external data in the `pointId` field (no file parser needed).

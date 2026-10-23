@@ -298,4 +298,90 @@ describe('3.10.0 config upgrade', () => {
       assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
     });
   });
+
+  describe('OIAnalytics North', () => {
+    const transformer = (id: string, functionName: string): JsonObject => ({
+      oIBusInternalId: id,
+      type: 'standard',
+      settings: { functionName, inputType: 'any', outputType: 'any' },
+      manifest: {}
+    });
+    const buildConfig = (functionNames: Array<string>): JsonObject => ({
+      transformers: functionNames.map(functionName => transformer(functionName, functionName)),
+      southConnectors: [
+        { oIBusInternalId: 'opcua', type: 'opcua', settings: { items: [] } },
+        { oIBusInternalId: 'modbus', type: 'modbus', settings: { items: [] } },
+        { oIBusInternalId: 'mysql', type: 'mysql', settings: { items: [] } }
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'oia',
+          type: 'oianalytics',
+          settings: {
+            transformers: [
+              { id: 'iso', transformerId: 'iso', options: {}, source: { type: 'south', southId: 'opcua', items: [{ id: 'item1' }] } },
+              { id: 'ignore', transformerId: 'ignore', options: {}, source: { type: 'south', southId: 'modbus', items: [] } }
+            ]
+          }
+        },
+        { oIBusInternalId: 'fileWriter', type: 'file-writer', settings: { transformers: [] } }
+      ],
+      historyQueries: [
+        { settings: { southType: 'opcua', northType: 'oianalytics', items: [], northTransformers: [] } },
+        { settings: { southType: 'mysql', northType: 'oianalytics', items: [], northTransformers: [] } }
+      ]
+    });
+
+    it('sends the point-based souths of an export made before the record-list refactor through record-list-to-oianalytics', () => {
+      const config = upgrade.apply(buildConfig(['iso', 'ignore', 'time-values-to-csv']));
+
+      const oiaTransformer = (config.transformers as Array<JsonObject>).find(
+        candidate => (candidate.settings as JsonObject).functionName === 'record-list-to-oianalytics'
+      )!;
+      assert.strictEqual((oiaTransformer.manifest as JsonObject).key, 'options');
+      const links = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
+      const linksTo = (southId: string) => links.filter(link => (link.source as JsonObject).southId === southId);
+      assert.deepStrictEqual(
+        linksTo('opcua').map(link => [link.transformerId, (link.source as JsonObject).items]),
+        [
+          [oiaTransformer.oIBusInternalId, [{ id: 'item1' }]],
+          [oiaTransformer.oIBusInternalId, []]
+        ]
+      );
+      assert.deepStrictEqual((linksTo('opcua')[0].options as JsonObject).pointIdColumn, 'pointId');
+      assert.deepStrictEqual(
+        linksTo('modbus').map(link => link.transformerId),
+        ['ignore']
+      );
+      assert.deepStrictEqual(linksTo('mysql'), []);
+      assert.deepStrictEqual(((config.northConnectors as Array<JsonObject>)[1].settings as JsonObject).transformers, []);
+      const [opcuaHistory, mysqlHistory] = (config.historyQueries as Array<JsonObject>).map(
+        historyQuery => (historyQuery.settings as JsonObject).northTransformers as Array<JsonObject>
+      );
+      assert.deepStrictEqual(
+        opcuaHistory.map(link => [link.transformerId, link.items]),
+        [[oiaTransformer.oIBusInternalId, []]]
+      );
+      assert.deepStrictEqual(mysqlHistory, []);
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig(['iso', 'ignore', 'time-values-to-csv', 'record-list-to-oianalytics']));
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+
+    it('leaves the links of an export made after the record-list refactor untouched', () => {
+      const config = buildConfig(['iso', 'ignore', 'record-list-to-csv']);
+
+      const upgraded = upgrade.apply(structuredClone(config));
+
+      assert.deepStrictEqual(upgraded.transformers, config.transformers);
+      assert.deepStrictEqual(upgraded.northConnectors, config.northConnectors);
+      assert.deepStrictEqual(
+        (upgraded.historyQueries as Array<JsonObject>).map(historyQuery => (historyQuery.settings as JsonObject).northTransformers),
+        [[], []]
+      );
+    });
+  });
 });

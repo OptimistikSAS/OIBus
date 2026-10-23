@@ -162,6 +162,21 @@ describe('JSONToOIAnalyticsTransformer', () => {
     assert.deepStrictEqual(parsed.timestamps, ['2020-01-01T00:00:00.000Z']);
   });
 
+  it('should skip the rows without point or value instead of sending an "undefined" reference', async () => {
+    const result = await createTransformer().transformInMemory(
+      [
+        { ts: '2020-01-01T00:00:00.000Z', val: 1 },
+        { id: 'point-2', ts: '2020-01-01T00:00:00.000Z' },
+        { id: 'point-3', ts: '2020-01-01T00:00:00.000Z', val: 3 }
+      ],
+      { source: 'test' },
+      null
+    );
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()).references, ['point-3']);
+    assert.strictEqual(result.metadata.numberOfElement, 1);
+  });
+
   it('should apply the reference process to the references', async () => {
     const transformer = createTransformer({
       ...options,
@@ -175,15 +190,6 @@ describe('JSONToOIAnalyticsTransformer', () => {
     const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
 
     assert.deepStrictEqual(JSON.parse(result.output.toString()).references, ['plant/point-1', 'plant/point-2']);
-  });
-
-  it('should properly format instant with precision', () => {
-    const transformer = createTransformer();
-
-    assert.strictEqual(transformer.formatInstant('2020-03-15T12:34:56.789Z', 'ms'), '2020-03-15T12:34:56.789Z');
-    assert.strictEqual(transformer.formatInstant('2020-03-15T12:34:56.789Z', 's'), '2020-03-15T12:34:56.000Z');
-    assert.strictEqual(transformer.formatInstant('2020-03-15T12:34:56.789Z', 'min'), '2020-03-15T12:34:00.000Z');
-    assert.strictEqual(transformer.formatInstant('2020-03-15T12:34:56.789Z', 'hr'), '2020-03-15T12:00:00.000Z');
   });
 
   it('should correctly expose the manifest settings', () => {

@@ -84,19 +84,19 @@ Standard transformers are built-in and require only configuration — no coding.
 ### Ignore and No transform {#ignore-and-no-transform}
 
 These two require no configuration. **Ignore** is available for every source type; **No transform** only when the
-North connector accepts the source's data as is: record lists for the Console, File Writer and OIAnalytics North,
-files for any file-based North. MQTT and OIBus API JSON payloads are cached as JSON files.
+North connector accepts the source's data as is: record lists for the Console and File Writer North, files for any
+file-based North (including OIAnalytics). MQTT and OIBus API JSON payloads are cached as JSON files.
 
 | Transformer      | Behavior                                                                                                                                                                                                         |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Ignore**       | Drops the data. Nothing is cached and nothing is sent to the North connector. Useful to silence part of a South connector's output for a given North (via item/group scoping) without disabling the item itself. |
 | **No transform** | Caches the data exactly as received, with no conversion at all. Use this when the North connector already accepts the South's native content type.                                                               |
 
-:::info Record lists sent to OIAnalytics as is
-Without transformer, the OIAnalytics North sends the point records of a record list as values, reading their
-`pointId`, `timestamp` and `value` fields. Records without `pointId` or `timestamp` (e.g. the rows of a SQL query) are
-not sent: use the [OIAnalytics (select time precision)](#oianalytics-select-time-precision) transformer to name the
-columns to read.
+:::info Record lists sent to OIAnalytics
+The OIAnalytics North only accepts files and OIAnalytics values: record lists are sent through the
+[OIAnalytics (select time precision)](#oianalytics-select-time-precision) transformer. When upgrading to 3.10, this
+transformer is added to every OIAnalytics North for the point-based South connectors (OPC UA, OPC Classic, Modbus,
+ADS, S7, BACnet, OSIsoft PI) and history queries, whose values it used to receive without transformer.
 :::
 
 ---
@@ -315,9 +315,9 @@ Mapping: `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 
 #### OIAnalytics (select time precision) {#oianalytics-select-time-precision}
 
-Prepares records for the OIAnalytics North connector. Only the point ID, the timestamp and the value of each record
-are forwarded — extra fields such as the quality are stripped — and the timestamps can be truncated to a chosen
-precision to reduce storage footprint. To save bandwidth, the values are written in the OIAnalytics **compact
+Prepares records for the OIAnalytics North connector, which needs it to receive record lists. Only the point ID, the
+timestamp and the value of each record are forwarded — extra fields such as the quality are stripped — and the
+timestamps can be truncated (in UTC) to a chosen precision to reduce storage footprint. To save bandwidth, the values are written in the OIAnalytics **compact
 format**: three parallel arrays of the same size (`timestamps`, `values`, `references`), the i-th value being made of
 the i-th element of each array.
 
@@ -454,8 +454,7 @@ tag/pressure1,2024-01-15T10:00:00.000Z,102.1
 ]
 ```
 
-These records can then be forwarded to the North connectors that accept record lists (OIAnalytics, Console, File
-Writer).
+These records can then be forwarded to the North connectors that accept record lists (Console, File Writer).
 
 ---
 
