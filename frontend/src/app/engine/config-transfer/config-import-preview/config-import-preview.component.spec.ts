@@ -51,7 +51,7 @@ describe('ConfigImportPreviewComponent', () => {
 
   beforeEach(() => {
     transformerService = createMock(TransformerService);
-    transformerService.list.mockReturnValue(of([localStandardTransformer('iso')]));
+    transformerService.list.mockReturnValue(of([localStandardTransformer('file')]));
     TestBed.configureTestingModule({ providers: [provideI18nTesting(), { provide: TransformerService, useValue: transformerService }] });
   });
 
@@ -135,8 +135,9 @@ describe('ConfigImportPreviewComponent', () => {
 
     await expect.element(tester.toggle('north:north1:transformer:0')).toMatchTextContent('My transformer');
     await expect.element(tester.toggle('north:north1:transformer:0')).toMatchTextContent('My folder scanner (Folder scanner) [All items]');
-    await expect.element(tester.toggle('north:north1:transformer:1')).toMatchTextContent('No transform');
+    await expect.element(tester.toggle('north:north1:transformer:1')).toMatchTextContent('File (as is)');
     await expect.element(tester.toggle('north:north1:transformer:1')).toMatchTextContent('OIAnalytics setpoints');
+    await expect.element(tester.toggle('north:north1:transformer:2')).toMatchTextContent('OIBus API (all data sources)');
 
     await tester.open('north:north1:transformer:0');
     await expect.element(tester.root.getByText('"precision": 2', { exact: false })).toBeInTheDocument();
@@ -151,7 +152,7 @@ describe('ConfigImportPreviewComponent', () => {
     await tester.open('history:history1', 'history:history1:items', 'history:history1:transformers', 'history:history1:time-range');
     await expect.element(tester.toggle('history:history1:item:hItem1')).toMatchTextContent('History item');
     await expect.element(tester.toggle('history:history1:item:hItem1')).toMatchTextContent('active');
-    await expect.element(tester.toggle('history:history1:transformer:0')).toMatchTextContent('No transform');
+    await expect.element(tester.toggle('history:history1:transformer:0')).toMatchTextContent('File (as is)');
     await expect.element(tester.toggle('history:history1:transformer:0')).toMatchTextContent('All items');
     await expect.element(tester.root.getByText('2026-01-02T00:00:00.000Z', { exact: false })).toBeInTheDocument();
   });
@@ -168,13 +169,13 @@ describe('ConfigImportPreviewComponent', () => {
   });
 
   test('should warn about standard transformers this instance does not have, and flag the links to them', async () => {
-    transformerService.list.mockReturnValue(of([localStandardTransformer('ignore')]));
+    transformerService.list.mockReturnValue(of([localStandardTransformer('record-list-to-json')]));
     createTester();
 
     await tester.open('transformers', 'north', 'north:north1', 'north:north1:transformers');
-    await expect.element(tester.missingStandardTransformers).toMatchTextContent('No transform');
+    await expect.element(tester.missingStandardTransformers).toMatchTextContent('File (as is)');
     await expect.element(tester.missingStandardTransformers.getByRole('listitem')).toHaveLength(1);
-    await expect.element(tester.toggle('north:north1:transformer:1')).toMatchTextContent('No transform (not available, will be skipped)');
+    await expect.element(tester.toggle('north:north1:transformer:1')).toMatchTextContent('File (as is) (not available, will be skipped)');
     await expect.element(tester.toggle('north:north1:transformer:0')).not.toMatchTextContent('will be skipped');
   });
 

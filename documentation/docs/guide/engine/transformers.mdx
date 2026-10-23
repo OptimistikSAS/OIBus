@@ -21,11 +21,11 @@ Click **Add** in the Transformers section to open the configuration modal. Three
 
 Choose where the data comes from.
 
-| Source                   | Description                                                                                                    |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| **South connector**      | Data collected by one of the configured South connectors                                                       |
-| **OIBus API**            | Data pushed to OIBus via the REST API. Requires a **Data Source ID** string to identify the originating system |
-| **OIAnalytics Setpoint** | Write-back commands sent from OIAnalytics                                                                      |
+| Source                   | Description                                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **South connector**      | Data collected by one of the configured South connectors                                                        |
+| **OIBus API**            | Data pushed to OIBus via the REST API, from the **Data Source ID** given, or from every data source without one |
+| **OIAnalytics Setpoint** | Write-back commands sent from OIAnalytics                                                                       |
 
 ### 2 — Item Scope (South connectors only) {#2--item-scope-south-connectors-only}
 
@@ -60,16 +60,19 @@ the transformer's position in the list.
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
 
-| South connector type                                                                                                                                 | Compatible standard transformers                                                           |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON)     |
-| **OIBus API**                                                                                                                                        | Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON)     |
-| **OIAnalytics Setpoint**                                                                                                                             | MQTT payloads, Modbus values, OPCUA values                                                 |
+| South connector type                                                                                                                                 | Compatible standard transformers                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values           |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **OIBus API**                                                                                                                                        | File (as is), Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                                                     |
 
-Custom transformers are also shown in this list and are always named by the user. In addition, **Ignore** is
-available for every source type, and **No transform** (see below) when the North connector accepts the source's data
-as is.
+Custom transformers are also shown in this list and are always named by the user.
+
+:::info Data without transformer
+A North connector ignores the data no transformer is configured for. To keep an item out of a transformer applying to
+all the items of its South connector (or of its group), scope that transformer to the list of the other items.
+:::
 
 After choosing a transformer, its settings form appears directly in the modal.
 
@@ -78,19 +81,6 @@ After choosing a transformer, its settings form appears directly in the modal.
 ## Standard Transformers {#standard-transformers}
 
 Standard transformers are built-in and require only configuration — no coding.
-
----
-
-### Ignore and No transform {#ignore-and-no-transform}
-
-These two require no configuration. **Ignore** is available for every source type; **No transform** only when the
-North connector accepts the source's data as is: record lists for the Console and File Writer North, files for any
-file-based North (including OIAnalytics). MQTT and OIBus API JSON payloads are cached as JSON files.
-
-| Transformer      | Behavior                                                                                                                                                                                                         |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Ignore**       | Drops the data. Nothing is cached and nothing is sent to the North connector. Useful to silence part of a South connector's output for a given North (via item/group scoping) without disabling the item itself. |
-| **No transform** | Caches the data exactly as received, with no conversion at all. Use this when the North connector already accepts the South's native content type.                                                               |
 
 :::info Record lists sent to OIAnalytics
 The OIAnalytics North only accepts files and OIAnalytics values: record lists are sent through the
@@ -412,6 +402,16 @@ Scanner and OIAnalytics, as well as data injected via the **OIBus API**.
 
 ---
 
+#### File (as is) {#file-as-is}
+
+Sends the files as they are, keeping their name, to a North connector expecting files (Azure Blob, Amazon S3, SFTP,
+REST, File Writer, OIAnalytics...). The JSON payloads of the MQTT South connector and of the OIBus API are saved as
+`.json` files.
+
+This transformer has **no configuration options**.
+
+---
+
 #### Records (from CSV) {#records-from-csv}
 
 Parses a CSV file and maps each row to a point record `{ pointId, timestamp, value }`. The transformer converts the
@@ -672,6 +672,15 @@ Each setpoint command has this shape:
 ```json
 { "reference": "pump1/setSpeed", "value": 1200 }
 ```
+
+---
+
+#### JSON {#json-setpoints}
+
+Writes the setpoint commands as a JSON file, unchanged, for the North connectors expecting files (e.g. Console or File
+Writer).
+
+This transformer has **no configuration options**.
 
 ---
 

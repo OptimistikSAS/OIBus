@@ -77,7 +77,12 @@
           <div class="col-4">
             <div class="form-group">
               <label class="form-label" for="api-data-source" translate="configuration.oibus.manifest.transformers.api-data-source"></label>
-              <input formControlName="apiDataSourceId" id="api-data-source" class="form-control" />
+              <input
+                formControlName="apiDataSourceId"
+                id="api-data-source"
+                class="form-control"
+                [placeholder]="'configuration.oibus.manifest.transformers.all-data-sources' | translate"
+              />
               <val-errors controlName="apiDataSourceId" />
             </div>
           </div>
