@@ -985,7 +985,8 @@ export default class ConfigImportService {
           type: 'south',
           south: { id: source.southId } as SourceOriginSouth['south'],
           group: source.groupId ? ({ id: source.groupId } as SourceOriginSouth['group']) : undefined,
-          items: source.items.map(item => ({ id: item.id }) as SourceOriginSouth['items'][number])
+          items: source.items.map(item => ({ id: item.id }) as SourceOriginSouth['items'][number]),
+          excludedItems: (source.excludedItems ?? []).map(item => ({ id: item.id }) as SourceOriginSouth['items'][number])
         };
       case 'oibus-api':
         return { type: 'oibus-api', dataSourceId: source.dataSourceId };

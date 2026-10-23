@@ -123,6 +123,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
         if (transformer.source.type === 'south') {
           transformer.source.items = [];
           delete transformer.source.groupId;
+          delete transformer.source.excludedItems;
         }
       }
     }

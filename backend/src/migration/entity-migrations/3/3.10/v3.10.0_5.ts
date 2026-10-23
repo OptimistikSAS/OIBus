@@ -43,9 +43,16 @@ interface NorthLinkRow {
  *    type ('file', 'record-list-to-json' or 'setpoint-to-json'), at the south level for the data without transformer;
  *  - the files of the OIBus API go through a 'file' transformer applying to every data source, unless the North ignored
  *    some of them;
- *  - the transformers the items configured with 'ignore' fell back to are narrowed to the list of the other items.
+ *  - the items configured with 'ignore' are left out of the North transformers they fell back to (applying to their
+ *    group or to their whole south), flagged as excluded items of these transformers; the history query transformers,
+ *    which cannot leave items out, are narrowed to the list of the other items.
  */
 export async function up(knex: Knex): Promise<void> {
+  // A North transformer applying to all the items of a south, or of a group, can leave some items out
+  await knex.schema.alterTable(NORTH_TRANSFORMERS_ITEMS_TABLE, table => {
+    table.boolean('excluded').notNullable().defaultTo(false);
+  });
+
   const standardTransformers: Array<{ id: string; function_name: string }> = await knex(TRANSFORMERS_TABLE)
     .select('id', 'function_name')
     .where('type', 'standard');
@@ -101,7 +108,8 @@ export async function up(knex: Knex): Promise<void> {
         routingLinks,
         (southItems.get(south.id) ?? []).map(row => row.id),
         defaultPassthrough !== undefined,
-        isoPassthrough !== undefined
+        isoPassthrough !== undefined,
+        true
       );
 
       await removeLinks(knex, NORTH_TRANSFORMERS_TABLE, NORTH_TRANSFORMERS_ITEMS_TABLE, plan.removed);
@@ -110,9 +118,12 @@ export async function up(knex: Knex): Promise<void> {
           .whereIn('id', plan.toPassthrough)
           .update({ transformer_id: await passthroughId(isoPassthrough!), options: '{}' });
       }
+      // Only the links listing items are narrowed: they keep listing some of them
       for (const [id, itemIds] of plan.narrowed) {
-        await knex(NORTH_TRANSFORMERS_TABLE).where('id', id).update({ source_south_group_id: null });
         await setLinkItems(knex, NORTH_TRANSFORMERS_ITEMS_TABLE, id, itemIds);
+      }
+      for (const [id, itemIds] of plan.excluded) {
+        await excludeLinkItems(knex, id, itemIds);
       }
       if (plan.added) {
         const id = generateRandomId(6);
@@ -121,6 +132,7 @@ export async function up(knex: Knex): Promise<void> {
           source_south_south_id: south.id
         });
         await setLinkItems(knex, NORTH_TRANSFORMERS_ITEMS_TABLE, id, plan.added.itemIds);
+        await excludeLinkItems(knex, id, plan.added.excludedItemIds);
       }
     }
 
@@ -200,7 +212,8 @@ export async function up(knex: Knex): Promise<void> {
       })),
       itemIds,
       defaultPassthrough !== undefined,
-      isoPassthrough !== undefined
+      isoPassthrough !== undefined,
+      false
     );
 
     await removeLinks(knex, HISTORY_QUERY_TRANSFORMERS_TABLE, HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE, plan.removed);
@@ -281,6 +294,15 @@ async function setLinkItems(knex: Knex, itemsTable: string, id: string, itemIds:
   await knex.batchInsert(
     itemsTable,
     itemIds.map(itemId => ({ id, item_id: itemId })),
+    100
+  );
+}
+
+/** Leaves items out of a North link applying to a group or to a whole south */
+async function excludeLinkItems(knex: Knex, id: string, itemIds: Array<string>): Promise<void> {
+  await knex.batchInsert(
+    NORTH_TRANSFORMERS_ITEMS_TABLE,
+    itemIds.map(itemId => ({ id, item_id: itemId, excluded: true })),
     100
   );
 }

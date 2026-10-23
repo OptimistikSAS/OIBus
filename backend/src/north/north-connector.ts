@@ -123,7 +123,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *     connector.transformers array so we can preserve list-order priority
    *     when multiple transformers match different items in the same batch)
    *   - "southId\0itemId" → group-level transformer (same shape)
-   *   - "southId"          → south-level fallback transformer
+   *   - "southId"          → south-level fallback transformers, in list order, each
+   *                          with the items it leaves out (the first one not
+   *                          leaving an item out applies to it)
    *   - "dataSourceId"     → oibus-api transformer, plus the one applying to
    *                          every data source (no data source id)
    *   - one entry for the oianalytics-setpoint transformer
@@ -131,7 +133,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private transformerLookup: {
     itemLevel: Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>;
     groupLevel: Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>;
-    southLevel: Map<string, NorthTransformerWithOptions>;
+    southLevel: Map<string, Array<{ transformer: NorthTransformerWithOptions; excludedItemIds: Set<string> }>>;
     apiLevel: Map<string, NorthTransformerWithOptions>;
     allApiSources: NorthTransformerWithOptions | undefined;
     oianalyticsSetpoint: NorthTransformerWithOptions | undefined;
@@ -157,7 +159,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   protected rebuildTransformerCache(): void {
     const itemLevel = new Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>();
     const groupLevel = new Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>();
-    const southLevel = new Map<string, NorthTransformerWithOptions>();
+    const southLevel = new Map<string, Array<{ transformer: NorthTransformerWithOptions; excludedItemIds: Set<string> }>>();
     const apiLevel = new Map<string, NorthTransformerWithOptions>();
     let allApiSources: NorthTransformerWithOptions | undefined;
     let oianalyticsSetpoint: NorthTransformerWithOptions | undefined;
@@ -170,6 +172,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       const source = t.source;
       if (source.type === 'south') {
         const entry = { transformer: t, listIndex };
+        const excludedItemIds = new Set((source.excludedItems ?? []).map(item => item.id));
         // Items-level: every item in the transformer's items list maps to this
         // transformer. First-wins so order in `connector.transformers` matters.
         for (const item of source.items) {
@@ -181,6 +184,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         // Group-level: every item in the group maps to this transformer.
         if (source.group) {
           for (const item of source.group.items) {
+            if (excludedItemIds.has(item.id)) continue;
             const key = compositeKey(source.south.id, item.id);
             if (!groupLevel.has(key)) {
               groupLevel.set(key, entry);
@@ -189,9 +193,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         }
         // South-level fallback: only for transformers with no items and no group.
         if (!source.group && source.items.length === 0) {
-          if (!southLevel.has(source.south.id)) {
-            southLevel.set(source.south.id, t);
-          }
+          const southEntries = southLevel.get(source.south.id) ?? [];
+          southEntries.push({ transformer: t, excludedItemIds });
+          southLevel.set(source.south.id, southEntries);
         }
       } else if (source.type === 'oibus-api') {
         if (source.dataSourceId === undefined) {
@@ -541,7 +545,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     const lookup = this.getTransformerLookup();
     const resolve = (itemId: string): NorthTransformerWithOptions | undefined => {
       const key = `${source.southId}\0${itemId}`;
-      return lookup.itemLevel.get(key)?.transformer ?? lookup.groupLevel.get(key)?.transformer ?? lookup.southLevel.get(source.southId);
+      return (
+        lookup.itemLevel.get(key)?.transformer ??
+        lookup.groupLevel.get(key)?.transformer ??
+        lookup.southLevel.get(source.southId)?.find(entry => !entry.excludedItemIds.has(itemId))?.transformer
+      );
     };
 
     // Resolve the transformer of every item in the batch and index it by item name (= pointId).
@@ -619,7 +627,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       if (byGroup) return byGroup;
 
       // 3) South-level fallback
-      return lookup.southLevel.get(metadataSource.southId);
+      // The first one which does not leave out every item of the batch
+      return lookup.southLevel
+        .get(metadataSource.southId)
+        ?.find(entry => metadataSource.items.length === 0 || metadataSource.items.some(item => !entry.excludedItemIds.has(item.id)))
+        ?.transformer;
     }
 
     if (metadataSource.source === 'oibus-api') {

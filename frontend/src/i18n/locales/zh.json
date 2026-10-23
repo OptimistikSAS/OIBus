@@ -296,11 +296,13 @@
           "one-item-selected": "1 项",
           "several-items-selected": "{{ numberOfItems }} 项",
           "all-items-selected": "全部项",
+          "except-items": "，排除 {{ numberOfItems }} 个数据项",
           "oibus-api-selected": "OIBus API（数据源 ID：{{ dataSourceId }}）",
           "oibus-api-all-selected": "OIBus API（所有数据源）",
           "oianalytics-setpoint-selected": "OIAnalytics 设定点",
           "all-items": "全部项",
           "specific-items": "特定项",
+          "exclude-items": "排除部分数据项",
           "search-items": "搜索项...",
           "no-items-found": "未找到项",
           "search-results-count": "{{ count }} 个结果",
@@ -3248,6 +3250,32 @@
         "edit": "编辑转换器",
         "delete": "删除转换器",
         "audit": "查看转换器审计历史"
+      },
+      "routing": {
+        "show": "查看路由",
+        "title": "数据路由",
+        "description": "South 连接器的每个数据项发送到此 North 连接器时经过的转换器：先是该数据项自己的转换器，然后是其分组的转换器，最后是所有数据项的转换器。没有转换器的数据项将被丢弃。",
+        "only-dropped": "仅显示被丢弃的数据项",
+        "summary": "共 {{ total }} 个数据项，其中 {{ dropped }} 个被丢弃",
+        "item": "数据项",
+        "transformer": "转换器",
+        "level": "适用于",
+        "levels": {
+          "item": "此数据项",
+          "group": "其分组",
+          "south": "所有数据项"
+        },
+        "no-group": "无分组",
+        "dropped": "已丢弃：无转换器",
+        "no-item": "没有可显示的数据项",
+        "send-dropped": "发送被丢弃的数据项"
+      },
+      "uncovered": {
+        "summary": "{{ count }} 个数据源发送的数据因没有适用的转换器而被此 North 连接器丢弃。",
+        "show": "显示",
+        "hide": "隐藏",
+        "none": "没有转换器，其所有数据都被丢弃",
+        "some": "只有部分数据项有转换器，其余的被丢弃"
       }
     },
     "monitoring": {

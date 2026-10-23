@@ -742,16 +742,20 @@ const createNorthTransformer = async (
 
   if (source.type === 'south') {
     for (const item of source.items) {
-      await createNorthTransformerItem(database, northTransformerId, item.id);
+      await createNorthTransformerItem(database, northTransformerId, item.id, false);
+    }
+    for (const item of source.excludedItems ?? []) {
+      await createNorthTransformerItem(database, northTransformerId, item.id, true);
     }
   }
 };
 
-const createNorthTransformerItem = async (database: knex.Knex, northTransformerId: string, itemId: string) => {
+const createNorthTransformerItem = async (database: knex.Knex, northTransformerId: string, itemId: string, excluded: boolean) => {
   await database
     .insert({
       id: northTransformerId,
-      item_id: itemId
+      item_id: itemId,
+      excluded
     })
     .into('north_transformers_items');
 };

@@ -1,0 +1,105 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="north.transformers.routing.title"></h4>
+</div>
+<div class="modal-body">
+  <p class="text-muted" translate="north.transformers.routing.description"></p>
+  <div class="row mb-2">
+    <div class="col-5">
+      <label class="form-label" for="routing-south" translate="north.transformers.source"></label>
+      <select
+        class="form-select"
+        id="routing-south"
+        [ngModel]="south()"
+        (ngModelChange)="selectSouth($event)"
+        [compareWith]="compareSouths"
+      >
+        <option [ngValue]="null"></option>
+        @for (southConnector of southConnectors(); track southConnector.id) {
+          <option [ngValue]="southConnector">{{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})</option>
+        }
+      </select>
+    </div>
+    @if (south() && !loading()) {
+      <div class="col-4">
+        <label class="form-label" for="routing-search" translate="configuration.oibus.manifest.transformers.search-items"></label>
+        <input class="form-control" id="routing-search" [ngModel]="search()" (ngModelChange)="filter($event, onlyDropped())" />
+      </div>
+      <div class="col-3 d-flex align-items-end">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="routing-only-dropped"
+            [checked]="onlyDropped()"
+            (change)="filter(search(), !onlyDropped())"
+          />
+          <label class="form-check-label" for="routing-only-dropped" translate="north.transformers.routing.only-dropped"></label>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <oib-loading-spinner />
+  } @else if (south()) {
+    <p
+      id="routing-summary"
+      translate="north.transformers.routing.summary"
+      [translateParams]="{ total: items().length, dropped: droppedCount() }"
+    ></p>
+    @if (page().content.length) {
+      <table class="table table-sm oib-table">
+        <thead class="light">
+          <tr>
+            <th translate="north.transformers.routing.item"></th>
+            <th translate="north.transformers.routing.transformer"></th>
+            <th translate="north.transformers.routing.level"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of page().content; track item.id) {
+            @if (startsGroup($index)) {
+              <tr class="routing-group">
+                <td colspan="3" class="fw-bold">
+                  @if (item.group) {
+                    {{ 'configuration.oibus.manifest.transformers.group-selected' | translate: { groupName: item.group } }}
+                  } @else {
+                    {{ 'north.transformers.routing.no-group' | translate }}
+                  }
+                </td>
+              </tr>
+            }
+            <tr class="routing-item">
+              <td class="ps-4">
+                <span [class]="item.enabled ? 'green-dot me-2 d-inline-block' : 'grey-dot me-2 d-inline-block'"></span>{{ item.name }}
+              </td>
+              @if (item.transformer) {
+                <td>{{ item.transformer }}</td>
+                <td>{{ 'north.transformers.routing.levels.' + item.level | translate }}</td>
+              } @else {
+                <td class="text-danger" colspan="2" translate="north.transformers.routing.dropped"></td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+      <oib-pagination [page]="page()" (pageChanged)="pageNumber.set($event)" />
+    } @else {
+      <p class="text-muted" translate="north.transformers.routing.no-item"></p>
+    }
+  }
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    @if (canSendDropped()) {
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="send-dropped"
+        (click)="sendDropped()"
+        translate="north.transformers.routing.send-dropped"
+      ></button>
+    }
+    <button type="button" class="btn btn-cancel" (click)="close()" translate="common.close" id="close-button"></button>
+  </div>
+</div>

@@ -327,6 +327,11 @@ export default class NorthConnectorRepository {
             .run(transformerWithOptions.id, item.id);
         }
       }
+      for (const item of (transformerWithOptions.source.excludedItems ?? []).filter(item => item.id)) {
+        this.database
+          .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, item_id, excluded) VALUES (?, ?, 1);`)
+          .run(transformerWithOptions.id, item.id);
+      }
     }
 
     const after = this.findTransformersForNorth(northId).find(t => t.id === transformerWithOptions.id) ?? null;
@@ -410,7 +415,8 @@ export default class NorthConnectorRepository {
           type: 'south',
           south: this.findSouth(sourceCommand.source_south_south_id),
           group: sourceCommand.source_south_group_id ? this.findGroup(sourceCommand.source_south_group_id) : undefined,
-          items: !sourceCommand.source_south_group_id ? this.findSouthItemsByNorthTransformer(sourceCommand.ntId) : []
+          items: !sourceCommand.source_south_group_id ? this.findSouthItemsByNorthTransformer(sourceCommand.ntId, false) : [],
+          excludedItems: this.findSouthItemsByNorthTransformer(sourceCommand.ntId, true)
         };
       default:
         return {
@@ -456,9 +462,10 @@ export default class NorthConnectorRepository {
     };
   }
 
-  private findSouthItemsByNorthTransformer(northTransformerId: string): Array<SouthConnectorItemEntityLight> {
-    const query = `SELECT nt.id, nt.item_id, si.name, si.enabled, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} nt JOIN ${SOUTH_ITEMS_TABLE} si ON nt.item_id = si.id WHERE nt.id = ?;`;
-    const results = this.database.prepare(query).all(northTransformerId) as Array<Record<string, string>>;
+  /** The items a North transformer applies to, or the ones it leaves out when `excluded` */
+  private findSouthItemsByNorthTransformer(northTransformerId: string, excluded: boolean): Array<SouthConnectorItemEntityLight> {
+    const query = `SELECT nt.id, nt.item_id, si.name, si.enabled, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} nt JOIN ${SOUTH_ITEMS_TABLE} si ON nt.item_id = si.id WHERE nt.id = ? AND nt.excluded = ?;`;
+    const results = this.database.prepare(query).all(northTransformerId, excluded ? 1 : 0) as Array<Record<string, string>>;
     return results.map(result => ({
       id: result.item_id as string,
       name: result.name as string,

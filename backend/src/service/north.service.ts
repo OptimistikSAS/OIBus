@@ -316,7 +316,7 @@ export default class NorthService {
           }
           group = result;
         }
-        const items: Array<SouthConnectorItemEntityLight> = sourceCommand.items.map(itemLight => {
+        const toItem = (itemLight: { id: string; name: string }): SouthConnectorItemEntityLight => {
           const item = south.items.find(element => element.id === itemLight.id);
           if (!item) {
             throw new NotFoundError(`Could not find South connector item "${itemLight.name}" (${itemLight.id})`);
@@ -330,7 +330,8 @@ export default class NorthService {
             createdAt: item.createdAt,
             updatedAt: item.updatedAt
           };
-        });
+        };
+        const items = sourceCommand.items.map(toItem);
         return {
           type: 'south',
           south: {
@@ -345,7 +346,9 @@ export default class NorthService {
             updatedAt: south.updatedAt
           },
           group,
-          items
+          items,
+          // Only a transformer applying to all the items of the south, or of the group, leaves items out
+          excludedItems: items.length === 0 ? (sourceCommand.excludedItems ?? []).map(toItem) : []
         };
       }
       case 'oianalytics-setpoint':
@@ -424,7 +427,8 @@ export const toTransformerSourceDTO = (source: TransformerSource, getUserInfo: G
         type: 'south',
         south: toSouthConnectorLightDTO(source.south, getUserInfo),
         group: source.group ? toSouthItemGroupLightDTO(source.group) : undefined,
-        items: source.items.map(item => toSouthItemLightDTO(item, getUserInfo))
+        items: source.items.map(item => toSouthItemLightDTO(item, getUserInfo)),
+        excludedItems: (source.excludedItems ?? []).map(item => toSouthItemLightDTO(item, getUserInfo))
       };
     case 'oibus-api':
     case 'oianalytics-setpoint':
