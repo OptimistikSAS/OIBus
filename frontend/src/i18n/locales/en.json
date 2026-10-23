@@ -1284,11 +1284,13 @@
           "one-item-selected": "1 item",
           "several-items-selected": "{{ numberOfItems }} items",
           "all-items-selected": "All items",
+          "except-items": ", except {{ numberOfItems }} items",
           "oibus-api-selected": "OIBus API (dataSourceId: {{ dataSourceId }})",
           "oibus-api-all-selected": "OIBus API (all data sources)",
           "oianalytics-setpoint-selected": "OIAnalytics setpoints",
           "all-items": "All items",
           "specific-items": "Specific items",
+          "exclude-items": "Except some items",
           "search-items": "Search items...",
           "no-items-found": "No items found",
           "search-results-count": "{{ count }} results",
@@ -3289,6 +3291,32 @@
         "edit": "Edit transformer",
         "delete": "Delete transformer",
         "audit": "View transformer audit history"
+      },
+      "routing": {
+        "show": "View routing",
+        "title": "Data routing",
+        "description": "The transformer each item of a South connector goes through on the way to this North connector: its own transformer first, then the one of its group, then the one of all the items. Items without transformer are dropped.",
+        "only-dropped": "Only dropped items",
+        "summary": "{{ total }} items, {{ dropped }} of which are dropped",
+        "item": "Item",
+        "transformer": "Transformer",
+        "level": "Applies to",
+        "levels": {
+          "item": "This item",
+          "group": "Its group",
+          "south": "All items"
+        },
+        "no-group": "No group",
+        "dropped": "Dropped: no transformer",
+        "no-item": "No item to display",
+        "send-dropped": "Send the dropped items"
+      },
+      "uncovered": {
+        "summary": "{{ count }} source(s) send data this North connector drops, as no transformer applies to it.",
+        "show": "Show",
+        "hide": "Hide",
+        "none": "no transformer, all its data is dropped",
+        "some": "only some of its items have a transformer, the others are dropped"
       }
     },
     "monitoring": {

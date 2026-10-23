@@ -2,7 +2,13 @@
 @if (layout() === 'section') {
   <div class="oib-section-title">
     <h5 translate="north.transformers.title" id="title"></h5>
-    <button type="button" class="btn btn-primary btn-sm" (click)="addTransformer($event)" translate="north.transformers.add"></button>
+    <button type="button" class="btn btn-primary btn-sm" (click)="addTransformer()" translate="north.transformers.add"></button>
+    <button
+      type="button"
+      class="btn btn-outline-primary btn-sm show-routing"
+      (click)="showRouting()"
+      translate="north.transformers.routing.show"
+    ></button>
     <oib-help [url]="helpUrl" />
   </div>
   <ng-container [ngTemplateOutlet]="list" />
@@ -17,8 +23,14 @@
           <button
             type="button"
             class="btn btn-primary btn-sm oib-box-btn"
-            (click)="addTransformer($event)"
+            (click)="addTransformer()"
             translate="north.transformers.add"
+          ></button>
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm oib-box-btn show-routing"
+            (click)="showRouting()"
+            translate="north.transformers.routing.show"
           ></button>
           <oib-help [url]="helpUrl" />
         </div>
@@ -29,6 +41,47 @@
 }
 
 <ng-template #list>
+  @if (uncoveredSouths().length) {
+    <div class="alert alert-warning mx-2 py-2" id="uncovered-souths">
+      <div class="d-flex justify-content-between align-items-center">
+        <span translate="north.transformers.uncovered.summary" [translateParams]="{ count: uncoveredSouths().length }"></span>
+        <button
+          type="button"
+          class="btn btn-link btn-sm alert-link"
+          id="toggle-uncovered-souths"
+          (click)="showUncoveredSouths.set(!showUncoveredSouths())"
+          [translate]="showUncoveredSouths() ? 'north.transformers.uncovered.hide' : 'north.transformers.uncovered.show'"
+        ></button>
+      </div>
+      @if (showUncoveredSouths()) {
+        <ul class="list-unstyled mb-0 mt-2">
+          @for (uncovered of uncoveredSouths(); track uncovered.south.id) {
+            <li class="d-flex justify-content-between align-items-center uncovered-south">
+              <span>
+                {{ uncovered.south.name }} ({{ uncovered.south.type | oIBusSouthTypeEnum }}):
+                {{ 'north.transformers.uncovered.' + uncovered.coverage | translate }}
+              </span>
+              @if (uncovered.coverage === 'none') {
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm alert-link"
+                  (click)="addTransformer(uncovered.south)"
+                  translate="north.transformers.add"
+                ></button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm alert-link"
+                  (click)="showRouting(uncovered.south)"
+                  translate="north.transformers.routing.show"
+                ></button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
   @if (transformersWithOptions().length) {
     <div class="mb-3 px-2">
       <table class="table table-sm table-hover oib-table">

@@ -93,6 +93,7 @@ class EditNorthTransformerModalComponentTester {
   readonly group = this.root.getByCss('#group');
   readonly itemSearch = this.root.getByLabelText('Search items...');
   readonly pills = this.root.getByCss('oib-pill');
+  readonly excludeItems = this.root.getByLabelText('Except some items');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly okButton = this.root.getByRole('button', { name: 'OK' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
@@ -284,7 +285,9 @@ describe('EditNorthTransformerModalComponent', () => {
 
     expect(southConnectorService.getGroups).toHaveBeenCalledWith('southId1');
     expect(activeModal.close).toHaveBeenCalledWith(
-      expect.objectContaining({ source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [] } })
+      expect.objectContaining({
+        source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [], excludedItems: [] }
+      })
     );
   });
 
@@ -300,7 +303,13 @@ describe('EditNorthTransformerModalComponent', () => {
 
     expect(activeModal.close).toHaveBeenCalledWith(
       expect.objectContaining({
-        source: { type: 'south', south: testData.south.listLight[0], group: { id: 'groupId1', name: 'Group 1' }, items: [] }
+        source: {
+          type: 'south',
+          south: testData.south.listLight[0],
+          group: { id: 'groupId1', name: 'Group 1' },
+          items: [],
+          excludedItems: []
+        }
       })
     );
   });
@@ -324,7 +333,7 @@ describe('EditNorthTransformerModalComponent', () => {
     expect(southConnectorService.searchItems).toHaveBeenCalledWith('southId1', { name: '', page: 0 });
     expect(activeModal.close).toHaveBeenCalledWith(
       expect.objectContaining({
-        source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [toItemLight(items[1])] }
+        source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [toItemLight(items[1])], excludedItems: [] }
       })
     );
   });
@@ -386,7 +395,7 @@ describe('EditNorthTransformerModalComponent', () => {
     expect(activeModal.close).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'northTransformerId1',
-        source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [toItemLight(items[1])] }
+        source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [toItemLight(items[1])], excludedItems: [] }
       })
     );
     // the selection works on a copy of the edited transformer items
@@ -413,16 +422,82 @@ describe('EditNorthTransformerModalComponent', () => {
     );
   });
 
-  test('should wipe the selected transformer when the source changes in the new creation mode', async () => {
+  test('should propose the obvious transformer of the source when it changes in the new creation mode', async () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForCreation();
     await tester.source.selectOptions('OIAnalytics setpoints');
-    await tester.output.selectOptions('MQTT payloads');
+    // the only transformer producing MQTT payloads from setpoints
+    await expect.element(tester.output).toHaveDisplayValue(/^\s*MQTT payloads\s*$/);
 
     await tester.source.selectOptions('OIBus API data source');
+    await expect.element(tester.output).toHaveDisplayValue(/MQTT payloads \(from CSV\)/);
 
+    await tester.source.selectOptions('');
     await expect.element(tester.output).toHaveDisplayValue('');
     await expect.element(tester.testPanel).not.toBeInTheDocument();
+  });
+
+  test('should preselect the south the transformer is created for', async () => {
+    const tester = new EditNorthTransformerModalComponentTester();
+    tester.component.prepareForCreation(
+      testData.south.listLight,
+      testData.scanMode.list,
+      testData.certificates.list,
+      [recordListToMqtt, anyToMqtt, setpointToMqtt],
+      ['mqtt'],
+      testData.south.listLight[0]
+    );
+
+    await expect.element(tester.source).toHaveDisplayValue(/South 1 \(Folder scanner\)/);
+    await expect.element(tester.output).toHaveDisplayValue(/MQTT payloads \(from CSV\)/);
+  });
+
+  test('should leave some items out of a transformer applying to all the items of a south connector', async () => {
+    const tester = new EditNorthTransformerModalComponentTester();
+    tester.prepareForCreation();
+    await tester.source.selectOptions('South 1 (Folder scanner)');
+
+    await tester.excludeItems.click();
+    await tester.itemSearch.click();
+    await tester.dropdownItem('item2').click();
+    await tester.saveButton.click();
+
+    expect(activeModal.close).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [], excludedItems: [toItemLight(items[1])] }
+      })
+    );
+  });
+
+  test('should edit the items left out of a transformer applying to a group', async () => {
+    const tester = new EditNorthTransformerModalComponentTester();
+    tester.prepareForEdition({
+      id: 'northTransformerId1',
+      transformer: anyToMqtt,
+      options: {},
+      source: {
+        type: 'south',
+        south: testData.south.listLight[0],
+        group: { id: 'groupId1', name: 'Group 1' },
+        items: [],
+        excludedItems: items.map(toItemLight)
+      }
+    });
+
+    await expect.element(tester.excludeItems).toBeChecked();
+    await expect.element(tester.pills).toHaveLength(2);
+    await tester.pills.nth(0).getByRole('button').click();
+    await tester.saveButton.click();
+    expect(activeModal.close).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.objectContaining({ group: { id: 'groupId1', name: 'Group 1' }, excludedItems: [toItemLight(items[1])] })
+      })
+    );
+
+    await tester.excludeItems.click();
+    await expect.element(tester.pills).toHaveLength(0);
+    await tester.specificItems.click();
+    await expect.element(tester.excludeItems).not.toBeInTheDocument();
   });
 
   test('should copy the transformer and its options from an existing attachment, and keep it when the source changes', async () => {

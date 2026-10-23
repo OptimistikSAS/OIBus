@@ -85,15 +85,19 @@ export function formatTransformerSource(transformer: TransformerDTOWithOptions, 
   if (transformer.source.type === 'south') {
     const southLabel = `${transformer.source.south!.name} (${translateService.instant('enums.oibus-south-type.' + transformer.source.south!.type)})`;
     const numberOfItems = transformer.source.items.length;
+    const numberOfExcludedItems = transformer.source.excludedItems?.length ?? 0;
+    const exceptItems = numberOfExcludedItems
+      ? translateService.instant('configuration.oibus.manifest.transformers.except-items', { numberOfItems: numberOfExcludedItems })
+      : '';
 
     if (transformer.source.group) {
-      return `${southLabel} [${translateService.instant('configuration.oibus.manifest.transformers.group-selected', { groupName: transformer.source.group.name })}]`;
+      return `${southLabel} [${translateService.instant('configuration.oibus.manifest.transformers.group-selected', { groupName: transformer.source.group.name })}${exceptItems}]`;
     } else if (numberOfItems === 1) {
       return `${southLabel} [${transformer.source.items[0].name}]`;
     } else if (numberOfItems > 1) {
       return `${southLabel} [${translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', { numberOfItems })}]`;
     } else {
-      return `${southLabel} [${translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
+      return `${southLabel} [${translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}${exceptItems}]`;
     }
   } else if (transformer.source.type === 'oibus-api') {
     return transformer.source.dataSourceId
