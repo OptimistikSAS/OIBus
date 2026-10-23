@@ -3,7 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 const manifest: NorthConnectorManifest = {
   id: 'oianalytics',
   category: 'api',
-  types: ['any', 'record-list', 'oianalytics'],
+  types: ['any', 'oianalytics'],
   settings: {
     type: 'object',
     key: 'settings',
