@@ -21,8 +21,8 @@ import { NorthTransformerTestComponent, TransformerTestItemSource } from './tran
 const transformer: StandardTransformerDTO = {
   id: 'transformer-1',
   type: 'standard',
-  functionName: 'time-values-to-json',
-  inputType: 'time-values',
+  functionName: 'record-list-to-json',
+  inputType: 'record-list',
   outputType: 'any',
   manifest: {
     type: 'object',
@@ -74,7 +74,7 @@ describe('NorthTransformerTestComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
 
-    transformerService.getInputTemplate.mockReturnValue(of({ type: 'time-values', data: '[]', description: '' }));
+    transformerService.getInputTemplate.mockReturnValue(of({ type: 'record-list', data: '[]', description: '' }));
     transformerService.testTransformer.mockReturnValue(of(testResult));
     southConnectorService.getSouthManifest.mockReturnValue(
       of({ ...testData.south.manifest, modes: { ...testData.south.manifest.modes, history: false } })
@@ -107,7 +107,7 @@ describe('NorthTransformerTestComponent', () => {
     const tester = new NorthTransformerTestComponentTester();
 
     await expect.element(tester.editor).toHaveTextContent('[]');
-    expect(transformerService.getInputTemplate).toHaveBeenCalledWith('time-values');
+    expect(transformerService.getInputTemplate).toHaveBeenCalledWith('record-list');
     await expect.element(tester.pasteRadio).toBeChecked();
     await expect.element(tester.itemRadio).not.toBeInTheDocument();
     await expect.element(tester.cancelButton).toBeDisabled();

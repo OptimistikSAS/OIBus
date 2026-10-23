@@ -278,7 +278,10 @@ describe('South PI', () => {
       async () =>
         createMockResponse(200, {
           recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+          content: [
+            { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: 1, quality: 'Good' } },
+            { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', data: { value: 2 } }
+          ],
           logs: ['log1', 'log2'],
           maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
         }),
@@ -288,7 +291,7 @@ describe('South PI', () => {
       async () =>
         createMockResponse(200, {
           recordCount: 1,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }],
+          content: [{ pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: 1 } }],
           logs: [],
           maxInstantRetrieved: '2020-02-01T00:00:00.000Z'
         }),
@@ -314,11 +317,14 @@ describe('South PI', () => {
 
     assert.deepStrictEqual(result, {
       trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-03-01T00:00:00.000Z' }
+      value: { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', value: 2 }
     });
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
-      type: 'time-values',
-      content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      type: 'record-list',
+      content: [
+        { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', value: 1, quality: 'Good' },
+        { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', value: 2 }
+      ]
     });
     assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0], configuration.items[1]]);
@@ -328,7 +334,7 @@ describe('South PI', () => {
     const resultNoUpdateInstant = await south.historyQuery(configuration.items, result!.trackedInstant!, endTime);
     assert.deepStrictEqual(resultNoUpdateInstant, {
       trackedInstant: null,
-      value: { timestamp: '2020-02-01T00:00:00.000Z' }
+      value: { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', value: 1 }
     });
 
     const noResult = await south.historyQuery(configuration.items, startTime, endTime);

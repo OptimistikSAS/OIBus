@@ -47,7 +47,7 @@ describe('EditTransformerModalComponent', () => {
     const engineService = createMock(EngineService);
     engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
 
-    transformerService.getInputTemplate.mockReturnValue(of({ type: 'time-values', data: '[]', description: '' }));
+    transformerService.getInputTemplate.mockReturnValue(of({ type: 'record-list', data: '[]', description: '' }));
     unsavedChangesConfirmationService.confirmUnsavedChanges.mockReturnValue(of(true));
 
     TestBed.configureTestingModule({
@@ -76,7 +76,7 @@ describe('EditTransformerModalComponent', () => {
 
     await tester.name.fill('new-transformer');
     await tester.description.fill('my description');
-    await tester.inputType.selectOptions('time-values');
+    await tester.inputType.selectOptions('record-list');
     await tester.outputType.selectOptions('any');
     await tester.language.selectOptions('typescript');
 
@@ -90,7 +90,7 @@ describe('EditTransformerModalComponent', () => {
         type: 'custom',
         name: 'new-transformer',
         description: 'my description',
-        inputType: 'time-values',
+        inputType: 'record-list',
         outputType: 'any',
         language: 'typescript',
         timeout: 2000,

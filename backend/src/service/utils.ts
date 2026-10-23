@@ -18,7 +18,7 @@ import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/api/engine.mode
 import { HistoryQueryItemDTO } from '../../shared/model/api/history-query.model';
 import { ValidatedCronExpression } from '../../shared/model/api/scan-mode.model';
 import { SouthConnectorItemDTO } from '../../shared/model/api/south-connector.model';
-import { OIBusContent } from '../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../shared/model/common/content.model';
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusSouthType, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
@@ -458,7 +458,7 @@ export const generateFilenameForSerialization = (baseFolder: string, filename: s
 };
 
 /**
- * Substitute the filename placeholders supported by the CSV output transformers (time-values-to-csv,
+ * Substitute the filename placeholders supported by the CSV output transformers (record-list-to-csv,
  * json-to-csv): `@CurrentDate` (when the transform runs) and, when the content came from a bounded
  * history query, `@QueryStartTime`/`@QueryEndTime` (the queried window). The latter two are left
  * empty for content that isn't bound to a time window (subscriptions, direct queries, other sources).
@@ -479,7 +479,7 @@ export const applyFilenameVariables = (filename: string, source: CacheMetadataSo
     .replace('@ItemName', itemName);
 };
 
-export const generateCsvContent = (data: Array<Record<string, string | number>>, delimiter: CsvCharacter): string => {
+export const generateCsvContent = (data: Array<Record<string, string | number | boolean | null>>, delimiter: CsvCharacter): string => {
   const options = {
     header: true,
     delimiter: convertDelimiter(delimiter)
@@ -1208,3 +1208,16 @@ export const sanitizeCommandError = (error: unknown, secret: string): Error => {
   const message = redact(err?.message || 'Unknown error');
   return new Error(details ? `${message} (${details})` : message);
 };
+
+/**
+ * A value as sent by the OIBus agents (OPC, PI), and as cached by OIBus before 3.10: the value and its extra fields
+ * (e.g. the quality) nested in `data`.
+ */
+export interface NestedPointValue {
+  pointId: string;
+  timestamp: Instant;
+  data: { value: string | number; [field: string]: string | number };
+}
+
+/** Flatten a nested point value into a point record. */
+export const toPointRecord = ({ pointId, timestamp, data }: NestedPointValue): OIBusPointRecord => ({ pointId, timestamp, ...data });

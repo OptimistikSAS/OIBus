@@ -4,7 +4,7 @@ import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'no
 
 import { DateTime } from 'luxon';
 
-import type { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../shared/model/common/content.model';
+import type { OIBusContent, OIBusPointRecord, OIBusRecord } from '../../shared/model/common/content.model';
 import type { Instant } from '../../shared/model/common/types';
 import type {
   SouthFolderScannerItemSettings,
@@ -1000,18 +1000,18 @@ describe('SouthConnector', () => {
     });
 
     it('should add values', async () => {
-      await south.addContent({ type: 'time-values', content: [] }, testData.constants.dates.DATE_1, []);
+      await south.addContent({ type: 'record-list', content: [] }, testData.constants.dates.DATE_1, []);
       assert.strictEqual(logger.debug.mock.calls.length, 1);
       assert.strictEqual(addContentCallback.mock.calls.length, 0);
       assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
 
-      const values = [{}, {}] as Array<OIBusTimeValue>;
-      await south.addContent({ type: 'time-values', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);
-      assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === `Add 2 values to cache from South "${testData.south.list[2].name}"`));
+      const values = [{}, {}] as Array<OIBusPointRecord>;
+      await south.addContent({ type: 'record-list', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+      assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === `Add 2 records to cache from South "${testData.south.list[2].name}"`));
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
-        { type: 'time-values', content: values },
+        { type: 'record-list', content: values },
         testData.constants.dates.DATE_1,
         testData.south.list[2].items,
         null,
@@ -1023,12 +1023,12 @@ describe('SouthConnector', () => {
       const interval = { start: '2020-01-01T00:00:00.000Z', end: '2020-01-02T00:00:00.000Z' };
       south['currentHistoryQueryInterval'] = interval;
 
-      const values = [{}] as Array<OIBusTimeValue>;
-      await south.addContent({ type: 'time-values', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+      const values = [{}] as Array<OIBusPointRecord>;
+      await south.addContent({ type: 'record-list', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
-        { type: 'time-values', content: values },
+        { type: 'record-list', content: values },
         testData.constants.dates.DATE_1,
         testData.south.list[2].items,
         interval.start,
@@ -1308,7 +1308,7 @@ describe('SouthConnector', () => {
         group,
         syncWithGroup: true
       };
-      south.directQuery = mock.fn(async () => ({ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }));
+      south.directQuery = mock.fn(async () => ({ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', value: '1' }));
 
       await south.directQueryHandler([itemA, itemB]);
 

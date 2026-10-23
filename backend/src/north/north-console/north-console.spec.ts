@@ -3,7 +3,7 @@ import { ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import type { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import type { OIBusPointRecord, OIBusSetpoint } from '../../../shared/model/common/content.model';
 import type { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
@@ -15,11 +15,12 @@ import type NorthConsoleClass from './north-console';
 
 const nodeRequire = createRequire(import.meta.url);
 
-const timeValues: Array<OIBusTimeValue> = [
+const timeValues: Array<OIBusPointRecord> = [
   {
     pointId: 'pointId',
     timestamp: testData.constants.dates.FAKE_NOW,
-    data: { value: '666', quality: 'good' }
+    value: '666',
+    quality: 'good'
   }
 ];
 const setpoints: Array<OIBusSetpoint> = [{ reference: 'reference', value: '123456' }];
@@ -63,18 +64,18 @@ describe('NorthConsole', () => {
   });
 
   it('should retrieve supported types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any', 'time-values', 'setpoint']);
+    assert.deepStrictEqual(north.supportedTypes(), ['any', 'record-list', 'setpoint']);
   });
 
   it('should properly handle values in verbose mode', async () => {
     utilsExports.streamToString.mock.mockImplementation(async () => JSON.stringify(timeValues));
 
-    await north.handleContent(readStream, metadata('time-values'));
+    await north.handleContent(readStream, metadata('record-list'));
 
     assert.strictEqual(utilsExports.streamToString.mock.calls.length, 1);
     assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);
     assert.strictEqual(consoleTableMock.mock.calls.length, 1);
-    assert.deepStrictEqual(consoleTableMock.mock.calls[0].arguments, [timeValues, ['pointId', 'timestamp', 'data']]);
+    assert.deepStrictEqual(consoleTableMock.mock.calls[0].arguments, [timeValues]);
     assert.strictEqual(stdoutWriteMock.mock.calls.length, 0);
   });
 
@@ -104,7 +105,7 @@ describe('NorthConsole', () => {
     utilsExports.streamToString.mock.mockImplementation(async () => JSON.stringify(timeValues));
     north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', { verbose: false });
 
-    await north.handleContent(readStream, metadata('time-values'));
+    await north.handleContent(readStream, metadata('record-list'));
 
     assert.strictEqual(utilsExports.streamToString.mock.calls.length, 1);
     assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);

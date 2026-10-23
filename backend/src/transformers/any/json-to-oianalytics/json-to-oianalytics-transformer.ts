@@ -55,7 +55,7 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
       return {
         pointId: String(pointId),
         timestamp: this.formatInstant(this.toInstant(rawTimestamp), this.options.datetimeSettings?.outputPrecision ?? 'ms'),
-        data: { value }
+        value
       };
     });
 

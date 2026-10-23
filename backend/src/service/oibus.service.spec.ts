@@ -219,12 +219,12 @@ describe('OIBus Service', () => {
   });
 
   it('should add content', async () => {
-    await service.addExternalContent('northId', 'dataSourceId', { type: 'time-values', content: [] });
+    await service.addExternalContent('northId', 'dataSourceId', { type: 'record-list', content: [] });
     assert.strictEqual(engine.addExternalContent.mock.calls.length, 1);
     assert.deepStrictEqual(engine.addExternalContent.mock.calls[0].arguments, [
       'northId',
       'dataSourceId',
-      { type: 'time-values', content: [] }
+      { type: 'record-list', content: [] }
     ]);
   });
 

@@ -37,7 +37,7 @@ function expectErrorsIgnoredUnlessUnauthorized(request: TestRequest) {
 
 const northTypes: Array<NorthType> = [
   { id: 'console', category: 'debug', types: ['any'] },
-  { id: 'mqtt', category: 'iot', types: ['time-values'] }
+  { id: 'mqtt', category: 'iot', types: ['record-list'] }
 ];
 const cacheSearchResult: CacheSearchResult = {
   searchDate: testData.constants.dates.DATE_1,
@@ -57,7 +57,7 @@ const cacheSearchResult: CacheSearchResult = {
         contentSize: 10,
         numberOfElement: 1,
         createdAt: testData.constants.dates.DATE_1,
-        contentType: 'time-values'
+        contentType: 'record-list'
       }
     }
   ],

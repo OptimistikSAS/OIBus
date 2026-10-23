@@ -1,4 +1,4 @@
-import { OIBusTimeValue } from '../common/content.model';
+import { OIBusRecord } from '../common/content.model';
 import { Instant } from '../common/types';
 
 /**
@@ -481,7 +481,7 @@ export interface SouthConnectorMetrics extends BaseConnectorMetrics {
    * The last value retrieved.
    * @example { "pointId": "point1", "timestamp": "2023-01-01T00:00:00Z", "data": { "value": 100 } }
    */
-  lastValueRetrieved: OIBusTimeValue | null;
+  lastValueRetrieved: OIBusRecord | null;
 
   /**
    * The last file retrieved.
@@ -609,7 +609,7 @@ export interface HistoryQueryMetrics {
      * The last value retrieved.
      * @example { "pointId": "point1", "timestamp": "2023-01-01T00:00:00Z", "data": { "value": 100 } }
      */
-    lastValueRetrieved: OIBusTimeValue | null;
+    lastValueRetrieved: OIBusRecord | null;
 
     /**
      * The last file retrieved.
@@ -906,7 +906,7 @@ export interface CacheMetadata {
 
   /**
    * The type of the content.
-   * @example "time-values"
+   * @example "record-list"
    */
   contentType: string;
 }

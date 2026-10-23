@@ -4,7 +4,7 @@ import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'no
 
 import type { AdsDataType } from 'ads-client';
 
-import type { OIBusTimeValue } from '../../../shared/model/common/content.model';
+import type { OIBusPointRecord } from '../../../shared/model/common/content.model';
 import type { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -92,10 +92,10 @@ const symbol1 = { indexGroup: 0x4040, indexOffset: 0x0001, size: 2, type: 'INT' 
 const symbol2 = { indexGroup: 0x4040, indexOffset: 0x0002, size: 2, type: 'INT' };
 const rawSuccess = (...bytes: Array<number>) => ({ success: true, value: Buffer.from(bytes), errorCode: 0, errorStr: '' });
 
-const timeValue = (pointId: string, value: string): OIBusTimeValue => ({
+const timeValue = (pointId: string, value: string): OIBusPointRecord => ({
   pointId,
   timestamp: testData.constants.dates.FAKE_NOW,
-  data: { value }
+  value
 });
 
 const lastValues = (...values: Array<[itemId: string, value: Array<string>, instant: string]>) =>
@@ -349,15 +349,15 @@ describe('South ADS', () => {
 
   it('should query last point', async () => {
     skipSymbolCache();
-    // Shaped like an actual OIBusTimeValue (rather than a bare `[1]`) since caching-strategy
-    // filtering now reads `.data.value` off each produced value to compare against the cache.
+    // Shaped like an actual OIBusPointRecord (rather than a bare `[1]`) since caching-strategy
+    // filtering now reads `.value` off each produced value to compare against the cache.
     mock.method(south, 'readAdsSymbol', async () => [timeValue('p', '1')]);
 
     await south.directQuery(configuration.items);
 
     assert.strictEqual(addContent.mock.calls.length, 1);
     assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-      type: 'time-values',
+      type: 'record-list',
       content: [timeValue('p', '1'), timeValue('p', '1')]
     });
     assert.strictEqual(addContent.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
@@ -463,7 +463,7 @@ describe('South ADS', () => {
     });
 
     it('should reuse the live client in testItem without touching this.client or reconnectTimeout', async () => {
-      const mockedResult = { pointId: 'pointId', timestamp: '2024-06-10T14:00:00.000Z', data: { value: '42' } };
+      const mockedResult = { pointId: 'pointId', timestamp: '2024-06-10T14:00:00.000Z', value: '42' };
       const readAdsSymbol = mock.method(south, 'readAdsSymbol', async () => [mockedResult]);
 
       const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
@@ -471,7 +471,7 @@ describe('South ADS', () => {
       assertLiveClientUntouched();
       // readAdsSymbol was handed the reused live client, not a fresh one
       assert.strictEqual(readAdsSymbol.mock.calls[0].arguments[2], liveClient);
-      assert.deepStrictEqual(result.result, { type: 'time-values', content: [mockedResult] });
+      assert.deepStrictEqual(result.result, { type: 'record-list', content: [mockedResult] });
       assert.strictEqual(result.connectionDuration, 0);
     });
   });
@@ -540,7 +540,7 @@ describe('South ADS', () => {
       return { targetAmsNetId: 'targetAmsNetId', localAmsNetId: 'localAmsNetId', localAdsPort: 'localAdsPort' };
     });
     const disconnect = mock.method(south, 'disconnect', async () => undefined);
-    const mockedResult = { pointId: 'pointId', timestamp: '2024-06-10T14:00:00.000Z', data: { value: '1234' } };
+    const mockedResult = { pointId: 'pointId', timestamp: '2024-06-10T14:00:00.000Z', value: '1234' };
     mock.method(south, 'readAdsSymbol', async () => {
       mock.timers.tick(25);
       return [mockedResult];
@@ -555,7 +555,7 @@ describe('South ADS', () => {
     assert.strictEqual(south['client'], null);
     assert.strictEqual(adsClient.disconnect.mock.calls.length, 1); // the local test client was closed instead
     assert.deepStrictEqual(result, {
-      result: { type: 'time-values', content: [mockedResult] },
+      result: { type: 'record-list', content: [mockedResult] },
       connectionDuration: 15,
       queryDuration: 25
     });
@@ -583,7 +583,7 @@ describe('South ADS', () => {
       adsClient.getSymbols.mock.mockImplementationOnce(async () => ({ 'gvl_test.testint1': symbol1, 'gvl_test.testint2': symbol2 }));
       adsClient.readRawMulti.mock.mockImplementationOnce(async () => [rawSuccess(0x01, 0x00), rawSuccess(0x02, 0x00)]);
       adsClient.convertFromRaw.mock.mockImplementation(async () => 42);
-      const parseValues = mock.method(south, 'parseValues', () => [{ pointId: 'p', timestamp: 'ts', data: { value: '42' } }]);
+      const parseValues = mock.method(south, 'parseValues', () => [{ pointId: 'p', timestamp: 'ts', value: '42' }]);
 
       await south.directQuery(configuration.items);
 
@@ -614,7 +614,7 @@ describe('South ADS', () => {
         rawSuccess(0x02, 0x00)
       ]);
       adsClient.convertFromRaw.mock.mockImplementation(async () => 2);
-      mock.method(south, 'parseValues', () => [{ pointId: 'p2', timestamp: 'ts', data: { value: '2' } }]);
+      mock.method(south, 'parseValues', () => [{ pointId: 'p2', timestamp: 'ts', value: '2' }]);
 
       await south.directQuery(configuration.items);
 
@@ -623,8 +623,8 @@ describe('South ADS', () => {
       );
       // Only one successful item contributed to content
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'time-values',
-        content: [{ pointId: 'p2', timestamp: 'ts', data: { value: '2' } }]
+        type: 'record-list',
+        content: [{ pointId: 'p2', timestamp: 'ts', value: '2' }]
       });
     });
 

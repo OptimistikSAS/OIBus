@@ -1,6 +1,6 @@
 import { ReadStream } from 'node:fs';
 
-import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusRecord, OIBusSetpoint } from '../../../shared/model/common/content.model';
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
@@ -18,7 +18,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'time-values', 'setpoint'];
+    return ['any', 'record-list', 'setpoint'];
   }
 
   testConnection(): Promise<OIBusConnectionTestResult> {
@@ -40,8 +40,8 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
       case 'any':
         return this.handleFile(cacheMetadata);
 
-      case 'time-values':
-        return this.handleValues(JSON.parse(await streamToString(fileStream)) as Array<OIBusTimeValue>);
+      case 'record-list':
+        return this.handleValues(JSON.parse(await streamToString(fileStream)) as Array<OIBusRecord>);
 
       case 'setpoint':
         return this.handleSetpoints(JSON.parse(await streamToString(fileStream)) as Array<OIBusSetpoint>);
@@ -51,9 +51,9 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   /**
    * Handle values by printing them to the console.
    */
-  handleValues(values: Array<OIBusTimeValue>): void {
+  handleValues(values: Array<OIBusRecord>): void {
     if (this.connector.settings.verbose) {
-      console.table(values, ['pointId', 'timestamp', 'data']);
+      console.table(values);
     } else {
       process.stdout.write(`North Console sent ${values.length} values.\r\n`);
     }

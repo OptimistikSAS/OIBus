@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import { SouthConnectorMetrics } from '../../../shared/model/domain/engine.model';
@@ -57,7 +57,7 @@ export default class SouthConnectorMetricsService {
     this.updateMetrics();
   };
 
-  private onAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null }) => {
+  private onAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusRecord | null }) => {
     this._metrics.numberOfValuesRetrieved += data.numberOfValuesRetrieved;
     this._metrics.lastValueRetrieved = data.lastValueRetrieved;
     this.updateMetrics();

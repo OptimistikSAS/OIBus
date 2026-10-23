@@ -1,4 +1,10 @@
-import recordListToCsvManifest from '../../../../transformers/any/record-list-to-csv/manifest';
+import csvToRecordListManifest from '../../../../transformers/any/csv-to-record-list/manifest';
+import recordListToCsvManifest from '../../../../transformers/record-list/record-list-to-csv/manifest';
+import recordListToJsonManifest from '../../../../transformers/record-list/record-list-to-json/manifest';
+import recordListToModbusManifest from '../../../../transformers/record-list/record-list-to-modbus/manifest';
+import recordListToMqttManifest from '../../../../transformers/record-list/record-list-to-mqtt/manifest';
+import recordListToOianalyticsManifest from '../../../../transformers/record-list/record-list-to-oianalytics/manifest';
+import recordListToOpcuaManifest from '../../../../transformers/record-list/record-list-to-opcua/manifest';
 import { generateRandomId } from '../../../utils';
 import {
   ConfigUpgrade,
@@ -110,6 +116,7 @@ export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings, via
     quoteChar: 'NONE',
     escapeChar: 'DOUBLE_QUOTE',
     nullValue: '',
+    keepOtherFields: true,
     fields: dateTimeFields.map(field => ({
       fieldName: field.fieldName,
       columnName: null,
@@ -137,6 +144,92 @@ export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings, via
  */
 export function keepsResolvedTransformer(resolvedFunctionName: string | null | undefined): boolean {
   return resolvedFunctionName !== undefined && resolvedFunctionName !== 'iso';
+}
+
+// The `time-values` data type is replaced by `record-list`: the point-based souths send point records
+// (`{ pointId, timestamp, value, ...extras }`), and the standard transformers taking or producing time values are
+// replaced by their record-list counterparts.
+export const TIME_VALUES_TRANSFORMER_REPLACEMENTS: Record<string, { functionName: string; inputType: string; outputType: string }> = {
+  'csv-to-time-values': { functionName: 'csv-to-record-list', inputType: 'any', outputType: 'record-list' },
+  'time-values-to-csv': { functionName: RECORD_LIST_TO_CSV_FUNCTION_NAME, inputType: 'record-list', outputType: 'any' },
+  'time-values-to-json': { functionName: 'record-list-to-json', inputType: 'record-list', outputType: 'any' },
+  'time-values-to-modbus': { functionName: 'record-list-to-modbus', inputType: 'record-list', outputType: 'modbus' },
+  'time-values-to-mqtt': { functionName: 'record-list-to-mqtt', inputType: 'record-list', outputType: 'mqtt' },
+  'time-values-to-oianalytics': { functionName: 'record-list-to-oianalytics', inputType: 'record-list', outputType: 'oianalytics' },
+  'time-values-to-opcua': { functionName: 'record-list-to-opcua', inputType: 'record-list', outputType: 'opcua' }
+};
+
+/** The data type of a custom transformer input or output, `time-values` becoming `record-list`. */
+export const toRecordListDataType = (dataType: string): string => (dataType === 'time-values' ? 'record-list' : dataType);
+
+/**
+ * Converts the options of a replaced time-values transformer for its record-list replacement, reading the columns of
+ * the point records. `time-values-to-csv` becomes a `record-list-to-csv` writing the same three columns.
+ */
+export function toRecordListTransformerOptions(oldFunctionName: string, options: Record<string, unknown>): Record<string, unknown> {
+  switch (oldFunctionName) {
+    case 'time-values-to-csv':
+      return {
+        filename: options.filename ?? '@CurrentDate.csv',
+        encoding: options.encoding ?? 'UTF_8',
+        header: options.header ?? true,
+        compression: false,
+        delimiter: options.delimiter ?? 'COMMA',
+        newline: options.newline ?? 'LF',
+        quoteChar: options.quoteChar ?? 'NONE',
+        escapeChar: options.escapeChar ?? 'DOUBLE_QUOTE',
+        nullValue: '',
+        keepOtherFields: false,
+        fields: [
+          {
+            fieldName: 'pointId',
+            columnName: options.pointIdColumnTitle ?? 'Reference',
+            dataType: 'string',
+            fieldProcess: options.pointIdProcess ?? null,
+            datetimeSettings: null
+          },
+          {
+            fieldName: 'timestamp',
+            columnName: options.timestampColumnTitle ?? 'Timestamp',
+            dataType: 'datetime',
+            fieldProcess: null,
+            datetimeSettings: {
+              inputType: 'iso-string',
+              inputTimezone: null,
+              inputFormat: null,
+              inputLocale: null,
+              outputType: options.timestampType ?? 'iso-string',
+              outputTimezone: options.timezone ?? 'UTC',
+              outputFormat: options.timestampFormat ?? 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputLocale: null
+            }
+          },
+          {
+            fieldName: 'value',
+            columnName: options.valueColumnTitle ?? 'Value',
+            dataType: 'string',
+            fieldProcess: null,
+            datetimeSettings: null
+          }
+        ]
+      };
+    case 'time-values-to-oianalytics':
+      return {
+        pointIdColumn: 'pointId',
+        timestampColumn: 'timestamp',
+        valueColumn: 'value',
+        timestampSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy-MM-dd HH:mm:ss', locale: 'en-En' },
+        precision: options.precision ?? 'ms',
+        referenceProcess: options.referenceProcess ?? null
+      };
+    case 'time-values-to-mqtt':
+      return { pointIdColumn: 'pointId', ...options };
+    case 'time-values-to-modbus':
+    case 'time-values-to-opcua':
+      return { pointIdColumn: 'pointId', valueColumn: 'value', ...options };
+    default:
+      return options;
+  }
 }
 
 // The south types whose item manifest defaulted the resampling to 'raw', which is not one of its selectable values
@@ -305,11 +398,77 @@ function migrateSqlHistoryQueryItems(config: JsonObject, catalog: ReturnType<typ
   });
 }
 
+const RECORD_LIST_TRANSFORMER_MANIFESTS = [
+  csvToRecordListManifest,
+  recordListToCsvManifest,
+  recordListToJsonManifest,
+  recordListToModbusManifest,
+  recordListToMqttManifest,
+  recordListToOianalyticsManifest,
+  recordListToOpcuaManifest
+];
+
+/**
+ * Replaces the time-values standard transformers by their record-list counterparts (renamed, or merged into the
+ * replacement the configuration already describes), converting the options of their links, and converts the data
+ * types of the custom transformers. The existing record-list-to-csv links keep every field.
+ */
+function migrateTimeValuesTransformers(config: JsonObject): void {
+  const transformers = asObjects(config.transformers);
+  const replacedIds = new Map<unknown, { oldFunctionName: string; newId: unknown }>();
+  const keptTransformers: Array<JsonObject> = [];
+  for (const transformer of transformers) {
+    const settings = transformer.settings as JsonObject;
+    if (transformer.type !== 'standard') {
+      settings.inputType = toRecordListDataType(settings.inputType as string);
+      settings.outputType = toRecordListDataType(settings.outputType as string);
+      keptTransformers.push(transformer);
+      continue;
+    }
+    const oldFunctionName = settings.functionName as string;
+    const replacement = TIME_VALUES_TRANSFORMER_REPLACEMENTS[oldFunctionName];
+    if (!replacement) {
+      keptTransformers.push(transformer);
+      continue;
+    }
+    const existingReplacement = transformers.find(
+      candidate => candidate.type === 'standard' && (candidate.settings as JsonObject).functionName === replacement.functionName
+    );
+    if (existingReplacement) {
+      replacedIds.set(transformer.oIBusInternalId, { oldFunctionName, newId: existingReplacement.oIBusInternalId });
+      continue;
+    }
+    transformer.settings = { ...replacement };
+    transformer.manifest = RECORD_LIST_TRANSFORMER_MANIFESTS.find(manifest => manifest.id === replacement.functionName)!.settings;
+    replacedIds.set(transformer.oIBusInternalId, { oldFunctionName, newId: transformer.oIBusInternalId });
+    keptTransformers.push(transformer);
+  }
+  config.transformers = keptTransformers;
+
+  const recordListToCsvId = keptTransformers.find(
+    transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === RECORD_LIST_TO_CSV_FUNCTION_NAME
+  )?.oIBusInternalId;
+  const convertLink = (link: JsonObject): void => {
+    const replaced = replacedIds.get(link.transformerId);
+    if (replaced) {
+      link.transformerId = replaced.newId;
+      link.options = toRecordListTransformerOptions(replaced.oldFunctionName, (link.options as JsonObject | null) ?? {});
+    }
+    if (recordListToCsvId !== undefined && link.transformerId === recordListToCsvId) {
+      link.options = { ...((link.options as JsonObject | null) ?? {}) };
+      setMissing(link.options as JsonObject, 'keepOtherFields', true);
+    }
+  };
+  forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(convertLink));
+  forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(convertLink));
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
     'Add scan mode scheduling types, certificate chains, item caching strategies and configuration workflows; ' +
-    'move SQL items CSV serialization to record-list-to-csv transformers; replace the raw resampling of OPC UA and OPC items with none',
+    'move SQL items CSV serialization to record-list-to-csv transformers; replace the raw resampling of OPC UA and OPC items with none; ' +
+    'replace the time-values transformers and data type by record-list ones',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -370,6 +529,8 @@ export const upgrade: ConfigUpgrade = {
     };
     forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(addReferenceProcess));
     forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(addReferenceProcess));
+
+    migrateTimeValuesTransformers(config);
 
     return config;
   }

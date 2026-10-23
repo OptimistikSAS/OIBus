@@ -19,7 +19,7 @@ import BACnetClient, {
 } from '@bacnet-js/client';
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord, OIBusRecord } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import {
   SouthBACnetItemSettings,
@@ -319,7 +319,7 @@ function toInstant(date: Date, timezone: string): Instant {
     .toISO()!;
 }
 
-/** Coerces a decoded BACnet application value into the string|number shape OIBusTimeValue expects. */
+/** Coerces a decoded BACnet application value into the string|number shape OIBusPointRecord expects. */
 function toPointValue(raw: unknown): string | number {
   if (typeof raw === 'number' || typeof raw === 'string') return raw;
   if (typeof raw === 'boolean') return raw ? 1 : 0;
@@ -409,7 +409,7 @@ export default class SouthBACnet
   // Last pending read of each device address: work-units run in parallel (maxParallelRun), but each
   // device gets one request at a time - small controllers handle a single transaction.
   private readonly deviceReads = new Map<string, Promise<void>>();
-  private bufferedValues: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; timestamp: Instant; value: OIBusTimeValue }> =
+  private bufferedValues: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; timestamp: Instant; value: OIBusPointRecord }> =
     [];
   private flushTimeout: NodeJS.Timeout | null = null;
   // Listeners this connector adds to the shared socket, removed when it releases it.
@@ -666,14 +666,14 @@ export default class SouthBACnet
         connectionDuration = DateTime.now().toMillis() - connectStart;
       }
       const queryStart = DateTime.now().toMillis();
-      let content: Array<OIBusTimeValue>;
+      let content: Array<OIBusPointRecord>;
       try {
         if (isTrendLog(item)) {
           // The test window, or the last hour when testing outside of a history window
           const endTime = testingSettings.history?.endTime ?? DateTime.now().toUTC().toISO()!;
           const startTime = testingSettings.history?.startTime ?? DateTime.fromISO(endTime).minus({ hours: 1 }).toUTC().toISO()!;
           const records = await this.readTrendLog(client, item, startTime, endTime);
-          content = records.map(record => ({ pointId: item.name, timestamp: record.timestamp, data: { value: record.value } }));
+          content = records.map(record => ({ pointId: item.name, timestamp: record.timestamp, value: record.value }));
         } else {
           const timeValue = await this.readItem(client, item);
           content = timeValue ? [timeValue] : [];
@@ -682,7 +682,7 @@ export default class SouthBACnet
         if (!isServiceRefusal(error)) throw error;
         throw new Error(toItemTestErrorMessage(item, error));
       }
-      const result: OIBusContent = { type: 'time-values', content };
+      const result: OIBusContent = { type: 'record-list', content };
       return { result, connectionDuration, queryDuration: DateTime.now().toMillis() - queryStart };
     } finally {
       if (client && !reusingLiveClient) {
@@ -746,14 +746,14 @@ export default class SouthBACnet
     }
   }
 
-  private async readItem(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<OIBusTimeValue | null> {
+  private async readItem(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<OIBusPointRecord | null> {
     const result = await client.readProperty(toAddress(item), toObjectId(item), toPropertyIdentifier(item));
     const rawValue = result.values[0]?.value;
     if (rawValue === undefined || rawValue === null) return null;
     return {
       pointId: item.name,
       timestamp: DateTime.now().toUTC().toISO()!,
-      data: { value: toPointValue(rawValue) }
+      value: toPointValue(rawValue)
     };
   }
 
@@ -831,7 +831,7 @@ export default class SouthBACnet
     return items.filter(isTrendLog);
   }
 
-  async directQuery(allItems: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>): Promise<OIBusTimeValue | null> {
+  async directQuery(allItems: Array<SouthConnectorItemEntity<SouthBACnetItemSettings>>): Promise<OIBusPointRecord | null> {
     // directQueryHandler passes the whole work-unit: trend logs are left to historyQuery.
     const items = this.filterDirectItems(allItems);
     if (!items.length) return null;
@@ -855,7 +855,7 @@ export default class SouthBACnet
     }
 
     const queryTime = DateTime.now().toUTC().toISO()!;
-    const candidates: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; value: OIBusTimeValue }> = [];
+    const candidates: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; value: OIBusPointRecord }> = [];
 
     for (const [deviceKey, { device, items: deviceItems }] of itemsByDevice) {
       let results: Map<string, PropertyReadResult>;
@@ -881,18 +881,18 @@ export default class SouthBACnet
         }
         const rawValue = result.values[0]?.value;
         if (rawValue === undefined || rawValue === null) continue;
-        candidates.push({ item, value: { pointId: item.name, timestamp: queryTime, data: { value: toPointValue(rawValue) } } });
+        candidates.push({ item, value: { pointId: item.name, timestamp: queryTime, value: toPointValue(rawValue) } });
       }
     }
 
     const cachedCandidates = this.applyCachingStrategy(candidates, candidate => ({
       item: candidate.item,
-      value: candidate.value.data.value,
+      value: candidate.value.value,
       timestamp: candidate.value.timestamp
     }));
     if (cachedCandidates.length > 0) {
       await this.addContent(
-        { type: 'time-values', content: cachedCandidates.map(candidate => candidate.value) },
+        { type: 'record-list', content: cachedCandidates.map(candidate => candidate.value) },
         queryTime,
         cachedCandidates.map(candidate => candidate.item)
       );
@@ -916,7 +916,7 @@ export default class SouthBACnet
     }
     const logCtx = workUnitLogCtx(items);
     const queryTime = DateTime.now().toUTC().toISO()!;
-    const candidates: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; value: OIBusTimeValue }> = [];
+    const candidates: Array<{ item: SouthConnectorItemEntity<SouthBACnetItemSettings>; value: OIBusPointRecord }> = [];
     let trackedInstant: Instant | null = null;
     for (const item of this.filterHistoryItems(items)) {
       const device = toAddress(item);
@@ -935,7 +935,7 @@ export default class SouthBACnet
         throw error;
       }
       for (const record of records) {
-        candidates.push({ item, value: { pointId: item.name, timestamp: record.timestamp, data: { value: record.value } } });
+        candidates.push({ item, value: { pointId: item.name, timestamp: record.timestamp, value: record.value } });
         if (!trackedInstant || record.timestamp > trackedInstant) {
           trackedInstant = record.timestamp;
         }
@@ -944,12 +944,12 @@ export default class SouthBACnet
 
     const cachedCandidates = this.applyCachingStrategy(candidates, candidate => ({
       item: candidate.item,
-      value: candidate.value.data.value,
+      value: candidate.value.value,
       timestamp: candidate.value.timestamp
     }));
     if (cachedCandidates.length > 0) {
       await this.addContent(
-        { type: 'time-values', content: cachedCandidates.map(candidate => candidate.value) },
+        { type: 'record-list', content: cachedCandidates.map(candidate => candidate.value) },
         queryTime,
         cachedCandidates.map(candidate => candidate.item)
       );
@@ -1221,7 +1221,7 @@ export default class SouthBACnet
     this.bufferedValues.push({
       item: subscription.item,
       timestamp,
-      value: { pointId: subscription.item.name, timestamp, data: { value: toPointValue(rawValue) } }
+      value: { pointId: subscription.item.name, timestamp, value: toPointValue(rawValue) }
     });
     if (this.bufferedValues.length >= this.connector.settings.maxNumberOfMessages) {
       this.flushMessages().catch((error: unknown) => {
@@ -1241,12 +1241,12 @@ export default class SouthBACnet
       try {
         const cachedEntries = this.applyCachingStrategy(valuesToSend, entry => ({
           item: entry.item,
-          value: entry.value.data.value,
+          value: entry.value.value,
           timestamp: entry.timestamp
         }));
         if (cachedEntries.length > 0) {
           await this.addContent(
-            { type: 'time-values', content: cachedEntries.map(entry => entry.value) },
+            { type: 'record-list', content: cachedEntries.map(entry => entry.value) },
             DateTime.now().toUTC().toISO()!,
             cachedEntries.map(entry => entry.item)
           );

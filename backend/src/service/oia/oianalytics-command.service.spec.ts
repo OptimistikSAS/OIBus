@@ -2262,12 +2262,12 @@ describe('OIAnalytics Command service with no commands and without update', () =
     const content = new Array(2000).fill(0);
     const content2 = new Array(10).fill(0);
 
-    complete(testResult({ type: 'time-values', content }));
-    complete(testResult({ type: 'time-values', content: content2 }));
+    complete(testResult({ type: 'record-list', content }));
+    complete(testResult({ type: 'record-list', content: content2 }));
 
     assert.deepStrictEqual(completedResults(), [
-      completedResult({ type: 'time-values', content: content.slice(0, 1000), truncated: true, totalSize: 2000 }),
-      completedResult({ type: 'time-values', content: content2, truncated: false, totalSize: 10 })
+      completedResult({ type: 'record-list', content: content.slice(0, 1000), truncated: true, totalSize: 2000 }),
+      completedResult({ type: 'record-list', content: content2, truncated: false, totalSize: 10 })
     ]);
   });
 

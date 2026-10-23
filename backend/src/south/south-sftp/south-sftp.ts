@@ -4,7 +4,7 @@ import path from 'node:path';
 import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions, FileInfo } from 'ssh2-sftp-client';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { SouthItemSettings, SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
@@ -188,13 +188,13 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
 
       const queryDuration = DateTime.now().toMillis() - queryStart;
 
-      const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
+      const values: Array<OIBusPointRecord> = filesInFolder.map(file => ({
         pointId: item.name,
         timestamp: DateTime.fromMillis(file.modifyTime).toUTC().toISO()!,
-        data: { value: file.name }
+        value: file.name
       }));
       return {
-        result: { type: 'time-values', content: values },
+        result: { type: 'record-list', content: values },
         connectionDuration,
         queryDuration
       };

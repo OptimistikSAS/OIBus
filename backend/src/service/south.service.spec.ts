@@ -805,7 +805,7 @@ describe('South Service', () => {
 
   it('should delegate to the transformer service when a transformer is provided', async () => {
     const rawContent = { type: 'any-content', content: 'raw' } as OIBusContent;
-    const transformedContent = { type: 'time-values', content: [] } as OIBusContent;
+    const transformedContent = { type: 'record-list', content: [] } as OIBusContent;
     mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ result: rawContent, connectionDuration: 12, queryDuration: 34 }));
     transformerService.runTransformer.mock.mockImplementationOnce(async () => transformedContent);
 

@@ -17,7 +17,7 @@ import type { EditorView } from '@codemirror/view';
 import { TranslatePipe } from '@ngx-translate/core';
 import Papa from 'papaparse';
 
-import { OIBusContent, OIBusTimeValue } from '@oibus/shared/common/content.model';
+import { OIBusContent } from '@oibus/shared/common/content.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
 
 import { ProgressbarComponent } from '../../../../history-query/history-query-detail/history-metrics/progressbar/progressbar.component';
@@ -59,8 +59,6 @@ export class ItemTestResultComponent {
   readonly displayModeIcons: Record<ContentDisplayMode, string> = { table: 'fa-table', any: 'fa-file-lines', json: 'fa-code' };
 
   // --- Table state ---
-  readonly tableType = signal<'time-values' | 'generic'>('generic');
-  readonly tableView = signal<Page<OIBusTimeValue>>(emptyPage());
   readonly genericTableView = signal<Page<Array<string>>>(emptyPage());
   readonly headers = signal<Array<string> | null>(null);
 
@@ -130,7 +128,7 @@ export class ItemTestResultComponent {
     if (result) {
       this._result.set(result);
       // A fresh result may support different display modes than the previous one
-      // (e.g. raw time-values -> table, transformed output -> any). Recompute the
+      // (e.g. raw records -> table, transformed output -> any). Recompute the
       // available modes and fall back to the first one when the current mode no
       // longer applies, otherwise a stale 'table' mode renders nothing.
       this.updateAvailableDisplayModes(result);
@@ -178,26 +176,16 @@ export class ItemTestResultComponent {
     this.currentDisplayMode.emit(newMode);
   }
 
-  readonly activePage = computed<Page<OIBusTimeValue> | Page<Array<string>>>(() =>
-    this.tableType() === 'time-values' ? this.tableView() : this.genericTableView()
-  );
-
   readonly isContentEmpty = computed(() => {
     const content = this._result();
     if (!content) return false;
-    if (content.type === 'time-values' || content.type === 'record-list') return content.content.length === 0;
+    if (content.type === 'record-list') return content.content.length === 0;
     if (content.type === 'any' || content.type === 'any-content') return !content.content;
     return false;
   });
 
-  convertDataToString(data: OIBusTimeValue['data']) {
-    const { value, ...rest } = data;
-    return { value, other: JSON.stringify(rest, null, 2) };
-  }
-
   resetPage() {
     try {
-      this.tableType.set(this._result()?.type === 'time-values' ? 'time-values' : 'generic');
       this.changePage(0);
     } catch (error: unknown) {
       this.displayError(error instanceof Error ? error.message : String(error), 'display-result-error');
@@ -209,9 +197,6 @@ export class ItemTestResultComponent {
     if (!content) return;
 
     switch (content.type) {
-      case 'time-values':
-        this.tableView.set(createPageFromArray(content.content, PAGE_SIZE, pageNumber));
-        break;
       case 'any': {
         const contentString = content.content;
         if (!contentString) {
@@ -224,7 +209,8 @@ export class ItemTestResultComponent {
         break;
       }
       case 'record-list': {
-        const headers = Object.keys(content.content[0] ?? {});
+        // The records may not all have the same fields (e.g. a point record with or without quality)
+        const headers = [...new Set(content.content.flatMap(record => Object.keys(record)))];
         this.headers.set(headers);
         const rows = content.content.map(record => headers.map(header => (record[header] == null ? '' : String(record[header]))));
         this.genericTableView.set(createPageFromArray(rows, PAGE_SIZE, pageNumber));
@@ -237,11 +223,6 @@ export class ItemTestResultComponent {
     const modes = new Set<ContentDisplayMode>();
 
     switch (content.type) {
-      case 'time-values':
-        modes.add('table');
-        modes.add('json');
-        modes.add('any');
-        break;
       case 'any':
         if (content.filePath.endsWith('.csv') && content.content) {
           modes.add('table');
@@ -270,7 +251,7 @@ export class ItemTestResultComponent {
   }
 
   private getDisplayContent(content: OIBusContent): string {
-    if (content.type === 'time-values' || content.type === 'record-list') {
+    if (content.type === 'record-list') {
       return JSON.stringify(content.content, null, 2);
     }
     if (content.type === 'any' || content.type === 'any-content') {

@@ -81,7 +81,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
     // Services used by the embedded transformer-test panel (rendered once a transformer is selected).
     const transformerService = createMock(TransformerService);
-    transformerService.getInputTemplate.mockReturnValue(of({ type: 'time-values', data: '[]', description: '' }));
+    transformerService.getInputTemplate.mockReturnValue(of({ type: 'record-list', data: '[]', description: '' }));
     const southConnectorService = createMock(SouthConnectorService);
     southConnectorService.getSouthManifest.mockReturnValue(of({ ...testData.south.manifest, modes: { ...testData.south.manifest.modes } }));
 
@@ -142,7 +142,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
   test('should only offer the transformers compatible with the North and the South', async () => {
     const tester = new EditHistoryQueryTransformerModalComponentTester();
-    // time-values input is not compatible with a folder scanner, which produces files
+    // record-list input is not compatible with a folder scanner, which produces files
     tester.modal.prepareForCreation('folder-scanner', [], [], [customTransformer, transformerWithOptions], ['any'], items);
 
     await expect.element(tester.output.getByRole('option')).toHaveLength(2);
