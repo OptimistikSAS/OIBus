@@ -3251,31 +3251,39 @@
         "delete": "删除转换器",
         "audit": "查看转换器审计历史"
       },
-      "routing": {
-        "show": "查看路由",
-        "title": "数据路由",
-        "description": "South 连接器的每个数据项发送到此 North 连接器时经过的转换器：先是该数据项自己的转换器，然后是其分组的转换器，最后是所有数据项的转换器。没有转换器的数据项将被丢弃。",
-        "only-dropped": "仅显示被丢弃的数据项",
-        "summary": "共 {{ total }} 个数据项，其中 {{ dropped }} 个被丢弃",
-        "item": "数据项",
-        "transformer": "转换器",
-        "level": "适用于",
-        "levels": {
-          "item": "此数据项",
-          "group": "其分组",
-          "south": "所有数据项"
+      "list": {
+        "filter": "筛选数据源",
+        "filters": {
+          "all": "全部",
+          "sent": "已发送",
+          "dropped": "已丢弃",
+          "incompatible": "不兼容"
         },
+        "search": "搜索数据源",
+        "transformer": "转换器",
+        "expand": "显示分组和数据项",
+        "collapse": "隐藏分组和数据项",
+        "paused": "已暂停",
+        "unused": "从未使用：列表中排在前面的转换器优先生效",
+        "incompatible": "没有转换器可以将这些数据发送到此 North 连接器",
+        "partly-dropped": "部分丢弃",
+        "dropped": "已丢弃",
+        "on-groups-or-items": "{{ count }} 个用于分组或数据项的转换器",
+        "add-data-source": "为数据源添加",
+        "other": "其他…",
+        "no-source": "没有匹配的数据源",
+        "all-items-except": "所有数据项，排除 {{ count }} 个",
         "no-group": "无分组",
-        "dropped": "已丢弃：无转换器",
-        "no-item": "没有可显示的数据项",
-        "send-dropped": "发送被丢弃的数据项"
-      },
-      "uncovered": {
-        "summary": "{{ count }} 个数据源发送的数据因没有适用的转换器而被此 North 连接器丢弃。",
-        "show": "显示",
-        "hide": "隐藏",
-        "none": "没有转换器，其所有数据都被丢弃",
-        "some": "只有部分数据项有转换器，其余的被丢弃"
+        "dropped-items": "{{ count }} 个被丢弃",
+        "except": "排除 {{ count }} 个数据项",
+        "from-south": "来自所有数据项：{{ name }}",
+        "from-group": "来自其分组：{{ name }}",
+        "shared-with": "与其他 {{ count }} 个数据项共享",
+        "add": "添加",
+        "override": "覆盖",
+        "exclude": "排除",
+        "remove-item": "从转换器中移除此数据项",
+        "no-item": "没有数据项"
       }
     },
     "monitoring": {
