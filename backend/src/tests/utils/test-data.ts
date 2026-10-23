@@ -1020,7 +1020,8 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
               createdAt: '',
               updatedAt: ''
             }
-          ]
+          ],
+          excludedItems: []
         }
       },
       {
@@ -1050,7 +1051,18 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
             updatedAt: ''
           },
           group: undefined,
-          items: []
+          items: [],
+          excludedItems: [
+            {
+              id: southConnectors[1].items[0].id,
+              name: southConnectors[1].items[0].name,
+              enabled: southConnectors[1].items[0].enabled,
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            }
+          ]
         }
       }
     ]

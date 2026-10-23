@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { of } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
@@ -16,10 +16,11 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
+import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal/edit-north-transformer-modal.component';
 import { NorthTransformersComponent } from './north-transformers.component';
+import { TransformerRoutingModalComponent } from './transformer-routing-modal/transformer-routing-modal.component';
 
 function buildItem(index: number): ItemLightDTO {
   return {
@@ -39,6 +40,8 @@ class NorthTransformersComponentTester {
   readonly rows = this.root.getByCss('tbody tr');
   readonly addButton = this.root.getByRole('button', { name: 'Add a transformer' });
   readonly none = this.root.getByText('No transformer');
+  readonly uncovered = this.root.getByCss('#uncovered-souths');
+  readonly uncoveredSouths = this.root.getByCss('.uncovered-south');
   readonly emitted: Array<Array<TransformerDTOWithOptions> | null> = [];
 
   constructor(northConnector: NorthConnectorDTO | null, saveChangesDirectly: boolean) {
@@ -73,7 +76,7 @@ describe('NorthTransformersComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockModalService<EditNorthTransformerModalComponent | AuditHistoryModalComponent>;
+  let modalService: MockModalService<EditNorthTransformerModalComponent | AuditHistoryModalComponent | TransformerRoutingModalComponent>;
   let northConnector: NorthConnectorDTO;
   let newTransformer: TransformerDTOWithOptions;
 
@@ -134,11 +137,16 @@ describe('NorthTransformersComponent', () => {
         source: { type: 'south', south: testData.south.listLight[0], items: Array.from({ length: 7 }, (_, index) => buildItem(index)) }
       },
       { ...base, id: 'setpoint', source: { type: 'oianalytics-setpoint' } },
-      { ...base, id: 'allDataSources', source: { type: 'oibus-api' } }
+      { ...base, id: 'allDataSources', source: { type: 'oibus-api' } },
+      {
+        ...base,
+        id: 'exceptItems',
+        source: { type: 'south', south: testData.south.listLight[0], items: [], excludedItems: [buildItem(1), buildItem(2)] }
+      }
     );
     const tester = new NorthTransformersComponentTester(northConnector, true);
 
-    await expect.element(tester.rows).toHaveLength(7);
+    await expect.element(tester.rows).toHaveLength(8);
     await expect.element(tester.cell(0, 0)).toHaveTextContent('South 1 (Folder scanner) [item1]');
     await expect.element(tester.cell(0, 1)).toHaveTextContent('my transformer 1');
     await expect.element(tester.cell(1, 0)).toHaveTextContent('OIBus API (dataSourceId: dataSourceId1)');
@@ -148,6 +156,7 @@ describe('NorthTransformersComponent', () => {
     await expect.element(tester.cell(4, 1)).toHaveTextContent('File (as is)');
     await expect.element(tester.cell(5, 0)).toHaveTextContent('OIAnalytics setpoints');
     await expect.element(tester.cell(6, 0)).toHaveTextContent('OIBus API (all data sources)');
+    await expect.element(tester.cell(7, 0)).toHaveTextContent('South 1 (Folder scanner) [All items, except 2 items]');
 
     await tester.cell(4, 0).getByText('7 items').hover();
     await expect.element(page.getByCss('.items-tooltip')).toHaveTextContent('item0 item1 item2 item3 item4 ... (2 more)');
@@ -170,6 +179,80 @@ describe('NorthTransformersComponent', () => {
     expect(fakeModal.prepare).toHaveBeenCalledWith('north_transformer', 'northTransformerId2');
   });
 
+  describe('data without transformer', () => {
+    test('should not list the souths whose data no transformer can send to the north', async () => {
+      const tester = new NorthTransformersComponentTester({ ...northConnector, transformers: [] }, true);
+      tester.fixture.componentRef.setInput('transformers', []);
+
+      await expect.element(tester.none).toBeInTheDocument();
+      await expect.element(tester.uncovered).not.toBeInTheDocument();
+    });
+
+    test('should list the souths without transformer, and add one for them', async () => {
+      const editModal = createFakeEditModal();
+      modalService.mockClosedModal(editModal, {
+        ...newTransformer,
+        source: { type: 'south', south: testData.south.listLight[1], items: [] }
+      });
+      const tester = new NorthTransformersComponentTester({ ...northConnector, transformers: [] }, false);
+
+      // South 1 sends files, which no transformer given to the component can take
+      await expect.element(tester.uncovered).toMatchTextContent('2 source(s) send data this North connector drops');
+      await expect.element(tester.uncoveredSouths).not.toBeInTheDocument();
+      await tester.uncovered.getByRole('button', { name: 'Show' }).click();
+      await expect.element(tester.uncoveredSouths).toHaveLength(2);
+      await expect
+        .element(tester.uncoveredSouths.nth(0))
+        .toMatchTextContent('South 2 (Microsoft SQL Server™): no transformer, all its data is dropped');
+      await tester.uncoveredSouths.nth(0).getByRole('button', { name: 'Add a transformer' }).click();
+
+      expect(editModal.prepareForCreation).toHaveBeenCalledWith(
+        testData.south.listLight,
+        testData.scanMode.list,
+        testData.certificates.list,
+        [testData.north.list[0].transformers[0].transformer],
+        testData.north.manifest.types,
+        testData.south.listLight[1]
+      );
+      await expect.element(tester.uncovered).toMatchTextContent('1 source(s) send data');
+      await tester.root.getByRole('button', { name: 'Hide' }).click();
+      await expect.element(tester.uncoveredSouths).not.toBeInTheDocument();
+    });
+
+    test('should show the routing of a south some items of which are dropped, and send them', async () => {
+      northConnector.transformers = [
+        { ...northConnector.transformers[0], source: { type: 'south', south: testData.south.listLight[1], items: [buildItem(1)] } }
+      ];
+      const routingModal = createMock(TransformerRoutingModalComponent);
+      const editModal = createFakeEditModal();
+      vi.spyOn(modalService, 'open').mockImplementation(((component: unknown) =>
+        component === TransformerRoutingModalComponent
+          ? fakeModal(routingModal, Promise.resolve(testData.south.listLight[1]))
+          : fakeModal(editModal)) as typeof modalService.open);
+      const tester = new NorthTransformersComponentTester(northConnector, false);
+
+      await tester.uncovered.getByRole('button', { name: 'Show' }).click();
+      await expect
+        .element(tester.uncoveredSouths.nth(0))
+        .toMatchTextContent('South 2 (Microsoft SQL Server™): only some of its items have a transformer, the others are dropped');
+      await tester.uncoveredSouths.nth(0).getByRole('button', { name: 'View routing' }).click();
+
+      expect(routingModal.prepare).toHaveBeenCalledWith(testData.south.listLight, northConnector.transformers, testData.south.listLight[1]);
+      await vi.waitFor(() => expect(editModal.prepareForCreation).toHaveBeenCalled());
+      expect(editModal.prepareForCreation.mock.calls[0][5]).toEqual(testData.south.listLight[1]);
+    });
+
+    test('should show the routing of every south', async () => {
+      const routingModal = createMock(TransformerRoutingModalComponent);
+      modalService.mockDismissedModal(routingModal);
+      const tester = new NorthTransformersComponentTester(northConnector, true);
+
+      await tester.root.getByRole('button', { name: 'View routing' }).click();
+
+      expect(routingModal.prepare).toHaveBeenCalledWith(testData.south.listLight, northConnector.transformers, null);
+    });
+  });
+
   describe('in memory', () => {
     test('should add a transformer', async () => {
       const fakeModal = createFakeEditModal();
@@ -184,7 +267,8 @@ describe('NorthTransformersComponent', () => {
         testData.scanMode.list,
         testData.certificates.list,
         [testData.north.list[0].transformers[0].transformer],
-        testData.north.manifest.types
+        testData.north.manifest.types,
+        null
       );
       await expect.element(tester.rows).toHaveLength(1);
       await expect.element(tester.cell(0, 0)).toHaveTextContent('OIAnalytics setpoints');

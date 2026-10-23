@@ -37,6 +37,9 @@ When the source is a South connector, you can restrict which of its items the tr
 | **By group**       | Only items belonging to a specific group are processed                   |
 | **Specific items** | Hand-pick individual items from the search list                          |
 
+With **All items** or **By group**, check **Except some items** to leave a few items out: the transformer applies to
+every other item of the South connector (or of the group), including the items added later.
+
 :::tip
 A single North connector can have **multiple transformers** with different sources and scopes. This lets you apply
 different conversions to different parts of the same South connector — for example, one transformer for a group of
@@ -53,12 +56,19 @@ the same South connector), OIBus resolves it with this priority, most specific f
    the fallback.
 
 The first configured transformer that matches, in that order, is used; ties within the same level are broken by
-the transformer's position in the list.
+the transformer's position in the list. A transformer leaving an item out (**Except some items**) is skipped for that
+item, which falls back to the next level.
+
+Click **View routing** in the Transformers section to check the result: for each item of a South connector, grouped
+by item group, it shows the transformer its data goes through and whether it applies to the item itself, to its group
+or to all the items — or that the data of the item is dropped.
 
 ### 3 — Transformer {#3--transformer}
 
-Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
-choices depend on the type of South connector chosen:
+Once a source is selected, the list is automatically filtered to show only compatible transformers, and the obvious
+one is preselected: **File (as is)** for files sent to a North connector accepting files, otherwise the only standard
+transformer producing the North connector's own format (e.g. OIAnalytics values, MQTT payloads), otherwise the
+passthrough of the data (**JSON**). The available choices depend on the type of South connector chosen:
 
 | South connector type                                                                                                                                 | Compatible standard transformers                                                                     |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -70,8 +80,10 @@ choices depend on the type of South connector chosen:
 Custom transformers are also shown in this list and are always named by the user.
 
 :::info Data without transformer
-A North connector ignores the data no transformer is configured for. To keep an item out of a transformer applying to
-all the items of its South connector (or of its group), scope that transformer to the list of the other items.
+A North connector ignores the data no transformer is configured for. The Transformers section warns about the South
+connectors whose data is dropped this way, all of it or that of some items: **Add a transformer** opens the
+configuration modal for that South connector, and **View routing** shows which items are dropped, with a button to send
+them too.
 :::
 
 After choosing a transformer, its settings form appears directly in the modal.

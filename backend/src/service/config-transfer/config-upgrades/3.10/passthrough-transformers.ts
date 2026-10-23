@@ -6,8 +6,8 @@
  *    'iso' (the JSON payloads of the MQTT souths and of the OIBus API being cached as files). Such data now goes through
  *    the passthrough of its content type: 'file' for files and payloads, 'record-list-to-json' for records,
  *    'setpoint-to-json' for setpoints;
- *  - the items configured with 'ignore' are left out of the transformer they would otherwise fall back to, which is
- *    narrowed to the list of the other items.
+ *  - the items configured with 'ignore' are left out of the transformer they would otherwise fall back to (excluded
+ *    from it, or, for history queries, which cannot exclude items, by narrowing it to the list of the other items).
  */
 
 export const ISO_FUNCTION_NAME = 'iso';
@@ -102,22 +102,32 @@ export interface RoutingPlan {
   removed: Array<string>;
   /** The 'iso' links now going through the passthrough, at the same scope */
   toPassthrough: Array<string>;
-  /** The links narrowed to a list of items (no longer scoped to their group or to the whole south) */
+  /** The links now applying to a list of items: fewer of their items, or no longer their group or their whole south */
   narrowed: Map<string, Array<string>>;
-  /** The passthrough link to add: at the south level when `itemIds` is empty */
-  added: { itemIds: Array<string> } | undefined;
+  /** The items now left out of the links applying to a group or to the whole south */
+  excluded: Map<string, Array<string>>;
+  /** The passthrough link to add: at the south level when `itemIds` is empty, leaving `excludedItemIds` out */
+  added: { itemIds: Array<string>; excludedItemIds: Array<string> } | undefined;
+}
+
+interface PlannedLink extends RoutingLink {
+  excludedItemIds: Array<string>;
 }
 
 const NEW_LINK_ID = '\0new';
 
 const isSouthLevel = (link: RoutingLink) => !link.groupItemIds && link.itemIds.length === 0;
 
-/** The link an item is routed to by the North: items level, then group level, then south level, the first one winning */
-function resolve(links: Array<RoutingLink>, itemId: string): string | undefined {
+/**
+ * The link an item is routed to by the North: items level, then group level, then south level, the first one not leaving
+ * the item out winning
+ */
+function resolve(links: Array<PlannedLink>, itemId: string): string | undefined {
+  const keeps = (link: PlannedLink) => !link.excludedItemIds.includes(itemId);
   return (
     links.find(link => link.itemIds.includes(itemId))?.id ??
-    links.find(link => link.groupItemIds?.includes(itemId))?.id ??
-    links.find(isSouthLevel)?.id
+    links.find(link => link.groupItemIds?.includes(itemId) && keeps(link))?.id ??
+    links.find(link => isSouthLevel(link) && keeps(link))?.id
   );
 }
 
@@ -128,21 +138,25 @@ function resolve(links: Array<RoutingLink>, itemId: string): string | undefined 
  *
  * Without transformer, the data now goes through a new passthrough link at the south level, so that the items added
  * later are still sent. An item configured with 'ignore' (or with 'iso' when the North dropped its data) falls back to
- * the link of its group or of its south: that link is narrowed to the list of the items it still routes.
+ * the link of its group or of its south: with `allowExclusions`, the item is left out of that link, which keeps applying
+ * to the items added later; otherwise (history queries), the link is narrowed to the list of the items it still routes.
+ * A link listing the item itself no longer lists it.
  */
 export function planRouting(
   links: Array<RoutingLink>,
   itemIds: Array<string>,
   passthroughByDefault: boolean,
-  passthroughThroughIso: boolean
+  passthroughThroughIso: boolean,
+  allowExclusions: boolean
 ): RoutingPlan {
   const kind = (link: RoutingLink) =>
     link.functionName === ISO_FUNCTION_NAME || link.functionName === IGNORE_FUNCTION_NAME ? link.functionName : 'other';
+  const withoutExclusion = (link: RoutingLink): PlannedLink => ({ ...link, excludedItemIds: [] });
 
   // The link each item must be routed to, undefined when its data must be dropped
   const expected = new Map<string, string | undefined>();
   for (const itemId of itemIds) {
-    const resolvedId = resolve(links, itemId);
+    const resolvedId = resolve(links.map(withoutExclusion), itemId);
     const resolved = links.find(link => link.id === resolvedId);
     if (!resolved) {
       expected.set(itemId, passthroughByDefault ? NEW_LINK_ID : undefined);
@@ -155,45 +169,47 @@ export function planRouting(
     }
   }
 
-  let planned: Array<RoutingLink> = links.filter(
-    link => kind(link) === 'other' || (kind(link) === ISO_FUNCTION_NAME && passthroughThroughIso)
-  );
+  let planned: Array<PlannedLink> = links
+    .filter(link => kind(link) === 'other' || (kind(link) === ISO_FUNCTION_NAME && passthroughThroughIso))
+    .map(withoutExclusion);
   if (passthroughByDefault && !links.some(isSouthLevel)) {
-    planned.push({ id: NEW_LINK_ID, functionName: undefined, itemIds: [] });
+    planned.push({ id: NEW_LINK_ID, functionName: undefined, itemIds: [], excludedItemIds: [] });
   }
 
-  // Narrow the links now catching items which must be dropped. Each narrowing only moves its link to the items level for
-  // the items it already routed, so a few passes are enough
-  const narrowed = new Map<string, Array<string>>();
-  for (let pass = 0; pass <= links.length; pass++) {
-    const wronglyRouting = new Set<string>();
-    for (const itemId of itemIds) {
-      const resolvedId = resolve(planned, itemId);
-      if (resolvedId !== undefined && resolvedId !== expected.get(itemId)) {
-        wronglyRouting.add(resolvedId);
-      }
-    }
-    if (wronglyRouting.size === 0) break;
+  // Fix the links now catching items which must be dropped. Each fix moves the item to a link of lower priority, so a few
+  // passes are enough
+  const narrowed = new Set<string>();
+  for (let pass = 0; pass <= links.length + 1; pass++) {
+    const wrongRoutes = itemIds
+      .map(itemId => ({ itemId, linkId: resolve(planned, itemId) }))
+      .filter(({ itemId, linkId }) => linkId !== undefined && linkId !== expected.get(itemId));
+    if (wrongRoutes.length === 0) break;
     planned = planned.map(link => {
-      if (!wronglyRouting.has(link.id)) return link;
-      const routedItemIds = itemIds.filter(itemId => expected.get(itemId) === link.id);
-      narrowed.set(link.id, routedItemIds);
-      return { ...link, itemIds: routedItemIds, groupItemIds: undefined };
+      const wrongItemIds = wrongRoutes.filter(route => route.linkId === link.id).map(route => route.itemId);
+      if (wrongItemIds.length === 0) return link;
+      if (link.itemIds.length > 0) {
+        narrowed.add(link.id);
+        return { ...link, itemIds: link.itemIds.filter(itemId => !wrongItemIds.includes(itemId)) };
+      }
+      if (allowExclusions) {
+        return { ...link, excludedItemIds: [...link.excludedItemIds, ...wrongItemIds] };
+      }
+      narrowed.add(link.id);
+      return { ...link, itemIds: itemIds.filter(itemId => expected.get(itemId) === link.id), groupItemIds: undefined };
     });
+    // A link narrowed to no item would apply to the whole south
     planned = planned.filter(link => link.itemIds.length > 0 || !narrowed.has(link.id));
   }
 
   const plannedIds = new Set(planned.map(link => link.id));
   const newLink = planned.find(link => link.id === NEW_LINK_ID);
-  narrowed.delete(NEW_LINK_ID);
-  for (const id of narrowed.keys()) {
-    if (!plannedIds.has(id)) narrowed.delete(id);
-  }
+  const existingLinks = planned.filter(link => link.id !== NEW_LINK_ID);
   return {
     removed: links.filter(link => !plannedIds.has(link.id)).map(link => link.id),
     toPassthrough: links.filter(link => kind(link) === ISO_FUNCTION_NAME && plannedIds.has(link.id)).map(link => link.id),
-    narrowed,
-    added: newLink ? { itemIds: newLink.itemIds } : undefined
+    narrowed: new Map(existingLinks.filter(link => narrowed.has(link.id)).map(link => [link.id, link.itemIds])),
+    excluded: new Map(existingLinks.filter(link => link.excludedItemIds.length > 0).map(link => [link.id, link.excludedItemIds])),
+    added: newLink ? { itemIds: newLink.itemIds, excludedItemIds: newLink.excludedItemIds } : undefined
   };
 }
 
