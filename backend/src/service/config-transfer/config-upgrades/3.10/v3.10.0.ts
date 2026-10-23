@@ -159,6 +159,11 @@ export const TIME_VALUES_TRANSFORMER_REPLACEMENTS: Record<string, { functionName
   'time-values-to-opcua': { functionName: 'record-list-to-opcua', inputType: 'record-list', outputType: 'opcua' }
 };
 
+// The souths which sent time values: the OIAnalytics North sent them without transformer. It now only accepts files and
+// OIAnalytics values, so their point records need a record-list-to-oianalytics transformer.
+export const POINT_SOUTH_TYPES = ['ads', 'bacnet', 'modbus', 'opc', 'opcua', 'osisoft-pi', 's7'];
+export const RECORD_LIST_TO_OIANALYTICS_FUNCTION_NAME = 'record-list-to-oianalytics';
+
 /** The data type of a custom transformer input or output, `time-values` becoming `record-list`. */
 export const toRecordListDataType = (dataType: string): string => (dataType === 'time-values' ? 'record-list' : dataType);
 
@@ -231,6 +236,10 @@ export function toRecordListTransformerOptions(oldFunctionName: string, options:
       return options;
   }
 }
+
+/** The options of a record-list-to-oianalytics transformer sending point records as they used to be sent. */
+export const defaultRecordListToOIAnalyticsOptions = (): Record<string, unknown> =>
+  toRecordListTransformerOptions('time-values-to-oianalytics', {});
 
 // The south types whose item manifest defaulted the resampling to 'raw', which is not one of its selectable values
 // ('none', '1s', ...). 'raw' already meant no resampling at runtime.
@@ -412,8 +421,10 @@ const RECORD_LIST_TRANSFORMER_MANIFESTS = [
  * Replaces the time-values standard transformers by their record-list counterparts (renamed, or merged into the
  * replacement the configuration already describes), converting the options of their links, and converts the data
  * types of the custom transformers. The existing record-list-to-csv links keep every field.
+ * Returns whether the configuration still described time-values transformers (an export carries every standard
+ * transformer, so this tells an export made before the record-list refactor).
  */
-function migrateTimeValuesTransformers(config: JsonObject): void {
+function migrateTimeValuesTransformers(config: JsonObject): boolean {
   const transformers = asObjects(config.transformers);
   const replacedIds = new Map<unknown, { oldFunctionName: string; newId: unknown }>();
   const keptTransformers: Array<JsonObject> = [];
@@ -461,6 +472,80 @@ function migrateTimeValuesTransformers(config: JsonObject): void {
   };
   forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(convertLink));
   forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(convertLink));
+  return replacedIds.size > 0;
+}
+
+/**
+ * The OIAnalytics North no longer accepts time values: the point-based souths (and history queries) sending to an
+ * OIAnalytics North go through a record-list-to-oianalytics transformer, replacing their 'iso' links and added at the
+ * south (or history query) level when there is none (see the 3.10.0_4 entity migration). Only applied to an export made
+ * before the record-list refactor: afterwards, a point-based south without transformer deliberately sends nothing to
+ * the OIAnalytics North.
+ */
+function addOIAnalyticsTransformers(config: JsonObject): void {
+  const pointSouthIds = asObjects(config.southConnectors)
+    .filter(south => POINT_SOUTH_TYPES.includes(south.type as string))
+    .map(south => south.oIBusInternalId);
+  const oiaNorths = asObjects(config.northConnectors).filter(north => north.type === 'oianalytics');
+  const oiaHistoryQueries = asObjects(config.historyQueries)
+    .map(historyQuery => historyQuery.settings as JsonObject)
+    .filter(settings => settings.northType === 'oianalytics' && POINT_SOUTH_TYPES.includes(settings.southType as string));
+  if ((oiaNorths.length === 0 || pointSouthIds.length === 0) && oiaHistoryQueries.length === 0) return;
+
+  const transformers = asObjects(config.transformers);
+  const standardId = (functionName: string) =>
+    transformers.find(transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === functionName)
+      ?.oIBusInternalId;
+  let oiaTransformerId = standardId(RECORD_LIST_TO_OIANALYTICS_FUNCTION_NAME);
+  if (oiaTransformerId === undefined) {
+    oiaTransformerId = generateRandomId(6);
+    transformers.push({
+      oIBusInternalId: oiaTransformerId,
+      type: 'standard',
+      settings: { functionName: RECORD_LIST_TO_OIANALYTICS_FUNCTION_NAME, inputType: 'record-list', outputType: 'oianalytics' },
+      manifest: recordListToOianalyticsManifest.settings
+    });
+    config.transformers = transformers;
+  }
+  const isoId = standardId('iso');
+  const replaceIso = (link: JsonObject): void => {
+    if (isoId === undefined || link.transformerId !== isoId) return;
+    link.transformerId = oiaTransformerId;
+    link.options = defaultRecordListToOIAnalyticsOptions();
+  };
+
+  for (const north of oiaNorths) {
+    const settings = north.settings as JsonObject;
+    const links = asObjects(settings.transformers);
+    for (const southId of pointSouthIds) {
+      const southLinks = links.filter(link => {
+        const source = link.source as JsonObject;
+        return source.type === 'south' && source.southId === southId;
+      });
+      southLinks.forEach(replaceIso);
+      const hasSouthLevelLink = southLinks.some(link => {
+        const source = link.source as JsonObject;
+        return !source.groupId && asObjects(source.items).length === 0;
+      });
+      if (!hasSouthLevelLink) {
+        links.push({
+          id: generateRandomId(6),
+          transformerId: oiaTransformerId,
+          options: defaultRecordListToOIAnalyticsOptions(),
+          source: { type: 'south', southId, items: [] }
+        });
+      }
+    }
+    settings.transformers = links;
+  }
+  for (const settings of oiaHistoryQueries) {
+    const links = asObjects(settings.northTransformers);
+    links.forEach(replaceIso);
+    if (!links.some(link => asObjects(link.items).length === 0)) {
+      links.push({ id: generateRandomId(6), transformerId: oiaTransformerId, options: defaultRecordListToOIAnalyticsOptions(), items: [] });
+    }
+    settings.northTransformers = links;
+  }
 }
 
 export const upgrade: ConfigUpgrade = {
@@ -468,7 +553,8 @@ export const upgrade: ConfigUpgrade = {
   description:
     'Add scan mode scheduling types, certificate chains, item caching strategies and configuration workflows; ' +
     'move SQL items CSV serialization to record-list-to-csv transformers; replace the raw resampling of OPC UA and OPC items with none; ' +
-    'replace the time-values transformers and data type by record-list ones',
+    'replace the time-values transformers and data type by record-list ones, sending the point-based souths to OIAnalytics through ' +
+    'record-list-to-oianalytics transformers',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -530,7 +616,9 @@ export const upgrade: ConfigUpgrade = {
     forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(addReferenceProcess));
     forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(addReferenceProcess));
 
-    migrateTimeValuesTransformers(config);
+    if (migrateTimeValuesTransformers(config)) {
+      addOIAnalyticsTransformers(config);
+    }
 
     return config;
   }

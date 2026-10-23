@@ -99,7 +99,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'record-list', 'oianalytics'];
+    return ['any', 'oianalytics'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -120,7 +120,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       case 'any':
         return this.handleFile(fileStream, cacheMetadata);
 
-      case 'record-list':
       case 'oianalytics':
         return this.handleValues(fileStream, cacheMetadata);
 
@@ -131,10 +130,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
   /**
    * Send time values to OIAnalytics in the compact format `{ timestamps, values, references }`.
-   * - `oianalytics` content is already in the compact format (produced by the OIAnalytics transformers) and is streamed
-   *   as is. Content still in the legacy array format (e.g. from a custom transformer) is converted on the fly.
-   * - `record-list` content is an array of point records (`{ pointId, timestamp, value }`) converted into the compact
-   *   format.
+   * `oianalytics` content is already in the compact format (produced by the OIAnalytics transformers) and is streamed
+   * as is. Content still in the legacy array format (e.g. from a custom transformer, or cached before 3.10) is converted
+   * on the fly.
    */
   async handleValues(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     const body = await this.toCompactBody(fileStream, cacheMetadata);
@@ -188,12 +186,12 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       return fileStream;
     }
     const values = JSON.parse(await streamToString(fileStream)) as Array<PointValueLike>;
-    // Records without point or timestamp (e.g. the rows of a SQL query sent without transformer) are not values
+    // Values without point or timestamp cannot be sent
     const pointValues = values
       .filter(value => value.pointId !== null && value.pointId !== undefined && value.timestamp !== null && value.timestamp !== undefined)
       .map(value => ({ ...value, pointId: String(value.pointId) }));
     if (pointValues.length < values.length) {
-      this.logger.warn(`${values.length - pointValues.length} record(s) without "pointId" or "timestamp" not sent`);
+      this.logger.warn(`${values.length - pointValues.length} value(s) without "pointId" or "timestamp" not sent`);
     }
     if (pointValues.length === 0) {
       return null;
