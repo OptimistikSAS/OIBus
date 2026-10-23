@@ -239,9 +239,11 @@ export class ConfigImportPreviewComponent {
       return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
     }
     if (source.type === 'oibus-api') {
-      return this.translateService.instant('configuration.oibus.manifest.transformers.oibus-api-selected', {
-        dataSourceId: source.dataSourceId
-      });
+      return source.dataSourceId
+        ? this.translateService.instant('configuration.oibus.manifest.transformers.oibus-api-selected', {
+            dataSourceId: source.dataSourceId
+          })
+        : this.translateService.instant('configuration.oibus.manifest.transformers.oibus-api-all-selected');
     }
     return this.translateService.instant('configuration.oibus.manifest.transformers.oianalytics-setpoint-selected');
   }

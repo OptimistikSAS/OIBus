@@ -10,16 +10,16 @@ import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToRecordListTransformer from '../../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
+import FileTransformer from '../../transformers/any/file/file-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
-import IgnoreTransformer from '../../transformers/ignore-transformer';
-import IsoTransformer from '../../transformers/iso-transformer';
 import RecordListToCsvTransformer from '../../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
 import RecordListToJSONTransformer from '../../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
 import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
 import RecordListToMQTTTransformer from '../../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
 import RecordListToOIAnalyticsTransformer from '../../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
 import RecordListToOPCUATransformer from '../../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
+import OIBusSetpointToJSONTransformer from '../../transformers/setpoint/oibus-setpoint-to-json/oibus-setpoint-to-json-transformer';
 import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
@@ -36,8 +36,7 @@ const standardTransformers: Array<StandardTransformer> = [
     outputType: 'record-list',
     type: 'standard'
   },
-  { id: 'ignore', type: 'standard', functionName: IgnoreTransformer.transformerName, inputType: 'any', outputType: 'any' },
-  { id: 'iso', type: 'standard', functionName: IsoTransformer.transformerName, inputType: 'any', outputType: 'any' },
+  { id: 'file', type: 'standard', functionName: FileTransformer.transformerName, inputType: 'any', outputType: 'any' },
   { id: 'jsonToCsv', inputType: 'any', functionName: JSONToCSVTransformer.transformerName, outputType: 'any', type: 'standard' },
   {
     id: 'recordListToCsv',
@@ -86,6 +85,13 @@ const standardTransformers: Array<StandardTransformer> = [
     inputType: 'record-list',
     functionName: RecordListToOPCUATransformer.transformerName,
     outputType: 'opcua',
+    type: 'standard'
+  },
+  {
+    id: 'oibusSetpointToJson',
+    inputType: 'setpoint',
+    functionName: OIBusSetpointToJSONTransformer.transformerName,
+    outputType: 'any',
     type: 'standard'
   },
   {

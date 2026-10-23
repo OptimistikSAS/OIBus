@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusRecord } from '../../shared/model/common/content.model';
+import { OIBusAnyContent, OIBusContent, OIBusFileContent, OIBusRecord } from '../../shared/model/common/content.model';
 import { Instant } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import {
@@ -29,8 +29,7 @@ import { loggerService } from '../service/logger/logger.service';
 import { createTransformer, runTransformerOnContent } from '../service/transformer.service';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import { createOIBusError, delay } from '../service/utils';
-import IgnoreTransformer from '../transformers/ignore-transformer';
-import IsoTransformer from '../transformers/iso-transformer';
+import FileTransformer from '../transformers/any/file/file-transformer';
 
 /** Events published by a North connector's {@link NorthConnector.metricsEvent}. */
 export interface NorthMetricsEvents {
@@ -69,8 +68,9 @@ export interface NorthMetricsEvents {
  *
  * **Transformer routing** (in `cacheContent` → `findTransformer`)
  *  - Resolution priority: items-level → group-level → south-level fallback.
- *  - Standard transformers `'ignore'` and `'iso'` short-circuit: ignore drops
- *    the data, iso skips transformation and caches the raw payload.
+ *  - Data no transformer is configured for is dropped.
+ *  - The standard `'file'` transformer short-circuits for files and payloads:
+ *    they are cached as is, without reading them.
  *  - Resolution uses a pre-built lookup that's invalidated on the
  *    `connectorConfiguration` setter (see `transformerLookup` doc).
  *
@@ -124,7 +124,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *     when multiple transformers match different items in the same batch)
    *   - "southId\0itemId" → group-level transformer (same shape)
    *   - "southId"          → south-level fallback transformer
-   *   - "dataSourceId"     → oibus-api transformer
+   *   - "dataSourceId"     → oibus-api transformer, plus the one applying to
+   *                          every data source (no data source id)
    *   - one entry for the oianalytics-setpoint transformer
    */
   private transformerLookup: {
@@ -132,6 +133,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     groupLevel: Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>;
     southLevel: Map<string, NorthTransformerWithOptions>;
     apiLevel: Map<string, NorthTransformerWithOptions>;
+    allApiSources: NorthTransformerWithOptions | undefined;
     oianalyticsSetpoint: NorthTransformerWithOptions | undefined;
   } | null = null;
 
@@ -157,6 +159,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     const groupLevel = new Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>();
     const southLevel = new Map<string, NorthTransformerWithOptions>();
     const apiLevel = new Map<string, NorthTransformerWithOptions>();
+    let allApiSources: NorthTransformerWithOptions | undefined;
     let oianalyticsSetpoint: NorthTransformerWithOptions | undefined;
 
     // Use the null character as a path separator — guaranteed to never appear
@@ -191,7 +194,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           }
         }
       } else if (source.type === 'oibus-api') {
-        if (!apiLevel.has(source.dataSourceId)) {
+        if (source.dataSourceId === undefined) {
+          allApiSources ??= t;
+        } else if (!apiLevel.has(source.dataSourceId)) {
           apiLevel.set(source.dataSourceId, t);
         }
       } else if (source.type === 'oianalytics-setpoint') {
@@ -201,7 +206,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       }
     });
 
-    this.transformerLookup = { itemLevel, groupLevel, southLevel, apiLevel, oianalyticsSetpoint };
+    this.transformerLookup = { itemLevel, groupLevel, southLevel, apiLevel, allApiSources, oianalyticsSetpoint };
   }
 
   private getTransformerLookup() {
@@ -454,10 +459,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * Routing:
    *  - Cache full → drop on the floor (the cache-full warning is debounced
    *    inside `cacheIsFull`).
-   *  - No transformer matches → `handleNoTransformer` (caches raw if the
-   *    type is supported, else logs and drops).
-   *  - Transformer is the standard `'ignore'` → drop intentionally.
-   *  - Transformer is the standard `'iso'` → cache as-is (pass-through).
+   *  - No transformer matches → drop.
+   *  - Transformer is the standard `'file'` and the data a file or a payload
+   *    → cache as-is, without reading it.
    *  - Otherwise → run the transformer and cache its output.
    *
    * After caching, `triggerRunIfNecessary(0)` is called so a configured
@@ -488,8 +492,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /**
-   * Transform and cache a single routing group. Mirrors the standard/ignore/iso handling but does
-   * NOT trigger a run — `cacheContent` triggers once after all groups have been cached.
+   * Transform and cache a single routing group. Does NOT trigger a run — `cacheContent` triggers
+   * once after all groups have been cached.
    */
   private async applyTransformer(
     data: OIBusContent,
@@ -497,20 +501,14 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     source: CacheMetadataSource
   ): Promise<void> {
     if (!transformerConfig) {
-      return this.handleNoTransformer(data);
-    }
-
-    if (
-      transformerConfig.transformer.type === 'standard' &&
-      transformerConfig.transformer.functionName === IgnoreTransformer.transformerName
-    ) {
-      this.logger.trace(`Ignoring data of type ${data.type}`);
+      this.logger.trace(`No transformer configured for data of type ${data.type}. Data will be ignored.`);
       return;
     }
 
     if (
+      (data.type === 'any' || data.type === 'any-content') &&
       transformerConfig.transformer.type === 'standard' &&
-      transformerConfig.transformer.functionName === IsoTransformer.transformerName
+      transformerConfig.transformer.functionName === FileTransformer.transformerName
     ) {
       return this.cacheWithoutTransform(data);
     }
@@ -625,7 +623,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
 
     if (metadataSource.source === 'oibus-api') {
-      return lookup.apiLevel.get(metadataSource.dataSourceId);
+      return lookup.apiLevel.get(metadataSource.dataSourceId) ?? lookup.allApiSources;
     }
 
     if (metadataSource.source === 'oianalytics-setpoints') {
@@ -633,14 +631,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
 
     return undefined;
-  }
-
-  private async handleNoTransformer(data: OIBusContent): Promise<void> {
-    if (!this.supportedTypes().includes(data.type)) {
-      this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
-      return;
-    }
-    await this.cacheWithoutTransform(data);
   }
 
   private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {
@@ -662,7 +652,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
-  private async cacheWithoutTransform(data: OIBusContent) {
+  /** Cache a file or a payload as is, through the standard 'file' transformer. */
+  private async cacheWithoutTransform(data: OIBusFileContent | OIBusAnyContent) {
     if (data.type === 'any') {
       await this.cacheService.addCacheContent(createReadStream(data.filePath), {
         contentType: data.type,
@@ -670,27 +661,12 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         // Fall back to the basename so that absolute paths are never leaked into cache metadata.
         contentFilename: data.filename ?? path.basename(data.filePath)
       });
-    } else if (data.type === 'any-content') {
-      // The serialised payload (JSON from MQTT, InfluxDB or the OIBus API) is cached as a JSON file: no North accepts
+    } else {
+      // The serialised payload (JSON from MQTT or the OIBus API) is cached as a JSON file: no North accepts
       // `any-content` itself
       await this.cacheService.addCacheContent(Readable.from(data.content), {
         contentType: 'any'
       });
-    } else {
-      if (this.connector.caching.throttling.maxNumberOfElements > 0) {
-        for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
-          const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
-          await this.cacheService.addCacheContent(Readable.from(JSON.stringify(chunks)), {
-            contentType: data.type,
-            numberOfElement: chunks.length
-          });
-        }
-      } else {
-        await this.cacheService.addCacheContent(Readable.from(JSON.stringify(data.content)), {
-          contentType: data.type,
-          numberOfElement: data.content.length
-        });
-      }
     }
   }
 

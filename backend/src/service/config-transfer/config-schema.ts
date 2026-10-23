@@ -218,7 +218,7 @@ const transformerSourceSchema = Joi.object({
   southId: Joi.when('type', { is: 'south', then: Joi.string().required() }),
   groupId: Joi.string(),
   items: Joi.when('type', { is: 'south', then: Joi.array().items(itemLight).required() }),
-  dataSourceId: Joi.when('type', { is: 'oibus-api', then: Joi.string().required() })
+  dataSourceId: Joi.string()
 }).required();
 
 const northEntry = Joi.object({

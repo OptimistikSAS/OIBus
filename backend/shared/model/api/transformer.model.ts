@@ -159,7 +159,13 @@ export interface SourceOriginOIAnalyticsDTO extends BaseSourceOrigin {
 
 export interface SourceOriginAPIDTO extends BaseSourceOrigin {
   type: 'oibus-api';
-  dataSourceId: string;
+
+  /**
+   * The data source the transformer applies to, every data source without one
+   *
+   * @example "my-data-source"
+   */
+  dataSourceId?: string;
 }
 
 export type TransformerSourceDTO = SourceOriginSouthDTO | SourceOriginOIAnalyticsDTO | SourceOriginAPIDTO;
@@ -208,7 +214,13 @@ export interface SourceOriginOIAnalyticsCommandDTO extends BaseSourceOrigin {
 
 export interface SourceOriginAPICommandDTO extends BaseSourceOrigin {
   type: 'oibus-api';
-  dataSourceId: string;
+
+  /**
+   * The data source the transformer applies to, every data source without one
+   *
+   * @example "my-data-source"
+   */
+  dataSourceId?: string;
 }
 
 export type TransformerSourceCommandDTO = SourceOriginSouthCommandDTO | SourceOriginOIAnalyticsCommandDTO | SourceOriginAPICommandDTO;

@@ -117,14 +117,17 @@ Your custom transformer will then be available for selection in the North connec
 
 ## Data Filtering {#data-filtering}
 
-Transformers are also the mechanism for filtering which data a North connector receives. By selecting a specific
-source type when adding a transformer, you control what kinds of data are accepted into the cache.
+Transformers are also the mechanism for filtering which data a North connector receives: a North connector only
+caches the data of the sources (and items) a transformer is configured for. **Data without transformer is ignored.**
 
-:::info Current behaviour
-Data that arrives at a North connector and is **compatible with its type** is cached and sent by default, even if no
-transformer is configured for that source type.
+To send data as it is, use a passthrough transformer: [File (as is)](../engine/transformers.mdx#file-as-is) for files
+and JSON payloads, [JSON](../engine/transformers.mdx#json) for record lists, or
+[JSON](../engine/transformers.mdx#json-setpoints) for OIAnalytics setpoints.
 
-This default behaviour is planned to change in a future OIBus release — unmatched data will be **ignored by default**
-rather than forwarded. If you rely on implicit forwarding today, add an explicit transformer to preserve that behaviour
-after the upgrade.
+:::info Upgrading to 3.10
+Before 3.10, the data compatible with the North connector type was cached without transformer, and the **No
+transform** and **Ignore** transformers forced or prevented it. When upgrading, OIBus adds the passthrough transformers
+reproducing what each North connector received (at the South connector level, so that new items are still sent),
+replaces **No transform** by them, and narrows the transformers the items set to **Ignore** fell back to, to the list of
+the other items. The files of the OIBus API go through a **File (as is)** transformer applying to every data source.
 :::

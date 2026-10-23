@@ -28445,12 +28445,13 @@
 						"nullable": false
 					},
 					"dataSourceId": {
-						"type": "string"
+						"type": "string",
+						"description": "The data source the transformer applies to, every data source without one",
+						"example": "my-data-source"
 					}
 				},
 				"required": [
-					"type",
-					"dataSourceId"
+					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -36510,12 +36511,13 @@
 						"nullable": false
 					},
 					"dataSourceId": {
-						"type": "string"
+						"type": "string",
+						"description": "The data source the transformer applies to, every data source without one",
+						"example": "my-data-source"
 					}
 				},
 				"required": [
-					"type",
-					"dataSourceId"
+					"type"
 				],
 				"type": "object",
 				"additionalProperties": false

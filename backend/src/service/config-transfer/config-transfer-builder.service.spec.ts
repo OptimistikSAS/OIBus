@@ -16,14 +16,14 @@ import type TransformerRepository from '../../repository/config/transformer.repo
 import type UserRepository from '../../repository/config/user.repository';
 import testData from '../../tests/utils/test-data';
 import { createMock, Mocked } from '../../tests/utils/test-utils';
-import IsoTransformer from '../../transformers/iso-transformer';
+import FileTransformer from '../../transformers/any/file/file-transformer';
 import EncryptionService from '../encryption.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
 
 const standardTransformer: StandardTransformer = {
-  id: IsoTransformer.transformerName,
+  id: FileTransformer.transformerName,
   type: 'standard',
-  functionName: IsoTransformer.transformerName,
+  functionName: FileTransformer.transformerName,
   inputType: 'any',
   outputType: 'any'
 };

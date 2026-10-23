@@ -6,7 +6,7 @@ import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'no
 
 import { DateTime } from 'luxon';
 
-import type { OIBusContent, OIBusFileContent } from '../../shared/model/common/content.model';
+import type { OIBusAnyContent, OIBusContent, OIBusFileContent } from '../../shared/model/common/content.model';
 import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { CacheContentUpdateCommand, CacheMetadata } from '../../shared/model/domain/engine.model';
 
@@ -653,19 +653,18 @@ describe('NorthConnector', () => {
     assert.strictEqual(findTransformerMock.mock.calls.length, 0);
   });
 
-  it('should cache json content and handle no transform', async () => {
+  it('should drop the content no transformer is configured for', async () => {
     const findTransformerMock = mock.fn((_metadataSource: CacheMetadataSource) => undefined as NorthTransformerWithOptions | undefined);
     north['findTransformer'] = findTransformerMock;
-    const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
-    north['handleNoTransformer'] = handleNoTransformerMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
     assert.strictEqual(findTransformerMock.mock.calls.length, 1);
-    assert.strictEqual(handleNoTransformerMock.mock.calls.length, 1);
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 0);
+    assert.ok(logged(logger.trace, `No transformer configured for data of type ${testData.oibusContent[0].type}. Data will be ignored.`));
   });
 
   it('should trigger a run check after caching content', async () => {
-    north['handleNoTransformer'] = mock.fn(async (_data: OIBusContent) => undefined);
+    north['findTransformer'] = mock.fn((_metadataSource: CacheMetadataSource) => undefined as NorthTransformerWithOptions | undefined);
     const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
     north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
@@ -676,46 +675,31 @@ describe('NorthConnector', () => {
 
   it('should not trigger an immediate retry after caching content while a send is failing', async () => {
     north['errorCount'] = 1;
-    const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
-    north['handleNoTransformer'] = handleNoTransformerMock;
     const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
     north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
-    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
+    await north.cacheContent(testData.oibusContent[0], southSource);
 
     // Content is still cached, but the retry stays paced by run() and caching.error.retryInterval
-    assert.strictEqual(handleNoTransformerMock.mock.calls.length, 1);
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
     assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 0);
   });
 
-  it('should cache json content and handle ignore transform', async () => {
-    const findTransformerMock = mock.fn(
-      (_metadataSource: CacheMetadataSource) =>
-        ({ transformer: { type: 'standard', functionName: 'ignore' } }) as NorthTransformerWithOptions
+  it('should cache files and payloads as is through the file transformer', async () => {
+    north['findTransformer'] = mock.fn(
+      (_metadataSource: CacheMetadataSource) => ({ transformer: { type: 'standard', functionName: 'file' } }) as NorthTransformerWithOptions
     );
-    north['findTransformer'] = findTransformerMock;
-    const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
-    north['handleNoTransformer'] = handleNoTransformerMock;
-    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
-
-    assert.strictEqual(findTransformerMock.mock.calls.length, 1);
-    assert.strictEqual(handleNoTransformerMock.mock.calls.length, 0);
-    assert.ok(logged(logger.trace, `Ignoring data of type ${testData.oibusContent[0].type}`));
-  });
-
-  it('should cache json content and handle iso transform', async () => {
-    const findTransformerMock = mock.fn(
-      (_metadataSource: CacheMetadataSource) => ({ transformer: { type: 'standard', functionName: 'iso' } }) as NorthTransformerWithOptions
-    );
-    north['findTransformer'] = findTransformerMock;
-    const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
-    north['handleNoTransformer'] = handleNoTransformerMock;
-    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusContent) => undefined);
+    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusFileContent | OIBusAnyContent) => undefined);
     north['cacheWithoutTransform'] = cacheWithoutTransformMock;
+    const executeTransformationMock = mock.fn(async () => undefined);
+    north['executeTransformation'] = executeTransformationMock;
+
+    await north.cacheContent({ type: 'any-content', content: '{}' }, { source: 'test' });
+    await north.cacheContent({ type: 'any', filePath: 'file.csv' }, { source: 'test' });
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    assert.strictEqual(findTransformerMock.mock.calls.length, 1);
-    assert.strictEqual(handleNoTransformerMock.mock.calls.length, 0);
-    assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 1);
+    // Records are written as a JSON file by the transformer itself
+    assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 2);
+    assert.strictEqual(executeTransformationMock.mock.calls.length, 1);
   });
 
   it('should cache file content', async () => {
@@ -758,7 +742,7 @@ describe('NorthConnector', () => {
     await north['cacheWithoutTransform']({
       type: 'any',
       filePath: 'path/file.csv'
-    } as OIBusContent);
+    });
 
     assert.strictEqual(createReadStream.mock.calls.length, 1);
     assert.deepStrictEqual(createReadStream.mock.calls[0].arguments[0], 'path/file.csv');
@@ -802,6 +786,32 @@ describe('NorthConnector', () => {
       } as CacheMetadataSource),
       expectedTransformer
     );
+  });
+
+  it('should find the transformer of an OIBus API data source, then the one of every data source', () => {
+    setConnectorTransformers([
+      {
+        id: 'allSources1',
+        options: {},
+        transformer: { id: 'file', type: 'standard', functionName: 'file', inputType: 'any', outputType: 'any' },
+        source: { type: 'oibus-api' }
+      },
+      {
+        id: 'dataSource1',
+        options: {},
+        transformer: { id: 'custom', type: 'standard', functionName: 'json-to-csv', inputType: 'any', outputType: 'any' },
+        source: { type: 'oibus-api', dataSourceId: 'ds1' }
+      },
+      {
+        id: 'allSources2',
+        options: {},
+        transformer: { id: 'file', type: 'standard', functionName: 'file', inputType: 'any', outputType: 'any' },
+        source: { type: 'oibus-api' }
+      }
+    ]);
+
+    assert.strictEqual(north['findTransformer']({ source: 'oibus-api', dataSourceId: 'ds1' })?.id, 'dataSource1');
+    assert.strictEqual(north['findTransformer']({ source: 'oibus-api', dataSourceId: 'ds2' })?.id, 'allSources1');
   });
 
   it('should find transformer from south metadata at group level', () => {
@@ -858,22 +868,6 @@ describe('NorthConnector', () => {
     assert.strictEqual(result, undefined);
   });
 
-  it('should handle no transformer when not supporting type', async () => {
-    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusContent) => undefined);
-    north['cacheWithoutTransform'] = cacheWithoutTransformMock;
-    await north['handleNoTransformer']({ type: 'bad' } as unknown as OIBusContent);
-    assert.ok(logged(logger.trace, `Data type "bad" not supported by the connector. Data will be ignored.`));
-    assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 0);
-  });
-
-  it('should handle no transformer when supporting type', async () => {
-    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusContent) => undefined);
-    north['cacheWithoutTransform'] = cacheWithoutTransformMock;
-    await north['handleNoTransformer']({ type: 'record-list' } as OIBusContent);
-    // handleNoTransformer only caches; cacheContent is responsible for triggering a run once.
-    assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 1);
-  });
-
   it('should transform any-content payload', async () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
@@ -924,23 +918,10 @@ describe('NorthConnector', () => {
     });
   });
 
-  it('should cache without transform with max number of elements', async () => {
-    north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
-    await north['cacheWithoutTransform']({ type: 'record-list', content: [{}, {}] } as OIBusContent);
-    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 2);
-  });
-
   it('should cache without transform with any-content as a file', async () => {
-    north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
-    await north['cacheWithoutTransform']({ type: 'any-content', content: '' } as OIBusContent);
+    await north['cacheWithoutTransform']({ type: 'any-content', content: '' });
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], { contentType: 'any' });
-  });
-
-  it('should cache without transform', async () => {
-    north.connectorConfiguration.caching.throttling.maxNumberOfElements = 0;
-    await north['cacheWithoutTransform']({ type: 'record-list', content: [{}, {}] } as OIBusContent);
-    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
   });
 
   it('should get cache folder', () => {

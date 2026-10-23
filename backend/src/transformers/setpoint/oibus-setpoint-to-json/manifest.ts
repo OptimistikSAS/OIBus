@@ -1,8 +1,8 @@
-import { TransformerManifest } from '../../../shared/model/connector/transformer-manifest.model';
+import { TransformerManifest } from '../../../../shared/model/connector/transformer-manifest.model';
 
 const manifest: TransformerManifest = {
-  id: 'ignore',
-  inputType: 'any',
+  id: 'setpoint-to-json',
+  inputType: 'setpoint',
   outputType: 'any',
   settings: {
     type: 'object',

@@ -30,14 +30,12 @@ import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-tr
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
 import CSVToRecordListTransformer from '../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
 import csvToRecordListManifest from '../transformers/any/csv-to-record-list/manifest';
+import FileTransformer from '../transformers/any/file/file-transformer';
+import fileManifest from '../transformers/any/file/manifest';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
-import IgnoreTransformer from '../transformers/ignore-transformer';
-import ignoreManifest from '../transformers/ignore-transformer/manifest';
-import IsoTransformer from '../transformers/iso-transformer';
-import isoManifest from '../transformers/iso-transformer/manifest';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import OibusTransformer from '../transformers/oibus-transformer';
 import recordListToCsvManifest from '../transformers/record-list/record-list-to-csv/manifest';
@@ -52,6 +50,8 @@ import recordListToOianalyticsManifest from '../transformers/record-list/record-
 import RecordListToOIAnalyticsTransformer from '../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
 import recordListToOpcuaManifest from '../transformers/record-list/record-list-to-opcua/manifest';
 import RecordListToOPCUATransformer from '../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
+import setpointToJsonManifest from '../transformers/setpoint/oibus-setpoint-to-json/manifest';
+import OIBusSetpointToJSONTransformer from '../transformers/setpoint/oibus-setpoint-to-json/oibus-setpoint-to-json-transformer';
 import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
 import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
@@ -70,10 +70,9 @@ interface TransformerReloadEngine {
 }
 
 export const transformerManifestList: Array<TransformerManifest> = [
-  isoManifest,
-  ignoreManifest,
   csvToMqttManifest,
   csvToRecordListManifest,
+  fileManifest,
   jsonToCsvManifest,
   jsonToOianalyticsManifest,
   recordListToCsvManifest,
@@ -82,6 +81,7 @@ export const transformerManifestList: Array<TransformerManifest> = [
   recordListToMqttManifest,
   recordListToOianalyticsManifest,
   recordListToOpcuaManifest,
+  setpointToJsonManifest,
   setpointToModbusManifest,
   setpointToMqttManifest,
   setpointToOpcuaManifest
@@ -244,13 +244,6 @@ export default class TransformerService {
    */
   async runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent> {
     const transformer = this.findById(transformerId);
-    // iso and ignore are handled by the North itself (cached as is / dropped), they have no implementation to run
-    if (transformer.type === 'standard' && transformer.functionName === IsoTransformer.transformerName) {
-      return content;
-    }
-    if (transformer.type === 'standard' && transformer.functionName === IgnoreTransformer.transformerName) {
-      return { type: 'any-content', content: '' };
-    }
     const transformerToRun: NorthTransformerWithOptions = {
       id: 'test',
       transformer,
@@ -426,6 +419,9 @@ export const createTransformer = (
       case CSVToRecordListTransformer.transformerName: {
         return new CSVToRecordListTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
+      case FileTransformer.transformerName: {
+        return new FileTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      }
       case JSONToCSVTransformer.transformerName: {
         return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
@@ -449,6 +445,9 @@ export const createTransformer = (
       }
       case RecordListToOPCUATransformer.transformerName: {
         return new RecordListToOPCUATransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      }
+      case OIBusSetpointToJSONTransformer.transformerName: {
+        return new OIBusSetpointToJSONTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusSetpointToModbusTransformer.transformerName: {
         return new OIBusSetpointToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
@@ -524,17 +523,14 @@ export const runTransformerOnContent = async (
 
 export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {
   switch (functionName) {
-    case isoManifest.id: {
-      return isoManifest.settings;
-    }
-    case ignoreManifest.id: {
-      return ignoreManifest.settings;
-    }
     case csvToMqttManifest.id: {
       return csvToMqttManifest.settings;
     }
     case csvToRecordListManifest.id: {
       return csvToRecordListManifest.settings;
+    }
+    case fileManifest.id: {
+      return fileManifest.settings;
     }
     case jsonToCsvManifest.id: {
       return jsonToCsvManifest.settings;
@@ -559,6 +555,9 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case recordListToOpcuaManifest.id: {
       return recordListToOpcuaManifest.settings;
+    }
+    case setpointToJsonManifest.id: {
+      return setpointToJsonManifest.settings;
     }
     case setpointToModbusManifest.id: {
       return setpointToModbusManifest.settings;

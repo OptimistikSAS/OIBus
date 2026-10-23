@@ -6165,7 +6165,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "type": {"dataType":"enum","enums":["oibus-api"],"required":true},
-            "dataSourceId": {"dataType":"string","required":true},
+            "dataSourceId": {"dataType":"string"},
         },
         "additionalProperties": false,
     },
@@ -8103,7 +8103,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "type": {"dataType":"enum","enums":["oibus-api"],"required":true},
-            "dataSourceId": {"dataType":"string","required":true},
+            "dataSourceId": {"dataType":"string"},
         },
         "additionalProperties": false,
     },

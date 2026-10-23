@@ -113,7 +113,7 @@ export const configImportPreview: ConfigImportPreviewDTO = {
     transformers: [
       // listed by every export but linked to by nothing: never counted nor reported as missing
       standardTransformerEntry('unlinked-standard', 'json-to-csv'),
-      standardTransformerEntry('standard1', 'iso'),
+      standardTransformerEntry('standard1', 'file'),
       {
         oIBusInternalId: 'custom1',
         type: 'custom',
@@ -148,7 +148,8 @@ export const configImportPreview: ConfigImportPreviewDTO = {
           description: '',
           transformers: [
             { id: 't1', source: { type: 'south', southId: 'south1', items: [] }, transformerId: 'custom1', options: { precision: 2 } },
-            { id: 't2', source: { type: 'oianalytics-setpoint' }, transformerId: 'standard1', options: {} }
+            { id: 't2', source: { type: 'oianalytics-setpoint' }, transformerId: 'standard1', options: {} },
+            { id: 't3', source: { type: 'oibus-api' }, transformerId: 'standard1', options: {} }
           ]
         }
       }

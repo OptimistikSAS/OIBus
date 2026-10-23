@@ -42,7 +42,7 @@ before(() => {
 });
 
 const isoManifest: TransformerManifest = {
-  id: 'iso',
+  id: 'file',
   inputType: 'any',
   outputType: 'any',
   settings: {
@@ -83,12 +83,12 @@ describe('TransformerController', () => {
     const result = await controller.listManifest(mockRequest as CustomExpressRequest);
 
     assert.strictEqual(transformerService.listManifest.mock.calls.length, 1);
-    assert.deepStrictEqual(result, [{ id: 'iso', inputType: 'any', outputType: 'any' }]);
+    assert.deepStrictEqual(result, [{ id: 'file', inputType: 'any', outputType: 'any' }]);
   });
 
   it('should return a transformer manifest', async () => {
     const mockManifest = isoManifest;
-    const type = 'iso';
+    const type = 'file';
     transformerService.getManifest.mock.mockImplementation(() => mockManifest);
 
     const result = await controller.getManifest(type, mockRequest as CustomExpressRequest);

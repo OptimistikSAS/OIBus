@@ -233,9 +233,9 @@ describe('Audit Service', () => {
         service.getEntityInfo({
           ...baseLog,
           entityType: 'north_transformer',
-          newState: { transformer: { type: 'standard', functionName: 'iso' } }
+          newState: { transformer: { type: 'standard', functionName: 'file' } }
         }),
-        { exists: false, name: 'iso', parentId: null }
+        { exists: false, name: 'file', parentId: null }
       );
       assert.deepStrictEqual(service.getEntityInfo({ ...baseLog, entityType: 'history_query_transformer', newState: { options: {} } }), {
         exists: false,

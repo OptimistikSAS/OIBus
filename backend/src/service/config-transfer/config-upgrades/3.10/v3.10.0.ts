@@ -1,10 +1,12 @@
 import csvToRecordListManifest from '../../../../transformers/any/csv-to-record-list/manifest';
+import fileManifest from '../../../../transformers/any/file/manifest';
 import recordListToCsvManifest from '../../../../transformers/record-list/record-list-to-csv/manifest';
 import recordListToJsonManifest from '../../../../transformers/record-list/record-list-to-json/manifest';
 import recordListToModbusManifest from '../../../../transformers/record-list/record-list-to-modbus/manifest';
 import recordListToMqttManifest from '../../../../transformers/record-list/record-list-to-mqtt/manifest';
 import recordListToOianalyticsManifest from '../../../../transformers/record-list/record-list-to-oianalytics/manifest';
 import recordListToOpcuaManifest from '../../../../transformers/record-list/record-list-to-opcua/manifest';
+import setpointToJsonManifest from '../../../../transformers/setpoint/oibus-setpoint-to-json/manifest';
 import { generateRandomId } from '../../../utils';
 import {
   ConfigUpgrade,
@@ -15,6 +17,18 @@ import {
   forEachSouthItem,
   JsonObject
 } from '../config-upgrade';
+import {
+  FILE_PASSTHROUGH,
+  IGNORE_FUNCTION_NAME,
+  ISO_FUNCTION_NAME,
+  Passthrough,
+  passthroughFor,
+  planRouting,
+  planSourceRouting,
+  RoutingPlan,
+  SETPOINT_PASSTHROUGH,
+  southContentType
+} from './passthrough-transformers';
 
 /**
  * The 3.10.0 changes to the configuration, shared with the entity migration doing the same to existing
@@ -548,13 +562,190 @@ function addOIAnalyticsTransformers(config: JsonObject): void {
   }
 }
 
+const PASSTHROUGH_MANIFESTS = [fileManifest, recordListToJsonManifest, setpointToJsonManifest];
+
+/**
+ * The 'iso' and 'ignore' standard transformers are removed: the links are changed to keep routing the data as before
+ * (see the 3.10.0_5 entity migration). Only applied to an export describing them (an export carries every standard
+ * transformer): afterwards, the data without transformer is deliberately dropped.
+ */
+function replaceIsoAndIgnoreTransformers(config: JsonObject): void {
+  const transformers = asObjects(config.transformers);
+  const functionNameOf = (transformerId: unknown): string | undefined => {
+    const transformer = transformers.find(candidate => candidate.oIBusInternalId === transformerId);
+    return transformer?.type === 'standard' ? ((transformer.settings as JsonObject).functionName as string) : undefined;
+  };
+  const isRemoved = (transformer: JsonObject) =>
+    transformer.type === 'standard' &&
+    [ISO_FUNCTION_NAME, IGNORE_FUNCTION_NAME].includes((transformer.settings as JsonObject).functionName as string);
+  const removedIds = transformers.filter(isRemoved).map(transformer => transformer.oIBusInternalId);
+  if (removedIds.length === 0) return;
+
+  const passthroughId = (passthrough: Passthrough): unknown => {
+    const existing = transformers.find(
+      transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === passthrough.functionName
+    );
+    if (existing) return existing.oIBusInternalId;
+    const id = generateRandomId(6);
+    transformers.push({
+      oIBusInternalId: id,
+      type: 'standard',
+      settings: { ...passthrough },
+      manifest: PASSTHROUGH_MANIFESTS.find(manifest => manifest.id === passthrough.functionName)!.settings
+    });
+    return id;
+  };
+  const toPassthrough = (link: JsonObject, passthrough: Passthrough): void => {
+    link.transformerId = passthroughId(passthrough);
+    link.options = {};
+  };
+  const routingLink = (link: JsonObject, itemIds: Array<unknown>, groupItemIds?: Array<unknown>) => ({
+    id: link.id as string,
+    functionName: functionNameOf(link.transformerId),
+    itemIds: itemIds as Array<string>,
+    groupItemIds: groupItemIds as Array<string> | undefined
+  });
+  /** Applies a plan to the links of a source, returning the links of the North (or history query) left */
+  const applyPlan = (
+    links: Array<JsonObject>,
+    plan: RoutingPlan,
+    isoPassthrough: Passthrough | undefined,
+    narrow: (link: JsonObject, itemIds: Array<string>) => void
+  ): Array<JsonObject> => {
+    for (const link of links) {
+      if (plan.toPassthrough.includes(link.id as string)) toPassthrough(link, isoPassthrough!);
+      const narrowedItemIds = plan.narrowed.get(link.id as string);
+      if (narrowedItemIds) narrow(link, narrowedItemIds);
+    }
+    return links.filter(link => !plan.removed.includes(link.id as string));
+  };
+  const sourceOf = (link: JsonObject) => link.source as JsonObject;
+
+  const souths = asObjects(config.southConnectors);
+  forEachNorth(config, null, north => {
+    const settings = north.settings as JsonObject;
+    const northType = north.type as string;
+    let links = asObjects(settings.transformers);
+
+    for (const south of souths) {
+      const items = asObjects((south.settings as JsonObject).items);
+      const southLinks = links.filter(link => sourceOf(link).type === 'south' && sourceOf(link).southId === south.oIBusInternalId);
+      const contentType = southContentType(south.type as string);
+      const defaultPassthrough = passthroughFor(contentType, northType, false);
+      const isoPassthrough = passthroughFor(contentType, northType, true);
+      const plan = planRouting(
+        southLinks.map(link => {
+          const source = sourceOf(link);
+          return routingLink(
+            link,
+            asObjects(source.items).map(item => item.id),
+            source.groupId ? items.filter(item => item.groupId === source.groupId).map(item => item.id) : undefined
+          );
+        }),
+        items.map(item => item.id as string),
+        defaultPassthrough !== undefined,
+        isoPassthrough !== undefined
+      );
+      links = applyPlan(links, plan, isoPassthrough, (link, itemIds) => {
+        const { groupId: _groupId, ...source } = sourceOf(link);
+        link.source = { ...source, items: items.filter(item => itemIds.includes(item.id as string)).map(itemLight) };
+      });
+      if (plan.added) {
+        links.push({
+          id: generateRandomId(6),
+          transformerId: passthroughId(defaultPassthrough!),
+          source: {
+            type: 'south',
+            southId: south.oIBusInternalId,
+            items: items.filter(item => plan.added!.itemIds.includes(item.id as string)).map(itemLight)
+          },
+          options: {}
+        });
+      }
+    }
+
+    // OIBus API: each data source is routed by its first link, the others by a new link applying to every data source
+    const filePassthrough = passthroughFor('any', northType, true);
+    const dataSourceIds = new Set(links.filter(link => sourceOf(link).type === 'oibus-api').map(link => sourceOf(link).dataSourceId));
+    let ignoresDataSources = false;
+    for (const dataSourceId of dataSourceIds) {
+      const dataSourceLinks = links.filter(link => sourceOf(link).type === 'oibus-api' && sourceOf(link).dataSourceId === dataSourceId);
+      const plan = planSourceRouting(
+        dataSourceLinks.map(link => routingLink(link, [])),
+        filePassthrough !== undefined
+      );
+      ignoresDataSources ||= plan.ignored;
+      dataSourceLinks.filter(link => link.id === plan.toPassthrough).forEach(link => toPassthrough(link, FILE_PASSTHROUGH));
+      links = links.filter(link => !plan.removed.includes(link.id as string));
+    }
+    if (filePassthrough && !ignoresDataSources) {
+      links.push({ id: generateRandomId(6), transformerId: passthroughId(FILE_PASSTHROUGH), source: { type: 'oibus-api' }, options: {} });
+    }
+
+    // OIAnalytics setpoints
+    const setpointLinks = links.filter(link => sourceOf(link).type === 'oianalytics-setpoint');
+    const setpointPassthrough = passthroughFor('setpoint', northType, true);
+    const setpointPlan = planSourceRouting(
+      setpointLinks.map(link => routingLink(link, [])),
+      setpointPassthrough !== undefined
+    );
+    setpointLinks.filter(link => link.id === setpointPlan.toPassthrough).forEach(link => toPassthrough(link, SETPOINT_PASSTHROUGH));
+    links = links.filter(link => !setpointPlan.removed.includes(link.id as string));
+    if (setpointLinks.length === 0 && setpointPassthrough) {
+      links.push({
+        id: generateRandomId(6),
+        transformerId: passthroughId(SETPOINT_PASSTHROUGH),
+        source: { type: 'oianalytics-setpoint' },
+        options: {}
+      });
+    }
+
+    // The links left to 'iso' and 'ignore' were never used (e.g. their south was deleted)
+    settings.transformers = links.filter(link => !removedIds.includes(link.transformerId));
+  });
+
+  forEachHistoryQuery(config, null, settings => {
+    const items = asObjects(settings.items);
+    const links = asObjects(settings.northTransformers);
+    const contentType = southContentType(settings.southType as string);
+    const defaultPassthrough = passthroughFor(contentType, settings.northType as string, false);
+    const isoPassthrough = passthroughFor(contentType, settings.northType as string, true);
+    const plan = planRouting(
+      links.map(link =>
+        routingLink(
+          link,
+          asObjects(link.items).map(item => item.id)
+        )
+      ),
+      items.map(item => item.id as string),
+      defaultPassthrough !== undefined,
+      isoPassthrough !== undefined
+    );
+    const newLinks = applyPlan(links, plan, isoPassthrough, (link, itemIds) => {
+      link.items = items.filter(item => itemIds.includes(item.id as string)).map(itemLight);
+    });
+    if (plan.added) {
+      newLinks.push({
+        id: generateRandomId(6),
+        transformerId: passthroughId(defaultPassthrough!),
+        options: {},
+        items: items.filter(item => plan.added!.itemIds.includes(item.id as string)).map(itemLight)
+      });
+    }
+    settings.northTransformers = newLinks.filter(link => !removedIds.includes(link.transformerId));
+  });
+
+  config.transformers = transformers.filter(transformer => !isRemoved(transformer));
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
     'Add scan mode scheduling types, certificate chains, item caching strategies and configuration workflows; ' +
     'move SQL items CSV serialization to record-list-to-csv transformers; replace the raw resampling of OPC UA and OPC items with none; ' +
     'replace the time-values transformers and data type by record-list ones, sending the point-based souths to OIAnalytics through ' +
-    'record-list-to-oianalytics transformers',
+    'record-list-to-oianalytics transformers; replace the iso and ignore transformers by passthroughs, the data without transformer ' +
+    'being dropped',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -619,6 +810,7 @@ export const upgrade: ConfigUpgrade = {
     if (migrateTimeValuesTransformers(config)) {
       addOIAnalyticsTransformers(config);
     }
+    replaceIsoAndIgnoreTransformers(config);
 
     return config;
   }

@@ -25,8 +25,8 @@ const standardTransformer = (id: string, functionName: string, outputType: Outpu
   manifest: testData.transformers.customList[0].manifest
 });
 
-const compatibleTransformer = standardTransformer('transformer-ignore', 'ignore', 'any');
-const incompatibleTransformer = standardTransformer('transformer-iso', 'iso', 'mqtt');
+const compatibleTransformer = standardTransformer('transformer-file', 'file', 'any');
+const incompatibleTransformer = standardTransformer('transformer-csv-to-mqtt', 'csv-to-mqtt', 'mqtt');
 const customTransformer: TransformerDTO = testData.transformers.customList[0];
 
 const northDetail: NorthConnectorDTO = {
@@ -123,9 +123,13 @@ describe('SelectExistingTransformerComponent', () => {
 
     expect(northConnectorService.findById).toHaveBeenCalledWith(norths[0].id);
     await expect.element(tester.transformer.getByRole('option')).toHaveLength(3);
-    expect(tester.optionLabels(tester.transformer)).toEqual(['', `Ignore (${testData.south.listLight[0].name})`, customTransformer.name]);
+    expect(tester.optionLabels(tester.transformer)).toEqual([
+      '',
+      `File (as is) (${testData.south.listLight[0].name})`,
+      customTransformer.name
+    ]);
 
-    await tester.transformer.selectOptions(`Ignore (${testData.south.listLight[0].name})`);
+    await tester.transformer.selectOptions(`File (as is) (${testData.south.listLight[0].name})`);
 
     expect(tester.picked).toEqual([{ transformer: compatibleTransformer, options: { key: 'value' } }]);
   });
@@ -137,25 +141,25 @@ describe('SelectExistingTransformerComponent', () => {
 
     expect(historyQueryService.findById).toHaveBeenCalledWith(historyQueries[0].id);
     await expect.element(tester.transformer.getByRole('option')).toHaveLength(2);
-    expect(tester.optionLabels(tester.transformer)).toEqual(['', 'Ignore']);
+    expect(tester.optionLabels(tester.transformer)).toEqual(['', 'File (as is)']);
 
-    await tester.transformer.selectOptions('Ignore');
+    await tester.transformer.selectOptions('File (as is)');
 
     expect(tester.picked).toEqual([{ transformer: compatibleTransformer, options: { key: 'history' } }]);
   });
 
   test('should only list the transformers applicable to the data of the source', async () => {
     const tester = new SelectExistingTransformerComponentTester('north', ['any']);
-    tester.fixture.componentRef.setInput('dataType', 'setpoint');
+    tester.fixture.componentRef.setInput('dataType', 'any');
 
     await tester.source.selectOptions(norths[0].name);
 
-    // the custom transformer takes record lists: it cannot be applied to setpoints
-    expect(tester.optionLabels(tester.transformer)).toEqual(['', `Ignore (${testData.south.listLight[0].name})`]);
+    // the custom transformer takes record lists: it cannot be applied to files
+    expect(tester.optionLabels(tester.transformer)).toEqual(['', `File (as is) (${testData.south.listLight[0].name})`]);
 
     tester.fixture.componentRef.setInput('dataType', 'record-list');
 
-    await expect.element(tester.transformer.getByRole('option')).toHaveLength(3);
+    await expect.element(tester.transformer.getByRole('option')).toHaveLength(2);
   });
 
   test('should tell when the source has no compatible transformer', async () => {
@@ -170,7 +174,7 @@ describe('SelectExistingTransformerComponent', () => {
   test('should not emit when the empty transformer is selected again', async () => {
     const tester = new SelectExistingTransformerComponentTester('history-query', ['any']);
     await tester.source.selectOptions(historyQueries[0].name);
-    await tester.transformer.selectOptions('Ignore');
+    await tester.transformer.selectOptions('File (as is)');
 
     await tester.transformer.selectOptions('');
 

@@ -130,22 +130,24 @@ describe('NorthTransformersComponent', () => {
       {
         ...base,
         id: 'severalItems',
-        transformer: { ...testData.north.list[0].transformers[0].transformer, type: 'standard', functionName: 'iso' },
+        transformer: { ...testData.north.list[0].transformers[0].transformer, type: 'standard', functionName: 'file' },
         source: { type: 'south', south: testData.south.listLight[0], items: Array.from({ length: 7 }, (_, index) => buildItem(index)) }
       },
-      { ...base, id: 'setpoint', source: { type: 'oianalytics-setpoint' } }
+      { ...base, id: 'setpoint', source: { type: 'oianalytics-setpoint' } },
+      { ...base, id: 'allDataSources', source: { type: 'oibus-api' } }
     );
     const tester = new NorthTransformersComponentTester(northConnector, true);
 
-    await expect.element(tester.rows).toHaveLength(6);
+    await expect.element(tester.rows).toHaveLength(7);
     await expect.element(tester.cell(0, 0)).toHaveTextContent('South 1 (Folder scanner) [item1]');
     await expect.element(tester.cell(0, 1)).toHaveTextContent('my transformer 1');
     await expect.element(tester.cell(1, 0)).toHaveTextContent('OIBus API (dataSourceId: dataSourceId1)');
     await expect.element(tester.cell(2, 0)).toHaveTextContent('South 2 (Microsoft SQL Server™) [All items]');
     await expect.element(tester.cell(3, 0)).toHaveTextContent('South 1 (Folder scanner) [Group: Group 1]');
     await expect.element(tester.cell(4, 0)).toHaveTextContent('South 1 (Folder scanner) [7 items]');
-    await expect.element(tester.cell(4, 1)).toHaveTextContent('No transform');
+    await expect.element(tester.cell(4, 1)).toHaveTextContent('File (as is)');
     await expect.element(tester.cell(5, 0)).toHaveTextContent('OIAnalytics setpoints');
+    await expect.element(tester.cell(6, 0)).toHaveTextContent('OIBus API (all data sources)');
 
     await tester.cell(4, 0).getByText('7 items').hover();
     await expect.element(page.getByCss('.items-tooltip')).toHaveTextContent('item0 item1 item2 item3 item4 ... (2 more)');
