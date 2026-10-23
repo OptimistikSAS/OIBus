@@ -292,7 +292,7 @@ export default class NorthConnectorRepository {
           transformerWithOptions.transformer.id,
           JSON.stringify(transformerWithOptions.options),
           transformerWithOptions.source.type,
-          transformerWithOptions.source.type === 'oibus-api' ? transformerWithOptions.source.dataSourceId : null,
+          transformerWithOptions.source.type === 'oibus-api' ? (transformerWithOptions.source.dataSourceId ?? null) : null,
           transformerWithOptions.source.type === 'south' ? transformerWithOptions.source.south.id : null,
           transformerWithOptions.source.type === 'south' && transformerWithOptions.source.group
             ? transformerWithOptions.source.group.id
@@ -305,7 +305,7 @@ export default class NorthConnectorRepository {
         .run(
           transformerWithOptions.transformer.id,
           JSON.stringify(transformerWithOptions.options),
-          transformerWithOptions.source.type === 'oibus-api' ? transformerWithOptions.source.dataSourceId : null,
+          transformerWithOptions.source.type === 'oibus-api' ? (transformerWithOptions.source.dataSourceId ?? null) : null,
           transformerWithOptions.source.type === 'south' ? transformerWithOptions.source.south.id : null,
           transformerWithOptions.source.type === 'south' && transformerWithOptions.source.group
             ? transformerWithOptions.source.group.id
@@ -403,7 +403,7 @@ export default class NorthConnectorRepository {
       case 'oibus-api':
         return {
           type: 'oibus-api',
-          dataSourceId: sourceCommand.source_api_data_source_id
+          dataSourceId: sourceCommand.source_api_data_source_id ?? undefined
         };
       case 'south':
         return {

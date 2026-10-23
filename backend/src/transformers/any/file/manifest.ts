@@ -1,7 +1,7 @@
-import { TransformerManifest } from '../../../shared/model/connector/transformer-manifest.model';
+import { TransformerManifest } from '../../../../shared/model/connector/transformer-manifest.model';
 
 const manifest: TransformerManifest = {
-  id: 'iso',
+  id: 'file',
   inputType: 'any',
   outputType: 'any',
   settings: {

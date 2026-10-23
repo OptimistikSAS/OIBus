@@ -333,7 +333,7 @@ describe('AuditRepository', () => {
     it('should use the function name of standard transformers referenced by north transformers', () => {
       database
         .prepare(
-          `INSERT INTO transformers (id, type, input_type, output_type, function_name) VALUES ('standardTransformerId', 'standard', 'record-list', 'any', 'iso');`
+          `INSERT INTO transformers (id, type, input_type, output_type, function_name) VALUES ('standardTransformerId', 'standard', 'any', 'any', 'file');`
         )
         .run();
       database
@@ -343,7 +343,7 @@ describe('AuditRepository', () => {
         .run(testData.north.list[0].id);
 
       assert.deepStrictEqual(repository.findEntityReference('north_transformer', 'standardNorthTransformerId'), {
-        name: 'iso',
+        name: 'file',
         parentId: testData.north.list[0].id
       });
       database.prepare(`DELETE FROM north_transformers WHERE id = 'standardNorthTransformerId';`).run();

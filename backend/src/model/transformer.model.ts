@@ -58,7 +58,8 @@ export interface SourceOriginOIAnalytics extends BaseSourceOrigin {
 
 export interface SourceOriginAPI extends BaseSourceOrigin {
   type: 'oibus-api';
-  dataSourceId: string;
+  /** Undefined for the transformer applying to every data source */
+  dataSourceId?: string;
 }
 
 export type TransformerSource = SourceOriginSouth | SourceOriginOIAnalytics | SourceOriginAPI;

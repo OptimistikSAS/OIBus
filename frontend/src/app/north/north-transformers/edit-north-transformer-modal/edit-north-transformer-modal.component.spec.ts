@@ -51,7 +51,7 @@ const recordListToMqtt: StandardTransformerDTO = {
 const anyToMqtt: StandardTransformerDTO = {
   ...recordListToMqtt,
   id: 'any-to-mqtt',
-  functionName: 'ignore',
+  functionName: 'csv-to-mqtt',
   inputType: 'any',
   manifest: { ...recordListToMqtt.manifest, attributes: [] }
 };
@@ -206,7 +206,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.apiDataSource.fill('my-source');
     // only the transformers accepting any content are proposed
     await expect.element(tester.output.getByRole('option')).toHaveLength(2);
-    await tester.output.selectOptions('Ignore');
+    await tester.output.selectOptions('MQTT payloads (from CSV)');
     await expect.element(tester.testPanel).toBeInTheDocument();
     await tester.saveButton.click();
 
@@ -218,17 +218,39 @@ describe('EditNorthTransformerModalComponent', () => {
     });
   });
 
+  test('should create a transformer applying to every OIBus API data source', async () => {
+    const tester = new EditNorthTransformerModalComponentTester();
+    tester.prepareForCreation();
+
+    await tester.source.selectOptions('OIBus API data source');
+    await expect.element(tester.apiDataSource).toHaveAttribute('placeholder', 'All data sources');
+    await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.saveButton.click();
+
+    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ source: { type: 'oibus-api', dataSourceId: undefined } }));
+  });
+
+  test('should edit a transformer applying to every OIBus API data source', async () => {
+    const tester = new EditNorthTransformerModalComponentTester();
+    tester.prepareForEdition({ id: 'northTransformerId1', transformer: anyToMqtt, options: {}, source: { type: 'oibus-api' } });
+
+    await expect.element(tester.apiDataSource).toHaveValue('');
+    await tester.saveButton.click();
+
+    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ source: { type: 'oibus-api', dataSourceId: undefined } }));
+  });
+
   test('should create a transformer with an OIAnalytics setpoint source and options', async () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForCreation();
 
     await tester.source.selectOptions('OIAnalytics setpoints');
-    await expect.element(tester.output.getByRole('option')).toHaveLength(3);
-    await tester.output.selectOptions('Ignore');
+    await expect.element(tester.output.getByRole('option')).toHaveLength(2);
+    await tester.output.selectOptions('MQTT payloads');
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(
-      expect.objectContaining({ source: { type: 'oianalytics-setpoint' }, transformer: anyToMqtt })
+      expect.objectContaining({ source: { type: 'oianalytics-setpoint' }, transformer: setpointToMqtt })
     );
   });
 
@@ -257,7 +279,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
     await tester.source.selectOptions('South 1 (Folder scanner)');
     await expect.element(tester.allItems).toBeChecked();
-    await tester.output.selectOptions('Ignore');
+    await tester.output.selectOptions('MQTT payloads (from CSV)');
     await tester.saveButton.click();
 
     expect(southConnectorService.getGroups).toHaveBeenCalledWith('southId1');
@@ -273,7 +295,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.source.selectOptions('South 1 (Folder scanner)');
     await tester.byGroup.click();
     await tester.group.selectOptions('Group 1');
-    await tester.output.selectOptions('Ignore');
+    await tester.output.selectOptions('MQTT payloads (from CSV)');
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(
@@ -296,7 +318,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await expect.element(tester.pills).toHaveLength(2);
     await tester.pills.nth(1).getByRole('button').click();
     await expect.element(tester.pills).toHaveLength(1);
-    await tester.output.selectOptions('Ignore');
+    await tester.output.selectOptions('MQTT payloads (from CSV)');
     await tester.saveButton.click();
 
     expect(southConnectorService.searchItems).toHaveBeenCalledWith('southId1', { name: '', page: 0 });
@@ -395,7 +417,7 @@ describe('EditNorthTransformerModalComponent', () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForCreation();
     await tester.source.selectOptions('OIAnalytics setpoints');
-    await tester.output.selectOptions('Ignore');
+    await tester.output.selectOptions('MQTT payloads');
 
     await tester.source.selectOptions('OIBus API data source');
 

@@ -14,13 +14,12 @@ import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-tr
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
 import CSVToRecordListTransformer from '../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
 import csvToRecordListManifest from '../transformers/any/csv-to-record-list/manifest';
+import fileManifest from '../transformers/any/file/manifest';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
-import ignoreManifest from '../transformers/ignore-transformer/manifest';
 // Import transformer manifests
-import isoManifest from '../transformers/iso-transformer/manifest';
 import recordListToJsonManifest from '../transformers/record-list/record-list-to-json/manifest';
 // Import concrete transformer classes for instanceof checks
 import RecordListToJSONTransformer from '../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
@@ -32,6 +31,7 @@ import recordListToOianalyticsManifest from '../transformers/record-list/record-
 import RecordListToOIAnalyticsTransformer from '../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
 import recordListToOpcuaManifest from '../transformers/record-list/record-list-to-opcua/manifest';
 import RecordListToOPCUATransformer from '../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
+import setpointToJsonManifest from '../transformers/setpoint/oibus-setpoint-to-json/manifest';
 import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
 import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
@@ -592,24 +592,34 @@ describe('Transformer Service', () => {
       assert.strictEqual(result.content, JSON.stringify(content.content));
     });
 
-    it('returns the content unchanged for the iso transformer', async () => {
+    it('runs the file transformer, writing a payload as a file', async () => {
       transformerRepository.findById.mock.mockImplementation(
-        () => ({ id: 'iso', type: 'standard', inputType: 'any', outputType: 'any', functionName: 'iso' }) as StandardTransformer
+        () => ({ id: 'file', type: 'standard', inputType: 'any', outputType: 'any', functionName: 'file' }) as StandardTransformer
       );
-      const content = { type: 'any-content' as const, content: '{"a":1}' };
 
-      assert.strictEqual(await service.runTransformer('iso', {}, content), content);
+      const result = await service.runTransformer('file', {}, { type: 'any-content', content: '{"a":1}' });
+
+      assert.strictEqual(result.type, 'any');
+      assert.strictEqual(result.content, '{"a":1}');
     });
 
-    it('returns empty content for the ignore transformer', async () => {
+    it('runs the setpoint-to-json transformer', async () => {
       transformerRepository.findById.mock.mockImplementation(
-        () => ({ id: 'ignore', type: 'standard', inputType: 'any', outputType: 'any', functionName: 'ignore' }) as StandardTransformer
+        () =>
+          ({
+            id: 'setpoints',
+            type: 'standard',
+            inputType: 'setpoint',
+            outputType: 'any',
+            functionName: 'setpoint-to-json'
+          }) as StandardTransformer
       );
+      const setpoints = [{ reference: 'temperature', value: 22 }];
 
-      assert.deepStrictEqual(await service.runTransformer('ignore', {}, { type: 'any-content', content: '{"a":1}' }), {
-        type: 'any-content',
-        content: ''
-      });
+      const result = await service.runTransformer('setpoints', {}, { type: 'setpoint', content: setpoints });
+
+      assert.strictEqual(result.type, 'any');
+      assert.deepStrictEqual(JSON.parse(result.content as string), setpoints);
     });
 
     it('throws a NotFoundError when the transformer to run does not exist', async () => {
@@ -761,8 +771,8 @@ describe('Transformer Service', () => {
   });
 
   it('should retrieve a transformer manifest', () => {
-    const manifest = service.getManifest('iso');
-    assert.deepStrictEqual(manifest, isoManifest);
+    const manifest = service.getManifest('file');
+    assert.deepStrictEqual(manifest, fileManifest);
   });
 
   it('should throw an error if transformer manifest is not found', () => {
@@ -772,8 +782,7 @@ describe('Transformer Service', () => {
   it('should get standard manifest', () => {
     assert.deepStrictEqual(getStandardManifest('csv-to-mqtt'), csvToMqttManifest.settings);
     assert.deepStrictEqual(getStandardManifest('csv-to-record-list'), csvToRecordListManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('iso'), isoManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('ignore'), ignoreManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('file'), fileManifest.settings);
     assert.deepStrictEqual(getStandardManifest('json-to-csv'), jsonToCsvManifest.settings);
     assert.deepStrictEqual(getStandardManifest('json-to-oianalytics'), jsonToOianalyticsManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-json'), recordListToJsonManifest.settings);
@@ -781,6 +790,7 @@ describe('Transformer Service', () => {
     assert.deepStrictEqual(getStandardManifest('record-list-to-mqtt'), recordListToMqttManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-oianalytics'), recordListToOianalyticsManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-opcua'), recordListToOpcuaManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('setpoint-to-json'), setpointToJsonManifest.settings);
     assert.deepStrictEqual(getStandardManifest('setpoint-to-modbus'), setpointToModbusManifest.settings);
     assert.deepStrictEqual(getStandardManifest('setpoint-to-mqtt'), setpointToMqttManifest.settings);
     assert.deepStrictEqual(getStandardManifest('setpoint-to-opcua'), setpointToOpcuaManifest.settings);
@@ -829,7 +839,7 @@ describe('Transformer Service', () => {
       inputType: 'record-list',
       outputType: 'record-list',
       type: 'standard',
-      functionName: 'iso'
+      functionName: 'file'
     };
     assert.deepStrictEqual(toTransformerDTO(standardTransformer, getUserInfo), {
       id: standardTransformer.id,
@@ -837,7 +847,7 @@ describe('Transformer Service', () => {
       inputType: standardTransformer.inputType,
       outputType: standardTransformer.outputType,
       functionName: standardTransformer.functionName,
-      manifest: ignoreManifest.settings
+      manifest: fileManifest.settings
     });
   });
 });
