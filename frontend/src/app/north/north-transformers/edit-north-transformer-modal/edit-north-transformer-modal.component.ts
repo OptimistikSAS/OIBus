@@ -208,7 +208,8 @@ export class EditNorthTransformerModalComponent {
     this.form.patchValue(
       {
         source: sourceValue,
-        apiDataSourceId: transformerWithOptionsToEdit.source.type === 'oibus-api' ? transformerWithOptionsToEdit.source.dataSourceId : null,
+        apiDataSourceId:
+          transformerWithOptionsToEdit.source.type === 'oibus-api' ? (transformerWithOptionsToEdit.source.dataSourceId ?? null) : null,
         transformer: transformerWithOptionsToEdit.transformer,
         options: transformerWithOptionsToEdit.options
       },
@@ -321,7 +322,8 @@ export class EditNorthTransformerModalComponent {
             : []
       };
     } else if (sourceType === 'oibus-api') {
-      source = { type: 'oibus-api', dataSourceId: this.form.value.apiDataSourceId! };
+      // Without data source, the transformer applies to every data source
+      source = { type: 'oibus-api', dataSourceId: this.form.value.apiDataSourceId || undefined };
     } else {
       source = { type: 'oianalytics-setpoint' };
     }

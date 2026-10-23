@@ -349,12 +349,8 @@ describe('3.10.0 config upgrade', () => {
         ]
       );
       assert.deepStrictEqual((linksTo('opcua')[0].options as JsonObject).pointIdColumn, 'pointId');
-      assert.deepStrictEqual(
-        linksTo('modbus').map(link => link.transformerId),
-        ['ignore']
-      );
+      assert.deepStrictEqual(linksTo('modbus'), []);
       assert.deepStrictEqual(linksTo('mysql'), []);
-      assert.deepStrictEqual(((config.northConnectors as Array<JsonObject>)[1].settings as JsonObject).transformers, []);
       const [opcuaHistory, mysqlHistory] = (config.historyQueries as Array<JsonObject>).map(
         historyQuery => (historyQuery.settings as JsonObject).northTransformers as Array<JsonObject>
       );
@@ -371,17 +367,143 @@ describe('3.10.0 config upgrade', () => {
       assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
     });
 
-    it('leaves the links of an export made after the record-list refactor untouched', () => {
-      const config = buildConfig(['iso', 'ignore', 'record-list-to-csv']);
+    it('does not send the point-based souths of an export made after the record-list refactor to OIAnalytics', () => {
+      const upgraded = upgrade.apply(buildConfig(['iso', 'ignore', 'record-list-to-csv']));
 
-      const upgraded = upgrade.apply(structuredClone(config));
-
-      assert.deepStrictEqual(upgraded.transformers, config.transformers);
-      assert.deepStrictEqual(upgraded.northConnectors, config.northConnectors);
+      const functionNames = (upgraded.transformers as Array<JsonObject>).map(
+        transformer => (transformer.settings as JsonObject).functionName
+      );
+      // The passthroughs are for the other Norths, and for the OIBus API
+      assert.deepStrictEqual(functionNames, ['record-list-to-csv', 'file', 'record-list-to-json', 'setpoint-to-json']);
+      const links = ((upgraded.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
+      assert.deepStrictEqual(
+        links.map(link => link.source),
+        [{ type: 'oibus-api' }]
+      );
       assert.deepStrictEqual(
         (upgraded.historyQueries as Array<JsonObject>).map(historyQuery => (historyQuery.settings as JsonObject).northTransformers),
         [[], []]
       );
+    });
+  });
+
+  describe('iso and ignore transformers', () => {
+    const transformer = (id: string, functionName: string): JsonObject => ({
+      oIBusInternalId: id,
+      type: 'standard',
+      settings: { functionName, inputType: 'any', outputType: 'any' },
+      manifest: {}
+    });
+    const southLink = (id: string, transformerId: string, southId: string, items: Array<string> = [], groupId?: string) => ({
+      id,
+      transformerId,
+      options: { kept: true },
+      source: { type: 'south', southId, groupId, items: items.map(item => ({ id: item, name: item, enabled: true })) }
+    });
+    const item = (id: string, groupId: string | null = null) => ({ id, name: id, enabled: true, groupId, settings: {} });
+    const buildConfig = (): JsonObject => ({
+      transformers: [
+        transformer('iso', 'iso'),
+        transformer('ignore', 'ignore'),
+        transformer('csv', 'record-list-to-csv'),
+        transformer('json', 'record-list-to-json')
+      ],
+      southConnectors: [
+        { oIBusInternalId: 'opcua', type: 'opcua', settings: { items: [item('i1', 'g1'), item('i2', 'g1'), item('i3')] } },
+        { oIBusInternalId: 'folder', type: 'folder-scanner', settings: { items: [item('f1')] } },
+        { oIBusInternalId: 'mqtt', type: 'mqtt', settings: { items: [item('m1')] } }
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'console',
+          type: 'console',
+          settings: {
+            transformers: [
+              southLink('ignoreI2', 'ignore', 'opcua', ['i2']),
+              southLink('groupCsv', 'csv', 'opcua', [], 'g1'),
+              southLink('ignoreFolder', 'ignore', 'folder'),
+              { id: 'ignoreSetpoints', transformerId: 'ignore', options: {}, source: { type: 'oianalytics-setpoint' } }
+            ]
+          }
+        },
+        {
+          oIBusInternalId: 's3',
+          type: 'aws-s3',
+          settings: {
+            transformers: [
+              southLink('isoMqtt', 'iso', 'mqtt'),
+              southLink('isoOpcua', 'iso', 'opcua'),
+              southLink('orphan', 'iso', 'deleted'),
+              { id: 'isoApi', transformerId: 'iso', options: {}, source: { type: 'oibus-api', dataSourceId: 'ds1' } },
+              { id: 'ignoreApi', transformerId: 'ignore', options: {}, source: { type: 'oibus-api', dataSourceId: 'ds2' } }
+            ]
+          }
+        },
+        { oIBusInternalId: 'fileWriter', type: 'file-writer', settings: { transformers: [] } }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'opcua',
+            northType: 'console',
+            items: [item('h1'), item('h2')],
+            northTransformers: [{ id: 'ignoreH1', transformerId: 'ignore', options: {}, items: [item('h1')] }]
+          }
+        }
+      ]
+    });
+    const linksOf = (config: JsonObject, index: number) =>
+      (((config.northConnectors as Array<JsonObject>)[index].settings as JsonObject).transformers as Array<JsonObject>).map(link => ({
+        transformerId: link.transformerId,
+        options: link.options,
+        source: link.source
+      }));
+    const idOf = (config: JsonObject, functionName: string) =>
+      (config.transformers as Array<JsonObject>).find(candidate => (candidate.settings as JsonObject).functionName === functionName)
+        ?.oIBusInternalId;
+    const lightItems = (...ids: Array<string>) => ids.map(id => ({ id, name: id, enabled: true }));
+
+    it('replaces them by passthroughs routing the data as before', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const fileId = idOf(config, 'file');
+      const setpointToJsonId = idOf(config, 'setpoint-to-json');
+      assert.deepStrictEqual(
+        (config.transformers as Array<JsonObject>).map(candidate => (candidate.settings as JsonObject).functionName),
+        ['record-list-to-csv', 'record-list-to-json', 'file', 'setpoint-to-json']
+      );
+      assert.strictEqual(((config.transformers as Array<JsonObject>)[2].manifest as JsonObject).key, 'options');
+      assert.deepStrictEqual(linksOf(config, 0), [
+        {
+          transformerId: 'csv',
+          options: { kept: true, keepOtherFields: true },
+          source: { type: 'south', southId: 'opcua', items: lightItems('i1') }
+        },
+        { transformerId: 'json', options: {}, source: { type: 'south', southId: 'opcua', items: lightItems('i3') } },
+        { transformerId: fileId, options: {}, source: { type: 'oibus-api' } }
+      ]);
+      assert.deepStrictEqual(linksOf(config, 1), [
+        { transformerId: fileId, options: {}, source: { type: 'south', southId: 'mqtt', groupId: undefined, items: [] } },
+        { transformerId: fileId, options: {}, source: { type: 'oibus-api', dataSourceId: 'ds1' } },
+        { transformerId: fileId, options: {}, source: { type: 'south', southId: 'folder', items: [] } }
+      ]);
+      assert.deepStrictEqual(linksOf(config, 2), [
+        { transformerId: 'json', options: {}, source: { type: 'south', southId: 'opcua', items: [] } },
+        { transformerId: fileId, options: {}, source: { type: 'south', southId: 'folder', items: [] } },
+        { transformerId: fileId, options: {}, source: { type: 'oibus-api' } },
+        { transformerId: setpointToJsonId, options: {}, source: { type: 'oianalytics-setpoint' } }
+      ]);
+      const historyLinks = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
+      assert.deepStrictEqual(
+        historyLinks.map(link => [link.transformerId, link.options, link.items]),
+        [['json', {}, lightItems('h2')]]
+      );
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
     });
   });
 });

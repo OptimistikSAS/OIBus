@@ -11,16 +11,16 @@ import AuditService from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToRecordListTransformer from '../../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
+import FileTransformer from '../../transformers/any/file/file-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
-import IgnoreTransformer from '../../transformers/ignore-transformer';
-import IsoTransformer from '../../transformers/iso-transformer';
 import RecordListToCsvTransformer from '../../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
 import RecordListToJSONTransformer from '../../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
 import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
 import RecordListToMQTTTransformer from '../../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
 import RecordListToOIAnalyticsTransformer from '../../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
 import RecordListToOPCUATransformer from '../../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
+import OIBusSetpointToJSONTransformer from '../../transformers/setpoint/oibus-setpoint-to-json/oibus-setpoint-to-json-transformer';
 import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
@@ -192,8 +192,7 @@ export default class TransformerRepository {
     const standardTransformers: Array<Pick<StandardTransformer, 'functionName' | 'inputType' | 'outputType'>> = [
       { functionName: CSVToMQTTTransformer.transformerName, inputType: 'any', outputType: 'mqtt' },
       { functionName: CSVToRecordListTransformer.transformerName, inputType: 'any', outputType: 'record-list' },
-      { functionName: IgnoreTransformer.transformerName, inputType: 'any', outputType: 'any' },
-      { functionName: IsoTransformer.transformerName, inputType: 'any', outputType: 'any' },
+      { functionName: FileTransformer.transformerName, inputType: 'any', outputType: 'any' },
       { functionName: JSONToCSVTransformer.transformerName, inputType: 'any', outputType: 'any' },
       { functionName: JSONToOIAnalyticsTransformer.transformerName, inputType: 'any', outputType: 'oianalytics' },
       { functionName: RecordListToCsvTransformer.transformerName, inputType: 'record-list', outputType: 'any' },
@@ -202,6 +201,7 @@ export default class TransformerRepository {
       { functionName: RecordListToMQTTTransformer.transformerName, inputType: 'record-list', outputType: 'mqtt' },
       { functionName: RecordListToOIAnalyticsTransformer.transformerName, inputType: 'record-list', outputType: 'oianalytics' },
       { functionName: RecordListToOPCUATransformer.transformerName, inputType: 'record-list', outputType: 'opcua' },
+      { functionName: OIBusSetpointToJSONTransformer.transformerName, inputType: 'setpoint', outputType: 'any' },
       { functionName: OIBusSetpointToModbusTransformer.transformerName, inputType: 'setpoint', outputType: 'modbus' },
       { functionName: OIBusSetpointToMQTTTransformer.transformerName, inputType: 'setpoint', outputType: 'mqtt' },
       { functionName: OIBusSetpointToOPCUATransformer.transformerName, inputType: 'setpoint', outputType: 'opcua' }

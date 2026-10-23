@@ -32,18 +32,10 @@ export const getAssociatedInputType = (southType: OIBusSouthType): InputType => 
 
 /**
  * Whether a transformer can be applied to data of `dataType` (`null` when no source is selected yet) sent to a north
- * accepting `northTypes`. `iso` caches the data unchanged, so the north must accept the data type itself.
+ * accepting `northTypes`.
  */
-export const isTransformerApplicable = (transformer: TransformerDTO, dataType: InputType | null, northTypes: Array<string>): boolean => {
-  const isStandard = (functionName: string) => transformer.type === 'standard' && transformer.functionName === functionName;
-  if (dataType && isStandard('iso')) {
-    return northTypes.includes(dataType);
-  }
-  if (!northTypes.includes(transformer.outputType)) {
-    return false;
-  }
-  return !dataType || isStandard('ignore') || transformer.inputType === dataType;
-};
+export const isTransformerApplicable = (transformer: TransformerDTO, dataType: InputType | null, northTypes: Array<string>): boolean =>
+  northTypes.includes(transformer.outputType) && (!dataType || transformer.inputType === dataType);
 
 export const toSourceCommand = (source: TransformerSourceDTO): TransformerSourceCommandDTO => {
   switch (source.type) {

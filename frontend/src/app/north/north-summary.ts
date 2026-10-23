@@ -96,7 +96,9 @@ export function formatTransformerSource(transformer: TransformerDTOWithOptions, 
       return `${southLabel} [${translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
     }
   } else if (transformer.source.type === 'oibus-api') {
-    return `${translateService.instant('configuration.oibus.manifest.transformers.oibus-api-selected', { dataSourceId: transformer.source.dataSourceId })} `;
+    return transformer.source.dataSourceId
+      ? `${translateService.instant('configuration.oibus.manifest.transformers.oibus-api-selected', { dataSourceId: transformer.source.dataSourceId })} `
+      : `${translateService.instant('configuration.oibus.manifest.transformers.oibus-api-all-selected')} `;
   } else {
     return `${translateService.instant('configuration.oibus.manifest.transformers.oianalytics-setpoint-selected')}`;
   }
