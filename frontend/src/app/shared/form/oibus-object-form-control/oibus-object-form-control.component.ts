@@ -27,9 +27,11 @@ import { OIBusTimezoneFormControlComponent } from '../oibus-timezone-form-contro
 import { trackControl } from '../tracked-control';
 
 /** The simple attributes are laid out in rows of columns, the objects and arrays in rows of their own */
-type FormRow =
-  | { wrapInRow: true; columns: Array<{ size: number; attribute: OIBusControlAttribute }> }
-  | { wrapInRow: false; attribute: OIBusObjectAttribute | OIBusArrayAttribute };
+interface FieldsRow {
+  wrapInRow: true;
+  columns: Array<{ size: number; attribute: OIBusControlAttribute }>;
+}
+type FormRow = FieldsRow | { wrapInRow: false; attribute: OIBusObjectAttribute | OIBusArrayAttribute };
 
 /**
  * Provides the group of the object, bound by the `formGroupName` around the component, as the parent of the `formGroupName`
@@ -99,7 +101,10 @@ export class OIBusObjectFormControlComponent {
   });
 
   readonly formRows = computed(() => {
+    // The fields are laid out by their row number; an object or an array takes the next row of its own
     const rows: Array<FormRow> = [];
+    // The fields of a row an object or an array already took, shown right after it rather than left out
+    const displacedRows = new Map<number, FieldsRow>();
     this.objectAttribute().attributes.forEach(attribute => {
       switch (attribute.type) {
         case 'object':
@@ -116,16 +121,19 @@ export class OIBusObjectFormControlComponent {
         case 'scan-mode':
         case 'certificate':
         case 'timezone': {
-          const row = (rows[attribute.displayProperties.row] ??= { wrapInRow: true, columns: [] });
-          // A row already taken by an object or an array is not shared
-          if (row.wrapInRow) {
-            row.columns.push({ size: attribute.displayProperties.columns, attribute });
+          const rowNumber = attribute.displayProperties.row;
+          let row = (rows[rowNumber] ??= { wrapInRow: true, columns: [] });
+          if (!row.wrapInRow) {
+            row = displacedRows.get(rowNumber) ?? { wrapInRow: true, columns: [] };
+            displacedRows.set(rowNumber, row);
           }
+          row.columns.push({ size: attribute.displayProperties.columns, attribute });
           break;
         }
       }
     });
-    return rows;
+    // flatMap leaves out the row numbers no field uses
+    return rows.flatMap((row, rowNumber) => (displacedRows.has(rowNumber) ? [row, displacedRows.get(rowNumber)!] : [row]));
   });
 
   constructor() {

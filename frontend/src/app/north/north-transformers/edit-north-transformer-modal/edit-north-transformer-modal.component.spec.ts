@@ -20,7 +20,7 @@ import { TransformerService } from '../../../services/transformer.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { toPage } from '../../../shared/utils/page.utils';
-import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal.component';
+import { EditNorthTransformerModalComponent, TransformerSourcePreset } from './edit-north-transformer-modal.component';
 
 const recordListToMqtt: StandardTransformerDTO = {
   id: 'record-list-to-mqtt',
@@ -445,11 +445,51 @@ describe('EditNorthTransformerModalComponent', () => {
       testData.certificates.list,
       [recordListToMqtt, anyToMqtt, setpointToMqtt],
       ['mqtt'],
-      testData.south.listLight[0]
+      { dataSourceType: 'south', south: testData.south.listLight[0] }
     );
 
     await expect.element(tester.source).toHaveDisplayValue(/South 1 \(Folder scanner\)/);
     await expect.element(tester.output).toHaveDisplayValue(/MQTT payloads \(from CSV\)/);
+    await expect.element(tester.allItems).toBeChecked();
+  });
+
+  test('should preselect the group or the items the transformer is created for', async () => {
+    const tester = new EditNorthTransformerModalComponentTester();
+    const prepare = (preset: Partial<TransformerSourcePreset>) =>
+      tester.component.prepareForCreation(
+        testData.south.listLight,
+        testData.scanMode.list,
+        testData.certificates.list,
+        [recordListToMqtt, anyToMqtt, setpointToMqtt],
+        ['mqtt'],
+        { dataSourceType: 'south', south: testData.south.listLight[0], ...preset }
+      );
+
+    prepare({ items: [toItemLight(items[1])] });
+    await expect.element(tester.specificItems).toBeChecked();
+    await expect.element(tester.pills).toHaveLength(1);
+    await tester.saveButton.click();
+    expect(activeModal.close).toHaveBeenCalledWith(
+      expect.objectContaining({ source: expect.objectContaining({ items: [toItemLight(items[1])], excludedItems: [] }) })
+    );
+
+    prepare({ group: { id: 'groupId1', name: 'Group 1' } });
+    await expect.element(tester.byGroup).toBeChecked();
+    await expect.element(tester.group).toHaveDisplayValue('Group 1');
+  });
+
+  test('should preselect the OIBus API source', async () => {
+    const tester = new EditNorthTransformerModalComponentTester();
+    tester.component.prepareForCreation(
+      testData.south.listLight,
+      testData.scanMode.list,
+      testData.certificates.list,
+      [recordListToMqtt, anyToMqtt, setpointToMqtt],
+      ['mqtt'],
+      { dataSourceType: 'oibus-api' }
+    );
+
+    await expect.element(tester.apiDataSource).toBeVisible();
   });
 
   test('should leave some items out of a transformer applying to all the items of a south connector', async () => {

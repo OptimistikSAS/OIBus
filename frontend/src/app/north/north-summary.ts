@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 
+import { FormUtils } from '../shared/form/form-utils';
 import { SettingSummary } from '../shared/form/oibus-settings-summary/settings-summary';
 
 /** The caching settings as edited in the north connector and history query forms */
@@ -78,6 +79,22 @@ export function transformerName(transformer: TransformerDTO, translateService: T
   return transformer.type === 'standard'
     ? translateService.instant('configuration.oibus.manifest.transformers.standard.' + transformer.functionName)
     : transformer.name;
+}
+
+/**
+ * The options of a north transformer shown beside its name in the transformer lists: the ones its manifest displays in view
+ * mode (e.g. the time precision of the OIAnalytics payloads), as "label: value"
+ */
+export function transformerOptionsSummary(transformer: TransformerDTOWithOptions, translateService: TranslateService): string {
+  return FormUtils.buildColumn(transformer.transformer.manifest.attributes, [])
+    .map(column => {
+      const value = FormUtils.formatValue(transformer.options, column.path, column.type, column.translationKey, translateService, []);
+      if (value === '' || value === null || value === undefined) return null;
+      const label = translateService.instant(column.type === 'string-select' ? `${column.translationKey}.title` : column.translationKey);
+      return `${label}: ${value}`;
+    })
+    .filter(option => option !== null)
+    .join(', ');
 }
 
 /** Where the data of a north transformer comes from, as shown in the transformer lists */

@@ -11,11 +11,35 @@ also the mechanism for **filtering** which data a North connector receives — s
 
 Transformers are configured **on the North connector**, in the **Transformers** section of its settings page.
 
+## The sources of a North connector {#the-sources-of-a-north-connector}
+
+The Transformers section lists every source of data — each South connector, the OIBus API and the OIAnalytics
+setpoints — with the transformer its data goes through, in a green tag when all its data is sent; in a green outlined
+tag (**Partly sent**) when only some of its items, or some OIBus API data sources, are; in a grey tag (**Dropped**) when
+none is. A South connector whose items all have a transformer, through their group or their own one, is **Sent**. A source no standard
+transformer can send to this North connector is dropped too: a custom transformer can still send it. Filter the list by what
+reaches the North connector, by the status or the type of the South connectors, or search a source by name.
+
+- **Add a transformer to a source** from its line: the button named after a transformer adds it in one click (the
+  obvious transformer for its data, when its default options are valid), and **Other…** opens the configuration modal
+  for that source.
+- **Expand a South connector** to see its groups, then their items, each with the transformer its data goes through:
+  its own one, the one of its group (**from its group**), the one of all the items (**from all items**), or
+  **Dropped**. From there:
+  - **Add** a transformer to a group, or to an item without one;
+  - **Override** the transformer an item inherits: when the transformer and options chosen are those of another item,
+    the item is added to that transformer rather than getting its own copy;
+  - **Exclude** an item from the transformer it inherits (see **Except some items** below);
+  - remove an item from its own transformer (deleting the transformer when it was its last item).
+
+A transformer that is never used, another one before it in the list applying to the same data, is struck through.
+
 ---
 
 ## Configuring a Transformer {#configuring-a-transformer}
 
-Click **Add** in the Transformers section to open the configuration modal. Three fields guide the setup.
+Click **Add a transformer** in the Transformers section (or a button of a source) to open the configuration modal.
+Three fields guide the setup.
 
 ### 1 — Source {#1--source}
 
@@ -59,10 +83,6 @@ The first configured transformer that matches, in that order, is used; ties with
 the transformer's position in the list. A transformer leaving an item out (**Except some items**) is skipped for that
 item, which falls back to the next level.
 
-Click **View routing** in the Transformers section to check the result: for each item of a South connector, grouped
-by item group, it shows the transformer its data goes through and whether it applies to the item itself, to its group
-or to all the items — or that the data of the item is dropped.
-
 ### 3 — Transformer {#3--transformer}
 
 Once a source is selected, the list is automatically filtered to show only compatible transformers, and the obvious
@@ -72,7 +92,7 @@ passthrough of the data (**JSON**). The available choices depend on the type of 
 
 | South connector type                                                                                                                                 | Compatible standard transformers                                                                     |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values           |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                           |
 | **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
 | **OIBus API**                                                                                                                                        | File (as is), Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
 | **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                                                     |
@@ -80,10 +100,8 @@ passthrough of the data (**JSON**). The available choices depend on the type of 
 Custom transformers are also shown in this list and are always named by the user.
 
 :::info Data without transformer
-A North connector ignores the data no transformer is configured for. The Transformers section warns about the South
-connectors whose data is dropped this way, all of it or that of some items: **Add a transformer** opens the
-configuration modal for that South connector, and **View routing** shows which items are dropped, with a button to send
-them too.
+A North connector ignores the data no transformer is configured for: such sources (and items) are shown as **Dropped**
+in the Transformers section (see [The sources of a North connector](#the-sources-of-a-north-connector)).
 :::
 
 After choosing a transformer, its settings form appears directly in the modal.
@@ -96,7 +114,7 @@ Standard transformers are built-in and require only configuration — no coding.
 
 :::info Record lists sent to OIAnalytics
 The OIAnalytics North only accepts files and OIAnalytics values: record lists are sent through the
-[OIAnalytics (select time precision)](#oianalytics-select-time-precision) transformer. When upgrading to 3.10, this
+[OIAnalytics payload](#oianalytics-payload) transformer. When upgrading to 3.10, this
 transformer is added to every OIAnalytics North for the point-based South connectors (OPC UA, OPC Classic, Modbus,
 ADS, S7, BACnet, OSIsoft PI) and history queries, whose values it used to receive without transformer.
 :::
@@ -315,7 +333,7 @@ Mapping: `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 
 ---
 
-#### OIAnalytics (select time precision) {#oianalytics-select-time-precision}
+#### OIAnalytics payload {#oianalytics-payload}
 
 Prepares records for the OIAnalytics North connector, which needs it to receive record lists. Only the point ID, the
 timestamp and the value of each record are forwarded — extra fields such as the quality are stripped — and the
@@ -609,7 +627,7 @@ one row per nested match, so a single message holding several readings splits in
 
 Extracts point ID, value, and timestamp from an arbitrary JSON structure via JSONPath expressions and produces
 values in the OIAnalytics compact format (`timestamps`, `values` and `references` parallel arrays) — the same
-output as the [OIAnalytics (select time precision)](#oianalytics-select-time-precision) transformer. A **row iterator
+output as the [OIAnalytics payload](#oianalytics-payload) transformer. A **row iterator
 path** identifies which part of the payload becomes one row (one value) per match; the point ID, value, and
 timestamp paths are then resolved relative to that row.
 
