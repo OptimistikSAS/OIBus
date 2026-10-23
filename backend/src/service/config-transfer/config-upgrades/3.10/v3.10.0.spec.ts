@@ -69,6 +69,10 @@ describe('3.10.0 config upgrade', () => {
     const config = fixtureConfig('3.9.3');
     config.southConnectors = (config.southConnectors as Array<JsonObject>).filter(south => south.type !== 'mssql');
     config.historyQueries = [];
+    // time-values-to-csv is replaced by record-list-to-csv
+    config.transformers = (config.transformers as Array<JsonObject>).filter(
+      transformer => (transformer.settings as JsonObject).functionName !== 'time-values-to-csv'
+    );
 
     upgrade.apply(config);
 
@@ -221,6 +225,77 @@ describe('3.10.0 config upgrade', () => {
         fieldName: 'timestamp',
         dateTimeInput: { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd', locale: 'en-US' }
       });
+    });
+  });
+
+  describe('time-values transformers', () => {
+    const standard = (id: string, functionName: string, inputType: string, outputType: string): JsonObject => ({
+      oIBusInternalId: id,
+      type: 'standard',
+      settings: { functionName, inputType, outputType },
+      manifest: {}
+    });
+    const buildConfig = (): JsonObject => ({
+      transformers: [
+        standard('csv', 'record-list-to-csv', 'record-list', 'any'),
+        standard('tvCsv', 'time-values-to-csv', 'time-values', 'any'),
+        standard('tvOia', 'time-values-to-oianalytics', 'time-values', 'oianalytics'),
+        { oIBusInternalId: 'custom', type: 'custom', settings: { name: 'custom', inputType: 'time-values', outputType: 'time-values' } }
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'northId',
+          type: 'file-writer',
+          settings: {
+            transformers: [
+              { id: 'l1', transformerId: 'csv', options: { filename: 'sql.csv' } },
+              { id: 'l2', transformerId: 'tvCsv', options: { pointIdColumnTitle: 'Ref' } },
+              { id: 'l3', transformerId: 'tvOia', options: { precision: 's' } }
+            ]
+          }
+        }
+      ],
+      historyQueries: [
+        { settings: { southType: 'opcua', items: [], northTransformers: [{ id: 'h1', transformerId: 'tvOia', options: null }] } }
+      ]
+    });
+
+    it('replaces them by their record-list counterparts and converts the links', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const transformers = config.transformers as Array<JsonObject>;
+      assert.deepStrictEqual(
+        transformers.map(transformer => [transformer.oIBusInternalId, (transformer.settings as JsonObject).functionName ?? null]),
+        [
+          ['csv', 'record-list-to-csv'],
+          ['tvOia', 'record-list-to-oianalytics'],
+          ['custom', null]
+        ]
+      );
+      assert.deepStrictEqual(transformers[1].settings, {
+        functionName: 'record-list-to-oianalytics',
+        inputType: 'record-list',
+        outputType: 'oianalytics'
+      });
+      assert.strictEqual((transformers[1].manifest as JsonObject).key, 'options');
+      assert.deepStrictEqual(transformers[2].settings, { name: 'custom', inputType: 'record-list', outputType: 'record-list' });
+
+      const [l1, l2, l3] = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
+      assert.deepStrictEqual(l1.options, { filename: 'sql.csv', keepOtherFields: true });
+      assert.strictEqual(l2.transformerId, 'csv');
+      assert.strictEqual((l2.options as JsonObject).keepOtherFields, false);
+      assert.strictEqual(((l2.options as JsonObject).fields as Array<JsonObject>)[0].columnName, 'Ref');
+      assert.strictEqual(l3.transformerId, 'tvOia');
+      assert.strictEqual((l3.options as JsonObject).precision, 's');
+      assert.strictEqual((l3.options as JsonObject).pointIdColumn, 'pointId');
+      const [h1] = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
+      assert.strictEqual((h1.options as JsonObject).precision, 'ms');
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
     });
   });
 });

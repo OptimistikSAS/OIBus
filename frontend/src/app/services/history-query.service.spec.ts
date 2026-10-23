@@ -92,7 +92,7 @@ const cacheSearchResult: CacheSearchResult = {
         contentSize: 10,
         numberOfElement: 1,
         createdAt: testData.constants.dates.DATE_1,
-        contentType: 'time-values'
+        contentType: 'record-list'
       }
     }
   ],

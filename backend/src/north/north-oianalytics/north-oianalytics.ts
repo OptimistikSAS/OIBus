@@ -12,7 +12,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import type CacheService from '../../service/cache/cache.service';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
-import { TimeValueLike, toCompactTimeValues } from '../../service/oia/compact-time-values';
+import { PointValueLike, toCompactTimeValues } from '../../service/oia/compact-time-values';
 import { getErrorMessage, streamToString } from '../../service/utils';
 import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 import NorthConnector from '../north-connector';
@@ -99,7 +99,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'time-values', 'oianalytics'];
+    return ['any', 'record-list', 'oianalytics'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -120,7 +120,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       case 'any':
         return this.handleFile(fileStream, cacheMetadata);
 
-      case 'time-values':
+      case 'record-list':
       case 'oianalytics':
         return this.handleValues(fileStream, cacheMetadata);
 
@@ -133,10 +133,14 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Send time values to OIAnalytics in the compact format `{ timestamps, values, references }`.
    * - `oianalytics` content is already in the compact format (produced by the OIAnalytics transformers) and is streamed
    *   as is. Content still in the legacy array format (e.g. from a custom transformer) is converted on the fly.
-   * - `time-values` content is an array of OIBus time values that is converted into the compact format.
+   * - `record-list` content is an array of point records (`{ pointId, timestamp, value }`) converted into the compact
+   *   format.
    */
   async handleValues(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     const body = await this.toCompactBody(fileStream, cacheMetadata);
+    if (!body) {
+      return;
+    }
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     const httpOptions = await buildHttpOptions(
       'POST',
@@ -175,13 +179,26 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     await response.body.dump();
   }
 
-  private async toCompactBody(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<Readable> {
+  /**
+   * Returns null when there is no value to send.
+   */
+  private async toCompactBody(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<Readable | null> {
     if (cacheMetadata.contentType === 'oianalytics' && !isJsonArray(await peekFirstChunk(fileStream))) {
       // Already compact: stream the file without buffering it in memory
       return fileStream;
     }
-    const timeValues = JSON.parse(await streamToString(fileStream)) as Array<TimeValueLike>;
-    return Readable.from([Buffer.from(JSON.stringify(toCompactTimeValues(timeValues)))]);
+    const values = JSON.parse(await streamToString(fileStream)) as Array<PointValueLike>;
+    // Records without point or timestamp (e.g. the rows of a SQL query sent without transformer) are not values
+    const pointValues = values
+      .filter(value => value.pointId !== null && value.pointId !== undefined && value.timestamp !== null && value.timestamp !== undefined)
+      .map(value => ({ ...value, pointId: String(value.pointId) }));
+    if (pointValues.length < values.length) {
+      this.logger.warn(`${values.length - pointValues.length} record(s) without "pointId" or "timestamp" not sent`);
+    }
+    if (pointValues.length === 0) {
+      return null;
+    }
+    return Readable.from([Buffer.from(JSON.stringify(toCompactTimeValues(pointValues)))]);
   }
 
   async handleFile(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

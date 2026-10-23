@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { Aggregate, Instant, Resampling } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
@@ -9,7 +9,7 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
-import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { getErrorMessage, NestedPointValue, toPointRecord, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
 
@@ -118,7 +118,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     item: SouthConnectorItemEntity<SouthOPCItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
-    const content: OIBusContent = { type: 'time-values', content: [] };
+    const content: OIBusContent = { type: 'record-list', content: [] };
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
 
@@ -145,14 +145,14 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     if (response.statusCode === 200) {
       const result: {
         recordCount: number;
-        content: Array<OIBusTimeValue>;
+        content: Array<NestedPointValue>;
         maxInstantRetrieved: Instant;
       } = (await response.body.json()) as {
         recordCount: number;
-        content: Array<OIBusTimeValue>;
+        content: Array<NestedPointValue>;
         maxInstantRetrieved: string;
       };
-      content.content = result.content;
+      content.content = result.content.map(toPointRecord);
     } else {
       throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
     }
@@ -178,7 +178,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     let updatedStartTime: Instant | null = null;
     let result: {
       recordCount: number;
-      content: Array<OIBusTimeValue>;
+      content: Array<NestedPointValue>;
       maxInstantRetrieved: Instant;
     } | null = null;
     try {
@@ -256,7 +256,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
           if (response.statusCode === 200) {
             result = (await response.body.json()) as {
               recordCount: number;
-              content: Array<OIBusTimeValue>;
+              content: Array<NestedPointValue>;
               maxInstantRetrieved: string;
             };
             const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
@@ -272,8 +272,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
               // sub-batch, not per value) before the existing addContent call. Only items that are
               // actually cached this cycle are passed to saveItemsLastValues below, so "last cached"
               // is anchored correctly rather than reset on every raw reading.
-              const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthOPCItemSettings>; value: OIBusTimeValue }> = [];
-              for (const value of result.content) {
+              const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthOPCItemSettings>; value: OIBusPointRecord }> = [];
+              for (const value of result.content.map(toPointRecord)) {
                 const item = itemByName.get(value.pointId);
                 if (item) {
                   valuePairs.push({ item, value });
@@ -285,12 +285,12 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
               // response batch compare against each other correctly, not a stale pre-batch state.
               const cachedPairs = this.applyCachingStrategy(valuePairs, ({ item, value }) => ({
                 item,
-                value: value.data.value,
+                value: value.value,
                 timestamp: value.timestamp
               }));
 
               await this.addContent(
-                { type: 'time-values', content: cachedPairs.map(({ value }) => value) },
+                { type: 'record-list', content: cachedPairs.map(({ value }) => value) },
                 startRequest.toUTC().toISO(),
                 cachedPairs.map(({ item }) => item)
               );

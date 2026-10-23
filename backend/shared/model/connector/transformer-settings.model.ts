@@ -58,16 +58,16 @@ export type TransformerCsvToMqttSettingsDelimiter = (typeof TRANSFORMER_CSV_TO_M
 export const TRANSFORMER_CSV_TO_MQTT_SETTINGS_PAYLOAD_TYPES = ['string', 'number', 'boolean', 'datetime', 'object'] as const;
 export type TransformerCsvToMqttSettingsPayloadType = (typeof TRANSFORMER_CSV_TO_MQTT_SETTINGS_PAYLOAD_TYPES)[number];
 
-export const TRANSFORMER_CSV_TO_TIME_VALUES_SETTINGS_TIMESTAMP_SETTINGS_TYPES = [
+export const TRANSFORMER_CSV_TO_RECORD_LIST_SETTINGS_TIMESTAMP_SETTINGS_TYPES = [
   'iso-string',
   'unix-epoch',
   'unix-epoch-ms',
   'string'
 ] as const;
-export type TransformerCsvToTimeValuesSettingsTimestampSettingsType =
-  (typeof TRANSFORMER_CSV_TO_TIME_VALUES_SETTINGS_TIMESTAMP_SETTINGS_TYPES)[number];
+export type TransformerCsvToRecordListSettingsTimestampSettingsType =
+  (typeof TRANSFORMER_CSV_TO_RECORD_LIST_SETTINGS_TIMESTAMP_SETTINGS_TYPES)[number];
 
-export const TRANSFORMER_CSV_TO_TIME_VALUES_SETTINGS_DELIMITERS = [
+export const TRANSFORMER_CSV_TO_RECORD_LIST_SETTINGS_DELIMITERS = [
   'DOT',
   'SEMI_COLON',
   'COLON',
@@ -77,7 +77,7 @@ export const TRANSFORMER_CSV_TO_TIME_VALUES_SETTINGS_DELIMITERS = [
   'TAB',
   'PIPE'
 ] as const;
-export type TransformerCsvToTimeValuesSettingsDelimiter = (typeof TRANSFORMER_CSV_TO_TIME_VALUES_SETTINGS_DELIMITERS)[number];
+export type TransformerCsvToRecordListSettingsDelimiter = (typeof TRANSFORMER_CSV_TO_RECORD_LIST_SETTINGS_DELIMITERS)[number];
 
 export const TRANSFORMER_JSON_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES = [
   'iso-string',
@@ -189,44 +189,26 @@ export type TransformerRecordListToCsvSettingsQuoteChar = (typeof TRANSFORMER_RE
 export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
 export type TransformerRecordListToCsvSettingsEscapeChar = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
 
+export const TRANSFORMER_RECORD_LIST_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
+export type TransformerRecordListToModbusSettingsMappingModbusType =
+  (typeof TRANSFORMER_RECORD_LIST_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_SETTINGS_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type TransformerRecordListToOianalyticsSettingsTimestampSettingsType =
+  (typeof TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_SETTINGS_TYPES)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_PRECISIONS = ['ms', 's', 'min', 'hr'] as const;
+export type TransformerRecordListToOianalyticsSettingsPrecision =
+  (typeof TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_PRECISIONS)[number];
+
 export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerSetpointToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
-
-export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
-export type TransformerTimeValuesToCsvSettingsEncoding = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_ENCODINGS)[number];
-
-export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type TransformerTimeValuesToCsvSettingsDelimiter = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_DELIMITERS)[number];
-
-export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
-export type TransformerTimeValuesToCsvSettingsNewline = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_NEWLINES)[number];
-
-export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
-export type TransformerTimeValuesToCsvSettingsQuoteChar = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_QUOTE_CHARS)[number];
-
-export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
-export type TransformerTimeValuesToCsvSettingsEscapeChar = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
-
-export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_TIMESTAMP_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
-export type TransformerTimeValuesToCsvSettingsTimestampType = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_TIMESTAMP_TYPES)[number];
-
-export const TRANSFORMER_TIME_VALUES_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
-export type TransformerTimeValuesToModbusSettingsMappingModbusType =
-  (typeof TRANSFORMER_TIME_VALUES_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
-
-export const TRANSFORMER_TIME_VALUES_TO_OIANALYTICS_SETTINGS_PRECISIONS = ['ms', 's', 'min', 'hr'] as const;
-export type TransformerTimeValuesToOianalyticsSettingsPrecision =
-  (typeof TRANSFORMER_TIME_VALUES_TO_OIANALYTICS_SETTINGS_PRECISIONS)[number];
 
 export interface TransformerCsvToMqttSettingsDatetimeSettings {
   inputType: TransformerCsvToMqttSettingsDatetimeSettingsInputType;
@@ -257,8 +239,8 @@ export interface TransformerCsvToMqttSettingsObjectFields {
   datetimeSettings?: TransformerCsvToMqttSettingsObjectFieldsDatetimeSettings | null;
 }
 
-export interface TransformerCsvToTimeValuesSettingsTimestampSettings {
-  type: TransformerCsvToTimeValuesSettingsTimestampSettingsType;
+export interface TransformerCsvToRecordListSettingsTimestampSettings {
+  type: TransformerCsvToRecordListSettingsTimestampSettingsType;
   timezone?: Timezone;
   format?: string;
   locale?: string;
@@ -310,6 +292,29 @@ export interface TransformerRecordListToCsvSettingsFields {
   datetimeSettings?: TransformerRecordListToCsvSettingsFieldsDatetimeSettings | null;
 }
 
+export interface TransformerRecordListToModbusSettingsMapping {
+  pointId: string;
+  address: string;
+  modbusType: TransformerRecordListToModbusSettingsMappingModbusType;
+}
+
+export interface TransformerRecordListToMqttSettingsMapping {
+  pointId: string;
+  topic: string;
+}
+
+export interface TransformerRecordListToOianalyticsSettingsTimestampSettings {
+  type: TransformerRecordListToOianalyticsSettingsTimestampSettingsType;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
+}
+
+export interface TransformerRecordListToOpcuaSettingsMapping {
+  pointId: string;
+  nodeId: string;
+}
+
 export interface TransformerSetpointToModbusSettingsMapping {
   reference: string;
   address: string;
@@ -326,22 +331,6 @@ export interface TransformerSetpointToOpcuaSettingsMapping {
   nodeId: string;
 }
 
-export interface TransformerTimeValuesToModbusSettingsMapping {
-  pointId: string;
-  address: string;
-  modbusType: TransformerTimeValuesToModbusSettingsMappingModbusType;
-}
-
-export interface TransformerTimeValuesToMqttSettingsMapping {
-  pointId: string;
-  topic: string;
-}
-
-export interface TransformerTimeValuesToOpcuaSettingsMapping {
-  pointId: string;
-  nodeId: string;
-}
-
 export interface TransformerCsvToMqttSettings {
   delimiter: TransformerCsvToMqttSettingsDelimiter;
   hasHeader: boolean;
@@ -352,13 +341,13 @@ export interface TransformerCsvToMqttSettings {
   objectFields?: Array<TransformerCsvToMqttSettingsObjectFields> | null;
 }
 
-export interface TransformerCsvToTimeValuesSettings {
-  delimiter: TransformerCsvToTimeValuesSettingsDelimiter;
+export interface TransformerCsvToRecordListSettings {
+  delimiter: TransformerCsvToRecordListSettingsDelimiter;
   hasHeader: boolean;
   pointIdColumn: string;
   timestampColumn: string;
   valueColumn: string;
-  timestampSettings: TransformerCsvToTimeValuesSettingsTimestampSettings;
+  timestampSettings: TransformerCsvToRecordListSettingsTimestampSettings;
 }
 
 export interface TransformerJsonToCsvSettings {
@@ -383,6 +372,10 @@ export interface TransformerJsonToOianalyticsSettings {
   datetimeSettings: TransformerJsonToOianalyticsSettingsDatetimeSettings | null;
 }
 
+export type TransformerIgnoreSettings = object;
+
+export type TransformerIsoSettings = object;
+
 export interface TransformerRecordListToCsvSettings {
   filename: string;
   encoding: TransformerRecordListToCsvSettingsEncoding;
@@ -393,12 +386,37 @@ export interface TransformerRecordListToCsvSettings {
   quoteChar: TransformerRecordListToCsvSettingsQuoteChar;
   escapeChar: TransformerRecordListToCsvSettingsEscapeChar;
   nullValue: string | null;
+  keepOtherFields: boolean;
   fields: Array<TransformerRecordListToCsvSettingsFields> | null;
 }
 
-export type TransformerIgnoreSettings = object;
+export type TransformerRecordListToJsonSettings = object;
 
-export type TransformerIsoSettings = object;
+export interface TransformerRecordListToModbusSettings {
+  pointIdColumn: string;
+  valueColumn: string;
+  mapping: Array<TransformerRecordListToModbusSettingsMapping>;
+}
+
+export interface TransformerRecordListToMqttSettings {
+  pointIdColumn: string;
+  mapping: Array<TransformerRecordListToMqttSettingsMapping>;
+}
+
+export interface TransformerRecordListToOianalyticsSettings {
+  pointIdColumn: string;
+  timestampColumn: string;
+  valueColumn: string;
+  timestampSettings: TransformerRecordListToOianalyticsSettingsTimestampSettings;
+  precision: TransformerRecordListToOianalyticsSettingsPrecision;
+  referenceProcess: string | null;
+}
+
+export interface TransformerRecordListToOpcuaSettings {
+  pointIdColumn: string;
+  valueColumn: string;
+  mapping: Array<TransformerRecordListToOpcuaSettingsMapping>;
+}
 
 export interface TransformerSetpointToModbusSettings {
   mapping: Array<TransformerSetpointToModbusSettingsMapping>;
@@ -412,56 +430,19 @@ export interface TransformerSetpointToOpcuaSettings {
   mapping: Array<TransformerSetpointToOpcuaSettingsMapping>;
 }
 
-export interface TransformerTimeValuesToCsvSettings {
-  filename: string;
-  encoding: TransformerTimeValuesToCsvSettingsEncoding;
-  header: boolean | null;
-  delimiter: TransformerTimeValuesToCsvSettingsDelimiter;
-  newline: TransformerTimeValuesToCsvSettingsNewline;
-  quoteChar: TransformerTimeValuesToCsvSettingsQuoteChar;
-  escapeChar: TransformerTimeValuesToCsvSettingsEscapeChar;
-  pointIdColumnTitle: string;
-  valueColumnTitle: string;
-  timestampColumnTitle: string;
-  timestampType: TransformerTimeValuesToCsvSettingsTimestampType;
-  timestampFormat?: string;
-  timezone?: Timezone;
-  pointIdProcess: string | null;
-}
-
-export type TransformerTimeValuesToJsonSettings = object;
-
-export interface TransformerTimeValuesToModbusSettings {
-  mapping: Array<TransformerTimeValuesToModbusSettingsMapping>;
-}
-
-export interface TransformerTimeValuesToMqttSettings {
-  mapping: Array<TransformerTimeValuesToMqttSettingsMapping>;
-}
-
-export interface TransformerTimeValuesToOianalyticsSettings {
-  precision: TransformerTimeValuesToOianalyticsSettingsPrecision;
-  referenceProcess: string | null;
-}
-
-export interface TransformerTimeValuesToOpcuaSettings {
-  mapping: Array<TransformerTimeValuesToOpcuaSettingsMapping>;
-}
-
 export type TransformerSettings =
   | TransformerCsvToMqttSettings
-  | TransformerCsvToTimeValuesSettings
+  | TransformerCsvToRecordListSettings
   | TransformerJsonToCsvSettings
   | TransformerJsonToOianalyticsSettings
-  | TransformerRecordListToCsvSettings
   | TransformerIgnoreSettings
   | TransformerIsoSettings
+  | TransformerRecordListToCsvSettings
+  | TransformerRecordListToJsonSettings
+  | TransformerRecordListToModbusSettings
+  | TransformerRecordListToMqttSettings
+  | TransformerRecordListToOianalyticsSettings
+  | TransformerRecordListToOpcuaSettings
   | TransformerSetpointToModbusSettings
   | TransformerSetpointToMqttSettings
-  | TransformerSetpointToOpcuaSettings
-  | TransformerTimeValuesToCsvSettings
-  | TransformerTimeValuesToJsonSettings
-  | TransformerTimeValuesToModbusSettings
-  | TransformerTimeValuesToMqttSettings
-  | TransformerTimeValuesToOianalyticsSettings
-  | TransformerTimeValuesToOpcuaSettings;
+  | TransformerSetpointToOpcuaSettings;

@@ -1467,7 +1467,7 @@ export default class OIAnalyticsCommandService {
 
   /**
    * Caps content size before it goes into a command result (the OIAnalytics command payload has its
-   * own size limits): first 1000 elements for time-values/setpoint, first 500 KB for arbitrary file
+   * own size limits): first 1000 elements for records/setpoints, first 500 KB for arbitrary file
    * content. Returns the (possibly truncated) content plus `truncated`/`totalSize` so the UI can tell
    * the user more was collected than shown.
    */
@@ -1475,7 +1475,7 @@ export default class OIAnalyticsCommandService {
     let truncated = false;
     let totalSize = 0;
     switch (result.type) {
-      case 'time-values':
+      case 'record-list':
       case 'setpoint':
         totalSize = result.content.length;
         if (result.content.length > 1000) {

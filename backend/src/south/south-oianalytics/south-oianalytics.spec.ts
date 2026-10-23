@@ -211,7 +211,7 @@ describe('SouthOIAnalytics', () => {
   describe('testItem', () => {
     it('should return the CSV content sent by the connector', async () => {
       const mockRawData = [{ raw: 'data' }];
-      const mockFormatted = [{ pointId: 'p1', timestamp: '2023-02-01T12:00:00.000Z', data: { value: 12, unit: '°C' } }];
+      const mockFormatted = [{ pointId: 'p1', timestamp: '2023-02-01T12:00:00.000Z', value: 12, unit: '°C' }];
 
       HTTPRequest.mock.mockImplementation(async () => {
         mock.timers.tick(25);
@@ -240,7 +240,7 @@ describe('SouthOIAnalytics', () => {
     it('should process items, persist results, and return max instant', async () => {
       const item = baseConfiguration.items[0];
       const mockRaw = [{ raw: 1 }];
-      const mockFormatted = [{ pointId: 'p1', timestamp: '2023-02-01T12:00:00.000Z', data: { value: 12, unit: '°C' } }];
+      const mockFormatted = [{ pointId: 'p1', timestamp: '2023-02-01T12:00:00.000Z', value: 12, unit: '°C' }];
       const maxInstant = '2023-02-01T12:00:00.000Z';
       utilsExports.formatInstant.mock.mockImplementation(() => '2023-02-01');
 

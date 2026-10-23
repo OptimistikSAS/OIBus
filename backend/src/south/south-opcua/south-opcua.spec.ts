@@ -14,7 +14,7 @@ import { StatusCodes } from 'node-opcua-status-code';
 import { HistoryReadRequest, MessageSecurityMode, UserTokenType } from 'node-opcua-types';
 import { DataType } from 'node-opcua-variant';
 
-import type { OIBusTimeValue } from '../../../shared/model/common/content.model';
+import type { OIBusPointRecord } from '../../../shared/model/common/content.model';
 import type { Instant } from '../../../shared/model/common/types';
 import type { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
 import { SouthConnectorExploreEntry } from '../../../shared/model/domain/south-connector.model';
@@ -152,10 +152,11 @@ const daNode = (item: SouthConnectorItemEntity<SouthOPCUAItemSettings>) => ({
   settings: item.settings
 });
 
-const goodTimeValue = (pointId: string, value: unknown): OIBusTimeValue => ({
+const goodTimeValue = (pointId: string, value: unknown): OIBusPointRecord => ({
   pointId,
   timestamp: testData.constants.dates.FAKE_NOW,
-  data: { value: value as string, quality: 'Good' }
+  value: value as string,
+  quality: 'Good'
 });
 
 /** What SouthCacheRepository.getItemsLastValues returns for items cached at DATE_1 with the given values. */
@@ -804,7 +805,8 @@ describe('SouthOPCUA', () => {
     assert.ok(historyRead.mock.calls.length >= 1);
     assert.deepStrictEqual(result, {
       value: {
-        data: { quality: 'Good', value: '123' },
+        quality: 'Good',
+        value: '123',
         pointId: 'item1',
         timestamp: testData.constants.dates.FAKE_NOW
       },
@@ -840,17 +842,19 @@ describe('SouthOPCUA', () => {
       {
         content: [
           {
-            data: { quality: 'Good', value: '123' },
+            quality: 'Good',
+            value: '123',
             pointId: 'item1',
             timestamp: testData.constants.dates.DATE_2
           },
           {
-            data: { quality: 'Good', value: '456' },
+            quality: 'Good',
+            value: '456',
             pointId: 'item1',
             timestamp: testData.constants.dates.DATE_1
           }
         ],
-        type: 'time-values'
+        type: 'record-list'
       },
       testData.constants.dates.FAKE_NOW,
       [configuration.items[0]]
@@ -966,7 +970,7 @@ describe('SouthOPCUA', () => {
   it('should query last point (only one)', async () => {
     const session = createMock<ClientSession>();
     south['session'] = session;
-    const getDAValues = mock.method(south, 'getDAValues', async () => testData.oibusContent[0].content as Array<OIBusTimeValue>);
+    const getDAValues = mock.method(south, 'getDAValues', async () => testData.oibusContent[0].content as Array<OIBusPointRecord>);
     const addContent = mock.method(south, 'addContent', async () => undefined);
     await south.directQuery([configuration.items[0], configuration.items[3]]);
     assert.deepStrictEqual(getDAValues.mock.calls[0].arguments, [
@@ -1059,7 +1063,8 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(read.mock.calls.length, 1);
     assert.deepStrictEqual(result, [
       {
-        data: { quality: 'Good', value: '123' },
+        quality: 'Good',
+        value: '123',
         pointId: 'item2',
         timestamp: testData.constants.dates.FAKE_NOW
       }
@@ -1259,10 +1264,10 @@ describe('SouthOPCUA', () => {
     await south.flushMessages();
     assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
       {
-        type: 'time-values',
+        type: 'record-list',
         content: [
-          { pointId: 'pointId', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 'value1', quality: 'quality1' } },
-          { pointId: 'pointId', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 'value2', quality: 'quality2' } }
+          { pointId: 'pointId', timestamp: testData.constants.dates.FAKE_NOW, value: 'value1', quality: 'quality1' },
+          { pointId: 'pointId', timestamp: testData.constants.dates.FAKE_NOW, value: 'value2', quality: 'quality2' }
         ]
       },
       testData.constants.dates.FAKE_NOW,
@@ -1885,7 +1890,7 @@ describe('SouthOPCUA', () => {
 
         await south.directQuery([item]);
 
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'time-values', content: [] });
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'record-list', content: [] });
         assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], []);
         assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments, ['southId', []]);
       });
@@ -1898,7 +1903,7 @@ describe('SouthOPCUA', () => {
 
         await south.directQuery([item]);
 
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'time-values', content: [goodTimeValue('daItem1', 42)] });
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'record-list', content: [goodTimeValue('daItem1', 42)] });
         assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [item]);
         assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments[1], [
           { itemId: 'daId1', value: 42, instant: testData.constants.dates.FAKE_NOW }
@@ -1922,7 +1927,7 @@ describe('SouthOPCUA', () => {
 
         await south.directQuery([overItem, underItem]);
 
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'time-values', content: [goodTimeValue('daItem1', 42)] });
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'record-list', content: [goodTimeValue('daItem1', 42)] });
         assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [overItem]);
       });
 
@@ -1935,7 +1940,7 @@ describe('SouthOPCUA', () => {
 
         await south.directQuery([item]);
 
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'time-values', content: [goodTimeValue('daItem1', 42)] });
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'record-list', content: [goodTimeValue('daItem1', 42)] });
       });
 
       it('should always cache the very first read for an item regardless of strategy', async () => {
@@ -1946,7 +1951,7 @@ describe('SouthOPCUA', () => {
 
         await south.directQuery([item]);
 
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'time-values', content: [goodTimeValue('daItem1', 42)] });
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'record-list', content: [goodTimeValue('daItem1', 42)] });
       });
 
       it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
@@ -1989,7 +1994,7 @@ describe('SouthOPCUA', () => {
         );
 
         assert.strictEqual(addContent.mock.calls.length, 1);
-        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'time-values', content: [] });
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'record-list', content: [] });
         assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], []);
         assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments, ['southId', []]);
       });

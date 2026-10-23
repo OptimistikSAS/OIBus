@@ -201,7 +201,7 @@ describe('SouthFolderScanner', () => {
       mock.method(fs, 'readdir', async () => ['file1.csv', 'file2.csv', 'other.txt']);
 
       const result = await south.testItem(configuration.items[0], { history: undefined });
-      assert.ok(result.result.type === 'time-values');
+      assert.ok(result.result.type === 'record-list');
       assert.strictEqual(result.result.content.length, 2);
       assert.strictEqual(typeof result.connectionDuration, 'number');
       assert.strictEqual(typeof result.queryDuration, 'number');
@@ -211,7 +211,7 @@ describe('SouthFolderScanner', () => {
       mock.method(fs, 'readdir', async () => ['other.txt', 'another.log']);
 
       const result = await south.testItem(configuration.items[0], { history: undefined });
-      assert.ok(result.result.type === 'time-values');
+      assert.ok(result.result.type === 'record-list');
       assert.strictEqual(result.result.content.length, 0);
     });
 

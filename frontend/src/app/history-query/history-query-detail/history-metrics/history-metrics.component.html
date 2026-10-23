@@ -99,9 +99,7 @@
           <div class="oib-summary-entry oib-summary-wide">
             <dt translate="history-query.monitoring.south.last-value"></dt>
             <dd>
-              {{ lastValue.pointId }}
-              <span class="oib-summary-note ms-1">{{ lastValue.timestamp | datetime: 'mediumWithSeconds' }}</span>
-              <pre class="oib-summary-code">{{ lastValue.data | json }}</pre>
+              <pre class="oib-summary-code">{{ lastValue | json }}</pre>
             </dd>
           </div>
         }

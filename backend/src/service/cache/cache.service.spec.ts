@@ -45,7 +45,7 @@ const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 3,
       createdAt: testData.constants.dates.DATE_1,
-      contentType: 'time-values'
+      contentType: 'record-list'
     }
   },
   {
@@ -55,7 +55,7 @@ const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 4,
       createdAt: testData.constants.dates.DATE_2,
-      contentType: 'time-values'
+      contentType: 'record-list'
     }
   },
   {
@@ -75,7 +75,7 @@ const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 6,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'time-values'
+      contentType: 'record-list'
     }
   },
   {
@@ -95,7 +95,7 @@ const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 9,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'time-values'
+      contentType: 'record-list'
     }
   }
 ];
@@ -288,7 +288,7 @@ describe('CacheService', () => {
   });
 
   it('should compact queue and return item if content type is not "any"', async () => {
-    const item = { filename: 'data.json', metadata: { contentType: 'time-values' } as CacheMetadata };
+    const item = { filename: 'data.json', metadata: { contentType: 'record-list' } as CacheMetadata };
     service['queue'] = [item];
 
     const waitCacheUpdateTasks = mock.fn(async () => undefined);
@@ -299,7 +299,7 @@ describe('CacheService', () => {
     const result = await service.getCacheContentToSend(maxGroupCount);
 
     assert.ok(waitCacheUpdateTasks.mock.calls.length > 0);
-    assert.deepStrictEqual(compactQueue.mock.calls[0].arguments, [maxGroupCount, 'time-values']);
+    assert.deepStrictEqual(compactQueue.mock.calls[0].arguments, [maxGroupCount, 'record-list']);
     assert.deepStrictEqual(result, item);
   });
 
@@ -697,7 +697,7 @@ describe('CacheService', () => {
     assert.strictEqual(service.getNumberOfRawFilesInQueue(), 0);
 
     // Add a 10-element batch → numberOfElement bumps, rawFiles stays put.
-    await service.addCacheContent(Buffer.from('payload-1'), { contentType: 'time-values', numberOfElement: 10 });
+    await service.addCacheContent(Buffer.from('payload-1'), { contentType: 'record-list', numberOfElement: 10 });
     assert.strictEqual(service.getNumberOfElementsInQueue(), 10);
     assert.strictEqual(service.getNumberOfRawFilesInQueue(), 0);
 
@@ -944,7 +944,7 @@ describe('CacheService', () => {
       service['updateCache$'] = { promise: compactPromise } as DeferredPromise;
 
       let isFinished = false;
-      const waitCall = service['compactQueue'](1, 'time-values').then(() => {
+      const waitCall = service['compactQueue'](1, 'record-list').then(() => {
         isFinished = true;
       });
 

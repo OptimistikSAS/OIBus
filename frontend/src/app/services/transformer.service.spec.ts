@@ -47,7 +47,7 @@ describe('TransformerService', () => {
     connectionDuration: 1,
     queryDuration: 2
   };
-  const inputTemplate: InputTemplate = { type: 'time-values', data: '[]', description: 'Sample' };
+  const inputTemplate: InputTemplate = { type: 'record-list', data: '[]', description: 'Sample' };
 
   test.each<HttpCase>([
     {
@@ -108,9 +108,9 @@ describe('TransformerService', () => {
     },
     {
       name: 'get an input template',
-      call: s => s.getInputTemplate('time-values'),
+      call: s => s.getInputTemplate('record-list'),
       method: 'GET',
-      url: '/api/transformers/template/time-values',
+      url: '/api/transformers/template/record-list',
       body: null,
       response: inputTemplate
     }

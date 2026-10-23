@@ -4,7 +4,7 @@ import { client } from 'jsmodbus';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { SouthItemSettings, SouthModbusItemSettings, SouthModbusSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
@@ -151,11 +151,11 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         `Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port} in ${connectionDuration} ms`
       );
       const queryStart = DateTime.now().toMillis();
-      const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(modbusClient, item);
+      const dataValues: Array<OIBusPointRecord> = await this.modbusFunction(modbusClient, item);
       const queryDuration = DateTime.now().toMillis() - queryStart;
       return {
         result: {
-          type: 'time-values',
+          type: 'record-list',
           content: dataValues
         },
         connectionDuration,
@@ -174,12 +174,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     }
   }
 
-  async directQuery(items: Array<SouthConnectorItemEntity<SouthModbusItemSettings>>): Promise<OIBusTimeValue | null> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthModbusItemSettings>>): Promise<OIBusPointRecord | null> {
     const logCtx = workUnitLogCtx(items);
-    // Values are collected paired with the item that produced them (rather than plain OIBusTimeValue,
+    // Values are collected paired with the item that produced them (rather than plain OIBusPointRecord,
     // which is only tagged with pointId=item.name) so caching-strategy filtering below can key off the
     // item's id even when several items share the same name.
-    const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }> = [];
+    const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusPointRecord }> = [];
     try {
       if (!this.modbusClient) {
         throw new Error('Could not read address: Modbus client not set');
@@ -230,12 +230,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
 
       const cachedPairs = this.applyCachingStrategy(valuePairs, ({ item, value }) => ({
         item,
-        value: value.data.value,
+        value: value.value,
         timestamp: value.timestamp
       }));
 
       await this.addContent(
-        { type: 'time-values', content: cachedPairs.map(({ value }) => value) },
+        { type: 'record-list', content: cachedPairs.map(({ value }) => value) },
         startRequest.toUTC().toISO(),
         cachedPairs.map(({ item }) => item)
       );
@@ -269,8 +269,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     timestamp: string,
     groupingGap: number,
     logCtx: Record<string, string>
-  ): Promise<Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }>> {
-    const results: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }> = [];
+  ): Promise<Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusPointRecord }>> {
+    const results: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusPointRecord }> = [];
     let i = 0;
     while (i < sortedItems.length) {
       // Find the end of a run where every gap between adjacent items is ≤ groupingGap
@@ -297,7 +297,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         for (const { item, address } of chunk) {
           results.push({
             item,
-            value: { pointId: item.name, timestamp, data: { value: values[address - chunk[0].address].toString() } }
+            value: { pointId: item.name, timestamp, value: values[address - chunk[0].address].toString() }
           });
         }
         c = chunkEnd;
@@ -320,8 +320,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     timestamp: string,
     groupingGap: number,
     logCtx: Record<string, string>
-  ): Promise<Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }>> {
-    const results: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }> = [];
+  ): Promise<Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusPointRecord }>> {
+    const results: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusPointRecord }> = [];
     let i = 0;
     while (i < sortedItems.length) {
       // Find the end of a run where every gap between adjacent items is ≤ groupingGap
@@ -369,17 +369,15 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
             value: {
               pointId: item.name,
               timestamp,
-              data: {
-                value: getValueFromBuffer(
-                  slice,
-                  item.settings.data!.multiplierCoefficient!,
-                  item.settings.data!.dataType!,
-                  this.connector.settings.swapWordsInDWords,
-                  this.connector.settings.swapBytesInWords,
-                  this.connector.settings.endianness,
-                  item.settings.data!.bitIndex
-                )
-              }
+              value: getValueFromBuffer(
+                slice,
+                item.settings.data!.multiplierCoefficient!,
+                item.settings.data!.dataType!,
+                this.connector.settings.swapWordsInDWords,
+                this.connector.settings.swapBytesInWords,
+                this.connector.settings.endianness,
+                item.settings.data!.bitIndex
+              )
             }
           });
         }
@@ -396,7 +394,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   async modbusFunction(
     modbusClient: ModbusTCPClient,
     item: SouthConnectorItemEntity<SouthModbusItemSettings>
-  ): Promise<Array<OIBusTimeValue>> {
+  ): Promise<Array<OIBusPointRecord>> {
     const offset = this.connector.settings.addressOffset === 'modbus' ? 0 : -1;
     const address =
       (item.settings.address.match(/^0x[0-9a-f]+$/i) ? parseInt(item.settings.address, 16) : parseInt(item.settings.address, 10)) + offset;
@@ -440,7 +438,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       {
         pointId: item.name,
         timestamp: DateTime.now().toUTC().toISO(),
-        data: { value }
+        value
       }
     ];
   }

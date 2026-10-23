@@ -46,7 +46,7 @@ describe('SouthConnectorMetricsRepository with populated database', () => {
     newMetrics.lastValueRetrieved = {
       pointId: 'my reference',
       timestamp: testData.constants.dates.DATE_3,
-      data: { value: 'my value' }
+      value: 'my value'
     };
     repository.updateMetrics(testData.south.list[0].id, newMetrics);
 

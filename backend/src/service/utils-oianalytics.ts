@@ -17,7 +17,7 @@ export function clearOIAnalyticsCredentialCache(): void {
 }
 import { DateTime } from 'luxon';
 
-import { OIBusTimeValue } from '../../shared/model/common/content.model';
+import { OIBusPointRecord } from '../../shared/model/common/content.model';
 
 import { Instant } from '../model/types';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -232,10 +232,10 @@ export const getUrl = (
 /**
  * Parse data from OIAnalytics time values API
  * check data from OIAnalytics API for result of
- * For now, only 'time-values' type is accepted
+ * For now, only 'record-list' type is accepted
  * Expected data are : [
  *   {
- *     type: 'time-values',
+ *     type: 'record-list',
  *     unit: { id: '2', label: '%' },
  *     data: {
  *       dataType: 'RAW_TIME_DATA',
@@ -247,7 +247,7 @@ export const getUrl = (
  *     values: [63.6414804414747,  87.2277880675425]
  *   },
  *   {
- *     type: 'time-values',
+ *     type: 'record-list',
  *     unit: { id: '180', label: 'pH' },
  *     data: {
  *       dataType: 'RAW_TIME_DATA',
@@ -262,8 +262,8 @@ export const getUrl = (
  * Return the formatted results flattened for easier access
  * (into csv files for example) and the latestDateRetrieved in ISO String format
  */
-export const parseData = (httpResult: Array<OIATimeValues>): { formattedResult: Array<OIBusTimeValue>; maxInstant: Instant } => {
-  const formattedData: Array<OIBusTimeValue> = [];
+export const parseData = (httpResult: Array<OIATimeValues>): { formattedResult: Array<OIBusPointRecord>; maxInstant: Instant } => {
+  const formattedData: Array<OIBusPointRecord> = [];
   let maxInstant = DateTime.fromMillis(0).toUTC().toISO()!;
   for (const element of httpResult) {
     element.values.forEach((currentValue: string | number, index: number) => {
@@ -272,7 +272,8 @@ export const parseData = (httpResult: Array<OIATimeValues>): { formattedResult: 
       formattedData.push({
         pointId: element.data!.reference,
         timestamp: resultInstant,
-        data: { value: currentValue, unit: element.unit!.label }
+        value: currentValue,
+        unit: element.unit!.label
       });
       if (resultInstant > maxInstant) {
         maxInstant = resultInstant;

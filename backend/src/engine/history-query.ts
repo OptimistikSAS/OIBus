@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 
-import { OIBusTimeValue } from '../../shared/model/common/content.model';
+import { OIBusRecord } from '../../shared/model/common/content.model';
 import { Interval } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
@@ -77,7 +77,7 @@ export interface HistoryMetricsEvents {
     numberOfItems: number;
     itemsStatus: Array<HistoryQueryItemStatus>;
   };
-  'south-add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
+  'south-add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusRecord | null };
   'south-add-file': { lastFileRetrieved: string };
 }
 
@@ -223,8 +223,10 @@ export default class HistoryQuery {
         });
       }
     );
-    this.south.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null }) => {
-      this.updateRunningItemStatus(data.numberOfValuesRetrieved, data.lastValueRetrieved?.timestamp ?? null);
+    this.south.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusRecord | null }) => {
+      // The last record of a point-based source carries its instant
+      const lastTimestamp = data.lastValueRetrieved?.timestamp;
+      this.updateRunningItemStatus(data.numberOfValuesRetrieved, typeof lastTimestamp === 'string' ? lastTimestamp : null);
       this.metricsEvent.emit('south-add-values', data);
     });
     this.south.metricsEvent.on('add-file', (data: { lastFileRetrieved: string }) => {

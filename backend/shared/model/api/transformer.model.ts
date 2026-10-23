@@ -351,7 +351,7 @@ export interface CustomTransformerCommandDTO {
 
   /**
    * The input data type that the transformer accepts.
-   * @example "time-values"
+   * @example "record-list"
    */
   inputType: InputType;
 
@@ -404,7 +404,7 @@ export interface TransformerTestRequest {
   /**
    * The raw input data string to pass to the transformer.
    * The expected format depends on the transformer's `inputType`
-   * (e.g. a JSON-serialised array of time-values, or a raw file path for `any`).
+   * (e.g. a JSON-serialised array of records, or a raw file path for `any`).
    * @example "[{\"timestamp\":\"2024-01-01T00:00:00.000Z\",\"pointId\":\"sensor1\",\"value\":\"42.0\"}]"
    */
   inputData: string;
