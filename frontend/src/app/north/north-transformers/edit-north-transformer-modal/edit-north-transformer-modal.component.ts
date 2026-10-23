@@ -30,6 +30,14 @@ import { getAssociatedInputType, isTransformerApplicable } from '../../../shared
 import { findDefaultTransformer } from '../transformer-routing';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
 
+/** The source (and, for a south, the scope) a transformer is created for */
+export interface TransformerSourcePreset {
+  dataSourceType: DataSourceType;
+  south?: SouthConnectorLightDTO;
+  group?: SouthItemGroupLightDTO;
+  items?: Array<ItemLightDTO>;
+}
+
 interface TransformerSourceOption {
   dataSourceType: DataSourceType | null;
   south: SouthConnectorLightDTO | null;
@@ -156,7 +164,7 @@ export class EditNorthTransformerModalComponent {
     certificates: Array<CertificateDTO>,
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>,
-    south: SouthConnectorLightDTO | null = null
+    preset: TransformerSourcePreset | null = null
   ) {
     this.mode.set('create');
     this.southConnectors.set(southConnectors);
@@ -165,8 +173,15 @@ export class EditNorthTransformerModalComponent {
     this.allTransformers = transformers;
     this.supportedOutputTypes.set(supportedOutputTypes);
     this.buildForm();
-    if (south) {
-      this.form.controls.source.setValue({ dataSourceType: 'south', south });
+    if (preset) {
+      this.form.controls.source.setValue({ dataSourceType: preset.dataSourceType, south: preset.south ?? null });
+      if (preset.group) {
+        this.selectionType.set('group');
+        this.selectedGroup.set(preset.group);
+      } else if (preset.items?.length) {
+        this.selectionType.set('items');
+        this.selectedItems.set(preset.items);
+      }
     }
   }
 

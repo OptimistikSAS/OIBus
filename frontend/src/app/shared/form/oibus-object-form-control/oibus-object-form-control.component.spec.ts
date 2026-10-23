@@ -185,6 +185,32 @@ describe('OIBusObjectFormControlComponent', () => {
     expect(tester.settings.value).toEqual({ trackingInstant: { trackInstant: true, dateTimeInput: { type: 'iso-string' } } });
   });
 
+  test('should display a field whose row an object takes, after the object', async () => {
+    // as the OIAnalytics payload transformer: fields on row 0, an object (taking the next row), then a field on row 1
+    const tester = new TestHostComponentTester({
+      ...objectAttribute,
+      enablingConditions: [],
+      attributes: [
+        enabledAttribute,
+        {
+          type: 'object',
+          key: 'timestampSettings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          validators: [],
+          attributes: [{ ...nameAttribute, key: 'type', translationKey: 'configuration.oibus.manifest.south.items.scan-mode' }],
+          enablingConditions: [],
+          displayProperties: { visible: true, wrapInBox: false }
+        },
+        { ...nameAttribute, displayProperties: { ...displayProperties, row: 1 } }
+      ]
+    });
+
+    await expect.element(tester.enabled).toBeInTheDocument();
+    await expect.element(tester.name).toBeInTheDocument();
+    await tester.name.fill('precision');
+    expect(tester.settings.value).toEqual(expect.objectContaining({ name: 'precision' }));
+  });
+
   test('should display nothing when not visible', async () => {
     const tester = new TestHostComponentTester({ ...objectAttribute, displayProperties: { visible: false, wrapInBox: false } });
 

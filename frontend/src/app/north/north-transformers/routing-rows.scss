@@ -1,0 +1,88 @@
+// Rows of the North transformers list: a source (or a group, or an item) | the transformer its data goes through | actions
+.routing-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) 13rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.routing-row.routing-header {
+  font-weight: 500;
+  border-bottom-width: 2px;
+}
+
+.routing-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.routing-actions .btn-outline-secondary,
+.routing-actions .btn-outline-primary {
+  padding: 0 0.4rem;
+}
+
+.routing-transformer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.routing-chip {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--bs-border-radius);
+  background-color: var(--bs-secondary-bg);
+}
+
+// all the data goes through a transformer
+.routing-chip.routing-sent {
+  background-color: var(--bs-success-bg-subtle);
+  border-color: var(--bs-success-border-subtle);
+  color: var(--bs-success-text-emphasis);
+}
+
+// only some of the data goes through a transformer
+.routing-chip.routing-partial {
+  background-color: transparent;
+  border-color: var(--bs-success);
+  color: var(--bs-success-text-emphasis);
+}
+
+.routing-chip.routing-dropped {
+  background-color: var(--bs-secondary-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-secondary-color);
+}
+
+.routing-chip.routing-unused {
+  text-decoration: line-through;
+}
+
+.routing-toggle {
+  padding: 0 0.25rem;
+  color: inherit;
+}
+
+.routing-indent-1 {
+  padding-left: 1.75rem;
+}
+
+.routing-indent-2 {
+  padding-left: 3.25rem;
+}
+
+.routing-toggle-placeholder {
+  width: 1.75rem;
+}
+
+// wider than the search of the lists, beside the status filter of the souths
+.source-search {
+  flex: 0 1 30rem;
+  max-width: 30rem;
+}

@@ -330,7 +330,7 @@
             "record-list-to-json": "JSON",
             "record-list-to-modbus": "Valeurs Modbus",
             "record-list-to-mqtt": "Charges utiles MQTT",
-            "record-list-to-oianalytics": "OIAnalytics (sélectionner la précision temporelle)",
+            "record-list-to-oianalytics": "Charge utile OIAnalytics",
             "record-list-to-opcua": "Valeurs OPCUA",
             "setpoint-to-json": "JSON",
             "setpoint-to-modbus": "Valeurs Modbus",
@@ -3251,31 +3251,38 @@
         "delete": "Supprimer le transformateur",
         "audit": "Voir l'historique d'audit du transformateur"
       },
-      "routing": {
-        "show": "Voir le routage",
-        "title": "Routage des données",
-        "description": "Le transformateur par lequel passe chaque item d'un connecteur South vers ce connecteur North : d'abord le sien, puis celui de son groupe, puis celui de tous les items. Les items sans transformateur sont ignorés.",
-        "only-dropped": "Seulement les items ignorés",
-        "summary": "{{ total }} items, dont {{ dropped }} ignorés",
-        "item": "Item",
-        "transformer": "Transformateur",
-        "level": "S'applique à",
-        "levels": {
-          "item": "Cet item",
-          "group": "Son groupe",
-          "south": "Tous les items"
+      "list": {
+        "filters": {
+          "sent": "Envoyées",
+          "partial": "Partiellement envoyées",
+          "dropped": "Ignorées"
         },
+        "search": "Rechercher des sources",
+        "transformer": "Transformateur",
+        "expand": "Afficher les groupes et les items",
+        "collapse": "Masquer les groupes et les items",
+        "paused": "en pause",
+        "unused": "Jamais utilisé : un transformateur placé avant s'applique d'abord",
+        "partly-sent": "Partiellement envoyée",
+        "dropped": "Ignorée",
+        "on-groups-or-items": "{{ count }} transformateur(s) pour des groupes ou des items",
+        "add-data-source": "Ajouter pour une source de données",
+        "other": "Autre…",
+        "no-source": "Aucune source ne correspond",
+        "all-items-except": "Tous les items, sauf {{ count }}",
         "no-group": "Sans groupe",
-        "dropped": "Ignoré : aucun transformateur",
-        "no-item": "Aucun item à afficher",
-        "send-dropped": "Envoyer les items ignorés"
-      },
-      "uncovered": {
-        "summary": "{{ count }} source(s) envoient des données que ce connecteur North ignore, faute de transformateur.",
-        "show": "Afficher",
-        "hide": "Masquer",
-        "none": "aucun transformateur, toutes ses données sont ignorées",
-        "some": "seuls certains de ses items ont un transformateur, les autres sont ignorés"
+        "dropped-items": "{{ count }} ignorés",
+        "except": "sauf {{ count }} items",
+        "from-south": "de tous les items : {{ name }}",
+        "inherited-from-south": "de tous les items",
+        "inherited-from-group": "de son groupe",
+        "shared-with": "partagé avec {{ count }} autre(s) item(s)",
+        "add": "Ajouter",
+        "override": "Remplacer",
+        "exclude": "Exclure",
+        "remove-item": "Retirer cet item du transformateur",
+        "no-item": "Aucun item",
+        "sent": "Envoyée"
       }
     },
     "monitoring": {

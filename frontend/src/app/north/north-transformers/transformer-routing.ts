@@ -14,14 +14,14 @@ export interface ItemRouting {
 /** Whether the data of a south reaches the North: through a transformer for all its items, for some of them, or none */
 export type SouthCoverage = 'all' | 'some' | 'none';
 
-type SouthTransformer = TransformerDTOWithOptions & { source: SourceOriginSouthDTO };
+export type SouthTransformer = TransformerDTOWithOptions & { source: SourceOriginSouthDTO };
 
-const southTransformers = (transformers: Array<TransformerDTOWithOptions>, southId: string): Array<SouthTransformer> =>
+export const southTransformers = (transformers: Array<TransformerDTOWithOptions>, southId: string): Array<SouthTransformer> =>
   transformers.filter(
     (transformer): transformer is SouthTransformer => transformer.source.type === 'south' && transformer.source.south.id === southId
   );
 
-const isSouthLevel = (transformer: SouthTransformer) => !transformer.source.group && transformer.source.items.length === 0;
+export const isSouthLevel = (transformer: SouthTransformer) => !transformer.source.group && transformer.source.items.length === 0;
 
 const excludes = (transformer: SouthTransformer, itemId: string) =>
   (transformer.source.excludedItems ?? []).some(excludedItem => excludedItem.id === itemId);
@@ -55,6 +55,56 @@ export function southCoverage(transformers: Array<TransformerDTOWithOptions>, so
   const candidates = southTransformers(transformers, southId);
   if (candidates.length === 0) return 'none';
   return candidates.some(isSouthLevel) ? 'all' : 'some';
+}
+
+/** The transformers applying to all the items of a south, in list order (the first one not leaving an item out applies) */
+export function southLevelTransformers(transformers: Array<TransformerDTOWithOptions>, southId: string): Array<SouthTransformer> {
+  return southTransformers(transformers, southId).filter(isSouthLevel);
+}
+
+/** The transformers applying to all the items of a group, in list order */
+export function groupLevelTransformers(
+  transformers: Array<TransformerDTOWithOptions>,
+  southId: string,
+  groupId: string
+): Array<SouthTransformer> {
+  return southTransformers(transformers, southId).filter(transformer => transformer.source.group?.id === groupId);
+}
+
+/** The transformers listing some items of a south */
+export function itemLevelTransformers(transformers: Array<TransformerDTOWithOptions>, southId: string): Array<SouthTransformer> {
+  return southTransformers(transformers, southId).filter(transformer => transformer.source.items.length > 0);
+}
+
+/**
+ * The transformers the North never uses: another transformer of the same scope (the whole south, the same group, or the
+ * same items) comes first in the list and applies to everything they would apply to.
+ */
+export function unusedTransformerIds(transformers: Array<TransformerDTOWithOptions>): Set<string> {
+  const unused = new Set<string>();
+  transformers.forEach((transformer, index) => {
+    const before = transformers.slice(0, index);
+    const source = transformer.source;
+    if (source.type === 'south') {
+      const earlier = southTransformers(before, source.south.id);
+      const coversAll = (candidate: SouthTransformer) => (candidate.source.excludedItems ?? []).length === 0;
+      if (source.items.length > 0) {
+        const listedBefore = new Set(earlier.flatMap(candidate => candidate.source.items.map(item => item.id)));
+        if (source.items.every(item => listedBefore.has(item.id))) unused.add(transformer.id);
+      } else if (source.group) {
+        if (earlier.some(candidate => candidate.source.group?.id === source.group!.id && coversAll(candidate))) unused.add(transformer.id);
+      } else if (earlier.some(candidate => isSouthLevel(candidate) && coversAll(candidate))) {
+        unused.add(transformer.id);
+      }
+    } else if (source.type === 'oibus-api') {
+      if (before.some(candidate => candidate.source.type === 'oibus-api' && candidate.source.dataSourceId === source.dataSourceId)) {
+        unused.add(transformer.id);
+      }
+    } else if (before.some(candidate => candidate.source.type === 'oianalytics-setpoint')) {
+      unused.add(transformer.id);
+    }
+  });
+  return unused;
 }
 
 /** The standard transformers sending the data of each type as it is */

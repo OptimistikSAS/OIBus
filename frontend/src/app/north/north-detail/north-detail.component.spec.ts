@@ -78,7 +78,8 @@ class NorthDetailComponentTester {
   readonly testConnectionButton = this.root.getByRole('button', { name: 'Test settings' });
   readonly copyCachePath = this.root.getByRole('button', { name: 'Copy cache path to clipboard' });
   readonly metrics = this.root.getByCss('oib-north-metrics');
-  readonly transformers = this.root.getByCss('oib-north-transformers tbody tr');
+  // the transformers of the sources: without south, only the one of the OIBus API data source
+  readonly transformers = this.root.getByCss('oib-north-transformers').getByRole('button', { name: 'Delete transformer' });
   readonly status = this.root.getByCss('#north-status');
   readonly caching = this.root.getByCss('#north-caching .oib-summary-entry');
 }
@@ -152,7 +153,7 @@ describe('NorthDetailComponent', () => {
     await expect.element(tester.settings.nth(1)).toHaveTextContent('Prefix prefix-');
     await expect.element(tester.caching.nth(0)).toHaveTextContent('Schedule scanMode1');
     await expect.element(tester.caching.nth(1)).toHaveTextContent('Number of elements 250');
-    await expect.element(tester.transformers).toHaveLength(3);
+    await expect.element(tester.transformers).toHaveLength(1);
     await expect.element(tester.metrics).toBeInTheDocument();
     await expect.element(tester.stopButton).toBeInTheDocument();
   });
@@ -252,12 +253,12 @@ describe('NorthDetailComponent', () => {
 
   test('should reload the connector when its transformers change', async () => {
     const tester = new NorthDetailComponentTester();
-    await expect.element(tester.transformers).toHaveLength(3);
+    await expect.element(tester.transformers).toHaveLength(1);
     northConnectorService.findById.mockReturnValue(of({ ...northConnector, transformers: [] }));
     northConnectorService.removeTransformer.mockReturnValue(of(undefined));
 
     // deleting a transformer from the embedded list makes the detail page reload the connector
-    await tester.transformers.nth(0).getByRole('button', { name: 'Delete transformer' }).click();
+    await tester.transformers.nth(0).click();
 
     await expect.element(tester.transformers).toHaveLength(0);
     expect(northConnectorService.findById).toHaveBeenCalledTimes(2);

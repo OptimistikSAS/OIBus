@@ -92,6 +92,6 @@ The password is **only displayed once** during API key generation. If lost, you 
 ## Data Format {#data-format}
 
 - Records are sent as **JSON payloads** to OIAnalytics® through the
-  [OIAnalytics transformer](../engine/transformers.mdx#oianalytics-select-time-precision), which reads their point ID,
+  [OIAnalytics transformer](../engine/transformers.mdx#oianalytics-payload), which reads their point ID,
   timestamp and value columns. Without transformer, record lists are not sent to OIAnalytics®.
 - OIAnalytics® directly references external data in the `pointId` field (no file parser needed).

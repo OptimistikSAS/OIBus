@@ -1,0 +1,209 @@
+@if (loading()) {
+  <oib-loading-spinner />
+} @else {
+  <div class="routing-row routing-indent-1">
+    <input
+      class="form-control form-control-sm"
+      [attr.aria-label]="'configuration.oibus.manifest.transformers.search-items' | translate"
+      [placeholder]="'configuration.oibus.manifest.transformers.search-items' | translate"
+      [ngModel]="itemSearch()"
+      (ngModelChange)="search($event)"
+    />
+  </div>
+  @for (row of groups(); track groupKey(row)) {
+    <div class="routing-row routing-indent-1 routing-group">
+      <div>
+        <button
+          type="button"
+          class="btn btn-sm routing-toggle"
+          [attr.aria-label]="(isExpanded(row) ? 'north.transformers.list.collapse' : 'north.transformers.list.expand') | translate"
+          [attr.aria-expanded]="isExpanded(row)"
+          (click)="toggleGroup(row)"
+        >
+          <span [class]="isExpanded(row) ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right'" aria-hidden="true"></span>
+        </button>
+        <span class="fa-regular fa-folder me-1" aria-hidden="true"></span>
+        @if (row.group) {
+          {{ row.group.name }}
+        } @else {
+          {{ 'north.transformers.list.no-group' | translate }}
+        }
+        @if (row.droppedCount) {
+          <small
+            class="text-danger ms-2"
+            translate="north.transformers.list.dropped-items"
+            [translateParams]="{ count: row.droppedCount }"
+          ></small>
+        }
+      </div>
+      <div class="routing-transformer">
+        @for (transformer of row.transformers; track transformer.id) {
+          <span>
+            <span
+              class="routing-chip"
+              [class.routing-sent]="!row.droppedCount"
+              [class.routing-partial]="row.droppedCount"
+              [class.routing-unused]="unusedTransformerIds().has(transformer.id)"
+              >{{ name(transformer) }}</span
+            >
+            @if (options(transformer); as options) {
+              <small class="text-body-secondary transformer-options ms-1">{{ options }}</small>
+            }
+            @if (excludedCount(transformer)) {
+              <small
+                class="text-body-secondary ms-1"
+                translate="north.transformers.list.except"
+                [translateParams]="{ count: excludedCount(transformer) }"
+              ></small>
+            }
+          </span>
+        } @empty {
+          @if (southLevelTransformer(); as inherited) {
+            <small
+              class="text-body-secondary"
+              translate="north.transformers.list.from-south"
+              [translateParams]="{ name: name(inherited) }"
+            ></small>
+          }
+        }
+      </div>
+      <div class="routing-actions">
+        @for (transformer of row.transformers; track transformer.id) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary edit-transformer"
+            [ngbTooltip]="'north.transformers.tooltips.edit' | translate"
+            [attr.aria-label]="'north.transformers.tooltips.edit' | translate"
+            (click)="edit.emit(transformer)"
+          >
+            <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary delete-transformer"
+            [ngbTooltip]="'north.transformers.tooltips.delete' | translate"
+            [attr.aria-label]="'north.transformers.tooltips.delete' | translate"
+            (click)="remove.emit(transformer)"
+          >
+            <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+          </button>
+          @if (canAudit()) {
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              [ngbTooltip]="'north.transformers.tooltips.audit' | translate"
+              [attr.aria-label]="'north.transformers.tooltips.audit' | translate"
+              (click)="audit.emit(transformer)"
+            >
+              <span class="fa-solid fa-history" aria-hidden="true"></span>
+            </button>
+          }
+        } @empty {
+          @if (row.group) {
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary"
+              (click)="add.emit({ dataSourceType: 'south', south: south(), group: row.group })"
+              translate="north.transformers.list.add"
+            ></button>
+          }
+        }
+      </div>
+    </div>
+    @if (isExpanded(row)) {
+      @let page = this.page(row);
+      @for (itemRow of page.content; track itemRow.item.id) {
+        <div class="routing-row routing-indent-2 routing-item">
+          <div>
+            @if (itemRow.item.enabled) {
+              <span [ngbTooltip]="'south.enabled' | translate" class="fa-solid fa-check-circle status-green me-2"></span>
+            } @else {
+              <span [ngbTooltip]="'south.disabled' | translate" class="fa-solid fa-minus-circle status-grey me-2"></span>
+            }
+            {{ itemRow.item.name }}
+          </div>
+          <div class="routing-transformer">
+            @if (itemRow.routing; as routing) {
+              <span class="routing-chip routing-sent">{{ name(routing.transformer) }}</span>
+              @if (options(routing.transformer); as options) {
+                <small class="text-body-secondary transformer-options">{{ options }}</small>
+              }
+              @switch (routing.level) {
+                @case ('item') {
+                  @if (sharedWith(routing.transformer)) {
+                    <small
+                      class="text-body-secondary"
+                      translate="north.transformers.list.shared-with"
+                      [translateParams]="{ count: sharedWith(routing.transformer) }"
+                    ></small>
+                  }
+                }
+                @case ('group') {
+                  <small class="text-body-secondary" translate="north.transformers.list.inherited-from-group"></small>
+                }
+                @default {
+                  <small class="text-body-secondary" translate="north.transformers.list.inherited-from-south"></small>
+                }
+              }
+            } @else {
+              <span class="routing-chip routing-dropped" translate="north.transformers.list.dropped"></span>
+            }
+          </div>
+          <div class="routing-actions">
+            @if (itemRow.routing; as routing) {
+              @if (routing.level === 'item') {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary edit-transformer"
+                  [ngbTooltip]="'north.transformers.tooltips.edit' | translate"
+                  [attr.aria-label]="'north.transformers.tooltips.edit' | translate"
+                  (click)="edit.emit(routing.transformer)"
+                >
+                  <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  [ngbTooltip]="'north.transformers.list.remove-item' | translate"
+                  [attr.aria-label]="'north.transformers.list.remove-item' | translate"
+                  (click)="removeItem.emit({ transformer: routing.transformer, item: itemRow.item })"
+                >
+                  <span class="fa-solid fa-xmark" aria-hidden="true"></span>
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  (click)="add.emit({ dataSourceType: 'south', south: south(), items: [itemRow.item] })"
+                  translate="north.transformers.list.override"
+                ></button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  (click)="exclude.emit({ transformer: routing.transformer, item: itemRow.item })"
+                  translate="north.transformers.list.exclude"
+                ></button>
+              }
+            } @else {
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                (click)="add.emit({ dataSourceType: 'south', south: south(), items: [itemRow.item] })"
+                translate="north.transformers.list.add"
+              ></button>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="routing-row routing-indent-2 text-body-secondary" translate="north.transformers.list.no-item"></div>
+      }
+      @if (page.totalPages > 1) {
+        <div class="routing-indent-2 mt-1">
+          <oib-pagination [page]="page" (pageChanged)="changePage(row, $event)" />
+        </div>
+      }
+    }
+  } @empty {
+    <div class="routing-row routing-indent-1 text-body-secondary" translate="north.transformers.list.no-item"></div>
+  }
+}

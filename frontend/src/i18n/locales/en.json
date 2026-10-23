@@ -1318,7 +1318,7 @@
             "record-list-to-json": "JSON",
             "record-list-to-modbus": "Modbus values",
             "record-list-to-mqtt": "MQTT payloads",
-            "record-list-to-oianalytics": "OIAnalytics (select time precision)",
+            "record-list-to-oianalytics": "OIAnalytics payload",
             "record-list-to-opcua": "OPCUA values",
             "setpoint-to-json": "JSON",
             "setpoint-to-modbus": "Modbus values",
@@ -3292,31 +3292,38 @@
         "delete": "Delete transformer",
         "audit": "View transformer audit history"
       },
-      "routing": {
-        "show": "View routing",
-        "title": "Data routing",
-        "description": "The transformer each item of a South connector goes through on the way to this North connector: its own transformer first, then the one of its group, then the one of all the items. Items without transformer are dropped.",
-        "only-dropped": "Only dropped items",
-        "summary": "{{ total }} items, {{ dropped }} of which are dropped",
-        "item": "Item",
-        "transformer": "Transformer",
-        "level": "Applies to",
-        "levels": {
-          "item": "This item",
-          "group": "Its group",
-          "south": "All items"
+      "list": {
+        "filters": {
+          "sent": "Sent",
+          "partial": "Partly sent",
+          "dropped": "Dropped"
         },
+        "search": "Search sources",
+        "transformer": "Transformer",
+        "expand": "Show the groups and items",
+        "collapse": "Hide the groups and items",
+        "paused": "paused",
+        "unused": "Never used: a transformer listed before applies first",
+        "partly-sent": "Partly sent",
+        "dropped": "Dropped",
+        "on-groups-or-items": "{{ count }} transformer(s) for groups or items",
+        "add-data-source": "Add for a data source",
+        "other": "Other…",
+        "no-source": "No source matches",
+        "all-items-except": "All items, except {{ count }}",
         "no-group": "No group",
-        "dropped": "Dropped: no transformer",
-        "no-item": "No item to display",
-        "send-dropped": "Send the dropped items"
-      },
-      "uncovered": {
-        "summary": "{{ count }} source(s) send data this North connector drops, as no transformer applies to it.",
-        "show": "Show",
-        "hide": "Hide",
-        "none": "no transformer, all its data is dropped",
-        "some": "only some of its items have a transformer, the others are dropped"
+        "dropped-items": "{{ count }} dropped",
+        "except": "except {{ count }} items",
+        "from-south": "from all items: {{ name }}",
+        "inherited-from-south": "from all items",
+        "inherited-from-group": "from its group",
+        "shared-with": "shared with {{ count }} other item(s)",
+        "add": "Add",
+        "override": "Override",
+        "exclude": "Exclude",
+        "remove-item": "Remove this item from the transformer",
+        "no-item": "No item",
+        "sent": "Sent"
       }
     },
     "monitoring": {

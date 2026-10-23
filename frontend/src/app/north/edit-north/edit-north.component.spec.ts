@@ -53,7 +53,8 @@ class EditNorthComponentTester {
   readonly outputFolder = this.root.getByLabelText('Output folder');
   readonly scanMode = this.root.getByLabelText('Schedule');
   readonly numberOfElements = this.root.getByLabelText('Number of elements');
-  readonly transformerRows = this.root.getByCss('oib-north-transformers tbody tr');
+  // the transformers of the sources: without south, only the one of the OIBus API data source
+  readonly deleteTransformerButtons = this.root.getByCss('oib-north-transformers').getByRole('button', { name: 'Delete transformer' });
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly testButton = this.root.getByRole('button', { name: 'Test settings' });
   readonly nextButton = this.root.getByRole('button', { name: 'Next' });
@@ -143,7 +144,7 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.name).toHaveValue('');
       await tester.goTo('caching');
       await expect.element(tester.numberOfElements).toHaveValue(1000);
-      await expect.element(tester.transformerRows).toHaveLength(0);
+      await expect.element(tester.deleteTransformerButtons).toHaveLength(0);
     });
 
     test('should go through the steps of a new connector, the next one opening once the current one is valid', async () => {
@@ -307,7 +308,7 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.scanMode).toHaveDisplayValue('scanMode1');
       await expect.element(tester.numberOfElements).toHaveValue(250);
       await tester.goTo('transformers');
-      await expect.element(tester.transformerRows).toHaveLength(3);
+      await expect.element(tester.deleteTransformerButtons).toHaveLength(1);
       expect(northConnector).toEqual(testData.north.list[0]);
     });
 
@@ -335,7 +336,7 @@ describe('EditNorthComponent', () => {
       await tester.goTo('caching');
       await tester.numberOfElements.fill('300');
       await tester.goTo('transformers');
-      await tester.transformerRows.nth(0).getByRole('button', { name: 'Delete transformer' }).click();
+      await tester.deleteTransformerButtons.nth(0).click();
       await tester.goTo('review');
 
       await expect.element(tester.reviewChanges).toHaveTextContent('Changes since the connector was saved: 3');
@@ -356,10 +357,11 @@ describe('EditNorthComponent', () => {
 
     test('should update the north connector with the in-memory transformers', async () => {
       const tester = new EditNorthComponentTester();
-      await expect.element(tester.transformerRows).toHaveLength(3);
+      await expect.element(tester.name).toHaveValue('North 1');
 
       await tester.goTo('transformers');
-      await tester.transformerRows.nth(0).getByRole('button', { name: 'Delete transformer' }).click();
+      await expect.element(tester.deleteTransformerButtons).toHaveLength(1);
+      await tester.deleteTransformerButtons.nth(0).click();
       await tester.goTo('general');
       await tester.description.fill('updated');
       await tester.saveButton.click();
@@ -376,13 +378,8 @@ describe('EditNorthComponent', () => {
           })
         })
       );
-      expect(command.transformers.map(transformer => transformer.id)).toEqual(['northTransformerId2', 'northTransformerId3']);
-      expect(command.transformers[0]).toEqual({
-        id: 'northTransformerId2',
-        transformerId: 'transformerId2',
-        options: {},
-        source: { type: 'oibus-api', dataSourceId: 'dataSourceId1' }
-      });
+      expect(command.transformers.map(transformer => transformer.id)).toEqual(['northTransformerId1', 'northTransformerId3']);
+      expect(command.transformers[0]).toEqual(expect.objectContaining({ id: 'northTransformerId1', transformerId: 'transformerId1' }));
       expect(notificationService.success).toHaveBeenCalledWith('north.updated', { name: 'North 1' });
       expect(northConnectorService.findById).toHaveBeenCalledTimes(2);
       await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/north/northId1'));
