@@ -1,14 +1,11 @@
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
-import { DateTime } from 'luxon';
-
 import { TransformerRecordListToOianalyticsSettings } from '../../../../shared/model/connector/transformer-settings.model';
 import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
-import { Instant } from '../../../model/types';
-import { PointValueLike, toCompactTimeValues } from '../../../service/oia/compact-time-values';
+import { PointValueLike, toCompactTimeValues, truncateInstant } from '../../../service/oia/compact-time-values';
 import { generateRandomId, streamToString } from '../../../service/utils';
 import { createStringFieldProcess } from '../../field-process';
 import OIBusTransformer from '../../oibus-transformer';
@@ -45,7 +42,7 @@ export default class RecordListToOIAnalyticsTransformer extends OIBusTransformer
         skippedRows++;
         continue;
       }
-      values.push({ pointId, timestamp: this.formatInstant(timestamp, precision), value });
+      values.push({ pointId, timestamp: truncateInstant(timestamp, precision), value });
     }
     if (skippedRows > 0) {
       this.logger.warn(
@@ -66,19 +63,5 @@ export default class RecordListToOIAnalyticsTransformer extends OIBusTransformer
 
   get options(): TransformerRecordListToOianalyticsSettings {
     return this._options as TransformerRecordListToOianalyticsSettings;
-  }
-
-  formatInstant(timestamp: Instant, precision: 'ms' | 's' | 'min' | 'hr'): Instant {
-    switch (precision) {
-      case 'hr':
-        return DateTime.fromISO(timestamp).set({ minute: 0, second: 0, millisecond: 0 }).toUTC().toISO()!;
-      case 'min':
-        return DateTime.fromISO(timestamp).set({ second: 0, millisecond: 0 }).toUTC().toISO()!;
-      case 's':
-        return DateTime.fromISO(timestamp).set({ millisecond: 0 }).toUTC().toISO()!;
-      case 'ms':
-      default:
-        return timestamp;
-    }
   }
 }

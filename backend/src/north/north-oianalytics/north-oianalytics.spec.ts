@@ -129,21 +129,22 @@ describe('NorthOIAnalytics', () => {
   });
 
   it('should return correct types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any', 'record-list', 'oianalytics']);
+    assert.deepStrictEqual(north.supportedTypes(), ['any', 'oianalytics']);
   });
 
-  describe('handleValues (time-values/oianalytics)', () => {
+  describe('handleValues (oianalytics)', () => {
+    // Values in the legacy array format, as produced by a custom transformer or cached before 3.10
     const timeValuesMetadata = {
       contentFile: 'file.json',
       contentSize: 100,
       numberOfElement: 2,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'record-list'
+      contentType: 'oianalytics'
     };
     const oianalyticsMetadata = { ...timeValuesMetadata, contentType: 'oianalytics' };
     const timeValues = [
-      { pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', value: 1.5, quality: 'good' },
-      { pointId: 'ref2', timestamp: '2020-01-01T00:01:00.000Z', value: null }
+      { pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1.5, quality: 'good' } },
+      { pointId: 'ref2', timestamp: '2020-01-01T00:01:00.000Z', data: { value: null } }
     ];
     const compactTimeValues = {
       timestamps: ['2020-01-01T00:00:00.000Z', '2020-01-01T00:01:00.000Z'],
@@ -175,11 +176,11 @@ describe('NorthOIAnalytics', () => {
       assert.strictEqual(await readBody(options.body), content);
     });
 
-    it('should convert legacy array oianalytics content into the compact format', async () => {
+    it('should convert flat array oianalytics content into the compact format', async () => {
       const legacy = timeValues.map(timeValue => ({
         pointId: timeValue.pointId,
         timestamp: timeValue.timestamp,
-        value: timeValue.value
+        value: timeValue.data.value
       }));
 
       await north.handleContent(fileStreamOf(`\n${JSON.stringify(legacy)}`), oianalyticsMetadata);
@@ -229,8 +230,20 @@ describe('NorthOIAnalytics', () => {
       assert.deepStrictEqual(JSON.parse(await readBody(gzipStream)), compactTimeValues);
     });
 
-    it('should throw an error when time values content is not valid JSON', async () => {
-      await assert.rejects(north.handleContent(fileStreamOf('not json'), timeValuesMetadata), SyntaxError);
+    it('should throw an error when array content is not valid JSON', async () => {
+      await assert.rejects(north.handleContent(fileStreamOf('[not json'), timeValuesMetadata), SyntaxError);
+      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
+    });
+
+    it('should not send values without point or timestamp', async () => {
+      await north.handleContent(fileStreamOf(JSON.stringify([{ id: 1, value: 2 }])), timeValuesMetadata);
+
+      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
+    });
+
+    it('should not handle record lists', async () => {
+      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), { ...timeValuesMetadata, contentType: 'record-list' });
+
       assert.strictEqual(HTTPRequest.mock.calls.length, 0);
     });
 

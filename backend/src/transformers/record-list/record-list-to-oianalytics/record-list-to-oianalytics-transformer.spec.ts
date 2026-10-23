@@ -102,15 +102,6 @@ describe('RecordListToOIAnalyticsTransformer', () => {
     ]);
   });
 
-  it('should truncate instants with each precision', () => {
-    const transformer = new Transformer(logger, testData.transformers.list[0], options);
-
-    assert.strictEqual(transformer.formatInstant('2024-01-01T10:12:13.456Z', 'ms'), '2024-01-01T10:12:13.456Z');
-    assert.strictEqual(transformer.formatInstant('2024-01-01T10:12:13.456Z', 's'), '2024-01-01T10:12:13.000Z');
-    assert.strictEqual(transformer.formatInstant('2024-01-01T10:12:13.456Z', 'min'), '2024-01-01T10:12:00.000Z');
-    assert.strictEqual(transformer.formatInstant('2024-01-01T10:12:13.456Z', 'hr'), '2024-01-01T10:00:00.000Z');
-  });
-
   it('should expose its manifest', () => {
     assert.strictEqual(manifest.id, 'record-list-to-oianalytics');
     assert.deepStrictEqual(
