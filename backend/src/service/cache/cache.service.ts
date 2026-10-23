@@ -732,7 +732,7 @@ export default class CacheService {
           contentSize: metadata.contentSize
         }
       },
-      `Cache updated: ${cacheSnapshot.queuedElements} time-values and ${cacheSnapshot.queuedRawFiles} raw file(s) in queue. ` +
+      `Cache updated: ${cacheSnapshot.queuedElements} element(s) and ${cacheSnapshot.queuedRawFiles} raw file(s) in queue. ` +
         `Cache: ${cacheSizeMB} MB, Error: ${errorSizeMB} MB, Archive: ${archiveSizeMB} MB`
     );
 

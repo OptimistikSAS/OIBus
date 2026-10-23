@@ -7,9 +7,9 @@ describe('toCompactTimeValues', () => {
   it('should convert time values into three parallel arrays', () => {
     assert.deepStrictEqual(
       toCompactTimeValues([
-        { pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1.5 } },
-        { pointId: 'ref2', timestamp: '2020-01-01T00:01:00.000Z', data: { value: 0 } },
-        { pointId: 'ref3', timestamp: '2020-01-01T00:02:00.000Z', data: { value: undefined } },
+        { pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', value: 1.5 },
+        { pointId: 'ref2', timestamp: '2020-01-01T00:01:00.000Z', value: 0 },
+        { pointId: 'ref3', timestamp: '2020-01-01T00:02:00.000Z', value: undefined },
         { pointId: 'ref4', timestamp: '2020-01-01T00:03:00.000Z' } as unknown as Parameters<typeof toCompactTimeValues>[0][number]
       ]),
       {
@@ -22,14 +22,14 @@ describe('toCompactTimeValues', () => {
 
   it('should format timestamps with the given function', () => {
     assert.deepStrictEqual(
-      toCompactTimeValues([{ pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 'a' } }], timestamp => `${timestamp}!`),
+      toCompactTimeValues([{ pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', value: 'a' }], timestamp => `${timestamp}!`),
       { timestamps: ['2020-01-01T00:00:00.000Z!'], values: ['a'], references: ['ref1'] }
     );
   });
 
   it('should format references with the given function', () => {
     assert.deepStrictEqual(
-      toCompactTimeValues([{ pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 'a' } }], undefined, reference =>
+      toCompactTimeValues([{ pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', value: 'a' }], undefined, reference =>
         reference.toUpperCase()
       ),
       { timestamps: ['2020-01-01T00:00:00.000Z'], values: ['a'], references: ['REF1'] }

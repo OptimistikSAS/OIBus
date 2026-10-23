@@ -366,7 +366,7 @@ describe('SouthFTP', () => {
       assert.strictEqual(disconnectSpy.mock.calls.length, 0);
       assert.strictEqual(ftpClientConstructor.mock.calls.length, 1);
       assert.strictEqual(ftpClient.close.mock.calls.length, 1);
-      assert.strictEqual(result.result.type, 'time-values');
+      assert.strictEqual(result.result.type, 'record-list');
     });
 
     it('should test connection', async () => {
@@ -411,12 +411,12 @@ describe('SouthFTP', () => {
 
       const result = await south.testItem(configuration.items[0], { history: undefined });
 
-      assert.ok(result.result.type === 'time-values');
+      assert.ok(result.result.type === 'record-list');
       const content = result.result.content;
       assert.strictEqual(content.length, 1);
       assert.strictEqual(content[0].pointId, 'item1');
       assert.ok(typeof content[0].timestamp === 'string');
-      assert.deepStrictEqual(content[0].data, { value: 'test.csv' });
+      assert.strictEqual(content[0].value, 'test.csv');
       assert.strictEqual(result.connectionDuration, 15);
       assert.strictEqual(result.queryDuration, 25);
     });
@@ -426,7 +426,7 @@ describe('SouthFTP', () => {
 
       const result = await south.testItem(configuration.items[0], { history: undefined });
 
-      assert.ok(result.result.type === 'time-values');
+      assert.ok(result.result.type === 'record-list');
       assert.strictEqual(result.result.content.length, 1);
     });
 

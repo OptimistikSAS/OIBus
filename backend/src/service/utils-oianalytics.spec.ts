@@ -265,7 +265,7 @@ describe('utils-oianalytics', () => {
     it('should parse OIAnalytics time values correctly', () => {
       const input: Array<OIATimeValues> = [
         {
-          type: 'time-values',
+          type: 'record-list',
           unit: { id: '1', label: '%' },
           data: {
             id: 'd1',
@@ -284,12 +284,14 @@ describe('utils-oianalytics', () => {
       assert.deepStrictEqual(formattedResult[0], {
         pointId: 'REF_1',
         timestamp: '2023-01-01T10:00:00.000Z',
-        data: { value: 10, unit: '%' }
+        value: 10,
+        unit: '%'
       });
       assert.deepStrictEqual(formattedResult[1], {
         pointId: 'REF_1',
         timestamp: '2023-01-01T10:05:00.000Z',
-        data: { value: 20, unit: '%' }
+        value: 20,
+        unit: '%'
       });
       assert.strictEqual(maxInstant, '2023-01-01T10:05:00.000Z');
     });
@@ -297,14 +299,14 @@ describe('utils-oianalytics', () => {
     it('should handle mixed timestamps and find correct maxInstant', () => {
       const input: Array<OIATimeValues> = [
         {
-          type: 'time-values',
+          type: 'record-list',
           unit: { id: '1', label: 'U' },
           data: { id: 'd1', dataType: 'R', reference: 'R1', description: 'D' },
           timestamps: ['2023-01-02T00:00:00Z'],
           values: [100]
         },
         {
-          type: 'time-values',
+          type: 'record-list',
           unit: { id: '1', label: 'U' },
           data: { id: 'd2', dataType: 'R', reference: 'R2', description: 'D' },
           timestamps: ['2023-01-01T00:00:00Z'],

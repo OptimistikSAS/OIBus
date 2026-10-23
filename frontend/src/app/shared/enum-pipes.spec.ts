@@ -88,7 +88,7 @@ const ENUM_PIPES: Array<EnumPipeCase> = [
   ]),
   enumPipeCase(OibusInputDataTypeEnumPipe, INPUT_TYPES, [
     ['any', 'Files (for all sources)'],
-    ['time-values', 'OIBus Time Values (for all sources)']
+    ['record-list', 'Records (point-based and SQL-like sources)']
   ]),
   enumPipeCase(OibusOutputDataTypeEnumPipe, OUTPUT_TYPES, [
     ['oianalytics', 'OIAnalytics optimized time values'],

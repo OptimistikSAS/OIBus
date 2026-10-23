@@ -526,6 +526,7 @@ describe('Entity migration v3.10.0', () => {
         quoteChar: 'NONE',
         escapeChar: 'DOUBLE_QUOTE',
         nullValue: '',
+        keepOtherFields: true,
         fields: [
           {
             fieldName: 'other',
@@ -684,6 +685,7 @@ describe('Entity migration v3.10.0', () => {
         quoteChar: 'NONE',
         escapeChar: 'DOUBLE_QUOTE',
         nullValue: '',
+        keepOtherFields: true,
         fields: [
           {
             fieldName: 'ts',

@@ -190,7 +190,7 @@ describe('TransformerController', () => {
   });
 
   it('should test a transformer', async () => {
-    const testRequest: TransformerTestRequest = { inputData: 'time-values', options: {} };
+    const testRequest: TransformerTestRequest = { inputData: 'record-list', options: {} };
     const transformerCommand: CustomTransformerCommandDTO = testData.transformers.command;
     const body = { transformer: transformerCommand, testRequest };
     transformerService.test.mock.mockImplementation(
@@ -205,7 +205,7 @@ describe('TransformerController', () => {
   });
 
   it('should wrap a transformer test failure in an OIBusTestingError', async () => {
-    const testRequest: TransformerTestRequest = { inputData: 'time-values', options: {} };
+    const testRequest: TransformerTestRequest = { inputData: 'record-list', options: {} };
     const transformerCommand: CustomTransformerCommandDTO = testData.transformers.command;
     const body = { transformer: transformerCommand, testRequest };
     transformerService.test.mock.mockImplementation(async () => {
@@ -244,7 +244,7 @@ describe('TransformerController', () => {
   });
 
   it('should get a template for transformer', async () => {
-    const inputType = 'time-values';
+    const inputType = 'record-list';
     transformerService.generateTemplate.mock.mockImplementation((_inputType: InputType): InputTemplate => ({}) as InputTemplate);
 
     await controller.getInputTemplate(inputType, mockRequest as CustomExpressRequest);

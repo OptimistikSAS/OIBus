@@ -75,7 +75,7 @@ describe('SouthMetricsComponent', () => {
         numberOfValuesRetrieved: 0,
         numberOfFilesRetrieved: 0,
         lastConnection: '2020-03-15T10:00:00.000Z',
-        lastValueRetrieved: { pointId: 'point1', timestamp: '2020-03-15T10:30:00.000Z', data: { value: '12' } },
+        lastValueRetrieved: { pointId: 'point1', timestamp: '2020-03-15T10:30:00.000Z', value: '12' },
         lastFileRetrieved: 'file.csv',
         lastRunStart: '2020-03-15T11:00:00.000Z',
         lastRunDuration: 2000
@@ -87,7 +87,7 @@ describe('SouthMetricsComponent', () => {
     await expect.element(tester.entries.nth(1)).toMatchTextContent('Last run');
     await expect.element(tester.entries.nth(2)).toHaveTextContent('Last run duration2 s');
     await expect.element(tester.entries.nth(3)).toHaveTextContent('Last file retrievedfile.csv');
-    await expect.element(tester.entries.nth(4)).toMatchTextContent(/^Last value retrieved point1 15 Mar 2020/);
+    await expect.element(tester.entries.nth(4)).toMatchTextContent(/^Last value retrieved.*"pointId": "point1"/);
     await expect.element(tester.entries.nth(4).getByCss('pre')).toMatchTextContent('"value": "12"');
   });
 

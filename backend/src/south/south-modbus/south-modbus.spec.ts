@@ -534,9 +534,7 @@ describe('South Modbus', () => {
     const values = await south.modbusFunction(mockedClient, configuration.items[4]);
     assert.strictEqual(utilsModbusExports.readCoil.mock.calls.length, 1);
     assert.deepStrictEqual(utilsModbusExports.readCoil.mock.calls[0].arguments, [mockedClient, 3715]);
-    assert.deepStrictEqual(values, [
-      { pointId: configuration.items[4].name, timestamp: testData.constants.dates.FAKE_NOW, data: { value: '123' } }
-    ]);
+    assert.deepStrictEqual(values, [{ pointId: configuration.items[4].name, timestamp: testData.constants.dates.FAKE_NOW, value: '123' }]);
   });
 
   it('should call readDiscreteInputRegister method', async () => {
@@ -545,9 +543,7 @@ describe('South Modbus', () => {
     const values = await south.modbusFunction(mockedClient, configuration.items[3]);
     assert.strictEqual(utilsModbusExports.readDiscreteInputRegister.mock.calls.length, 1);
     assert.deepStrictEqual(utilsModbusExports.readDiscreteInputRegister.mock.calls[0].arguments, [mockedClient, 7810]);
-    assert.deepStrictEqual(values, [
-      { pointId: configuration.items[3].name, timestamp: testData.constants.dates.FAKE_NOW, data: { value: '123' } }
-    ]);
+    assert.deepStrictEqual(values, [{ pointId: configuration.items[3].name, timestamp: testData.constants.dates.FAKE_NOW, value: '123' }]);
   });
 
   it('should call readInputRegister method', async () => {
@@ -566,7 +562,7 @@ describe('South Modbus', () => {
       item.settings.data!.dataType,
       item.settings.data!.bitIndex
     ]);
-    assert.deepStrictEqual(values, [{ pointId: item.name, timestamp: testData.constants.dates.FAKE_NOW, data: { value: '123' } }]);
+    assert.deepStrictEqual(values, [{ pointId: item.name, timestamp: testData.constants.dates.FAKE_NOW, value: '123' }]);
   });
 
   it('should call readHoldingRegister method', async () => {
@@ -585,7 +581,7 @@ describe('South Modbus', () => {
       item.settings.data!.dataType,
       item.settings.data!.bitIndex
     ]);
-    assert.deepStrictEqual(values, [{ pointId: item.name, timestamp: testData.constants.dates.FAKE_NOW, data: { value: '123' } }]);
+    assert.deepStrictEqual(values, [{ pointId: item.name, timestamp: testData.constants.dates.FAKE_NOW, value: '123' }]);
   });
 
   it('should throw an error on wrong modbus type', async () => {
@@ -747,7 +743,7 @@ describe('South Modbus', () => {
       modbusType: 'input-register',
       data: { dataType: 'uint16', multiplierCoefficient: 1 }
     } as const;
-    const cachedValue = (value: string) => ({ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value } });
+    const cachedValue = (value: string) => ({ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, value });
 
     beforeEach(() => {
       south['modbusClient'] = mockedClient;

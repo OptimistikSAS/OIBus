@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../shared/model/common/content.model';
+import { OIBusContent, OIBusRecord } from '../../shared/model/common/content.model';
 import { Instant } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import {
@@ -524,8 +524,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   /**
    * Split an incoming batch into groups that each map to a single transformer.
    *
-   * Only south-sourced `time-values` batches can both (a) carry several items routed to different
-   * transformers and (b) be split safely (each value references its item via `pointId === item.name`).
+   * Only south-sourced `record-list` batches can both (a) carry several items routed to different
+   * transformers and (b) be split safely (each point record references its item via `pointId === item.name`).
    * Every other case — non-south sources, opaque `any-content`/file payloads, or a batch whose items
    * all resolve to the same transformer (e.g. a south-level-only transformer) — is returned as a
    * single group, preserving the previous behaviour with no extra work.
@@ -536,7 +536,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   ): Array<{ transformer: NorthTransformerWithOptions | undefined; data: OIBusContent; source: CacheMetadataSource }> {
     const singleGroup = () => [{ transformer: this.findTransformer(source), data, source }];
 
-    if (source.source !== 'south' || data.type !== 'time-values') {
+    if (source.source !== 'south' || data.type !== 'record-list') {
       return singleGroup();
     }
 
@@ -560,30 +560,31 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       return singleGroup();
     }
 
-    // Partition the values by the transformer their point is routed to. If any value cannot be
+    // Partition the records by the transformer their point is routed to. If any record cannot be
     // attributed to a known item, fall back to a single group to avoid silently dropping data.
-    const contentByTransformer = new Map<NorthTransformerWithOptions | undefined, Array<OIBusTimeValue>>();
-    for (const value of data.content) {
-      if (!transformerByItemName.has(value.pointId)) {
+    const contentByTransformer = new Map<NorthTransformerWithOptions | undefined, Array<OIBusRecord>>();
+    for (const record of data.content) {
+      const pointId = String(record.pointId);
+      if (!transformerByItemName.has(pointId)) {
         this.logger.warn(
-          `Cannot route point "${value.pointId}" to a transformer: it does not match any source item. Routing the whole batch to a single transformer`
+          `Cannot route point "${pointId}" to a transformer: it does not match any source item. Routing the whole batch to a single transformer`
         );
         return singleGroup();
       }
-      const transformer = transformerByItemName.get(value.pointId);
-      const values = contentByTransformer.get(transformer);
-      if (values) {
-        values.push(value);
+      const transformer = transformerByItemName.get(pointId);
+      const records = contentByTransformer.get(transformer);
+      if (records) {
+        records.push(record);
       } else {
-        contentByTransformer.set(transformer, [value]);
+        contentByTransformer.set(transformer, [record]);
       }
     }
 
     return Array.from(contentByTransformer.entries()).map(([transformer, content]) => {
-      const pointIds = new Set(content.map(value => value.pointId));
+      const pointIds = new Set(content.map(record => String(record.pointId)));
       return {
         transformer,
-        data: { type: 'time-values', content } as OIBusContent,
+        data: { type: 'record-list', content } as OIBusContent,
         source: { ...source, items: source.items.filter(item => pointIds.has(item.name)) }
       };
     });
@@ -645,7 +646,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {
     const transformer = createTransformer(config, this.connector, this.logger);
 
-    // In-memory payloads (time-values / setpoint / any-content) go through
+    // In-memory payloads (record-list / setpoint / any-content) go through
     // `transformInMemory`, which lets specialised transformers (e.g. the
     // OIAnalytics one) bypass the JSON.stringify → stream → collect-chunks →
     // JSON.parse round-trip. The base-class default still streamifies for

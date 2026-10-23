@@ -330,8 +330,7 @@ describe('SouthBACnet', () => {
 
   /** The time values sent to the engine by the first addContent call */
   const publishedValues = () =>
-    (addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; timestamp: string; data: { value: unknown } }> })
-      .content;
+    (addContentCallback.mock.calls[0].arguments[1] as { content: Array<{ pointId: string; timestamp: string; value: unknown }> }).content;
 
   describe('connect / disconnect', () => {
     it('should properly connect and open a BACnet/IP client', async () => {
@@ -645,11 +644,8 @@ describe('SouthBACnet', () => {
       await flushPromises();
       const result = await testPromise;
 
-      assert.strictEqual(result.result.type, 'time-values');
-      assert.deepStrictEqual(
-        (result.result as { content: Array<{ pointId: string; data: { value: unknown } }> }).content[0].data.value,
-        42
-      );
+      assert.ok(result.result.type === 'record-list');
+      assert.deepStrictEqual(result.result.content[0].value, 42);
       assert.strictEqual(typeof result.connectionDuration, 'number');
       assert.strictEqual(typeof result.queryDuration, 'number');
       assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
@@ -857,7 +853,7 @@ describe('SouthBACnet', () => {
 
       const content = publishedValues();
       assert.deepStrictEqual(
-        content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.value]),
         [['item1', 21.5]]
       );
       assert.ok(logged(logger.warn, '"item2"', 'OBJECT/UNKNOWN_OBJECT'));
@@ -892,7 +888,7 @@ describe('SouthBACnet', () => {
       ]);
       const content = publishedValues();
       assert.deepStrictEqual(
-        content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.value]),
         [
           ['item1', 21.5],
           ['item5', '1001']
@@ -915,7 +911,7 @@ describe('SouthBACnet', () => {
       assert.strictEqual(client.readProperty.mock.calls.length, 2);
       const content = publishedValues();
       assert.deepStrictEqual(
-        content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.value]),
         [['item1', 21.5]]
       );
       assert.ok(logged(logger.warn, '"item2"', 'OBJECT/UNKNOWN_OBJECT'));
@@ -992,7 +988,7 @@ describe('SouthBACnet', () => {
       );
       const content = publishedValues();
       assert.deepStrictEqual(
-        content.map(value => [value.pointId, value.timestamp, value.data.value]),
+        content.map(value => [value.pointId, value.timestamp, value.value]),
         [
           ['trendLog1', '2026-10-14T11:58:00.000Z', 20],
           ['trendLog1', '2026-10-14T11:59:00.000Z', 21]
@@ -1048,7 +1044,7 @@ describe('SouthBACnet', () => {
 
       // 12:00 in Paris (summer time) is 10:00 UTC
       assert.deepStrictEqual((result.result as { content: Array<unknown> }).content, [
-        { pointId: 'trendLog1', timestamp: '2026-10-14T10:00:00.000Z', data: { value: 21.5 } }
+        { pointId: 'trendLog1', timestamp: '2026-10-14T10:00:00.000Z', value: 21.5 }
       ]);
     });
 
@@ -1128,7 +1124,7 @@ describe('SouthBACnet', () => {
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
       const content = publishedValues();
       assert.strictEqual(content[0].pointId, 'item4');
-      assert.strictEqual(content[0].data.value, 12.5);
+      assert.strictEqual(content[0].value, 12.5);
     });
 
     it('should publish status flags from a SubscribeCOV notification for a status-flags item', async () => {
@@ -1161,7 +1157,7 @@ describe('SouthBACnet', () => {
 
       const content = publishedValues();
       assert.deepStrictEqual(
-        content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.value]),
         [['item6', '0100']]
       );
     });
@@ -1196,7 +1192,7 @@ describe('SouthBACnet', () => {
 
       const content = publishedValues();
       assert.deepStrictEqual(
-        content.map(value => [value.pointId, value.data.value]),
+        content.map(value => [value.pointId, value.value]),
         [['item7', 7]]
       );
 

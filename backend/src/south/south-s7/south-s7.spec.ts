@@ -110,7 +110,7 @@ const errorCases: Array<{ code: string; expected: string }> = [
   { code: 'OTHER', expected: 'Unable to connect' }
 ];
 
-const timeValue = (pointId: string, value: string) => ({ pointId, timestamp: testData.constants.dates.FAKE_NOW, data: { value } });
+const timeValue = (pointId: string, value: string) => ({ pointId, timestamp: testData.constants.dates.FAKE_NOW, value });
 
 const lastValues = (...values: Array<[itemId: string, value: string, instant: string]>) =>
   new Map(
@@ -545,8 +545,8 @@ describe('South S7', () => {
     });
 
     const content = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    assert.strictEqual(content.result.type, 'time-values');
-    assert.deepStrictEqual(content.result.content, [{ pointId: 'Var1', timestamp: '2021-01-02T00:00:00.040Z', data: { value: '42' } }]);
+    assert.strictEqual(content.result.type, 'record-list');
+    assert.deepStrictEqual(content.result.content, [{ pointId: 'Var1', timestamp: '2021-01-02T00:00:00.040Z', value: '42' }]);
     assert.strictEqual(content.connectionDuration, 15);
     assert.strictEqual(content.queryDuration, 25);
     assert.strictEqual(latestGroup.translationCB!('Var1'), 'DB1,REAL0');
@@ -572,7 +572,7 @@ describe('South S7', () => {
 
     it('should properly test item even when the temporary endpoint disconnect fails', async () => {
       const content = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-      assert.strictEqual(content.result.type, 'time-values');
+      assert.strictEqual(content.result.type, 'record-list');
       assert.strictEqual(latestEndpoint.disconnect.mock.calls.length, 1);
     });
   });

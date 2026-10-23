@@ -25,7 +25,7 @@ const customTransformerSettings: Omit<CustomTransformerCommandDTO, 'type'> = {
   ...testData.transformers.command,
   name: 'My transformer',
   description: '',
-  inputType: 'time-values',
+  inputType: 'record-list',
   outputType: 'any'
 };
 

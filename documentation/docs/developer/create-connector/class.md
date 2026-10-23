@@ -22,7 +22,7 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusRecord, OIBusSetpoint } from '../../../shared/model/common/content.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
@@ -34,7 +34,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'time-values', 'setpoint'];
+    return ['any', 'record-list', 'setpoint'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -46,9 +46,9 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     switch (cacheMetadata.contentType) {
-      case 'time-values': {
-        const values = JSON.parse(await streamToString(fileStream)) as Array<OIBusTimeValue>;
-        console.table(values, ['pointId', 'timestamp', 'data']);
+      case 'record-list': {
+        const records = JSON.parse(await streamToString(fileStream)) as Array<OIBusRecord>;
+        console.table(records);
         return;
       }
       case 'setpoint': {
@@ -107,7 +107,7 @@ import pino from 'pino';
 import { DateTime } from 'luxon';
 import { SouthMyTypeSettings, SouthMyTypeItemSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -150,16 +150,16 @@ export default class SouthMyType extends SouthConnector<SouthMyTypeSettings, Sou
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<OIBusContent> {
     // run a single item once and return the produced content
-    return { type: 'time-values', content: [] };
+    return { type: 'record-list', content: [] };
   }
 
   // ─── If you implement SouthDirectQuery ────────────────────────────────────
-  async directQuery(items: Array<SouthConnectorItemEntity<SouthMyTypeItemSettings>>): Promise<OIBusTimeValue | null> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthMyTypeItemSettings>>): Promise<OIBusPointRecord | null> {
     const startTime = DateTime.now().toUTC().toISO()!;
-    const values: Array<OIBusTimeValue> = [];
-    // read each item, push to values…
+    const values: Array<OIBusPointRecord> = [];
+    // read each item, push { pointId: item.name, timestamp, value } to values…
 
-    await this.addContent({ type: 'time-values', content: values }, startTime, items);
+    await this.addContent({ type: 'record-list', content: values }, startTime, items);
     return values.length ? values[values.length - 1] : null;
   }
 }
@@ -260,11 +260,11 @@ await this.addContent(
 
 `OIBusContent` is a discriminated union:
 
-| `type`          | `content` shape                                                               | Use for                                     |
-| --------------- | ----------------------------------------------------------------------------- | ------------------------------------------- |
-| `'time-values'` | `Array<OIBusTimeValue>` — `{ pointId, timestamp, data: { value, quality? } }` | Most numeric / textual time-series data     |
-| `'any-content'` | `string` — an opaque serialised payload (e.g. JSON-stringified MQTT messages) | When the destination needs the raw payload  |
-| `'any'`         | `{ filePath: string }` — a file already written to disk                       | File-based connectors (folder scanner, FTP) |
+| `type`          | `content` shape                                                                               | Use for                                     |
+| --------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `'record-list'` | `Array<OIBusRecord>` — point records `{ pointId, timestamp, value, quality? }`, or query rows | Point values (time series), query results   |
+| `'any-content'` | `string` — an opaque serialised payload (e.g. JSON-stringified MQTT messages)                 | When the destination needs the raw payload  |
+| `'any'`         | `{ filePath: string }` — a file already written to disk                                       | File-based connectors (folder scanner, FTP) |
 
 The engine takes care of writing the content into each enabled North's cache via its transformer pipeline.
 Don't write to the cache directly — always go through `addContent`.

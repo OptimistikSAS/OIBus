@@ -146,14 +146,14 @@ describe('SelectExistingTransformerComponent', () => {
 
   test('should only list the transformers applicable to the data of the source', async () => {
     const tester = new SelectExistingTransformerComponentTester('north', ['any']);
-    tester.fixture.componentRef.setInput('dataType', 'record-list');
+    tester.fixture.componentRef.setInput('dataType', 'setpoint');
 
     await tester.source.selectOptions(norths[0].name);
 
-    // the custom transformer takes time-values: it cannot be applied to record lists
+    // the custom transformer takes record lists: it cannot be applied to setpoints
     expect(tester.optionLabels(tester.transformer)).toEqual(['', `Ignore (${testData.south.listLight[0].name})`]);
 
-    tester.fixture.componentRef.setInput('dataType', 'time-values');
+    tester.fixture.componentRef.setInput('dataType', 'record-list');
 
     await expect.element(tester.transformer.getByRole('option')).toHaveLength(3);
   });

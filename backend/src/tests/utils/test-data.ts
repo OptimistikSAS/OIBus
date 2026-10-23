@@ -97,7 +97,7 @@ const transformerCommandDTO: CustomTransformerCommandDTO = {
   type: 'custom',
   name: 'my new transformer',
   description: 'description',
-  inputType: 'time-values',
+  inputType: 'record-list',
   outputType: 'any',
   customCode: 'console.log("Hello World");',
   language: 'javascript',
@@ -121,7 +121,7 @@ const transformers: Array<Transformer> = [
     type: 'custom',
     name: 'my transformer 1',
     description: 'description',
-    inputType: 'time-values',
+    inputType: 'record-list',
     outputType: 'any',
     customCode: 'console.log("Hello World");',
     language: 'javascript',
@@ -204,7 +204,7 @@ const customTransformers: Array<CustomTransformerDTO> = [
     type: 'custom',
     name: 'my transformer 1',
     description: 'description',
-    inputType: 'time-values',
+    inputType: 'record-list',
     outputType: 'any',
     customCode: 'console.log("Hello World");',
     language: 'javascript',
@@ -937,7 +937,7 @@ const itemTestingSettings: SouthConnectorItemTestingSettings = {
 const northTestManifest: NorthConnectorManifest = {
   id: 'console',
   category: 'debug',
-  types: ['any', 'time-values'],
+  types: ['any', 'record-list'],
   settings: {
     type: 'object',
     key: 'settings',
@@ -2403,29 +2403,23 @@ const oIBusMessages: Array<OIAnalyticsMessage> = [
 
 const oibusContent: Array<OIBusContent> = [
   {
-    type: 'time-values',
+    type: 'record-list',
     content: [
       {
         pointId: 'reference1',
         timestamp: constants.dates.DATE_1,
-        data: {
-          value: 'value1'
-        }
+        value: 'value1'
       },
       {
         pointId: 'reference1',
         timestamp: constants.dates.DATE_2,
-        data: {
-          value: 'value2',
-          quality: 'good'
-        }
+        value: 'value2',
+        quality: 'good'
       },
       {
         pointId: 'reference2',
         timestamp: constants.dates.DATE_3,
-        data: {
-          value: 'value1'
-        }
+        value: 'value1'
       }
     ]
   },

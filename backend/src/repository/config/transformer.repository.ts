@@ -10,21 +10,20 @@ import { NotFoundError } from '../../model/types';
 import AuditService from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
-import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
+import CSVToRecordListTransformer from '../../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
-import RecordListToCsvTransformer from '../../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
 import IgnoreTransformer from '../../transformers/ignore-transformer';
 import IsoTransformer from '../../transformers/iso-transformer';
+import RecordListToCsvTransformer from '../../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
+import RecordListToJSONTransformer from '../../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
+import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
+import RecordListToMQTTTransformer from '../../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
+import RecordListToOIAnalyticsTransformer from '../../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
+import RecordListToOPCUATransformer from '../../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
 import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
-import OIBusTimeValuesToCsvTransformer from '../../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
-import OIBusTimeValuesToJSONTransformer from '../../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToModbusTransformer from '../../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
-import OIBusTimeValuesToMQTTTransformer from '../../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToOIAnalyticsTransformer from '../../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
-import OIBusTimeValuesToOPCUATransformer from '../../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -190,165 +189,27 @@ export default class TransformerRepository {
   }
 
   protected createStandardTransformers() {
-    if (!this.findByFunctionName(CSVToMQTTTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: CSVToMQTTTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'mqtt'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(CSVToTimeValuesTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: CSVToTimeValuesTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'time-values'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(IgnoreTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: IgnoreTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'any'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(IsoTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: IsoTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'any'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(JSONToCSVTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: JSONToCSVTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'any'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(RecordListToCsvTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: RecordListToCsvTransformer.transformerName,
-        inputType: 'record-list',
-        outputType: 'any'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(JSONToOIAnalyticsTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: JSONToOIAnalyticsTransformer.transformerName,
-        inputType: 'any',
-        outputType: 'oianalytics'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusTimeValuesToCsvTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusTimeValuesToCsvTransformer.transformerName,
-        inputType: 'time-values',
-        outputType: 'any'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusTimeValuesToJSONTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusTimeValuesToJSONTransformer.transformerName,
-        inputType: 'time-values',
-        outputType: 'any'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusTimeValuesToModbusTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusTimeValuesToModbusTransformer.transformerName,
-        inputType: 'time-values',
-        outputType: 'modbus'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusTimeValuesToMQTTTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
-        inputType: 'time-values',
-        outputType: 'mqtt'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusTimeValuesToOIAnalyticsTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
-        inputType: 'time-values',
-        outputType: 'oianalytics'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusTimeValuesToOPCUATransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
-        inputType: 'time-values',
-        outputType: 'opcua'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusSetpointToModbusTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusSetpointToModbusTransformer.transformerName,
-        inputType: 'setpoint',
-        outputType: 'modbus'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusSetpointToMQTTTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusSetpointToMQTTTransformer.transformerName,
-        inputType: 'setpoint',
-        outputType: 'mqtt'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findByFunctionName(OIBusSetpointToOPCUATransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: generateRandomId(6),
-        type: 'standard',
-        functionName: OIBusSetpointToOPCUATransformer.transformerName,
-        inputType: 'setpoint',
-        outputType: 'opcua'
-      };
-      this.createStandardTransformer(standardTransformer);
+    const standardTransformers: Array<Pick<StandardTransformer, 'functionName' | 'inputType' | 'outputType'>> = [
+      { functionName: CSVToMQTTTransformer.transformerName, inputType: 'any', outputType: 'mqtt' },
+      { functionName: CSVToRecordListTransformer.transformerName, inputType: 'any', outputType: 'record-list' },
+      { functionName: IgnoreTransformer.transformerName, inputType: 'any', outputType: 'any' },
+      { functionName: IsoTransformer.transformerName, inputType: 'any', outputType: 'any' },
+      { functionName: JSONToCSVTransformer.transformerName, inputType: 'any', outputType: 'any' },
+      { functionName: JSONToOIAnalyticsTransformer.transformerName, inputType: 'any', outputType: 'oianalytics' },
+      { functionName: RecordListToCsvTransformer.transformerName, inputType: 'record-list', outputType: 'any' },
+      { functionName: RecordListToJSONTransformer.transformerName, inputType: 'record-list', outputType: 'any' },
+      { functionName: RecordListToModbusTransformer.transformerName, inputType: 'record-list', outputType: 'modbus' },
+      { functionName: RecordListToMQTTTransformer.transformerName, inputType: 'record-list', outputType: 'mqtt' },
+      { functionName: RecordListToOIAnalyticsTransformer.transformerName, inputType: 'record-list', outputType: 'oianalytics' },
+      { functionName: RecordListToOPCUATransformer.transformerName, inputType: 'record-list', outputType: 'opcua' },
+      { functionName: OIBusSetpointToModbusTransformer.transformerName, inputType: 'setpoint', outputType: 'modbus' },
+      { functionName: OIBusSetpointToMQTTTransformer.transformerName, inputType: 'setpoint', outputType: 'mqtt' },
+      { functionName: OIBusSetpointToOPCUATransformer.transformerName, inputType: 'setpoint', outputType: 'opcua' }
+    ];
+    for (const { functionName, inputType, outputType } of standardTransformers) {
+      if (!this.findByFunctionName(functionName)) {
+        this.createStandardTransformer({ id: generateRandomId(6), type: 'standard', functionName, inputType, outputType });
+      }
     }
   }
 }

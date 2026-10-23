@@ -7,9 +7,8 @@ import {
   OIBusAnyContent,
   OIBusContent,
   OIBusFileContent,
-  OIBusRecordListContent,
-  OIBusTimeValue,
-  OIBusTimeValueContent
+  OIBusRecord,
+  OIBusRecordListContent
 } from '../../shared/model/common/content.model';
 import { Instant, Interval } from '../../shared/model/common/types';
 import { IOT_FAMILY_SOUTH_TYPES, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
@@ -46,8 +45,8 @@ export interface SouthMetricsEvents {
   // an item whose window is already caught up may emit zero `history-query-interval` events, so the
   // UI would otherwise have no boundary event to show progress moving to the next item.
   'history-query-item-start': { itemName: string; currentItemNumber: number; numberOfItems: number };
-  // `any-content` (opaque payloads) has no time value, hence the `| null`.
-  'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
+  // `any-content` (opaque payloads) has no record, hence the `| null`.
+  'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusRecord | null };
   'add-file': { lastFileRetrieved: string };
 }
 import type { ILogger } from '../model/logger.model';
@@ -68,7 +67,7 @@ import { shouldCacheValue } from '../service/south-caching-strategy.service';
  *    are resumable across restarts (no re-querying already-fetched data).
  *  - Manage subscription items (`scanMode.id === 'subscription'`) by diffing
  *    the desired item set against the live subscriptions.
- *  - Forward retrieved content (time-values / files / opaque payloads) to the
+ *  - Forward retrieved content (records / files / opaque payloads) to the
  *    engine via the `addContent*` family.
  *
  * **What a subclass implements**
@@ -882,15 +881,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /**
    * Entry point subclasses call after a successful read. Dispatches by content
    * shape to the engine callback and updates per-shape metrics:
-   *   - `'time-values'`  → array of OIBusTimeValue (timestamp + pointId + data)
    *   - `'any-content'`  → opaque serialised payload (MQTT messages, etc.)
    *   - `'any'`          → a file on disk (folder-scanner, FTP, etc.)
-   *   - `'record-list'`  → array of flat rows, untouched (SQL-like souths)
+   *   - `'record-list'`  → array of flat rows: point records of point-based souths, untouched rows of SQL-like souths
    */
   addContent(data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> {
     switch (data.type) {
-      case 'time-values':
-        return this.addValues(data, queryTime, items);
       case 'any-content':
         return this.addAnyContent(data, queryTime, items);
       case 'any':
@@ -916,34 +912,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.currentHistoryQueryInterval?.start ?? null,
       this.currentHistoryQueryInterval?.end ?? null
     );
-    // `any-content` is a single opaque serialised payload, not a list of time values: count it
-    // as one retrieved item (not its byte length) and carry no "last value" (no OIBusTimeValue).
+    // `any-content` is a single opaque serialised payload, not a list of records: count it
+    // as one retrieved item (not its byte length) and carry no "last value" (no record).
     this.metricsEvent.emit('add-values', {
       numberOfValuesRetrieved: 1,
       lastValueRetrieved: null
     });
-  }
-
-  private async addValues(
-    data: OIBusTimeValueContent,
-    queryTime: Instant,
-    items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-  ): Promise<void> {
-    if (data.content.length > 0) {
-      this.logger.debug(`Add ${data.content.length} values to cache from South "${this.connector.name}"`);
-      await this.engineAddContentCallback(
-        this.connector.id,
-        data,
-        queryTime,
-        items,
-        this.currentHistoryQueryInterval?.start ?? null,
-        this.currentHistoryQueryInterval?.end ?? null
-      );
-      this.metricsEvent.emit('add-values', {
-        numberOfValuesRetrieved: data.content.length,
-        lastValueRetrieved: data.content[data.content.length - 1]
-      });
-    }
   }
 
   private async addRecords(
@@ -963,7 +937,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       );
       this.metricsEvent.emit('add-values', {
         numberOfValuesRetrieved: data.content.length,
-        lastValueRetrieved: null
+        lastValueRetrieved: data.content[data.content.length - 1]
       });
     }
   }
