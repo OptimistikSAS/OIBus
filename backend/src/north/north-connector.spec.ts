@@ -32,7 +32,7 @@ type Transformers = NorthConnectorEntity<NorthSettings>['transformers'];
 const timeValuesTransformer = (id: string, transformerId: string, source: Record<string, unknown>) => ({
   id,
   options: {},
-  transformer: { id: transformerId, type: 'standard', functionName: 'noop', outputType: 'time-values' },
+  transformer: { id: transformerId, type: 'standard', functionName: 'noop', outputType: 'record-list' },
   source: { type: 'south', group: undefined, items: [], ...source }
 });
 
@@ -45,7 +45,7 @@ const southSource: CacheMetadataSourceOriginSouth = {
   items: []
 };
 
-const timeValue = (pointId: string, value: number) => ({ pointId, timestamp: '2020-01-01T00:00:00.000Z', data: { value } });
+const timeValue = (pointId: string, value: number) => ({ pointId, timestamp: '2020-01-01T00:00:00.000Z', value });
 
 /** Time values cached by the south "southX" for the given items */
 const southXSource = (items: Array<{ id: string; name: string }>) =>
@@ -89,7 +89,7 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 3,
       createdAt: testData.constants.dates.DATE_1,
-      contentType: 'time-values'
+      contentType: 'record-list'
     }
   };
 
@@ -536,7 +536,7 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: (testData.oibusContent[0].content as Array<object>).length,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'time-values'
+      contentType: 'record-list'
     };
     const outputStream = Buffer.from('outputStream');
     oiBusTransformer.transformInMemory.mock.mockImplementation(async () => ({ metadata, output: outputStream }));
@@ -565,7 +565,7 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 1,
       createdAt: '',
-      contentType: 'time-values'
+      contentType: 'record-list'
     };
     const outputStream1 = Buffer.from('outputStream1');
     const outputStream2 = Buffer.from('outputStream2');
@@ -596,7 +596,7 @@ describe('NorthConnector', () => {
     const v3 = timeValue('point-1', 3);
 
     await north.cacheContent(
-      { type: 'time-values', content: [v1, v2, v3] },
+      { type: 'record-list', content: [v1, v2, v3] },
       southXSource([
         { id: 'i1', name: 'point-1' },
         { id: 'i2', name: 'point-2' }
@@ -632,7 +632,7 @@ describe('NorthConnector', () => {
 
     const content = [timeValue('point-1', 1), timeValue('point-2', 2)];
     await north.cacheContent(
-      { type: 'time-values', content },
+      { type: 'record-list', content },
       southXSource([
         { id: 'i1', name: 'point-1' },
         { id: 'i2', name: 'point-2' }
@@ -869,7 +869,7 @@ describe('NorthConnector', () => {
   it('should handle no transformer when supporting type', async () => {
     const cacheWithoutTransformMock = mock.fn(async (_data: OIBusContent) => undefined);
     north['cacheWithoutTransform'] = cacheWithoutTransformMock;
-    await north['handleNoTransformer']({ type: 'time-values' } as OIBusContent);
+    await north['handleNoTransformer']({ type: 'record-list' } as OIBusContent);
     // handleNoTransformer only caches; cacheContent is responsible for triggering a run once.
     assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 1);
   });
@@ -926,7 +926,7 @@ describe('NorthConnector', () => {
 
   it('should cache without transform with max number of elements', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
-    await north['cacheWithoutTransform']({ type: 'time-values', content: [{}, {}] } as OIBusContent);
+    await north['cacheWithoutTransform']({ type: 'record-list', content: [{}, {}] } as OIBusContent);
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 2);
   });
 
@@ -939,7 +939,7 @@ describe('NorthConnector', () => {
 
   it('should cache without transform', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 0;
-    await north['cacheWithoutTransform']({ type: 'time-values', content: [{}, {}] } as OIBusContent);
+    await north['cacheWithoutTransform']({ type: 'record-list', content: [{}, {}] } as OIBusContent);
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
   });
 
@@ -991,7 +991,7 @@ describe('NorthConnector', () => {
     const unmatched = timeValue('point-unknown', 3);
 
     await north.cacheContent(
-      { type: 'time-values', content: [v1, v2, unmatched] },
+      { type: 'record-list', content: [v1, v2, unmatched] },
       southXSource([
         { id: 'i1', name: 'point-1' },
         { id: 'i2', name: 'point-2' }
@@ -1019,7 +1019,7 @@ describe('NorthConnector', () => {
     const v3 = timeValue('point-3', 3);
 
     await north.cacheContent(
-      { type: 'time-values', content: [v1, v2, v3] },
+      { type: 'record-list', content: [v1, v2, v3] },
       southXSource([
         { id: 'i1', name: 'point-1' },
         { id: 'i2', name: 'point-2' },

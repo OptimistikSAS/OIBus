@@ -38,7 +38,7 @@ describe('ContentController', () => {
   it('should wrap JSON body as any-content and add it to each north connector', async () => {
     const northId = 'northId1,northId2';
     const dataSourceId = 'dataSourceId';
-    const body = { type: 'time-values', content: [] };
+    const body = { type: 'record-list', content: [] };
     oIBusService.addExternalContent.mock.mockImplementation(async () => undefined);
 
     await controller.addContent(northId, dataSourceId, body, mockRequest as CustomExpressRequest);

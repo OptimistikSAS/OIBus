@@ -532,7 +532,7 @@ describe('DataStreamEngine', () => {
       // Start norths so they can receive content
       await engine.start(northList, [], []);
 
-      const mockData: OIBusContent = { type: 'time-values', content: [] };
+      const mockData: OIBusContent = { type: 'record-list', content: [] };
       await engine.addContent('south-1', mockData, '2023-01-01', []);
 
       assert.strictEqual(mockedNorth1.cacheContent.mock.calls.length, 1);
@@ -547,7 +547,7 @@ describe('DataStreamEngine', () => {
       mockedNorth1.cacheContent.mock.mockImplementationOnce(() => Promise.reject(new Error('North1 boom')));
       mockedNorth2.cacheContent.mock.mockImplementationOnce(async () => undefined);
 
-      const mockData: OIBusContent = { type: 'time-values', content: [] };
+      const mockData: OIBusContent = { type: 'record-list', content: [] };
       await engine.addContent('south-1', mockData, '2023-01-01', []);
 
       assert.ok(mockedNorth1.cacheContent.mock.calls.length > 0);
@@ -572,7 +572,7 @@ describe('DataStreamEngine', () => {
         releaseNorth1(); // North2 unblocks North1
       });
 
-      const mockData: OIBusContent = { type: 'time-values', content: [] };
+      const mockData: OIBusContent = { type: 'record-list', content: [] };
       await engine.addContent('south-1', mockData, '2023-01-01', []);
 
       assert.ok(mockedNorth1.cacheContent.mock.calls.length > 0);

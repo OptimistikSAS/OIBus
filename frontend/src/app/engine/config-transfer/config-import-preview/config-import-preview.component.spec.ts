@@ -160,7 +160,7 @@ describe('ConfigImportPreviewComponent', () => {
     createTester();
     await tester.open('transformers', 'users');
     await expect.element(tester.toggle('transformer:custom1')).toMatchTextContent('My transformer');
-    await expect.element(tester.toggle('transformer:custom1')).toMatchTextContent('time-values → any');
+    await expect.element(tester.toggle('transformer:custom1')).toMatchTextContent('record-list → any');
     await expect.element(tester.toggle('transformer:standard1')).not.toBeInTheDocument();
     await expect.element(tester.root.getByCss('#preview-standard-transformers')).toMatchTextContent('1 standard transformer(s) are used');
     await expect.element(tester.missingStandardTransformers).not.toBeInTheDocument();

@@ -318,18 +318,17 @@
           "deleted": "转换器 {{ name }} 已删除",
           "standard": {
             "csv-to-mqtt": "MQTT 有效载荷（来自 CSV）",
-            "csv-to-time-values": "时间值（来自 CSV）",
+            "csv-to-record-list": "记录（来自 CSV）",
             "ignore": "忽略",
             "iso": "不转换",
             "json-to-csv": "CSV（来自 JSON）",
             "json-to-oianalytics": "OIAnalytics（来自 JSON）",
-            "record-list-to-csv": "CSV（来自记录列表）",
-            "time-values-to-csv": "CSV",
-            "time-values-to-json": "JSON",
-            "time-values-to-modbus": "Modbus 值",
-            "time-values-to-mqtt": "MQTT 有效载荷",
-            "time-values-to-oianalytics": "OIAnalytics（选择时间精度）",
-            "time-values-to-opcua": "OPCUA 值",
+            "record-list-to-csv": "CSV",
+            "record-list-to-json": "JSON",
+            "record-list-to-modbus": "Modbus 值",
+            "record-list-to-mqtt": "MQTT 有效载荷",
+            "record-list-to-oianalytics": "OIAnalytics（选择时间精度）",
+            "record-list-to-opcua": "OPCUA 值",
             "setpoint-to-modbus": "Modbus 值",
             "setpoint-to-mqtt": "MQTT 有效载荷",
             "setpoint-to-opcua": "OPCUA 值"
@@ -513,7 +512,7 @@
               }
             }
           },
-          "csv-to-time-values": {
+          "csv-to-record-list": {
             "delimiter": {
               "title": "CSV 分隔符",
               "DOT": "点 .",
@@ -663,6 +662,7 @@
               "DOUBLE_QUOTE": "双引号（\"）"
             },
             "null-value": "空值",
+            "keep-other-fields": "保留其他字段",
             "fields": {
               "title": "字段映射",
               "item": {
@@ -747,61 +747,9 @@
               }
             }
           },
-          "time-values-to-csv": {
-            "filename": "文件名",
-            "encoding": {
-              "title": "编码",
-              "UTF_8": "UTF-8",
-              "UTF_8_BOM": "UTF-8 BOM",
-              "LATIN_1": "Latin-1（ISO-8859-1）",
-              "UTF_16_LE": "UTF-16 LE"
-            },
-            "header": "第一行作为表头",
-            "delimiter": {
-              "title": "分隔符",
-              "DOT": "点 .",
-              "SEMI_COLON": "分号 ;",
-              "COLON": "冒号 :",
-              "COMMA": "逗号 ,",
-              "SLASH": "斜杠 /",
-              "TAB": "制表符",
-              "NON_BREAKING_SPACE": "空格",
-              "PIPE": "竖线 |"
-            },
-            "newline": {
-              "title": "换行符",
-              "DEFAULT": "默认",
-              "CRLF": "CRLF（\\r\\n）",
-              "LF": "LF（\\n）",
-              "CR": "CR（\\r）"
-            },
-            "quote-char": {
-              "title": "引号字符",
-              "DOUBLE_QUOTE": "双引号（\"）",
-              "SINGLE_QUOTE": "单引号（'）",
-              "NONE": "无"
-            },
-            "escape-char": {
-              "title": "转义字符",
-              "BACKSLASH": "反斜杠（\\）",
-              "DOUBLE_QUOTE": "双引号（\"）"
-            },
-            "compression": "压缩文件",
-            "point-id": "点位 ID（引用）的列名",
-            "value": "值的列名",
-            "timestamp": "时间戳的列名",
-            "timestamp-type": {
-              "title": "时间戳输出类型",
-              "string": "字符串",
-              "iso-string": "ISO 字符串",
-              "unix-epoch": "Unix 纪元（秒）",
-              "unix-epoch-ms": "Unix 纪元（毫秒）"
-            },
-            "timestamp-format": "时间戳输出格式",
-            "timezone": "输出时区",
-            "point-id-process": "点位 ID 处理（JS 表达式，例如 value.toUpperCase()）"
-          },
-          "time-values-to-modbus": {
+          "record-list-to-modbus": {
+            "point-id-column": "点位 ID 列",
+            "value-column": "值列",
             "mapping": {
               "title": "映射表",
               "point-id": "点位 ID（引用）",
@@ -813,7 +761,8 @@
               }
             }
           },
-          "time-values-to-mqtt": {
+          "record-list-to-mqtt": {
+            "point-id-column": "点位 ID 列",
             "mapping": {
               "title": "映射表",
               "point-id": "点位 ID（引用）",
@@ -847,7 +796,23 @@
               }
             }
           },
-          "time-values-to-oianalytics": {
+          "record-list-to-oianalytics": {
+            "point-id-column": "点位 ID 列",
+            "timestamp-column": "时间戳列",
+            "value-column": "值列",
+            "timestamp-settings": {
+              "title": "时间戳设置",
+              "type": {
+                "title": "时间戳类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "timezone": "时区",
+              "format": "格式",
+              "locale": "区域设置"
+            },
             "precision": {
               "title": "时间戳精度",
               "ms": "毫秒",
@@ -857,7 +822,9 @@
             },
             "reference-process": "引用处理（JS 表达式，例如 value.toUpperCase()）"
           },
-          "time-values-to-opcua": {
+          "record-list-to-opcua": {
+            "point-id-column": "点位 ID 列",
+            "value-column": "值列",
             "mapping": {
               "title": "映射表",
               "point-id": "点位 ID（引用）",
@@ -2740,9 +2707,8 @@
     "oibus-input-data-type": {
       "any": "文件（适用于所有数据源）",
       "setpoint": "设定值（适用于所有数据源）",
-      "time-values": "OIBus 时间值（适用于所有数据源）",
       "any-content": "任意内容",
-      "record-list": "记录列表（类 SQL 数据源）"
+      "record-list": "记录（点位和类 SQL 数据源）"
     },
     "oibus-output-data-type": {
       "any": "任意",
@@ -2750,7 +2716,7 @@
       "modbus": "Modbus",
       "oianalytics": "OIAnalytics 优化时间值",
       "opcua": "OPCUA",
-      "time-values": "OIBus 时间值"
+      "record-list": "记录"
     },
     "oibus-transformer-language": {
       "javascript": "JavaScript",

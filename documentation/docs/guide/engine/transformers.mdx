@@ -60,13 +60,12 @@ the transformer's position in the list.
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
 
-| South connector type                                                                                        | Compatible standard transformers                                                           |
-| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI** (PLC / historian)                              | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                         | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (query-based, row-list output) | CSV (from Record list)                                                                     |
-| **OIBus API**                                                                                               | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **OIAnalytics Setpoint**                                                                                    | MQTT payloads, Modbus values, OPCUA values                                                 |
+| South connector type                                                                                                                                 | Compatible standard transformers                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON)     |
+| **OIBus API**                                                                                                                                        | Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON)     |
+| **OIAnalytics Setpoint**                                                                                                                             | MQTT payloads, Modbus values, OPCUA values                                                 |
 
 Custom transformers are also shown in this list and are always named by the user. In addition, **Ignore** is
 available for every source type, and **No transform** (see below) when the North connector accepts the source's data
@@ -85,110 +84,166 @@ Standard transformers are built-in and require only configuration — no coding.
 ### Ignore and No transform {#ignore-and-no-transform}
 
 These two require no configuration. **Ignore** is available for every source type; **No transform** only when the
-North connector accepts the source's data as is (e.g. time-values for the Console, File Writer or OIAnalytics North,
-files for any file-based North). MQTT and OIBus API JSON payloads are cached as JSON files.
+North connector accepts the source's data as is: record lists for the Console, File Writer and OIAnalytics North,
+files for any file-based North. MQTT and OIBus API JSON payloads are cached as JSON files.
 
 | Transformer      | Behavior                                                                                                                                                                                                         |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Ignore**       | Drops the data. Nothing is cached and nothing is sent to the North connector. Useful to silence part of a South connector's output for a given North (via item/group scoping) without disabling the item itself. |
 | **No transform** | Caches the data exactly as received, with no conversion at all. Use this when the North connector already accepts the South's native content type.                                                               |
 
+:::info Record lists sent to OIAnalytics as is
+Without transformer, the OIAnalytics North sends the point records of a record list as values, reading their
+`pointId`, `timestamp` and `value` fields. Records without `pointId` or `timestamp` (e.g. the rows of a SQL query) are
+not sent: use the [OIAnalytics (select time precision)](#oianalytics-select-time-precision) transformer to name the
+columns to read.
+:::
+
 ---
 
-### For PLC and historian South connectors {#for-plc-and-historian-south-connectors}
+### For record lists {#for-record-list-south-connectors}
 
-These transformers process the structured **time-value** arrays produced by connectors such as OPC UA, OPC Classic,
-Modbus, TwinCAT ADS, Siemens S7, and OSIsoft PI.
+Most South connectors send **record lists**: arrays of flat records.
 
-Each time-value object has this shape:
+- **Point-based connectors** (OPC UA, OPC Classic, Modbus, TwinCAT ADS, Siemens S7, BACnet, OSIsoft PI) send
+  **point records**: the point, the timestamp and the value of each reading, possibly with extra fields depending on
+  the protocol (e.g. the OPC UA `quality`).
 
-```json
-{ "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } }
-```
+  ```json
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 23.5, "quality": "Good" }
+  ```
+
+- **Query-based connectors** (MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB) send each
+  row (or document) exactly as the database returned it.
+
+  ```json
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:00:00.000Z", "reading": 23.5 }
+  ```
+
+The transformers below render a record list into the shape a North connector expects. Those needing a point, a
+timestamp or a value read them from configurable columns, which default to `pointId`, `timestamp` and `value`: point
+records work without changing them, while for query rows you name the columns of your query.
 
 ---
 
 #### CSV {#csv}
 
-Converts the time-values array into a CSV file. Each row is one reading. The three columns (point ID, timestamp,
-value) are mapped to configurable column titles. Optional per-column JavaScript expressions let you
-transform individual values before they are written.
+Converts the records into a CSV file. Every field of a record becomes a column automatically — there's no need to
+declare a field just to have it appear in the output. Declaring a field (via **Fields Mapping**, using the same
+per-field mapping model as [CSV (from JSON)](#csv-from-json)) is only needed when a column must be renamed, cast to a
+specific type, reformatted (dates), or passed through a JavaScript expression. With **Keep the other fields** off,
+only the configured fields are written, in their configured order.
 
 ##### Settings {#settings}
 
-| Setting               | Description                                                                                                                                                                                        |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename**          | Output filename; supports `@CurrentDate` (current UTC timestamp), and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
-| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                                                                                                                                                    |
-| **Header**            | Whether to include the column header row                                                                                                                                                           |
-| **Delimiter**         | Column separator                                                                                                                                                                                   |
-| **Newline**           | Line ending (`LF`, `CRLF`, `CR`)                                                                                                                                                                   |
-| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                                                                                                                                          |
-| **Escape char**       | `DOUBLE_QUOTE` or `BACKSLASH`                                                                                                                                                                      |
-| **Point ID column**   | Header label for the point identifier column                                                                                                                                                       |
-| **Value column**      | Header label for the value column                                                                                                                                                                  |
-| **Timestamp column**  | Header label for the timestamp column                                                                                                                                                              |
-| **Timestamp type**    | Output format (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)                                                                                                                              |
-| **Timestamp format**  | Custom pattern when type is `string` (e.g. `yyyy-MM-dd HH:mm:ss.SSS`)                                                                                                                              |
-| **Timezone**          | Timezone for formatting when type is `string`                                                                                                                                                      |
-| **Point ID process**  | Optional JS expression applied to each point ID (variable: `value`)                                                                                                                                |
-| **Value process**     | Optional JS expression applied to each value (variable: `value`)                                                                                                                                   |
-| **Timestamp process** | Optional JS expression applied to each formatted timestamp (variable: `value`)                                                                                                                     |
+| Setting                   | Description                                                                                                                                                                                        |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**              | Output filename; supports `@CurrentDate` (current UTC timestamp), and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
+| **Encoding**              | Output character encoding (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                                                                                                                           |
+| **First row as header**   | Whether to write a header row with the column names                                                                                                                                                |
+| **Compression**           | Gzip-compress the output file                                                                                                                                                                      |
+| **Delimiter**             | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                                                                                                                              |
+| **Newline**               | Row separator (`CRLF`, `LF`, `CR`)                                                                                                                                                                 |
+| **Quote character**       | Character used to quote fields (`DOUBLE_QUOTE`, `SINGLE_QUOTE`, `NONE`)                                                                                                                            |
+| **Escape character**      | Character used to escape a quote character inside a quoted field (`BACKSLASH`, `DOUBLE_QUOTE`)                                                                                                     |
+| **Null value**            | Value written out when a configured field is `null` or missing from the record                                                                                                                     |
+| **Keep the other fields** | Write the fields that are not configured in **Fields Mapping** unchanged (enabled by default)                                                                                                      |
+| **Fields Mapping**        | A list of per-column overrides (rename, cast, reformat, or process) — see below                                                                                                                    |
 
-##### Example {#example}
+Each entry in **Fields Mapping** targets one column, by its name in the records:
+
+| Setting               | Description                                                                                          |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Field Name**        | Name of the field to configure, matching a key in the records                                        |
+| **Column Name**       | Header for this column in the output CSV. Leave empty to keep the original field name.               |
+| **Data Type**         | How to cast the value: `string`, `number`, `boolean`, `datetime`, `array`, or `object`               |
+| **Field Process**     | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`)                    |
+| **Datetime Settings** | Shown only when Data Type is `datetime` — input/output type, timezone, format and locale (see below) |
+
+When **Data Type** is `datetime`, **Datetime Settings** describes how to parse the raw value and how to render
+it:
+
+| Setting                               | Description                                                                        |
+| ------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Timestamp input type**              | How to parse the raw value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`) |
+| **Input timezone / format / locale**  | Used to parse the raw value when its input type is `string`                        |
+| **Timestamp output type**             | How to render the value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)    |
+| **Output timezone / format / locale** | Used to render the value when its output type is `string`                          |
+
+##### Example — Point records {#example}
 
 **Input (OPC UA items: temp1, pressure1)**
 
 ```json
 [
-  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
-  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 23.5, "quality": "Good" },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 102.1, "quality": "Good" }
 ]
 ```
 
-With Delimiter: `SEMI_COLON`, `pointIdProcess: value.split('/').pop()`, and `valueProcess: String(value).replace('.', ',')`:
+With **Keep the other fields** off, Delimiter `SEMI_COLON`, and three fields: `pointId` (column `Reference`, field
+process `value.split('/').pop()`), `timestamp` (column `Timestamp`, datetime from `iso-string` to `string` with format
+`yyyy-MM-dd HH:mm:ss` and timezone `Europe/Paris`) and `value` (column `Value`):
 
-:::tip Why semicolon here
-`valueProcess` turns the decimal point into a comma (`23.5` → `23,5`), as is common in some locales. With a
-comma **delimiter** that would create an extra, unintended column. Using `;` as the delimiter avoids the clash.
-:::
+**Output CSV** — `quality` is not written
+
+```csv
+Reference;Timestamp;Value
+temp1;2024-01-15 11:00:00;23.5
+pressure1;2024-01-15 11:00:00;102.1
+```
+
+##### Example — Query rows {#example-7}
+
+**Input** (record list from a MySQL item)
+
+```json
+[
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:00:00.000Z", "value": 23.5 },
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:01:00.000Z", "value": 23.8 }
+]
+```
+
+With a single field configured (`readingTime`, data type `datetime`, input type `iso-string`, output type
+`string` with format `yyyy-MM-dd HH:mm:ss` and timezone `Europe/Paris`) — `deviceId` and `value` are not
+configured, so they pass through unchanged:
 
 **Output CSV**
 
 ```csv
-Reference;Timestamp;Value
-temp1;2024-01-15T10:00:00.000Z;23,5
-pressure1;2024-01-15T10:00:00.000Z;102,1
+deviceId,value,readingTime
+sensor-1,23.5,2024-01-15 11:00:00
+sensor-1,23.8,2024-01-15 11:01:00
 ```
 
 ---
 
 #### JSON {#json}
 
-A transparent pass-through that re-serializes the time-values array as a JSON file. Use this when the North
-connector expects a generic JSON file rather than the internal time-values format (e.g. a file-based North like
-Azure Blob or File Writer).
+Writes the records as a JSON file, unchanged. Use this when the North connector expects files (e.g. a file-based North
+like Azure Blob, Amazon S3, SFTP or REST).
 
 This transformer has **no configuration options**.
 
 ##### Example {#example-1}
 
-**Input** — any time-values array from an OPC UA or Modbus South connector.
+**Input** — the point records of an OPC UA or Modbus South connector, or the rows of a SQL query.
 
-**Output** — the identical JSON content saved as a `.json` file.
+**Output** — the same records saved as a `.json` file.
 
 ---
 
 #### MQTT payloads {#mqtt-payloads}
 
-Maps each reading to an MQTT message using a **point ID → topic** mapping table. Readings whose point ID has no
-match are silently dropped. The payload is a JSON string containing the `data` fields merged with the `timestamp`.
+Maps each record to an MQTT message using a **point ID → topic** mapping table. Records whose point ID has no match
+are silently dropped. The payload is the record without its point column, as a JSON string.
 
 ##### Settings {#settings-1}
 
-| Setting     | Description                        |
-| ----------- | ---------------------------------- |
-| **Mapping** | List of `{ pointId, topic }` pairs |
+| Setting             | Description                                                   |
+| ------------------- | ------------------------------------------------------------- |
+| **Point ID column** | Field of the records holding the point ID (default `pointId`) |
+| **Mapping**         | List of `{ pointId, topic }` pairs                            |
 
 ##### Example {#example-2}
 
@@ -198,9 +253,9 @@ Mapping: `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pre
 
 ```json
 [
-  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
-  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } },
-  { "pointId": "plant/unknown", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "0" } }
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "23.5" },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "102.1" },
+  { "pointId": "plant/unknown", "timestamp": "2024-01-15T10:00:00.000Z", "value": "0" }
 ]
 ```
 
@@ -208,8 +263,8 @@ Mapping: `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pre
 
 ```json
 [
-  { "topic": "sensors/temperature", "payload": "{\"value\":\"23.5\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" },
-  { "topic": "sensors/pressure", "payload": "{\"value\":\"102.1\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" }
+  { "topic": "sensors/temperature", "payload": "{\"timestamp\":\"2024-01-15T10:00:00.000Z\",\"value\":\"23.5\"}" },
+  { "topic": "sensors/pressure", "payload": "{\"timestamp\":\"2024-01-15T10:00:00.000Z\",\"value\":\"102.1\"}" }
 ]
 ```
 
@@ -217,8 +272,8 @@ Mapping: `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pre
 
 #### Modbus values {#modbus-values}
 
-Maps each reading to a Modbus write command using a **point ID → address** mapping table. The value is cast to the
-appropriate type (see [Modbus value conversion](#modbus-value-conversion)). Readings with no match are dropped.
+Maps each record to a Modbus write command using a **point ID → address** mapping table. The value is cast to the
+appropriate type (see [Modbus value conversion](#modbus-value-conversion)). Records with no match are dropped.
 
 ##### Modbus value conversion {#modbus-value-conversion}
 
@@ -228,9 +283,11 @@ or any non-zero number, and cleared for `false` or `0`. A register receives the 
 
 ##### Settings {#settings-2}
 
-| Setting     | Description                                                                           |
-| ----------- | ------------------------------------------------------------------------------------- |
-| **Mapping** | List of `{ pointId, address, modbusType }` pairs (`modbusType`: `coil` or `register`) |
+| Setting             | Description                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| **Point ID column** | Field of the records holding the point ID (default `pointId`)                         |
+| **Value column**    | Field of the records holding the value to write (default `value`)                     |
+| **Mapping**         | List of `{ pointId, address, modbusType }` pairs (`modbusType`: `coil` or `register`) |
 
 ##### Example {#example-3}
 
@@ -240,8 +297,8 @@ Mapping: `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 
 ```json
 [
-  { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "true" } },
-  { "pointId": "plant/speed", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "1450" } }
+  { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "true" },
+  { "pointId": "plant/speed", "timestamp": "2024-01-15T10:00:00.000Z", "value": "1450" }
 ]
 ```
 
@@ -258,24 +315,34 @@ Mapping: `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 
 #### OIAnalytics (select time precision) {#oianalytics-select-time-precision}
 
-Prepares readings for the OIAnalytics North connector. Timestamps can be truncated to a chosen precision to reduce
-storage footprint. Only the `pointId`, `timestamp`, and `data.value` fields are forwarded — extra quality fields
-are stripped. To save bandwidth, the readings are written in the OIAnalytics **compact format**: three parallel arrays
-of the same size (`timestamps`, `values`, `references`), the i-th reading being made of the i-th element of each array.
+Prepares records for the OIAnalytics North connector. Only the point ID, the timestamp and the value of each record
+are forwarded — extra fields such as the quality are stripped — and the timestamps can be truncated to a chosen
+precision to reduce storage footprint. To save bandwidth, the values are written in the OIAnalytics **compact
+format**: three parallel arrays of the same size (`timestamps`, `values`, `references`), the i-th value being made of
+the i-th element of each array.
+
+Records without point ID, value or valid timestamp are skipped, with a single warning per batch. A date column
+returned by a database driver as a date object is used as is; other timestamps are parsed with the timestamp
+settings.
 
 ##### Settings {#settings-3}
 
-| Setting               | Description                                                                                                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Precision**         | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr`                                                                                                                |
-| **Reference process** | Optional JavaScript expression applied to each point ID to build the OIAnalytics reference, `value` being the point ID (e.g. `value.replace('plant/', '').toUpperCase()`) |
+| Setting                        | Description                                                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Point ID column**            | Field of the records holding the point ID (default `pointId`)                                                                                                             |
+| **Timestamp column**           | Field of the records holding the timestamp (default `timestamp`)                                                                                                          |
+| **Value column**               | Field of the records holding the value (default `value`)                                                                                                                  |
+| **Timestamp type**             | Format of the raw timestamp: `iso-string` (default, as in point records), `unix-epoch`, `unix-epoch-ms`, or `string`                                                      |
+| **Timezone / Format / Locale** | Used to parse the raw timestamp when its type is `string`                                                                                                                 |
+| **Precision**                  | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr`                                                                                                                |
+| **Reference process**          | Optional JavaScript expression applied to each point ID to build the OIAnalytics reference, `value` being the point ID (e.g. `value.replace('plant/', '').toUpperCase()`) |
 
 ##### Example — Precision `s` {#example--precision-s}
 
 **Input**
 
 ```json
-[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.523Z", "data": { "value": "23.5", "quality": "good" } }]
+[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.523Z", "value": "23.5", "quality": "good" }]
 ```
 
 **Output** — milliseconds are zeroed, `quality` is stripped
@@ -284,18 +351,35 @@ of the same size (`timestamps`, `values`, `references`), the i-th reading being 
 { "timestamps": ["2024-01-15T10:00:00.000Z"], "values": ["23.5"], "references": ["tag/temp1"] }
 ```
 
+##### Example — Query rows {#example--query-rows}
+
+**Input** (record list from a PostgreSQL item), with Point ID column `deviceId`, Timestamp column `readingTime`
+(type `string`, format `yyyy-MM-dd HH:mm:ss`, timezone `Europe/Paris`) and Value column `reading`:
+
+```json
+[{ "deviceId": "sensor-1", "readingTime": "2024-01-15 11:00:00", "reading": 23.5 }]
+```
+
+**Output**
+
+```json
+{ "timestamps": ["2024-01-15T10:00:00.000Z"], "values": [23.5], "references": ["sensor-1"] }
+```
+
 ---
 
 #### OPCUA values {#opcua-values}
 
-Maps each reading to an OPC UA write command using a **point ID → node ID** mapping table. The value is forwarded
-as-is. Readings with no match are dropped.
+Maps each record to an OPC UA write command using a **point ID → node ID** mapping table. The value is forwarded
+as-is. Records with no match, or without value, are dropped.
 
 ##### Settings {#settings-4}
 
-| Setting     | Description                         |
-| ----------- | ----------------------------------- |
-| **Mapping** | List of `{ pointId, nodeId }` pairs |
+| Setting             | Description                                                       |
+| ------------------- | ----------------------------------------------------------------- |
+| **Point ID column** | Field of the records holding the point ID (default `pointId`)     |
+| **Value column**    | Field of the records holding the value to write (default `value`) |
+| **Mapping**         | List of `{ pointId, nodeId }` pairs                               |
 
 ##### Example {#example-4}
 
@@ -305,8 +389,8 @@ Mapping: `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 
 ```json
 [
-  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
-  { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "true" } }
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "23.5" },
+  { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "true" }
 ]
 ```
 
@@ -321,17 +405,17 @@ Mapping: `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 
 ---
 
-### For file and query-based South connectors {#for-file-and-query-based-south-connectors}
+### For file-based South connectors {#for-file-and-query-based-south-connectors}
 
-These transformers process files or JSON payloads produced by connectors such as REST, SFTP, FTP, Folder Scanner,
-ODBC, and OLEDB, as well as data injected via the **OIBus API**.
+These transformers process files or JSON payloads produced by connectors such as MQTT, REST, SFTP, FTP, Folder
+Scanner and OIAnalytics, as well as data injected via the **OIBus API**.
 
 ---
 
-#### Time Values (from CSV) {#time-values-from-csv}
+#### Records (from CSV) {#records-from-csv}
 
-Parses a CSV file and maps each row to an OIBus time-value object. The transformer converts the raw timestamp
-string to ISO-8601 according to the configured format.
+Parses a CSV file and maps each row to a point record `{ pointId, timestamp, value }`. The transformer converts the
+raw timestamp string to ISO-8601 according to the configured format.
 
 ##### Settings {#settings-5}
 
@@ -360,18 +444,18 @@ tag/temp1,2024-01-15T10:01:00.000Z,23.8
 tag/pressure1,2024-01-15T10:00:00.000Z,102.1
 ```
 
-**Output (time-values JSON)**
+**Output (point records)**
 
 ```json
 [
-  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 23.5 } },
-  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": 23.8 } },
-  { "pointId": "tag/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 102.1 } }
+  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 23.5 },
+  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "value": 23.8 },
+  { "pointId": "tag/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 102.1 }
 ]
 ```
 
-These time-values can then be forwarded to any North connector that accepts structured readings (OIAnalytics,
-MQTT, OPC UA…).
+These records can then be forwarded to the North connectors that accept record lists (OIAnalytics, Console, File
+Writer).
 
 ---
 
@@ -513,29 +597,29 @@ one row per nested match, so a single message holding several readings splits in
 #### OIAnalytics (from JSON) {#oianalytics-from-json}
 
 Extracts point ID, value, and timestamp from an arbitrary JSON structure via JSONPath expressions and produces
-time-values in the OIAnalytics compact format (`timestamps`, `values` and `references` parallel arrays) — the same
+values in the OIAnalytics compact format (`timestamps`, `values` and `references` parallel arrays) — the same
 output as the [OIAnalytics (select time precision)](#oianalytics-select-time-precision) transformer. A **row iterator
-path** identifies which part of the payload becomes one row (one time-value) per match; the point ID, value, and
+path** identifies which part of the payload becomes one row (one value) per match; the point ID, value, and
 timestamp paths are then resolved relative to that row.
 
 This is the transformer to reach for when a South connector (typically MQTT, REST, or Folder Scanner) delivers raw
-JSON that doesn't already match OIBus's internal time-values shape, and you want to feed it straight to an
+JSON that doesn't already match OIBus's point records, and you want to feed it straight to an
 OIAnalytics North connector without writing a custom transformer.
 
 ##### Settings {#settings-8}
 
-| Setting                   | Description                                                                                                                                                                                                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Row Iterator JSONPath** | JSONPath to the array of rows that become time-values (e.g. `$[*]`). Automatically parses a JSON-stringified intermediate node when direct traversal fails, so the path may cross into a field holding raw JSON text (e.g. an MQTT payload) and still yield one row per nested match |
-| **Point ID JSONPath**     | JSONPath to the point identifier within the current row (e.g. `$[*].id`); wildcards (`[*]`) are resolved to the current row's indices                                                                                                                                                |
-| **Value JSONPath**        | JSONPath to the value within the current row                                                                                                                                                                                                                                         |
-| **Timestamp JSONPath**    | JSONPath to the raw timestamp within the current row. Falls back to the current time if it cannot be resolved                                                                                                                                                                        |
-| **Reference process**     | Optional JavaScript expression applied to each resolved point ID to build the OIAnalytics reference, `value` being the point ID (e.g. `value.replace('plant/', '').toUpperCase()`)                                                                                                   |
-| **Timestamp input type**  | Format of the raw timestamp: `String`, `ISO string`, `Unix epoch (s)`, or `Unix epoch (ms)`                                                                                                                                                                                          |
-| **Timezone**              | Timezone used when parsing (only used when input type is `String`)                                                                                                                                                                                                                   |
-| **Format**                | Custom datetime pattern (only used when input type is `String`, e.g. `yyyy-MM-dd HH:mm:ss`)                                                                                                                                                                                          |
-| **Locale**                | Locale used for parsing month/day names (only used when input type is `String`)                                                                                                                                                                                                      |
-| **Timestamp precision**   | Output precision the resulting ISO timestamp is truncated to: `Millisecond`, `Second`, `Minute`, or `Hour`                                                                                                                                                                           |
+| Setting                   | Description                                                                                                                                                                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Row Iterator JSONPath** | JSONPath to the array of rows that become values (e.g. `$[*]`). Automatically parses a JSON-stringified intermediate node when direct traversal fails, so the path may cross into a field holding raw JSON text (e.g. an MQTT payload) and still yield one row per nested match |
+| **Point ID JSONPath**     | JSONPath to the point identifier within the current row (e.g. `$[*].id`); wildcards (`[*]`) are resolved to the current row's indices                                                                                                                                           |
+| **Value JSONPath**        | JSONPath to the value within the current row                                                                                                                                                                                                                                    |
+| **Timestamp JSONPath**    | JSONPath to the raw timestamp within the current row. Falls back to the current time if it cannot be resolved                                                                                                                                                                   |
+| **Reference process**     | Optional JavaScript expression applied to each resolved point ID to build the OIAnalytics reference, `value` being the point ID (e.g. `value.replace('plant/', '').toUpperCase()`)                                                                                              |
+| **Timestamp input type**  | Format of the raw timestamp: `String`, `ISO string`, `Unix epoch (s)`, or `Unix epoch (ms)`                                                                                                                                                                                     |
+| **Timezone**              | Timezone used when parsing (only used when input type is `String`)                                                                                                                                                                                                              |
+| **Format**                | Custom datetime pattern (only used when input type is `String`, e.g. `yyyy-MM-dd HH:mm:ss`)                                                                                                                                                                                     |
+| **Locale**                | Locale used for parsing month/day names (only used when input type is `String`)                                                                                                                                                                                                 |
+| **Timestamp precision**   | Output precision the resulting ISO timestamp is truncated to: `Millisecond`, `Second`, `Minute`, or `Hour`                                                                                                                                                                      |
 
 ##### Example — MQTT messages with a JSON-stringified payload {#example--mqtt-messages-with-a-json-stringified-payload}
 
@@ -575,83 +659,6 @@ handles a single-metric message and a multi-metric message alike.
   "values": [52.2936, 18.4, 1450],
   "references": ["PLANT.UNIT1.TANK3.LEVEL", "PLANT.UNIT1.TANK3.TEMP", "PLANT.UNIT2.PUMP1.SPEED"]
 }
-```
-
----
-
-### For SQL database and MongoDB South connectors {#for-sql-database-and-mongodb-south-connectors}
-
-MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB and InfluxDB South connectors don't serialize their query results
-themselves — each row (or document) is sent downstream exactly as the database returned it, as
-**record-list** content (an array of flat row objects). Rendering that data into any other shape, including
-CSV, is the transformer's job.
-
----
-
-#### CSV (from Record list) {#csv-from-record-list}
-
-Converts an array of rows into a CSV file. Every key present in a row becomes a column automatically — there's
-no need to declare a field just to have it appear in the output. Declaring a field (via **Fields Mapping**,
-using the same per-field mapping model as [CSV (from JSON)](#csv-from-json)) is only needed when a column must
-be renamed, cast to a specific type, reformatted (dates), or passed through a JavaScript expression. Any column
-not covered by a field configuration is written out unchanged.
-
-##### Settings {#settings-9}
-
-| Setting                 | Description                                                                                    |
-| ----------------------- | ---------------------------------------------------------------------------------------------- |
-| **Filename**            | Output filename pattern (supports `@CurrentDate`, `@QueryStartTime`, `@QueryEndTime`)          |
-| **Encoding**            | Output character encoding (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                       |
-| **First row as header** | Whether to write a header row with the column names                                            |
-| **Compression**         | Gzip-compress the output file                                                                  |
-| **Delimiter**           | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                          |
-| **Newline**             | Row separator (`CRLF`, `LF`, `CR`)                                                             |
-| **Quote character**     | Character used to quote fields (`DOUBLE_QUOTE`, `SINGLE_QUOTE`, `NONE`)                        |
-| **Escape character**    | Character used to escape a quote character inside a quoted field (`BACKSLASH`, `DOUBLE_QUOTE`) |
-| **Null value**          | Value written out when a configured field is `null` or missing from the row                    |
-| **Fields Mapping**      | A list of per-column overrides (rename, cast, reformat, or process) — see below                |
-
-Each entry in **Fields Mapping** targets one column, by its name in the source rows:
-
-| Setting               | Description                                                                                          |
-| --------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Field Name**        | Name of the column to configure, matching a key in the source rows                                   |
-| **Column Name**       | Header for this column in the output CSV. Leave empty to keep the original field name.               |
-| **Data Type**         | How to cast the value: `string`, `number`, `boolean`, `datetime`, `array`, or `object`               |
-| **Field Process**     | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`)                    |
-| **Datetime Settings** | Shown only when Data Type is `datetime` — input/output type, timezone, format and locale (see below) |
-
-When **Data Type** is `datetime`, **Datetime Settings** describes how to parse the raw value and how to render
-it:
-
-| Setting                               | Description                                                                        |
-| ------------------------------------- | ---------------------------------------------------------------------------------- |
-| **Timestamp input type**              | How to parse the raw value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`) |
-| **Input timezone / format / locale**  | Used to parse the raw value when its input type is `string`                        |
-| **Timestamp output type**             | How to render the value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)    |
-| **Output timezone / format / locale** | Used to render the value when its output type is `string`                          |
-
-##### Example {#example-7}
-
-**Input** (record-list content from a MySQL item)
-
-```json
-[
-  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:00:00.000Z", "value": 23.5 },
-  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:01:00.000Z", "value": 23.8 }
-]
-```
-
-With a single field configured (`readingTime`, data type `datetime`, input type `iso-string`, output type
-`string` with format `yyyy-MM-dd HH:mm:ss` and timezone `Europe/Paris`) — `deviceId` and `value` are not
-configured, so they pass through unchanged:
-
-**Output CSV**
-
-```csv
-deviceId,value,readingTime
-sensor-1,23.5,2024-01-15 11:00:00
-sensor-1,23.8,2024-01-15 11:01:00
 ```
 
 ---
@@ -794,7 +801,14 @@ TypeScript. Custom code runs inside a secure isolated sandbox with no access to 
 modules, or the network.
 
 Custom transformers are created in the **Engine → Transformers** page and are then available in the transformer
-selection list of any North connector.
+selection list of any North connector. Their **input type** is `any` (files and payloads), `record-list` or
+`setpoint`; their **output type** is `any`, `record-list`, `mqtt`, `opcua`, `modbus` or `oianalytics`.
+
+:::info Custom transformers from OIBus 3.9
+The `time-values` data type no longer exists: custom transformers taking or producing time-values were switched to
+`record-list` on upgrade. Their code must now read and write flat point records (`{ pointId, timestamp, value }`,
+e.g. `record.value`) instead of `{ pointId, timestamp, data: { value } }`.
+:::
 
 ### Transform Function {#transform-function}
 
@@ -831,11 +845,11 @@ according to its content type. `data` is handled by kind:
 | -------------------------------------------- | ---------------------------- | ------------------------------------------------------- |
 | a **string**                                 | the string verbatim (UTF-8)  | any output type — you control the exact text            |
 | a **`Uint8Array` / `ArrayBuffer`** (binary)  | the raw bytes, byte-for-byte | the **`any`** output type only (file Norths)            |
-| any **other value** (object, array, number…) | `JSON.stringify(data)`       | typed outputs (`time-values`, `mqtt`, …) that read JSON |
+| any **other value** (object, array, number…) | `JSON.stringify(data)`       | typed outputs (`record-list`, `mqtt`, …) that read JSON |
 
 :::caution Match `data` to the output type; keep `filename` a string
 
-- For **typed** output types (`time-values`, `mqtt`, `oianalytics`, `modbus`, `opcua`) the North reads
+- For **typed** output types (`record-list`, `mqtt`, `oianalytics`, `modbus`, `opcua`) the North reads
   the cache file as **JSON** — return a string or an object/array (which OIBus serializes to JSON).
   Returning binary here will not parse.
 - **Binary** output (`Uint8Array`/`ArrayBuffer`) is for the **`any`** output type, where file Norths
@@ -929,17 +943,17 @@ export function transform(content, source, filename, options) {
 
 ---
 
-#### Example 2 — Filter and enrich time-values (TypeScript) {#example-2--filter-and-enrich-time-values-typescript}
+#### Example 2 — Filter and enrich point records (TypeScript) {#example-2--filter-and-enrich-point-records-typescript}
 
 Only keep readings above a configured threshold, and annotate each with a derived `status` field.
 
-**Input (`content`)** — standard time-values array, `options.threshold = 20`
+**Input (`content`)** — the point records of a point-based South connector, `options.threshold = 20`
 
 ```json
 [
-  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
-  { "pointId": "plant/temp2", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "18.0" } },
-  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "23.5" },
+  { "pointId": "plant/temp2", "timestamp": "2024-01-15T10:00:00.000Z", "value": "18.0" },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "102.1" }
 ]
 ```
 
@@ -947,15 +961,15 @@ Only keep readings above a configured threshold, and annotate each with a derive
 
 ```json
 [
-  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5", "status": "NORMAL" } },
-  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1", "status": "HIGH" } }
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "23.5", "status": "NORMAL" },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "value": "102.1", "status": "HIGH" }
 ]
 ```
 
 **Code**
 
 ```typescript
-type TimeValue = { pointId: string; timestamp: string; data: { value: string } };
+type PointRecord = { pointId: string; timestamp: string; value: string };
 
 export function transform(
   content: string,
@@ -963,20 +977,17 @@ export function transform(
   _filename: string,
   options: { threshold: number }
 ): { data: string; filename: string; numberOfElement: number } {
-  const values: Array<TimeValue> = JSON.parse(content);
+  const records: Array<PointRecord> = JSON.parse(content);
   const threshold = options.threshold ?? 0;
 
-  const filtered = values
-    .filter(v => parseFloat(v.data.value) > threshold)
-    .map(v => ({
-      ...v,
-      data: {
-        ...v.data,
-        status: parseFloat(v.data.value) > threshold * 2 ? 'HIGH' : 'NORMAL'
-      }
+  const filtered = records
+    .filter(record => parseFloat(record.value) > threshold)
+    .map(record => ({
+      ...record,
+      status: parseFloat(record.value) > threshold * 2 ? 'HIGH' : 'NORMAL'
     }));
 
-  console.info(`Kept ${filtered.length} / ${values.length} values above threshold ${threshold}`);
+  console.info(`Kept ${filtered.length} / ${records.length} records above threshold ${threshold}`);
 
   return {
     data: JSON.stringify(filtered),
@@ -1006,9 +1017,9 @@ export function transform(
 
 ```json
 [
-  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
-  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": "23.8" } },
-  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 23.5 },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "value": 23.8 },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 102.1 }
 ]
 ```
 
@@ -1023,16 +1034,16 @@ export function transform(content, _source, _filename, _options) {
   const tags = JSONPath({ path: '$.records[*].tag', json: data });
   const values = JSONPath({ path: '$.records[*].measurements.val', json: data });
 
-  const timeValues = timestamps.map((ts, i) => ({
+  const records = timestamps.map((ts, i) => ({
     pointId: tags[i],
     timestamp: ts,
-    data: { value: String(values[i]) }
+    value: values[i]
   }));
 
   return {
-    data: JSON.stringify(timeValues),
+    data: JSON.stringify(records),
     filename: `extracted_${Date.now()}.json`,
-    numberOfElement: timeValues.length
+    numberOfElement: records.length
   };
 }
 ```
@@ -1083,13 +1094,13 @@ export function transform(content, _source, _filename, _options) {
 
 ---
 
-#### Example 5 — Normalize MQTT JSON messages to time-values (JavaScript) {#example-5--normalize-mqtt-json-messages-to-time-values-javascript}
+#### Example 5 — Normalize MQTT JSON messages to records (JavaScript) {#example-5--normalize-mqtt-json-messages-to-records-javascript}
 
 An **MQTT South** connector delivers each batch of received messages as a single `any-content` payload:
 a JSON array of `{ message, timestamp, item: { id, name, topic } }`, where `message` is the **raw MQTT
 payload string**. That raw payload can be any shape — a bare number, a JSON string, a flat object, or
 an array of readings (see the [JSON topics](../../developer/local-test-stack.md#json-topics) published
-by the local test stack). This transformer normalizes all of them into a standard time-values array,
+by the local test stack). This transformer normalizes all of them into point records (`record-list` output),
 using the topic as the point ID.
 
 **Input (`content`)** — three messages from different topics
@@ -1114,14 +1125,14 @@ using the topic as the point ID.
 ]
 ```
 
-**Output** — one time-value per reading; the array message yields two
+**Output** — one point record per reading; the array message yields two
 
 ```json
 [
-  { "pointId": "workshop1/json/flat", "timestamp": "2026-06-04T08:15:06.673+00:00", "data": { "value": "35.17" } },
-  { "pointId": "workshop2/json/number", "timestamp": "2026-06-04T08:15:06.700Z", "data": { "value": "44.53" } },
-  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:06.673+00:00", "data": { "value": "34.95" } },
-  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:08.673+00:00", "data": { "value": "35.48" } }
+  { "pointId": "workshop1/json/flat", "timestamp": "2026-06-04T08:15:06.673+00:00", "value": "35.17" },
+  { "pointId": "workshop2/json/number", "timestamp": "2026-06-04T08:15:06.700Z", "value": "44.53" },
+  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:06.673+00:00", "value": "34.95" },
+  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:08.673+00:00", "value": "35.48" }
 ]
 ```
 
@@ -1130,7 +1141,7 @@ using the topic as the point ID.
 ```javascript
 export function transform(content, _source, _filename, _options) {
   const messages = JSON.parse(content); // [{ message, timestamp, item: { topic } }, …]
-  const timeValues = [];
+  const records = [];
 
   // Extract a scalar value from one reading, whatever its shape.
   const toValue = reading => {
@@ -1152,19 +1163,19 @@ export function transform(content, _source, _filename, _options) {
 
     const readings = Array.isArray(parsed) ? parsed : [parsed];
     for (const reading of readings) {
-      timeValues.push({
+      records.push({
         pointId: item.topic,
         timestamp: (reading && reading.timestamp) || timestamp,
-        data: { value: String(toValue(reading)) }
+        value: String(toValue(reading))
       });
     }
   }
 
   return {
-    data: JSON.stringify(timeValues),
+    data: JSON.stringify(records),
     // Always a plain string filename — never a payload object (see the caution above).
     filename: `mqtt_${Date.now()}.json`,
-    numberOfElement: timeValues.length
+    numberOfElement: records.length
   };
 }
 ```

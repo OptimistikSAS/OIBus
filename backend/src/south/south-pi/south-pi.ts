@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthPIItemSettings, SouthPISettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
@@ -9,7 +9,7 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { HTTPRequest } from '../../service/http-request.utils';
-import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { getErrorMessage, NestedPointValue, toPointRecord, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
 
@@ -106,7 +106,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
     const testSessionId = `${this.connector.id}-test`;
-    const content: OIBusContent = { type: 'time-values', content: [] };
+    const content: OIBusContent = { type: 'record-list', content: [] };
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
 
@@ -144,14 +144,14 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       if (response.statusCode === 200) {
         const result: {
           recordCount: number;
-          content: Array<OIBusTimeValue>;
+          content: Array<NestedPointValue>;
           maxInstantRetrieved: Instant;
         } = (await response.body.json()) as {
           recordCount: number;
-          content: Array<OIBusTimeValue>;
+          content: Array<NestedPointValue>;
           maxInstantRetrieved: string;
         };
-        content.content = result.content;
+        content.content = result.content.map(toPointRecord);
         const queryDuration = DateTime.now().toMillis() - queryStart;
         return { result: content, connectionDuration, queryDuration };
       }
@@ -199,14 +199,14 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     const response = await HTTPRequest(requestUrl, fetchOptions);
     let result: {
       recordCount: number;
-      content: Array<OIBusTimeValue>;
+      content: Array<NestedPointValue>;
       logs: Array<string>;
       maxInstantRetrieved: Instant;
     } | null = null;
     if (response.statusCode === 200) {
       result = (await response.body.json()) as {
         recordCount: number;
-        content: Array<OIBusTimeValue>;
+        content: Array<NestedPointValue>;
         logs: Array<string>;
         maxInstantRetrieved: string;
       };
@@ -219,7 +219,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       }
       if (result.recordCount > 0) {
         this.logger.debug(logCtx, `Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
-        await this.addContent({ type: 'time-values', content: result.content }, startRequest.toUTC().toISO(), items);
+        await this.addContent({ type: 'record-list', content: result.content.map(toPointRecord) }, startRequest.toUTC().toISO(), items);
         if (result.maxInstantRetrieved > startTime) {
           updatedStartTime = result.maxInstantRetrieved;
         }
@@ -234,7 +234,10 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       await response.body.dump();
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
-    return { trackedInstant: updatedStartTime, value: result?.content.length > 0 ? result.content[result.content.length - 1] : null };
+    return {
+      trackedInstant: updatedStartTime,
+      value: result?.content.length > 0 ? toPointRecord(result.content[result.content.length - 1]) : null
+    };
   }
 
   async disconnect(): Promise<void> {

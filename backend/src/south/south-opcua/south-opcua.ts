@@ -20,7 +20,7 @@ import {
 } from 'node-opcua';
 import { EUInformation, HistoryDataOptions, HistoryReadValueIdOptions, Range } from 'node-opcua-types/source/_generated_opcua_types';
 
-import { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord, OIBusRecord } from '../../../shared/model/common/content.model';
 import { Aggregate, Instant, Resampling } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
@@ -417,7 +417,7 @@ export default class SouthOPCUA
       if (item.settings.mode === 'da') {
         const nodeId = resolveNodeId(item.settings.nodeId);
         const daValues = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session, workUnitLogCtx([item]));
-        result = { type: 'time-values', content: daValues };
+        result = { type: 'record-list', content: daValues };
       } else {
         const haResult = await this.getHAValues(
           [item],
@@ -426,7 +426,7 @@ export default class SouthOPCUA
           session,
           true
         );
-        result = { type: 'time-values', content: haResult.value ? [haResult.value] : [] };
+        result = { type: 'record-list', content: haResult.value ? [haResult.value] : [] };
       }
       return { result, connectionDuration, queryDuration: DateTime.now().toMillis() - queryStart };
     } finally {
@@ -839,12 +839,12 @@ export default class SouthOPCUA
     endTime: Instant,
     session: ClientSession,
     testingItem = false
-  ): Promise<{ trackedInstant: Instant | null; value: OIBusTimeValue | null }> {
+  ): Promise<{ trackedInstant: Instant | null; value: OIBusPointRecord | null }> {
     // One work-unit (single item, or a synced group) can still fan out into several
     // aggregate/resampling sub-batches below — logCtx identifies the work-unit as a whole and is
     // reused across all of them rather than recomputed per sub-batch.
     const logCtx = workUnitLogCtx(items);
-    let lastValue: OIBusTimeValue | null = null;
+    let lastValue: OIBusPointRecord | null = null;
     // Track the most-recent timestamp in epoch-ms so we can compare numerically
     // and avoid re-parsing lastValue.timestamp ISO string on every history value.
     let lastValueTimestampMs = -Infinity;
@@ -923,7 +923,7 @@ export default class SouthOPCUA
         const subBatchStart = DateTime.now();
         do {
           roundTripCount++;
-          const batchValues: Array<OIBusTimeValue> = [];
+          const batchValues: Array<OIBusPointRecord> = [];
           // A Set, not an array: a single item can produce several history values in one round-trip
           // (multiple timestamps for the same node), and each must only appear once in the item list
           // passed to addContent — same "one entry per item" shape as resampledItemsAsItems before.
@@ -989,13 +989,11 @@ export default class SouthOPCUA
                     }
                     const selectedTimestamp = historyValue.sourceTimestamp ?? historyValue.serverTimestamp;
                     const selectedTimestampMs = selectedTimestamp!.getTime();
-                    const timeValue: OIBusTimeValue = {
+                    const timeValue: OIBusPointRecord = {
                       pointId: associatedItem.name,
                       timestamp: selectedTimestamp!.toISOString(),
-                      data: {
-                        value,
-                        quality: historyValue.statusCode.name
-                      }
+                      value,
+                      quality: historyValue.statusCode.name
                     };
                     const previous = lastValues.get(associatedItem.id) ?? null;
                     const shouldCache = shouldCacheValue({
@@ -1050,7 +1048,7 @@ export default class SouthOPCUA
               // to the OPC-UA session and would trigger a needless disconnect+reconnect.
               try {
                 await this.addContent(
-                  { type: 'time-values', content: batchValues },
+                  { type: 'record-list', content: batchValues },
                   startRequest.toUTC().toISO(),
                   Array.from(itemsToCacheSet)
                 );
@@ -1098,17 +1096,17 @@ export default class SouthOPCUA
     // TypeScript's control-flow analysis can't see assignments inside the .map()
     // callback above, so it narrows lastValue to its initial type (null) here.
     // The `as` cast disables narrowing for the use site.
-    const result = lastValue as OIBusTimeValue | null;
+    const result = lastValue as OIBusPointRecord | null;
     return {
       trackedInstant: result?.timestamp ?? null,
       value: result
     };
   }
 
-  async directQuery(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<OIBusTimeValue | null> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<OIBusPointRecord | null> {
     const logCtx = workUnitLogCtx(items);
     const nodesToRead: Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }> = [];
-    let content: Array<OIBusTimeValue> = [];
+    let content: Array<OIBusPointRecord> = [];
     for (const item of items) {
       if (item.settings.mode === 'da') {
         let nodeId;
@@ -1162,12 +1160,12 @@ export default class SouthOPCUA
     });
     const cachedPairs = this.applyCachingStrategy(candidates, ({ item, value }) => ({
       item,
-      value: value.data.value,
+      value: value.value,
       timestamp: value.timestamp
     }));
 
     await this.addContent(
-      { type: 'time-values', content: cachedPairs.map(({ value }) => value) },
+      { type: 'record-list', content: cachedPairs.map(({ value }) => value) },
       queryTime,
       cachedPairs.map(({ item }) => item)
     );
@@ -1178,7 +1176,7 @@ export default class SouthOPCUA
     nodesToRead: Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }>,
     session: ClientSession,
     logCtx: Record<string, string> = {}
-  ): Promise<Array<OIBusTimeValue>> {
+  ): Promise<Array<OIBusPointRecord>> {
     const startRequest = DateTime.now().toMillis();
     const timeoutMs = this.connector.settings.readTimeout;
 
@@ -1227,13 +1225,11 @@ export default class SouthOPCUA
         return {
           pointId: nodesToRead[i].name,
           timestamp: selectedTimestamp,
-          data: {
-            value: parseOPCUAValue(nodesToRead[i].name, dataValue.value, this.logger),
-            quality: dataValue.statusCode.name
-          }
+          value: parseOPCUAValue(nodesToRead[i].name, dataValue.value, this.logger),
+          quality: dataValue.statusCode.name
         };
       })
-      .filter(parsedValue => parsedValue.data.value);
+      .filter(parsedValue => parsedValue.value);
   }
 
   async subscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
@@ -1357,7 +1353,7 @@ export default class SouthOPCUA
     if (valuesToSend.length) {
       this.logger.debug(`Flushing ${valuesToSend.length} messages`);
       try {
-        const content = new Array<OIBusTimeValue>(valuesToSend.length);
+        const content = new Array<OIBusPointRecord>(valuesToSend.length);
         const uniqueItems = new Set<SouthConnectorItemEntity<SouthOPCUAItemSettings>>();
         // Every buffered value already passed shouldCacheValue at push time (see subscribe()), so
         // the whole flushed batch is what actually gets cached this cycle. Dedupe to one row per
@@ -1368,12 +1364,13 @@ export default class SouthOPCUA
           content[i] = {
             pointId: element.item.name,
             timestamp: element.timestamp,
-            data: { value: element.value, quality: element.quality }
+            value: element.value,
+            quality: element.quality
           };
           uniqueItems.add(element.item);
           cachedEntriesByItem.set(element.item.id, { itemId: element.item.id, value: element.value, instant: element.timestamp });
         }
-        await this.addContent({ type: 'time-values', content }, DateTime.now().toUTC().toISO(), Array.from(uniqueItems));
+        await this.addContent({ type: 'record-list', content }, DateTime.now().toUTC().toISO(), Array.from(uniqueItems));
         // Subscription mode never wrote to south_item_cache before this feature: this is the first
         // path that persists the per-item "last cached" row for push-based items.
         this.southCacheRepository.saveItemsLastValues(this.connector.id, Array.from(cachedEntriesByItem.values()));

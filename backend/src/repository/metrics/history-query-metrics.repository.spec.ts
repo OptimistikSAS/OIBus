@@ -59,7 +59,7 @@ describe('HistoryQueryMetricsRepository with populated database', () => {
     newMetrics.south.lastValueRetrieved = {
       pointId: 'my reference',
       timestamp: testData.constants.dates.DATE_3,
-      data: { value: 'my value' }
+      value: 'my value'
     };
     newMetrics.north.lastContentSent = 'file.csv';
     repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);

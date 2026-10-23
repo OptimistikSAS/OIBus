@@ -129,7 +129,7 @@ describe('NorthOIAnalytics', () => {
   });
 
   it('should return correct types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any', 'time-values', 'oianalytics']);
+    assert.deepStrictEqual(north.supportedTypes(), ['any', 'record-list', 'oianalytics']);
   });
 
   describe('handleValues (time-values/oianalytics)', () => {
@@ -138,12 +138,12 @@ describe('NorthOIAnalytics', () => {
       contentSize: 100,
       numberOfElement: 2,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values'
+      contentType: 'record-list'
     };
     const oianalyticsMetadata = { ...timeValuesMetadata, contentType: 'oianalytics' };
     const timeValues = [
-      { pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1.5, quality: 'good' } },
-      { pointId: 'ref2', timestamp: '2020-01-01T00:01:00.000Z', data: { value: null } }
+      { pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', value: 1.5, quality: 'good' },
+      { pointId: 'ref2', timestamp: '2020-01-01T00:01:00.000Z', value: null }
     ];
     const compactTimeValues = {
       timestamps: ['2020-01-01T00:00:00.000Z', '2020-01-01T00:01:00.000Z'],
@@ -179,7 +179,7 @@ describe('NorthOIAnalytics', () => {
       const legacy = timeValues.map(timeValue => ({
         pointId: timeValue.pointId,
         timestamp: timeValue.timestamp,
-        data: { value: timeValue.data.value }
+        value: timeValue.value
       }));
 
       await north.handleContent(fileStreamOf(`\n${JSON.stringify(legacy)}`), oianalyticsMetadata);

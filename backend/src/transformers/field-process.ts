@@ -92,7 +92,7 @@ export function applyFieldProcess(value: unknown, expression: string | null | un
 
 /**
  * Build a function applying `expression` to string values (e.g. point IDs / references) and returning a string.
- * The same references repeat many times in a batch of time values, so results are memoized per value to avoid
+ * The same references repeat many times in a batch of records, so results are memoized per value to avoid
  * evaluating the expression in a new vm context for each element. Without expression, values are returned as is.
  */
 export function createStringFieldProcess(expression: string | null | undefined): (value: string) => string {

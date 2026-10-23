@@ -4,7 +4,7 @@ import { EditorView } from '@codemirror/view';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { OIBusContent, OIBusTimeValue, OIBusTimeValueContent } from '@oibus/shared/common/content.model';
+import { OIBusContent, OIBusPointRecord, OIBusRecordListContent } from '@oibus/shared/common/content.model';
 
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { ContentDisplayMode, ItemTestResultComponent } from './item-test-result.component';
@@ -43,13 +43,14 @@ class ItemTestResultComponentTester {
   }
 }
 
-function timeValues(count: number): OIBusTimeValueContent {
+function pointRecords(count: number): OIBusRecordListContent {
   return {
-    type: 'time-values',
-    content: Array.from({ length: count }, (_, index): OIBusTimeValue => ({
+    type: 'record-list',
+    content: Array.from({ length: count }, (_, index): OIBusPointRecord => ({
       pointId: `point${index}`,
       timestamp: '2024-01-01T00:00:00.000Z',
-      data: { value: `${index}`, quality: 'good' }
+      value: `${index}`,
+      quality: 'good'
     }))
   };
 }
@@ -83,7 +84,7 @@ describe('ItemTestResultComponent', () => {
 
   test('should display an item error and drop the result', async () => {
     const tester = new ItemTestResultComponentTester();
-    tester.component.displayResult(timeValues(1));
+    tester.component.displayResult(pointRecords(1));
     await expect.element(tester.table).toBeVisible();
 
     tester.component.displayError('boom');
@@ -98,33 +99,36 @@ describe('ItemTestResultComponent', () => {
 
   test('should display a display error and keep the result', async () => {
     const tester = new ItemTestResultComponentTester();
-    tester.component.displayResult(timeValues(1));
+    tester.component.displayResult(pointRecords(1));
 
     tester.component.displayError('cannot display', 'display-result-error');
 
     await expect.element(tester.message).toHaveTextContent('Error when displaying item, please try another view modecannot display');
     await expect.element(tester.table).not.toBeInTheDocument();
     expect(tester.currentDisplayMode).toHaveBeenLastCalledWith('table');
-    expect(tester.component.result()).toEqual(timeValues(1));
+    expect(tester.component.result()).toEqual(pointRecords(1));
   });
 
-  test('should display time values in a table', async () => {
+  test('should display point records in a table, with the fields of every record', async () => {
     const tester = new ItemTestResultComponentTester();
+    const records = pointRecords(2);
+    delete records.content[0]['quality'];
 
-    tester.component.displayResult(timeValues(2));
+    tester.component.displayResult(records);
 
     await expect.element(tester.tableHeaders).toHaveLength(4);
-    await expect.element(tester.tableHeaders.nth(1)).toHaveTextContent('Point Id');
+    await expect.element(tester.tableHeaders.nth(0)).toHaveTextContent('pointId');
+    await expect.element(tester.tableHeaders.nth(3)).toHaveTextContent('quality');
     await expect.element(tester.tableRows).toHaveLength(2);
-    await expect.element(tester.tableRows.nth(1)).toMatchTextContent(/2024-01-01T00:00:00.000Zpoint11.*"quality": "good"/);
+    await expect.element(tester.tableRows.nth(1)).toMatchTextContent('point12024-01-01T00:00:00.000Z1good');
     await expect.element(tester.pagination).not.toBeVisible();
-    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'json', 'any']);
+    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'json']);
     expect(tester.currentDisplayMode).toHaveBeenCalledWith('table');
   });
 
   test('should paginate the table', async () => {
     const tester = new ItemTestResultComponentTester();
-    tester.component.displayResult(timeValues(25));
+    tester.component.displayResult(pointRecords(25));
     await expect.element(tester.tableRows).toHaveLength(10);
 
     await tester.pagination.getByRole('link', { name: '3' }).click();
@@ -133,10 +137,10 @@ describe('ItemTestResultComponent', () => {
     await expect.element(tester.tableRows.nth(0)).toMatchTextContent('point20');
   });
 
-  test('should display a caption when there are no time values', async () => {
+  test('should display a caption when there are no records', async () => {
     const tester = new ItemTestResultComponentTester();
 
-    tester.component.displayResult(timeValues(0));
+    tester.component.displayResult(pointRecords(0));
 
     await expect.element(tester.noValues).toBeVisible();
     await expect.element(tester.table).not.toBeInTheDocument();
@@ -172,14 +176,14 @@ describe('ItemTestResultComponent', () => {
     expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'json']);
   });
 
-  test('should display time values as JSON', async () => {
+  test('should display records as JSON', async () => {
     const tester = new ItemTestResultComponentTester();
-    tester.component.displayResult(timeValues(1));
+    tester.component.displayResult(pointRecords(1));
 
     tester.switchTo('json');
 
     await expect.element(tester.table).not.toBeInTheDocument();
-    await expect.poll(() => tester.editorContent()).toBe(JSON.stringify(timeValues(1).content, null, 2));
+    await expect.poll(() => tester.editorContent()).toBe(JSON.stringify(pointRecords(1).content, null, 2));
   });
 
   test('should pretty-print raw content which is JSON', async () => {
@@ -220,7 +224,7 @@ describe('ItemTestResultComponent', () => {
 
   test('should drop stale table mode when a new result no longer supports it', async () => {
     const tester = new ItemTestResultComponentTester();
-    tester.component.displayResult(timeValues(1));
+    tester.component.displayResult(pointRecords(1));
     await expect.element(tester.table).toBeVisible();
 
     const transformed: OIBusContent = { type: 'any-content', content: '[]' };

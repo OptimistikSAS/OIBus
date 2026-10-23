@@ -16,7 +16,7 @@
 
   @if (!isLoading() && !message() && result()) {
     @if (displayMode() === 'table') {
-      @let page = activePage();
+      @let page = genericTableView();
       @if (page.totalElements) {
         <div class="d-flex flex-row-reverse">
           <div [class]="page.totalPages > 1 ? 'ms-2' : ''">
@@ -25,62 +25,24 @@
         </div>
       }
 
-      @let type = tableType();
-      @switch (type) {
-        @case ('time-values') {
-          @let timeValuesPage = tableView();
-          @if (timeValuesPage.totalElements === 0) {
-            <div class="alert alert-info m-2">{{ 'south.test-item.table.no-values' | translate }}</div>
-          } @else {
-            <div id="tableView" class="mb-2 grid-table">
-              <div class="grid-table-header fw-bold">
-                <div class="p-2">{{ 'south.test-item.table.timestamp' | translate }}</div>
-                <div class="p-2">{{ 'south.test-item.table.pointId' | translate }}</div>
-                <div class="p-2">{{ 'south.test-item.table.value' | translate }}</div>
-                <div class="p-2">{{ 'south.test-item.table.other' | translate }}</div>
-              </div>
-              @for (item of timeValuesPage.content; track $index) {
-                @let data = convertDataToString(item.data);
-                <div class="grid-table-row">
-                  <div class="align-items-center d-flex h-100 p-2">{{ item.timestamp }}</div>
-                  <div class="align-items-center d-flex h-100 p-2">{{ item.pointId }}</div>
-                  <div class="align-items-center d-flex h-100 p-2 break-anywhere">{{ data.value }}</div>
-                  <div class="align-items-center d-flex h-100 p-2">
-                    <code class="json-content">{{ data.other }}</code>
-                  </div>
-                </div>
+      @let headerNames = headers();
+      @if (page.totalElements === 0) {
+        <div class="alert alert-info m-2">{{ 'south.test-item.table.no-values' | translate }}</div>
+      } @else {
+        <div id="tableView" class="mb-2 grid-table" [style.grid-template-columns]="'repeat(' + headerNames?.length + ', minmax(0, 1fr))'">
+          <div class="grid-table-header fw-bold">
+            @for (header of headerNames; track $index) {
+              <div class="p-2">{{ header }}</div>
+            }
+          </div>
+          @for (items of page.content; track $index) {
+            <div class="grid-table-row">
+              @for (item of items; track $index) {
+                <div class="align-items-center d-flex h-100 p-2 break-anywhere">{{ item }}</div>
               }
             </div>
           }
-        }
-
-        @case ('generic') {
-          @let genericPage = genericTableView();
-          @let headerNames = headers();
-          @if (genericPage.totalElements === 0) {
-            <div class="alert alert-info m-2">{{ 'south.test-item.table.no-values' | translate }}</div>
-          } @else {
-            <div
-              id="tableView"
-              class="mb-2 grid-table"
-              [style.grid-template-columns]="'repeat(' + headerNames?.length + ', minmax(0, 1fr))'"
-            >
-              <div class="grid-table-header fw-bold">
-                @for (header of headerNames; track $index) {
-                  <div class="p-2">{{ header }}</div>
-                }
-              </div>
-              @for (items of genericPage.content; track $index) {
-                <div class="grid-table-row">
-                  @for (item of items; track $index) {
-                    <div class="align-items-center d-flex h-100 p-2 break-anywhere">{{ item }}</div>
-                  }
-                </div>
-              }
-            </div>
-          }
-        }
-        @default never;
+        </div>
       }
     }
 

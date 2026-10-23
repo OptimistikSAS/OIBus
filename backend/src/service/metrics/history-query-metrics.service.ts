@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { CacheMetadata, HistoryQueryItemStatus, HistoryQueryMetrics } from '../../../shared/model/domain/engine.model';
 
 import HistoryQuery from '../../engine/history-query';
@@ -166,7 +166,7 @@ export default class HistoryQueryMetricsService {
     this.updateMetrics();
   };
 
-  private onSouthAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null }) => {
+  private onSouthAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusRecord | null }) => {
     this._metrics.south.numberOfValuesRetrieved += data.numberOfValuesRetrieved;
     this._metrics.south.lastValueRetrieved = data.lastValueRetrieved;
     this.updateMetrics();

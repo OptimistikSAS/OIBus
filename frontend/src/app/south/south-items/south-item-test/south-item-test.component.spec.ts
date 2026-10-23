@@ -51,7 +51,7 @@ const historyTransformer: HistoryTransformerDTOWithOptions = {
 };
 
 const testResult: SouthConnectorItemTestResult = {
-  raw: { type: 'time-values', content: [] },
+  raw: { type: 'record-list', content: [] },
   transformed: null,
   connectionDuration: 12,
   queryDuration: 34

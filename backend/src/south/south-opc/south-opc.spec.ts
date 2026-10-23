@@ -308,10 +308,10 @@ describe('South OPC', () => {
     assert.strictEqual(addContent.mock.calls.length, 1);
     assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
       {
-        type: 'time-values',
+        type: 'record-list',
         content: [
-          { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: 10 } },
-          { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', data: { value: 20 } }
+          { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', value: 10 },
+          { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', value: 20 }
         ]
       },
       testData.constants.dates.FAKE_NOW,
@@ -359,7 +359,7 @@ describe('South OPC', () => {
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
       assert.strictEqual(addContent.mock.calls.length, 1);
-      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'time-values', content: [] });
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], { type: 'record-list', content: [] });
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], []);
       assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments[1], []);
     });
@@ -376,8 +376,8 @@ describe('South OPC', () => {
 
       assert.strictEqual(addContent.mock.calls.length, 1);
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'time-values',
-        content: [{ pointId: 'item1', timestamp: '2020-01-01T00:01:00.000Z', data: { value: 20 } }]
+        type: 'record-list',
+        content: [{ pointId: 'item1', timestamp: '2020-01-01T00:01:00.000Z', value: 20 }]
       });
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [item]);
       assert.deepStrictEqual(southCacheRepository.saveItemsLastValues.mock.calls[0].arguments[1], [
@@ -408,8 +408,8 @@ describe('South OPC', () => {
       mockSingleValueResponse('item1', 25, '2020-01-01T00:02:00.000Z');
       await south.historyQuery([item], '2020-01-01T00:01:00.000Z', '2022-01-01T00:00:00.000Z');
       assert.deepStrictEqual(addContent.mock.calls[1].arguments[0], {
-        type: 'time-values',
-        content: [{ pointId: 'item1', timestamp: '2020-01-01T00:02:00.000Z', data: { value: 25 } }]
+        type: 'record-list',
+        content: [{ pointId: 'item1', timestamp: '2020-01-01T00:02:00.000Z', value: 25 }]
       });
       assert.deepStrictEqual(addContent.mock.calls[1].arguments[2], [item]);
     });

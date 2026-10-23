@@ -357,7 +357,7 @@ describe('SouthSFTP', () => {
         assert.strictEqual(disconnectSpy.mock.calls.length, 0);
         assert.strictEqual(sftpClientConstructor.mock.calls.length, 1);
         assert.strictEqual(sftpClient.end.mock.calls.length, 1);
-        assert.strictEqual(result.result.type, 'time-values');
+        assert.strictEqual(result.result.type, 'record-list');
       });
     });
 
@@ -757,14 +757,14 @@ describe('SouthSFTP', () => {
 
       assert.deepStrictEqual(result, {
         result: {
-          type: 'time-values',
+          type: 'record-list',
           content: [
             {
               pointId: configuration.items[0].name,
               timestamp: DateTime.fromMillis(DateTime.fromISO(testData.constants.dates.FAKE_NOW).toMillis() + 25)
                 .toUTC()
                 .toISO(),
-              data: { value: 'file.csv' }
+              value: 'file.csv'
             }
           ]
         },

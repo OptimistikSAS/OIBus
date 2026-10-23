@@ -63,7 +63,7 @@ export interface NorthType {
   /**
    * The data types supported by this North connector.
    *
-   * @example ["time-values", "any", "setpoints"]
+   * @example ["record-list", "any", "setpoint"]
    */
   types: Array<OIBusDataType>;
 }
@@ -94,7 +94,7 @@ export interface NorthConnectorManifest {
   /**
    * The data types supported by this North connector.
    *
-   * @example ["time-values", "any", "setpoints"]
+   * @example ["record-list", "any", "setpoint"]
    */
   types: Array<string>;
   /**

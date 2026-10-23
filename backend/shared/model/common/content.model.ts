@@ -3,10 +3,10 @@ import { Instant } from './types';
 /**
  * List of possible OIBus data types.
  */
-export const OIBUS_DATA_TYPES = ['any', 'time-values', 'setpoint', 'record-list'] as const;
+export const OIBUS_DATA_TYPES = ['any', 'setpoint', 'record-list'] as const;
 /**
  * Type representing an OIBus data type.
- * @example 'time-values'
+ * @example 'record-list'
  */
 export type OIBusDataType = (typeof OIBUS_DATA_TYPES)[number];
 
@@ -18,55 +18,6 @@ interface BaseOIBusContent {
    * The type of content.
    */
   type: string;
-}
-
-/**
- * A time-value pair.
- */
-export interface OIBusTimeValue {
-  /**
-   * The ID of the point.
-   * @example "point1"
-   */
-  pointId: string;
-
-  /**
-   * The timestamp of the value.
-   * @example "2023-01-01T00:00:00Z"
-   */
-  timestamp: Instant;
-
-  /**
-   * The data associated with the point.
-   */
-  data: {
-    /**
-     * The value of the point.
-     * @example "100"
-     */
-    value: string | number;
-
-    /**
-     * Additional data associated with the point.
-     */
-    [key: string]: string | number;
-  };
-}
-
-/**
- * Time-value content.
- */
-export interface OIBusTimeValueContent extends BaseOIBusContent {
-  /**
-   * The type of content.
-   * @example "time-values"
-   */
-  type: 'time-values';
-
-  /**
-   * The array of time-value pairs.
-   */
-  content: Array<OIBusTimeValue>;
 }
 
 /**
@@ -154,6 +105,36 @@ export interface OIBusAnyContent extends BaseOIBusContent {
 export type OIBusRecord = Record<string, string | number | boolean | null>;
 
 /**
+ * A record of a point-based source (OPC UA, Modbus, S7...): the point, the timestamp and the value, possibly with
+ * extra fields depending on the protocol (e.g. the OPC UA quality). The record-list transformers and North connectors
+ * that need a point, a timestamp and a value read these fields by default.
+ */
+export interface OIBusPointRecord {
+  /**
+   * The ID of the point.
+   * @example "point1"
+   */
+  pointId: string;
+
+  /**
+   * The timestamp of the value.
+   * @example "2023-01-01T00:00:00.000Z"
+   */
+  timestamp: Instant;
+
+  /**
+   * The value of the point.
+   * @example 100
+   */
+  value: string | number;
+
+  /**
+   * Additional fields, depending on the protocol.
+   */
+  [field: string]: string | number | boolean | null;
+}
+
+/**
  * Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query).
  */
 export interface OIBusRecordListContent extends BaseOIBusContent {
@@ -172,4 +153,4 @@ export interface OIBusRecordListContent extends BaseOIBusContent {
 /**
  * Type representing OIBus content.
  */
-export type OIBusContent = OIBusTimeValueContent | OIBusFileContent | OIBusAnyContent | OIBusSetpointContent | OIBusRecordListContent;
+export type OIBusContent = OIBusFileContent | OIBusAnyContent | OIBusSetpointContent | OIBusRecordListContent;

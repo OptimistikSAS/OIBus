@@ -131,12 +131,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InputType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["time-values"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OutputType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["time-values"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["record-list"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusObjectAttribute": {
@@ -420,7 +420,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusDataType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["time-values"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CustomTransformerCommandDTO": {
@@ -453,25 +453,6 @@ const models: TsoaRoute.Models = {
         "properties": {
             "inputData": {"dataType":"string","required":true},
             "options": {"dataType":"object"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusTimeValue": {
-        "dataType": "refObject",
-        "properties": {
-            "pointId": {"dataType":"string","required":true},
-            "timestamp": {"ref":"Instant","required":true},
-            "data": {"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}],"required":true}},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}]},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusTimeValueContent": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"dataType":"enum","enums":["time-values"],"required":true},
-            "content": {"dataType":"array","array":{"dataType":"refObject","ref":"OIBusTimeValue"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -535,7 +516,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusContent": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusFileContent"},{"ref":"OIBusAnyContent"},{"ref":"OIBusSetpointContent"},{"ref":"OIBusRecordListContent"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusFileContent"},{"ref":"OIBusAnyContent"},{"ref":"OIBusSetpointContent"},{"ref":"OIBusRecordListContent"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemTestResult": {
@@ -3754,7 +3735,7 @@ const models: TsoaRoute.Models = {
             "lastRunDuration": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "numberOfValuesRetrieved": {"dataType":"double","required":true},
             "numberOfFilesRetrieved": {"dataType":"double","required":true},
-            "lastValueRetrieved": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValue"},{"dataType":"enum","enums":[null]}],"required":true},
+            "lastValueRetrieved": {"dataType":"union","subSchemas":[{"ref":"OIBusRecord"},{"dataType":"enum","enums":[null]}],"required":true},
             "lastFileRetrieved": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
@@ -9593,7 +9574,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "metricsStart": {"ref":"Instant","required":true},
             "north": {"dataType":"nestedObjectLiteral","nestedProperties":{"currentArchiveSize":{"dataType":"double","required":true},"currentErrorSize":{"dataType":"double","required":true},"currentCacheSize":{"dataType":"double","required":true},"lastContentSent":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"contentCachedSize":{"dataType":"double","required":true},"contentArchivedSize":{"dataType":"double","required":true},"contentErroredSize":{"dataType":"double","required":true},"contentSentSize":{"dataType":"double","required":true},"lastRunDuration":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"lastRunStart":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"lastConnection":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true}},"required":true},
-            "south": {"dataType":"nestedObjectLiteral","nestedProperties":{"lastFileRetrieved":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"lastValueRetrieved":{"dataType":"union","subSchemas":[{"ref":"OIBusTimeValue"},{"dataType":"enum","enums":[null]}],"required":true},"numberOfFilesRetrieved":{"dataType":"double","required":true},"numberOfValuesRetrieved":{"dataType":"double","required":true},"lastRunDuration":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"lastRunStart":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"lastConnection":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true}},"required":true},
+            "south": {"dataType":"nestedObjectLiteral","nestedProperties":{"lastFileRetrieved":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"lastValueRetrieved":{"dataType":"union","subSchemas":[{"ref":"OIBusRecord"},{"dataType":"enum","enums":[null]}],"required":true},"numberOfFilesRetrieved":{"dataType":"double","required":true},"numberOfValuesRetrieved":{"dataType":"double","required":true},"lastRunDuration":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"lastRunStart":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"lastConnection":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true}},"required":true},
             "historyMetrics": {"dataType":"nestedObjectLiteral","nestedProperties":{"itemsStatus":{"dataType":"array","array":{"dataType":"refObject","ref":"HistoryQueryItemStatus"}},"itemNumberOfIntervals":{"dataType":"double"},"itemIntervalNumber":{"dataType":"double"},"itemIntervalProgress":{"dataType":"double"},"numberOfItems":{"dataType":"double"},"currentItemNumber":{"dataType":"double"},"itemName":{"dataType":"string"},"numberOfIntervals":{"dataType":"double","required":true},"currentIntervalNumber":{"dataType":"double","required":true},"currentIntervalEnd":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"currentIntervalStart":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"intervalProgress":{"dataType":"double","required":true},"running":{"dataType":"boolean","required":true}},"required":true},
         },
         "additionalProperties": false,

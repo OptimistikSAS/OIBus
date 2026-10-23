@@ -22,11 +22,11 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 import { toPage } from '../../../shared/utils/page.utils';
 import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal.component';
 
-const timeValuesToMqtt: StandardTransformerDTO = {
-  id: 'time-values-to-mqtt',
+const recordListToMqtt: StandardTransformerDTO = {
+  id: 'record-list-to-mqtt',
   type: 'standard',
-  functionName: 'time-values-to-mqtt',
-  inputType: 'time-values',
+  functionName: 'record-list-to-mqtt',
+  inputType: 'record-list',
   outputType: 'mqtt',
   manifest: {
     type: 'object',
@@ -36,7 +36,7 @@ const timeValuesToMqtt: StandardTransformerDTO = {
       {
         type: 'string',
         key: 'topic',
-        translationKey: 'configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.point-id',
+        translationKey: 'configuration.oibus.manifest.transformers.record-list-to-modbus.mapping.point-id',
         defaultValue: null,
         validators: [{ type: 'REQUIRED', arguments: [] }],
         displayProperties: { row: 0, columns: 4, displayInViewMode: true }
@@ -49,11 +49,11 @@ const timeValuesToMqtt: StandardTransformerDTO = {
 };
 
 const anyToMqtt: StandardTransformerDTO = {
-  ...timeValuesToMqtt,
+  ...recordListToMqtt,
   id: 'any-to-mqtt',
   functionName: 'ignore',
   inputType: 'any',
-  manifest: { ...timeValuesToMqtt.manifest, attributes: [] }
+  manifest: { ...recordListToMqtt.manifest, attributes: [] }
 };
 
 const setpointToMqtt: StandardTransformerDTO = {
@@ -103,7 +103,7 @@ class EditNorthTransformerModalComponentTester {
       testData.south.listLight,
       testData.scanMode.list,
       testData.certificates.list,
-      [timeValuesToMqtt, anyToMqtt, setpointToMqtt],
+      [recordListToMqtt, anyToMqtt, setpointToMqtt],
       supportedOutputTypes
     );
   }
@@ -113,7 +113,7 @@ class EditNorthTransformerModalComponentTester {
       testData.south.listLight,
       testData.scanMode.list,
       testData.certificates.list,
-      [timeValuesToMqtt, anyToMqtt, setpointToMqtt],
+      [recordListToMqtt, anyToMqtt, setpointToMqtt],
       ['mqtt'],
       transformer
     );
@@ -145,7 +145,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
     // Services used by the embedded transformer-test panel (rendered once a transformer is selected).
     const transformerService = createMock(TransformerService);
-    transformerService.getInputTemplate.mockReturnValue(of({ type: 'time-values', data: '[]', description: '' }));
+    transformerService.getInputTemplate.mockReturnValue(of({ type: 'record-list', data: '[]', description: '' }));
     southConnectorService.getSouthManifest.mockReturnValue(of(testData.south.manifest));
     southConnectorService.findById.mockReturnValue(of(testData.south.list[0]));
 
@@ -247,7 +247,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.topic.fill('my/topic');
     await tester.saveButton.click();
     expect(activeModal.close).toHaveBeenCalledWith(
-      expect.objectContaining({ transformer: timeValuesToMqtt, options: { topic: 'my/topic' } })
+      expect.objectContaining({ transformer: recordListToMqtt, options: { topic: 'my/topic' } })
     );
   });
 
@@ -326,7 +326,7 @@ describe('EditNorthTransformerModalComponent', () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForEdition({
       id: 'northTransformerId1',
-      transformer: timeValuesToMqtt,
+      transformer: recordListToMqtt,
       options: { topic: 'my/topic' },
       source: { type: 'oibus-api', dataSourceId: 'dataSourceId' }
     });
@@ -340,7 +340,7 @@ describe('EditNorthTransformerModalComponent', () => {
     expect(activeModal.close).toHaveBeenCalledWith({
       id: 'northTransformerId1',
       source: { type: 'oibus-api', dataSourceId: 'other-source' },
-      transformer: timeValuesToMqtt,
+      transformer: recordListToMqtt,
       options: { topic: 'my/topic' }
     });
   });

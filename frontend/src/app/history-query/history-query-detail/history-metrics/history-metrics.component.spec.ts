@@ -139,14 +139,14 @@ describe('HistoryMetricsComponent', () => {
       south: {
         ...batchedMetrics.south,
         lastFileRetrieved: 'retrieved.csv',
-        lastValueRetrieved: { pointId: 'point1', timestamp: '2020-03-15T00:00:00.000Z', data: { value: 12 } }
+        lastValueRetrieved: { pointId: 'point1', timestamp: '2020-03-15T00:00:00.000Z', value: 12 }
       }
     });
 
     await expect.element(tester.value('Last content sent')).toHaveTextContent('file.csv');
     await expect.element(tester.value('Last run duration').first()).toHaveTextContent('2 s');
     await expect.element(tester.value('Last file retrieved')).toHaveTextContent('retrieved.csv');
-    await expect.element(tester.value('Last value retrieved')).toMatchTextContent(/^point1 15 Mar 2020.*"value": 12/);
+    await expect.element(tester.value('Last value retrieved')).toMatchTextContent(/"pointId": "point1".*"value": 12/);
     await expect.element(tester.value('Cache size')).toHaveTextContent('10 B Total cached: 22 B / Total sent: 11 B');
     await expect.element(tester.value('Error size')).toHaveTextContent('20 B Total errored: 23 B');
     await expect.element(tester.value('Archive size')).toHaveTextContent('30 B Total archived: 24 B');

@@ -43,8 +43,8 @@ describe('TransformerTestResultComponent', () => {
 
   test('should switch the display mode of a stage', async () => {
     tester.fixture.componentRef.setInput('raw', {
-      type: 'time-values',
-      content: [{ pointId: 'point1', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '42' } }]
+      type: 'record-list',
+      content: [{ pointId: 'point1', timestamp: '2024-01-01T00:00:00.000Z', value: '42' }]
     });
     const modeToggle = tester.rawStage.getByRole('button', { name: 'Table view' });
     await expect.element(modeToggle).toBeVisible();

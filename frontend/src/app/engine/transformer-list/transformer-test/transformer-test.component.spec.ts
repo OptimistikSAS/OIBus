@@ -50,7 +50,7 @@ describe('TransformerTestComponent', () => {
 
   beforeEach(() => {
     transformerService = createMock(TransformerService);
-    transformerService.getInputTemplate.mockReturnValue(of({ type: 'time-values', data: '[{"pointId":"p1"}]', description: '' }));
+    transformerService.getInputTemplate.mockReturnValue(of({ type: 'record-list', data: '[{"pointId":"p1"}]', description: '' }));
     const engineService = createMock(EngineService);
     engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
 
@@ -76,7 +76,7 @@ describe('TransformerTestComponent', () => {
     const tester = new TransformerTestComponentTester();
 
     await expect.element(tester.inputEditor).toHaveTextContent('[{"pointId":"p1"}]');
-    expect(transformerService.getInputTemplate).toHaveBeenCalledWith('time-values');
+    expect(transformerService.getInputTemplate).toHaveBeenCalledWith('record-list');
     await expect.element(tester.runButton).toBeEnabled();
   });
 

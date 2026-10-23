@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import {
   SouthItemSettings,
@@ -123,10 +123,10 @@ export default class SouthOIAnalytics
   }
 
   /**
-   * One CSV column per field: the value and unit are nested in `data`, and the timestamp follows the output settings
+   * One CSV column per field, the timestamp following the output settings
    */
-  private toRows(item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>, values: Array<OIBusTimeValue>) {
-    return values.map(({ pointId, timestamp, data }) => ({
+  private toRows(item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>, values: Array<OIBusPointRecord>) {
+    return values.map(({ pointId, timestamp, value, unit }) => ({
       pointId,
       timestamp: formatInstant(timestamp, {
         type: 'string',
@@ -134,8 +134,8 @@ export default class SouthOIAnalytics
         timezone: item.settings.serialization.outputTimezone,
         locale: 'en-En'
       }),
-      value: data.value,
-      unit: data.unit
+      value,
+      unit
     }));
   }
 

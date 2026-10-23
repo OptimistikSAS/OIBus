@@ -318,18 +318,17 @@
           "deleted": "Transformateur {{ name }} supprimé",
           "standard": {
             "csv-to-mqtt": "Charges utiles MQTT (depuis CSV)",
-            "csv-to-time-values": "Valeurs temporelles (depuis CSV)",
+            "csv-to-record-list": "Enregistrements (depuis CSV)",
             "ignore": "Ignorer",
             "iso": "Pas de transformation",
             "json-to-csv": "CSV (depuis JSON)",
             "json-to-oianalytics": "OIAnalytics (depuis JSON)",
-            "record-list-to-csv": "CSV (depuis liste d'enregistrements)",
-            "time-values-to-csv": "CSV",
-            "time-values-to-json": "JSON",
-            "time-values-to-modbus": "Valeurs Modbus",
-            "time-values-to-mqtt": "Charges utiles MQTT",
-            "time-values-to-oianalytics": "OIAnalytics (sélectionner la précision temporelle)",
-            "time-values-to-opcua": "Valeurs OPCUA",
+            "record-list-to-csv": "CSV",
+            "record-list-to-json": "JSON",
+            "record-list-to-modbus": "Valeurs Modbus",
+            "record-list-to-mqtt": "Charges utiles MQTT",
+            "record-list-to-oianalytics": "OIAnalytics (sélectionner la précision temporelle)",
+            "record-list-to-opcua": "Valeurs OPCUA",
             "setpoint-to-modbus": "Valeurs Modbus",
             "setpoint-to-mqtt": "Charges utiles MQTT",
             "setpoint-to-opcua": "Valeurs OPCUA"
@@ -513,7 +512,7 @@
               }
             }
           },
-          "csv-to-time-values": {
+          "csv-to-record-list": {
             "delimiter": {
               "title": "Délimiteur CSV",
               "DOT": "Point .",
@@ -663,6 +662,7 @@
               "DOUBLE_QUOTE": "Guillemet double (\")"
             },
             "null-value": "Valeur nulle",
+            "keep-other-fields": "Conserver les autres champs",
             "fields": {
               "title": "Mappage des champs",
               "item": {
@@ -747,61 +747,9 @@
               }
             }
           },
-          "time-values-to-csv": {
-            "filename": "Nom du fichier",
-            "encoding": {
-              "title": "Encodage",
-              "UTF_8": "UTF-8",
-              "UTF_8_BOM": "UTF-8 BOM",
-              "LATIN_1": "Latin-1 (ISO-8859-1)",
-              "UTF_16_LE": "UTF-16 LE"
-            },
-            "header": "Première ligne comme en-tête",
-            "delimiter": {
-              "title": "Délimiteur",
-              "DOT": "Point .",
-              "SEMI_COLON": "Point-virgule ;",
-              "COLON": "Deux-points :",
-              "COMMA": "Virgule ,",
-              "SLASH": "Barre oblique /",
-              "TAB": "Tabulation",
-              "NON_BREAKING_SPACE": "Espace",
-              "PIPE": "Barre verticale |"
-            },
-            "newline": {
-              "title": "Saut de ligne",
-              "DEFAULT": "Par défaut",
-              "CRLF": "CRLF (\\r\\n)",
-              "LF": "LF (\\n)",
-              "CR": "CR (\\r)"
-            },
-            "quote-char": {
-              "title": "Caractère de citation",
-              "DOUBLE_QUOTE": "Guillemet double (\")",
-              "SINGLE_QUOTE": "Guillemet simple (')",
-              "NONE": "Aucun"
-            },
-            "escape-char": {
-              "title": "Caractère d'échappement",
-              "BACKSLASH": "Barre oblique inversée (\\)",
-              "DOUBLE_QUOTE": "Guillemet double (\")"
-            },
-            "compression": "Compresser le fichier",
-            "point-id": "Nom de colonne pour l'ID du point (Référence)",
-            "value": "Nom de colonne pour la valeur",
-            "timestamp": "Nom de colonne pour l'horodatage",
-            "timestamp-type": {
-              "title": "Type de sortie de l'horodatage",
-              "string": "Chaîne",
-              "iso-string": "Chaîne ISO",
-              "unix-epoch": "Époque Unix (s)",
-              "unix-epoch-ms": "Époque Unix (ms)"
-            },
-            "timestamp-format": "Format de sortie de l'horodatage",
-            "timezone": "Fuseau horaire de sortie",
-            "point-id-process": "Traitement de l'ID du point (expression JS, ex. value.toUpperCase())"
-          },
-          "time-values-to-modbus": {
+          "record-list-to-modbus": {
+            "point-id-column": "Colonne ID du point",
+            "value-column": "Colonne de valeur",
             "mapping": {
               "title": "Table de mappage",
               "point-id": "ID du point (Référence)",
@@ -813,7 +761,8 @@
               }
             }
           },
-          "time-values-to-mqtt": {
+          "record-list-to-mqtt": {
+            "point-id-column": "Colonne ID du point",
             "mapping": {
               "title": "Table de mappage",
               "point-id": "ID du point (Référence)",
@@ -847,7 +796,23 @@
               }
             }
           },
-          "time-values-to-oianalytics": {
+          "record-list-to-oianalytics": {
+            "point-id-column": "Colonne ID du point",
+            "timestamp-column": "Colonne d'horodatage",
+            "value-column": "Colonne de valeur",
+            "timestamp-settings": {
+              "title": "Paramètres d'horodatage",
+              "type": {
+                "title": "Type d'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "timezone": "Fuseau horaire",
+              "format": "Format",
+              "locale": "Paramètres régionaux"
+            },
             "precision": {
               "title": "Précision de l'horodatage",
               "ms": "Milliseconde",
@@ -857,7 +822,9 @@
             },
             "reference-process": "Traitement de la référence (expression JS, ex. value.toUpperCase())"
           },
-          "time-values-to-opcua": {
+          "record-list-to-opcua": {
+            "point-id-column": "Colonne ID du point",
+            "value-column": "Colonne de valeur",
             "mapping": {
               "title": "Table de mappage",
               "point-id": "ID du point (Référence)",
@@ -2740,9 +2707,8 @@
     "oibus-input-data-type": {
       "any": "Fichiers (pour toutes les sources)",
       "setpoint": "Consignes (pour toutes les sources)",
-      "time-values": "Valeurs temporelles OIBus (pour toutes les sources)",
       "any-content": "Tout contenu",
-      "record-list": "Liste d'enregistrements (sources de type SQL)"
+      "record-list": "Enregistrements (sources de points et de type SQL)"
     },
     "oibus-output-data-type": {
       "any": "Tout",
@@ -2750,7 +2716,7 @@
       "modbus": "Modbus",
       "oianalytics": "Valeurs temporelles optimisées OIAnalytics",
       "opcua": "OPCUA",
-      "time-values": "Valeurs temporelles OIBus"
+      "record-list": "Enregistrements"
     },
     "oibus-transformer-language": {
       "javascript": "JavaScript",

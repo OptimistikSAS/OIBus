@@ -12,7 +12,7 @@ import {
   TransformerTestRequest,
   TransformerTestResponse
 } from '../../shared/model/api/transformer.model';
-import { OIBusContent, OIBusRecord, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord, OIBusSetpoint } from '../../shared/model/common/content.model';
 import { GetUserInfo, Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
@@ -28,38 +28,36 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import TransformerRepository from '../repository/config/transformer.repository';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
-import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
-import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
+import CSVToRecordListTransformer from '../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
+import csvToRecordListManifest from '../transformers/any/csv-to-record-list/manifest';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
-import recordListToCsvManifest from '../transformers/any/record-list-to-csv/manifest';
-import RecordListToCsvTransformer from '../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
 import IgnoreTransformer from '../transformers/ignore-transformer';
 import ignoreManifest from '../transformers/ignore-transformer/manifest';
 import IsoTransformer from '../transformers/iso-transformer';
 import isoManifest from '../transformers/iso-transformer/manifest';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import OibusTransformer from '../transformers/oibus-transformer';
+import recordListToCsvManifest from '../transformers/record-list/record-list-to-csv/manifest';
+import RecordListToCsvTransformer from '../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
+import recordListToJsonManifest from '../transformers/record-list/record-list-to-json/manifest';
+import RecordListToJSONTransformer from '../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
+import recordListToModbusManifest from '../transformers/record-list/record-list-to-modbus/manifest';
+import RecordListToModbusTransformer from '../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
+import recordListToMqttManifest from '../transformers/record-list/record-list-to-mqtt/manifest';
+import RecordListToMQTTTransformer from '../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
+import recordListToOianalyticsManifest from '../transformers/record-list/record-list-to-oianalytics/manifest';
+import RecordListToOIAnalyticsTransformer from '../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
+import recordListToOpcuaManifest from '../transformers/record-list/record-list-to-opcua/manifest';
+import RecordListToOPCUATransformer from '../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
 import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
 import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
 import OIBusSetpointToMQTTTransformer from '../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
 import OIBusSetpointToOPCUATransformer from '../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
-import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
-import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
-import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
-import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
-import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
-import OIBusTimeValuesToModbusTransformer from '../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
-import timeValuesToMqttManifest from '../transformers/time-values/oibus-time-values-to-mqtt/manifest';
-import OIBusTimeValuesToMQTTTransformer from '../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
-import timeValuesToOianalyticsManifest from '../transformers/time-values/oibus-time-values-to-oianalytics/manifest';
-import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
-import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-values-to-opcua/manifest';
-import OIBusTimeValuesToOPCUATransformer from '../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -75,16 +73,15 @@ export const transformerManifestList: Array<TransformerManifest> = [
   isoManifest,
   ignoreManifest,
   csvToMqttManifest,
-  csvToTimeValuesManifest,
+  csvToRecordListManifest,
   jsonToCsvManifest,
-  recordListToCsvManifest,
   jsonToOianalyticsManifest,
-  timeValuesToCsvManifest,
-  timeValuesToJsonManifest,
-  timeValuesToModbusManifest,
-  timeValuesToMqttManifest,
-  timeValuesToOianalyticsManifest,
-  timeValuesToOpcuaManifest,
+  recordListToCsvManifest,
+  recordListToJsonManifest,
+  recordListToModbusManifest,
+  recordListToMqttManifest,
+  recordListToOianalyticsManifest,
+  recordListToOpcuaManifest,
   setpointToModbusManifest,
   setpointToMqttManifest,
   setpointToOpcuaManifest
@@ -92,12 +89,10 @@ export const transformerManifestList: Array<TransformerManifest> = [
 
 /**
  * Wrap a copy-pasted input string into the OIBusContent shape matching a transformer input type.
- * `time-values` / `setpoint` inputs are JSON arrays; everything else is treated as raw file content.
+ * `record-list` / `setpoint` inputs are JSON arrays; everything else is treated as raw file content.
  */
 const buildContentFromInput = (inputType: string, inputData: string): OIBusContent => {
   switch (inputType) {
-    case 'time-values':
-      return { type: 'time-values', content: JSON.parse(inputData) };
     case 'setpoint':
       return { type: 'setpoint', content: JSON.parse(inputData) };
     case 'record-list':
@@ -109,12 +104,12 @@ const buildContentFromInput = (inputType: string, inputData: string): OIBusConte
 
 /**
  * Wrap a transformer's raw output string into an OIBusContent using the content type it produced,
- * so the UI renders time-values as a table, file/CSV output as a table, and anything else as text.
+ * so the UI renders records as a table, file/CSV output as a table, and anything else as text.
  */
 export const toTransformedContent = (output: string, contentType: string | undefined, contentFile: string | undefined): OIBusContent => {
-  if (contentType === 'time-values') {
+  if (contentType === 'record-list') {
     try {
-      return { type: 'time-values', content: JSON.parse(output) };
+      return { type: 'record-list', content: JSON.parse(output) };
     } catch {
       return { type: 'any-content', content: output };
     }
@@ -244,7 +239,7 @@ export default class TransformerService {
   /**
    * Run an existing transformer (custom or standard, resolved by catalog id) with the given options
    * over an OIBusContent payload, returning the transformed output wrapped as OIBusContent so the UI
-   * can render it (time-values → table, file/CSV → table, otherwise raw text). Shared by the
+   * can render it (records → table, file/CSV → table, otherwise raw text). Shared by the
    * south/history item test (#4773) and the transformer test-with-input feature (#4774).
    */
   async runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent> {
@@ -290,8 +285,6 @@ export default class TransformerService {
 
   generateTemplate(inputType: InputType): InputTemplate {
     switch (inputType) {
-      case 'time-values':
-        return this.generateTimeValuesTemplate();
       case 'any':
         return this.generateFileTemplate();
       case 'record-list':
@@ -300,48 +293,6 @@ export default class TransformerService {
       default:
         return this.generateSetpointTemplate();
     }
-  }
-
-  /**
-   * Generate input template for time-values input type
-   */
-  private generateTimeValuesTemplate(): InputTemplate {
-    const now = DateTime.now().toUTC().toISO()!;
-    const timeValues: Array<OIBusTimeValue> = [
-      {
-        pointId: 'temperature_sensor_01',
-        timestamp: now,
-        data: {
-          value: 23.5,
-          unit: '°C',
-          quality: 'good'
-        }
-      },
-      {
-        pointId: 'pressure_sensor_01',
-        timestamp: now,
-        data: {
-          value: 1013.25,
-          unit: 'hPa',
-          quality: 'good'
-        }
-      },
-      {
-        pointId: 'humidity_sensor_01',
-        timestamp: now,
-        data: {
-          value: 65.2,
-          unit: '%',
-          quality: 'good'
-        }
-      }
-    ];
-
-    return {
-      type: 'time-values',
-      data: JSON.stringify(timeValues, null, 2),
-      description: 'Sample time-series data with multiple sensor readings'
-    };
   }
 
   /**
@@ -375,20 +326,21 @@ export default class TransformerService {
   }
 
   /**
-   * Generate input template for record-list input type (e.g. SQL query results)
+   * Generate input template for record-list input type: point records, as sent by point-based sources (OPC UA,
+   * Modbus...), with the columns the record-list transformers read by default
    */
   private generateRecordListTemplate(): InputTemplate {
     const now = DateTime.now().toUTC().toISO()!;
-    const records: Array<OIBusRecord> = [
-      { id: 1, name: 'temperature_sensor_01', value: 23.5, timestamp: now },
-      { id: 2, name: 'pressure_sensor_01', value: 1013.25, timestamp: now },
-      { id: 3, name: 'humidity_sensor_01', value: 65.2, timestamp: now }
+    const records: Array<OIBusPointRecord> = [
+      { pointId: 'temperature_sensor_01', timestamp: now, value: 23.5, quality: 'good' },
+      { pointId: 'pressure_sensor_01', timestamp: now, value: 1013.25, quality: 'good' },
+      { pointId: 'humidity_sensor_01', timestamp: now, value: 65.2, quality: 'good' }
     ];
 
     return {
       type: 'record-list',
       data: JSON.stringify(records, null, 2),
-      description: 'Sample rows as returned by a query-based source (e.g. a SQL database)'
+      description: 'Sample records with a point ID, a timestamp and a value, as sent by point-based sources (OPC UA, Modbus...)'
     };
   }
 
@@ -471,35 +423,32 @@ export const createTransformer = (
       case CSVToMQTTTransformer.transformerName: {
         return new CSVToMQTTTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case CSVToTimeValuesTransformer.transformerName: {
-        return new CSVToTimeValuesTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case CSVToRecordListTransformer.transformerName: {
+        return new CSVToRecordListTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case JSONToCSVTransformer.transformerName: {
         return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case RecordListToCsvTransformer.transformerName: {
-        return new RecordListToCsvTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
-      }
       case JSONToOIAnalyticsTransformer.transformerName: {
         return new JSONToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case OIBusTimeValuesToCsvTransformer.transformerName: {
-        return new OIBusTimeValuesToCsvTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case RecordListToCsvTransformer.transformerName: {
+        return new RecordListToCsvTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case OIBusTimeValuesToJSONTransformer.transformerName: {
-        return new OIBusTimeValuesToJSONTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case RecordListToJSONTransformer.transformerName: {
+        return new RecordListToJSONTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case OIBusTimeValuesToModbusTransformer.transformerName: {
-        return new OIBusTimeValuesToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case RecordListToModbusTransformer.transformerName: {
+        return new RecordListToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case OIBusTimeValuesToMQTTTransformer.transformerName: {
-        return new OIBusTimeValuesToMQTTTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case RecordListToMQTTTransformer.transformerName: {
+        return new RecordListToMQTTTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case OIBusTimeValuesToOIAnalyticsTransformer.transformerName: {
-        return new OIBusTimeValuesToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case RecordListToOIAnalyticsTransformer.transformerName: {
+        return new RecordListToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case OIBusTimeValuesToOPCUATransformer.transformerName: {
-        return new OIBusTimeValuesToOPCUATransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case RecordListToOPCUATransformer.transformerName: {
+        return new RecordListToOPCUATransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusSetpointToModbusTransformer.transformerName: {
         return new OIBusSetpointToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
@@ -523,9 +472,9 @@ export const createTransformer = (
 
 /**
  * Run a transformer instance over an OIBusContent payload and return the produced output(s).
- * In-memory payloads (time-values / setpoint / any-content) go through `transformInMemory`;
+ * In-memory payloads (record-list / setpoint / any-content) go through `transformInMemory`;
  * true file-on-disk payloads (`any`) stay on the stream API to avoid slurping the file.
- * When `maxElements > 0`, time-value batches larger than that are split into several outputs.
+ * When `maxElements > 0`, record batches larger than that are split into several outputs.
  */
 export const runTransformerOnContent = async (
   transformer: OibusTransformer,
@@ -535,7 +484,7 @@ export const runTransformerOnContent = async (
 ): Promise<Array<{ output: Buffer; metadata: CacheMetadata }>> => {
   const results: Array<{ output: Buffer; metadata: CacheMetadata }> = [];
   switch (data.type) {
-    case 'time-values': {
+    case 'record-list': {
       const content = data.content;
       if (maxElements > 0 && content.length > maxElements) {
         for (let i = 0; i < content.length; i += maxElements) {
@@ -547,9 +496,6 @@ export const runTransformerOnContent = async (
       break;
     }
     case 'setpoint':
-      results.push(await transformer.transformInMemory(data.content, source, null));
-      break;
-    case 'record-list':
       results.push(await transformer.transformInMemory(data.content, source, null));
       break;
     case 'any-content':
@@ -578,44 +524,41 @@ export const runTransformerOnContent = async (
 
 export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {
   switch (functionName) {
-    case csvToMqttManifest.id: {
-      return csvToMqttManifest.settings;
-    }
-    case csvToTimeValuesManifest.id: {
-      return csvToTimeValuesManifest.settings;
-    }
     case isoManifest.id: {
       return isoManifest.settings;
     }
     case ignoreManifest.id: {
       return ignoreManifest.settings;
     }
+    case csvToMqttManifest.id: {
+      return csvToMqttManifest.settings;
+    }
+    case csvToRecordListManifest.id: {
+      return csvToRecordListManifest.settings;
+    }
     case jsonToCsvManifest.id: {
       return jsonToCsvManifest.settings;
-    }
-    case recordListToCsvManifest.id: {
-      return recordListToCsvManifest.settings;
     }
     case jsonToOianalyticsManifest.id: {
       return jsonToOianalyticsManifest.settings;
     }
-    case timeValuesToCsvManifest.id: {
-      return timeValuesToCsvManifest.settings;
+    case recordListToCsvManifest.id: {
+      return recordListToCsvManifest.settings;
     }
-    case timeValuesToJsonManifest.id: {
-      return timeValuesToJsonManifest.settings;
+    case recordListToJsonManifest.id: {
+      return recordListToJsonManifest.settings;
     }
-    case timeValuesToModbusManifest.id: {
-      return timeValuesToModbusManifest.settings;
+    case recordListToModbusManifest.id: {
+      return recordListToModbusManifest.settings;
     }
-    case timeValuesToMqttManifest.id: {
-      return timeValuesToMqttManifest.settings;
+    case recordListToMqttManifest.id: {
+      return recordListToMqttManifest.settings;
     }
-    case timeValuesToOianalyticsManifest.id: {
-      return timeValuesToOianalyticsManifest.settings;
+    case recordListToOianalyticsManifest.id: {
+      return recordListToOianalyticsManifest.settings;
     }
-    case timeValuesToOpcuaManifest.id: {
-      return timeValuesToOpcuaManifest.settings;
+    case recordListToOpcuaManifest.id: {
+      return recordListToOpcuaManifest.settings;
     }
     case setpointToModbusManifest.id: {
       return setpointToModbusManifest.settings;

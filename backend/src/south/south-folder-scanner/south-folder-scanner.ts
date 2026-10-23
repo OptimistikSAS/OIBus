@@ -11,7 +11,7 @@ import { Stats } from 'node:fs';
 
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import {
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
@@ -200,13 +200,13 @@ export default class SouthFolderScanner
     }
 
     const queryDuration = DateTime.now().toMillis() - queryStart;
-    const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
+    const values: Array<OIBusPointRecord> = matchedFiles.map(file => ({
       pointId: item.name,
       timestamp: DateTime.fromMillis(file.modifyTime).toUTC().toISO()!,
-      data: { value: file.name }
+      value: file.name
     }));
     return {
-      result: { type: 'time-values', content: values },
+      result: { type: 'record-list', content: values },
       connectionDuration,
       queryDuration
     };

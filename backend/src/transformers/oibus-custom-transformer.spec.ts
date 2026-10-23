@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { Readable } from 'node:stream';
 import { before, beforeEach, describe, it } from 'node:test';
 
-import { OIBusTimeValue } from '../../shared/model/common/content.model';
+import { OIBusPointRecord } from '../../shared/model/common/content.model';
 
 import { CustomTransformer } from '../model/transformer.model';
 import type SandboxService from '../service/sandbox.service';
@@ -64,10 +64,10 @@ describe('OIBusCustomTransformer', () => {
   });
 
   it('should transform data from a stream and return sandbox result', async () => {
-    const dataChunks: Array<OIBusTimeValue> = [
-      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } },
-      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, data: { value: 'value2', quality: 'good' } },
-      { pointId: 'reference2', timestamp: testData.constants.dates.DATE_3, data: { value: 'value1' } }
+    const dataChunks: Array<OIBusPointRecord> = [
+      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, value: 'value1' },
+      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, value: 'value2', quality: 'good' },
+      { pointId: 'reference2', timestamp: testData.constants.dates.DATE_3, value: 'value1' }
     ];
 
     const result = await transformer.transform(Readable.from(JSON.stringify(dataChunks)), { source: 'test' }, null);

@@ -2,7 +2,7 @@ import { AdsDataType, AdsSymbol, Client } from 'ads-client';
 import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import { SouthADSItemSettings, SouthADSSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
@@ -59,7 +59,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     timestamp: Instant,
     subItems: Array<AdsDataType> = [],
     enumInfo: Array<AdsEnumInfoEntry> = []
-  ): Array<OIBusTimeValue> {
+  ): Array<OIBusPointRecord> {
     let valueToAdd: string | null = null;
     /**
      * Source of the following data types:
@@ -116,7 +116,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
           )
         );
         return parsedValues.reduce(
-          (concatenatedResults: Array<OIBusTimeValue>, result: Array<OIBusTimeValue>) => [...concatenatedResults, ...result],
+          (concatenatedResults: Array<OIBusPointRecord>, result: Array<OIBusPointRecord>) => [...concatenatedResults, ...result],
           []
         );
       }
@@ -161,7 +161,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         {
           pointId: itemName,
           timestamp,
-          data: { value: valueToAdd }
+          value: valueToAdd
         }
       ];
     }
@@ -216,12 +216,12 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     this.logger.debug(logCtx, `Symbol cache: ${this.symbolCache.size}/${items.length} symbols resolved`);
   }
 
-  async directQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<OIBusTimeValue | null> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<OIBusPointRecord | null> {
     const logCtx = workUnitLogCtx(items);
     // Values are collected paired with the item that produced them, and grouped per top-level item
-    // (a struct/array item parses into several OIBusTimeValues) since caching-strategy filtering below
+    // (a struct/array item parses into several point records) since caching-strategy filtering below
     // treats each top-level item as a single caching unit rather than filtering sub-fields separately.
-    const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthADSItemSettings>; values: Array<OIBusTimeValue> }> = [];
+    const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthADSItemSettings>; values: Array<OIBusPointRecord> }> = [];
     try {
       await this.buildSymbolCache(items, logCtx);
 
@@ -245,7 +245,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
             const item = chunk[i];
             if (!result.success) {
               this.logger.error(logCtx, `Failed to read "${item.settings.address}" (${item.name}): ${result.errorStr}`);
-              return { item, values: [] as Array<OIBusTimeValue> };
+              return { item, values: [] as Array<OIBusPointRecord> };
             }
             const { dataType } = this.symbolCache.get(item.settings.address)!;
             const value = await this.client!.convertFromRaw(result.value!, dataType);
@@ -276,11 +276,11 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       // compared/cached as one unit (the array of each sub-value), not filtered individually.
       const cachedPairs = this.applyCachingStrategy(
         valuePairs.filter(pair => pair.values.length > 0),
-        ({ item, values }) => ({ item, value: values.map(v => v.data.value), timestamp })
+        ({ item, values }) => ({ item, value: values.map(v => v.value), timestamp })
       );
 
       await this.addContent(
-        { type: 'time-values', content: cachedPairs.flatMap(pair => pair.values) },
+        { type: 'record-list', content: cachedPairs.flatMap(pair => pair.values) },
         startRequest.toUTC().toISO(),
         cachedPairs.map(pair => pair.item)
       );
@@ -304,7 +304,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     item: SouthConnectorItemEntity<SouthADSItemSettings>,
     timestamp: Instant,
     client: Client = this.client!
-  ): Promise<Array<OIBusTimeValue>> {
+  ): Promise<Array<OIBusPointRecord>> {
     const result = await client.readValue(item.settings.address);
 
     return this.parseValues(
@@ -337,11 +337,11 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         connectionDuration = DateTime.now().toMillis() - connectStart;
       }
       const queryStart = DateTime.now().toMillis();
-      const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!, client);
+      const dataValues: Array<OIBusPointRecord> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!, client);
       const queryDuration = DateTime.now().toMillis() - queryStart;
       return {
         result: {
-          type: 'time-values',
+          type: 'record-list',
           content: dataValues
         },
         connectionDuration,

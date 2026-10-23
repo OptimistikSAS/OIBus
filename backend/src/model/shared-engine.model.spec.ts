@@ -11,7 +11,7 @@ import { AUTH_TOKEN_DURATIONS, REGISTRATION_STATUS } from '../../shared/model/do
 
 describe('shared engine model constants', () => {
   it('OIBUS_DATA_TYPES contains the expected data types', () => {
-    assert.deepEqual(OIBUS_DATA_TYPES, ['any', 'time-values', 'setpoint', 'record-list']);
+    assert.deepEqual(OIBUS_DATA_TYPES, ['any', 'setpoint', 'record-list']);
   });
 
   it('AUTH_TOKEN_DURATIONS contains the expected durations', () => {

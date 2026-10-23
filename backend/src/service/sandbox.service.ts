@@ -172,7 +172,7 @@ export default class SandboxService {
               //   - a string                                   -> written verbatim (UTF-8),
               //   - binary (ArrayBuffer / TypedArray / DataView) -> written as raw bytes,
               //   - any other value                            -> JSON-serialized (so typed Norths
-              //     such as time-values/mqtt still receive valid JSON text).
+              //     such as record-list/mqtt still receive valid JSON text).
               // Binary is normalized to the exact bytes it covers; if a non-string value cannot be
               // serialized (e.g. a function, or a value JSON.stringify drops), fail with a clear
               // error instead of letting "undefined" crash later when the output is written.

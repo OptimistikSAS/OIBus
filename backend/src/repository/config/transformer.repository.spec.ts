@@ -9,21 +9,20 @@ import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
-import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
+import CSVToRecordListTransformer from '../../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
-import RecordListToCsvTransformer from '../../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
 import IgnoreTransformer from '../../transformers/ignore-transformer';
 import IsoTransformer from '../../transformers/iso-transformer';
+import RecordListToCsvTransformer from '../../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
+import RecordListToJSONTransformer from '../../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
+import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
+import RecordListToMQTTTransformer from '../../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
+import RecordListToOIAnalyticsTransformer from '../../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
+import RecordListToOPCUATransformer from '../../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
 import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
-import OIBusTimeValuesToCsvTransformer from '../../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
-import OIBusTimeValuesToJSONTransformer from '../../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToModbusTransformer from '../../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
-import OIBusTimeValuesToMQTTTransformer from '../../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToOIAnalyticsTransformer from '../../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
-import OIBusTimeValuesToOPCUATransformer from '../../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
 import TransformerRepository from './transformer.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-transformer.db';
@@ -31,10 +30,10 @@ const TEST_DB_PATH = 'src/tests/test-config-transformer.db';
 const standardTransformers: Array<StandardTransformer> = [
   { id: 'csvToMqtt', inputType: 'any', functionName: CSVToMQTTTransformer.transformerName, outputType: 'mqtt', type: 'standard' },
   {
-    id: 'csvToTimeValues',
+    id: 'csvToRecordList',
     inputType: 'any',
-    functionName: CSVToTimeValuesTransformer.transformerName,
-    outputType: 'time-values',
+    functionName: CSVToRecordListTransformer.transformerName,
+    outputType: 'record-list',
     type: 'standard'
   },
   { id: 'ignore', type: 'standard', functionName: IgnoreTransformer.transformerName, inputType: 'any', outputType: 'any' },
@@ -55,44 +54,37 @@ const standardTransformers: Array<StandardTransformer> = [
     type: 'standard'
   },
   {
-    id: 'oibusTimeValuesToCsv',
+    id: 'recordListToJson',
     type: 'standard',
-    functionName: OIBusTimeValuesToCsvTransformer.transformerName,
-    inputType: 'time-values',
+    functionName: RecordListToJSONTransformer.transformerName,
+    inputType: 'record-list',
     outputType: 'any'
   },
   {
-    id: 'oibusTimeValuesToJson',
-    type: 'standard',
-    functionName: OIBusTimeValuesToJSONTransformer.transformerName,
-    inputType: 'time-values',
-    outputType: 'any'
-  },
-  {
-    id: 'oibusTimeValuesToModbus',
-    inputType: 'time-values',
-    functionName: OIBusTimeValuesToModbusTransformer.transformerName,
+    id: 'recordListToModbus',
+    inputType: 'record-list',
+    functionName: RecordListToModbusTransformer.transformerName,
     outputType: 'modbus',
     type: 'standard'
   },
   {
-    id: 'oibusTimeValuesToMqtt',
-    inputType: 'time-values',
-    functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
+    id: 'recordListToMqtt',
+    inputType: 'record-list',
+    functionName: RecordListToMQTTTransformer.transformerName,
     outputType: 'mqtt',
     type: 'standard'
   },
   {
-    id: 'oibusTimeValuesToOia',
-    inputType: 'time-values',
-    functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
+    id: 'recordListToOia',
+    inputType: 'record-list',
+    functionName: RecordListToOIAnalyticsTransformer.transformerName,
     outputType: 'oianalytics',
     type: 'standard'
   },
   {
-    id: 'oibusTimeValuesToOpcua',
-    inputType: 'time-values',
-    functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
+    id: 'recordListToOpcua',
+    inputType: 'record-list',
+    functionName: RecordListToOPCUATransformer.transformerName,
     outputType: 'opcua',
     type: 'standard'
   },
@@ -279,7 +271,7 @@ describe('TransformerRepository', () => {
 
   it('should properly search transformers and page them', () => {
     const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-    assert.strictEqual(result.totalElements, 19);
+    assert.strictEqual(result.totalElements, 18);
     // First page contains standard transformers (10 per page)
     for (const t of result.content.map(stripAuditFields)) {
       assert.strictEqual(t.type, 'standard');
@@ -295,7 +287,7 @@ describe('TransformerRepository', () => {
   });
 
   it('should search with only inputType filter', () => {
-    const result = repository.search({ type: undefined, inputType: 'time-values', outputType: undefined, page: 0 });
+    const result = repository.search({ type: undefined, inputType: 'record-list', outputType: undefined, page: 0 });
     assert.ok(result.totalElements >= 1);
   });
 

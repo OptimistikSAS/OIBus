@@ -12,8 +12,8 @@ import testData from '../tests/utils/test-data';
 import { createMock, Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
-import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
-import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
+import CSVToRecordListTransformer from '../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
+import csvToRecordListManifest from '../transformers/any/csv-to-record-list/manifest';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
@@ -21,25 +21,23 @@ import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/m
 import ignoreManifest from '../transformers/ignore-transformer/manifest';
 // Import transformer manifests
 import isoManifest from '../transformers/iso-transformer/manifest';
+import recordListToJsonManifest from '../transformers/record-list/record-list-to-json/manifest';
+// Import concrete transformer classes for instanceof checks
+import RecordListToJSONTransformer from '../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
+import recordListToModbusManifest from '../transformers/record-list/record-list-to-modbus/manifest';
+import RecordListToModbusTransformer from '../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
+import recordListToMqttManifest from '../transformers/record-list/record-list-to-mqtt/manifest';
+import RecordListToMQTTTransformer from '../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
+import recordListToOianalyticsManifest from '../transformers/record-list/record-list-to-oianalytics/manifest';
+import RecordListToOIAnalyticsTransformer from '../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
+import recordListToOpcuaManifest from '../transformers/record-list/record-list-to-opcua/manifest';
+import RecordListToOPCUATransformer from '../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
 import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
 import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
 import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
 import OIBusSetpointToMQTTTransformer from '../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
 import OIBusSetpointToOPCUATransformer from '../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
-import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
-import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
-import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
-// Import concrete transformer classes for instanceof checks
-import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
-import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
-import OIBusTimeValuesToModbusTransformer from '../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
-import timeValuesToMqttManifest from '../transformers/time-values/oibus-time-values-to-mqtt/manifest';
-import OIBusTimeValuesToMQTTTransformer from '../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
-import timeValuesToOianalyticsManifest from '../transformers/time-values/oibus-time-values-to-oianalytics/manifest';
-import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
-import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-values-to-opcua/manifest';
-import OIBusTimeValuesToOPCUATransformer from '../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import type TransformerServiceType from './transformer.service';
@@ -57,7 +55,7 @@ const nodeRequire = createRequire(import.meta.url);
 class MockOIBusCustomTransformer {
   transform = mock.fn(async () => ({
     metadata: { contentType: 'any', numberOfElement: 1 },
-    output: JSON.stringify({ data: [{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }] })
+    output: JSON.stringify({ data: [{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', value: 42 }] })
   }));
 }
 
@@ -395,15 +393,14 @@ describe('Transformer Service', () => {
 
     const expectedClasses: Array<[string, abstract new (...args: Array<never>) => unknown]> = [
       ['csv-to-mqtt', CSVToMQTTTransformer],
-      ['csv-to-time-values', CSVToTimeValuesTransformer],
+      ['csv-to-record-list', CSVToRecordListTransformer],
       ['json-to-csv', JSONToCSVTransformer],
       ['json-to-oianalytics', JSONToOIAnalyticsTransformer],
-      ['time-values-to-csv', OIBusTimeValuesToCsvTransformer],
-      ['time-values-to-json', OIBusTimeValuesToJSONTransformer],
-      ['time-values-to-modbus', OIBusTimeValuesToModbusTransformer],
-      ['time-values-to-mqtt', OIBusTimeValuesToMQTTTransformer],
-      ['time-values-to-oianalytics', OIBusTimeValuesToOIAnalyticsTransformer],
-      ['time-values-to-opcua', OIBusTimeValuesToOPCUATransformer],
+      ['record-list-to-json', RecordListToJSONTransformer],
+      ['record-list-to-modbus', RecordListToModbusTransformer],
+      ['record-list-to-mqtt', RecordListToMQTTTransformer],
+      ['record-list-to-oianalytics', RecordListToOIAnalyticsTransformer],
+      ['record-list-to-opcua', RecordListToOPCUATransformer],
       ['setpoint-to-modbus', OIBusSetpointToModbusTransformer],
       ['setpoint-to-mqtt', OIBusSetpointToMQTTTransformer],
       ['setpoint-to-opcua', OIBusSetpointToOPCUATransformer]
@@ -456,7 +453,7 @@ describe('Transformer Service', () => {
     it('runs a single batch for time-values without chunking', async () => {
       const t = buildTransformer();
       const content = [{ pointId: 'p1' }, { pointId: 'p2' }];
-      const results = await run()(t, { type: 'time-values', content }, { source: 'test' });
+      const results = await run()(t, { type: 'record-list', content }, { source: 'test' });
       assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
       assert.deepStrictEqual(t.transformInMemory.mock.calls[0].arguments[0], content);
       assert.strictEqual(results.length, 1);
@@ -465,7 +462,7 @@ describe('Transformer Service', () => {
     it('chunks time-values when maxElements is exceeded', async () => {
       const t = buildTransformer();
       const content = [{ pointId: 'p1' }, { pointId: 'p2' }, { pointId: 'p3' }];
-      const results = await run()(t, { type: 'time-values', content }, { source: 'test' }, 2);
+      const results = await run()(t, { type: 'record-list', content }, { source: 'test' }, 2);
       assert.strictEqual(t.transformInMemory.mock.calls.length, 2);
       assert.deepStrictEqual(t.transformInMemory.mock.calls[0].arguments[0], content.slice(0, 2));
       assert.deepStrictEqual(t.transformInMemory.mock.calls[1].arguments[0], content.slice(2));
@@ -511,12 +508,12 @@ describe('Transformer Service', () => {
 
   describe('toTransformedContent', () => {
     it('parses time-values output into a time-values content', () => {
-      const tv = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }];
-      assert.deepStrictEqual(toTransformedContent(JSON.stringify(tv), 'time-values', 'out.json'), { type: 'time-values', content: tv });
+      const tv = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', value: '1' }];
+      assert.deepStrictEqual(toTransformedContent(JSON.stringify(tv), 'record-list', 'out.json'), { type: 'record-list', content: tv });
     });
 
     it('falls back to any-content when time-values output is not valid JSON', () => {
-      assert.deepStrictEqual(toTransformedContent('not-json', 'time-values', 'out.json'), { type: 'any-content', content: 'not-json' });
+      assert.deepStrictEqual(toTransformedContent('not-json', 'record-list', 'out.json'), { type: 'any-content', content: 'not-json' });
     });
 
     it('wraps "any" output as a file so a table can be rendered', () => {
@@ -537,15 +534,15 @@ describe('Transformer Service', () => {
 
   describe('testTransformer', () => {
     it('wraps time-values input and delegates to runTransformer with the resolved transformer', async () => {
-      const tv = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }];
-      transformerRepository.findById.mock.mockImplementation(() => ({ id: 't1', type: 'standard', inputType: 'time-values' }) as never);
+      const tv = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', value: '1' }];
+      transformerRepository.findById.mock.mockImplementation(() => ({ id: 't1', type: 'standard', inputType: 'record-list' }) as never);
       const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'any-content', content: 'done' }) as never);
 
       const result = await service.testTransformer('t1', { foo: 'bar' }, JSON.stringify(tv));
 
-      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t1', { foo: 'bar' }, { type: 'time-values', content: tv }]);
+      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t1', { foo: 'bar' }, { type: 'record-list', content: tv }]);
       assert.deepStrictEqual(result, {
-        raw: { type: 'time-values', content: tv },
+        raw: { type: 'record-list', content: tv },
         transformed: { type: 'any-content', content: 'done' },
         connectionDuration: 0,
         queryDuration: 0
@@ -577,15 +574,15 @@ describe('Transformer Service', () => {
       const standardTransformer: StandardTransformer = {
         id: 'std-json',
         type: 'standard',
-        inputType: 'time-values',
+        inputType: 'record-list',
         outputType: 'any',
-        functionName: 'time-values-to-json'
+        functionName: 'record-list-to-json'
       } as StandardTransformer;
       transformerRepository.findById.mock.mockImplementation(() => standardTransformer);
 
       const content = {
-        type: 'time-values' as const,
-        content: [{ pointId: 'p1', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }]
+        type: 'record-list' as const,
+        content: [{ pointId: 'p1', timestamp: '2024-01-01T00:00:00.000Z', value: '1' }]
       };
       const result = await service.runTransformer('std-json', {}, content);
 
@@ -650,7 +647,7 @@ describe('Transformer Service', () => {
       type: 'custom' as const,
       name: 'Test Transformer',
       description: 'Test transformer for testing',
-      inputType: 'time-values' as const,
+      inputType: 'record-list' as const,
       outputType: 'any' as const,
       customCode,
       language: 'javascript' as const,
@@ -660,7 +657,7 @@ describe('Transformer Service', () => {
 
     it('should test a custom transformer successfully', async () => {
       const testRequest = {
-        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }]),
+        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', value: 42 }]),
         options: { testOption: 'value' }
       };
 
@@ -674,7 +671,7 @@ describe('Transformer Service', () => {
 
     it('should test a custom transformer with undefined options', async () => {
       const testRequest = {
-        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }])
+        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', value: 42 }])
         // options is undefined
       };
 
@@ -695,23 +692,23 @@ describe('Transformer Service', () => {
     });
   });
 
-  describe('generateTimeValuesTemplate', () => {
-    it('should generate time-values template with sample data', () => {
-      const template = service.generateTemplate('time-values');
+  describe('generateRecordListTemplate', () => {
+    it('should generate a record-list template of point records', () => {
+      const template = service.generateTemplate('record-list');
 
-      assert.strictEqual(template.type, 'time-values');
-      assert.strictEqual(template.description, 'Sample time-series data with multiple sensor readings');
-
+      assert.strictEqual(template.type, 'record-list');
       const data = JSON.parse(template.data);
-      assert.ok(Array.isArray(data));
       assert.strictEqual(data.length, 3);
-
-      assert.strictEqual(data[0].pointId, 'temperature_sensor_01');
-      assert.ok('timestamp' in data[0]);
-      assert.ok('data' in data[0]);
-      assert.strictEqual(data[0].data.value, 23.5);
-      assert.strictEqual(data[0].data.unit, '°C');
-      assert.strictEqual(data[0].data.quality, 'good');
+      assert.deepStrictEqual(
+        { ...data[0], timestamp: undefined },
+        {
+          pointId: 'temperature_sensor_01',
+          timestamp: undefined,
+          value: 23.5,
+          quality: 'good'
+        }
+      );
+      assert.ok(!Number.isNaN(Date.parse(data[0].timestamp)));
     });
   });
 
@@ -774,17 +771,16 @@ describe('Transformer Service', () => {
 
   it('should get standard manifest', () => {
     assert.deepStrictEqual(getStandardManifest('csv-to-mqtt'), csvToMqttManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('csv-to-time-values'), csvToTimeValuesManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('csv-to-record-list'), csvToRecordListManifest.settings);
     assert.deepStrictEqual(getStandardManifest('iso'), isoManifest.settings);
     assert.deepStrictEqual(getStandardManifest('ignore'), ignoreManifest.settings);
     assert.deepStrictEqual(getStandardManifest('json-to-csv'), jsonToCsvManifest.settings);
     assert.deepStrictEqual(getStandardManifest('json-to-oianalytics'), jsonToOianalyticsManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('time-values-to-csv'), timeValuesToCsvManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('time-values-to-json'), timeValuesToJsonManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('time-values-to-modbus'), timeValuesToModbusManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('time-values-to-mqtt'), timeValuesToMqttManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('time-values-to-oianalytics'), timeValuesToOianalyticsManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('time-values-to-opcua'), timeValuesToOpcuaManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('record-list-to-json'), recordListToJsonManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('record-list-to-modbus'), recordListToModbusManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('record-list-to-mqtt'), recordListToMqttManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('record-list-to-oianalytics'), recordListToOianalyticsManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('record-list-to-opcua'), recordListToOpcuaManifest.settings);
     assert.deepStrictEqual(getStandardManifest('setpoint-to-modbus'), setpointToModbusManifest.settings);
     assert.deepStrictEqual(getStandardManifest('setpoint-to-mqtt'), setpointToMqttManifest.settings);
     assert.deepStrictEqual(getStandardManifest('setpoint-to-opcua'), setpointToOpcuaManifest.settings);
@@ -830,8 +826,8 @@ describe('Transformer Service', () => {
     });
     const standardTransformer: StandardTransformer = {
       id: 'standardId',
-      inputType: 'time-values',
-      outputType: 'time-values',
+      inputType: 'record-list',
+      outputType: 'record-list',
       type: 'standard',
       functionName: 'iso'
     };

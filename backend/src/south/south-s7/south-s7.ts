@@ -1,7 +1,7 @@
 import { S7Endpoint, S7ItemGroup } from '@st-one-io/nodes7';
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import {
   SouthItemSettings,
   SouthS7ItemSettings,
@@ -169,16 +169,16 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
       group.addItems([item.name]);
       const values = await group.readAllItems();
       const queryDuration = DateTime.now().toMillis() - queryStart;
-      const dataValues: Array<OIBusTimeValue> = [
+      const dataValues: Array<OIBusPointRecord> = [
         {
           pointId: item.name,
           timestamp: DateTime.now().toUTC().toISO(),
-          data: { value: String(values[item.name]) }
+          value: String(values[item.name])
         }
       ];
       return {
         result: {
-          type: 'time-values',
+          type: 'record-list',
           content: dataValues
         },
         connectionDuration,
@@ -197,11 +197,11 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
     }
   }
 
-  async directQuery(items: Array<SouthConnectorItemEntity<SouthS7ItemSettings>>): Promise<OIBusTimeValue | null> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthS7ItemSettings>>): Promise<OIBusPointRecord | null> {
     if (!this.endpoint || !this.endpoint.isConnected) {
       throw new Error('Could not read address: S7 client not set');
     }
-    const dataValues: Array<OIBusTimeValue> = [];
+    const dataValues: Array<OIBusPointRecord> = [];
     try {
       const startRequest = DateTime.now();
       const timestamp = startRequest.toUTC().toISO();
@@ -219,11 +219,11 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
         timestamp: timestamp!
       }));
       for (const { item, value } of cachedItems) {
-        dataValues.push({ pointId: item.name, timestamp, data: { value } });
+        dataValues.push({ pointId: item.name, timestamp, value });
       }
 
       await this.addContent(
-        { type: 'time-values', content: dataValues },
+        { type: 'record-list', content: dataValues },
         startRequest.toUTC().toISO(),
         cachedItems.map(entry => entry.item)
       );

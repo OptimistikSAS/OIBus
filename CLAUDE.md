@@ -103,7 +103,7 @@ npm run build
 South connector(s)
   └─► Engine (DataStreamEngine / HistoryQuery)
         ├── Cache (per-north SQLite + files)
-        ├── Transformers (JSON→CSV, time-values→MQTT, …)
+        ├── Transformers (JSON→CSV, record-list→MQTT, …)
         └─► North connector(s)
 ```
 
@@ -130,7 +130,7 @@ send/retry/archive/error cache. Subclasses implement `handleContent()`. `NorthCo
 ### Transformers
 
 Transformers sit between the engine and north connectors. Standard transformers live in `backend/src/transformers/`
-(e.g. `time-values-to-csv`, `json-to-csv`). Custom transformers run inside `isolated-vm` sandboxes via `SandboxService`.
+(e.g. `record-list-to-csv`, `json-to-csv`). Custom transformers run inside `isolated-vm` sandboxes via `SandboxService`.
 Each transformer has a `manifest.ts` that declares its input/output types.
 
 ### Web server & API
@@ -144,7 +144,7 @@ The Express 5 server (`backend/src/web-server/`) uses **tsoa** for contract-firs
 `backend/shared/model/` holds the types shared by backend and frontend, split by purpose:
 
 - `common/` — base types (`Instant`, `Page`, `BaseEntity`, …) and the data content flowing through the engine
-  (`OIBusContent`, `OIBusTimeValue`, `OIBusSetpoint`, …)
+  (`OIBusContent`, `OIBusPointRecord`, `OIBusSetpoint`, …)
 - `connector/` — connector/transformer type catalogs and manifests (`OIBUS_SOUTH_TYPES`, `SouthConnectorManifest`, …),
   the form model, and the `*-settings.model.ts` files generated from the manifests
   (`npm run generate:settings-interface`, do not edit by hand)
