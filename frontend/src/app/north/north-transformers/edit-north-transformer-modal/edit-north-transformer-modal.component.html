@@ -399,16 +399,51 @@
       </div>
     </form>
 
-    <!-- 3. Test: the transformer tried out on data, outside the form as the test panel has its own -->
-    <div [hidden]="steps.current() !== 'test'" id="step-test">
+    <!-- 2. Options, tried out right away: the test panel has its own form, so it sits outside the transformer one -->
+    <div [hidden]="steps.current() !== 'options'" class="mt-4" id="step-options-test">
       @if (form.controls.transformer.value) {
         <oib-north-transformer-test
           [transformer]="form.controls.transformer.value"
           [options]="form.controls.options.value"
           [itemSource]="transformerTestSource()"
         />
-      } @else {
-        <p class="text-muted mt-3" translate="north.transformers.modal.no-transformer"></p>
+      }
+    </div>
+
+    <!-- 3. Review & save: the transformer as it will be saved, what changed since it was saved, and what to fix before -->
+    <div [hidden]="steps.current() !== 'review'" id="step-review">
+      @let summary = reviewSummary();
+      @let saved = savedSummary();
+      @if (steps.withErrors().length > 0) {
+        <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
+          <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
+          <span translate="north.transformers.modal.review-errors"></span>
+          @for (step of steps.withErrors(); track step) {
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              (click)="steps.current.set(step)"
+              [translate]="'north.transformers.modal.step.' + step"
+            ></button>
+          }
+        </div>
+      } @else if (changeCount(); as changeCount) {
+        <div class="alert alert-warning py-2" id="review-changes" role="status">
+          {{ 'north.transformers.modal.review-changes' | translate: { count: changeCount } }}
+        </div>
+      } @else if (saved) {
+        <div
+          class="alert alert-secondary py-2"
+          id="review-changes"
+          role="status"
+          translate="north.transformers.modal.review-no-changes"
+        ></div>
+      }
+      <h5 class="oib-section-title" translate="north.transformers.modal.step.source"></h5>
+      <oib-oibus-settings-summary id="source-summary" [settings]="summary.source" [previous]="saved?.source ?? null" />
+      @if (summary.options.length) {
+        <h5 class="oib-section-title" translate="north.transformers.modal.step.options"></h5>
+        <oib-oibus-settings-summary id="options-summary" [settings]="summary.options" [previous]="saved?.options ?? null" />
       }
     </div>
   }
