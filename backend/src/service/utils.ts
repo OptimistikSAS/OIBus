@@ -1,10 +1,9 @@
-import { createReadStream, createWriteStream, existsSync, readFileSync } from 'node:fs';
+import { createWriteStream, existsSync, readFileSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import Stream from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import zlib from 'node:zlib';
 
 import cronparser from 'cron-parser';
 import cronstrue from 'cronstrue';
@@ -31,8 +30,6 @@ import { OIBusInitConfig } from '../model/oibus-init-config.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorItemEntity, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-
-const COMPRESSION_LEVEL = 9;
 
 /**
  * Get config file from console arguments
@@ -170,13 +167,6 @@ export const createFolder = async (folder: string): Promise<void> => {
   } catch {
     await fs.mkdir(folderPath, { recursive: true });
   }
-};
-
-/**
- * Compress the specified file
- */
-export const compress = (input: string, output: string): Promise<void> => {
-  return pipeline(createReadStream(input), zlib.createGzip({ level: COMPRESSION_LEVEL }), createWriteStream(output));
 };
 
 /**

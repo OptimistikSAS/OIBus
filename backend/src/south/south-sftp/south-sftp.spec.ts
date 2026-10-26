@@ -78,7 +78,6 @@ const buildConfiguration = (
     authentication: 'password',
     username: 'user',
     password: 'pass',
-    compression: false,
     retryInterval: 10000,
     ...settings
   },
@@ -135,8 +134,7 @@ describe('SouthSFTP', () => {
 
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
   const createUtilsMocks = () => ({
-    checkAge: mock.fn((..._args: Parameters<typeof Utils.checkAge>) => true),
-    compress: mock.fn(async (_input: string, _output: string): Promise<void> => undefined)
+    checkAge: mock.fn((..._args: Parameters<typeof Utils.checkAge>) => true)
   });
   const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
@@ -511,7 +509,7 @@ describe('SouthSFTP', () => {
         assert.strictEqual(sftpClient.connect.mock.calls.length, 1);
       });
 
-      it('should log an error but still complete when removing the local temp file fails (no compression)', async () => {
+      it('should log an error but still complete when removing the local temp file fails', async () => {
         const addContent = mock.method(south, 'addContent', async () => undefined);
         unlink.mock.mockImplementation(async () => {
           throw new Error('unlink error');
@@ -580,8 +578,8 @@ describe('SouthSFTP', () => {
     });
   });
 
-  describe('with preserve file and compression', () => {
-    const configuration = buildConfiguration({ compression: true });
+  describe('with preserve file', () => {
+    const configuration = buildConfiguration();
     let addContent: Mock<SouthSftpClass['addContent']>;
 
     beforeEach(async () => {
@@ -590,109 +588,27 @@ describe('SouthSFTP', () => {
       addContent = mock.method(south, 'addContent', async () => undefined);
     });
 
-    it('should properly add compressed file and capture the real compression error', async () => {
+    it('should send the raw file, keep the remote file and clean up the downloaded temp file', async () => {
       const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
       const fileInfo = { name: 'myFile1', size: 123, modifyTime: mtimeMs } as FileInfo;
-      unlink.mock.mockImplementation(async () => {
-        if (unlink.mock.callCount() === 2) throw new Error('error');
-      });
+      const filesPreserved: Array<{ filename: string; modifiedTime: number }> = [];
 
-      await south.getFile(fileInfo, configuration.items[1], []);
+      await south.getFile(fileInfo, configuration.items[1], filesPreserved);
 
       assert.strictEqual(sftpClient.fastGet.mock.calls.length, 1);
-      assert.strictEqual(utilsExports.compress.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments, [
-        path.resolve('cacheFolder', 'tmp', fileInfo.name),
-        `${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`
-      ]);
-
-      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'file',
-        filePath: path.resolve('cacheFolder', 'tmp', `${fileInfo.name}.gz`)
-      });
-      assert.strictEqual(addContent.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
-      assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [configuration.items[1]]);
-      assert.strictEqual(logger.error.mock.calls.length, 0);
-      // The persistent client is never closed per-file.
-      assert.strictEqual(sftpClient.end.mock.calls.length, 0);
-
-      // Second call — 3rd unlink throws
-      fileInfo.name = 'myFile2';
-      await south.getFile(fileInfo, configuration.items[1], []);
-      assert.deepStrictEqual(addContent.mock.calls[1].arguments[0], {
-        type: 'file',
-        filePath: `${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz`
-      });
-      assert.ok(logIncludes(logger.error, `Error while removing compressed file "${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz"`));
-
-      // Third call — compress throws: the real error is captured (not swallowed), the file is sent
-      // raw, and the downloaded temp file is still cleaned up (the sibling leak fix).
-      utilsExports.compress.mock.mockImplementation(async () => {
-        throw new Error('compression error');
-      });
-      await south.getFile(fileInfo, configuration.items[1], []);
-      assert.deepStrictEqual(addContent.mock.calls[2].arguments[0], {
-        type: 'file',
-        filePath: path.resolve('cacheFolder', 'tmp', 'myFile2')
-      });
-      assert.ok(
-        logIncludes(
-          logger.error,
-          `Error compressing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": compression error. Sending it raw instead.`
-        )
-      );
-      // fs.unlink was called to remove the raw temp file after the compress-failure fallback send.
-      assert.ok(unlink.mock.callCount() >= 4);
-    });
-
-    it('should clean up the downloaded temp file after sending it raw (no compression)', async () => {
-      const southWithoutCompression = createSouth(buildConfiguration({ compression: false }));
-      await southWithoutCompression.start();
-      const fileInfo = { name: 'myFile1', size: 123, modifyTime: Date.now() } as FileInfo;
-      mock.method(southWithoutCompression, 'addContent', async () => undefined);
-
-      await southWithoutCompression.getFile(fileInfo, configuration.items[0], []);
-
-      assert.ok(unlink.mock.calls.some(c => c.arguments[0] === path.resolve('cacheFolder', 'tmp', fileInfo.name)));
-    });
-
-    it('should remove the local temp file after falling back to a raw send when compression fails', async () => {
-      const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
-      const fileInfo = { name: 'myFile3', size: 123, modifyTime: mtimeMs } as FileInfo;
-      utilsExports.compress.mock.mockImplementation(async () => {
-        throw new Error('compression error');
-      });
-
-      await south.getFile(fileInfo, configuration.items[1], []);
-
+      assert.strictEqual(sftpClient.delete.mock.calls.length, 0);
+      assert.deepStrictEqual(filesPreserved, [{ filename: 'myFile1', modifiedTime: mtimeMs }]);
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
         type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', fileInfo.name)
       });
+      assert.strictEqual(addContent.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
+      assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [configuration.items[1]]);
       assert.strictEqual(unlink.mock.calls.length, 1);
       assert.deepStrictEqual(unlink.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', fileInfo.name));
-    });
-
-    it('should log an error but still complete when removing the local temp file fails after a compression failure fallback', async () => {
-      const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
-      const fileInfo = { name: 'myFile4', size: 123, modifyTime: mtimeMs } as FileInfo;
-      utilsExports.compress.mock.mockImplementation(async () => {
-        throw new Error('compression error');
-      });
-      unlink.mock.mockImplementation(async () => {
-        throw new Error('unlink error');
-      });
-
-      await south.getFile(fileInfo, configuration.items[1], []);
-
-      assert.strictEqual(addContent.mock.calls.length, 1);
-      assert.ok(
-        logger.error.mock.calls.some(c =>
-          (c.arguments[1] as string).includes(
-            `Error while removing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": unlink error`
-          )
-        )
-      );
+      assert.strictEqual(logger.error.mock.calls.length, 0);
+      // The persistent client is never closed per-file.
+      assert.strictEqual(sftpClient.end.mock.calls.length, 0);
     });
   });
 

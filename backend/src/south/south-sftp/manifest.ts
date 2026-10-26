@@ -154,23 +154,6 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'boolean',
-        key: 'compression',
-        translationKey: 'configuration.oibus.manifest.south.sftp.compression',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 3,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
         type: 'number',
         key: 'retryInterval',
         translationKey: 'configuration.oibus.manifest.south.sftp.retry-interval',

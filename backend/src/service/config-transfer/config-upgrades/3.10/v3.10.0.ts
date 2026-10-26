@@ -393,6 +393,19 @@ export function resolveSouthItemLink<T extends SouthItemLink>(links: Array<T>, i
   );
 }
 
+/** The South connectors which compressed their files themselves, now compressed by the North transformers */
+export const COMPRESSING_SOUTH_TYPES = ['folder-scanner', 'ftp', 'sftp'];
+
+/**
+ * The options of the file-to-file transformer replacing the file one for the files of a South which compressed them:
+ * the file is sent with the same name, gzipped (`.gz` being added to its name).
+ */
+export const COMPRESSED_FILE_OPTIONS = {
+  input: { fileType: 'other' },
+  filename: '@SourceFilename@SourceExtension',
+  compression: true
+};
+
 /** The data type of a transformer input or output, `any` being renamed `file`. */
 export const toFileDataType = (dataType: string): string => (dataType === 'any' ? 'file' : dataType);
 
@@ -1138,6 +1151,63 @@ function convertOIAnalyticsSouths(config: JsonObject): void {
   });
 }
 
+/**
+ * The folder scanner, FTP and SFTP South connectors no longer compress their files: when they did, their files sent as
+ * they are (through the file transformer) are compressed by a file-to-file transformer instead (see
+ * `COMPRESSED_FILE_OPTIONS`). The `compression` setting is removed.
+ */
+function moveCompressionToNorths(config: JsonObject): void {
+  const transformers = asObjects(config.transformers);
+  const fileId = transformers.find(
+    transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === fileManifest.id
+  )?.oIBusInternalId;
+  const fileToFileId = (): unknown => {
+    const existing = transformers.find(
+      transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === fileToFileManifest.id
+    );
+    if (existing) return existing.oIBusInternalId;
+    const added = {
+      oIBusInternalId: generateRandomId(6),
+      type: 'standard',
+      settings: { functionName: fileToFileManifest.id, inputType: 'file', outputType: 'file' },
+      manifest: fileToFileManifest.settings
+    };
+    transformers.push(added);
+    config.transformers = transformers;
+    return added.oIBusInternalId;
+  };
+  const compress = (link: JsonObject): void => {
+    if (fileId === undefined || link.transformerId !== fileId) return;
+    link.transformerId = fileToFileId();
+    link.options = structuredClone(COMPRESSED_FILE_OPTIONS);
+  };
+  /** Removes the compression setting of a South, returning whether it was compressing its files */
+  const removeCompression = (owner: JsonObject, key: string): boolean => {
+    const settings = owner[key] as JsonObject | undefined;
+    if (settings?.compression === undefined) return false;
+    const { compression, ...rest } = settings;
+    owner[key] = rest;
+    return compression === true;
+  };
+
+  for (const southType of COMPRESSING_SOUTH_TYPES) {
+    forEachSouth(config, southType, south => {
+      if (!removeCompression(south.settings as JsonObject, 'settings')) return;
+      forEachNorth(config, null, north =>
+        asObjects((north.settings as JsonObject).transformers)
+          .filter(
+            link =>
+              (link.source as JsonObject | undefined)?.type === 'south' && (link.source as JsonObject).southId === south.oIBusInternalId
+          )
+          .forEach(compress)
+      );
+    });
+    forEachHistoryQuery(config, southType, settings => {
+      if (removeCompression(settings, 'southSettings')) asObjects(settings.northTransformers).forEach(compress);
+    });
+  }
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -1150,7 +1220,7 @@ export const upgrade: ConfigUpgrade = {
     'file-to-mqtt, file-to-record-list and file-to-oianalytics ones, reading both CSV and JSON files; replace the json-to-csv, ' +
     'record-list-to-csv and record-list-to-json transformers by file-to-file and record-list-to-file ones, writing both CSV and JSON files; ' +
     'only send files to the File Writer North; send record lists from the South OIAnalytics, its CSV files being written by ' +
-    'record-list-to-file transformers',
+    'record-list-to-file transformers; compress the files of the folder scanner, FTP and SFTP souths in file-to-file transformers',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1242,6 +1312,7 @@ export const upgrade: ConfigUpgrade = {
 
     convertFileWriterLinks(config);
     convertOIAnalyticsSouths(config);
+    moveCompressionToNorths(config);
 
     return config;
   }

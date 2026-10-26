@@ -1030,7 +1030,6 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "inputFolder": {"dataType":"string","required":true},
-            "compression": {"dataType":"boolean","required":true},
             "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "domain": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
@@ -1143,7 +1142,6 @@ const models: TsoaRoute.Models = {
             "authentication": {"ref":"SouthFTPSettingsAuthentication","required":true},
             "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "compression": {"dataType":"boolean","required":true},
             "retryInterval": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
@@ -3399,7 +3397,6 @@ const models: TsoaRoute.Models = {
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "privateKey": {"dataType":"string"},
             "passphrase": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "compression": {"dataType":"boolean","required":true},
             "retryInterval": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
