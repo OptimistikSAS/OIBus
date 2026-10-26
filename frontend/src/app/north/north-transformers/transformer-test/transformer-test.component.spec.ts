@@ -22,7 +22,7 @@ const transformer: StandardTransformerDTO = {
   type: 'standard',
   functionName: 'record-list-to-json',
   inputType: 'record-list',
-  outputType: 'any',
+  outputType: 'file',
   manifest: {
     type: 'object',
     key: 'options',
@@ -35,8 +35,8 @@ const transformer: StandardTransformerDTO = {
 };
 
 const testResult: SouthConnectorItemTestResult = {
-  raw: { type: 'any-content', content: 'raw-input' },
-  transformed: { type: 'any-content', content: 'pasted-output' },
+  raw: { type: 'file-content', content: 'raw-input' },
+  transformed: { type: 'file-content', content: 'pasted-output' },
   connectionDuration: 12,
   queryDuration: 34
 };
@@ -283,11 +283,11 @@ describe('NorthTransformerTestComponent', () => {
     await tester.runButton.click();
     await expect.element(tester.result).toBeInTheDocument();
 
-    tester.fixture.componentRef.setInput('transformer', { ...transformer, id: 'transformer-2', inputType: 'any' });
+    tester.fixture.componentRef.setInput('transformer', { ...transformer, id: 'transformer-2', inputType: 'file' });
 
     await expect.element(tester.result).not.toBeInTheDocument();
     await expect.element(tester.summaryChip).not.toBeInTheDocument();
     await expect.element(tester.info).toHaveTextContent('Test results will appear here');
-    expect(transformerService.getInputTemplate).toHaveBeenLastCalledWith('any');
+    expect(transformerService.getInputTemplate).toHaveBeenLastCalledWith('file');
   });
 });

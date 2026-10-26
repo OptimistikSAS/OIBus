@@ -4,9 +4,9 @@ import path from 'node:path';
 import { DateTime } from 'luxon';
 
 import {
-  OIBusAnyContent,
   OIBusContent,
   OIBusFileContent,
+  OIBusInMemoryFileContent,
   OIBusRecord,
   OIBusRecordListContent
 } from '../../shared/model/common/content.model';
@@ -45,7 +45,7 @@ export interface SouthMetricsEvents {
   // an item whose window is already caught up may emit zero `history-query-interval` events, so the
   // UI would otherwise have no boundary event to show progress moving to the next item.
   'history-query-item-start': { itemName: string; currentItemNumber: number; numberOfItems: number };
-  // `any-content` (opaque payloads) has no record, hence the `| null`.
+  // `file-content` (opaque payloads) has no record, hence the `| null`.
   'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusRecord | null };
   'add-file': { lastFileRetrieved: string };
 }
@@ -881,15 +881,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /**
    * Entry point subclasses call after a successful read. Dispatches by content
    * shape to the engine callback and updates per-shape metrics:
-   *   - `'any-content'`  → opaque serialised payload (MQTT messages, etc.)
-   *   - `'any'`          → a file on disk (folder-scanner, FTP, etc.)
+   *   - `'file-content'`  → opaque serialised payload (MQTT messages, etc.)
+   *   - `'file'`          → a file on disk (folder-scanner, FTP, etc.)
    *   - `'record-list'`  → array of flat rows: point records of point-based souths, untouched rows of SQL-like souths
    */
   addContent(data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> {
     switch (data.type) {
-      case 'any-content':
+      case 'file-content':
         return this.addAnyContent(data, queryTime, items);
-      case 'any':
+      case 'file':
         return this.addFile(data, queryTime, items);
       case 'record-list':
         return this.addRecords(data, queryTime, items);
@@ -899,7 +899,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   private async addAnyContent(
-    data: OIBusAnyContent,
+    data: OIBusInMemoryFileContent,
     queryTime: Instant,
     items: Array<SouthConnectorItemEntity<SouthItemSettings>>
   ): Promise<void> {
@@ -912,7 +912,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.currentHistoryQueryInterval?.start ?? null,
       this.currentHistoryQueryInterval?.end ?? null
     );
-    // `any-content` is a single opaque serialised payload, not a list of records: count it
+    // `file-content` is a single opaque serialised payload, not a list of records: count it
     // as one retrieved item (not its byte length) and carry no "last value" (no record).
     this.metricsEvent.emit('add-values', {
       numberOfValuesRetrieved: 1,

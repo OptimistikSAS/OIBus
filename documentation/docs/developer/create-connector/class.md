@@ -34,7 +34,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'record-list', 'setpoint'];
+    return ['file', 'record-list', 'setpoint'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -56,7 +56,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
         console.table(setpoints, ['reference', 'value']);
         return;
       }
-      case 'any':
+      case 'file':
         console.log(`Sending file ${cacheMetadata.contentFile} (${cacheMetadata.contentSize} bytes)`);
         return;
     }
@@ -260,11 +260,11 @@ await this.addContent(
 
 `OIBusContent` is a discriminated union:
 
-| `type`          | `content` shape                                                                               | Use for                                     |
-| --------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `'record-list'` | `Array<OIBusRecord>` — point records `{ pointId, timestamp, value, quality? }`, or query rows | Point values (time series), query results   |
-| `'any-content'` | `string` — an opaque serialised payload (e.g. JSON-stringified MQTT messages)                 | When the destination needs the raw payload  |
-| `'any'`         | `{ filePath: string }` — a file already written to disk                                       | File-based connectors (folder scanner, FTP) |
+| `type`           | `content` shape                                                                               | Use for                                     |
+| ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `'record-list'`  | `Array<OIBusRecord>` — point records `{ pointId, timestamp, value, quality? }`, or query rows | Point values (time series), query results   |
+| `'file-content'` | `string` — an opaque serialised payload (e.g. JSON-stringified MQTT messages)                 | When the destination needs the raw payload  |
+| `'file'`         | `{ filePath: string }` — a file already written to disk                                       | File-based connectors (folder scanner, FTP) |
 
 The engine takes care of writing the content into each enabled North's cache via its transformer pipeline.
 Don't write to the cache directly — always go through `addContent`.

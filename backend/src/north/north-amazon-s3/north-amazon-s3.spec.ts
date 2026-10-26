@@ -87,7 +87,7 @@ describe('NorthAmazonS3', () => {
   });
 
   it('should retrieve supported types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file']);
   });
 
   it('should properly start', async () => {
@@ -159,7 +159,7 @@ describe('NorthAmazonS3', () => {
       contentSize: 1234,
       numberOfElement: 0,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any'
+      contentType: 'file'
     });
 
     assert.strictEqual(s3.send.mock.calls.length, 1);

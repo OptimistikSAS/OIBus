@@ -575,7 +575,7 @@ describe('SouthRestAPI connector', () => {
     assert.strictEqual(addContentCallback.mock.calls.length, 1);
     const [southId, content] = addContentCallback.mock.calls[0].arguments;
     assert.strictEqual(southId, 'south-rest');
-    assert.ok(content.type === 'any');
+    assert.ok(content.type === 'file');
     assert.ok(content.filePath.includes('REST-Test Item-random-id.json'));
 
     assert.strictEqual(unlink.mock.calls.length, 1, 'the temp file should be deleted from the south cache once sent');
@@ -642,7 +642,7 @@ describe('SouthRestAPI connector', () => {
 
     const result = await south.testItem(createItem(), { history: { startTime: DATE_1, endTime: DATE_2 } });
 
-    assert.ok(result.result.type === 'any');
+    assert.ok(result.result.type === 'file');
     assert.strictEqual(result.result.content, JSON.stringify({ test: 'ok' }));
     assert.notStrictEqual(result.result.filePath, undefined);
     assert.strictEqual(result.connectionDuration, 0);

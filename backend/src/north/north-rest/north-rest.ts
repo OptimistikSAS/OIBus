@@ -41,7 +41,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any'];
+    return ['file'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {

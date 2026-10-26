@@ -1484,7 +1484,7 @@ export default class OIAnalyticsCommandService {
           result.content = result.content.slice(0, 1000);
         }
         break;
-      case 'any':
+      case 'file':
         if (result.content) {
           totalSize = result.content.length;
           if (result.content.length > 1024 * 500) {

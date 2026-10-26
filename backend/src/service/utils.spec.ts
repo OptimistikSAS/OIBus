@@ -502,7 +502,7 @@ describe('Service utils', () => {
     const assertContentAdded = (sentFilePath: string) => {
       assert.strictEqual(addContent.mock.calls.length, 1);
       assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-        { type: 'any', filePath: sentFilePath },
+        { type: 'file', filePath: sentFilePath },
         testData.constants.dates.FAKE_NOW,
         [item]
       ]);

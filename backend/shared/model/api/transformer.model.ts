@@ -398,7 +398,7 @@ export interface CustomTransformerCommandDTO {
 
   /**
    * The output data type that the transformer produces.
-   * @example "any"
+   * @example "file"
    */
   outputType: OutputType;
 

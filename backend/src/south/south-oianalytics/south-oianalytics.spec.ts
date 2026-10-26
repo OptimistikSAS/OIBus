@@ -228,7 +228,7 @@ describe('SouthOIAnalytics', () => {
 
       assert.strictEqual(HTTPRequest.mock.calls.length, 1);
       assert.deepStrictEqual(utilsOianalyticsExports.parseData.mock.calls[0].arguments, [mockRawData]);
-      assert.ok(result.result.type === 'any');
+      assert.ok(result.result.type === 'file');
       assert.match(result.result.filePath, /sql-.*\.csv$/);
       assert.strictEqual(result.result.content, 'pointId,timestamp,value,unit\r\np1,2023-02-01,12,°C');
       assert.strictEqual(result.connectionDuration, 0);

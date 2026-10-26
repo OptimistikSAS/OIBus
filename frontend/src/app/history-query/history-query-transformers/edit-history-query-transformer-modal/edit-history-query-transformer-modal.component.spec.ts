@@ -113,13 +113,13 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
   function createTester(): EditHistoryQueryTransformerModalComponentTester {
     const tester = new EditHistoryQueryTransformerModalComponentTester();
-    tester.modal.prepareForCreation('opcua', [], [], [customTransformer, transformerWithOptions], ['any'], items);
+    tester.modal.prepareForCreation('opcua', [], [], [customTransformer, transformerWithOptions], ['file'], items);
     return tester;
   }
 
   function editTester(transformer: HistoryTransformerDTOWithOptions): EditHistoryQueryTransformerModalComponentTester {
     const tester = new EditHistoryQueryTransformerModalComponentTester();
-    tester.modal.prepareForEdition('opcua', [], [], [customTransformer, transformerWithOptions], ['any'], items, transformer);
+    tester.modal.prepareForEdition('opcua', [], [], [customTransformer, transformerWithOptions], ['file'], items, transformer);
     return tester;
   }
 
@@ -143,7 +143,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
   test('should only offer the transformers compatible with the North and the South', async () => {
     const tester = new EditHistoryQueryTransformerModalComponentTester();
     // record-list input is not compatible with a folder scanner, which produces files
-    tester.modal.prepareForCreation('folder-scanner', [], [], [customTransformer, transformerWithOptions], ['any'], items);
+    tester.modal.prepareForCreation('folder-scanner', [], [], [customTransformer, transformerWithOptions], ['file'], items);
 
     await expect.element(tester.output.getByRole('option')).toHaveLength(2);
     await expect.element(tester.output.getByRole('option', { name: 'my transformer 2' })).toBeInTheDocument();

@@ -26,7 +26,7 @@ const metadata: CacheMetadata = {
   contentSize: 1234,
   numberOfElement: 1,
   createdAt: '2020-02-02T02:02:02.222Z',
-  contentType: 'any'
+  contentType: 'file'
 };
 
 describe('NorthSFTP', () => {
@@ -91,7 +91,7 @@ describe('NorthSFTP', () => {
     });
 
     it('should retrieve supported types', () => {
-      assert.deepStrictEqual(north.supportedTypes(), ['any']);
+      assert.deepStrictEqual(north.supportedTypes(), ['file']);
     });
 
     it('should properly handle files and call sendToSftpServer', async () => {

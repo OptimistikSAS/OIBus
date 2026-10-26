@@ -149,13 +149,13 @@ describe('ItemTestResultComponent', () => {
   test('should display a CSV file in a table', async () => {
     const tester = new ItemTestResultComponentTester();
 
-    tester.component.displayResult({ type: 'any', filePath: 'file.csv', content: 'name,value\nfoo,1\nbar,2' });
+    tester.component.displayResult({ type: 'file', filePath: 'file.csv', content: 'name,value\nfoo,1\nbar,2' });
 
     await expect.element(tester.tableHeaders).toHaveLength(2);
     await expect.element(tester.tableHeaders.nth(0)).toHaveTextContent('name');
     await expect.element(tester.tableRows).toHaveLength(2);
     await expect.element(tester.tableRows.nth(1)).toHaveTextContent('bar2');
-    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'any']);
+    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'raw']);
   });
 
   test('should display a record list in a table', async () => {
@@ -189,16 +189,16 @@ describe('ItemTestResultComponent', () => {
   test('should pretty-print raw content which is JSON', async () => {
     const tester = new ItemTestResultComponentTester();
 
-    tester.component.displayResult({ type: 'any-content', content: '{"a":1}' });
+    tester.component.displayResult({ type: 'file-content', content: '{"a":1}' });
 
-    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['any']);
+    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['raw']);
     await expect.poll(() => tester.editorContent()).toBe('{\n  "a": 1\n}');
   });
 
   test('should display raw content which is not JSON as is', async () => {
     const tester = new ItemTestResultComponentTester();
 
-    tester.component.displayResult({ type: 'any', filePath: 'file.txt', content: 'plain text' });
+    tester.component.displayResult({ type: 'file', filePath: 'file.txt', content: 'plain text' });
 
     await expect.poll(() => tester.editorContent()).toBe('plain text');
   });
@@ -206,7 +206,7 @@ describe('ItemTestResultComponent', () => {
   test('should display a caption when the raw content is empty', async () => {
     const tester = new ItemTestResultComponentTester();
 
-    tester.component.displayResult({ type: 'any-content', content: '' });
+    tester.component.displayResult({ type: 'file-content', content: '' });
 
     await expect.element(tester.noValues).toBeVisible();
     await expect.element(tester.editor).not.toBeInTheDocument();
@@ -216,7 +216,7 @@ describe('ItemTestResultComponent', () => {
     const tester = new ItemTestResultComponentTester();
     const content = 'x'.repeat(250_000);
 
-    tester.component.displayResult({ type: 'any-content', content });
+    tester.component.displayResult({ type: 'file-content', content });
 
     await expect.poll(() => tester.editorContent()).toHaveLength(250_000);
     await expect.element(tester.progressbar).not.toBeInTheDocument();
@@ -227,11 +227,11 @@ describe('ItemTestResultComponent', () => {
     tester.component.displayResult(pointRecords(1));
     await expect.element(tester.table).toBeVisible();
 
-    const transformed: OIBusContent = { type: 'any-content', content: '[]' };
+    const transformed: OIBusContent = { type: 'file-content', content: '[]' };
     tester.component.displayResult(transformed);
 
-    // Transformed any-content result has no table mode -> must switch to 'any', not stay stuck on 'table'.
-    expect(tester.currentDisplayMode).toHaveBeenLastCalledWith('any');
+    // Transformed file-content result has no table mode -> must switch to 'raw', not stay stuck on 'table'.
+    expect(tester.currentDisplayMode).toHaveBeenLastCalledWith('raw');
     await expect.element(tester.table).not.toBeInTheDocument();
     await expect.poll(() => tester.editorContent()).toBe('[]');
   });

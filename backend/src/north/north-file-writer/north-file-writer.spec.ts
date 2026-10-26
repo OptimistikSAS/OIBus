@@ -27,7 +27,7 @@ const metadata = (contentFile: string, contentSize = 1234): CacheMetadata => ({
   contentSize,
   numberOfElement: 1,
   createdAt: '2020-02-02T02:02:02.222Z',
-  contentType: 'any'
+  contentType: 'file'
 });
 const UNC_FOLDER = '\\\\server\\share\\out';
 
@@ -82,7 +82,7 @@ describe('NorthFileWriter', () => {
   });
 
   it('should retrieve supported types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any', 'setpoint', 'record-list']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file', 'setpoint', 'record-list']);
   });
 
   it('should properly handle files with prefix and suffix', async () => {

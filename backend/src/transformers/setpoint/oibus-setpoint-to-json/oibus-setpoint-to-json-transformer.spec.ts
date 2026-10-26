@@ -47,7 +47,7 @@ describe('OIBusSetpointToJSONTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 2,
-        contentType: 'any'
+        contentType: 'file'
       });
     }
   });
@@ -55,6 +55,6 @@ describe('OIBusSetpointToJSONTransformer', () => {
   it('should expose its manifest', () => {
     assert.strictEqual(manifest.id, 'setpoint-to-json');
     assert.strictEqual(manifest.inputType, 'setpoint');
-    assert.strictEqual(manifest.outputType, 'any');
+    assert.strictEqual(manifest.outputType, 'file');
   });
 });

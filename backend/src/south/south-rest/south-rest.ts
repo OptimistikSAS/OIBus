@@ -102,7 +102,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     const { filename, content } = await this.queryData(item, startTime, endTime);
     const queryDuration = DateTime.now().toMillis() - queryStart;
     return {
-      result: { type: 'any', filePath: filename, content },
+      result: { type: 'file', filePath: filename, content },
       // No separate connection step in testItem() for this connector — the call above does
       // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
@@ -125,7 +125,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     const stats = await fs.stat(filePath);
     if (stats.size > 0) {
       this.logger.info(logCtx, `Downloaded file (${stats.size} bytes) in ${requestDuration} ms`);
-      await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [items[0]]);
+      await this.addContent({ type: 'file', filePath }, startRequest.toUTC().toISO(), [items[0]]);
       try {
         await fs.unlink(filePath);
         this.logger.trace(logCtx, `File "${filePath}" deleted`);

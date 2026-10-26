@@ -33,9 +33,9 @@ describe('ChooseNorthConnectorTypeModalComponent', () => {
 
     northConnectorService.getNorthTypes.mockReturnValue(
       of([
-        { id: 'file-writer', category: 'file', name: 'File Writer', description: 'File Writer description', types: ['any'] },
-        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', beta: true, types: ['any'] },
-        { id: 'sftp', category: 'file', name: 'SFTP', description: 'SFTP description', types: ['any'] }
+        { id: 'file-writer', category: 'file', name: 'File Writer', description: 'File Writer description', types: ['file'] },
+        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', beta: true, types: ['file'] },
+        { id: 'sftp', category: 'file', name: 'SFTP', description: 'SFTP description', types: ['file'] }
       ])
     );
 

@@ -362,8 +362,8 @@ const cacheFileContent: FileCacheContent = {
 };
 
 // --- results of the item tests ---
-const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
-const transformedContent: OIBusContent = { type: 'any-content', content: 'transformed content' };
+const rawContent: OIBusContent = { type: 'file-content', content: 'raw content' };
+const transformedContent: OIBusContent = { type: 'file-content', content: 'transformed content' };
 const itemTestResult = { raw: rawContent, transformed: transformedContent, connectionDuration: 56, queryDuration: 78 };
 const itemTestResultWithoutTransformer = { raw: rawContent, transformed: null, connectionDuration: 0, queryDuration: 0 };
 const completedItemTest = JSON.stringify({
@@ -2274,20 +2274,20 @@ describe('OIAnalytics Command service with no commands and without update', () =
   it('should complete file test item command', () => {
     const content2 = 'A'.repeat(500 * 1025);
 
-    complete(testResult({ type: 'any', filePath: 'file.csv', content: 'content' }));
-    complete(testResult({ type: 'any', filePath: 'file.csv', content: content2 }));
-    complete(testResult({ type: 'any', filePath: 'file.csv' }));
+    complete(testResult({ type: 'file', filePath: 'file.csv', content: 'content' }));
+    complete(testResult({ type: 'file', filePath: 'file.csv', content: content2 }));
+    complete(testResult({ type: 'file', filePath: 'file.csv' }));
 
     assert.deepStrictEqual(completedResults(), [
-      completedResult({ type: 'any', filePath: 'file.csv', content: 'content', truncated: false, totalSize: 'content'.length }),
+      completedResult({ type: 'file', filePath: 'file.csv', content: 'content', truncated: false, totalSize: 'content'.length }),
       completedResult({
-        type: 'any',
+        type: 'file',
         filePath: 'file.csv',
         content: content2.slice(0, 1024 * 500),
         truncated: true,
         totalSize: 1025 * 500
       }),
-      completedResult({ type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0 })
+      completedResult({ type: 'file', filePath: 'file.csv', truncated: false, totalSize: 0 })
     ]);
   });
 

@@ -62,7 +62,7 @@ export default class RecordListToCsvTransformer extends OIBusTransformer {
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: 0,
-      contentType: 'any'
+      contentType: 'file'
     };
 
     const fields = this.options.fields || [];

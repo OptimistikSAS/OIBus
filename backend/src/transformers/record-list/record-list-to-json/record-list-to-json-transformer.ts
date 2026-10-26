@@ -33,7 +33,7 @@ export default class RecordListToJSONTransformer extends OIBusTransformer {
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: rows.length,
-      contentType: 'any'
+      contentType: 'file'
     };
     return Promise.resolve({ output: Buffer.from(JSON.stringify(rows)), metadata });
   }

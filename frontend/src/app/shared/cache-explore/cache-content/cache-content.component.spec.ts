@@ -73,7 +73,7 @@ class CacheContentComponentTester {
 function cacheFile(index: number, contentFile: string, contentSize: number, createdAt: string): CacheFile {
   return {
     filename: `file-${index}.json`,
-    metadata: { contentFile, contentSize, numberOfElement: 1, createdAt, contentType: 'any' }
+    metadata: { contentFile, contentSize, numberOfElement: 1, createdAt, contentType: 'file' }
   };
 }
 

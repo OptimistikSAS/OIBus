@@ -22,7 +22,7 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any'];
+    return ['file'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {

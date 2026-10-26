@@ -64,7 +64,7 @@ describe('NorthConsole', () => {
   });
 
   it('should retrieve supported types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any', 'record-list', 'setpoint']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file', 'record-list', 'setpoint']);
   });
 
   it('should properly handle values in verbose mode', async () => {
@@ -92,7 +92,7 @@ describe('NorthConsole', () => {
   });
 
   it('should properly handle files in verbose mode', async () => {
-    await north.handleContent(readStream, metadata('any', 'path/to/file/example.file', 666));
+    await north.handleContent(readStream, metadata('file', 'path/to/file/example.file', 666));
 
     // Handle File does not read the stream in NorthConsole, it just logs metadata
     assert.strictEqual(utilsExports.streamToString.mock.calls.length, 0);
@@ -130,7 +130,7 @@ describe('NorthConsole', () => {
   it('should properly handle file in non verbose mode', async () => {
     north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', { verbose: false });
 
-    await north.handleContent(readStream, metadata('any', 'path/to/file/example.file'));
+    await north.handleContent(readStream, metadata('file', 'path/to/file/example.file'));
 
     assert.strictEqual(utilsExports.streamToString.mock.calls.length, 0);
     assert.strictEqual(stdoutWriteMock.mock.calls.length, 1);

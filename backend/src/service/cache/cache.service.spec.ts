@@ -65,7 +65,7 @@ const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_3,
-      contentType: 'any'
+      contentType: 'file'
     }
   },
   {
@@ -85,7 +85,7 @@ const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'any'
+      contentType: 'file'
     }
   },
   {
@@ -273,8 +273,8 @@ describe('CacheService', () => {
     assert.strictEqual(result, null);
   });
 
-  it('should return item directly if content type is "any"', async () => {
-    const item = { filename: 'file1.txt', metadata: { contentType: 'any' } as CacheMetadata };
+  it('should return item directly if content type is "file"', async () => {
+    const item = { filename: 'file1.txt', metadata: { contentType: 'file' } as CacheMetadata };
     service['queue'] = [item];
     const waitCacheUpdateTasks = mock.fn(async () => undefined);
     service['waitCacheUpdateTasks'] = waitCacheUpdateTasks;
@@ -287,7 +287,7 @@ describe('CacheService', () => {
     assert.deepStrictEqual(result, item);
   });
 
-  it('should compact queue and return item if content type is not "any"', async () => {
+  it('should compact queue and return item if content type is not "file"', async () => {
     const item = { filename: 'data.json', metadata: { contentType: 'record-list' } as CacheMetadata };
     service['queue'] = [item];
 
@@ -516,7 +516,7 @@ describe('CacheService', () => {
 
     const input = Readable.from([Buffer.from('hello '), Buffer.from('world')]);
 
-    await service.addCacheContent(input, { contentType: 'any' });
+    await service.addCacheContent(input, { contentType: 'file' });
 
     const expectedSize = Buffer.from('hello world').length;
     assert.strictEqual(Buffer.concat(written).length, expectedSize);
@@ -538,7 +538,7 @@ describe('CacheService', () => {
     utilsExports.generateRandomId.mock.mockImplementation(() => 'random');
     const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
 
-    await service.addCacheContent(output, { contentType: 'any' });
+    await service.addCacheContent(output, { contentType: 'file' });
 
     assert.strictEqual(writeFileMock.mock.calls.length, 2); // Content + Metadata
     assert.ok(logger.trace.mock.calls.some(c => String(c.arguments[0]).includes('added to cache')));
@@ -564,7 +564,7 @@ describe('CacheService', () => {
     );
     const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
 
-    await assert.rejects(service.addCacheContent(Buffer.from('some content'), { contentType: 'any' }), { message: 'ENOSPC' });
+    await assert.rejects(service.addCacheContent(Buffer.from('some content'), { contentType: 'file' }), { message: 'ENOSPC' });
 
     assert.deepStrictEqual(
       rmMock.mock.calls.map(c => c.arguments[0]),
@@ -591,7 +591,7 @@ describe('CacheService', () => {
         }
       });
 
-      await assert.rejects(service.addCacheContent(source, { contentType: 'any', contentFilename: 'file.csv' }), {
+      await assert.rejects(service.addCacheContent(source, { contentType: 'file', contentFilename: 'file.csv' }), {
         message: 'source error'
       });
 
@@ -703,7 +703,7 @@ describe('CacheService', () => {
 
     // Add a raw file (numberOfElement omitted/zero) → rawFiles bumps.
     utilsExports.generateRandomId.mock.mockImplementationOnce(() => 'counter-test-2');
-    await service.addCacheContent(Buffer.from('payload-2'), { contentType: 'any' });
+    await service.addCacheContent(Buffer.from('payload-2'), { contentType: 'file' });
     assert.strictEqual(service.getNumberOfElementsInQueue(), 10);
     assert.strictEqual(service.getNumberOfRawFilesInQueue(), 1);
 
@@ -875,7 +875,7 @@ describe('CacheService', () => {
     it('should write content and update metadata in memory', async () => {
       const fileData = {
         filename: 'test.json',
-        metadata: { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'any', contentFile: 'orig' }
+        metadata: { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'file', contentFile: 'orig' }
       };
       const newContent = [{ id: 'new' }];
       const newSize = 500;
@@ -904,7 +904,7 @@ describe('CacheService', () => {
     it('should write content and not update metadata in memory if file not found in queue', async () => {
       const fileData = {
         filename: 'test.json',
-        metadata: { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'any', contentFile: 'orig' }
+        metadata: { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'file', contentFile: 'orig' }
       };
       const newContent = [{ id: 'new' }];
       const newSize = 500;
@@ -922,7 +922,7 @@ describe('CacheService', () => {
     it('should handled missing queue element', async () => {
       const fileData = {
         filename: 'test.json',
-        metadata: { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'any', contentFile: 'orig' }
+        metadata: { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'file', contentFile: 'orig' }
       };
       const newContent = [{ id: 'new' }];
 
@@ -1091,7 +1091,7 @@ describe('CacheService', () => {
     it('should move content and metadata files and update cache size', async () => {
       // Setup
       const filename = 'file1.json';
-      const metadata = { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'any', contentFile: 'file' };
+      const metadata = { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'file', contentFile: 'file' };
 
       // Inject initial state
       service['queue'] = [{ filename, metadata }];

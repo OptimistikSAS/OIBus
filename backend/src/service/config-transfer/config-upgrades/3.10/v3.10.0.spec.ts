@@ -35,6 +35,19 @@ describe('3.10.0 config upgrade', () => {
     assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
   });
 
+  it('renames the any data type of the transformers file', () => {
+    const config = fixtureConfig('3.9.3');
+
+    upgrade.apply(config);
+
+    const dataTypes = (config.transformers as Array<JsonObject>).flatMap(transformer => [
+      (transformer.settings as JsonObject).inputType,
+      (transformer.settings as JsonObject).outputType
+    ]);
+    assert.ok(dataTypes.includes('file'));
+    assert.ok(!dataTypes.includes('any'));
+  });
+
   it('adds the record-list-to-csv standard transformer once, and links to it', () => {
     const config = fixtureConfig('3.9.3');
     assert.deepStrictEqual(standardTransformers(config, 'record-list-to-csv'), []);
@@ -44,7 +57,7 @@ describe('3.10.0 config upgrade', () => {
     const [recordListToCsv, ...others] = standardTransformers(config, 'record-list-to-csv');
     assert.ok(recordListToCsv);
     assert.deepStrictEqual(others, []);
-    assert.deepStrictEqual(recordListToCsv.settings, { functionName: 'record-list-to-csv', inputType: 'record-list', outputType: 'any' });
+    assert.deepStrictEqual(recordListToCsv.settings, { functionName: 'record-list-to-csv', inputType: 'record-list', outputType: 'file' });
     const links = (config.northConnectors as Array<JsonObject>).flatMap(
       north => (north.settings as JsonObject).transformers as Array<JsonObject>
     );

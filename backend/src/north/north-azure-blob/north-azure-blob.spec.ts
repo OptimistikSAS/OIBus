@@ -25,7 +25,7 @@ const metadata = (contentSize: number): CacheMetadata => ({
   contentSize,
   numberOfElement: 0,
   createdAt: '',
-  contentType: 'any'
+  contentType: 'file'
 });
 
 const buildSettings = (settings: Partial<NorthAzureBlobSettings> = {}): NorthAzureBlobSettings => ({
@@ -148,7 +148,7 @@ describe('NorthAzureBlob', () => {
   };
 
   it('should retrieve supported types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file']);
   });
 
   it('should properly start', async () => {

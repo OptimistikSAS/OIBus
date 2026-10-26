@@ -1,5 +1,5 @@
-import csvToRecordListManifest from '../../../../transformers/any/csv-to-record-list/manifest';
-import fileManifest from '../../../../transformers/any/file/manifest';
+import csvToRecordListManifest from '../../../../transformers/file/csv-to-record-list/manifest';
+import fileManifest from '../../../../transformers/file/file/manifest';
 import recordListToCsvManifest from '../../../../transformers/record-list/record-list-to-csv/manifest';
 import recordListToJsonManifest from '../../../../transformers/record-list/record-list-to-json/manifest';
 import recordListToModbusManifest from '../../../../transformers/record-list/record-list-to-modbus/manifest';
@@ -201,6 +201,9 @@ export function toGroupedOIAnalyticsOptions(options: Record<string, unknown>): R
     value: { valueField: options.valueColumn ?? 'value', valueProcess: null }
   };
 }
+
+/** The data type of a transformer input or output, `any` being renamed `file`. */
+export const toFileDataType = (dataType: string): string => (dataType === 'any' ? 'file' : dataType);
 
 /** The data type of a custom transformer input or output, `time-values` becoming `record-list`. */
 export const toRecordListDataType = (dataType: string): string => (dataType === 'time-values' ? 'record-list' : dataType);
@@ -769,7 +772,8 @@ export const upgrade: ConfigUpgrade = {
     'move SQL items CSV serialization to record-list-to-csv transformers; replace the raw resampling of OPC UA and OPC items with none; ' +
     'replace the time-values transformers and data type by record-list ones, sending the point-based souths to OIAnalytics through ' +
     'record-list-to-oianalytics transformers; replace the iso and ignore transformers by passthroughs, the data without transformer ' +
-    'being dropped; group the options of the record-list-to-oianalytics transformers by reference, timestamp and value',
+    'being dropped; group the options of the record-list-to-oianalytics transformers by reference, timestamp and value; ' +
+    'rename the any data type file',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -849,6 +853,12 @@ export const upgrade: ConfigUpgrade = {
     };
     forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(groupOIAnalyticsOptions));
     forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(groupOIAnalyticsOptions));
+
+    for (const transformer of asObjects(config.transformers)) {
+      const settings = transformer.settings as JsonObject;
+      settings.inputType = toFileDataType(settings.inputType as string);
+      settings.outputType = toFileDataType(settings.outputType as string);
+    }
 
     return config;
   }
