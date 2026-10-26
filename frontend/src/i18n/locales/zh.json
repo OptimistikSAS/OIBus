@@ -322,12 +322,11 @@
           "deleted": "转换器 {{ name }} 已删除",
           "standard": {
             "file": "文件（原样）",
+            "file-to-file": "文件（转换或重命名）",
             "file-to-mqtt": "MQTT 有效载荷",
             "file-to-oianalytics": "OIAnalytics 有效载荷",
             "file-to-record-list": "记录",
-            "json-to-csv": "CSV（来自 JSON）",
-            "record-list-to-csv": "CSV",
-            "record-list-to-json": "JSON",
+            "record-list-to-file": "文件",
             "record-list-to-modbus": "Modbus 值",
             "record-list-to-mqtt": "MQTT 有效载荷",
             "record-list-to-oianalytics": "OIAnalytics 有效载荷",
@@ -460,7 +459,8 @@
             "file-type": {
               "title": "文件类型",
               "csv": "CSV",
-              "json": "JSON"
+              "json": "JSON",
+              "other": "其他（仅重命名）"
             },
             "delimiter": {
               "title": "CSV 分隔符",
@@ -475,6 +475,92 @@
             },
             "has-header": "包含表头",
             "row-iterator-path": "行迭代器 JSONPath"
+          },
+          "file-output": {
+            "title": "写入的文件",
+            "file-type": {
+              "title": "文件类型",
+              "csv": "CSV",
+              "json": "JSON"
+            },
+            "filename": "文件名（变量：@CurrentDate、@SourceFilename、@SourceExtension...）",
+            "encoding": {
+              "title": "编码",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1（ISO-8859-1）",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "compression": "压缩文件",
+            "header": "第一行作为表头",
+            "delimiter": {
+              "title": "分隔符",
+              "DOT": "点 .",
+              "SEMI_COLON": "分号 ;",
+              "COLON": "冒号 :",
+              "COMMA": "逗号 ,",
+              "SLASH": "斜杠 /",
+              "TAB": "制表符",
+              "NON_BREAKING_SPACE": "空格",
+              "PIPE": "竖线 |"
+            },
+            "newline": {
+              "title": "换行符",
+              "CRLF": "CRLF（\\r\\n）",
+              "LF": "LF（\\n）",
+              "CR": "CR（\\r）"
+            },
+            "quote-char": {
+              "title": "引号字符",
+              "DOUBLE_QUOTE": "双引号（\"）",
+              "SINGLE_QUOTE": "单引号（'）",
+              "NONE": "无"
+            },
+            "escape-char": {
+              "title": "转义字符",
+              "BACKSLASH": "反斜杠（\\）",
+              "DOUBLE_QUOTE": "双引号（\"）"
+            },
+            "null-value": "空值"
+          },
+          "file-fields": {
+            "title": "字段",
+            "item": {
+              "title": "字段配置"
+            },
+            "field": "字段（或 JSONPath）",
+            "name": "写入名称",
+            "data-type": {
+              "title": "数据类型",
+              "string": "字符串",
+              "number": "数字",
+              "boolean": "布尔值",
+              "datetime": "日期时间",
+              "array": "数组",
+              "object": "对象"
+            },
+            "field-process": "字段处理（JS 表达式，例如 value.toUpperCase()）",
+            "datetime-settings": {
+              "title": "日期时间设置",
+              "input-type": {
+                "title": "时间戳输入类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "output-type": {
+                "title": "时间戳输出类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "timezone": "时区",
+              "format": "格式",
+              "locale": "区域设置"
+            },
+            "keep-other-fields": "保留其他字段"
           },
           "file-to-mqtt": {
             "topic-field": "主题字段",
@@ -522,166 +608,6 @@
                 "datetime": "日期时间",
                 "array": "数组",
                 "object": "对象"
-              }
-            }
-          },
-          "json-to-csv": {
-            "filename": "输出文件名",
-            "delimiter": {
-              "title": "CSV 分隔符",
-              "DOT": "点 .",
-              "SEMI_COLON": "分号 ;",
-              "COLON": "冒号 :",
-              "COMMA": "逗号 ,",
-              "SLASH": "斜杠 /",
-              "TAB": "制表符",
-              "NON_BREAKING_SPACE": "空格",
-              "PIPE": "竖线 |"
-            },
-            "encoding": {
-              "title": "编码",
-              "UTF_8": "UTF-8",
-              "UTF_8_BOM": "UTF-8 BOM",
-              "LATIN_1": "Latin-1（ISO-8859-1）",
-              "UTF_16_LE": "UTF-16 LE"
-            },
-            "quote-char": {
-              "title": "引号字符",
-              "DOUBLE_QUOTE": "双引号（\"）",
-              "SINGLE_QUOTE": "单引号（'）",
-              "NONE": "无"
-            },
-            "escape-char": {
-              "title": "转义字符",
-              "BACKSLASH": "反斜杠（\\）",
-              "DOUBLE_QUOTE": "双引号（\"）"
-            },
-            "newline": {
-              "title": "行分隔符",
-              "DEFAULT": "默认（\\r、\\n 或 \\r\\n）",
-              "CRLF": "CRLF（\\r\\n）",
-              "LF": "LF（\\n）",
-              "CR": "CR（\\r）"
-            },
-            "null-value": "空值",
-            "header": "第一行作为表头",
-            "row-iterator-path": "行迭代器 JSONPath",
-            "fields": {
-              "title": "字段映射",
-              "item": {
-                "title": "字段配置"
-              },
-              "column-name": "列名",
-              "json-path": "JSONPath",
-              "data-type": {
-                "title": "数据类型",
-                "string": "字符串",
-                "number": "数字",
-                "boolean": "布尔值",
-                "datetime": "日期时间",
-                "array": "数组",
-                "object": "对象"
-              },
-              "field-process": "字段处理（JS 表达式，例如 value.toUpperCase()）",
-              "datetime-settings": {
-                "title": "日期时间设置",
-                "input-type": {
-                  "title": "时间戳输入类型",
-                  "string": "字符串",
-                  "iso-string": "ISO 字符串",
-                  "unix-epoch": "Unix 纪元（秒）",
-                  "unix-epoch-ms": "Unix 纪元（毫秒）"
-                },
-                "output-type": {
-                  "title": "时间戳输出类型",
-                  "string": "字符串",
-                  "iso-string": "ISO 字符串",
-                  "unix-epoch": "Unix 纪元（秒）",
-                  "unix-epoch-ms": "Unix 纪元（毫秒）"
-                },
-                "timezone": "时区",
-                "format": "格式",
-                "locale": "区域设置"
-              }
-            }
-          },
-          "record-list-to-csv": {
-            "filename": "文件名",
-            "encoding": {
-              "title": "编码",
-              "UTF_8": "UTF-8",
-              "UTF_8_BOM": "UTF-8 BOM",
-              "LATIN_1": "Latin-1（ISO-8859-1）",
-              "UTF_16_LE": "UTF-16 LE"
-            },
-            "header": "第一行作为表头",
-            "compression": "压缩文件",
-            "delimiter": {
-              "title": "分隔符",
-              "DOT": "点 .",
-              "SEMI_COLON": "分号 ;",
-              "COLON": "冒号 :",
-              "COMMA": "逗号 ,",
-              "SLASH": "斜杠 /",
-              "TAB": "制表符",
-              "NON_BREAKING_SPACE": "空格",
-              "PIPE": "竖线 |"
-            },
-            "newline": {
-              "title": "换行符",
-              "CRLF": "CRLF（\\r\\n）",
-              "LF": "LF（\\n）",
-              "CR": "CR（\\r）"
-            },
-            "quote-char": {
-              "title": "引号字符",
-              "DOUBLE_QUOTE": "双引号（\"）",
-              "SINGLE_QUOTE": "单引号（'）",
-              "NONE": "无"
-            },
-            "escape-char": {
-              "title": "转义字符",
-              "BACKSLASH": "反斜杠（\\）",
-              "DOUBLE_QUOTE": "双引号（\"）"
-            },
-            "null-value": "空值",
-            "keep-other-fields": "保留其他字段",
-            "fields": {
-              "title": "字段映射",
-              "item": {
-                "title": "字段配置"
-              },
-              "field-name": "字段名",
-              "column-name": "列名",
-              "data-type": {
-                "title": "数据类型",
-                "string": "字符串",
-                "number": "数字",
-                "boolean": "布尔值",
-                "datetime": "日期时间",
-                "array": "数组",
-                "object": "对象"
-              },
-              "field-process": "字段处理（JS 表达式，例如 value.toUpperCase()）",
-              "datetime-settings": {
-                "title": "日期时间设置",
-                "input-type": {
-                  "title": "时间戳输入类型",
-                  "string": "字符串",
-                  "iso-string": "ISO 字符串",
-                  "unix-epoch": "Unix 纪元（秒）",
-                  "unix-epoch-ms": "Unix 纪元（毫秒）"
-                },
-                "output-type": {
-                  "title": "时间戳输出类型",
-                  "string": "字符串",
-                  "iso-string": "ISO 字符串",
-                  "unix-epoch": "Unix 纪元（秒）",
-                  "unix-epoch-ms": "Unix 纪元（毫秒）"
-                },
-                "timezone": "时区",
-                "format": "格式",
-                "locale": "区域设置"
               }
             }
           },

@@ -458,12 +458,14 @@ export const generateFilenameForSerialization = (baseFolder: string, filename: s
 };
 
 /**
- * Substitute the filename placeholders supported by the CSV output transformers (record-list-to-csv,
- * json-to-csv): `@CurrentDate` (when the transform runs) and, when the content came from a bounded
+ * Substitute the filename placeholders supported by the file output transformers (record-list-to-file,
+ * file-to-file): `@CurrentDate` (when the transform runs) and, when the content came from a bounded
  * history query, `@QueryStartTime`/`@QueryEndTime` (the queried window). The latter two are left
  * empty for content that isn't bound to a time window (subscriptions, direct queries, other sources).
+ * `@SourceFilename` and `@SourceExtension` are the name (without extension) and the extension (with its dot) of the
+ * transformed file, empty for other content.
  */
-export const applyFilenameVariables = (filename: string, source: CacheMetadataSource): string => {
+export const applyFilenameVariables = (filename: string, source: CacheMetadataSource, sourceFilename: string | null = null): string => {
   const formatQueryBound = (instant: Instant | null | undefined): string =>
     instant ? DateTime.fromISO(instant).toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS') : '';
   // Only meaningful when the batch is unambiguously about one item (e.g. a SQL-like south, which
@@ -476,7 +478,9 @@ export const applyFilenameVariables = (filename: string, source: CacheMetadataSo
     .replace('@QueryStartTime', source.source === 'south' ? formatQueryBound(source.queryStartTime) : '')
     .replace('@QueryEndTime', source.source === 'south' ? formatQueryBound(source.queryEndTime) : '')
     .replace('@ConnectorName', source.source === 'south' ? source.southName : '')
-    .replace('@ItemName', itemName);
+    .replace('@ItemName', itemName)
+    .replace('@SourceFilename', sourceFilename ? path.parse(sourceFilename).name : '')
+    .replace('@SourceExtension', sourceFilename ? path.parse(sourceFilename).ext : '');
 };
 
 export const generateCsvContent = (data: Array<Record<string, string | number | boolean | null>>, delimiter: CsvCharacter): string => {

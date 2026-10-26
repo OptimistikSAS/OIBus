@@ -133,7 +133,7 @@ describe('transformer routing', () => {
   describe('findDefaultTransformer', () => {
     const transformers = [
       standard('file', 'file', 'file'),
-      standard('record-list-to-json', 'record-list', 'file'),
+      standard('record-list-to-file', 'record-list', 'file'),
       standard('setpoint-to-json', 'setpoint', 'file'),
       standard('record-list-to-oianalytics', 'record-list', 'oianalytics'),
       standard('file-to-oianalytics', 'file', 'oianalytics'),
@@ -155,7 +155,7 @@ describe('transformer routing', () => {
     });
 
     test('should fall back to the passthrough of the data type', () => {
-      expect(defaultOf('record-list', ['file', 'record-list'])).toBe('record-list-to-json');
+      expect(defaultOf('record-list', ['file', 'record-list'])).toBe('record-list-to-file');
       expect(defaultOf('setpoint', ['file'])).toBe('setpoint-to-json');
     });
 

@@ -197,6 +197,23 @@ describe('OIBusSettingsSummaryComponent', () => {
     await expect.element(tester.entry('Mode')).not.toHaveClass('oib-summary-changed');
   });
 
+  test('should leave out the settings turned off by an attribute of another group, when asked', () => {
+    const attribute: OIBusObjectAttribute = {
+      ...settingsAttribute,
+      attributes: [settingsAttribute.attributes[0], settingsAttribute.attributes[1]],
+      enablingConditions: [{ referralPathFromRoot: 'trackingInstant.trackInstant', targetPathFromRoot: 'minAge', values: [true] }]
+    };
+    const keys = (value: Record<string, unknown>) =>
+      summarizeSettings(attribute, value, { translateService: TestBed.inject(TranslateService), applyEnablingConditions: true }).map(
+        setting => setting.labelKey
+      );
+
+    const mode = `${items}.opcua.mode.title`;
+    expect(keys({ mode: 'ha', minAge: 1000, trackingInstant: { trackInstant: false } })).toEqual([mode]);
+    expect(keys({ mode: 'ha', minAge: 1000, trackingInstant: { trackInstant: true } })).toEqual([mode, `${items}.ftp.min-age`]);
+    expect(keys({ mode: 'ha', minAge: 1000 })).toEqual([mode]);
+  });
+
   test('should flag the settings with an error', async () => {
     const tester = new OIBusSettingsSummaryComponentTester();
 

@@ -58,7 +58,11 @@ export function summarizeSettings(
   const values = (value ?? {}) as Record<string, unknown>;
   const enabled = (attribute: OIBusAttribute) => {
     const condition = objectAttribute.enablingConditions.find(candidate => candidate.targetPathFromRoot === attribute.key);
-    return !context.applyEnablingConditions || !condition || checkCondition(values[condition.referralPathFromRoot] ?? null, condition);
+    // The referral may be an attribute of a sibling object (e.g. `input.fileType`)
+    const referral = condition?.referralPathFromRoot
+      .split('.')
+      .reduce<unknown>((parent, key) => (parent as Record<string, unknown> | null | undefined)?.[key], values);
+    return !context.applyEnablingConditions || !condition || checkCondition(referral ?? null, condition);
   };
   return objectAttribute.attributes
     .filter(attribute => attribute.key in values && enabled(attribute))

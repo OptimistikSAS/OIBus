@@ -293,12 +293,12 @@ describe('NorthTransformersComponent', () => {
     });
 
     test('should add the obvious transformer of a source in one click', async () => {
-      const json = standard('record-list-to-json', 'record-list');
+      const json = standard('record-list-to-file', 'record-list');
       const tester = new NorthTransformersComponentTester(northConnector, false, [customTransformer, json, standard('file', 'file', true)]);
 
       // the file transformer needs its options to be set: it cannot be added in one click
       await expect.element(tester.row('OIBus API').getByCss('.quick-add')).not.toBeInTheDocument();
-      await tester.row('South 3').getByRole('button', { name: 'JSON' }).click();
+      await tester.row('South 3').getByRole('button', { name: 'File' }).click();
 
       expect(tester.emitted).toEqual([
         [
@@ -311,7 +311,7 @@ describe('NorthTransformersComponent', () => {
           }
         ]
       ]);
-      await expect.element(tester.row('South 3')).toMatchTextContent('JSONAll items');
+      await expect.element(tester.row('South 3')).toMatchTextContent('FileAll items');
     });
 
     test('should edit a transformer at its place in the list', async () => {

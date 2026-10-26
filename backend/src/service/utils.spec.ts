@@ -1755,6 +1755,11 @@ describe('Service utils', () => {
       assert.strictEqual(result, '2021_01_02_00_00_00_000_2023_01_01_00_00_00_000.csv');
     });
 
+    it('should replace @SourceFilename and @SourceExtension with the name and extension of the transformed file', () => {
+      assert.strictEqual(utils.applyFilenameVariables('@SourceFilename_copy@SourceExtension', southSource(), 'data.csv'), 'data_copy.csv');
+      assert.strictEqual(utils.applyFilenameVariables('@SourceFilename_copy@SourceExtension', southSource()), '_copy');
+    });
+
     it('should replace @QueryStartTime/@QueryEndTime with an empty string when the south content is not bound to a query window', () => {
       assert.strictEqual(utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', southSource()), 'export__.csv');
     });

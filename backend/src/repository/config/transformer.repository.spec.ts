@@ -9,12 +9,11 @@ import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import FileTransformer from '../../transformers/file/file/file-transformer';
+import FileToFileTransformer from '../../transformers/file/file-to-file/file-to-file-transformer';
 import FileToMQTTTransformer from '../../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
 import FileToOIAnalyticsTransformer from '../../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
 import FileToRecordListTransformer from '../../transformers/file/file-to-record-list/file-to-record-list-transformer';
-import JSONToCSVTransformer from '../../transformers/file/json-to-csv/json-to-csv-transformer';
-import RecordListToCsvTransformer from '../../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
-import RecordListToJSONTransformer from '../../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
+import RecordListToFileTransformer from '../../transformers/record-list/record-list-to-file/record-list-to-file-transformer';
 import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
 import RecordListToMQTTTransformer from '../../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
 import RecordListToOIAnalyticsTransformer from '../../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
@@ -37,14 +36,7 @@ const standardTransformers: Array<StandardTransformer> = [
     type: 'standard'
   },
   { id: 'file', type: 'standard', functionName: FileTransformer.transformerName, inputType: 'file', outputType: 'file' },
-  { id: 'jsonToCsv', inputType: 'file', functionName: JSONToCSVTransformer.transformerName, outputType: 'file', type: 'standard' },
-  {
-    id: 'recordListToCsv',
-    inputType: 'record-list',
-    functionName: RecordListToCsvTransformer.transformerName,
-    outputType: 'file',
-    type: 'standard'
-  },
+  { id: 'jsonToCsv', inputType: 'file', functionName: FileToFileTransformer.transformerName, outputType: 'file', type: 'standard' },
   {
     id: 'jsonToOia',
     inputType: 'file',
@@ -55,7 +47,7 @@ const standardTransformers: Array<StandardTransformer> = [
   {
     id: 'recordListToJson',
     type: 'standard',
-    functionName: RecordListToJSONTransformer.transformerName,
+    functionName: RecordListToFileTransformer.transformerName,
     inputType: 'record-list',
     outputType: 'file'
   },
@@ -277,7 +269,7 @@ describe('TransformerRepository', () => {
 
   it('should properly search transformers and page them', () => {
     const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-    assert.strictEqual(result.totalElements, 18);
+    assert.strictEqual(result.totalElements, 17);
     // First page contains standard transformers (10 per page)
     for (const t of result.content.map(stripAuditFields)) {
       assert.strictEqual(t.type, 'standard');
