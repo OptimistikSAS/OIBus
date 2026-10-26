@@ -214,8 +214,13 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.nextButton.click();
     await expect.element(tester.optionsStep).toHaveAttribute('aria-current', 'step');
     await expect.element(tester.root.getByText('This transformer has no options.')).toBeVisible();
-    await tester.nextButton.click();
+    // the options are tried out right away
     await expect.element(tester.testPanel).toBeVisible();
+    await tester.nextButton.click();
+    await expect.element(tester.root.getByCss('#source-summary')).toMatchTextContent('OIAnalytics setpoints');
+    await expect.element(tester.root.getByCss('#source-summary')).toMatchTextContent('MQTT payloads');
+    await expect.element(tester.testPanel).not.toBeVisible();
+    await expect.element(tester.nextButton).not.toBeInTheDocument();
     await tester.root.getByRole('button', { name: 'Back' }).click();
     await expect.element(tester.optionsStep).toHaveAttribute('aria-current', 'step');
   });
@@ -424,13 +429,18 @@ describe('EditNorthTransformerModalComponent', () => {
     await expect.element(tester.saveButton).toBeVisible();
     await tester.optionsStep.click();
     await expect.element(tester.topic).toHaveValue('my/topic');
+    await tester.topic.fill('other/topic');
+    // the review tells what changed since the transformer was saved
+    await tester.root.getByCss('#modal-step-review').click();
+    await expect.element(tester.root.getByCss('#review-changes')).toHaveTextContent('Settings changed since the transformer was saved: 2');
+    await expect.element(tester.root.getByCss('#options-summary')).toMatchTextContent('other/topic');
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith({
       id: 'northTransformerId1',
       source: { type: 'oibus-api', dataSourceId: 'other-source' },
       transformer: recordListToMqtt,
-      options: { topic: 'my/topic' }
+      options: { topic: 'other/topic' }
     });
   });
 

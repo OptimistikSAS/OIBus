@@ -98,7 +98,10 @@ export function transformerOptionsSummary(transformer: TransformerDTOWithOptions
 }
 
 /** Where the data of a north transformer comes from, as shown in the transformer lists */
-export function formatTransformerSource(transformer: TransformerDTOWithOptions, translateService: TranslateService): string {
+export function formatTransformerSource(
+  transformer: Pick<TransformerDTOWithOptions, 'source'>,
+  translateService: TranslateService
+): string {
   if (transformer.source.type === 'south') {
     const southLabel = `${transformer.source.south!.name} (${translateService.instant('enums.oibus-south-type.' + transformer.source.south!.type)})`;
     const numberOfItems = transformer.source.items.length;
