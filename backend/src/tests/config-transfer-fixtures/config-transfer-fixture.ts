@@ -84,6 +84,14 @@ export function exportConfigDatabase(database: Database, oibusVersion: string): 
   };
 }
 
+/** The JSON text of a value, its object keys sorted: the same for the same content, whatever the key order */
+const canonicalJson = (value: unknown): string =>
+  JSON.stringify(value, (_key, nested: unknown) =>
+    nested && typeof nested === 'object' && !Array.isArray(nested)
+      ? Object.fromEntries(Object.entries(nested).sort(([a], [b]) => a.localeCompare(b)))
+      : nested
+  );
+
 /**
  * The part of a configuration an import reads, normalized for comparing two of them:
  *  - the engine and the registration are informational only, so they are left out;
@@ -110,7 +118,7 @@ export function importedPart(config: OIBusConfigurationDTO): {
   const normalizeLinks = <T extends { id: string; transformerId: string }>(links: Array<T>): Array<T> =>
     links
       .map(({ id: _id, ...link }) => ({ ...link, transformerId: reference(link.transformerId) }) as unknown as T)
-      .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+      .sort((a, b) => canonicalJson(a).localeCompare(canonicalJson(b)));
   return {
     config: {
       ...rest,

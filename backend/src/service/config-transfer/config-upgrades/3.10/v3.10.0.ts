@@ -1,9 +1,9 @@
 import fileManifest from '../../../../transformers/file/file/manifest';
+import fileToFileManifest from '../../../../transformers/file/file-to-file/manifest';
 import fileToMqttManifest from '../../../../transformers/file/file-to-mqtt/manifest';
 import fileToOianalyticsManifest from '../../../../transformers/file/file-to-oianalytics/manifest';
 import fileToRecordListManifest from '../../../../transformers/file/file-to-record-list/manifest';
-import recordListToCsvManifest from '../../../../transformers/record-list/record-list-to-csv/manifest';
-import recordListToJsonManifest from '../../../../transformers/record-list/record-list-to-json/manifest';
+import recordListToFileManifest from '../../../../transformers/record-list/record-list-to-file/manifest';
 import recordListToModbusManifest from '../../../../transformers/record-list/record-list-to-modbus/manifest';
 import recordListToMqttManifest from '../../../../transformers/record-list/record-list-to-mqtt/manifest';
 import recordListToOianalyticsManifest from '../../../../transformers/record-list/record-list-to-oianalytics/manifest';
@@ -262,6 +262,57 @@ export function toFileTransformerOptions(oldFunctionName: string, options: Recor
   }
 }
 
+/** The file transformers replacing the CSV and JSON writers: each writes both CSV and JSON files */
+export const FILE_OUTPUT_TRANSFORMER_REPLACEMENTS: Record<string, string> = {
+  'json-to-csv': 'file-to-file',
+  'record-list-to-csv': 'record-list-to-file',
+  'record-list-to-json': 'record-list-to-file'
+};
+
+/**
+ * Converts the options of a CSV or JSON writer for the file transformer replacing it: the format of the written file
+ * goes in an `output` group, and the fields are renamed `field` (the read field, or JSONPath) and `name` (the written
+ * column). record-list-to-json sent the records as they are, in a JSON file. Options already converted are returned as
+ * they are.
+ */
+export function toFileOutputTransformerOptions(oldFunctionName: string, options: Record<string, unknown>): Record<string, unknown> {
+  if (options.output !== undefined) return options;
+  if (oldFunctionName === 'record-list-to-json') {
+    return {
+      output: { fileType: 'json', encoding: 'UTF_8', compression: false },
+      filename: '@CurrentDate.json',
+      keepOtherFields: true,
+      fields: []
+    };
+  }
+  const fromJson = oldFunctionName === 'json-to-csv';
+  const converted: Record<string, unknown> = {
+    output: {
+      fileType: 'csv',
+      encoding: options.encoding ?? 'UTF_8',
+      compression: options.compression ?? false,
+      header: options.header ?? true,
+      delimiter: options.delimiter ?? 'COMMA',
+      newline: options.newline ?? 'LF',
+      quoteChar: options.quoteChar ?? 'NONE',
+      escapeChar: options.escapeChar ?? 'DOUBLE_QUOTE',
+      nullValue: options.nullValue ?? ''
+    },
+    filename: options.filename ?? '@CurrentDate.csv',
+    // json-to-csv only wrote its fields
+    keepOtherFields: fromJson ? false : (options.keepOtherFields ?? true),
+    fields: ((options.fields ?? []) as Array<Record<string, unknown>>).map(({ fieldName, jsonPath, columnName, ...field }) => ({
+      ...field,
+      field: fromJson ? jsonPath : fieldName,
+      name: columnName ?? null
+    }))
+  };
+  if (fromJson) {
+    return { input: { fileType: 'json', rowIteratorPath: options.rowIteratorPath ?? '$[*]' }, ...converted };
+  }
+  return converted;
+}
+
 /** The data type of a transformer input or output, `any` being renamed `file`. */
 export const toFileDataType = (dataType: string): string => (dataType === 'any' ? 'file' : dataType);
 
@@ -397,7 +448,8 @@ function transformerCatalog(config: JsonObject): {
       oIBusInternalId: generateRandomId(6),
       type: 'standard',
       settings: { functionName: RECORD_LIST_TO_CSV_FUNCTION_NAME, inputType: 'record-list', outputType: 'any' },
-      manifest: recordListToCsvManifest.settings
+      // record-list-to-csv is replaced by record-list-to-file at the end of the upgrade, with its manifest
+      manifest: null
     };
     transformers.push(added);
     config.transformers = transformers;
@@ -510,8 +562,6 @@ function migrateSqlHistoryQueryItems(config: JsonObject, catalog: ReturnType<typ
 
 // csv-to-time-values becomes csv-to-record-list, itself replaced by file-to-record-list (see `FILE_TRANSFORMER_REPLACEMENTS`)
 const RECORD_LIST_TRANSFORMER_MANIFESTS = [
-  recordListToCsvManifest,
-  recordListToJsonManifest,
   recordListToModbusManifest,
   recordListToMqttManifest,
   recordListToOianalyticsManifest,
@@ -649,7 +699,8 @@ function addOIAnalyticsTransformers(config: JsonObject): void {
   }
 }
 
-const PASSTHROUGH_MANIFESTS = [fileManifest, recordListToJsonManifest, setpointToJsonManifest];
+// record-list-to-json is replaced by record-list-to-file at the end of the upgrade, with its manifest
+const PASSTHROUGH_MANIFESTS = [fileManifest, setpointToJsonManifest];
 
 /**
  * The 'iso' and 'ignore' standard transformers are removed: the links are changed to keep routing the data as before
@@ -678,7 +729,7 @@ function replaceIsoAndIgnoreTransformers(config: JsonObject): void {
       oIBusInternalId: id,
       type: 'standard',
       settings: { ...passthrough },
-      manifest: PASSTHROUGH_MANIFESTS.find(manifest => manifest.id === passthrough.functionName)!.settings
+      manifest: PASSTHROUGH_MANIFESTS.find(manifest => manifest.id === passthrough.functionName)?.settings ?? null
     });
     return id;
   };
@@ -825,44 +876,48 @@ function replaceIsoAndIgnoreTransformers(config: JsonObject): void {
   config.transformers = transformers.filter(transformer => !isRemoved(transformer));
 }
 
-const FILE_TRANSFORMER_MANIFESTS = [fileToMqttManifest, fileToOianalyticsManifest, fileToRecordListManifest];
+const FILE_TRANSFORMER_MANIFESTS = [
+  fileToFileManifest,
+  fileToMqttManifest,
+  fileToOianalyticsManifest,
+  fileToRecordListManifest,
+  recordListToFileManifest
+];
 
 /**
- * The CSV and JSON transformers are replaced by the file ones (see `FILE_TRANSFORMER_REPLACEMENTS`): renamed in place, or
- * merged into their replacement when the configuration already describes it, their links' options being converted (see
- * `toFileTransformerOptions`).
+ * The CSV and JSON transformers are replaced by the file ones (see `FILE_TRANSFORMER_REPLACEMENTS` and
+ * `FILE_OUTPUT_TRANSFORMER_REPLACEMENTS`): renamed in place, or merged into their replacement when the configuration
+ * already describes it, their links' options being converted.
  */
-function replaceCsvAndJsonTransformers(config: JsonObject): void {
-  const transformers = asObjects(config.transformers);
+function replaceCsvAndJsonTransformers(
+  config: JsonObject,
+  replacements: Record<string, string>,
+  convertOptions: (oldFunctionName: string, options: Record<string, unknown>) => Record<string, unknown>
+): void {
+  // In the order of the replacements, as the migrations do: the first replaced transformer is renamed in place
   const replacedIds = new Map<unknown, { oldFunctionName: string; newId: unknown }>();
-  const keptTransformers: Array<JsonObject> = [];
-  for (const transformer of transformers) {
-    const settings = transformer.settings as JsonObject;
-    const oldFunctionName = settings.functionName as string;
-    const newFunctionName = transformer.type === 'standard' ? FILE_TRANSFORMER_REPLACEMENTS[oldFunctionName] : undefined;
-    if (!newFunctionName) {
-      keptTransformers.push(transformer);
-      continue;
-    }
-    const existingReplacement = transformers.find(
-      candidate => candidate.type === 'standard' && (candidate.settings as JsonObject).functionName === newFunctionName
-    );
+  for (const [oldFunctionName, newFunctionName] of Object.entries(replacements)) {
+    const transformers = asObjects(config.transformers);
+    const isStandard = (transformer: JsonObject, functionName: string) =>
+      transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === functionName;
+    const oldTransformer = transformers.find(transformer => isStandard(transformer, oldFunctionName));
+    if (!oldTransformer) continue;
+    const existingReplacement = transformers.find(transformer => isStandard(transformer, newFunctionName));
     if (existingReplacement) {
-      replacedIds.set(transformer.oIBusInternalId, { oldFunctionName, newId: existingReplacement.oIBusInternalId });
+      replacedIds.set(oldTransformer.oIBusInternalId, { oldFunctionName, newId: existingReplacement.oIBusInternalId });
+      config.transformers = transformers.filter(transformer => transformer !== oldTransformer);
       continue;
     }
-    settings.functionName = newFunctionName;
-    transformer.manifest = FILE_TRANSFORMER_MANIFESTS.find(manifest => manifest.id === newFunctionName)!.settings;
-    replacedIds.set(transformer.oIBusInternalId, { oldFunctionName, newId: transformer.oIBusInternalId });
-    keptTransformers.push(transformer);
+    (oldTransformer.settings as JsonObject).functionName = newFunctionName;
+    oldTransformer.manifest = FILE_TRANSFORMER_MANIFESTS.find(manifest => manifest.id === newFunctionName)!.settings;
+    replacedIds.set(oldTransformer.oIBusInternalId, { oldFunctionName, newId: oldTransformer.oIBusInternalId });
   }
-  config.transformers = keptTransformers;
 
   const convertLink = (link: JsonObject): void => {
     const replaced = replacedIds.get(link.transformerId);
     if (!replaced) return;
     link.transformerId = replaced.newId;
-    link.options = toFileTransformerOptions(replaced.oldFunctionName, (link.options as JsonObject | null) ?? {});
+    link.options = convertOptions(replaced.oldFunctionName, (link.options as JsonObject | null) ?? {});
   };
   forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(convertLink));
   forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(convertLink));
@@ -877,7 +932,8 @@ export const upgrade: ConfigUpgrade = {
     'record-list-to-oianalytics transformers; replace the iso and ignore transformers by passthroughs, the data without transformer ' +
     'being dropped; group the options of the record-list-to-oianalytics transformers by reference, timestamp and value; ' +
     'rename the any data type file; replace the csv-to-mqtt, csv-to-record-list and json-to-oianalytics transformers by ' +
-    'file-to-mqtt, file-to-record-list and file-to-oianalytics ones, reading both CSV and JSON files',
+    'file-to-mqtt, file-to-record-list and file-to-oianalytics ones, reading both CSV and JSON files; replace the json-to-csv, ' +
+    'record-list-to-csv and record-list-to-json transformers by file-to-file and record-list-to-file ones, writing both CSV and JSON files',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -958,7 +1014,8 @@ export const upgrade: ConfigUpgrade = {
     forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(groupOIAnalyticsOptions));
     forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(groupOIAnalyticsOptions));
 
-    replaceCsvAndJsonTransformers(config);
+    replaceCsvAndJsonTransformers(config, FILE_TRANSFORMER_REPLACEMENTS, toFileTransformerOptions);
+    replaceCsvAndJsonTransformers(config, FILE_OUTPUT_TRANSFORMER_REPLACEMENTS, toFileOutputTransformerOptions);
 
     for (const transformer of asObjects(config.transformers)) {
       const settings = transformer.settings as JsonObject;

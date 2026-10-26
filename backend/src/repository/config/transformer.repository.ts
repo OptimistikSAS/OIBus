@@ -10,12 +10,11 @@ import { NotFoundError } from '../../model/types';
 import AuditService from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
 import FileTransformer from '../../transformers/file/file/file-transformer';
+import FileToFileTransformer from '../../transformers/file/file-to-file/file-to-file-transformer';
 import FileToMQTTTransformer from '../../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
 import FileToOIAnalyticsTransformer from '../../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
 import FileToRecordListTransformer from '../../transformers/file/file-to-record-list/file-to-record-list-transformer';
-import JSONToCSVTransformer from '../../transformers/file/json-to-csv/json-to-csv-transformer';
-import RecordListToCsvTransformer from '../../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
-import RecordListToJSONTransformer from '../../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
+import RecordListToFileTransformer from '../../transformers/record-list/record-list-to-file/record-list-to-file-transformer';
 import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
 import RecordListToMQTTTransformer from '../../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
 import RecordListToOIAnalyticsTransformer from '../../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
@@ -193,10 +192,9 @@ export default class TransformerRepository {
       { functionName: FileToMQTTTransformer.transformerName, inputType: 'file', outputType: 'mqtt' },
       { functionName: FileToRecordListTransformer.transformerName, inputType: 'file', outputType: 'record-list' },
       { functionName: FileTransformer.transformerName, inputType: 'file', outputType: 'file' },
-      { functionName: JSONToCSVTransformer.transformerName, inputType: 'file', outputType: 'file' },
+      { functionName: FileToFileTransformer.transformerName, inputType: 'file', outputType: 'file' },
       { functionName: FileToOIAnalyticsTransformer.transformerName, inputType: 'file', outputType: 'oianalytics' },
-      { functionName: RecordListToCsvTransformer.transformerName, inputType: 'record-list', outputType: 'file' },
-      { functionName: RecordListToJSONTransformer.transformerName, inputType: 'record-list', outputType: 'file' },
+      { functionName: RecordListToFileTransformer.transformerName, inputType: 'record-list', outputType: 'file' },
       { functionName: RecordListToModbusTransformer.transformerName, inputType: 'record-list', outputType: 'modbus' },
       { functionName: RecordListToMQTTTransformer.transformerName, inputType: 'record-list', outputType: 'mqtt' },
       { functionName: RecordListToOIAnalyticsTransformer.transformerName, inputType: 'record-list', outputType: 'oianalytics' },

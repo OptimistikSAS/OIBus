@@ -169,7 +169,7 @@ describe('ConfigImportPreviewComponent', () => {
   });
 
   test('should warn about standard transformers this instance does not have, and flag the links to them', async () => {
-    transformerService.list.mockReturnValue(of([localStandardTransformer('record-list-to-json')]));
+    transformerService.list.mockReturnValue(of([localStandardTransformer('record-list-to-file')]));
     createTester();
 
     await tester.open('transformers', 'north', 'north:north1', 'north:north1:transformers');

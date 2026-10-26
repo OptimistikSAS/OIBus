@@ -28,20 +28,18 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import TransformerRepository from '../repository/config/transformer.repository';
 import FileTransformer from '../transformers/file/file/file-transformer';
 import fileManifest from '../transformers/file/file/manifest';
+import FileToFileTransformer from '../transformers/file/file-to-file/file-to-file-transformer';
+import fileToFileManifest from '../transformers/file/file-to-file/manifest';
 import FileToMQTTTransformer from '../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
 import fileToMqttManifest from '../transformers/file/file-to-mqtt/manifest';
 import FileToOIAnalyticsTransformer from '../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
 import fileToOianalyticsManifest from '../transformers/file/file-to-oianalytics/manifest';
 import FileToRecordListTransformer from '../transformers/file/file-to-record-list/file-to-record-list-transformer';
 import fileToRecordListManifest from '../transformers/file/file-to-record-list/manifest';
-import JSONToCSVTransformer from '../transformers/file/json-to-csv/json-to-csv-transformer';
-import jsonToCsvManifest from '../transformers/file/json-to-csv/manifest';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import OibusTransformer from '../transformers/oibus-transformer';
-import recordListToCsvManifest from '../transformers/record-list/record-list-to-csv/manifest';
-import RecordListToCsvTransformer from '../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
-import recordListToJsonManifest from '../transformers/record-list/record-list-to-json/manifest';
-import RecordListToJSONTransformer from '../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
+import recordListToFileManifest from '../transformers/record-list/record-list-to-file/manifest';
+import RecordListToFileTransformer from '../transformers/record-list/record-list-to-file/record-list-to-file-transformer';
 import recordListToModbusManifest from '../transformers/record-list/record-list-to-modbus/manifest';
 import RecordListToModbusTransformer from '../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
 import recordListToMqttManifest from '../transformers/record-list/record-list-to-mqtt/manifest';
@@ -73,10 +71,9 @@ export const transformerManifestList: Array<TransformerManifest> = [
   fileToMqttManifest,
   fileToRecordListManifest,
   fileManifest,
-  jsonToCsvManifest,
+  fileToFileManifest,
   fileToOianalyticsManifest,
-  recordListToCsvManifest,
-  recordListToJsonManifest,
+  recordListToFileManifest,
   recordListToModbusManifest,
   recordListToMqttManifest,
   recordListToOianalyticsManifest,
@@ -422,17 +419,14 @@ export const createTransformer = (
       case FileTransformer.transformerName: {
         return new FileTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case JSONToCSVTransformer.transformerName: {
-        return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case FileToFileTransformer.transformerName: {
+        return new FileToFileTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case FileToOIAnalyticsTransformer.transformerName: {
         return new FileToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case RecordListToCsvTransformer.transformerName: {
-        return new RecordListToCsvTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
-      }
-      case RecordListToJSONTransformer.transformerName: {
-        return new RecordListToJSONTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      case RecordListToFileTransformer.transformerName: {
+        return new RecordListToFileTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case RecordListToModbusTransformer.transformerName: {
         return new RecordListToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
@@ -532,17 +526,14 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     case fileManifest.id: {
       return fileManifest.settings;
     }
-    case jsonToCsvManifest.id: {
-      return jsonToCsvManifest.settings;
+    case fileToFileManifest.id: {
+      return fileToFileManifest.settings;
     }
     case fileToOianalyticsManifest.id: {
       return fileToOianalyticsManifest.settings;
     }
-    case recordListToCsvManifest.id: {
-      return recordListToCsvManifest.settings;
-    }
-    case recordListToJsonManifest.id: {
-      return recordListToJsonManifest.settings;
+    case recordListToFileManifest.id: {
+      return recordListToFileManifest.settings;
     }
     case recordListToModbusManifest.id: {
       return recordListToModbusManifest.settings;

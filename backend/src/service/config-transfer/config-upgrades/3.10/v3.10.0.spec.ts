@@ -22,6 +22,30 @@ const standardTransformers = (config: JsonObject, functionName: string): Array<J
     transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === functionName
   );
 
+/** The options of record-list-to-csv and record-list-to-json, once replaced by record-list-to-file */
+const csvFileOptions = {
+  output: {
+    fileType: 'csv',
+    encoding: 'UTF_8',
+    compression: false,
+    header: true,
+    delimiter: 'COMMA',
+    newline: 'LF',
+    quoteChar: 'NONE',
+    escapeChar: 'DOUBLE_QUOTE',
+    nullValue: ''
+  },
+  filename: '@CurrentDate.csv',
+  keepOtherFields: true,
+  fields: []
+};
+const jsonFileOptions = {
+  output: { fileType: 'json', encoding: 'UTF_8', compression: false },
+  filename: '@CurrentDate.json',
+  keepOtherFields: true,
+  fields: []
+};
+
 describe('3.10.0 config upgrade', () => {
   it('leaves a configuration already in the 3.10.0 shape untouched, as exported by a 3.10.0 pre-release', () => {
     const config = fixtureConfig('3.10.0');
@@ -48,16 +72,17 @@ describe('3.10.0 config upgrade', () => {
     assert.ok(!dataTypes.includes('any'));
   });
 
-  it('adds the record-list-to-csv standard transformer once, and links to it', () => {
+  it('adds the record-list-to-csv standard transformer once, replaced by record-list-to-file, and links to it', () => {
     const config = fixtureConfig('3.9.3');
     assert.deepStrictEqual(standardTransformers(config, 'record-list-to-csv'), []);
 
     upgrade.apply(config);
 
-    const [recordListToCsv, ...others] = standardTransformers(config, 'record-list-to-csv');
+    const [recordListToCsv, ...others] = standardTransformers(config, 'record-list-to-file');
     assert.ok(recordListToCsv);
     assert.deepStrictEqual(others, []);
-    assert.deepStrictEqual(recordListToCsv.settings, { functionName: 'record-list-to-csv', inputType: 'record-list', outputType: 'file' });
+    assert.deepStrictEqual(recordListToCsv.settings, { functionName: 'record-list-to-file', inputType: 'record-list', outputType: 'file' });
+    assert.strictEqual((recordListToCsv.manifest as JsonObject).key, 'options');
     const links = (config.northConnectors as Array<JsonObject>).flatMap(
       north => (north.settings as JsonObject).transformers as Array<JsonObject>
     );
@@ -73,7 +98,7 @@ describe('3.10.0 config upgrade', () => {
     upgrade.apply(config);
 
     assert.deepStrictEqual(
-      standardTransformers(config, 'record-list-to-csv').map(transformer => transformer.oIBusInternalId),
+      standardTransformers(config, 'record-list-to-file').map(transformer => transformer.oIBusInternalId),
       ['existingId']
     );
   });
@@ -191,7 +216,11 @@ describe('3.10.0 config upgrade', () => {
       }
     };
     const fieldInputs = (options: Record<string, unknown>) =>
-      (options.fields as Array<JsonObject>).map(field => [field.fieldName, (field.datetimeSettings as JsonObject).inputType]);
+      // the fields of record-list-to-csv, then of the record-list-to-file replacing it
+      (options.fields as Array<JsonObject>).map(field => [
+        field.fieldName ?? field.field,
+        (field.datetimeSettings as JsonObject).inputType
+      ]);
 
     it('tells which souths query their database through the remote agent', () => {
       assert.strictEqual(usesRemoteAgent('oledb', {}), true);
@@ -372,7 +401,7 @@ describe('3.10.0 config upgrade', () => {
       assert.deepStrictEqual(
         transformers.map(transformer => [transformer.oIBusInternalId, (transformer.settings as JsonObject).functionName ?? null]),
         [
-          ['csv', 'record-list-to-csv'],
+          ['csv', 'record-list-to-file'],
           ['tvOia', 'record-list-to-oianalytics'],
           ['custom', null]
         ]
@@ -386,10 +415,10 @@ describe('3.10.0 config upgrade', () => {
       assert.deepStrictEqual(transformers[2].settings, { name: 'custom', inputType: 'record-list', outputType: 'record-list' });
 
       const [l1, l2, l3] = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
-      assert.deepStrictEqual(l1.options, { filename: 'sql.csv', keepOtherFields: true });
+      assert.deepStrictEqual(l1.options, { ...csvFileOptions, filename: 'sql.csv' });
       assert.strictEqual(l2.transformerId, 'csv');
       assert.strictEqual((l2.options as JsonObject).keepOtherFields, false);
-      assert.strictEqual(((l2.options as JsonObject).fields as Array<JsonObject>)[0].columnName, 'Ref');
+      assert.strictEqual(((l2.options as JsonObject).fields as Array<JsonObject>)[0].name, 'Ref');
       assert.strictEqual(l3.transformerId, 'tvOia');
       // grouped by part of the OIAnalytics payload
       assert.deepStrictEqual(l3.options, {
@@ -490,7 +519,8 @@ describe('3.10.0 config upgrade', () => {
         transformer => (transformer.settings as JsonObject).functionName
       );
       // The passthroughs are for the other Norths, and for the OIBus API
-      assert.deepStrictEqual(functionNames, ['record-list-to-csv', 'file', 'record-list-to-json', 'setpoint-to-json']);
+      // record-list-to-json merged into the record-list-to-file replacing record-list-to-csv
+      assert.deepStrictEqual(functionNames, ['record-list-to-file', 'file', 'setpoint-to-json']);
       const links = ((upgraded.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
       assert.deepStrictEqual(
         links.map(link => link.source),
@@ -586,18 +616,18 @@ describe('3.10.0 config upgrade', () => {
       const setpointToJsonId = idOf(config, 'setpoint-to-json');
       assert.deepStrictEqual(
         (config.transformers as Array<JsonObject>).map(candidate => (candidate.settings as JsonObject).functionName),
-        ['record-list-to-csv', 'record-list-to-json', 'file', 'setpoint-to-json']
+        ['record-list-to-file', 'file', 'setpoint-to-json']
       );
-      assert.strictEqual(((config.transformers as Array<JsonObject>)[2].manifest as JsonObject).key, 'options');
+      assert.strictEqual(((config.transformers as Array<JsonObject>)[1].manifest as JsonObject).key, 'options');
       assert.deepStrictEqual(linksOf(config, 0), [
         {
           transformerId: 'csv',
-          options: { kept: true, keepOtherFields: true },
+          options: csvFileOptions,
           source: { type: 'south', southId: 'opcua', groupId: 'g1', items: [], excludedItems: lightItems('i2') }
         },
         {
-          transformerId: 'json',
-          options: {},
+          transformerId: 'csv',
+          options: jsonFileOptions,
           source: { type: 'south', southId: 'opcua', items: [], excludedItems: lightItems('i2') }
         },
         { transformerId: fileId, options: {}, source: { type: 'oibus-api' } }
@@ -608,7 +638,7 @@ describe('3.10.0 config upgrade', () => {
         { transformerId: fileId, options: {}, source: { type: 'south', southId: 'folder', items: [] } }
       ]);
       assert.deepStrictEqual(linksOf(config, 2), [
-        { transformerId: 'json', options: {}, source: { type: 'south', southId: 'opcua', items: [] } },
+        { transformerId: 'csv', options: jsonFileOptions, source: { type: 'south', southId: 'opcua', items: [] } },
         { transformerId: fileId, options: {}, source: { type: 'south', southId: 'folder', items: [] } },
         { transformerId: fileId, options: {}, source: { type: 'oibus-api' } },
         { transformerId: setpointToJsonId, options: {}, source: { type: 'oianalytics-setpoint' } }
@@ -616,7 +646,7 @@ describe('3.10.0 config upgrade', () => {
       const historyLinks = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
       assert.deepStrictEqual(
         historyLinks.map(link => [link.transformerId, link.options, link.items]),
-        [['json', {}, lightItems('h2')]]
+        [['csv', jsonFileOptions, lightItems('h2')]]
       );
     });
 

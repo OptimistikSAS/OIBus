@@ -1310,12 +1310,11 @@
           "deleted": "Transformer {{ name }} deleted",
           "standard": {
             "file": "File (as is)",
+            "file-to-file": "File (converted or renamed)",
             "file-to-mqtt": "MQTT payloads",
             "file-to-oianalytics": "OIAnalytics payload",
             "file-to-record-list": "Records",
-            "json-to-csv": "CSV (from JSON)",
-            "record-list-to-csv": "CSV",
-            "record-list-to-json": "JSON",
+            "record-list-to-file": "File",
             "record-list-to-modbus": "Modbus values",
             "record-list-to-mqtt": "MQTT payloads",
             "record-list-to-oianalytics": "OIAnalytics payload",
@@ -1448,7 +1447,8 @@
             "file-type": {
               "title": "File type",
               "csv": "CSV",
-              "json": "JSON"
+              "json": "JSON",
+              "other": "Other (renamed only)"
             },
             "delimiter": {
               "title": "CSV delimiter",
@@ -1463,6 +1463,92 @@
             },
             "has-header": "Has Header",
             "row-iterator-path": "Row iterator JSONPath"
+          },
+          "file-output": {
+            "title": "Written file",
+            "file-type": {
+              "title": "File type",
+              "csv": "CSV",
+              "json": "JSON"
+            },
+            "filename": "Filename (variables: @CurrentDate, @SourceFilename, @SourceExtension...)",
+            "encoding": {
+              "title": "Encoding",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "compression": "Compress file",
+            "header": "First row as header",
+            "delimiter": {
+              "title": "Delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "newline": {
+              "title": "Newline",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "quote-char": {
+              "title": "Quote character",
+              "DOUBLE_QUOTE": "Double quote (\")",
+              "SINGLE_QUOTE": "Single quote (')",
+              "NONE": "None"
+            },
+            "escape-char": {
+              "title": "Escape character",
+              "BACKSLASH": "Backslash (\\)",
+              "DOUBLE_QUOTE": "Double quote (\")"
+            },
+            "null-value": "Null value"
+          },
+          "file-fields": {
+            "title": "Fields",
+            "item": {
+              "title": "Field Configuration"
+            },
+            "field": "Field (or JSONPath)",
+            "name": "Written name",
+            "data-type": {
+              "title": "Data Type",
+              "string": "String",
+              "number": "Number",
+              "boolean": "Boolean",
+              "datetime": "Datetime",
+              "array": "Array",
+              "object": "Object"
+            },
+            "field-process": "Field Process (JS expression, e.g. value.toUpperCase())",
+            "datetime-settings": {
+              "title": "Datetime Settings",
+              "input-type": {
+                "title": "Timestamp input type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "output-type": {
+                "title": "Timestamp output type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale"
+            },
+            "keep-other-fields": "Keep the other fields"
           },
           "file-to-mqtt": {
             "topic-field": "Topic field",
@@ -1510,166 +1596,6 @@
                 "datetime": "Datetime",
                 "array": "Array",
                 "object": "Object"
-              }
-            }
-          },
-          "json-to-csv": {
-            "filename": "Output Filename",
-            "delimiter": {
-              "title": "CSV delimiter",
-              "DOT": "Dot .",
-              "SEMI_COLON": "Semi colon ;",
-              "COLON": "Colon :",
-              "COMMA": "Comma ,",
-              "SLASH": "Slash /",
-              "TAB": "Tab",
-              "NON_BREAKING_SPACE": "Space",
-              "PIPE": "Pipe |"
-            },
-            "encoding": {
-              "title": "Encoding",
-              "UTF_8": "UTF-8",
-              "UTF_8_BOM": "UTF-8 BOM",
-              "LATIN_1": "Latin-1 (ISO-8859-1)",
-              "UTF_16_LE": "UTF-16 LE"
-            },
-            "quote-char": {
-              "title": "Quote character",
-              "DOUBLE_QUOTE": "Double quote (\")",
-              "SINGLE_QUOTE": "Single quote (')",
-              "NONE": "None"
-            },
-            "escape-char": {
-              "title": "Escape character",
-              "BACKSLASH": "Backslash (\\)",
-              "DOUBLE_QUOTE": "Double quote (\")"
-            },
-            "newline": {
-              "title": "Row delimiter",
-              "DEFAULT": "Default (\\r, \\n, or \\r\\n)",
-              "CRLF": "CRLF (\\r\\n)",
-              "LF": "LF (\\n)",
-              "CR": "CR (\\r)"
-            },
-            "null-value": "Null value",
-            "header": "First row as header",
-            "row-iterator-path": "Row Iterator JSONPath",
-            "fields": {
-              "title": "Fields Mapping",
-              "item": {
-                "title": "Field Configuration"
-              },
-              "column-name": "Column Name",
-              "json-path": "JSONPath",
-              "data-type": {
-                "title": "Data Type",
-                "string": "String",
-                "number": "Number",
-                "boolean": "Boolean",
-                "datetime": "Datetime",
-                "array": "Array",
-                "object": "Object"
-              },
-              "field-process": "Field Process (JS expression, e.g. value.toUpperCase())",
-              "datetime-settings": {
-                "title": "Datetime Settings",
-                "input-type": {
-                  "title": "Timestamp input type",
-                  "string": "String",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)"
-                },
-                "output-type": {
-                  "title": "Timestamp output type",
-                  "string": "String",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              }
-            }
-          },
-          "record-list-to-csv": {
-            "filename": "Filename",
-            "encoding": {
-              "title": "Encoding",
-              "UTF_8": "UTF-8",
-              "UTF_8_BOM": "UTF-8 BOM",
-              "LATIN_1": "Latin-1 (ISO-8859-1)",
-              "UTF_16_LE": "UTF-16 LE"
-            },
-            "header": "First row as header",
-            "compression": "Compress file",
-            "delimiter": {
-              "title": "Delimiter",
-              "DOT": "Dot .",
-              "SEMI_COLON": "Semi colon ;",
-              "COLON": "Colon :",
-              "COMMA": "Comma ,",
-              "SLASH": "Slash /",
-              "TAB": "Tab",
-              "NON_BREAKING_SPACE": "Space",
-              "PIPE": "Pipe |"
-            },
-            "newline": {
-              "title": "Newline",
-              "CRLF": "CRLF (\\r\\n)",
-              "LF": "LF (\\n)",
-              "CR": "CR (\\r)"
-            },
-            "quote-char": {
-              "title": "Quote character",
-              "DOUBLE_QUOTE": "Double quote (\")",
-              "SINGLE_QUOTE": "Single quote (')",
-              "NONE": "None"
-            },
-            "escape-char": {
-              "title": "Escape character",
-              "BACKSLASH": "Backslash (\\)",
-              "DOUBLE_QUOTE": "Double quote (\")"
-            },
-            "null-value": "Null value",
-            "keep-other-fields": "Keep the other fields",
-            "fields": {
-              "title": "Fields Mapping",
-              "item": {
-                "title": "Field Configuration"
-              },
-              "field-name": "Field Name",
-              "column-name": "Column Name",
-              "data-type": {
-                "title": "Data Type",
-                "string": "String",
-                "number": "Number",
-                "boolean": "Boolean",
-                "datetime": "Datetime",
-                "array": "Array",
-                "object": "Object"
-              },
-              "field-process": "Field Process (JS expression, e.g. value.toUpperCase())",
-              "datetime-settings": {
-                "title": "Datetime Settings",
-                "input-type": {
-                  "title": "Timestamp input type",
-                  "string": "String",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)"
-                },
-                "output-type": {
-                  "title": "Timestamp output type",
-                  "string": "String",
-                  "iso-string": "ISO string",
-                  "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
               }
             }
           },
