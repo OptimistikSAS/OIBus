@@ -323,8 +323,10 @@
           "standard": {
             "file": "Fichier (tel quel)",
             "file-to-file": "Fichier (converti ou renommé)",
+            "file-to-modbus": "Valeurs Modbus",
             "file-to-mqtt": "Charges utiles MQTT",
             "file-to-oianalytics": "Charge utile OIAnalytics",
+            "file-to-opcua": "Valeurs OPCUA",
             "file-to-record-list": "Enregistrements",
             "record-list-to-file": "Fichier",
             "record-list-to-modbus": "Valeurs Modbus",

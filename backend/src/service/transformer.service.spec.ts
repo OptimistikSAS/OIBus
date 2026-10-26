@@ -13,10 +13,14 @@ import { createMock, Mocked, mockModule, reloadModule } from '../tests/utils/tes
 import fileManifest from '../transformers/file/file/manifest';
 import FileToFileTransformer from '../transformers/file/file-to-file/file-to-file-transformer';
 import fileToFileManifest from '../transformers/file/file-to-file/manifest';
+import FileToModbusTransformer from '../transformers/file/file-to-modbus/file-to-modbus-transformer';
+import fileToModbusManifest from '../transformers/file/file-to-modbus/manifest';
 import FileToMQTTTransformer from '../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
 import fileToMqttManifest from '../transformers/file/file-to-mqtt/manifest';
 import FileToOIAnalyticsTransformer from '../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
 import fileToOianalyticsManifest from '../transformers/file/file-to-oianalytics/manifest';
+import FileToOPCUATransformer from '../transformers/file/file-to-opcua/file-to-opcua-transformer';
+import fileToOpcuaManifest from '../transformers/file/file-to-opcua/manifest';
 import FileToRecordListTransformer from '../transformers/file/file-to-record-list/file-to-record-list-transformer';
 import fileToRecordListManifest from '../transformers/file/file-to-record-list/manifest';
 // Import transformer manifests
@@ -395,6 +399,8 @@ describe('Transformer Service', () => {
       ['file-to-mqtt', FileToMQTTTransformer],
       ['file-to-record-list', FileToRecordListTransformer],
       ['file-to-file', FileToFileTransformer],
+      ['file-to-modbus', FileToModbusTransformer],
+      ['file-to-opcua', FileToOPCUATransformer],
       ['file-to-oianalytics', FileToOIAnalyticsTransformer],
       ['record-list-to-file', RecordListToFileTransformer],
       ['record-list-to-modbus', RecordListToModbusTransformer],
@@ -784,6 +790,8 @@ describe('Transformer Service', () => {
     assert.deepStrictEqual(getStandardManifest('file-to-record-list'), fileToRecordListManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file'), fileManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file-to-file'), fileToFileManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('file-to-modbus'), fileToModbusManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('file-to-opcua'), fileToOpcuaManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file-to-oianalytics'), fileToOianalyticsManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-file'), recordListToFileManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-modbus'), recordListToModbusManifest.settings);

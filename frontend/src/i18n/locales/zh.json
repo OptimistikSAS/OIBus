@@ -323,8 +323,10 @@
           "standard": {
             "file": "文件（原样）",
             "file-to-file": "文件（转换或重命名）",
+            "file-to-modbus": "Modbus 值",
             "file-to-mqtt": "MQTT 有效载荷",
             "file-to-oianalytics": "OIAnalytics 有效载荷",
+            "file-to-opcua": "OPCUA 值",
             "file-to-record-list": "记录",
             "record-list-to-file": "文件",
             "record-list-to-modbus": "Modbus 值",

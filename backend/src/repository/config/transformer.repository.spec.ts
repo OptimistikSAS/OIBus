@@ -10,8 +10,10 @@ import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
 import FileTransformer from '../../transformers/file/file/file-transformer';
 import FileToFileTransformer from '../../transformers/file/file-to-file/file-to-file-transformer';
+import FileToModbusTransformer from '../../transformers/file/file-to-modbus/file-to-modbus-transformer';
 import FileToMQTTTransformer from '../../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
 import FileToOIAnalyticsTransformer from '../../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
+import FileToOPCUATransformer from '../../transformers/file/file-to-opcua/file-to-opcua-transformer';
 import FileToRecordListTransformer from '../../transformers/file/file-to-record-list/file-to-record-list-transformer';
 import RecordListToFileTransformer from '../../transformers/record-list/record-list-to-file/record-list-to-file-transformer';
 import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
@@ -37,6 +39,8 @@ const standardTransformers: Array<StandardTransformer> = [
   },
   { id: 'file', type: 'standard', functionName: FileTransformer.transformerName, inputType: 'file', outputType: 'file' },
   { id: 'jsonToCsv', inputType: 'file', functionName: FileToFileTransformer.transformerName, outputType: 'file', type: 'standard' },
+  { id: 'fileToModbus', inputType: 'file', functionName: FileToModbusTransformer.transformerName, outputType: 'modbus', type: 'standard' },
+  { id: 'fileToOpcua', inputType: 'file', functionName: FileToOPCUATransformer.transformerName, outputType: 'opcua', type: 'standard' },
   {
     id: 'jsonToOia',
     inputType: 'file',
@@ -269,7 +273,7 @@ describe('TransformerRepository', () => {
 
   it('should properly search transformers and page them', () => {
     const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-    assert.strictEqual(result.totalElements, 17);
+    assert.strictEqual(result.totalElements, 19);
     // First page contains standard transformers (10 per page)
     for (const t of result.content.map(stripAuditFields)) {
       assert.strictEqual(t.type, 'standard');
