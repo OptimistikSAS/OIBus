@@ -34,6 +34,24 @@ function getMigrationDirs(base: string): Array<string> {
 // Mirrors knex's default loadExtensions for the file types we ship migrations in.
 const MIGRATION_EXTENSIONS = ['.js', '.cjs', '.mjs', '.ts'];
 
+/**
+ * Orders the migration files of a directory by their numbers, compared numerically, the rest of their name as text:
+ * "v3.10.0.ts", "v3.10.0_1.ts", "v3.10.0_2.ts" ... "v3.10.0_10.ts" (as text, "_10" would run before "_2").
+ */
+export function compareMigrationFilenames(a: string, b: string): number {
+  const tokensOf = (name: string) => name.match(/\d+|\D+/g) ?? [];
+  const tokensA = tokensOf(a);
+  const tokensB = tokensOf(b);
+  for (let i = 0; i < Math.min(tokensA.length, tokensB.length); i++) {
+    const [tokenA, tokenB] = [tokensA[i], tokensB[i]];
+    if (tokenA === tokenB) continue;
+    const bothNumbers = /^\d/.test(tokenA) && /^\d/.test(tokenB);
+    if (bothNumbers && Number(tokenA) !== Number(tokenB)) return Number(tokenA) - Number(tokenB);
+    return tokenA < tokenB ? -1 : 1;
+  }
+  return tokensA.length - tokensB.length;
+}
+
 interface MigrationFile {
   file: string;
   directory: string;
@@ -49,9 +67,10 @@ interface MigrationFile {
  * spec files would otherwise abort `migrate.latest`. This source skips them while
  * keeping the set of real migrations unchanged (so recorded names/no re-runs are
  * unaffected) and ordering them minor-version directory first (numerically, via
- * getMigrationDirs), then lexicographically by filename within each directory —
- * NOT lexicographically by filename across the whole tree, which would sort a
- * directory like "3.10" ahead of "3.2"..."3.9".
+ * getMigrationDirs), then by filename within each directory, its numbers compared
+ * numerically (see compareMigrationFilenames) — NOT lexicographically by filename
+ * across the whole tree, which would sort a directory like "3.10" ahead of
+ * "3.2"..."3.9".
  */
 export function specFilteredMigrationSource(base: string): Knex.MigrationSource<MigrationFile> {
   const dirs = getMigrationDirs(base);
@@ -61,7 +80,7 @@ export function specFilteredMigrationSource(base: string): Knex.MigrationSource<
       const migrations = dirs.flatMap(directory =>
         readdirSync(directory)
           .filter(file => extensions.includes(path.extname(file)) && !file.includes('.spec.'))
-          .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0))
+          .sort(compareMigrationFilenames)
           .map(file => ({ file, directory }))
       );
       return Promise.resolve(migrations);
