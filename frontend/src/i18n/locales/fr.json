@@ -3283,6 +3283,16 @@
         "remove-item": "Retirer cet item du transformateur",
         "no-item": "Aucun item",
         "sent": "Envoyée"
+      },
+      "modal": {
+        "items-required": "Sélectionnez au moins un item",
+        "impact": {
+          "sent": "{{ count }} item(s) envoyé(s) par ce transformateur",
+          "newly-sent": "{{ count }} actuellement ignoré(s)",
+          "taken-over": "{{ count }} actuellement envoyé(s) par un autre transformateur",
+          "kept": "{{ count }} des items sélectionnés gardent un transformateur qui s'applique d'abord",
+          "none": "Aucun item ne passerait par ce transformateur : des transformateurs qui s'appliquent d'abord envoient tous les items sélectionnés"
+        }
       }
     },
     "monitoring": {

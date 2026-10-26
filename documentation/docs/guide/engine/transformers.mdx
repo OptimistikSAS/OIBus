@@ -39,7 +39,8 @@ A transformer that is never used, another one before it in the list applying to 
 ## Configuring a Transformer {#configuring-a-transformer}
 
 Click **Add a transformer** in the Transformers section (or a button of a source) to open the configuration modal.
-Three fields guide the setup.
+Three steps guide the setup: the source, its items, then the transformer. Opened from the line of a source (or of one of
+its groups or items), the modal shows that source, and the scope, already set.
 
 ### 1 — Source {#1--source}
 
@@ -62,7 +63,12 @@ When the source is a South connector, you can restrict which of its items the tr
 | **Specific items** | Hand-pick individual items from the search list                          |
 
 With **All items** or **By group**, check **Except some items** to leave a few items out: the transformer applies to
-every other item of the South connector (or of the group), including the items added later.
+every other item of the South connector (or of the group), including the items added later. **Specific items** needs at
+least one item: a transformer without item would apply to all of them.
+
+Below the scope, the modal tells how many items the transformer would send, given the other transformers of the North
+connector and their order: how many are currently dropped, how many it takes over from another transformer, and how
+many keep a transformer applying first. It warns when a transformer applying first already sends all the selected items.
 
 :::tip
 A single North connector can have **multiple transformers** with different sources and scopes. This lets you apply
