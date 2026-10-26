@@ -762,7 +762,7 @@ describe('South Service', () => {
 
     await service.testSouth(testData.south.list[0].id, testData.south.command.type, {
       ...testData.south.list[0].settings,
-      compression: false
+      inputFolder: 'another-input'
     });
 
     assert.strictEqual(buildSouth.mock.calls.length, 1);
@@ -794,7 +794,7 @@ describe('South Service', () => {
       testData.south.list[0].id,
       testData.south.command.type,
       testData.south.itemCommand.name,
-      { ...testData.south.list[0].settings, compression: false },
+      { ...testData.south.list[0].settings, inputFolder: 'another-input' },
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings
     );

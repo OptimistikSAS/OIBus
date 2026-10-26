@@ -1,5 +1,6 @@
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
+import zlib from 'node:zlib';
 
 import { TransformerFileToFileSettings } from '../../../../shared/model/connector/transformer-settings.model';
 import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
@@ -35,7 +36,7 @@ export default class FileToFileTransformer extends OIBusTransformer {
 
   /**
    * Convert a CSV or JSON file into a CSV or JSON file (see `readFileRows` and `writeFile`), or only rename another
-   * file, its content being sent as it is.
+   * file, its content being sent as it is or gzipped (adding `.gz` to its name).
    */
   private convert(content: Buffer, source: CacheMetadataSource, filename: string | null): { metadata: CacheMetadata; output: Buffer } {
     const { input } = this.options;
@@ -44,6 +45,10 @@ export default class FileToFileTransformer extends OIBusTransformer {
     let numberOfElement = 0;
     if (input.fileType === 'other') {
       contentFile = sanitizeFilename(applyFilenameVariables(this.options.filename, source, filename));
+      if (this.options.compression) {
+        output = zlib.gzipSync(content);
+        contentFile = `${contentFile}.gz`;
+      }
     } else {
       const settings = this.options as FileOutputSettings;
       const { rows, errors } = readFileRows(

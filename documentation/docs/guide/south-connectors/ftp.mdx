@@ -10,11 +10,14 @@ Securely transfer and read files from remote FTP servers.
 
 ## Specific Settings {#specific-settings}
 
-| Setting           | Description                                      | Example Value    |
-| ----------------- | ------------------------------------------------ | ---------------- |
-| **Host**          | IP address or hostname of the FTP server.        | `192.168.1.100`  |
-| **Port**          | Port for the connection. Default: `21`.          | `21`             |
-| **Compress file** | Enable gzip compression before North processing. | Enabled/Disabled |
+| Setting  | Description                               | Example Value   |
+| -------- | ----------------------------------------- | --------------- |
+| **Host** | IP address or hostname of the FTP server. | `192.168.1.100` |
+| **Port** | Port for the connection. Default: `21`.   | `21`            |
+
+To compress the files (gzip), use the [File (converted or renamed)](../engine/transformers.mdx#file-converted-or-renamed)
+transformer with the file type **Other** and **Compress file** enabled. Before 3.10, the connector compressed its files
+itself: upgrading moves this setting to such a transformer wherever its files were sent as they are.
 
 ### Authentication {#authentication}
 

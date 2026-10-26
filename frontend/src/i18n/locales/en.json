@@ -1794,7 +1794,6 @@
           },
           "folder-scanner": {
             "input-folder": "Input folder",
-            "compression": "Enable compression",
             "smb-username": "SMB username",
             "smb-password": "SMB password",
             "smb-domain": "SMB domain"
@@ -2083,7 +2082,6 @@
             "password": "Password",
             "private-key": "Private key",
             "passphrase": "Passphrase",
-            "compression": "Compress files",
             "retry-interval": "Retry interval"
           },
           "ftp": {
@@ -2096,7 +2094,6 @@
             },
             "username": "Username",
             "password": "Password",
-            "compression": "Compress files",
             "retry-interval": "Retry interval"
           },
           "sqlite": {

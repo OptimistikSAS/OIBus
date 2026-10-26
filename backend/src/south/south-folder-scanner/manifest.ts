@@ -39,23 +39,6 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'boolean',
-        key: 'compression',
-        translationKey: 'configuration.oibus.manifest.south.folder-scanner.compression',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
         type: 'string',
         key: 'username',
         translationKey: 'configuration.oibus.manifest.south.folder-scanner.smb-username',

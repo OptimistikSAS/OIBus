@@ -806,7 +806,6 @@
           },
           "folder-scanner": {
             "input-folder": "输入文件夹",
-            "compression": "启用压缩",
             "smb-username": "SMB 用户名",
             "smb-password": "SMB 密码",
             "smb-domain": "SMB 域"
@@ -1095,7 +1094,6 @@
             "password": "密码",
             "private-key": "私钥",
             "passphrase": "密码短语",
-            "compression": "压缩文件",
             "retry-interval": "重试间隔"
           },
           "ftp": {
@@ -1108,7 +1106,6 @@
             },
             "username": "用户名",
             "password": "密码",
-            "compression": "压缩文件",
             "retry-interval": "重试间隔"
           },
           "sqlite": {

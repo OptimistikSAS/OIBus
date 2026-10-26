@@ -499,6 +499,7 @@ export interface TransformerFileToFileSettings {
   input: TransformerFileToFileSettingsInput;
   output?: TransformerFileToFileSettingsOutput;
   filename: string;
+  compression?: boolean;
   keepOtherFields?: boolean;
   fields?: Array<TransformerFileToFileSettingsFields> | null;
 }

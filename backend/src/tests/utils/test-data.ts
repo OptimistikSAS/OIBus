@@ -558,7 +558,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     updatedAt: '',
     settings: {
       inputFolder: 'input',
-      compression: true,
       username: null,
       password: null,
       domain: null
@@ -857,7 +856,6 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
   enabled: true,
   settings: {
     inputFolder: 'input',
-    compression: true,
     username: null,
     password: null,
     domain: null

@@ -806,7 +806,6 @@
           },
           "folder-scanner": {
             "input-folder": "Dossier d'entrée",
-            "compression": "Activer la compression",
             "smb-username": "Nom d'utilisateur SMB",
             "smb-password": "Mot de passe SMB",
             "smb-domain": "Domaine SMB"
@@ -1095,7 +1094,6 @@
             "password": "Mot de passe",
             "private-key": "Clé privée",
             "passphrase": "Phrase secrète",
-            "compression": "Compresser les fichiers",
             "retry-interval": "Intervalle de nouvelle tentative"
           },
           "ftp": {
@@ -1108,7 +1106,6 @@
             },
             "username": "Nom d'utilisateur",
             "password": "Mot de passe",
-            "compression": "Compresser les fichiers",
             "retry-interval": "Intervalle de nouvelle tentative"
           },
           "sqlite": {

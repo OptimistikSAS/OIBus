@@ -10,10 +10,13 @@ The **Folder Scanner** South connector periodically scans a specified input fold
 
 ## Specific Settings {#specific-settings}
 
-| Setting            | Description                                                                                                                                                                                                                    | Example Value               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
-| Input folder       | Path of the folder to scan. Can be **absolute** or **relative** (relative to the **Data folder** - see the _About_ section). Supports remote paths (e.g., `/remote.server/data` or `Z:\Remote disk\DATA`). **Case-sensitive**. | `/data/input` or `Z:\Files` |
-| Enable compression | If enabled, files are compressed using **gzip** before being sent to North caches.                                                                                                                                             | Enabled/Disabled            |
+| Setting      | Description                                                                                                                                                                                                                    | Example Value               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| Input folder | Path of the folder to scan. Can be **absolute** or **relative** (relative to the **Data folder** - see the _About_ section). Supports remote paths (e.g., `/remote.server/data` or `Z:\Remote disk\DATA`). **Case-sensitive**. | `/data/input` or `Z:\Files` |
+
+To compress the files (gzip), use the [File (converted or renamed)](../engine/transformers.mdx#file-converted-or-renamed)
+transformer with the file type **Other** and **Compress file** enabled. Before 3.10, the connector compressed its files
+itself: upgrading moves this setting to such a transformer wherever its files were sent as they are.
 
 :::caution User Access Requirements
 

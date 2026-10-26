@@ -36,7 +36,6 @@ const buildConfiguration = (
   enabled: true,
   settings: {
     inputFolder: 'inputFolder',
-    compression: false,
     ...settings
   },
   groups: [],
@@ -110,8 +109,7 @@ describe('SouthFolderScanner', () => {
 
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
   const createUtilsMocks = () => ({
-    checkAge: mock.fn((..._args: Parameters<typeof Utils.checkAge>) => true),
-    compress: mock.fn(async (_input: string, _output: string): Promise<void> => undefined)
+    checkAge: mock.fn((..._args: Parameters<typeof Utils.checkAge>) => true)
   });
   const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
@@ -365,14 +363,12 @@ describe('SouthFolderScanner', () => {
   describe('sendFile', () => {
     const mockQueryTime = DateTime.now().toUTC().toISO()!;
     let addContent: Mock<SouthFolderScannerClass['addContent']>;
-    let unlink: Mock<typeof fs.unlink>;
 
     beforeEach(() => {
       addContent = mock.method(south, 'addContent', async () => undefined);
-      unlink = mock.method(fs, 'unlink', async () => undefined);
     });
 
-    it('should send the raw file if compression is disabled', async () => {
+    it('should send the raw file', async () => {
       await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
 
       assert.strictEqual(addContent.mock.calls.length, 1);
@@ -385,55 +381,14 @@ describe('SouthFolderScanner', () => {
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[2], [configuration.items[0]]);
     });
 
-    it('should compress the file and send the gzipped version if compression is enabled', async () => {
-      configuration.settings.compression = true;
-
+    it('should keep the relative path of a file found in a sub-folder as its name', async () => {
       await south.sendFile(configuration.items[0], path.join('sub', 'file1.csv'), mockQueryTime);
 
-      const expectedGzipPath = path.resolve('cacheFolder', 'tmp', 'sub_file1.csv.gz');
-      assert.strictEqual(utilsExports.compress.mock.calls.length, 1);
-      assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments, [
-        path.resolve('inputFolder', 'sub', 'file1.csv'),
-        expectedGzipPath
-      ]);
-      assert.strictEqual(addContent.mock.calls.length, 1);
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
         type: 'file',
-        filePath: expectedGzipPath,
-        filename: path.join('sub', 'file1.csv') + '.gz'
+        filePath: path.resolve('inputFolder', 'sub', 'file1.csv'),
+        filename: path.join('sub', 'file1.csv')
       });
-      assert.ok(unlink.mock.calls.some(c => c.arguments[0] === expectedGzipPath));
-    });
-
-    it('should fallback to sending the raw file if compression fails', async () => {
-      configuration.settings.compression = true;
-      utilsExports.compress.mock.mockImplementation(async () => {
-        throw new Error('Zip failure');
-      });
-
-      await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
-
-      assert.ok(logger.error.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error compressing file')));
-      assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'file',
-        filePath: path.resolve('inputFolder', 'file1.csv'),
-        filename: 'file1.csv'
-      });
-    });
-
-    it('should safely log and ignore unlink errors after compressing', async () => {
-      configuration.settings.compression = true;
-      unlink.mock.mockImplementation(async () => {
-        throw new Error('Cannot delete zip');
-      });
-
-      await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
-
-      assert.ok(
-        logger.error.mock.calls.some(
-          c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error while removing compressed file')
-        )
-      );
     });
   });
 

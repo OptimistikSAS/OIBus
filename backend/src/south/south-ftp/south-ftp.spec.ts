@@ -71,7 +71,6 @@ const buildConfiguration = (
     authentication: 'password',
     username: 'user',
     password: 'pass',
-    compression: false,
     retryInterval: 10000,
     ...settings
   },
@@ -121,7 +120,6 @@ describe('SouthFTP', () => {
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
   const createUtilsMocks = () => ({
     checkAge: mock.fn((..._args: Parameters<typeof Utils.checkAge>) => true),
-    compress: mock.fn(async (_input: string, _output: string): Promise<void> => undefined),
     workUnitLogCtx: mock.fn(realUtils.workUnitLogCtx)
   });
   const utilsExports = { ...realUtils, ...createUtilsMocks() };
@@ -512,23 +510,11 @@ describe('SouthFTP', () => {
       });
       assert.strictEqual(addContentCallback.mock.calls[0].arguments[2], testData.constants.dates.FAKE_NOW);
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
+      // The downloaded temp file is removed once sent
+      assert.strictEqual(unlink.mock.calls.length, 1);
+      assert.deepStrictEqual(unlink.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
       // getFile() no longer closes the persistent client after each file.
       assert.strictEqual(ftpClient.close.mock.calls.length, 0);
-    });
-
-    it('should get file with compression', async () => {
-      const southWithCompression = await startSouthWith({ compression: true });
-
-      const item = configuration.items[0];
-      await southWithCompression.getFile(createFileInfo('test.csv'), item, []);
-
-      assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
-      assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments[1], path.resolve('cacheFolder', 'tmp', 'test.csv.gz'));
-      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'file',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
-      });
-      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
     });
 
     it('should preserve files when configured', async () => {
@@ -562,28 +548,6 @@ describe('SouthFTP', () => {
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
-    });
-
-    it('should capture the real error when compression fails and send the file raw instead', async () => {
-      utilsExports.compress.mock.mockImplementation(async () => {
-        throw new Error('Compression failed');
-      });
-      const southWithCompression = await startSouthWith({ compression: true });
-
-      await southWithCompression.getFile(createFileInfo('test.csv'), configuration.items[0], []);
-
-      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'file',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
-      // The real compression error is captured and logged, not swallowed.
-      assert.ok(
-        logger.error.mock.calls.some(
-          c =>
-            c.arguments.some(arg => typeof arg === 'string' && arg.includes('Error compressing file')) &&
-            c.arguments.some(arg => typeof arg === 'string' && arg.includes('Compression failed'))
-        )
-      );
     });
 
     it('should list files recursively when recursive is true', async () => {
@@ -738,20 +702,6 @@ describe('SouthFTP', () => {
       await assert.rejects(south.getFile(createFileInfo('test.csv'), configuration.items[0], []), new Error('Download failed'));
     });
 
-    it('should handle file unlink error after compression', async () => {
-      unlink.mock.mockImplementation(async () => {
-        throw new Error('Unlink failed');
-      });
-      const southWithCompression = await startSouthWith({ compression: true });
-
-      await southWithCompression.getFile(createFileInfo('test.csv'), configuration.items[0], []);
-
-      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'file',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
-      });
-    });
-
     it('should handle empty username and password', async () => {
       const southWithoutCredentials = createSouth(buildConfiguration({ username: '', password: '' }));
 
@@ -796,23 +746,6 @@ describe('SouthFTP', () => {
       assert.strictEqual(result, false);
     });
 
-    it('should handle try-catch blocks properly in getFile with compression error and unlink error', async () => {
-      utilsExports.compress.mock.mockImplementation(async () => {
-        throw new Error('Compression failed');
-      });
-      unlink.mock.mockImplementation(async () => {
-        throw new Error('Unlink failed');
-      });
-      const southWithCompression = await startSouthWith({ compression: true });
-
-      await southWithCompression.getFile(createFileInfo('test.csv'), configuration.items[0], []);
-
-      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'file',
-        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-      });
-    });
-
     it('should handle password decryption', async () => {
       const southWithEncryptedPassword = createSouth(buildConfiguration({ password: 'encrypted-password' }));
 
@@ -847,7 +780,7 @@ describe('SouthFTP', () => {
       assert.ok(ftpClient.downloadTo.mock.calls.length > 0);
     });
 
-    it('should handle file unlink error in non-compression mode', async () => {
+    it('should log and ignore an error when removing the local temp file', async () => {
       unlink.mock.mockImplementation(async () => {
         throw new Error('Unlink failed');
       });
@@ -858,6 +791,7 @@ describe('SouthFTP', () => {
         type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
+      assert.ok(logIncludes(logger.error, `Error while removing file "${path.resolve('cacheFolder', 'tmp', 'test.csv')}": Unlink failed`));
     });
   });
 });

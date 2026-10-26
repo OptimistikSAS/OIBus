@@ -5,7 +5,6 @@ import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
-import zlib from 'node:zlib';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import cronstrue from 'cronstrue';
@@ -251,38 +250,6 @@ describe('Service utils', () => {
 
       assert.strictEqual(mkdirMock.mock.calls.length, 1);
       assert.deepStrictEqual(mkdirMock.mock.calls[0].arguments, [path.resolve('myFolder'), { recursive: true }]);
-    });
-  });
-
-  describe('compress', () => {
-    it('should properly compress file', async () => {
-      const source = new PassThrough();
-      source.end('some data');
-      const dest = new PassThrough();
-      dest.resume(); // drain so pipeline finishes
-      const createReadStreamMock = mock.method(fsSync, 'createReadStream', () => source);
-      const createWriteStreamMock = mock.method(fsSync, 'createWriteStream', () => dest);
-      const createGzipMock = mock.method(zlib, 'createGzip', () => new PassThrough());
-
-      await utils.compress('myInputFile', 'myOutputFile');
-
-      assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
-      assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments, ['myInputFile']);
-      assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
-      assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, ['myOutputFile']);
-      assert.strictEqual(createGzipMock.mock.calls.length, 1);
-    });
-
-    it('should properly manage error when compressing file', async () => {
-      const source = new PassThrough();
-      mock.method(fsSync, 'createReadStream', () => source);
-      mock.method(fsSync, 'createWriteStream', () => new PassThrough());
-      mock.method(zlib, 'createGzip', () => new PassThrough());
-
-      // Emit an error on the source after the pipeline has started
-      setImmediate(() => source.destroy(new Error('compression error')));
-
-      await assert.rejects(() => utils.compress('myInputFile', 'myOutputFile'), /compression error/);
     });
   });
 

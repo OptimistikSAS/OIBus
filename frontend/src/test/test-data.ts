@@ -208,7 +208,6 @@ const southList: Array<SouthConnectorDTO> = [
     enabled: true,
     settings: {
       inputFolder: 'input',
-      compression: true,
       username: null,
       password: '',
       domain: null
@@ -749,7 +748,6 @@ const southCommand: SouthConnectorCommandDTO = {
   enabled: true,
   settings: {
     inputFolder: 'input',
-    compression: true,
     username: null,
     password: null,
     domain: null
@@ -2484,7 +2482,6 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
       enabled: true,
       settings: {
         inputFolder: 'input',
-        compression: true,
         username: null,
         password: null,
         domain: null
@@ -2667,7 +2664,6 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
       enabled: true,
       settings: {
         inputFolder: 'input',
-        compression: true,
         username: null,
         password: null,
         domain: null

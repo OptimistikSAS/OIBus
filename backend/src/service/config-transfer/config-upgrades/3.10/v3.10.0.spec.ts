@@ -7,6 +7,7 @@ import { CONFIG_TRANSFER_FIXTURES_DIR } from '../../../../tests/config-transfer-
 import { JsonObject } from '../config-upgrade';
 import {
   buildRecordListToCsvOptions,
+  COMPRESSED_FILE_OPTIONS,
   keepsResolvedTransformer,
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
@@ -354,6 +355,80 @@ describe('3.10.0 config upgrade', () => {
           }
         }
       ]);
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
+  describe('compression of the folder scanner, FTP and SFTP files', () => {
+    const fileTransformer = {
+      oIBusInternalId: 'file',
+      type: 'standard',
+      settings: { functionName: 'file', inputType: 'file', outputType: 'file' }
+    };
+    const buildConfig = (): JsonObject => ({
+      transformers: [fileTransformer],
+      southConnectors: [
+        {
+          oIBusInternalId: 'compressed',
+          type: 'folder-scanner',
+          settings: { settings: { inputFolder: 'in', compression: true }, items: [] }
+        },
+        { oIBusInternalId: 'raw', type: 'ftp', settings: { settings: { host: 'h', compression: false }, items: [] } }
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'writer',
+          type: 'file-writer',
+          settings: {
+            transformers: [
+              { id: 'l1', transformerId: 'file', options: {}, source: { type: 'south', southId: 'compressed', items: [] } },
+              { id: 'l2', transformerId: 'file', options: {}, source: { type: 'south', southId: 'raw', items: [] } },
+              { id: 'l3', transformerId: 'file', options: {}, source: { type: 'oibus-api' } }
+            ]
+          }
+        }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'sftp',
+            northType: 'file-writer',
+            southSettings: { host: 'h', compression: true },
+            items: [],
+            northTransformers: [{ id: 'h1', transformerId: 'file', options: {}, items: [] }]
+          }
+        }
+      ]
+    });
+
+    it('compresses the files in file-to-file transformers instead of the souths', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const fileToFile = (config.transformers as Array<JsonObject>).find(
+        transformer => (transformer.settings as JsonObject).functionName === 'file-to-file'
+      )!;
+      assert.strictEqual((fileToFile.manifest as JsonObject).key, 'options');
+      const links = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
+      assert.deepStrictEqual(
+        links.map(link => [link.id, link.transformerId, link.options]),
+        [
+          ['l1', fileToFile.oIBusInternalId, COMPRESSED_FILE_OPTIONS],
+          ['l2', 'file', {}],
+          ['l3', 'file', {}]
+        ]
+      );
+      assert.deepStrictEqual(
+        (config.southConnectors as Array<JsonObject>).map(south => (south.settings as JsonObject).settings),
+        [{ inputFolder: 'in' }, { host: 'h' }]
+      );
+      const historyQuery = (config.historyQueries as Array<JsonObject>)[0].settings as JsonObject;
+      assert.deepStrictEqual(historyQuery.southSettings, { host: 'h' });
+      assert.deepStrictEqual((historyQuery.northTransformers as Array<JsonObject>)[0].options, COMPRESSED_FILE_OPTIONS);
     });
 
     it('is safe to run twice', () => {

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { Readable } from 'node:stream';
+import zlib from 'node:zlib';
 import { beforeEach, describe, it } from 'node:test';
 
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
@@ -86,6 +87,19 @@ describe('FileToFileTransformer', () => {
     assert.strictEqual(payload.metadata.contentFile, '_copy');
   });
 
+  it('should compress another file when asked', async () => {
+    const transformer = new FileToFileTransformer(logger, testData.transformers.list[0], {
+      input: { fileType: 'other' },
+      filename: '@SourceFilename@SourceExtension',
+      compression: true
+    });
+
+    const result = await transformer.transform(Readable.from([Buffer.from('raw content')]), { source: 'test' }, 'data.bin');
+
+    assert.strictEqual(zlib.gunzipSync(result.output).toString(), 'raw content');
+    assert.strictEqual(result.metadata.contentFile, 'data.bin.gz');
+  });
+
   it('should hide the output and the fields of another file', () => {
     assert.deepStrictEqual(
       manifest.settings.enablingConditions.map(condition => [
@@ -96,7 +110,8 @@ describe('FileToFileTransformer', () => {
       [
         ['input.fileType', 'output', ['csv', 'json']],
         ['input.fileType', 'keepOtherFields', ['csv', 'json']],
-        ['input.fileType', 'fields', ['csv', 'json']]
+        ['input.fileType', 'fields', ['csv', 'json']],
+        ['input.fileType', 'compression', ['other']]
       ]
     );
   });

@@ -571,7 +571,7 @@ describe('Entity migration v3.9.0', () => {
     it('backfills username/password/domain as null for a folder-scanner south connector missing them', async () => {
       const south = buildSouthEntity<SouthFolderScannerSettings, SouthItemSettings>(
         'folder-scanner',
-        { inputFolder: 'input', compression: false, username: null, password: null, domain: null },
+        { inputFolder: 'input', username: null, password: null, domain: null },
         []
       );
       south.id = 'folder-scanner-1';
@@ -594,7 +594,7 @@ describe('Entity migration v3.9.0', () => {
     it('preserves existing username/password/domain for a folder-scanner south connector that already has them', async () => {
       const south = buildSouthEntity<SouthFolderScannerSettings, SouthItemSettings>(
         'folder-scanner',
-        { inputFolder: 'input', compression: false, username: 'admin', password: 'secret', domain: 'WORKGROUP' },
+        { inputFolder: 'input', username: 'admin', password: 'secret', domain: 'WORKGROUP' },
         []
       );
       south.id = 'folder-scanner-2';

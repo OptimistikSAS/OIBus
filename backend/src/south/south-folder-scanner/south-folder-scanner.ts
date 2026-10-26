@@ -28,7 +28,7 @@ import {
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { Instant, OIBusTestingError } from '../../model/types';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { checkAge, compress, getErrorMessage, sanitizeCommandError, workUnitLogCtx } from '../../service/utils';
+import { checkAge, getErrorMessage, sanitizeCommandError, workUnitLogCtx } from '../../service/utils';
 import { SouthDirectQuery, SouthExplore } from '../south-interface';
 
 /**
@@ -389,27 +389,6 @@ export default class SouthFolderScanner
     const filePath = path.resolve(this.connector.settings.inputFolder, filename);
     this.logger.info(logCtx, `Sending file "${filePath}" to the engine`);
 
-    if (this.connector.settings.compression) {
-      try {
-        // Compress and send the compressed file.
-        // Use a flattened name for the temp .gz file (replace separators with _),
-        // but preserve the original relative `filename` as the logical name so
-        // north connectors see "subdir/file.json.gz" not the temp absolute path.
-        const safeFilename = filename.split(path.sep).join('_');
-        const gzipPath = path.resolve(this.tmpFolder, `${safeFilename}.gz`);
-        await compress(filePath, gzipPath);
-        await this.addContent({ type: 'file', filePath: gzipPath, filename: `${filename}.gz` }, queryTime, [item]);
-        try {
-          await fs.unlink(gzipPath);
-        } catch (unlinkError) {
-          this.logger.error(logCtx, `Error while removing compressed file "${gzipPath}": ${getErrorMessage(unlinkError)}`);
-        }
-      } catch (error: unknown) {
-        this.logger.error(logCtx, `Error compressing file "${filePath}": ${getErrorMessage(error)}. Sending it raw instead.`);
-        await this.addContent({ type: 'file', filePath, filename }, queryTime, [item]);
-      }
-    } else {
-      await this.addContent({ type: 'file', filePath, filename }, queryTime, [item]);
-    }
+    await this.addContent({ type: 'file', filePath, filename }, queryTime, [item]);
   }
 }

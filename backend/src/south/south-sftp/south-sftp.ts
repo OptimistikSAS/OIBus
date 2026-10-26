@@ -13,7 +13,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import { Instant, OIBusTestingError } from '../../model/types';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { encryptionService } from '../../service/encryption.service';
-import { checkAge, compress, getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { checkAge, getErrorMessage, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthDirectQuery } from '../south-interface';
 
@@ -376,34 +376,11 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       }
     }
 
-    if (this.connector.settings.compression) {
-      try {
-        // Compress and send the compressed file
-        const gzipPath = path.resolve(this.tmpFolder, `${safeFilename}.gz`);
-        await compress(resultingFile, gzipPath);
-        await this.addContent({ type: 'file', filePath: gzipPath }, startRequest.toUTC().toISO(), [item]);
-        try {
-          await fs.unlink(resultingFile);
-          await fs.unlink(gzipPath);
-        } catch (unlinkError: unknown) {
-          this.logger.error(logCtx, `Error while removing compressed file "${gzipPath}": ${getErrorMessage(unlinkError)}`);
-        }
-      } catch (error: unknown) {
-        this.logger.error(logCtx, `Error compressing file "${resultingFile}": ${getErrorMessage(error)}. Sending it raw instead.`);
-        await this.addContent({ type: 'file', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
-        try {
-          await fs.unlink(resultingFile);
-        } catch (unlinkError: unknown) {
-          this.logger.error(logCtx, `Error while removing file "${resultingFile}": ${getErrorMessage(unlinkError)}`);
-        }
-      }
-    } else {
-      await this.addContent({ type: 'file', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
-      try {
-        await fs.unlink(resultingFile);
-      } catch (unlinkError: unknown) {
-        this.logger.error(logCtx, `Error while removing file "${resultingFile}": ${getErrorMessage(unlinkError)}`);
-      }
+    await this.addContent({ type: 'file', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
+    try {
+      await fs.unlink(resultingFile);
+    } catch (unlinkError: unknown) {
+      this.logger.error(logCtx, `Error while removing file "${resultingFile}": ${getErrorMessage(unlinkError)}`);
     }
   }
 

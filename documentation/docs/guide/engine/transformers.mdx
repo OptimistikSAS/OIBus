@@ -653,8 +653,9 @@ renaming, casting and processing the fields of its rows. After the [File group](
 transformer of the record lists, the fields being read in the rows of the file (a JSONPath for a JSON file, see
 [Reading the file](#reading-the-file)).
 
-With the file type **Other**, the file is only **renamed**: its content is sent as it is, and only the **Filename** is
-set. Changing the content of such a file needs a [custom transformer](#custom-transformers).
+With the file type **Other**, the file is only **renamed**, and possibly **compressed** (**Compress file**, gzip, adding
+`.gz` to its name): its content is otherwise sent as it is. Changing the content of such a file needs a
+[custom transformer](#custom-transformers).
 
 Besides the variables of the record lists, the **Filename** supports `@SourceFilename` and `@SourceExtension`: the name
 (without extension) and the extension (with its dot) of the transformed file, e.g. `@SourceFilename_copy@SourceExtension`.
