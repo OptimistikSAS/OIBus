@@ -11,7 +11,7 @@ import {
 } from '@angular/forms';
 
 import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { Observable } from 'rxjs';
 
@@ -34,6 +34,13 @@ import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/
 import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import {
+  compareSettings,
+  countChanges,
+  SettingSummary,
+  summarizeSettings
+} from '../../../shared/form/oibus-settings-summary/settings-summary';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
 import { filterItems } from '../../../shared/item-table/item-table';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
@@ -44,6 +51,7 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { getAssociatedInputType, isTransformerApplicable } from '../../../shared/utils/utils';
+import { formatTransformerSource, transformerName } from '../../north-summary';
 import { findDefaultTransformer, resolveItemRouting, RoutedTransformer } from '../transformer-routing';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
 
@@ -55,9 +63,15 @@ export interface TransformerSourcePreset {
   items?: Array<ItemLightDTO>;
 }
 
-/** The steps of the modal: where the data comes from and the transformer, its options, then a test */
-export const TRANSFORMER_MODAL_STEPS = ['source', 'options', 'test'] as const;
+/** The steps of the modal: where the data comes from and the transformer, its options (tried out right away), then a review */
+export const TRANSFORMER_MODAL_STEPS = ['source', 'options', 'review'] as const;
 export type TransformerModalStep = (typeof TRANSFORMER_MODAL_STEPS)[number];
+
+/** A transformer as summed up in the Review step: its source and the transformer, and its options */
+export interface TransformerSummary {
+  source: Array<SettingSummary>;
+  options: Array<SettingSummary>;
+}
 
 /** What a transformer being configured would send of the items of its south */
 export interface TransformerImpact {
@@ -112,6 +126,7 @@ interface TransformerSourceOption {
     NorthTransformerTestComponent,
     NgbTooltip,
     ModalStepsComponent,
+    OIBusSettingsSummaryComponent,
     SelectExistingTransformerComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -129,6 +144,7 @@ export class EditNorthTransformerModalComponent {
   private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private readonly southConnectorService = inject(SouthConnectorService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translateService = inject(TranslateService);
 
   readonly state = new ObservableState();
   readonly mode = signal<'create' | 'edit'>('create');
@@ -160,6 +176,20 @@ export class EditNorthTransformerModalComponent {
   readonly steps = new WizardSteps<TransformerModalStep>(TRANSFORMER_MODAL_STEPS, step => this.stepControls(step), this.formEvents);
   /** A new transformer is saved once its source and the transformer are chosen, an edited one from any step */
   readonly canSave = computed(() => this.mode() === 'edit' || this.steps.current() !== 'source');
+  /** The transformer as summed up in the Review step */
+  readonly reviewSummary = computed(() => {
+    this.formEvents();
+    return this.summarize();
+  });
+  /** The transformer as it was when opened for edition, to show what changed in the Review step: null for a new one */
+  readonly savedSummary = signal<TransformerSummary | null>(null);
+  /** How many settings changed since the transformer was saved: null for a new one */
+  readonly changeCount = computed(() => {
+    const saved = this.savedSummary();
+    if (!saved) return null;
+    const summary = this.reviewSummary();
+    return countChanges(compareSettings(summary.source, saved.source)) + countChanges(compareSettings(summary.options, saved.options));
+  });
   private allTransformers: Array<TransformerDTO> = [];
   readonly selectableOutputs = signal<Array<TransformerDTO>>([]);
   readonly supportedOutputTypes = signal<Array<string>>([]);
@@ -330,6 +360,7 @@ export class EditNorthTransformerModalComponent {
       { emitEvent: false }
     );
     this.form.controls.source.disable({ emitEvent: false });
+    this.savedSummary.set(this.summarize());
   }
 
   buildForm() {
@@ -432,25 +463,59 @@ export class EditNorthTransformerModalComponent {
       return;
     }
 
-    const sourceType: DataSourceType = (
-      this.existingTransformerWithOptions ? this.existingTransformerWithOptions.source.type : this.form.value.source!.dataSourceType!
-    ) as DataSourceType;
-    let source: TransformerSourceDTO;
-    if (sourceType === 'south') {
-      source = this.southSource()!;
-    } else if (sourceType === 'oibus-api') {
-      // Without data source, the transformer applies to every data source
-      source = { type: 'oibus-api', dataSourceId: this.form.value.apiDataSourceId || undefined };
-    } else {
-      source = { type: 'oianalytics-setpoint' };
-    }
-
     this.modal.close({
       id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : `temp_${Date.now()}`,
-      source,
+      source: this.source(),
       transformer: this.form.value.transformer,
       options: this.form.value.options
     });
+  }
+
+  /** The source of the transformer, as configured: `null` until it is chosen */
+  private source(): TransformerSourceDTO | null {
+    const sourceType = this.existingTransformerWithOptions
+      ? this.existingTransformerWithOptions.source.type
+      : this.form.controls.source.value.dataSourceType;
+    switch (sourceType) {
+      case 'south':
+        return this.southSource();
+      case 'oibus-api':
+        // Without data source, the transformer applies to every data source
+        return { type: 'oibus-api', dataSourceId: this.form.controls.apiDataSourceId.value || undefined };
+      case 'oianalytics-setpoint':
+        return { type: 'oianalytics-setpoint' };
+      default:
+        return null;
+    }
+  }
+
+  /** The transformer as currently configured, summed up: see `reviewSummary` */
+  private summarize(): TransformerSummary {
+    const transformer = this.form.controls.transformer.value;
+    const source = this.source();
+    const manifest = this.manifest();
+    return {
+      source: [
+        {
+          kind: 'text',
+          labelKey: 'north.transformers.source',
+          text: source ? formatTransformerSource({ source }, this.translateService).trim() : null
+        },
+        {
+          kind: 'text',
+          labelKey: 'north.transformers.list.transformer',
+          text: transformer ? transformerName(transformer, this.translateService) : null
+        }
+      ],
+      options:
+        transformer && manifest
+          ? summarizeSettings(manifest, this.form.controls.options.value, {
+              translateService: this.translateService,
+              scanModes: this.scanModes(),
+              certificates: this.certificates()
+            })
+          : []
+    };
   }
 
   /** Whether the chosen items are fine: a transformer for specific items needs one at least, without, it would apply to all */

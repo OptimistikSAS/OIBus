@@ -232,7 +232,7 @@ describe('NorthTransformersComponent', () => {
           {
             type: 'string-select',
             key: 'precision',
-            translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.precision',
+            translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.timestamp.precision',
             defaultValue: 'ms',
             selectableValues: ['ms', 's', 'min', 'hr'],
             validators: [],
