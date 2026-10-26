@@ -8,11 +8,11 @@ import AuditService from '../../service/audit.service';
 import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
-import CSVToMQTTTransformer from '../../transformers/file/csv-to-mqtt/csv-to-mqtt-transformer';
-import CSVToRecordListTransformer from '../../transformers/file/csv-to-record-list/csv-to-record-list-transformer';
 import FileTransformer from '../../transformers/file/file/file-transformer';
+import FileToMQTTTransformer from '../../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
+import FileToOIAnalyticsTransformer from '../../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
+import FileToRecordListTransformer from '../../transformers/file/file-to-record-list/file-to-record-list-transformer';
 import JSONToCSVTransformer from '../../transformers/file/json-to-csv/json-to-csv-transformer';
-import JSONToOIAnalyticsTransformer from '../../transformers/file/json-to-oianalytics/json-to-oianalytics-transformer';
 import RecordListToCsvTransformer from '../../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
 import RecordListToJSONTransformer from '../../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
 import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
@@ -28,11 +28,11 @@ import TransformerRepository from './transformer.repository';
 const TEST_DB_PATH = 'src/tests/test-config-transformer.db';
 
 const standardTransformers: Array<StandardTransformer> = [
-  { id: 'csvToMqtt', inputType: 'file', functionName: CSVToMQTTTransformer.transformerName, outputType: 'mqtt', type: 'standard' },
+  { id: 'csvToMqtt', inputType: 'file', functionName: FileToMQTTTransformer.transformerName, outputType: 'mqtt', type: 'standard' },
   {
     id: 'csvToRecordList',
     inputType: 'file',
-    functionName: CSVToRecordListTransformer.transformerName,
+    functionName: FileToRecordListTransformer.transformerName,
     outputType: 'record-list',
     type: 'standard'
   },
@@ -48,7 +48,7 @@ const standardTransformers: Array<StandardTransformer> = [
   {
     id: 'jsonToOia',
     inputType: 'file',
-    functionName: JSONToOIAnalyticsTransformer.transformerName,
+    functionName: FileToOIAnalyticsTransformer.transformerName,
     outputType: 'oianalytics',
     type: 'standard'
   },

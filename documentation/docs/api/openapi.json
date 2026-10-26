@@ -1116,7 +1116,7 @@
 					"id": {
 						"type": "string",
 						"description": "The unique identifier of the transformer type.",
-						"example": "csv-to-mqtt"
+						"example": "file-to-mqtt"
 					},
 					"inputType": {
 						"$ref": "#/components/schemas/InputType",
