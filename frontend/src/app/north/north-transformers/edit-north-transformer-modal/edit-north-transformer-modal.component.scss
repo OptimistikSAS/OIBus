@@ -23,21 +23,3 @@
   color: $component-active-color;
   background-color: $component-active-bg;
 }
-
-// Source, items, transformer: the steps of the configuration, separated as in a list
-.transformer-section {
-  padding-bottom: 0.75rem;
-  margin-bottom: 0.75rem;
-  border-bottom: 1px solid var(--bs-border-color);
-
-  &:last-of-type {
-    border-bottom: none;
-    margin-bottom: 0;
-  }
-}
-
-.transformer-section-title {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
