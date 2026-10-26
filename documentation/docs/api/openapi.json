@@ -3771,9 +3771,6 @@
 					"inputFolder": {
 						"type": "string"
 					},
-					"compression": {
-						"type": "boolean"
-					},
 					"username": {
 						"type": "string",
 						"nullable": true
@@ -3788,8 +3785,7 @@
 					}
 				},
 				"required": [
-					"inputFolder",
-					"compression"
+					"inputFolder"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4302,9 +4298,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"compression": {
-						"type": "boolean"
-					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -4314,7 +4307,6 @@
 					"host",
 					"port",
 					"authentication",
-					"compression",
 					"retryInterval"
 				],
 				"type": "object",
@@ -13972,9 +13964,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"compression": {
-						"type": "boolean"
-					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -13985,7 +13974,6 @@
 					"port",
 					"authentication",
 					"username",
-					"compression",
 					"retryInterval"
 				],
 				"type": "object",

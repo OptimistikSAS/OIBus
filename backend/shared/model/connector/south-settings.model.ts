@@ -384,7 +384,6 @@ export interface SouthBACnetSettings {
 
 export interface SouthFolderScannerSettings {
   inputFolder: string;
-  compression: boolean;
   username?: string | null;
   password?: string | null;
   domain?: string | null;
@@ -396,7 +395,6 @@ export interface SouthFTPSettings {
   authentication: SouthFTPSettingsAuthentication;
   username?: string | null;
   password?: string | null;
-  compression: boolean;
   retryInterval: number;
 }
 
@@ -571,7 +569,6 @@ export interface SouthSFTPSettings {
   password?: string | null;
   privateKey?: string;
   passphrase?: string | null;
-  compression: boolean;
   retryInterval: number;
 }
 
