@@ -108,20 +108,18 @@ To retrieve raw values for several data references over a time window, configure
 Since `data-reference` is repeated, it is sent as `data-reference=CIP_Line_1_Acid_Tank_Level&data-reference=CIP_Line_1_Caustic_Tank_Level`,
 letting the endpoint return values for both tank levels in a single query.
 
-## CSV Serialization Options {#csv-serialization-options}
+## Sent data {#sent-data}
 
-| Setting                | Description                                                              | Example Value                                                                                                     |
-| ---------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Filename               | Output filename pattern with variables: `@ConnectorName`, `@CurrentDate` | `data_@ConnectorName.csv`                                                                                         |
-| Delimiter              | Field separator character                                                | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
-| Compression            | Enable gzip compression                                                  | Enabled/Disabled                                                                                                  |
-| Output datetime format | Format for datetime fields in CSV                                        | `yyyy-MM-dd HH:mm:ss`                                                                                             |
-| Output timezone        | Timezone for datetime values                                             | `UTC` or `Europe/Paris`                                                                                           |
+Each item sends the values it retrieves as **point records**, with their unit:
 
-:::info Filename Variables
+```json
+{ "pointId": "CIP_Line_1_Acid_Tank_Level", "timestamp": "2024-01-15T10:00:00.000Z", "value": 52.3, "unit": "%" }
+```
 
-- `@ConnectorName`: Connector name
-- `@CurrentDate`: Current timestamp in `yyyy_MM_dd_HH_mm_ss_SSS` format (fixed format)
-- Datetime format setting doesn't affect filename timestamp
+To write them in a CSV (or JSON) file, attach the [File](../engine/transformers.mdx#file-from-records) transformer to the
+North connector or history query: its settings choose the columns, the timestamp format and timezone, the delimiter, the
+file name and the compression.
 
-:::
+Before 3.10, the items wrote CSV files themselves (filename, delimiter, compression, timestamp format and timezone):
+upgrading moves these settings to a File transformer for each item whose files were sent as they are. The other
+transformers reading its files are removed, the data being record lists.

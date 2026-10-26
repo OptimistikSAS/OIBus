@@ -14,7 +14,7 @@ import { DateTime } from 'luxon';
 import type { EngineSettingsDTO, OIBusInfo } from '../../shared/model/api/engine.model';
 import type { HistoryQueryItemDTO } from '../../shared/model/api/history-query.model';
 import type { SouthConnectorItemDTO } from '../../shared/model/api/south-connector.model';
-import type { DateTimeType, SerializationSettings } from '../../shared/model/common/types';
+import type { DateTimeType } from '../../shared/model/common/types';
 import type { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import type { SouthFolderScannerItemSettings } from '../../shared/model/connector/south-settings.model';
 
@@ -23,7 +23,7 @@ import type { SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/so
 import type { OIBusValidationError as OIBusValidationErrorType } from '../model/types';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 // the real papaparse, to parse the imported files
@@ -254,16 +254,6 @@ describe('Service utils', () => {
     });
   });
 
-  describe('getFilenameWithoutRandomId', () => {
-    it('should properly get filename without random id', () => {
-      assert.deepStrictEqual(utils.getFilenameWithoutRandomId('test.file'), 'test.file');
-      assert.deepStrictEqual(utils.getFilenameWithoutRandomId('test-12345.file'), 'test.file');
-      assert.deepStrictEqual(utils.getFilenameWithoutRandomId('test-12345.csv.gz'), 'test.gz'); // This case should never happen
-      assert.deepStrictEqual(utils.getFilenameWithoutRandomId('test.csv-12345.gz'), 'test.csv.gz');
-      assert.deepStrictEqual(utils.getFilenameWithoutRandomId(path.join('folder', 'sub-directory', 'test-12345.file')), 'test.file');
-    });
-  });
-
   describe('compress', () => {
     it('should properly compress file', async () => {
       const source = new PassThrough();
@@ -387,47 +377,6 @@ describe('Service utils', () => {
     }
   });
 
-  describe('dirSize', () => {
-    it('should properly retrieve dir size', async () => {
-      const entry = (name: string, kind: 'file' | 'directory' | 'other') => ({
-        name,
-        isDirectory: () => kind === 'directory',
-        isFile: () => kind === 'file'
-      });
-      const readdirMock = mock.method(
-        fs,
-        'readdir',
-        seq(
-          async () => [entry('file1', 'file'), entry('file2', 'file'), entry('dir', 'directory')],
-          async () => [entry('file3', 'file'), entry('file4', 'other'), entry('file5', 'file')]
-        )
-      );
-
-      const statMock = mock.method(
-        fs,
-        'stat',
-        seq(
-          async () => ({ size: 1 }),
-          async () => ({ size: 2 }),
-          async () => {
-            throw new Error('stat error');
-          },
-          async () => ({ size: 8 })
-        )
-      );
-
-      const result = await utils.dirSize('myDir');
-      assert.deepStrictEqual(readdirMock.mock.calls[0].arguments, ['myDir', { withFileTypes: true }]);
-      assert.deepStrictEqual(readdirMock.mock.calls[1].arguments, [path.join('myDir', 'dir'), { withFileTypes: true }]);
-      assert.deepStrictEqual(statMock.mock.calls[0].arguments, [path.join('myDir', 'file1')]);
-      assert.deepStrictEqual(statMock.mock.calls[1].arguments, [path.join('myDir', 'file2')]);
-      assert.deepStrictEqual(statMock.mock.calls[2].arguments, [path.join('myDir', 'dir', 'file3')]);
-      assert.deepStrictEqual(statMock.mock.calls[3].arguments, [path.join('myDir', 'dir', 'file5')]);
-      assert.strictEqual(statMock.mock.calls.length, 4);
-      assert.deepStrictEqual(result, 11);
-    });
-  });
-
   describe('generateReplacementParameters', () => {
     it('should generate replacement parameters', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
@@ -471,122 +420,6 @@ describe('Service utils', () => {
 
       assert.strictEqual(logger.info.mock.calls.length, 1);
       assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [{}, `Sending "SELECT * FROM logs"`]);
-    });
-  });
-
-  describe('persistResults', () => {
-    const item = testData.south.list[0].items[0];
-    const filePath = path.join('myTmpFolder', 'myFilename.csv');
-    const csvSettings = (compression: boolean): SerializationSettings => ({
-      type: 'csv',
-      delimiter: 'SEMI_COLON',
-      filename: 'myFilename.csv',
-      compression,
-      outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
-      outputTimezone: 'UTC'
-    });
-    let addContent: Mock<() => Promise<void>>;
-
-    const persist = (settings: SerializationSettings) =>
-      utils.persistResults(
-        [{ data1: 1 }, { data2: 2 }],
-        settings,
-        'connectorName',
-        item,
-        testData.constants.dates.FAKE_NOW,
-        'myTmpFolder',
-        addContent,
-        logger
-      );
-
-    const assertContentAdded = (sentFilePath: string) => {
-      assert.strictEqual(addContent.mock.calls.length, 1);
-      assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
-        { type: 'file', filePath: sentFilePath },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      ]);
-    };
-
-    const throwUnlinkError = () => {
-      throw new Error('unlink error');
-    };
-
-    beforeEach(() => {
-      addContent = mock.fn(async () => undefined);
-      mock.method(fs, 'writeFile', async () => null);
-    });
-
-    describe('without compression', () => {
-      it('should properly write results into CSV without compression', async () => {
-        const unlinkMock = mock.method(fs, 'unlink', async () => null);
-
-        await persist(csvSettings(false));
-
-        assertContentAdded(filePath);
-        assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
-        assert.strictEqual(unlinkMock.mock.calls.length, 1);
-      });
-
-      it('should properly write results into CSV without compression and log unlink errors', async () => {
-        const unlinkMock = mock.method(fs, 'unlink', throwUnlinkError);
-
-        await persist(csvSettings(false));
-
-        assertContentAdded(filePath);
-        assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
-        assert.strictEqual(unlinkMock.mock.calls.length, 1);
-        assert.strictEqual(logger.error.mock.calls.length, 1);
-        assert.strictEqual(
-          logger.error.mock.calls[0].arguments[1],
-          `Error when deleting CSV file "${filePath}" after caching it: unlink error`
-        );
-      });
-    });
-
-    describe('with compression', () => {
-      beforeEach(() => {
-        mock.method(fsSync, 'createReadStream', () => {
-          const source = new PassThrough();
-          source.end('some data');
-          return source;
-        });
-        mock.method(fsSync, 'createWriteStream', () => {
-          const dest = new PassThrough();
-          dest.resume(); // drain so pipeline finishes
-          return dest;
-        });
-        mock.method(zlib, 'createGzip', () => new PassThrough());
-      });
-
-      for (const { label, settings } of [{ label: 'CSV file', settings: csvSettings(true) }]) {
-        it(`should properly persists results into ${label}`, async () => {
-          const unlinkMock = mock.method(fs, 'unlink', async () => null);
-
-          await persist(settings);
-
-          assertContentAdded(`${filePath}.gz`);
-          const unlinkArgs = unlinkMock.mock.calls.map(c => c.arguments[0]);
-          assert.strictEqual(unlinkArgs.includes(filePath), true);
-          assert.strictEqual(unlinkArgs.includes(`${filePath}.gz`), true);
-          assert.strictEqual(unlinkMock.mock.calls.length, 2);
-        });
-
-        it(`should properly persists results into ${label} and log unlink errors`, async () => {
-          mock.method(fs, 'unlink', throwUnlinkError);
-
-          await persist(settings);
-
-          assert.strictEqual(logger.error.mock.calls.length, 2);
-          const errorMessages = logger.error.mock.calls.map(c => c.arguments[1]);
-          assert.strictEqual(errorMessages.includes(`Error when deleting ${label} "${filePath}" after compression: unlink error`), true);
-          assert.strictEqual(
-            errorMessages.includes(`Error when deleting compressed ${label} "${filePath}.gz" after caching it: unlink error`),
-            true
-          );
-          assertContentAdded(`${filePath}.gz`);
-        });
-      }
     });
   });
 
@@ -1703,23 +1536,6 @@ describe('Service utils', () => {
     });
   });
 
-  describe('generateFilenameForSerialization', () => {
-    it('should replace placeholders correctly', () => {
-      mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
-      const base = '/base/folder';
-      const filenameTemplate = 'export_@ConnectorName_@ItemName_@CurrentDate.csv';
-      const connectorName = 'MyConnector';
-      const itemName = 'MyItem';
-
-      const result = utils.generateFilenameForSerialization(base, filenameTemplate, connectorName, itemName);
-
-      const expectedDate = '2021_01_02_00_00_00_000';
-      const expectedFilename = `export_${connectorName}_${itemName}_${expectedDate}.csv`;
-
-      assert.deepStrictEqual(result, path.join(base, expectedFilename));
-    });
-  });
-
   describe('applyFilenameVariables', () => {
     const southSource = (overrides: Partial<CacheMetadataSourceOriginSouth> = {}): CacheMetadataSourceOriginSouth => ({
       source: 'south',
@@ -1788,39 +1604,6 @@ describe('Service utils', () => {
       const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', { source: 'test' });
 
       assert.strictEqual(result, 'export__.csv');
-    });
-  });
-
-  describe('generateCsvContent', () => {
-    beforeEach(() => {
-      csvExports.unparse.mock.mockImplementation(() => 'mocked,csv,output');
-    });
-
-    it('should generate CSV string with correct delimiter', () => {
-      const data = [
-        { col1: 'val1', col2: 123 },
-        { col1: 'val2', col2: 456 }
-      ];
-
-      const result = utils.generateCsvContent(data, 'COMMA');
-
-      assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
-      assert.deepStrictEqual(csvExports.unparse.mock.calls[0].arguments, [
-        data,
-        {
-          header: true,
-          delimiter: ','
-        }
-      ]);
-      assert.strictEqual(result, 'mocked,csv,output');
-    });
-
-    it('should handle different delimiters', () => {
-      const data = [{ a: 1 }];
-      utils.generateCsvContent(data, 'SEMI_COLON');
-      assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
-      const callArgs = csvExports.unparse.mock.calls[0].arguments[1] as Record<string, unknown>;
-      assert.strictEqual(callArgs.delimiter, ';');
     });
   });
 

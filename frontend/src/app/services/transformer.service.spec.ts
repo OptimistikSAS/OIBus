@@ -42,8 +42,8 @@ describe('TransformerService', () => {
     metadata: { contentType: 'file', contentFile: '', contentSize: 12, createdAt: testData.constants.dates.DATE_1, numberOfElement: 1 }
   };
   const itemTestResult: SouthConnectorItemTestResult = {
-    raw: { type: 'file-content', content: 'raw' },
-    transformed: { type: 'file-content', content: 'transformed' },
+    raw: { type: 'file', content: 'raw' },
+    transformed: { type: 'file', content: 'transformed' },
     connectionDuration: 1,
     queryDuration: 2
   };

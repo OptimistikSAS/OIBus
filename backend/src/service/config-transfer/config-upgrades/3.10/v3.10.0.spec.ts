@@ -10,6 +10,7 @@ import {
   keepsResolvedTransformer,
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
+  toOIAnalyticsItemFileOptions,
   upgrade,
   usesRemoteAgent
 } from './v3.10.0';
@@ -353,6 +354,178 @@ describe('3.10.0 config upgrade', () => {
           }
         }
       ]);
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
+  describe('South OIAnalytics', () => {
+    const serialization = {
+      type: 'csv',
+      filename: 'a.csv',
+      delimiter: 'TAB',
+      compression: false,
+      outputTimestampFormat: 'yyyy',
+      outputTimezone: 'UTC'
+    };
+    const item = (id: string, groupId: string | null = null) => ({
+      id,
+      name: id,
+      enabled: true,
+      groupId,
+      settings: { endpoint: '/api', serialization }
+    });
+    const buildConfig = (): JsonObject => ({
+      transformers: [
+        { oIBusInternalId: 'file', type: 'standard', settings: { functionName: 'file', inputType: 'file', outputType: 'file' } },
+        {
+          oIBusInternalId: 'records',
+          type: 'standard',
+          settings: { functionName: 'record-list-to-file', inputType: 'record-list', outputType: 'file' }
+        }
+      ],
+      southConnectors: [{ oIBusInternalId: 'oia', type: 'oianalytics', settings: { items: [item('i1', 'g1'), item('i2')] } }],
+      northConnectors: [
+        {
+          oIBusInternalId: 'writer',
+          type: 'file-writer',
+          settings: {
+            transformers: [
+              {
+                id: 'l1',
+                transformerId: 'file',
+                options: {},
+                source: { type: 'south', southId: 'oia', items: [], excludedItems: [{ id: 'i1', name: 'i1', enabled: true }] }
+              }
+            ]
+          }
+        }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'oianalytics',
+            northType: 'file-writer',
+            items: [item('h1')],
+            northTransformers: [{ id: 'h', transformerId: 'file', options: {}, items: [] }]
+          }
+        }
+      ]
+    });
+
+    it('writes the CSV files of the items sent as they are through record-list-to-file', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const [link, ...others] = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
+      assert.deepStrictEqual(others, []);
+      assert.deepStrictEqual(
+        { ...link, id: undefined },
+        {
+          id: undefined,
+          transformerId: 'records',
+          options: toOIAnalyticsItemFileOptions(serialization),
+          source: { type: 'south', southId: 'oia', items: [{ id: 'i2', name: 'i2', enabled: true }] }
+        }
+      );
+      const south = (config.southConnectors as Array<JsonObject>)[0];
+      assert.deepStrictEqual(
+        ((south.settings as JsonObject).items as Array<JsonObject>).map(candidate => candidate.settings),
+        [{ endpoint: '/api' }, { endpoint: '/api' }]
+      );
+      const historyQuery = (config.historyQueries as Array<JsonObject>)[0].settings as JsonObject;
+      assert.deepStrictEqual(
+        (historyQuery.northTransformers as Array<JsonObject>).map(candidate => [candidate.transformerId, candidate.items]),
+        [['records', [{ id: 'h1', name: 'h1', enabled: true }]]]
+      );
+    });
+
+    it('adds the record-list-to-file transformer when the configuration does not describe it', () => {
+      const config = buildConfig();
+      config.transformers = (config.transformers as Array<JsonObject>).slice(0, 1);
+
+      upgrade.apply(config);
+
+      const recordListToFile = (config.transformers as Array<JsonObject>).find(
+        transformer => (transformer.settings as JsonObject).functionName === 'record-list-to-file'
+      )!;
+      assert.strictEqual((recordListToFile.manifest as JsonObject).key, 'options');
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
+  describe('File Writer North', () => {
+    const buildConfig = (): JsonObject => ({
+      transformers: [
+        {
+          oIBusInternalId: 'records',
+          type: 'standard',
+          settings: { functionName: 'file-to-record-list', inputType: 'file', outputType: 'record-list' }
+        },
+        { oIBusInternalId: 'custom', type: 'custom', settings: { name: 'custom', inputType: 'file', outputType: 'setpoint' } }
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'writer',
+          type: 'file-writer',
+          settings: {
+            transformers: [
+              {
+                id: 'l1',
+                transformerId: 'records',
+                options: { input: { fileType: 'json', rowIteratorPath: '$[*]' } },
+                source: { type: 'oibus-api' }
+              },
+              { id: 'l2', transformerId: 'custom', options: {}, source: { type: 'oibus-api' } }
+            ]
+          }
+        },
+        { oIBusInternalId: 'console', type: 'console', settings: { transformers: [{ id: 'l3', transformerId: 'records', options: {} }] } }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'folder-scanner',
+            northType: 'file-writer',
+            items: [],
+            northTransformers: [{ id: 'h1', transformerId: 'custom', options: {} }]
+          }
+        }
+      ]
+    });
+
+    it('only sends files to the File Writers', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const fileToFile = (config.transformers as Array<JsonObject>).find(
+        transformer => (transformer.settings as JsonObject).functionName === 'file-to-file'
+      )!;
+      assert.strictEqual((fileToFile.manifest as JsonObject).key, 'options');
+      const [writer, consoleNorth] = config.northConnectors as Array<JsonObject>;
+      assert.deepStrictEqual((writer.settings as JsonObject).transformers, [
+        {
+          id: 'l1',
+          transformerId: fileToFile.oIBusInternalId,
+          options: {
+            input: { fileType: 'json', rowIteratorPath: '$[*]' },
+            output: { fileType: 'json', encoding: 'UTF_8', compression: false },
+            filename: '@CurrentDate.json',
+            keepOtherFields: true,
+            fields: []
+          },
+          source: { type: 'oibus-api' }
+        }
+      ]);
+      assert.deepStrictEqual((consoleNorth.settings as JsonObject).transformers, [{ id: 'l3', transformerId: 'records', options: {} }]);
+      assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers, []);
     });
 
     it('is safe to run twice', () => {

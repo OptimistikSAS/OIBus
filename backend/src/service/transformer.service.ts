@@ -95,7 +95,7 @@ const buildContentFromInput = (inputType: string, inputData: string): OIBusConte
     case 'record-list':
       return { type: 'record-list', content: JSON.parse(inputData) };
     default:
-      return { type: 'file-content', content: inputData };
+      return { type: 'file', content: inputData };
   }
 };
 
@@ -108,13 +108,13 @@ export const toTransformedContent = (output: string, contentType: string | undef
     try {
       return { type: 'record-list', content: JSON.parse(output) };
     } catch {
-      return { type: 'file-content', content: output };
+      return { type: 'file', content: output };
     }
   }
   if (contentType === 'file') {
     return { type: 'file', filePath: contentFile || 'output', content: output };
   }
-  return { type: 'file-content', content: output };
+  return { type: 'file', content: output };
 };
 
 export default class TransformerService {
@@ -465,7 +465,7 @@ export const createTransformer = (
 
 /**
  * Run a transformer instance over an OIBusContent payload and return the produced output(s).
- * In-memory payloads (record-list / setpoint / file-content) go through `transformInMemory`;
+ * In-memory payloads (record-list / setpoint / files held in memory) go through `transformInMemory`;
  * true file-on-disk payloads (`any`) stay on the stream API to avoid slurping the file.
  * When `maxElements > 0`, record batches larger than that are split into several outputs.
  */
@@ -491,23 +491,18 @@ export const runTransformerOnContent = async (
     case 'setpoint':
       results.push(await transformer.transformInMemory(data.content, source, null));
       break;
-    case 'file-content':
-      // file-content is already a serialised string; pass it through as-is.
-      results.push(await transformer.transformInMemory(data.content, source, null));
-      break;
     case 'file': {
       const randomId = generateRandomId(10);
       // Use the logical filename when provided, otherwise fall back to the basename of the disk path.
-      const logicalName = data.filename ?? path.basename(data.filePath);
-      const { name, ext } = path.parse(logicalName);
-      const cacheFilename = `${name}-${randomId}${ext}`;
+      const logicalName = data.filename ?? (data.filePath ? path.basename(data.filePath) : null);
+      const cacheFilename = logicalName ? `${path.parse(logicalName).name}-${randomId}${path.parse(logicalName).ext}` : null;
       if (data.content !== undefined) {
-        // No file on disk to stream from (e.g. south item / north transformer test runs, which produce
-        // content in memory without writing it to filePath) — use the in-memory content instead.
+        // A file held in memory (MQTT messages, OIBus API payloads, south item / north transformer test runs):
+        // no file on disk to stream from.
         results.push(await transformer.transformInMemory(data.content, source, cacheFilename));
       } else {
         // True file-on-disk path stays on the stream API.
-        results.push(await transformer.transform(createReadStream(data.filePath), source, cacheFilename));
+        results.push(await transformer.transform(createReadStream(data.filePath!), source, cacheFilename));
       }
       break;
     }

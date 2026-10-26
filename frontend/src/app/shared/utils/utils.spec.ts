@@ -28,7 +28,7 @@ describe('utils', () => {
       expect(getAssociatedInputType('influxdb')).toBe('record-list');
       expect(getAssociatedInputType('folder-scanner')).toBe('file');
       // OIAnalytics values are serialized into CSV files
-      expect(getAssociatedInputType('oianalytics')).toBe('file');
+      expect(getAssociatedInputType('oianalytics')).toBe('record-list');
     });
   });
 

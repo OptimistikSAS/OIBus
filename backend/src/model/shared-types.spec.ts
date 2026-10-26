@@ -13,8 +13,7 @@ import {
   DATE_TIME_TYPES,
   DEFAULT_TZ,
   LANGUAGES,
-  RESAMPLING,
-  SERIALIZATION_TYPES
+  RESAMPLING
 } from '../../shared/model/common/types';
 
 describe('createPageFromArray', () => {
@@ -94,9 +93,5 @@ describe('shared model type constants', () => {
   it('ALL_CSV_CHARACTERS contains the expected values', () => {
     assert.ok(ALL_CSV_CHARACTERS.includes('COMMA'));
     assert.equal(ALL_CSV_CHARACTERS.length, 8);
-  });
-
-  it('SERIALIZATION_TYPES contains csv', () => {
-    assert.deepEqual(SERIALIZATION_TYPES, ['csv']);
   });
 });
