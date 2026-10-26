@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { ItemLightDTO, SouthConnectorItemDTO } from '@oibus/shared/api/south-connector.model';
-import { StandardTransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { SourceOriginSouthDTO, StandardTransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup } from '../../../../test/builders';
@@ -85,11 +85,13 @@ class EditNorthTransformerModalComponentTester {
   readonly apiDataSource = this.root.getByLabelText('API data source');
   readonly output = this.root.getByLabelText('Output', { exact: true });
   readonly topic = this.root.getByRole('textbox', { name: /Point ID/ });
-  readonly modeNew = this.root.getByLabelText('New', { exact: true });
-  readonly modeFromNorth = this.root.getByLabelText('From a North connector');
-  readonly allItems = this.root.getByLabelText('All items');
-  readonly byGroup = this.root.getByLabelText('By group');
-  readonly specificItems = this.root.getByLabelText('Specific items');
+  readonly modeNew = this.root.getByRole('button', { name: 'New', exact: true });
+  readonly modeFromNorth = this.root.getByRole('button', { name: 'From a North connector' });
+  readonly allItems = this.root.getByRole('button', { name: 'All items' });
+  readonly byGroup = this.root.getByRole('button', { name: 'By group' });
+  readonly specificItems = this.root.getByRole('button', { name: 'Specific items' });
+  readonly sourceLine = this.root.getByCss('#transformer-source');
+  readonly impact = this.root.getByCss('#transformer-impact');
   readonly group = this.root.getByCss('#group');
   readonly itemSearch = this.root.getByLabelText('Search items...');
   readonly pills = this.root.getByCss('oib-pill');
@@ -134,7 +136,9 @@ describe('EditNorthTransformerModalComponent', () => {
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     southConnectorService = createMock(SouthConnectorService);
-    southConnectorService.getGroups.mockReturnValue(of([buildSouthItemGroup('groupId1', 'Group 1')]));
+    southConnectorService.findById.mockImplementation(southId =>
+      of({ ...testData.south.list.find(south => south.id === southId)!, groups: [buildSouthItemGroup('groupId1', 'Group 1')] })
+    );
     southConnectorService.searchItems.mockReturnValue(of(toPage(items)));
 
     // Services used by the "copy from existing" picker (rendered once the user leaves the 'new' creation mode).
@@ -148,7 +152,6 @@ describe('EditNorthTransformerModalComponent', () => {
     const transformerService = createMock(TransformerService);
     transformerService.getInputTemplate.mockReturnValue(of({ type: 'record-list', data: '[]', description: '' }));
     southConnectorService.getSouthManifest.mockReturnValue(of(testData.south.manifest));
-    southConnectorService.findById.mockReturnValue(of(testData.south.list[0]));
 
     const engineService = createMock(EngineService, { info$: of(testData.engine.oIBusInfo) });
     engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
@@ -279,11 +282,11 @@ describe('EditNorthTransformerModalComponent', () => {
     tester.prepareForCreation();
 
     await tester.source.selectOptions('South 1 (Folder scanner)');
-    await expect.element(tester.allItems).toBeChecked();
+    await expect.element(tester.allItems).toHaveAttribute('aria-pressed', 'true');
     await tester.output.selectOptions('MQTT payloads (from CSV)');
     await tester.saveButton.click();
 
-    expect(southConnectorService.getGroups).toHaveBeenCalledWith('southId1');
+    expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
     expect(activeModal.close).toHaveBeenCalledWith(
       expect.objectContaining({
         source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [], excludedItems: [] }
@@ -362,7 +365,7 @@ describe('EditNorthTransformerModalComponent', () => {
       source: { type: 'oibus-api', dataSourceId: 'dataSourceId' }
     });
 
-    await expect.element(tester.root.getByText('Source: OIBus API data source')).toBeInTheDocument();
+    await expect.element(tester.sourceLine).toHaveTextContent('OIBus API data source');
     await expect.element(tester.source).not.toBeInTheDocument();
     await expect.element(tester.topic).toHaveValue('my/topic');
     await tester.apiDataSource.fill('other-source');
@@ -386,8 +389,8 @@ describe('EditNorthTransformerModalComponent', () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForEdition(transformer);
 
-    await expect.element(tester.root.getByText('Source: South 1 (Folder scanner)')).toBeInTheDocument();
-    await expect.element(tester.specificItems).toBeChecked();
+    await expect.element(tester.sourceLine).toHaveTextContent('South 1Folder scanner');
+    await expect.element(tester.specificItems).toHaveAttribute('aria-pressed', 'true');
     await expect.element(tester.pills).toHaveLength(2);
     await tester.pills.nth(0).getByRole('button').click();
     await tester.saveButton.click();
@@ -411,8 +414,8 @@ describe('EditNorthTransformerModalComponent', () => {
       source: { type: 'south', south: testData.south.listLight[1], group: { id: 'groupId1', name: 'Group 1' }, items: [] }
     });
 
-    await expect.element(tester.root.getByText(/^Source: South 2 .* - paused$/)).toBeInTheDocument();
-    await expect.element(tester.byGroup).toBeChecked();
+    await expect.element(tester.sourceLine).toMatchTextContent(/South 2.*paused/);
+    await expect.element(tester.byGroup).toHaveAttribute('aria-pressed', 'true');
     await expect.element(tester.group).toHaveDisplayValue('Group 1');
 
     await tester.allItems.click();
@@ -448,9 +451,11 @@ describe('EditNorthTransformerModalComponent', () => {
       { dataSourceType: 'south', south: testData.south.listLight[0] }
     );
 
-    await expect.element(tester.source).toHaveDisplayValue(/South 1 \(Folder scanner\)/);
+    // the source is shown, not chosen
+    await expect.element(tester.sourceLine).toHaveTextContent('South 1Folder scanner');
+    await expect.element(tester.source).not.toBeInTheDocument();
     await expect.element(tester.output).toHaveDisplayValue(/MQTT payloads \(from CSV\)/);
-    await expect.element(tester.allItems).toBeChecked();
+    await expect.element(tester.allItems).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('should preselect the group or the items the transformer is created for', async () => {
@@ -466,7 +471,7 @@ describe('EditNorthTransformerModalComponent', () => {
       );
 
     prepare({ items: [toItemLight(items[1])] });
-    await expect.element(tester.specificItems).toBeChecked();
+    await expect.element(tester.specificItems).toHaveAttribute('aria-pressed', 'true');
     await expect.element(tester.pills).toHaveLength(1);
     await tester.saveButton.click();
     expect(activeModal.close).toHaveBeenCalledWith(
@@ -474,7 +479,7 @@ describe('EditNorthTransformerModalComponent', () => {
     );
 
     prepare({ group: { id: 'groupId1', name: 'Group 1' } });
-    await expect.element(tester.byGroup).toBeChecked();
+    await expect.element(tester.byGroup).toHaveAttribute('aria-pressed', 'true');
     await expect.element(tester.group).toHaveDisplayValue('Group 1');
   });
 
@@ -543,7 +548,7 @@ describe('EditNorthTransformerModalComponent', () => {
   test('should copy the transformer and its options from an existing attachment, and keep it when the source changes', async () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForCreation(['any']);
-    await expect.element(tester.modeNew).toBeChecked();
+    await expect.element(tester.modeNew).toHaveAttribute('aria-pressed', 'true');
 
     await tester.modeFromNorth.click();
     await tester.root.getByLabelText('Select a source').selectOptions('North 1');
@@ -587,5 +592,76 @@ describe('EditNorthTransformerModalComponent', () => {
     const result = tester.component.canDismiss();
     expect(isObservable(result) && (await firstValueFrom(result))).toBe(false);
     expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
+  });
+
+  describe('what the transformer would send', () => {
+    const south = testData.south.listLight[0];
+    const southLink = (id: string, source: Partial<SourceOriginSouthDTO>): TransformerDTOWithOptions => ({
+      id,
+      transformer: anyToMqtt,
+      options: {},
+      source: { type: 'south', south, items: [], ...source }
+    });
+    const prepare = (tester: EditNorthTransformerModalComponentTester, existing: Array<TransformerDTOWithOptions>) => {
+      tester.component.existingTransformers.set(existing);
+      tester.component.prepareForCreation(
+        testData.south.listLight,
+        testData.scanMode.list,
+        testData.certificates.list,
+        [recordListToMqtt, anyToMqtt, setpointToMqtt],
+        ['mqtt'],
+        { dataSourceType: 'south', south }
+      );
+    };
+
+    test('should tell the items it would send, currently dropped', async () => {
+      const tester = new EditNorthTransformerModalComponentTester();
+      prepare(tester, []);
+
+      await expect.element(tester.impact).toMatchTextContent('2 item(s) sent through this transformer');
+      await expect.element(tester.impact).toMatchTextContent('2 currently dropped');
+    });
+
+    test('should tell the items keeping a transformer applying first', async () => {
+      const tester = new EditNorthTransformerModalComponentTester();
+      prepare(tester, [southLink('itemLevel', { items: [toItemLight(items[0])] })]);
+
+      await expect.element(tester.impact).toMatchTextContent('1 item(s) sent through this transformer');
+      await expect.element(tester.impact).toMatchTextContent('1 of the selected items keep a transformer applying first');
+    });
+
+    test('should tell the items it would take over from another transformer', async () => {
+      const tester = new EditNorthTransformerModalComponentTester();
+      prepare(tester, [southLink('southLevel', {})]);
+
+      await tester.specificItems.click();
+      // no item selected yet: nothing to tell
+      await expect.element(tester.impact).not.toBeInTheDocument();
+      await tester.itemSearch.click();
+      await tester.dropdownItem('item1').click();
+
+      await expect.element(tester.impact).toMatchTextContent('1 item(s) sent through this transformer');
+      await expect.element(tester.impact).toMatchTextContent('1 currently sent through another transformer');
+    });
+
+    test('should warn when it would send nothing', async () => {
+      const tester = new EditNorthTransformerModalComponentTester();
+      prepare(tester, [southLink('southLevel', {}), southLink('southLevelAgain', {})]);
+
+      await expect.element(tester.impact).toMatchTextContent('No item would go through this transformer');
+    });
+
+    test('should not save a transformer for specific items without any', async () => {
+      const tester = new EditNorthTransformerModalComponentTester();
+      prepare(tester, []);
+      await tester.specificItems.click();
+
+      await tester.saveButton.click();
+
+      await expect.element(tester.root.getByText('Select at least one item')).toBeVisible();
+      expect(activeModal.close).not.toHaveBeenCalled();
+      await tester.allItems.click();
+      await expect.element(tester.root.getByText('Select at least one item')).not.toBeInTheDocument();
+    });
   });
 });

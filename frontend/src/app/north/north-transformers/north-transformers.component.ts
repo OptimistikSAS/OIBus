@@ -273,6 +273,7 @@ export class NorthTransformersComponent {
     });
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
     component.directSave.set(this.saveChangesDirectly());
+    component.existingTransformers.set(this.transformersWithOptions());
     component.prepareForCreation(
       this.southConnectors(),
       this.scanModes(),
@@ -307,6 +308,7 @@ export class NorthTransformersComponent {
     });
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
     component.directSave.set(this.saveChangesDirectly());
+    component.existingTransformers.set(this.transformersWithOptions());
     component.prepareForEdition(
       this.southConnectors(),
       this.scanModes(),

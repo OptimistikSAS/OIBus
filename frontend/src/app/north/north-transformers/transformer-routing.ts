@@ -1,4 +1,4 @@
-import { SourceOriginSouthDTO, TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { SourceOriginSouthDTO, TransformerDTO, TransformerDTOWithOptions, TransformerSourceDTO } from '@oibus/shared/api/transformer.model';
 import { InputType } from '@oibus/shared/connector/transformer-manifest.model';
 
 import { isTransformerApplicable } from '../../shared/utils/utils';
@@ -6,24 +6,31 @@ import { isTransformerApplicable } from '../../shared/utils/utils';
 /** The level of the transformer an item is routed to: its own, its group's or its south's */
 export type RoutingLevel = 'item' | 'group' | 'south';
 
-export interface ItemRouting {
-  transformer: TransformerDTOWithOptions;
+/** What routing needs of a transformer: where its data comes from (a transformer being configured has no options yet) */
+export interface RoutedTransformer {
+  id: string;
+  source: TransformerSourceDTO;
+}
+
+export interface ItemRouting<T extends RoutedTransformer = TransformerDTOWithOptions> {
+  transformer: T;
   level: RoutingLevel;
 }
 
 /** Whether the data of a south reaches the North: through a transformer for all its items, for some of them, or none */
 export type SouthCoverage = 'all' | 'some' | 'none';
 
-export type SouthTransformer = TransformerDTOWithOptions & { source: SourceOriginSouthDTO };
+export type SouthTransformer<T extends RoutedTransformer = TransformerDTOWithOptions> = T & { source: SourceOriginSouthDTO };
 
-export const southTransformers = (transformers: Array<TransformerDTOWithOptions>, southId: string): Array<SouthTransformer> =>
+export const southTransformers = <T extends RoutedTransformer>(transformers: Array<T>, southId: string): Array<SouthTransformer<T>> =>
   transformers.filter(
-    (transformer): transformer is SouthTransformer => transformer.source.type === 'south' && transformer.source.south.id === southId
+    (transformer): transformer is SouthTransformer<T> => transformer.source.type === 'south' && transformer.source.south.id === southId
   );
 
-export const isSouthLevel = (transformer: SouthTransformer) => !transformer.source.group && transformer.source.items.length === 0;
+export const isSouthLevel = (transformer: SouthTransformer<RoutedTransformer>) =>
+  !transformer.source.group && transformer.source.items.length === 0;
 
-const excludes = (transformer: SouthTransformer, itemId: string) =>
+const excludes = (transformer: SouthTransformer<RoutedTransformer>, itemId: string) =>
   (transformer.source.excludedItems ?? []).some(excludedItem => excludedItem.id === itemId);
 
 /**
@@ -31,11 +38,11 @@ const excludes = (transformer: SouthTransformer, itemId: string) =>
  * its group, then the first one of its south, the transformers leaving the item out being skipped. `null` when the data of
  * the item is dropped.
  */
-export function resolveItemRouting(
-  transformers: Array<TransformerDTOWithOptions>,
+export function resolveItemRouting<T extends RoutedTransformer>(
+  transformers: Array<T>,
   southId: string,
   item: { id: string; groupId: string | null }
-): ItemRouting | null {
+): ItemRouting<T> | null {
   const candidates = southTransformers(transformers, southId);
   const byItem = candidates.find(transformer => transformer.source.items.some(element => element.id === item.id));
   if (byItem) return { transformer: byItem, level: 'item' };

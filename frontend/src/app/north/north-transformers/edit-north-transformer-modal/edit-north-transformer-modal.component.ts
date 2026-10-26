@@ -1,15 +1,21 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, forwardRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { Observable } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from '@oibus/shared/api/south-connector.model';
+import {
+  ItemLightDTO,
+  SouthConnectorDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorLightDTO,
+  SouthItemGroupLightDTO
+} from '@oibus/shared/api/south-connector.model';
 import { SourceOriginSouthDTO, TransformerDTO, TransformerDTOWithOptions, TransformerSourceDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { InputType } from '@oibus/shared/connector/transformer-manifest.model';
@@ -27,7 +33,7 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { getAssociatedInputType, isTransformerApplicable } from '../../../shared/utils/utils';
-import { findDefaultTransformer } from '../transformer-routing';
+import { findDefaultTransformer, resolveItemRouting, RoutedTransformer } from '../transformer-routing';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
 
 /** The source (and, for a south, the scope) a transformer is created for */
@@ -38,6 +44,31 @@ export interface TransformerSourcePreset {
   items?: Array<ItemLightDTO>;
 }
 
+/** What a transformer being configured would send of the items of its south */
+export interface TransformerImpact {
+  /** The items it would send */
+  sent: number;
+  /** Among them, the ones currently dropped */
+  newlySent: number;
+  /** Among them, the ones currently sent through another transformer */
+  takenOver: number;
+  /** The items of its scope another transformer applying first still sends */
+  kept: number;
+}
+
+/** The id of the transformer being created, to tell how the items of its south would be routed */
+const NEW_TRANSFORMER_ID = '\0new';
+
+const toItemLight = (item: ItemLightDTO): ItemLightDTO => ({
+  id: item.id,
+  name: item.name,
+  enabled: item.enabled,
+  createdBy: item.createdBy,
+  updatedBy: item.updatedBy,
+  createdAt: item.createdAt,
+  updatedAt: item.updatedAt
+});
+
 interface TransformerSourceOption {
   dataSourceType: DataSourceType | null;
   south: SouthConnectorLightDTO | null;
@@ -46,7 +77,7 @@ interface TransformerSourceOption {
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
-  styleUrl: './edit-north-transformer-modal.component.scss',
+  styleUrls: ['./edit-north-transformer-modal.component.scss', '../routing-rows.scss'],
   imports: [
     ReactiveFormsModule,
     FormsModule,
@@ -64,6 +95,7 @@ interface TransformerSourceOption {
     ValErrorDelayDirective,
     ValidationErrorsComponent,
     NorthTransformerTestComponent,
+    NgbTooltip,
     SelectExistingTransformerComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -112,6 +144,8 @@ export class EditNorthTransformerModalComponent {
   readonly supportedOutputTypes = signal<Array<string>>([]);
   /** The type of the data of the selected source (`null` when none is selected). */
   readonly sourceDataType = signal<InputType | null>(null);
+  /** The south the transformer is configured for (`null` for the other sources) */
+  readonly selectedSouth = signal<SouthConnectorLightDTO | null>(null);
   readonly manifest = signal<OIBusObjectAttribute | null>(null);
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
@@ -129,6 +163,44 @@ export class EditNorthTransformerModalComponent {
   readonly searchInteracted = signal(false);
   readonly availableGroups = signal<Array<SouthItemGroupLightDTO>>([]);
   readonly selectedGroup = signal<SouthItemGroupLightDTO | null>(null);
+  /** Whether the source is set by the line it is configured from (or by the edited transformer): it is shown, not chosen */
+  readonly presetSource = signal(false);
+  /** The transformers of the North, to tell which items the configured one would send */
+  readonly existingTransformers = signal<Array<TransformerDTOWithOptions>>([]);
+  /** The selected south, with its groups and items */
+  readonly southConnector = signal<SouthConnectorDTO | null>(null);
+  /** Shown when specific items are chosen without any */
+  readonly itemsRequired = signal(false);
+
+  /** What the transformer would send of the items of its south, given the transformers of the North and their order */
+  readonly impact = computed<TransformerImpact | null>(() => {
+    const southConnector = this.southConnector();
+    const source = this.southSource();
+    if (!southConnector || !source || (this.selectionType() === 'items' && this.selectedItems().length === 0)) return null;
+    const id = this.existingTransformerWithOptions?.id ?? NEW_TRANSFORMER_ID;
+    const existing: Array<RoutedTransformer> = this.existingTransformers();
+    const candidate: RoutedTransformer = { id, source };
+    // An edited transformer keeps its place in the list, a new one comes last
+    const transformers = existing.some(transformer => transformer.id === id)
+      ? existing.map(transformer => (transformer.id === id ? candidate : transformer))
+      : [...existing, candidate];
+    const impact: TransformerImpact = { sent: 0, newlySent: 0, takenOver: 0, kept: 0 };
+    for (const item of southConnector.items) {
+      const itemRef = { id: item.id, groupId: item.group?.id ?? null };
+      if (resolveItemRouting(transformers, southConnector.id, itemRef)?.transformer.id === id) {
+        impact.sent++;
+        const before = resolveItemRouting(existing, southConnector.id, itemRef);
+        if (!before) {
+          impact.newlySent++;
+        } else if (before.transformer.id !== id) {
+          impact.takenOver++;
+        }
+      } else if (this.inScope(source, item)) {
+        impact.kept++;
+      }
+    }
+    return impact;
+  });
 
   filterItems() {
     const southId = this.form.controls.source.value.south?.id;
@@ -174,6 +246,7 @@ export class EditNorthTransformerModalComponent {
     this.supportedOutputTypes.set(supportedOutputTypes);
     this.buildForm();
     if (preset) {
+      this.presetSource.set(true);
       this.form.controls.source.setValue({ dataSourceType: preset.dataSourceType, south: preset.south ?? null });
       if (preset.group) {
         this.selectionType.set('group');
@@ -194,6 +267,7 @@ export class EditNorthTransformerModalComponent {
     transformerWithOptionsToEdit: TransformerDTOWithOptions
   ) {
     this.mode.set('edit');
+    this.presetSource.set(true);
     this.southConnectors.set(southConnectors);
     this.scanModes.set(scanModes);
     this.certificates.set(certificates);
@@ -204,9 +278,8 @@ export class EditNorthTransformerModalComponent {
     if (transformerWithOptionsToEdit.source.type === 'south') {
       this.filterItems();
       // Pre-load items and groups if editing with a south connector
-      this.southConnectorService.getGroups(transformerWithOptionsToEdit.source.south.id).subscribe(groups => {
-        this.availableGroups.set(groups.map(group => ({ id: group.id, name: group.standardSettings.name })));
-      });
+      this.selectedSouth.set(transformerWithOptionsToEdit.source.south);
+      this.loadSouth(transformerWithOptionsToEdit.source.south.id);
       this.selectedItems.set(transformerWithOptionsToEdit.source.items);
       const excludedItems = transformerWithOptionsToEdit.source.excludedItems ?? [];
       if (transformerWithOptionsToEdit.source.items.length === 0 && excludedItems.length > 0) {
@@ -262,11 +335,10 @@ export class EditNorthTransformerModalComponent {
       this.selectedItems.set([]);
       this.selectedGroup.set(null);
       this.availableGroups.set([]);
+      this.southConnector.set(null);
       if (source.south) {
         this.filterItems();
-        this.southConnectorService.getGroups(source.south.id).subscribe(groups => {
-          this.availableGroups.set(groups.map(group => ({ id: group.id, name: group.standardSettings.name })));
-        });
+        this.loadSouth(source.south.id);
       } else {
         this.filteredItems.set([]);
         this.searchResults.set([]);
@@ -316,7 +388,11 @@ export class EditNorthTransformerModalComponent {
   }
 
   save() {
-    if (!this.form.valid) {
+    if (this.form.value.source?.south || this.existingTransformerWithOptions?.source.type === 'south') {
+      // A transformer without item would apply to all the items of the south
+      this.itemsRequired.set(this.selectionType() === 'items' && this.selectedItems().length === 0);
+    }
+    if (!this.form.valid || this.itemsRequired()) {
       return;
     }
 
@@ -325,31 +401,7 @@ export class EditNorthTransformerModalComponent {
     ) as DataSourceType;
     let source: TransformerSourceDTO;
     if (sourceType === 'south') {
-      const selectedGroup = this.selectedGroup();
-      const toItemLight = (item: ItemLightDTO): ItemLightDTO => ({
-        id: item.id,
-        name: item.name,
-        enabled: item.enabled,
-        createdBy: item.createdBy,
-        updatedBy: item.updatedBy,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt
-      });
-      source = {
-        type: 'south',
-        south: this.existingTransformerWithOptions
-          ? (this.existingTransformerWithOptions.source as SourceOriginSouthDTO).south
-          : this.form.value.source!.south!,
-        group:
-          this.selectionType() === 'group' && selectedGroup
-            ? {
-                id: selectedGroup.id,
-                name: selectedGroup.name
-              }
-            : undefined,
-        items: this.selectionType() === 'items' ? this.selectedItems().map(toItemLight) : [],
-        excludedItems: this.selectionType() !== 'items' && this.excludeItems() ? this.selectedItems().map(toItemLight) : []
-      };
+      source = this.southSource()!;
     } else if (sourceType === 'oibus-api') {
       // Without data source, the transformer applies to every data source
       source = { type: 'oibus-api', dataSourceId: this.form.value.apiDataSourceId || undefined };
@@ -363,6 +415,20 @@ export class EditNorthTransformerModalComponent {
       transformer: this.form.value.transformer,
       options: this.form.value.options
     });
+  }
+
+  /** The south source of the transformer, as configured */
+  southSource(): SourceOriginSouthDTO | null {
+    const south = this.selectedSouth();
+    if (!south) return null;
+    const selectedGroup = this.selectedGroup();
+    return {
+      type: 'south',
+      south,
+      group: this.selectionType() === 'group' && selectedGroup ? { id: selectedGroup.id, name: selectedGroup.name } : undefined,
+      items: this.selectionType() === 'items' ? this.selectedItems().map(toItemLight) : [],
+      excludedItems: this.selectionType() !== 'items' && this.excludeItems() ? this.selectedItems().map(toItemLight) : []
+    };
   }
 
   compareSource(o1: TransformerSourceOption | null, o2: TransformerSourceOption | null): boolean {
@@ -385,11 +451,29 @@ export class EditNorthTransformerModalComponent {
     // Keep the embedded test panel's source in sync (only south sources can run an item).
     this.transformerTestSource.set(source.south ? { kind: 'south', id: source.south.id, southType: source.south.type } : { kind: 'none' });
 
+    this.selectedSouth.set(source.south);
     const dataType = this.getSourceDataType(source);
     this.sourceDataType.set(dataType);
     this.selectableOutputs.set(
       this.allTransformers.filter(element => isTransformerApplicable(element, dataType, this.supportedOutputTypes()))
     );
+  }
+
+  /** Loads the groups and items of the south, to choose the scope of the transformer and to tell which items it would send */
+  private loadSouth(southId: string) {
+    this.southConnectorService.findById(southId).subscribe(southConnector => {
+      // The source may have changed in the meantime
+      if (this.selectedSouth()?.id !== southId) return;
+      this.southConnector.set(southConnector);
+      this.availableGroups.set(southConnector.groups.map(group => ({ id: group.id, name: group.standardSettings.name })));
+    });
+  }
+
+  /** Whether an item is in the scope of a south source: listed, in its group, or not left out of all the items */
+  private inScope(source: SourceOriginSouthDTO, item: SouthConnectorItemDTO): boolean {
+    if (source.items.length > 0) return source.items.some(element => element.id === item.id);
+    if ((source.excludedItems ?? []).some(element => element.id === item.id)) return false;
+    return !source.group || item.group?.id === source.group.id;
   }
 
   /** The type of the data the source sends, `null` when no source is selected. */
@@ -407,6 +491,7 @@ export class EditNorthTransformerModalComponent {
   }
 
   toggleItem(item: ItemLightDTO) {
+    this.itemsRequired.set(false);
     if (this.isItemSelected(item)) {
       this.selectedItems.update(selectedItems => selectedItems.filter(i => i.id !== item.id));
       if (item.name.toLowerCase().includes(this.itemSearchText().toLowerCase())) {
@@ -428,6 +513,7 @@ export class EditNorthTransformerModalComponent {
 
   setSelectionType(type: 'all' | 'group' | 'items') {
     this.selectionType.set(type);
+    this.itemsRequired.set(false);
     this.excludeItems.set(false);
     if (type !== 'items') {
       this.selectedItems.set([]);
