@@ -48,7 +48,7 @@
     "Optimistik"
   ],
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1151.0",
+    "@aws-sdk/client-s3": "3.1154.0",
     "@azure/identity": "4.14.0",
     "@azure/storage-blob": "12.34.0",
     "@azure/storage-file-datalake": "12.31.0",
@@ -67,7 +67,7 @@
     "cors": "2.8.6",
     "cron": "4.4.0",
     "cron-parser": "5.10.2",
-    "cronstrue": "3.32.0",
+    "cronstrue": "3.37.0",
     "express": "5.3.0",
     "express-rate-limit": "8.7.1",
     "helmet": "8.3.0",
@@ -75,7 +75,7 @@
     "https-proxy-agent": "7.0.6",
     "influx": "5.12.0",
     "isolated-vm": "7.0.1",
-    "joi": "18.2.9",
+    "joi": "18.3.0",
     "jsmodbus": "5.0.0",
     "jsonpath-plus": "11.2.1",
     "jsonwebtoken": "9.0.3",
@@ -83,12 +83,12 @@
     "luxon": "3.7.2",
     "minimist": "1.2.8",
     "mongodb": "7.7.0",
-    "mqtt": "5.16.0",
-    "mssql": "12.7.6",
+    "mqtt": "5.16.1",
+    "mssql": "12.7.10",
     "multer": "2.4.0",
     "mysql2": "3.24.6",
     "node-forge": "1.4.0",
-    "node-opcua": "2.187.7",
+    "node-opcua": "2.187.10",
     "oracledb": "26.0.0",
     "papaparse": "5.7.0",
     "pg": "8.23.1",
@@ -102,7 +102,7 @@
     "ssh2-sftp-client": "12.1.1",
     "thread-stream": "4.2.0",
     "tsoa": "6.6.0",
-    "undici": "8.11.2",
+    "undici": "8.12.3",
     "yauzl": "3.4.0",
     "yazl": "3.3.1"
   },
@@ -138,7 +138,7 @@
     "tslib": "2.8.1",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.71.2"
+    "typescript-eslint": "8.72.0"
   },
   "pkg": {
     "scripts": [
