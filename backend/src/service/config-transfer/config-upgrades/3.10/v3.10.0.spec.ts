@@ -241,6 +241,98 @@ describe('3.10.0 config upgrade', () => {
     });
   });
 
+  describe('CSV and JSON transformers', () => {
+    const standard = (id: string, functionName: string, inputType: string, outputType: string): JsonObject => ({
+      oIBusInternalId: id,
+      type: 'standard',
+      settings: { functionName, inputType, outputType }
+    });
+    const buildConfig = (): JsonObject => ({
+      transformers: [
+        standard('mqtt', 'csv-to-mqtt', 'any', 'mqtt'),
+        standard('oia', 'json-to-oianalytics', 'any', 'oianalytics'),
+        standard('records', 'csv-to-record-list', 'any', 'record-list'),
+        standard('existing', 'file-to-record-list', 'file', 'record-list')
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'northId',
+          type: 'console',
+          settings: {
+            transformers: [
+              {
+                id: 'l1',
+                transformerId: 'mqtt',
+                options: { delimiter: 'COMMA', topicColumn: 't', payloadType: 'string', valueColumn: 'v' }
+              },
+              { id: 'l2', transformerId: 'records', options: null }
+            ]
+          }
+        }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'folder-scanner',
+            items: [],
+            northTransformers: [
+              { id: 'h1', transformerId: 'oia', options: { rowIteratorPath: '$[*]', pointId: 'id', value: 'v', timestamp: 't' } }
+            ]
+          }
+        }
+      ]
+    });
+
+    it('replaces them by the file transformers and converts the links', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const transformers = config.transformers as Array<JsonObject>;
+      assert.deepStrictEqual(
+        transformers.map(transformer => [transformer.oIBusInternalId, transformer.settings]),
+        [
+          ['mqtt', { functionName: 'file-to-mqtt', inputType: 'file', outputType: 'mqtt' }],
+          ['oia', { functionName: 'file-to-oianalytics', inputType: 'file', outputType: 'oianalytics' }],
+          ['existing', { functionName: 'file-to-record-list', inputType: 'file', outputType: 'record-list' }]
+        ]
+      );
+      assert.deepStrictEqual(
+        ((transformers[0].manifest as JsonObject).attributes as Array<JsonObject>).map(attribute => attribute.key)[0],
+        'input'
+      );
+      assert.deepStrictEqual(((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers, [
+        {
+          id: 'l1',
+          transformerId: 'mqtt',
+          options: {
+            input: { fileType: 'csv', delimiter: 'COMMA', hasHeader: true },
+            topicField: 't',
+            payloadType: 'string',
+            valueField: 'v'
+          }
+        },
+        { id: 'l2', transformerId: 'existing', options: { input: { fileType: 'csv', delimiter: 'SEMI_COLON', hasHeader: true } } }
+      ]);
+      assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers, [
+        {
+          id: 'h1',
+          transformerId: 'oia',
+          options: {
+            input: { fileType: 'json', rowIteratorPath: '$[*]' },
+            reference: { referenceField: 'id', referenceProcess: null },
+            timestamp: { timestampField: 't', sourceType: 'iso-string', precision: 'ms' },
+            value: { valueField: 'v', valueProcess: null }
+          }
+        }
+      ]);
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
   describe('time-values transformers', () => {
     const standard = (id: string, functionName: string, inputType: string, outputType: string): JsonObject => ({
       oIBusInternalId: id,

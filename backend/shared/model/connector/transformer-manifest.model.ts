@@ -13,7 +13,7 @@ export type OutputType = (typeof OUTPUT_TYPES)[number];
 export interface TransformerManifest {
   /**
    * The unique identifier of the transformer type.
-   * @example "csv-to-mqtt"
+   * @example "file-to-mqtt"
    */
   id: string;
 

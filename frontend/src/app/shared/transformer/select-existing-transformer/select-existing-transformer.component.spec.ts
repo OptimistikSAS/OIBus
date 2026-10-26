@@ -26,7 +26,7 @@ const standardTransformer = (id: string, functionName: string, outputType: Outpu
 });
 
 const compatibleTransformer = standardTransformer('transformer-file', 'file', 'file');
-const incompatibleTransformer = standardTransformer('transformer-csv-to-mqtt', 'csv-to-mqtt', 'mqtt');
+const incompatibleTransformer = standardTransformer('transformer-file-to-mqtt', 'file-to-mqtt', 'mqtt');
 const customTransformer: TransformerDTO = testData.transformers.customList[0];
 
 const northDetail: NorthConnectorDTO = {

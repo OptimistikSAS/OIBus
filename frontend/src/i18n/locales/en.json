@@ -1309,11 +1309,11 @@
           "confirm-edit": "Are you sure you want to update the custom transformer {{ name }}? All north connectors and history queries using it will be reloaded.",
           "deleted": "Transformer {{ name }} deleted",
           "standard": {
-            "csv-to-mqtt": "MQTT payloads (from CSV)",
-            "csv-to-record-list": "Records (from CSV)",
             "file": "File (as is)",
+            "file-to-mqtt": "MQTT payloads",
+            "file-to-oianalytics": "OIAnalytics payload",
+            "file-to-record-list": "Records",
             "json-to-csv": "CSV (from JSON)",
-            "json-to-oianalytics": "OIAnalytics (from JSON)",
             "record-list-to-csv": "CSV",
             "record-list-to-json": "JSON",
             "record-list-to-modbus": "Modbus values",
@@ -1443,7 +1443,13 @@
               "edit-title": "Edit Attribute"
             }
           },
-          "csv-to-mqtt": {
+          "file-input": {
+            "title": "File",
+            "file-type": {
+              "title": "File type",
+              "csv": "CSV",
+              "json": "JSON"
+            },
             "delimiter": {
               "title": "CSV delimiter",
               "DOT": "Dot .",
@@ -1456,7 +1462,10 @@
               "PIPE": "Pipe |"
             },
             "has-header": "Has Header",
-            "topic-column": "Topic Column",
+            "row-iterator-path": "Row iterator JSONPath"
+          },
+          "file-to-mqtt": {
+            "topic-field": "Topic field",
             "payload-type": {
               "title": "Payload Type",
               "string": "String",
@@ -1465,7 +1474,7 @@
               "datetime": "Datetime",
               "object": "Object"
             },
-            "value-column": "Value Column",
+            "value-field": "Value field",
             "datetime-settings": {
               "title": "Datetime Settings",
               "input-type": {
@@ -1492,7 +1501,7 @@
                 "title": "Field Configuration"
               },
               "key": "Key",
-              "column": "Column",
+              "field": "Field",
               "data-type": {
                 "title": "Data Type",
                 "string": "String",
@@ -1502,36 +1511,6 @@
                 "array": "Array",
                 "object": "Object"
               }
-            }
-          },
-          "csv-to-record-list": {
-            "delimiter": {
-              "title": "CSV delimiter",
-              "DOT": "Dot .",
-              "SEMI_COLON": "Semi colon ;",
-              "COLON": "Colon :",
-              "COMMA": "Comma ,",
-              "SLASH": "Slash /",
-              "TAB": "Tab",
-              "NON_BREAKING_SPACE": "Space",
-              "PIPE": "Pipe |"
-            },
-            "has-header": "Has Header",
-            "point-id-column": "Point ID Column",
-            "timestamp-column": "Timestamp Column",
-            "value-column": "Value Column",
-            "timestamp-settings": {
-              "title": "Timestamp Settings",
-              "type": {
-                "title": "Timestamp type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "timezone": "Timezone",
-              "format": "Format",
-              "locale": "Locale"
             }
           },
           "json-to-csv": {
@@ -1759,33 +1738,6 @@
               "title": "Mapping table",
               "point-id": "Point ID (Reference)",
               "topic": "MQTT Topic"
-            }
-          },
-          "json-to-oianalytics": {
-            "row-iterator-path": "Row Iterator JSONPath",
-            "point-id": "Point ID JSONPath",
-            "value": "Value JSONPath",
-            "timestamp": "Timestamp JSONPath",
-            "reference-process": "Reference process (JS expression, e.g. value.toUpperCase())",
-            "datetime-settings": {
-              "title": "Datetime Settings",
-              "input-type": {
-                "title": "Timestamp input type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "timezone": "Timezone",
-              "format": "Format",
-              "locale": "Locale",
-              "output-precision": {
-                "title": "Timestamp precision",
-                "ms": "Millisecond",
-                "s": "Second",
-                "min": "Minute",
-                "hr": "Hour"
-              }
             }
           },
           "record-list-to-oianalytics": {

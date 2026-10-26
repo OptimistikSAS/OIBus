@@ -35,7 +35,7 @@ describe('utils', () => {
   describe('isTransformerApplicable', () => {
     const file = standard('file', 'file', 'file');
     const recordListToMqtt = standard('record-list-to-mqtt', 'record-list', 'mqtt');
-    const csvToMqtt = standard('csv-to-mqtt', 'file', 'mqtt');
+    const fileToMqtt = standard('file-to-mqtt', 'file', 'mqtt');
 
     test('should offer the file transformer for files only', () => {
       expect(isTransformerApplicable(file, 'file', ['file'])).toBe(true);
@@ -46,14 +46,14 @@ describe('utils', () => {
     test('should offer a transformer matching the source data type and producing a type the north accepts', () => {
       expect(isTransformerApplicable(recordListToMqtt, 'record-list', ['mqtt'])).toBe(true);
       expect(isTransformerApplicable(recordListToMqtt, 'record-list', ['file'])).toBe(false);
-      expect(isTransformerApplicable(csvToMqtt, 'record-list', ['mqtt'])).toBe(false);
-      expect(isTransformerApplicable(csvToMqtt, 'file', ['mqtt'])).toBe(true);
+      expect(isTransformerApplicable(fileToMqtt, 'record-list', ['mqtt'])).toBe(false);
+      expect(isTransformerApplicable(fileToMqtt, 'file', ['mqtt'])).toBe(true);
     });
 
     test('should only check the output type when no source is selected', () => {
       expect(isTransformerApplicable(file, null, ['file'])).toBe(true);
-      expect(isTransformerApplicable(csvToMqtt, null, ['mqtt'])).toBe(true);
-      expect(isTransformerApplicable(csvToMqtt, null, ['file'])).toBe(false);
+      expect(isTransformerApplicable(fileToMqtt, null, ['mqtt'])).toBe(true);
+      expect(isTransformerApplicable(fileToMqtt, null, ['file'])).toBe(false);
     });
   });
 });

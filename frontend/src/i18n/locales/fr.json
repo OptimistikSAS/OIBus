@@ -321,11 +321,11 @@
           "confirm-edit": "Êtes-vous sûr de vouloir mettre à jour le transformateur personnalisé {{ name }} ? Tous les connecteurs North et requêtes d'historique qui l'utilisent seront rechargés.",
           "deleted": "Transformateur {{ name }} supprimé",
           "standard": {
-            "csv-to-mqtt": "Charges utiles MQTT (depuis CSV)",
-            "csv-to-record-list": "Enregistrements (depuis CSV)",
             "file": "Fichier (tel quel)",
+            "file-to-mqtt": "Charges utiles MQTT",
+            "file-to-oianalytics": "Charge utile OIAnalytics",
+            "file-to-record-list": "Enregistrements",
             "json-to-csv": "CSV (depuis JSON)",
-            "json-to-oianalytics": "OIAnalytics (depuis JSON)",
             "record-list-to-csv": "CSV",
             "record-list-to-json": "JSON",
             "record-list-to-modbus": "Valeurs Modbus",
@@ -455,7 +455,13 @@
               "edit-title": "Modifier un attribut"
             }
           },
-          "csv-to-mqtt": {
+          "file-input": {
+            "title": "Fichier",
+            "file-type": {
+              "title": "Type de fichier",
+              "csv": "CSV",
+              "json": "JSON"
+            },
             "delimiter": {
               "title": "Délimiteur CSV",
               "DOT": "Point .",
@@ -468,7 +474,10 @@
               "PIPE": "Barre verticale |"
             },
             "has-header": "Comporte un en-tête",
-            "topic-column": "Colonne du sujet",
+            "row-iterator-path": "JSONPath de l'itérateur de ligne"
+          },
+          "file-to-mqtt": {
+            "topic-field": "Champ du sujet",
             "payload-type": {
               "title": "Type de charge utile",
               "string": "Chaîne",
@@ -477,7 +486,7 @@
               "datetime": "Date/heure",
               "object": "Objet"
             },
-            "value-column": "Colonne de valeur",
+            "value-field": "Champ de valeur",
             "datetime-settings": {
               "title": "Paramètres de date/heure",
               "input-type": {
@@ -504,7 +513,7 @@
                 "title": "Configuration du champ"
               },
               "key": "Clé",
-              "column": "Colonne",
+              "field": "Champ",
               "data-type": {
                 "title": "Type de données",
                 "string": "Chaîne",
@@ -514,36 +523,6 @@
                 "array": "Tableau",
                 "object": "Objet"
               }
-            }
-          },
-          "csv-to-record-list": {
-            "delimiter": {
-              "title": "Délimiteur CSV",
-              "DOT": "Point .",
-              "SEMI_COLON": "Point-virgule ;",
-              "COLON": "Deux-points :",
-              "COMMA": "Virgule ,",
-              "SLASH": "Barre oblique /",
-              "TAB": "Tabulation",
-              "NON_BREAKING_SPACE": "Espace",
-              "PIPE": "Barre verticale |"
-            },
-            "has-header": "Comporte un en-tête",
-            "point-id-column": "Colonne ID du point",
-            "timestamp-column": "Colonne d'horodatage",
-            "value-column": "Colonne de valeur",
-            "timestamp-settings": {
-              "title": "Paramètres d'horodatage",
-              "type": {
-                "title": "Type d'horodatage",
-                "string": "Chaîne",
-                "iso-string": "Chaîne ISO",
-                "unix-epoch": "Époque Unix (s)",
-                "unix-epoch-ms": "Époque Unix (ms)"
-              },
-              "timezone": "Fuseau horaire",
-              "format": "Format",
-              "locale": "Paramètres régionaux"
             }
           },
           "json-to-csv": {
@@ -771,33 +750,6 @@
               "title": "Table de mappage",
               "point-id": "ID du point (Référence)",
               "topic": "Sujet MQTT"
-            }
-          },
-          "json-to-oianalytics": {
-            "row-iterator-path": "JSONPath de l'itérateur de ligne",
-            "point-id": "JSONPath de l'ID du point",
-            "value": "JSONPath de la valeur",
-            "timestamp": "JSONPath de l'horodatage",
-            "reference-process": "Traitement de la référence (expression JS, ex. value.toUpperCase())",
-            "datetime-settings": {
-              "title": "Paramètres de date/heure",
-              "input-type": {
-                "title": "Type d'entrée de l'horodatage",
-                "string": "Chaîne",
-                "iso-string": "Chaîne ISO",
-                "unix-epoch": "Époque Unix (s)",
-                "unix-epoch-ms": "Époque Unix (ms)"
-              },
-              "timezone": "Fuseau horaire",
-              "format": "Format",
-              "locale": "Paramètres régionaux",
-              "output-precision": {
-                "title": "Précision de l'horodatage",
-                "ms": "Milliseconde",
-                "s": "Seconde",
-                "min": "Minute",
-                "hr": "Heure"
-              }
             }
           },
           "record-list-to-oianalytics": {

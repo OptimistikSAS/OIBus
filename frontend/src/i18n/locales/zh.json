@@ -321,11 +321,11 @@
           "confirm-edit": "确定要更新自定义转换器 {{ name }} 吗？所有使用它的 North 连接器和历史查询将被重新加载。",
           "deleted": "转换器 {{ name }} 已删除",
           "standard": {
-            "csv-to-mqtt": "MQTT 有效载荷（来自 CSV）",
-            "csv-to-record-list": "记录（来自 CSV）",
             "file": "文件（原样）",
+            "file-to-mqtt": "MQTT 有效载荷",
+            "file-to-oianalytics": "OIAnalytics 有效载荷",
+            "file-to-record-list": "记录",
             "json-to-csv": "CSV（来自 JSON）",
-            "json-to-oianalytics": "OIAnalytics（来自 JSON）",
             "record-list-to-csv": "CSV",
             "record-list-to-json": "JSON",
             "record-list-to-modbus": "Modbus 值",
@@ -455,7 +455,13 @@
               "edit-title": "编辑属性"
             }
           },
-          "csv-to-mqtt": {
+          "file-input": {
+            "title": "文件",
+            "file-type": {
+              "title": "文件类型",
+              "csv": "CSV",
+              "json": "JSON"
+            },
             "delimiter": {
               "title": "CSV 分隔符",
               "DOT": "点 .",
@@ -468,7 +474,10 @@
               "PIPE": "竖线 |"
             },
             "has-header": "包含表头",
-            "topic-column": "主题列",
+            "row-iterator-path": "行迭代器 JSONPath"
+          },
+          "file-to-mqtt": {
+            "topic-field": "主题字段",
             "payload-type": {
               "title": "有效载荷类型",
               "string": "字符串",
@@ -477,7 +486,7 @@
               "datetime": "日期时间",
               "object": "对象"
             },
-            "value-column": "值列",
+            "value-field": "值字段",
             "datetime-settings": {
               "title": "日期时间设置",
               "input-type": {
@@ -504,7 +513,7 @@
                 "title": "字段配置"
               },
               "key": "键",
-              "column": "列",
+              "field": "字段",
               "data-type": {
                 "title": "数据类型",
                 "string": "字符串",
@@ -514,36 +523,6 @@
                 "array": "数组",
                 "object": "对象"
               }
-            }
-          },
-          "csv-to-record-list": {
-            "delimiter": {
-              "title": "CSV 分隔符",
-              "DOT": "点 .",
-              "SEMI_COLON": "分号 ;",
-              "COLON": "冒号 :",
-              "COMMA": "逗号 ,",
-              "SLASH": "斜杠 /",
-              "TAB": "制表符",
-              "NON_BREAKING_SPACE": "空格",
-              "PIPE": "竖线 |"
-            },
-            "has-header": "包含表头",
-            "point-id-column": "点位 ID 列",
-            "timestamp-column": "时间戳列",
-            "value-column": "值列",
-            "timestamp-settings": {
-              "title": "时间戳设置",
-              "type": {
-                "title": "时间戳类型",
-                "string": "字符串",
-                "iso-string": "ISO 字符串",
-                "unix-epoch": "Unix 纪元（秒）",
-                "unix-epoch-ms": "Unix 纪元（毫秒）"
-              },
-              "timezone": "时区",
-              "format": "格式",
-              "locale": "区域设置"
             }
           },
           "json-to-csv": {
@@ -771,33 +750,6 @@
               "title": "映射表",
               "point-id": "点位 ID（引用）",
               "topic": "MQTT 主题"
-            }
-          },
-          "json-to-oianalytics": {
-            "row-iterator-path": "行迭代器 JSONPath",
-            "point-id": "点位 ID JSONPath",
-            "value": "值 JSONPath",
-            "timestamp": "时间戳 JSONPath",
-            "reference-process": "引用处理（JS 表达式，例如 value.toUpperCase()）",
-            "datetime-settings": {
-              "title": "日期时间设置",
-              "input-type": {
-                "title": "时间戳输入类型",
-                "string": "字符串",
-                "iso-string": "ISO 字符串",
-                "unix-epoch": "Unix 纪元（秒）",
-                "unix-epoch-ms": "Unix 纪元（毫秒）"
-              },
-              "timezone": "时区",
-              "format": "格式",
-              "locale": "区域设置",
-              "output-precision": {
-                "title": "时间戳精度",
-                "ms": "毫秒",
-                "s": "秒",
-                "min": "分钟",
-                "hr": "小时"
-              }
             }
           },
           "record-list-to-oianalytics": {
