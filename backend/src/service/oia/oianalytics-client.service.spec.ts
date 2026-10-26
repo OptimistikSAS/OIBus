@@ -288,7 +288,7 @@ describe('OIAnalytics Client', () => {
 
   describe('downloadFile', () => {
     it('should stream the download directly to disk without buffering in memory', async () => {
-      const mockBuffer = Buffer.from('file-content');
+      const mockBuffer = Buffer.from('file');
       // .buffer is the shared pool — slice to an isolated ArrayBuffer so only the
       // actual data is streamed, not the full 64 KB pool.
       const isolatedArrayBuffer = mockBuffer.buffer.slice(

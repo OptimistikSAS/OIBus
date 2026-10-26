@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusFileContent, OIBusInMemoryFileContent, OIBusRecord } from '../../shared/model/common/content.model';
+import { OIBusContent, OIBusFileContent, OIBusRecord } from '../../shared/model/common/content.model';
 import { Instant } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import {
@@ -510,7 +510,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
 
     if (
-      (data.type === 'file' || data.type === 'file-content') &&
+      data.type === 'file' &&
       transformerConfig.transformer.type === 'standard' &&
       transformerConfig.transformer.functionName === FileTransformer.transformerName
     ) {
@@ -528,7 +528,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *
    * Only south-sourced `record-list` batches can both (a) carry several items routed to different
    * transformers and (b) be split safely (each point record references its item via `pointId === item.name`).
-   * Every other case — non-south sources, opaque `file-content`/file payloads, or a batch whose items
+   * Every other case — non-south sources, files, or a batch whose items
    * all resolve to the same transformer (e.g. a south-level-only transformer) — is returned as a
    * single group, preserving the previous behaviour with no extra work.
    */
@@ -648,7 +648,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {
     const transformer = createTransformer(config, this.connector, this.logger);
 
-    // In-memory payloads (record-list / setpoint / file-content) go through
+    // In-memory payloads (record-list / setpoint / file content) go through
     // `transformInMemory`, which lets specialised transformers (e.g. the
     // OIAnalytics one) bypass the JSON.stringify → stream → collect-chunks →
     // JSON.parse round-trip. The base-class default still streamifies for
@@ -665,19 +665,19 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /** Cache a file or a payload as is, through the standard 'file' transformer. */
-  private async cacheWithoutTransform(data: OIBusFileContent | OIBusInMemoryFileContent) {
-    if (data.type === 'file') {
-      await this.cacheService.addCacheContent(createReadStream(data.filePath), {
+  private async cacheWithoutTransform(data: OIBusFileContent) {
+    if (data.content !== undefined) {
+      // A file held in memory (JSON from MQTT or the OIBus API): cached as a JSON file
+      await this.cacheService.addCacheContent(
+        Readable.from(data.content),
+        data.filename ? { contentType: 'file', contentFilename: data.filename } : { contentType: 'file' }
+      );
+    } else {
+      await this.cacheService.addCacheContent(createReadStream(data.filePath!), {
         contentType: data.type,
         // Use the logical filename when provided (preserves relative sub-paths like "subdir/file.json").
         // Fall back to the basename so that absolute paths are never leaked into cache metadata.
-        contentFilename: data.filename ?? path.basename(data.filePath)
-      });
-    } else {
-      // The serialised payload (JSON from MQTT or the OIBus API) is cached as a JSON file: no North accepts
-      // `file-content` itself
-      await this.cacheService.addCacheContent(Readable.from(data.content), {
-        contentType: 'file'
+        contentFilename: data.filename ?? path.basename(data.filePath!)
       });
     }
   }

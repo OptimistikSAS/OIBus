@@ -6,7 +6,7 @@ import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'no
 
 import { DateTime } from 'luxon';
 
-import type { OIBusContent, OIBusFileContent, OIBusInMemoryFileContent } from '../../shared/model/common/content.model';
+import type { OIBusContent, OIBusFileContent } from '../../shared/model/common/content.model';
 import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { CacheContentUpdateCommand, CacheMetadata } from '../../shared/model/domain/engine.model';
 
@@ -89,7 +89,7 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 3,
       createdAt: testData.constants.dates.DATE_1,
-      contentType: 'record-list'
+      contentType: 'file'
     }
   };
 
@@ -688,12 +688,12 @@ describe('NorthConnector', () => {
     north['findTransformer'] = mock.fn(
       (_metadataSource: CacheMetadataSource) => ({ transformer: { type: 'standard', functionName: 'file' } }) as NorthTransformerWithOptions
     );
-    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusFileContent | OIBusInMemoryFileContent) => undefined);
+    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusFileContent | OIBusFileContent) => undefined);
     north['cacheWithoutTransform'] = cacheWithoutTransformMock;
     const executeTransformationMock = mock.fn(async () => undefined);
     north['executeTransformation'] = executeTransformationMock;
 
-    await north.cacheContent({ type: 'file-content', content: '{}' }, { source: 'test' });
+    await north.cacheContent({ type: 'file', content: '{}' }, { source: 'test' });
     await north.cacheContent({ type: 'file', filePath: 'file.csv' }, { source: 'test' });
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
@@ -704,7 +704,7 @@ describe('NorthConnector', () => {
 
   it('should cache file content', async () => {
     const metadata: CacheMetadata = {
-      contentFile: `${path.parse((testData.oibusContent[1] as OIBusFileContent).filePath).name}-1234567890.csv`,
+      contentFile: `${path.parse((testData.oibusContent[1] as OIBusFileContent).filePath!).name}-1234567890.csv`,
       contentSize: 100,
       numberOfElement: 0,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
@@ -868,7 +868,7 @@ describe('NorthConnector', () => {
     assert.strictEqual(result, undefined);
   });
 
-  it('should transform file-content payload', async () => {
+  it('should transform a file held in memory', async () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
@@ -878,7 +878,7 @@ describe('NorthConnector', () => {
       output: outputBuffer,
       metadata: { contentFile: '', contentType: 'opcua', numberOfElement: 1, contentSize: 0, createdAt: '' }
     }));
-    await north['executeTransformation']({ type: 'file-content', content: '' } as OIBusContent, options, {
+    await north['executeTransformation']({ type: 'file', content: '' } as OIBusContent, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);
     assert.strictEqual(transformInMemory.mock.calls.length, 1);
@@ -918,8 +918,8 @@ describe('NorthConnector', () => {
     });
   });
 
-  it('should cache without transform with file-content as a file', async () => {
-    await north['cacheWithoutTransform']({ type: 'file-content', content: '' });
+  it('should cache without transform a file held in memory', async () => {
+    await north['cacheWithoutTransform']({ type: 'file', content: '' });
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], { contentType: 'file' });
   });

@@ -35,7 +35,7 @@ describe('ContentController', () => {
     mock.restoreAll();
   });
 
-  it('should wrap JSON body as file-content and add it to each north connector', async () => {
+  it('should wrap the JSON body as a file held in memory and add it to each north connector', async () => {
     const northId = 'northId1,northId2';
     const dataSourceId = 'dataSourceId';
     const body = { type: 'record-list', content: [] };
@@ -43,7 +43,7 @@ describe('ContentController', () => {
 
     await controller.addContent(northId, dataSourceId, body, mockRequest as CustomExpressRequest);
 
-    const expectedContent = { type: 'file-content', content: JSON.stringify(body) };
+    const expectedContent = { type: 'file', content: JSON.stringify(body) };
     assert.strictEqual(oIBusService.addExternalContent.mock.calls.length, 2);
     assert.deepStrictEqual(oIBusService.addExternalContent.mock.calls[0].arguments, ['northId1', dataSourceId, expectedContent]);
     assert.deepStrictEqual(oIBusService.addExternalContent.mock.calls[1].arguments, ['northId2', dataSourceId, expectedContent]);

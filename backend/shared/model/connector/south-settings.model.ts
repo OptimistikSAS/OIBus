@@ -130,22 +130,6 @@ export const SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['
 export type SouthOIAnalyticsSettingsSpecificSettingsAuthentication =
   (typeof SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
 
-export const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthOIAnalyticsItemSettingsSerializationType = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type SouthOIAnalyticsItemSettingsSerializationDelimiter =
-  (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
-
 export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'iso-string',
   'unix-epoch',
@@ -682,15 +666,6 @@ export interface SouthOIAnalyticsItemSettingsQueryParams {
   value: string;
 }
 
-export interface SouthOIAnalyticsItemSettingsSerialization {
-  type: SouthOIAnalyticsItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthOIAnalyticsItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
-}
-
 export interface SouthOLEDBItemSettingsTrackingInstantDateTimeInput {
   type: SouthOLEDBItemSettingsTrackingInstantDateTimeInputType;
   timezone?: Timezone;
@@ -875,7 +850,6 @@ export interface SouthODBCItemSettings {
 export interface SouthOIAnalyticsItemSettings {
   endpoint: string;
   queryParams: Array<SouthOIAnalyticsItemSettingsQueryParams>;
-  serialization: SouthOIAnalyticsItemSettingsSerialization;
 }
 
 export interface SouthOLEDBItemSettings {

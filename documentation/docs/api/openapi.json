@@ -1497,7 +1497,7 @@
 				"additionalProperties": false
 			},
 			"OIBusFileContent": {
-				"description": "Raw content.",
+				"description": "A file: written on disk (its path), or held in memory (its content, e.g. the JSON messages of the MQTT South or the\nJSON pushed to the OIBus API).",
 				"properties": {
 					"type": {
 						"type": "string",
@@ -1510,7 +1510,7 @@
 					},
 					"filePath": {
 						"type": "string",
-						"description": "The path to the file containing the content.",
+						"description": "The path of the file on disk, when its content is not held in memory.",
 						"example": "/path/to/file.json"
 					},
 					"filename": {
@@ -1519,35 +1519,11 @@
 					},
 					"content": {
 						"type": "string",
-						"description": "The content itself, if available."
+						"description": "The content itself, when held in memory: it is then used instead of the file on disk."
 					}
 				},
 				"required": [
-					"type",
-					"filePath"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusInMemoryFileContent": {
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"file-content"
-						],
-						"nullable": false,
-						"description": "The type of content.",
-						"example": "file-content"
-					},
-					"content": {
-						"type": "string",
-						"description": "The content"
-					}
-				},
-				"required": [
-					"type",
-					"content"
+					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1665,9 +1641,6 @@
 				"anyOf": [
 					{
 						"$ref": "#/components/schemas/OIBusFileContent"
-					},
-					{
-						"$ref": "#/components/schemas/OIBusInMemoryFileContent"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusSetpointContent"
@@ -8504,58 +8477,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOIAnalyticsItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthOIAnalyticsItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthOIAnalyticsItemSettingsSerialization": {
-				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthOIAnalyticsItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthOIAnalyticsItemSettingsSerializationDelimiter"
-					},
-					"compression": {
-						"type": "boolean"
-					},
-					"outputTimestampFormat": {
-						"type": "string"
-					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
-					}
-				},
-				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthOIAnalyticsItemSettings": {
 				"properties": {
 					"endpoint": {
@@ -8566,15 +8487,11 @@
 							"$ref": "#/components/schemas/SouthOIAnalyticsItemSettingsQueryParams"
 						},
 						"type": "array"
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthOIAnalyticsItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"endpoint",
-					"queryParams",
-					"serialization"
+					"queryParams"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -51429,7 +51346,7 @@
 						"description": "No Content"
 					}
 				},
-				"description": "Adds any JSON content directly to the specified North connector(s) cache queue.\nThe body can be any valid JSON object or array. It is serialized and wrapped as\nan OIBus file-content payload, allowing external systems to push arbitrary data\ndirectly into OIBus for further processing by North connectors.",
+				"description": "Adds any JSON content directly to the specified North connector(s) cache queue.\nThe body can be any valid JSON object or array. It is serialized and wrapped as\na file held in memory, allowing external systems to push arbitrary data\ndirectly into OIBus for further processing by North connectors.",
 				"summary": "Inject any JSON content into North connector cache(s) queue",
 				"tags": [
 					"Content"

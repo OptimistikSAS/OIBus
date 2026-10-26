@@ -189,7 +189,7 @@ describe('ItemTestResultComponent', () => {
   test('should pretty-print raw content which is JSON', async () => {
     const tester = new ItemTestResultComponentTester();
 
-    tester.component.displayResult({ type: 'file-content', content: '{"a":1}' });
+    tester.component.displayResult({ type: 'file', content: '{"a":1}' });
 
     expect(tester.availableDisplayModes).toHaveBeenCalledWith(['raw']);
     await expect.poll(() => tester.editorContent()).toBe('{\n  "a": 1\n}');
@@ -206,7 +206,7 @@ describe('ItemTestResultComponent', () => {
   test('should display a caption when the raw content is empty', async () => {
     const tester = new ItemTestResultComponentTester();
 
-    tester.component.displayResult({ type: 'file-content', content: '' });
+    tester.component.displayResult({ type: 'file', content: '' });
 
     await expect.element(tester.noValues).toBeVisible();
     await expect.element(tester.editor).not.toBeInTheDocument();
@@ -216,7 +216,7 @@ describe('ItemTestResultComponent', () => {
     const tester = new ItemTestResultComponentTester();
     const content = 'x'.repeat(250_000);
 
-    tester.component.displayResult({ type: 'file-content', content });
+    tester.component.displayResult({ type: 'file', content });
 
     await expect.poll(() => tester.editorContent()).toHaveLength(250_000);
     await expect.element(tester.progressbar).not.toBeInTheDocument();
@@ -227,7 +227,7 @@ describe('ItemTestResultComponent', () => {
     tester.component.displayResult(pointRecords(1));
     await expect.element(tester.table).toBeVisible();
 
-    const transformed: OIBusContent = { type: 'file-content', content: '[]' };
+    const transformed: OIBusContent = { type: 'file', content: '[]' };
     tester.component.displayResult(transformed);
 
     // Transformed file-content result has no table mode -> must switch to 'raw', not stay stuck on 'table'.

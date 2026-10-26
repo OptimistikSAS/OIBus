@@ -167,103 +167,6 @@ export const TRANSFORMER_FILE_TO_RECORD_LIST_SETTINGS_INPUT_DELIMITERS = [
 ] as const;
 export type TransformerFileToRecordListSettingsInputDelimiter = (typeof TRANSFORMER_FILE_TO_RECORD_LIST_SETTINGS_INPUT_DELIMITERS)[number];
 
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerJsonToCsvSettingsFieldsDatetimeSettingsInputType =
-  (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerJsonToCsvSettingsFieldsDatetimeSettingsOutputType =
-  (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_FIELDS_DATA_TYPES = ['string', 'number', 'datetime', 'array', 'boolean', 'object'] as const;
-export type TransformerJsonToCsvSettingsFieldsDataType = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_FIELDS_DATA_TYPES)[number];
-
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
-export type TransformerJsonToCsvSettingsEncoding = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_ENCODINGS)[number];
-
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type TransformerJsonToCsvSettingsDelimiter = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_DELIMITERS)[number];
-
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
-export type TransformerJsonToCsvSettingsNewline = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_NEWLINES)[number];
-
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
-export type TransformerJsonToCsvSettingsQuoteChar = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_QUOTE_CHARS)[number];
-
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
-export type TransformerJsonToCsvSettingsEscapeChar = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
-
-export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerRecordListToCsvSettingsFieldsDatetimeSettingsInputType =
-  (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES)[number];
-
-export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES = [
-  'iso-string',
-  'unix-epoch',
-  'unix-epoch-ms',
-  'string'
-] as const;
-export type TransformerRecordListToCsvSettingsFieldsDatetimeSettingsOutputType =
-  (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES)[number];
-
-export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_FIELDS_DATA_TYPES = [
-  'string',
-  'number',
-  'datetime',
-  'array',
-  'boolean',
-  'object'
-] as const;
-export type TransformerRecordListToCsvSettingsFieldsDataType = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_FIELDS_DATA_TYPES)[number];
-
-export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
-export type TransformerRecordListToCsvSettingsEncoding = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ENCODINGS)[number];
-
-export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type TransformerRecordListToCsvSettingsDelimiter = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_DELIMITERS)[number];
-
-export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
-export type TransformerRecordListToCsvSettingsNewline = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_NEWLINES)[number];
-
-export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
-export type TransformerRecordListToCsvSettingsQuoteChar = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_QUOTE_CHARS)[number];
-
-export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
-export type TransformerRecordListToCsvSettingsEscapeChar = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
-
 export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_FILE_TYPES = ['csv', 'json'] as const;
 export type TransformerRecordListToFileSettingsOutputFileType = (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_FILE_TYPES)[number];
 
@@ -450,44 +353,6 @@ export interface TransformerFileToRecordListSettingsInput {
   rowIteratorPath?: string;
 }
 
-export interface TransformerJsonToCsvSettingsFieldsDatetimeSettings {
-  inputType: TransformerJsonToCsvSettingsFieldsDatetimeSettingsInputType;
-  inputTimezone?: Timezone;
-  inputFormat?: string;
-  inputLocale?: string;
-  outputType: TransformerJsonToCsvSettingsFieldsDatetimeSettingsOutputType;
-  outputTimezone?: Timezone;
-  outputFormat?: string;
-  outputLocale?: string;
-}
-
-export interface TransformerJsonToCsvSettingsFields {
-  columnName: string;
-  jsonPath: string;
-  dataType: TransformerJsonToCsvSettingsFieldsDataType;
-  fieldProcess?: string | null;
-  datetimeSettings?: TransformerJsonToCsvSettingsFieldsDatetimeSettings | null;
-}
-
-export interface TransformerRecordListToCsvSettingsFieldsDatetimeSettings {
-  inputType: TransformerRecordListToCsvSettingsFieldsDatetimeSettingsInputType;
-  inputTimezone?: Timezone;
-  inputFormat?: string;
-  inputLocale?: string;
-  outputType: TransformerRecordListToCsvSettingsFieldsDatetimeSettingsOutputType;
-  outputTimezone?: Timezone;
-  outputFormat?: string;
-  outputLocale?: string;
-}
-
-export interface TransformerRecordListToCsvSettingsFields {
-  fieldName: string;
-  columnName: string | null;
-  dataType: TransformerRecordListToCsvSettingsFieldsDataType;
-  fieldProcess: string | null;
-  datetimeSettings?: TransformerRecordListToCsvSettingsFieldsDatetimeSettings | null;
-}
-
 export interface TransformerRecordListToFileSettingsOutput {
   fileType: TransformerRecordListToFileSettingsOutputFileType;
   encoding: TransformerRecordListToFileSettingsOutputEncoding;
@@ -600,41 +465,12 @@ export interface TransformerFileToRecordListSettings {
   input: TransformerFileToRecordListSettingsInput;
 }
 
-export interface TransformerJsonToCsvSettings {
-  filename: string;
-  encoding: TransformerJsonToCsvSettingsEncoding;
-  header: boolean | null;
-  delimiter: TransformerJsonToCsvSettingsDelimiter;
-  newline: TransformerJsonToCsvSettingsNewline;
-  quoteChar: TransformerJsonToCsvSettingsQuoteChar;
-  escapeChar: TransformerJsonToCsvSettingsEscapeChar;
-  nullValue: string | null;
-  rowIteratorPath: string;
-  fields: Array<TransformerJsonToCsvSettingsFields>;
-}
-
-export interface TransformerRecordListToCsvSettings {
-  filename: string;
-  encoding: TransformerRecordListToCsvSettingsEncoding;
-  header: boolean | null;
-  compression: boolean;
-  delimiter: TransformerRecordListToCsvSettingsDelimiter;
-  newline: TransformerRecordListToCsvSettingsNewline;
-  quoteChar: TransformerRecordListToCsvSettingsQuoteChar;
-  escapeChar: TransformerRecordListToCsvSettingsEscapeChar;
-  nullValue: string | null;
-  keepOtherFields: boolean;
-  fields: Array<TransformerRecordListToCsvSettingsFields> | null;
-}
-
 export interface TransformerRecordListToFileSettings {
   output: TransformerRecordListToFileSettingsOutput;
   filename: string;
   keepOtherFields: boolean;
   fields: Array<TransformerRecordListToFileSettingsFields> | null;
 }
-
-export type TransformerRecordListToJsonSettings = object;
 
 export interface TransformerRecordListToModbusSettings {
   pointIdColumn: string;
@@ -679,10 +515,7 @@ export type TransformerSettings =
   | TransformerFileToMqttSettings
   | TransformerFileToOianalyticsSettings
   | TransformerFileToRecordListSettings
-  | TransformerJsonToCsvSettings
-  | TransformerRecordListToCsvSettings
   | TransformerRecordListToFileSettings
-  | TransformerRecordListToJsonSettings
   | TransformerRecordListToModbusSettings
   | TransformerRecordListToMqttSettings
   | TransformerRecordListToOianalyticsSettings

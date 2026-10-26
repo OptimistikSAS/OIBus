@@ -2315,28 +2315,6 @@
                 "query-param": "Query params",
                 "key": "Key",
                 "value": "Value"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
               }
             },
             "oledb": {

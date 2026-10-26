@@ -461,18 +461,9 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "type": {"dataType":"enum","enums":["file"],"required":true},
-            "filePath": {"dataType":"string","required":true},
+            "filePath": {"dataType":"string"},
             "filename": {"dataType":"string"},
             "content": {"dataType":"string"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusInMemoryFileContent": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"dataType":"enum","enums":["file-content"],"required":true},
-            "content": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -516,7 +507,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusContent": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusFileContent"},{"ref":"OIBusInMemoryFileContent"},{"ref":"OIBusSetpointContent"},{"ref":"OIBusRecordListContent"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusFileContent"},{"ref":"OIBusSetpointContent"},{"ref":"OIBusRecordListContent"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemTestResult": {
@@ -2101,35 +2092,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOIAnalyticsItemSettingsSerializationType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"enum","enums":["csv"],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOIAnalyticsItemSettingsSerializationDelimiter": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["DOT"]},{"dataType":"enum","enums":["SEMI_COLON"]},{"dataType":"enum","enums":["COLON"]},{"dataType":"enum","enums":["COMMA"]},{"dataType":"enum","enums":["NON_BREAKING_SPACE"]},{"dataType":"enum","enums":["SLASH"]},{"dataType":"enum","enums":["TAB"]},{"dataType":"enum","enums":["PIPE"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOIAnalyticsItemSettingsSerialization": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"ref":"SouthOIAnalyticsItemSettingsSerializationType","required":true},
-            "filename": {"dataType":"string","required":true},
-            "delimiter": {"ref":"SouthOIAnalyticsItemSettingsSerializationDelimiter","required":true},
-            "compression": {"dataType":"boolean","required":true},
-            "outputTimestampFormat": {"dataType":"string","required":true},
-            "outputTimezone": {"ref":"Timezone","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOIAnalyticsItemSettings": {
         "dataType": "refObject",
         "properties": {
             "endpoint": {"dataType":"string","required":true},
             "queryParams": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthOIAnalyticsItemSettingsQueryParams"},"required":true},
-            "serialization": {"ref":"SouthOIAnalyticsItemSettingsSerialization","required":true},
         },
         "additionalProperties": false,
     },

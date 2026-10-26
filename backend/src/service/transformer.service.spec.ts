@@ -475,9 +475,9 @@ describe('Transformer Service', () => {
       assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
     });
 
-    it('runs file-content payloads in memory', async () => {
+    it('runs the files held in memory in memory', async () => {
       const t = buildTransformer();
-      await run()(t, { type: 'file-content', content: 'raw' }, { source: 'test' });
+      await run()(t, { type: 'file', content: 'raw' }, { source: 'test' });
       assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
       assert.strictEqual(t.transformInMemory.mock.calls[0].arguments[0], 'raw');
     });
@@ -512,8 +512,8 @@ describe('Transformer Service', () => {
       assert.deepStrictEqual(toTransformedContent(JSON.stringify(tv), 'record-list', 'out.json'), { type: 'record-list', content: tv });
     });
 
-    it('falls back to file-content when time-values output is not valid JSON', () => {
-      assert.deepStrictEqual(toTransformedContent('not-json', 'record-list', 'out.json'), { type: 'file-content', content: 'not-json' });
+    it('falls back to a file held in memory when time-values output is not valid JSON', () => {
+      assert.deepStrictEqual(toTransformedContent('not-json', 'record-list', 'out.json'), { type: 'file', content: 'not-json' });
     });
 
     it('wraps "file" output as a file so a table can be rendered', () => {
@@ -526,9 +526,9 @@ describe('Transformer Service', () => {
       assert.deepStrictEqual(toTransformedContent('x', 'file', undefined), { type: 'file', filePath: 'output', content: 'x' });
     });
 
-    it('returns file-content for every other output type', () => {
-      assert.deepStrictEqual(toTransformedContent('payload', 'mqtt', 'f'), { type: 'file-content', content: 'payload' });
-      assert.deepStrictEqual(toTransformedContent('payload', undefined, undefined), { type: 'file-content', content: 'payload' });
+    it('returns a file held in memory for every other output type', () => {
+      assert.deepStrictEqual(toTransformedContent('payload', 'mqtt', 'f'), { type: 'file', content: 'payload' });
+      assert.deepStrictEqual(toTransformedContent('payload', undefined, undefined), { type: 'file', content: 'payload' });
     });
   });
 
@@ -536,32 +536,32 @@ describe('Transformer Service', () => {
     it('wraps time-values input and delegates to runTransformer with the resolved transformer', async () => {
       const tv = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', value: '1' }];
       transformerRepository.findById.mock.mockImplementation(() => ({ id: 't1', type: 'standard', inputType: 'record-list' }) as never);
-      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file-content', content: 'done' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file', content: 'done' }) as never);
 
       const result = await service.testTransformer('t1', { foo: 'bar' }, JSON.stringify(tv));
 
       assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t1', { foo: 'bar' }, { type: 'record-list', content: tv }]);
       assert.deepStrictEqual(result, {
         raw: { type: 'record-list', content: tv },
-        transformed: { type: 'file-content', content: 'done' },
+        transformed: { type: 'file', content: 'done' },
         connectionDuration: 0,
         queryDuration: 0
       });
     });
 
-    it('wraps non-structured input as file-content', async () => {
+    it('wraps non-structured input as a file held in memory', async () => {
       transformerRepository.findById.mock.mockImplementation(() => ({ id: 't2', type: 'standard', inputType: 'file' }) as never);
-      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file-content', content: '' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file', content: '' }) as never);
 
       await service.testTransformer('t2', {}, 'raw text');
 
-      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t2', {}, { type: 'file-content', content: 'raw text' }]);
+      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t2', {}, { type: 'file', content: 'raw text' }]);
     });
 
     it('wraps setpoint input as a parsed setpoint array', async () => {
       const setpoints = [{ reference: 'ref1', value: 1 }];
       transformerRepository.findById.mock.mockImplementation(() => ({ id: 't3', type: 'standard', inputType: 'setpoint' }) as never);
-      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file-content', content: '' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file', content: '' }) as never);
 
       await service.testTransformer('t3', {}, JSON.stringify(setpoints));
 
@@ -597,7 +597,7 @@ describe('Transformer Service', () => {
         () => ({ id: 'file', type: 'standard', inputType: 'file', outputType: 'file', functionName: 'file' }) as StandardTransformer
       );
 
-      const result = await service.runTransformer('file', {}, { type: 'file-content', content: '{"a":1}' });
+      const result = await service.runTransformer('file', {}, { type: 'file', content: '{"a":1}' });
 
       assert.strictEqual(result.type, 'file');
       assert.strictEqual(result.content, '{"a":1}');
@@ -626,7 +626,7 @@ describe('Transformer Service', () => {
       transformerRepository.findById.mock.mockImplementation(() => null);
 
       await assert.rejects(
-        async () => service.runTransformer('bad-id', {}, { type: 'file-content', content: 'x' }),
+        async () => service.runTransformer('bad-id', {}, { type: 'file', content: 'x' }),
         new NotFoundError('Transformer "bad-id" not found')
       );
     });

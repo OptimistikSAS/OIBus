@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import {
   SouthItemSettings,
@@ -15,14 +15,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { HTTPRequest } from '../../service/http-request.utils';
-import {
-  formatInstant,
-  formatQueryParams,
-  generateCsvContent,
-  generateFilenameForSerialization,
-  persistResults,
-  workUnitLogCtx
-} from '../../service/utils';
+import { formatQueryParams, workUnitLogCtx } from '../../service/utils';
 import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
@@ -73,14 +66,8 @@ export default class SouthOIAnalytics
     const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
     const queryDuration = DateTime.now().toMillis() - queryStart;
     const { formattedResult } = parseData(result);
-    // The values are sent as a CSV file: test with the same content
-    const filePath = generateFilenameForSerialization(this.tmpFolder, item.settings.serialization.filename, this.connector.name, item.name);
     return {
-      result: {
-        type: 'file',
-        filePath,
-        content: generateCsvContent(this.toRows(item, formattedResult), item.settings.serialization.delimiter)
-      },
+      result: { type: 'record-list', content: formattedResult },
       // No separate connection step in testItem() for this connector — the call above does
       // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
@@ -89,7 +76,8 @@ export default class SouthOIAnalytics
   }
 
   /**
-   * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
+   * Retrieve the values of an item from the OIAnalytics REST API, and send them to the Engine as point records with their
+   * unit.
    */
   async historyQuery(
     items: Array<SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>>,
@@ -105,38 +93,12 @@ export default class SouthOIAnalytics
 
     if (formattedResult.length > 0) {
       this.logger.info(logCtx, `Found ${formattedResult.length} results in ${requestDuration} ms`);
-      await persistResults(
-        this.toRows(item, formattedResult),
-        item.settings.serialization,
-        this.connector.name,
-        item,
-        startRequest.toUTC().toISO(),
-        this.tmpFolder,
-        this.addContent.bind(this),
-        this.logger
-      );
+      await this.addContent({ type: 'record-list', content: formattedResult }, startRequest.toUTC().toISO()!, [item]);
     } else {
       this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
     }
 
     return { trackedInstant: maxInstant, value: formattedResult.length > 0 ? formattedResult[formattedResult.length - 1] : null };
-  }
-
-  /**
-   * One CSV column per field, the timestamp following the output settings
-   */
-  private toRows(item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>, values: Array<OIBusPointRecord>) {
-    return values.map(({ pointId, timestamp, value, unit }) => ({
-      pointId,
-      timestamp: formatInstant(timestamp, {
-        type: 'string',
-        format: item.settings.serialization.outputTimestampFormat,
-        timezone: item.settings.serialization.outputTimezone,
-        locale: 'en-En'
-      }),
-      value,
-      unit
-    }));
   }
 
   async queryData(

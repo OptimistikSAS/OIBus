@@ -218,8 +218,8 @@ describe('TransformerController', () => {
   it('should test a transformer with input data by id', async () => {
     const testRequest: TransformerTestRequest = { inputData: '[]', options: { foo: 'bar' } };
     const testResult = {
-      raw: { type: 'file-content', content: '[]' },
-      transformed: { type: 'file-content', content: 'out' },
+      raw: { type: 'file', content: '[]' },
+      transformed: { type: 'file', content: 'out' },
       connectionDuration: 0,
       queryDuration: 0
     };

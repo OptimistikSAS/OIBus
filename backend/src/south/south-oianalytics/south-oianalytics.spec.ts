@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import path from 'node:path';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
@@ -56,15 +55,7 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
       enabled: true,
       settings: {
         endpoint: '/api/endpoint',
-        queryParams: [{ key: 'agg', value: 'RAW' }],
-        serialization: {
-          type: 'csv',
-          filename: 'sql-@CurrentDate.csv',
-          delimiter: 'COMMA',
-          compression: true,
-          outputTimestampFormat: 'yyyy-MM-dd',
-          outputTimezone: 'Europe/Paris'
-        }
+        queryParams: [{ key: 'agg', value: 'RAW' }]
       },
       scanMode: testData.scanMode.list[0],
       group: null,
@@ -95,6 +86,11 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
 describe('SouthOIAnalytics', () => {
   let SouthOIAnalytics: typeof SouthOIAnalyticsClass;
   let south: SouthOIAnalyticsClass;
+  let addContentCallback: ReturnType<
+    typeof mock.fn<
+      (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+    >
+  >;
 
   let logger: PinoLogger;
   let certificateRepository: Mocked<CertificateRepository>;
@@ -117,9 +113,7 @@ describe('SouthOIAnalytics', () => {
 
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
   const createUtilsMocks = () => ({
-    formatQueryParams: mock.fn((): Record<string, string> => ({ formatted: 'query' })),
-    persistResults: mock.fn(async () => undefined),
-    formatInstant: mock.fn((instant: unknown) => instant)
+    formatQueryParams: mock.fn((): Record<string, string> => ({ formatted: 'query' }))
   });
   const utilsExports = { ...realUtils, ...createUtilsMocks() };
 
@@ -145,12 +139,13 @@ describe('SouthOIAnalytics', () => {
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
+    addContentCallback = mock.fn(
+      async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
+        undefined
+    );
     south = new SouthOIAnalytics(
       baseConfiguration,
-      mock.fn(
-        async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-          undefined
-      ),
+      addContentCallback,
       createMock<SouthCacheRepository>(),
       'cacheFolder',
       certificateRepository,
@@ -218,7 +213,6 @@ describe('SouthOIAnalytics', () => {
         return createMockResponse(200, mockRawData);
       });
       utilsOianalyticsExports.parseData.mock.mockImplementation(() => ({ formattedResult: mockFormatted }));
-      utilsExports.formatInstant.mock.mockImplementation(() => '2023-02-01');
 
       const testingSettings = {
         history: { startTime: 'start', endTime: 'end' }
@@ -228,21 +222,19 @@ describe('SouthOIAnalytics', () => {
 
       assert.strictEqual(HTTPRequest.mock.calls.length, 1);
       assert.deepStrictEqual(utilsOianalyticsExports.parseData.mock.calls[0].arguments, [mockRawData]);
-      assert.ok(result.result.type === 'file');
-      assert.match(result.result.filePath, /sql-.*\.csv$/);
-      assert.strictEqual(result.result.content, 'pointId,timestamp,value,unit\r\np1,2023-02-01,12,°C');
+      // the point records with their unit, as sent to the Norths
+      assert.deepStrictEqual(result.result, { type: 'record-list', content: mockFormatted });
       assert.strictEqual(result.connectionDuration, 0);
       assert.strictEqual(result.queryDuration, 25);
     });
   });
 
   describe('historyQuery', () => {
-    it('should process items, persist results, and return max instant', async () => {
+    it('should send the point records of the items, and return max instant', async () => {
       const item = baseConfiguration.items[0];
       const mockRaw = [{ raw: 1 }];
       const mockFormatted = [{ pointId: 'p1', timestamp: '2023-02-01T12:00:00.000Z', value: 12, unit: '°C' }];
       const maxInstant = '2023-02-01T12:00:00.000Z';
-      utilsExports.formatInstant.mock.mockImplementation(() => '2023-02-01');
 
       HTTPRequest.mock.mockImplementation(async () => createMockResponse(200, mockRaw));
       utilsOianalyticsExports.parseData.mock.mockImplementation(() => ({ formattedResult: mockFormatted, maxInstant }));
@@ -251,19 +243,12 @@ describe('SouthOIAnalytics', () => {
 
       assert.strictEqual(HTTPRequest.mock.calls.length, 1);
       assert.deepStrictEqual(utilsOianalyticsExports.parseData.mock.calls[0].arguments, [mockRaw]);
-      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
-      const persistArgs = utilsExports.persistResults.mock.calls[0].arguments as Array<unknown>;
-      assert.deepStrictEqual(persistArgs[0], [{ pointId: 'p1', timestamp: '2023-02-01', value: 12, unit: '°C' }]);
-      assert.deepStrictEqual(utilsExports.formatInstant.mock.calls[0].arguments, [
-        '2023-02-01T12:00:00.000Z',
-        { type: 'string', format: 'yyyy-MM-dd', timezone: 'Europe/Paris', locale: 'en-En' }
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments.slice(0, 4), [
+        baseConfiguration.id,
+        { type: 'record-list', content: mockFormatted },
+        testData.constants.dates.FAKE_NOW,
+        [item]
       ]);
-      assert.deepStrictEqual(persistArgs[1], item.settings.serialization);
-      assert.strictEqual(persistArgs[2], baseConfiguration.name);
-      assert.deepStrictEqual(persistArgs[3], item);
-      assert.strictEqual(persistArgs[4], testData.constants.dates.FAKE_NOW);
-      assert.strictEqual(persistArgs[5], path.resolve('cacheFolder', 'tmp'));
-      assert.strictEqual(typeof persistArgs[6], 'function');
 
       assert.strictEqual(
         logger.info.mock.calls.some(c => c.arguments[1].includes(`Found ${mockFormatted.length} results`)),
@@ -280,7 +265,7 @@ describe('SouthOIAnalytics', () => {
 
       await south.historyQuery([item], 'start', 'end');
 
-      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
       assert.strictEqual(
         logger.debug.mock.calls.some(c => c.arguments[1].includes('No result found')),
         true

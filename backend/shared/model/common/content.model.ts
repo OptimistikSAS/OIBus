@@ -54,7 +54,8 @@ export interface OIBusSetpointContent extends BaseOIBusContent {
 }
 
 /**
- * Raw content.
+ * A file: written on disk (its path), or held in memory (its content, e.g. the JSON messages of the MQTT South or the
+ * JSON pushed to the OIBus API).
  */
 export interface OIBusFileContent extends BaseOIBusContent {
   /**
@@ -64,10 +65,10 @@ export interface OIBusFileContent extends BaseOIBusContent {
   type: 'file';
 
   /**
-   * The path to the file containing the content.
+   * The path of the file on disk, when its content is not held in memory.
    * @example "/path/to/file.json"
    */
-  filePath: string;
+  filePath?: string;
 
   /**
    * The logical filename to store in cache metadata (used as the output filename by north connectors).
@@ -79,22 +80,9 @@ export interface OIBusFileContent extends BaseOIBusContent {
   filename?: string;
 
   /**
-   * The content itself, if available.
+   * The content itself, when held in memory: it is then used instead of the file on disk.
    */
   content?: string;
-}
-
-export interface OIBusInMemoryFileContent extends BaseOIBusContent {
-  /**
-   * The type of content.
-   * @example "file-content"
-   */
-  type: 'file-content';
-
-  /**
-   * The content
-   */
-  content: string;
 }
 
 /**
@@ -153,4 +141,4 @@ export interface OIBusRecordListContent extends BaseOIBusContent {
 /**
  * Type representing OIBus content.
  */
-export type OIBusContent = OIBusFileContent | OIBusInMemoryFileContent | OIBusSetpointContent | OIBusRecordListContent;
+export type OIBusContent = OIBusFileContent | OIBusSetpointContent | OIBusRecordListContent;

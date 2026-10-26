@@ -176,7 +176,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
           entry.payloads.push(payload);
         }
         for (const { item, payloads } of cachedPayloadsByItem.values()) {
-          await this.addContent({ type: 'file-content', content: JSON.stringify(payloads) }, DateTime.now().toUTC().toISO(), [item]);
+          await this.addContent({ type: 'file', content: JSON.stringify(payloads) }, DateTime.now().toUTC().toISO(), [item]);
         }
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${getErrorMessage(error)}`);
@@ -266,7 +266,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
                 await client!.unsubscribeAsync(item.settings.topic);
                 resolve({
                   result: {
-                    type: 'file-content',
+                    type: 'file',
                     content: JSON.stringify([
                       {
                         message: message.toString(),

@@ -24,7 +24,7 @@ describe('TransformerTestResultComponent', () => {
   });
 
   test('should show only the raw stage when there is no transformer', async () => {
-    tester.fixture.componentRef.setInput('raw', { type: 'file-content', content: 'raw content' });
+    tester.fixture.componentRef.setInput('raw', { type: 'file', content: 'raw content' });
 
     await expect.element(tester.stages).toHaveLength(1);
     await expect.element(tester.rawStage.getByCss('.oib-box-title')).toMatchTextContent(/^Raw result/);
@@ -32,9 +32,9 @@ describe('TransformerTestResultComponent', () => {
   });
 
   test('should show both the raw and output stages once a transformer is involved', async () => {
-    tester.fixture.componentRef.setInput('raw', { type: 'file-content', content: 'raw content' });
+    tester.fixture.componentRef.setInput('raw', { type: 'file', content: 'raw content' });
     tester.fixture.componentRef.setInput('hasTransformer', true);
-    tester.fixture.componentRef.setInput('output', { type: 'file-content', content: 'transformed content' });
+    tester.fixture.componentRef.setInput('output', { type: 'file', content: 'transformed content' });
 
     await expect.element(tester.stages).toHaveLength(2);
     await expect.element(tester.outputStage.getByCss('.oib-box-title')).toMatchTextContent(/^Transformer output/);

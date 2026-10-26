@@ -35,8 +35,8 @@ const transformer: StandardTransformerDTO = {
 };
 
 const testResult: SouthConnectorItemTestResult = {
-  raw: { type: 'file-content', content: 'raw-input' },
-  transformed: { type: 'file-content', content: 'pasted-output' },
+  raw: { type: 'file', content: 'raw-input' },
+  transformed: { type: 'file', content: 'pasted-output' },
   connectionDuration: 12,
   queryDuration: 34
 };
