@@ -1,370 +1,423 @@
 <div class="modal-header">
   <h4 class="modal-title" translate="north.transformers.choose-transformer-modal.title"></h4>
 </div>
+<oib-modal-steps
+  [steps]="steps.steps"
+  [(current)]="steps.current"
+  [invalidSteps]="steps.invalid()"
+  labelPrefix="north.transformers.modal.step."
+  ariaLabel="north.transformers.modal.steps"
+/>
 <div class="modal-body">
   @if (form) {
-    <form [formGroup]="form" (ngSubmit)="save()" id="choose-transformer-form">
-      <!-- 1. Where the data comes from: shown when the transformer is configured from its line (or edited), chosen otherwise -->
-      <section class="transformer-section">
-        <div class="row">
-          @if (presetSource()) {
-            <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-8' : 'col-12'">
-              <h6 class="transformer-section-title" translate="north.transformers.source"></h6>
-              <div class="transformer-source" id="transformer-source">
-                @if (form.controls.source.value.south; as south) {
-                  @if (south.enabled) {
-                    <span [ngbTooltip]="'south.enabled' | translate" class="fa-solid fa-check-circle status-green me-2"></span>
+    <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onEnter($event)" id="choose-transformer-form">
+      <!-- 1. Source & transformer: where the data comes from, the items of a south it applies to, and the transformer -->
+      <div [hidden]="steps.current() !== 'source'" id="step-source">
+        <!-- 1. Where the data comes from: shown when the transformer is configured from its line (or edited), chosen otherwise -->
+        <section>
+          <div class="row">
+            @if (presetSource()) {
+              <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-8' : 'col-12'">
+                <h5 class="oib-section-title" translate="north.transformers.source"></h5>
+                <div class="transformer-source" id="transformer-source">
+                  @if (form.controls.source.value.south; as south) {
+                    @if (south.enabled) {
+                      <span [ngbTooltip]="'south.enabled' | translate" class="fa-solid fa-check-circle status-green me-2"></span>
+                    } @else {
+                      <span [ngbTooltip]="'south.disabled' | translate" class="fa-solid fa-minus-circle status-grey me-2"></span>
+                    }
+                    <span class="fw-medium">{{ south.name }}</span>
+                    <small class="text-body-secondary ms-1"
+                      >{{ south.type | oIBusSouthTypeEnum
+                      }}{{ south.enabled ? '' : ' — ' + ('north.transformers.list.paused' | translate) }}</small
+                    >
                   } @else {
-                    <span [ngbTooltip]="'south.disabled' | translate" class="fa-solid fa-minus-circle status-grey me-2"></span>
+                    <span
+                      [class]="
+                        form.controls.source.value.dataSourceType === 'oibus-api' ? 'fa-solid fa-plug me-2' : 'fa-solid fa-bolt me-2'
+                      "
+                      aria-hidden="true"
+                    ></span>
+                    <span class="fw-medium">{{
+                      'enums.oibus-data-source-type.' + form.controls.source.value.dataSourceType | translate
+                    }}</span>
                   }
-                  <span class="fw-medium">{{ south.name }}</span>
-                  <small class="text-body-secondary ms-1"
-                    >{{ south.type | oIBusSouthTypeEnum
-                    }}{{ south.enabled ? '' : ' — ' + ('north.transformers.list.paused' | translate) }}</small
-                  >
-                } @else {
-                  <span
-                    [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'fa-solid fa-plug me-2' : 'fa-solid fa-bolt me-2'"
-                    aria-hidden="true"
-                  ></span>
-                  <span class="fw-medium">{{
-                    'enums.oibus-data-source-type.' + form.controls.source.value.dataSourceType | translate
-                  }}</span>
-                }
+                </div>
               </div>
-            </div>
-          } @else {
-            <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-8' : 'col-12'">
-              <label class="transformer-section-title" for="source" translate="north.transformers.source"></label>
-              <select formControlName="source" class="form-select mb-2 mr-sm-2" id="source" [compareWith]="compareSource">
-                <option [ngValue]="{ dataSourceType: null, south: null }"></option>
+            } @else {
+              <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-8' : 'col-12'">
+                <h5 class="oib-section-title"><label class="mb-0" for="source" translate="north.transformers.source"></label></h5>
+                <select formControlName="source" class="form-select mb-2 mr-sm-2" id="source" [compareWith]="compareSource">
+                  <option [ngValue]="{ dataSourceType: null, south: null }"></option>
 
-                @for (southConnector of southConnectors(); track southConnector.id) {
-                  <option [ngValue]="{ dataSourceType: 'south', south: southConnector }">
-                    {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }}){{
-                      !southConnector.enabled ? ' — ' + ('disabled' | translate) : ''
-                    }}
+                  @for (southConnector of southConnectors(); track southConnector.id) {
+                    <option [ngValue]="{ dataSourceType: 'south', south: southConnector }">
+                      {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }}){{
+                        !southConnector.enabled ? ' — ' + ('disabled' | translate) : ''
+                      }}
+                    </option>
+                  }
+                  <option [ngValue]="{ dataSourceType: 'oibus-api', south: null }">
+                    {{ 'enums.oibus-data-source-type.oibus-api' | translate }}
                   </option>
-                }
-                <option [ngValue]="{ dataSourceType: 'oibus-api', south: null }">
-                  {{ 'enums.oibus-data-source-type.oibus-api' | translate }}
-                </option>
-                <option [ngValue]="{ dataSourceType: 'oianalytics-setpoint', south: null }">
-                  {{ 'enums.oibus-data-source-type.oianalytics-setpoint' | translate }}
-                </option>
-              </select>
-            </div>
-          }
-          @if (form.controls.source.value.dataSourceType === 'oibus-api') {
-            <div class="col-4">
-              <div class="form-group">
-                <label
-                  class="form-label"
-                  for="api-data-source"
-                  translate="configuration.oibus.manifest.transformers.api-data-source"
-                ></label>
-                <input
-                  formControlName="apiDataSourceId"
-                  id="api-data-source"
-                  class="form-control"
-                  [placeholder]="'configuration.oibus.manifest.transformers.all-data-sources' | translate"
-                />
-                <val-errors controlName="apiDataSourceId" />
+                  <option [ngValue]="{ dataSourceType: 'oianalytics-setpoint', south: null }">
+                    {{ 'enums.oibus-data-source-type.oianalytics-setpoint' | translate }}
+                  </option>
+                </select>
               </div>
-            </div>
-          }
-        </div>
-      </section>
+            }
+            @if (form.controls.source.value.dataSourceType === 'oibus-api') {
+              <div class="col-4">
+                <div class="form-group">
+                  <label
+                    class="form-label"
+                    for="api-data-source"
+                    translate="configuration.oibus.manifest.transformers.api-data-source"
+                  ></label>
+                  <input
+                    formControlName="apiDataSourceId"
+                    id="api-data-source"
+                    class="form-control"
+                    [placeholder]="'configuration.oibus.manifest.transformers.all-data-sources' | translate"
+                  />
+                  <val-errors controlName="apiDataSourceId" />
+                </div>
+              </div>
+            }
+          </div>
+        </section>
 
-      <!-- 2. The items of a south the transformer applies to, and what it would send -->
-      @if (form.controls.source.value.south) {
-        <section class="transformer-section">
-          <h6 class="transformer-section-title" translate="configuration.oibus.manifest.transformers.items"></h6>
-          <div
-            class="d-flex flex-wrap gap-1 mb-2"
-            role="group"
-            [attr.aria-label]="'configuration.oibus.manifest.transformers.items' | translate"
-          >
-            <button
-              type="button"
-              class="filter-chip px-2 py-1"
-              id="selectionAll"
-              [class.active]="selectionType() === 'all'"
-              [attr.aria-pressed]="selectionType() === 'all'"
-              (click)="setSelectionType('all')"
-              translate="configuration.oibus.manifest.transformers.all-items"
-            ></button>
-            @if (availableGroups().length > 0) {
+        <!-- 2. The items of a south the transformer applies to, and what it would send -->
+        @if (form.controls.source.value.south) {
+          <section>
+            <h5 class="oib-section-title" translate="configuration.oibus.manifest.transformers.items"></h5>
+            <div
+              class="d-flex flex-wrap gap-1 mb-2"
+              role="group"
+              [attr.aria-label]="'configuration.oibus.manifest.transformers.items' | translate"
+            >
               <button
                 type="button"
                 class="filter-chip px-2 py-1"
-                id="selectionGroup"
-                [class.active]="selectionType() === 'group'"
-                [attr.aria-pressed]="selectionType() === 'group'"
-                (click)="setSelectionType('group')"
-                translate="configuration.oibus.manifest.transformers.by-group"
+                id="selectionAll"
+                [class.active]="selectionType() === 'all'"
+                [attr.aria-pressed]="selectionType() === 'all'"
+                (click)="setSelectionType('all')"
+                translate="configuration.oibus.manifest.transformers.all-items"
               ></button>
-            }
-            <button
-              type="button"
-              class="filter-chip px-2 py-1"
-              id="selectionItems"
-              [class.active]="selectionType() === 'items'"
-              [attr.aria-pressed]="selectionType() === 'items'"
-              (click)="setSelectionType('items')"
-              translate="configuration.oibus.manifest.transformers.specific-items"
-            ></button>
-          </div>
-          @if (selectionType() === 'group') {
-            <select
-              class="form-select mb-2"
-              id="group"
-              [attr.aria-label]="'configuration.oibus.manifest.transformers.select-group' | translate"
-              [(ngModel)]="selectedGroup"
-              [ngModelOptions]="{ standalone: true }"
-              [compareWith]="compareGroups"
-            >
-              <option [ngValue]="null" translate="configuration.oibus.manifest.transformers.select-group"></option>
-              @for (group of availableGroups(); track group.id) {
-                <option [ngValue]="group">{{ group.name }}</option>
+              @if (availableGroups().length > 0) {
+                <button
+                  type="button"
+                  class="filter-chip px-2 py-1"
+                  id="selectionGroup"
+                  [class.active]="selectionType() === 'group'"
+                  [attr.aria-pressed]="selectionType() === 'group'"
+                  (click)="setSelectionType('group')"
+                  translate="configuration.oibus.manifest.transformers.by-group"
+                ></button>
               }
-            </select>
-          }
-          @if (selectionType() !== 'items') {
-            <div class="form-check mb-2">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="exclude-items"
-                [checked]="excludeItems()"
-                (change)="setExcludeItems(!excludeItems())"
-              />
-              <label
-                class="form-check-label"
-                for="exclude-items"
-                translate="configuration.oibus.manifest.transformers.exclude-items"
-              ></label>
+              <button
+                type="button"
+                class="filter-chip px-2 py-1"
+                id="selectionItems"
+                [class.active]="selectionType() === 'items'"
+                [attr.aria-pressed]="selectionType() === 'items'"
+                (click)="setSelectionType('items')"
+                translate="configuration.oibus.manifest.transformers.specific-items"
+              ></button>
             </div>
-          }
-          @if (selectionType() === 'items' || excludeItems()) {
-            @if (searchInteracted() && (totalSearchResults() > 0 || selectedItems().length > 0)) {
-              <div class="mb-2 d-flex align-items-center gap-2">
-                @if (totalSearchResults() > 0) {
-                  <small class="text-muted">
-                    <span
-                      translate="configuration.oibus.manifest.transformers.search-results-count"
-                      [translateParams]="{ count: totalSearchResults() }"
-                    ></span>
-                    @if (totalSearchResults() > 10) {
-                      <span translate="configuration.oibus.manifest.transformers.showing-first-n" [translateParams]="{ limit: 10 }"></span>
-                    }
-                  </small>
-                }
-                @if (searchResults().length > 0) {
-                  <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="selectAllResults()">
-                    <span translate="configuration.oibus.manifest.transformers.select-all-results"></span>
-                  </button>
-                }
-                @if (selectedItems().length > 0) {
-                  <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="removeAllItems()">
-                    <span translate="configuration.oibus.manifest.transformers.remove-all"></span>
-                  </button>
-                }
-              </div>
-            }
-            <div
-              ngbDropdown
-              autoClose="outside"
-              #itemDropdown="ngbDropdown"
-              class="item-search-dropdown"
-              (openChange)="onDropdownOpenChange($event)"
-            >
-              <input
-                id="items"
-                class="form-control"
-                placeholder="{{ 'configuration.oibus.manifest.transformers.search-items' | translate }}"
-                [attr.aria-label]="'configuration.oibus.manifest.transformers.search-items' | translate"
-                [(ngModel)]="itemSearchText"
+            @if (selectionType() === 'group') {
+              <select
+                class="form-select mb-2"
+                id="group"
+                [attr.aria-label]="'configuration.oibus.manifest.transformers.select-group' | translate"
+                [(ngModel)]="selectedGroup"
                 [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="filterItems()"
-                (focus)="searchInteracted.set(true); itemDropdown.open()"
-                ngbDropdownAnchor
-              />
-              <div ngbDropdownMenu class="item-dropdown-menu">
-                @for (item of filteredItems(); track item.id) {
-                  <button type="button" ngbDropdownItem (click)="toggleItem(item)" [class.selected]="isItemSelected(item)">
-                    <div class="d-flex align-items-center">
-                      <span
-                        [class]="item.enabled ? 'fa-solid fa-check-circle status-green me-2' : 'fa-solid fa-minus-circle status-grey me-2'"
-                        aria-hidden="true"
-                      ></span>
-                      <div class="flex-grow-1 me-3">{{ item.name }}</div>
-                      <div class="fa-fw">
-                        @if (isItemSelected(item)) {
-                          <span class="fa-solid fa-check" aria-hidden="true"></span>
-                        }
-                      </div>
-                    </div>
-                  </button>
+                [compareWith]="compareGroups"
+              >
+                <option [ngValue]="null" translate="configuration.oibus.manifest.transformers.select-group"></option>
+                @for (group of availableGroups(); track group.id) {
+                  <option [ngValue]="group">{{ group.name }}</option>
                 }
-                @if (filteredItems().length === 0 && itemSearchText()) {
-                  <div class="dropdown-item text-muted" translate="configuration.oibus.manifest.transformers.no-items-found"></div>
-                }
+              </select>
+            }
+            @if (selectionType() !== 'items') {
+              <div class="form-check mb-2">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="exclude-items"
+                  [checked]="excludeItems()"
+                  (change)="setExcludeItems(!excludeItems())"
+                />
+                <label
+                  class="form-check-label"
+                  for="exclude-items"
+                  translate="configuration.oibus.manifest.transformers.exclude-items"
+                ></label>
               </div>
-            </div>
-            @if (selectedItems().length > 0) {
-              <div class="mt-2">
-                @for (item of selectedItems(); track item.id) {
-                  <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)">
-                    <div class="d-inline-flex align-items-center">
+            }
+            @if (selectionType() === 'items' || excludeItems()) {
+              @if (searchInteracted() && (totalSearchResults() > 0 || selectedItems().length > 0)) {
+                <div class="mb-2 d-flex align-items-center gap-2">
+                  @if (totalSearchResults() > 0) {
+                    <small class="text-muted">
                       <span
-                        [class]="item.enabled ? 'fa-solid fa-check-circle status-green me-1' : 'fa-solid fa-minus-circle status-grey me-1'"
-                        aria-hidden="true"
+                        translate="configuration.oibus.manifest.transformers.search-results-count"
+                        [translateParams]="{ count: totalSearchResults() }"
                       ></span>
-                      {{ item.name }}
-                    </div>
-                  </oib-pill>
+                      @if (totalSearchResults() > 10) {
+                        <span
+                          translate="configuration.oibus.manifest.transformers.showing-first-n"
+                          [translateParams]="{ limit: 10 }"
+                        ></span>
+                      }
+                    </small>
+                  }
+                  @if (searchResults().length > 0) {
+                    <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="selectAllResults()">
+                      <span translate="configuration.oibus.manifest.transformers.select-all-results"></span>
+                    </button>
+                  }
+                  @if (selectedItems().length > 0) {
+                    <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="removeAllItems()">
+                      <span translate="configuration.oibus.manifest.transformers.remove-all"></span>
+                    </button>
+                  }
+                </div>
+              }
+              <div
+                ngbDropdown
+                autoClose="outside"
+                #itemDropdown="ngbDropdown"
+                class="item-search-dropdown"
+                (openChange)="onDropdownOpenChange($event)"
+              >
+                <input
+                  id="items"
+                  class="form-control"
+                  placeholder="{{ 'configuration.oibus.manifest.transformers.search-items' | translate }}"
+                  [attr.aria-label]="'configuration.oibus.manifest.transformers.search-items' | translate"
+                  [(ngModel)]="itemSearchText"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="filterItems()"
+                  (focus)="searchInteracted.set(true); itemDropdown.open()"
+                  ngbDropdownAnchor
+                />
+                <div ngbDropdownMenu class="item-dropdown-menu">
+                  @for (item of filteredItems(); track item.id) {
+                    <button type="button" ngbDropdownItem (click)="toggleItem(item)" [class.selected]="isItemSelected(item)">
+                      <div class="d-flex align-items-center">
+                        <span
+                          [class]="
+                            item.enabled ? 'fa-solid fa-check-circle status-green me-2' : 'fa-solid fa-minus-circle status-grey me-2'
+                          "
+                          aria-hidden="true"
+                        ></span>
+                        <div class="flex-grow-1 me-3">{{ item.name }}</div>
+                        <div class="fa-fw">
+                          @if (isItemSelected(item)) {
+                            <span class="fa-solid fa-check" aria-hidden="true"></span>
+                          }
+                        </div>
+                      </div>
+                    </button>
+                  }
+                  @if (filteredItems().length === 0 && itemSearchText()) {
+                    <div class="dropdown-item text-muted" translate="configuration.oibus.manifest.transformers.no-items-found"></div>
+                  }
+                </div>
+              </div>
+              @if (selectedItems().length > 0) {
+                <div class="mt-2">
+                  @for (item of selectedItems(); track item.id) {
+                    <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)">
+                      <div class="d-inline-flex align-items-center">
+                        <span
+                          [class]="
+                            item.enabled ? 'fa-solid fa-check-circle status-green me-1' : 'fa-solid fa-minus-circle status-grey me-1'
+                          "
+                          aria-hidden="true"
+                        ></span>
+                        {{ item.name }}
+                      </div>
+                    </oib-pill>
+                  }
+                </div>
+              }
+            }
+            @if (itemsRequired()) {
+              <div class="text-danger small mt-1" id="items-required" translate="north.transformers.modal.items-required"></div>
+            }
+            @if (impact(); as impact) {
+              <div class="transformer-impact mt-2 d-flex flex-wrap align-items-center gap-2" id="transformer-impact">
+                @if (impact.sent) {
+                  <span
+                    class="routing-chip routing-sent"
+                    translate="north.transformers.modal.impact.sent"
+                    [translateParams]="{ count: impact.sent }"
+                  ></span>
+                  @if (impact.newlySent) {
+                    <small
+                      class="text-body-secondary"
+                      translate="north.transformers.modal.impact.newly-sent"
+                      [translateParams]="{ count: impact.newlySent }"
+                    ></small>
+                  }
+                  @if (impact.takenOver) {
+                    <small
+                      class="text-body-secondary"
+                      translate="north.transformers.modal.impact.taken-over"
+                      [translateParams]="{ count: impact.takenOver }"
+                    ></small>
+                  }
+                  @if (impact.kept) {
+                    <small
+                      class="text-body-secondary"
+                      translate="north.transformers.modal.impact.kept"
+                      [translateParams]="{ count: impact.kept }"
+                    ></small>
+                  }
+                } @else {
+                  <div class="alert alert-warning py-1 mb-0" translate="north.transformers.modal.impact.none"></div>
                 }
               </div>
             }
+          </section>
+        }
+
+        <!-- 3. The transformer: configured from scratch, or copied from another North or history query -->
+        <section>
+          <h5 class="oib-section-title" translate="north.transformers.list.transformer"></h5>
+          @if (mode() === 'create') {
+            <div class="d-flex flex-wrap gap-1 mb-2" role="group" [attr.aria-label]="'north.transformers.list.transformer' | translate">
+              <button
+                type="button"
+                class="filter-chip px-2 py-1"
+                id="creationModeNew"
+                [class.active]="creationMode() === 'new'"
+                [attr.aria-pressed]="creationMode() === 'new'"
+                (click)="setCreationMode('new')"
+                translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-new"
+              ></button>
+              <button
+                type="button"
+                class="filter-chip px-2 py-1"
+                id="creationModeFromNorth"
+                [class.active]="creationMode() === 'from-north'"
+                [attr.aria-pressed]="creationMode() === 'from-north'"
+                (click)="setCreationMode('from-north')"
+                translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-from-north"
+              ></button>
+              <button
+                type="button"
+                class="filter-chip px-2 py-1"
+                id="creationModeFromHistory"
+                [class.active]="creationMode() === 'from-history'"
+                [attr.aria-pressed]="creationMode() === 'from-history'"
+                (click)="setCreationMode('from-history')"
+                translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-from-history"
+              ></button>
+            </div>
           }
-          @if (itemsRequired()) {
-            <div class="text-danger small mt-1" id="items-required" translate="north.transformers.modal.items-required"></div>
-          }
-          @if (impact(); as impact) {
-            <div class="transformer-impact mt-2 d-flex flex-wrap align-items-center gap-2" id="transformer-impact">
-              @if (impact.sent) {
-                <span
-                  class="routing-chip routing-sent"
-                  translate="north.transformers.modal.impact.sent"
-                  [translateParams]="{ count: impact.sent }"
-                ></span>
-                @if (impact.newlySent) {
-                  <small
-                    class="text-body-secondary"
-                    translate="north.transformers.modal.impact.newly-sent"
-                    [translateParams]="{ count: impact.newlySent }"
-                  ></small>
-                }
-                @if (impact.takenOver) {
-                  <small
-                    class="text-body-secondary"
-                    translate="north.transformers.modal.impact.taken-over"
-                    [translateParams]="{ count: impact.takenOver }"
-                  ></small>
-                }
-                @if (impact.kept) {
-                  <small
-                    class="text-body-secondary"
-                    translate="north.transformers.modal.impact.kept"
-                    [translateParams]="{ count: impact.kept }"
-                  ></small>
-                }
-              } @else {
-                <div class="alert alert-warning py-1 mb-0" translate="north.transformers.modal.impact.none"></div>
-              }
+          @if (creationMode() === 'new') {
+            <div class="row">
+              <div class="col-6">
+                <div class="form-group">
+                  <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
+                  <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
+                    <option [ngValue]="null"></option>
+                    @for (transformer of selectableOutputs(); track transformer.id) {
+                      @if (transformer.type === 'standard') {
+                        <option [ngValue]="transformer">
+                          {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
+                        </option>
+                      } @else {
+                        <option [ngValue]="transformer">{{ transformer.name }}</option>
+                      }
+                    }
+                  </select>
+                  <val-errors controlName="transformer" />
+                </div>
+              </div>
+            </div>
+          } @else {
+            <div class="row mb-2">
+              <div class="col-12">
+                <oib-select-existing-transformer
+                  [sourceKind]="creationMode() === 'from-north' ? 'north' : 'history-query'"
+                  [supportedOutputTypes]="supportedOutputTypes()"
+                  [dataType]="sourceDataType()"
+                  (transformerPicked)="applyExistingTransformer($event)"
+                />
+                <val-errors controlName="transformer" />
+              </div>
             </div>
           }
         </section>
-      }
+      </div>
 
-      <!-- 3. The transformer: configured from scratch, or copied from another North or history query -->
-      <section class="transformer-section">
-        <h6 class="transformer-section-title" translate="north.transformers.list.transformer"></h6>
-        @if (mode() === 'create') {
-          <div class="d-flex flex-wrap gap-1 mb-2" role="group" [attr.aria-label]="'north.transformers.list.transformer' | translate">
-            <button
-              type="button"
-              class="filter-chip px-2 py-1"
-              id="creationModeNew"
-              [class.active]="creationMode() === 'new'"
-              [attr.aria-pressed]="creationMode() === 'new'"
-              (click)="setCreationMode('new')"
-              translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-new"
-            ></button>
-            <button
-              type="button"
-              class="filter-chip px-2 py-1"
-              id="creationModeFromNorth"
-              [class.active]="creationMode() === 'from-north'"
-              [attr.aria-pressed]="creationMode() === 'from-north'"
-              (click)="setCreationMode('from-north')"
-              translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-from-north"
-            ></button>
-            <button
-              type="button"
-              class="filter-chip px-2 py-1"
-              id="creationModeFromHistory"
-              [class.active]="creationMode() === 'from-history'"
-              [attr.aria-pressed]="creationMode() === 'from-history'"
-              (click)="setCreationMode('from-history')"
-              translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-from-history"
-            ></button>
-          </div>
-        }
-        @if (creationMode() === 'new') {
-          <div class="row">
-            <div class="col-6">
-              <div class="form-group">
-                <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
-                <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
-                  <option [ngValue]="null"></option>
-                  @for (transformer of selectableOutputs(); track transformer.id) {
-                    @if (transformer.type === 'standard') {
-                      <option [ngValue]="transformer">
-                        {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
-                      </option>
-                    } @else {
-                      <option [ngValue]="transformer">{{ transformer.name }}</option>
-                    }
-                  }
-                </select>
-              </div>
-            </div>
-          </div>
-        } @else {
-          <div class="row mb-2">
-            <div class="col-12">
-              <oib-select-existing-transformer
-                [sourceKind]="creationMode() === 'from-north' ? 'north' : 'history-query'"
-                [supportedOutputTypes]="supportedOutputTypes()"
-                [dataType]="sourceDataType()"
-                (transformerPicked)="applyExistingTransformer($event)"
-              />
-            </div>
-          </div>
-        }
+      <!-- 2. Options: those of the chosen transformer -->
+      <div [hidden]="steps.current() !== 'options'" id="step-options">
         @if (manifest(); as manifest) {
-          <div class="row mt-2" formGroupName="options">
-            <oib-oibus-object-form-control
-              [scanModes]="scanModes()"
-              [certificates]="certificates()"
-              [group]="form.controls.options"
-              [objectAttribute]="manifest"
-            />
-          </div>
+          @if (manifest.attributes.length) {
+            <h5 class="oib-section-title" translate="north.transformers.modal.step.options"></h5>
+            <ng-container formGroupName="options">
+              <oib-oibus-object-form-control
+                [scanModes]="scanModes()"
+                [certificates]="certificates()"
+                [group]="form.controls.options"
+                [objectAttribute]="manifest"
+                layout="sections"
+              />
+            </ng-container>
+          } @else {
+            <p class="text-muted mt-3" id="no-options" translate="north.transformers.modal.no-options"></p>
+          }
+        } @else {
+          <p class="text-muted mt-3" translate="north.transformers.modal.no-transformer"></p>
         }
-      </section>
+      </div>
     </form>
 
-    @if (form.controls.transformer.value) {
-      <oib-north-transformer-test
-        [transformer]="form.controls.transformer.value"
-        [options]="form.controls.options.value"
-        [itemSource]="transformerTestSource()"
-      />
-    }
+    <!-- 3. Test: the transformer tried out on data, outside the form as the test panel has its own -->
+    <div [hidden]="steps.current() !== 'test'" id="step-test">
+      @if (form.controls.transformer.value) {
+        <oib-north-transformer-test
+          [transformer]="form.controls.transformer.value"
+          [options]="form.controls.options.value"
+          [itemSource]="transformerTestSource()"
+        />
+      } @else {
+        <p class="text-muted mt-3" translate="north.transformers.modal.no-transformer"></p>
+      }
+    </div>
   }
 </div>
 <div class="modal-footer">
+  <!-- Moving between the steps, apart from saving: the main action is Save once it shows, Next before -->
+  <div class="d-flex gap-2 me-auto">
+    @if (!steps.isFirst()) {
+      <button type="button" class="btn btn-subtle" id="previous-step" (click)="steps.back()">
+        <i class="fa-solid fa-chevron-left me-1" aria-hidden="true"></i><span translate="common.back"></span>
+      </button>
+    }
+    @if (!steps.isLast()) {
+      <button type="button" class="btn" [class.btn-primary]="!canSave()" [class.btn-subtle]="canSave()" id="next-step" (click)="nextStep()">
+        <span translate="common.next"></span><i class="fa-solid fa-chevron-right ms-1" aria-hidden="true"></i>
+      </button>
+    }
+  </div>
   <div class="btn-group">
-    <button
-      type="submit"
-      [oib-save-button]="state"
-      form="choose-transformer-form"
-      [translationKey]="directSave() ? 'common.save' : 'common.ok'"
-      [iconClass]="directSave() ? 'fa-floppy-disk' : 'fa-check'"
-    ></button>
+    @if (canSave()) {
+      <button
+        type="submit"
+        [oib-save-button]="state"
+        form="choose-transformer-form"
+        [translationKey]="directSave() ? 'common.save' : 'common.ok'"
+        [iconClass]="directSave() ? 'fa-floppy-disk' : 'fa-check'"
+      ></button>
+    }
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>
