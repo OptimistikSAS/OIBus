@@ -8,6 +8,7 @@ import { after, before, describe, it, mock } from 'node:test';
 import Database from 'better-sqlite3';
 
 import {
+  compareMigrationFilenames,
   migrateCrypto,
   migrateDataFolder,
   migrateEntities,
@@ -246,6 +247,28 @@ describe('migration-service', () => {
       const loaded = await source.getMigration(migration);
 
       assert.strictEqual(typeof loaded.up, 'function');
+    });
+
+    it('orders the migrations of a directory by their numbers', () => {
+      assert.deepStrictEqual(
+        ['v3.10.0_10.ts', 'v3.10.0_2.ts', 'v3.10.0.ts', 'v3.10.0_1.ts', 'v3.9.0.ts', 'v3.10.0_1b.ts', 'v3.10.0_1a.ts'].sort(
+          compareMigrationFilenames
+        ),
+        ['v3.9.0.ts', 'v3.10.0.ts', 'v3.10.0_1.ts', 'v3.10.0_1a.ts', 'v3.10.0_1b.ts', 'v3.10.0_2.ts', 'v3.10.0_10.ts']
+      );
+    });
+
+    it('runs the 3.10 entity migrations in the order of their steps', async () => {
+      const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
+      const steps = (await source.getMigrations([]))
+        .map(migration => migration.file)
+        .filter(file => file.startsWith('v3.10.0_'))
+        .map(file => Number(/_(\d+)\./.exec(file)![1]));
+
+      assert.deepStrictEqual(
+        steps,
+        [...steps].sort((a, b) => a - b)
+      );
     });
 
     it('falls through the file-name sort comparator when two directory entries compare equal', async () => {
