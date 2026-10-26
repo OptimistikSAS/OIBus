@@ -11,18 +11,18 @@ import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { createMock, Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import fileManifest from '../transformers/file/file/manifest';
+import FileToFileTransformer from '../transformers/file/file-to-file/file-to-file-transformer';
+import fileToFileManifest from '../transformers/file/file-to-file/manifest';
 import FileToMQTTTransformer from '../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
 import fileToMqttManifest from '../transformers/file/file-to-mqtt/manifest';
 import FileToOIAnalyticsTransformer from '../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
 import fileToOianalyticsManifest from '../transformers/file/file-to-oianalytics/manifest';
 import FileToRecordListTransformer from '../transformers/file/file-to-record-list/file-to-record-list-transformer';
 import fileToRecordListManifest from '../transformers/file/file-to-record-list/manifest';
-import JSONToCSVTransformer from '../transformers/file/json-to-csv/json-to-csv-transformer';
-import jsonToCsvManifest from '../transformers/file/json-to-csv/manifest';
 // Import transformer manifests
-import recordListToJsonManifest from '../transformers/record-list/record-list-to-json/manifest';
+import recordListToFileManifest from '../transformers/record-list/record-list-to-file/manifest';
 // Import concrete transformer classes for instanceof checks
-import RecordListToJSONTransformer from '../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
+import RecordListToFileTransformer from '../transformers/record-list/record-list-to-file/record-list-to-file-transformer';
 import recordListToModbusManifest from '../transformers/record-list/record-list-to-modbus/manifest';
 import RecordListToModbusTransformer from '../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
 import recordListToMqttManifest from '../transformers/record-list/record-list-to-mqtt/manifest';
@@ -394,9 +394,9 @@ describe('Transformer Service', () => {
     const expectedClasses: Array<[string, abstract new (...args: Array<never>) => unknown]> = [
       ['file-to-mqtt', FileToMQTTTransformer],
       ['file-to-record-list', FileToRecordListTransformer],
-      ['json-to-csv', JSONToCSVTransformer],
+      ['file-to-file', FileToFileTransformer],
       ['file-to-oianalytics', FileToOIAnalyticsTransformer],
-      ['record-list-to-json', RecordListToJSONTransformer],
+      ['record-list-to-file', RecordListToFileTransformer],
       ['record-list-to-modbus', RecordListToModbusTransformer],
       ['record-list-to-mqtt', RecordListToMQTTTransformer],
       ['record-list-to-oianalytics', RecordListToOIAnalyticsTransformer],
@@ -576,7 +576,7 @@ describe('Transformer Service', () => {
         type: 'standard',
         inputType: 'record-list',
         outputType: 'file',
-        functionName: 'record-list-to-json'
+        functionName: 'record-list-to-file'
       } as StandardTransformer;
       transformerRepository.findById.mock.mockImplementation(() => standardTransformer);
 
@@ -588,7 +588,7 @@ describe('Transformer Service', () => {
 
       assert.strictEqual(transformerRepository.findById.mock.calls[0].arguments[0], 'std-json');
       assert.strictEqual(result.type, 'file');
-      assert.match((result as { filePath: string }).filePath, /^[\w-]{10}\.json$/);
+      assert.match((result as { filePath: string }).filePath, /^[\d_]+\.json$/);
       assert.strictEqual(result.content, JSON.stringify(content.content));
     });
 
@@ -783,9 +783,9 @@ describe('Transformer Service', () => {
     assert.deepStrictEqual(getStandardManifest('file-to-mqtt'), fileToMqttManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file-to-record-list'), fileToRecordListManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file'), fileManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('json-to-csv'), jsonToCsvManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('file-to-file'), fileToFileManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file-to-oianalytics'), fileToOianalyticsManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('record-list-to-json'), recordListToJsonManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('record-list-to-file'), recordListToFileManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-modbus'), recordListToModbusManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-mqtt'), recordListToMqttManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-oianalytics'), recordListToOianalyticsManifest.settings);

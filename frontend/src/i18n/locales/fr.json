@@ -322,12 +322,11 @@
           "deleted": "Transformateur {{ name }} supprimé",
           "standard": {
             "file": "Fichier (tel quel)",
+            "file-to-file": "Fichier (converti ou renommé)",
             "file-to-mqtt": "Charges utiles MQTT",
             "file-to-oianalytics": "Charge utile OIAnalytics",
             "file-to-record-list": "Enregistrements",
-            "json-to-csv": "CSV (depuis JSON)",
-            "record-list-to-csv": "CSV",
-            "record-list-to-json": "JSON",
+            "record-list-to-file": "Fichier",
             "record-list-to-modbus": "Valeurs Modbus",
             "record-list-to-mqtt": "Charges utiles MQTT",
             "record-list-to-oianalytics": "Charge utile OIAnalytics",
@@ -460,7 +459,8 @@
             "file-type": {
               "title": "Type de fichier",
               "csv": "CSV",
-              "json": "JSON"
+              "json": "JSON",
+              "other": "Autre (renommé seulement)"
             },
             "delimiter": {
               "title": "Délimiteur CSV",
@@ -475,6 +475,92 @@
             },
             "has-header": "Comporte un en-tête",
             "row-iterator-path": "JSONPath de l'itérateur de ligne"
+          },
+          "file-output": {
+            "title": "Fichier écrit",
+            "file-type": {
+              "title": "Type de fichier",
+              "csv": "CSV",
+              "json": "JSON"
+            },
+            "filename": "Nom du fichier (variables : @CurrentDate, @SourceFilename, @SourceExtension...)",
+            "encoding": {
+              "title": "Encodage",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "compression": "Compresser le fichier",
+            "header": "Première ligne comme en-tête",
+            "delimiter": {
+              "title": "Délimiteur",
+              "DOT": "Point .",
+              "SEMI_COLON": "Point-virgule ;",
+              "COLON": "Deux-points :",
+              "COMMA": "Virgule ,",
+              "SLASH": "Barre oblique /",
+              "TAB": "Tabulation",
+              "NON_BREAKING_SPACE": "Espace",
+              "PIPE": "Barre verticale |"
+            },
+            "newline": {
+              "title": "Saut de ligne",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "quote-char": {
+              "title": "Caractère de citation",
+              "DOUBLE_QUOTE": "Guillemet double (\")",
+              "SINGLE_QUOTE": "Guillemet simple (')",
+              "NONE": "Aucun"
+            },
+            "escape-char": {
+              "title": "Caractère d'échappement",
+              "BACKSLASH": "Barre oblique inversée (\\)",
+              "DOUBLE_QUOTE": "Guillemet double (\")"
+            },
+            "null-value": "Valeur nulle"
+          },
+          "file-fields": {
+            "title": "Champs",
+            "item": {
+              "title": "Configuration du champ"
+            },
+            "field": "Champ (ou JSONPath)",
+            "name": "Nom écrit",
+            "data-type": {
+              "title": "Type de données",
+              "string": "Chaîne",
+              "number": "Nombre",
+              "boolean": "Booléen",
+              "datetime": "Date/heure",
+              "array": "Tableau",
+              "object": "Objet"
+            },
+            "field-process": "Traitement du champ (expression JS, ex. value.toUpperCase())",
+            "datetime-settings": {
+              "title": "Paramètres de date/heure",
+              "input-type": {
+                "title": "Type d'entrée de l'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "output-type": {
+                "title": "Type de sortie de l'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "timezone": "Fuseau horaire",
+              "format": "Format",
+              "locale": "Paramètres régionaux"
+            },
+            "keep-other-fields": "Conserver les autres champs"
           },
           "file-to-mqtt": {
             "topic-field": "Champ du sujet",
@@ -522,166 +608,6 @@
                 "datetime": "Date/heure",
                 "array": "Tableau",
                 "object": "Objet"
-              }
-            }
-          },
-          "json-to-csv": {
-            "filename": "Nom du fichier de sortie",
-            "delimiter": {
-              "title": "Délimiteur CSV",
-              "DOT": "Point .",
-              "SEMI_COLON": "Point-virgule ;",
-              "COLON": "Deux-points :",
-              "COMMA": "Virgule ,",
-              "SLASH": "Barre oblique /",
-              "TAB": "Tabulation",
-              "NON_BREAKING_SPACE": "Espace",
-              "PIPE": "Barre verticale |"
-            },
-            "encoding": {
-              "title": "Encodage",
-              "UTF_8": "UTF-8",
-              "UTF_8_BOM": "UTF-8 BOM",
-              "LATIN_1": "Latin-1 (ISO-8859-1)",
-              "UTF_16_LE": "UTF-16 LE"
-            },
-            "quote-char": {
-              "title": "Caractère de citation",
-              "DOUBLE_QUOTE": "Guillemet double (\")",
-              "SINGLE_QUOTE": "Guillemet simple (')",
-              "NONE": "Aucun"
-            },
-            "escape-char": {
-              "title": "Caractère d'échappement",
-              "BACKSLASH": "Barre oblique inversée (\\)",
-              "DOUBLE_QUOTE": "Guillemet double (\")"
-            },
-            "newline": {
-              "title": "Délimiteur de ligne",
-              "DEFAULT": "Par défaut (\\r, \\n, ou \\r\\n)",
-              "CRLF": "CRLF (\\r\\n)",
-              "LF": "LF (\\n)",
-              "CR": "CR (\\r)"
-            },
-            "null-value": "Valeur nulle",
-            "header": "Première ligne comme en-tête",
-            "row-iterator-path": "JSONPath de l'itérateur de ligne",
-            "fields": {
-              "title": "Mappage des champs",
-              "item": {
-                "title": "Configuration du champ"
-              },
-              "column-name": "Nom de colonne",
-              "json-path": "JSONPath",
-              "data-type": {
-                "title": "Type de données",
-                "string": "Chaîne",
-                "number": "Nombre",
-                "boolean": "Booléen",
-                "datetime": "Date/heure",
-                "array": "Tableau",
-                "object": "Objet"
-              },
-              "field-process": "Traitement du champ (expression JS, ex. value.toUpperCase())",
-              "datetime-settings": {
-                "title": "Paramètres de date/heure",
-                "input-type": {
-                  "title": "Type d'entrée de l'horodatage",
-                  "string": "Chaîne",
-                  "iso-string": "Chaîne ISO",
-                  "unix-epoch": "Époque Unix (s)",
-                  "unix-epoch-ms": "Époque Unix (ms)"
-                },
-                "output-type": {
-                  "title": "Type de sortie de l'horodatage",
-                  "string": "Chaîne",
-                  "iso-string": "Chaîne ISO",
-                  "unix-epoch": "Époque Unix (s)",
-                  "unix-epoch-ms": "Époque Unix (ms)"
-                },
-                "timezone": "Fuseau horaire",
-                "format": "Format",
-                "locale": "Paramètres régionaux"
-              }
-            }
-          },
-          "record-list-to-csv": {
-            "filename": "Nom du fichier",
-            "encoding": {
-              "title": "Encodage",
-              "UTF_8": "UTF-8",
-              "UTF_8_BOM": "UTF-8 BOM",
-              "LATIN_1": "Latin-1 (ISO-8859-1)",
-              "UTF_16_LE": "UTF-16 LE"
-            },
-            "header": "Première ligne comme en-tête",
-            "compression": "Compresser le fichier",
-            "delimiter": {
-              "title": "Délimiteur",
-              "DOT": "Point .",
-              "SEMI_COLON": "Point-virgule ;",
-              "COLON": "Deux-points :",
-              "COMMA": "Virgule ,",
-              "SLASH": "Barre oblique /",
-              "TAB": "Tabulation",
-              "NON_BREAKING_SPACE": "Espace",
-              "PIPE": "Barre verticale |"
-            },
-            "newline": {
-              "title": "Saut de ligne",
-              "CRLF": "CRLF (\\r\\n)",
-              "LF": "LF (\\n)",
-              "CR": "CR (\\r)"
-            },
-            "quote-char": {
-              "title": "Caractère de citation",
-              "DOUBLE_QUOTE": "Guillemet double (\")",
-              "SINGLE_QUOTE": "Guillemet simple (')",
-              "NONE": "Aucun"
-            },
-            "escape-char": {
-              "title": "Caractère d'échappement",
-              "BACKSLASH": "Barre oblique inversée (\\)",
-              "DOUBLE_QUOTE": "Guillemet double (\")"
-            },
-            "null-value": "Valeur nulle",
-            "keep-other-fields": "Conserver les autres champs",
-            "fields": {
-              "title": "Mappage des champs",
-              "item": {
-                "title": "Configuration du champ"
-              },
-              "field-name": "Nom du champ",
-              "column-name": "Nom de colonne",
-              "data-type": {
-                "title": "Type de données",
-                "string": "Chaîne",
-                "number": "Nombre",
-                "boolean": "Booléen",
-                "datetime": "Date/heure",
-                "array": "Tableau",
-                "object": "Objet"
-              },
-              "field-process": "Traitement du champ (expression JS, ex. value.toUpperCase())",
-              "datetime-settings": {
-                "title": "Paramètres de date/heure",
-                "input-type": {
-                  "title": "Type d'entrée de l'horodatage",
-                  "string": "Chaîne",
-                  "iso-string": "Chaîne ISO",
-                  "unix-epoch": "Époque Unix (s)",
-                  "unix-epoch-ms": "Époque Unix (ms)"
-                },
-                "output-type": {
-                  "title": "Type de sortie de l'horodatage",
-                  "string": "Chaîne",
-                  "iso-string": "Chaîne ISO",
-                  "unix-epoch": "Époque Unix (s)",
-                  "unix-epoch-ms": "Époque Unix (ms)"
-                },
-                "timezone": "Fuseau horaire",
-                "format": "Format",
-                "locale": "Paramètres régionaux"
               }
             }
           },

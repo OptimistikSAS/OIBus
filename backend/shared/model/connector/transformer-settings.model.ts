@@ -4,6 +4,69 @@
 
 import { Timezone } from '../common/types';
 
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json', 'other'] as const;
+export type TransformerFileToFileSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_FILE_TYPES)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
+export type TransformerFileToFileSettingsInputDelimiter = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_DELIMITERS)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_FILE_TYPES = ['csv', 'json'] as const;
+export type TransformerFileToFileSettingsOutputFileType = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_FILE_TYPES)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
+export type TransformerFileToFileSettingsOutputEncoding = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_ENCODINGS)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
+export type TransformerFileToFileSettingsOutputDelimiter = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_DELIMITERS)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
+export type TransformerFileToFileSettingsOutputNewline = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_NEWLINES)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
+export type TransformerFileToFileSettingsOutputQuoteChar = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_QUOTE_CHARS)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
+export type TransformerFileToFileSettingsOutputEscapeChar = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_ESCAPE_CHARS)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type TransformerFileToFileSettingsFieldsDatetimeSettingsInputType =
+  (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type TransformerFileToFileSettingsFieldsDatetimeSettingsOutputType =
+  (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES)[number];
+
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_FIELDS_DATA_TYPES = ['string', 'number', 'datetime', 'array', 'boolean', 'object'] as const;
+export type TransformerFileToFileSettingsFieldsDataType = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_FIELDS_DATA_TYPES)[number];
+
 export const TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json'] as const;
 export type TransformerFileToMqttSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_FILE_TYPES)[number];
 
@@ -201,6 +264,64 @@ export type TransformerRecordListToCsvSettingsQuoteChar = (typeof TRANSFORMER_RE
 export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
 export type TransformerRecordListToCsvSettingsEscapeChar = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
 
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_FILE_TYPES = ['csv', 'json'] as const;
+export type TransformerRecordListToFileSettingsOutputFileType = (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_FILE_TYPES)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
+export type TransformerRecordListToFileSettingsOutputEncoding = (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_ENCODINGS)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
+export type TransformerRecordListToFileSettingsOutputDelimiter =
+  (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_DELIMITERS)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
+export type TransformerRecordListToFileSettingsOutputNewline = (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_NEWLINES)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
+export type TransformerRecordListToFileSettingsOutputQuoteChar =
+  (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_QUOTE_CHARS)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
+export type TransformerRecordListToFileSettingsOutputEscapeChar =
+  (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_ESCAPE_CHARS)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type TransformerRecordListToFileSettingsFieldsDatetimeSettingsInputType =
+  (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_FIELDS_DATETIME_SETTINGS_INPUT_TYPES)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type TransformerRecordListToFileSettingsFieldsDatetimeSettingsOutputType =
+  (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_FIELDS_DATETIME_SETTINGS_OUTPUT_TYPES)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_FIELDS_DATA_TYPES = [
+  'string',
+  'number',
+  'datetime',
+  'array',
+  'boolean',
+  'object'
+] as const;
+export type TransformerRecordListToFileSettingsFieldsDataType = (typeof TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_FIELDS_DATA_TYPES)[number];
+
 export const TRANSFORMER_RECORD_LIST_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerRecordListToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_RECORD_LIST_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
@@ -221,6 +342,44 @@ export type TransformerRecordListToOianalyticsSettingsTimestampPrecision =
 export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerSetpointToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
+
+export interface TransformerFileToFileSettingsInput {
+  fileType: TransformerFileToFileSettingsInputFileType;
+  delimiter?: TransformerFileToFileSettingsInputDelimiter;
+  hasHeader?: boolean;
+  rowIteratorPath?: string;
+}
+
+export interface TransformerFileToFileSettingsOutput {
+  fileType: TransformerFileToFileSettingsOutputFileType;
+  encoding: TransformerFileToFileSettingsOutputEncoding;
+  compression: boolean;
+  header?: boolean;
+  delimiter?: TransformerFileToFileSettingsOutputDelimiter;
+  newline?: TransformerFileToFileSettingsOutputNewline;
+  quoteChar?: TransformerFileToFileSettingsOutputQuoteChar;
+  escapeChar?: TransformerFileToFileSettingsOutputEscapeChar;
+  nullValue?: string | null;
+}
+
+export interface TransformerFileToFileSettingsFieldsDatetimeSettings {
+  inputType: TransformerFileToFileSettingsFieldsDatetimeSettingsInputType;
+  inputTimezone?: Timezone;
+  inputFormat?: string;
+  inputLocale?: string;
+  outputType: TransformerFileToFileSettingsFieldsDatetimeSettingsOutputType;
+  outputTimezone?: Timezone;
+  outputFormat?: string;
+  outputLocale?: string;
+}
+
+export interface TransformerFileToFileSettingsFields {
+  field: string;
+  name: string | null;
+  dataType: TransformerFileToFileSettingsFieldsDataType;
+  fieldProcess: string | null;
+  datetimeSettings?: TransformerFileToFileSettingsFieldsDatetimeSettings | null;
+}
 
 export interface TransformerFileToMqttSettingsInput {
   fileType: TransformerFileToMqttSettingsInputFileType;
@@ -329,6 +488,37 @@ export interface TransformerRecordListToCsvSettingsFields {
   datetimeSettings?: TransformerRecordListToCsvSettingsFieldsDatetimeSettings | null;
 }
 
+export interface TransformerRecordListToFileSettingsOutput {
+  fileType: TransformerRecordListToFileSettingsOutputFileType;
+  encoding: TransformerRecordListToFileSettingsOutputEncoding;
+  compression: boolean;
+  header?: boolean;
+  delimiter?: TransformerRecordListToFileSettingsOutputDelimiter;
+  newline?: TransformerRecordListToFileSettingsOutputNewline;
+  quoteChar?: TransformerRecordListToFileSettingsOutputQuoteChar;
+  escapeChar?: TransformerRecordListToFileSettingsOutputEscapeChar;
+  nullValue?: string | null;
+}
+
+export interface TransformerRecordListToFileSettingsFieldsDatetimeSettings {
+  inputType: TransformerRecordListToFileSettingsFieldsDatetimeSettingsInputType;
+  inputTimezone?: Timezone;
+  inputFormat?: string;
+  inputLocale?: string;
+  outputType: TransformerRecordListToFileSettingsFieldsDatetimeSettingsOutputType;
+  outputTimezone?: Timezone;
+  outputFormat?: string;
+  outputLocale?: string;
+}
+
+export interface TransformerRecordListToFileSettingsFields {
+  field: string;
+  name: string | null;
+  dataType: TransformerRecordListToFileSettingsFieldsDataType;
+  fieldProcess: string | null;
+  datetimeSettings?: TransformerRecordListToFileSettingsFieldsDatetimeSettings | null;
+}
+
 export interface TransformerRecordListToModbusSettingsMapping {
   pointId: string;
   address: string;
@@ -382,6 +572,14 @@ export interface TransformerSetpointToOpcuaSettingsMapping {
 
 export type TransformerFileSettings = object;
 
+export interface TransformerFileToFileSettings {
+  input: TransformerFileToFileSettingsInput;
+  output?: TransformerFileToFileSettingsOutput;
+  filename: string;
+  keepOtherFields?: boolean;
+  fields?: Array<TransformerFileToFileSettingsFields> | null;
+}
+
 export interface TransformerFileToMqttSettings {
   input: TransformerFileToMqttSettingsInput;
   topicField: string;
@@ -429,6 +627,13 @@ export interface TransformerRecordListToCsvSettings {
   fields: Array<TransformerRecordListToCsvSettingsFields> | null;
 }
 
+export interface TransformerRecordListToFileSettings {
+  output: TransformerRecordListToFileSettingsOutput;
+  filename: string;
+  keepOtherFields: boolean;
+  fields: Array<TransformerRecordListToFileSettingsFields> | null;
+}
+
 export type TransformerRecordListToJsonSettings = object;
 
 export interface TransformerRecordListToModbusSettings {
@@ -470,11 +675,13 @@ export interface TransformerSetpointToOpcuaSettings {
 
 export type TransformerSettings =
   | TransformerFileSettings
+  | TransformerFileToFileSettings
   | TransformerFileToMqttSettings
   | TransformerFileToOianalyticsSettings
   | TransformerFileToRecordListSettings
   | TransformerJsonToCsvSettings
   | TransformerRecordListToCsvSettings
+  | TransformerRecordListToFileSettings
   | TransformerRecordListToJsonSettings
   | TransformerRecordListToModbusSettings
   | TransformerRecordListToMqttSettings

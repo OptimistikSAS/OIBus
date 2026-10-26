@@ -61,8 +61,8 @@ to configuring the proxy here.
 
 ## Important Notes {#important-notes}
 
-- **Data format must match the transformer**: use the CSV transformer (`record-list-to-csv`) with the `CSV` data
-  format, or the JSON transformer (`record-list-to-json`) with the `JSON` or `Multiline JSON` data format. A mismatch
+- **Data format must match the transformer**: use the [File transformer](../engine/transformers.mdx#file-from-records)
+  writing a `CSV` file with the `CSV` data format, or a `JSON` file with the `JSON` or `Multiline JSON` data format. A mismatch
   between the transformer and the data format causes ingestion failures on the Azure Data Explorer side.
 - **Ingestion is queued, not streaming**: Azure Data Explorer accepts the batch and completes ingestion
   asynchronously, so rows become queryable only after Azure Data Explorer's own batching latency (by default up to

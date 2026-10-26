@@ -1,0 +1,38 @@
+import { TransformerManifest } from '../../../../shared/model/connector/transformer-manifest.model';
+
+import { buildFileInputAttribute } from '../file-input';
+import { buildFilenameAttribute, buildFileOutputAttribute, fileFieldsAttributes } from '../file-output';
+
+/**
+ * Converts a CSV or JSON file into a CSV or JSON file, renaming, casting and processing the fields of its rows. Another
+ * file is only renamed: changing its content needs a custom transformer.
+ */
+const manifest: TransformerManifest = {
+  id: 'file-to-file',
+  inputType: 'file',
+  outputType: 'file',
+  settings: {
+    type: 'object',
+    key: 'options',
+    translationKey: 'configuration.oibus.manifest.transformers.options',
+    attributes: [
+      buildFileInputAttribute(['csv', 'json', 'other'], 'json'),
+      buildFileOutputAttribute('csv'),
+      buildFilenameAttribute('@CurrentDate.csv'),
+      ...fileFieldsAttributes
+    ],
+    // the content of another file is not converted
+    enablingConditions: ['output', 'keepOtherFields', 'fields'].map(key => ({
+      referralPathFromRoot: 'input.fileType',
+      targetPathFromRoot: key,
+      values: ['csv', 'json']
+    })),
+    validators: [],
+    displayProperties: {
+      visible: true,
+      wrapInBox: false
+    }
+  }
+};
+
+export default manifest;

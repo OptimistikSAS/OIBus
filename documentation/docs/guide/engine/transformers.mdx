@@ -101,14 +101,14 @@ item, which falls back to the next level.
 Once a source is selected, the list is automatically filtered to show only compatible transformers, and the obvious
 one is preselected: **File (as is)** for files sent to a North connector accepting files, otherwise the only standard
 transformer producing the North connector's own format (e.g. OIAnalytics values, MQTT payloads), otherwise the
-passthrough of the data (**JSON**). The available choices depend on the type of South connector chosen:
+passthrough of the data (**File**, the records as they are in a JSON file, or **JSON** for setpoints). The available choices depend on the type of South connector chosen:
 
-| South connector type                                                                                                                                 | Compatible standard transformers                                           |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), Records, MQTT payloads, CSV (from JSON), OIAnalytics payload |
-| **OIBus API**                                                                                                                                        | File (as is), Records, MQTT payloads, CSV (from JSON), OIAnalytics payload |
-| **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                           |
+| South connector type                                                                                                                                 | Compatible standard transformers                                                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                  |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), File (converted or renamed), Records, MQTT payloads, OIAnalytics payload |
+| **OIBus API**                                                                                                                                        | File (as is), File (converted or renamed), Records, MQTT payloads, OIAnalytics payload |
+| **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                                       |
 
 Custom transformers are also shown in this list and are always named by the user.
 
@@ -159,39 +159,53 @@ records work without changing them, while for query rows you name the columns of
 
 ---
 
-#### CSV {#csv}
+#### File {#file-from-records}
 
-Converts the records into a CSV file. Every field of a record becomes a column automatically — there's no need to
-declare a field just to have it appear in the output. Declaring a field (via **Fields Mapping**, using the same
-per-field mapping model as [CSV (from JSON)](#csv-from-json)) is only needed when a column must be renamed, cast to a
-specific type, reformatted (dates), or passed through a JavaScript expression. With **Keep the other fields** off,
-only the configured fields are written, in their configured order.
+Writes the records in a **CSV** or **JSON** file, for the North connectors expecting files (Azure Blob, Amazon S3,
+SFTP, REST, File Writer...). With its default settings, the records are written as they are in a JSON file: this is the
+transformer preselected for the record lists sent to a North connector expecting files.
+
+Every field of a record is written automatically — there's no need to declare a field just to have it appear in the
+output. Declaring a field (via **Fields**) is only needed when it must be renamed, cast to a specific type, reformatted
+(dates), or passed through a JavaScript expression. With **Keep the other fields** off, only the configured fields are
+written, in their configured order.
+
+Before 3.10, the CSV and JSON files had their own transformers (CSV and JSON): upgrading replaces them by this one,
+keeping their settings.
 
 ##### Settings {#settings}
 
-| Setting                   | Description                                                                                                                                                                                        |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename**              | Output filename; supports `@CurrentDate` (current UTC timestamp), and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
-| **Encoding**              | Output character encoding (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                                                                                                                           |
-| **First row as header**   | Whether to write a header row with the column names                                                                                                                                                |
-| **Compression**           | Gzip-compress the output file                                                                                                                                                                      |
-| **Delimiter**             | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                                                                                                                              |
-| **Newline**               | Row separator (`CRLF`, `LF`, `CR`)                                                                                                                                                                 |
-| **Quote character**       | Character used to quote fields (`DOUBLE_QUOTE`, `SINGLE_QUOTE`, `NONE`)                                                                                                                            |
-| **Escape character**      | Character used to escape a quote character inside a quoted field (`BACKSLASH`, `DOUBLE_QUOTE`)                                                                                                     |
-| **Null value**            | Value written out when a configured field is `null` or missing from the record                                                                                                                     |
-| **Keep the other fields** | Write the fields that are not configured in **Fields Mapping** unchanged (enabled by default)                                                                                                      |
-| **Fields Mapping**        | A list of per-column overrides (rename, cast, reformat, or process) — see below                                                                                                                    |
+The **Written file** group:
 
-Each entry in **Fields Mapping** targets one column, by its name in the records:
+| Setting                 | Description                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| **File type**           | `CSV` or `JSON` (default)                                                                            |
+| **Encoding**            | Output character encoding (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                             |
+| **Compress file**       | Gzip-compress the output file, adding `.gz` to its name                                              |
+| **First row as header** | Whether to write a header row with the column names (CSV)                                            |
+| **Delimiter**           | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.) (CSV)                                          |
+| **Newline**             | Row separator (`CRLF`, `LF`, `CR`) (CSV)                                                             |
+| **Quote character**     | Character used to quote fields (`DOUBLE_QUOTE`, `SINGLE_QUOTE`, `NONE`) (CSV)                        |
+| **Escape character**    | Character used to escape a quote character inside a quoted field (`BACKSLASH`, `DOUBLE_QUOTE`) (CSV) |
+| **Null value**          | Value written out when a configured field is `null` or missing (CSV; a JSON file writes `null`)      |
 
-| Setting               | Description                                                                                          |
-| --------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Field Name**        | Name of the field to configure, matching a key in the records                                        |
-| **Column Name**       | Header for this column in the output CSV. Leave empty to keep the original field name.               |
-| **Data Type**         | How to cast the value: `string`, `number`, `boolean`, `datetime`, `array`, or `object`               |
-| **Field Process**     | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`)                    |
-| **Datetime Settings** | Shown only when Data Type is `datetime` — input/output type, timezone, format and locale (see below) |
+Then:
+
+| Setting                   | Description                                                                                                                                                                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**              | Output filename (default `@CurrentDate.json`); supports `@CurrentDate` (current UTC timestamp), `@ConnectorName`, `@ItemName`, and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
+| **Keep the other fields** | Write the fields that are not configured in **Fields** unchanged (enabled by default)                                                                                                                                                                           |
+| **Fields**                | A list of per-field overrides (rename, cast, reformat, or process) — see below                                                                                                                                                                                  |
+
+Each entry in **Fields** targets one field, by its name in the records:
+
+| Setting               | Description                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Field**             | Name of the field to configure, matching a key in the records                                                                                     |
+| **Written name**      | Column (CSV) or property (JSON) name in the output. Leave empty to keep the field name.                                                           |
+| **Data Type**         | How to cast the value: `string`, `number`, `boolean`, `datetime`, `array`, or `object` (an array or object is written as JSON text in a CSV file) |
+| **Field Process**     | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`)                                                                 |
+| **Datetime Settings** | Shown only when Data Type is `datetime` — input/output type, timezone, format and locale (see below)                                              |
 
 When **Data Type** is `datetime`, **Datetime Settings** describes how to parse the raw value and how to render
 it:
@@ -203,7 +217,7 @@ it:
 | **Timestamp output type**             | How to render the value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)    |
 | **Output timezone / format / locale** | Used to render the value when its output type is `string`                          |
 
-##### Example — Point records {#example}
+##### Example — Point records in a CSV file {#example}
 
 **Input (OPC UA items: temp1, pressure1)**
 
@@ -214,9 +228,10 @@ it:
 ]
 ```
 
-With **Keep the other fields** off, Delimiter `SEMI_COLON`, and three fields: `pointId` (column `Reference`, field
-process `value.split('/').pop()`), `timestamp` (column `Timestamp`, datetime from `iso-string` to `string` with format
-`yyyy-MM-dd HH:mm:ss` and timezone `Europe/Paris`) and `value` (column `Value`):
+With File type `CSV`, Delimiter `SEMI_COLON`, **Keep the other fields** off, and three fields: `pointId` (written
+name `Reference`, field process `value.split('/').pop()`), `timestamp` (written name `Timestamp`, datetime from
+`iso-string` to `string` with format `yyyy-MM-dd HH:mm:ss` and timezone `Europe/Paris`) and `value` (written name
+`Value`):
 
 **Output CSV** — `quality` is not written
 
@@ -226,7 +241,7 @@ temp1;2024-01-15 11:00:00;23.5
 pressure1;2024-01-15 11:00:00;102.1
 ```
 
-##### Example — Query rows {#example-7}
+##### Example — Query rows in a CSV file {#example-7}
 
 **Input** (record list from a MySQL item)
 
@@ -237,8 +252,8 @@ pressure1;2024-01-15 11:00:00;102.1
 ]
 ```
 
-With a single field configured (`readingTime`, data type `datetime`, input type `iso-string`, output type
-`string` with format `yyyy-MM-dd HH:mm:ss` and timezone `Europe/Paris`) — `deviceId` and `value` are not
+With File type `CSV` and a single field configured (`readingTime`, data type `datetime`, input type `iso-string`,
+output type `string` with format `yyyy-MM-dd HH:mm:ss` and timezone `Europe/Paris`) — `deviceId` and `value` are not
 configured, so they pass through unchanged:
 
 **Output CSV**
@@ -249,20 +264,10 @@ sensor-1,23.5,2024-01-15 11:00:00
 sensor-1,23.8,2024-01-15 11:01:00
 ```
 
----
+##### Example — Records as they are {#example-1}
 
-#### JSON {#json}
-
-Writes the records as a JSON file, unchanged. Use this when the North connector expects files (e.g. a file-based North
-like Azure Blob, Amazon S3, SFTP or REST).
-
-This transformer has **no configuration options**.
-
-##### Example {#example-1}
-
-**Input** — the point records of an OPC UA or Modbus South connector, or the rows of a SQL query.
-
-**Output** — the same records saved as a `.json` file.
+With the default settings, the records (point records of an OPC UA or Modbus South connector, or the rows of a SQL
+query) are saved unchanged as a `.json` file.
 
 ---
 
@@ -585,41 +590,26 @@ Configuration: row iterator `$.sensors[*]`, topic field `topic`, object fields `
 
 ---
 
-#### CSV (from JSON) {#csv-from-json}
+#### File (converted or renamed) {#file-converted-or-renamed}
 
-Parses a JSON structure and writes a CSV file. A **row iterator path** (JSONPath expression) identifies the array
-of objects that become rows, and each configured **field** maps a path within each row to a CSV column. Fields
-support datetime conversion, type casting, and optional per-field JavaScript post-processing expressions.
+Converts a CSV or JSON file into a CSV or JSON file — CSV to JSON, JSON to CSV, or into another CSV or JSON format —
+renaming, casting and processing the fields of its rows. After the [File group](#reading-the-file), its settings are the
+[Written file group, Filename, Keep the other fields and Fields](#settings) of the [File](#file-from-records)
+transformer of the record lists, the fields being read in the rows of the file (a JSONPath for a JSON file, see
+[Reading the file](#reading-the-file)).
 
-##### Settings {#settings-7}
+With the file type **Other**, the file is only **renamed**: its content is sent as it is, and only the **Filename** is
+set. Changing the content of such a file needs a [custom transformer](#custom-transformers).
 
-| Setting               | Description                                                                                                                                                                                        |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename**          | Output filename; supports `@CurrentDate` (current UTC timestamp), and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
-| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                                                                                                                                                    |
-| **Header**            | Whether to include the column header row                                                                                                                                                           |
-| **Delimiter**         | Column separator                                                                                                                                                                                   |
-| **Newline**           | Line ending (`LF`, `CRLF`, `CR`)                                                                                                                                                                   |
-| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                                                                                                                                          |
-| **Escape char**       | `DOUBLE_QUOTE` or `BACKSLASH`                                                                                                                                                                      |
-| **Null value**        | String written when a field is missing or null (defaults to empty string)                                                                                                                          |
-| **Row iterator path** | JSONPath pointing to the array of rows (e.g. `$.data[*]`)                                                                                                                                          |
-| **Fields**            | One entry per CSV column (see below)                                                                                                                                                               |
+Besides the variables of the record lists, the **Filename** supports `@SourceFilename` and `@SourceExtension`: the name
+(without extension) and the extension (with its dot) of the transformed file, e.g. `@SourceFilename_copy@SourceExtension`.
 
-Each **field** entry:
+Before 3.10, the JSON files had their own transformer to CSV (CSV from JSON): upgrading replaces it by this one, keeping
+its settings, its fields only being written.
 
-| Setting               | Description                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------- |
-| **Column name**       | Header label in the CSV                                                                 |
-| **JSON path**         | JSONPath to the value within the current row (e.g. `$.timestamp`)                       |
-| **Data type**         | `string`, `number`, `boolean`, `datetime`, `array`, or `object`                         |
-| **Datetime settings** | Input and output format/timezone/type when data type is `datetime`                      |
-| **Field process**     | Optional JS expression to post-process the extracted value (e.g. `value.toUpperCase()`) |
+##### Example — JSON to CSV {#example-6}
 
-##### Example {#example-6}
-
-A REST South connector fetches a JSON report from an API. The **CSV (from JSON)** transformer extracts the
-relevant fields and reformats them for a File Writer North connector.
+A REST South connector fetches a JSON report from an API, reformatted for a File Writer North connector.
 
 **Input JSON** (returned by the REST item)
 
@@ -635,8 +625,9 @@ relevant fields and reformats them for a File Writer North connector.
 
 Configuration:
 
-- Row iterator path: `$.data[*]`
-- Fields: `Timestamp` (`$.ts`, datetime), `Tag` (`$.tag`, string), `Value` (`$.val`, number), `OK` (`$.ok`, boolean)
+- File type `JSON`, row iterator JSONPath `$.data[*]`
+- Written file type `CSV`, filename `@SourceFilename.csv`, **Keep the other fields** off
+- Fields: `ts` (written name `Timestamp`, datetime), `tag` (`Tag`, string), `val` (`Value`, number), `ok` (`OK`, boolean)
 
 **Output CSV**
 
@@ -647,7 +638,10 @@ Timestamp,Tag,Value,OK
 2024-01-15T10:00:00.000Z,pressure1,102.1,false
 ```
 
-Like the other file transformers, it parses the [nested JSON strings](#reading-the-file).
+##### Example — Renaming a file {#example--renaming-a-file}
+
+With the file type `Other` and the filename `@SourceFilename_@CurrentDate@SourceExtension`, a file `report.pdf` is
+sent unchanged as `report_2024_01_15_10_00_00_000.pdf`.
 
 ---
 

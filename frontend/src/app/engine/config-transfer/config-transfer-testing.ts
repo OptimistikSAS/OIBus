@@ -112,7 +112,7 @@ export const configImportPreview: ConfigImportPreviewDTO = {
     ],
     transformers: [
       // listed by every export but linked to by nothing: never counted nor reported as missing
-      standardTransformerEntry('unlinked-standard', 'json-to-csv'),
+      standardTransformerEntry('unlinked-standard', 'file-to-file'),
       standardTransformerEntry('standard1', 'file'),
       {
         oIBusInternalId: 'custom1',

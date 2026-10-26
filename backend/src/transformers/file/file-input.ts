@@ -11,7 +11,7 @@ const KEY = 'configuration.oibus.manifest.transformers.file-input';
 
 /** How the file transformers read their file: its type, and the options of that type */
 export interface FileInputSettings {
-  fileType: 'csv' | 'json';
+  fileType: 'csv' | 'json' | 'other';
   delimiter?: CsvCharacter;
   hasHeader?: boolean;
   rowIteratorPath?: string;
@@ -20,9 +20,12 @@ export interface FileInputSettings {
 /**
  * The `input` options of the file transformers: the type of the file, then how to read its rows. A CSV file has a row
  * per line (the columns named by the header, or by their index from 0 without header); a JSON file has a row per node
- * matched by the row iterator JSONPath.
+ * matched by the row iterator JSONPath. Another file is not read (file-to-file only renames it).
  */
-export const fileInputAttribute: OIBusObjectAttribute = {
+export const buildFileInputAttribute = (
+  fileTypes: Array<FileInputSettings['fileType']>,
+  defaultFileType: FileInputSettings['fileType']
+): OIBusObjectAttribute => ({
   type: 'object',
   key: 'input',
   translationKey: `${KEY}.title`,
@@ -38,8 +41,8 @@ export const fileInputAttribute: OIBusObjectAttribute = {
       type: 'string-select',
       key: 'fileType',
       translationKey: `${KEY}.file-type`,
-      defaultValue: 'csv',
-      selectableValues: ['csv', 'json'],
+      defaultValue: defaultFileType,
+      selectableValues: fileTypes,
       validators: [{ type: 'REQUIRED', arguments: [] }],
       displayProperties: { row: 0, columns: 4, displayInViewMode: true }
     },
@@ -69,7 +72,10 @@ export const fileInputAttribute: OIBusObjectAttribute = {
       displayProperties: { row: 0, columns: 8, displayInViewMode: false }
     }
   ]
-};
+});
+
+/** The input of the transformers reading the rows of CSV and JSON files */
+export const fileInputAttribute = buildFileInputAttribute(['csv', 'json'], 'csv');
 
 /** The rows read from a file, and the number of errors met while parsing a CSV file */
 export interface FileRows {

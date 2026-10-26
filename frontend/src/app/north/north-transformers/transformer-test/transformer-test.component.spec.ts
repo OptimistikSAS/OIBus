@@ -20,7 +20,7 @@ import { NorthTransformerTestComponent, TransformerTestItemSource } from './tran
 const transformer: StandardTransformerDTO = {
   id: 'transformer-1',
   type: 'standard',
-  functionName: 'record-list-to-json',
+  functionName: 'record-list-to-file',
   inputType: 'record-list',
   outputType: 'file',
   manifest: {
