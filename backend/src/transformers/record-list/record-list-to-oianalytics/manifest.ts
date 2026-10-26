@@ -1,5 +1,11 @@
 import { TransformerManifest } from '../../../../shared/model/connector/transformer-manifest.model';
 
+const KEY = 'configuration.oibus.manifest.transformers.record-list-to-oianalytics';
+
+/**
+ * The OIAnalytics payload is made of references, timestamps and values: each one is read from a field of the records, and
+ * the references and values can be processed by a JS expression.
+ */
 const manifest: TransformerManifest = {
   id: 'record-list-to-oianalytics',
   inputType: 'record-list',
@@ -10,99 +16,127 @@ const manifest: TransformerManifest = {
     translationKey: 'configuration.oibus.manifest.transformers.options',
     attributes: [
       {
-        type: 'string',
-        key: 'pointIdColumn',
-        translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.point-id-column',
-        defaultValue: 'pointId',
-        validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 0, columns: 4, displayInViewMode: false }
-      },
-      {
-        type: 'string',
-        key: 'timestampColumn',
-        translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.timestamp-column',
-        defaultValue: 'timestamp',
-        validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 0, columns: 4, displayInViewMode: false }
-      },
-      {
-        type: 'string',
-        key: 'valueColumn',
-        translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.value-column',
-        defaultValue: 'value',
-        validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 0, columns: 4, displayInViewMode: false }
-      },
-      {
         type: 'object',
-        key: 'timestampSettings',
-        translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.timestamp-settings.title',
-        displayProperties: { visible: true, wrapInBox: false },
-        enablingConditions: [
-          { referralPathFromRoot: 'type', targetPathFromRoot: 'timezone', values: ['string'] },
-          { referralPathFromRoot: 'type', targetPathFromRoot: 'format', values: ['string'] },
-          { referralPathFromRoot: 'type', targetPathFromRoot: 'locale', values: ['string'] }
-        ],
+        key: 'reference',
+        translationKey: `${KEY}.reference.title`,
+        displayProperties: { visible: true, wrapInBox: true },
+        enablingConditions: [],
         validators: [{ type: 'REQUIRED', arguments: [] }],
         attributes: [
           {
-            type: 'string-select',
-            key: 'type',
-            translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.timestamp-settings.type',
-            defaultValue: 'iso-string',
-            selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+            type: 'string',
+            key: 'referenceField',
+            translationKey: `${KEY}.reference.reference-field`,
+            defaultValue: 'pointId',
             validators: [{ type: 'REQUIRED', arguments: [] }],
-            displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-          },
-          {
-            type: 'timezone',
-            key: 'timezone',
-            translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.timestamp-settings.timezone',
-            defaultValue: 'UTC',
-            validators: [{ type: 'REQUIRED', arguments: [] }],
-            displayProperties: { row: 0, columns: 3, displayInViewMode: false }
+            displayProperties: { row: 0, columns: 4, displayInViewMode: false }
           },
           {
             type: 'string',
-            key: 'format',
-            translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.timestamp-settings.format',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss',
-            validators: [{ type: 'REQUIRED', arguments: [] }],
-            displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-          },
-          {
-            type: 'string',
-            key: 'locale',
-            translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.timestamp-settings.locale',
-            defaultValue: 'en-En',
-            validators: [{ type: 'REQUIRED', arguments: [] }],
-            displayProperties: { row: 0, columns: 3, displayInViewMode: false }
+            key: 'referenceProcess',
+            translationKey: `${KEY}.reference.reference-process`,
+            defaultValue: null,
+            validators: [],
+            displayProperties: { row: 0, columns: 8, displayInViewMode: false }
           }
         ]
       },
       {
-        type: 'string-select',
-        key: 'precision',
-        translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.precision',
-        defaultValue: 'ms',
-        selectableValues: ['ms', 's', 'min', 'hr'],
+        type: 'object',
+        key: 'timestamp',
+        translationKey: `${KEY}.timestamp.title`,
+        displayProperties: { visible: true, wrapInBox: true },
+        enablingConditions: [
+          { referralPathFromRoot: 'sourceType', targetPathFromRoot: 'timezone', values: ['string'] },
+          { referralPathFromRoot: 'sourceType', targetPathFromRoot: 'format', values: ['string'] },
+          { referralPathFromRoot: 'sourceType', targetPathFromRoot: 'locale', values: ['string'] }
+        ],
         validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 1, columns: 4, displayInViewMode: true }
+        attributes: [
+          {
+            type: 'string',
+            key: 'timestampField',
+            translationKey: `${KEY}.timestamp.timestamp-field`,
+            defaultValue: 'timestamp',
+            validators: [{ type: 'REQUIRED', arguments: [] }],
+            displayProperties: { row: 0, columns: 4, displayInViewMode: false }
+          },
+          {
+            type: 'string-select',
+            key: 'sourceType',
+            translationKey: `${KEY}.timestamp.source-type`,
+            defaultValue: 'iso-string',
+            selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
+            validators: [{ type: 'REQUIRED', arguments: [] }],
+            displayProperties: { row: 0, columns: 4, displayInViewMode: false }
+          },
+          {
+            type: 'string-select',
+            key: 'precision',
+            translationKey: `${KEY}.timestamp.precision`,
+            defaultValue: 'ms',
+            selectableValues: ['ms', 's', 'min', 'hr'],
+            validators: [{ type: 'REQUIRED', arguments: [] }],
+            displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+          },
+          {
+            type: 'timezone',
+            key: 'timezone',
+            translationKey: `${KEY}.timestamp.timezone`,
+            defaultValue: 'UTC',
+            validators: [{ type: 'REQUIRED', arguments: [] }],
+            displayProperties: { row: 1, columns: 4, displayInViewMode: false }
+          },
+          {
+            type: 'string',
+            key: 'format',
+            translationKey: `${KEY}.timestamp.format`,
+            defaultValue: 'yyyy-MM-dd HH:mm:ss',
+            validators: [{ type: 'REQUIRED', arguments: [] }],
+            displayProperties: { row: 1, columns: 4, displayInViewMode: false }
+          },
+          {
+            type: 'string',
+            key: 'locale',
+            translationKey: `${KEY}.timestamp.locale`,
+            defaultValue: 'en-En',
+            validators: [{ type: 'REQUIRED', arguments: [] }],
+            displayProperties: { row: 1, columns: 4, displayInViewMode: false }
+          }
+        ]
       },
       {
-        type: 'string',
-        key: 'referenceProcess',
-        translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.reference-process',
-        defaultValue: null,
-        validators: [],
-        displayProperties: { row: 2, columns: 12, displayInViewMode: false }
+        type: 'object',
+        key: 'value',
+        translationKey: `${KEY}.value.title`,
+        displayProperties: { visible: true, wrapInBox: true },
+        enablingConditions: [],
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        attributes: [
+          {
+            type: 'string',
+            key: 'valueField',
+            translationKey: `${KEY}.value.value-field`,
+            defaultValue: 'value',
+            validators: [{ type: 'REQUIRED', arguments: [] }],
+            displayProperties: { row: 0, columns: 4, displayInViewMode: false }
+          },
+          {
+            type: 'string',
+            key: 'valueProcess',
+            translationKey: `${KEY}.value.value-process`,
+            defaultValue: null,
+            validators: [],
+            displayProperties: { row: 0, columns: 8, displayInViewMode: false }
+          }
+        ]
       }
     ],
     enablingConditions: [],
     validators: [],
     displayProperties: {
       visible: true,
-      wrapInBox: true
+      wrapInBox: false
     }
   }
 };

@@ -801,13 +801,16 @@
             }
           },
           "record-list-to-oianalytics": {
-            "point-id-column": "点位 ID 列",
-            "timestamp-column": "时间戳列",
-            "value-column": "值列",
-            "timestamp-settings": {
-              "title": "时间戳设置",
-              "type": {
-                "title": "时间戳类型",
+            "reference": {
+              "title": "引用",
+              "reference-field": "引用字段",
+              "reference-process": "引用处理（JS 表达式，例如 value.toUpperCase()）"
+            },
+            "timestamp": {
+              "title": "时间戳",
+              "timestamp-field": "时间戳字段",
+              "source-type": {
+                "title": "源类型",
                 "string": "字符串",
                 "iso-string": "ISO 字符串",
                 "unix-epoch": "Unix 纪元（秒）",
@@ -815,16 +818,20 @@
               },
               "timezone": "时区",
               "format": "格式",
-              "locale": "区域设置"
+              "locale": "区域设置",
+              "precision": {
+                "title": "时间戳精度",
+                "ms": "毫秒",
+                "s": "秒",
+                "min": "分钟",
+                "hr": "小时"
+              }
             },
-            "precision": {
-              "title": "时间戳精度",
-              "ms": "毫秒",
-              "s": "秒",
-              "min": "分钟",
-              "hr": "小时"
-            },
-            "reference-process": "引用处理（JS 表达式，例如 value.toUpperCase()）"
+            "value": {
+              "title": "值",
+              "value-field": "值字段",
+              "value-process": "值处理（JS 表达式，例如 Math.round(value * 100) / 100）"
+            }
           },
           "record-list-to-opcua": {
             "point-id-column": "点位 ID 列",
@@ -3297,10 +3304,13 @@
         "step": {
           "source": "数据源和转换器",
           "options": "选项",
-          "test": "测试"
+          "review": "检查并保存"
         },
         "no-options": "此转换器没有选项。",
-        "no-transformer": "请在第一步中选择转换器。"
+        "no-transformer": "请在第一步中选择转换器。",
+        "review-errors": "保存前请修正以下步骤：",
+        "review-changes": "自上次保存以来修改的设置：{{count}}",
+        "review-no-changes": "自上次保存以来没有修改"
       }
     },
     "monitoring": {

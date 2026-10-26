@@ -801,13 +801,16 @@
             }
           },
           "record-list-to-oianalytics": {
-            "point-id-column": "Colonne ID du point",
-            "timestamp-column": "Colonne d'horodatage",
-            "value-column": "Colonne de valeur",
-            "timestamp-settings": {
-              "title": "Paramètres d'horodatage",
-              "type": {
-                "title": "Type d'horodatage",
+            "reference": {
+              "title": "Référence",
+              "reference-field": "Champ de la référence",
+              "reference-process": "Traitement de la référence (expression JS, ex. value.toUpperCase())"
+            },
+            "timestamp": {
+              "title": "Horodatage",
+              "timestamp-field": "Champ de l'horodatage",
+              "source-type": {
+                "title": "Type source",
                 "string": "Chaîne",
                 "iso-string": "Chaîne ISO",
                 "unix-epoch": "Époque Unix (s)",
@@ -815,16 +818,20 @@
               },
               "timezone": "Fuseau horaire",
               "format": "Format",
-              "locale": "Paramètres régionaux"
+              "locale": "Paramètres régionaux",
+              "precision": {
+                "title": "Précision de l'horodatage",
+                "ms": "Milliseconde",
+                "s": "Seconde",
+                "min": "Minute",
+                "hr": "Heure"
+              }
             },
-            "precision": {
-              "title": "Précision de l'horodatage",
-              "ms": "Milliseconde",
-              "s": "Seconde",
-              "min": "Minute",
-              "hr": "Heure"
-            },
-            "reference-process": "Traitement de la référence (expression JS, ex. value.toUpperCase())"
+            "value": {
+              "title": "Valeur",
+              "value-field": "Champ de la valeur",
+              "value-process": "Traitement de la valeur (expression JS, ex. Math.round(value * 100) / 100)"
+            }
           },
           "record-list-to-opcua": {
             "point-id-column": "Colonne ID du point",
@@ -3297,10 +3304,13 @@
         "step": {
           "source": "Source et transformateur",
           "options": "Options",
-          "test": "Test"
+          "review": "Vérification et enregistrement"
         },
         "no-options": "Ce transformateur n'a pas d'option.",
-        "no-transformer": "Choisissez un transformateur à la première étape."
+        "no-transformer": "Choisissez un transformateur à la première étape.",
+        "review-errors": "Corrigez ces étapes avant d'enregistrer :",
+        "review-changes": "Paramètres modifiés depuis l'enregistrement du transformateur : {{count}}",
+        "review-no-changes": "Aucune modification depuis l'enregistrement du transformateur"
       }
     },
     "monitoring": {

@@ -178,6 +178,30 @@ export const TIME_VALUES_TRANSFORMER_REPLACEMENTS: Record<string, { functionName
 export const POINT_SOUTH_TYPES = ['ads', 'bacnet', 'modbus', 'opc', 'opcua', 'osisoft-pi', 's7'];
 export const RECORD_LIST_TO_OIANALYTICS_FUNCTION_NAME = 'record-list-to-oianalytics';
 
+/**
+ * Groups the options of a record-list-to-oianalytics transformer by part of the OIAnalytics payload: the reference, the
+ * timestamp and the value, each read from a field, the value now processed like the reference (without expression for
+ * the existing transformers). Options already grouped are left as they are.
+ */
+export function toGroupedOIAnalyticsOptions(options: Record<string, unknown>): Record<string, unknown> {
+  if (options.reference !== undefined) return options;
+  const timestampSettings = (options.timestampSettings ?? {}) as Record<string, unknown>;
+  const timestamp: Record<string, unknown> = {
+    timestampField: options.timestampColumn ?? 'timestamp',
+    sourceType: timestampSettings.type ?? 'iso-string',
+    precision: options.precision ?? 'ms'
+  };
+  // The settings of the string timestamps, kept only when set: the form leaves them out for the other types
+  for (const key of ['timezone', 'format', 'locale']) {
+    if (timestampSettings[key] !== undefined) timestamp[key] = timestampSettings[key];
+  }
+  return {
+    reference: { referenceField: options.pointIdColumn ?? 'pointId', referenceProcess: options.referenceProcess ?? null },
+    timestamp,
+    value: { valueField: options.valueColumn ?? 'value', valueProcess: null }
+  };
+}
+
 /** The data type of a custom transformer input or output, `time-values` becoming `record-list`. */
 export const toRecordListDataType = (dataType: string): string => (dataType === 'time-values' ? 'record-list' : dataType);
 
@@ -745,7 +769,7 @@ export const upgrade: ConfigUpgrade = {
     'move SQL items CSV serialization to record-list-to-csv transformers; replace the raw resampling of OPC UA and OPC items with none; ' +
     'replace the time-values transformers and data type by record-list ones, sending the point-based souths to OIAnalytics through ' +
     'record-list-to-oianalytics transformers; replace the iso and ignore transformers by passthroughs, the data without transformer ' +
-    'being dropped',
+    'being dropped; group the options of the record-list-to-oianalytics transformers by reference, timestamp and value',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -811,6 +835,20 @@ export const upgrade: ConfigUpgrade = {
       addOIAnalyticsTransformers(config);
     }
     replaceIsoAndIgnoreTransformers(config);
+
+    const oiaTransformerIds = asObjects(config.transformers)
+      .filter(
+        transformer =>
+          transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === RECORD_LIST_TO_OIANALYTICS_FUNCTION_NAME
+      )
+      .map(transformer => transformer.oIBusInternalId);
+    const groupOIAnalyticsOptions = (link: JsonObject): void => {
+      if (oiaTransformerIds.includes(link.transformerId)) {
+        link.options = toGroupedOIAnalyticsOptions((link.options as JsonObject | null) ?? {});
+      }
+    };
+    forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(groupOIAnalyticsOptions));
+    forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(groupOIAnalyticsOptions));
 
     return config;
   }

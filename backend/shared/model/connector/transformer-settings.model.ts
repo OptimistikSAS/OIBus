@@ -193,18 +193,18 @@ export const TRANSFORMER_RECORD_LIST_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = [
 export type TransformerRecordListToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_RECORD_LIST_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
 
-export const TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_SETTINGS_TYPES = [
+export const TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_SOURCE_TYPES = [
   'iso-string',
   'unix-epoch',
   'unix-epoch-ms',
   'string'
 ] as const;
-export type TransformerRecordListToOianalyticsSettingsTimestampSettingsType =
-  (typeof TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_SETTINGS_TYPES)[number];
+export type TransformerRecordListToOianalyticsSettingsTimestampSourceType =
+  (typeof TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_SOURCE_TYPES)[number];
 
-export const TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_PRECISIONS = ['ms', 's', 'min', 'hr'] as const;
-export type TransformerRecordListToOianalyticsSettingsPrecision =
-  (typeof TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_PRECISIONS)[number];
+export const TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_PRECISIONS = ['ms', 's', 'min', 'hr'] as const;
+export type TransformerRecordListToOianalyticsSettingsTimestampPrecision =
+  (typeof TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_PRECISIONS)[number];
 
 export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerSetpointToModbusSettingsMappingModbusType =
@@ -303,11 +303,23 @@ export interface TransformerRecordListToMqttSettingsMapping {
   topic: string;
 }
 
-export interface TransformerRecordListToOianalyticsSettingsTimestampSettings {
-  type: TransformerRecordListToOianalyticsSettingsTimestampSettingsType;
+export interface TransformerRecordListToOianalyticsSettingsReference {
+  referenceField: string;
+  referenceProcess: string | null;
+}
+
+export interface TransformerRecordListToOianalyticsSettingsTimestamp {
+  timestampField: string;
+  sourceType: TransformerRecordListToOianalyticsSettingsTimestampSourceType;
+  precision: TransformerRecordListToOianalyticsSettingsTimestampPrecision;
   timezone?: Timezone;
   format?: string;
   locale?: string;
+}
+
+export interface TransformerRecordListToOianalyticsSettingsValue {
+  valueField: string;
+  valueProcess: string | null;
 }
 
 export interface TransformerRecordListToOpcuaSettingsMapping {
@@ -350,6 +362,8 @@ export interface TransformerCsvToRecordListSettings {
   timestampSettings: TransformerCsvToRecordListSettingsTimestampSettings;
 }
 
+export type TransformerFileSettings = object;
+
 export interface TransformerJsonToCsvSettings {
   filename: string;
   encoding: TransformerJsonToCsvSettingsEncoding;
@@ -371,10 +385,6 @@ export interface TransformerJsonToOianalyticsSettings {
   referenceProcess: string | null;
   datetimeSettings: TransformerJsonToOianalyticsSettingsDatetimeSettings | null;
 }
-
-export type TransformerIgnoreSettings = object;
-
-export type TransformerIsoSettings = object;
 
 export interface TransformerRecordListToCsvSettings {
   filename: string;
@@ -404,12 +414,9 @@ export interface TransformerRecordListToMqttSettings {
 }
 
 export interface TransformerRecordListToOianalyticsSettings {
-  pointIdColumn: string;
-  timestampColumn: string;
-  valueColumn: string;
-  timestampSettings: TransformerRecordListToOianalyticsSettingsTimestampSettings;
-  precision: TransformerRecordListToOianalyticsSettingsPrecision;
-  referenceProcess: string | null;
+  reference: TransformerRecordListToOianalyticsSettingsReference;
+  timestamp: TransformerRecordListToOianalyticsSettingsTimestamp;
+  value: TransformerRecordListToOianalyticsSettingsValue;
 }
 
 export interface TransformerRecordListToOpcuaSettings {
@@ -417,6 +424,8 @@ export interface TransformerRecordListToOpcuaSettings {
   valueColumn: string;
   mapping: Array<TransformerRecordListToOpcuaSettingsMapping>;
 }
+
+export type TransformerSetpointToJsonSettings = object;
 
 export interface TransformerSetpointToModbusSettings {
   mapping: Array<TransformerSetpointToModbusSettingsMapping>;
@@ -433,16 +442,16 @@ export interface TransformerSetpointToOpcuaSettings {
 export type TransformerSettings =
   | TransformerCsvToMqttSettings
   | TransformerCsvToRecordListSettings
+  | TransformerFileSettings
   | TransformerJsonToCsvSettings
   | TransformerJsonToOianalyticsSettings
-  | TransformerIgnoreSettings
-  | TransformerIsoSettings
   | TransformerRecordListToCsvSettings
   | TransformerRecordListToJsonSettings
   | TransformerRecordListToModbusSettings
   | TransformerRecordListToMqttSettings
   | TransformerRecordListToOianalyticsSettings
   | TransformerRecordListToOpcuaSettings
+  | TransformerSetpointToJsonSettings
   | TransformerSetpointToModbusSettings
   | TransformerSetpointToMqttSettings
   | TransformerSetpointToOpcuaSettings;
