@@ -1837,7 +1837,7 @@
         "cancel": "测试已取消"
       },
       "view": {
-        "any": "原始视图",
+        "raw": "原始视图",
         "table": "表格视图",
         "json": "JSON 视图"
       },
@@ -2716,13 +2716,13 @@
       "oibus-south": "South 连接器"
     },
     "oibus-input-data-type": {
-      "any": "文件（适用于所有数据源）",
+      "file": "文件（适用于所有数据源）",
       "setpoint": "设定值（适用于所有数据源）",
-      "any-content": "任意内容",
+      "file-content": "文件内容",
       "record-list": "记录（点位和类 SQL 数据源）"
     },
     "oibus-output-data-type": {
-      "any": "任意",
+      "file": "文件",
       "mqtt": "MQTT",
       "modbus": "Modbus",
       "oianalytics": "OIAnalytics 优化时间值",

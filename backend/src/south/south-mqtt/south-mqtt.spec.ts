@@ -252,7 +252,7 @@ describe('SouthMQTT', () => {
             item: { id: mockPayload.item.id, name: mockPayload.item.name, topic: mockPayload.item.settings.topic }
           }
         ]),
-        type: 'any-content'
+        type: 'file-content'
       },
       testData.constants.dates.FAKE_NOW,
       [mockPayload.item],
@@ -280,14 +280,14 @@ describe('SouthMQTT', () => {
 
     const [firstCall, secondCall] = addContentCallback.mock.calls;
     assert.deepStrictEqual(firstCall.arguments[3], [configuration.items[0]]);
-    assert.ok(firstCall.arguments[1].type === 'any-content');
+    assert.ok(firstCall.arguments[1].type === 'file-content');
     assert.deepStrictEqual(JSON.parse(firstCall.arguments[1].content), [
       { message: 'a', timestamp: testData.constants.dates.FAKE_NOW, item: { id: 'id1', name: 'item1', topic: 'my/first/topic' } },
       { message: 'c', timestamp: testData.constants.dates.FAKE_NOW, item: { id: 'id1', name: 'item1', topic: 'my/first/topic' } }
     ]);
 
     assert.deepStrictEqual(secondCall.arguments[3], [configuration.items[1]]);
-    assert.ok(secondCall.arguments[1].type === 'any-content');
+    assert.ok(secondCall.arguments[1].type === 'file-content');
     assert.deepStrictEqual(JSON.parse(secondCall.arguments[1].content), [
       {
         message: 'b',
@@ -646,7 +646,7 @@ describe('SouthMQTT', () => {
       await flushPromises();
 
       const result = await testItemPromise;
-      assert.ok(result.result.type === 'any-content');
+      assert.ok(result.result.type === 'file-content');
       const parsed = JSON.parse(result.result.content);
       assert.strictEqual(parsed[0].message, 'hello from PLC');
       assert.strictEqual(result.connectionDuration, 15);

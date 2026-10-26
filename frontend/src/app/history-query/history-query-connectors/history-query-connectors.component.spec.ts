@@ -50,8 +50,8 @@ const southTypes: Array<SouthType> = [
   { id: 'opcua', category: 'iot', modes: historyModes }
 ];
 const northTypes: Array<NorthType> = [
-  { id: 'console', category: 'debug', types: ['any'] },
-  { id: 'file-writer', category: 'file', types: ['any'] }
+  { id: 'console', category: 'debug', types: ['file'] },
+  { id: 'file-writer', category: 'file', types: ['file'] }
 ];
 
 describe('HistoryQueryConnectorsComponent', () => {

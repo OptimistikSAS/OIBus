@@ -8,11 +8,11 @@ import AuditService from '../../service/audit.service';
 import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
-import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
-import CSVToRecordListTransformer from '../../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
-import FileTransformer from '../../transformers/any/file/file-transformer';
-import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
-import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
+import CSVToMQTTTransformer from '../../transformers/file/csv-to-mqtt/csv-to-mqtt-transformer';
+import CSVToRecordListTransformer from '../../transformers/file/csv-to-record-list/csv-to-record-list-transformer';
+import FileTransformer from '../../transformers/file/file/file-transformer';
+import JSONToCSVTransformer from '../../transformers/file/json-to-csv/json-to-csv-transformer';
+import JSONToOIAnalyticsTransformer from '../../transformers/file/json-to-oianalytics/json-to-oianalytics-transformer';
 import RecordListToCsvTransformer from '../../transformers/record-list/record-list-to-csv/record-list-to-csv-transformer';
 import RecordListToJSONTransformer from '../../transformers/record-list/record-list-to-json/record-list-to-json-transformer';
 import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
@@ -28,26 +28,26 @@ import TransformerRepository from './transformer.repository';
 const TEST_DB_PATH = 'src/tests/test-config-transformer.db';
 
 const standardTransformers: Array<StandardTransformer> = [
-  { id: 'csvToMqtt', inputType: 'any', functionName: CSVToMQTTTransformer.transformerName, outputType: 'mqtt', type: 'standard' },
+  { id: 'csvToMqtt', inputType: 'file', functionName: CSVToMQTTTransformer.transformerName, outputType: 'mqtt', type: 'standard' },
   {
     id: 'csvToRecordList',
-    inputType: 'any',
+    inputType: 'file',
     functionName: CSVToRecordListTransformer.transformerName,
     outputType: 'record-list',
     type: 'standard'
   },
-  { id: 'file', type: 'standard', functionName: FileTransformer.transformerName, inputType: 'any', outputType: 'any' },
-  { id: 'jsonToCsv', inputType: 'any', functionName: JSONToCSVTransformer.transformerName, outputType: 'any', type: 'standard' },
+  { id: 'file', type: 'standard', functionName: FileTransformer.transformerName, inputType: 'file', outputType: 'file' },
+  { id: 'jsonToCsv', inputType: 'file', functionName: JSONToCSVTransformer.transformerName, outputType: 'file', type: 'standard' },
   {
     id: 'recordListToCsv',
     inputType: 'record-list',
     functionName: RecordListToCsvTransformer.transformerName,
-    outputType: 'any',
+    outputType: 'file',
     type: 'standard'
   },
   {
     id: 'jsonToOia',
-    inputType: 'any',
+    inputType: 'file',
     functionName: JSONToOIAnalyticsTransformer.transformerName,
     outputType: 'oianalytics',
     type: 'standard'
@@ -57,7 +57,7 @@ const standardTransformers: Array<StandardTransformer> = [
     type: 'standard',
     functionName: RecordListToJSONTransformer.transformerName,
     inputType: 'record-list',
-    outputType: 'any'
+    outputType: 'file'
   },
   {
     id: 'recordListToModbus',
@@ -91,7 +91,7 @@ const standardTransformers: Array<StandardTransformer> = [
     id: 'oibusSetpointToJson',
     inputType: 'setpoint',
     functionName: OIBusSetpointToJSONTransformer.transformerName,
-    outputType: 'any',
+    outputType: 'file',
     type: 'standard'
   },
   {
@@ -298,7 +298,7 @@ describe('TransformerRepository', () => {
   });
 
   it('should search with only outputType filter', () => {
-    const result = repository.search({ type: undefined, inputType: undefined, outputType: 'any', page: 0 });
+    const result = repository.search({ type: undefined, inputType: undefined, outputType: 'file', page: 0 });
     assert.ok(result.totalElements >= 1);
   });
 

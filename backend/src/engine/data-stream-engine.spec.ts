@@ -366,7 +366,7 @@ describe('DataStreamEngine', () => {
 
     it('should add external content (API)', async () => {
       mockedNorth1.isEnabled.mock.mockImplementation(() => true);
-      const mockContent: OIBusContent = { type: 'any', filePath: 'file' };
+      const mockContent: OIBusContent = { type: 'file', filePath: 'file' };
       await engine.addExternalContent(testData.north.list[0].id, 'dataSourceId', mockContent);
 
       assert.strictEqual(mockedNorth1.cacheContent.mock.calls.length, 1);
@@ -378,7 +378,7 @@ describe('DataStreamEngine', () => {
 
     it('should not add external content (API) when disabled', async () => {
       mockedNorth1.isEnabled.mock.mockImplementation(() => false);
-      const mockContent: OIBusContent = { type: 'any', filePath: 'file' };
+      const mockContent: OIBusContent = { type: 'file', filePath: 'file' };
       await engine.addExternalContent(testData.north.list[0].id, 'dataSourceId', mockContent);
 
       assert.strictEqual(mockedNorth1.cacheContent.mock.calls.length, 0);

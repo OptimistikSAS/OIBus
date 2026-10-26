@@ -20,12 +20,12 @@ const standardTransformer = (id: string, functionName: string, outputType: Outpu
   id,
   type: 'standard',
   functionName,
-  inputType: 'any',
+  inputType: 'file',
   outputType,
   manifest: testData.transformers.customList[0].manifest
 });
 
-const compatibleTransformer = standardTransformer('transformer-file', 'file', 'any');
+const compatibleTransformer = standardTransformer('transformer-file', 'file', 'file');
 const incompatibleTransformer = standardTransformer('transformer-csv-to-mqtt', 'csv-to-mqtt', 'mqtt');
 const customTransformer: TransformerDTO = testData.transformers.customList[0];
 
@@ -102,7 +102,7 @@ describe('SelectExistingTransformerComponent', () => {
   });
 
   test('should list the north connectors', async () => {
-    const tester = new SelectExistingTransformerComponentTester('north', ['any']);
+    const tester = new SelectExistingTransformerComponentTester('north', ['file']);
 
     await expect.element(tester.source.getByRole('option')).toHaveLength(norths.length + 1);
     expect(tester.optionLabels(tester.source)).toEqual(['', ...norths.map(north => north.name)]);
@@ -110,14 +110,14 @@ describe('SelectExistingTransformerComponent', () => {
   });
 
   test('should list the history queries', async () => {
-    const tester = new SelectExistingTransformerComponentTester('history-query', ['any']);
+    const tester = new SelectExistingTransformerComponentTester('history-query', ['file']);
 
     await expect.element(tester.source.getByRole('option')).toHaveLength(historyQueries.length + 1);
     expect(tester.optionLabels(tester.source)).toEqual(['', ...historyQueries.map(historyQuery => historyQuery.name)]);
   });
 
   test('should list the compatible transformers of the selected north connector, and emit the picked one', async () => {
-    const tester = new SelectExistingTransformerComponentTester('north', ['any']);
+    const tester = new SelectExistingTransformerComponentTester('north', ['file']);
 
     await tester.source.selectOptions(norths[0].name);
 
@@ -135,7 +135,7 @@ describe('SelectExistingTransformerComponent', () => {
   });
 
   test('should list the compatible transformers of the selected history query, and emit the picked one', async () => {
-    const tester = new SelectExistingTransformerComponentTester('history-query', ['any']);
+    const tester = new SelectExistingTransformerComponentTester('history-query', ['file']);
 
     await tester.source.selectOptions(historyQueries[0].name);
 
@@ -149,8 +149,8 @@ describe('SelectExistingTransformerComponent', () => {
   });
 
   test('should only list the transformers applicable to the data of the source', async () => {
-    const tester = new SelectExistingTransformerComponentTester('north', ['any']);
-    tester.fixture.componentRef.setInput('dataType', 'any');
+    const tester = new SelectExistingTransformerComponentTester('north', ['file']);
+    tester.fixture.componentRef.setInput('dataType', 'file');
 
     await tester.source.selectOptions(norths[0].name);
 
@@ -172,7 +172,7 @@ describe('SelectExistingTransformerComponent', () => {
   });
 
   test('should not emit when the empty transformer is selected again', async () => {
-    const tester = new SelectExistingTransformerComponentTester('history-query', ['any']);
+    const tester = new SelectExistingTransformerComponentTester('history-query', ['file']);
     await tester.source.selectOptions(historyQueries[0].name);
     await tester.transformer.selectOptions('File (as is)');
 
@@ -182,7 +182,7 @@ describe('SelectExistingTransformerComponent', () => {
   });
 
   test('should clear the transformers when no source is selected', async () => {
-    const tester = new SelectExistingTransformerComponentTester('north', ['any']);
+    const tester = new SelectExistingTransformerComponentTester('north', ['file']);
     await tester.source.selectOptions(norths[0].name);
     await expect.element(tester.transformer).toBeVisible();
 
@@ -193,7 +193,7 @@ describe('SelectExistingTransformerComponent', () => {
   });
 
   test('should reset the selection when switching between north connectors and history queries', async () => {
-    const tester = new SelectExistingTransformerComponentTester('north', ['any']);
+    const tester = new SelectExistingTransformerComponentTester('north', ['file']);
     await tester.source.selectOptions(norths[0].name);
     await expect.element(tester.transformer).toBeVisible();
 

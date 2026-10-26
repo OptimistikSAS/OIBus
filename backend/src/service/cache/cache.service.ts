@@ -267,13 +267,13 @@ export default class CacheService {
     // Decide whether to amortize compaction. Compaction reads ALL same-type
     // queued files and rewrites them; on every send, with a large backlog,
     // that's a lot of disk + JSON parse churn. Skip it when:
-    //   - the head file is a raw "any" payload (always sent as-is), OR
+    //   - the head file is a raw "file" payload (always sent as-is), OR
     //   - the head file already has enough elements to fill a batch by itself
     //     (nothing for compaction to add — the send will take this one file).
     // `?? 0` keeps the previous behaviour for entries lacking numberOfElement.
     const head = this.queue[0];
     const numberOfElement = head.metadata.numberOfElement ?? 0;
-    const shouldCompact = head.metadata.contentType !== 'any' && (maxGroupCount === 0 || numberOfElement < maxGroupCount);
+    const shouldCompact = head.metadata.contentType !== 'file' && (maxGroupCount === 0 || numberOfElement < maxGroupCount);
     if (shouldCompact) {
       await this.compactQueue(maxGroupCount, head.metadata.contentType);
     }

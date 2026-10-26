@@ -424,7 +424,7 @@ export const persistResults = async (
         }
 
         logger.debug(logCtx, `Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
+        await addContentFn({ type: 'file', filePath: gzipPath }, queryTime, [item]);
 
         try {
           await fs.unlink(gzipPath);
@@ -434,7 +434,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(logCtx, `Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [item]);
+        await addContentFn({ type: 'file', filePath: csvPath }, queryTime, [item]);
 
         try {
           await fs.unlink(csvPath);

@@ -103,8 +103,8 @@ const savedQuery = testData.historyQueries.list[0];
 const historyModes = { subscription: false, lastPoint: false, lastFile: false, history: true };
 const southTypes: Array<SouthType> = [{ id: 'mssql', category: 'database', modes: historyModes }];
 const northTypes: Array<NorthType> = [
-  { id: 'console', category: 'debug', types: ['any'] },
-  { id: 'file-writer', category: 'file', types: ['any'] }
+  { id: 'console', category: 'debug', types: ['file'] },
+  { id: 'file-writer', category: 'file', types: ['file'] }
 ];
 const newItem: HistoryQueryItemCommandDTO = { ...testData.historyQueries.itemCommand, id: '', name: 'new item' };
 

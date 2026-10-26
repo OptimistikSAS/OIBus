@@ -486,7 +486,7 @@ describe('SouthSFTP', () => {
         assert.strictEqual(sftpClient.end.mock.calls.length, 0);
 
         assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-          type: 'any',
+          type: 'file',
           filePath: path.resolve('cacheFolder', 'tmp', fileInfo.name)
         });
         assert.strictEqual(addContent.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
@@ -607,7 +607,7 @@ describe('SouthSFTP', () => {
       ]);
 
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', `${fileInfo.name}.gz`)
       });
       assert.strictEqual(addContent.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
@@ -620,7 +620,7 @@ describe('SouthSFTP', () => {
       fileInfo.name = 'myFile2';
       await south.getFile(fileInfo, configuration.items[1], []);
       assert.deepStrictEqual(addContent.mock.calls[1].arguments[0], {
-        type: 'any',
+        type: 'file',
         filePath: `${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz`
       });
       assert.ok(logIncludes(logger.error, `Error while removing compressed file "${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz"`));
@@ -632,7 +632,7 @@ describe('SouthSFTP', () => {
       });
       await south.getFile(fileInfo, configuration.items[1], []);
       assert.deepStrictEqual(addContent.mock.calls[2].arguments[0], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'myFile2')
       });
       assert.ok(
@@ -666,7 +666,7 @@ describe('SouthSFTP', () => {
       await south.getFile(fileInfo, configuration.items[1], []);
 
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', fileInfo.name)
       });
       assert.strictEqual(unlink.mock.calls.length, 1);
@@ -785,7 +785,7 @@ describe('SouthSFTP', () => {
         transformer: { transformerId: 'transformerId', options: {} }
       });
 
-      assert.deepStrictEqual(result.result, { type: 'any', filePath: 'recent.csv', filename: 'recent.csv', content: 'a;b' });
+      assert.deepStrictEqual(result.result, { type: 'file', filePath: 'recent.csv', filename: 'recent.csv', content: 'a;b' });
       assert.strictEqual(sftpClient.get.mock.calls[0].arguments[0], `${configuration.items[0].settings.remoteFolder}/recent.csv`);
     });
 

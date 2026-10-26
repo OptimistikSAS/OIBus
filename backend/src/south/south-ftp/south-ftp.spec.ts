@@ -446,7 +446,7 @@ describe('SouthFTP', () => {
         transformer: { transformerId: 'transformerId', options: {} }
       });
 
-      assert.deepStrictEqual(result.result, { type: 'any', filePath: 'recent.csv', filename: 'recent.csv', content: 'a;b' });
+      assert.deepStrictEqual(result.result, { type: 'file', filePath: 'recent.csv', filename: 'recent.csv', content: 'a;b' });
       assert.strictEqual(ftpClient.downloadTo.mock.calls[0].arguments[1], 'input/recent.csv');
       assert.strictEqual(ftpClient.close.mock.calls.length, 1);
     });
@@ -507,7 +507,7 @@ describe('SouthFTP', () => {
       assert.deepStrictEqual(ftpClient.remove.mock.calls[0].arguments[0], 'input/test.csv');
       assert.strictEqual(addContentCallback.mock.calls[0].arguments[0], 'southId');
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
       assert.strictEqual(addContentCallback.mock.calls[0].arguments[2], testData.constants.dates.FAKE_NOW);
@@ -525,7 +525,7 @@ describe('SouthFTP', () => {
       assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
       assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments[1], path.resolve('cacheFolder', 'tmp', 'test.csv.gz'));
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
       });
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
@@ -558,7 +558,7 @@ describe('SouthFTP', () => {
 
       assert.deepStrictEqual(ftpClient.remove.mock.calls[0].arguments[0], 'input/test.csv');
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
@@ -573,7 +573,7 @@ describe('SouthFTP', () => {
       await southWithCompression.getFile(createFileInfo('test.csv'), configuration.items[0], []);
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
       // The real compression error is captured and logged, not swallowed.
@@ -643,7 +643,7 @@ describe('SouthFTP', () => {
       assert.deepStrictEqual(ftpClient.downloadTo.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
       assert.deepStrictEqual(ftpClient.downloadTo.mock.calls[0].arguments[1], 'input/test.csv');
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [configuration.items[0]]);
@@ -747,7 +747,7 @@ describe('SouthFTP', () => {
       await southWithCompression.getFile(createFileInfo('test.csv'), configuration.items[0], []);
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
       });
     });
@@ -808,7 +808,7 @@ describe('SouthFTP', () => {
       await southWithCompression.getFile(createFileInfo('test.csv'), configuration.items[0], []);
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });
@@ -855,7 +855,7 @@ describe('SouthFTP', () => {
       await south.getFile(createFileInfo('test.csv'), configuration.items[0], []);
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
     });

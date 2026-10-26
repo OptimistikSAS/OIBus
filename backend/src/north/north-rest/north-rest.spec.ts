@@ -23,7 +23,7 @@ const metadata = (contentFile: string): CacheMetadata => ({
   contentSize: 0,
   numberOfElement: 0,
   createdAt: '',
-  contentType: 'any'
+  contentType: 'file'
 });
 
 const buildConfiguration = (settings: Partial<NorthRESTSettings> = {}) =>
@@ -93,7 +93,7 @@ describe('NorthREST', () => {
   });
 
   it('should return any', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file']);
   });
 
   it('should test connection successfully', async () => {

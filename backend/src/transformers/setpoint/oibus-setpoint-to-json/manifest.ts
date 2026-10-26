@@ -3,7 +3,7 @@ import { TransformerManifest } from '../../../../shared/model/connector/transfor
 const manifest: TransformerManifest = {
   id: 'setpoint-to-json',
   inputType: 'setpoint',
-  outputType: 'any',
+  outputType: 'file',
   settings: {
     type: 'object',
     key: 'options',

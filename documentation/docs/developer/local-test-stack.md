@@ -225,7 +225,7 @@ The `9001` WebSocket port is available for browser-based MQTT clients if needed.
 | **Password**       | `pass` (or `$MQTT_PASSWORD`) |
 
 Items subscribe to the [scalar topics](#scalar-topics) published by the simulator (the JSON topics
-are meant for `any-content` / custom-transformer testing, not point-value items):
+are meant for `file-content` / custom-transformer testing, not point-value items):
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/mqtt-item-list.csv">Download item list (CSV)</DownloadButton>
@@ -611,7 +611,7 @@ sends **two families** of topics:
 
 - **Scalar topics** — a single number, for value-based items.
 - **JSON topics** (under `<workshop>/json/<shape>`) — structured payloads of different shapes. OIBus's
-  MQTT south ingests these as `any-content`, which makes them ideal for exercising custom transformers.
+  MQTT south ingests these as `file-content`, which makes them ideal for exercising custom transformers.
 
 ##### Scalar topics {#scalar-topics}
 

@@ -52,7 +52,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 const manifest: NorthConnectorManifest = {
   id: 'console', // must be in OIBUS_NORTH_TYPES
   category: 'debug', // 'debug' | 'api' | 'file' | 'iot'
-  types: ['any', 'record-list', 'setpoint'], // content types this North can deliver
+  types: ['file', 'record-list', 'setpoint'], // content types this North can deliver
   settings: {/* OIBusObjectAttribute */}
 };
 

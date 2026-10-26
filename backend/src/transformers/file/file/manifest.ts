@@ -2,8 +2,8 @@ import { TransformerManifest } from '../../../../shared/model/connector/transfor
 
 const manifest: TransformerManifest = {
   id: 'file',
-  inputType: 'any',
-  outputType: 'any',
+  inputType: 'file',
+  outputType: 'file',
   settings: {
     type: 'object',
     key: 'options',

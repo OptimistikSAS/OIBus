@@ -16,7 +16,7 @@ import type TransformerRepository from '../../repository/config/transformer.repo
 import type UserRepository from '../../repository/config/user.repository';
 import testData from '../../tests/utils/test-data';
 import { createMock, Mocked } from '../../tests/utils/test-utils';
-import FileTransformer from '../../transformers/any/file/file-transformer';
+import FileTransformer from '../../transformers/file/file/file-transformer';
 import EncryptionService from '../encryption.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
 
@@ -24,8 +24,8 @@ const standardTransformer: StandardTransformer = {
   id: FileTransformer.transformerName,
   type: 'standard',
   functionName: FileTransformer.transformerName,
-  inputType: 'any',
-  outputType: 'any'
+  inputType: 'file',
+  outputType: 'file'
 };
 
 describe('Config Transfer Builder Service', () => {

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 import { Body, Controller, Post, Query, Request, Route, SuccessResponse, Tags, UploadedFile } from 'tsoa';
 
-import { OIBusAnyContent } from '../../../shared/model/common/content.model';
+import { OIBusInMemoryFileContent } from '../../../shared/model/common/content.model';
 
 import { OIBusValidationError } from '../../model/types';
 import { CustomExpressRequest } from '../express';
@@ -36,7 +36,7 @@ export class ContentController extends Controller {
     try {
       const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
       for (const id of normalizedNorthIds) {
-        await oIBusService.addExternalContent(id, dataSourceId, { type: 'any', filePath: file.path });
+        await oIBusService.addExternalContent(id, dataSourceId, { type: 'file', filePath: file.path });
       }
     } finally {
       // Cleanup: This block runs NO MATTER WHAT (success or failure)
@@ -51,7 +51,7 @@ export class ContentController extends Controller {
   /**
    * Adds any JSON content directly to the specified North connector(s) cache queue.
    * The body can be any valid JSON object or array. It is serialized and wrapped as
-   * an OIBus any-content payload, allowing external systems to push arbitrary data
+   * an OIBus file-content payload, allowing external systems to push arbitrary data
    * directly into OIBus for further processing by North connectors.
    * @summary Inject any JSON content into North connector cache(s) queue
    * @param northId One or more North connector IDs, comma-separated (e.g. `id1,id2`). The content is queued in every listed connector.
@@ -66,7 +66,7 @@ export class ContentController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const oIBusService = request.services.oIBusService;
-    const anyContent: OIBusAnyContent = { type: 'any-content', content: JSON.stringify(body) };
+    const anyContent: OIBusInMemoryFileContent = { type: 'file-content', content: JSON.stringify(body) };
     const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
     for (const id of normalizedNorthIds) {
       await oIBusService.addExternalContent(id, dataSourceId, anyContent);

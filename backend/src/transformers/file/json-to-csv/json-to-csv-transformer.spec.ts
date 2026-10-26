@@ -73,7 +73,7 @@ describe('JSONToCSVTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'any'
+        contentType: 'file'
       }
     });
   });

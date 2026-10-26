@@ -2,7 +2,7 @@ import { TransformerManifest } from '../../../../shared/model/connector/transfor
 
 const manifest: TransformerManifest = {
   id: 'csv-to-mqtt',
-  inputType: 'any',
+  inputType: 'file',
   outputType: 'mqtt',
   settings: {
     type: 'object',

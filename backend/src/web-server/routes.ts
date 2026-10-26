@@ -131,12 +131,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InputType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OutputType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["record-list"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["record-list"]},{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusObjectAttribute": {
@@ -420,7 +420,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusDataType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CustomTransformerCommandDTO": {
@@ -460,7 +460,7 @@ const models: TsoaRoute.Models = {
     "OIBusFileContent": {
         "dataType": "refObject",
         "properties": {
-            "type": {"dataType":"enum","enums":["any"],"required":true},
+            "type": {"dataType":"enum","enums":["file"],"required":true},
             "filePath": {"dataType":"string","required":true},
             "filename": {"dataType":"string"},
             "content": {"dataType":"string"},
@@ -468,10 +468,10 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusAnyContent": {
+    "OIBusInMemoryFileContent": {
         "dataType": "refObject",
         "properties": {
-            "type": {"dataType":"enum","enums":["any-content"],"required":true},
+            "type": {"dataType":"enum","enums":["file-content"],"required":true},
             "content": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
@@ -516,7 +516,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusContent": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusFileContent"},{"ref":"OIBusAnyContent"},{"ref":"OIBusSetpointContent"},{"ref":"OIBusRecordListContent"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusFileContent"},{"ref":"OIBusInMemoryFileContent"},{"ref":"OIBusSetpointContent"},{"ref":"OIBusRecordListContent"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemTestResult": {

@@ -25,7 +25,7 @@ import { CodeMirror, loadCodeMirror, loadOnDemand } from '../../../../shared/cod
 import { LoadingSpinnerComponent } from '../../../../shared/loading-spinner/loading-spinner.component';
 import { PaginationComponent } from '../../../../shared/pagination/pagination.component';
 
-export type ContentDisplayMode = 'table' | 'any' | 'json';
+export type ContentDisplayMode = 'table' | 'raw' | 'json';
 
 const PAGE_SIZE = 10;
 
@@ -56,7 +56,7 @@ export class ItemTestResultComponent {
   readonly availableDisplayModes = output<Array<ContentDisplayMode>>();
   private _availableDisplayModes: Array<ContentDisplayMode> = [];
 
-  readonly displayModeIcons: Record<ContentDisplayMode, string> = { table: 'fa-table', any: 'fa-file-lines', json: 'fa-code' };
+  readonly displayModeIcons: Record<ContentDisplayMode, string> = { table: 'fa-table', raw: 'fa-file-lines', json: 'fa-code' };
 
   // --- Table state ---
   readonly genericTableView = signal<Page<Array<string>>>(emptyPage());
@@ -71,10 +71,10 @@ export class ItemTestResultComponent {
   private languageCompartment: Compartment | null = null;
   private currentWriteId = 0;
 
-  private readonly isAnyJson = computed(() => {
-    if (this.displayMode() !== 'any') return false;
+  private readonly isRawJson = computed(() => {
+    if (this.displayMode() !== 'raw') return false;
     const content = this._result();
-    if (!content || (content.type !== 'any' && content.type !== 'any-content')) return false;
+    if (!content || (content.type !== 'file' && content.type !== 'file-content')) return false;
     try {
       JSON.parse(content.content || '');
       return true;
@@ -180,7 +180,7 @@ export class ItemTestResultComponent {
     const content = this._result();
     if (!content) return false;
     if (content.type === 'record-list') return content.content.length === 0;
-    if (content.type === 'any' || content.type === 'any-content') return !content.content;
+    if (content.type === 'file' || content.type === 'file-content') return !content.content;
     return false;
   });
 
@@ -197,7 +197,7 @@ export class ItemTestResultComponent {
     if (!content) return;
 
     switch (content.type) {
-      case 'any': {
+      case 'file': {
         const contentString = content.content;
         if (!contentString) {
           this.genericTableView.set(emptyPage());
@@ -223,14 +223,14 @@ export class ItemTestResultComponent {
     const modes = new Set<ContentDisplayMode>();
 
     switch (content.type) {
-      case 'any':
+      case 'file':
         if (content.filePath.endsWith('.csv') && content.content) {
           modes.add('table');
         }
-        modes.add('any');
+        modes.add('raw');
         break;
-      case 'any-content':
-        modes.add('any');
+      case 'file-content':
+        modes.add('raw');
         break;
       case 'record-list':
         modes.add('table');
@@ -247,15 +247,15 @@ export class ItemTestResultComponent {
   }
 
   private getLanguageExtension({ json }: CodeMirror) {
-    return this.displayMode() === 'json' || this.isAnyJson() ? json() : [];
+    return this.displayMode() === 'json' || this.isRawJson() ? json() : [];
   }
 
   private getDisplayContent(content: OIBusContent): string {
     if (content.type === 'record-list') {
       return JSON.stringify(content.content, null, 2);
     }
-    if (content.type === 'any' || content.type === 'any-content') {
-      if (this.isAnyJson()) {
+    if (content.type === 'file' || content.type === 'file-content') {
+      if (this.isRawJson()) {
         return JSON.stringify(JSON.parse(content.content!), null, 2);
       }
       return content.content || '';

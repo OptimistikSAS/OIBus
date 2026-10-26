@@ -333,7 +333,7 @@ describe('AuditRepository', () => {
     it('should use the function name of standard transformers referenced by north transformers', () => {
       database
         .prepare(
-          `INSERT INTO transformers (id, type, input_type, output_type, function_name) VALUES ('standardTransformerId', 'standard', 'any', 'any', 'file');`
+          `INSERT INTO transformers (id, type, input_type, output_type, function_name) VALUES ('standardTransformerId', 'standard', 'file', 'file', 'file');`
         )
         .run();
       database
