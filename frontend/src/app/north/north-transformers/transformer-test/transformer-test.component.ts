@@ -3,11 +3,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal, vi
 import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { catchError, EMPTY, forkJoin, map, Observable, of, Subscription, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, map, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 
-import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
 import { TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
@@ -34,15 +34,23 @@ interface TestItem {
 /**
  * Embedded panel to test a configured transformer with its options, using either copy-pasted input
  * or the values produced by running one of the transformer's source items. Used inside the north
- * and history-query "edit transformer" modals. For a history source, the items offered are exactly
- * that history query's items. The result is shown as a pipeline: Raw input → transformer + its
- * options → transformer output.
+ * and history-query "edit transformer" modals, laid out as the test panel of the items. For a history
+ * source, the items offered are exactly that history query's items. The result is shown as a pipeline:
+ * Raw input → transformer output.
  */
 @Component({
   selector: 'oib-north-transformer-test',
   templateUrl: './transformer-test.component.html',
+  styleUrl: './transformer-test.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateDirective, OibCodeBlockComponent, TransformerTestResultComponent, DateRangeSelectorComponent]
+  imports: [
+    ReactiveFormsModule,
+    TranslateDirective,
+    TranslatePipe,
+    OibCodeBlockComponent,
+    TransformerTestResultComponent,
+    DateRangeSelectorComponent
+  ]
 })
 export class NorthTransformerTestComponent {
   private readonly translate = inject(TranslateService);
@@ -60,6 +68,7 @@ export class NorthTransformerTestComponent {
   private testSubscription: Subscription | null = null;
 
   readonly isTestRunning = signal(false);
+  readonly infoMessage = signal<string | null>(this.translate.instant('south.test-item.status-message.initial'));
   readonly errorMessage = signal<string | null>(null);
 
   /** Whether the source south supports history queries and therefore needs a query range. */
@@ -80,11 +89,14 @@ export class NorthTransformerTestComponent {
     },
     stream: ({ params: source }): Observable<{ southSettings: SouthSettings; items: Array<TestItem> }> =>
       source.kind === 'south'
-        ? forkJoin([this.southConnectorService.findById(source.id), this.southConnectorService.searchItems(source.id, { page: 0 })]).pipe(
-            map(([south, page]) => ({
-              southSettings: south.settings,
-              items: page.content.map(item => ({ id: item.id, name: item.name, settings: item.settings }))
-            }))
+        ? this.southConnectorService.findById(source.id).pipe(
+            map(south => {
+              const items: ReadonlyArray<SouthConnectorItemDTO> = south.items;
+              return {
+                southSettings: south.settings,
+                items: items.map(item => ({ id: item.id, name: item.name, settings: item.settings }))
+              };
+            })
           )
         : this.historyQueryService.findById(source.id).pipe(
             map(historyQuery => ({
@@ -98,8 +110,10 @@ export class NorthTransformerTestComponent {
 
   /** Latest test result (raw + transformed) feeding the pipeline view. */
   readonly testResult = signal<SouthConnectorItemTestResult | null>(null);
+  /** What the latest test ran on: see `testedInput` */
+  private readonly lastTestedInput = signal<string | null>(null);
 
-  /** Once a test has succeeded, the settings form collapses into a summary chip to leave room for the result. */
+  /** User-toggled: collapses the settings form into a summary chip to leave room for the result. */
   readonly settingsCollapsed = signal(false);
 
   readonly form = this.fb.group({
@@ -111,6 +125,7 @@ export class NorthTransformerTestComponent {
     dateRange: this.fb.control<DateRange | null>(null)
   });
   readonly inputSource = toSignal(this.form.controls.inputSource.valueChanges, { initialValue: this.form.controls.inputSource.value });
+  private readonly inputData = toSignal(this.form.controls.inputData.valueChanges, { initialValue: this.form.controls.inputData.value });
   private readonly itemId = toSignal(this.form.controls.itemId.valueChanges, { initialValue: this.form.controls.itemId.value });
   private readonly dateRange = toSignal(this.form.controls.dateRange.valueChanges, { initialValue: this.form.controls.dateRange.value });
 
@@ -121,7 +136,9 @@ export class NorthTransformerTestComponent {
       .pipe(
         tap(() => {
           this.testResult.set(null);
+          this.lastTestedInput.set(null);
           this.errorMessage.set(null);
+          this.infoMessage.set(this.translate.instant('south.test-item.status-message.initial'));
           this.settingsCollapsed.set(false);
         }),
         switchMap(transformer => (transformer ? this.transformerService.getInputTemplate(transformer.inputType) : EMPTY)),
@@ -131,6 +148,22 @@ export class NorthTransformerTestComponent {
   }
 
   readonly canUseItemSource = computed(() => this.itemSource().kind !== 'none' && this.availableItems().length > 0);
+
+  /**
+   * What a test runs on: the transformer with its options, and the pasted data or the item. The date range is left out: a
+   * relative one (e.g. the last 10 minutes) moves on by itself.
+   */
+  private readonly testedInput = computed(() =>
+    JSON.stringify({
+      transformerId: this.transformer()?.id ?? null,
+      options: this.options(),
+      input: this.inputSource() === 'paste' ? { data: this.inputData() } : { itemId: this.itemId() }
+    })
+  );
+  /** The latest test result no longer matches what a test would run on: the options or the input changed since */
+  readonly resultOutdated = computed(() => !!this.testResult() && this.lastTestedInput() !== this.testedInput());
+  /** Whether the latest test ran an item, which connects to the source and queries it */
+  readonly testedOnItem = signal(false);
 
   /** One-line recap of the current input settings, shown on the collapsed summary chip. */
   readonly settingsSummary = computed(() => {
@@ -160,7 +193,10 @@ export class NorthTransformerTestComponent {
     }
 
     this.errorMessage.set(null);
+    this.infoMessage.set(null);
     this.isTestRunning.set(true);
+    this.lastTestedInput.set(this.testedInput());
+    const onItem = this.form.controls.inputSource.value === 'item';
     this.testSubscription = request
       .pipe(
         catchError((error: HttpErrorResponse) => {
@@ -173,8 +209,8 @@ export class NorthTransformerTestComponent {
       .subscribe(result => {
         this.finishTest();
         if (result) {
+          this.testedOnItem.set(onItem);
           this.testResult.set(result);
-          this.settingsCollapsed.set(true);
         }
       });
   }
@@ -182,6 +218,7 @@ export class NorthTransformerTestComponent {
   cancelTest() {
     this.testSubscription?.unsubscribe();
     this.finishTest();
+    this.infoMessage.set(this.translate.instant('south.test-item.status-message.cancel'));
   }
 
   private buildRequest(transformer: TransformerDTO): Observable<SouthConnectorItemTestResult> | null {

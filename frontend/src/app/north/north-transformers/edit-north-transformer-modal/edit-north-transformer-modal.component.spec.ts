@@ -19,7 +19,6 @@ import { SouthConnectorService } from '../../../services/south-connector.service
 import { TransformerService } from '../../../services/transformer.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { toPage } from '../../../shared/utils/page.utils';
 import { EditNorthTransformerModalComponent, TransformerSourcePreset } from './edit-north-transformer-modal.component';
 
 const recordListToMqtt: StandardTransformerDTO = {
@@ -142,7 +141,6 @@ describe('EditNorthTransformerModalComponent', () => {
     southConnectorService.findById.mockImplementation(southId =>
       of({ ...testData.south.list.find(south => south.id === southId)!, groups: [buildSouthItemGroup('groupId1', 'Group 1')] })
     );
-    southConnectorService.searchItems.mockReturnValue(of(toPage(items)));
 
     // Services used by the "copy from existing" picker (rendered once the user leaves the 'new' creation mode).
     northConnectorService = createMock(NorthConnectorService);
