@@ -3283,6 +3283,16 @@
         "remove-item": "从转换器中移除此数据项",
         "no-item": "没有数据项",
         "sent": "已发送"
+      },
+      "modal": {
+        "items-required": "请至少选择一个数据项",
+        "impact": {
+          "sent": "{{ count }} 个数据项通过此转换器发送",
+          "newly-sent": "{{ count }} 个当前被丢弃",
+          "taken-over": "{{ count }} 个当前通过其他转换器发送",
+          "kept": "所选数据项中有 {{ count }} 个保留优先生效的转换器",
+          "none": "没有数据项会经过此转换器：优先生效的转换器会发送所有所选数据项"
+        }
       }
     },
     "monitoring": {

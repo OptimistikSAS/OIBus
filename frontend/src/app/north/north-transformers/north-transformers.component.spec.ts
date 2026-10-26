@@ -116,7 +116,7 @@ describe('NorthTransformersComponent', () => {
   let newTransformer: TransformerDTOWithOptions;
 
   function createFakeEditModal() {
-    return createMock(EditNorthTransformerModalComponent, { directSave: signal(true) });
+    return createMock(EditNorthTransformerModalComponent, { directSave: signal(true), existingTransformers: signal([]) });
   }
 
   beforeEach(() => {
@@ -267,6 +267,7 @@ describe('NorthTransformersComponent', () => {
       await tester.addButton.click();
 
       expect(fakeModal.directSave()).toBe(false);
+      expect(fakeModal.existingTransformers()).toEqual([]);
       expect(fakeModal.prepareForCreation).toHaveBeenCalledWith(
         testData.south.listLight,
         testData.scanMode.list,

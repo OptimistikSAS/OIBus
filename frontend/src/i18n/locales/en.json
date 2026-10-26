@@ -3324,6 +3324,16 @@
         "remove-item": "Remove this item from the transformer",
         "no-item": "No item",
         "sent": "Sent"
+      },
+      "modal": {
+        "items-required": "Select at least one item",
+        "impact": {
+          "sent": "{{ count }} item(s) sent through this transformer",
+          "newly-sent": "{{ count }} currently dropped",
+          "taken-over": "{{ count }} currently sent through another transformer",
+          "kept": "{{ count }} of the selected items keep a transformer applying first",
+          "none": "No item would go through this transformer: transformers applying first send all the selected items"
+        }
       }
     },
     "monitoring": {
