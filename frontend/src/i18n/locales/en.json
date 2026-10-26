@@ -1789,13 +1789,16 @@
             }
           },
           "record-list-to-oianalytics": {
-            "point-id-column": "Point ID Column",
-            "timestamp-column": "Timestamp Column",
-            "value-column": "Value Column",
-            "timestamp-settings": {
-              "title": "Timestamp Settings",
-              "type": {
-                "title": "Timestamp type",
+            "reference": {
+              "title": "Reference",
+              "reference-field": "Reference field",
+              "reference-process": "Reference process (JS expression, e.g. value.toUpperCase())"
+            },
+            "timestamp": {
+              "title": "Timestamp",
+              "timestamp-field": "Timestamp field",
+              "source-type": {
+                "title": "Source type",
                 "string": "String",
                 "iso-string": "ISO string",
                 "unix-epoch": "Unix epoch (s)",
@@ -1803,16 +1806,20 @@
               },
               "timezone": "Timezone",
               "format": "Format",
-              "locale": "Locale"
+              "locale": "Locale",
+              "precision": {
+                "title": "Timestamp precision",
+                "ms": "Millisecond",
+                "s": "Second",
+                "min": "Minute",
+                "hr": "Hour"
+              }
             },
-            "precision": {
-              "title": "Timestamp precision",
-              "ms": "Millisecond",
-              "s": "Second",
-              "min": "Minute",
-              "hr": "Hour"
-            },
-            "reference-process": "Reference process (JS expression, e.g. value.toUpperCase())"
+            "value": {
+              "title": "Value",
+              "value-field": "Value field",
+              "value-process": "Value process (JS expression, e.g. Math.round(value * 100) / 100)"
+            }
           },
           "record-list-to-opcua": {
             "point-id-column": "Point ID Column",
@@ -3338,10 +3345,13 @@
         "step": {
           "source": "Source & transformer",
           "options": "Options",
-          "test": "Test"
+          "review": "Review & save"
         },
         "no-options": "This transformer has no options.",
-        "no-transformer": "Choose a transformer in the first step."
+        "no-transformer": "Choose a transformer in the first step.",
+        "review-errors": "Fix these steps before saving:",
+        "review-changes": "Settings changed since the transformer was saved: {{count}}",
+        "review-no-changes": "No change since the transformer was saved"
       }
     },
     "monitoring": {

@@ -40,9 +40,11 @@ A transformer that is never used, another one before it in the list applying to 
 
 Click **Add a transformer** in the Transformers section (or a button of a source) to open the configuration modal.
 The modal has three steps, as the item modals: **Source & transformer** (where the data comes from, the items of a South
-connector it applies to, and the transformer, new or copied), **Options** (those of the chosen transformer), then
-**Test**. A new transformer can be saved from the Options step, an edited one from any step. Opened from the line of a
-source (or of one of its groups or items), the modal shows that source, and the scope, already set.
+connector it applies to, and the transformer, new or copied), **Options** (those of the chosen transformer, tried out right
+away with the test panel below them), then **Review & save** (the transformer as it will be saved, what changed since it
+was saved, and the steps to fix first). A new transformer can be saved from the Options step, an edited one from any step.
+Opened from the line of a source (or of one of its groups or items), the modal shows that source, and the scope, already
+set.
 
 ### 1 — Source {#1--source}
 
@@ -358,15 +360,20 @@ settings.
 
 ##### Settings {#settings-3}
 
-| Setting                        | Description                                                                                                                                                               |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Point ID column**            | Field of the records holding the point ID (default `pointId`)                                                                                                             |
-| **Timestamp column**           | Field of the records holding the timestamp (default `timestamp`)                                                                                                          |
-| **Value column**               | Field of the records holding the value (default `value`)                                                                                                                  |
-| **Timestamp type**             | Format of the raw timestamp: `iso-string` (default, as in point records), `unix-epoch`, `unix-epoch-ms`, or `string`                                                      |
-| **Timezone / Format / Locale** | Used to parse the raw timestamp when its type is `string`                                                                                                                 |
-| **Precision**                  | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr`                                                                                                                |
-| **Reference process**          | Optional JavaScript expression applied to each point ID to build the OIAnalytics reference, `value` being the point ID (e.g. `value.replace('plant/', '').toUpperCase()`) |
+The settings are grouped by part of the OIAnalytics payload.
+
+| Group         | Setting                        | Description                                                                                                                                |
+| ------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Reference** | **Reference field**            | Field of the records holding the reference (default `pointId`)                                                                             |
+|               | **Reference process**          | Optional JavaScript expression applied to each reference, `value` being the field value (e.g. `value.replace('plant/', '').toUpperCase()`) |
+| **Timestamp** | **Timestamp field**            | Field of the records holding the timestamp (default `timestamp`)                                                                           |
+|               | **Source type**                | Format of the raw timestamp: `iso-string` (default, as in point records), `unix-epoch`, `unix-epoch-ms`, or `string`                       |
+|               | **Precision**                  | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr`                                                                                 |
+|               | **Timezone / Format / Locale** | Used to parse the raw timestamp when its source type is `string`                                                                           |
+| **Value**     | **Value field**                | Field of the records holding the value (default `value`)                                                                                   |
+|               | **Value process**              | Optional JavaScript expression applied to each value, `value` being the field value (e.g. `Math.round(value * 100) / 100`)                 |
+
+Before 3.10, the settings were not grouped: upgrading moves them in their group, without value process.
 
 ##### Example — Precision `s` {#example--precision-s}
 
@@ -384,8 +391,8 @@ settings.
 
 ##### Example — Query rows {#example--query-rows}
 
-**Input** (record list from a PostgreSQL item), with Point ID column `deviceId`, Timestamp column `readingTime`
-(type `string`, format `yyyy-MM-dd HH:mm:ss`, timezone `Europe/Paris`) and Value column `reading`:
+**Input** (record list from a PostgreSQL item), with Reference field `deviceId`, Timestamp field `readingTime`
+(source type `string`, format `yyyy-MM-dd HH:mm:ss`, timezone `Europe/Paris`) and Value field `reading`:
 
 ```json
 [{ "deviceId": "sensor-1", "readingTime": "2024-01-15 11:00:00", "reading": 23.5 }]
