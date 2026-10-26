@@ -158,6 +158,15 @@ describe('ItemTestResultComponent', () => {
     expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'raw']);
   });
 
+  test('should display a CSV file held in memory in a table, named by its filename', async () => {
+    const tester = new ItemTestResultComponentTester();
+
+    tester.component.displayResult({ type: 'file', filename: 'response.csv', content: 'name,value\nfoo,1' });
+
+    await expect.element(tester.tableRows).toHaveLength(1);
+    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'raw']);
+  });
+
   test('should display a record list in a table', async () => {
     const tester = new ItemTestResultComponentTester();
 

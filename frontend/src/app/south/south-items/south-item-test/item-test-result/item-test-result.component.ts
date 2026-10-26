@@ -224,7 +224,7 @@ export class ItemTestResultComponent {
 
     switch (content.type) {
       case 'file':
-        if (content.filePath?.endsWith('.csv') && content.content) {
+        if ((content.filename ?? content.filePath)?.endsWith('.csv') && content.content) {
           modes.add('table');
         }
         modes.add('raw');
