@@ -1,118 +1,138 @@
 @if (transformer()) {
-  <div class="testing-item-panel">
-    <div class="d-flex justify-content-between oib-box-title">
-      <span translate="north.transformers.test.title"></span>
-      <div>
-        <button
-          type="button"
-          id="run-transformer-test"
-          class="btn btn-secondary btn-sm oib-box-btn m-0"
-          [disabled]="isTestRunning()"
-          (click)="runTest()"
-        >
-          @if (isTestRunning()) {
-            <span class="fa-solid fa-spinner fa-spin ms-2" aria-hidden="true"></span>
-          } @else {
-            <span class="fa-solid fa-check ms-2" aria-hidden="true"></span>
-          }
-          <span translate="north.transformers.test.run"></span>
-        </button>
-        <button
-          type="button"
-          id="cancel-transformer-test"
-          class="btn btn-danger btn-sm oib-box-btn ms-2"
-          [disabled]="!isTestRunning()"
-          (click)="cancelTest()"
-          translate="common.cancel"
-        ></button>
-      </div>
+  <div class="oib-section-title">
+    <h5 translate="north.transformers.test.title"></h5>
+    <div>
+      <button
+        type="button"
+        id="run-transformer-test"
+        class="btn btn-primary btn-sm"
+        [disabled]="isTestRunning()"
+        (click)="runTest()"
+        translate="north.transformers.test.run"
+      >
+        @if (isTestRunning()) {
+          <span class="fa-solid fa-spinner fa-spin ms-2" aria-hidden="true"></span>
+        } @else {
+          <span class="fa-solid fa-check ms-2" aria-hidden="true"></span>
+        }
+      </button>
+      <button
+        type="button"
+        id="cancel-transformer-test"
+        class="btn btn-danger btn-sm ms-2"
+        [disabled]="!isTestRunning()"
+        (click)="cancelTest()"
+        translate="common.cancel"
+      ></button>
     </div>
+  </div>
 
-    <div class="testing-item-body" [formGroup]="form">
-      @if (settingsCollapsed()) {
-        <button
-          type="button"
-          id="expand-settings"
-          class="btn btn-link btn-sm p-0 settings-summary-chip"
-          (click)="settingsCollapsed.set(false)"
-        >
-          <span class="fa-solid fa-sliders me-1" aria-hidden="true"></span>
-          <span>{{ settingsSummary() }}</span>
-          <span class="fa-solid fa-chevron-down ms-2" aria-hidden="true"></span>
-        </button>
-      }
+  <form [formGroup]="form" id="transformer-test-form">
+    @if (settingsCollapsed()) {
+      <button
+        type="button"
+        id="expand-settings"
+        class="btn btn-link btn-sm p-0 settings-summary-chip"
+        (click)="settingsCollapsed.set(false)"
+      >
+        <span class="fa-solid fa-sliders me-1" aria-hidden="true"></span>
+        <span>{{ settingsSummary() }}</span>
+        <span class="fa-solid fa-chevron-down ms-2" aria-hidden="true"></span>
+      </button>
+    }
 
-      <div [class.d-none]="settingsCollapsed()">
-        <!-- input source -->
-        <div class="d-flex gap-3 mb-2">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" id="sourcePaste" formControlName="inputSource" value="paste" />
-            <label class="form-check-label" for="sourcePaste" translate="north.transformers.test.source-paste"></label>
+    <div [class.d-none]="settingsCollapsed()">
+      <!-- What the transformer runs on: pasted data, or what an item of its source retrieves -->
+      @if (canUseItemSource()) {
+        <div class="row">
+          <div class="col-6 form-group">
+            <label class="form-label" for="test-input-source" translate="north.transformers.test.input"></label>
+            <select id="test-input-source" class="form-select" formControlName="inputSource">
+              <option value="paste" translate="north.transformers.test.source-paste"></option>
+              <option value="item" translate="north.transformers.test.source-item"></option>
+            </select>
           </div>
-          @if (canUseItemSource()) {
-            <div class="form-check">
-              <input class="form-check-input" type="radio" id="sourceItem" formControlName="inputSource" value="item" />
-              <label class="form-check-label" for="sourceItem" translate="north.transformers.test.source-item"></label>
+          @if (inputSource() === 'item') {
+            <div class="col-6 form-group">
+              <label class="form-label" for="test-item-select" translate="north.transformers.test.item"></label>
+              <select id="test-item-select" class="form-select" formControlName="itemId">
+                <option [ngValue]="null"></option>
+                @for (item of availableItems(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.name }}</option>
+                }
+              </select>
             </div>
           }
         </div>
+      }
 
-        @if (inputSource() === 'paste') {
-          <label
-            class="form-label"
-            for="transformer-test-input-data"
-            translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"
-          ></label>
-          <oib-code-block
-            id="transformer-test-input-data"
-            formControlName="inputData"
-            [language]="'json'"
-            [readOnly]="false"
-            height="15rem"
-          />
-        } @else {
-          <div class="form-group">
-            <label class="form-label" for="test-item-select" translate="north.transformers.test.item"></label>
-            <select id="test-item-select" class="form-select" formControlName="itemId">
-              <option [ngValue]="null"></option>
-              @for (item of availableItems(); track item.id) {
-                <option [ngValue]="item.id">{{ item.name }}</option>
-              }
-            </select>
-          </div>
-          @if (supportsHistory()) {
-            <div class="form-group mt-2">
-              <oib-date-range-selector
-                #dateRangeSelector
-                formControlName="dateRange"
-                [startLabel]="'south.test-item.query-start'"
-                [endLabel]="'south.test-item.query-end'"
-                [defaultRange]="'last-10-minutes'"
-              />
-            </div>
-          }
-        }
-
-        @if (testResult()) {
-          <div class="text-end mt-1">
-            <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed.set(true)">
-              <span translate="south.test-item.hide-settings"></span>
-              <span class="fa-solid fa-chevron-up ms-1" aria-hidden="true"></span>
-            </button>
-          </div>
-        }
-      </div>
-
-      @if (errorMessage(); as errorMessage) {
-        <div class="alert alert-danger mt-2 mb-0">{{ errorMessage }}</div>
-      } @else if (testResult(); as testResult) {
-        <oib-transformer-test-result
-          class="d-block mt-2"
-          [raw]="testResult.raw"
-          [hasTransformer]="true"
-          [output]="testResult.transformed"
+      @if (inputSource() === 'paste') {
+        <label
+          class="form-label"
+          for="transformer-test-input-data"
+          translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"
+        ></label>
+        <oib-code-block
+          id="transformer-test-input-data"
+          formControlName="inputData"
+          [language]="'json'"
+          [readOnly]="false"
+          height="15rem"
         />
+      } @else if (supportsHistory()) {
+        <hr class="my-2" />
+        <div class="form-group" id="history">
+          <oib-date-range-selector
+            #dateRangeSelector
+            formControlName="dateRange"
+            [startLabel]="'south.test-item.query-start'"
+            [endLabel]="'south.test-item.query-end'"
+            [defaultRange]="'last-10-minutes'"
+          />
+        </div>
+      }
+
+      @if (testResult()) {
+        <div class="text-end mt-1">
+          <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed.set(true)">
+            <span translate="south.test-item.hide-settings"></span>
+            <span class="fa-solid fa-chevron-up ms-1" aria-hidden="true"></span>
+          </button>
+        </div>
       }
     </div>
-  </div>
+  </form>
+
+  @if (infoMessage(); as infoMessage) {
+    <div class="alert alert-primary mt-2 mb-0">{{ infoMessage }}</div>
+  } @else if (errorMessage(); as errorMessage) {
+    <div class="alert alert-danger mt-2 mb-0">{{ errorMessage }}</div>
+  } @else if (testResult(); as testResult) {
+    @if (resultOutdated()) {
+      <div class="alert alert-warning d-flex align-items-center gap-2 py-1 px-2 mt-2 mb-0" id="outdated-result" role="status">
+        <span class="fa-solid fa-clock-rotate-left" aria-hidden="true"></span>
+        <span class="flex-grow-1" translate="north.transformers.test.result-outdated"></span>
+        <button
+          type="button"
+          id="run-test-again"
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="isTestRunning()"
+          (click)="runTest()"
+          translate="south.test-item.run-again"
+        ></button>
+      </div>
+    }
+    <!-- An outdated result stays readable, but faded: it no longer matches what a test would run on -->
+    <div class="test-result" [class.test-result-outdated]="resultOutdated()">
+      <!-- Only an item test connects to the source and queries it -->
+      @if (testedOnItem()) {
+        <div class="small text-muted mt-2 mb-1" id="test-durations">
+          {{ 'south.test-item.connection-duration' | translate: { duration: testResult.connectionDuration } }}
+          &middot;
+          {{ 'south.test-item.query-duration' | translate: { duration: testResult.queryDuration } }}
+        </div>
+      }
+      <oib-transformer-test-result class="d-block mt-2" [raw]="testResult.raw" [hasTransformer]="true" [output]="testResult.transformed" />
+    </div>
+  }
 }

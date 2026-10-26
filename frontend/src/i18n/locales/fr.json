@@ -3247,11 +3247,13 @@
       "confirm-deletion": "Êtes-vous sûr de vouloir supprimer ce transformateur de ce connecteur North ?",
       "removed": "Transformateur supprimé",
       "test": {
-        "title": "Tester le transformateur",
+        "title": "Test du transformateur",
         "run": "Lancer le test",
+        "input": "Entrée",
         "source-paste": "Coller des données",
         "source-item": "À partir d'un élément source",
-        "item": "Élément"
+        "item": "Élément",
+        "result-outdated": "Les options du transformateur ou l'entrée ont changé depuis ce test"
       },
       "tooltips": {
         "edit": "Modifier le transformateur",

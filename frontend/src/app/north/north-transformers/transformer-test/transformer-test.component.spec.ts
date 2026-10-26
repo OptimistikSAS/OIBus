@@ -5,7 +5,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { SouthConnectorItemDTO, SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
 import { StandardTransformerDTO } from '@oibus/shared/api/transformer.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -15,7 +15,6 @@ import { HistoryQueryService } from '../../../services/history-query.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { TransformerService } from '../../../services/transformer.service';
 import { provideCurrentUser } from '../../../shared/current-user-testing';
-import { toPage } from '../../../shared/utils/page.utils';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from './transformer-test.component';
 
 const transformer: StandardTransformerDTO = {
@@ -38,20 +37,24 @@ const transformer: StandardTransformerDTO = {
 const testResult: SouthConnectorItemTestResult = {
   raw: { type: 'any-content', content: 'raw-input' },
   transformed: { type: 'any-content', content: 'pasted-output' },
-  connectionDuration: 0,
-  queryDuration: 0
+  connectionDuration: 12,
+  queryDuration: 34
 };
 
 class NorthTransformerTestComponentTester {
   readonly fixture = TestBed.createComponent(NorthTransformerTestComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly runButton = this.root.getByRole('button', { name: 'Run test' });
+  readonly title = this.root.getByRole('heading', { name: 'Testing transformer' });
+  readonly runButton = this.root.getByCss('#run-transformer-test');
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
-  readonly pasteRadio = this.root.getByLabelText('Paste data');
-  readonly itemRadio = this.root.getByLabelText('From a source item');
+  readonly inputSelect = this.root.getByLabelText('Input', { exact: true });
   readonly itemSelect = this.root.getByLabelText('Item', { exact: true });
-  readonly editor = this.root.getByCss('.cm-content');
+  readonly editor = this.root.getByCss('#transformer-test-input-data .cm-content');
+  readonly info = this.root.getByCss('.alert-primary');
   readonly error = this.root.getByCss('.alert-danger');
+  readonly outdated = this.root.getByCss('#outdated-result');
+  readonly runAgainButton = this.root.getByRole('button', { name: 'Run again' });
+  readonly durations = this.root.getByCss('#test-durations');
   readonly result = this.root.getByCss('oib-transformer-test-result');
   readonly summaryChip = this.root.getByCss('#expand-settings');
   readonly hideSettingsButton = this.root.getByCss('#hide-settings');
@@ -80,7 +83,6 @@ describe('NorthTransformerTestComponent', () => {
       of({ ...testData.south.manifest, modes: { ...testData.south.manifest.modes, history: false } })
     );
     southConnectorService.findById.mockReturnValue(of(testData.south.list[0]));
-    southConnectorService.searchItems.mockReturnValue(of(toPage<SouthConnectorItemDTO>(testData.south.list[0].items)));
     southConnectorService.testItem.mockReturnValue(of(testResult));
     historyQueryService.findById.mockReturnValue(of(testData.historyQueries.list[0]));
     historyQueryService.testItem.mockReturnValue(of(testResult));
@@ -106,15 +108,16 @@ describe('NorthTransformerTestComponent', () => {
   test('should prefill the paste input from the transformer template and offer only the paste source', async () => {
     const tester = new NorthTransformerTestComponentTester();
 
+    await expect.element(tester.title).toBeInTheDocument();
     await expect.element(tester.editor).toHaveTextContent('[]');
     expect(transformerService.getInputTemplate).toHaveBeenCalledWith('record-list');
-    await expect.element(tester.pasteRadio).toBeChecked();
-    await expect.element(tester.itemRadio).not.toBeInTheDocument();
+    await expect.element(tester.inputSelect).not.toBeInTheDocument();
     await expect.element(tester.cancelButton).toBeDisabled();
+    await expect.element(tester.info).toHaveTextContent('Test results will appear here');
     expect(southConnectorService.getSouthManifest).not.toHaveBeenCalled();
   });
 
-  test('should run the transformer with pasted input and its options, then collapse the settings', async () => {
+  test('should run the transformer with pasted input and its options, and collapse the settings on demand', async () => {
     const tester = new NorthTransformerTestComponentTester();
     await expect.element(tester.editor).toHaveTextContent('[]');
     await tester.editor.fill('[{"pointId":"p"}]');
@@ -126,15 +129,39 @@ describe('NorthTransformerTestComponent', () => {
       options: { precision: 2 }
     });
     await expect.element(tester.result).toBeInTheDocument();
+    await expect.element(tester.info).not.toBeInTheDocument();
+    // pasted data is not queried from a source
+    await expect.element(tester.durations).not.toBeInTheDocument();
+    await expect.element(tester.editor).toBeVisible();
+
+    await tester.hideSettingsButton.click();
     await expect.element(tester.summaryChip).toHaveTextContent('Paste data');
-    await expect.element(tester.pasteRadio).not.toBeVisible();
+    await expect.element(tester.editor).not.toBeVisible();
 
     await tester.summaryChip.click();
     await expect.element(tester.summaryChip).not.toBeInTheDocument();
-    await expect.element(tester.pasteRadio).toBeVisible();
+    await expect.element(tester.editor).toBeVisible();
+  });
 
-    await tester.hideSettingsButton.click();
-    await expect.element(tester.summaryChip).toBeInTheDocument();
+  test('should flag the result as outdated when the input or the options change, and run it again', async () => {
+    const tester = new NorthTransformerTestComponentTester();
+    await expect.element(tester.editor).toHaveTextContent('[]');
+    await tester.runButton.click();
+    await expect.element(tester.result).toBeInTheDocument();
+    await expect.element(tester.outdated).not.toBeInTheDocument();
+
+    await tester.editor.fill('[{"pointId":"q"}]');
+    await expect.element(tester.outdated).toMatchTextContent('The transformer options or the input changed since this test ran');
+
+    await tester.runAgainButton.click();
+    expect(transformerService.testTransformer).toHaveBeenLastCalledWith('transformer-1', {
+      inputData: '[{"pointId":"q"}]',
+      options: { precision: 2 }
+    });
+    await expect.element(tester.outdated).not.toBeInTheDocument();
+
+    tester.fixture.componentRef.setInput('options', { precision: 3 });
+    await expect.element(tester.outdated).toBeInTheDocument();
   });
 
   test('should display the error of a failed test', async () => {
@@ -164,17 +191,19 @@ describe('NorthTransformerTestComponent', () => {
     await expect.element(tester.runButton).toBeEnabled();
     expect(result$.observed).toBe(false);
     await expect.element(tester.result).not.toBeInTheDocument();
+    await expect.element(tester.info).toHaveTextContent('Test cancelled');
   });
 
   test('should load the source south items and run the selected item through the transformer', async () => {
     const tester = new NorthTransformerTestComponentTester({ kind: 'south', id: 'southId1', southType: 'folder-scanner' });
 
-    await tester.itemRadio.click();
+    await tester.inputSelect.selectOptions('From a source item');
     await expect.element(tester.dateRangeSelector).not.toBeInTheDocument();
+    await expect.element(tester.editor).not.toBeInTheDocument();
     await tester.itemSelect.selectOptions('item2');
     await tester.runButton.click();
 
-    expect(southConnectorService.searchItems).toHaveBeenCalledWith('southId1', { page: 0 });
+    expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
     expect(southConnectorService.testItem).toHaveBeenCalledWith(
       'southId1',
       'folder-scanner',
@@ -183,13 +212,20 @@ describe('NorthTransformerTestComponent', () => {
       testData.south.list[0].items[1].settings,
       { history: undefined, transformer: { transformerId: 'transformer-1', options: { precision: 2 } } }
     );
+    await expect.element(tester.durations).toHaveTextContent('Connection: 12 ms · Query: 34 ms');
+    await tester.hideSettingsButton.click();
     await expect.element(tester.summaryChip).toHaveTextContent('item2');
+
+    // another item
+    await tester.summaryChip.click();
+    await tester.itemSelect.selectOptions('item1');
+    await expect.element(tester.outdated).toBeInTheDocument();
   });
 
   test('should not run an item test without selected item', async () => {
     const tester = new NorthTransformerTestComponentTester({ kind: 'south', id: 'southId1', southType: 'folder-scanner' });
 
-    await tester.itemRadio.click();
+    await tester.inputSelect.selectOptions('From a source item');
     await tester.runButton.click();
 
     expect(southConnectorService.testItem).not.toHaveBeenCalled();
@@ -200,7 +236,7 @@ describe('NorthTransformerTestComponent', () => {
     southConnectorService.getSouthManifest.mockReturnValue(of(testData.south.manifest));
     const tester = new NorthTransformerTestComponentTester({ kind: 'south', id: 'southId1', southType: 'folder-scanner' });
 
-    await tester.itemRadio.click();
+    await tester.inputSelect.selectOptions('From a source item');
     await expect.element(tester.dateRangeSelector).toBeInTheDocument();
     await tester.itemSelect.selectOptions('item1');
     await tester.runButton.click();
@@ -217,6 +253,7 @@ describe('NorthTransformerTestComponent', () => {
       }
     );
     // item label and range label
+    await tester.hideSettingsButton.click();
     await expect.element(tester.summaryChip).toMatchTextContent(/item1 · .+/);
   });
 
@@ -224,12 +261,12 @@ describe('NorthTransformerTestComponent', () => {
     const historyQuery = testData.historyQueries.list[0];
     const tester = new NorthTransformerTestComponentTester({ kind: 'history', id: 'historyId1', southType: 'mssql' });
 
-    await tester.itemRadio.click();
+    await tester.inputSelect.selectOptions('From a source item');
     await expect.element(tester.itemSelect.getByRole('option')).toHaveLength(historyQuery.items.length + 1);
     await tester.itemSelect.selectOptions(historyQuery.items[0].name);
     await tester.runButton.click();
 
-    expect(southConnectorService.searchItems).not.toHaveBeenCalled();
+    expect(southConnectorService.findById).not.toHaveBeenCalled();
     expect(historyQueryService.testItem).toHaveBeenCalledWith(
       'historyId1',
       null,
@@ -250,6 +287,7 @@ describe('NorthTransformerTestComponent', () => {
 
     await expect.element(tester.result).not.toBeInTheDocument();
     await expect.element(tester.summaryChip).not.toBeInTheDocument();
+    await expect.element(tester.info).toHaveTextContent('Test results will appear here');
     expect(transformerService.getInputTemplate).toHaveBeenLastCalledWith('any');
   });
 });

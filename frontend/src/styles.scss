@@ -155,20 +155,6 @@ html {
   white-space: pre-wrap;
 }
 
-// Shared by south-item-test and north-transformer-test: wraps a "testing" section in its own
-// tinted, rounded card so it reads as a distinct zone within the surrounding modal instead of
-// more configuration fields, and gives collapsed-settings chips / recap boxes a consistent look.
-.testing-item-panel {
-  background-color: $veryLightGrey;
-  border-radius: 1rem;
-  margin-top: 1.5rem;
-  overflow: hidden;
-}
-
-.testing-item-body {
-  padding: 0.75rem 0.75rem 1rem;
-}
-
 // a link button in an alert reads as the link of the alert, not as the white links of the oib-box-title bars
 .alert .btn-link.alert-link {
   padding: 0;
@@ -176,8 +162,9 @@ html {
   text-decoration: underline;
 }
 
-// specificity must beat the global .btn-link white (that rule targets buttons in the dark
-// oib-box-title bars; this chip sits on the light testing-item-panel background instead)
+// Shared by south-item-test and north-transformer-test: the chip of the collapsed test settings.
+// Specificity must beat the global .btn-link white (that rule targets buttons in the dark
+// oib-box-title bars; this chip sits on the light background of the modal instead)
 .btn-link.settings-summary-chip {
   color: $darkGrey;
   text-decoration: none;
