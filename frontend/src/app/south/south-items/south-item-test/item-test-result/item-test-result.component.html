@@ -46,7 +46,7 @@
       }
     }
 
-    @if (displayMode() === 'json' || displayMode() === 'any') {
+    @if (displayMode() === 'json' || displayMode() === 'raw') {
       @if (isContentEmpty()) {
         <div class="alert alert-info m-2">{{ 'south.test-item.table.no-values' | translate }}</div>
       } @else {

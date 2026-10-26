@@ -87,7 +87,7 @@ const ENUM_PIPES: Array<EnumPipeCase> = [
     ['create-or-update-south-items-from-csv', 'Load south items from CSV']
   ]),
   enumPipeCase(OibusInputDataTypeEnumPipe, INPUT_TYPES, [
-    ['any', 'Files (for all sources)'],
+    ['file', 'Files (for all sources)'],
     ['record-list', 'Records (point-based and SQL-like sources)']
   ]),
   enumPipeCase(OibusOutputDataTypeEnumPipe, OUTPUT_TYPES, [

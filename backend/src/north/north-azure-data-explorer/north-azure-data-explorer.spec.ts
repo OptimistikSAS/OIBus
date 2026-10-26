@@ -26,7 +26,7 @@ const cacheMetadata: CacheMetadata = {
   contentSize: 123,
   numberOfElement: 0,
   createdAt: '',
-  contentType: 'any'
+  contentType: 'file'
 };
 const proxyWithCredentials: Partial<NorthAzureDataExplorerSettings> = {
   useProxy: true,
@@ -174,7 +174,7 @@ describe('NorthAzureDataExplorer', () => {
   });
 
   it('should retrieve supported types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file']);
   });
 
   it('should properly start', async () => {

@@ -26,7 +26,7 @@ export const getAssociatedInputType = (southType: OIBusSouthType): InputType => 
     case 'sqlite':
       return 'record-list';
     default:
-      return 'any';
+      return 'file';
   }
 };
 

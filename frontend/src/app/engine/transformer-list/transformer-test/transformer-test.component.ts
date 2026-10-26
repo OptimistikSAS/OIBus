@@ -65,7 +65,7 @@ export class TransformerTestComponent implements OnChanges {
         // output is not valid JSON; table mode not available
       }
     }
-    modes.push('any');
+    modes.push('raw');
     if (r.metadata.contentFile.endsWith('.csv') && r.output) {
       modes.push('table');
     }
@@ -74,7 +74,7 @@ export class TransformerTestComponent implements OnChanges {
 
   readonly displayModeIcons: Record<ContentDisplayMode, string> = {
     table: 'fa-table',
-    any: 'fa-file-lines',
+    raw: 'fa-file-lines',
     json: 'fa-code'
   };
 

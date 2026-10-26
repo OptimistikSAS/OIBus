@@ -17,7 +17,7 @@ const audit = {
 export function standardTransformerEntry(oIBusInternalId: string, functionName: string): TransformerEntry {
   // the settings of a standard transformer are not those of a custom one: build them apart, so that they are not
   // checked against the common properties only
-  const settings = { functionName, inputType: 'any', outputType: 'any' };
+  const settings = { functionName, inputType: 'file', outputType: 'file' };
   return { oIBusInternalId, type: 'standard', settings, manifest: testData.transformers.command.customManifest };
 }
 
@@ -26,7 +26,7 @@ const customTransformerSettings: Omit<CustomTransformerCommandDTO, 'type'> = {
   name: 'My transformer',
   description: '',
   inputType: 'record-list',
-  outputType: 'any'
+  outputType: 'file'
 };
 
 const southItems = Array.from({ length: 25 }, (_, index) => ({

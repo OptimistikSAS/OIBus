@@ -43,8 +43,8 @@ before(() => {
 
 const isoManifest: TransformerManifest = {
   id: 'file',
-  inputType: 'any',
-  outputType: 'any',
+  inputType: 'file',
+  outputType: 'file',
   settings: {
     type: 'object',
     key: 'options',
@@ -83,7 +83,7 @@ describe('TransformerController', () => {
     const result = await controller.listManifest(mockRequest as CustomExpressRequest);
 
     assert.strictEqual(transformerService.listManifest.mock.calls.length, 1);
-    assert.deepStrictEqual(result, [{ id: 'file', inputType: 'any', outputType: 'any' }]);
+    assert.deepStrictEqual(result, [{ id: 'file', inputType: 'file', outputType: 'file' }]);
   });
 
   it('should return a transformer manifest', async () => {
@@ -100,8 +100,8 @@ describe('TransformerController', () => {
 
   it('should search for transformers with parameters', async () => {
     const type: 'standard' | 'custom' = 'custom';
-    const inputType: OIBusDataType = 'any';
-    const outputType: OIBusDataType = 'any';
+    const inputType: OIBusDataType = 'file';
+    const outputType: OIBusDataType = 'file';
     const page = 1;
 
     const searchParams: TransformerSearchParam = { type, inputType, outputType, page };
@@ -218,8 +218,8 @@ describe('TransformerController', () => {
   it('should test a transformer with input data by id', async () => {
     const testRequest: TransformerTestRequest = { inputData: '[]', options: { foo: 'bar' } };
     const testResult = {
-      raw: { type: 'any-content', content: '[]' },
-      transformed: { type: 'any-content', content: 'out' },
+      raw: { type: 'file-content', content: '[]' },
+      transformed: { type: 'file-content', content: 'out' },
       connectionDuration: 0,
       queryDuration: 0
     };

@@ -193,7 +193,7 @@ export default class SouthFolderScanner
       }
       const content = await fs.readFile(path.join(inputFolder, lastFile.name), 'utf-8');
       return {
-        result: { type: 'any', filePath: lastFile.name, filename: lastFile.name, content },
+        result: { type: 'file', filePath: lastFile.name, filename: lastFile.name, content },
         connectionDuration,
         queryDuration: DateTime.now().toMillis() - queryStart
       };
@@ -398,7 +398,7 @@ export default class SouthFolderScanner
         const safeFilename = filename.split(path.sep).join('_');
         const gzipPath = path.resolve(this.tmpFolder, `${safeFilename}.gz`);
         await compress(filePath, gzipPath);
-        await this.addContent({ type: 'any', filePath: gzipPath, filename: `${filename}.gz` }, queryTime, [item]);
+        await this.addContent({ type: 'file', filePath: gzipPath, filename: `${filename}.gz` }, queryTime, [item]);
         try {
           await fs.unlink(gzipPath);
         } catch (unlinkError) {
@@ -406,10 +406,10 @@ export default class SouthFolderScanner
         }
       } catch (error: unknown) {
         this.logger.error(logCtx, `Error compressing file "${filePath}": ${getErrorMessage(error)}. Sending it raw instead.`);
-        await this.addContent({ type: 'any', filePath, filename }, queryTime, [item]);
+        await this.addContent({ type: 'file', filePath, filename }, queryTime, [item]);
       }
     } else {
-      await this.addContent({ type: 'any', filePath, filename }, queryTime, [item]);
+      await this.addContent({ type: 'file', filePath, filename }, queryTime, [item]);
     }
   }
 }

@@ -3,7 +3,7 @@ import { Instant } from './types';
 /**
  * List of possible OIBus data types.
  */
-export const OIBUS_DATA_TYPES = ['any', 'setpoint', 'record-list'] as const;
+export const OIBUS_DATA_TYPES = ['file', 'setpoint', 'record-list'] as const;
 /**
  * Type representing an OIBus data type.
  * @example 'record-list'
@@ -59,9 +59,9 @@ export interface OIBusSetpointContent extends BaseOIBusContent {
 export interface OIBusFileContent extends BaseOIBusContent {
   /**
    * The type of content.
-   * @example "any"
+   * @example "file"
    */
-  type: 'any';
+  type: 'file';
 
   /**
    * The path to the file containing the content.
@@ -84,12 +84,12 @@ export interface OIBusFileContent extends BaseOIBusContent {
   content?: string;
 }
 
-export interface OIBusAnyContent extends BaseOIBusContent {
+export interface OIBusInMemoryFileContent extends BaseOIBusContent {
   /**
    * The type of content.
-   * @example "any-content"
+   * @example "file-content"
    */
-  type: 'any-content';
+  type: 'file-content';
 
   /**
    * The content
@@ -153,4 +153,4 @@ export interface OIBusRecordListContent extends BaseOIBusContent {
 /**
  * Type representing OIBus content.
  */
-export type OIBusContent = OIBusFileContent | OIBusAnyContent | OIBusSetpointContent | OIBusRecordListContent;
+export type OIBusContent = OIBusFileContent | OIBusInMemoryFileContent | OIBusSetpointContent | OIBusRecordListContent;

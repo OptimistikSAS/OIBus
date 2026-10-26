@@ -10,15 +10,15 @@ import type TransformerRepository from '../repository/config/transformer.reposit
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { createMock, Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
-import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
-import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
-import CSVToRecordListTransformer from '../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
-import csvToRecordListManifest from '../transformers/any/csv-to-record-list/manifest';
-import fileManifest from '../transformers/any/file/manifest';
-import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
-import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
-import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
-import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
+import CSVToMQTTTransformer from '../transformers/file/csv-to-mqtt/csv-to-mqtt-transformer';
+import csvToMqttManifest from '../transformers/file/csv-to-mqtt/manifest';
+import CSVToRecordListTransformer from '../transformers/file/csv-to-record-list/csv-to-record-list-transformer';
+import csvToRecordListManifest from '../transformers/file/csv-to-record-list/manifest';
+import fileManifest from '../transformers/file/file/manifest';
+import JSONToCSVTransformer from '../transformers/file/json-to-csv/json-to-csv-transformer';
+import jsonToCsvManifest from '../transformers/file/json-to-csv/manifest';
+import JSONToOIAnalyticsTransformer from '../transformers/file/json-to-oianalytics/json-to-oianalytics-transformer';
+import jsonToOianalyticsManifest from '../transformers/file/json-to-oianalytics/manifest';
 // Import transformer manifests
 import recordListToJsonManifest from '../transformers/record-list/record-list-to-json/manifest';
 // Import concrete transformer classes for instanceof checks
@@ -54,7 +54,7 @@ const nodeRequire = createRequire(import.meta.url);
 // OIBusCustomTransformer is used with `new`: each instance gets a fresh transform mock
 class MockOIBusCustomTransformer {
   transform = mock.fn(async () => ({
-    metadata: { contentType: 'any', numberOfElement: 1 },
+    metadata: { contentType: 'file', numberOfElement: 1 },
     output: JSON.stringify({ data: [{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', value: 42 }] })
   }));
 }
@@ -430,7 +430,7 @@ describe('Transformer Service', () => {
   });
 
   describe('runTransformerOnContent', () => {
-    const metadata = { contentFile: 'f', contentType: 'any', numberOfElement: 1, contentSize: 0, createdAt: '' };
+    const metadata = { contentFile: 'f', contentType: 'file', numberOfElement: 1, contentSize: 0, createdAt: '' };
     // Loosely-typed wrapper to avoid verbose OIBusContent casts in each call.
     const run = () =>
       runTransformerOnContent as unknown as (
@@ -475,9 +475,9 @@ describe('Transformer Service', () => {
       assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
     });
 
-    it('runs any-content payloads in memory', async () => {
+    it('runs file-content payloads in memory', async () => {
       const t = buildTransformer();
-      await run()(t, { type: 'any-content', content: 'raw' }, { source: 'test' });
+      await run()(t, { type: 'file-content', content: 'raw' }, { source: 'test' });
       assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
       assert.strictEqual(t.transformInMemory.mock.calls[0].arguments[0], 'raw');
     });
@@ -485,7 +485,7 @@ describe('Transformer Service', () => {
     it('streams any file content through transform', async () => {
       const createReadStreamMock = mock.method(fs, 'createReadStream', (_path: string) => 'stream');
       const t = buildTransformer();
-      const results = await run()(t, { type: 'any', filePath: '/tmp/data.csv' }, { source: 'test' });
+      const results = await run()(t, { type: 'file', filePath: '/tmp/data.csv' }, { source: 'test' });
       assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
       assert.strictEqual(createReadStreamMock.mock.calls[0].arguments[0], '/tmp/data.csv');
       assert.strictEqual(t.transform.mock.calls.length, 1);
@@ -497,7 +497,7 @@ describe('Transformer Service', () => {
     it('runs any content in memory when no file was written to filePath', async () => {
       const createReadStreamMock = mock.method(fs, 'createReadStream', () => 'stream');
       const t = buildTransformer();
-      const results = await run()(t, { type: 'any', filePath: 'does-not-exist.csv', content: 'a;b\n1;2' }, { source: 'test' });
+      const results = await run()(t, { type: 'file', filePath: 'does-not-exist.csv', content: 'a;b\n1;2' }, { source: 'test' });
       assert.strictEqual(createReadStreamMock.mock.calls.length, 0);
       assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
       assert.strictEqual(t.transformInMemory.mock.calls[0].arguments[0], 'a;b\n1;2');
@@ -512,23 +512,23 @@ describe('Transformer Service', () => {
       assert.deepStrictEqual(toTransformedContent(JSON.stringify(tv), 'record-list', 'out.json'), { type: 'record-list', content: tv });
     });
 
-    it('falls back to any-content when time-values output is not valid JSON', () => {
-      assert.deepStrictEqual(toTransformedContent('not-json', 'record-list', 'out.json'), { type: 'any-content', content: 'not-json' });
+    it('falls back to file-content when time-values output is not valid JSON', () => {
+      assert.deepStrictEqual(toTransformedContent('not-json', 'record-list', 'out.json'), { type: 'file-content', content: 'not-json' });
     });
 
-    it('wraps "any" output as a file so a table can be rendered', () => {
-      assert.deepStrictEqual(toTransformedContent('a;b\n1;2', 'any', 'result.csv'), {
-        type: 'any',
+    it('wraps "file" output as a file so a table can be rendered', () => {
+      assert.deepStrictEqual(toTransformedContent('a;b\n1;2', 'file', 'result.csv'), {
+        type: 'file',
         filePath: 'result.csv',
         content: 'a;b\n1;2'
       });
       // defaults the file name when none provided
-      assert.deepStrictEqual(toTransformedContent('x', 'any', undefined), { type: 'any', filePath: 'output', content: 'x' });
+      assert.deepStrictEqual(toTransformedContent('x', 'file', undefined), { type: 'file', filePath: 'output', content: 'x' });
     });
 
-    it('returns any-content for every other output type', () => {
-      assert.deepStrictEqual(toTransformedContent('payload', 'mqtt', 'f'), { type: 'any-content', content: 'payload' });
-      assert.deepStrictEqual(toTransformedContent('payload', undefined, undefined), { type: 'any-content', content: 'payload' });
+    it('returns file-content for every other output type', () => {
+      assert.deepStrictEqual(toTransformedContent('payload', 'mqtt', 'f'), { type: 'file-content', content: 'payload' });
+      assert.deepStrictEqual(toTransformedContent('payload', undefined, undefined), { type: 'file-content', content: 'payload' });
     });
   });
 
@@ -536,32 +536,32 @@ describe('Transformer Service', () => {
     it('wraps time-values input and delegates to runTransformer with the resolved transformer', async () => {
       const tv = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', value: '1' }];
       transformerRepository.findById.mock.mockImplementation(() => ({ id: 't1', type: 'standard', inputType: 'record-list' }) as never);
-      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'any-content', content: 'done' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file-content', content: 'done' }) as never);
 
       const result = await service.testTransformer('t1', { foo: 'bar' }, JSON.stringify(tv));
 
       assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t1', { foo: 'bar' }, { type: 'record-list', content: tv }]);
       assert.deepStrictEqual(result, {
         raw: { type: 'record-list', content: tv },
-        transformed: { type: 'any-content', content: 'done' },
+        transformed: { type: 'file-content', content: 'done' },
         connectionDuration: 0,
         queryDuration: 0
       });
     });
 
-    it('wraps non-structured input as any-content', async () => {
-      transformerRepository.findById.mock.mockImplementation(() => ({ id: 't2', type: 'standard', inputType: 'any' }) as never);
-      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'any-content', content: '' }) as never);
+    it('wraps non-structured input as file-content', async () => {
+      transformerRepository.findById.mock.mockImplementation(() => ({ id: 't2', type: 'standard', inputType: 'file' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file-content', content: '' }) as never);
 
       await service.testTransformer('t2', {}, 'raw text');
 
-      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t2', {}, { type: 'any-content', content: 'raw text' }]);
+      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t2', {}, { type: 'file-content', content: 'raw text' }]);
     });
 
     it('wraps setpoint input as a parsed setpoint array', async () => {
       const setpoints = [{ reference: 'ref1', value: 1 }];
       transformerRepository.findById.mock.mockImplementation(() => ({ id: 't3', type: 'standard', inputType: 'setpoint' }) as never);
-      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'any-content', content: '' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'file-content', content: '' }) as never);
 
       await service.testTransformer('t3', {}, JSON.stringify(setpoints));
 
@@ -575,7 +575,7 @@ describe('Transformer Service', () => {
         id: 'std-json',
         type: 'standard',
         inputType: 'record-list',
-        outputType: 'any',
+        outputType: 'file',
         functionName: 'record-list-to-json'
       } as StandardTransformer;
       transformerRepository.findById.mock.mockImplementation(() => standardTransformer);
@@ -587,19 +587,19 @@ describe('Transformer Service', () => {
       const result = await service.runTransformer('std-json', {}, content);
 
       assert.strictEqual(transformerRepository.findById.mock.calls[0].arguments[0], 'std-json');
-      assert.strictEqual(result.type, 'any');
+      assert.strictEqual(result.type, 'file');
       assert.match((result as { filePath: string }).filePath, /^[\w-]{10}\.json$/);
       assert.strictEqual(result.content, JSON.stringify(content.content));
     });
 
     it('runs the file transformer, writing a payload as a file', async () => {
       transformerRepository.findById.mock.mockImplementation(
-        () => ({ id: 'file', type: 'standard', inputType: 'any', outputType: 'any', functionName: 'file' }) as StandardTransformer
+        () => ({ id: 'file', type: 'standard', inputType: 'file', outputType: 'file', functionName: 'file' }) as StandardTransformer
       );
 
-      const result = await service.runTransformer('file', {}, { type: 'any-content', content: '{"a":1}' });
+      const result = await service.runTransformer('file', {}, { type: 'file-content', content: '{"a":1}' });
 
-      assert.strictEqual(result.type, 'any');
+      assert.strictEqual(result.type, 'file');
       assert.strictEqual(result.content, '{"a":1}');
     });
 
@@ -610,7 +610,7 @@ describe('Transformer Service', () => {
             id: 'setpoints',
             type: 'standard',
             inputType: 'setpoint',
-            outputType: 'any',
+            outputType: 'file',
             functionName: 'setpoint-to-json'
           }) as StandardTransformer
       );
@@ -618,7 +618,7 @@ describe('Transformer Service', () => {
 
       const result = await service.runTransformer('setpoints', {}, { type: 'setpoint', content: setpoints });
 
-      assert.strictEqual(result.type, 'any');
+      assert.strictEqual(result.type, 'file');
       assert.deepStrictEqual(JSON.parse(result.content as string), setpoints);
     });
 
@@ -626,7 +626,7 @@ describe('Transformer Service', () => {
       transformerRepository.findById.mock.mockImplementation(() => null);
 
       await assert.rejects(
-        async () => service.runTransformer('bad-id', {}, { type: 'any-content', content: 'x' }),
+        async () => service.runTransformer('bad-id', {}, { type: 'file-content', content: 'x' }),
         new NotFoundError('Transformer "bad-id" not found')
       );
     });
@@ -658,7 +658,7 @@ describe('Transformer Service', () => {
       name: 'Test Transformer',
       description: 'Test transformer for testing',
       inputType: 'record-list' as const,
-      outputType: 'any' as const,
+      outputType: 'file' as const,
       customCode,
       language: 'javascript' as const,
       timeout: 2000,
@@ -675,7 +675,7 @@ describe('Transformer Service', () => {
 
       assert.ok('output' in result);
       assert.ok('metadata' in result);
-      assert.strictEqual(result.metadata.contentType, 'any');
+      assert.strictEqual(result.metadata.contentType, 'file');
       assert.strictEqual(result.metadata.numberOfElement, 1);
     });
 
@@ -689,7 +689,7 @@ describe('Transformer Service', () => {
 
       assert.ok('output' in result);
       assert.ok('metadata' in result);
-      assert.strictEqual(result.metadata.contentType, 'any');
+      assert.strictEqual(result.metadata.contentType, 'file');
       assert.strictEqual(result.metadata.numberOfElement, 1);
     });
 
@@ -743,9 +743,9 @@ describe('Transformer Service', () => {
 
   describe('generateFileTemplate', () => {
     it('should generate file template with sample data', () => {
-      const template = service.generateTemplate('any');
+      const template = service.generateTemplate('file');
 
-      assert.strictEqual(template.type, 'any');
+      assert.strictEqual(template.type, 'file');
       assert.strictEqual(template.description, 'Sample file content with structured data');
 
       const data = JSON.parse(template.data);

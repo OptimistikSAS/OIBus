@@ -99,7 +99,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'oianalytics'];
+    return ['file', 'oianalytics'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -117,7 +117,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
   handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     switch (cacheMetadata.contentType) {
-      case 'any':
+      case 'file':
         return this.handleFile(fileStream, cacheMetadata);
 
       case 'oianalytics':

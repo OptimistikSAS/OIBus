@@ -294,13 +294,13 @@
       "oibus-south": "South connector"
     },
     "oibus-input-data-type": {
-      "any": "Files (for all sources)",
+      "file": "Files (for all sources)",
       "setpoint": "Setpoints (for all sources)",
-      "any-content": "Any content",
+      "file-content": "File content",
       "record-list": "Records (point-based and SQL-like sources)"
     },
     "oibus-output-data-type": {
-      "any": "Any",
+      "file": "Files",
       "mqtt": "MQTT",
       "modbus": "Modbus",
       "oianalytics": "OIAnalytics optimized time values",
@@ -2825,7 +2825,7 @@
         "cancel": "Test cancelled"
       },
       "view": {
-        "any": "Raw view",
+        "raw": "Raw view",
         "table": "Table view",
         "json": "JSON view"
       },

@@ -2,7 +2,7 @@ import { TransformerManifest } from '../../../../shared/model/connector/transfor
 
 const manifest: TransformerManifest = {
   id: 'json-to-oianalytics',
-  inputType: 'any',
+  inputType: 'file',
   outputType: 'oianalytics',
   settings: {
     type: 'object',

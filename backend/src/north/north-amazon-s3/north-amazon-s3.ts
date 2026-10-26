@@ -23,7 +23,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   }
 
   supportedTypes(): Array<string> {
-    return ['any'];
+    return ['file'];
   }
 
   async start(): Promise<void> {

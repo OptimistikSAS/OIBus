@@ -275,7 +275,7 @@ describe('SouthConnectorController', () => {
     };
 
     const mockResult = {
-      raw: { type: 'any', filePath: '/path/to/file.json', content: '{"key": "value"}' } as OIBusContent,
+      raw: { type: 'file', filePath: '/path/to/file.json', content: '{"key": "value"}' } as OIBusContent,
       transformed: null,
       connectionDuration: 12,
       queryDuration: 34

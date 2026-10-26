@@ -42,7 +42,7 @@ class TestComponent {
           contentSize: 100,
           numberOfElement: 1,
           createdAt: '2023-01-01T10:00:00.000Z',
-          contentType: 'any'
+          contentType: 'file'
         }
       }
     ],
@@ -54,7 +54,7 @@ class TestComponent {
           contentSize: 50,
           numberOfElement: 1,
           createdAt: '2023-01-01T11:00:00.000Z',
-          contentType: 'any'
+          contentType: 'file'
         }
       }
     ],

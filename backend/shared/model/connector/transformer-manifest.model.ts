@@ -1,9 +1,9 @@
 import { OIBusObjectAttribute } from './form.model';
 
-export const INPUT_TYPES = ['any', 'setpoint', 'record-list'] as const;
+export const INPUT_TYPES = ['file', 'setpoint', 'record-list'] as const;
 export type InputType = (typeof INPUT_TYPES)[number];
 
-export const OUTPUT_TYPES = ['any', 'record-list', 'opcua', 'mqtt', 'modbus', 'oianalytics'] as const;
+export const OUTPUT_TYPES = ['file', 'record-list', 'opcua', 'mqtt', 'modbus', 'oianalytics'] as const;
 export type OutputType = (typeof OUTPUT_TYPES)[number];
 
 /**
@@ -19,7 +19,7 @@ export interface TransformerManifest {
 
   /**
    * The input data type that the transformer accepts.
-   * @example "any"
+   * @example "file"
    */
   inputType: InputType;
 

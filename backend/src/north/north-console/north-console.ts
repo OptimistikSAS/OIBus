@@ -18,7 +18,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'record-list', 'setpoint'];
+    return ['file', 'record-list', 'setpoint'];
   }
 
   testConnection(): Promise<OIBusConnectionTestResult> {
@@ -37,7 +37,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     switch (cacheMetadata.contentType) {
-      case 'any':
+      case 'file':
         return this.handleFile(cacheMetadata);
 
       case 'record-list':

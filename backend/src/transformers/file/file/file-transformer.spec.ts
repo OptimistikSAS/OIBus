@@ -35,7 +35,7 @@ describe('FileTransformer', () => {
 
     assert.deepStrictEqual(result, {
       output: content,
-      metadata: { contentFile: 'file.gz', contentSize: 0, createdAt: '', numberOfElement: 0, contentType: 'any' }
+      metadata: { contentFile: 'file.gz', contentSize: 0, createdAt: '', numberOfElement: 0, contentType: 'file' }
     });
   });
 
@@ -50,8 +50,8 @@ describe('FileTransformer', () => {
 
   it('should expose its manifest', () => {
     assert.strictEqual(manifest.id, 'file');
-    assert.strictEqual(manifest.inputType, 'any');
-    assert.strictEqual(manifest.outputType, 'any');
+    assert.strictEqual(manifest.inputType, 'file');
+    assert.strictEqual(manifest.outputType, 'file');
     assert.deepStrictEqual(manifest.settings.attributes, []);
   });
 });

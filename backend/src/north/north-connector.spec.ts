@@ -6,7 +6,7 @@ import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'no
 
 import { DateTime } from 'luxon';
 
-import type { OIBusAnyContent, OIBusContent, OIBusFileContent } from '../../shared/model/common/content.model';
+import type { OIBusContent, OIBusFileContent, OIBusInMemoryFileContent } from '../../shared/model/common/content.model';
 import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { CacheContentUpdateCommand, CacheMetadata } from '../../shared/model/domain/engine.model';
 
@@ -688,13 +688,13 @@ describe('NorthConnector', () => {
     north['findTransformer'] = mock.fn(
       (_metadataSource: CacheMetadataSource) => ({ transformer: { type: 'standard', functionName: 'file' } }) as NorthTransformerWithOptions
     );
-    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusFileContent | OIBusAnyContent) => undefined);
+    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusFileContent | OIBusInMemoryFileContent) => undefined);
     north['cacheWithoutTransform'] = cacheWithoutTransformMock;
     const executeTransformationMock = mock.fn(async () => undefined);
     north['executeTransformation'] = executeTransformationMock;
 
-    await north.cacheContent({ type: 'any-content', content: '{}' }, { source: 'test' });
-    await north.cacheContent({ type: 'any', filePath: 'file.csv' }, { source: 'test' });
+    await north.cacheContent({ type: 'file-content', content: '{}' }, { source: 'test' });
+    await north.cacheContent({ type: 'file', filePath: 'file.csv' }, { source: 'test' });
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
     // Records are written as a JSON file by the transformer itself
@@ -708,7 +708,7 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 0,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'any'
+      contentType: 'file'
     };
     const outputStream = Buffer.from('outputStream');
     oiBusTransformer.transform.mock.mockImplementation(async () => ({ metadata, output: outputStream }));
@@ -740,7 +740,7 @@ describe('NorthConnector', () => {
     createReadStream.mock.mockImplementation(() => readStream);
 
     await north['cacheWithoutTransform']({
-      type: 'any',
+      type: 'file',
       filePath: 'path/file.csv'
     });
 
@@ -749,7 +749,7 @@ describe('NorthConnector', () => {
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
     assert.strictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], readStream);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
-      contentType: 'any',
+      contentType: 'file',
       contentFilename: 'file.csv' // basename — full path is never leaked into cache metadata
     });
   });
@@ -793,19 +793,19 @@ describe('NorthConnector', () => {
       {
         id: 'allSources1',
         options: {},
-        transformer: { id: 'file', type: 'standard', functionName: 'file', inputType: 'any', outputType: 'any' },
+        transformer: { id: 'file', type: 'standard', functionName: 'file', inputType: 'file', outputType: 'file' },
         source: { type: 'oibus-api' }
       },
       {
         id: 'dataSource1',
         options: {},
-        transformer: { id: 'custom', type: 'standard', functionName: 'json-to-csv', inputType: 'any', outputType: 'any' },
+        transformer: { id: 'custom', type: 'standard', functionName: 'json-to-csv', inputType: 'file', outputType: 'file' },
         source: { type: 'oibus-api', dataSourceId: 'ds1' }
       },
       {
         id: 'allSources2',
         options: {},
-        transformer: { id: 'file', type: 'standard', functionName: 'file', inputType: 'any', outputType: 'any' },
+        transformer: { id: 'file', type: 'standard', functionName: 'file', inputType: 'file', outputType: 'file' },
         source: { type: 'oibus-api' }
       }
     ]);
@@ -868,7 +868,7 @@ describe('NorthConnector', () => {
     assert.strictEqual(result, undefined);
   });
 
-  it('should transform any-content payload', async () => {
+  it('should transform file-content payload', async () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
@@ -878,7 +878,7 @@ describe('NorthConnector', () => {
       output: outputBuffer,
       metadata: { contentFile: '', contentType: 'opcua', numberOfElement: 1, contentSize: 0, createdAt: '' }
     }));
-    await north['executeTransformation']({ type: 'any-content', content: '' } as OIBusContent, options, {
+    await north['executeTransformation']({ type: 'file-content', content: '' } as OIBusContent, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);
     assert.strictEqual(transformInMemory.mock.calls.length, 1);
@@ -918,10 +918,10 @@ describe('NorthConnector', () => {
     });
   });
 
-  it('should cache without transform with any-content as a file', async () => {
-    await north['cacheWithoutTransform']({ type: 'any-content', content: '' });
+  it('should cache without transform with file-content as a file', async () => {
+    await north['cacheWithoutTransform']({ type: 'file-content', content: '' });
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
-    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], { contentType: 'any' });
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], { contentType: 'file' });
   });
 
   it('should get cache folder', () => {

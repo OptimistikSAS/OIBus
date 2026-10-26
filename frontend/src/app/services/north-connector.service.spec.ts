@@ -36,7 +36,7 @@ function expectErrorsIgnoredUnlessUnauthorized(request: TestRequest) {
 }
 
 const northTypes: Array<NorthType> = [
-  { id: 'console', category: 'debug', types: ['any'] },
+  { id: 'console', category: 'debug', types: ['file'] },
   { id: 'mqtt', category: 'iot', types: ['record-list'] }
 ];
 const cacheSearchResult: CacheSearchResult = {

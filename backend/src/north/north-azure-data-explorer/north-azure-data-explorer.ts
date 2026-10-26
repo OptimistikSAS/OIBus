@@ -38,7 +38,7 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
   }
 
   supportedTypes(): Array<string> {
-    return ['any'];
+    return ['file'];
   }
 
   override async start(): Promise<void> {

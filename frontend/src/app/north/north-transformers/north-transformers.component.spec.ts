@@ -29,7 +29,7 @@ const standard = (functionName: string, inputType: StandardTransformerDTO['input
   type: 'standard',
   functionName,
   inputType,
-  outputType: 'any',
+  outputType: 'file',
   manifest: {
     type: 'object',
     key: 'options',
@@ -294,7 +294,7 @@ describe('NorthTransformersComponent', () => {
 
     test('should add the obvious transformer of a source in one click', async () => {
       const json = standard('record-list-to-json', 'record-list');
-      const tester = new NorthTransformersComponentTester(northConnector, false, [customTransformer, json, standard('file', 'any', true)]);
+      const tester = new NorthTransformersComponentTester(northConnector, false, [customTransformer, json, standard('file', 'file', true)]);
 
       // the file transformer needs its options to be set: it cannot be added in one click
       await expect.element(tester.row('OIBus API').getByCss('.quick-add')).not.toBeInTheDocument();

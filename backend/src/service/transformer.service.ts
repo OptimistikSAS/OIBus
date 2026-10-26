@@ -26,16 +26,16 @@ import { NorthConnectorEntity } from '../model/north-connector.model';
 import { CustomTransformer, NorthTransformerWithOptions, Transformer } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import TransformerRepository from '../repository/config/transformer.repository';
-import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
-import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
-import CSVToRecordListTransformer from '../transformers/any/csv-to-record-list/csv-to-record-list-transformer';
-import csvToRecordListManifest from '../transformers/any/csv-to-record-list/manifest';
-import FileTransformer from '../transformers/any/file/file-transformer';
-import fileManifest from '../transformers/any/file/manifest';
-import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
-import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
-import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
-import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
+import CSVToMQTTTransformer from '../transformers/file/csv-to-mqtt/csv-to-mqtt-transformer';
+import csvToMqttManifest from '../transformers/file/csv-to-mqtt/manifest';
+import CSVToRecordListTransformer from '../transformers/file/csv-to-record-list/csv-to-record-list-transformer';
+import csvToRecordListManifest from '../transformers/file/csv-to-record-list/manifest';
+import FileTransformer from '../transformers/file/file/file-transformer';
+import fileManifest from '../transformers/file/file/manifest';
+import JSONToCSVTransformer from '../transformers/file/json-to-csv/json-to-csv-transformer';
+import jsonToCsvManifest from '../transformers/file/json-to-csv/manifest';
+import JSONToOIAnalyticsTransformer from '../transformers/file/json-to-oianalytics/json-to-oianalytics-transformer';
+import jsonToOianalyticsManifest from '../transformers/file/json-to-oianalytics/manifest';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import OibusTransformer from '../transformers/oibus-transformer';
 import recordListToCsvManifest from '../transformers/record-list/record-list-to-csv/manifest';
@@ -98,7 +98,7 @@ const buildContentFromInput = (inputType: string, inputData: string): OIBusConte
     case 'record-list':
       return { type: 'record-list', content: JSON.parse(inputData) };
     default:
-      return { type: 'any-content', content: inputData };
+      return { type: 'file-content', content: inputData };
   }
 };
 
@@ -111,13 +111,13 @@ export const toTransformedContent = (output: string, contentType: string | undef
     try {
       return { type: 'record-list', content: JSON.parse(output) };
     } catch {
-      return { type: 'any-content', content: output };
+      return { type: 'file-content', content: output };
     }
   }
-  if (contentType === 'any') {
-    return { type: 'any', filePath: contentFile || 'output', content: output };
+  if (contentType === 'file') {
+    return { type: 'file', filePath: contentFile || 'output', content: output };
   }
-  return { type: 'any-content', content: output };
+  return { type: 'file-content', content: output };
 };
 
 export default class TransformerService {
@@ -278,7 +278,7 @@ export default class TransformerService {
 
   generateTemplate(inputType: InputType): InputTemplate {
     switch (inputType) {
-      case 'any':
+      case 'file':
         return this.generateFileTemplate();
       case 'record-list':
         return this.generateRecordListTemplate();
@@ -357,7 +357,7 @@ export default class TransformerService {
     };
 
     return {
-      type: 'any',
+      type: 'file',
       data: JSON.stringify(fileContent, null, 2),
       description: 'Sample file content with structured data'
     };
@@ -471,7 +471,7 @@ export const createTransformer = (
 
 /**
  * Run a transformer instance over an OIBusContent payload and return the produced output(s).
- * In-memory payloads (record-list / setpoint / any-content) go through `transformInMemory`;
+ * In-memory payloads (record-list / setpoint / file-content) go through `transformInMemory`;
  * true file-on-disk payloads (`any`) stay on the stream API to avoid slurping the file.
  * When `maxElements > 0`, record batches larger than that are split into several outputs.
  */
@@ -497,11 +497,11 @@ export const runTransformerOnContent = async (
     case 'setpoint':
       results.push(await transformer.transformInMemory(data.content, source, null));
       break;
-    case 'any-content':
-      // any-content is already a serialised string; pass it through as-is.
+    case 'file-content':
+      // file-content is already a serialised string; pass it through as-is.
       results.push(await transformer.transformInMemory(data.content, source, null));
       break;
-    case 'any': {
+    case 'file': {
       const randomId = generateRandomId(10);
       // Use the logical filename when provided, otherwise fall back to the basename of the disk path.
       const logicalName = data.filename ?? path.basename(data.filePath);

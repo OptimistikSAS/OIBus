@@ -2,7 +2,7 @@ import { TransformerManifest } from '../../../../shared/model/connector/transfor
 
 const manifest: TransformerManifest = {
   id: 'csv-to-record-list',
-  inputType: 'any',
+  inputType: 'file',
   outputType: 'record-list',
   settings: {
     type: 'object',

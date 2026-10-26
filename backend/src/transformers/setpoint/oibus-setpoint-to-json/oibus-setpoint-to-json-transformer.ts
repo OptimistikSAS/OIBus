@@ -33,7 +33,7 @@ export default class OIBusSetpointToJSONTransformer extends OIBusTransformer {
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: setpoints.length,
-      contentType: 'any'
+      contentType: 'file'
     };
     return Promise.resolve({ output: Buffer.from(JSON.stringify(setpoints)), metadata });
   }

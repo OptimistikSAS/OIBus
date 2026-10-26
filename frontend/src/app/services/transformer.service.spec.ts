@@ -39,11 +39,11 @@ describe('TransformerService', () => {
   const testRequest: TransformerTestRequest = { inputData: '{}', options: { precision: 2 } };
   const testResponse: TransformerTestResponse = {
     output: '{"value":42}',
-    metadata: { contentType: 'any', contentFile: '', contentSize: 12, createdAt: testData.constants.dates.DATE_1, numberOfElement: 1 }
+    metadata: { contentType: 'file', contentFile: '', contentSize: 12, createdAt: testData.constants.dates.DATE_1, numberOfElement: 1 }
   };
   const itemTestResult: SouthConnectorItemTestResult = {
-    raw: { type: 'any-content', content: 'raw' },
-    transformed: { type: 'any-content', content: 'transformed' },
+    raw: { type: 'file-content', content: 'raw' },
+    transformed: { type: 'file-content', content: 'transformed' },
     connectionDuration: 1,
     queryDuration: 2
   };

@@ -229,7 +229,7 @@ describe('SouthFolderScanner', () => {
         transformer: { transformerId: 'transformerId', options: {} }
       });
 
-      assert.deepStrictEqual(result.result, { type: 'any', filePath: 'file2.csv', filename: 'file2.csv', content: 'a;b' });
+      assert.deepStrictEqual(result.result, { type: 'file', filePath: 'file2.csv', filename: 'file2.csv', content: 'a;b' });
       assert.deepStrictEqual(readFile.mock.calls[0].arguments, [
         path.join(path.resolve(configuration.settings.inputFolder), 'file2.csv'),
         'utf-8'
@@ -377,7 +377,7 @@ describe('SouthFolderScanner', () => {
 
       assert.strictEqual(addContent.mock.calls.length, 1);
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('inputFolder', 'file1.csv'),
         filename: 'file1.csv'
       });
@@ -398,7 +398,7 @@ describe('SouthFolderScanner', () => {
       ]);
       assert.strictEqual(addContent.mock.calls.length, 1);
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'any',
+        type: 'file',
         filePath: expectedGzipPath,
         filename: path.join('sub', 'file1.csv') + '.gz'
       });
@@ -415,7 +415,7 @@ describe('SouthFolderScanner', () => {
 
       assert.ok(logger.error.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error compressing file')));
       assert.deepStrictEqual(addContent.mock.calls[0].arguments[0], {
-        type: 'any',
+        type: 'file',
         filePath: path.resolve('inputFolder', 'file1.csv'),
         filename: 'file1.csv'
       });

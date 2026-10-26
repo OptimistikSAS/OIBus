@@ -32,7 +32,7 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
   }
 
   /**
-   * In-memory fast path. The any-content payload reaching the North is already a serialised JSON
+   * In-memory fast path. The file-content payload reaching the North is already a serialised JSON
    * string, so tolerate both a parsed object and the raw string. Each row matched by
    * `rowIteratorPath` is mapped to an OIAnalytics time-value, and the result is sent in the OIAnalytics compact format
    * `{ timestamps, values, references }`.

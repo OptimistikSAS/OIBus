@@ -17,8 +17,8 @@ const localStandardTransformer = (functionName: string): StandardTransformerDTO 
   id: `local-${functionName}`,
   type: 'standard',
   functionName,
-  inputType: 'any',
-  outputType: 'any',
+  inputType: 'file',
+  outputType: 'file',
   manifest: testData.transformers.command.customManifest
 });
 
@@ -161,7 +161,7 @@ describe('ConfigImportPreviewComponent', () => {
     createTester();
     await tester.open('transformers', 'users');
     await expect.element(tester.toggle('transformer:custom1')).toMatchTextContent('My transformer');
-    await expect.element(tester.toggle('transformer:custom1')).toMatchTextContent('record-list → any');
+    await expect.element(tester.toggle('transformer:custom1')).toMatchTextContent('record-list → file');
     await expect.element(tester.toggle('transformer:standard1')).not.toBeInTheDocument();
     await expect.element(tester.root.getByCss('#preview-standard-transformers')).toMatchTextContent('1 standard transformer(s) are used');
     await expect.element(tester.missingStandardTransformers).not.toBeInTheDocument();

@@ -176,7 +176,7 @@ export class NorthTransformersComponent {
         'oibus-api',
         'oibus-api',
         null,
-        'any',
+        'file',
         apiTransformers.filter(transformer => transformer.source.type === 'oibus-api' && !transformer.source.dataSourceId),
         apiTransformers.filter(transformer => transformer.source.type === 'oibus-api' && !!transformer.source.dataSourceId)
       ),

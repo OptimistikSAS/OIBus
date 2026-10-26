@@ -24,7 +24,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   }
 
   supportedTypes(): Array<string> {
-    return ['any'];
+    return ['file'];
   }
 
   async start(): Promise<void> {

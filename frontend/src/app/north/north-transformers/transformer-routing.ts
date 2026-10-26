@@ -116,7 +116,7 @@ export function unusedTransformerIds(transformers: Array<TransformerDTOWithOptio
 
 /** The standard transformers sending the data of each type as it is */
 const PASSTHROUGHS: Record<InputType, string> = {
-  any: 'file',
+  file: 'file',
   'record-list': 'record-list-to-json',
   setpoint: 'setpoint-to-json'
 };
@@ -138,8 +138,8 @@ export function findDefaultTransformer(
   const passthrough = applicable.find(
     transformer => transformer.type === 'standard' && transformer.functionName === PASSTHROUGHS[dataType]
   );
-  if (dataType === 'any' && passthrough) return passthrough;
-  const specific = applicable.filter(transformer => transformer.outputType !== 'any');
+  if (dataType === 'file' && passthrough) return passthrough;
+  const specific = applicable.filter(transformer => transformer.outputType !== 'file');
   if (specific.length === 1) return specific[0];
   return passthrough ?? null;
 }

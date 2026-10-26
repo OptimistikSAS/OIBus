@@ -21,7 +21,7 @@ export default abstract class OIBusTransformer {
 
   /**
    * Fast path for callers that already have the payload in memory (the common
-   * case for South-emitted records, setpoints, and any-content). Skips the
+   * case for South-emitted records, setpoints, and file-content). Skips the
    * `JSON.stringify` → `Readable.from` → collect-chunks → `JSON.parse`
    * round-trip that the stream-only `transform()` would otherwise force.
    *

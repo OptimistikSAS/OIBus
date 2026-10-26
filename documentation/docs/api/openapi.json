@@ -263,7 +263,7 @@
 			"InputType": {
 				"type": "string",
 				"enum": [
-					"any",
+					"file",
 					"setpoint",
 					"record-list"
 				]
@@ -271,7 +271,7 @@
 			"OutputType": {
 				"type": "string",
 				"enum": [
-					"any",
+					"file",
 					"record-list",
 					"opcua",
 					"mqtt",
@@ -1121,7 +1121,7 @@
 					"inputType": {
 						"$ref": "#/components/schemas/InputType",
 						"description": "The input data type that the transformer accepts.",
-						"example": "any"
+						"example": "file"
 					},
 					"outputType": {
 						"$ref": "#/components/schemas/OutputType",
@@ -1345,7 +1345,7 @@
 			"OIBusDataType": {
 				"type": "string",
 				"enum": [
-					"any",
+					"file",
 					"setpoint",
 					"record-list"
 				],
@@ -1370,7 +1370,7 @@
 					"outputType": {
 						"$ref": "#/components/schemas/OutputType",
 						"description": "The output data type that the transformer produces.",
-						"example": "any"
+						"example": "file"
 					},
 					"name": {
 						"type": "string",
@@ -1502,11 +1502,11 @@
 					"type": {
 						"type": "string",
 						"enum": [
-							"any"
+							"file"
 						],
 						"nullable": false,
 						"description": "The type of content.",
-						"example": "any"
+						"example": "file"
 					},
 					"filePath": {
 						"type": "string",
@@ -1529,16 +1529,16 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"OIBusAnyContent": {
+			"OIBusInMemoryFileContent": {
 				"properties": {
 					"type": {
 						"type": "string",
 						"enum": [
-							"any-content"
+							"file-content"
 						],
 						"nullable": false,
 						"description": "The type of content.",
-						"example": "any-content"
+						"example": "file-content"
 					},
 					"content": {
 						"type": "string",
@@ -1667,7 +1667,7 @@
 						"$ref": "#/components/schemas/OIBusFileContent"
 					},
 					{
-						"$ref": "#/components/schemas/OIBusAnyContent"
+						"$ref": "#/components/schemas/OIBusInMemoryFileContent"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusSetpointContent"
@@ -36335,7 +36335,7 @@
 						"description": "The data types supported by this North connector.",
 						"example": [
 							"record-list",
-							"any",
+							"file",
 							"setpoint"
 						]
 					},
@@ -45082,7 +45082,7 @@
 					"outputType": {
 						"type": "string",
 						"description": "The output data type that the transformer produces.",
-						"example": "any"
+						"example": "file"
 					}
 				},
 				"required": [
@@ -51429,7 +51429,7 @@
 						"description": "No Content"
 					}
 				},
-				"description": "Adds any JSON content directly to the specified North connector(s) cache queue.\nThe body can be any valid JSON object or array. It is serialized and wrapped as\nan OIBus any-content payload, allowing external systems to push arbitrary data\ndirectly into OIBus for further processing by North connectors.",
+				"description": "Adds any JSON content directly to the specified North connector(s) cache queue.\nThe body can be any valid JSON object or array. It is serialized and wrapped as\nan OIBus file-content payload, allowing external systems to push arbitrary data\ndirectly into OIBus for further processing by North connectors.",
 				"summary": "Inject any JSON content into North connector cache(s) queue",
 				"tags": [
 					"Content"

@@ -857,8 +857,8 @@ TypeScript. Custom code runs inside a secure isolated sandbox with no access to 
 modules, or the network.
 
 Custom transformers are created in the **Engine → Transformers** page and are then available in the transformer
-selection list of any North connector. Their **input type** is `any` (files and payloads), `record-list` or
-`setpoint`; their **output type** is `any`, `record-list`, `mqtt`, `opcua`, `modbus` or `oianalytics`.
+selection list of any North connector. Their **input type** is `file` (files and payloads), `record-list` or
+`setpoint`; their **output type** is `file`, `record-list`, `mqtt`, `opcua`, `modbus` or `oianalytics`.
 
 :::info Custom transformers from OIBus 3.9
 The `time-values` data type no longer exists: custom transformers taking or producing time-values were switched to
@@ -900,7 +900,7 @@ according to its content type. `data` is handled by kind:
 | `data` returned                              | Stored as                    | Use with                                                |
 | -------------------------------------------- | ---------------------------- | ------------------------------------------------------- |
 | a **string**                                 | the string verbatim (UTF-8)  | any output type — you control the exact text            |
-| a **`Uint8Array` / `ArrayBuffer`** (binary)  | the raw bytes, byte-for-byte | the **`any`** output type only (file Norths)            |
+| a **`Uint8Array` / `ArrayBuffer`** (binary)  | the raw bytes, byte-for-byte | the **`file`** output type only (file Norths)           |
 | any **other value** (object, array, number…) | `JSON.stringify(data)`       | typed outputs (`record-list`, `mqtt`, …) that read JSON |
 
 :::caution Match `data` to the output type; keep `filename` a string
@@ -908,7 +908,7 @@ according to its content type. `data` is handled by kind:
 - For **typed** output types (`record-list`, `mqtt`, `oianalytics`, `modbus`, `opcua`) the North reads
   the cache file as **JSON** — return a string or an object/array (which OIBus serializes to JSON).
   Returning binary here will not parse.
-- **Binary** output (`Uint8Array`/`ArrayBuffer`) is for the **`any`** output type, where file Norths
+- **Binary** output (`Uint8Array`/`ArrayBuffer`) is for the **`file`** output type, where file Norths
   (File Writer, S3, Azure, OIAnalytics file upload) write/upload the bytes untouched.
 - A non-string, non-binary value that `JSON.stringify` rejects (a circular structure, a `BigInt`) or
   drops (a function) fails the transform with a clear error rather than being cached.
@@ -1152,7 +1152,7 @@ export function transform(content, _source, _filename, _options) {
 
 #### Example 5 — Normalize MQTT JSON messages to records (JavaScript) {#example-5--normalize-mqtt-json-messages-to-records-javascript}
 
-An **MQTT South** connector delivers each batch of received messages as a single `any-content` payload:
+An **MQTT South** connector delivers each batch of received messages as a single `file-content` payload:
 a JSON array of `{ message, timestamp, item: { id, name, topic } }`, where `message` is the **raw MQTT
 payload string**. That raw payload can be any shape — a bare number, a JSON string, a flat object, or
 an array of readings (see the [JSON topics](../../developer/local-test-stack.md#json-topics) published

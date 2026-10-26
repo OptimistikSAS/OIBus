@@ -1205,7 +1205,7 @@ const copySouthConnectorCommandToSouthEntity = async (
 };
 
 /**
- * MQTT's `any-content` payload is arbitrary JSON, not a guaranteed scalar, so the 'threshold'
+ * MQTT's `file-content` payload is arbitrary JSON, not a guaranteed scalar, so the 'threshold'
  * caching strategy is never valid on an MQTT south connector's items or groups (only
  * 'allValues'/'onChange' are). The frontend already hides/rejects this combination in both the
  * item and group edit modals; this is the defense-in-depth backend guard for any other path that

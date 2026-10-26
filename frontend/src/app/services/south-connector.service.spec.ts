@@ -66,7 +66,7 @@ const southTypes: Array<SouthType> = [
 ];
 const connectionTestResult: OIBusConnectionTestResult = { items: [{ key: 'Connected', value: 'true' }] };
 const itemTestResult: SouthConnectorItemTestResult = {
-  raw: { type: 'any-content', content: 'raw' },
+  raw: { type: 'file-content', content: 'raw' },
   transformed: null,
   connectionDuration: 1,
   queryDuration: 2

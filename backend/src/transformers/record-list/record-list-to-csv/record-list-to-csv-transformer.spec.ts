@@ -92,7 +92,7 @@ describe('RecordListToCsvTransformer', () => {
         contentSize: 0,
         createdAt: '',
         numberOfElement: 0,
-        contentType: 'any'
+        contentType: 'file'
       }
     });
   });
@@ -273,6 +273,6 @@ describe('RecordListToCsvTransformer', () => {
     assert.strictEqual(recordListToCsvManifest.settings.key, 'options');
     assert.strictEqual(recordListToCsvManifest.settings.attributes[0].key, 'filename');
     assert.strictEqual(recordListToCsvManifest.inputType, 'record-list');
-    assert.strictEqual(recordListToCsvManifest.outputType, 'any');
+    assert.strictEqual(recordListToCsvManifest.outputType, 'file');
   });
 });

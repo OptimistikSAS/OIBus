@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 
 import { DateTime } from 'luxon';
 
-import { OIBusAnyContent, OIBusContent, OIBusFileContent, OIBusRecord } from '../../shared/model/common/content.model';
+import { OIBusContent, OIBusFileContent, OIBusInMemoryFileContent, OIBusRecord } from '../../shared/model/common/content.model';
 import { Instant } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import {
@@ -29,7 +29,7 @@ import { loggerService } from '../service/logger/logger.service';
 import { createTransformer, runTransformerOnContent } from '../service/transformer.service';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import { createOIBusError, delay } from '../service/utils';
-import FileTransformer from '../transformers/any/file/file-transformer';
+import FileTransformer from '../transformers/file/file/file-transformer';
 
 /** Events published by a North connector's {@link NorthConnector.metricsEvent}. */
 export interface NorthMetricsEvents {
@@ -58,7 +58,7 @@ export interface NorthMetricsEvents {
  *
  * **What a subclass implements**
  *  - `supportedTypes()`: which `OIBusContent.contentType` values this North
- *    can deliver (e.g. `['oianalytics', 'any']`). Unsupported types are
+ *    can deliver (e.g. `['oianalytics', 'file']`). Unsupported types are
  *    automatically routed to the error folder by `handleContentWrapper`.
  *  - `handleContent(fileStream, metadata)`: the actual delivery. May throw —
  *    the wrapper handles retry + error-folder routing.
@@ -510,7 +510,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
 
     if (
-      (data.type === 'any' || data.type === 'any-content') &&
+      (data.type === 'file' || data.type === 'file-content') &&
       transformerConfig.transformer.type === 'standard' &&
       transformerConfig.transformer.functionName === FileTransformer.transformerName
     ) {
@@ -528,7 +528,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *
    * Only south-sourced `record-list` batches can both (a) carry several items routed to different
    * transformers and (b) be split safely (each point record references its item via `pointId === item.name`).
-   * Every other case — non-south sources, opaque `any-content`/file payloads, or a batch whose items
+   * Every other case — non-south sources, opaque `file-content`/file payloads, or a batch whose items
    * all resolve to the same transformer (e.g. a south-level-only transformer) — is returned as a
    * single group, preserving the previous behaviour with no extra work.
    */
@@ -648,7 +648,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {
     const transformer = createTransformer(config, this.connector, this.logger);
 
-    // In-memory payloads (record-list / setpoint / any-content) go through
+    // In-memory payloads (record-list / setpoint / file-content) go through
     // `transformInMemory`, which lets specialised transformers (e.g. the
     // OIAnalytics one) bypass the JSON.stringify → stream → collect-chunks →
     // JSON.parse round-trip. The base-class default still streamifies for
@@ -665,8 +665,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /** Cache a file or a payload as is, through the standard 'file' transformer. */
-  private async cacheWithoutTransform(data: OIBusFileContent | OIBusAnyContent) {
-    if (data.type === 'any') {
+  private async cacheWithoutTransform(data: OIBusFileContent | OIBusInMemoryFileContent) {
+    if (data.type === 'file') {
       await this.cacheService.addCacheContent(createReadStream(data.filePath), {
         contentType: data.type,
         // Use the logical filename when provided (preserves relative sub-paths like "subdir/file.json").
@@ -675,9 +675,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       });
     } else {
       // The serialised payload (JSON from MQTT or the OIBus API) is cached as a JSON file: no North accepts
-      // `any-content` itself
+      // `file-content` itself
       await this.cacheService.addCacheContent(Readable.from(data.content), {
-        contentType: 'any'
+        contentType: 'file'
       });
     }
   }
@@ -795,7 +795,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   /**
    * Content types this North can deliver, expressed as the `contentType`
    * strings produced by South connectors and transformers (e.g.
-   * `'oianalytics'`, `'any'`, `'modbus'`). The wrapper routes any other
+   * `'oianalytics'`, `'file'`, `'modbus'`). The wrapper routes any other
    * content type to the error folder so misrouted payloads don't get
    * delivered to a destination that can't handle them.
    */

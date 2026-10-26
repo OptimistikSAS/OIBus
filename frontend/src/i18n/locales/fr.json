@@ -1837,7 +1837,7 @@
         "cancel": "Test annulé"
       },
       "view": {
-        "any": "Vue brute",
+        "raw": "Vue brute",
         "table": "Vue tableau",
         "json": "Vue JSON"
       },
@@ -2716,13 +2716,13 @@
       "oibus-south": "Connecteur South"
     },
     "oibus-input-data-type": {
-      "any": "Fichiers (pour toutes les sources)",
+      "file": "Fichiers (pour toutes les sources)",
       "setpoint": "Consignes (pour toutes les sources)",
-      "any-content": "Tout contenu",
+      "file-content": "Contenu de fichier",
       "record-list": "Enregistrements (sources de points et de type SQL)"
     },
     "oibus-output-data-type": {
-      "any": "Tout",
+      "file": "Fichiers",
       "mqtt": "MQTT",
       "modbus": "Modbus",
       "oianalytics": "Valeurs temporelles optimisées OIAnalytics",

@@ -52,8 +52,8 @@ const standardTransformer: StandardTransformerDTO = {
   id: 'file',
   type: 'standard',
   functionName: 'file',
-  inputType: 'any',
-  outputType: 'any',
+  inputType: 'file',
+  outputType: 'file',
   manifest: testData.transformers.customList[0].manifest
 };
 
@@ -94,7 +94,7 @@ describe('TransformerListComponent', () => {
     await expect.element(tester.root.getByText('(2)')).toBeInTheDocument();
     await expect.element(tester.cell(0, 0)).toHaveTextContent('transformer 02');
     await expect.element(tester.cell(0, 2)).toHaveTextContent('record-list');
-    await expect.element(tester.cell(0, 3)).toHaveTextContent('any');
+    await expect.element(tester.cell(0, 3)).toHaveTextContent('file');
     await expect.element(tester.pagination).not.toBeInTheDocument();
   });
 

@@ -77,7 +77,7 @@ describe('EditTransformerModalComponent', () => {
     await tester.name.fill('new-transformer');
     await tester.description.fill('my description');
     await tester.inputType.selectOptions('record-list');
-    await tester.outputType.selectOptions('any');
+    await tester.outputType.selectOptions('file');
     await tester.language.selectOptions('typescript');
 
     // the code template of the language is generated
@@ -91,7 +91,7 @@ describe('EditTransformerModalComponent', () => {
         name: 'new-transformer',
         description: 'my description',
         inputType: 'record-list',
-        outputType: 'any',
+        outputType: 'file',
         language: 'typescript',
         timeout: 2000,
         customCode: expect.stringContaining('function transform(inputData: string'),

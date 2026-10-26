@@ -132,35 +132,35 @@ describe('transformer routing', () => {
 
   describe('findDefaultTransformer', () => {
     const transformers = [
-      standard('file', 'any', 'any'),
-      standard('record-list-to-json', 'record-list', 'any'),
-      standard('setpoint-to-json', 'setpoint', 'any'),
+      standard('file', 'file', 'file'),
+      standard('record-list-to-json', 'record-list', 'file'),
+      standard('setpoint-to-json', 'setpoint', 'file'),
       standard('record-list-to-oianalytics', 'record-list', 'oianalytics'),
-      standard('json-to-oianalytics', 'any', 'oianalytics'),
+      standard('json-to-oianalytics', 'file', 'oianalytics'),
       standard('record-list-to-mqtt', 'record-list', 'mqtt'),
       standard('record-list-to-opcua', 'record-list', 'opcua'),
-      standard('csv-to-mqtt', 'any', 'mqtt'),
+      standard('csv-to-mqtt', 'file', 'mqtt'),
       testData.transformers.customList[0]
     ];
     const defaultOf = (dataType: TransformerDTO['inputType'] | null, northTypes: Array<string>) =>
       findDefaultTransformer(transformers, dataType, northTypes)?.id ?? null;
 
     test('should send files as they are when the north accepts files', () => {
-      expect(defaultOf('any', ['any', 'oianalytics'])).toBe('file');
+      expect(defaultOf('file', ['file', 'oianalytics'])).toBe('file');
     });
 
     test("should propose the only transformer producing the north's own format", () => {
-      expect(defaultOf('record-list', ['any', 'oianalytics'])).toBe('record-list-to-oianalytics');
-      expect(defaultOf('any', ['mqtt'])).toBe('csv-to-mqtt');
+      expect(defaultOf('record-list', ['file', 'oianalytics'])).toBe('record-list-to-oianalytics');
+      expect(defaultOf('file', ['mqtt'])).toBe('csv-to-mqtt');
     });
 
     test('should fall back to the passthrough of the data type', () => {
-      expect(defaultOf('record-list', ['any', 'record-list'])).toBe('record-list-to-json');
-      expect(defaultOf('setpoint', ['any'])).toBe('setpoint-to-json');
+      expect(defaultOf('record-list', ['file', 'record-list'])).toBe('record-list-to-json');
+      expect(defaultOf('setpoint', ['file'])).toBe('setpoint-to-json');
     });
 
     test('should not propose anything without obvious choice', () => {
-      expect(defaultOf(null, ['any'])).toBeNull();
+      expect(defaultOf(null, ['file'])).toBeNull();
       expect(defaultOf('record-list', ['mqtt', 'opcua'])).toBeNull();
       expect(defaultOf('setpoint', ['modbus'])).toBeNull();
     });

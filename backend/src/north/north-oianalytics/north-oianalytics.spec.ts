@@ -129,7 +129,7 @@ describe('NorthOIAnalytics', () => {
   });
 
   it('should return correct types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['any', 'oianalytics']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file', 'oianalytics']);
   });
 
   describe('handleValues (oianalytics)', () => {
@@ -284,7 +284,7 @@ describe('NorthOIAnalytics', () => {
       contentSize: 100,
       numberOfElement: 1,
       createdAt: 'date',
-      contentType: 'any'
+      contentType: 'file'
     };
 
     it('should upload file using multipart stream', async () => {

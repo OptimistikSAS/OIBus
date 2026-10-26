@@ -27,7 +27,7 @@ function emptyState(): NorthMetricsState {
 
 /** Build a valid CacheMetadata with the two fields the accumulator reads. */
 function meta(contentFile: string, contentSize: number): CacheMetadata {
-  return { contentFile, contentSize, createdAt: '2025-01-01T00:00:00.000Z', numberOfElement: 0, contentType: 'any' };
+  return { contentFile, contentSize, createdAt: '2025-01-01T00:00:00.000Z', numberOfElement: 0, contentType: 'file' };
 }
 
 describe('north-metrics-accumulator', () => {

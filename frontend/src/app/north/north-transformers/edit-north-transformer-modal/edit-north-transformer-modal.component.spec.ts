@@ -51,7 +51,7 @@ const anyToMqtt: StandardTransformerDTO = {
   ...recordListToMqtt,
   id: 'any-to-mqtt',
   functionName: 'csv-to-mqtt',
-  inputType: 'any',
+  inputType: 'file',
   manifest: { ...recordListToMqtt.manifest, attributes: [] }
 };
 
@@ -613,7 +613,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
   test('should copy the transformer and its options from an existing attachment, and keep it when the source changes', async () => {
     const tester = new EditNorthTransformerModalComponentTester();
-    tester.prepareForCreation(['any']);
+    tester.prepareForCreation(['file']);
     await expect.element(tester.modeNew).toHaveAttribute('aria-pressed', 'true');
 
     await tester.modeFromNorth.click();
@@ -637,7 +637,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
   test('should reset the copied transformer when switching back to the new creation mode', async () => {
     const tester = new EditNorthTransformerModalComponentTester();
-    tester.prepareForCreation(['any']);
+    tester.prepareForCreation(['file']);
     await tester.modeFromNorth.click();
     await tester.root.getByLabelText('Select a source').selectOptions('North 1');
     await tester.root.getByLabelText('Transformer to copy').selectOptions('my transformer 2');

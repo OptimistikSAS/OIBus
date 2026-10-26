@@ -28,7 +28,7 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'setpoint', 'record-list'];
+    return ['file', 'setpoint', 'record-list'];
   }
 
   override async connect(): Promise<void> {

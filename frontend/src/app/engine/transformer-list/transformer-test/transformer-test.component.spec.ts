@@ -88,9 +88,9 @@ describe('TransformerTestComponent', () => {
     await tester.fixture.whenStable();
     expect(transformerService.getInputTemplate).toHaveBeenCalledTimes(1);
 
-    tester.fixture.componentRef.setInput('transformer', { ...testData.transformers.command, inputType: 'any' });
+    tester.fixture.componentRef.setInput('transformer', { ...testData.transformers.command, inputType: 'file' });
     await tester.fixture.whenStable();
-    expect(transformerService.getInputTemplate).toHaveBeenLastCalledWith('any');
+    expect(transformerService.getInputTemplate).toHaveBeenLastCalledWith('file');
   });
 
   test('should display an error when the input template cannot be loaded', async () => {
@@ -150,7 +150,7 @@ describe('TransformerTestComponent', () => {
   });
 
   test('should display a raw response', async () => {
-    transformerService.test.mockReturnValue(of(buildResponse('not json', 'output.txt', 'any')));
+    transformerService.test.mockReturnValue(of(buildResponse('not json', 'output.txt', 'file')));
     const tester = new TransformerTestComponentTester();
 
     await tester.runButton.click();
@@ -164,7 +164,7 @@ describe('TransformerTestComponent', () => {
 
   test('should display a CSV response as a paginated table with a configurable delimiter', async () => {
     const rows = Array.from({ length: 12 }, (_, index) => `value${index};${index}`);
-    transformerService.test.mockReturnValue(of(buildResponse(['name;value', ...rows].join('\n'), 'output.csv', 'any')));
+    transformerService.test.mockReturnValue(of(buildResponse(['name;value', ...rows].join('\n'), 'output.csv', 'file')));
     const tester = new TransformerTestComponentTester();
     await tester.runButton.click();
     await expect.element(tester.viewDropdown).toHaveTextContent('Raw view');

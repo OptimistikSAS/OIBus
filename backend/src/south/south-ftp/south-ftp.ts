@@ -150,7 +150,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
           `${item.settings.remoteFolder}/${lastFile.name}`
         );
         return {
-          result: { type: 'any', filePath: lastFile.name, filename: lastFile.name, content: Buffer.concat(chunks).toString('utf-8') },
+          result: { type: 'file', filePath: lastFile.name, filename: lastFile.name, content: Buffer.concat(chunks).toString('utf-8') },
           connectionDuration,
           queryDuration: DateTime.now().toMillis() - queryStart
         };
@@ -370,7 +370,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
         // Compress and send the compressed file
         const gzipPath = path.resolve(this.tmpFolder, `${safeFilename}.gz`);
         await compress(resultingFile, gzipPath);
-        await this.addContent({ type: 'any', filePath: gzipPath }, startRequest.toUTC().toISO(), [item]);
+        await this.addContent({ type: 'file', filePath: gzipPath }, startRequest.toUTC().toISO(), [item]);
         try {
           await fs.unlink(resultingFile);
           await fs.unlink(gzipPath);
@@ -379,7 +379,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
         }
       } catch (error: unknown) {
         this.logger.error(logCtx, `Error compressing file "${resultingFile}": ${getErrorMessage(error)}. Sending it raw instead.`);
-        await this.addContent({ type: 'any', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
+        await this.addContent({ type: 'file', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
         try {
           await fs.unlink(resultingFile);
         } catch (unlinkError: unknown) {
@@ -387,7 +387,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
         }
       }
     } else {
-      await this.addContent({ type: 'any', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
+      await this.addContent({ type: 'file', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
       try {
         await fs.unlink(resultingFile);
       } catch (unlinkError: unknown) {

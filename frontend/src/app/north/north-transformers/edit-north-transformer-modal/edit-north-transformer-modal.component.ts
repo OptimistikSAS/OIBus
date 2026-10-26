@@ -603,7 +603,7 @@ export class EditNorthTransformerModalComponent {
       case 'oianalytics-setpoint':
         return 'setpoint';
       case 'oibus-api':
-        return 'any';
+        return 'file';
       default:
         return null;
     }

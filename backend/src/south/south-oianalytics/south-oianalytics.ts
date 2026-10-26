@@ -77,7 +77,7 @@ export default class SouthOIAnalytics
     const filePath = generateFilenameForSerialization(this.tmpFolder, item.settings.serialization.filename, this.connector.name, item.name);
     return {
       result: {
-        type: 'any',
+        type: 'file',
         filePath,
         content: generateCsvContent(this.toRows(item, formattedResult), item.settings.serialization.delimiter)
       },

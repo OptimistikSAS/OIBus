@@ -3,7 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 const manifest: NorthConnectorManifest = {
   id: 'azure-data-explorer',
   category: 'database',
-  types: ['any'],
+  types: ['file'],
   settings: {
     type: 'object',
     key: 'settings',

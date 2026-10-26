@@ -90,7 +90,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
       value: '$[*].message.temperature',
       timestamp: '$[*].timestamp'
     });
-    // `message` is a JSON string, exactly how an MQTT any-content payload arrives.
+    // `message` is a JSON string, exactly how an MQTT file-content payload arrives.
     const inputData = [
       { item: { name: 'sensor-A' }, timestamp: '2020-01-01T00:00:00.000Z', message: JSON.stringify({ temperature: 21.5 }) }
     ];
@@ -197,6 +197,6 @@ describe('JSONToOIAnalyticsTransformer', () => {
     assert.strictEqual(jsonToOianalyticsManifest.settings.type, 'object');
     assert.strictEqual(jsonToOianalyticsManifest.settings.key, 'options');
     assert.strictEqual(jsonToOianalyticsManifest.outputType, 'oianalytics');
-    assert.strictEqual(jsonToOianalyticsManifest.inputType, 'any');
+    assert.strictEqual(jsonToOianalyticsManifest.inputType, 'file');
   });
 });

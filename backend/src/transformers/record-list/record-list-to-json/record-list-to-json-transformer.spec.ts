@@ -47,7 +47,7 @@ describe('RecordListToJSONTransformer', () => {
 
     for (const result of [fromMemory, fromStream]) {
       assert.deepStrictEqual(JSON.parse(result.output.toString()), records);
-      assert.deepStrictEqual(result.metadata, metadata(2, 'any'));
+      assert.deepStrictEqual(result.metadata, metadata(2, 'file'));
     }
   });
 
