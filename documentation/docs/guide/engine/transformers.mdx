@@ -64,6 +64,9 @@ When the source is a South connector, you can restrict which of its items the tr
 | **By group**       | Only items belonging to a specific group are processed                   |
 | **Specific items** | Hand-pick individual items from the search list                          |
 
+The items to pick (or to leave out) are searched by name and filtered by group, schedule and status, as in the list of
+the items of the South connector.
+
 With **All items** or **By group**, check **Except some items** to leave a few items out: the transformer applies to
 every other item of the South connector (or of the group), including the items added later. **Specific items** needs at
 least one item: a transformer without item would apply to all of them.

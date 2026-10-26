@@ -359,7 +359,6 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.nextButton.click();
     await tester.saveButton.click();
 
-    expect(southConnectorService.searchItems).toHaveBeenCalledWith('southId1', { name: '', page: 0 });
     expect(activeModal.close).toHaveBeenCalledWith(
       expect.objectContaining({
         source: { type: 'south', south: testData.south.listLight[0], group: undefined, items: [toItemLight(items[1])], excludedItems: [] }
@@ -367,19 +366,46 @@ describe('EditNorthTransformerModalComponent', () => {
     );
   });
 
-  test('should search items', async () => {
+  test('should search and filter the items as the south items list', async () => {
+    const group = buildSouthItemGroup('groupId1', 'Group 1');
+    const south = testData.south.list[0];
+    if (south.type !== 'folder-scanner') throw new Error('Expected a folder scanner in the test data');
+    const [item1, item2] = south.items;
+    southConnectorService.findById.mockReturnValue(
+      of({
+        ...south,
+        groups: [group],
+        items: [
+          { ...item1, group },
+          { ...item2, enabled: false }
+        ]
+      })
+    );
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForCreation();
     await tester.source.selectOptions('South 1 (Folder scanner)');
     await tester.specificItems.click();
-    southConnectorService.searchItems.mockReturnValue(of(toPage([items[0]])));
 
     await tester.itemSearch.fill('item1');
-
-    expect(southConnectorService.searchItems).toHaveBeenLastCalledWith('southId1', { name: 'item1', page: 0 });
     await expect.element(tester.dropdownItem('item1')).toBeInTheDocument();
     await expect.element(tester.dropdownItem('item2')).not.toBeInTheDocument();
     await expect.element(tester.root.getByText('1 results')).toBeInTheDocument();
+    await tester.itemSearch.fill('');
+
+    await tester.root.getByLabelText('Status').selectOptions('Disabled');
+    await expect.element(tester.dropdownItem('item1')).not.toBeInTheDocument();
+    await expect.element(tester.dropdownItem('item2')).toBeInTheDocument();
+    await tester.root.getByLabelText('Status').selectOptions('All statuses');
+
+    await tester.root.getByLabelText('Group').selectOptions('Group 1');
+    await expect.element(tester.dropdownItem('item1')).toBeInTheDocument();
+    await expect.element(tester.dropdownItem('item2')).not.toBeInTheDocument();
+    await tester.root.getByLabelText('Group').selectOptions('None');
+    await expect.element(tester.dropdownItem('item1')).not.toBeInTheDocument();
+
+    await tester.root.getByLabelText('Group').selectOptions('All groups');
+    await tester.root.getByLabelText('Schedule').selectOptions(testData.scanMode.list[1].name);
+    await expect.element(tester.dropdownItem('item1')).not.toBeInTheDocument();
   });
 
   test('should edit a transformer with an OIBus API source', async () => {
