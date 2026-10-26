@@ -1327,28 +1327,6 @@
                 "query-param": "查询参数",
                 "key": "键",
                 "value": "值"
-              },
-              "serialization": {
-                "title": "序列化",
-                "type": {
-                  "title": "类型",
-                  "csv": "CSV"
-                },
-                "filename": "文件名",
-                "delimiter": {
-                  "title": "分隔符",
-                  "DOT": "点 .",
-                  "SEMI_COLON": "分号 ;",
-                  "COLON": "冒号 :",
-                  "COMMA": "逗号 ,",
-                  "SLASH": "斜杠 /",
-                  "TAB": "制表符",
-                  "NON_BREAKING_SPACE": "空格",
-                  "PIPE": "竖线 |"
-                },
-                "compression": "压缩",
-                "output-timestamp-format": "输出日期时间格式",
-                "output-timezone": "输出时区"
               }
             },
             "oledb": {

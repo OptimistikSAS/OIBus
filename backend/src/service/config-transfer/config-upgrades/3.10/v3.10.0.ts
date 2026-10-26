@@ -313,6 +313,86 @@ export function toFileOutputTransformerOptions(oldFunctionName: string, options:
   return converted;
 }
 
+/** The data types the North File Writer no longer accepts: it only writes files */
+export const FILE_WRITER_REMOVED_DATA_TYPES = ['record-list', 'setpoint'];
+
+/**
+ * The options of the file-to-file transformer replacing a file-to-record-list one on a North File Writer, which only
+ * writes files: the rows of the file are written as they are in a JSON file, as the records were.
+ */
+export const toFileWriterFileToFileOptions = (options: Record<string, unknown>): Record<string, unknown> => ({
+  input: options.input ?? { fileType: 'csv', delimiter: 'SEMI_COLON', hasHeader: true },
+  output: { fileType: 'json', encoding: 'UTF_8', compression: false },
+  filename: '@CurrentDate.json',
+  keepOtherFields: true,
+  fields: []
+});
+
+/**
+ * The South OIAnalytics sends record lists (point records with their unit) instead of writing them in CSV files: the
+ * `serialization` settings of its items become the options of a record-list-to-file transformer writing the same CSV
+ * file (same columns, timestamp format, delimiter, name and compression).
+ */
+export function toOIAnalyticsItemFileOptions(serialization: Record<string, unknown>): Record<string, unknown> {
+  const field = (name: string, extra: Record<string, unknown> = {}) => ({
+    field: name,
+    name: null,
+    dataType: 'string',
+    fieldProcess: null,
+    ...extra
+  });
+  return {
+    output: {
+      fileType: 'csv',
+      encoding: 'UTF_8',
+      compression: serialization.compression ?? false,
+      header: true,
+      delimiter: serialization.delimiter ?? 'COMMA',
+      newline: 'CRLF',
+      quoteChar: 'NONE',
+      escapeChar: 'DOUBLE_QUOTE',
+      nullValue: ''
+    },
+    filename: serialization.filename ?? '@ConnectorName-@ItemName-@CurrentDate.csv',
+    keepOtherFields: false,
+    fields: [
+      field('pointId'),
+      field('timestamp', {
+        dataType: 'datetime',
+        datetimeSettings: {
+          inputType: 'iso-string',
+          outputType: 'string',
+          outputTimezone: serialization.outputTimezone ?? 'UTC',
+          outputFormat: serialization.outputTimestampFormat ?? 'yyyy-MM-dd HH:mm:ss.SSS',
+          outputLocale: 'en-En'
+        }
+      }),
+      field('value'),
+      field('unit')
+    ]
+  };
+}
+
+/** A transformer link of a South, as resolved for one of its items */
+export interface SouthItemLink {
+  groupId: unknown;
+  itemIds: Array<unknown>;
+  excludedItemIds: Array<unknown>;
+}
+
+/**
+ * The link (in list order) routing the data of an item, as the North connectors do: the first link of the item, then
+ * of its group, then of its whole South, a link leaving the item out being skipped.
+ */
+export function resolveSouthItemLink<T extends SouthItemLink>(links: Array<T>, itemId: unknown, groupId: unknown): T | undefined {
+  const applies = (link: T) => !link.excludedItemIds.includes(itemId);
+  return (
+    links.find(link => link.itemIds.includes(itemId)) ??
+    links.find(link => link.groupId && link.groupId === groupId && link.itemIds.length === 0 && applies(link)) ??
+    links.find(link => !link.groupId && link.itemIds.length === 0 && applies(link))
+  );
+}
+
 /** The data type of a transformer input or output, `any` being renamed `file`. */
 export const toFileDataType = (dataType: string): string => (dataType === 'any' ? 'file' : dataType);
 
@@ -923,6 +1003,141 @@ function replaceCsvAndJsonTransformers(
   forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(convertLink));
 }
 
+/**
+ * The North File Writer only writes files: its file-to-record-list links write the rows of the file in a JSON file
+ * through file-to-file instead (see `toFileWriterFileToFileOptions`), and its links to the custom transformers sending
+ * records or setpoints are removed.
+ */
+function convertFileWriterLinks(config: JsonObject): void {
+  const transformers = asObjects(config.transformers);
+  const transformerOf = (id: unknown) => transformers.find(transformer => transformer.oIBusInternalId === id);
+  const fileToFileId = (): unknown => {
+    const existing = transformers.find(
+      transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === fileToFileManifest.id
+    );
+    if (existing) return existing.oIBusInternalId;
+    const added = {
+      oIBusInternalId: generateRandomId(6),
+      type: 'standard',
+      settings: { functionName: fileToFileManifest.id, inputType: 'file', outputType: 'file' },
+      manifest: fileToFileManifest.settings
+    };
+    transformers.push(added);
+    config.transformers = transformers;
+    return added.oIBusInternalId;
+  };
+  const convertLinks = (links: Array<JsonObject>): Array<JsonObject> =>
+    links.flatMap(link => {
+      const transformer = transformerOf(link.transformerId);
+      const settings = (transformer?.settings ?? {}) as JsonObject;
+      if (!FILE_WRITER_REMOVED_DATA_TYPES.includes(settings.outputType as string)) return [link];
+      if (transformer!.type !== 'standard' || settings.functionName !== fileToRecordListManifest.id) return [];
+      return [
+        { ...link, transformerId: fileToFileId(), options: toFileWriterFileToFileOptions((link.options as JsonObject | null) ?? {}) }
+      ];
+    });
+  forEachNorth(config, 'file-writer', north => {
+    const settings = north.settings as JsonObject;
+    settings.transformers = convertLinks(asObjects(settings.transformers));
+  });
+  forEachHistoryQuery(config, null, settings => {
+    if (settings.northType !== 'file-writer') return;
+    settings.northTransformers = convertLinks(asObjects(settings.northTransformers));
+  });
+}
+
+/**
+ * The South OIAnalytics sends record lists instead of CSV files: for each of its items sent as is (through the file
+ * transformer) to a North or by a history query, a record-list-to-file transformer writes the same CSV file (see
+ * `toOIAnalyticsItemFileOptions`). Its links to the transformers reading files are removed, and its items lose their
+ * `serialization` settings.
+ */
+function convertOIAnalyticsSouths(config: JsonObject): void {
+  const transformers = asObjects(config.transformers);
+  const transformerOf = (id: unknown) => transformers.find(transformer => transformer.oIBusInternalId === id);
+  const readsFiles = (link: JsonObject) => (transformerOf(link.transformerId)?.settings as JsonObject | undefined)?.inputType === 'file';
+  const sendsAsIs = (link: JsonObject | undefined) => {
+    const transformer = link ? transformerOf(link.transformerId) : undefined;
+    return transformer?.type === 'standard' && (transformer.settings as JsonObject).functionName === fileManifest.id;
+  };
+  const recordListToFileId = (): unknown => {
+    const existing = transformers.find(
+      transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === recordListToFileManifest.id
+    );
+    if (existing) return existing.oIBusInternalId;
+    const added = {
+      oIBusInternalId: generateRandomId(6),
+      type: 'standard',
+      settings: { functionName: recordListToFileManifest.id, inputType: 'record-list', outputType: 'file' },
+      manifest: recordListToFileManifest.settings
+    };
+    transformers.push(added);
+    config.transformers = transformers;
+    return added.oIBusInternalId;
+  };
+  const serializationOf = (item: JsonObject) => (item.settings as JsonObject).serialization as JsonObject | undefined;
+  const removeSerialization = (item: JsonObject) => {
+    const { serialization: _serialization, ...settings } = item.settings as JsonObject;
+    item.settings = settings;
+  };
+
+  forEachSouth(config, 'oianalytics', south => {
+    const items = asObjects((south.settings as JsonObject).items).filter(item => serializationOf(item) !== undefined);
+    if (items.length === 0) return;
+    forEachNorth(config, null, north => {
+      const settings = north.settings as JsonObject;
+      const allLinks = asObjects(settings.transformers);
+      const southLinks = allLinks
+        .filter(
+          link => (link.source as JsonObject | undefined)?.type === 'south' && (link.source as JsonObject).southId === south.oIBusInternalId
+        )
+        .map(link => {
+          const source = link.source as JsonObject;
+          return {
+            link,
+            groupId: source.groupId ?? null,
+            itemIds: asObjects(source.items).map(item => item.id),
+            excludedItemIds: asObjects(source.excludedItems).map(item => item.id)
+          };
+        });
+      if (southLinks.length === 0) return;
+      const added = items
+        .filter(item => sendsAsIs(resolveSouthItemLink(southLinks, item.id, item.groupId)?.link))
+        .map(item => ({
+          id: generateRandomId(6),
+          transformerId: recordListToFileId(),
+          options: toOIAnalyticsItemFileOptions(serializationOf(item)!),
+          source: { type: 'south', southId: south.oIBusInternalId, items: [itemLight(item)] }
+        }));
+      const removed = new Set(southLinks.filter(({ link }) => readsFiles(link)).map(({ link }) => link));
+      settings.transformers = [...allLinks.filter(link => !removed.has(link)), ...added];
+    });
+    items.forEach(removeSerialization);
+  });
+
+  forEachHistoryQuery(config, 'oianalytics', settings => {
+    const items = asObjects(settings.items).filter(item => serializationOf(item) !== undefined);
+    if (items.length === 0) return;
+    const links = asObjects(settings.northTransformers);
+    const historyLinks = links.map(link => ({
+      link,
+      groupId: null,
+      itemIds: asObjects(link.items).map(item => item.id),
+      excludedItemIds: []
+    }));
+    const added = items
+      .filter(item => sendsAsIs(resolveSouthItemLink(historyLinks, item.id, null)?.link))
+      .map(item => ({
+        id: generateRandomId(6),
+        transformerId: recordListToFileId(),
+        options: toOIAnalyticsItemFileOptions(serializationOf(item)!),
+        items: [itemLight(item)]
+      }));
+    settings.northTransformers = [...links.filter(link => !readsFiles(link)), ...added];
+    items.forEach(removeSerialization);
+  });
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -933,7 +1148,9 @@ export const upgrade: ConfigUpgrade = {
     'being dropped; group the options of the record-list-to-oianalytics transformers by reference, timestamp and value; ' +
     'rename the any data type file; replace the csv-to-mqtt, csv-to-record-list and json-to-oianalytics transformers by ' +
     'file-to-mqtt, file-to-record-list and file-to-oianalytics ones, reading both CSV and JSON files; replace the json-to-csv, ' +
-    'record-list-to-csv and record-list-to-json transformers by file-to-file and record-list-to-file ones, writing both CSV and JSON files',
+    'record-list-to-csv and record-list-to-json transformers by file-to-file and record-list-to-file ones, writing both CSV and JSON files; ' +
+    'only send files to the File Writer North; send record lists from the South OIAnalytics, its CSV files being written by ' +
+    'record-list-to-file transformers',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1022,6 +1239,9 @@ export const upgrade: ConfigUpgrade = {
       settings.inputType = toFileDataType(settings.inputType as string);
       settings.outputType = toFileDataType(settings.outputType as string);
     }
+
+    convertFileWriterLinks(config);
+    convertOIAnalyticsSouths(config);
 
     return config;
   }

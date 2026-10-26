@@ -1115,19 +1115,19 @@ describe('SouthConnector', () => {
       const addValuesListener = mock.fn();
       south.metricsEvent.on('add-values', addValuesListener);
 
-      await south.addContent({ type: 'file-content', content: 'file.csv' }, testData.constants.dates.DATE_1, []);
+      await south.addContent({ type: 'file', content: 'file.csv' }, testData.constants.dates.DATE_1, []);
       assert.ok(
         logger.debug.mock.calls.some(c => c.arguments[0] === `Add 8 bytes of content to cache from South "${testData.south.list[2].name}"`)
       );
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
-        { type: 'file-content', content: 'file.csv' },
+        { type: 'file', content: 'file.csv' },
         testData.constants.dates.DATE_1,
         [],
         null,
         null
       ]);
-      // file-content is one opaque payload: counts as 1 value (not its byte length), no time value
+      // a file held in memory is one opaque payload: counts as 1 value (not its byte length), no time value
       assert.strictEqual(addValuesListener.mock.calls.length, 1);
       assert.deepStrictEqual(addValuesListener.mock.calls[0].arguments[0], { numberOfValuesRetrieved: 1, lastValueRetrieved: null });
     });
@@ -1195,7 +1195,7 @@ describe('SouthConnector', () => {
         async (
           items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
         ): Promise<{ trackedInstant: Instant | null; value: null }> => {
-          await south.addContent({ type: 'file-content', content: 'x' }, '2020-02-02T02:02:02.222Z', items);
+          await south.addContent({ type: 'file', content: 'x' }, '2020-02-02T02:02:02.222Z', items);
           return { trackedInstant: null, value: null };
         }
       );
@@ -1210,7 +1210,7 @@ describe('SouthConnector', () => {
     });
 
     it('should not tag content added outside of a historyQuery window (direct call) with any interval', async () => {
-      await south.addContent({ type: 'file-content', content: 'x' }, '2020-02-02T02:02:02.222Z', []);
+      await south.addContent({ type: 'file', content: 'x' }, '2020-02-02T02:02:02.222Z', []);
 
       assert.strictEqual(addContentCallback.mock.calls.length, 1);
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments.slice(-2), [null, null]);

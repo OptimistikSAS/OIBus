@@ -362,18 +362,19 @@ const cacheFileContent: FileCacheContent = {
 };
 
 // --- results of the item tests ---
-const rawContent: OIBusContent = { type: 'file-content', content: 'raw content' };
-const transformedContent: OIBusContent = { type: 'file-content', content: 'transformed content' };
+const rawContent: OIBusContent = { type: 'file', content: 'raw content' };
+const transformedContent: OIBusContent = { type: 'file', content: 'transformed content' };
 const itemTestResult = { raw: rawContent, transformed: transformedContent, connectionDuration: 56, queryDuration: 78 };
 const itemTestResultWithoutTransformer = { raw: rawContent, transformed: null, connectionDuration: 0, queryDuration: 0 };
+// the size of a file held in memory is the length of its content
 const completedItemTest = JSON.stringify({
-  raw: { ...rawContent, truncated: false, totalSize: 0 },
-  transformed: { ...transformedContent, truncated: false, totalSize: 0 },
+  raw: { ...rawContent, truncated: false, totalSize: 11 },
+  transformed: { ...transformedContent, truncated: false, totalSize: 19 },
   connectionDuration: 56,
   queryDuration: 78
 });
 const completedItemTestWithoutTransformer = JSON.stringify({
-  raw: { ...rawContent, truncated: false, totalSize: 0 },
+  raw: { ...rawContent, truncated: false, totalSize: 11 },
   transformed: null,
   connectionDuration: 0,
   queryDuration: 0

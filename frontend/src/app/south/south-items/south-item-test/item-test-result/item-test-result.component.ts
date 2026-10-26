@@ -74,7 +74,7 @@ export class ItemTestResultComponent {
   private readonly isRawJson = computed(() => {
     if (this.displayMode() !== 'raw') return false;
     const content = this._result();
-    if (!content || (content.type !== 'file' && content.type !== 'file-content')) return false;
+    if (!content || content.type !== 'file') return false;
     try {
       JSON.parse(content.content || '');
       return true;
@@ -180,7 +180,7 @@ export class ItemTestResultComponent {
     const content = this._result();
     if (!content) return false;
     if (content.type === 'record-list') return content.content.length === 0;
-    if (content.type === 'file' || content.type === 'file-content') return !content.content;
+    if (content.type === 'file') return !content.content;
     return false;
   });
 
@@ -224,12 +224,9 @@ export class ItemTestResultComponent {
 
     switch (content.type) {
       case 'file':
-        if (content.filePath.endsWith('.csv') && content.content) {
+        if (content.filePath?.endsWith('.csv') && content.content) {
           modes.add('table');
         }
-        modes.add('raw');
-        break;
-      case 'file-content':
         modes.add('raw');
         break;
       case 'record-list':
@@ -254,7 +251,7 @@ export class ItemTestResultComponent {
     if (content.type === 'record-list') {
       return JSON.stringify(content.content, null, 2);
     }
-    if (content.type === 'file' || content.type === 'file-content') {
+    if (content.type === 'file') {
       if (this.isRawJson()) {
         return JSON.stringify(JSON.parse(content.content!), null, 2);
       }

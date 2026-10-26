@@ -1139,7 +1139,7 @@ export function transform(content, _source, _filename, _options) {
 
 #### Example 5 — Normalize MQTT JSON messages to records (JavaScript) {#example-5--normalize-mqtt-json-messages-to-records-javascript}
 
-An **MQTT South** connector delivers each batch of received messages as a single `file-content` payload:
+An **MQTT South** connector delivers each batch of received messages as a single JSON file, held in memory:
 a JSON array of `{ message, timestamp, item: { id, name, topic } }`, where `message` is the **raw MQTT
 payload string**. That raw payload can be any shape — a bare number, a JSON string, a flat object, or
 an array of readings (see the [JSON topics](../../developer/local-test-stack.md#json-topics) published

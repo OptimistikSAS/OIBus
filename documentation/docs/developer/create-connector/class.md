@@ -260,11 +260,10 @@ await this.addContent(
 
 `OIBusContent` is a discriminated union:
 
-| `type`           | `content` shape                                                                               | Use for                                     |
-| ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `'record-list'`  | `Array<OIBusRecord>` — point records `{ pointId, timestamp, value, quality? }`, or query rows | Point values (time series), query results   |
-| `'file-content'` | `string` — an opaque serialised payload (e.g. JSON-stringified MQTT messages)                 | When the destination needs the raw payload  |
-| `'file'`         | `{ filePath: string }` — a file already written to disk                                       | File-based connectors (folder scanner, FTP) |
+| `type`          | `content` shape                                                                                                                                 | Use for                                                   |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `'record-list'` | `Array<OIBusRecord>` — point records `{ pointId, timestamp, value, quality? }`, or query rows                                                   | Point values (time series), query results                 |
+| `'file'`        | `{ filePath: string }` — a file already written to disk, or `{ content: string }` — a file held in memory (e.g. JSON-stringified MQTT messages) | File-based connectors (folder scanner, FTP), raw payloads |
 
 The engine takes care of writing the content into each enabled North's cache via its transformer pipeline.
 Don't write to the cache directly — always go through `addContent`.

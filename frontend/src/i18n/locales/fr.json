@@ -1327,28 +1327,6 @@
                 "query-param": "Paramètres de requête",
                 "key": "Clé",
                 "value": "Valeur"
-              },
-              "serialization": {
-                "title": "Sérialisation",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Nom du fichier",
-                "delimiter": {
-                  "title": "Délimiteur",
-                  "DOT": "Point .",
-                  "SEMI_COLON": "Point-virgule ;",
-                  "COLON": "Deux-points :",
-                  "COMMA": "Virgule ,",
-                  "SLASH": "Barre oblique /",
-                  "TAB": "Tabulation",
-                  "NON_BREAKING_SPACE": "Espace",
-                  "PIPE": "Barre verticale |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Format de date/heure de sortie",
-                "output-timezone": "Fuseau horaire de sortie"
               }
             },
             "oledb": {

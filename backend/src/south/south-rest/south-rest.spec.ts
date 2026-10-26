@@ -420,32 +420,32 @@ describe('SouthRestAPI connector', () => {
   });
 
   it('should handle file downloads (returnType = file)', async () => {
-    respondWith(200, 'file-content', { 'content-disposition': 'attachment; filename="report.pdf"' });
+    respondWith(200, 'file', { 'content-disposition': 'attachment; filename="report.pdf"' });
 
     const result = await south.queryData(createItem({ returnType: 'file' }), DATE_1, DATE_2);
 
     assert.strictEqual(result.filename, '"report.pdf"');
-    assert.strictEqual(result.content, 'file-content');
+    assert.strictEqual(result.content, 'file');
     assert.strictEqual(result.maxInstant, null);
   });
 
   it('should handle file downloads (returnType = file) without filename', async () => {
-    respondWith(200, 'file-content', { 'content-disposition': 'attachment; file="report.pdf"' });
+    respondWith(200, 'file', { 'content-disposition': 'attachment; file="report.pdf"' });
 
     const result = await south.queryData(createItem({ returnType: 'file' }), DATE_1, DATE_2);
 
     assert.strictEqual(result.filename, 'REST-Test Item-random-id');
-    assert.strictEqual(result.content, 'file-content');
+    assert.strictEqual(result.content, 'file');
     assert.strictEqual(result.maxInstant, null);
   });
 
   it('should handle file downloads (returnType = file) without content disposition', async () => {
-    respondWith(200, 'file-content', {});
+    respondWith(200, 'file', {});
 
     const result = await south.queryData(createItem({ returnType: 'file' }), DATE_1, DATE_2);
 
     assert.strictEqual(result.filename, 'REST-Test Item-random-id');
-    assert.strictEqual(result.content, 'file-content');
+    assert.strictEqual(result.content, 'file');
     assert.strictEqual(result.maxInstant, null);
   });
 
@@ -576,7 +576,7 @@ describe('SouthRestAPI connector', () => {
     const [southId, content] = addContentCallback.mock.calls[0].arguments;
     assert.strictEqual(southId, 'south-rest');
     assert.ok(content.type === 'file');
-    assert.ok(content.filePath.includes('REST-Test Item-random-id.json'));
+    assert.ok(content.filePath!.includes('REST-Test Item-random-id.json'));
 
     assert.strictEqual(unlink.mock.calls.length, 1, 'the temp file should be deleted from the south cache once sent');
     assert.strictEqual(unlink.mock.calls[0].arguments[0], content.filePath);

@@ -18,8 +18,8 @@ import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/api/engine.mode
 import { HistoryQueryItemDTO } from '../../shared/model/api/history-query.model';
 import { ValidatedCronExpression } from '../../shared/model/api/scan-mode.model';
 import { SouthConnectorItemDTO } from '../../shared/model/api/south-connector.model';
-import { OIBusContent, OIBusPointRecord } from '../../shared/model/common/content.model';
-import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/common/types';
+import { OIBusPointRecord } from '../../shared/model/common/content.model';
+import { CsvCharacter, DateTimeType, Instant, Interval, Timezone } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusSouthType, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
 import { SouthFolderScannerItemSettings, SouthItemSettings } from '../../shared/model/connector/south-settings.model';
@@ -173,19 +173,6 @@ export const createFolder = async (folder: string): Promise<void> => {
 };
 
 /**
- * Get filename without random ID from file path.
- * Example: file1-123456.json => file1.json
- */
-export const getFilenameWithoutRandomId = (filename: string): string => {
-  const { name, ext } = path.parse(filename);
-  if (name.lastIndexOf('-') === -1) {
-    return `${name}${ext}`;
-  }
-  const resultingFilename = name.slice(0, name.lastIndexOf('-'));
-  return `${resultingFilename}${ext}`;
-};
-
-/**
  * Compress the specified file
  */
 export const compress = (input: string, output: string): Promise<void> => {
@@ -240,31 +227,6 @@ export const generateRandomId = (size = RANDOM_LENGTH): string => {
     randomId += CHARACTER_SET[Math.floor(Math.random() * CHARACTER_SET.length)];
   }
   return randomId;
-};
-
-export const dirSize = async (dir: string): Promise<number> => {
-  const files = await fs.readdir(dir, { withFileTypes: true });
-
-  const paths = files.map(async file => {
-    const filePath = path.join(dir, file.name);
-
-    if (file.isDirectory()) {
-      return await dirSize(filePath);
-    }
-
-    if (file.isFile()) {
-      try {
-        const { size } = await fs.stat(filePath);
-        return size;
-      } catch {
-        return 0;
-      }
-    }
-
-    return 0;
-  });
-
-  return (await Promise.all(paths)).flat(Infinity).reduce((i, size) => i + size, 0);
 };
 
 /**
@@ -392,71 +354,6 @@ export const convertNewline = (newline: 'DEFAULT' | 'CRLF' | 'LF' | 'CR'): strin
   }
 };
 
-export const persistResults = async (
-  data: Array<unknown> | string,
-  serializationSettings: SerializationSettings,
-  connectorName: string,
-  item: SouthConnectorItemEntity<SouthItemSettings>,
-  queryTime: Instant,
-  baseFolder: string,
-  addContentFn: (data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>,
-  logger: ILogger
-): Promise<void> => {
-  const logCtx = workUnitLogCtx([item]);
-  switch (serializationSettings.type) {
-    case 'csv':
-      const csvPath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, item.name);
-      const csvContent = generateCsvContent(data as Array<Record<string, string>>, serializationSettings.delimiter);
-
-      logger.debug(logCtx, `Writing ${csvContent.length} bytes into CSV file at "${csvPath}"`);
-      await fs.writeFile(csvPath, csvContent);
-
-      if (serializationSettings.compression) {
-        // Compress and send the compressed file
-        const gzipPath = `${csvPath}.gz`;
-        await compress(csvPath, gzipPath);
-
-        try {
-          await fs.unlink(csvPath);
-          logger.info(logCtx, `CSV file "${csvPath}" compressed and deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting CSV file "${csvPath}" after compression: ${getErrorMessage(unlinkError)}`);
-        }
-
-        logger.debug(logCtx, `Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'file', filePath: gzipPath }, queryTime, [item]);
-
-        try {
-          await fs.unlink(gzipPath);
-          logger.trace(logCtx, `CSV file "${gzipPath}" deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting compressed CSV file "${gzipPath}" after caching it: ${getErrorMessage(unlinkError)}`);
-        }
-      } else {
-        logger.debug(logCtx, `Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'file', filePath: csvPath }, queryTime, [item]);
-
-        try {
-          await fs.unlink(csvPath);
-          logger.trace(logCtx, `CSV file ${csvPath} deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting CSV file "${csvPath}" after caching it: ${getErrorMessage(unlinkError)}`);
-        }
-      }
-      break;
-  }
-};
-
-export const generateFilenameForSerialization = (baseFolder: string, filename: string, connectorName: string, itemName: string): string => {
-  return path.join(
-    baseFolder,
-    filename
-      .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      .replace('@ConnectorName', connectorName)
-      .replace('@ItemName', itemName)
-  );
-};
-
 /**
  * Substitute the filename placeholders supported by the file output transformers (record-list-to-file,
  * file-to-file): `@CurrentDate` (when the transform runs) and, when the content came from a bounded
@@ -483,13 +380,6 @@ export const applyFilenameVariables = (filename: string, source: CacheMetadataSo
     .replace('@SourceExtension', sourceFilename ? path.parse(sourceFilename).ext : '');
 };
 
-export const generateCsvContent = (data: Array<Record<string, string | number | boolean | null>>, delimiter: CsvCharacter): string => {
-  const options = {
-    header: true,
-    delimiter: convertDelimiter(delimiter)
-  };
-  return csv.unparse(data, options);
-};
 /**
  * Log the executed query with replacements values for query variables
  */

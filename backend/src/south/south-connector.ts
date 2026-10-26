@@ -3,13 +3,7 @@ import path from 'node:path';
 
 import { DateTime } from 'luxon';
 
-import {
-  OIBusContent,
-  OIBusFileContent,
-  OIBusInMemoryFileContent,
-  OIBusRecord,
-  OIBusRecordListContent
-} from '../../shared/model/common/content.model';
+import { OIBusContent, OIBusFileContent, OIBusRecord, OIBusRecordListContent } from '../../shared/model/common/content.model';
 import { Instant, Interval } from '../../shared/model/common/types';
 import { IOT_FAMILY_SOUTH_TYPES, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
@@ -45,7 +39,7 @@ export interface SouthMetricsEvents {
   // an item whose window is already caught up may emit zero `history-query-interval` events, so the
   // UI would otherwise have no boundary event to show progress moving to the next item.
   'history-query-item-start': { itemName: string; currentItemNumber: number; numberOfItems: number };
-  // `file-content` (opaque payloads) has no record, hence the `| null`.
+  // a file (e.g. MQTT payloads) has no record, hence the `| null`.
   'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusRecord | null };
   'add-file': { lastFileRetrieved: string };
 }
@@ -881,14 +875,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /**
    * Entry point subclasses call after a successful read. Dispatches by content
    * shape to the engine callback and updates per-shape metrics:
-   *   - `'file-content'`  → opaque serialised payload (MQTT messages, etc.)
-   *   - `'file'`          → a file on disk (folder-scanner, FTP, etc.)
+   *   - `'file'`         → a file on disk (folder-scanner, FTP, etc.), or held in memory (MQTT messages, etc.)
    *   - `'record-list'`  → array of flat rows: point records of point-based souths, untouched rows of SQL-like souths
    */
   addContent(data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> {
     switch (data.type) {
-      case 'file-content':
-        return this.addAnyContent(data, queryTime, items);
       case 'file':
         return this.addFile(data, queryTime, items);
       case 'record-list':
@@ -896,28 +887,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       default:
         return Promise.resolve();
     }
-  }
-
-  private async addAnyContent(
-    data: OIBusInMemoryFileContent,
-    queryTime: Instant,
-    items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-  ): Promise<void> {
-    this.logger.debug(`Add ${data.content.length} bytes of content to cache from South "${this.connector.name}"`);
-    await this.engineAddContentCallback(
-      this.connector.id,
-      data,
-      queryTime,
-      items,
-      this.currentHistoryQueryInterval?.start ?? null,
-      this.currentHistoryQueryInterval?.end ?? null
-    );
-    // `file-content` is a single opaque serialised payload, not a list of records: count it
-    // as one retrieved item (not its byte length) and carry no "last value" (no record).
-    this.metricsEvent.emit('add-values', {
-      numberOfValuesRetrieved: 1,
-      lastValueRetrieved: null
-    });
   }
 
   private async addRecords(
@@ -947,7 +916,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     queryTime: Instant,
     items: Array<SouthConnectorItemEntity<SouthItemSettings>>
   ): Promise<void> {
-    this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
+    if (data.content !== undefined) {
+      this.logger.debug(`Add ${data.content.length} bytes of content to cache from South "${this.connector.name}"`);
+    } else {
+      this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
+    }
     await this.engineAddContentCallback(
       this.connector.id,
       data,
@@ -956,9 +929,18 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.currentHistoryQueryInterval?.start ?? null,
       this.currentHistoryQueryInterval?.end ?? null
     );
-    this.metricsEvent.emit('add-file', {
-      lastFileRetrieved: path.parse(data.filePath).base
-    });
+    if (data.content !== undefined) {
+      // A payload held in memory is not a list of records: count it as one retrieved item (not its byte length) and
+      // carry no "last value" (no record).
+      this.metricsEvent.emit('add-values', {
+        numberOfValuesRetrieved: 1,
+        lastValueRetrieved: null
+      });
+    } else {
+      this.metricsEvent.emit('add-file', {
+        lastFileRetrieved: path.parse(data.filePath!).base
+      });
+    }
   }
 
   /**

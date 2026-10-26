@@ -82,7 +82,7 @@ describe('NorthFileWriter', () => {
   });
 
   it('should retrieve supported types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['file', 'setpoint', 'record-list']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file']);
   });
 
   it('should properly handle files with prefix and suffix', async () => {
