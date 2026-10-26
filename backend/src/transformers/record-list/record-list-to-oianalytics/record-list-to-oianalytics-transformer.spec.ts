@@ -31,12 +31,9 @@ const metadata = (numberOfElement: number, contentType: string) => ({
 describe('RecordListToOIAnalyticsTransformer', () => {
   let logger: PinoLogger;
   const options = {
-    pointIdColumn: 'pointId',
-    timestampColumn: 'timestamp',
-    valueColumn: 'value',
-    timestampSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy-MM-dd HH:mm:ss', locale: 'en-En' },
-    precision: 'ms',
-    referenceProcess: null
+    reference: { referenceField: 'pointId', referenceProcess: null },
+    timestamp: { timestampField: 'timestamp', sourceType: 'iso-string', precision: 'ms' },
+    value: { valueField: 'value', valueProcess: null }
   };
 
   beforeEach(() => {
@@ -60,14 +57,18 @@ describe('RecordListToOIAnalyticsTransformer', () => {
     assert.deepStrictEqual(result.metadata, metadata(2, 'oianalytics'));
   });
 
-  it('should read the configured columns of rows, truncate the timestamps and process the references', async () => {
+  it('should read the configured fields of rows, truncate the timestamps and process the references and the values', async () => {
     const transformer = new Transformer(logger, testData.transformers.list[0], {
-      pointIdColumn: 'tag',
-      timestampColumn: 'date',
-      valueColumn: 'reading',
-      timestampSettings: { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss', locale: 'en-En' },
-      precision: 'min',
-      referenceProcess: 'value.toUpperCase()'
+      reference: { referenceField: 'tag', referenceProcess: 'value.toUpperCase()' },
+      timestamp: {
+        timestampField: 'date',
+        sourceType: 'string',
+        precision: 'min',
+        timezone: 'Europe/Paris',
+        format: 'yyyy-MM-dd HH:mm:ss',
+        locale: 'en-En'
+      },
+      value: { valueField: 'reading', valueProcess: 'value * 10' }
     });
     const rows = [
       { tag: 'a', date: '2024-01-01 01:00:30', reading: 1 },
@@ -78,7 +79,7 @@ describe('RecordListToOIAnalyticsTransformer', () => {
 
     assert.deepStrictEqual(JSON.parse(result.output.toString()), {
       timestamps: ['2024-01-01T00:00:00.000Z', '2024-01-01T00:01:00.000Z'],
-      values: [1, 2],
+      values: [10, 20],
       references: ['A', '2']
     });
   });
@@ -106,7 +107,7 @@ describe('RecordListToOIAnalyticsTransformer', () => {
     assert.strictEqual(manifest.id, 'record-list-to-oianalytics');
     assert.deepStrictEqual(
       manifest.settings.attributes.map(attribute => attribute.key),
-      ['pointIdColumn', 'timestampColumn', 'valueColumn', 'timestampSettings', 'precision', 'referenceProcess']
+      ['reference', 'timestamp', 'value']
     );
   });
 });

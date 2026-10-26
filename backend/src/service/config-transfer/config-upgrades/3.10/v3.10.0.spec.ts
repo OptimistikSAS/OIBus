@@ -286,10 +286,21 @@ describe('3.10.0 config upgrade', () => {
       assert.strictEqual((l2.options as JsonObject).keepOtherFields, false);
       assert.strictEqual(((l2.options as JsonObject).fields as Array<JsonObject>)[0].columnName, 'Ref');
       assert.strictEqual(l3.transformerId, 'tvOia');
-      assert.strictEqual((l3.options as JsonObject).precision, 's');
-      assert.strictEqual((l3.options as JsonObject).pointIdColumn, 'pointId');
+      // grouped by part of the OIAnalytics payload
+      assert.deepStrictEqual(l3.options, {
+        reference: { referenceField: 'pointId', referenceProcess: null },
+        timestamp: {
+          timestampField: 'timestamp',
+          sourceType: 'iso-string',
+          precision: 's',
+          timezone: 'UTC',
+          format: 'yyyy-MM-dd HH:mm:ss',
+          locale: 'en-En'
+        },
+        value: { valueField: 'value', valueProcess: null }
+      });
       const [h1] = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
-      assert.strictEqual((h1.options as JsonObject).precision, 'ms');
+      assert.strictEqual(((h1.options as JsonObject).timestamp as JsonObject).precision, 'ms');
     });
 
     it('is safe to run twice', () => {
@@ -348,7 +359,7 @@ describe('3.10.0 config upgrade', () => {
           [oiaTransformer.oIBusInternalId, []]
         ]
       );
-      assert.deepStrictEqual((linksTo('opcua')[0].options as JsonObject).pointIdColumn, 'pointId');
+      assert.deepStrictEqual(((linksTo('opcua')[0].options as JsonObject).reference as JsonObject).referenceField, 'pointId');
       assert.deepStrictEqual(linksTo('modbus'), []);
       assert.deepStrictEqual(linksTo('mysql'), []);
       const [opcuaHistory, mysqlHistory] = (config.historyQueries as Array<JsonObject>).map(
