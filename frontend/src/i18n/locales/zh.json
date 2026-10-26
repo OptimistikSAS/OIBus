@@ -3249,9 +3249,11 @@
       "test": {
         "title": "测试转换器",
         "run": "运行测试",
+        "input": "输入",
         "source-paste": "粘贴数据",
         "source-item": "来自源项",
-        "item": "项"
+        "item": "项",
+        "result-outdated": "自本次测试运行以来，转换器选项或输入已更改"
       },
       "tooltips": {
         "edit": "编辑转换器",

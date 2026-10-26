@@ -204,11 +204,14 @@
     </form>
 
     @if (selectedTransformer(); as selectedTransformer) {
-      <oib-north-transformer-test
-        [transformer]="selectedTransformer"
-        [options]="selectedOptions()"
-        [itemSource]="transformerTestSource()"
-      />
+      <!-- the test panel has its own form, so it sits outside the transformer one -->
+      <div class="mt-4">
+        <oib-north-transformer-test
+          [transformer]="selectedTransformer"
+          [options]="selectedOptions()"
+          [itemSource]="transformerTestSource()"
+        />
+      </div>
     }
   }
 </div>

@@ -1,0 +1,12 @@
+.fa-spinner:before {
+  display: block;
+  transform: translateY(1px);
+}
+
+.test-result {
+  transition: opacity 0.15s ease-in-out;
+}
+
+.test-result-outdated {
+  opacity: 0.5;
+}
