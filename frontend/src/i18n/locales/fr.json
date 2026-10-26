@@ -3292,7 +3292,15 @@
           "taken-over": "{{ count }} actuellement envoyé(s) par un autre transformateur",
           "kept": "{{ count }} des items sélectionnés gardent un transformateur qui s'applique d'abord",
           "none": "Aucun item ne passerait par ce transformateur : des transformateurs qui s'appliquent d'abord envoient tous les items sélectionnés"
-        }
+        },
+        "steps": "Étapes du transformateur",
+        "step": {
+          "source": "Source et transformateur",
+          "options": "Options",
+          "test": "Test"
+        },
+        "no-options": "Ce transformateur n'a pas d'option.",
+        "no-transformer": "Choisissez un transformateur à la première étape."
       }
     },
     "monitoring": {

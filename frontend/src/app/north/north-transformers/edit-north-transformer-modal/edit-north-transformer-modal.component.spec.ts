@@ -97,6 +97,9 @@ class EditNorthTransformerModalComponentTester {
   readonly pills = this.root.getByCss('oib-pill');
   readonly excludeItems = this.root.getByLabelText('Except some items');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
+  readonly nextButton = this.root.getByRole('button', { name: 'Next' });
+  readonly sourceStep = this.root.getByCss('#modal-step-source');
+  readonly optionsStep = this.root.getByCss('#modal-step-options');
   readonly okButton = this.root.getByRole('button', { name: 'OK' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
   readonly testPanel = this.root.getByCss('oib-north-transformer-test');
@@ -188,18 +191,33 @@ describe('EditNorthTransformerModalComponent', () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.component.directSave.set(false);
     tester.prepareForCreation();
+    await tester.source.selectOptions('OIAnalytics setpoints');
+    await tester.nextButton.click();
 
     await expect.element(tester.okButton).toBeInTheDocument();
     await expect.element(tester.saveButton).not.toBeInTheDocument();
   });
 
-  test('should not save in create mode when form is invalid', async () => {
+  test('should only open the next step once the source and the transformer are chosen', async () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForCreation();
+    // a new transformer is saved once its source and the transformer are chosen
+    await expect.element(tester.saveButton).not.toBeInTheDocument();
 
-    await tester.saveButton.click();
+    await tester.nextButton.click();
 
+    await expect.element(tester.sourceStep).toHaveAttribute('aria-current', 'step');
+    await expect.element(tester.sourceStep).toHaveClass('modal-step-invalid');
     expect(activeModal.close).not.toHaveBeenCalled();
+
+    await tester.source.selectOptions('OIAnalytics setpoints');
+    await tester.nextButton.click();
+    await expect.element(tester.optionsStep).toHaveAttribute('aria-current', 'step');
+    await expect.element(tester.root.getByText('This transformer has no options.')).toBeVisible();
+    await tester.nextButton.click();
+    await expect.element(tester.testPanel).toBeVisible();
+    await tester.root.getByRole('button', { name: 'Back' }).click();
+    await expect.element(tester.optionsStep).toHaveAttribute('aria-current', 'step');
   });
 
   test('should create a transformer with an OIBus API source', async () => {
@@ -212,6 +230,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await expect.element(tester.output.getByRole('option')).toHaveLength(2);
     await tester.output.selectOptions('MQTT payloads (from CSV)');
     await expect.element(tester.testPanel).toBeInTheDocument();
+    await tester.nextButton.click();
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith({
@@ -229,6 +248,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.source.selectOptions('OIBus API data source');
     await expect.element(tester.apiDataSource).toHaveAttribute('placeholder', 'All data sources');
     await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.nextButton.click();
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ source: { type: 'oibus-api', dataSourceId: undefined } }));
@@ -251,6 +271,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.source.selectOptions('OIAnalytics setpoints');
     await expect.element(tester.output.getByRole('option')).toHaveLength(2);
     await tester.output.selectOptions('MQTT payloads');
+    await tester.nextButton.click();
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(
@@ -266,9 +287,11 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.source.selectOptions('');
     await expect.element(tester.output.getByRole('option')).toHaveLength(4);
     await tester.output.selectOptions(tester.output.getByRole('option').nth(1));
+    await tester.nextButton.click();
 
     await tester.saveButton.click();
     expect(activeModal.close).not.toHaveBeenCalled();
+    await expect.element(tester.optionsStep).toHaveClass('modal-step-invalid');
 
     await tester.topic.fill('my/topic');
     await tester.saveButton.click();
@@ -284,6 +307,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.source.selectOptions('South 1 (Folder scanner)');
     await expect.element(tester.allItems).toHaveAttribute('aria-pressed', 'true');
     await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.nextButton.click();
     await tester.saveButton.click();
 
     expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
@@ -302,6 +326,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.byGroup.click();
     await tester.group.selectOptions('Group 1');
     await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.nextButton.click();
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(
@@ -331,6 +356,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.pills.nth(1).getByRole('button').click();
     await expect.element(tester.pills).toHaveLength(1);
     await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.nextButton.click();
     await tester.saveButton.click();
 
     expect(southConnectorService.searchItems).toHaveBeenCalledWith('southId1', { name: '', page: 0 });
@@ -367,8 +393,11 @@ describe('EditNorthTransformerModalComponent', () => {
 
     await expect.element(tester.sourceLine).toHaveTextContent('OIBus API data source');
     await expect.element(tester.source).not.toBeInTheDocument();
-    await expect.element(tester.topic).toHaveValue('my/topic');
     await tester.apiDataSource.fill('other-source');
+    // an edited transformer is saved from any step
+    await expect.element(tester.saveButton).toBeVisible();
+    await tester.optionsStep.click();
+    await expect.element(tester.topic).toHaveValue('my/topic');
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith({
@@ -473,12 +502,14 @@ describe('EditNorthTransformerModalComponent', () => {
     prepare({ items: [toItemLight(items[1])] });
     await expect.element(tester.specificItems).toHaveAttribute('aria-pressed', 'true');
     await expect.element(tester.pills).toHaveLength(1);
+    await tester.nextButton.click();
     await tester.saveButton.click();
     expect(activeModal.close).toHaveBeenCalledWith(
       expect.objectContaining({ source: expect.objectContaining({ items: [toItemLight(items[1])], excludedItems: [] }) })
     );
 
     prepare({ group: { id: 'groupId1', name: 'Group 1' } });
+    await tester.sourceStep.click();
     await expect.element(tester.byGroup).toHaveAttribute('aria-pressed', 'true');
     await expect.element(tester.group).toHaveDisplayValue('Group 1');
   });
@@ -505,6 +536,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.excludeItems.click();
     await tester.itemSearch.click();
     await tester.dropdownItem('item2').click();
+    await tester.nextButton.click();
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(
@@ -557,6 +589,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await expect.element(tester.testPanel).toBeInTheDocument();
 
     await tester.source.selectOptions('OIAnalytics setpoints');
+    await tester.nextButton.click();
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(
@@ -656,9 +689,10 @@ describe('EditNorthTransformerModalComponent', () => {
       prepare(tester, []);
       await tester.specificItems.click();
 
-      await tester.saveButton.click();
+      await tester.nextButton.click();
 
       await expect.element(tester.root.getByText('Select at least one item')).toBeVisible();
+      await expect.element(tester.sourceStep).toHaveAttribute('aria-current', 'step');
       expect(activeModal.close).not.toHaveBeenCalled();
       await tester.allItems.click();
       await expect.element(tester.root.getByText('Select at least one item')).not.toBeInTheDocument();

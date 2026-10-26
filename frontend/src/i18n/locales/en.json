@@ -3333,7 +3333,15 @@
           "taken-over": "{{ count }} currently sent through another transformer",
           "kept": "{{ count }} of the selected items keep a transformer applying first",
           "none": "No item would go through this transformer: transformers applying first send all the selected items"
-        }
+        },
+        "steps": "Transformer steps",
+        "step": {
+          "source": "Source & transformer",
+          "options": "Options",
+          "test": "Test"
+        },
+        "no-options": "This transformer has no options.",
+        "no-transformer": "Choose a transformer in the first step."
       }
     },
     "monitoring": {

@@ -1,6 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
 
 import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -27,6 +35,8 @@ import { FormControlValidationDirective } from '../../../shared/form/form-contro
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
+import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
+import { submitsOnEnter, WizardSteps } from '../../../shared/modal-steps/wizard-steps';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 import { PillComponent } from '../../../shared/pill/pill.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
@@ -43,6 +53,10 @@ export interface TransformerSourcePreset {
   group?: SouthItemGroupLightDTO;
   items?: Array<ItemLightDTO>;
 }
+
+/** The steps of the modal: where the data comes from and the transformer, its options, then a test */
+export const TRANSFORMER_MODAL_STEPS = ['source', 'options', 'test'] as const;
+export type TransformerModalStep = (typeof TRANSFORMER_MODAL_STEPS)[number];
 
 /** What a transformer being configured would send of the items of its south */
 export interface TransformerImpact {
@@ -96,6 +110,7 @@ interface TransformerSourceOption {
     ValidationErrorsComponent,
     NorthTransformerTestComponent,
     NgbTooltip,
+    ModalStepsComponent,
     SelectExistingTransformerComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -139,6 +154,11 @@ export class EditNorthTransformerModalComponent {
     transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
     options: this.fb.group({})
   });
+  /** Emits on every change of the form, so that the steps with errors are kept up to date */
+  private readonly formEvents = toSignal(this.form.events);
+  readonly steps = new WizardSteps<TransformerModalStep>(TRANSFORMER_MODAL_STEPS, step => this.stepControls(step), this.formEvents);
+  /** A new transformer is saved once its source and the transformer are chosen, an edited one from any step */
+  readonly canSave = computed(() => this.mode() === 'edit' || this.steps.current() !== 'source');
   private allTransformers: Array<TransformerDTO> = [];
   readonly selectableOutputs = signal<Array<TransformerDTO>>([]);
   readonly supportedOutputTypes = signal<Array<string>>([]);
@@ -387,12 +407,38 @@ export class EditNorthTransformerModalComponent {
     this.modal.dismiss();
   }
 
-  save() {
-    if (this.form.value.source?.south || this.existingTransformerWithOptions?.source.type === 'south') {
-      // A transformer without item would apply to all the items of the south
-      this.itemsRequired.set(this.selectionType() === 'items' && this.selectedItems().length === 0);
+  /** Pressing Enter in a field submits the form, whether the Save button shows or not */
+  onEnter(event: Event) {
+    if (submitsOnEnter(event)) {
+      event.preventDefault();
+      this.submit();
     }
-    if (!this.form.valid || this.itemsRequired()) {
+  }
+
+  /** Submitting the form (e.g. pressing Enter) saves the transformer once it can be, and opens the next step before */
+  submit() {
+    if (this.canSave()) {
+      this.save();
+    } else {
+      this.nextStep();
+    }
+  }
+
+  /** Opens the next step, once the current one is complete */
+  nextStep() {
+    if (this.steps.current() === 'source' && !this.checkItems()) {
+      return;
+    }
+    this.steps.next();
+  }
+
+  save() {
+    if (!this.checkItems()) {
+      this.steps.current.set('source');
+      return;
+    }
+    if (!this.form.valid) {
+      this.steps.showFirstInvalid();
       return;
     }
 
@@ -415,6 +461,24 @@ export class EditNorthTransformerModalComponent {
       transformer: this.form.value.transformer,
       options: this.form.value.options
     });
+  }
+
+  /** Whether the chosen items are fine: a transformer for specific items needs one at least, without, it would apply to all */
+  private checkItems(): boolean {
+    this.itemsRequired.set(!!this.selectedSouth() && this.selectionType() === 'items' && this.selectedItems().length === 0);
+    return !this.itemsRequired();
+  }
+
+  /** The controls edited in each step */
+  private stepControls(step: TransformerModalStep): Array<AbstractControl> {
+    switch (step) {
+      case 'source':
+        return [this.form.controls.source, this.form.controls.apiDataSourceId, this.form.controls.transformer];
+      case 'options':
+        return [this.form.controls.options];
+      default:
+        return [];
+    }
   }
 
   /** The south source of the transformer, as configured */
