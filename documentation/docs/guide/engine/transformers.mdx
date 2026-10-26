@@ -103,12 +103,12 @@ one is preselected: **File (as is)** for files sent to a North connector accepti
 transformer producing the North connector's own format (e.g. OIAnalytics values, MQTT payloads), otherwise the
 passthrough of the data (**JSON**). The available choices depend on the type of South connector chosen:
 
-| South connector type                                                                                                                                 | Compatible standard transformers                                                                     |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                           |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **OIBus API**                                                                                                                                        | File (as is), Records (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                                                     |
+| South connector type                                                                                                                                 | Compatible standard transformers                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), Records, MQTT payloads, CSV (from JSON), OIAnalytics payload |
+| **OIBus API**                                                                                                                                        | File (as is), Records, MQTT payloads, CSV (from JSON), OIAnalytics payload |
+| **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                           |
 
 Custom transformers are also shown in this list and are always named by the user.
 
@@ -448,6 +448,37 @@ Mapping: `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 These transformers process files or JSON payloads produced by connectors such as MQTT, REST, SFTP, FTP, Folder
 Scanner and OIAnalytics, as well as data injected via the **OIBus API**.
 
+#### Reading the file {#reading-the-file}
+
+Except **File (as is)**, the file transformers first read the rows of the file, with the settings of their **File**
+group:
+
+| Setting                   | Description                                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **File type**             | `CSV` or `JSON`                                                                                             |
+| **CSV delimiter**         | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.), for a CSV file                                       |
+| **Has header**            | Whether the first line of a CSV file is a header                                                            |
+| **Row iterator JSONPath** | JSONPath matching the rows of a JSON file (default `$[*]`, each element of the root array), for a JSON file |
+
+The other settings then read **fields** of each row:
+
+- in a **CSV** file, a field is a column: its name in the header, or its index from `0` without header. Numbers and
+  booleans are typed.
+- in a **JSON** file, a field is a property of the row (e.g. `value`), or a **JSONPath** of the whole file starting with
+  `$`, whose wildcards (`[*]`) are resolved to the row (e.g. `$.metrics[*].value` for the row `$.metrics[2]`). A
+  JSONPath also reads a value shared by all the rows (e.g. `$.site`). An object or an array is read as its JSON text.
+
+:::info Nested JSON strings
+A JSONPath (the row iterator included) automatically parses JSON-stringified intermediate nodes — for example an MQTT
+South connector whose messages carry a JSON payload as a raw string. If a path segment resolves to a string that itself
+contains JSON, the rest of the path is resolved against the parsed value. The row iterator can cross that string
+boundary and still produce one row per nested match, so a single message holding several readings splits into several
+rows. See the [OIAnalytics payload](#oianalytics-payload-from-file) example below for a worked-through case.
+:::
+
+Before 3.10, the CSV and JSON files had their own transformers (Records and MQTT payloads from CSV, OIAnalytics from
+JSON): upgrading replaces them by the file transformers below, keeping their settings.
+
 ---
 
 #### File (as is) {#file-as-is}
@@ -460,71 +491,52 @@ This transformer has **no configuration options**.
 
 ---
 
-#### Records (from CSV) {#records-from-csv}
+#### Records {#records-from-file}
 
-Parses a CSV file and maps each row to a point record `{ pointId, timestamp, value }`. The transformer converts the
-raw timestamp string to ISO-8601 according to the configured format.
-
-##### Settings {#settings-5}
-
-| Setting              | Description                                                                           |
-| -------------------- | ------------------------------------------------------------------------------------- |
-| **Has header**       | Whether the first row is a header row                                                 |
-| **Delimiter**        | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                 |
-| **Point ID column**  | Column name (header mode) or zero-based index holding the point identifier            |
-| **Timestamp column** | Column name or index holding the timestamp                                            |
-| **Value column**     | Column name or index holding the value                                                |
-| **Timestamp type**   | Format of the raw timestamp (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)   |
-| **Timezone**         | Timezone for parsing (only used when type is `string`)                                |
-| **Format**           | Custom datetime pattern (only used when type is `string`, e.g. `yyyy-MM-dd HH:mm:ss`) |
+Sends the rows of the file as records, with all their fields, to the North connectors that accept record lists
+(Console). Its only settings are the [File group](#reading-the-file).
 
 ##### Example {#example-5}
 
-This transformer is useful when a REST South connector fetches CSV exports from an API, or when a Folder Scanner
-South connector picks up CSV files dropped by another system.
-
-**Input CSV** (fetched by a REST item)
+**Input CSV** (fetched by a REST item), read with a `COMMA` delimiter and a header
 
 ```csv
 SensorID,Timestamp,Reading
 tag/temp1,2024-01-15T10:00:00.000Z,23.5
-tag/temp1,2024-01-15T10:01:00.000Z,23.8
 tag/pressure1,2024-01-15T10:00:00.000Z,102.1
 ```
 
-**Output (point records)**
+**Output (records)**
 
 ```json
 [
-  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 23.5 },
-  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "value": 23.8 },
-  { "pointId": "tag/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "value": 102.1 }
+  { "SensorID": "tag/temp1", "Timestamp": "2024-01-15T10:00:00.000Z", "Reading": 23.5 },
+  { "SensorID": "tag/pressure1", "Timestamp": "2024-01-15T10:00:00.000Z", "Reading": 102.1 }
 ]
 ```
 
-These records can then be forwarded to the North connectors that accept record lists (Console, File Writer).
-
 ---
 
-#### MQTT payloads (from CSV) {#mqtt-payloads-from-csv}
+#### MQTT payloads {#mqtt-payloads-from-file}
 
-Parses a CSV file and converts each row into an MQTT message with a topic and a payload. Two payload modes are
-supported:
+Converts each row of the file into an MQTT message with a topic and a payload. Two payload modes are supported:
 
-- **Simple** — a single column becomes the payload, cast to the configured type.
-- **Object** — multiple columns are assembled into a JSON object payload.
+- **Simple** — a single field becomes the payload, cast to the configured type.
+- **Object** — several fields are assembled into a JSON object payload.
+
+Rows without topic or payload are skipped.
 
 ##### Settings {#settings-6}
 
-| Setting               | Description                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| **Has header**        | Whether the first row is a header row                                                 |
-| **Delimiter**         | Column separator                                                                      |
-| **Topic column**      | Column name or index holding the MQTT topic                                           |
-| **Payload type**      | `string`, `number`, `boolean`, `datetime`, or `object`                                |
-| **Value column**      | Column for the value (simple payload types only)                                      |
-| **Object fields**     | List of `{ key, column, dataType }` mappings (object payload only)                    |
-| **Datetime settings** | Input/output datetime conversion (applies when payload type or a field is `datetime`) |
+After the [File group](#reading-the-file):
+
+| Setting               | Description                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Topic field**       | Field holding the MQTT topic                                                                            |
+| **Payload type**      | `string`, `number`, `boolean`, `datetime`, or `object`                                                  |
+| **Value field**       | Field holding the payload (simple payload types only)                                                   |
+| **Datetime settings** | Input/output datetime conversion (`datetime` payload type)                                              |
+| **Object fields**     | List of `{ key, field, data type }` mappings (object payload only), each with its own datetime settings |
 
 ##### Example — Simple payload {#example--simple-payload}
 
@@ -545,24 +557,29 @@ plant/pump1/running,true
 ]
 ```
 
-##### Example — Object payload {#example--object-payload}
+##### Example — Object payload from JSON {#example--object-payload}
 
-**Input CSV**
+**Input JSON**
 
-```csv
-topic,value,quality,timestamp
-plant/sensor1,23.5,good,2024-01-15T10:00:00.000Z
-plant/sensor2,48.0,good,2024-01-15T10:00:00.000Z
+```json
+{
+  "site": "plant",
+  "sensors": [
+    { "topic": "plant/sensor1", "value": 23.5, "quality": "good" },
+    { "topic": "plant/sensor2", "value": 48.0, "quality": "good" }
+  ]
+}
 ```
 
-Object fields: `value → number`, `quality → string`, `timestamp → datetime`
+Configuration: row iterator `$.sensors[*]`, topic field `topic`, object fields `value → value (number)`,
+`quality → quality (string)` and `site → $.site (string)`
 
 **Output (MQTT messages)**
 
 ```json
 [
-  { "topic": "plant/sensor1", "payload": "{\"value\":23.5,\"quality\":\"good\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" },
-  { "topic": "plant/sensor2", "payload": "{\"value\":48.0,\"quality\":\"good\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" }
+  { "topic": "plant/sensor1", "payload": "{\"value\":23.5,\"quality\":\"good\",\"site\":\"plant\"}" },
+  { "topic": "plant/sensor2", "payload": "{\"value\":48,\"quality\":\"good\",\"site\":\"plant\"}" }
 ]
 ```
 
@@ -630,43 +647,20 @@ Timestamp,Tag,Value,OK
 2024-01-15T10:00:00.000Z,pressure1,102.1,false
 ```
 
-:::info Nested JSON strings
-Both **CSV (from JSON)** and **OIAnalytics (from JSON)** (below) can automatically parse JSON-stringified
-intermediate nodes — for example an MQTT South connector whose messages carry a JSON payload as a raw string. If a
-path segment resolves to a string that itself contains JSON, the rest of the path is resolved against the parsed
-value. This also applies to the **row iterator path** itself: it can cross that string boundary and still produce
-one row per nested match, so a single message holding several readings splits into several rows. See the
-[OIAnalytics (from JSON)](#oianalytics-from-json) example below for a worked-through case.
-:::
+Like the other file transformers, it parses the [nested JSON strings](#reading-the-file).
 
 ---
 
-#### OIAnalytics (from JSON) {#oianalytics-from-json}
+#### OIAnalytics payload {#oianalytics-payload-from-file}
 
-Extracts point ID, value, and timestamp from an arbitrary JSON structure via JSONPath expressions and produces
-values in the OIAnalytics compact format (`timestamps`, `values` and `references` parallel arrays) — the same
-output as the [OIAnalytics payload](#oianalytics-payload) transformer. A **row iterator
-path** identifies which part of the payload becomes one row (one value) per match; the point ID, value, and
-timestamp paths are then resolved relative to that row.
+Sends the rows of the file to an OIAnalytics North connector, in the OIAnalytics compact format (`timestamps`, `values`
+and `references` parallel arrays), as the [OIAnalytics payload](#oianalytics-payload) transformer of the record lists.
+After the [File group](#reading-the-file), its settings are the same: the [Reference, Timestamp and Value
+groups](#settings-3), whose fields are read in the rows of the file.
 
-This is the transformer to reach for when a South connector (typically MQTT, REST, or Folder Scanner) delivers raw
-JSON that doesn't already match OIBus's point records, and you want to feed it straight to an
-OIAnalytics North connector without writing a custom transformer.
-
-##### Settings {#settings-8}
-
-| Setting                   | Description                                                                                                                                                                                                                                                                     |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Row Iterator JSONPath** | JSONPath to the array of rows that become values (e.g. `$[*]`). Automatically parses a JSON-stringified intermediate node when direct traversal fails, so the path may cross into a field holding raw JSON text (e.g. an MQTT payload) and still yield one row per nested match |
-| **Point ID JSONPath**     | JSONPath to the point identifier within the current row (e.g. `$[*].id`); wildcards (`[*]`) are resolved to the current row's indices                                                                                                                                           |
-| **Value JSONPath**        | JSONPath to the value within the current row                                                                                                                                                                                                                                    |
-| **Timestamp JSONPath**    | JSONPath to the raw timestamp within the current row. Falls back to the current time if it cannot be resolved                                                                                                                                                                   |
-| **Reference process**     | Optional JavaScript expression applied to each resolved point ID to build the OIAnalytics reference, `value` being the point ID (e.g. `value.replace('plant/', '').toUpperCase()`)                                                                                              |
-| **Timestamp input type**  | Format of the raw timestamp: `String`, `ISO string`, `Unix epoch (s)`, or `Unix epoch (ms)`                                                                                                                                                                                     |
-| **Timezone**              | Timezone used when parsing (only used when input type is `String`)                                                                                                                                                                                                              |
-| **Format**                | Custom datetime pattern (only used when input type is `String`, e.g. `yyyy-MM-dd HH:mm:ss`)                                                                                                                                                                                     |
-| **Locale**                | Locale used for parsing month/day names (only used when input type is `String`)                                                                                                                                                                                                 |
-| **Timestamp precision**   | Output precision the resulting ISO timestamp is truncated to: `Millisecond`, `Second`, `Minute`, or `Hour`                                                                                                                                                                      |
+This is the transformer to reach for when a South connector (typically MQTT, REST, or Folder Scanner) delivers a CSV
+or JSON file and you want to feed it straight to an OIAnalytics North connector without writing a custom transformer.
+Rows without reference, value or valid timestamp are skipped, with a single warning per file.
 
 ##### Example — MQTT messages with a JSON-stringified payload {#example--mqtt-messages-with-a-json-stringified-payload}
 
@@ -688,15 +682,14 @@ payload — and fans out one row per metric, whether a given message holds one r
 
 Configuration:
 
-- Row Iterator JSONPath: `$[*].message.metrics[*]`
-- Point ID JSONPath: `$[*].message.metrics[*].name`
-- Value JSONPath: `$[*].message.metrics[*].value`
-- Timestamp JSONPath: `$[*].message.metrics[*].timestamp`
-- Timestamp input type: `ISO string`, Timestamp precision: `Millisecond`
+- File type: `JSON`, Row iterator JSONPath: `$[*].message.metrics[*]`
+- Reference field: `name`
+- Timestamp field: `timestamp`, source type `iso-string`, precision `ms`
+- Value field: `value`
 
 The first `[*]` walks the outer array of messages; the second crosses the `message` string boundary (parsed
-automatically) to walk the metrics inside it. Both are resolved together for each row, so the same configuration
-handles a single-metric message and a multi-metric message alike.
+automatically) to walk the metrics inside it, each metric being a row whose properties are its fields. The same
+configuration handles a single-metric message and a multi-metric message alike.
 
 **Output** — three rows: two from the first message, one from the second
 

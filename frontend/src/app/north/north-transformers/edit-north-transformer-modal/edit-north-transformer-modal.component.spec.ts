@@ -50,7 +50,7 @@ const recordListToMqtt: StandardTransformerDTO = {
 const anyToMqtt: StandardTransformerDTO = {
   ...recordListToMqtt,
   id: 'any-to-mqtt',
-  functionName: 'csv-to-mqtt',
+  functionName: 'file-to-mqtt',
   inputType: 'file',
   manifest: { ...recordListToMqtt.manifest, attributes: [] }
 };
@@ -231,7 +231,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.apiDataSource.fill('my-source');
     // only the transformers accepting any content are proposed
     await expect.element(tester.output.getByRole('option')).toHaveLength(2);
-    await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.output.selectOptions('MQTT payloads');
     await expect.element(tester.testPanel).toBeInTheDocument();
     await tester.nextButton.click();
     await tester.saveButton.click();
@@ -250,7 +250,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
     await tester.source.selectOptions('OIBus API data source');
     await expect.element(tester.apiDataSource).toHaveAttribute('placeholder', 'All data sources');
-    await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.output.selectOptions('MQTT payloads');
     await tester.nextButton.click();
     await tester.saveButton.click();
 
@@ -309,7 +309,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
     await tester.source.selectOptions('South 1 (Folder scanner)');
     await expect.element(tester.allItems).toHaveAttribute('aria-pressed', 'true');
-    await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.output.selectOptions('MQTT payloads');
     await tester.nextButton.click();
     await tester.saveButton.click();
 
@@ -328,7 +328,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.source.selectOptions('South 1 (Folder scanner)');
     await tester.byGroup.click();
     await tester.group.selectOptions('Group 1');
-    await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.output.selectOptions('MQTT payloads');
     await tester.nextButton.click();
     await tester.saveButton.click();
 
@@ -358,7 +358,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await expect.element(tester.pills).toHaveLength(2);
     await tester.pills.nth(1).getByRole('button').click();
     await expect.element(tester.pills).toHaveLength(1);
-    await tester.output.selectOptions('MQTT payloads (from CSV)');
+    await tester.output.selectOptions('MQTT payloads');
     await tester.nextButton.click();
     await tester.saveButton.click();
 
@@ -496,7 +496,7 @@ describe('EditNorthTransformerModalComponent', () => {
     await expect.element(tester.output).toHaveDisplayValue(/^\s*MQTT payloads\s*$/);
 
     await tester.source.selectOptions('OIBus API data source');
-    await expect.element(tester.output).toHaveDisplayValue(/MQTT payloads \(from CSV\)/);
+    await expect.element(tester.output).toHaveDisplayValue(/MQTT payloads/);
 
     await tester.source.selectOptions('');
     await expect.element(tester.output).toHaveDisplayValue('');
@@ -517,7 +517,7 @@ describe('EditNorthTransformerModalComponent', () => {
     // the source is shown, not chosen
     await expect.element(tester.sourceLine).toHaveTextContent('South 1Folder scanner');
     await expect.element(tester.source).not.toBeInTheDocument();
-    await expect.element(tester.output).toHaveDisplayValue(/MQTT payloads \(from CSV\)/);
+    await expect.element(tester.output).toHaveDisplayValue(/MQTT payloads/);
     await expect.element(tester.allItems).toHaveAttribute('aria-pressed', 'true');
   });
 

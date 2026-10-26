@@ -10,15 +10,15 @@ import type TransformerRepository from '../repository/config/transformer.reposit
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { createMock, Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
-import CSVToMQTTTransformer from '../transformers/file/csv-to-mqtt/csv-to-mqtt-transformer';
-import csvToMqttManifest from '../transformers/file/csv-to-mqtt/manifest';
-import CSVToRecordListTransformer from '../transformers/file/csv-to-record-list/csv-to-record-list-transformer';
-import csvToRecordListManifest from '../transformers/file/csv-to-record-list/manifest';
 import fileManifest from '../transformers/file/file/manifest';
+import FileToMQTTTransformer from '../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
+import fileToMqttManifest from '../transformers/file/file-to-mqtt/manifest';
+import FileToOIAnalyticsTransformer from '../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
+import fileToOianalyticsManifest from '../transformers/file/file-to-oianalytics/manifest';
+import FileToRecordListTransformer from '../transformers/file/file-to-record-list/file-to-record-list-transformer';
+import fileToRecordListManifest from '../transformers/file/file-to-record-list/manifest';
 import JSONToCSVTransformer from '../transformers/file/json-to-csv/json-to-csv-transformer';
 import jsonToCsvManifest from '../transformers/file/json-to-csv/manifest';
-import JSONToOIAnalyticsTransformer from '../transformers/file/json-to-oianalytics/json-to-oianalytics-transformer';
-import jsonToOianalyticsManifest from '../transformers/file/json-to-oianalytics/manifest';
 // Import transformer manifests
 import recordListToJsonManifest from '../transformers/record-list/record-list-to-json/manifest';
 // Import concrete transformer classes for instanceof checks
@@ -392,10 +392,10 @@ describe('Transformer Service', () => {
       );
 
     const expectedClasses: Array<[string, abstract new (...args: Array<never>) => unknown]> = [
-      ['csv-to-mqtt', CSVToMQTTTransformer],
-      ['csv-to-record-list', CSVToRecordListTransformer],
+      ['file-to-mqtt', FileToMQTTTransformer],
+      ['file-to-record-list', FileToRecordListTransformer],
       ['json-to-csv', JSONToCSVTransformer],
-      ['json-to-oianalytics', JSONToOIAnalyticsTransformer],
+      ['file-to-oianalytics', FileToOIAnalyticsTransformer],
       ['record-list-to-json', RecordListToJSONTransformer],
       ['record-list-to-modbus', RecordListToModbusTransformer],
       ['record-list-to-mqtt', RecordListToMQTTTransformer],
@@ -780,11 +780,11 @@ describe('Transformer Service', () => {
   });
 
   it('should get standard manifest', () => {
-    assert.deepStrictEqual(getStandardManifest('csv-to-mqtt'), csvToMqttManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('csv-to-record-list'), csvToRecordListManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('file-to-mqtt'), fileToMqttManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('file-to-record-list'), fileToRecordListManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file'), fileManifest.settings);
     assert.deepStrictEqual(getStandardManifest('json-to-csv'), jsonToCsvManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('json-to-oianalytics'), jsonToOianalyticsManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('file-to-oianalytics'), fileToOianalyticsManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-json'), recordListToJsonManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-modbus'), recordListToModbusManifest.settings);
     assert.deepStrictEqual(getStandardManifest('record-list-to-mqtt'), recordListToMqttManifest.settings);
