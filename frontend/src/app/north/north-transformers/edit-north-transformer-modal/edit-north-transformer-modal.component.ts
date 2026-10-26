@@ -35,6 +35,7 @@ import { FormControlValidationDirective } from '../../../shared/form/form-contro
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
+import { filterItems } from '../../../shared/item-table/item-table';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { submitsOnEnter, WizardSteps } from '../../../shared/modal-steps/wizard-steps';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
@@ -176,11 +177,33 @@ export class EditNorthTransformerModalComponent {
   readonly selectionType = signal<'all' | 'group' | 'items'>('all');
   /** Whether the selected items are left out of a transformer applying to all the items (of the south or of the group) */
   readonly excludeItems = signal(false);
-  readonly searchResults = signal<Array<ItemLightDTO>>([]);
-  readonly filteredItems = signal<Array<ItemLightDTO>>([]);
-  readonly totalSearchResults = signal(0);
   readonly itemSearchText = signal('');
   readonly searchInteracted = signal(false);
+  // The filters of the items, as in the south items list
+  readonly groupFilter = signal<string | null>(null);
+  readonly scanModeFilter = signal<string | null>(null);
+  readonly statusFilter = signal<'enabled' | 'disabled' | null>(null);
+  /** The items of the south matching the search and the filters */
+  readonly matchingItems = computed<Array<ItemLightDTO>>(() => {
+    const southConnector = this.southConnector();
+    if (!southConnector) return [];
+    const groupFilter = this.groupFilter();
+    const scanModeFilter = this.scanModeFilter();
+    const items: ReadonlyArray<SouthConnectorItemDTO> = southConnector.items;
+    return filterItems(items, { name: this.itemSearchText(), status: this.statusFilter() })
+      .filter(item => {
+        if (groupFilter === 'none' && item.group) return false;
+        if (groupFilter && groupFilter !== 'none' && item.group?.id !== groupFilter) return false;
+        const scanModeId = item.group ? item.group.standardSettings.scanMode.id : item.scanMode?.id;
+        return !scanModeFilter || scanModeId === scanModeFilter;
+      })
+      .map(toItemLight);
+  });
+  /** The first matching items, listed in the dropdown */
+  readonly filteredItems = computed(() => this.matchingItems().slice(0, 10));
+  /** The matching items not selected yet */
+  readonly searchResults = computed(() => this.matchingItems().filter(item => !this.isItemSelected(item)));
+  readonly totalSearchResults = computed(() => this.searchResults().length);
   readonly availableGroups = signal<Array<SouthItemGroupLightDTO>>([]);
   readonly selectedGroup = signal<SouthItemGroupLightDTO | null>(null);
   /** Whether the source is set by the line it is configured from (or by the edited transformer): it is shown, not chosen */
@@ -221,34 +244,6 @@ export class EditNorthTransformerModalComponent {
     }
     return impact;
   });
-
-  filterItems() {
-    const southId = this.form.controls.source.value.south?.id;
-    if (!southId) {
-      this.filteredItems.set([]);
-      this.searchResults.set([]);
-      this.totalSearchResults.set(0);
-      return;
-    }
-
-    this.southConnectorService.searchItems(southId, { name: this.itemSearchText(), page: 0 }).subscribe(items => {
-      const allItems = items.content;
-      const selectedItems = this.selectedItems();
-      const searchResults = allItems.filter(item => !selectedItems.some(element => element.id === item.id));
-      this.searchResults.set(searchResults);
-      this.totalSearchResults.set(searchResults.length);
-      this.filteredItems.set(allItems.slice(0, 10));
-    });
-  }
-
-  onDropdownOpenChange(isOpen: boolean) {
-    if (isOpen) {
-      // Items should already be pre-loaded, but just in case
-      if (this.filteredItems().length === 0) {
-        this.filterItems();
-      }
-    }
-  }
 
   prepareForCreation(
     southConnectors: Array<SouthConnectorLightDTO>,
@@ -296,7 +291,6 @@ export class EditNorthTransformerModalComponent {
     this.existingTransformerWithOptions = transformerWithOptionsToEdit;
     this.selectedItems.set([]);
     if (transformerWithOptionsToEdit.source.type === 'south') {
-      this.filterItems();
       // Pre-load items and groups if editing with a south connector
       this.selectedSouth.set(transformerWithOptionsToEdit.source.south);
       this.loadSouth(transformerWithOptionsToEdit.source.south.id);
@@ -356,13 +350,9 @@ export class EditNorthTransformerModalComponent {
       this.selectedGroup.set(null);
       this.availableGroups.set([]);
       this.southConnector.set(null);
+      this.clearItemFilters();
       if (source.south) {
-        this.filterItems();
         this.loadSouth(source.south.id);
-      } else {
-        this.filteredItems.set([]);
-        this.searchResults.set([]);
-        this.totalSearchResults.set(0);
       }
     });
 
@@ -558,12 +548,8 @@ export class EditNorthTransformerModalComponent {
     this.itemsRequired.set(false);
     if (this.isItemSelected(item)) {
       this.selectedItems.update(selectedItems => selectedItems.filter(i => i.id !== item.id));
-      if (item.name.toLowerCase().includes(this.itemSearchText().toLowerCase())) {
-        this.searchResults.update(searchResults => [...searchResults, item]);
-      }
     } else {
       this.selectedItems.update(selectedItems => [...selectedItems, item]);
-      this.searchResults.update(searchResults => searchResults.filter(i => i.id !== item.id));
     }
   }
 
@@ -582,12 +568,8 @@ export class EditNorthTransformerModalComponent {
     if (type !== 'items') {
       this.selectedItems.set([]);
       this.searchInteracted.set(false);
-      this.searchResults.set([]);
-      this.filteredItems.set([]);
-      this.totalSearchResults.set(0);
-    } else {
-      this.filterItems();
     }
+    this.clearItemFilters();
     if (type !== 'group') {
       this.selectedGroup.set(null);
     }
@@ -598,9 +580,14 @@ export class EditNorthTransformerModalComponent {
     this.excludeItems.set(exclude);
     this.selectedItems.set([]);
     this.searchInteracted.set(false);
-    if (exclude) {
-      this.filterItems();
-    }
+    this.clearItemFilters();
+  }
+
+  private clearItemFilters() {
+    this.itemSearchText.set('');
+    this.groupFilter.set(null);
+    this.scanModeFilter.set(null);
+    this.statusFilter.set(null);
   }
 
   selectAllResults() {
@@ -611,14 +598,9 @@ export class EditNorthTransformerModalComponent {
       }
     }
     this.selectedItems.set(selectedItems);
-    // Clear search results since all items are now selected
-    this.searchResults.set([]);
-    this.totalSearchResults.set(0);
   }
 
   removeAllItems() {
     this.selectedItems.set([]);
-    // Refresh search results to include previously selected items
-    this.filterItems();
   }
 }
