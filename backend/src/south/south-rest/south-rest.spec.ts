@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
@@ -89,9 +88,6 @@ describe('SouthRestAPI connector', () => {
   let logger: PinoLogger;
   let addContentCallback: Mock<ConstructorParameters<typeof SouthRestClass>[1]>;
   let HTTPRequest: Mock<(url: URL, options?: ReqOptions) => Promise<ReqResponse>>;
-  let writeFile: Mock<typeof fs.writeFile>;
-  let unlink: Mock<typeof fs.unlink>;
-  let fileSize: number;
 
   const httpRequestExports: Record<string, unknown> = { HTTPRequest: undefined };
 
@@ -128,14 +124,6 @@ describe('SouthRestAPI connector', () => {
     HTTPRequest = mock.fn(async () => createMockResponse(200));
     httpRequestExports.HTTPRequest = HTTPRequest;
     Object.assign(utilsExports, createUtilsMocks());
-    writeFile = mock.method(fs, 'writeFile', async () => undefined);
-    fileSize = 100;
-    mock.method(
-      fs,
-      'stat',
-      mock.fn(async () => ({ size: fileSize }))
-    );
-    unlink = mock.method(fs, 'unlink', async () => undefined);
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     south = createSouth(createConfiguration());
@@ -557,7 +545,7 @@ describe('SouthRestAPI connector', () => {
   // 4. History Query & File Handling
   // --------------------------------------------------------------------------
 
-  it('should execute historyQuery for multiple items and save content', async () => {
+  it('should execute historyQuery and send the response as a file held in memory', async () => {
     mock.method(
       south,
       'queryData',
@@ -571,27 +559,11 @@ describe('SouthRestAPI connector', () => {
 
     await south.historyQuery([createItem({ endpoint: '/item1' })], DATE_1, DATE_2);
 
-    assert.strictEqual(writeFile.mock.calls.length, 1);
     assert.strictEqual(addContentCallback.mock.calls.length, 1);
     const [southId, content] = addContentCallback.mock.calls[0].arguments;
     assert.strictEqual(southId, 'south-rest');
-    assert.ok(content.type === 'file');
-    assert.ok(content.filePath!.includes('REST-Test Item-random-id.json'));
-
-    assert.strictEqual(unlink.mock.calls.length, 1, 'the temp file should be deleted from the south cache once sent');
-    assert.strictEqual(unlink.mock.calls[0].arguments[0], content.filePath);
-  });
-
-  it('should log an error but not throw if deleting the temp file fails after caching', async () => {
-    mock.method(south, 'queryData', async () => ({ filename: 'REST-Test Item-random-id.json', content: 'content', maxInstant: null }));
-    unlink.mock.mockImplementation(async () => {
-      throw new Error('EBUSY');
-    });
-
-    await south.historyQuery([createItem({ endpoint: '/item1' })], DATE_1, DATE_2);
-
-    assert.strictEqual(addContentCallback.mock.calls.length, 1);
-    assert.ok(logger.error.mock.calls.some(c => (c.arguments[1] as string).includes('Error when deleting file')));
+    assert.deepStrictEqual(content, { type: 'file', filename: 'REST-Test Item-random-id.json', content: 'content' });
+    assert.ok(logger.info.mock.calls.some(c => (c.arguments[1] as string).includes('Downloaded file (7 bytes)')));
   });
 
   it('should update maxInstant across multiple items in historyQuery', async () => {
@@ -604,30 +576,13 @@ describe('SouthRestAPI connector', () => {
     assert.deepStrictEqual(result, { trackedInstant: DATE_1, value: '' });
   });
 
-  it('should not add content if file is empty', async () => {
-    respondWith(200, {});
-    fileSize = 0;
-
-    await south.historyQuery([createItem()], DATE_1, DATE_2);
-
-    assert.strictEqual(writeFile.mock.calls.length, 1);
-    assert.strictEqual(addContentCallback.mock.calls.length, 0);
-    assert.strictEqual(unlink.mock.calls.length, 1, 'the empty temp file should still be cleaned up');
-  });
-
-  it('should log an error but not throw if deleting an empty temp file fails', async () => {
-    respondWith(200, {});
-    fileSize = 0;
-    unlink.mock.mockImplementation(async () => {
-      throw new Error('EBUSY');
-    });
+  it('should not add content if the response is empty', async () => {
+    mock.method(south, 'queryData', async () => ({ filename: 'REST-Test Item-random-id.txt', content: '', maxInstant: null }));
 
     await south.historyQuery([createItem()], DATE_1, DATE_2);
 
     assert.strictEqual(addContentCallback.mock.calls.length, 0);
-    assert.ok(
-      logger.error.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error when deleting empty file'))
-    );
+    assert.ok(logger.debug.mock.calls.some(c => (c.arguments[1] as string).includes('Empty file downloaded')));
   });
 
   // --------------------------------------------------------------------------
@@ -644,7 +599,8 @@ describe('SouthRestAPI connector', () => {
 
     assert.ok(result.result.type === 'file');
     assert.strictEqual(result.result.content, JSON.stringify({ test: 'ok' }));
-    assert.notStrictEqual(result.result.filePath, undefined);
+    assert.strictEqual(result.result.filename, 'REST-Test Item-random-id.json');
+    assert.strictEqual(result.result.filePath, undefined);
     assert.strictEqual(result.connectionDuration, 0);
     assert.strictEqual(result.queryDuration, 25);
   });

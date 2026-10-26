@@ -1,6 +1,3 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-
 import { JSONPath } from 'jsonpath-plus';
 import { DateTime, DurationLikeObject } from 'luxon';
 
@@ -102,7 +99,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     const { filename, content } = await this.queryData(item, startTime, endTime);
     const queryDuration = DateTime.now().toMillis() - queryStart;
     return {
-      result: { type: 'file', filePath: filename, content },
+      result: { type: 'file', filename, content },
       // No separate connection step in testItem() for this connector — the call above does
       // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
@@ -120,25 +117,13 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     const { filename, content, maxInstant } = await this.queryData(items[0], startTime, endTime);
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
-    const filePath = path.resolve(this.tmpFolder, filename);
-    await fs.writeFile(filePath, content);
-    const stats = await fs.stat(filePath);
-    if (stats.size > 0) {
-      this.logger.info(logCtx, `Downloaded file (${stats.size} bytes) in ${requestDuration} ms`);
-      await this.addContent({ type: 'file', filePath }, startRequest.toUTC().toISO(), [items[0]]);
-      try {
-        await fs.unlink(filePath);
-        this.logger.trace(logCtx, `File "${filePath}" deleted`);
-      } catch (unlinkError) {
-        this.logger.error(logCtx, `Error when deleting file "${filePath}" after caching it: ${getErrorMessage(unlinkError)}`);
-      }
+    // The response is sent as a file held in memory, named after the response
+    const size = Buffer.byteLength(content);
+    if (size > 0) {
+      this.logger.info(logCtx, `Downloaded file (${size} bytes) in ${requestDuration} ms`);
+      await this.addContent({ type: 'file', filename, content }, startRequest.toUTC().toISO(), [items[0]]);
     } else {
       this.logger.debug(logCtx, `Empty file downloaded. Request done in ${requestDuration} ms`);
-      try {
-        await fs.unlink(filePath);
-      } catch (unlinkError) {
-        this.logger.error(logCtx, `Error when deleting empty file "${filePath}": ${getErrorMessage(unlinkError)}`);
-      }
     }
 
     return { trackedInstant: maxInstant, value: content };
