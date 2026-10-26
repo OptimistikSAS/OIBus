@@ -67,6 +67,24 @@ export type TransformerFileToFileSettingsFieldsDatetimeSettingsOutputType =
 export const TRANSFORMER_FILE_TO_FILE_SETTINGS_FIELDS_DATA_TYPES = ['string', 'number', 'datetime', 'array', 'boolean', 'object'] as const;
 export type TransformerFileToFileSettingsFieldsDataType = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_FIELDS_DATA_TYPES)[number];
 
+export const TRANSFORMER_FILE_TO_MODBUS_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json'] as const;
+export type TransformerFileToModbusSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_MODBUS_SETTINGS_INPUT_FILE_TYPES)[number];
+
+export const TRANSFORMER_FILE_TO_MODBUS_SETTINGS_INPUT_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
+export type TransformerFileToModbusSettingsInputDelimiter = (typeof TRANSFORMER_FILE_TO_MODBUS_SETTINGS_INPUT_DELIMITERS)[number];
+
+export const TRANSFORMER_FILE_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
+export type TransformerFileToModbusSettingsMappingModbusType = (typeof TRANSFORMER_FILE_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
+
 export const TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json'] as const;
 export type TransformerFileToMqttSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_FILE_TYPES)[number];
 
@@ -151,6 +169,21 @@ export type TransformerFileToOianalyticsSettingsTimestampSourceType =
 export const TRANSFORMER_FILE_TO_OIANALYTICS_SETTINGS_TIMESTAMP_PRECISIONS = ['ms', 's', 'min', 'hr'] as const;
 export type TransformerFileToOianalyticsSettingsTimestampPrecision =
   (typeof TRANSFORMER_FILE_TO_OIANALYTICS_SETTINGS_TIMESTAMP_PRECISIONS)[number];
+
+export const TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json'] as const;
+export type TransformerFileToOpcuaSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_FILE_TYPES)[number];
+
+export const TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
+export type TransformerFileToOpcuaSettingsInputDelimiter = (typeof TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_DELIMITERS)[number];
 
 export const TRANSFORMER_FILE_TO_RECORD_LIST_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json'] as const;
 export type TransformerFileToRecordListSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_RECORD_LIST_SETTINGS_INPUT_FILE_TYPES)[number];
@@ -284,6 +317,19 @@ export interface TransformerFileToFileSettingsFields {
   datetimeSettings?: TransformerFileToFileSettingsFieldsDatetimeSettings | null;
 }
 
+export interface TransformerFileToModbusSettingsInput {
+  fileType: TransformerFileToModbusSettingsInputFileType;
+  delimiter?: TransformerFileToModbusSettingsInputDelimiter;
+  hasHeader?: boolean;
+  rowIteratorPath?: string;
+}
+
+export interface TransformerFileToModbusSettingsMapping {
+  pointId: string;
+  address: string;
+  modbusType: TransformerFileToModbusSettingsMappingModbusType;
+}
+
 export interface TransformerFileToMqttSettingsInput {
   fileType: TransformerFileToMqttSettingsInputFileType;
   delimiter?: TransformerFileToMqttSettingsInputDelimiter;
@@ -344,6 +390,18 @@ export interface TransformerFileToOianalyticsSettingsTimestamp {
 export interface TransformerFileToOianalyticsSettingsValue {
   valueField: string;
   valueProcess: string | null;
+}
+
+export interface TransformerFileToOpcuaSettingsInput {
+  fileType: TransformerFileToOpcuaSettingsInputFileType;
+  delimiter?: TransformerFileToOpcuaSettingsInputDelimiter;
+  hasHeader?: boolean;
+  rowIteratorPath?: string;
+}
+
+export interface TransformerFileToOpcuaSettingsMapping {
+  pointId: string;
+  nodeId: string;
 }
 
 export interface TransformerFileToRecordListSettingsInput {
@@ -445,6 +503,13 @@ export interface TransformerFileToFileSettings {
   fields?: Array<TransformerFileToFileSettingsFields> | null;
 }
 
+export interface TransformerFileToModbusSettings {
+  input: TransformerFileToModbusSettingsInput;
+  pointIdColumn: string;
+  valueColumn: string;
+  mapping: Array<TransformerFileToModbusSettingsMapping>;
+}
+
 export interface TransformerFileToMqttSettings {
   input: TransformerFileToMqttSettingsInput;
   topicField: string;
@@ -459,6 +524,13 @@ export interface TransformerFileToOianalyticsSettings {
   reference: TransformerFileToOianalyticsSettingsReference;
   timestamp: TransformerFileToOianalyticsSettingsTimestamp;
   value: TransformerFileToOianalyticsSettingsValue;
+}
+
+export interface TransformerFileToOpcuaSettings {
+  input: TransformerFileToOpcuaSettingsInput;
+  pointIdColumn: string;
+  valueColumn: string;
+  mapping: Array<TransformerFileToOpcuaSettingsMapping>;
 }
 
 export interface TransformerFileToRecordListSettings {
@@ -512,8 +584,10 @@ export interface TransformerSetpointToOpcuaSettings {
 export type TransformerSettings =
   | TransformerFileSettings
   | TransformerFileToFileSettings
+  | TransformerFileToModbusSettings
   | TransformerFileToMqttSettings
   | TransformerFileToOianalyticsSettings
+  | TransformerFileToOpcuaSettings
   | TransformerFileToRecordListSettings
   | TransformerRecordListToFileSettings
   | TransformerRecordListToModbusSettings

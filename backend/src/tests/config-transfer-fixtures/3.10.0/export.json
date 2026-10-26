@@ -247,8 +247,8 @@
         "oIBusInternalId": "southId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.908Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.908Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.351Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.351Z",
         "type": "folder-scanner",
         "settings": {
           "type": "folder-scanner",
@@ -267,8 +267,8 @@
               "id": "southItemId1",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": "fixture",
-              "oIBusCreatedAt": "2026-10-26T15:14:08.909Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.351Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26Z",
               "name": "item1",
               "enabled": false,
               "scanModeId": "scanModeId1",
@@ -295,8 +295,8 @@
               "id": "southItemId2",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.910Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.910Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.354Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.354Z",
               "name": "item2",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -367,8 +367,8 @@
         "oIBusInternalId": "southId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.910Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.910Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.357Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.357Z",
         "type": "mssql",
         "settings": {
           "type": "mssql",
@@ -392,8 +392,8 @@
               "id": "southItemId3",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.911Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.911Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.358Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.358Z",
               "name": "item3",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -420,8 +420,8 @@
               "id": "southItemId4",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.911Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.911Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.360Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.360Z",
               "name": "item4",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -467,8 +467,8 @@
         "oIBusInternalId": "southId3",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.912Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.912Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.362Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.362Z",
         "type": "opcua",
         "settings": {
           "type": "opcua",
@@ -495,8 +495,8 @@
               "id": "southItemId7",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.914Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.914Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.365Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.365Z",
               "name": "opcua da",
               "enabled": true,
               "scanModeId": "scanModeId2",
@@ -525,8 +525,8 @@
               "id": "southItemId5",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.913Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.913Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.363Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.363Z",
               "name": "opcua ha",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -555,8 +555,8 @@
               "id": "southItemId8",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.915Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.915Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.366Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.366Z",
               "name": "opcua ha 2",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -585,8 +585,8 @@
               "id": "southItemId6",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.914Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.914Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.364Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.364Z",
               "name": "opcua sub",
               "enabled": true,
               "scanModeId": "subscription",
@@ -622,8 +622,8 @@
         "oIBusInternalId": "northId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.916Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.916Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.367Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.367Z",
         "type": "file-writer",
         "settings": {
           "type": "file-writer",
@@ -710,8 +710,8 @@
         "oIBusInternalId": "northId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.921Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.921Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.377Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.377Z",
         "type": "oianalytics",
         "settings": {
           "type": "oianalytics",
@@ -783,7 +783,7 @@
     ],
     "transformers": [
       {
-        "oIBusInternalId": "Ybqm3F",
+        "oIBusInternalId": "HstZ6z",
         "type": "standard",
         "settings": {
           "functionName": "file-to-mqtt",
@@ -1415,7 +1415,7 @@
         }
       },
       {
-        "oIBusInternalId": "rtBZdH",
+        "oIBusInternalId": "u6BgKo",
         "type": "standard",
         "settings": {
           "functionName": "file-to-record-list",
@@ -1541,7 +1541,7 @@
         }
       },
       {
-        "oIBusInternalId": "fb82DU",
+        "oIBusInternalId": "RYrtTx",
         "type": "standard",
         "settings": {
           "functionName": "file-to-file",
@@ -2192,7 +2192,7 @@
         }
       },
       {
-        "oIBusInternalId": "as8wRz",
+        "oIBusInternalId": "Ydi52n",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-modbus",
@@ -2326,7 +2326,7 @@
         }
       },
       {
-        "oIBusInternalId": "hO1oQ8",
+        "oIBusInternalId": "ra3Aig",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-mqtt",
@@ -2425,7 +2425,7 @@
         }
       },
       {
-        "oIBusInternalId": "LmGHRj",
+        "oIBusInternalId": "bEt6no",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-oianalytics",
@@ -2679,7 +2679,7 @@
         }
       },
       {
-        "oIBusInternalId": "kPPbRO",
+        "oIBusInternalId": "sWPfKO",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-opcua",
@@ -2795,7 +2795,7 @@
         }
       },
       {
-        "oIBusInternalId": "Kchyog",
+        "oIBusInternalId": "0Xld17",
         "type": "standard",
         "settings": {
           "functionName": "setpoint-to-modbus",
@@ -2895,7 +2895,7 @@
         }
       },
       {
-        "oIBusInternalId": "aVSJ2F",
+        "oIBusInternalId": "pC0QyB",
         "type": "standard",
         "settings": {
           "functionName": "setpoint-to-mqtt",
@@ -2982,7 +2982,7 @@
         }
       },
       {
-        "oIBusInternalId": "s6M2LN",
+        "oIBusInternalId": "11HK3Z",
         "type": "standard",
         "settings": {
           "functionName": "setpoint-to-opcua",
@@ -3069,7 +3069,7 @@
         }
       },
       {
-        "oIBusInternalId": "U5Ke8a",
+        "oIBusInternalId": "6hKOxM",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-file",
@@ -3603,8 +3603,8 @@
         "oIBusInternalId": "transformerId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.906Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.906Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.346Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.346Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 1",
@@ -3632,8 +3632,8 @@
         "oIBusInternalId": "transformerId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.906Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.906Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.349Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.349Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 2",
@@ -3661,8 +3661,8 @@
         "oIBusInternalId": "transformerId3",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.907Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.907Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.350Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.350Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 3",
@@ -3687,7 +3687,7 @@
         }
       },
       {
-        "oIBusInternalId": "WdT2yN",
+        "oIBusInternalId": "TNSw79",
         "type": "standard",
         "settings": {
           "functionName": "file",
@@ -3708,7 +3708,465 @@
         }
       },
       {
-        "oIBusInternalId": "YmYxLo",
+        "oIBusInternalId": "qb4Vrj",
+        "type": "standard",
+        "settings": {
+          "functionName": "file-to-modbus",
+          "inputType": "file",
+          "outputType": "modbus"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "object",
+              "key": "input",
+              "translationKey": "configuration.oibus.manifest.transformers.file-input.title",
+              "displayProperties": {
+                "visible": true,
+                "wrapInBox": true
+              },
+              "enablingConditions": [
+                {
+                  "referralPathFromRoot": "fileType",
+                  "targetPathFromRoot": "delimiter",
+                  "values": ["csv"]
+                },
+                {
+                  "referralPathFromRoot": "fileType",
+                  "targetPathFromRoot": "hasHeader",
+                  "values": ["csv"]
+                },
+                {
+                  "referralPathFromRoot": "fileType",
+                  "targetPathFromRoot": "rowIteratorPath",
+                  "values": ["json"]
+                }
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "attributes": [
+                {
+                  "type": "string-select",
+                  "key": "fileType",
+                  "translationKey": "configuration.oibus.manifest.transformers.file-input.file-type",
+                  "defaultValue": "csv",
+                  "selectableValues": ["csv", "json"],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 4,
+                    "displayInViewMode": true
+                  }
+                },
+                {
+                  "type": "string-select",
+                  "key": "delimiter",
+                  "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
+                  "defaultValue": "SEMI_COLON",
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 4,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "boolean",
+                  "key": "hasHeader",
+                  "translationKey": "configuration.oibus.manifest.transformers.file-input.has-header",
+                  "defaultValue": true,
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 4,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "rowIteratorPath",
+                  "translationKey": "configuration.oibus.manifest.transformers.file-input.row-iterator-path",
+                  "defaultValue": "$[*]",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 8,
+                    "displayInViewMode": false
+                  }
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "key": "pointIdColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.point-id-column",
+              "defaultValue": "pointId",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 4,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "string",
+              "key": "valueColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.value-column",
+              "defaultValue": "value",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 4,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "array",
+              "key": "mapping",
+              "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.mapping.title",
+              "paginate": true,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "item",
+                "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.mapping.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": false
+                },
+                "enablingConditions": [],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "pointId",
+                    "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.mapping.point-id",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "address",
+                    "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.mapping.address",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string-select",
+                    "key": "modbusType",
+                    "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.mapping.modbus-type",
+                    "defaultValue": "register",
+                    "selectableValues": ["coil", "register"],
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "pt4Ank",
+        "type": "standard",
+        "settings": {
+          "functionName": "file-to-opcua",
+          "inputType": "file",
+          "outputType": "opcua"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "object",
+              "key": "input",
+              "translationKey": "configuration.oibus.manifest.transformers.file-input.title",
+              "displayProperties": {
+                "visible": true,
+                "wrapInBox": true
+              },
+              "enablingConditions": [
+                {
+                  "referralPathFromRoot": "fileType",
+                  "targetPathFromRoot": "delimiter",
+                  "values": ["csv"]
+                },
+                {
+                  "referralPathFromRoot": "fileType",
+                  "targetPathFromRoot": "hasHeader",
+                  "values": ["csv"]
+                },
+                {
+                  "referralPathFromRoot": "fileType",
+                  "targetPathFromRoot": "rowIteratorPath",
+                  "values": ["json"]
+                }
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "attributes": [
+                {
+                  "type": "string-select",
+                  "key": "fileType",
+                  "translationKey": "configuration.oibus.manifest.transformers.file-input.file-type",
+                  "defaultValue": "csv",
+                  "selectableValues": ["csv", "json"],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 4,
+                    "displayInViewMode": true
+                  }
+                },
+                {
+                  "type": "string-select",
+                  "key": "delimiter",
+                  "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
+                  "defaultValue": "SEMI_COLON",
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 4,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "boolean",
+                  "key": "hasHeader",
+                  "translationKey": "configuration.oibus.manifest.transformers.file-input.has-header",
+                  "defaultValue": true,
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 4,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "rowIteratorPath",
+                  "translationKey": "configuration.oibus.manifest.transformers.file-input.row-iterator-path",
+                  "defaultValue": "$[*]",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 8,
+                    "displayInViewMode": false
+                  }
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "key": "pointIdColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.record-list-to-opcua.point-id-column",
+              "defaultValue": "pointId",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 4,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "string",
+              "key": "valueColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.record-list-to-opcua.value-column",
+              "defaultValue": "value",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 4,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "array",
+              "key": "mapping",
+              "translationKey": "configuration.oibus.manifest.transformers.record-list-to-opcua.mapping.title",
+              "paginate": true,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "item",
+                "translationKey": "configuration.oibus.manifest.transformers.record-list-to-opcua.mapping.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": false
+                },
+                "enablingConditions": [],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "pointId",
+                    "translationKey": "configuration.oibus.manifest.transformers.record-list-to-opcua.mapping.point-id",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "nodeId",
+                    "translationKey": "configuration.oibus.manifest.transformers.record-list-to-opcua.mapping.node-id",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "Yasve1",
         "type": "standard",
         "settings": {
           "functionName": "file-to-oianalytics",
@@ -4066,7 +4524,7 @@
         }
       },
       {
-        "oIBusInternalId": "yKcyT9",
+        "oIBusInternalId": "9Fj9TA",
         "type": "standard",
         "settings": {
           "functionName": "setpoint-to-json",
@@ -4092,8 +4550,8 @@
         "oIBusInternalId": "historyId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.922Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.922Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.379Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.379Z",
         "settings": {
           "name": "my first History Query",
           "description": "description",
@@ -4150,8 +4608,8 @@
               "id": "historyQueryItem1",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.922Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.922Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.380Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.380Z",
               "name": "item1",
               "enabled": true,
               "settings": {
@@ -4165,8 +4623,8 @@
               "id": "historyQueryItem2",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.923Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.923Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.381Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.381Z",
               "name": "item2",
               "enabled": true,
               "settings": {
@@ -4189,8 +4647,8 @@
                   "enabled": true,
                   "createdBy": null,
                   "updatedBy": null,
-                  "createdAt": "2026-10-26T15:14:08.923Z",
-                  "updatedAt": "2026-10-26T15:14:08.923Z"
+                  "createdAt": "2026-10-26T19:04:26.381Z",
+                  "updatedAt": "2026-10-26T19:04:26.381Z"
                 }
               ]
             },
@@ -4207,8 +4665,8 @@
         "oIBusInternalId": "historyId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-26T15:14:08.925Z",
-        "oIBusUpdatedAt": "2026-10-26T15:14:08.925Z",
+        "oIBusCreatedAt": "2026-10-26T19:04:26.384Z",
+        "oIBusUpdatedAt": "2026-10-26T19:04:26.384Z",
         "settings": {
           "name": "My second History Query",
           "description": "description",
@@ -4268,8 +4726,8 @@
               "id": "historyQueryItem3",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-26T15:14:08.926Z",
-              "oIBusUpdatedAt": "2026-10-26T15:14:08.926Z",
+              "oIBusCreatedAt": "2026-10-26T19:04:26.387Z",
+              "oIBusUpdatedAt": "2026-10-26T19:04:26.387Z",
               "name": "item3",
               "enabled": true,
               "settings": {

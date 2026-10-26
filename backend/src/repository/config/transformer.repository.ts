@@ -11,8 +11,10 @@ import AuditService from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
 import FileTransformer from '../../transformers/file/file/file-transformer';
 import FileToFileTransformer from '../../transformers/file/file-to-file/file-to-file-transformer';
+import FileToModbusTransformer from '../../transformers/file/file-to-modbus/file-to-modbus-transformer';
 import FileToMQTTTransformer from '../../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
 import FileToOIAnalyticsTransformer from '../../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
+import FileToOPCUATransformer from '../../transformers/file/file-to-opcua/file-to-opcua-transformer';
 import FileToRecordListTransformer from '../../transformers/file/file-to-record-list/file-to-record-list-transformer';
 import RecordListToFileTransformer from '../../transformers/record-list/record-list-to-file/record-list-to-file-transformer';
 import RecordListToModbusTransformer from '../../transformers/record-list/record-list-to-modbus/record-list-to-modbus-transformer';
@@ -193,6 +195,8 @@ export default class TransformerRepository {
       { functionName: FileToRecordListTransformer.transformerName, inputType: 'file', outputType: 'record-list' },
       { functionName: FileTransformer.transformerName, inputType: 'file', outputType: 'file' },
       { functionName: FileToFileTransformer.transformerName, inputType: 'file', outputType: 'file' },
+      { functionName: FileToModbusTransformer.transformerName, inputType: 'file', outputType: 'modbus' },
+      { functionName: FileToOPCUATransformer.transformerName, inputType: 'file', outputType: 'opcua' },
       { functionName: FileToOIAnalyticsTransformer.transformerName, inputType: 'file', outputType: 'oianalytics' },
       { functionName: RecordListToFileTransformer.transformerName, inputType: 'record-list', outputType: 'file' },
       { functionName: RecordListToModbusTransformer.transformerName, inputType: 'record-list', outputType: 'modbus' },

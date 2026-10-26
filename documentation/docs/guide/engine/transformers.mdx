@@ -103,12 +103,12 @@ one is preselected: **File (as is)** for files sent to a North connector accepti
 transformer producing the North connector's own format (e.g. OIAnalytics values, MQTT payloads), otherwise the
 passthrough of the data (**File**, the records as they are in a JSON file, or **JSON** for setpoints). The available choices depend on the type of South connector chosen:
 
-| South connector type                                                                                                                                 | Compatible standard transformers                                                       |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                  |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), File (converted or renamed), Records, MQTT payloads, OIAnalytics payload |
-| **OIBus API**                                                                                                                                        | File (as is), File (converted or renamed), Records, MQTT payloads, OIAnalytics payload |
-| **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                                       |
+| South connector type                                                                                                                                 | Compatible standard transformers                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                                               |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), File (converted or renamed), Records, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
+| **OIBus API**                                                                                                                                        | File (as is), File (converted or renamed), Records, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
+| **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                                                                    |
 
 Custom transformers are also shown in this list and are always named by the user.
 
@@ -586,6 +586,61 @@ Configuration: row iterator `$.sensors[*]`, topic field `topic`, object fields `
   { "topic": "plant/sensor1", "payload": "{\"value\":23.5,\"quality\":\"good\",\"site\":\"plant\"}" },
   { "topic": "plant/sensor2", "payload": "{\"value\":48,\"quality\":\"good\",\"site\":\"plant\"}" }
 ]
+```
+
+---
+
+#### Modbus values {#modbus-values-from-file}
+
+Writes the values of the rows of the file to a Modbus North connector, as the [Modbus values](#modbus-values)
+transformer of the record lists: after the [File group](#reading-the-file), its settings are the same (point ID and
+value columns, and the **point ID → address** mapping), the columns being fields of the rows of the file.
+
+##### Example {#example--modbus-values-from-a-csv-file}
+
+**Input CSV**, read with a `SEMI_COLON` delimiter and a header
+
+```csv
+tag;setpoint
+pump1/speed;1450
+valve1/open;true
+```
+
+With the point ID column `tag`, the value column `setpoint`, and the mapping `pump1/speed → 0x0010 (register)`,
+`valve1/open → 0x0001 (coil)`:
+
+**Output**
+
+```json
+[
+  { "address": "0x0010", "value": 1450, "modbusType": "register" },
+  { "address": "0x0001", "value": true, "modbusType": "coil" }
+]
+```
+
+---
+
+#### OPCUA values {#opcua-values-from-file}
+
+Writes the values of the rows of the file to an OPC UA North connector, as the [OPCUA values](#opcua-values)
+transformer of the record lists: after the [File group](#reading-the-file), its settings are the same (point ID and
+value columns, and the **point ID → node ID** mapping), the columns being fields of the rows of the file.
+
+##### Example {#example--opcua-values-from-a-json-file}
+
+**Input JSON**
+
+```json
+{ "setpoints": [{ "tag": "valve1", "data": { "value": true } }] }
+```
+
+With the row iterator `$.setpoints[*]`, the point ID column `tag`, the value column `$.setpoints[*].data.value`, and the
+mapping `valve1 → ns=1;s=Valve1`:
+
+**Output**
+
+```json
+[{ "nodeId": "ns=1;s=Valve1", "value": true }]
 ```
 
 ---

@@ -30,10 +30,14 @@ import FileTransformer from '../transformers/file/file/file-transformer';
 import fileManifest from '../transformers/file/file/manifest';
 import FileToFileTransformer from '../transformers/file/file-to-file/file-to-file-transformer';
 import fileToFileManifest from '../transformers/file/file-to-file/manifest';
+import FileToModbusTransformer from '../transformers/file/file-to-modbus/file-to-modbus-transformer';
+import fileToModbusManifest from '../transformers/file/file-to-modbus/manifest';
 import FileToMQTTTransformer from '../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
 import fileToMqttManifest from '../transformers/file/file-to-mqtt/manifest';
 import FileToOIAnalyticsTransformer from '../transformers/file/file-to-oianalytics/file-to-oianalytics-transformer';
 import fileToOianalyticsManifest from '../transformers/file/file-to-oianalytics/manifest';
+import FileToOPCUATransformer from '../transformers/file/file-to-opcua/file-to-opcua-transformer';
+import fileToOpcuaManifest from '../transformers/file/file-to-opcua/manifest';
 import FileToRecordListTransformer from '../transformers/file/file-to-record-list/file-to-record-list-transformer';
 import fileToRecordListManifest from '../transformers/file/file-to-record-list/manifest';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
@@ -72,6 +76,8 @@ export const transformerManifestList: Array<TransformerManifest> = [
   fileToRecordListManifest,
   fileManifest,
   fileToFileManifest,
+  fileToModbusManifest,
+  fileToOpcuaManifest,
   fileToOianalyticsManifest,
   recordListToFileManifest,
   recordListToModbusManifest,
@@ -422,6 +428,12 @@ export const createTransformer = (
       case FileToFileTransformer.transformerName: {
         return new FileToFileTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
+      case FileToModbusTransformer.transformerName: {
+        return new FileToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      }
+      case FileToOPCUATransformer.transformerName: {
+        return new FileToOPCUATransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      }
       case FileToOIAnalyticsTransformer.transformerName: {
         return new FileToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
@@ -523,6 +535,12 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case fileToFileManifest.id: {
       return fileToFileManifest.settings;
+    }
+    case fileToModbusManifest.id: {
+      return fileToModbusManifest.settings;
+    }
+    case fileToOpcuaManifest.id: {
+      return fileToOpcuaManifest.settings;
     }
     case fileToOianalyticsManifest.id: {
       return fileToOianalyticsManifest.settings;
