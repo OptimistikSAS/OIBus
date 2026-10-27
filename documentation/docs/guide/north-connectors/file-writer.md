@@ -33,22 +33,17 @@ so it also works when OIBus runs as a Windows service, where the interactive-ses
 unreliable even under an account that otherwise has access to the share.
 :::
 
-### File Naming Options {#file-naming-options}
+### File Names {#file-names}
 
-| Setting    | Description                                                                                             | Example Value     |
-| ---------- | ------------------------------------------------------------------------------------------------------- | ----------------- |
-| **Prefix** | Text to prepend to the filename. Supports internal variables like `@ConnectorName`.                     | `@ConnectorName-` |
-| **Suffix** | Text to append to the filename (before the extension). Supports internal variables like `@CurrentDate`. | `-@CurrentDate`   |
+The files are written with the name given by their transformer, without their sub-folder: the **Filename** of the
+[File (as is, renamed or converted)](../engine/transformers.mdx#file-as-is-renamed-or-converted) and
+[File](../engine/transformers.mdx#file-from-records) transformers (e.g. `@SourceFilename-@CurrentDate@SourceExtension`).
 
-:::tip Dynamic Filenames
-Use internal variables to create dynamic filenames:
-
-- `@ConnectorName`: Inserts the name of the connector.
-- `@CurrentDate`: Inserts the current timestamp in `yyyy_MM_dd_HH_mm_ss_SSS` format.
-
-**Example**:
-With prefix `@ConnectorName-` and suffix `-@CurrentDate`, a file named `example.file` becomes:
-`<ConnectorName>-example-<CurrentDate>.file`
+:::info Upgrading to 3.10
+Before 3.10, the connector added a **Prefix** and a **Suffix** to the name of the files. Upgrading adds them to the
+filename of its transformers, `@ConnectorName` being replaced by the name of the connector (in a transformer,
+`@ConnectorName` is the name of the South connector), and renames the files waiting in its cache. A custom transformer
+names the files itself.
 :::
 
 ## Best Practices {#best-practices}

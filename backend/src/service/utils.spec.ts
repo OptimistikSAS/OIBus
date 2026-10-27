@@ -1567,6 +1567,13 @@ describe('Service utils', () => {
       );
     });
 
+    it('should replace every occurrence of a variable', () => {
+      assert.strictEqual(
+        utils.applyFilenameVariables('@ConnectorName-@CurrentDate-@CurrentDate.csv', southSource()),
+        'South 1-2021_01_02_00_00_00_000-2021_01_02_00_00_00_000.csv'
+      );
+    });
+
     it('should replace @QueryStartTime/@QueryEndTime with an empty string for a non-south source', () => {
       const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', { source: 'test' });
 

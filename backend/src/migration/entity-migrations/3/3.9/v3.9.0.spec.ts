@@ -643,8 +643,6 @@ describe('Entity migration v3.9.0', () => {
       await insertScanMode(db, testData.scanMode.list[0].id);
       const north = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
         outputFolder: 'output',
-        prefix: null,
-        suffix: null,
         username: null,
         password: null,
         domain: null
@@ -669,8 +667,6 @@ describe('Entity migration v3.9.0', () => {
       await insertScanMode(db, testData.scanMode.list[0].id);
       const north = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
         outputFolder: 'output',
-        prefix: null,
-        suffix: null,
         username: 'admin',
         password: 'secret',
         domain: 'WORKGROUP'

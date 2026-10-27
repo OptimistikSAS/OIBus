@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import fileToFileManifest from '../../../../transformers/file/file-to-file/manifest';
 import fileToMqttManifest from '../../../../transformers/file/file-to-mqtt/manifest';
 import fileToOianalyticsManifest from '../../../../transformers/file/file-to-oianalytics/manifest';
@@ -409,6 +411,23 @@ export const COMPRESSED_FILE_OPTIONS = { ...FILE_AS_IS_OPTIONS, compression: tru
 
 /** The 'file' transformer, sending the files as they are, is replaced by file-to-file (see `FILE_AS_IS_OPTIONS`) */
 export const FILE_AS_IS_REPLACEMENT: Record<string, string> = { [FILE_PASSTHROUGH.functionName]: 'file-to-file' };
+
+/** The North connectors which added a prefix and a suffix to the name of the files they sent, now added by their transformers */
+export const PREFIXING_NORTH_TYPES = ['file-writer', 'sftp'];
+/** The standard transformers naming the files they write (`filename` option) */
+export const FILENAME_FUNCTION_NAMES = ['file-to-file', 'record-list-to-file'];
+
+/**
+ * The filename of a transformer sending files to a North which added a prefix and a suffix to their name: the prefix
+ * before it, the suffix before its extension (`@SourceExtension`, or the extension written, e.g. `.csv`). The
+ * `@ConnectorName` of the prefix and suffix was the name of the North: it is replaced by it, being the name of the South
+ * in a transformer.
+ */
+export function withPrefixAndSuffix(filename: string, prefix: string, suffix: string, northName: string): string {
+  const resolve = (value: string) => value.replaceAll('@ConnectorName', northName);
+  const extension = filename.endsWith('@SourceExtension') ? '@SourceExtension' : path.extname(filename);
+  return `${resolve(prefix)}${filename.slice(0, filename.length - extension.length)}${resolve(suffix)}${extension}`;
+}
 
 /**
  * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
@@ -1285,6 +1304,47 @@ function replaceFileTransformer(config: JsonObject): void {
   replaceCsvAndJsonTransformers(config, FILE_AS_IS_REPLACEMENT, () => structuredClone(FILE_AS_IS_OPTIONS));
 }
 
+/**
+ * The File Writer and SFTP North connectors no longer add a prefix and a suffix to the name of the files they send: the
+ * `prefix` and `suffix` settings are removed, and added to the filename of their file-to-file and record-list-to-file
+ * transformers (see `withPrefixAndSuffix`). Their custom transformers name the files themselves.
+ */
+function moveFilenamePrefixAndSuffixToTransformers(config: JsonObject): void {
+  const namesFiles = (transformerId: unknown): boolean =>
+    asObjects(config.transformers).some(
+      transformer =>
+        transformer.oIBusInternalId === transformerId &&
+        transformer.type === 'standard' &&
+        FILENAME_FUNCTION_NAMES.includes((transformer.settings as JsonObject).functionName as string)
+    );
+  /** Removes the prefix and suffix settings of a North, adding them to the filename of its transformers */
+  const move = (owner: JsonObject, key: string, links: Array<JsonObject>, northName: string): void => {
+    const settings = owner[key] as JsonObject | undefined;
+    if (settings?.prefix === undefined && settings?.suffix === undefined) return;
+    const { prefix, suffix, ...rest } = settings;
+    owner[key] = rest;
+    if (!prefix && !suffix) return;
+    for (const link of links) {
+      const options = link.options as JsonObject | null;
+      if (!namesFiles(link.transformerId) || typeof options?.filename !== 'string') continue;
+      link.options = {
+        ...options,
+        filename: withPrefixAndSuffix(options.filename, (prefix as string | null) ?? '', (suffix as string | null) ?? '', northName)
+      };
+    }
+  };
+
+  forEachNorth(config, null, north => {
+    if (!PREFIXING_NORTH_TYPES.includes(north.type as string)) return;
+    const settings = north.settings as JsonObject;
+    move(settings, 'settings', asObjects(settings.transformers), settings.name as string);
+  });
+  forEachHistoryQuery(config, null, settings => {
+    if (!PREFIXING_NORTH_TYPES.includes(settings.northType as string)) return;
+    move(settings, 'northSettings', asObjects(settings.northTransformers), settings.name as string);
+  });
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -1299,7 +1359,8 @@ export const upgrade: ConfigUpgrade = {
     'only send files to the File Writer North; send record lists from the South OIAnalytics, its CSV files being written by ' +
     'record-list-to-file transformers; compress the files of the folder scanner, FTP and SFTP souths in file-to-file transformers; ' +
     'send the OIAnalytics setpoints as record lists, replacing the setpoint transformers by record-list ones; ' +
-    'replace the file transformer by file-to-file ones sending the files as they are',
+    'replace the file transformer by file-to-file ones sending the files as they are; ' +
+    'move the filename prefix and suffix of the File Writer and SFTP norths to the filename of their transformers',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1394,6 +1455,7 @@ export const upgrade: ConfigUpgrade = {
     moveCompressionToNorths(config);
     mergeSetpointsIntoRecordLists(config);
     replaceFileTransformer(config);
+    moveFilenamePrefixAndSuffixToTransformers(config);
 
     return config;
   }
