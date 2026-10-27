@@ -3,7 +3,7 @@ import { Instant } from './types';
 /**
  * List of possible OIBus data types.
  */
-export const OIBUS_DATA_TYPES = ['file', 'setpoint', 'record-list'] as const;
+export const OIBUS_DATA_TYPES = ['file', 'record-list'] as const;
 /**
  * Type representing an OIBus data type.
  * @example 'record-list'
@@ -18,39 +18,6 @@ interface BaseOIBusContent {
    * The type of content.
    */
   type: string;
-}
-
-/**
- * A setpoint.
- */
-export interface OIBusSetpoint {
-  /**
-   * The reference of the setpoint.
-   * @example "setpoint1"
-   */
-  reference: string;
-
-  /**
-   * The value of the setpoint.
-   * @example 100
-   */
-  value: string | number | boolean;
-}
-
-/**
- * Setpoint content.
- */
-export interface OIBusSetpointContent extends BaseOIBusContent {
-  /**
-   * The type of content.
-   * @example "setpoint"
-   */
-  type: 'setpoint';
-
-  /**
-   * The array of setpoints.
-   */
-  content: Array<OIBusSetpoint>;
 }
 
 /**
@@ -123,7 +90,8 @@ export interface OIBusPointRecord {
 }
 
 /**
- * Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query).
+ * Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query, or the setpoints sent by
+ * OIAnalytics, as `{ reference, value }` records).
  */
 export interface OIBusRecordListContent extends BaseOIBusContent {
   /**
@@ -141,4 +109,4 @@ export interface OIBusRecordListContent extends BaseOIBusContent {
 /**
  * Type representing OIBus content.
  */
-export type OIBusContent = OIBusFileContent | OIBusSetpointContent | OIBusRecordListContent;
+export type OIBusContent = OIBusFileContent | OIBusRecordListContent;

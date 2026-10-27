@@ -264,7 +264,6 @@
 				"type": "string",
 				"enum": [
 					"file",
-					"setpoint",
 					"record-list"
 				]
 			},
@@ -1346,7 +1345,6 @@
 				"type": "string",
 				"enum": [
 					"file",
-					"setpoint",
 					"record-list"
 				],
 				"description": "Type representing an OIBus data type."
@@ -1528,65 +1526,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"OIBusSetpoint": {
-				"description": "A setpoint.",
-				"properties": {
-					"reference": {
-						"type": "string",
-						"description": "The reference of the setpoint.",
-						"example": "setpoint1"
-					},
-					"value": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "number",
-								"format": "double"
-							},
-							{
-								"type": "boolean"
-							}
-						],
-						"description": "The value of the setpoint.",
-						"example": 100
-					}
-				},
-				"required": [
-					"reference",
-					"value"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusSetpointContent": {
-				"description": "Setpoint content.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"setpoint"
-						],
-						"nullable": false,
-						"description": "The type of content.",
-						"example": "setpoint"
-					},
-					"content": {
-						"items": {
-							"$ref": "#/components/schemas/OIBusSetpoint"
-						},
-						"type": "array",
-						"description": "The array of setpoints."
-					}
-				},
-				"required": [
-					"type",
-					"content"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"Record_string.string-or-number-or-boolean-or-null_": {
 				"properties": {},
 				"additionalProperties": {
@@ -1611,7 +1550,7 @@
 				"description": "A single row of data, as returned by a query-based source (e.g. a SQL database). Keys are\ncolumn names; values are whatever the source returned, untouched (no datetime parsing/formatting\nis applied here — that is the responsibility of the north-side transformer, e.g. record-list-to-csv)."
 			},
 			"OIBusRecordListContent": {
-				"description": "Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query).",
+				"description": "Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query, or the setpoints sent by\nOIAnalytics, as `{ reference, value }` records).",
 				"properties": {
 					"type": {
 						"type": "string",
@@ -1641,9 +1580,6 @@
 				"anyOf": [
 					{
 						"$ref": "#/components/schemas/OIBusFileContent"
-					},
-					{
-						"$ref": "#/components/schemas/OIBusSetpointContent"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusRecordListContent"
@@ -20580,7 +20516,6 @@
 			"OIBusCommandType": {
 				"type": "string",
 				"enum": [
-					"setpoint",
 					"update-version",
 					"restart-engine",
 					"regenerate-cipher-keys",
@@ -20619,6 +20554,7 @@
 					"test-history-query-south-item",
 					"create-or-update-history-query-south-items-from-csv",
 					"update-history-query-status",
+					"setpoint",
 					"search-north-cache-content",
 					"search-history-cache-content",
 					"get-north-cache-file-content",
@@ -36240,8 +36176,7 @@
 						"description": "The data types supported by this North connector.",
 						"example": [
 							"record-list",
-							"file",
-							"setpoint"
+							"file"
 						]
 					},
 					"settings": {

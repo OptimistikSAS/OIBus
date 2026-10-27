@@ -175,8 +175,8 @@ const transformers: Array<Transformer> = [
     type: 'custom',
     name: 'my transformer 3',
     description: 'description',
-    inputType: 'setpoint',
-    outputType: 'file',
+    inputType: 'record-list',
+    outputType: 'mqtt',
     customCode: 'console.log("Hello World");',
     language: 'javascript',
     timeout: 2000,
@@ -2441,10 +2441,6 @@ const oibusContent: Array<OIBusContent> = [
     type: 'file',
     filePath: 'path/another-file.csv',
     content: 'my raw content'
-  },
-  {
-    type: 'setpoint',
-    content: [{ reference: 'ref', value: 123 }]
   }
 ];
 

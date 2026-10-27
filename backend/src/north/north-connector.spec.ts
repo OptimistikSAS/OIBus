@@ -893,7 +893,7 @@ describe('NorthConnector', () => {
     });
   });
 
-  it('should transform setpoint payload', async () => {
+  it('should transform the setpoints sent by OIAnalytics, as records', async () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
@@ -903,7 +903,7 @@ describe('NorthConnector', () => {
       output: outputBuffer,
       metadata: { contentFile: '', contentType: 'opcua', numberOfElement: 1, contentSize: 0, createdAt: '' }
     }));
-    await north['executeTransformation']({ type: 'setpoint', content: [] } as OIBusContent, options, {
+    await north['executeTransformation']({ type: 'record-list', content: [{ reference: 'sp1', value: 1 }] }, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);
     assert.strictEqual(transformInMemory.mock.calls.length, 1);

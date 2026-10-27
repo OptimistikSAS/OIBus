@@ -449,7 +449,7 @@ describe('North Service', () => {
     assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
-  it('should execute setpoint', async () => {
+  it('should execute setpoint, sending the setpoints as records', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     northMock.isEnabled.mock.mockImplementationOnce(() => true);
     engine.getNorth.mock.mockImplementation(() => ({ north: northMock, metrics: createMock<NorthConnectorMetricsService>() }));
@@ -458,7 +458,7 @@ describe('North Service', () => {
     await service.executeSetpoint('northId', commandContent, callback);
     assert.deepStrictEqual(northMock.cacheContent.mock.calls[0].arguments, [
       {
-        type: 'setpoint',
+        type: 'record-list',
         content: [
           {
             reference: commandContent[0].reference,

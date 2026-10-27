@@ -12,7 +12,7 @@ import {
   TransformerTestRequest,
   TransformerTestResponse
 } from '../../shared/model/api/transformer.model';
-import { OIBusContent, OIBusPointRecord, OIBusSetpoint } from '../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../shared/model/common/content.model';
 import { GetUserInfo, Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
@@ -52,14 +52,6 @@ import recordListToOianalyticsManifest from '../transformers/record-list/record-
 import RecordListToOIAnalyticsTransformer from '../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
 import recordListToOpcuaManifest from '../transformers/record-list/record-list-to-opcua/manifest';
 import RecordListToOPCUATransformer from '../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
-import setpointToJsonManifest from '../transformers/setpoint/oibus-setpoint-to-json/manifest';
-import OIBusSetpointToJSONTransformer from '../transformers/setpoint/oibus-setpoint-to-json/oibus-setpoint-to-json-transformer';
-import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
-import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
-import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
-import OIBusSetpointToMQTTTransformer from '../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
-import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
-import OIBusSetpointToOPCUATransformer from '../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -83,21 +75,15 @@ export const transformerManifestList: Array<TransformerManifest> = [
   recordListToModbusManifest,
   recordListToMqttManifest,
   recordListToOianalyticsManifest,
-  recordListToOpcuaManifest,
-  setpointToJsonManifest,
-  setpointToModbusManifest,
-  setpointToMqttManifest,
-  setpointToOpcuaManifest
+  recordListToOpcuaManifest
 ];
 
 /**
  * Wrap a copy-pasted input string into the OIBusContent shape matching a transformer input type.
- * `record-list` / `setpoint` inputs are JSON arrays; everything else is treated as raw file content.
+ * `record-list` inputs are JSON arrays; everything else is treated as raw file content.
  */
 const buildContentFromInput = (inputType: string, inputData: string): OIBusContent => {
   switch (inputType) {
-    case 'setpoint':
-      return { type: 'setpoint', content: JSON.parse(inputData) };
     case 'record-list':
       return { type: 'record-list', content: JSON.parse(inputData) };
     default:
@@ -281,44 +267,12 @@ export default class TransformerService {
 
   generateTemplate(inputType: InputType): InputTemplate {
     switch (inputType) {
-      case 'file':
-        return this.generateFileTemplate();
       case 'record-list':
         return this.generateRecordListTemplate();
-      case 'setpoint':
+      case 'file':
       default:
-        return this.generateSetpointTemplate();
+        return this.generateFileTemplate();
     }
-  }
-
-  /**
-   * Generate input template for setpoint input type
-   */
-  private generateSetpointTemplate(): InputTemplate {
-    const setpoints: Array<OIBusSetpoint> = [
-      {
-        reference: 'setpoint_temperature',
-        value: 22.0
-      },
-      {
-        reference: 'setpoint_pressure',
-        value: 1000.0
-      },
-      {
-        reference: 'setpoint_enabled',
-        value: true
-      },
-      {
-        reference: 'setpoint_mode',
-        value: 'auto'
-      }
-    ];
-
-    return {
-      type: 'setpoint',
-      data: JSON.stringify(setpoints, null, 2),
-      description: 'Sample setpoint commands for various parameters'
-    };
   }
 
   /**
@@ -452,18 +406,6 @@ export const createTransformer = (
       case RecordListToOPCUATransformer.transformerName: {
         return new RecordListToOPCUATransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case OIBusSetpointToJSONTransformer.transformerName: {
-        return new OIBusSetpointToJSONTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
-      }
-      case OIBusSetpointToModbusTransformer.transformerName: {
-        return new OIBusSetpointToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
-      }
-      case OIBusSetpointToMQTTTransformer.transformerName: {
-        return new OIBusSetpointToMQTTTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
-      }
-      case OIBusSetpointToOPCUATransformer.transformerName: {
-        return new OIBusSetpointToOPCUATransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
-      }
 
       default:
         throw new Error(
@@ -477,7 +419,7 @@ export const createTransformer = (
 
 /**
  * Run a transformer instance over an OIBusContent payload and return the produced output(s).
- * In-memory payloads (record-list / setpoint / files held in memory) go through `transformInMemory`;
+ * In-memory payloads (record-list / files held in memory) go through `transformInMemory`;
  * true file-on-disk payloads (`any`) stay on the stream API to avoid slurping the file.
  * When `maxElements > 0`, record batches larger than that are split into several outputs.
  */
@@ -500,9 +442,6 @@ export const runTransformerOnContent = async (
       }
       break;
     }
-    case 'setpoint':
-      results.push(await transformer.transformInMemory(data.content, source, null));
-      break;
     case 'file': {
       const randomId = generateRandomId(10);
       // Use the logical filename when provided, otherwise fall back to the basename of the disk path.
@@ -559,18 +498,6 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case recordListToOpcuaManifest.id: {
       return recordListToOpcuaManifest.settings;
-    }
-    case setpointToJsonManifest.id: {
-      return setpointToJsonManifest.settings;
-    }
-    case setpointToModbusManifest.id: {
-      return setpointToModbusManifest.settings;
-    }
-    case setpointToMqttManifest.id: {
-      return setpointToMqttManifest.settings;
-    }
-    case setpointToOpcuaManifest.id: {
-      return setpointToOpcuaManifest.settings;
     }
     default:
       throw new Error(`Could not find manifest for "${functionName}" transformer`);

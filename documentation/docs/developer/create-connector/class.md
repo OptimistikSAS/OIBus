@@ -22,7 +22,7 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { OIBusRecord, OIBusSetpoint } from '../../../shared/model/common/content.model';
+import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
@@ -34,7 +34,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['file', 'record-list', 'setpoint'];
+    return ['file', 'record-list'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -49,11 +49,6 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
       case 'record-list': {
         const records = JSON.parse(await streamToString(fileStream)) as Array<OIBusRecord>;
         console.table(records);
-        return;
-      }
-      case 'setpoint': {
-        const setpoints = JSON.parse(await streamToString(fileStream)) as Array<OIBusSetpoint>;
-        console.table(setpoints, ['reference', 'value']);
         return;
       }
       case 'file':
