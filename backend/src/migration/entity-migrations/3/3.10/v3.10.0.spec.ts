@@ -24,6 +24,7 @@ import {
   renameAnyDataType,
   replaceCsvAndJsonReaders,
   replaceCsvAndJsonWriters,
+  replaceFileTransformer,
   replaceIsoAndIgnoreTransformers,
   replaceRawResampling,
   replaceTimeValuesByRecordLists,
@@ -3956,5 +3957,91 @@ describe('Entity migration v3.10.0: mergeSetpointsIntoRecordLists', () => {
       { id: 'reads', input_type: 'record-list', output_type: 'mqtt' },
       { id: 'writes', input_type: 'file', output_type: 'record-list' }
     ]);
+  });
+});
+
+describe('Entity migration v3.10.0: replaceFileTransformer', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(replaceFileTransformer, db)
+  });
+  let db: Knex;
+  const fileAsIs = { input: { fileType: 'other' }, filename: '@SourceFilename@SourceExtension', compression: false };
+  const linksOf = async (table: string) =>
+    (await db(table).select('id', 'transformer_id', 'options').orderBy('id')).map(
+      (link: { id: string; transformer_id: string; options: string }) => [link.id, link.transformer_id, JSON.parse(link.options)]
+    );
+  const standard = (id: string, functionName: string) => ({
+    id,
+    type: 'standard',
+    function_name: functionName,
+    input_type: 'file',
+    output_type: 'file'
+  });
+  const northLink = (id: string, transformerId: string, options: object) => ({
+    id,
+    north_id: 'writer',
+    transformer_id: transformerId,
+    options: JSON.stringify(options),
+    source_type: 'oibus-api'
+  });
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+    await db('north_connectors').insert({ ...caching, id: 'writer', name: 'writer', type: 'file-writer', enabled: true, settings: '{}' });
+    await db('history_queries').insert({
+      ...caching,
+      id: 'hq1',
+      name: 'HQ 1',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'folder-scanner',
+      north_type: 'file-writer',
+      south_settings: '{}',
+      north_settings: '{}'
+    });
+    await db('transformers').where('type', 'standard').del();
+  });
+
+  afterEach(() => harness.afterEach());
+
+  it('should rename the file transformer into file-to-file, sending the files as they are', async () => {
+    await db('transformers').insert(standard('file', 'file'));
+    await db('north_transformers').insert(northLink('north', 'file', {}));
+    await db('history_query_transformers').insert({ id: 'history', history_id: 'hq1', transformer_id: 'file', options: '{}' });
+
+    await replaceFileTransformer(db);
+
+    assert.deepStrictEqual(await db('transformers').select('id', 'function_name', 'input_type', 'output_type'), [
+      { id: 'file', function_name: 'file-to-file', input_type: 'file', output_type: 'file' }
+    ]);
+    assert.deepStrictEqual(await linksOf('north_transformers'), [['north', 'file', fileAsIs]]);
+    assert.deepStrictEqual(await linksOf('history_query_transformers'), [['history', 'file', fileAsIs]]);
+  });
+
+  it('should merge the file transformer into the existing file-to-file one', async () => {
+    const compressed = { ...fileAsIs, compression: true };
+    await db('transformers').insert([standard('file', 'file'), standard('fileToFile', 'file-to-file')]);
+    await db('north_transformers').insert([northLink('asIs', 'file', {}), northLink('compressed', 'fileToFile', compressed)]);
+
+    await replaceFileTransformer(db);
+
+    assert.deepStrictEqual(await db('transformers').select('id', 'function_name'), [{ id: 'fileToFile', function_name: 'file-to-file' }]);
+    assert.deepStrictEqual(await linksOf('north_transformers'), [
+      ['asIs', 'fileToFile', fileAsIs],
+      ['compressed', 'fileToFile', compressed]
+    ]);
+  });
+
+  it('should do nothing without file transformer', async () => {
+    await db('transformers').insert(standard('fileToFile', 'file-to-file'));
+
+    await replaceFileTransformer(db);
+
+    assert.deepStrictEqual(await db('transformers').select('id', 'function_name'), [{ id: 'fileToFile', function_name: 'file-to-file' }]);
   });
 });

@@ -99,16 +99,16 @@ item, which falls back to the next level.
 ### 3 — Transformer {#3--transformer}
 
 Once a source is selected, the list is automatically filtered to show only compatible transformers, and the obvious
-one is preselected: **File (as is)** for files sent to a North connector accepting files, otherwise the only standard
-transformer producing the North connector's own format (e.g. OIAnalytics values, MQTT payloads), otherwise the
-passthrough of the data (**File**: files as they are, records in a JSON file). The available choices depend on the type of South connector chosen:
+one is preselected: **File (as is, renamed or converted)**, sending them as they are, for files sent to a North
+connector accepting files, otherwise the only standard transformer producing the North connector's own format (e.g.
+OIAnalytics values, MQTT payloads), otherwise the passthrough of the data (**File**: records in a JSON file). The available choices depend on the type of South connector chosen:
 
-| South connector type                                                                                                                                 | Compatible standard transformers                                                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                                               |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), File (converted or renamed), Records, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
-| **OIBus API**                                                                                                                                        | File (as is), File (converted or renamed), Records, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
-| **OIAnalytics Setpoint** (record list)                                                                                                               | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                                               |
+| South connector type                                                                                                                                 | Compatible standard transformers                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                                        |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is, renamed or converted), Records, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
+| **OIBus API**                                                                                                                                        | File (as is, renamed or converted), Records, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
+| **OIAnalytics Setpoint** (record list)                                                                                                               | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                                        |
 
 Custom transformers are also shown in this list and are always named by the user.
 
@@ -464,8 +464,8 @@ Scanner and OIAnalytics, as well as data injected via the **OIBus API**.
 
 #### Reading the file {#reading-the-file}
 
-Except **File (as is)**, the file transformers first read the rows of the file, with the settings of their **File**
-group:
+The file transformers first read the rows of the file (except the files of type **Other** of
+[File (as is, renamed or converted)](#file-as-is-renamed-or-converted)), with the settings of their **File** group:
 
 | Setting                   | Description                                                                                                 |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -492,16 +492,6 @@ rows. See the [OIAnalytics payload](#oianalytics-payload-from-file) example belo
 
 Before 3.10, the CSV and JSON files had their own transformers (Records and MQTT payloads from CSV, OIAnalytics from
 JSON): upgrading replaces them by the file transformers below, keeping their settings.
-
----
-
-#### File (as is) {#file-as-is}
-
-Sends the files as they are, keeping their name, to a North connector expecting files (Azure Blob, Amazon S3, SFTP,
-REST, File Writer, OIAnalytics...). The JSON payloads of the MQTT South connector and of the OIBus API are saved as
-`.json` files.
-
-This transformer has **no configuration options**.
 
 ---
 
@@ -654,23 +644,31 @@ mapping `valve1 → ns=1;s=Valve1`:
 
 ---
 
-#### File (converted or renamed) {#file-converted-or-renamed}
+#### File (as is, renamed or converted) {#file-as-is-renamed-or-converted}
 
-Converts a CSV or JSON file into a CSV or JSON file — CSV to JSON, JSON to CSV, or into another CSV or JSON format —
-renaming, casting and processing the fields of its rows. After the [File group](#reading-the-file), its settings are the
-[Written file group, Filename, Keep the other fields and Fields](#settings) of the [File](#file-from-records)
-transformer of the record lists, the fields being read in the rows of the file (a JSONPath for a JSON file, see
-[Reading the file](#reading-the-file)).
+By default (file type **Other**, filename `@SourceFilename@SourceExtension`), sends the files as they are, keeping their
+name, to a North connector expecting files (Azure Blob, Amazon S3, SFTP, REST, File Writer, OIAnalytics...): the North
+connector copies them to its cache without reading them. A file of a sub-folder of the Folder Scanner keeps its folder,
+and the JSON payloads of the MQTT South connector and of the OIBus API, which have no name, are saved as `.json` files
+with a random name.
 
 With the file type **Other**, the file is only **renamed**, and possibly **compressed** (**Compress file**, gzip, adding
 `.gz` to its name): its content is otherwise sent as it is. Changing the content of such a file needs a
 [custom transformer](#custom-transformers).
 
+With the file type **CSV** or **JSON**, it converts the file into a CSV or JSON file — CSV to JSON, JSON to CSV, or into
+another CSV or JSON format — renaming, casting and processing the fields of its rows. After the
+[File group](#reading-the-file), its settings are the
+[Written file group, Filename, Keep the other fields and Fields](#settings) of the [File](#file-from-records)
+transformer of the record lists, the fields being read in the rows of the file (a JSONPath for a JSON file, see
+[Reading the file](#reading-the-file)).
+
 Besides the variables of the record lists, the **Filename** supports `@SourceFilename` and `@SourceExtension`: the name
 (without extension) and the extension (with its dot) of the transformed file, e.g. `@SourceFilename_copy@SourceExtension`.
 
-Before 3.10, the JSON files had their own transformer to CSV (CSV from JSON): upgrading replaces it by this one, keeping
-its settings, its fields only being written.
+Before 3.10, the JSON files had their own transformer to CSV (CSV from JSON), and the files were sent as they are by the
+**File (as is)** transformer: upgrading replaces them by this one, keeping the settings of the first, the second sending
+the files as they are.
 
 ##### Example — JSON to CSV {#example-6}
 

@@ -8,7 +8,6 @@ import AuditService from '../../service/audit.service';
 import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
-import FileTransformer from '../../transformers/file/file/file-transformer';
 import FileToFileTransformer from '../../transformers/file/file-to-file/file-to-file-transformer';
 import FileToModbusTransformer from '../../transformers/file/file-to-modbus/file-to-modbus-transformer';
 import FileToMQTTTransformer from '../../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
@@ -33,7 +32,6 @@ const standardTransformers: Array<StandardTransformer> = [
     outputType: 'record-list',
     type: 'standard'
   },
-  { id: 'file', type: 'standard', functionName: FileTransformer.transformerName, inputType: 'file', outputType: 'file' },
   { id: 'jsonToCsv', inputType: 'file', functionName: FileToFileTransformer.transformerName, outputType: 'file', type: 'standard' },
   { id: 'fileToModbus', inputType: 'file', functionName: FileToModbusTransformer.transformerName, outputType: 'modbus', type: 'standard' },
   { id: 'fileToOpcua', inputType: 'file', functionName: FileToOPCUATransformer.transformerName, outputType: 'opcua', type: 'standard' },
@@ -241,11 +239,11 @@ describe('TransformerRepository', () => {
 
   it('should properly search transformers and page them', () => {
     const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-    assert.strictEqual(result.totalElements, 15);
+    assert.strictEqual(result.totalElements, 14);
     // 10 per page
     assert.strictEqual(result.content.length, 10);
     assert.strictEqual(result.totalPages, 2);
-    assert.strictEqual(repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 1 }).content.length, 5);
+    assert.strictEqual(repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 1 }).content.length, 4);
   });
 
   it('should search with only type filter', () => {

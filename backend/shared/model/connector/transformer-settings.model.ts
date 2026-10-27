@@ -476,8 +476,6 @@ export interface TransformerRecordListToOpcuaSettingsMapping {
   nodeId: string;
 }
 
-export type TransformerFileSettings = object;
-
 export interface TransformerFileToFileSettings {
   input: TransformerFileToFileSettingsInput;
   output?: TransformerFileToFileSettingsOutput;
@@ -554,7 +552,6 @@ export interface TransformerRecordListToOpcuaSettings {
 }
 
 export type TransformerSettings =
-  | TransformerFileSettings
   | TransformerFileToFileSettings
   | TransformerFileToModbusSettings
   | TransformerFileToMqttSettings

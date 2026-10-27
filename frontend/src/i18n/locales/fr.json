@@ -321,8 +321,7 @@
           "confirm-edit": "Êtes-vous sûr de vouloir mettre à jour le transformateur personnalisé {{ name }} ? Tous les connecteurs North et requêtes d'historique qui l'utilisent seront rechargés.",
           "deleted": "Transformateur {{ name }} supprimé",
           "standard": {
-            "file": "Fichier (tel quel)",
-            "file-to-file": "Fichier (converti ou renommé)",
+            "file-to-file": "Fichier (tel quel, renommé ou converti)",
             "file-to-modbus": "Valeurs Modbus",
             "file-to-mqtt": "Charges utiles MQTT",
             "file-to-oianalytics": "Charge utile OIAnalytics",

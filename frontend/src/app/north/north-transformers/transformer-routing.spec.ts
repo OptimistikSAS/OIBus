@@ -132,7 +132,7 @@ describe('transformer routing', () => {
 
   describe('findDefaultTransformer', () => {
     const transformers = [
-      standard('file', 'file', 'file'),
+      standard('file-to-file', 'file', 'file'),
       standard('record-list-to-file', 'record-list', 'file'),
       standard('record-list-to-oianalytics', 'record-list', 'oianalytics'),
       standard('file-to-oianalytics', 'file', 'oianalytics'),
@@ -145,7 +145,7 @@ describe('transformer routing', () => {
       findDefaultTransformer(transformers, dataType, northTypes)?.id ?? null;
 
     test('should send files as they are when the north accepts files', () => {
-      expect(defaultOf('file', ['file', 'oianalytics'])).toBe('file');
+      expect(defaultOf('file', ['file', 'oianalytics'])).toBe('file-to-file');
     });
 
     test("should propose the only transformer producing the north's own format", () => {

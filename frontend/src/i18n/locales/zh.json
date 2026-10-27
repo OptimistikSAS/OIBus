@@ -321,8 +321,7 @@
           "confirm-edit": "确定要更新自定义转换器 {{ name }} 吗？所有使用它的 North 连接器和历史查询将被重新加载。",
           "deleted": "转换器 {{ name }} 已删除",
           "standard": {
-            "file": "文件（原样）",
-            "file-to-file": "文件（转换或重命名）",
+            "file-to-file": "文件（原样、重命名或转换）",
             "file-to-modbus": "Modbus 值",
             "file-to-mqtt": "MQTT 有效载荷",
             "file-to-oianalytics": "OIAnalytics 有效载荷",

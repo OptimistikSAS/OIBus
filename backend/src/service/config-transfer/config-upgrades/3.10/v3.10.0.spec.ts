@@ -8,6 +8,7 @@ import { JsonObject } from '../config-upgrade';
 import {
   buildRecordListToCsvOptions,
   COMPRESSED_FILE_OPTIONS,
+  FILE_AS_IS_OPTIONS,
   keepsResolvedTransformer,
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
@@ -418,8 +419,9 @@ describe('3.10.0 config upgrade', () => {
         links.map(link => [link.id, link.transformerId, link.options]),
         [
           ['l1', fileToFile.oIBusInternalId, COMPRESSED_FILE_OPTIONS],
-          ['l2', 'file', {}],
-          ['l3', 'file', {}]
+          // the other files sent as they are
+          ['l2', fileToFile.oIBusInternalId, FILE_AS_IS_OPTIONS],
+          ['l3', fileToFile.oIBusInternalId, FILE_AS_IS_OPTIONS]
         ]
       );
       assert.deepStrictEqual(
@@ -858,7 +860,7 @@ describe('3.10.0 config upgrade', () => {
       );
       // The passthroughs are for the other Norths, and for the OIBus API
       // record-list-to-json and setpoint-to-json merged into the record-list-to-file replacing record-list-to-csv
-      assert.deepStrictEqual(functionNames, ['record-list-to-file', 'file']);
+      assert.deepStrictEqual(functionNames, ['record-list-to-file', 'file-to-file']);
       const links = ((upgraded.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
       assert.deepStrictEqual(
         links.map(link => link.source),
@@ -950,11 +952,11 @@ describe('3.10.0 config upgrade', () => {
     it('replaces them by passthroughs routing the data as before', () => {
       const config = upgrade.apply(buildConfig());
 
-      const fileId = idOf(config, 'file');
-      // The setpoint passthrough (setpoint-to-json) merged into record-list-to-file
+      const fileId = idOf(config, 'file-to-file');
+      // The setpoint passthrough (setpoint-to-json) merged into record-list-to-file, the file one replaced by file-to-file
       assert.deepStrictEqual(
         (config.transformers as Array<JsonObject>).map(candidate => (candidate.settings as JsonObject).functionName),
-        ['record-list-to-file', 'file']
+        ['record-list-to-file', 'file-to-file']
       );
       assert.strictEqual(((config.transformers as Array<JsonObject>)[1].manifest as JsonObject).key, 'options');
       assert.deepStrictEqual(linksOf(config, 0), [
@@ -968,17 +970,17 @@ describe('3.10.0 config upgrade', () => {
           options: jsonFileOptions,
           source: { type: 'south', southId: 'opcua', items: [], excludedItems: lightItems('i2') }
         },
-        { transformerId: fileId, options: {}, source: { type: 'oibus-api' } }
+        { transformerId: fileId, options: FILE_AS_IS_OPTIONS, source: { type: 'oibus-api' } }
       ]);
       assert.deepStrictEqual(linksOf(config, 1), [
-        { transformerId: fileId, options: {}, source: { type: 'south', southId: 'mqtt', groupId: undefined, items: [] } },
-        { transformerId: fileId, options: {}, source: { type: 'oibus-api', dataSourceId: 'ds1' } },
-        { transformerId: fileId, options: {}, source: { type: 'south', southId: 'folder', items: [] } }
+        { transformerId: fileId, options: FILE_AS_IS_OPTIONS, source: { type: 'south', southId: 'mqtt', groupId: undefined, items: [] } },
+        { transformerId: fileId, options: FILE_AS_IS_OPTIONS, source: { type: 'oibus-api', dataSourceId: 'ds1' } },
+        { transformerId: fileId, options: FILE_AS_IS_OPTIONS, source: { type: 'south', southId: 'folder', items: [] } }
       ]);
       assert.deepStrictEqual(linksOf(config, 2), [
         { transformerId: 'csv', options: jsonFileOptions, source: { type: 'south', southId: 'opcua', items: [] } },
-        { transformerId: fileId, options: {}, source: { type: 'south', southId: 'folder', items: [] } },
-        { transformerId: fileId, options: {}, source: { type: 'oibus-api' } },
+        { transformerId: fileId, options: FILE_AS_IS_OPTIONS, source: { type: 'south', southId: 'folder', items: [] } },
+        { transformerId: fileId, options: FILE_AS_IS_OPTIONS, source: { type: 'oibus-api' } },
         { transformerId: 'csv', options: jsonFileOptions, source: { type: 'oianalytics-setpoint' } }
       ]);
       const historyLinks = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;

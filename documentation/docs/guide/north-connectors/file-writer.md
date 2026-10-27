@@ -6,7 +6,7 @@ local storage, data processing pipelines, or integration with file-based systems
 It only receives files: the record lists (the OIAnalytics setpoints included) are written into files by a transformer
 (e.g. [File](../engine/transformers.mdx#file-from-records)). Before 3.10, it also received records and setpoints:
 upgrading writes the rows of the [Records](../engine/transformers.mdx#records-from-file) transformers in JSON files
-through [File (converted or renamed)](../engine/transformers.mdx#file-converted-or-renamed), and removes its custom
+through [File (as is, renamed or converted)](../engine/transformers.mdx#file-as-is-renamed-or-converted), and removes its custom
 transformers sending records or setpoints.
 
 ## Specific Settings {#specific-settings}

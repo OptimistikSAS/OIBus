@@ -26,8 +26,6 @@ import { NorthConnectorEntity } from '../model/north-connector.model';
 import { CustomTransformer, NorthTransformerWithOptions, Transformer } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import TransformerRepository from '../repository/config/transformer.repository';
-import FileTransformer from '../transformers/file/file/file-transformer';
-import fileManifest from '../transformers/file/file/manifest';
 import FileToFileTransformer from '../transformers/file/file-to-file/file-to-file-transformer';
 import fileToFileManifest from '../transformers/file/file-to-file/manifest';
 import FileToModbusTransformer from '../transformers/file/file-to-modbus/file-to-modbus-transformer';
@@ -66,7 +64,6 @@ interface TransformerReloadEngine {
 export const transformerManifestList: Array<TransformerManifest> = [
   fileToMqttManifest,
   fileToRecordListManifest,
-  fileManifest,
   fileToFileManifest,
   fileToModbusManifest,
   fileToOpcuaManifest,
@@ -376,9 +373,6 @@ export const createTransformer = (
       case FileToRecordListTransformer.transformerName: {
         return new FileToRecordListTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
-      case FileTransformer.transformerName: {
-        return new FileTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
-      }
       case FileToFileTransformer.transformerName: {
         return new FileToFileTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
@@ -468,9 +462,6 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case fileToRecordListManifest.id: {
       return fileToRecordListManifest.settings;
-    }
-    case fileManifest.id: {
-      return fileManifest.settings;
     }
     case fileToFileManifest.id: {
       return fileToFileManifest.settings;

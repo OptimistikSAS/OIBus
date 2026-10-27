@@ -1308,8 +1308,7 @@
           "confirm-edit": "Are you sure you want to update the custom transformer {{ name }}? All north connectors and history queries using it will be reloaded.",
           "deleted": "Transformer {{ name }} deleted",
           "standard": {
-            "file": "File (as is)",
-            "file-to-file": "File (converted or renamed)",
+            "file-to-file": "File (as is, renamed or converted)",
             "file-to-modbus": "Modbus values",
             "file-to-mqtt": "MQTT payloads",
             "file-to-oianalytics": "OIAnalytics payload",

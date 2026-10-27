@@ -49,9 +49,9 @@ function buildTransformer(index: number, overrides: Partial<CustomTransformerDTO
 }
 
 const standardTransformer: StandardTransformerDTO = {
-  id: 'file',
+  id: 'file-to-file',
   type: 'standard',
-  functionName: 'file',
+  functionName: 'file-to-file',
   inputType: 'file',
   outputType: 'file',
   manifest: testData.transformers.customList[0].manifest
