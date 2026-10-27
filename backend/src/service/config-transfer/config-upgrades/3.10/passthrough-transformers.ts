@@ -1,7 +1,8 @@
 /**
  * 3.10.0 removes the 'iso' (cache as is) and 'ignore' (drop) standard transformers: a North now drops the data no
- * transformer is configured for. Shared by the entity migration (`migration/entity-migrations/3/3.10/v3.10.0_5.ts`) and
- * the config upgrade of the same version, which reproduce the previous routing:
+ * transformer is configured for. Shared by the entity migration (`replaceIsoAndIgnoreTransformers` in
+ * `migration/entity-migrations/3/3.10/v3.10.0.ts`) and the config upgrade of the same version, which reproduce the
+ * previous routing:
  *  - a North cached as is the data without transformer when it accepted its content type, and the data configured with
  *    'iso' (the JSON payloads of the MQTT souths and of the OIBus API being cached as files). Such data now goes through
  *    the passthrough of its content type: 'file' for files and payloads, 'record-list-to-json' for records,

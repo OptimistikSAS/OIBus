@@ -760,10 +760,10 @@ function migrateTimeValuesTransformers(config: JsonObject): boolean {
 
 /**
  * The OIAnalytics North no longer accepts time values: the point-based souths (and history queries) sending to an
- * OIAnalytics North go through a record-list-to-oianalytics transformer, replacing their 'iso' links and added at the
- * south (or history query) level when there is none (see the 3.10.0_4 entity migration). Only applied to an export made
- * before the record-list refactor: afterwards, a point-based south without transformer deliberately sends nothing to
- * the OIAnalytics North.
+ * OIAnalytics North go through a record-list-to-oianalytics transformer, replacing their 'iso' links and added at
+ * the south (or history query) level when there is none (see `replaceTimeValuesByRecordLists` in the entity
+ * migration). Only applied to an export made before the record-list refactor: afterwards, a point-based south
+ * without transformer deliberately sends nothing to the OIAnalytics North.
  */
 function addOIAnalyticsTransformers(config: JsonObject): void {
   const pointSouthIds = asObjects(config.southConnectors)
@@ -836,8 +836,8 @@ const PASSTHROUGH_MANIFESTS = [fileManifest];
 
 /**
  * The 'iso' and 'ignore' standard transformers are removed: the links are changed to keep routing the data as before
- * (see the 3.10.0_5 entity migration). Only applied to an export describing them (an export carries every standard
- * transformer): afterwards, the data without transformer is deliberately dropped.
+ * (see `replaceIsoAndIgnoreTransformers` in the entity migration). Only applied to an export describing them (an
+ * export carries every standard transformer): afterwards, the data without transformer is deliberately dropped.
  */
 function replaceIsoAndIgnoreTransformers(config: JsonObject): void {
   const transformers = asObjects(config.transformers);
