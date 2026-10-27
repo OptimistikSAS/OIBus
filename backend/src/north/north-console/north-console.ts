@@ -1,6 +1,6 @@
 import { ReadStream } from 'node:fs';
 
-import { OIBusRecord, OIBusSetpoint } from '../../../shared/model/common/content.model';
+import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
@@ -18,7 +18,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['file', 'record-list', 'setpoint'];
+    return ['file', 'record-list'];
   }
 
   testConnection(): Promise<OIBusConnectionTestResult> {
@@ -42,9 +42,6 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
       case 'record-list':
         return this.handleValues(JSON.parse(await streamToString(fileStream)) as Array<OIBusRecord>);
-
-      case 'setpoint':
-        return this.handleSetpoints(JSON.parse(await streamToString(fileStream)) as Array<OIBusSetpoint>);
     }
   }
 
@@ -56,17 +53,6 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
       console.table(values);
     } else {
       process.stdout.write(`North Console sent ${values.length} values.\r\n`);
-    }
-  }
-
-  /**
-   * Handle values by printing them to the console.
-   */
-  handleSetpoints(values: Array<OIBusSetpoint>): void {
-    if (this.connector.settings.verbose) {
-      console.table(values, ['reference', 'value']);
-    } else {
-      process.stdout.write(`North Console sent ${values.length} setpoint.\r\n`);
     }
   }
 

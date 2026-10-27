@@ -601,7 +601,8 @@ export class EditNorthTransformerModalComponent {
       case 'south':
         return source.south ? getAssociatedInputType(source.south.type) : null;
       case 'oianalytics-setpoint':
-        return 'setpoint';
+        // The setpoints are records: their reference and value
+        return 'record-list';
       case 'oibus-api':
         return 'file';
       default:

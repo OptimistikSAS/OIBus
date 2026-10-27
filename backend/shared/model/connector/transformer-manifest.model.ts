@@ -1,6 +1,6 @@
 import { OIBusObjectAttribute } from './form.model';
 
-export const INPUT_TYPES = ['file', 'setpoint', 'record-list'] as const;
+export const INPUT_TYPES = ['file', 'record-list'] as const;
 export type InputType = (typeof INPUT_TYPES)[number];
 
 export const OUTPUT_TYPES = ['file', 'record-list', 'opcua', 'mqtt', 'modbus', 'oianalytics'] as const;

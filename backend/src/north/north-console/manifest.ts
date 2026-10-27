@@ -3,7 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 const manifest: NorthConnectorManifest = {
   id: 'console',
   category: 'debug',
-  types: ['file', 'record-list', 'setpoint'],
+  types: ['file', 'record-list'],
   settings: {
     type: 'object',
     key: 'settings',

@@ -184,7 +184,7 @@ export class NorthTransformersComponent {
         'oianalytics-setpoint',
         'oianalytics-setpoint',
         null,
-        'setpoint',
+        'record-list',
         transformers.filter(transformer => transformer.source.type === 'oianalytics-setpoint'),
         []
       )

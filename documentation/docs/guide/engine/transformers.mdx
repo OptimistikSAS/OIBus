@@ -101,14 +101,14 @@ item, which falls back to the next level.
 Once a source is selected, the list is automatically filtered to show only compatible transformers, and the obvious
 one is preselected: **File (as is)** for files sent to a North connector accepting files, otherwise the only standard
 transformer producing the North connector's own format (e.g. OIAnalytics values, MQTT payloads), otherwise the
-passthrough of the data (**File**, the records as they are in a JSON file, or **JSON** for setpoints). The available choices depend on the type of South connector chosen:
+passthrough of the data (**File**: files as they are, records in a JSON file). The available choices depend on the type of South connector chosen:
 
 | South connector type                                                                                                                                 | Compatible standard transformers                                                                                    |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | **OPC UA, OPC Classic, Modbus, ADS, S7, BACnet, OSIsoft PI, MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB, ODBC, OLEDB, InfluxDB** (record list) | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                                               |
 | **MQTT, REST, SFTP, FTP, Folder Scanner, OIAnalytics** (file-based)                                                                                  | File (as is), File (converted or renamed), Records, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
 | **OIBus API**                                                                                                                                        | File (as is), File (converted or renamed), Records, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values |
-| **OIAnalytics Setpoint**                                                                                                                             | JSON, MQTT payloads, Modbus values, OPCUA values                                                                    |
+| **OIAnalytics Setpoint** (record list)                                                                                                               | File, MQTT payloads, Modbus values, OIAnalytics payload, OPCUA values                                               |
 
 Custom transformers are also shown in this list and are always named by the user.
 
@@ -151,6 +151,13 @@ Most South connectors send **record lists**: arrays of flat records.
 
   ```json
   { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:00:00.000Z", "reading": 23.5 }
+  ```
+
+- **OIAnalytics setpoints** are records too: the reference and the value of each setpoint (see
+  [OIAnalytics setpoints](#for-oianalytics-setpoints)).
+
+  ```json
+  { "reference": "pump1/setSpeed", "value": 1200 }
   ```
 
 The transformers below render a record list into the shape a North connector expects. Those needing a point, a
@@ -274,14 +281,16 @@ query) are saved unchanged as a `.json` file.
 #### MQTT payloads {#mqtt-payloads}
 
 Maps each record to an MQTT message using a **point ID → topic** mapping table. Records whose point ID has no match
-are silently dropped. The payload is the record without its point column, as a JSON string.
+are silently dropped. The payload is the record without its point column, as a JSON string, or the value alone.
 
 ##### Settings {#settings-1}
 
-| Setting             | Description                                                   |
-| ------------------- | ------------------------------------------------------------- |
-| **Point ID column** | Field of the records holding the point ID (default `pointId`) |
-| **Mapping**         | List of `{ pointId, topic }` pairs                            |
+| Setting             | Description                                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Point ID column** | Field of the records holding the point ID (default `pointId`)                                                                              |
+| **Payload**         | **Record**: the record without its point column, as JSON (default). **Value**: the value column alone, text as it is, other values as JSON |
+| **Value column**    | Field of the records holding the value, with the **Value** payload (default `value`)                                                       |
+| **Mapping**         | List of `{ pointId, topic }` pairs                                                                                                         |
 
 ##### Example {#example-2}
 
@@ -755,42 +764,8 @@ configuration handles a single-metric message and a multi-metric message alike.
 
 ### For OIAnalytics Setpoints {#for-oianalytics-setpoints}
 
-These transformers convert write-back commands sent by OIAnalytics into the format expected by the target
-actuator North connector.
-
-Each setpoint command has this shape:
-
-```json
-{ "reference": "pump1/setSpeed", "value": 1200 }
-```
-
----
-
-#### JSON {#json-setpoints}
-
-Writes the setpoint commands as a JSON file, unchanged, for the North connectors expecting files (e.g. Console or File
-Writer).
-
-This transformer has **no configuration options**.
-
----
-
-#### MQTT payloads {#mqtt-payloads-1}
-
-Converts setpoint commands into MQTT messages using a **reference → topic** mapping table. Commands with no
-matching entry are dropped. The payload is the value serialized to a string; object values are JSON-stringified.
-
-##### Settings {#settings-10}
-
-| Setting     | Description                          |
-| ----------- | ------------------------------------ |
-| **Mapping** | List of `{ reference, topic }` pairs |
-
-##### Example {#example-8}
-
-Mapping: `pump1/setSpeed → control/pump1/speed`
-
-**Input (setpoints)**
+The write-back commands sent by OIAnalytics are record lists: each setpoint is a record with its reference and its
+value.
 
 ```json
 [
@@ -799,76 +774,25 @@ Mapping: `pump1/setSpeed → control/pump1/speed`
 ]
 ```
 
-`valve2/open` is dropped (no mapping).
+They go through the [record-list transformers](#for-record-list-south-connectors), reading the point ID from the
+`reference` column and the value from the `value` column: [File](#file-from-records) writes them in a JSON file (e.g.
+for the Console), [MQTT payloads](#mqtt-payloads) with the **Value** payload publishes each value alone,
+[Modbus values](#modbus-values) and [OPCUA values](#opcua-values) write them into the mapped coils, registers or nodes.
 
-**Output (MQTT messages)**
+For example, [MQTT payloads](#mqtt-payloads) with the point ID column `reference`, the **Value** payload, the value
+column `value` and the mapping `pump1/setSpeed → control/pump1/speed` publishes the setpoints above as (`valve2/open`
+having no mapping):
 
 ```json
 [{ "topic": "control/pump1/speed", "payload": "1200" }]
 ```
 
----
-
-#### Modbus values {#modbus-values-1}
-
-Converts setpoint commands into Modbus write commands, writing each value into the coil or holding register of
-its mapping (see [Modbus value conversion](#modbus-value-conversion)).
-
-##### Settings {#settings-11}
-
-| Setting     | Description                                                                             |
-| ----------- | --------------------------------------------------------------------------------------- |
-| **Mapping** | List of `{ reference, address, modbusType }` pairs (`modbusType`: `coil` or `register`) |
-
-##### Example {#example-9}
-
-Mapping: `valve1/open → 0x0010 (coil)`, `pump1/speed → 0x0020 (register)`
-
-**Input (setpoints)**
-
-```json
-[
-  { "reference": "valve1/open", "value": true },
-  { "reference": "pump1/speed", "value": 1450 }
-]
-```
-
-**Output (Modbus write commands)**
-
-```json
-[
-  { "address": "0x0010", "value": true, "modbusType": "coil" },
-  { "address": "0x0020", "value": 1450, "modbusType": "register" }
-]
-```
-
----
-
-#### OPCUA values {#opcua-values-1}
-
-Converts setpoint commands into OPC UA write commands using a **reference → node ID** mapping table.
-
-##### Settings {#settings-12}
-
-| Setting     | Description                           |
-| ----------- | ------------------------------------- |
-| **Mapping** | List of `{ reference, nodeId }` pairs |
-
-##### Example {#example-10}
-
-Mapping: `pump1/speed → ns=1;s=PumpSpeed`
-
-**Input (setpoints)**
-
-```json
-[{ "reference": "pump1/speed", "value": 1200 }]
-```
-
-**Output (OPC UA write commands)**
-
-```json
-[{ "nodeId": "ns=1;s=PumpSpeed", "value": 1200 }]
-```
+:::info Setpoint transformers from OIBus 3.9
+The `setpoint` data type no longer exists. On upgrade, the JSON, MQTT payloads, Modbus values and OPCUA values setpoint
+transformers are replaced by their record-list counterparts, their mapping keeping its references as point IDs (the
+MQTT payloads one publishing the value alone, as before). The custom transformers taking or producing setpoints were
+switched to `record-list`: the records they read or write keep the `{ reference, value }` shape.
+:::
 
 ---
 
@@ -900,8 +824,8 @@ TypeScript. Custom code runs inside a secure isolated sandbox with no access to 
 modules, or the network.
 
 Custom transformers are created in the **Engine → Transformers** page and are then available in the transformer
-selection list of any North connector. Their **input type** is `file` (files and payloads), `record-list` or
-`setpoint`; their **output type** is `file`, `record-list`, `mqtt`, `opcua`, `modbus` or `oianalytics`.
+selection list of any North connector. Their **input type** is `file` (files and payloads) or `record-list`
+(records, and the OIAnalytics setpoints); their **output type** is `file`, `record-list`, `mqtt`, `opcua`, `modbus` or `oianalytics`.
 
 :::info Custom transformers from OIBus 3.9
 The `time-values` data type no longer exists: custom transformers taking or producing time-values were switched to

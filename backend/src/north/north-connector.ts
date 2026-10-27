@@ -648,7 +648,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {
     const transformer = createTransformer(config, this.connector, this.logger);
 
-    // In-memory payloads (record-list / setpoint / file content) go through
+    // In-memory payloads (record-list / file content) go through
     // `transformInMemory`, which lets specialised transformers (e.g. the
     // OIAnalytics one) bypass the JSON.stringify → stream → collect-chunks →
     // JSON.parse round-trip. The base-class default still streamifies for

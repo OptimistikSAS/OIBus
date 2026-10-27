@@ -295,7 +295,6 @@
     },
     "oibus-input-data-type": {
       "file": "Files (for all sources)",
-      "setpoint": "Setpoints (for all sources)",
       "file-content": "File content",
       "record-list": "Records (point-based and SQL-like sources)"
     },
@@ -1320,11 +1319,7 @@
             "record-list-to-modbus": "Modbus values",
             "record-list-to-mqtt": "MQTT payloads",
             "record-list-to-oianalytics": "OIAnalytics payload",
-            "record-list-to-opcua": "OPCUA values",
-            "setpoint-to-json": "JSON",
-            "setpoint-to-modbus": "Modbus values",
-            "setpoint-to-mqtt": "MQTT payloads",
-            "setpoint-to-opcua": "OPCUA values"
+            "record-list-to-opcua": "OPCUA values"
           },
           "choose-transformer-modal": {
             "title": "Choose how to handle payloads",
@@ -1601,51 +1596,6 @@
               }
             }
           },
-          "setpoint-to-modbus": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
-              "address": "Modbus address",
-              "modbus-type": {
-                "title": "Modbus type",
-                "coil": "Coil",
-                "register": "Register"
-              }
-            }
-          },
-          "setpoint-to-mqtt": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
-              "topic": "MQTT Topic"
-            }
-          },
-          "setpoint-to-opcua": {
-            "mapping": {
-              "title": "Mapping table",
-              "point-id": "Point ID (Reference)",
-              "reference": "Reference",
-              "node-id": "OPCUA Node ID",
-              "data-type": {
-                "title": "Data type",
-                "boolean": "Boolean",
-                "s-byte": "SByte",
-                "byte": "Byte",
-                "int16": "Int16",
-                "uint16": "UInt16",
-                "int32": "Int32",
-                "uint32": "UInt32",
-                "int64": "Int64",
-                "uint64": "UInt64",
-                "float": "Float",
-                "double": "Double",
-                "string": "String",
-                "date-time": "Date Time"
-              }
-            }
-          },
           "record-list-to-modbus": {
             "point-id-column": "Point ID Column",
             "value-column": "Value Column",
@@ -1662,6 +1612,12 @@
           },
           "record-list-to-mqtt": {
             "point-id-column": "Point ID Column",
+            "payload": {
+              "title": "Payload",
+              "record": "Record (without its point ID column, as JSON)",
+              "value": "Value (text as it is, other values as JSON)"
+            },
+            "value-column": "Value Column",
             "mapping": {
               "title": "Mapping table",
               "point-id": "Point ID (Reference)",

@@ -332,11 +332,7 @@
             "record-list-to-modbus": "Modbus 值",
             "record-list-to-mqtt": "MQTT 有效载荷",
             "record-list-to-oianalytics": "OIAnalytics 有效载荷",
-            "record-list-to-opcua": "OPCUA 值",
-            "setpoint-to-json": "JSON",
-            "setpoint-to-modbus": "Modbus 值",
-            "setpoint-to-mqtt": "MQTT 有效载荷",
-            "setpoint-to-opcua": "OPCUA 值"
+            "record-list-to-opcua": "OPCUA 值"
           },
           "choose-transformer-modal": {
             "title": "选择如何处理有效载荷",
@@ -613,51 +609,6 @@
               }
             }
           },
-          "setpoint-to-modbus": {
-            "mapping": {
-              "title": "映射表",
-              "point-id": "点位 ID（引用）",
-              "reference": "引用",
-              "address": "Modbus 地址",
-              "modbus-type": {
-                "title": "Modbus 类型",
-                "coil": "线圈",
-                "register": "寄存器"
-              }
-            }
-          },
-          "setpoint-to-mqtt": {
-            "mapping": {
-              "title": "映射表",
-              "point-id": "点位 ID（引用）",
-              "reference": "引用",
-              "topic": "MQTT 主题"
-            }
-          },
-          "setpoint-to-opcua": {
-            "mapping": {
-              "title": "映射表",
-              "point-id": "点位 ID（引用）",
-              "reference": "引用",
-              "node-id": "OPCUA 节点 ID",
-              "data-type": {
-                "title": "数据类型",
-                "boolean": "布尔值",
-                "s-byte": "SByte",
-                "byte": "Byte",
-                "int16": "Int16",
-                "uint16": "UInt16",
-                "int32": "Int32",
-                "uint32": "UInt32",
-                "int64": "Int64",
-                "uint64": "UInt64",
-                "float": "Float",
-                "double": "Double",
-                "string": "字符串",
-                "date-time": "日期时间"
-              }
-            }
-          },
           "record-list-to-modbus": {
             "point-id-column": "点位 ID 列",
             "value-column": "值列",
@@ -674,6 +625,12 @@
           },
           "record-list-to-mqtt": {
             "point-id-column": "点位 ID 列",
+            "payload": {
+              "title": "负载",
+              "record": "记录（不含点位 ID 列，JSON 格式）",
+              "value": "值（文本原样，其他值为 JSON）"
+            },
+            "value-column": "值列",
             "mapping": {
               "title": "映射表",
               "point-id": "点位 ID（引用）",
@@ -2572,7 +2529,6 @@
     },
     "oibus-input-data-type": {
       "file": "文件（适用于所有数据源）",
-      "setpoint": "设定值（适用于所有数据源）",
       "file-content": "文件内容",
       "record-list": "记录（点位和类 SQL 数据源）"
     },

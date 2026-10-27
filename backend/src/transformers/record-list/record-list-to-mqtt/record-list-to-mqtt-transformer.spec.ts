@@ -38,6 +38,7 @@ describe('RecordListToMQTTTransformer', () => {
   it('should publish the mapped records without their point column', async () => {
     const transformer = new Transformer(logger, testData.transformers.list[0], {
       pointIdColumn: 'pointId',
+      payload: 'record',
       mapping: [{ pointId: 'p1', topic: 'topic/p1' }]
     });
     const records = [
@@ -56,6 +57,7 @@ describe('RecordListToMQTTTransformer', () => {
   it('should read the point from another column of the rows', async () => {
     const transformer = new Transformer(logger, testData.transformers.list[0], {
       pointIdColumn: 'id',
+      payload: 'record',
       mapping: [{ pointId: '12', topic: 'topic/12' }]
     });
 
@@ -64,11 +66,56 @@ describe('RecordListToMQTTTransformer', () => {
     assert.deepStrictEqual(JSON.parse(result.output.toString()), [{ topic: 'topic/12', payload: JSON.stringify({ temperature: 20 }) }]);
   });
 
+  it('should publish the whole record when the payload is not set', async () => {
+    const transformer = new Transformer(logger, testData.transformers.list[0], {
+      pointIdColumn: 'pointId',
+      mapping: [{ pointId: 'p1', topic: 'topic/p1' }]
+    });
+
+    const result = await transformer.transformInMemory([{ pointId: 'p1', value: 1 }], { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [{ topic: 'topic/p1', payload: JSON.stringify({ value: 1 }) }]);
+  });
+
+  it('should publish the value alone, text as it is and other values as JSON', async () => {
+    const transformer = new Transformer(logger, testData.transformers.list[0], {
+      pointIdColumn: 'reference',
+      payload: 'value',
+      valueColumn: 'value',
+      mapping: [
+        { pointId: 'mode', topic: 'topic/mode' },
+        { pointId: 'temperature', topic: 'topic/temperature' },
+        { pointId: 'enabled', topic: 'topic/enabled' },
+        { pointId: 'missing', topic: 'topic/missing' }
+      ]
+    });
+    const setpoints = [
+      { reference: 'mode', value: 'auto' },
+      { reference: 'temperature', value: 22.5 },
+      { reference: 'enabled', value: true },
+      { reference: 'missing' },
+      { reference: 'unmapped', value: 1 }
+    ];
+
+    const result = await transformer.transformInMemory(setpoints, { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [
+      { topic: 'topic/mode', payload: 'auto' },
+      { topic: 'topic/temperature', payload: '22.5' },
+      { topic: 'topic/enabled', payload: 'true' },
+      { topic: 'topic/missing', payload: 'null' }
+    ]);
+    assert.deepStrictEqual(result.metadata, metadata(4, 'mqtt'));
+  });
+
   it('should expose its manifest', () => {
     assert.strictEqual(manifest.id, 'record-list-to-mqtt');
     assert.deepStrictEqual(
       manifest.settings.attributes.map(attribute => attribute.key),
-      ['pointIdColumn', 'mapping']
+      ['pointIdColumn', 'payload', 'valueColumn', 'mapping']
     );
+    assert.deepStrictEqual(manifest.settings.enablingConditions, [
+      { referralPathFromRoot: 'payload', targetPathFromRoot: 'valueColumn', values: ['value'] }
+    ]);
   });
 });
