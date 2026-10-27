@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
-import { after, before, beforeEach, describe, it, mock } from 'node:test';
+import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import type { Knex } from 'knex';
 
@@ -13,9 +13,11 @@ const nodeRequire = createRequire(import.meta.url);
 
 type MigrationModule = typeof import('./v3.10.0');
 
-describe('Data folder migration v3.10.0 (cached time-values to record lists)', () => {
+describe('Data folder migration v3.10.0', () => {
   let tmpRoot: string;
   let migration: MigrationModule;
+  let info: ReturnType<typeof mock.method>;
+  let error: ReturnType<typeof mock.method>;
 
   const timeValues = [
     { pointId: 'p1', timestamp: '2024-01-01T00:00:00.000Z', data: { value: 1, quality: 'Good' } },
@@ -25,6 +27,22 @@ describe('Data folder migration v3.10.0 (cached time-values to record lists)', (
     { pointId: 'p1', timestamp: '2024-01-01T00:00:00.000Z', value: 1, quality: 'Good' },
     { pointId: 'p2', timestamp: '2024-01-01T00:00:01.000Z', value: '2' }
   ];
+  const setpoints = [{ reference: 'sp1', value: 1 }];
+
+  // The North connectors and history queries, as read from the configuration database
+  const northTypes: Record<string, Array<{ id: string; type: string }>> = {
+    north_connectors: [
+      { id: 'console', type: 'console' },
+      { id: 'oia', type: 'oianalytics' },
+      { id: 'writer', type: 'file-writer' }
+    ],
+    history_queries: [
+      { id: 'h1', type: 'console' },
+      { id: 'h2', type: 'oianalytics' },
+      { id: 'h3', type: 'file-writer' }
+    ]
+  };
+  const knex = ((table: string) => ({ select: async () => northTypes[table] })) as unknown as Knex;
 
   before(async () => {
     tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-mig-v3100-'));
@@ -42,19 +60,23 @@ describe('Data folder migration v3.10.0 (cached time-values to record lists)', (
       })
     });
     migration = reloadModule<MigrationModule>(nodeRequire, './v3.10.0');
-    mock.method(console, 'info', () => undefined);
-    mock.method(console, 'error', () => undefined);
   });
 
   after(async () => {
-    mock.restoreAll();
     await fs.rm(tmpRoot, { recursive: true, force: true });
   });
 
   beforeEach(async () => {
+    info = mock.method(console, 'info', () => undefined);
+    error = mock.method(console, 'error', () => undefined);
     for (const root of ['cache', 'error', 'archive']) {
       await fs.rm(path.join(tmpRoot, root), { recursive: true, force: true });
     }
+  });
+
+  afterEach(() => {
+    info.mock.restore();
+    error.mock.restore();
   });
 
   const writeCacheFile = async (folder: string, filename: string, contentType: string, content: unknown) => {
@@ -71,72 +93,169 @@ describe('Data folder migration v3.10.0 (cached time-values to record lists)', (
     content: JSON.parse(await fs.readFile(path.join(folder, 'content', filename), 'utf-8')),
     metadata: JSON.parse(await fs.readFile(path.join(folder, 'metadata', filename), 'utf-8'))
   });
+  const contentTypeOf = async (folder: string, filename: string) => (await readCacheFile(folder, filename)).metadata.contentType;
 
   it('should convert the cached time values of norths and history queries into record lists', async () => {
     const folders = [
-      path.join(tmpRoot, 'cache', 'north-n1'),
-      path.join(tmpRoot, 'error', 'north-n1'),
-      path.join(tmpRoot, 'archive', 'history-h1', 'north')
+      path.join(tmpRoot, 'cache', 'north-console'),
+      path.join(tmpRoot, 'error', 'north-console'),
+      path.join(tmpRoot, 'archive', 'history-h1', 'north'),
+      // a North deleted since: its type is unknown
+      path.join(tmpRoot, 'cache', 'north-deleted')
     ];
     for (const folder of folders) {
       await writeCacheFile(folder, 'file1', 'time-values', timeValues);
     }
 
-    await migration.up({} as Knex);
+    await migration.up(knex);
 
     for (const folder of folders) {
       const { content, metadata } = await readCacheFile(folder, 'file1');
       assert.deepStrictEqual(content, records);
-      assert.strictEqual(metadata.contentType, 'record-list');
-      assert.strictEqual(metadata.contentSize, Buffer.byteLength(JSON.stringify(records)));
-      assert.strictEqual(metadata.contentFile, 'file1.json');
+      assert.deepStrictEqual(metadata, {
+        contentFile: 'file1.json',
+        contentSize: Buffer.byteLength(JSON.stringify(records)),
+        numberOfElement: 2,
+        createdAt: '',
+        contentType: 'record-list'
+      });
     }
+    assert.strictEqual(info.mock.callCount(), 1);
   });
 
   it('should turn the cached time values of OIAnalytics norths and history queries into oianalytics content', async () => {
-    // The North connectors and history queries sending to OIAnalytics, as read from the configuration database
-    const oiaIds: Record<string, Array<{ id: string }>> = { north_connectors: [{ id: 'oia' }], history_queries: [{ id: 'h1' }] };
-    const knex = ((table: string) => ({ select: () => ({ where: async () => oiaIds[table] }) })) as unknown as Knex;
-    const oiaFolders = [path.join(tmpRoot, 'cache', 'north-oia'), path.join(tmpRoot, 'archive', 'history-h1', 'north')];
-    for (const folder of oiaFolders) {
+    const folders = [path.join(tmpRoot, 'cache', 'north-oia'), path.join(tmpRoot, 'archive', 'history-h2', 'north')];
+    for (const folder of folders) {
       await writeCacheFile(folder, 'file1', 'time-values', timeValues);
     }
-    await writeCacheFile(path.join(tmpRoot, 'cache', 'north-n1'), 'file1', 'time-values', timeValues);
 
     await migration.up(knex);
 
-    for (const folder of oiaFolders) {
+    for (const folder of folders) {
       const { content, metadata } = await readCacheFile(folder, 'file1');
       assert.deepStrictEqual(content, timeValues);
       assert.strictEqual(metadata.contentType, 'oianalytics');
     }
-    assert.deepStrictEqual((await readCacheFile(path.join(tmpRoot, 'cache', 'north-n1'), 'file1')).content, records);
+  });
+
+  it('should rename the any content type file, keeping the content', async () => {
+    const folders = [path.join(tmpRoot, 'cache', 'north-console'), path.join(tmpRoot, 'archive', 'history-h1', 'north')];
+    for (const folder of folders) {
+      await writeCacheFile(folder, 'file1', 'any', timeValues);
+    }
+
+    await migration.up(knex);
+
+    for (const folder of folders) {
+      const { content, metadata } = await readCacheFile(folder, 'file1');
+      assert.deepStrictEqual(content, timeValues);
+      assert.strictEqual(metadata.contentType, 'file');
+    }
+  });
+
+  it('should turn the cached setpoints into record lists, keeping their content', async () => {
+    const folders = [path.join(tmpRoot, 'cache', 'north-console'), path.join(tmpRoot, 'error', 'history-h1', 'north')];
+    for (const folder of folders) {
+      await writeCacheFile(folder, 'file1', 'setpoint', setpoints);
+    }
+
+    await migration.up(knex);
+
+    for (const folder of folders) {
+      const { content, metadata } = await readCacheFile(folder, 'file1');
+      assert.deepStrictEqual(content, setpoints);
+      assert.strictEqual(metadata.contentType, 'record-list');
+    }
+  });
+
+  it('should turn the cached time values, records and setpoints of the File Writers into files', async () => {
+    const folders = [path.join(tmpRoot, 'cache', 'north-writer'), path.join(tmpRoot, 'archive', 'history-h3', 'north')];
+    for (const folder of folders) {
+      await writeCacheFile(folder, 'file1', 'time-values', timeValues);
+      await writeCacheFile(folder, 'file2', 'record-list', records);
+      await writeCacheFile(folder, 'file3', 'setpoint', setpoints);
+      await writeCacheFile(folder, 'file4', 'any', setpoints);
+    }
+
+    await migration.up(knex);
+
+    for (const folder of folders) {
+      assert.deepStrictEqual(await readCacheFile(folder, 'file1'), {
+        content: records,
+        metadata: {
+          contentFile: 'file1.json',
+          contentSize: Buffer.byteLength(JSON.stringify(records)),
+          numberOfElement: 2,
+          createdAt: '',
+          contentType: 'file'
+        }
+      });
+      assert.deepStrictEqual((await readCacheFile(folder, 'file2')).content, records);
+      for (const filename of ['file2', 'file3', 'file4']) {
+        assert.strictEqual(await contentTypeOf(folder, filename), 'file');
+      }
+    }
   });
 
   it('should leave the other content types and folders untouched', async () => {
-    const north = path.join(tmpRoot, 'cache', 'north-n1');
-    await writeCacheFile(north, 'file1', 'any', timeValues);
+    const north = path.join(tmpRoot, 'cache', 'north-console');
+    await writeCacheFile(north, 'file1', 'record-list', records);
+    await writeCacheFile(north, 'file2', 'file', records);
     await writeCacheFile(path.join(tmpRoot, 'cache', 'south-s1'), 'file1', 'time-values', timeValues);
     await fs.mkdir(path.join(tmpRoot, 'cache', 'north-empty'), { recursive: true });
 
-    await migration.up({} as Knex);
+    await migration.up(knex);
 
-    assert.deepStrictEqual((await readCacheFile(north, 'file1')).content, timeValues);
-    assert.deepStrictEqual((await readCacheFile(path.join(tmpRoot, 'cache', 'south-s1'), 'file1')).content, timeValues);
+    assert.strictEqual(await contentTypeOf(north, 'file1'), 'record-list');
+    assert.strictEqual(await contentTypeOf(north, 'file2'), 'file');
+    assert.deepStrictEqual(await readCacheFile(path.join(tmpRoot, 'cache', 'south-s1'), 'file1'), {
+      content: timeValues,
+      metadata: {
+        contentFile: 'file1.json',
+        contentSize: JSON.stringify(timeValues).length,
+        numberOfElement: 2,
+        createdAt: '',
+        contentType: 'time-values'
+      }
+    });
+    assert.strictEqual(info.mock.callCount(), 0);
   });
 
   it('should log a file it cannot convert and go on', async () => {
-    const north = path.join(tmpRoot, 'cache', 'north-n1');
+    const north = path.join(tmpRoot, 'cache', 'north-console');
     await writeCacheFile(north, 'file1', 'time-values', timeValues);
     await fs.writeFile(path.join(north, 'metadata', 'file0'), 'not json');
 
-    await migration.up({} as Knex);
+    await migration.up(knex);
 
     assert.deepStrictEqual((await readCacheFile(north, 'file1')).content, records);
+    assert.strictEqual(error.mock.callCount(), 1);
   });
 
-  it('should do nothing without data folders', async () => {
-    await assert.doesNotReject(migration.up({} as Knex));
+  it('should convert the content without database tables', async () => {
+    const failingKnex = (() => ({ select: async () => Promise.reject(new Error('no table')) })) as unknown as Knex;
+    const north = path.join(tmpRoot, 'cache', 'north-writer');
+    await writeCacheFile(north, 'file1', 'time-values', timeValues);
+    await writeCacheFile(north, 'file2', 'setpoint', setpoints);
+
+    await migration.up(failingKnex);
+
+    assert.deepStrictEqual(await readCacheFile(north, 'file1'), {
+      content: records,
+      metadata: {
+        contentFile: 'file1.json',
+        contentSize: Buffer.byteLength(JSON.stringify(records)),
+        numberOfElement: 2,
+        createdAt: '',
+        contentType: 'record-list'
+      }
+    });
+    assert.strictEqual(await contentTypeOf(north, 'file2'), 'record-list');
+  });
+
+  it('should do nothing without data folders, nor when going down', async () => {
+    await assert.doesNotReject(migration.up(knex));
     await assert.doesNotReject(migration.down());
+    assert.strictEqual(info.mock.callCount(), 0);
   });
 });
