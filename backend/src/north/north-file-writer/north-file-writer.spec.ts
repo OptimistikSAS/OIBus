@@ -6,8 +6,6 @@ import path from 'node:path';
 import streamPromises from 'node:stream/promises';
 import { after, afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import { DateTime } from 'luxon';
-
 import type { NorthFileWriterSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
@@ -69,9 +67,7 @@ describe('NorthFileWriter', () => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     configuration = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
-      outputFolder: 'outputFolder',
-      prefix: 'prefix_',
-      suffix: '_suffix'
+      outputFolder: 'outputFolder'
     });
     createNorth();
   });
@@ -85,29 +81,6 @@ describe('NorthFileWriter', () => {
     assert.deepStrictEqual(north.supportedTypes(), ['file']);
   });
 
-  it('should properly handle files with prefix and suffix', async () => {
-    await north.handleContent(readStream, metadata('file-123456789.txt'));
-
-    const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), 'prefix_file-123456789_suffix.txt');
-    assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
-    assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, [expectedPath]);
-    assert.strictEqual(pipelineMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, writeStream]);
-  });
-
-  it('should properly handle files with dynamic replacements in prefix/suffix', async () => {
-    createNorth({ prefix: 'pre_@ConnectorName_', suffix: '_@CurrentDate_suf' });
-
-    await north.handleContent(readStream, metadata('data.csv', 100));
-
-    const nowDate = DateTime.fromMillis(new Date(testData.constants.dates.FAKE_NOW).getTime()).toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
-    const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), `pre_${configuration.name}_data_${nowDate}_suf.csv`);
-    assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
-    assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, [expectedPath]);
-    assert.strictEqual(pipelineMock.mock.calls.length, 1);
-    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, writeStream]);
-  });
-
   it('should properly catch handle file error (pipeline failure)', async () => {
     pipelineMock.mock.mockImplementation(async () => {
       throw new Error('Pipeline failed');
@@ -116,14 +89,8 @@ describe('NorthFileWriter', () => {
     await assert.rejects(north.handleContent(readStream, metadata('example.file')), /Pipeline failed/);
   });
 
-  it('should properly handle files (direct naming)', async () => {
-    north.connectorConfiguration = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
-      outputFolder: 'outputFolder',
-      prefix: '',
-      suffix: ''
-    });
-
-    await north.handleContent(readStream, metadata('example-123.file'));
+  it('should write the files under the name given by their transformer, without their sub-folder', async () => {
+    await north.handleContent(readStream, metadata(path.join('sub', 'example-123.file')));
 
     const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), 'example-123.file');
     assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);

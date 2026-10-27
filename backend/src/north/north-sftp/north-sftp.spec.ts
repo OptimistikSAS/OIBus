@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import type { ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import path from 'node:path';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import type SftpClient from 'ssh2-sftp-client';
@@ -76,7 +77,7 @@ describe('NorthSFTP', () => {
     mock.restoreAll();
   });
 
-  describe('with suffix and prefix (Password Auth)', () => {
+  describe('with Password Auth', () => {
     beforeEach(() => {
       createNorth({
         host: '127.0.0.1',
@@ -84,9 +85,7 @@ describe('NorthSFTP', () => {
         remoteFolder: 'remoteFolder',
         authentication: 'password',
         username: 'user',
-        password: 'pass',
-        prefix: 'prefix_',
-        suffix: '_suffix'
+        password: 'pass'
       });
     });
 
@@ -94,13 +93,13 @@ describe('NorthSFTP', () => {
       assert.deepStrictEqual(north.supportedTypes(), ['file']);
     });
 
-    it('should properly handle files and call sendToSftpServer', async () => {
+    it('should send the files under the name given by their transformer, without their sub-folder', async () => {
       const sendSpy = mock.method(north, 'sendToSftpServer', async () => undefined);
 
-      await north.handleContent(mockStream, metadata);
+      await north.handleContent(mockStream, { ...metadata, contentFile: path.join('sub', metadata.contentFile) });
 
       assert.strictEqual(sendSpy.mock.calls.length, 1);
-      assert.deepStrictEqual(sendSpy.mock.calls[0].arguments, [mockStream, 'remoteFolder/prefix_example-123_suffix.file']);
+      assert.deepStrictEqual(sendSpy.mock.calls[0].arguments, [mockStream, 'remoteFolder/example-123.file']);
     });
 
     it('should properly catch handle file error', async () => {
@@ -134,7 +133,7 @@ describe('NorthSFTP', () => {
     });
   });
 
-  describe('without suffix or prefix (Private Key Auth)', () => {
+  describe('with Private Key Auth', () => {
     beforeEach(() => {
       createNorth({
         host: '127.0.0.1',
@@ -143,19 +142,8 @@ describe('NorthSFTP', () => {
         authentication: 'private-key',
         username: 'user',
         privateKey: 'path/to/private.key',
-        passphrase: 'myPassphrase',
-        prefix: '',
-        suffix: ''
+        passphrase: 'myPassphrase'
       });
-    });
-
-    it('should properly handle files (Direct Naming)', async () => {
-      const sendSpy = mock.method(north, 'sendToSftpServer', async () => undefined);
-
-      await north.handleContent(mockStream, metadata);
-
-      assert.strictEqual(sendSpy.mock.calls.length, 1);
-      assert.deepStrictEqual(sendSpy.mock.calls[0].arguments, [mockStream, 'remoteFolder/example-123.file']);
     });
 
     it('should use private key for connection', async () => {

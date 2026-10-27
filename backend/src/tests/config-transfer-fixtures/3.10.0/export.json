@@ -247,8 +247,8 @@
         "oIBusInternalId": "southId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.392Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.392Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.415Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.415Z",
         "type": "folder-scanner",
         "settings": {
           "type": "folder-scanner",
@@ -266,8 +266,8 @@
               "id": "southItemId1",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": "fixture",
-              "oIBusCreatedAt": "2026-10-27T14:51:34.393Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.416Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30Z",
               "name": "item1",
               "enabled": false,
               "scanModeId": "scanModeId1",
@@ -294,8 +294,8 @@
               "id": "southItemId2",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.393Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.393Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.417Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.417Z",
               "name": "item2",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -366,8 +366,8 @@
         "oIBusInternalId": "southId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.394Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.394Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.418Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.418Z",
         "type": "mssql",
         "settings": {
           "type": "mssql",
@@ -391,8 +391,8 @@
               "id": "southItemId3",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.395Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.395Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.418Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.418Z",
               "name": "item3",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -419,8 +419,8 @@
               "id": "southItemId4",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.395Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.395Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.419Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.419Z",
               "name": "item4",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -466,8 +466,8 @@
         "oIBusInternalId": "southId3",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.396Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.396Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.419Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.419Z",
         "type": "opcua",
         "settings": {
           "type": "opcua",
@@ -494,8 +494,8 @@
               "id": "southItemId7",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.399Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.399Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.421Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.421Z",
               "name": "opcua da",
               "enabled": true,
               "scanModeId": "scanModeId2",
@@ -524,8 +524,8 @@
               "id": "southItemId5",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.397Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.397Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.420Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.420Z",
               "name": "opcua ha",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -554,8 +554,8 @@
               "id": "southItemId8",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.400Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.400Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.422Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.422Z",
               "name": "opcua ha 2",
               "enabled": true,
               "scanModeId": "scanModeId1",
@@ -584,8 +584,8 @@
               "id": "southItemId6",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.398Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.398Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.420Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.420Z",
               "name": "opcua sub",
               "enabled": true,
               "scanModeId": "subscription",
@@ -621,8 +621,8 @@
         "oIBusInternalId": "northId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.400Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.400Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.422Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.422Z",
         "type": "file-writer",
         "settings": {
           "type": "file-writer",
@@ -631,8 +631,6 @@
           "enabled": true,
           "settings": {
             "outputFolder": "output-folder",
-            "prefix": "prefix-",
-            "suffix": "-suffix",
             "username": null,
             "password": "",
             "domain": null
@@ -709,8 +707,8 @@
         "oIBusInternalId": "northId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.404Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.404Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.427Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.427Z",
         "type": "oianalytics",
         "settings": {
           "type": "oianalytics",
@@ -782,7 +780,7 @@
     ],
     "transformers": [
       {
-        "oIBusInternalId": "fD0Vte",
+        "oIBusInternalId": "EJLgnG",
         "type": "standard",
         "settings": {
           "functionName": "file-to-mqtt",
@@ -1414,7 +1412,7 @@
         }
       },
       {
-        "oIBusInternalId": "SG5ICB",
+        "oIBusInternalId": "7QL9P4",
         "type": "standard",
         "settings": {
           "functionName": "file-to-record-list",
@@ -1540,7 +1538,7 @@
         }
       },
       {
-        "oIBusInternalId": "oCwEfj",
+        "oIBusInternalId": "OQ2YAT",
         "type": "standard",
         "settings": {
           "functionName": "file-to-file",
@@ -2213,7 +2211,7 @@
         }
       },
       {
-        "oIBusInternalId": "Fsigh5",
+        "oIBusInternalId": "hUjf8T",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-modbus",
@@ -2347,7 +2345,7 @@
         }
       },
       {
-        "oIBusInternalId": "uhC9Rm",
+        "oIBusInternalId": "wQ5QpC",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-mqtt",
@@ -2487,7 +2485,7 @@
         }
       },
       {
-        "oIBusInternalId": "wAZjGa",
+        "oIBusInternalId": "770rM5",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-oianalytics",
@@ -2741,7 +2739,7 @@
         }
       },
       {
-        "oIBusInternalId": "RJCKeT",
+        "oIBusInternalId": "PEpBsK",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-opcua",
@@ -2857,7 +2855,7 @@
         }
       },
       {
-        "oIBusInternalId": "0u6KRm",
+        "oIBusInternalId": "3p0NRx",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-file",
@@ -3391,8 +3389,8 @@
         "oIBusInternalId": "transformerId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.389Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.389Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.413Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.413Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 1",
@@ -3420,8 +3418,8 @@
         "oIBusInternalId": "transformerId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.390Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.390Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.413Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.413Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 2",
@@ -3449,8 +3447,8 @@
         "oIBusInternalId": "transformerId3",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.391Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.391Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.414Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.414Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 3",
@@ -3475,7 +3473,7 @@
         }
       },
       {
-        "oIBusInternalId": "kdV9qE",
+        "oIBusInternalId": "hXedZA",
         "type": "standard",
         "settings": {
           "functionName": "file-to-modbus",
@@ -3713,7 +3711,7 @@
         }
       },
       {
-        "oIBusInternalId": "rnMFy6",
+        "oIBusInternalId": "31JQ91",
         "type": "standard",
         "settings": {
           "functionName": "file-to-opcua",
@@ -3933,7 +3931,7 @@
         }
       },
       {
-        "oIBusInternalId": "TZDDmU",
+        "oIBusInternalId": "SDCSFd",
         "type": "standard",
         "settings": {
           "functionName": "file-to-oianalytics",
@@ -4296,8 +4294,8 @@
         "oIBusInternalId": "historyId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.405Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.405Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.427Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.427Z",
         "settings": {
           "name": "my first History Query",
           "description": "description",
@@ -4354,8 +4352,8 @@
               "id": "historyQueryItem1",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.406Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.406Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.428Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.428Z",
               "name": "item1",
               "enabled": true,
               "settings": {
@@ -4369,8 +4367,8 @@
               "id": "historyQueryItem2",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.407Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.407Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.428Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.428Z",
               "name": "item2",
               "enabled": true,
               "settings": {
@@ -4393,8 +4391,8 @@
                   "enabled": true,
                   "createdBy": null,
                   "updatedBy": null,
-                  "createdAt": "2026-10-27T14:51:34.407Z",
-                  "updatedAt": "2026-10-27T14:51:34.407Z"
+                  "createdAt": "2026-10-27T15:06:30.428Z",
+                  "updatedAt": "2026-10-27T15:06:30.428Z"
                 }
               ]
             },
@@ -4411,8 +4409,8 @@
         "oIBusInternalId": "historyId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-27T14:51:34.409Z",
-        "oIBusUpdatedAt": "2026-10-27T14:51:34.409Z",
+        "oIBusCreatedAt": "2026-10-27T15:06:30.431Z",
+        "oIBusUpdatedAt": "2026-10-27T15:06:30.431Z",
         "settings": {
           "name": "My second History Query",
           "description": "description",
@@ -4439,8 +4437,6 @@
           "northType": "file-writer",
           "northSettings": {
             "outputFolder": "output-folder",
-            "prefix": "prefix-",
-            "suffix": "-suffix",
             "username": null,
             "password": "",
             "domain": null
@@ -4472,8 +4468,8 @@
               "id": "historyQueryItem3",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-27T14:51:34.410Z",
-              "oIBusUpdatedAt": "2026-10-27T14:51:34.410Z",
+              "oIBusCreatedAt": "2026-10-27T15:06:30.432Z",
+              "oIBusUpdatedAt": "2026-10-27T15:06:30.432Z",
               "name": "item3",
               "enabled": true,
               "settings": {

@@ -2,7 +2,6 @@ import { ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 
 import { NorthSFTPSettings } from '../../../shared/model/connector/north-settings.model';
@@ -56,11 +55,8 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
-    const { name, ext } = path.parse(cacheMetadata.contentFile);
-    const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
-    const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
-    const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
-    const resultingFilename = `${prefix}${name}${suffix}${ext}`;
+    // The file is named by its transformer (see the filename of the file transformers)
+    const resultingFilename = path.basename(cacheMetadata.contentFile);
     const target = `${this.connector.settings.remoteFolder}/${resultingFilename}`;
 
     await this.sendToSftpServer(fileStream, target);

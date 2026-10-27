@@ -857,8 +857,6 @@ const northList: Array<NorthConnectorDTO> = [
     enabled: true,
     settings: {
       outputFolder: 'output-folder',
-      prefix: 'prefix-',
-      suffix: '-suffix',
       username: null,
       password: '',
       domain: null
@@ -1198,8 +1196,6 @@ const northCommand: NorthConnectorCommandDTO = {
   enabled: true,
   settings: {
     outputFolder: 'output-folder',
-    prefix: 'prefix-',
-    suffix: '-suffix',
     username: null,
     password: null,
     domain: null
@@ -1517,8 +1513,6 @@ const historyQueryList: Array<HistoryQueryDTO> = [
     northType: 'file-writer',
     northSettings: {
       outputFolder: 'output-folder',
-      prefix: 'prefix-',
-      suffix: '-suffix',
       username: null,
       password: '',
       domain: null
@@ -1668,8 +1662,6 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   },
   northSettings: {
     outputFolder: 'output-folder',
-    prefix: 'prefix-',
-    suffix: '-suffix',
     username: null,
     password: null,
     domain: null
@@ -2539,8 +2531,6 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
       enabled: true,
       settings: {
         outputFolder: 'output-folder',
-        prefix: 'prefix-',
-        suffix: '-suffix',
         username: null,
         password: null,
         domain: null
@@ -2721,8 +2711,6 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
       enabled: true,
       settings: {
         outputFolder: 'output-folder',
-        prefix: 'prefix-',
-        suffix: '-suffix',
         username: null,
         password: null,
         domain: null

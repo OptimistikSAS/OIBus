@@ -47,22 +47,22 @@ const manifest: NorthConnectorManifest = {
       },
       {
         type: 'string',
-        key: 'prefix',
-        translationKey: 'configuration.oibus.manifest.north.file-writer.prefix',
+        key: 'password',
+        translationKey: 'configuration.oibus.manifest.north.file-writer.smb-password',
         defaultValue: null,
         validators: [],
         displayProperties: { row: 0, columns: 4, displayInViewMode: true }
       },
       {
         type: 'string',
-        key: 'suffix',
-        translationKey: 'configuration.oibus.manifest.north.file-writer.suffix',
+        key: 'domain',
+        translationKey: 'configuration.oibus.manifest.north.file-writer.smb-domain',
         defaultValue: null,
         validators: [],
         displayProperties: { row: 0, columns: 4, displayInViewMode: true }
       }
     ],
-    enablingConditions: [{ referralPathFromRoot: 'prefix', targetPathFromRoot: 'suffix', values: ['other-prefix'] }]
+    enablingConditions: [{ referralPathFromRoot: 'password', targetPathFromRoot: 'domain', values: ['other-password'] }]
   }
 };
 
@@ -147,10 +147,10 @@ describe('NorthDetailComponent', () => {
     await expect.element(tester.status).toHaveTextContent('Enabled');
     expect(northConnectorService.findById).toHaveBeenCalledWith('northId1');
     expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith('file-writer');
-    // output folder and prefix (the suffix is not enabled for this prefix)
+    // output folder and password (the domain is not enabled for this password)
     await expect.element(tester.settings).toHaveLength(2);
     await expect.element(tester.settings.nth(0)).toHaveTextContent('Output folder output-folder');
-    await expect.element(tester.settings.nth(1)).toHaveTextContent('Prefix prefix-');
+    await expect.element(tester.settings.nth(1)).toHaveTextContent('SMB password–');
     await expect.element(tester.caching.nth(0)).toHaveTextContent('Schedule scanMode1');
     await expect.element(tester.caching.nth(1)).toHaveTextContent('Number of elements 250');
     await expect.element(tester.transformers).toHaveLength(1);

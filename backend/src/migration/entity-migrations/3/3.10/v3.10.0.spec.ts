@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
+import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { Knex } from 'knex';
 
@@ -20,6 +20,7 @@ import {
   groupOIAnalyticsOptions,
   mergeSetpointsIntoRecordLists,
   moveCompressionToNorths,
+  moveFilenamePrefixAndSuffixToTransformers,
   moveSqlSerializationToTransformers,
   renameAnyDataType,
   replaceCsvAndJsonReaders,
@@ -4043,5 +4044,128 @@ describe('Entity migration v3.10.0: replaceFileTransformer', () => {
     await replaceFileTransformer(db);
 
     assert.deepStrictEqual(await db('transformers').select('id', 'function_name'), [{ id: 'fileToFile', function_name: 'file-to-file' }]);
+  });
+});
+
+describe('Entity migration v3.10.0: moveFilenamePrefixAndSuffixToTransformers', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(moveFilenamePrefixAndSuffixToTransformers, db)
+  });
+  let db: Knex;
+  const fileAsIs = { input: { fileType: 'other' }, filename: '@SourceFilename@SourceExtension', compression: false };
+  const linkOptions = async (table: string, id: string) => JSON.parse((await db(table).where('id', id).first('options')).options);
+  const northLink = (id: string, northId: string, transformerId: string, options: object) => ({
+    id,
+    north_id: northId,
+    transformer_id: transformerId,
+    options: JSON.stringify(options),
+    source_type: 'oibus-api'
+  });
+  const north = (id: string, type: string, settings: object) => ({
+    ...caching,
+    id,
+    name: `North ${id}`,
+    type,
+    enabled: true,
+    settings: JSON.stringify(settings)
+  });
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+    await db('transformers').where('type', 'standard').del();
+    await db('transformers').insert([
+      { id: 'fileToFile', type: 'standard', function_name: 'file-to-file', input_type: 'file', output_type: 'file' },
+      { id: 'recordListToFile', type: 'standard', function_name: 'record-list-to-file', input_type: 'record-list', output_type: 'file' },
+      {
+        id: 'custom',
+        type: 'custom',
+        input_type: 'file',
+        output_type: 'file',
+        name: 'custom',
+        description: '',
+        custom_code: '',
+        custom_manifest: '{}',
+        language: 'javascript',
+        timeout: 2000
+      }
+    ]);
+  });
+
+  afterEach(() => harness.afterEach());
+
+  it('should add the prefix and suffix of the File Writer and SFTP norths to the filename of their transformers', async () => {
+    const warn = mock.method(console, 'warn', () => undefined);
+    await db('north_connectors').insert([
+      north('writer', 'file-writer', { outputFolder: 'out', prefix: '@ConnectorName-', suffix: '-@CurrentDate' }),
+      north('sftp', 'sftp', { remoteFolder: 'remote', prefix: 'pre_', suffix: null }),
+      north('empty', 'file-writer', { outputFolder: 'out', prefix: '', suffix: '' })
+    ]);
+    await db('north_transformers').insert([
+      northLink('asIs', 'writer', 'fileToFile', fileAsIs),
+      northLink('csv', 'writer', 'fileToFile', { input: { fileType: 'json' }, filename: '@CurrentDate.csv' }),
+      northLink('records', 'sftp', 'recordListToFile', { filename: '@ItemName' }),
+      northLink('custom', 'writer', 'custom', {}),
+      northLink('empty', 'empty', 'fileToFile', fileAsIs)
+    ]);
+    await db('history_queries').insert({
+      ...caching,
+      id: 'hq1',
+      name: 'HQ 1',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'folder-scanner',
+      north_type: 'sftp',
+      south_settings: '{}',
+      north_settings: JSON.stringify({ remoteFolder: 'remote', prefix: '', suffix: '_@ConnectorName' })
+    });
+    await db('history_query_transformers').insert({
+      id: 'history',
+      history_id: 'hq1',
+      transformer_id: 'fileToFile',
+      options: JSON.stringify(fileAsIs)
+    });
+
+    await moveFilenamePrefixAndSuffixToTransformers(db);
+
+    const settingsOf = async (table: string, column: string, id: string) =>
+      JSON.parse((await db(table).where('id', id).first(column))[column]);
+    assert.deepStrictEqual(await settingsOf('north_connectors', 'settings', 'writer'), { outputFolder: 'out' });
+    assert.deepStrictEqual(await settingsOf('north_connectors', 'settings', 'sftp'), { remoteFolder: 'remote' });
+    assert.deepStrictEqual(await settingsOf('north_connectors', 'settings', 'empty'), { outputFolder: 'out' });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'north_settings', 'hq1'), { remoteFolder: 'remote' });
+    assert.deepStrictEqual(await linkOptions('north_transformers', 'asIs'), {
+      ...fileAsIs,
+      filename: 'North writer-@SourceFilename-@CurrentDate@SourceExtension'
+    });
+    assert.deepStrictEqual(await linkOptions('north_transformers', 'csv'), {
+      input: { fileType: 'json' },
+      filename: 'North writer-@CurrentDate-@CurrentDate.csv'
+    });
+    assert.deepStrictEqual(await linkOptions('north_transformers', 'records'), { filename: 'pre_@ItemName' });
+    assert.deepStrictEqual(await linkOptions('north_transformers', 'custom'), {});
+    assert.deepStrictEqual(await linkOptions('north_transformers', 'empty'), fileAsIs);
+    assert.deepStrictEqual(await linkOptions('history_query_transformers', 'history'), {
+      ...fileAsIs,
+      filename: '@SourceFilename_HQ 1@SourceExtension'
+    });
+    // The custom transformers name the files themselves
+    assert.strictEqual(warn.mock.callCount(), 1);
+    warn.mock.restore();
+  });
+
+  it('should leave the other norths untouched', async () => {
+    const settings = { host: 'h', prefix: 'not-a-prefix' };
+    await db('north_connectors').insert(north('mqtt', 'mqtt', settings));
+    await db('north_transformers').insert(northLink('link', 'mqtt', 'fileToFile', fileAsIs));
+
+    await moveFilenamePrefixAndSuffixToTransformers(db);
+
+    assert.deepStrictEqual(JSON.parse((await db('north_connectors').where('id', 'mqtt').first('settings')).settings), settings);
+    assert.deepStrictEqual(await linkOptions('north_transformers', 'link'), fileAsIs);
   });
 });

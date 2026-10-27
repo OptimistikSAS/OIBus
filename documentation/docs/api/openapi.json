@@ -29259,14 +29259,6 @@
 					"outputFolder": {
 						"type": "string"
 					},
-					"prefix": {
-						"type": "string",
-						"nullable": true
-					},
-					"suffix": {
-						"type": "string",
-						"nullable": true
-					},
 					"username": {
 						"type": "string",
 						"nullable": true
@@ -29281,9 +29273,7 @@
 					}
 				},
 				"required": [
-					"outputFolder",
-					"prefix",
-					"suffix"
+					"outputFolder"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -30937,14 +30927,6 @@
 					},
 					"remoteFolder": {
 						"type": "string"
-					},
-					"prefix": {
-						"type": "string",
-						"nullable": true
-					},
-					"suffix": {
-						"type": "string",
-						"nullable": true
 					}
 				},
 				"required": [
@@ -30952,9 +30934,7 @@
 					"port",
 					"authentication",
 					"username",
-					"remoteFolder",
-					"prefix",
-					"suffix"
+					"remoteFolder"
 				],
 				"type": "object",
 				"additionalProperties": false

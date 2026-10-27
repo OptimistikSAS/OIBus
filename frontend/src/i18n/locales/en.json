@@ -1072,8 +1072,6 @@
           },
           "file-writer": {
             "output-folder": "Output folder",
-            "prefix": "Prefix",
-            "suffix": "Suffix",
             "smb-username": "SMB username",
             "smb-password": "SMB password",
             "smb-domain": "SMB domain"
@@ -1263,8 +1261,6 @@
               "private-key": "Private key"
             },
             "remote-folder": "Remote folder",
-            "prefix": "Prefix",
-            "suffix": "Suffix",
             "username": "Username",
             "password": "Password",
             "private-key": "Private key",

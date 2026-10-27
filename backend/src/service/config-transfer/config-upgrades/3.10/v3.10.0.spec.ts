@@ -14,7 +14,8 @@ import {
   toNoneResamplingItemSettings,
   toOIAnalyticsItemFileOptions,
   upgrade,
-  usesRemoteAgent
+  usesRemoteAgent,
+  withPrefixAndSuffix
 } from './v3.10.0';
 
 const fixtureConfig = (version: string): JsonObject =>
@@ -437,6 +438,85 @@ describe('3.10.0 config upgrade', () => {
       const once = upgrade.apply(buildConfig());
 
       assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
+  describe('filename prefix and suffix of the File Writer and SFTP norths', () => {
+    const buildConfig = (): JsonObject => ({
+      transformers: [
+        {
+          oIBusInternalId: 'fileToFile',
+          type: 'standard',
+          settings: { functionName: 'file-to-file', inputType: 'file', outputType: 'file' }
+        },
+        { oIBusInternalId: 'custom', type: 'custom', settings: { name: 'custom', inputType: 'file', outputType: 'file' } }
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'writer',
+          type: 'file-writer',
+          settings: {
+            name: 'Writer',
+            settings: { outputFolder: 'out', prefix: '@ConnectorName-', suffix: '-@CurrentDate' },
+            transformers: [
+              { id: 'l1', transformerId: 'fileToFile', options: { ...FILE_AS_IS_OPTIONS }, source: { type: 'oibus-api' } },
+              { id: 'l2', transformerId: 'custom', options: {}, source: { type: 'oibus-api' } }
+            ]
+          }
+        },
+        {
+          oIBusInternalId: 'mqtt',
+          type: 'mqtt',
+          settings: {
+            name: 'MQTT',
+            settings: { prefix: 'kept' },
+            transformers: [{ id: 'l3', transformerId: 'fileToFile', options: { ...FILE_AS_IS_OPTIONS }, source: { type: 'oibus-api' } }]
+          }
+        }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            name: 'History',
+            southType: 'folder-scanner',
+            northType: 'sftp',
+            northSettings: { remoteFolder: 'remote', prefix: 'pre_', suffix: null },
+            items: [],
+            northTransformers: [{ id: 'h1', transformerId: 'fileToFile', options: { ...FILE_AS_IS_OPTIONS }, items: [] }]
+          }
+        }
+      ]
+    });
+
+    it('adds them to the filename of the transformers of these norths', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const [writer, mqtt] = (config.northConnectors as Array<JsonObject>).map(north => north.settings as JsonObject);
+      assert.deepStrictEqual(writer.settings, { outputFolder: 'out' });
+      assert.deepStrictEqual(
+        (writer.transformers as Array<JsonObject>).map(link => link.options),
+        [{ ...FILE_AS_IS_OPTIONS, filename: 'Writer-@SourceFilename-@CurrentDate@SourceExtension' }, {}]
+      );
+      assert.deepStrictEqual(mqtt.settings, { prefix: 'kept' });
+      assert.deepStrictEqual((mqtt.transformers as Array<JsonObject>)[0].options, FILE_AS_IS_OPTIONS);
+      const historyQuery = (config.historyQueries as Array<JsonObject>)[0].settings as JsonObject;
+      assert.deepStrictEqual(historyQuery.northSettings, { remoteFolder: 'remote' });
+      assert.deepStrictEqual((historyQuery.northTransformers as Array<JsonObject>)[0].options, {
+        ...FILE_AS_IS_OPTIONS,
+        filename: 'pre_@SourceFilename@SourceExtension'
+      });
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+
+    it('puts the suffix before the extension of the filename', () => {
+      assert.strictEqual(withPrefixAndSuffix('@SourceFilename@SourceExtension', 'p_', '_s', 'N'), 'p_@SourceFilename_s@SourceExtension');
+      assert.strictEqual(withPrefixAndSuffix('@CurrentDate.csv', '@ConnectorName-', '', 'North'), 'North-@CurrentDate.csv');
+      assert.strictEqual(withPrefixAndSuffix('@ItemName', '', '-@ConnectorName', 'North'), '@ItemName-North');
     });
   });
 

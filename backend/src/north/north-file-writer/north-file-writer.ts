@@ -11,8 +11,6 @@ const execFile = promisify(execFileCb);
 import { createWriteStream, ReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 
-import { DateTime } from 'luxon';
-
 import { NorthFileWriterSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
@@ -139,11 +137,8 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     // self-heals a session that dropped or was replaced since connect() ran, instead of failing
     // every write until the connector fully reconnects.
     await this.mountNetworkShare(this.connector.settings.outputFolder);
-    const { name, ext } = path.parse(cacheMetadata.contentFile);
-    const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
-    const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
-    const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
-    const resultingFilename = `${prefix}${name}${suffix}${ext}`;
+    // The file is named by its transformer (see the filename of the file transformers)
+    const resultingFilename = path.basename(cacheMetadata.contentFile);
     const destinationPath = path.join(path.resolve(this.connector.settings.outputFolder), resultingFilename);
 
     await pipeline(fileStream, createWriteStream(destinationPath));

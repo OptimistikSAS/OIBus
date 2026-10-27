@@ -85,8 +85,6 @@
           },
           "file-writer": {
             "output-folder": "Dossier de sortie",
-            "prefix": "Préfixe",
-            "suffix": "Suffixe",
             "smb-username": "Nom d'utilisateur SMB",
             "smb-password": "Mot de passe SMB",
             "smb-domain": "Domaine SMB"
@@ -276,8 +274,6 @@
               "private-key": "Clé privée"
             },
             "remote-folder": "Dossier distant",
-            "prefix": "Préfixe",
-            "suffix": "Suffixe",
             "username": "Nom d'utilisateur",
             "password": "Mot de passe",
             "private-key": "Clé privée",
