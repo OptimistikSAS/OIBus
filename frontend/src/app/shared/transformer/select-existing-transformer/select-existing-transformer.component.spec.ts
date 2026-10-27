@@ -25,7 +25,7 @@ const standardTransformer = (id: string, functionName: string, outputType: Outpu
   manifest: testData.transformers.customList[0].manifest
 });
 
-const compatibleTransformer = standardTransformer('transformer-file', 'file', 'file');
+const compatibleTransformer = standardTransformer('transformer-file', 'file-to-file', 'file');
 const incompatibleTransformer = standardTransformer('transformer-file-to-mqtt', 'file-to-mqtt', 'mqtt');
 const customTransformer: TransformerDTO = testData.transformers.customList[0];
 
@@ -125,11 +125,11 @@ describe('SelectExistingTransformerComponent', () => {
     await expect.element(tester.transformer.getByRole('option')).toHaveLength(3);
     expect(tester.optionLabels(tester.transformer)).toEqual([
       '',
-      `File (as is) (${testData.south.listLight[0].name})`,
+      `File (as is, renamed or converted) (${testData.south.listLight[0].name})`,
       customTransformer.name
     ]);
 
-    await tester.transformer.selectOptions(`File (as is) (${testData.south.listLight[0].name})`);
+    await tester.transformer.selectOptions(`File (as is, renamed or converted) (${testData.south.listLight[0].name})`);
 
     expect(tester.picked).toEqual([{ transformer: compatibleTransformer, options: { key: 'value' } }]);
   });
@@ -141,9 +141,9 @@ describe('SelectExistingTransformerComponent', () => {
 
     expect(historyQueryService.findById).toHaveBeenCalledWith(historyQueries[0].id);
     await expect.element(tester.transformer.getByRole('option')).toHaveLength(2);
-    expect(tester.optionLabels(tester.transformer)).toEqual(['', 'File (as is)']);
+    expect(tester.optionLabels(tester.transformer)).toEqual(['', 'File (as is, renamed or converted)']);
 
-    await tester.transformer.selectOptions('File (as is)');
+    await tester.transformer.selectOptions('File (as is, renamed or converted)');
 
     expect(tester.picked).toEqual([{ transformer: compatibleTransformer, options: { key: 'history' } }]);
   });
@@ -155,7 +155,10 @@ describe('SelectExistingTransformerComponent', () => {
     await tester.source.selectOptions(norths[0].name);
 
     // the custom transformer takes record lists: it cannot be applied to files
-    expect(tester.optionLabels(tester.transformer)).toEqual(['', `File (as is) (${testData.south.listLight[0].name})`]);
+    expect(tester.optionLabels(tester.transformer)).toEqual([
+      '',
+      `File (as is, renamed or converted) (${testData.south.listLight[0].name})`
+    ]);
 
     tester.fixture.componentRef.setInput('dataType', 'record-list');
 
@@ -174,7 +177,7 @@ describe('SelectExistingTransformerComponent', () => {
   test('should not emit when the empty transformer is selected again', async () => {
     const tester = new SelectExistingTransformerComponentTester('history-query', ['file']);
     await tester.source.selectOptions(historyQueries[0].name);
-    await tester.transformer.selectOptions('File (as is)');
+    await tester.transformer.selectOptions('File (as is, renamed or converted)');
 
     await tester.transformer.selectOptions('');
 
