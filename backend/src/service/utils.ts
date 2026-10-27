@@ -350,7 +350,7 @@ export const convertNewline = (newline: 'DEFAULT' | 'CRLF' | 'LF' | 'CR'): strin
  * history query, `@QueryStartTime`/`@QueryEndTime` (the queried window). The latter two are left
  * empty for content that isn't bound to a time window (subscriptions, direct queries, other sources).
  * `@SourceFilename` and `@SourceExtension` are the name (without extension) and the extension (with its dot) of the
- * transformed file, empty for other content.
+ * transformed file, empty for other content. Each variable may be used several times.
  */
 export const applyFilenameVariables = (filename: string, source: CacheMetadataSource, sourceFilename: string | null = null): string => {
   const formatQueryBound = (instant: Instant | null | undefined): string =>
@@ -361,13 +361,13 @@ export const applyFilenameVariables = (filename: string, source: CacheMetadataSo
   const itemName = source.source === 'south' && source.items.length === 1 ? source.items[0].name : '';
 
   return filename
-    .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-    .replace('@QueryStartTime', source.source === 'south' ? formatQueryBound(source.queryStartTime) : '')
-    .replace('@QueryEndTime', source.source === 'south' ? formatQueryBound(source.queryEndTime) : '')
-    .replace('@ConnectorName', source.source === 'south' ? source.southName : '')
-    .replace('@ItemName', itemName)
-    .replace('@SourceFilename', sourceFilename ? path.parse(sourceFilename).name : '')
-    .replace('@SourceExtension', sourceFilename ? path.parse(sourceFilename).ext : '');
+    .replaceAll('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+    .replaceAll('@QueryStartTime', source.source === 'south' ? formatQueryBound(source.queryStartTime) : '')
+    .replaceAll('@QueryEndTime', source.source === 'south' ? formatQueryBound(source.queryEndTime) : '')
+    .replaceAll('@ConnectorName', source.source === 'south' ? source.southName : '')
+    .replaceAll('@ItemName', itemName)
+    .replaceAll('@SourceFilename', sourceFilename ? path.parse(sourceFilename).name : '')
+    .replaceAll('@SourceExtension', sourceFilename ? path.parse(sourceFilename).ext : '');
 };
 
 /**

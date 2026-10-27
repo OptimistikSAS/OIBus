@@ -23,11 +23,13 @@ import {
   FILE_OUTPUT_TRANSFORMER_REPLACEMENTS,
   FILE_TRANSFORMER_REPLACEMENTS,
   FILE_WRITER_REMOVED_DATA_TYPES,
+  FILENAME_FUNCTION_NAMES,
   IOT_FAMILY_SOUTH_TYPES,
   keepsResolvedTransformer,
   OIANALYTICS_TRANSFORMER_FUNCTION_NAMES,
   OldSqlItemSettings,
   POINT_SOUTH_TYPES,
+  PREFIXING_NORTH_TYPES,
   RAW_RESAMPLING_SOUTH_TYPES,
   RECORD_LIST_TO_CSV_FUNCTION_NAME,
   RECORD_LIST_TO_OIANALYTICS_FUNCTION_NAME,
@@ -45,7 +47,8 @@ import {
   toOIAnalyticsItemFileOptions,
   toRecordListTransformerOptions,
   toSetpointTransformerOptions,
-  usesRemoteAgent
+  usesRemoteAgent,
+  withPrefixAndSuffix
 } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
 import { generateRandomId } from '../../../../service/utils';
 
@@ -97,7 +100,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   convertOIAnalyticsSouths,
   moveCompressionToNorths,
   mergeSetpointsIntoRecordLists,
-  replaceFileTransformer
+  replaceFileTransformer,
+  moveFilenamePrefixAndSuffixToTransformers
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -1216,10 +1220,12 @@ export async function replaceCsvAndJsonWriters(knex: Knex): Promise<void> {
   }
 }
 
-const FILE_WRITER_LINK_TABLES = [
+/** The North connectors and history queries (owning a North), with their North type, settings and transformer links */
+const NORTH_LINK_OWNER_TABLES = [
   {
     owners: NORTH_CONNECTORS_TABLE,
     typeColumn: 'type',
+    settingsColumn: 'settings',
     links: NORTH_TRANSFORMERS_TABLE,
     items: NORTH_TRANSFORMERS_ITEMS_TABLE,
     owner: 'north_id'
@@ -1227,6 +1233,7 @@ const FILE_WRITER_LINK_TABLES = [
   {
     owners: HISTORY_QUERIES_TABLE,
     typeColumn: 'north_type',
+    settingsColumn: 'north_settings',
     links: HISTORY_QUERY_TRANSFORMERS_TABLE,
     items: HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE,
     owner: 'history_id'
@@ -1247,7 +1254,7 @@ export async function convertFileWriterLinks(knex: Knex): Promise<void> {
   if (removedTypeTransformers.length === 0) return;
 
   let removed = 0;
-  for (const table of FILE_WRITER_LINK_TABLES) {
+  for (const table of NORTH_LINK_OWNER_TABLES) {
     const ownerIds = (await knex(table.owners).select('id').where(table.typeColumn, 'file-writer')).map((row: { id: string }) => row.id);
     if (ownerIds.length === 0) continue;
     const links: Array<{ id: string; transformer_id: string; options: string | null }> = await knex(table.links)
@@ -1498,6 +1505,63 @@ export async function mergeSetpointsIntoRecordLists(knex: Knex): Promise<void> {
 export async function replaceFileTransformer(knex: Knex): Promise<void> {
   for (const [oldFunctionName, functionName] of Object.entries(FILE_AS_IS_REPLACEMENT)) {
     await replaceStandardTransformer(knex, oldFunctionName, { functionName }, () => structuredClone(FILE_AS_IS_OPTIONS));
+  }
+}
+
+/**
+ * The File Writer and SFTP North connectors no longer add a prefix and a suffix to the name of the files they send (see
+ * `moveFilenamePrefixAndSuffixToTransformers` in the config upgrade): the `prefix` and `suffix` settings are removed, and
+ * added to the filename of their file-to-file and record-list-to-file transformers. Their custom transformers name the
+ * files themselves: a warning lists them. The files still waiting in their caches are renamed by the 3.10.0 data folder
+ * migration.
+ */
+export async function moveFilenamePrefixAndSuffixToTransformers(knex: Knex): Promise<void> {
+  const transformers: Array<{ id: string; type: string; function_name: string | null }> = await knex(TRANSFORMERS_TABLE).select(
+    'id',
+    'type',
+    'function_name'
+  );
+  const transformerOf = (id: string) => transformers.find(transformer => transformer.id === id);
+  const namesFiles = (id: string) =>
+    transformerOf(id)?.type === 'standard' && FILENAME_FUNCTION_NAMES.includes(transformerOf(id)!.function_name!);
+
+  let customLinks = 0;
+  for (const table of NORTH_LINK_OWNER_TABLES) {
+    const owners: Array<{ id: string; name: string; settings: string }> = await knex(table.owners)
+      .select('id', 'name', `${table.settingsColumn} as settings`)
+      .whereIn(table.typeColumn, PREFIXING_NORTH_TYPES);
+    for (const owner of owners) {
+      const { prefix, suffix, ...settings } = JSON.parse(owner.settings) as Record<string, unknown>;
+      if (prefix === undefined && suffix === undefined) continue;
+      await knex(table.owners)
+        .where('id', owner.id)
+        .update({ [table.settingsColumn]: JSON.stringify(settings) });
+      if (!prefix && !suffix) continue;
+
+      const links: Array<{ id: string; transformer_id: string; options: string | null }> = await knex(table.links)
+        .select('id', 'transformer_id', 'options')
+        .where(table.owner, owner.id);
+      for (const link of links) {
+        const options = link.options ? (JSON.parse(link.options) as Record<string, unknown>) : {};
+        if (transformerOf(link.transformer_id)?.type === 'custom') customLinks++;
+        if (!namesFiles(link.transformer_id) || typeof options.filename !== 'string') continue;
+        options.filename = withPrefixAndSuffix(
+          options.filename,
+          (prefix as string | null) ?? '',
+          (suffix as string | null) ?? '',
+          owner.name
+        );
+        await knex(table.links)
+          .where('id', link.id)
+          .update({ options: JSON.stringify(options) });
+      }
+    }
+  }
+  if (customLinks > 0) {
+    console.warn(
+      `${customLinks} link(s) of File Writer and SFTP North connectors to custom transformers no longer add the prefix and suffix ` +
+        'of their North to the file names: the custom transformers name the files'
+    );
   }
 }
 

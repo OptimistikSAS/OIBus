@@ -85,8 +85,6 @@
           },
           "file-writer": {
             "output-folder": "输出文件夹",
-            "prefix": "前缀",
-            "suffix": "后缀",
             "smb-username": "SMB 用户名",
             "smb-password": "SMB 密码",
             "smb-domain": "SMB 域"
@@ -276,8 +274,6 @@
               "private-key": "私钥"
             },
             "remote-folder": "远程文件夹",
-            "prefix": "前缀",
-            "suffix": "后缀",
             "username": "用户名",
             "password": "密码",
             "private-key": "私钥",

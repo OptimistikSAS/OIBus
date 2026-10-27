@@ -962,8 +962,6 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     updatedAt: '',
     settings: {
       outputFolder: 'output-folder',
-      prefix: 'prefix-',
-      suffix: '-suffix',
       username: null,
       password: null,
       domain: null
@@ -1111,8 +1109,6 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
   enabled: true,
   settings: {
     outputFolder: 'output-folder',
-    prefix: 'prefix-',
-    suffix: '-suffix',
     username: null,
     password: null,
     domain: null
@@ -1307,8 +1303,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     },
     northSettings: {
       outputFolder: 'output-folder',
-      prefix: 'prefix-',
-      suffix: '-suffix',
       username: null,
       password: null,
       domain: null
@@ -1393,8 +1387,6 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   },
   northSettings: {
     outputFolder: 'output-folder',
-    prefix: 'prefix-',
-    suffix: '-suffix',
     username: null,
     password: null,
     domain: null

@@ -30,16 +30,24 @@ describe('Data folder migration v3.10.0', () => {
   const setpoints = [{ reference: 'sp1', value: 1 }];
 
   // The North connectors and history queries, as read from the configuration database
-  const northTypes: Record<string, Array<{ id: string; type: string }>> = {
+  const northTypes: Record<string, Array<{ id: string; type: string; name?: string; settings?: string }>> = {
     north_connectors: [
       { id: 'console', type: 'console' },
       { id: 'oia', type: 'oianalytics' },
-      { id: 'writer', type: 'file-writer' }
+      { id: 'writer', type: 'file-writer' },
+      {
+        id: 'prefixed',
+        type: 'file-writer',
+        name: 'Writer',
+        settings: JSON.stringify({ prefix: '@ConnectorName-', suffix: '-@CurrentDate' })
+      },
+      { id: 'mqtt', type: 'mqtt', name: 'MQTT', settings: JSON.stringify({ prefix: 'not-a-prefix' }) }
     ],
     history_queries: [
       { id: 'h1', type: 'console' },
       { id: 'h2', type: 'oianalytics' },
-      { id: 'h3', type: 'file-writer' }
+      { id: 'h3', type: 'file-writer' },
+      { id: 'h4', type: 'sftp', name: 'History', settings: JSON.stringify({ prefix: 'pre_', suffix: null }) }
     ]
   };
   const knex = ((table: string) => ({ select: async () => northTypes[table] })) as unknown as Knex;
@@ -195,6 +203,30 @@ describe('Data folder migration v3.10.0', () => {
         assert.strictEqual(await contentTypeOf(folder, filename), 'file');
       }
     }
+  });
+
+  it('should rename the files cached by the File Writer and SFTP norths, adding their prefix and suffix', async () => {
+    mock.timers.enable({ apis: ['Date'], now: new Date('2024-01-02T03:04:05.006Z') });
+    const north = path.join(tmpRoot, 'cache', 'north-prefixed');
+    const history = path.join(tmpRoot, 'error', 'history-h4', 'north');
+    const other = path.join(tmpRoot, 'cache', 'north-mqtt');
+    await writeCacheFile(north, 'file1', 'file', records);
+    await writeCacheFile(history, 'file1', 'any', records);
+    await writeCacheFile(other, 'file1', 'file', records);
+
+    await migration.up(knex);
+    mock.timers.reset();
+
+    assert.deepStrictEqual((await readCacheFile(north, 'file1')).metadata, {
+      contentFile: 'Writer-file1-2024_01_02_03_04_05_006.json',
+      contentSize: JSON.stringify(records).length,
+      numberOfElement: 2,
+      createdAt: '',
+      contentType: 'file'
+    });
+    const historyFile = await readCacheFile(history, 'file1');
+    assert.deepStrictEqual([historyFile.metadata.contentFile, historyFile.metadata.contentType], ['pre_file1.json', 'file']);
+    assert.strictEqual((await readCacheFile(other, 'file1')).metadata.contentFile, 'file1.json');
   });
 
   it('should leave the other content types and folders untouched', async () => {

@@ -34,30 +34,6 @@ const manifest: NorthConnectorManifest = {
       },
       {
         type: 'string',
-        key: 'prefix',
-        translationKey: 'configuration.oibus.manifest.north.file-writer.prefix',
-        validators: [],
-        defaultValue: '@ConnectorName-',
-        displayProperties: {
-          row: 0,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'suffix',
-        translationKey: 'configuration.oibus.manifest.north.file-writer.suffix',
-        validators: [],
-        defaultValue: '-@CurrentDate',
-        displayProperties: {
-          row: 0,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
         key: 'username',
         translationKey: 'configuration.oibus.manifest.north.file-writer.smb-username',
         defaultValue: '',

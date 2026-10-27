@@ -164,30 +164,6 @@ const manifest: NorthConnectorManifest = {
           columns: 12,
           displayInViewMode: true
         }
-      },
-      {
-        type: 'string',
-        key: 'prefix',
-        translationKey: 'configuration.oibus.manifest.north.sftp.prefix',
-        defaultValue: '@ConnectorName-',
-        validators: [],
-        displayProperties: {
-          row: 4,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'suffix',
-        translationKey: 'configuration.oibus.manifest.north.sftp.suffix',
-        defaultValue: '-@CurrentDate',
-        validators: [],
-        displayProperties: {
-          row: 4,
-          columns: 6,
-          displayInViewMode: true
-        }
       }
     ]
   }
