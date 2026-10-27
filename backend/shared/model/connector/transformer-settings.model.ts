@@ -262,6 +262,9 @@ export const TRANSFORMER_RECORD_LIST_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = [
 export type TransformerRecordListToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_RECORD_LIST_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
 
+export const TRANSFORMER_RECORD_LIST_TO_MQTT_SETTINGS_PAYLOADS = ['record', 'value'] as const;
+export type TransformerRecordListToMqttSettingsPayload = (typeof TRANSFORMER_RECORD_LIST_TO_MQTT_SETTINGS_PAYLOADS)[number];
+
 export const TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_SOURCE_TYPES = [
   'iso-string',
   'unix-epoch',
@@ -274,10 +277,6 @@ export type TransformerRecordListToOianalyticsSettingsTimestampSourceType =
 export const TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_PRECISIONS = ['ms', 's', 'min', 'hr'] as const;
 export type TransformerRecordListToOianalyticsSettingsTimestampPrecision =
   (typeof TRANSFORMER_RECORD_LIST_TO_OIANALYTICS_SETTINGS_TIMESTAMP_PRECISIONS)[number];
-
-export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
-export type TransformerSetpointToModbusSettingsMappingModbusType =
-  (typeof TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
 
 export interface TransformerFileToFileSettingsInput {
   fileType: TransformerFileToFileSettingsInputFileType;
@@ -477,22 +476,6 @@ export interface TransformerRecordListToOpcuaSettingsMapping {
   nodeId: string;
 }
 
-export interface TransformerSetpointToModbusSettingsMapping {
-  reference: string;
-  address: string;
-  modbusType: TransformerSetpointToModbusSettingsMappingModbusType;
-}
-
-export interface TransformerSetpointToMqttSettingsMapping {
-  reference: string;
-  topic: string;
-}
-
-export interface TransformerSetpointToOpcuaSettingsMapping {
-  reference: string;
-  nodeId: string;
-}
-
 export type TransformerFileSettings = object;
 
 export interface TransformerFileToFileSettings {
@@ -553,6 +536,8 @@ export interface TransformerRecordListToModbusSettings {
 
 export interface TransformerRecordListToMqttSettings {
   pointIdColumn: string;
+  payload: TransformerRecordListToMqttSettingsPayload;
+  valueColumn?: string;
   mapping: Array<TransformerRecordListToMqttSettingsMapping>;
 }
 
@@ -568,20 +553,6 @@ export interface TransformerRecordListToOpcuaSettings {
   mapping: Array<TransformerRecordListToOpcuaSettingsMapping>;
 }
 
-export type TransformerSetpointToJsonSettings = object;
-
-export interface TransformerSetpointToModbusSettings {
-  mapping: Array<TransformerSetpointToModbusSettingsMapping>;
-}
-
-export interface TransformerSetpointToMqttSettings {
-  mapping: Array<TransformerSetpointToMqttSettingsMapping>;
-}
-
-export interface TransformerSetpointToOpcuaSettings {
-  mapping: Array<TransformerSetpointToOpcuaSettingsMapping>;
-}
-
 export type TransformerSettings =
   | TransformerFileSettings
   | TransformerFileToFileSettings
@@ -594,8 +565,4 @@ export type TransformerSettings =
   | TransformerRecordListToModbusSettings
   | TransformerRecordListToMqttSettings
   | TransformerRecordListToOianalyticsSettings
-  | TransformerRecordListToOpcuaSettings
-  | TransformerSetpointToJsonSettings
-  | TransformerSetpointToModbusSettings
-  | TransformerSetpointToMqttSettings
-  | TransformerSetpointToOpcuaSettings;
+  | TransformerRecordListToOpcuaSettings;

@@ -55,13 +55,6 @@ const anyToMqtt: StandardTransformerDTO = {
   manifest: { ...recordListToMqtt.manifest, attributes: [] }
 };
 
-const setpointToMqtt: StandardTransformerDTO = {
-  ...anyToMqtt,
-  id: 'setpoint-to-mqtt',
-  functionName: 'setpoint-to-mqtt',
-  inputType: 'setpoint'
-};
-
 const items: Array<SouthConnectorItemDTO> = testData.south.list[0].items;
 
 function toItemLight(item: SouthConnectorItemDTO): ItemLightDTO {
@@ -108,7 +101,7 @@ class EditNorthTransformerModalComponentTester {
       testData.south.listLight,
       testData.scanMode.list,
       testData.certificates.list,
-      [recordListToMqtt, anyToMqtt, setpointToMqtt],
+      [recordListToMqtt, anyToMqtt],
       supportedOutputTypes
     );
   }
@@ -118,7 +111,7 @@ class EditNorthTransformerModalComponentTester {
       testData.south.listLight,
       testData.scanMode.list,
       testData.certificates.list,
-      [recordListToMqtt, anyToMqtt, setpointToMqtt],
+      [recordListToMqtt, anyToMqtt],
       ['mqtt'],
       transformer
     );
@@ -211,9 +204,10 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.source.selectOptions('OIAnalytics setpoints');
     await tester.nextButton.click();
     await expect.element(tester.optionsStep).toHaveAttribute('aria-current', 'step');
-    await expect.element(tester.root.getByText('This transformer has no options.')).toBeVisible();
+    await expect.element(tester.topic).toBeVisible();
     // the options are tried out right away
     await expect.element(tester.testPanel).toBeVisible();
+    await tester.topic.fill('my/topic');
     await tester.nextButton.click();
     await expect.element(tester.root.getByCss('#source-summary')).toMatchTextContent('OIAnalytics setpoints');
     await expect.element(tester.root.getByCss('#source-summary')).toMatchTextContent('MQTT payloads');
@@ -272,13 +266,15 @@ describe('EditNorthTransformerModalComponent', () => {
     tester.prepareForCreation();
 
     await tester.source.selectOptions('OIAnalytics setpoints');
+    // the setpoints are records
     await expect.element(tester.output.getByRole('option')).toHaveLength(2);
     await tester.output.selectOptions('MQTT payloads');
     await tester.nextButton.click();
+    await tester.topic.fill('my/topic');
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(
-      expect.objectContaining({ source: { type: 'oianalytics-setpoint' }, transformer: setpointToMqtt })
+      expect.objectContaining({ source: { type: 'oianalytics-setpoint' }, transformer: recordListToMqtt, options: { topic: 'my/topic' } })
     );
   });
 
@@ -288,7 +284,7 @@ describe('EditNorthTransformerModalComponent', () => {
     // without source, every transformer is proposed
     await tester.source.selectOptions('OIAnalytics setpoints');
     await tester.source.selectOptions('');
-    await expect.element(tester.output.getByRole('option')).toHaveLength(4);
+    await expect.element(tester.output.getByRole('option')).toHaveLength(3);
     await tester.output.selectOptions(tester.output.getByRole('option').nth(1));
     await tester.nextButton.click();
 
@@ -492,7 +488,7 @@ describe('EditNorthTransformerModalComponent', () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.prepareForCreation();
     await tester.source.selectOptions('OIAnalytics setpoints');
-    // the only transformer producing MQTT payloads from setpoints
+    // the only transformer producing MQTT payloads from records, as the setpoints are
     await expect.element(tester.output).toHaveDisplayValue(/^\s*MQTT payloads\s*$/);
 
     await tester.source.selectOptions('OIBus API data source');
@@ -509,7 +505,7 @@ describe('EditNorthTransformerModalComponent', () => {
       testData.south.listLight,
       testData.scanMode.list,
       testData.certificates.list,
-      [recordListToMqtt, anyToMqtt, setpointToMqtt],
+      [recordListToMqtt, anyToMqtt],
       ['mqtt'],
       { dataSourceType: 'south', south: testData.south.listLight[0] }
     );
@@ -528,7 +524,7 @@ describe('EditNorthTransformerModalComponent', () => {
         testData.south.listLight,
         testData.scanMode.list,
         testData.certificates.list,
-        [recordListToMqtt, anyToMqtt, setpointToMqtt],
+        [recordListToMqtt, anyToMqtt],
         ['mqtt'],
         { dataSourceType: 'south', south: testData.south.listLight[0], ...preset }
       );
@@ -554,7 +550,7 @@ describe('EditNorthTransformerModalComponent', () => {
       testData.south.listLight,
       testData.scanMode.list,
       testData.certificates.list,
-      [recordListToMqtt, anyToMqtt, setpointToMqtt],
+      [recordListToMqtt, anyToMqtt],
       ['mqtt'],
       { dataSourceType: 'oibus-api' }
     );
@@ -675,7 +671,7 @@ describe('EditNorthTransformerModalComponent', () => {
         testData.south.listLight,
         testData.scanMode.list,
         testData.certificates.list,
-        [recordListToMqtt, anyToMqtt, setpointToMqtt],
+        [recordListToMqtt, anyToMqtt],
         ['mqtt'],
         { dataSourceType: 'south', south }
       );

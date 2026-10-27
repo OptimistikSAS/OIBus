@@ -1026,7 +1026,7 @@ const northList: Array<NorthConnectorDTO> = [
           type: 'custom',
           name: 'my transformer 3',
           description: 'description',
-          inputType: 'setpoint',
+          inputType: 'record-list',
           outputType: 'file',
           customCode: 'console.log("Hello World");',
           language: 'javascript',

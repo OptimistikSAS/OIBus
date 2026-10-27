@@ -121,8 +121,8 @@ Transformers are also the mechanism for filtering which data a North connector r
 caches the data of the sources (and items) a transformer is configured for. **Data without transformer is ignored.**
 
 To send data as it is, use a passthrough transformer: [File (as is)](../engine/transformers.mdx#file-as-is) for files
-and JSON payloads, [File](../engine/transformers.mdx#file-from-records) for record lists, or
-[JSON](../engine/transformers.mdx#json-setpoints) for OIAnalytics setpoints.
+and JSON payloads, or [File](../engine/transformers.mdx#file-from-records) for record lists (the OIAnalytics setpoints
+included).
 
 :::info Upgrading to 3.10
 Before 3.10, the data compatible with the North connector type was cached without transformer, and the **No

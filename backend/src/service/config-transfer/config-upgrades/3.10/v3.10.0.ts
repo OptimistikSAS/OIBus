@@ -8,7 +8,6 @@ import recordListToModbusManifest from '../../../../transformers/record-list/rec
 import recordListToMqttManifest from '../../../../transformers/record-list/record-list-to-mqtt/manifest';
 import recordListToOianalyticsManifest from '../../../../transformers/record-list/record-list-to-oianalytics/manifest';
 import recordListToOpcuaManifest from '../../../../transformers/record-list/record-list-to-opcua/manifest';
-import setpointToJsonManifest from '../../../../transformers/setpoint/oibus-setpoint-to-json/manifest';
 import { generateRandomId } from '../../../utils';
 import {
   ConfigUpgrade,
@@ -406,6 +405,46 @@ export const COMPRESSED_FILE_OPTIONS = {
   compression: true
 };
 
+/**
+ * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
+ * record-list ones.
+ */
+export const SETPOINT_TRANSFORMER_REPLACEMENTS: Record<string, string> = {
+  'setpoint-to-json': 'record-list-to-file',
+  'setpoint-to-modbus': 'record-list-to-modbus',
+  'setpoint-to-mqtt': 'record-list-to-mqtt',
+  'setpoint-to-opcua': 'record-list-to-opcua'
+};
+
+/**
+ * Converts the options of a setpoint transformer for the record-list one replacing it: the point of a setpoint is read
+ * from its `reference`, and its value from its `value`. setpoint-to-json sent the setpoints as they are, in a JSON file;
+ * setpoint-to-mqtt published the value alone. Options already converted are returned as they are.
+ */
+export function toSetpointTransformerOptions(oldFunctionName: string, options: Record<string, unknown>): Record<string, unknown> {
+  if (oldFunctionName === 'setpoint-to-json') {
+    if (options.output !== undefined) return options;
+    return {
+      output: { fileType: 'json', encoding: 'UTF_8', compression: false },
+      filename: '@CurrentDate.json',
+      keepOtherFields: true,
+      fields: []
+    };
+  }
+  if (options.pointIdColumn !== undefined) return options;
+  const mapping = ((options.mapping ?? []) as Array<Record<string, unknown>>).map(({ reference, ...target }) => ({
+    pointId: reference,
+    ...target
+  }));
+  if (oldFunctionName === 'setpoint-to-mqtt') {
+    return { pointIdColumn: 'reference', payload: 'value', valueColumn: 'value', mapping };
+  }
+  return { pointIdColumn: 'reference', valueColumn: 'value', mapping };
+}
+
+/** The data type of a transformer input or output, `setpoint` becoming `record-list`. */
+export const toSetpointFreeDataType = (dataType: string): string => (dataType === 'setpoint' ? 'record-list' : dataType);
+
 /** The data type of a transformer input or output, `any` being renamed `file`. */
 export const toFileDataType = (dataType: string): string => (dataType === 'any' ? 'file' : dataType);
 
@@ -792,8 +831,8 @@ function addOIAnalyticsTransformers(config: JsonObject): void {
   }
 }
 
-// record-list-to-json is replaced by record-list-to-file at the end of the upgrade, with its manifest
-const PASSTHROUGH_MANIFESTS = [fileManifest, setpointToJsonManifest];
+// record-list-to-json and setpoint-to-json are replaced by record-list-to-file at the end of the upgrade, with its manifest
+const PASSTHROUGH_MANIFESTS = [fileManifest];
 
 /**
  * The 'iso' and 'ignore' standard transformers are removed: the links are changed to keep routing the data as before
@@ -969,17 +1008,20 @@ function replaceIsoAndIgnoreTransformers(config: JsonObject): void {
   config.transformers = transformers.filter(transformer => !isRemoved(transformer));
 }
 
-const FILE_TRANSFORMER_MANIFESTS = [
+const REPLACEMENT_TRANSFORMER_MANIFESTS = [
   fileToFileManifest,
   fileToMqttManifest,
   fileToOianalyticsManifest,
   fileToRecordListManifest,
-  recordListToFileManifest
+  recordListToFileManifest,
+  recordListToModbusManifest,
+  recordListToMqttManifest,
+  recordListToOpcuaManifest
 ];
 
 /**
- * The CSV and JSON transformers are replaced by the file ones (see `FILE_TRANSFORMER_REPLACEMENTS` and
- * `FILE_OUTPUT_TRANSFORMER_REPLACEMENTS`): renamed in place, or merged into their replacement when the configuration
+ * Standard transformers are replaced (see `FILE_TRANSFORMER_REPLACEMENTS`, `FILE_OUTPUT_TRANSFORMER_REPLACEMENTS` and
+ * `SETPOINT_TRANSFORMER_REPLACEMENTS`): renamed in place, or merged into their replacement when the configuration
  * already describes it, their links' options being converted.
  */
 function replaceCsvAndJsonTransformers(
@@ -1002,7 +1044,7 @@ function replaceCsvAndJsonTransformers(
       continue;
     }
     (oldTransformer.settings as JsonObject).functionName = newFunctionName;
-    oldTransformer.manifest = FILE_TRANSFORMER_MANIFESTS.find(manifest => manifest.id === newFunctionName)!.settings;
+    oldTransformer.manifest = REPLACEMENT_TRANSFORMER_MANIFESTS.find(manifest => manifest.id === newFunctionName)!.settings;
     replacedIds.set(oldTransformer.oIBusInternalId, { oldFunctionName, newId: oldTransformer.oIBusInternalId });
   }
 
@@ -1208,6 +1250,33 @@ function moveCompressionToNorths(config: JsonObject): void {
   }
 }
 
+/**
+ * The setpoints sent by OIAnalytics are records: the setpoint transformers are replaced by the record-list ones (see
+ * `toSetpointTransformerOptions`), and the custom transformers reading or writing setpoints read or write records. The
+ * record-list-to-mqtt links without payload publish the whole record, as before.
+ */
+function mergeSetpointsIntoRecordLists(config: JsonObject): void {
+  replaceCsvAndJsonTransformers(config, SETPOINT_TRANSFORMER_REPLACEMENTS, toSetpointTransformerOptions);
+  for (const transformer of asObjects(config.transformers)) {
+    const settings = transformer.settings as JsonObject;
+    settings.inputType = toSetpointFreeDataType(settings.inputType as string);
+    settings.outputType = toSetpointFreeDataType(settings.outputType as string);
+  }
+
+  const recordListToMqttIds = asObjects(config.transformers)
+    .filter(
+      transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === recordListToMqttManifest.id
+    )
+    .map(transformer => transformer.oIBusInternalId);
+  const setRecordPayload = (link: JsonObject): void => {
+    if (!recordListToMqttIds.includes(link.transformerId)) return;
+    link.options = { ...((link.options as JsonObject | null) ?? {}) };
+    setMissing(link.options as JsonObject, 'payload', 'record');
+  };
+  forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(setRecordPayload));
+  forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(setRecordPayload));
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -1220,7 +1289,8 @@ export const upgrade: ConfigUpgrade = {
     'file-to-mqtt, file-to-record-list and file-to-oianalytics ones, reading both CSV and JSON files; replace the json-to-csv, ' +
     'record-list-to-csv and record-list-to-json transformers by file-to-file and record-list-to-file ones, writing both CSV and JSON files; ' +
     'only send files to the File Writer North; send record lists from the South OIAnalytics, its CSV files being written by ' +
-    'record-list-to-file transformers; compress the files of the folder scanner, FTP and SFTP souths in file-to-file transformers',
+    'record-list-to-file transformers; compress the files of the folder scanner, FTP and SFTP souths in file-to-file transformers; ' +
+    'send the OIAnalytics setpoints as record lists, replacing the setpoint transformers by record-list ones',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1313,6 +1383,7 @@ export const upgrade: ConfigUpgrade = {
     convertFileWriterLinks(config);
     convertOIAnalyticsSouths(config);
     moveCompressionToNorths(config);
+    mergeSetpointsIntoRecordLists(config);
 
     return config;
   }

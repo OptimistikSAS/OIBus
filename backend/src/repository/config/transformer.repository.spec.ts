@@ -20,10 +20,6 @@ import RecordListToModbusTransformer from '../../transformers/record-list/record
 import RecordListToMQTTTransformer from '../../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
 import RecordListToOIAnalyticsTransformer from '../../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
 import RecordListToOPCUATransformer from '../../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
-import OIBusSetpointToJSONTransformer from '../../transformers/setpoint/oibus-setpoint-to-json/oibus-setpoint-to-json-transformer';
-import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
-import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
-import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
 import TransformerRepository from './transformer.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-transformer.db';
@@ -82,34 +78,6 @@ const standardTransformers: Array<StandardTransformer> = [
     functionName: RecordListToOPCUATransformer.transformerName,
     outputType: 'opcua',
     type: 'standard'
-  },
-  {
-    id: 'oibusSetpointToJson',
-    inputType: 'setpoint',
-    functionName: OIBusSetpointToJSONTransformer.transformerName,
-    outputType: 'file',
-    type: 'standard'
-  },
-  {
-    id: 'oibusSetpointToModbus',
-    inputType: 'setpoint',
-    functionName: OIBusSetpointToModbusTransformer.transformerName,
-    outputType: 'modbus',
-    type: 'standard'
-  },
-  {
-    id: 'oibusSetpointToMqtt',
-    inputType: 'setpoint',
-    functionName: OIBusSetpointToMQTTTransformer.transformerName,
-    outputType: 'mqtt',
-    type: 'standard'
-  },
-  {
-    id: 'oibusSetpointToOpcua',
-    inputType: 'setpoint',
-    functionName: OIBusSetpointToOPCUATransformer.transformerName,
-    outputType: 'opcua',
-    type: 'standard'
   }
 ];
 
@@ -120,8 +88,8 @@ const customTransformer = (id: string, name: string): CustomTransformer => ({
   name
 });
 
-const isSetpointToOpcua = (transformer: Transformer) =>
-  transformer.type === 'standard' && transformer.functionName === OIBusSetpointToOPCUATransformer.transformerName;
+const isRecordListToOpcua = (transformer: Transformer) =>
+  transformer.type === 'standard' && transformer.functionName === RecordListToOPCUATransformer.transformerName;
 
 let database: Database;
 describe('TransformerRepository', () => {
@@ -273,11 +241,11 @@ describe('TransformerRepository', () => {
 
   it('should properly search transformers and page them', () => {
     const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-    assert.strictEqual(result.totalElements, 19);
-    // First page contains standard transformers (10 per page)
-    for (const t of result.content.map(stripAuditFields)) {
-      assert.strictEqual(t.type, 'standard');
-    }
+    assert.strictEqual(result.totalElements, 15);
+    // 10 per page
+    assert.strictEqual(result.content.length, 10);
+    assert.strictEqual(result.totalPages, 2);
+    assert.strictEqual(repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 1 }).content.length, 5);
   });
 
   it('should search with only type filter', () => {
@@ -303,9 +271,9 @@ describe('TransformerRepository', () => {
     const all = secondRepo.list().filter(t => t.type === 'standard');
     assert.strictEqual(all.length, standardTransformers.length);
     // Explicitly pin the last standard transformer registered by createStandardTransformers()
-    // (setpoint-to-opcua) to make sure it was not duplicated on this second construction.
-    const setpointToOpcuaEntries = all.filter(isSetpointToOpcua);
-    assert.strictEqual(setpointToOpcuaEntries.length, 1);
+    // (record-list-to-opcua) to make sure it was not duplicated on this second construction.
+    const recordListToOpcuaEntries = all.filter(isRecordListToOpcua);
+    assert.strictEqual(recordListToOpcuaEntries.length, 1);
   });
 
   it('should create all standard transformers when none exist', () => {
@@ -315,21 +283,21 @@ describe('TransformerRepository', () => {
     const created = freshRepo.list().filter(t => t.type === 'standard');
     assert.deepStrictEqual(created.map(t => t.functionName).sort(), standardTransformers.map(t => t.functionName).sort());
     // Explicitly pin the last standard transformer registered by createStandardTransformers()
-    // (setpoint-to-opcua) to make sure the creation branch is exercised for it specifically,
+    // (record-list-to-opcua) to make sure the creation branch is exercised for it specifically,
     // not just implicitly via the aggregate count above.
-    const setpointToOpcua = created.find(isSetpointToOpcua);
-    assert.ok(setpointToOpcua, 'setpoint-to-opcua standard transformer was not created');
-    assert.strictEqual(setpointToOpcua!.inputType, 'setpoint');
-    assert.strictEqual(setpointToOpcua!.outputType, 'opcua');
+    const recordListToOpcua = created.find(isRecordListToOpcua);
+    assert.ok(recordListToOpcua, 'record-list-to-opcua standard transformer was not created');
+    assert.strictEqual(recordListToOpcua!.inputType, 'record-list');
+    assert.strictEqual(recordListToOpcua!.outputType, 'opcua');
 
     // And re-constructing once more against the now fully-populated table should skip it again,
     // covering the false branch of that same last if-check without disturbing other tests' state.
-    database.prepare('DELETE FROM transformers WHERE function_name = ?').run(OIBusSetpointToOPCUATransformer.transformerName);
+    database.prepare('DELETE FROM transformers WHERE function_name = ?').run(RecordListToOPCUATransformer.transformerName);
     const repoMissingLastOne = new TransformerRepository(database, createAuditServiceMock());
-    const recreated = repoMissingLastOne.list().filter(isSetpointToOpcua);
+    const recreated = repoMissingLastOne.list().filter(isRecordListToOpcua);
     assert.strictEqual(recreated.length, 1);
     const repoWithAllPresent = new TransformerRepository(database, createAuditServiceMock());
-    const stillOne = repoWithAllPresent.list().filter(isSetpointToOpcua);
+    const stillOne = repoWithAllPresent.list().filter(isRecordListToOpcua);
     assert.strictEqual(stillOne.length, 1);
   });
 });

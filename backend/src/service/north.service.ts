@@ -6,7 +6,7 @@ import { northManifestList } from './north-manifests';
 export { northManifestList } from './north-manifests';
 import { SouthItemGroupLightDTO } from '../../shared/model/api/south-connector.model';
 import { TransformerSourceCommandDTO, TransformerSourceDTO } from '../../shared/model/api/transformer.model';
-import { OIBusSetpointContent } from '../../shared/model/common/content.model';
+import { OIBusRecordListContent } from '../../shared/model/common/content.model';
 import { GetUserInfo } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
@@ -276,8 +276,9 @@ export default class NorthService {
       throw new OIBusValidationError(`North connector "${northConnectorId}" disabled`);
     }
 
-    const setpointContent: OIBusSetpointContent = {
-      type: 'setpoint',
+    // The setpoints are sent as records: their reference and value
+    const setpointContent: OIBusRecordListContent = {
+      type: 'record-list',
       content: commandContent
     };
 

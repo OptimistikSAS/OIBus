@@ -21,10 +21,6 @@ import RecordListToModbusTransformer from '../../transformers/record-list/record
 import RecordListToMQTTTransformer from '../../transformers/record-list/record-list-to-mqtt/record-list-to-mqtt-transformer';
 import RecordListToOIAnalyticsTransformer from '../../transformers/record-list/record-list-to-oianalytics/record-list-to-oianalytics-transformer';
 import RecordListToOPCUATransformer from '../../transformers/record-list/record-list-to-opcua/record-list-to-opcua-transformer';
-import OIBusSetpointToJSONTransformer from '../../transformers/setpoint/oibus-setpoint-to-json/oibus-setpoint-to-json-transformer';
-import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
-import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
-import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -202,11 +198,7 @@ export default class TransformerRepository {
       { functionName: RecordListToModbusTransformer.transformerName, inputType: 'record-list', outputType: 'modbus' },
       { functionName: RecordListToMQTTTransformer.transformerName, inputType: 'record-list', outputType: 'mqtt' },
       { functionName: RecordListToOIAnalyticsTransformer.transformerName, inputType: 'record-list', outputType: 'oianalytics' },
-      { functionName: RecordListToOPCUATransformer.transformerName, inputType: 'record-list', outputType: 'opcua' },
-      { functionName: OIBusSetpointToJSONTransformer.transformerName, inputType: 'setpoint', outputType: 'file' },
-      { functionName: OIBusSetpointToModbusTransformer.transformerName, inputType: 'setpoint', outputType: 'modbus' },
-      { functionName: OIBusSetpointToMQTTTransformer.transformerName, inputType: 'setpoint', outputType: 'mqtt' },
-      { functionName: OIBusSetpointToOPCUATransformer.transformerName, inputType: 'setpoint', outputType: 'opcua' }
+      { functionName: RecordListToOPCUATransformer.transformerName, inputType: 'record-list', outputType: 'opcua' }
     ];
     for (const { functionName, inputType, outputType } of standardTransformers) {
       if (!this.findByFunctionName(functionName)) {

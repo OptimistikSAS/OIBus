@@ -438,6 +438,96 @@ describe('3.10.0 config upgrade', () => {
     });
   });
 
+  describe('OIAnalytics setpoints', () => {
+    const standard = (id: string, functionName: string, inputType: string, outputType: string) => ({
+      oIBusInternalId: id,
+      type: 'standard',
+      settings: { functionName, inputType, outputType }
+    });
+    const setpointLink = (id: string, transformerId: string, options: JsonObject) => ({
+      id,
+      transformerId,
+      options,
+      source: { type: 'oianalytics-setpoint' }
+    });
+    const buildConfig = (): JsonObject => ({
+      transformers: [
+        standard('setpointToJson', 'setpoint-to-json', 'setpoint', 'file'),
+        standard('setpointToModbus', 'setpoint-to-modbus', 'setpoint', 'modbus'),
+        standard('setpointToMqtt', 'setpoint-to-mqtt', 'setpoint', 'mqtt'),
+        standard('setpointToOpcua', 'setpoint-to-opcua', 'setpoint', 'opcua'),
+        standard('recordListToMqtt', 'record-list-to-mqtt', 'record-list', 'mqtt'),
+        { oIBusInternalId: 'custom', type: 'custom', settings: { name: 'custom', inputType: 'setpoint', outputType: 'setpoint' } }
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'north',
+          type: 'console',
+          settings: {
+            transformers: [
+              setpointLink('json', 'setpointToJson', {}),
+              setpointLink('modbus', 'setpointToModbus', { mapping: [{ reference: 'sp1', address: '0x01', modbusType: 'coil' }] }),
+              setpointLink('mqtt', 'setpointToMqtt', { mapping: [{ reference: 'sp1', topic: 'topic/sp1' }] }),
+              setpointLink('opcua', 'setpointToOpcua', { mapping: [{ reference: 'sp1', nodeId: 'ns=1;s=sp1' }] }),
+              {
+                id: 'records',
+                transformerId: 'recordListToMqtt',
+                options: { pointIdColumn: 'pointId', mapping: [] },
+                source: { type: 'oibus-api' }
+              }
+            ]
+          }
+        }
+      ]
+    });
+
+    it('replaces the setpoint transformers by the record-list ones, reading the reference and value of the setpoints', () => {
+      const config = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(
+        (config.transformers as Array<JsonObject>).map(transformer => [transformer.oIBusInternalId, transformer.settings]),
+        [
+          ['setpointToJson', { functionName: 'record-list-to-file', inputType: 'record-list', outputType: 'file' }],
+          ['setpointToModbus', { functionName: 'record-list-to-modbus', inputType: 'record-list', outputType: 'modbus' }],
+          ['setpointToOpcua', { functionName: 'record-list-to-opcua', inputType: 'record-list', outputType: 'opcua' }],
+          ['recordListToMqtt', { functionName: 'record-list-to-mqtt', inputType: 'record-list', outputType: 'mqtt' }],
+          ['custom', { name: 'custom', inputType: 'record-list', outputType: 'record-list' }]
+        ]
+      );
+      assert.strictEqual(((config.transformers as Array<JsonObject>)[1].manifest as JsonObject).key, 'options');
+      const links = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
+      assert.deepStrictEqual(
+        links.map(link => [link.id, link.transformerId, link.options]),
+        [
+          ['json', 'setpointToJson', jsonFileOptions],
+          [
+            'modbus',
+            'setpointToModbus',
+            { pointIdColumn: 'reference', valueColumn: 'value', mapping: [{ pointId: 'sp1', address: '0x01', modbusType: 'coil' }] }
+          ],
+          [
+            'mqtt',
+            'recordListToMqtt',
+            { pointIdColumn: 'reference', payload: 'value', valueColumn: 'value', mapping: [{ pointId: 'sp1', topic: 'topic/sp1' }] }
+          ],
+          [
+            'opcua',
+            'setpointToOpcua',
+            { pointIdColumn: 'reference', valueColumn: 'value', mapping: [{ pointId: 'sp1', nodeId: 'ns=1;s=sp1' }] }
+          ],
+          // record-list-to-mqtt kept publishing the whole record
+          ['records', 'recordListToMqtt', { pointIdColumn: 'pointId', mapping: [], payload: 'record' }]
+        ]
+      );
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
   describe('South OIAnalytics', () => {
     const serialization = {
       type: 'csv',
@@ -767,8 +857,8 @@ describe('3.10.0 config upgrade', () => {
         transformer => (transformer.settings as JsonObject).functionName
       );
       // The passthroughs are for the other Norths, and for the OIBus API
-      // record-list-to-json merged into the record-list-to-file replacing record-list-to-csv
-      assert.deepStrictEqual(functionNames, ['record-list-to-file', 'file', 'setpoint-to-json']);
+      // record-list-to-json and setpoint-to-json merged into the record-list-to-file replacing record-list-to-csv
+      assert.deepStrictEqual(functionNames, ['record-list-to-file', 'file']);
       const links = ((upgraded.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
       assert.deepStrictEqual(
         links.map(link => link.source),
@@ -861,10 +951,10 @@ describe('3.10.0 config upgrade', () => {
       const config = upgrade.apply(buildConfig());
 
       const fileId = idOf(config, 'file');
-      const setpointToJsonId = idOf(config, 'setpoint-to-json');
+      // The setpoint passthrough (setpoint-to-json) merged into record-list-to-file
       assert.deepStrictEqual(
         (config.transformers as Array<JsonObject>).map(candidate => (candidate.settings as JsonObject).functionName),
-        ['record-list-to-file', 'file', 'setpoint-to-json']
+        ['record-list-to-file', 'file']
       );
       assert.strictEqual(((config.transformers as Array<JsonObject>)[1].manifest as JsonObject).key, 'options');
       assert.deepStrictEqual(linksOf(config, 0), [
@@ -889,7 +979,7 @@ describe('3.10.0 config upgrade', () => {
         { transformerId: 'csv', options: jsonFileOptions, source: { type: 'south', southId: 'opcua', items: [] } },
         { transformerId: fileId, options: {}, source: { type: 'south', southId: 'folder', items: [] } },
         { transformerId: fileId, options: {}, source: { type: 'oibus-api' } },
-        { transformerId: setpointToJsonId, options: {}, source: { type: 'oianalytics-setpoint' } }
+        { transformerId: 'csv', options: jsonFileOptions, source: { type: 'oianalytics-setpoint' } }
       ]);
       const historyLinks = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
       assert.deepStrictEqual(

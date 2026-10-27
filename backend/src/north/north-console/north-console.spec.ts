@@ -3,7 +3,7 @@ import { ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import type { OIBusPointRecord, OIBusSetpoint } from '../../../shared/model/common/content.model';
+import type { OIBusPointRecord, OIBusRecord } from '../../../shared/model/common/content.model';
 import type { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
@@ -23,7 +23,8 @@ const timeValues: Array<OIBusPointRecord> = [
     quality: 'good'
   }
 ];
-const setpoints: Array<OIBusSetpoint> = [{ reference: 'reference', value: '123456' }];
+// The setpoints sent by OIAnalytics
+const setpoints: Array<OIBusRecord> = [{ reference: 'reference', value: '123456' }];
 const readStream = {} as ReadStream;
 
 const metadata = (contentType: string, contentFile = '/path/to/file/example-123.json', contentSize = 1234): CacheMetadata => ({
@@ -64,7 +65,7 @@ describe('NorthConsole', () => {
   });
 
   it('should retrieve supported types', () => {
-    assert.deepStrictEqual(north.supportedTypes(), ['file', 'record-list', 'setpoint']);
+    assert.deepStrictEqual(north.supportedTypes(), ['file', 'record-list']);
   });
 
   it('should properly handle values in verbose mode', async () => {
@@ -79,15 +80,15 @@ describe('NorthConsole', () => {
     assert.strictEqual(stdoutWriteMock.mock.calls.length, 0);
   });
 
-  it('should properly handle setpoints in verbose mode', async () => {
+  it('should properly handle setpoints, as records, in verbose mode', async () => {
     utilsExports.streamToString.mock.mockImplementation(async () => JSON.stringify(setpoints));
 
-    await north.handleContent(readStream, metadata('setpoint'));
+    await north.handleContent(readStream, metadata('record-list'));
 
     assert.strictEqual(utilsExports.streamToString.mock.calls.length, 1);
     assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);
     assert.strictEqual(consoleTableMock.mock.calls.length, 1);
-    assert.deepStrictEqual(consoleTableMock.mock.calls[0].arguments, [setpoints, ['reference', 'value']]);
+    assert.deepStrictEqual(consoleTableMock.mock.calls[0].arguments, [setpoints]);
     assert.strictEqual(stdoutWriteMock.mock.calls.length, 0);
   });
 
@@ -111,19 +112,6 @@ describe('NorthConsole', () => {
     assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);
     assert.strictEqual(stdoutWriteMock.mock.calls.length, 1);
     assert.deepStrictEqual(stdoutWriteMock.mock.calls[0].arguments, ['North Console sent 1 values.\r\n']);
-    assert.strictEqual(consoleTableMock.mock.calls.length, 0);
-  });
-
-  it('should properly handle setpoints in non verbose mode', async () => {
-    utilsExports.streamToString.mock.mockImplementation(async () => JSON.stringify(setpoints));
-    north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', { verbose: false });
-
-    await north.handleContent(readStream, metadata('setpoint'));
-
-    assert.strictEqual(utilsExports.streamToString.mock.calls.length, 1);
-    assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);
-    assert.strictEqual(stdoutWriteMock.mock.calls.length, 1);
-    assert.deepStrictEqual(stdoutWriteMock.mock.calls[0].arguments, ['North Console sent 1 setpoint.\r\n']);
     assert.strictEqual(consoleTableMock.mock.calls.length, 0);
   });
 

@@ -134,7 +134,6 @@ describe('transformer routing', () => {
     const transformers = [
       standard('file', 'file', 'file'),
       standard('record-list-to-file', 'record-list', 'file'),
-      standard('setpoint-to-json', 'setpoint', 'file'),
       standard('record-list-to-oianalytics', 'record-list', 'oianalytics'),
       standard('file-to-oianalytics', 'file', 'oianalytics'),
       standard('record-list-to-mqtt', 'record-list', 'mqtt'),
@@ -156,13 +155,11 @@ describe('transformer routing', () => {
 
     test('should fall back to the passthrough of the data type', () => {
       expect(defaultOf('record-list', ['file', 'record-list'])).toBe('record-list-to-file');
-      expect(defaultOf('setpoint', ['file'])).toBe('setpoint-to-json');
     });
 
     test('should not propose anything without obvious choice', () => {
       expect(defaultOf(null, ['file'])).toBeNull();
       expect(defaultOf('record-list', ['mqtt', 'opcua'])).toBeNull();
-      expect(defaultOf('setpoint', ['modbus'])).toBeNull();
     });
   });
 });

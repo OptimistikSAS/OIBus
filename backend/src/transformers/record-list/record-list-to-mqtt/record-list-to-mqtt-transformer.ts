@@ -8,7 +8,7 @@ import { CacheMetadataSource } from '../../../model/engine.model';
 import { generateRandomId, streamToString } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
 import OIBusTransformer from '../../oibus-transformer';
-import { readPointId, toRows } from '../point-record';
+import { readPointId, readValue, Row, toRows } from '../point-record';
 
 export default class RecordListToMQTTTransformer extends OIBusTransformer {
   public static transformerName = 'record-list-to-mqtt';
@@ -22,7 +22,8 @@ export default class RecordListToMQTTTransformer extends OIBusTransformer {
   }
 
   /**
-   * Publish each record whose point is mapped to a topic, the payload being the record without its point column.
+   * Publish each record whose point is mapped to a topic, the payload being the record without its point column (as
+   * JSON), or the value of its value column (as it is when it is text, as JSON otherwise).
    */
   override transformInMemory(
     data: unknown,
@@ -36,8 +37,7 @@ export default class RecordListToMQTTTransformer extends OIBusTransformer {
     for (const row of toRows(data)) {
       const mapped = mappingByPointId.get(readPointId(row, pointIdColumn) ?? '');
       if (!mapped) continue;
-      const { [pointIdColumn]: _pointId, ...payload } = row;
-      content.push({ topic: mapped.topic, payload: JSON.stringify(payload) });
+      content.push({ topic: mapped.topic, payload: this.payloadOf(row) });
     }
 
     const metadata: CacheMetadata = {
@@ -48,6 +48,15 @@ export default class RecordListToMQTTTransformer extends OIBusTransformer {
       contentType: 'mqtt'
     };
     return Promise.resolve({ output: Buffer.from(JSON.stringify(content)), metadata });
+  }
+
+  private payloadOf(row: Row): string {
+    if (this.options.payload === 'value') {
+      const value = readValue(row, this.options.valueColumn!);
+      return typeof value === 'string' ? value : JSON.stringify(value);
+    }
+    const { [this.options.pointIdColumn]: _pointId, ...record } = row;
+    return JSON.stringify(record);
   }
 
   get options(): TransformerRecordListToMqttSettings {
