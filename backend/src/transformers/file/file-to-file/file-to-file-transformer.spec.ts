@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { Readable } from 'node:stream';
 import zlib from 'node:zlib';
 import { beforeEach, describe, it } from 'node:test';
+
+import { OIBusObjectAttribute, OIBusStringAttribute, OIBusStringSelectAttribute } from '../../../../shared/model/connector/form.model';
 
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
@@ -82,9 +85,13 @@ describe('FileToFileTransformer', () => {
     assert.deepStrictEqual(result.output, content);
     assert.strictEqual(result.metadata.contentFile, 'image_copy.bin');
 
+    const subFolderFile = await transformer.transform(Readable.from([content]), { source: 'test' }, path.join('sub', 'image.bin'));
+    assert.strictEqual(subFolderFile.metadata.contentFile, path.join('sub', 'image_copy.bin'));
+
+    // A payload without name is named as a random JSON file
     const payload = await transformer.transformInMemory({ a: 1 }, { source: 'test' }, null);
     assert.strictEqual(payload.output.toString(), '{"a":1}');
-    assert.strictEqual(payload.metadata.contentFile, '_copy');
+    assert.match(payload.metadata.contentFile, /^[^_]{10}_copy\.json$/);
   });
 
   it('should compress another file when asked', async () => {
@@ -98,6 +105,14 @@ describe('FileToFileTransformer', () => {
 
     assert.strictEqual(zlib.gunzipSync(result.output).toString(), 'raw content');
     assert.strictEqual(result.metadata.contentFile, 'data.bin.gz');
+  });
+
+  it('should send the files as they are by default', () => {
+    const input = manifest.settings.attributes.find(attribute => attribute.key === 'input') as OIBusObjectAttribute;
+    const fileType = input.attributes.find(attribute => attribute.key === 'fileType') as OIBusStringSelectAttribute;
+    const filename = manifest.settings.attributes.find(attribute => attribute.key === 'filename') as OIBusStringAttribute;
+    assert.strictEqual(fileType.defaultValue, 'other');
+    assert.strictEqual(filename.defaultValue, '@SourceFilename@SourceExtension');
   });
 
   it('should hide the output and the fields of another file', () => {

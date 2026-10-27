@@ -10,7 +10,6 @@ import type TransformerRepository from '../repository/config/transformer.reposit
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { createMock, Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
-import fileManifest from '../transformers/file/file/manifest';
 import FileToFileTransformer from '../transformers/file/file-to-file/file-to-file-transformer';
 import fileToFileManifest from '../transformers/file/file-to-file/manifest';
 import FileToModbusTransformer from '../transformers/file/file-to-modbus/file-to-modbus-transformer';
@@ -572,12 +571,23 @@ describe('Transformer Service', () => {
       assert.strictEqual(result.content, JSON.stringify(content.content));
     });
 
-    it('runs the file transformer, writing a payload as a file', async () => {
+    it('runs the file-to-file transformer, writing a payload as a file', async () => {
       transformerRepository.findById.mock.mockImplementation(
-        () => ({ id: 'file', type: 'standard', inputType: 'file', outputType: 'file', functionName: 'file' }) as StandardTransformer
+        () =>
+          ({
+            id: 'file-to-file',
+            type: 'standard',
+            inputType: 'file',
+            outputType: 'file',
+            functionName: 'file-to-file'
+          }) as StandardTransformer
       );
 
-      const result = await service.runTransformer('file', {}, { type: 'file', content: '{"a":1}' });
+      const result = await service.runTransformer(
+        'file-to-file',
+        { input: { fileType: 'other' }, filename: '@SourceFilename@SourceExtension', compression: false },
+        { type: 'file', content: '{"a":1}' }
+      );
 
       assert.strictEqual(result.type, 'file');
       assert.strictEqual(result.content, '{"a":1}');
@@ -713,8 +723,8 @@ describe('Transformer Service', () => {
   });
 
   it('should retrieve a transformer manifest', () => {
-    const manifest = service.getManifest('file');
-    assert.deepStrictEqual(manifest, fileManifest);
+    const manifest = service.getManifest('file-to-file');
+    assert.deepStrictEqual(manifest, fileToFileManifest);
   });
 
   it('should throw an error if transformer manifest is not found', () => {
@@ -724,7 +734,6 @@ describe('Transformer Service', () => {
   it('should get standard manifest', () => {
     assert.deepStrictEqual(getStandardManifest('file-to-mqtt'), fileToMqttManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file-to-record-list'), fileToRecordListManifest.settings);
-    assert.deepStrictEqual(getStandardManifest('file'), fileManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file-to-file'), fileToFileManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file-to-modbus'), fileToModbusManifest.settings);
     assert.deepStrictEqual(getStandardManifest('file-to-opcua'), fileToOpcuaManifest.settings);
@@ -779,7 +788,7 @@ describe('Transformer Service', () => {
       inputType: 'record-list',
       outputType: 'record-list',
       type: 'standard',
-      functionName: 'file'
+      functionName: 'file-to-file'
     };
     assert.deepStrictEqual(toTransformerDTO(standardTransformer, getUserInfo), {
       id: standardTransformer.id,
@@ -787,7 +796,7 @@ describe('Transformer Service', () => {
       inputType: standardTransformer.inputType,
       outputType: standardTransformer.outputType,
       functionName: standardTransformer.functionName,
-      manifest: fileManifest.settings
+      manifest: fileToFileManifest.settings
     });
   });
 });

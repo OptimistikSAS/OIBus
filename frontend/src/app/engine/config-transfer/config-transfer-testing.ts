@@ -112,8 +112,8 @@ export const configImportPreview: ConfigImportPreviewDTO = {
     ],
     transformers: [
       // listed by every export but linked to by nothing: never counted nor reported as missing
-      standardTransformerEntry('unlinked-standard', 'file-to-file'),
-      standardTransformerEntry('standard1', 'file'),
+      standardTransformerEntry('unlinked-standard', 'file-to-mqtt'),
+      standardTransformerEntry('standard1', 'file-to-file'),
       {
         oIBusInternalId: 'custom1',
         type: 'custom',

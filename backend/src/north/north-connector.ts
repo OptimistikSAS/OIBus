@@ -2,12 +2,14 @@ import { EventEmitter } from 'node:events';
 import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
+import zlib from 'node:zlib';
 
 import { DateTime } from 'luxon';
 
 import { OIBusContent, OIBusFileContent, OIBusRecord } from '../../shared/model/common/content.model';
 import { Instant } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { TransformerFileToFileSettings } from '../../shared/model/connector/transformer-settings.model';
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -29,7 +31,7 @@ import { loggerService } from '../service/logger/logger.service';
 import { createTransformer, runTransformerOnContent } from '../service/transformer.service';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import { createOIBusError, delay } from '../service/utils';
-import FileTransformer from '../transformers/file/file/file-transformer';
+import FileToFileTransformer, { otherFileName } from '../transformers/file/file-to-file/file-to-file-transformer';
 
 /** Events published by a North connector's {@link NorthConnector.metricsEvent}. */
 export interface NorthMetricsEvents {
@@ -69,8 +71,9 @@ export interface NorthMetricsEvents {
  * **Transformer routing** (in `cacheContent` → `findTransformer`)
  *  - Resolution priority: items-level → group-level → south-level fallback.
  *  - Data no transformer is configured for is dropped.
- *  - The standard `'file'` transformer short-circuits for files and payloads:
- *    they are cached as is, without reading them.
+ *  - The standard `'file-to-file'` transformer short-circuits for other files
+ *    (neither CSV nor JSON): they are streamed into the cache, renamed and
+ *    possibly gzipped, without reading them in memory.
  *  - Resolution uses a pre-built lookup that's invalidated on the
  *    `connectorConfiguration` setter (see `transformerLookup` doc).
  *
@@ -464,8 +467,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *  - Cache full → drop on the floor (the cache-full warning is debounced
    *    inside `cacheIsFull`).
    *  - No transformer matches → drop.
-   *  - Transformer is the standard `'file'` and the data a file or a payload
-   *    → cache as-is, without reading it.
+   *  - Transformer is the standard `'file-to-file'` for other files and the
+   *    data a file or a payload → stream it into the cache, without reading it.
    *  - Otherwise → run the transformer and cache its output.
    *
    * After caching, `triggerRunIfNecessary(0)` is called so a configured
@@ -509,12 +512,14 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       return;
     }
 
+    const fileToFileOptions = transformerConfig.options as Partial<TransformerFileToFileSettings>;
     if (
       data.type === 'file' &&
       transformerConfig.transformer.type === 'standard' &&
-      transformerConfig.transformer.functionName === FileTransformer.transformerName
+      transformerConfig.transformer.functionName === FileToFileTransformer.transformerName &&
+      fileToFileOptions.input?.fileType === 'other'
     ) {
-      return this.cacheWithoutTransform(data);
+      return this.cacheOtherFile(data, fileToFileOptions as TransformerFileToFileSettings, source);
     }
 
     this.logger.trace(
@@ -664,22 +669,26 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
-  /** Cache a file or a payload as is, through the standard 'file' transformer. */
-  private async cacheWithoutTransform(data: OIBusFileContent) {
-    if (data.content !== undefined) {
-      // A file held in memory (JSON from MQTT or the OIBus API): cached as a JSON file
-      await this.cacheService.addCacheContent(
-        Readable.from(data.content),
-        data.filename ? { contentType: 'file', contentFilename: data.filename } : { contentType: 'file' }
-      );
-    } else {
-      await this.cacheService.addCacheContent(createReadStream(data.filePath!), {
-        contentType: data.type,
-        // Use the logical filename when provided (preserves relative sub-paths like "subdir/file.json").
-        // Fall back to the basename so that absolute paths are never leaked into cache metadata.
-        contentFilename: data.filename ?? path.basename(data.filePath!)
-      });
+  /**
+   * Cache a file or a payload through the standard 'file-to-file' transformer for other files: streamed as it is or
+   * gzipped, under its new name (see `otherFileName`).
+   */
+  private async cacheOtherFile(data: OIBusFileContent, options: TransformerFileToFileSettings, source: CacheMetadataSource) {
+    // Use the logical filename when provided (preserves relative sub-paths like "subdir/file.json").
+    // Fall back to the basename so that absolute paths are never leaked into cache metadata.
+    const sourceFilename = data.filename ?? (data.filePath ? path.basename(data.filePath) : null);
+    // A file held in memory (JSON from MQTT or the OIBus API) has no file on disk to stream from
+    const content: Readable = data.content !== undefined ? Readable.from(data.content) : createReadStream(data.filePath!);
+    let output = content;
+    if (options.compression) {
+      const gzip = zlib.createGzip();
+      content.once('error', error => gzip.destroy(error));
+      output = content.pipe(gzip);
     }
+    await this.cacheService.addCacheContent(output, {
+      contentType: 'file',
+      contentFilename: otherFileName(options, source, sourceFilename)
+    });
   }
 
   isCacheEmpty(): boolean {

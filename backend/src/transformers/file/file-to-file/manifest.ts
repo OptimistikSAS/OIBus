@@ -5,7 +5,8 @@ import { buildFilenameAttribute, buildFileOutputAttribute, fileFieldsAttributes 
 
 /**
  * Converts a CSV or JSON file into a CSV or JSON file, renaming, casting and processing the fields of its rows. Another
- * file is only renamed, and possibly compressed: changing its content needs a custom transformer.
+ * file is only renamed, and possibly compressed: changing its content needs a custom transformer. By default, the files
+ * are sent as they are.
  */
 const manifest: TransformerManifest = {
   id: 'file-to-file',
@@ -16,9 +17,9 @@ const manifest: TransformerManifest = {
     key: 'options',
     translationKey: 'configuration.oibus.manifest.transformers.options',
     attributes: [
-      buildFileInputAttribute(['csv', 'json', 'other'], 'json'),
+      buildFileInputAttribute(['csv', 'json', 'other'], 'other'),
       buildFileOutputAttribute('csv'),
-      buildFilenameAttribute('@CurrentDate.csv'),
+      buildFilenameAttribute('@SourceFilename@SourceExtension'),
       {
         type: 'boolean',
         key: 'compression',

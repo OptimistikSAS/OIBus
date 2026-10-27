@@ -1,4 +1,3 @@
-import fileManifest from '../../../../transformers/file/file/manifest';
 import fileToFileManifest from '../../../../transformers/file/file-to-file/manifest';
 import fileToMqttManifest from '../../../../transformers/file/file-to-mqtt/manifest';
 import fileToOianalyticsManifest from '../../../../transformers/file/file-to-oianalytics/manifest';
@@ -395,15 +394,21 @@ export function resolveSouthItemLink<T extends SouthItemLink>(links: Array<T>, i
 /** The South connectors which compressed their files themselves, now compressed by the North transformers */
 export const COMPRESSING_SOUTH_TYPES = ['folder-scanner', 'ftp', 'sftp'];
 
+/** The options of the file-to-file transformer replacing the file one: the file is sent as it is, with the same name */
+export const FILE_AS_IS_OPTIONS = {
+  input: { fileType: 'other' },
+  filename: '@SourceFilename@SourceExtension',
+  compression: false
+};
+
 /**
  * The options of the file-to-file transformer replacing the file one for the files of a South which compressed them:
  * the file is sent with the same name, gzipped (`.gz` being added to its name).
  */
-export const COMPRESSED_FILE_OPTIONS = {
-  input: { fileType: 'other' },
-  filename: '@SourceFilename@SourceExtension',
-  compression: true
-};
+export const COMPRESSED_FILE_OPTIONS = { ...FILE_AS_IS_OPTIONS, compression: true };
+
+/** The 'file' transformer, sending the files as they are, is replaced by file-to-file (see `FILE_AS_IS_OPTIONS`) */
+export const FILE_AS_IS_REPLACEMENT: Record<string, string> = { [FILE_PASSTHROUGH.functionName]: 'file-to-file' };
 
 /**
  * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
@@ -831,9 +836,6 @@ function addOIAnalyticsTransformers(config: JsonObject): void {
   }
 }
 
-// record-list-to-json and setpoint-to-json are replaced by record-list-to-file at the end of the upgrade, with its manifest
-const PASSTHROUGH_MANIFESTS = [fileManifest];
-
 /**
  * The 'iso' and 'ignore' standard transformers are removed: the links are changed to keep routing the data as before
  * (see `replaceIsoAndIgnoreTransformers` in the entity migration). Only applied to an export describing them (an
@@ -861,7 +863,8 @@ function replaceIsoAndIgnoreTransformers(config: JsonObject): void {
       oIBusInternalId: id,
       type: 'standard',
       settings: { ...passthrough },
-      manifest: PASSTHROUGH_MANIFESTS.find(manifest => manifest.id === passthrough.functionName)?.settings ?? null
+      // the passthroughs are replaced by file-to-file and record-list-to-file at the end of the upgrade, with their manifest
+      manifest: null
     });
     return id;
   };
@@ -1113,7 +1116,7 @@ function convertOIAnalyticsSouths(config: JsonObject): void {
   const readsFiles = (link: JsonObject) => (transformerOf(link.transformerId)?.settings as JsonObject | undefined)?.inputType === 'file';
   const sendsAsIs = (link: JsonObject | undefined) => {
     const transformer = link ? transformerOf(link.transformerId) : undefined;
-    return transformer?.type === 'standard' && (transformer.settings as JsonObject).functionName === fileManifest.id;
+    return transformer?.type === 'standard' && (transformer.settings as JsonObject).functionName === FILE_PASSTHROUGH.functionName;
   };
   const recordListToFileId = (): unknown => {
     const existing = transformers.find(
@@ -1201,7 +1204,7 @@ function convertOIAnalyticsSouths(config: JsonObject): void {
 function moveCompressionToNorths(config: JsonObject): void {
   const transformers = asObjects(config.transformers);
   const fileId = transformers.find(
-    transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === fileManifest.id
+    transformer => transformer.type === 'standard' && (transformer.settings as JsonObject).functionName === FILE_PASSTHROUGH.functionName
   )?.oIBusInternalId;
   const fileToFileId = (): unknown => {
     const existing = transformers.find(
@@ -1277,6 +1280,11 @@ function mergeSetpointsIntoRecordLists(config: JsonObject): void {
   forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(setRecordPayload));
 }
 
+/** The 'file' transformer, sending the files as they are, is replaced by file-to-file (see `FILE_AS_IS_OPTIONS`) */
+function replaceFileTransformer(config: JsonObject): void {
+  replaceCsvAndJsonTransformers(config, FILE_AS_IS_REPLACEMENT, () => structuredClone(FILE_AS_IS_OPTIONS));
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -1290,7 +1298,8 @@ export const upgrade: ConfigUpgrade = {
     'record-list-to-csv and record-list-to-json transformers by file-to-file and record-list-to-file ones, writing both CSV and JSON files; ' +
     'only send files to the File Writer North; send record lists from the South OIAnalytics, its CSV files being written by ' +
     'record-list-to-file transformers; compress the files of the folder scanner, FTP and SFTP souths in file-to-file transformers; ' +
-    'send the OIAnalytics setpoints as record lists, replacing the setpoint transformers by record-list ones',
+    'send the OIAnalytics setpoints as record lists, replacing the setpoint transformers by record-list ones; ' +
+    'replace the file transformer by file-to-file ones sending the files as they are',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1384,6 +1393,7 @@ export const upgrade: ConfigUpgrade = {
     convertOIAnalyticsSouths(config);
     moveCompressionToNorths(config);
     mergeSetpointsIntoRecordLists(config);
+    replaceFileTransformer(config);
 
     return config;
   }

@@ -9,7 +9,6 @@ import { CustomTransformer, StandardTransformer, Transformer } from '../../model
 import { NotFoundError } from '../../model/types';
 import AuditService from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
-import FileTransformer from '../../transformers/file/file/file-transformer';
 import FileToFileTransformer from '../../transformers/file/file-to-file/file-to-file-transformer';
 import FileToModbusTransformer from '../../transformers/file/file-to-modbus/file-to-modbus-transformer';
 import FileToMQTTTransformer from '../../transformers/file/file-to-mqtt/file-to-mqtt-transformer';
@@ -189,7 +188,6 @@ export default class TransformerRepository {
     const standardTransformers: Array<Pick<StandardTransformer, 'functionName' | 'inputType' | 'outputType'>> = [
       { functionName: FileToMQTTTransformer.transformerName, inputType: 'file', outputType: 'mqtt' },
       { functionName: FileToRecordListTransformer.transformerName, inputType: 'file', outputType: 'record-list' },
-      { functionName: FileTransformer.transformerName, inputType: 'file', outputType: 'file' },
       { functionName: FileToFileTransformer.transformerName, inputType: 'file', outputType: 'file' },
       { functionName: FileToModbusTransformer.transformerName, inputType: 'file', outputType: 'modbus' },
       { functionName: FileToOPCUATransformer.transformerName, inputType: 'file', outputType: 'opcua' },

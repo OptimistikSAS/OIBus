@@ -18,6 +18,8 @@ import {
   COMPRESSED_FILE_OPTIONS,
   COMPRESSING_SOUTH_TYPES,
   defaultRecordListToOIAnalyticsOptions,
+  FILE_AS_IS_OPTIONS,
+  FILE_AS_IS_REPLACEMENT,
   FILE_OUTPUT_TRANSFORMER_REPLACEMENTS,
   FILE_TRANSFORMER_REPLACEMENTS,
   FILE_WRITER_REMOVED_DATA_TYPES,
@@ -94,7 +96,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   convertFileWriterLinks,
   convertOIAnalyticsSouths,
   moveCompressionToNorths,
-  mergeSetpointsIntoRecordLists
+  mergeSetpointsIntoRecordLists,
+  replaceFileTransformer
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -893,7 +896,8 @@ interface NorthLinkRow {
  * The 'iso' and 'ignore' standard transformers are removed: a North now drops the data no transformer is configured
  * for. The links are changed to keep routing the data as before (see `passthrough-transformers.ts`):
  *  - the data a North received as is, without transformer or through 'iso', goes through the passthrough of its content
- *    type ('file', 'record-list-to-json' or 'setpoint-to-json'), at the south level for the data without transformer;
+ *    type ('file', 'record-list-to-json' or 'setpoint-to-json', replaced by later steps), at the south level for the data
+ *    without transformer;
  *  - the files of the OIBus API go through a 'file' transformer applying to every data source, unless the North ignored
  *    some of them;
  *  - the items configured with 'ignore' are left out of the North transformers they fell back to (applying to their
@@ -1297,7 +1301,8 @@ export async function convertOIAnalyticsSouths(knex: Knex): Promise<void> {
   const readsFiles = (transformerId: string) => transformers.find(transformer => transformer.id === transformerId)?.input_type === 'file';
   const sendsAsIs = (transformerId: string | undefined) =>
     transformers.some(
-      transformer => transformer.id === transformerId && transformer.type === 'standard' && transformer.function_name === 'file'
+      transformer =>
+        transformer.id === transformerId && transformer.type === 'standard' && transformer.function_name === FILE_PASSTHROUGH.functionName
     );
   const recordListToFile = () => ensureStandardTransformer(knex, 'record-list-to-file', 'record-list', 'file');
 
@@ -1426,7 +1431,9 @@ export async function moveCompressionToNorths(knex: Knex): Promise<void> {
     .select('id', 'south_settings')
     .whereIn('south_type', COMPRESSING_SOUTH_TYPES);
 
-  const file: { id: string } | undefined = await knex(TRANSFORMERS_TABLE).where({ type: 'standard', function_name: 'file' }).first('id');
+  const file: { id: string } | undefined = await knex(TRANSFORMERS_TABLE)
+    .where({ type: 'standard', function_name: FILE_PASSTHROUGH.functionName })
+    .first('id');
   const compressedLink = async () => ({
     transformer_id: await ensureStandardTransformer(knex, 'file-to-file', 'file', 'file'),
     options: JSON.stringify(COMPRESSED_FILE_OPTIONS)
@@ -1482,6 +1489,16 @@ export async function mergeSetpointsIntoRecordLists(knex: Knex): Promise<void> {
   await moveLinks(knex, recordListToMqtt.id, recordListToMqtt.id, options =>
     options.payload === undefined ? { ...options, payload: 'record' } : options
   );
+}
+
+/**
+ * The 'file' transformer, sending the files as they are, is replaced by file-to-file (see `FILE_AS_IS_OPTIONS` and
+ * `replaceFileTransformer` in the config upgrade).
+ */
+export async function replaceFileTransformer(knex: Knex): Promise<void> {
+  for (const [oldFunctionName, functionName] of Object.entries(FILE_AS_IS_REPLACEMENT)) {
+    await replaceStandardTransformer(knex, oldFunctionName, { functionName }, () => structuredClone(FILE_AS_IS_OPTIONS));
+  }
 }
 
 /** The id of a standard transformer, created when missing (the startup seeding runs after the migrations). */

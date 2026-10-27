@@ -2,12 +2,15 @@ import assert from 'node:assert/strict';
 import fs, { type ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { Readable } from 'node:stream';
+import zlib from 'node:zlib';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
 
 import type { OIBusContent, OIBusFileContent } from '../../shared/model/common/content.model';
 import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/connector/north-settings.model';
+import type { TransformerFileToFileSettings } from '../../shared/model/connector/transformer-settings.model';
 import type { CacheContentUpdateCommand, CacheMetadata } from '../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource, CacheMetadataSourceOriginSouth, OIBusError } from '../model/engine.model';
@@ -684,22 +687,29 @@ describe('NorthConnector', () => {
     assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 0);
   });
 
-  it('should cache files and payloads as is through the file transformer', async () => {
-    north['findTransformer'] = mock.fn(
-      (_metadataSource: CacheMetadataSource) => ({ transformer: { type: 'standard', functionName: 'file' } }) as NorthTransformerWithOptions
-    );
-    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusFileContent | OIBusFileContent) => undefined);
-    north['cacheWithoutTransform'] = cacheWithoutTransformMock;
+  it('should stream the other files and payloads through the file-to-file transformer', async () => {
+    const fileToFile = (fileType: string): NorthTransformerWithOptions => ({
+      id: 'link',
+      transformer: { id: 'file-to-file', type: 'standard', functionName: 'file-to-file', inputType: 'file', outputType: 'file' },
+      source: { type: 'oibus-api' },
+      options: { input: { fileType } }
+    });
+    let transformer = fileToFile('other');
+    north['findTransformer'] = mock.fn((_metadataSource: CacheMetadataSource) => transformer);
+    const cacheOtherFileMock = mock.fn(async () => undefined);
+    north['cacheOtherFile'] = cacheOtherFileMock;
     const executeTransformationMock = mock.fn(async () => undefined);
     north['executeTransformation'] = executeTransformationMock;
 
     await north.cacheContent({ type: 'file', content: '{}' }, { source: 'test' });
     await north.cacheContent({ type: 'file', filePath: 'file.csv' }, { source: 'test' });
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
+    transformer = fileToFile('csv');
+    await north.cacheContent({ type: 'file', filePath: 'file.csv' }, { source: 'test' });
 
-    // Records are written as a JSON file by the transformer itself
-    assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 2);
-    assert.strictEqual(executeTransformationMock.mock.calls.length, 1);
+    // Records are written as a JSON file by the transformer itself, and CSV files converted
+    assert.strictEqual(cacheOtherFileMock.mock.calls.length, 2);
+    assert.strictEqual(executeTransformationMock.mock.calls.length, 2);
   });
 
   it('should cache file content', async () => {
@@ -735,13 +745,23 @@ describe('NorthConnector', () => {
     });
   });
 
-  it('should cache any data without transform', async () => {
+  const otherFileOptions = (filename: string, compression = false): TransformerFileToFileSettings => ({
+    input: { fileType: 'other' },
+    filename,
+    compression
+  });
+  const readOutput = async (output: Readable) => {
+    const chunks: Array<Buffer> = [];
+    for await (const chunk of output) chunks.push(Buffer.from(chunk));
+    return Buffer.concat(chunks);
+  };
+
+  it('should stream another file into the cache, renamed', async () => {
     const readStream = createMock<ReadStream>();
     createReadStream.mock.mockImplementation(() => readStream);
 
-    await north['cacheWithoutTransform']({
-      type: 'file',
-      filePath: 'path/file.csv'
+    await north['cacheOtherFile']({ type: 'file', filePath: 'path/file.csv' }, otherFileOptions('@SourceFilename_copy@SourceExtension'), {
+      source: 'test'
     });
 
     assert.strictEqual(createReadStream.mock.calls.length, 1);
@@ -750,8 +770,75 @@ describe('NorthConnector', () => {
     assert.strictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], readStream);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: 'file.csv' // basename — full path is never leaked into cache metadata
+      contentFilename: 'file_copy.csv' // basename — full path is never leaked into cache metadata
     });
+  });
+
+  it('should keep the sub-folder of another file', async () => {
+    await north['cacheOtherFile'](
+      { type: 'file', filePath: 'path/sub/file.csv', filename: path.join('sub', 'file.csv') },
+      otherFileOptions('@SourceFilename@SourceExtension'),
+      { source: 'test' }
+    );
+
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
+      contentType: 'file',
+      contentFilename: path.join('sub', 'file.csv')
+    });
+  });
+
+  it('should name a payload without filename as a random JSON file', async () => {
+    let cached = '';
+    cacheService.addCacheContent.mock.mockImplementation(async output => {
+      cached = (await readOutput(output as Readable)).toString();
+    });
+
+    await north['cacheOtherFile']({ type: 'file', content: '{}' }, otherFileOptions('@SourceFilename@SourceExtension'), { source: 'test' });
+
+    assert.strictEqual(cached, '{}');
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
+      contentType: 'file',
+      contentFilename: '1234567890.json'
+    });
+  });
+
+  it('should gzip another file', async () => {
+    createReadStream.mock.mockImplementation(() => Readable.from(Buffer.from('content')) as ReadStream);
+    let cached = Buffer.alloc(0);
+    cacheService.addCacheContent.mock.mockImplementation(async output => {
+      cached = await readOutput(output as Readable);
+    });
+
+    await north['cacheOtherFile']({ type: 'file', filePath: 'file.csv' }, otherFileOptions('@SourceFilename@SourceExtension', true), {
+      source: 'test'
+    });
+
+    assert.strictEqual(zlib.gunzipSync(cached).toString(), 'content');
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
+      contentType: 'file',
+      contentFilename: 'file.csv.gz'
+    });
+  });
+
+  it('should fail to gzip a file it cannot read', async () => {
+    createReadStream.mock.mockImplementation(
+      () =>
+        new Readable({
+          read() {
+            this.destroy(new Error('read error'));
+          }
+        }) as ReadStream
+    );
+    cacheService.addCacheContent.mock.mockImplementation(async output => {
+      await readOutput(output as Readable);
+    });
+
+    await assert.rejects(
+      north['cacheOtherFile']({ type: 'file', filePath: 'file.csv' }, otherFileOptions('@SourceFilename@SourceExtension', true), {
+        source: 'test'
+      }),
+      { message: 'read error' }
+    );
   });
 
   it('should find transformer from south metadata', () => {
@@ -793,7 +880,7 @@ describe('NorthConnector', () => {
       {
         id: 'allSources1',
         options: {},
-        transformer: { id: 'file', type: 'standard', functionName: 'file', inputType: 'file', outputType: 'file' },
+        transformer: { id: 'file', type: 'standard', functionName: 'file-to-file', inputType: 'file', outputType: 'file' },
         source: { type: 'oibus-api' }
       },
       {
@@ -805,7 +892,7 @@ describe('NorthConnector', () => {
       {
         id: 'allSources2',
         options: {},
-        transformer: { id: 'file', type: 'standard', functionName: 'file', inputType: 'file', outputType: 'file' },
+        transformer: { id: 'file', type: 'standard', functionName: 'file-to-file', inputType: 'file', outputType: 'file' },
         source: { type: 'oibus-api' }
       }
     ]);
@@ -916,12 +1003,6 @@ describe('NorthConnector', () => {
       contentFilename: '',
       numberOfElement: 1
     });
-  });
-
-  it('should cache without transform a file held in memory', async () => {
-    await north['cacheWithoutTransform']({ type: 'file', content: '' });
-    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
-    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], { contentType: 'file' });
   });
 
   it('should get cache folder', () => {

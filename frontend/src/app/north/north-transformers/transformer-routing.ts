@@ -116,7 +116,7 @@ export function unusedTransformerIds(transformers: Array<TransformerDTOWithOptio
 
 /** The standard transformers sending the data of each type as it is */
 const PASSTHROUGHS: Record<InputType, string> = {
-  file: 'file',
+  file: 'file-to-file',
   'record-list': 'record-list-to-file'
 };
 
