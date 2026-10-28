@@ -1,23 +1,28 @@
 <div class="transformer-pipeline">
-  <!-- Which panes are shown: both side by side, or one of them on the full width -->
+  <!-- Which panes are shown: both side by side, or one of them on the full width; the actions given by the parent on the far right -->
   @if (hasTransformer()) {
-    <div
-      class="d-flex flex-wrap align-items-center gap-1 mb-2"
-      role="group"
-      [attr.aria-label]="'south.test-item.pipeline.show' | translate"
-      id="pipeline-panes"
-    >
-      <span class="small text-body-secondary me-1" translate="south.test-item.pipeline.show"></span>
-      @for (choice of paneChoices; track choice) {
-        <button
-          type="button"
-          class="filter-chip px-2 py-1"
-          [class.active]="panes() === choice"
-          [attr.aria-pressed]="panes() === choice"
-          (click)="panes.set(choice)"
-          [translate]="'south.test-item.pipeline.' + choice"
-        ></button>
-      }
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <div
+        class="d-flex flex-wrap align-items-center gap-1"
+        role="group"
+        [attr.aria-label]="'south.test-item.pipeline.show' | translate"
+        id="pipeline-panes"
+      >
+        <span class="small text-body-secondary me-1" translate="south.test-item.pipeline.show"></span>
+        @for (choice of paneChoices; track choice) {
+          <button
+            type="button"
+            class="filter-chip px-2 py-1"
+            [class.active]="panes() === choice"
+            [attr.aria-pressed]="panes() === choice"
+            (click)="panes.set(choice)"
+            [translate]="'south.test-item.pipeline.' + choice"
+          ></button>
+        }
+      </div>
+      <div class="ms-auto">
+        <ng-content select="[pipelineActions]" />
+      </div>
     </div>
   }
   <!-- flex + gap, not the Bootstrap grid: a .row's negative margins would bleed this wider than

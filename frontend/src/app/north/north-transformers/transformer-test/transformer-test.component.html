@@ -1,30 +1,26 @@
 @if (transformer()) {
+  <!-- One button runs the test, and cancels it while it runs -->
+  <ng-template #runButton>
+    <button
+      type="button"
+      id="run-transformer-test"
+      class="btn btn-sm"
+      [class.btn-primary]="!isTestRunning()"
+      [class.btn-outline-danger]="isTestRunning()"
+      (click)="isTestRunning() ? cancelTest() : runTest()"
+    >
+      @if (isTestRunning()) {
+        <span class="fa-solid fa-spinner fa-spin me-2" aria-hidden="true"></span>
+        <span translate="common.cancel"></span>
+      } @else {
+        <span class="fa-solid fa-play me-2" aria-hidden="true"></span>
+        <span translate="north.transformers.test.run"></span>
+      }
+    </button>
+  </ng-template>
+
   <div class="oib-section-title">
     <h5 translate="north.transformers.test.title"></h5>
-    <div>
-      <button
-        type="button"
-        id="run-transformer-test"
-        class="btn btn-primary btn-sm"
-        [disabled]="isTestRunning()"
-        (click)="runTest()"
-        translate="north.transformers.test.run"
-      >
-        @if (isTestRunning()) {
-          <span class="fa-solid fa-spinner fa-spin ms-2" aria-hidden="true"></span>
-        } @else {
-          <span class="fa-solid fa-check ms-2" aria-hidden="true"></span>
-        }
-      </button>
-      <button
-        type="button"
-        id="cancel-transformer-test"
-        class="btn btn-danger btn-sm ms-2"
-        [disabled]="!isTestRunning()"
-        (click)="cancelTest()"
-        translate="common.cancel"
-      ></button>
-    </div>
   </div>
 
   <form [formGroup]="form" id="transformer-test-form">
@@ -123,6 +119,13 @@
     </div>
   </form>
 
+  <!-- Until there is a result, whose panes it then joins -->
+  @if (!testResult()) {
+    <div class="d-flex justify-content-end mt-2">
+      <ng-container [ngTemplateOutlet]="runButton" />
+    </div>
+  }
+
   @if (infoMessage(); as infoMessage) {
     <div class="alert alert-primary mt-2 mb-0">{{ infoMessage }}</div>
   } @else if (errorMessage(); as errorMessage) {
@@ -152,7 +155,9 @@
           {{ 'south.test-item.query-duration' | translate: { duration: testResult.queryDuration } }}
         </div>
       }
-      <oib-transformer-test-result class="d-block mt-2" [raw]="testResult.raw" [hasTransformer]="true" [output]="testResult.transformed" />
+      <oib-transformer-test-result class="d-block mt-2" [raw]="testResult.raw" [hasTransformer]="true" [output]="testResult.transformed">
+        <ng-container pipelineActions [ngTemplateOutlet]="runButton" />
+      </oib-transformer-test-result>
     </div>
   }
 }

@@ -9,9 +9,13 @@ $containerMinHeight: 30vh;
 
   // Compact mode (raw/output side by side in the transformer-test pipeline): fixed height
   // rather than shrink-to-content, so both boxes line up regardless of which has more content.
+  // The pipeline frames it, under its caption: no outline of its own.
   &.compact {
     height: 40vh;
     overflow: auto;
+    outline: none;
+    border-bottom-left-radius: var(--bs-border-radius);
+    border-bottom-right-radius: var(--bs-border-radius);
 
     #loading-spinner-container,
     #message-container {

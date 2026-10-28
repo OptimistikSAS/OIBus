@@ -46,7 +46,6 @@ class NorthTransformerTestComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByRole('heading', { name: 'Testing transformer' });
   readonly runButton = this.root.getByCss('#run-transformer-test');
-  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
   readonly inputToggle = this.root.getByRole('group', { name: 'Input' });
   readonly fromItemButton = this.root.getByRole('button', { name: 'From a source item' });
   readonly itemSearch = this.root.getByLabelText('Item', { exact: true });
@@ -121,7 +120,7 @@ describe('NorthTransformerTestComponent', () => {
     await expect.element(tester.editor).toHaveTextContent('[]');
     expect(transformerService.getInputTemplate).toHaveBeenCalledWith('record-list');
     await expect.element(tester.inputToggle).not.toBeInTheDocument();
-    await expect.element(tester.cancelButton).toBeDisabled();
+    await expect.element(tester.runButton).toHaveTextContent('Run test');
     await expect.element(tester.info).toHaveTextContent('Test results will appear here');
     expect(southConnectorService.getSouthManifest).not.toHaveBeenCalled();
   });
@@ -138,6 +137,8 @@ describe('NorthTransformerTestComponent', () => {
       options: { precision: 2 }
     });
     await expect.element(tester.result).toBeInTheDocument();
+    // the button joins the result, next to the choice of the panes
+    await expect.element(tester.result.getByCss('#run-transformer-test')).toHaveTextContent('Run test');
     await expect.element(tester.info).not.toBeInTheDocument();
     // pasted data is not queried from a source
     await expect.element(tester.durations).not.toBeInTheDocument();
@@ -193,11 +194,11 @@ describe('NorthTransformerTestComponent', () => {
     const tester = new NorthTransformerTestComponentTester();
 
     await tester.runButton.click();
-    await expect.element(tester.runButton).toBeDisabled();
+    await expect.element(tester.runButton).toHaveTextContent('Cancel');
 
-    await tester.cancelButton.click();
+    await tester.runButton.click();
 
-    await expect.element(tester.runButton).toBeEnabled();
+    await expect.element(tester.runButton).toHaveTextContent('Run test');
     expect(result$.observed).toBe(false);
     await expect.element(tester.result).not.toBeInTheDocument();
     await expect.element(tester.info).toHaveTextContent('Test cancelled');
