@@ -214,7 +214,9 @@ export async function bootstrap(): Promise<void> {
     oIAnalyticsMessageService,
     dataStreamEngine,
     repositoryService.southItemGroupRepository,
-    transformerService
+    transformerService,
+    repositoryService.northConnectorRepository,
+    repositoryService.oibusConfigDatabase
   );
   const configurationWorkflowService = new ConfigurationWorkflowService(
     repositoryService.configurationWorkflowRepository,
