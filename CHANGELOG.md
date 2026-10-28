@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.9.7](https://github.com/OptimistikSAS/OIBus/compare/v3.9.6...v3.9.7) (2026-10-28)
+
+
+### Bug Fixes
+
+* **installer:** keep the service log on account when upgrading over an existing service ([4aea0bb](https://github.com/OptimistikSAS/OIBus/commit/4aea0bb7682f38ae84a3b72dd944099b5e6ef577))
+* **opcua:** derive subscription watchdog timeout from the keepalive interval ([e681237](https://github.com/OptimistikSAS/OIBus/commit/e681237748637fb30e6e0a72f183d10ce5b5504e))
+* **south:** do not split history queries that ignore the interval bounds ([378168c](https://github.com/OptimistikSAS/OIBus/commit/378168cc45602ac322b031cddfd3c1d0798b9026))
+* **south:** log history query warnings once per work-unit, then as trace ([0b7af3c](https://github.com/OptimistikSAS/OIBus/commit/0b7af3ce3414e864008fa7842eebd9837cb74fbd))
+
 ## [3.9.6](https://github.com/OptimistikSAS/OIBus/compare/v3.9.5...v3.9.6) (2026-10-21)
 
 
