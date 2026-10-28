@@ -106,14 +106,15 @@ WHERE timestamp > @StartTime
 
 If `@StartTime` or `@EndTime` is missing from the query (commented-out variables don't count), splitting it would make
 every sub-query return the same data again. OIBus therefore **does not split the window**: `Max read interval` is
-ignored, the whole window is queried at once, and a warning is logged when the window was large enough to be split.
+ignored, the whole window is queried at once, and a warning is logged when the window was large enough to be split (once per
+item or group, then as a trace until the connector restarts).
 Without `@EndTime` the query returns everything from `@StartTime` onward, and without `@StartTime` it returns the same
 fixed result set at every run.
 
 Do not shift the variables inside the query (`@StartTime - INTERVAL 1 HOUR`, `DATEADD(hour, -1, @StartTime)`, REST's
 `@StartTime.add(-1, 'day')`...): the shift is applied to **each** sub-interval, which then re-reads the end of the
 previous one — a 1-hour shift on 10-minute sub-intervals reads each row about 7 times. OIBus keeps the split and logs a
-warning when it detects it. Use `Start time offset` and `End time offset` instead: they are applied once to the whole
+warning when it detects it (once per item or group, then as a trace until the connector restarts). Use `Start time offset` and `End time offset` instead: they are applied once to the whole
 window.
 
 Connectors that manage their own historical read internally — OPC UA (HA mode), OPC Classic (HDA mode), and OSIsoft PI —
