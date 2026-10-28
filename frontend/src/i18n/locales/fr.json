@@ -1644,7 +1644,6 @@
     "test-item": {
       "title": "Test de l'élément",
       "test-button": "Lancer le test",
-      "cancel-button": "Annuler",
       "query-start": "Interroger les données depuis",
       "query-end": "Interroger les données jusqu'à",
       "connection-duration": "Connexion : {{duration}} ms",

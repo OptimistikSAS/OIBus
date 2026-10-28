@@ -104,7 +104,7 @@ class EditSouthItemModalComponentTester {
   reviewed(label: string) {
     return this.reviewedEntry(label).getByRole('definition');
   }
-  readonly runTestButton = this.root.getByRole('button', { name: 'Run test', includeHidden: true });
+  readonly runTestButton = this.root.getByCss('#step-settings-test #test-item');
   readonly northTransformersSummary = this.root.getByCss('#north-transformers-summary');
 
   /** Attaches "my transformer 2" to a North, in the North step */

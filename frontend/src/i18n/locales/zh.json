@@ -1644,7 +1644,6 @@
     "test-item": {
       "title": "测试项",
       "test-button": "运行测试",
-      "cancel-button": "取消",
       "query-start": "从此处查询数据",
       "query-end": "查询数据直到",
       "connection-duration": "连接：{{duration}} 毫秒",
