@@ -865,14 +865,27 @@ export default class SouthOPCUA
     if (this.subscriptionWatchdog) {
       clearTimeout(this.subscriptionWatchdog);
     }
+    const watchdogTimeout = this.getSubscriptionWatchdogTimeout();
     this.subscriptionWatchdog = setTimeout(() => {
       if (!this.disconnecting) {
-        this.logger.error(
-          `OPC-UA subscription watchdog: no keepalive or data received for ${this.connector.settings.readTimeout} ms. Triggering reconnect`
-        );
+        this.logger.error(`OPC-UA subscription watchdog: no keepalive or data received for ${watchdogTimeout} ms. Triggering reconnect`);
         this.triggerReconnect();
       }
-    }, this.connector.settings.readTimeout);
+    }, watchdogTimeout);
+  }
+
+  /**
+   * On a quiet subscription the server only sends a keepalive every publishingInterval * maxKeepAliveCount (revised values
+   * negotiated with the server). The watchdog must wait longer than that, otherwise it triggers reconnects on a healthy
+   * connection. It tolerates one missed keepalive and never goes below the configured read timeout.
+   */
+  private getSubscriptionWatchdogTimeout(): number {
+    const readTimeout = this.connector.settings.readTimeout;
+    const keepAliveInterval = (this.subscription?.publishingInterval ?? 0) * (this.subscription?.maxKeepAliveCount ?? 0);
+    if (!Number.isFinite(keepAliveInterval) || keepAliveInterval <= 0) {
+      return readTimeout;
+    }
+    return Math.max(readTimeout, keepAliveInterval * 2);
   }
 
   private clearSubscriptionWatchdog(): void {
