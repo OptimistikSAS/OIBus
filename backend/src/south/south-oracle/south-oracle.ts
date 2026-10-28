@@ -8,8 +8,10 @@ import {
   generateFilenameForSerialization,
   generateReplacementParameters,
   getErrorMessage,
+  getSqlQueryTimeVariablesUsage,
   logQuery,
   persistResults,
+  QueryTimeVariablesUsage,
   workUnitLogCtx
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
@@ -168,6 +170,10 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       connectionDuration: 0,
       queryDuration
     };
+  }
+
+  protected override getHistoryQueryTimeVariablesUsage(lead: SouthConnectorItemEntity<SouthOracleItemSettings>): QueryTimeVariablesUsage {
+    return getSqlQueryTimeVariablesUsage(lead.settings.query);
   }
 
   /**

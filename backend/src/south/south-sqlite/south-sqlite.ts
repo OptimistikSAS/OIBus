@@ -8,8 +8,10 @@ import {
   formatInstant,
   generateCsvContent,
   generateFilenameForSerialization,
+  getSqlQueryTimeVariablesUsage,
   logQuery,
   persistResults,
+  QueryTimeVariablesUsage,
   workUnitLogCtx
 } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
@@ -143,6 +145,10 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
       connectionDuration: 0,
       queryDuration
     };
+  }
+
+  protected override getHistoryQueryTimeVariablesUsage(lead: SouthConnectorItemEntity<SouthSQLiteItemSettings>): QueryTimeVariablesUsage {
+    return getSqlQueryTimeVariablesUsage(lead.settings.query);
   }
 
   /**

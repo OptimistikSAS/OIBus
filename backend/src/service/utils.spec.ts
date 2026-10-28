@@ -367,6 +367,113 @@ describe('Service utils', () => {
     });
   });
 
+  describe('stripSqlComments', () => {
+    it('should remove line and block comments', () => {
+      assert.strictEqual(
+        utils.stripSqlComments('SELECT * /* all @EndTime */ FROM t -- AND ts <= @EndTime\nWHERE ts > @StartTime'),
+        'SELECT *   FROM t \nWHERE ts > @StartTime'
+      );
+    });
+
+    it('should keep comment markers inside quoted strings and identifiers', () => {
+      assert.strictEqual(
+        utils.stripSqlComments(`SELECT 'a--b', "c/*d*/e", \`f--g\`, 'it''s -- fine' FROM t -- end`),
+        `SELECT 'a--b', "c/*d*/e", \`f--g\`, 'it''s -- fine' FROM t `
+      );
+    });
+
+    it('should drop everything after an unterminated block comment', () => {
+      assert.strictEqual(utils.stripSqlComments('SELECT 1 /* never closed @EndTime'), 'SELECT 1  ');
+    });
+
+    it('should keep an unterminated quoted string as is', () => {
+      assert.strictEqual(utils.stripSqlComments("SELECT 'never closed"), "SELECT 'never closed");
+    });
+  });
+
+  describe('getQueryTimeVariablesUsage', () => {
+    it('should detect both variables', () => {
+      assert.deepStrictEqual(utils.getQueryTimeVariablesUsage('SELECT * FROM t WHERE ts > @StartTime AND ts <= @EndTime'), {
+        usesStartTime: true,
+        usesEndTime: true,
+        hasInlineOffset: false
+      });
+    });
+
+    it('should detect a missing variable', () => {
+      assert.deepStrictEqual(utils.getQueryTimeVariablesUsage('SELECT * FROM t WHERE ts > @StartTime'), {
+        usesStartTime: true,
+        usesEndTime: false,
+        hasInlineOffset: false
+      });
+      assert.deepStrictEqual(utils.getQueryTimeVariablesUsage('SELECT * FROM t WHERE ts <= @EndTime'), {
+        usesStartTime: false,
+        usesEndTime: true,
+        hasInlineOffset: false
+      });
+      assert.deepStrictEqual(utils.getQueryTimeVariablesUsage('SELECT * FROM t'), {
+        usesStartTime: false,
+        usesEndTime: false,
+        hasInlineOffset: false
+      });
+    });
+
+    it('should not match a longer variable name', () => {
+      const usage = utils.getQueryTimeVariablesUsage('SELECT * FROM t WHERE ts > @StartTimeUtc AND ts <= @EndTime_x');
+      assert.strictEqual(usage.usesStartTime, false);
+      assert.strictEqual(usage.usesEndTime, false);
+    });
+
+    for (const query of [
+      'ts > @StartTime - INTERVAL 1 HOUR',
+      'ts > @StartTime-3600',
+      'ts <= @EndTime + INTERVAL 1 HOUR',
+      "ts > @StartTime::timestamp - interval '1 hour'",
+      'ts > DATEADD(hour, -1, @StartTime)',
+      'ts > DATE_SUB(@StartTime, INTERVAL 1 HOUR)',
+      'ts > date_add(@EndTime, INTERVAL 1 DAY)',
+      '{ "from": "@StartTime.add(-1, \'day\')" }'
+    ]) {
+      it(`should detect an inline offset in "${query}"`, () => {
+        assert.strictEqual(utils.getQueryTimeVariablesUsage(query).hasInlineOffset, true);
+      });
+    }
+
+    for (const query of [
+      'ts > @StartTime AND ts <= @EndTime',
+      'ts > @StartTime AND value - 1 > 0',
+      'ts BETWEEN @StartTime AND @EndTime',
+      'ts > DATEADD(hour, -1, ts) AND ts > @StartTime'
+    ]) {
+      it(`should not detect an inline offset in "${query}"`, () => {
+        assert.strictEqual(utils.getQueryTimeVariablesUsage(query).hasInlineOffset, false);
+      });
+    }
+  });
+
+  describe('getSqlQueryTimeVariablesUsage', () => {
+    it('should ignore the commented variables', () => {
+      const query = `SELECT * FROM t
+        WHERE ts > @StartTime
+        -- AND ts <= @EndTime
+        /* AND ts > @StartTime - INTERVAL 1 HOUR */`;
+      assert.deepStrictEqual(utils.getSqlQueryTimeVariablesUsage(query), {
+        usesStartTime: true,
+        usesEndTime: false,
+        hasInlineOffset: false
+      });
+    });
+
+    it('should keep the variables that follow a quoted comment marker', () => {
+      const query = "SELECT * FROM t WHERE name = 'a--b' AND ts > @StartTime AND ts <= @EndTime";
+      assert.deepStrictEqual(utils.getSqlQueryTimeVariablesUsage(query), {
+        usesStartTime: true,
+        usesEndTime: true,
+        hasInlineOffset: false
+      });
+    });
+  });
+
   describe('logQuery', () => {
     const logger = new PinoLogger();
 

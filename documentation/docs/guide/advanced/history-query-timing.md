@@ -93,9 +93,9 @@ hour that was in flight, not the whole day.
 
 :::warning SQL-like connectors must reference both time variables in the query 
 
-For SQL-based connectors (MSSQL, MySQL/MariaDB, ODBC, OLEDB, Oracle, PostgreSQL, SQLite) and REST, OIBus runs the query,
-replacing `@StartTime` and `@EndTime` with the computed sub-interval's bounds. Both variables are therefore necessary
-for `Max read interval` to have any effect.
+For SQL-based connectors (MSSQL, MySQL/MariaDB, ODBC, OLEDB, Oracle, PostgreSQL, SQLite), InfluxDB and REST, OIBus runs
+the query, replacing `@StartTime` and `@EndTime` with the computed sub-interval's bounds. Both variables are therefore
+necessary for `Max read interval` to have any effect.
 
 ```sql title="Example of a SQL query with @StartTime and @EndTime"
 SELECT *
@@ -104,9 +104,17 @@ WHERE timestamp > @StartTime
   AND timestamp <= @EndTime
 ```
 
-If `@EndTime` is missing from the query, every sub-interval still fetches everything from `@StartTime` onward with no
-upper bound (up to the last record) — every sub-query ends up large and returns mostly the same values. If
-`@StartTime` is also missing, every sub-query simply re-reads the same fixed result set.
+If `@StartTime` or `@EndTime` is missing from the query (commented-out variables don't count), splitting it would make
+every sub-query return the same data again. OIBus therefore **does not split the window**: `Max read interval` is
+ignored, the whole window is queried at once, and a warning is logged when the window was large enough to be split.
+Without `@EndTime` the query returns everything from `@StartTime` onward, and without `@StartTime` it returns the same
+fixed result set at every run.
+
+Do not shift the variables inside the query (`@StartTime - INTERVAL 1 HOUR`, `DATEADD(hour, -1, @StartTime)`, REST's
+`@StartTime.add(-1, 'day')`...): the shift is applied to **each** sub-interval, which then re-reads the end of the
+previous one — a 1-hour shift on 10-minute sub-intervals reads each row about 7 times. OIBus keeps the split and logs a
+warning when it detects it. Use `Start time offset` and `End time offset` instead: they are applied once to the whole
+window.
 
 Connectors that manage their own historical read internally — OPC UA (HA mode), OPC Classic (HDA mode), and OSIsoft PI —
 don't have this caveat: OIBus passes the sub-interval's start and end directly into the connector's own historical-read

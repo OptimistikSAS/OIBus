@@ -72,6 +72,7 @@ const utilsExports = {
   generateRandomId: mock.fn(() => 'random-id'),
   sanitizeFilename: mock.fn((name: unknown) => name),
   logQuery: mock.fn(),
+  getQueryTimeVariablesUsage: mock.fn((_query: string) => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
   getErrorMessage: mock.fn((error: unknown) => {
     if (error instanceof Error) return error.message;
     if (typeof error === 'string') return error;
@@ -215,6 +216,16 @@ describe('SouthInfluxDB', () => {
 
     beforeEach(() => {
       south = new SouthInfluxDB(configV1, addContentCallback, southCacheRepository, 'cacheFolder');
+    });
+
+    it('should analyze the time variables of the item query', () => {
+      const usage = { usesStartTime: true, usesEndTime: false, hasInlineOffset: true };
+      utilsExports.getQueryTimeVariablesUsage = mock.fn((_query: string) => usage);
+
+      assert.deepStrictEqual(south['getHistoryQueryTimeVariablesUsage'](configV1.items[0]), usage);
+      assert.deepStrictEqual((utilsExports.getQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        configV1.items[0].settings.query
+      ]);
     });
 
     it('should test connection successfully', async () => {

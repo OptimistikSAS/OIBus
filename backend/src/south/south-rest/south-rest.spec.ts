@@ -34,6 +34,7 @@ describe('SouthRestAPI connector', () => {
     }),
     formatInstant: mock.fn((instant: string) => instant),
     generateRandomId: mock.fn(() => 'random-id'),
+    getQueryTimeVariablesUsage: mock.fn((_text: string) => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
     sanitizeFilename: mock.fn((name: unknown) => name),
     delay: mock.fn(async () => undefined),
     generateIntervals: mock.fn(() => []),
@@ -214,6 +215,39 @@ describe('SouthRestAPI connector', () => {
   // --------------------------------------------------------------------------
   // 2. Query Data Logic (queryData)
   // --------------------------------------------------------------------------
+
+  it('should analyze the time variables of the query params, the headers and the body of a request with a body', () => {
+    const usage = { usesStartTime: true, usesEndTime: false, hasInlineOffset: true };
+    utilsExports.getQueryTimeVariablesUsage = mock.fn((_text: string) => usage);
+    const item = createItem({
+      method: 'POST',
+      queryParams: [{ key: 'start', value: '@StartTime', dateTimeInput: { type: 'iso-string' } }],
+      headers: [{ key: 'X-Window', value: "@StartTime.add(-1, 'day')", dateTimeInput: { type: 'iso-string' } }],
+      body: { content: '{"to": "@EndTime"}', dateTimeInput: { type: 'iso-string' } }
+    });
+
+    assert.deepStrictEqual(south['getHistoryQueryTimeVariablesUsage'](item), usage);
+    assert.deepStrictEqual((utilsExports.getQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      '@StartTime\n@StartTime.add(-1, \'day\')\n{"to": "@EndTime"}'
+    ]);
+  });
+
+  it('should not analyze the body of a request that does not send one', () => {
+    utilsExports.getQueryTimeVariablesUsage = mock.fn((_text: string) => ({
+      usesStartTime: true,
+      usesEndTime: true,
+      hasInlineOffset: false
+    }));
+    const item = createItem({
+      method: 'GET',
+      queryParams: [{ key: 'start', value: '@StartTime', dateTimeInput: { type: 'iso-string' } }],
+      body: { content: '{"to": "@EndTime"}', dateTimeInput: { type: 'iso-string' } }
+    });
+
+    south['getHistoryQueryTimeVariablesUsage'](item);
+
+    assert.deepStrictEqual((utilsExports.getQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['@StartTime']);
+  });
 
   it('should replace @StartTime and @EndTime in Query Params', async () => {
     const item = createItem({

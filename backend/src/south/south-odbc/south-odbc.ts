@@ -7,8 +7,10 @@ import {
   generateCsvContent,
   generateFilenameForSerialization,
   getErrorMessage,
+  getSqlQueryTimeVariablesUsage,
   logQuery,
   persistResults,
+  QueryTimeVariablesUsage,
   workUnitLogCtx
 } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
@@ -235,6 +237,10 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       await response.body.dump();
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
     }
+  }
+
+  protected override getHistoryQueryTimeVariablesUsage(lead: SouthConnectorItemEntity<SouthODBCItemSettings>): QueryTimeVariablesUsage {
+    return getSqlQueryTimeVariablesUsage(lead.settings.query);
   }
 
   /**

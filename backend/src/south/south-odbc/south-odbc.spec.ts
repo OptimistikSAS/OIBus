@@ -39,6 +39,7 @@ describe('SouthODBC', () => {
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn(() => []),
     logQuery: mock.fn(),
+    getSqlQueryTimeVariablesUsage: mock.fn((_query: string) => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
     persistResults: mock.fn(
       async (_data: unknown, _serialization: unknown, _name: string, _item: unknown, _instant: unknown, _folder: string) => undefined
     ),
@@ -271,6 +272,16 @@ describe('SouthODBC', () => {
 
     beforeEach(() => {
       south = new SouthODBC(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    });
+
+    it('should analyze the time variables of the item query', () => {
+      const usage = { usesStartTime: true, usesEndTime: false, hasInlineOffset: true };
+      utilsExports.getSqlQueryTimeVariablesUsage = mock.fn((_query: string) => usage);
+
+      assert.deepStrictEqual(south['getHistoryQueryTimeVariablesUsage'](configuration.items[0]), usage);
+      assert.deepStrictEqual((utilsExports.getSqlQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        configuration.items[0].settings.query
+      ]);
     });
 
     it('should do nothing on connect and disconnect', async () => {

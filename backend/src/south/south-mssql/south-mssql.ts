@@ -7,8 +7,10 @@ import {
   generateCsvContent,
   generateFilenameForSerialization,
   getErrorMessage,
+  getSqlQueryTimeVariablesUsage,
   logQuery,
   persistResults,
+  QueryTimeVariablesUsage,
   workUnitLogCtx
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
@@ -172,6 +174,10 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       connectionDuration: 0,
       queryDuration
     };
+  }
+
+  protected override getHistoryQueryTimeVariablesUsage(lead: SouthConnectorItemEntity<SouthMSSQLItemSettings>): QueryTimeVariablesUsage {
+    return getSqlQueryTimeVariablesUsage(lead.settings.query);
   }
 
   /**

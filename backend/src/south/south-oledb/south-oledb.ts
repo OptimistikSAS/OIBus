@@ -5,8 +5,10 @@ import {
   formatInstant,
   generateFilenameForSerialization,
   getErrorMessage,
+  getSqlQueryTimeVariablesUsage,
   logQuery,
   persistResults,
+  QueryTimeVariablesUsage,
   workUnitLogCtx
 } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
@@ -156,6 +158,10 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       connectionDuration: 0,
       queryDuration
     };
+  }
+
+  protected override getHistoryQueryTimeVariablesUsage(lead: SouthConnectorItemEntity<SouthOLEDBItemSettings>): QueryTimeVariablesUsage {
+    return getSqlQueryTimeVariablesUsage(lead.settings.query);
   }
 
   /**

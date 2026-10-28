@@ -8,8 +8,10 @@ import {
   generateFilenameForSerialization,
   generateReplacementParameters,
   getErrorMessage,
+  getSqlQueryTimeVariablesUsage,
   logQuery,
   persistResults,
+  QueryTimeVariablesUsage,
   workUnitLogCtx
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
@@ -170,6 +172,10 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       connectionDuration: 0,
       queryDuration
     };
+  }
+
+  protected override getHistoryQueryTimeVariablesUsage(lead: SouthConnectorItemEntity<SouthMySQLItemSettings>): QueryTimeVariablesUsage {
+    return getSqlQueryTimeVariablesUsage(lead.settings.query);
   }
 
   /**

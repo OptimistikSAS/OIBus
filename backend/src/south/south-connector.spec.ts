@@ -62,6 +62,8 @@ describe('SouthConnector', () => {
     generateCsvContent: mock.fn(() => ''),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn(() => []),
+    getQueryTimeVariablesUsage: mock.fn(() => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
+    getSqlQueryTimeVariablesUsage: mock.fn(() => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
     getErrorMessage: mock.fn((error: unknown) => {
       if (error instanceof Error) return error.message;
       if (typeof error === 'string') return error;
@@ -518,6 +520,107 @@ describe('SouthConnector', () => {
       assert.strictEqual(historyQueryMock.mock.calls.length, 2);
       assert.deepStrictEqual(historyQueryMock.mock.calls[0].arguments[0], [items[0]]);
       assert.deepStrictEqual(historyQueryMock.mock.calls[1].arguments[0], [items[1]]);
+    });
+
+    describe('time variables of the query', () => {
+      const windowStart = '2020-02-02T02:02:02.222Z';
+      const windowEnd = '2021-02-02T02:02:02.222Z';
+      const intervals = [
+        { start: windowStart, end: '2020-08-02T02:02:02.222Z' },
+        { start: '2020-08-02T02:02:02.222Z', end: windowEnd }
+      ];
+      let items: Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+
+      beforeEach(() => {
+        utilsExports.generateIntervals = mock.fn(() => intervals);
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false }));
+        items = [
+          {
+            ...testData.south.list[1].items[0],
+            group: null,
+            syncWithGroup: false,
+            startTimeOffset: 0,
+            endTimeOffset: 0,
+            recoveryStrategy: 'oldest'
+          }
+        ] as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+      });
+
+      it('should split the window when the query uses both @StartTime and @EndTime', async () => {
+        const historyQueryMock = mock.fn(async () => ({ trackedInstant: null, value: null }));
+        south.historyQuery = historyQueryMock;
+
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+
+        assert.strictEqual((utilsExports.getSqlQueryTimeVariablesUsage as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+        assert.deepStrictEqual(
+          (utilsExports.getSqlQueryTimeVariablesUsage as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments,
+          [items[0].settings.query]
+        );
+        assert.strictEqual(historyQueryMock.mock.calls.length, 2);
+        assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      });
+
+      it('should query the whole window at once when the query does not use @EndTime', async () => {
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: false, hasInlineOffset: false }));
+        const historyQueryMock = mock.fn(async () => ({ trackedInstant: null, value: null }));
+        south.historyQuery = historyQueryMock;
+
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+
+        assert.strictEqual(historyQueryMock.mock.calls.length, 1);
+        assert.strictEqual(historyQueryMock.mock.calls[0].arguments[1], windowStart);
+        assert.strictEqual(historyQueryMock.mock.calls[0].arguments[2], windowEnd);
+        const warnCalls = (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+        assert.strictEqual(warnCalls.length, 1);
+        assert.ok(
+          (warnCalls[0].arguments[1] as string).startsWith('The query does not use @EndTime: it cannot be split in 2 sub-intervals')
+        );
+      });
+
+      it('should query the whole window at once when the query does not use @StartTime nor @EndTime', async () => {
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: false, usesEndTime: false, hasInlineOffset: false }));
+        const historyQueryMock = mock.fn(async () => ({ trackedInstant: null, value: null }));
+        south.historyQuery = historyQueryMock;
+
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+
+        assert.strictEqual(historyQueryMock.mock.calls.length, 1);
+        const warnCalls = (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+        assert.ok(
+          (warnCalls[0].arguments[1] as string).startsWith(
+            'The query does not use @StartTime and @EndTime: it cannot be split in 2 sub-intervals'
+          )
+        );
+      });
+
+      it('should keep the split and warn when the query shifts the time variables itself', async () => {
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: true }));
+        const historyQueryMock = mock.fn(async () => ({ trackedInstant: null, value: null }));
+        south.historyQuery = historyQueryMock;
+
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+
+        assert.strictEqual(historyQueryMock.mock.calls.length, 2);
+        const warnCalls = (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+        assert.strictEqual(warnCalls.length, 1);
+        assert.ok(
+          (warnCalls[0].arguments[1] as string).startsWith('The query shifts @StartTime or @EndTime itself: each of the 2 sub-intervals')
+        );
+      });
+
+      it('should not analyze the query nor warn when the window is not split', async () => {
+        utilsExports.generateIntervals = mock.fn(() => [{ start: windowStart, end: windowEnd }]);
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: false, usesEndTime: false, hasInlineOffset: true }));
+        const historyQueryMock = mock.fn(async () => ({ trackedInstant: null, value: null }));
+        south.historyQuery = historyQueryMock;
+
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+
+        assert.strictEqual(historyQueryMock.mock.calls.length, 1);
+        assert.strictEqual((utilsExports.getSqlQueryTimeVariablesUsage as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+        assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      });
     });
 
     it('should use independent cache entries per item for single-item connectors', async () => {

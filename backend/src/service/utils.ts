@@ -275,6 +275,77 @@ export const generateReplacementParameters = (
   return occurrences.map(occurrence => occurrence.value);
 };
 
+/**
+ * How a user-written history query uses the @StartTime / @EndTime variables
+ */
+export interface QueryTimeVariablesUsage {
+  usesStartTime: boolean;
+  usesEndTime: boolean;
+  // The query shifts a variable itself (e.g. "@StartTime - INTERVAL 1 HOUR"), so each sub-interval re-reads the end of the previous one
+  hasInlineOffset: boolean;
+}
+
+const INLINE_OFFSET_PATTERNS: Array<RegExp> = [
+  // Arithmetic right after a variable, optionally cast: "@StartTime - INTERVAL 1 HOUR", "@StartTime::timestamp + 3600"
+  /@(?:StartTime|EndTime)\b(?:\s*::\s*\w+)?\s*[-+]/,
+  // Date functions wrapping a variable: "DATEADD(hour, -1, @StartTime)", "DATE_SUB(@StartTime, INTERVAL 1 HOUR)"
+  /\b(?:DATEADD|DATE_ADD|DATE_SUB|ADDDATE|SUBDATE|TIMESTAMPADD|DATETIME_ADD|DATETIME_SUB)\s*\([^()]*@(?:StartTime|EndTime)\b/i,
+  // REST inline offset: "@StartTime.add(-1, 'day')"
+  /@(?:StartTime|EndTime)\.add\(/
+];
+
+/**
+ * Remove the comments (-- until the end of the line, and block comments) of an SQL query, leaving the quoted strings and
+ * identifiers untouched. A commented @StartTime / @EndTime is still replaced by the connectors but is not part of the
+ * actual query, so it must not count as a time bound.
+ */
+export const stripSqlComments = (query: string): string => {
+  let result = '';
+  let index = 0;
+  while (index < query.length) {
+    const char = query[index];
+    if (char === "'" || char === '"' || char === '`') {
+      // Copy the quoted section as is. A doubled quote is an escaped quote and does not close the section
+      let end = index + 1;
+      while (end < query.length) {
+        if (query[end] === char) {
+          if (query[end + 1] !== char) break;
+          end++;
+        }
+        end++;
+      }
+      result += query.slice(index, end + 1);
+      index = end + 1;
+    } else if (char === '-' && query[index + 1] === '-') {
+      const end = query.indexOf('\n', index);
+      index = end === -1 ? query.length : end;
+    } else if (char === '/' && query[index + 1] === '*') {
+      const end = query.indexOf('*/', index + 2);
+      index = end === -1 ? query.length : end + 2;
+      result += ' ';
+    } else {
+      result += char;
+      index++;
+    }
+  }
+  return result;
+};
+
+/**
+ * Detect which time variables a text (query, request parameters...) uses
+ */
+export const getQueryTimeVariablesUsage = (text: string): QueryTimeVariablesUsage => ({
+  usesStartTime: /@StartTime\b/.test(text),
+  usesEndTime: /@EndTime\b/.test(text),
+  hasInlineOffset: INLINE_OFFSET_PATTERNS.some(pattern => pattern.test(text))
+});
+
+/**
+ * Same as getQueryTimeVariablesUsage, for an SQL query (comments are ignored)
+ */
+export const getSqlQueryTimeVariablesUsage = (query: string): QueryTimeVariablesUsage =>
+  getQueryTimeVariablesUsage(stripSqlComments(query));
+
 export const convertDelimiter = (delimiter: CsvCharacter): string => {
   switch (delimiter) {
     case 'NON_BREAKING_SPACE':
