@@ -1459,12 +1459,12 @@
             }
           },
           "file-input": {
-            "title": "File",
+            "title": "Incoming file",
             "file-type": {
               "title": "File type",
               "csv": "CSV",
               "json": "JSON",
-              "other": "Other (renamed only)"
+              "other": "Any file"
             },
             "delimiter": {
               "title": "CSV delimiter",
@@ -1663,7 +1663,7 @@
               "format": "Format",
               "locale": "Locale",
               "precision": {
-                "title": "Timestamp precision",
+                "title": "Output precision",
                 "ms": "Millisecond",
                 "s": "Second",
                 "min": "Minute",

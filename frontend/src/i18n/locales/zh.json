@@ -472,12 +472,12 @@
             }
           },
           "file-input": {
-            "title": "文件",
+            "title": "传入文件",
             "file-type": {
               "title": "文件类型",
               "csv": "CSV",
               "json": "JSON",
-              "other": "其他（仅重命名）"
+              "other": "任意文件"
             },
             "delimiter": {
               "title": "CSV 分隔符",
@@ -676,7 +676,7 @@
               "format": "格式",
               "locale": "区域设置",
               "precision": {
-                "title": "时间戳精度",
+                "title": "输出精度",
                 "ms": "毫秒",
                 "s": "秒",
                 "min": "分钟",
