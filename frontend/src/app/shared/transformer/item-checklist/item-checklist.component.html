@@ -1,0 +1,92 @@
+<div class="item-checklist">
+  <!-- The search and the filters, as in the south items list -->
+  <div class="d-flex flex-wrap align-items-center gap-2 p-2 border-bottom">
+    <input
+      class="form-control form-control-sm item-search"
+      [placeholder]="'configuration.oibus.manifest.transformers.search-items' | translate"
+      [attr.aria-label]="'configuration.oibus.manifest.transformers.search-items' | translate"
+      [(ngModel)]="searchText"
+    />
+    @if (groups().length) {
+      <select class="form-select form-select-sm w-auto" [attr.aria-label]="'south.items.group' | translate" [(ngModel)]="groupFilter">
+        <option [ngValue]="null" translate="south.items.all-groups"></option>
+        <option ngValue="none" translate="south.items.group-none"></option>
+        @for (group of groups(); track group.id) {
+          <option [ngValue]="group.id">{{ group.standardSettings.name }}</option>
+        }
+      </select>
+    }
+    <select class="form-select form-select-sm w-auto" [attr.aria-label]="'south.items.scan-mode' | translate" [(ngModel)]="scanModeFilter">
+      <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
+      @for (scanMode of scanModes(); track scanMode.id) {
+        <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>
+      }
+    </select>
+    <select class="form-select form-select-sm w-auto" [attr.aria-label]="'south.items.status' | translate" [(ngModel)]="statusFilter">
+      <option [ngValue]="null" translate="south.items.all-statuses"></option>
+      <option ngValue="enabled" translate="south.items.enabled-label"></option>
+      <option ngValue="disabled" translate="south.items.disabled-label"></option>
+    </select>
+  </div>
+
+  <!-- The selection: all the matching items at once, how many are selected -->
+  <div class="d-flex flex-wrap align-items-center gap-2 px-2 py-1 border-bottom checklist-header">
+    <input
+      type="checkbox"
+      class="form-check-input mt-0"
+      [attr.aria-label]="'configuration.oibus.manifest.transformers.select-matching' | translate"
+      [checked]="allMatchingSelected()"
+      [indeterminate]="someMatchingSelected()"
+      [disabled]="matchingItems().length === 0"
+      (change)="toggleMatching()"
+    />
+    <span class="small selection-count">{{ countKey() | translate: { count: selection().length, total: items().length } }}</span>
+    <div class="form-check form-switch mb-0 ms-auto">
+      <input class="form-check-input" type="checkbox" role="switch" id="selected-only" [(ngModel)]="selectedOnly" />
+      <label class="form-check-label small" for="selected-only" translate="configuration.oibus.manifest.transformers.selected-only"></label>
+    </div>
+    @if (selection().length) {
+      <button
+        type="button"
+        class="btn btn-sm btn-link text-secondary p-0"
+        (click)="clear()"
+        translate="configuration.oibus.manifest.transformers.clear-selection"
+      ></button>
+    }
+  </div>
+
+  <div class="checklist-items">
+    @for (row of shownItems(); track row.item.id) {
+      <label class="checklist-item d-flex align-items-center gap-2 px-2 py-1 mb-0" [class.selected]="isSelected(row.item)">
+        <input
+          type="checkbox"
+          class="form-check-input mt-0"
+          [attr.aria-label]="row.item.name"
+          [checked]="isSelected(row.item)"
+          (change)="toggle(row.item)"
+        />
+        <span
+          [class]="row.item.enabled ? 'fa-solid fa-check-circle status-green' : 'fa-solid fa-minus-circle status-grey'"
+          [attr.aria-label]="(row.item.enabled ? 'south.items.enabled-label' : 'south.items.disabled-label') | translate"
+        ></span>
+        <span class="flex-grow-1 text-truncate">{{ row.item.name }}</span>
+        @if (row.group) {
+          <small class="text-body-secondary text-truncate item-group">{{ row.group }}</small>
+        }
+        @if (row.scanMode) {
+          <small class="text-body-secondary text-truncate item-scan-mode">{{ row.scanMode }}</small>
+        }
+      </label>
+    } @empty {
+      <div class="px-2 py-2 small text-body-secondary" translate="configuration.oibus.manifest.transformers.no-items-found"></div>
+    }
+    @if (matchingItems().length > shownItems().length) {
+      <div
+        class="px-2 py-2 small text-body-secondary border-top"
+        id="more-items"
+        translate="configuration.oibus.manifest.transformers.more-items"
+        [translateParams]="{ limit: shownLimit, total: matchingItems().length }"
+      ></div>
+    }
+  </div>
+</div>
