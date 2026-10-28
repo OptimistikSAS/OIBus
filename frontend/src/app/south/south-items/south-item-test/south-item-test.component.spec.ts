@@ -55,8 +55,8 @@ interface TesterOptions {
 class SouthItemTestComponentTester {
   readonly fixture = TestBed.createComponent(SouthItemTestComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly testButton = this.root.getByRole('button', { name: 'Run test' });
-  readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
+  // runs the test, and cancels it while it runs
+  readonly testButton = this.root.getByCss('#test-item');
   readonly dateRange = this.root.getByCss('oib-date-range-selector');
   readonly transformerSelect = this.root.getByLabelText('Transformer', { exact: true });
   readonly pipelineTransformer = this.root.getByCss('.pipeline-transformer');
@@ -116,7 +116,7 @@ describe('SouthItemTestComponent', () => {
     await expect.element(tester.transformerSelect).not.toBeInTheDocument();
     await expect.element(tester.pipelineTransformer).not.toBeInTheDocument();
     await expect.element(tester.dateRange).not.toBeInTheDocument();
-    await expect.element(tester.cancelButton).toBeDisabled();
+    await expect.element(tester.testButton).toHaveTextContent('Run test');
 
     await tester.testButton.click();
 
@@ -183,6 +183,18 @@ describe('SouthItemTestComponent', () => {
     await expect.element(tester.durations).toHaveTextContent('Connection: 12 ms · Query: 34 ms');
     await expect.element(tester.result).toBeVisible();
     await expect.element(tester.info).not.toBeInTheDocument();
+    // the button joins the result, on the row of the choice of the panes (here without a transformer, so without that choice)
+    await expect.element(tester.result.getByCss('#test-item')).toHaveTextContent('Run test');
+    await expect.element(tester.result.getByCss('#pipeline-panes')).not.toBeInTheDocument();
+  });
+
+  test('should place the button next to the choice of the panes when testing through a transformer', async () => {
+    const tester = new SouthItemTestComponentTester({ transformer: northTransformer });
+
+    await tester.testButton.click();
+
+    await expect.element(tester.result.getByCss('#pipeline-panes')).toBeVisible();
+    await expect.element(tester.result.getByCss('#test-item')).toHaveTextContent('Run test');
   });
 
   test('should mark the result as outdated once the item changes, until the test runs again', async () => {
@@ -257,15 +269,31 @@ describe('SouthItemTestComponent', () => {
     const tester = new SouthItemTestComponentTester();
 
     await tester.testButton.click();
-    await expect.element(tester.testButton).toBeDisabled();
+    await expect.element(tester.testButton).toHaveTextContent('Cancel');
     await expect.element(tester.info).not.toBeInTheDocument();
 
-    await tester.cancelButton.click();
+    await tester.testButton.click();
 
     await expect.element(tester.info).toHaveTextContent('Test cancelled');
-    await expect.element(tester.testButton).toBeEnabled();
-    await expect.element(tester.cancelButton).toBeDisabled();
+    await expect.element(tester.testButton).toHaveTextContent('Run test');
     expect(result$.observed).toBe(false);
+    expect(southConnectorService.testItem).toHaveBeenCalledTimes(1);
+  });
+
+  test('should keep the run button when a test run again over a result is cancelled', async () => {
+    const tester = new SouthItemTestComponentTester();
+    await tester.testButton.click();
+    await expect.element(tester.result).toBeInTheDocument();
+    const result$ = new Subject<SouthConnectorItemTestResult>();
+    southConnectorService.testItem.mockReturnValue(result$);
+
+    await tester.testButton.click();
+    await expect.element(tester.testButton).toHaveTextContent('Cancel');
+    await tester.testButton.click();
+
+    await expect.element(tester.info).toHaveTextContent('Test cancelled');
+    await expect.element(tester.result).not.toBeInTheDocument();
+    await expect.element(tester.testButton).toHaveTextContent('Run test');
   });
 
   test('should offer the history query transformers in a history context', async () => {

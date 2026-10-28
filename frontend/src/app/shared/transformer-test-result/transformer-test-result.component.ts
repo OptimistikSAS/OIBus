@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, contentChild, Directive, effect, input, signal, viewChild } from '@angular/core';
 
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -12,11 +12,18 @@ import {
 
 type PipelinePanes = 'both' | 'raw' | 'output';
 
+/** Marks the actions a parent projects into the result, shown on the far right of the choice of the panes */
+@Directive({
+  selector: '[oibPipelineActions]'
+})
+export class PipelineActionsDirective {}
+
 /**
  * Displays a transformer test as raw result and transformer output side by side (single column when
  * no transformer is involved). Reuses {@link ItemTestResultComponent} for each content section. The
  * output section is hidden until a transformer is provided (raw-only case). Either section can be shown alone, on the full
- * width.
+ * width. Actions projected with {@link PipelineActionsDirective} sit on the far right of that choice, on their own row without
+ * a transformer.
  */
 @Component({
   selector: 'oib-transformer-test-result',
@@ -29,6 +36,7 @@ export class TransformerTestResultComponent {
   readonly raw = input<OIBusContent | null>(null);
   readonly hasTransformer = input<boolean>(false);
   readonly output = input<OIBusContent | null>(null);
+  readonly actions = contentChild(PipelineActionsDirective);
 
   /** The panes shown once a transformer is involved: both side by side, or one of them on the full width */
   readonly panes = signal<PipelinePanes>('both');

@@ -22,7 +22,10 @@ import { getMessageFromHttpErrorResponse } from '../../../shared/error-intercept
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { inMemoryTypeahead } from '../../../shared/form/typeahead';
 import { OI_TYPEAHEAD_DIRECTIVES } from '../../../shared/form/typeahead-directives';
-import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
+import {
+  PipelineActionsDirective,
+  TransformerTestResultComponent
+} from '../../../shared/transformer-test-result/transformer-test-result.component';
 
 /** Where the "from a source item" input pulls values from (or `none` for paste-only sources). */
 export type TransformerTestItemSource =
@@ -53,6 +56,7 @@ interface TestItem {
     TranslatePipe,
     OibCodeBlockComponent,
     TransformerTestResultComponent,
+    PipelineActionsDirective,
     DateRangeSelectorComponent,
     ...OI_TYPEAHEAD_DIRECTIVES
   ]
@@ -237,6 +241,8 @@ export class NorthTransformerTestComponent {
   cancelTest() {
     this.testSubscription?.unsubscribe();
     this.finishTest();
+    // the message replaces the previous result, which held the run button: drop it so that the button shows on its own
+    this.testResult.set(null);
     this.infoMessage.set(this.translate.instant('south.test-item.status-message.cancel'));
   }
 

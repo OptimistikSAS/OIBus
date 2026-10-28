@@ -156,7 +156,7 @@
         </div>
       }
       <oib-transformer-test-result class="d-block mt-2" [raw]="testResult.raw" [hasTransformer]="true" [output]="testResult.transformed">
-        <ng-container pipelineActions [ngTemplateOutlet]="runButton" />
+        <ng-container oibPipelineActions [ngTemplateOutlet]="runButton" />
       </oib-transformer-test-result>
     </div>
   }

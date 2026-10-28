@@ -2633,7 +2633,6 @@
     "test-item": {
       "title": "Testing item",
       "test-button": "Run test",
-      "cancel-button": "Cancel",
       "query-start": "Query data from",
       "query-end": "Query data until",
       "connection-duration": "Connection: {{duration}} ms",

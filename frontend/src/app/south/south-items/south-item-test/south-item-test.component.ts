@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -37,7 +38,10 @@ import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
-import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
+import {
+  PipelineActionsDirective,
+  TransformerTestResultComponent
+} from '../../../shared/transformer-test-result/transformer-test-result.component';
 
 /** A transformer available to run against the test item, with its configured (default) options. */
 interface TransformerChoice {
@@ -67,6 +71,7 @@ type TestingSettingsForm = FormGroup<{
   styleUrl: './south-item-test.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     TranslateDirective,
@@ -74,7 +79,8 @@ type TestingSettingsForm = FormGroup<{
     ValErrorDelayDirective,
     TranslatePipe,
     OIBusObjectFormControlComponent,
-    TransformerTestResultComponent
+    TransformerTestResultComponent,
+    PipelineActionsDirective
   ]
 })
 class SouthItemTestComponent {
@@ -332,6 +338,8 @@ class SouthItemTestComponent {
   cancelTesting() {
     this.testSubscription?.unsubscribe();
     this.finishTest();
+    // the message replaces the previous result, which held the run button: drop it so that the button shows on its own
+    this.testResult.set(null);
     this.infoMessage.set(this.translate.instant('south.test-item.status-message.cancel'));
   }
 

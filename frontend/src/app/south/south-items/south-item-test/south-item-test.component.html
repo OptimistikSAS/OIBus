@@ -1,29 +1,25 @@
+<!-- One button runs the test, and cancels it while it runs -->
+<ng-template #runButton>
+  <button
+    type="button"
+    id="test-item"
+    class="btn btn-sm"
+    [class.btn-primary]="!isTestRunning()"
+    [class.btn-outline-danger]="isTestRunning()"
+    (click)="isTestRunning() ? cancelTesting() : testItem()"
+  >
+    @if (isTestRunning()) {
+      <span class="fa-solid fa-spinner fa-spin me-2" aria-hidden="true"></span>
+      <span translate="common.cancel"></span>
+    } @else {
+      <span class="fa-solid fa-play me-2" aria-hidden="true"></span>
+      <span translate="south.test-item.test-button"></span>
+    }
+  </button>
+</ng-template>
+
 <div class="oib-section-title">
   <h5 translate="south.test-item.title"></h5>
-  <div>
-    <button
-      type="button"
-      translate="south.test-item.test-button"
-      id="test-item"
-      class="btn btn-primary btn-sm"
-      [disabled]="isTestRunning()"
-      (click)="testItem()"
-    >
-      @if (isTestRunning()) {
-        <span class="fa-solid fa-spinner fa-spin ms-2" aria-hidden="true"></span>
-      } @else {
-        <span class="fa-solid fa-check ms-2" aria-hidden="true"></span>
-      }
-    </button>
-    <button
-      type="button"
-      translate="south.test-item.cancel-button"
-      id="cancel-test-item"
-      class="btn btn-danger btn-sm ms-2"
-      [disabled]="!isTestRunning()"
-      (click)="cancelTesting()"
-    ></button>
-  </div>
 </div>
 
 @if (form(); as form) {
@@ -141,6 +137,13 @@
   </form>
 }
 
+<!-- Until there is a result, whose panes it then joins -->
+@if (!testResult()) {
+  <div class="d-flex justify-content-end mt-2">
+    <ng-container [ngTemplateOutlet]="runButton" />
+  </div>
+}
+
 @if (infoMessage(); as infoMessage) {
   <div class="alert alert-primary mt-2 mb-0">{{ infoMessage }}</div>
 } @else if (errorMessage(); as errorMessage) {
@@ -172,6 +175,8 @@
       [raw]="testResult.raw"
       [hasTransformer]="!!selectedTransformer()"
       [output]="testResult.transformed"
-    />
+    >
+      <ng-container oibPipelineActions [ngTemplateOutlet]="runButton" />
+    </oib-transformer-test-result>
   </div>
 }
