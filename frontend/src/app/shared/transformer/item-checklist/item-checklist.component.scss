@@ -1,0 +1,35 @@
+.item-checklist {
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+}
+
+.item-search {
+  flex: 1 1 12rem;
+  width: auto;
+}
+
+.checklist-header {
+  background-color: var(--bs-tertiary-bg);
+}
+
+.checklist-items {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.checklist-item {
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--bs-tertiary-bg);
+  }
+
+  &.selected {
+    background-color: var(--bs-secondary-bg);
+  }
+
+  .item-group,
+  .item-scan-mode {
+    max-width: 30%;
+  }
+}
