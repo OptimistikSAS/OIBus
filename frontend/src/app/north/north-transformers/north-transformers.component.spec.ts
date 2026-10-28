@@ -248,7 +248,7 @@ describe('NorthTransformersComponent', () => {
     };
     const tester = new NorthTransformersComponentTester(northConnector, true);
 
-    await expect.element(tester.row('South 2').getByCss('.transformer-options')).toMatchTextContent('Timestamp precision: Second');
+    await expect.element(tester.row('South 2').getByCss('.transformer-options')).toMatchTextContent('Output precision: Second');
   });
 
   test('should flag the transformers which are never used', async () => {

@@ -472,12 +472,12 @@
             }
           },
           "file-input": {
-            "title": "Fichier",
+            "title": "Fichier entrant",
             "file-type": {
               "title": "Type de fichier",
               "csv": "CSV",
               "json": "JSON",
-              "other": "Autre (renommé seulement)"
+              "other": "Tout fichier"
             },
             "delimiter": {
               "title": "Délimiteur CSV",
@@ -676,7 +676,7 @@
               "format": "Format",
               "locale": "Paramètres régionaux",
               "precision": {
-                "title": "Précision de l'horodatage",
+                "title": "Précision en sortie",
                 "ms": "Milliseconde",
                 "s": "Seconde",
                 "min": "Minute",

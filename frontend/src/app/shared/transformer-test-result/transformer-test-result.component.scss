@@ -11,15 +11,20 @@
   }
 }
 
-// A light caption on top of the result box, sharing its outline
+// One frame around the caption and its result, so that both share the same edges
+.pipeline-stage {
+  border: 1px solid $mediumGrey;
+  border-radius: var(--bs-border-radius);
+}
+
+// A light caption on top of the result
 .pipeline-caption {
   min-height: 1.75rem;
   padding: 0.125rem 0.5rem;
   font-size: 0.875rem;
   color: var(--bs-secondary-color);
   background-color: var(--bs-tertiary-bg);
-  border: 1px solid $mediumGrey;
-  border-bottom: 0;
+  border-bottom: 1px solid $mediumGrey;
   border-top-left-radius: var(--bs-border-radius);
   border-top-right-radius: var(--bs-border-radius);
 }
