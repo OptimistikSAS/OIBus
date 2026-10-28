@@ -86,7 +86,7 @@ class EditNorthTransformerModalComponentTester {
   readonly impact = this.root.getByCss('#transformer-impact');
   readonly group = this.root.getByCss('#group');
   readonly itemSearch = this.root.getByLabelText('Search items...');
-  readonly pills = this.root.getByCss('oib-pill');
+  readonly selectionCount = this.root.getByCss('.selection-count');
   readonly excludeItems = this.root.getByLabelText('Except some items');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly nextButton = this.root.getByRole('button', { name: 'Next' });
@@ -117,8 +117,8 @@ class EditNorthTransformerModalComponentTester {
     );
   }
 
-  dropdownItem(name: string) {
-    return this.root.getByRole('button', { name, exact: true });
+  item(name: string) {
+    return this.root.getByRole('checkbox', { name, exact: true });
   }
 }
 
@@ -347,13 +347,8 @@ describe('EditNorthTransformerModalComponent', () => {
 
     await tester.source.selectOptions('South 1 (Folder scanner)');
     await tester.specificItems.click();
-    await tester.itemSearch.click();
-    await tester.dropdownItem('item2').click();
-    await expect.element(tester.pills).toHaveLength(1);
-    await tester.root.getByRole('button', { name: 'Select all results' }).click();
-    await expect.element(tester.pills).toHaveLength(2);
-    await tester.pills.nth(1).getByRole('button').click();
-    await expect.element(tester.pills).toHaveLength(1);
+    await tester.item('item2').click();
+    await expect.element(tester.selectionCount).toHaveTextContent('1 of 2 items selected');
     await tester.output.selectOptions('MQTT payloads');
     await tester.nextButton.click();
     await tester.saveButton.click();
@@ -386,25 +381,24 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.specificItems.click();
 
     await tester.itemSearch.fill('item1');
-    await expect.element(tester.dropdownItem('item1')).toBeInTheDocument();
-    await expect.element(tester.dropdownItem('item2')).not.toBeInTheDocument();
-    await expect.element(tester.root.getByText('1 results')).toBeInTheDocument();
+    await expect.element(tester.item('item1')).toBeInTheDocument();
+    await expect.element(tester.item('item2')).not.toBeInTheDocument();
     await tester.itemSearch.fill('');
 
     await tester.root.getByLabelText('Status').selectOptions('Disabled');
-    await expect.element(tester.dropdownItem('item1')).not.toBeInTheDocument();
-    await expect.element(tester.dropdownItem('item2')).toBeInTheDocument();
+    await expect.element(tester.item('item1')).not.toBeInTheDocument();
+    await expect.element(tester.item('item2')).toBeInTheDocument();
     await tester.root.getByLabelText('Status').selectOptions('All statuses');
 
     await tester.root.getByLabelText('Group').selectOptions('Group 1');
-    await expect.element(tester.dropdownItem('item1')).toBeInTheDocument();
-    await expect.element(tester.dropdownItem('item2')).not.toBeInTheDocument();
+    await expect.element(tester.item('item1')).toBeInTheDocument();
+    await expect.element(tester.item('item2')).not.toBeInTheDocument();
     await tester.root.getByLabelText('Group').selectOptions('None');
-    await expect.element(tester.dropdownItem('item1')).not.toBeInTheDocument();
+    await expect.element(tester.item('item1')).not.toBeInTheDocument();
 
     await tester.root.getByLabelText('Group').selectOptions('All groups');
     await tester.root.getByLabelText('Schedule').selectOptions(testData.scanMode.list[1].name);
-    await expect.element(tester.dropdownItem('item1')).not.toBeInTheDocument();
+    await expect.element(tester.item('item1')).not.toBeInTheDocument();
   });
 
   test('should edit a transformer with an OIBus API source', async () => {
@@ -450,8 +444,8 @@ describe('EditNorthTransformerModalComponent', () => {
 
     await expect.element(tester.sourceLine).toHaveTextContent('South 1Folder scanner');
     await expect.element(tester.specificItems).toHaveAttribute('aria-pressed', 'true');
-    await expect.element(tester.pills).toHaveLength(2);
-    await tester.pills.nth(0).getByRole('button').click();
+    await expect.element(tester.selectionCount).toHaveTextContent('2 of 2 items selected');
+    await tester.item('item1').click();
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith(
@@ -531,7 +525,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
     prepare({ items: [toItemLight(items[1])] });
     await expect.element(tester.specificItems).toHaveAttribute('aria-pressed', 'true');
-    await expect.element(tester.pills).toHaveLength(1);
+    await expect.element(tester.item('item2')).toBeChecked();
     await tester.nextButton.click();
     await tester.saveButton.click();
     expect(activeModal.close).toHaveBeenCalledWith(
@@ -564,8 +558,8 @@ describe('EditNorthTransformerModalComponent', () => {
     await tester.source.selectOptions('South 1 (Folder scanner)');
 
     await tester.excludeItems.click();
-    await tester.itemSearch.click();
-    await tester.dropdownItem('item2').click();
+    await tester.item('item2').click();
+    await expect.element(tester.selectionCount).toHaveTextContent('1 of 2 items left out');
     await tester.nextButton.click();
     await tester.saveButton.click();
 
@@ -592,8 +586,8 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     await expect.element(tester.excludeItems).toBeChecked();
-    await expect.element(tester.pills).toHaveLength(2);
-    await tester.pills.nth(0).getByRole('button').click();
+    await expect.element(tester.selectionCount).toHaveTextContent('2 of 2 items left out');
+    await tester.item('item1').click();
     await tester.saveButton.click();
     expect(activeModal.close).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -602,8 +596,9 @@ describe('EditNorthTransformerModalComponent', () => {
     );
 
     await tester.excludeItems.click();
-    await expect.element(tester.pills).toHaveLength(0);
+    await expect.element(tester.itemSearch).not.toBeInTheDocument();
     await tester.specificItems.click();
+    await expect.element(tester.selectionCount).toHaveTextContent('0 of 2 items selected');
     await expect.element(tester.excludeItems).not.toBeInTheDocument();
   });
 
@@ -700,8 +695,7 @@ describe('EditNorthTransformerModalComponent', () => {
       await tester.specificItems.click();
       // no item selected yet: nothing to tell
       await expect.element(tester.impact).not.toBeInTheDocument();
-      await tester.itemSearch.click();
-      await tester.dropdownItem('item1').click();
+      await tester.item('item1').click();
 
       await expect.element(tester.impact).toMatchTextContent('1 item(s) sent through this transformer');
       await expect.element(tester.impact).toMatchTextContent('1 currently sent through another transformer');

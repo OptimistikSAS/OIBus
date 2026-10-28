@@ -10,7 +10,7 @@ import {
   Validators
 } from '@angular/forms';
 
-import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { Observable } from 'rxjs';
@@ -42,12 +42,11 @@ import {
   summarizeSettings
 } from '../../../shared/form/oibus-settings-summary/settings-summary';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
-import { filterItems } from '../../../shared/item-table/item-table';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { submitsOnEnter, WizardSteps } from '../../../shared/modal-steps/wizard-steps';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
-import { PillComponent } from '../../../shared/pill/pill.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+import { ItemChecklistComponent } from '../../../shared/transformer/item-checklist/item-checklist.component';
 import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { getAssociatedInputType, isTransformerApplicable } from '../../../shared/utils/utils';
@@ -106,7 +105,7 @@ interface TransformerSourceOption {
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
-  styleUrls: ['./edit-north-transformer-modal.component.scss', '../routing-rows.scss'],
+  styleUrl: '../routing-rows.scss',
   imports: [
     ReactiveFormsModule,
     FormsModule,
@@ -116,18 +115,14 @@ interface TransformerSourceOption {
     OIBusObjectFormControlComponent,
     OIBusSouthTypeEnumPipe,
     FormControlValidationDirective,
-    NgbDropdown,
-    NgbDropdownAnchor,
-    NgbDropdownMenu,
-    NgbDropdownItem,
-    PillComponent,
     ValErrorDelayDirective,
     ValidationErrorsComponent,
     NorthTransformerTestComponent,
     NgbTooltip,
     ModalStepsComponent,
     OIBusSettingsSummaryComponent,
-    SelectExistingTransformerComponent
+    SelectExistingTransformerComponent,
+    ItemChecklistComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -207,33 +202,6 @@ export class EditNorthTransformerModalComponent {
   readonly selectionType = signal<'all' | 'group' | 'items'>('all');
   /** Whether the selected items are left out of a transformer applying to all the items (of the south or of the group) */
   readonly excludeItems = signal(false);
-  readonly itemSearchText = signal('');
-  readonly searchInteracted = signal(false);
-  // The filters of the items, as in the south items list
-  readonly groupFilter = signal<string | null>(null);
-  readonly scanModeFilter = signal<string | null>(null);
-  readonly statusFilter = signal<'enabled' | 'disabled' | null>(null);
-  /** The items of the south matching the search and the filters */
-  readonly matchingItems = computed<Array<ItemLightDTO>>(() => {
-    const southConnector = this.southConnector();
-    if (!southConnector) return [];
-    const groupFilter = this.groupFilter();
-    const scanModeFilter = this.scanModeFilter();
-    const items: ReadonlyArray<SouthConnectorItemDTO> = southConnector.items;
-    return filterItems(items, { name: this.itemSearchText(), status: this.statusFilter() })
-      .filter(item => {
-        if (groupFilter === 'none' && item.group) return false;
-        if (groupFilter && groupFilter !== 'none' && item.group?.id !== groupFilter) return false;
-        const scanModeId = item.group ? item.group.standardSettings.scanMode.id : item.scanMode?.id;
-        return !scanModeFilter || scanModeId === scanModeFilter;
-      })
-      .map(toItemLight);
-  });
-  /** The first matching items, listed in the dropdown */
-  readonly filteredItems = computed(() => this.matchingItems().slice(0, 10));
-  /** The matching items not selected yet */
-  readonly searchResults = computed(() => this.matchingItems().filter(item => !this.isItemSelected(item)));
-  readonly totalSearchResults = computed(() => this.searchResults().length);
   readonly availableGroups = signal<Array<SouthItemGroupLightDTO>>([]);
   readonly selectedGroup = signal<SouthItemGroupLightDTO | null>(null);
   /** Whether the source is set by the line it is configured from (or by the edited transformer): it is shown, not chosen */
@@ -381,7 +349,6 @@ export class EditNorthTransformerModalComponent {
       this.selectedGroup.set(null);
       this.availableGroups.set([]);
       this.southConnector.set(null);
-      this.clearItemFilters();
       if (source.south) {
         this.loadSouth(source.south.id);
       }
@@ -610,21 +577,10 @@ export class EditNorthTransformerModalComponent {
     }
   }
 
-  toggleItem(item: ItemLightDTO) {
+  /** The items checked in the list: the items of the transformer, or the ones it leaves out */
+  setSelectedItems(items: Array<ItemLightDTO>) {
     this.itemsRequired.set(false);
-    if (this.isItemSelected(item)) {
-      this.selectedItems.update(selectedItems => selectedItems.filter(i => i.id !== item.id));
-    } else {
-      this.selectedItems.update(selectedItems => [...selectedItems, item]);
-    }
-  }
-
-  isItemSelected(item: ItemLightDTO): boolean {
-    return this.selectedItems().some(i => i.id === item.id);
-  }
-
-  removeItem(itemToRemove: ItemLightDTO) {
-    this.selectedItems.update(selectedItems => selectedItems.filter(item => item.id !== itemToRemove.id));
+    this.selectedItems.set(items);
   }
 
   setSelectionType(type: 'all' | 'group' | 'items') {
@@ -633,9 +589,7 @@ export class EditNorthTransformerModalComponent {
     this.excludeItems.set(false);
     if (type !== 'items') {
       this.selectedItems.set([]);
-      this.searchInteracted.set(false);
     }
-    this.clearItemFilters();
     if (type !== 'group') {
       this.selectedGroup.set(null);
     }
@@ -644,29 +598,6 @@ export class EditNorthTransformerModalComponent {
   /** Leaves (or no longer leaves) some items out of the transformer applying to all the items */
   setExcludeItems(exclude: boolean) {
     this.excludeItems.set(exclude);
-    this.selectedItems.set([]);
-    this.searchInteracted.set(false);
-    this.clearItemFilters();
-  }
-
-  private clearItemFilters() {
-    this.itemSearchText.set('');
-    this.groupFilter.set(null);
-    this.scanModeFilter.set(null);
-    this.statusFilter.set(null);
-  }
-
-  selectAllResults() {
-    const selectedItems = [...this.selectedItems()];
-    for (const item of this.searchResults()) {
-      if (!selectedItems.some(selected => selected.id === item.id)) {
-        selectedItems.push(item);
-      }
-    }
-    this.selectedItems.set(selectedItems);
-  }
-
-  removeAllItems() {
     this.selectedItems.set([]);
   }
 }

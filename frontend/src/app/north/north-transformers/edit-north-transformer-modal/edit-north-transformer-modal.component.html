@@ -83,14 +83,14 @@
           }
         </div>
 
-        <!-- 2. The items of a south the transformer applies to, and what it would send -->
+        <!-- 2. For a south, the items the transformer applies to (in the same section), and what it would send -->
         @if (form.controls.source.value.south) {
-          <h5 class="oib-section-title" translate="configuration.oibus.manifest.transformers.items"></h5>
           <div
-            class="d-flex flex-wrap gap-1 mb-2"
+            class="d-flex flex-wrap align-items-center gap-1 mb-2"
             role="group"
             [attr.aria-label]="'configuration.oibus.manifest.transformers.items' | translate"
           >
+            <span class="small text-body-secondary me-1" translate="configuration.oibus.manifest.transformers.applies-to"></span>
             <button
               type="button"
               class="filter-chip px-2 py-1"
@@ -120,22 +120,22 @@
               (click)="setSelectionType('items')"
               translate="configuration.oibus.manifest.transformers.specific-items"
             ></button>
+            @if (selectionType() === 'group') {
+              <select
+                class="form-select form-select-sm w-auto ms-1"
+                id="group"
+                [attr.aria-label]="'configuration.oibus.manifest.transformers.select-group' | translate"
+                [(ngModel)]="selectedGroup"
+                [ngModelOptions]="{ standalone: true }"
+                [compareWith]="compareGroups"
+              >
+                <option [ngValue]="null" translate="configuration.oibus.manifest.transformers.select-group"></option>
+                @for (group of availableGroups(); track group.id) {
+                  <option [ngValue]="group">{{ group.name }}</option>
+                }
+              </select>
+            }
           </div>
-          @if (selectionType() === 'group') {
-            <select
-              class="form-select mb-2"
-              id="group"
-              [attr.aria-label]="'configuration.oibus.manifest.transformers.select-group' | translate"
-              [(ngModel)]="selectedGroup"
-              [ngModelOptions]="{ standalone: true }"
-              [compareWith]="compareGroups"
-            >
-              <option [ngValue]="null" translate="configuration.oibus.manifest.transformers.select-group"></option>
-              @for (group of availableGroups(); track group.id) {
-                <option [ngValue]="group">{{ group.name }}</option>
-              }
-            </select>
-          }
           @if (selectionType() !== 'items') {
             <div class="form-check mb-2">
               <input
@@ -152,121 +152,19 @@
               ></label>
             </div>
           }
-          @if (selectionType() === 'items' || excludeItems()) {
-            @if (searchInteracted() && (totalSearchResults() > 0 || selectedItems().length > 0)) {
-              <div class="mb-2 d-flex align-items-center gap-2">
-                @if (totalSearchResults() > 0) {
-                  <small class="text-muted">
-                    <span
-                      translate="configuration.oibus.manifest.transformers.search-results-count"
-                      [translateParams]="{ count: totalSearchResults() }"
-                    ></span>
-                    @if (totalSearchResults() > 10) {
-                      <span translate="configuration.oibus.manifest.transformers.showing-first-n" [translateParams]="{ limit: 10 }"></span>
-                    }
-                  </small>
-                }
-                @if (searchResults().length > 0) {
-                  <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="selectAllResults()">
-                    <span translate="configuration.oibus.manifest.transformers.select-all-results"></span>
-                  </button>
-                }
-                @if (selectedItems().length > 0) {
-                  <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="removeAllItems()">
-                    <span translate="configuration.oibus.manifest.transformers.remove-all"></span>
-                  </button>
-                }
-              </div>
-            }
-            <!-- The search and the filters of the south items list -->
-            <div ngbDropdown autoClose="outside" #itemDropdown="ngbDropdown" class="item-search-dropdown">
-              <div class="d-flex align-items-center gap-2" ngbDropdownAnchor>
-                <input
-                  id="items"
-                  class="form-control form-control-sm flex-grow-1"
-                  placeholder="{{ 'configuration.oibus.manifest.transformers.search-items' | translate }}"
-                  [attr.aria-label]="'configuration.oibus.manifest.transformers.search-items' | translate"
-                  [(ngModel)]="itemSearchText"
-                  [ngModelOptions]="{ standalone: true }"
-                  (focus)="searchInteracted.set(true); itemDropdown.open()"
-                  (input)="itemDropdown.open()"
-                />
-                @if (southConnector()?.groups?.length) {
-                  <select
-                    class="form-select form-select-sm w-auto item-filter"
-                    [attr.aria-label]="'south.items.group' | translate"
-                    [(ngModel)]="groupFilter"
-                    [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="searchInteracted.set(true); itemDropdown.open()"
-                  >
-                    <option [ngValue]="null" translate="south.items.all-groups"></option>
-                    <option ngValue="none" translate="south.items.group-none"></option>
-                    @for (group of southConnector()!.groups; track group.id) {
-                      <option [ngValue]="group.id">{{ group.standardSettings.name }}</option>
-                    }
-                  </select>
-                }
-                <select
-                  class="form-select form-select-sm w-auto item-filter"
-                  [attr.aria-label]="'south.items.scan-mode' | translate"
-                  [(ngModel)]="scanModeFilter"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="searchInteracted.set(true); itemDropdown.open()"
-                >
-                  <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
-                  @for (scanMode of scanModes(); track scanMode.id) {
-                    <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>
-                  }
-                </select>
-                <select
-                  class="form-select form-select-sm w-auto item-filter"
-                  [attr.aria-label]="'south.items.status' | translate"
-                  [(ngModel)]="statusFilter"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="searchInteracted.set(true); itemDropdown.open()"
-                >
-                  <option [ngValue]="null" translate="south.items.all-statuses"></option>
-                  <option ngValue="enabled" translate="south.items.enabled-label"></option>
-                  <option ngValue="disabled" translate="south.items.disabled-label"></option>
-                </select>
-              </div>
-              <div ngbDropdownMenu class="item-dropdown-menu">
-                @for (item of filteredItems(); track item.id) {
-                  <button type="button" ngbDropdownItem (click)="toggleItem(item)" [class.selected]="isItemSelected(item)">
-                    <div class="d-flex align-items-center">
-                      <span
-                        [class]="item.enabled ? 'fa-solid fa-check-circle status-green me-2' : 'fa-solid fa-minus-circle status-grey me-2'"
-                        aria-hidden="true"
-                      ></span>
-                      <div class="flex-grow-1 me-3">{{ item.name }}</div>
-                      <div class="fa-fw">
-                        @if (isItemSelected(item)) {
-                          <span class="fa-solid fa-check" aria-hidden="true"></span>
-                        }
-                      </div>
-                    </div>
-                  </button>
-                }
-                @if (filteredItems().length === 0 && itemSearchText()) {
-                  <div class="dropdown-item text-muted" translate="configuration.oibus.manifest.transformers.no-items-found"></div>
-                }
-              </div>
-            </div>
-            @if (selectedItems().length > 0) {
-              <div class="mt-2">
-                @for (item of selectedItems(); track item.id) {
-                  <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)">
-                    <div class="d-inline-flex align-items-center">
-                      <span
-                        [class]="item.enabled ? 'fa-solid fa-check-circle status-green me-1' : 'fa-solid fa-minus-circle status-grey me-1'"
-                        aria-hidden="true"
-                      ></span>
-                      {{ item.name }}
-                    </div>
-                  </oib-pill>
-                }
-              </div>
-            }
+          @if ((selectionType() === 'items' || excludeItems()) && southConnector(); as southConnector) {
+            <oib-item-checklist
+              [items]="southConnector.items"
+              [groups]="southConnector.groups"
+              [scanModes]="scanModes()"
+              [countKey]="
+                excludeItems()
+                  ? 'configuration.oibus.manifest.transformers.left-out-count'
+                  : 'configuration.oibus.manifest.transformers.selected-count'
+              "
+              [selection]="selectedItems()"
+              (selectionChange)="setSelectedItems($event)"
+            />
           }
           @if (itemsRequired()) {
             <div class="text-danger small mt-1" id="items-required" translate="north.transformers.modal.items-required"></div>
