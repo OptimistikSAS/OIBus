@@ -80,7 +80,7 @@ const manifest: NorthConnectorManifest = {
       {
         type: 'object',
         key: 'specificSettings',
-        translationKey: 'configuration.oibus.manifest.north.oianalytics.specific-settings',
+        translationKey: 'configuration.oibus.manifest.north.oianalytics.specific-settings.title',
         displayProperties: {
           visible: true,
           wrapInBox: false
