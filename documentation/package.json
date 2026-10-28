@@ -3,8 +3,8 @@
   "version": "3.9.6",
   "private": true,
   "engines": {
-    "node": "=v26",
-    "npm": "=11"
+    "node": "26.12.1",
+    "npm": "11.20.0"
   },
   "scripts": {
     "docusaurus": "docusaurus",
