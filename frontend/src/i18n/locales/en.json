@@ -1125,6 +1125,7 @@
             "timeout": "Timeout",
             "compress": "Compress",
             "specific-settings": {
+              "title": "Connection",
               "host": "URL",
               "accept-unauthorized": "Accept unauthorized",
               "authentication": {
@@ -2142,6 +2143,7 @@
                 "holding-register": "Holding register"
               },
               "data": {
+                "title": "Data",
                 "data-type": {
                   "title": "Data type",
                   "uint16": "UInt16",

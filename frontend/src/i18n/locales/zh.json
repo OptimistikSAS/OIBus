@@ -138,6 +138,7 @@
             "timeout": "超时",
             "compress": "压缩",
             "specific-settings": {
+              "title": "连接",
               "host": "URL",
               "accept-unauthorized": "接受未授权",
               "authentication": {
@@ -1155,6 +1156,7 @@
                 "holding-register": "保持寄存器"
               },
               "data": {
+                "title": "数据",
                 "data-type": {
                   "title": "数据类型",
                   "uint16": "UInt16",

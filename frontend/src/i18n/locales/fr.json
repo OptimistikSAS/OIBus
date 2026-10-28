@@ -138,6 +138,7 @@
             "timeout": "Délai d'expiration",
             "compress": "Compresser",
             "specific-settings": {
+              "title": "Connexion",
               "host": "URL",
               "accept-unauthorized": "Accepter non autorisé",
               "authentication": {
@@ -1155,6 +1156,7 @@
                 "holding-register": "Registre de maintien"
               },
               "data": {
+                "title": "Données",
                 "data-type": {
                   "title": "Type de données",
                   "uint16": "UInt16",
