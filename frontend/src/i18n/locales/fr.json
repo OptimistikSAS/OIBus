@@ -336,6 +336,23 @@
             "record-list-to-oianalytics": "Charge utile OIAnalytics",
             "record-list-to-opcua": "Valeurs OPCUA"
           },
+          "standard-description": {
+            "file-to-file": "Envoie les fichiers tels quels, renommés ou compressés, ou convertit un fichier CSV ou JSON en un autre fichier CSV ou JSON.",
+            "file-to-modbus": "Écrit les valeurs des lignes d'un fichier CSV ou JSON dans des bobines et registres Modbus.",
+            "file-to-mqtt": "Publie chaque ligne d'un fichier CSV ou JSON comme un message MQTT, avec son topic et son contenu.",
+            "file-to-oianalytics": "Envoie les lignes d'un fichier CSV ou JSON à OIAnalytics comme des valeurs temporelles.",
+            "file-to-opcua": "Écrit les valeurs des lignes d'un fichier CSV ou JSON dans des nœuds OPC UA.",
+            "file-to-record-list": "Lit les lignes d'un fichier CSV ou JSON comme des enregistrements, avec tous leurs champs.",
+            "record-list-to-file": "Écrit les enregistrements dans un fichier CSV ou JSON.",
+            "record-list-to-modbus": "Écrit les valeurs des enregistrements dans des bobines et registres Modbus.",
+            "record-list-to-mqtt": "Publie chaque enregistrement comme un message MQTT, avec son topic et son contenu.",
+            "record-list-to-oianalytics": "Envoie les enregistrements à OIAnalytics comme des valeurs temporelles, avec leur référence, leur horodatage et leur valeur.",
+            "record-list-to-opcua": "Écrit les valeurs des enregistrements dans des nœuds OPC UA."
+          },
+          "custom": "Personnalisé",
+          "no-description": "Pas de description",
+          "choose-source-first": "Choisissez une source pour lister les transformateurs disponibles pour ses données",
+          "no-transformer-available": "Aucun transformateur n'est disponible pour cette source",
           "choose-transformer-modal": {
             "title": "Choisir comment traiter les charges utiles",
             "transformer": "Transformateur à appliquer",
@@ -1641,6 +1658,8 @@
       "transformer-none-compatible": "Aucun transformateur configuré ne correspond au type de sortie de cet élément.",
       "hide-settings": "Masquer les paramètres",
       "pipeline": {
+        "show": "Afficher",
+        "both": "Les deux",
         "raw": "Résultat brut",
         "output": "Sortie du transformateur"
       },
@@ -2538,7 +2557,7 @@
       "file": "Fichiers",
       "mqtt": "MQTT",
       "modbus": "Modbus",
-      "oianalytics": "Valeurs temporelles optimisées OIAnalytics",
+      "oianalytics": "Valeurs temporelles OIAnalytics",
       "opcua": "OPCUA",
       "record-list": "Enregistrements"
     },
@@ -3066,6 +3085,7 @@
         "source-paste": "Coller des données",
         "source-item": "À partir d'un élément source",
         "item": "Élément",
+        "search-item": "Rechercher un item de la source...",
         "result-outdated": "Les options du transformateur ou l'entrée ont changé depuis ce test"
       },
       "tooltips": {

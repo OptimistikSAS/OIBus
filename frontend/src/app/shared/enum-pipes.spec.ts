@@ -91,7 +91,7 @@ const ENUM_PIPES: Array<EnumPipeCase> = [
     ['record-list', 'Records (point-based and SQL-like sources)']
   ]),
   enumPipeCase(OibusOutputDataTypeEnumPipe, OUTPUT_TYPES, [
-    ['oianalytics', 'OIAnalytics optimized time values'],
+    ['oianalytics', 'OIAnalytics time values'],
     ['opcua', 'OPCUA']
   ]),
   enumPipeCase(OIBusNorthCategoryEnumPipe, OIBUS_NORTH_CATEGORIES, [['debug', 'Debug']]),

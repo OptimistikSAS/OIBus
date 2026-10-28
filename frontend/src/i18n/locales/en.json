@@ -302,7 +302,7 @@
       "file": "Files",
       "mqtt": "MQTT",
       "modbus": "Modbus",
-      "oianalytics": "OIAnalytics optimized time values",
+      "oianalytics": "OIAnalytics time values",
       "opcua": "OPCUA",
       "record-list": "Records"
     },
@@ -1323,6 +1323,23 @@
             "record-list-to-oianalytics": "OIAnalytics payload",
             "record-list-to-opcua": "OPCUA values"
           },
+          "standard-description": {
+            "file-to-file": "Sends the files as they are, renamed or compressed, or converts a CSV or JSON file into another CSV or JSON file.",
+            "file-to-modbus": "Writes the values of the rows of a CSV or JSON file to Modbus coils and registers.",
+            "file-to-mqtt": "Publishes each row of a CSV or JSON file as an MQTT message, with its topic and payload.",
+            "file-to-oianalytics": "Sends the rows of a CSV or JSON file to OIAnalytics as time values.",
+            "file-to-opcua": "Writes the values of the rows of a CSV or JSON file to OPC UA nodes.",
+            "file-to-record-list": "Reads the rows of a CSV or JSON file as records, with all their fields.",
+            "record-list-to-file": "Writes the records in a CSV or JSON file.",
+            "record-list-to-modbus": "Writes the values of the records to Modbus coils and registers.",
+            "record-list-to-mqtt": "Publishes each record as an MQTT message, with its topic and payload.",
+            "record-list-to-oianalytics": "Sends the records to OIAnalytics as time values, with their reference, timestamp and value.",
+            "record-list-to-opcua": "Writes the values of the records to OPC UA nodes."
+          },
+          "custom": "Custom",
+          "no-description": "No description",
+          "choose-source-first": "Choose a source to list the transformers available for its data",
+          "no-transformer-available": "No transformer is available for this source",
           "choose-transformer-modal": {
             "title": "Choose how to handle payloads",
             "transformer": "Transformer to apply",
@@ -2628,6 +2645,8 @@
       "transformer-none-compatible": "No configured transformer matches this item's output type.",
       "hide-settings": "Hide settings",
       "pipeline": {
+        "show": "Show",
+        "both": "Both",
         "raw": "Raw result",
         "output": "Transformer output"
       },
@@ -3107,6 +3126,7 @@
         "source-paste": "Paste data",
         "source-item": "From a source item",
         "item": "Item",
+        "search-item": "Search an item of the source...",
         "result-outdated": "The transformer options or the input changed since this test ran"
       },
       "tooltips": {

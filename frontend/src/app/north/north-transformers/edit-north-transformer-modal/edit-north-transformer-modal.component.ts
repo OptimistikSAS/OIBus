@@ -105,7 +105,7 @@ interface TransformerSourceOption {
 @Component({
   selector: 'oib-edit-north-transformer-modal',
   templateUrl: './edit-north-transformer-modal.component.html',
-  styleUrl: '../routing-rows.scss',
+  styleUrls: ['./edit-north-transformer-modal.component.scss', '../routing-rows.scss'],
   imports: [
     ReactiveFormsModule,
     FormsModule,
@@ -378,6 +378,21 @@ export class EditNorthTransformerModalComponent {
     this.form.patchValue({ transformer: null, options: {} });
   }
 
+  isSelectedTransformer(transformer: TransformerDTO): boolean {
+    return this.form.controls.transformer.value?.id === transformer.id;
+  }
+
+  /** Picks one of the transformers available for the source */
+  selectTransformer(transformer: TransformerDTO) {
+    if (this.isSelectedTransformer(transformer)) return;
+    this.form.controls.transformer.setValue(transformer);
+    this.form.controls.transformer.markAsDirty();
+  }
+
+  transformerName(transformer: TransformerDTO): string {
+    return transformerName(transformer, this.translateService);
+  }
+
   /** Called when the user picks an already-configured transformer attachment to copy as a starting point. */
   applyExistingTransformer(selection: { transformer: TransformerDTO; options: Record<string, unknown> }) {
     this.createOptionsForm(selection.transformer);
@@ -523,10 +538,6 @@ export class EditNorthTransformerModalComponent {
     if (o1.dataSourceType !== o2.dataSourceType) return false;
     // Compare South Connectors (handle objects or nulls)
     return (o1.south?.id ?? null) === (o2.south?.id ?? null);
-  }
-
-  compareTransformers(t1: TransformerDTO | null, t2: TransformerDTO | null): boolean {
-    return t1 && t2 ? t1.id === t2.id : t1 === t2;
   }
 
   compareGroups(g1: SouthItemGroupLightDTO | null, g2: SouthItemGroupLightDTO | null): boolean {

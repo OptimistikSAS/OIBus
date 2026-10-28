@@ -336,6 +336,23 @@
             "record-list-to-oianalytics": "OIAnalytics 有效载荷",
             "record-list-to-opcua": "OPCUA 值"
           },
+          "standard-description": {
+            "file-to-file": "按原样发送文件（可重命名或压缩），或将 CSV 或 JSON 文件转换为另一个 CSV 或 JSON 文件。",
+            "file-to-modbus": "将 CSV 或 JSON 文件各行的值写入 Modbus 线圈和寄存器。",
+            "file-to-mqtt": "将 CSV 或 JSON 文件的每一行作为 MQTT 消息发布，包含其主题和负载。",
+            "file-to-oianalytics": "将 CSV 或 JSON 文件的各行作为时间值发送到 OIAnalytics。",
+            "file-to-opcua": "将 CSV 或 JSON 文件各行的值写入 OPC UA 节点。",
+            "file-to-record-list": "将 CSV 或 JSON 文件的各行读取为记录，包含其所有字段。",
+            "record-list-to-file": "将记录写入 CSV 或 JSON 文件。",
+            "record-list-to-modbus": "将记录的值写入 Modbus 线圈和寄存器。",
+            "record-list-to-mqtt": "将每条记录作为 MQTT 消息发布，包含其主题和负载。",
+            "record-list-to-oianalytics": "将记录作为时间值发送到 OIAnalytics，包含其引用、时间戳和值。",
+            "record-list-to-opcua": "将记录的值写入 OPC UA 节点。"
+          },
+          "custom": "自定义",
+          "no-description": "无描述",
+          "choose-source-first": "请选择一个来源以列出其数据可用的转换器",
+          "no-transformer-available": "此来源没有可用的转换器",
           "choose-transformer-modal": {
             "title": "选择如何处理有效载荷",
             "transformer": "要应用的转换器",
@@ -1641,6 +1658,8 @@
       "transformer-none-compatible": "没有配置的转换器与此项的输出类型匹配。",
       "hide-settings": "隐藏设置",
       "pipeline": {
+        "show": "显示",
+        "both": "两者",
         "raw": "原始结果",
         "output": "转换器输出"
       },
@@ -2538,7 +2557,7 @@
       "file": "文件",
       "mqtt": "MQTT",
       "modbus": "Modbus",
-      "oianalytics": "OIAnalytics 优化时间值",
+      "oianalytics": "OIAnalytics 时间值",
       "opcua": "OPCUA",
       "record-list": "记录"
     },
@@ -3066,6 +3085,7 @@
         "source-paste": "粘贴数据",
         "source-item": "来自源项",
         "item": "项",
+        "search-item": "搜索来源的数据项...",
         "result-outdated": "自本次测试运行以来，转换器选项或输入已更改"
       },
       "tooltips": {

@@ -1,0 +1,20 @@
+.transformer-card {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: start;
+  color: inherit;
+  background-color: var(--bs-body-bg);
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+
+  &:hover {
+    background-color: var(--bs-tertiary-bg);
+  }
+
+  &.selected {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 1px var(--bs-primary);
+  }
+}

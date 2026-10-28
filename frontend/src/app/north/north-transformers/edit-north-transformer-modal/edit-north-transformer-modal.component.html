@@ -239,26 +239,59 @@
           </div>
         }
         @if (creationMode() === 'new') {
-          <div class="row">
-            <div class="col-6">
-              <div class="form-group">
-                <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
-                <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
-                  <option [ngValue]="null"></option>
-                  @for (transformer of selectableOutputs(); track transformer.id) {
-                    @if (transformer.type === 'standard') {
-                      <option [ngValue]="transformer">
-                        {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
-                      </option>
-                    } @else {
-                      <option [ngValue]="transformer">{{ transformer.name }}</option>
+          <!-- Every transformer available for the data of the source, with what it does -->
+          <div class="form-label" id="output-label" translate="configuration.oibus.manifest.transformers.output"></div>
+          <div class="row row-cols-1 row-cols-md-2 g-2 mb-2" role="radiogroup" aria-labelledby="output-label" id="output">
+            @for (transformer of selectableOutputs(); track transformer.id) {
+              @let selected = isSelectedTransformer(transformer);
+              <div class="col">
+                <button
+                  type="button"
+                  role="radio"
+                  class="transformer-card"
+                  [class.selected]="selected"
+                  [attr.aria-checked]="selected"
+                  [attr.aria-labelledby]="'transformer-name-' + $index"
+                  [attr.aria-describedby]="'transformer-description-' + $index"
+                  (click)="selectTransformer(transformer)"
+                >
+                  <span class="d-flex align-items-center gap-2 mb-1">
+                    <span
+                      [class]="selected ? 'fa-solid fa-circle-dot text-primary' : 'fa-regular fa-circle text-body-secondary'"
+                      aria-hidden="true"
+                    ></span>
+                    <span class="fw-medium flex-grow-1" [id]="'transformer-name-' + $index">{{ transformerName(transformer) }}</span>
+                    @if (transformer.type === 'custom') {
+                      <span class="badge text-bg-secondary" translate="configuration.oibus.manifest.transformers.custom"></span>
                     }
-                  }
-                </select>
-                <val-errors controlName="transformer" />
+                    <span class="badge text-bg-light border">{{
+                      'enums.oibus-output-data-type.' + transformer.outputType | translate
+                    }}</span>
+                  </span>
+                  <small class="d-block text-body-secondary" [id]="'transformer-description-' + $index">
+                    @if (transformer.type === 'standard') {
+                      {{ 'configuration.oibus.manifest.transformers.standard-description.' + transformer.functionName | translate }}
+                    } @else if (transformer.description) {
+                      {{ transformer.description }}
+                    } @else {
+                      <span class="fst-italic" translate="configuration.oibus.manifest.transformers.no-description"></span>
+                    }
+                  </small>
+                </button>
               </div>
-            </div>
+            } @empty {
+              <div
+                class="col text-body-secondary small"
+                id="no-transformer"
+                [translate]="
+                  form.controls.source.value.dataSourceType
+                    ? 'configuration.oibus.manifest.transformers.no-transformer-available'
+                    : 'configuration.oibus.manifest.transformers.choose-source-first'
+                "
+              ></div>
+            }
           </div>
+          <val-errors controlName="transformer" />
         } @else {
           <div class="row mb-2">
             <div class="col-12">
