@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { beforeEach, describe, expect, test } from 'vitest';
@@ -5,7 +6,22 @@ import { page } from 'vitest/browser';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../current-user-testing';
-import { TransformerTestResultComponent } from './transformer-test-result.component';
+import { PipelineActionsDirective, TransformerTestResultComponent } from './transformer-test-result.component';
+
+@Component({
+  selector: 'oib-test-transformer-test-result-actions',
+  template: `
+    <oib-transformer-test-result [raw]="raw" [hasTransformer]="hasTransformer()">
+      <button type="button" oibPipelineActions id="action">Action</button>
+    </oib-transformer-test-result>
+  `,
+  imports: [TransformerTestResultComponent, PipelineActionsDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+class ActionsTestComponent {
+  readonly raw = { type: 'file', content: 'raw content' } as const;
+  readonly hasTransformer = signal(false);
+}
 
 class TransformerTestResultComponentTester {
   readonly fixture = TestBed.createComponent(TransformerTestResultComponent);
@@ -80,5 +96,25 @@ describe('TransformerTestResultComponent', () => {
 
     await expect.element(tester.rawStage.getByRole('button', { name: 'JSON view' })).toBeVisible();
     await expect.element(tester.rawStage).toMatchTextContent(/"pointId": "point1"/);
+  });
+
+  test('should show the actions given by the parent next to the choice of the stages, or alone without transformer', async () => {
+    const fixture = TestBed.createComponent(ActionsTestComponent);
+    const root = page.elementLocator(fixture.nativeElement);
+    const panes = root.getByRole('group', { name: 'Show' });
+
+    await expect.element(root.getByCss('.pipeline-actions').getByRole('button', { name: 'Action' })).toBeVisible();
+    await expect.element(panes).not.toBeInTheDocument();
+
+    fixture.componentInstance.hasTransformer.set(true);
+    await expect.element(panes).toBeVisible();
+    await expect.element(root.getByRole('button', { name: 'Action' })).toBeVisible();
+  });
+
+  test('should show no row of actions without transformer nor actions', async () => {
+    tester.fixture.componentRef.setInput('raw', { type: 'file', content: 'raw content' });
+
+    await expect.element(tester.rawStage).toBeVisible();
+    await expect.element(tester.root.getByCss('.pipeline-actions')).not.toBeInTheDocument();
   });
 });

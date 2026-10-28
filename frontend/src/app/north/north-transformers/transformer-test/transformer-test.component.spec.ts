@@ -204,6 +204,22 @@ describe('NorthTransformerTestComponent', () => {
     await expect.element(tester.info).toHaveTextContent('Test cancelled');
   });
 
+  test('should keep the run button when a test run again over a result is cancelled', async () => {
+    const tester = new NorthTransformerTestComponentTester();
+    await tester.runButton.click();
+    await expect.element(tester.result).toBeInTheDocument();
+    const result$ = new Subject<SouthConnectorItemTestResult>();
+    transformerService.testTransformer.mockReturnValue(result$);
+
+    await tester.runButton.click();
+    await expect.element(tester.runButton).toHaveTextContent('Cancel');
+    await tester.runButton.click();
+
+    await expect.element(tester.info).toHaveTextContent('Test cancelled');
+    await expect.element(tester.result).not.toBeInTheDocument();
+    await expect.element(tester.runButton).toHaveTextContent('Run test');
+  });
+
   test('should run an item of the source by default, the pasted data being the other choice', async () => {
     const tester = new NorthTransformerTestComponentTester({ kind: 'south', id: 'southId1', southType: 'folder-scanner' });
 
