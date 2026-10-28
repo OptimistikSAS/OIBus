@@ -149,6 +149,15 @@ begin
   end;
 end;
 
+// A service created by nssm always has an ImagePath. Checking it (rather than the key
+// itself) matters because the [Registry] section pre-creates the key to store DataDir.
+function ServiceExists(const ServiceName: String): Boolean;
+var
+  ImagePath: String;
+begin
+  Result := RegQueryStringValue(HKLM, 'SYSTEM\CurrentControlSet\Services\' + ServiceName, 'ImagePath', ImagePath);
+end;
+
 // --- Instance Isolation ---
 // Every instance gets its own binaries folder AND its own data folder; the two must never
 // be shared between instances. "SOFTWARE\OIBus\Instances\<name>" (written via [Registry])
@@ -556,8 +565,13 @@ begin
   // 1. Stop (Safety check)
   ExecCmd(NssmPath, 'stop "' + FinalServiceName + '"', AppDir);
 
-  // 2. Install Service with Dynamic Name
-  if not ExecCmd(NssmPath, 'install "' + FinalServiceName + '" "' + LauncherPath + '" "--config ""' + FinalDataDir + '"""', AppDir) then Exit;
+  // 2. Install Service with Dynamic Name, only when it does not exist yet. An existing
+  // service is reconfigured below with "nssm set", which keeps its account (ObjectName),
+  // start type and recovery settings. Just repoint it to this folder's nssm.exe in case
+  // the instance was reinstalled in a different location.
+  if ServiceExists(FinalServiceName) then
+    ExecCmd('sc.exe', 'config "' + FinalServiceName + '" binPath= "\"' + NssmPath + '\""', AppDir)
+  else if not ExecCmd(NssmPath, 'install "' + FinalServiceName + '" "' + LauncherPath + '" "--config ""' + FinalDataDir + '"""', AppDir) then Exit;
 
   // 3. Configure Service
   ExecCmd(NssmPath, 'set "' + FinalServiceName + '" DisplayName "' + FinalServiceName + ' (OIBus Collector)"', AppDir);
@@ -631,35 +645,19 @@ end;
 // --- Step Change Events ---
 
 procedure CurStepChanged(CurStep: TSetupStep);
-var
-  LegacySvcName: String;
-  LegacySvcNameAnsi: AnsiString;
 begin
   if CurStep = ssInstall then
   begin
-     // Initialize default
-     LegacySvcName := 'OIBus';
-
-     // Try to load existing name if available
-     if FileExists(ExpandConstant('{app}\service.name')) then
-     begin
-        // Load into AnsiString buffer first
-        if LoadStringFromFile(ExpandConstant('{app}\service.name'), LegacySvcNameAnsi) then
-        begin
-            LegacySvcName := String(LegacySvcNameAnsi);
-        end;
-     end;
-
      // The binaries folder is shared across instances (multiple named services can point
-     // at it), so the previously recorded service name may belong to a DIFFERENT, still
-     // wanted instance. Only stop/delete it when it's actually the same service being
-     // reinstalled/renamed under the name we are about to (re)create; never touch another
+     // at it), so only stop the service we are about to reconfigure; never touch another
      // instance's service just because it happens to share this install folder.
-     if CompareText(LegacySvcName, FinalServiceName) = 0 then
+     // The service is deliberately NOT deleted: recreating it would reset its "Log on as"
+     // account to LocalSystem (the password of a custom account cannot be read back to
+     // restore it). InstallProgram() updates the existing service in place instead.
+     if ServiceExists(FinalServiceName) then
      begin
-       ExecCmd('sc.exe', 'stop "' + LegacySvcName + '"', '');
+       ExecCmd('sc.exe', 'stop "' + FinalServiceName + '"', '');
        Sleep(1000);
-       ExecCmd('sc.exe', 'delete "' + LegacySvcName + '"', '');
      end;
   end;
 
