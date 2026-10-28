@@ -303,7 +303,20 @@
       />
     </div>
 
-    <!-- 3. Review & save: the item as it will be saved, what changed since it was saved, and what to fix before -->
+    <!-- 3. North: where the data of the item is sent, tested through each North, and the transformers to attach with it -->
+    <div [hidden]="steps.current() !== 'north'" id="step-north">
+      <h5 class="oib-section-title" translate="south.edit-item-modal.step.north"></h5>
+      <oib-south-item-norths
+        [southId]="southId()"
+        [item]="formItem()"
+        [connectorCommand]="southConnectorCommand()!"
+        [manifest]="manifest"
+        [items]="southItems()"
+        [(attachments)]="northTransformers"
+      />
+    </div>
+
+    <!-- 4. Review & save: the item as it will be saved, what changed since it was saved, and what to fix before -->
     <div [hidden]="steps.current() !== 'review'" id="step-review">
       @let summary = reviewSummary();
       @let saved = savedSummary();
@@ -331,6 +344,19 @@
       <oib-oibus-settings-summary id="item-summary" [settings]="summary.general" [previous]="saved?.general ?? null" />
       <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
       <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" [previous]="saved?.settings ?? null" />
+      @if (norths()?.attachmentSummaries(); as attachments) {
+        @if (attachments.length > 0) {
+          <h5 class="oib-section-title" translate="south.edit-item-modal.north-transformers"></h5>
+          <dl class="oib-summary" id="north-transformers-summary">
+            @for (attachment of attachments; track attachment.northId) {
+              <div class="oib-summary-entry">
+                <dt>{{ attachment.northName }}</dt>
+                <dd>{{ attachment.transformerName }} · {{ attachment.scope }}</dd>
+              </div>
+            }
+          </dl>
+        }
+      }
     </div>
   </div>
 }

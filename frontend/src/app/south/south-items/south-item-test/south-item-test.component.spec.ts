@@ -5,14 +5,8 @@ import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
-import {
-  HistoryTransformerDTOWithOptions,
-  SourceOriginSouthDTO,
-  TransformerDTO,
-  TransformerDTOWithOptions
-} from '@oibus/shared/api/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -20,10 +14,9 @@ import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { EngineService } from '../../../services/engine.service';
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { NorthConnectorService } from '../../../services/north-connector.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { provideCurrentUser } from '../../../shared/current-user-testing';
-import SouthItemTestComponent from './south-item-test.component';
+import SouthItemTestComponent, { ItemTestTransformer } from './south-item-test.component';
 
 const connectorCommand = testData.south.command;
 const item = testData.south.itemCommand;
@@ -35,14 +28,8 @@ const transformer: TransformerDTO = {
   ...testData.north.list[0].transformers[0].transformer,
   manifest: { ...testData.north.list[0].transformers[0].transformer.manifest, attributes: [manifest.items.rootAttribute.attributes[0]] }
 };
-// attached to all the items of the tested south (southId1)
-const northTransformer: TransformerDTOWithOptions = {
-  ...testData.north.list[0].transformers[0],
-  source: { ...(testData.north.list[0].transformers[0].source as SourceOriginSouthDTO), items: [] },
-  transformer,
-  options: { name: 'configured' }
-};
-const north: NorthConnectorDTO = { ...testData.north.list[0], transformers: [northTransformer] };
+// the transformer of a North the tested item is sent to
+const northTransformer: ItemTestTransformer = { transformer, options: { name: 'configured' } };
 const historyTransformer: HistoryTransformerDTOWithOptions = {
   ...testData.historyQueries.list[0].northTransformers[0],
   items: [],
@@ -62,6 +49,7 @@ interface TesterOptions {
   entityId?: string;
   manifest?: SouthConnectorManifest;
   inMemoryTransformers?: Array<HistoryTransformerDTOWithOptions> | null;
+  transformer?: ItemTestTransformer | null;
 }
 
 class SouthItemTestComponentTester {
@@ -70,7 +58,6 @@ class SouthItemTestComponentTester {
   readonly testButton = this.root.getByRole('button', { name: 'Run test' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
   readonly dateRange = this.root.getByCss('oib-date-range-selector');
-  readonly northSelect = this.root.getByLabelText('North');
   readonly transformerSelect = this.root.getByLabelText('Transformer', { exact: true });
   readonly pipelineTransformer = this.root.getByCss('.pipeline-transformer');
   readonly editOptionsButton = this.root.getByRole('button', { name: 'Edit options' });
@@ -93,25 +80,22 @@ class SouthItemTestComponentTester {
     this.fixture.componentRef.setInput('connectorCommand', connectorCommand);
     this.fixture.componentRef.setInput('manifest', options.manifest ?? manifestWithoutHistory);
     this.fixture.componentRef.setInput('inMemoryTransformers', options.inMemoryTransformers ?? null);
+    this.fixture.componentRef.setInput('transformer', options.transformer ?? null);
   }
 }
 
 describe('SouthItemTestComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
-  let northConnectorService: MockObject<NorthConnectorService>;
   let historyQueryService: MockObject<HistoryQueryService>;
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
-    northConnectorService = createMock(NorthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
     const engineService = createMock(EngineService);
     engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
 
     southConnectorService.testItem.mockReturnValue(of(testResult));
     historyQueryService.testItem.mockReturnValue(of(testResult));
-    northConnectorService.list.mockReturnValue(of(testData.north.listLight));
-    northConnectorService.findById.mockReturnValue(of(north));
     historyQueryService.findById.mockReturnValue(of({ ...testData.historyQueries.list[0], northTransformers: [historyTransformer] }));
 
     TestBed.configureTestingModule({
@@ -119,39 +103,38 @@ describe('SouthItemTestComponent', () => {
         provideI18nTesting(),
         provideCurrentUser(),
         { provide: SouthConnectorService, useValue: southConnectorService },
-        { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: EngineService, useValue: engineService }
       ]
     });
   });
 
-  test('should display the initial state in a south context', async () => {
+  test('should test a south item raw, without a transformer to choose', async () => {
     const tester = new SouthItemTestComponentTester();
 
     await expect.element(tester.info).toHaveTextContent('Test results will appear here');
-    await expect.element(tester.northSelect).toHaveDisplayValue('Raw (no transformer)');
-    await expect.element(tester.northSelect.getByRole('option')).toHaveLength(1 + testData.north.listLight.length);
     await expect.element(tester.transformerSelect).not.toBeInTheDocument();
+    await expect.element(tester.pipelineTransformer).not.toBeInTheDocument();
     await expect.element(tester.dateRange).not.toBeInTheDocument();
     await expect.element(tester.cancelButton).toBeDisabled();
+
+    await tester.testButton.click();
+
+    expect(southConnectorService.testItem).toHaveBeenCalledWith(
+      'southId1',
+      connectorCommand.type,
+      item.name,
+      connectorCommand.settings,
+      item.settings,
+      { history: undefined, transformer: undefined }
+    );
   });
 
-  test('should not load the norths of a connector being created', async () => {
-    const tester = new SouthItemTestComponentTester({ entityId: 'create' });
+  test('should test a south item through the transformer given, with its options edited for the test', async () => {
+    const tester = new SouthItemTestComponentTester({ transformer: northTransformer });
 
-    await expect.element(tester.northSelect.getByRole('option')).toHaveLength(1);
-    expect(northConnectorService.list).not.toHaveBeenCalled();
-  });
-
-  test('should select a north and one of its transformers, and edit its options', async () => {
-    const tester = new SouthItemTestComponentTester();
-
-    await tester.northSelect.selectOptions('North 1');
-    expect(northConnectorService.findById).toHaveBeenCalledWith('northId1');
-    await tester.transformerSelect.selectOptions('my transformer 1');
-
-    await expect.element(tester.pipelineTransformer).toMatchTextContent('North 1 · my transformer 1');
+    await expect.element(tester.transformerSelect).not.toBeInTheDocument();
+    await expect.element(tester.pipelineTransformer).toMatchTextContent(/^\s*my transformer 1/);
     await expect.element(tester.optionsSummary).toHaveTextContent('name: configured');
 
     await tester.editOptionsButton.click();
@@ -172,15 +155,14 @@ describe('SouthItemTestComponent', () => {
     await expect.element(tester.optionsSummary).toHaveTextContent('name: edited');
   });
 
-  test('should reset the transformer when another north is selected', async () => {
-    const tester = new SouthItemTestComponentTester();
-    await tester.northSelect.selectOptions('North 1');
-    await tester.transformerSelect.selectOptions('my transformer 1');
-    await expect.element(tester.pipelineTransformer).toBeVisible();
+  test('should follow the transformer given when it changes', async () => {
+    const tester = new SouthItemTestComponentTester({ transformer: northTransformer });
+    await expect.element(tester.optionsSummary).toHaveTextContent('name: configured');
 
-    await tester.northSelect.selectOptions('Raw (no transformer)');
+    tester.fixture.componentRef.setInput('transformer', { transformer, options: { name: 'changed' } });
+    await expect.element(tester.optionsSummary).toHaveTextContent('name: changed');
 
-    await expect.element(tester.transformerSelect).not.toBeInTheDocument();
+    tester.fixture.componentRef.setInput('transformer', null);
     await expect.element(tester.pipelineTransformer).not.toBeInTheDocument();
   });
 
@@ -236,8 +218,7 @@ describe('SouthItemTestComponent', () => {
     await tester.testButton.click();
     await expect.element(tester.result).toBeInTheDocument();
 
-    await tester.northSelect.selectOptions('North 1');
-    await tester.transformerSelect.selectOptions('my transformer 1');
+    tester.fixture.componentRef.setInput('transformer', northTransformer);
 
     await expect.element(tester.outdatedNotice).toBeInTheDocument();
   });
@@ -250,10 +231,10 @@ describe('SouthItemTestComponent', () => {
     await tester.hideSettingsButton.click();
 
     await expect.element(tester.settingsSummary).toHaveTextContent('Last 10 minutes · Raw (no transformer)');
-    await expect.element(tester.northSelect).not.toBeVisible();
+    await expect.element(tester.dateRange).not.toBeVisible();
 
     await tester.settingsSummary.click();
-    await expect.element(tester.northSelect).toBeVisible();
+    await expect.element(tester.dateRange).toBeVisible();
     await expect.element(tester.settingsSummary).not.toBeInTheDocument();
   });
 
@@ -287,43 +268,13 @@ describe('SouthItemTestComponent', () => {
     expect(result$.observed).toBe(false);
   });
 
-  test('should only offer the transformers of the north attached to the tested item', async () => {
-    const southSource = northTransformer.source as SourceOriginSouthDTO;
-    const named = (name: string, source: SourceOriginSouthDTO): TransformerDTOWithOptions => ({
-      ...northTransformer,
-      id: name,
-      transformer: { ...testData.transformers.customList[0], id: name, name },
-      source
-    });
-    northConnectorService.findById.mockReturnValue(
-      of({
-        ...north,
-        transformers: [
-          northTransformer,
-          named('other south', { ...southSource, south: { ...southSource.south, id: 'southId2' } }),
-          named('other item', { ...southSource, items: [{ ...southSource.items[0], name: 'other item' }] }),
-          named('listed item', { ...southSource, items: [{ ...southSource.items[0], name: item.name }] })
-        ]
-      })
-    );
-    const tester = new SouthItemTestComponentTester();
-
-    await tester.northSelect.selectOptions('North 1');
-
-    await expect.element(tester.transformerSelect.getByRole('option')).toHaveLength(3);
-    await expect.element(tester.transformerSelect.getByRole('option', { name: 'my transformer 1' })).toBeInTheDocument();
-    await expect.element(tester.transformerSelect.getByRole('option', { name: 'listed item' })).toBeInTheDocument();
-  });
-
   test('should offer the history query transformers in a history context', async () => {
     const tester = new SouthItemTestComponentTester({ type: 'history-south', entityId: 'historyId1' });
 
-    await expect.element(tester.northSelect).not.toBeInTheDocument();
     await tester.transformerSelect.selectOptions('my transformer 1');
     await tester.testButton.click();
 
     expect(historyQueryService.findById).toHaveBeenCalledWith('historyId1');
-    expect(northConnectorService.list).not.toHaveBeenCalled();
     expect(historyQueryService.testItem).toHaveBeenCalledWith(
       'historyId1',
       'southId2',

@@ -6,15 +6,23 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthItemGroupDTO,
+  SouthItemNorthTransformerCommandDTO
+} from '@oibus/shared/api/south-connector.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
+import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../../../test/builders';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { NorthConnectorService } from '../../../services/north-connector.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { TransformerService } from '../../../services/transformer.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
@@ -42,6 +50,13 @@ const southConnectorCommand = testData.south.command;
 const scanModes = testData.scanMode.list;
 const southId = testData.south.list[0].id;
 const [savedItem1, savedItem2] = testData.south.list[0].items;
+// North 2 gets no data of the south: a transformer is attached to it in the North step
+const northTransformer: SouthItemNorthTransformerCommandDTO = {
+  northId: 'northId2',
+  scope: 'item',
+  transformerId: 'transformerId2',
+  options: {}
+};
 
 class EditSouthItemModalComponentTester {
   readonly fixture = TestBed.createComponent(EditSouthItemModalComponent);
@@ -90,6 +105,17 @@ class EditSouthItemModalComponentTester {
     return this.reviewedEntry(label).getByRole('definition');
   }
   readonly runTestButton = this.root.getByRole('button', { name: 'Run test', includeHidden: true });
+  readonly northTransformersSummary = this.root.getByCss('#north-transformers-summary');
+
+  /** Attaches "my transformer 2" to a North, in the North step */
+  async attachTransformer(northName: string, scope = 'This item') {
+    await this.step('north').click();
+    await this.root.getByRole('listitem').filter({ hasText: northName }).click();
+    await this.root.getByRole('button', { name: 'Attach a transformer' }).click();
+    await this.root.getByRole('radio', { name: scope }).click();
+    await this.root.getByRole('radio', { name: /^my transformer 2/ }).click();
+    await this.root.getByRole('button', { name: 'Attach', exact: true }).click();
+  }
 
   step(step: ItemModalStep) {
     return this.root.getByCss(`#modal-step-${step}`);
@@ -145,6 +171,15 @@ describe('EditSouthItemModalComponent', () => {
         provideModalTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: SouthConnectorService, useValue: createMock(SouthConnectorService) },
+        {
+          provide: NorthConnectorService,
+          useValue: createMock(NorthConnectorService, {
+            list: () => of(testData.north.listLight),
+            findById: (northId: string) => of(testData.north.list.find(north => north.id === northId)!),
+            getNorthManifest: (type: OIBusNorthType) => of({ ...testData.north.manifest, id: type })
+          })
+        },
+        { provide: TransformerService, useValue: createMock(TransformerService, { list: () => of(testData.transformers.customList) }) },
         { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesService }
       ]
     });
@@ -309,7 +344,7 @@ describe('EditSouthItemModalComponent', () => {
       await tester.name.fill('new item');
       await userEvent.keyboard('{Enter}');
 
-      await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
       expect(activeModal.close).not.toHaveBeenCalled();
     });
 
@@ -342,12 +377,16 @@ describe('EditSouthItemModalComponent', () => {
       await tester.name.fill('new item');
       await tester.scanMode.selectOptions(scanModes[0].name);
       await tester.nextButton.click();
+      // where the data of the item goes, once its group is chosen
+      await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.root.getByRole('listitem')).toHaveLength(2);
+      await tester.nextButton.click();
       await expect.element(tester.step('review')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.nextButton).not.toBeInTheDocument();
       await expect.element(tester.saveButton).toBeInTheDocument();
 
       await tester.backButton.click();
-      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
     });
 
     test('should save an edited item from any step', async () => {
@@ -893,6 +932,65 @@ describe('EditSouthItemModalComponent', () => {
       expect(savedCommand()).toEqual(
         expect.objectContaining({ groupId: 'group1', syncWithGroup: true, scanModeId: scanModes[0].id, maxReadInterval: null })
       );
+    });
+  });
+
+  describe('north transformers', () => {
+    test('should save the transformers attached in the North step with the item', async () => {
+      const tester = await open('create');
+      await tester.name.fill('new item');
+      await tester.scanMode.selectOptions(scanModes[0].name);
+
+      await tester.attachTransformer('North 2');
+      await tester.step('review').click();
+
+      await expect.element(tester.northTransformersSummary).toMatchTextContent(/North 2\s*my transformer 2 · this item/);
+      await tester.saveButton.click();
+      expect(savedCommand()).toEqual(expect.objectContaining({ name: 'new item', northTransformers: [northTransformer] }));
+    });
+
+    test('should count the transformers attached as changes of an edited item', async () => {
+      const tester = await open('edit');
+
+      await tester.attachTransformer('North 2');
+      await tester.step('review').click();
+
+      await expect.element(tester.reviewChanges).toHaveTextContent('Settings changed since the item was saved: 1');
+    });
+
+    test('should ask for confirmation before dismissing once a transformer is attached', async () => {
+      const tester = await open('edit');
+      const confirmation = of(true);
+      unsavedChangesService.confirmUnsavedChanges.mockReturnValue(confirmation);
+
+      await tester.attachTransformer('North 2');
+
+      expect(tester.fixture.componentInstance.canDismiss()).toBe(confirmation);
+    });
+
+    test('should keep the transformers attached before to an item edited in memory, but not to its copy', async () => {
+      const inMemoryItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, northTransformers: [northTransformer] };
+
+      const tester = await open('edit', { item: inMemoryItem, directSave: false });
+      await tester.okButton.click();
+      expect(savedCommand().northTransformers).toEqual([northTransformer]);
+
+      const copyTester = await open('copy', { item: inMemoryItem, directSave: false });
+      await copyTester.okButton.click();
+      expect(savedCommand().northTransformers).toEqual([]);
+    });
+
+    test('should drop the transformers attached to the group once the item leaves it', async () => {
+      const tester = await open('create');
+      await tester.name.fill('new item');
+      await tester.selectGroup('GroupA');
+      await tester.attachTransformer('North 2', 'Its group (GroupA)');
+
+      await tester.step('general').click();
+      await tester.selectGroup('None');
+      await tester.save();
+
+      expect(savedCommand().northTransformers).toEqual([]);
     });
   });
 

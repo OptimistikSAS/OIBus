@@ -1653,7 +1653,6 @@
       "transformer-raw": "原始（无转换器）",
       "transformer-options": "转换器选项",
       "edit-options": "编辑选项",
-      "north": "North",
       "transformer-run-first": "先运行一次测试以加载与此项输出匹配的转换器。",
       "transformer-none-compatible": "没有配置的转换器与此项的输出类型匹配。",
       "hide-settings": "隐藏设置",
@@ -1698,6 +1697,7 @@
       "step": {
         "general": "名称与计划",
         "settings": "设置",
+        "north": "北向",
         "review": "检查并保存"
       },
       "history-settings": "历史设置",
@@ -1707,7 +1707,8 @@
       "ok-and-add-another": "确定并继续添加",
       "review-errors": "保存前请修正以下步骤：",
       "review-changes": "自上次保存以来修改的设置：{{count}}",
-      "review-no-changes": "自上次保存以来没有修改"
+      "review-no-changes": "自上次保存以来没有修改",
+      "north-transformers": "附加到北向连接器的转换器"
     },
     "items": {
       "title": "项",
@@ -1831,7 +1832,46 @@
       "tooltips": {
         "audit": "查看项目审计历史"
       },
-      "more-actions": "更多项操作"
+      "more-actions": "更多项操作",
+      "norths": {
+        "description": "此数据项的数据发送到的北向连接器，以及数据经过的转换器：附加到数据项、其分组或南向连接器的所有数据项。",
+        "loading": "正在加载北向连接器…",
+        "no-north": "没有可接收此数据项数据的北向连接器。",
+        "list": "北向连接器",
+        "disabled": "已禁用",
+        "new": "新增",
+        "not-sent": "未发送",
+        "not-sent-description": "此数据项的数据不会发送到此北向连接器：它的转换器都不适用于此数据项。",
+        "sent-through": "通过以下转换器发送",
+        "attached-to": "附加到{{scope}}",
+        "saved-with-item": "保存数据项时附加",
+        "level": {
+          "item": "此数据项",
+          "group": "分组",
+          "south": "整个南向"
+        },
+        "scope": {
+          "item": "此数据项",
+          "group": "其分组（{{group}}）",
+          "south": "南向连接器的所有数据项"
+        },
+        "scope-option": {
+          "item": "此数据项",
+          "group": "其分组（{{group}}）",
+          "south": "南向连接器的所有数据项"
+        },
+        "attach": "附加转换器",
+        "attach-other": "通过其他转换器发送",
+        "routed-by-item": "此转换器已附加到此数据项：请在北向连接器的转换器中修改。",
+        "applies-to": "适用于",
+        "impact": "同时发送 {{count}} 个尚未发送到此北向连接器的其他数据项",
+        "takes-over": "它将取代此数据项当前的转换器。",
+        "transformer": "转换器",
+        "transformer-required": "请选择转换器",
+        "no-transformer": "没有转换器可以将此数据项的数据发送到此北向连接器。",
+        "add": "附加",
+        "update": "更新"
+      }
     },
     "groups": {
       "create-title": "创建新组",

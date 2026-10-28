@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { SouthConnectorItemDTO } from '@oibus/shared/api/south-connector.model';
+import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthItemLastValue } from '@oibus/shared/domain/south-connector.model';
 
@@ -17,6 +18,7 @@ import { EngineService } from '../../../services/engine.service';
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { TransformerService } from '../../../services/transformer.service';
 import { provideCurrentUser } from '../../../shared/current-user-testing';
 import { ViewSouthItemModalComponent } from './view-south-item-modal.component';
 
@@ -37,6 +39,7 @@ class ViewSouthItemModalComponentTester {
   readonly closeButton = this.root.getByRole('button', { name: 'Close' });
   readonly editButton = this.root.getByRole('button', { name: 'Edit' });
   readonly test = this.root.getByCss('#item-test');
+  readonly norths = this.root.getByCss('#item-norths');
 
   constructor(item: SouthConnectorItemDTO = savedItem, itemManifest: SouthConnectorManifest = manifest) {
     this.fixture.componentInstance.prepare(item, southConnector, itemManifest, scanModes, []);
@@ -84,7 +87,15 @@ describe('ViewSouthItemModalComponent', () => {
         provideCurrentUser(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: SouthConnectorService, useValue: createMock(SouthConnectorService) },
-        { provide: NorthConnectorService, useValue: createMock(NorthConnectorService, { list: () => of([]) }) },
+        {
+          provide: NorthConnectorService,
+          useValue: createMock(NorthConnectorService, {
+            list: () => of(testData.north.listLight),
+            findById: (northId: string) => of(testData.north.list.find(north => north.id === northId)!),
+            getNorthManifest: (type: OIBusNorthType) => of({ ...testData.north.manifest, id: type })
+          })
+        },
+        { provide: TransformerService, useValue: createMock(TransformerService, { list: () => of(testData.transformers.customList) }) },
         { provide: HistoryQueryService, useValue: createMock(HistoryQueryService) },
         { provide: EngineService, useValue: createMock(EngineService, { getInfo: () => of(testData.engine.oIBusInfo) }) }
       ]
@@ -236,6 +247,16 @@ describe('ViewSouthItemModalComponent', () => {
     await expect.element(tester.error).toHaveTextContent('Could not retrieve the last cached valueboom');
     await expect.element(tester.spinner).not.toBeInTheDocument();
     await expect.element(tester.setting('Name')).toHaveTextContent('item1');
+  });
+
+  test('should show the norths the data of the item is sent to, without attaching transformers', async () => {
+    const tester = new ViewSouthItemModalComponentTester();
+
+    await expect.element(tester.norths.getByRole('listitem')).toHaveLength(2);
+    await expect.element(tester.norths.getByRole('listitem').first()).toMatchTextContent(/my transformer 1this item/);
+    await tester.norths.getByRole('listitem').nth(1).click();
+    await expect.element(tester.norths.getByCss('#route-not-sent')).toBeVisible();
+    await expect.element(tester.norths.getByRole('button', { name: 'Attach a transformer' })).not.toBeInTheDocument();
   });
 
   test('should close the modal to edit the item', async () => {

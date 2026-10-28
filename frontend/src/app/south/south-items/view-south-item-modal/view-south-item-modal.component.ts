@@ -12,18 +12,27 @@ import { SouthItemLastValue } from '@oibus/shared/domain/south-connector.model';
 
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import { RoutedSouthItem, SouthItemNorthsComponent } from '../south-item-norths/south-item-norths.component';
 import { getItemSettingsAttribute, summarizeSouthItem, toSouthItemSummaryValues } from '../south-item-summary';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
 /**
  * Displays a south item like the connector page displays its connector: what its cache holds, then its settings, and lets the
- * user test it. Closes when the user chooses to edit the item, so that the opener opens the edit modal.
+ * user test it, raw and through the transformers of the Norths its data is sent to. Closes when the user chooses to edit the item, so that the opener opens the edit modal.
  */
 @Component({
   selector: 'oib-view-south-item-modal',
   templateUrl: './view-south-item-modal.component.html',
   styleUrl: './view-south-item-modal.component.scss',
-  imports: [TranslateDirective, TranslatePipe, DatetimePipe, JsonPipe, OIBusSettingsSummaryComponent, SouthItemTestComponent],
+  imports: [
+    TranslateDirective,
+    TranslatePipe,
+    DatetimePipe,
+    JsonPipe,
+    OIBusSettingsSummaryComponent,
+    SouthItemTestComponent,
+    SouthItemNorthsComponent
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ViewSouthItemModalComponent {
@@ -41,6 +50,20 @@ export class ViewSouthItemModalComponent {
   readonly groupLastValue = signal<SouthItemLastValue | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+
+  /** The item as the North section routes it */
+  readonly routedItem = computed<RoutedSouthItem | null>(() => {
+    const item = this.item();
+    return item
+      ? {
+          id: item.id,
+          name: item.name,
+          settings: item.settings,
+          groupId: item.group?.id ?? null,
+          groupName: item.group?.standardSettings.name ?? null
+        }
+      : null;
+  });
 
   readonly itemSettingsAttribute = computed(() => {
     const manifest = this.manifest();

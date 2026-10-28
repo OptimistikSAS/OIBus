@@ -100,14 +100,16 @@ déplacés vers un groupe, importés et exportés. Plutôt que de les créer un 
 
 ### Créer et modifier un élément {#creating-and-editing-an-item}
 
-La fenêtre de l'élément se parcourt en trois étapes, affichées dans une barre d'étapes en haut de la fenêtre. Les
-paramètres viennent en premier, pour être testés avant de nommer et de planifier l'élément :
+La fenêtre de l'élément se parcourt en quatre étapes, affichées dans une barre d'étapes en haut de la fenêtre. Les
+paramètres viennent en premier, pour être testés avant de nommer et de planifier l'élément, et les connecteurs North
+auxquels ses données sont envoyées viennent une fois son groupe choisi :
 
 | Étape                              | Contenu                                                                                                                                                                                                           |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Paramètres**                     | Les paramètres d'élément propres au connecteur (voir la page de chaque connecteur), avec le [panneau de test](#testing-an-item) juste en dessous, pour essayer les paramètres au fil de leur modification.        |
 | **Nom et planification**           | Nom, **Statut** (activé ou désactivé), groupe et planification, puis les **Paramètres d'historique** (connecteurs compatibles historique) et les paramètres de **Mise en cache** (connecteurs de la famille IoT). |
-| **Vérification et enregistrement** | Un récapitulatif en lecture seule de l'élément complet : paramètres généraux, d'historique et de mise en cache, puis ses paramètres de connecteur.                                                                |
+| **North**                          | Les connecteurs North auxquels les données de l'élément sont envoyées, et le transformateur par lequel elles passent — voir [Où sont envoyées les données d'un élément](#where-the-data-of-an-item-is-sent).      |
+| **Vérification et enregistrement** | Un récapitulatif en lecture seule de l'élément complet : paramètres généraux, d'historique et de mise en cache, ses paramètres de connecteur, puis les transformateurs à rattacher aux connecteurs North.         |
 
 **Suivant** ne passe à l'étape suivante qu'une fois l'étape courante valide. Un nouvel élément s'enregistre depuis la
 dernière étape ; un élément en cours de modification ou de copie peut être enregistré depuis n'importe quelle étape.
@@ -152,12 +154,37 @@ qu'ils sont en cours de modification — enregistrés ou non — et affiche le r
 compatibles historique, **Interroger les données depuis** / **Interroger les données jusqu'à** définissent la plage
 temporelle de la requête de test.
 
-Le résultat brut peut aussi passer par l'un des transformateurs North de l'élément, pour prévisualiser la sortie
-transformée — voir
+Le test de l'étape **Paramètres** n'affiche que le résultat brut. Pour prévisualiser ce que reçoit un connecteur North,
+testez l'élément depuis l'[étape **North**](#where-the-data-of-an-item-is-sent), via le transformateur de ce connecteur
+North — ou voir
 [Tester un transformateur sur un élément South réel](../engine/transformers.mdx#testing-a-transformer-against-a-real-south-item).
 
 > **Astuce** : utilisez d'abord **Tester les paramètres** sur le connecteur, pour vérifier la connexion avant de
 > tester les éléments individuels.
+
+### Où sont envoyées les données d'un élément {#where-the-data-of-an-item-is-sent}
+
+Les données d'un élément n'arrivent à un connecteur North que par un transformateur qui lui est rattaché pour le South
+de l'élément. L'étape **North** de la fenêtre de l'élément, et la section **North** de la vue de l'élément, listent
+chaque connecteur North avec le transformateur par lequel passent les données de l'élément, et ce à quoi ce
+transformateur est rattaché : l'élément lui-même, son groupe, ou tous les éléments du South. Un transformateur rattaché
+à l'élément prend le pas sur celui de son groupe, qui prend le pas sur celui de tout le South. Les connecteurs North qui
+ne reçoivent pas les données de l'élément affichent **Non envoyé**.
+
+Sélectionnez un connecteur North pour voir son transformateur et tester l'élément à travers lui : le panneau de test
+lance l'élément et affiche le résultat brut et la sortie du transformateur.
+
+**Rattacher un transformateur** (**Envoyer via un autre transformateur** lorsque l'élément passe déjà par le
+transformateur de son groupe ou de son South) rattache un nouveau transformateur au connecteur North sélectionné :
+choisissez ce à quoi il s'applique — **Cet item**, **Son groupe** (lorsque l'élément en a un) ou **Tous les items du
+south** —, puis le transformateur et ses options. Seules les portées qui prennent le pas sur le transformateur actuel
+sont proposées : un transformateur déjà rattaché à l'élément lui-même se modifie depuis les
+[transformateurs du connecteur North](../north-connectors/common-settings.md). Pour un groupe ou tout le South, l'étape
+indique combien d'autres éléments le transformateur enverrait aussi.
+
+Les transformateurs à rattacher sont listés à l'étape **Vérification et enregistrement**, et enregistrés avec l'élément,
+en une seule opération : si l'élément ne peut pas être enregistré, aucun d'eux n'est rattaché. Sur la page de
+création/modification du connecteur, ils sont enregistrés avec le connecteur.
 
 ### Actions sur les éléments {#item-actions}
 

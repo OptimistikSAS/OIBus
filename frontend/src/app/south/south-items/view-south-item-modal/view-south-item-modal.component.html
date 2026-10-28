@@ -124,6 +124,19 @@
           [manifest]="manifest()!"
         />
       </div>
+
+      <!-- Norths: where the data of the item is sent, as in the North step of the edit modal -->
+      <section class="mt-4" id="item-norths">
+        <h5 class="oib-section-title" translate="south.edit-item-modal.step.north"></h5>
+        <oib-south-item-norths
+          [southId]="southConnector.id"
+          [item]="routedItem()!"
+          [connectorCommand]="southConnector"
+          [manifest]="manifest()!"
+          [items]="southConnector.items"
+          [editable]="false"
+        />
+      </section>
     }
   </div>
 

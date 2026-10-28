@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -22,7 +22,8 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthItemGroupCommandDTO,
-  SouthItemGroupDTO
+  SouthItemGroupDTO,
+  SouthItemNorthTransformerCommandDTO
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
@@ -39,8 +40,9 @@ import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.com
 import { submitsOnEnter } from '../../../shared/modal-steps/wizard-steps';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary } from '../item-modal-steps';
+import { countItemChanges, ITEM_MODAL_STEPS, ItemModalStep, ItemModalSteps, ItemSummary } from '../item-modal-steps';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
+import { SouthItemNorthsComponent } from '../south-item-norths/south-item-norths.component';
 import {
   CACHING_STRATEGIES,
   getItemSettingsAttribute,
@@ -66,7 +68,8 @@ import SouthItemTestComponent from '../south-item-test/south-item-test.component
     OIBusObjectFormControlComponent,
     NgbDropdownModule,
     ModalStepsComponent,
-    OIBusSettingsSummaryComponent
+    OIBusSettingsSummaryComponent,
+    SouthItemNorthsComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -105,10 +108,19 @@ class EditSouthItemModalComponent {
   /** The item added just before, in a row of new items: the new one starts with its group, schedule and history settings */
   private previousItem: SouthConnectorItemCommandDTO | null = null;
   private itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO> = [];
+  /** The items of the south, to tell where their data goes in the North step */
+  readonly southItems = signal<Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>>([]);
   /** The groups of the page, changed through it only */
   private readonly groupStore = signal<SouthItemGroups | null>(null);
   readonly groups = computed(() => this.groupStore()?.list() ?? []);
   private previousGroupId: string | null = null;
+  /**
+   * The transformers to attach to Norths when the item is saved (with it, or with its south from edit-south): those chosen
+   * in the North step, and, for an item edited in memory, the ones chosen before
+   */
+  readonly northTransformers = signal<Array<SouthItemNorthTransformerCommandDTO>>([]);
+  private savedNorthTransformers: Array<SouthItemNorthTransformerCommandDTO> = [];
+  readonly norths = viewChild(SouthItemNorthsComponent);
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
    * This ensures that we have a backup identifier for the currently edited item.
@@ -193,7 +205,7 @@ class EditSouthItemModalComponent {
   /** Name of the schedule of the item: its own, or its group's while it has one */
   readonly scanModeName = computed(() => this.scanModes().find(scanMode => scanMode.id === this.formItem().scanModeId)?.name ?? null);
 
-  readonly steps = new ItemModalSteps(step => this.stepControls(step), this.formEvents);
+  readonly steps = new ItemModalSteps(ITEM_MODAL_STEPS, step => this.stepControls(step), this.formEvents);
   /** A new item is saved from the last step, an edited or copied one from any step */
   readonly canSave = computed(() => this.mode() !== 'create' || this.steps.isLast());
 
@@ -210,7 +222,7 @@ class EditSouthItemModalComponent {
   /** How many settings changed since the item was saved: null for a new item */
   readonly changeCount = computed(() => {
     const saved = this.savedSummary();
-    return saved ? countItemChanges(this.reviewSummary(), saved) : null;
+    return saved ? countItemChanges(this.reviewSummary(), saved) + this.northTransformerChanges() : null;
   });
 
   readonly itemSettingsAttribute = computed(() => {
@@ -326,11 +338,15 @@ class EditSouthItemModalComponent {
   ) {
     this.mode.set(mode);
     this.itemList = itemList;
+    this.southItems.set(itemList);
     this.scanModes.set(this.setScanModes(scanModes, getScanModeAttribute(manifest)));
     this.certificates.set(certificates);
     this.groupStore.set(groups);
     this.manifest.set(manifest);
     this.item = item;
+    // an item edited in memory keeps the transformers chosen before, a copy starts without any
+    this.savedNorthTransformers = (mode === 'edit' && item && 'northTransformers' in item ? item.northTransformers : undefined) ?? [];
+    this.northTransformers.set(this.savedNorthTransformers);
     this.southId.set(southId);
     this.southConnectorCommand.set(southConnectorCommand);
     this.tableIndex = tableIndex;
@@ -338,7 +354,7 @@ class EditSouthItemModalComponent {
   }
 
   canDismiss(): Observable<boolean> | boolean {
-    if (this.form?.dirty) {
+    if (this.form?.dirty || this.northTransformers() !== this.savedNorthTransformers) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -383,6 +399,7 @@ class EditSouthItemModalComponent {
         return Object.values(generalControls);
       case 'settings':
         return [settings];
+      case 'north':
       case 'review':
         return [];
     }
@@ -434,7 +451,8 @@ class EditSouthItemModalComponent {
       threshold: this.form.controls.threshold.value,
       rangeLow: this.form.controls.rangeLow.value,
       rangeHigh: this.form.controls.rangeHigh.value,
-      maxCachingInterval: this.form.controls.maxCachingInterval.value
+      maxCachingInterval: this.form.controls.maxCachingInterval.value,
+      northTransformers: this.northTransformers()
     };
   }
 
@@ -610,6 +628,7 @@ class EditSouthItemModalComponent {
     this.previousGroupId = groupId;
 
     if (groupId === null) {
+      this.dropGroupTransformers();
       // When deselecting group, enable historian fields and set sync to false
       this.form.controls.syncWithGroup.setValue(false);
       this.form.controls.maxReadInterval.enable();
@@ -621,6 +640,22 @@ class EditSouthItemModalComponent {
     } else {
       const selectedGroup = this.groups().find(g => g.id === groupId)!;
       this.applySyncLogicWhenSelectingGroup(selectedGroup, wasUnassigned);
+    }
+  }
+
+  /** How many Norths are given another transformer to attach since the item was opened */
+  private northTransformerChanges(): number {
+    const current = this.northTransformers();
+    const northIds = new Set([...current, ...this.savedNorthTransformers].map(northTransformer => northTransformer.northId));
+    const find = (list: Array<SouthItemNorthTransformerCommandDTO>, northId: string) =>
+      JSON.stringify(list.find(northTransformer => northTransformer.northId === northId) ?? null);
+    return [...northIds].filter(northId => find(current, northId) !== find(this.savedNorthTransformers, northId)).length;
+  }
+
+  /** A transformer attached to the group of the item no longer has one to apply to once the item leaves its group */
+  private dropGroupTransformers() {
+    if (this.northTransformers().some(northTransformer => northTransformer.scope === 'group')) {
+      this.northTransformers.update(northTransformers => northTransformers.filter(northTransformer => northTransformer.scope !== 'group'));
     }
   }
 
