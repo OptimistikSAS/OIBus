@@ -14773,6 +14773,56 @@
 				],
 				"description": "Data Transfer Object for a South connector.\nContains all configuration details and current state of a South connector."
 			},
+			"SouthItemTransformerScope": {
+				"type": "string",
+				"enum": [
+					"item",
+					"group",
+					"south"
+				],
+				"description": "What a north transformer attached along with an item applies to: the item alone, all the items of its group, or all the\nitems of its south"
+			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"SouthItemNorthTransformerCommandDTO": {
+				"description": "A transformer to attach to a north connector along with an item, to send the data of the item (or of its group, or of its\nsouth) to the north",
+				"properties": {
+					"northId": {
+						"type": "string",
+						"description": "The ID of the north connector the data is sent to.",
+						"example": "north-1"
+					},
+					"scope": {
+						"$ref": "#/components/schemas/SouthItemTransformerScope",
+						"description": "What the transformer applies to: the item, its group (the item must have one), or its south.",
+						"example": "item"
+					},
+					"transformerId": {
+						"type": "string",
+						"description": "The ID of the transformer.",
+						"example": "record-list-to-file"
+					},
+					"options": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "The options of the transformer.",
+						"example": {
+							"precision": "ms"
+						}
+					}
+				},
+				"required": [
+					"northId",
+					"scope",
+					"transformerId",
+					"options"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorItemCommandBodyDTO": {
 				"properties": {
 					"id": {
@@ -14910,6 +14960,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -15074,6 +15131,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -15198,12 +15262,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"Record_string.unknown_": {
-				"properties": {},
-				"additionalProperties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
 			},
 			"RecordFilterOperator": {
 				"type": "string",
@@ -15949,6 +16007,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -16113,6 +16178,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -16277,6 +16349,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -16441,6 +16520,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -16605,6 +16691,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -16769,6 +16862,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -16933,6 +17033,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -17097,6 +17204,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -17261,6 +17375,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -17425,6 +17546,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -17589,6 +17717,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -17753,6 +17888,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -17917,6 +18059,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -18081,6 +18230,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -18245,6 +18401,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -18409,6 +18572,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -18573,6 +18743,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -18737,6 +18914,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -18901,6 +19085,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -19065,6 +19256,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -19229,6 +19427,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -19393,6 +19598,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -22759,6 +22971,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -22988,6 +23207,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -23217,6 +23443,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -23446,6 +23679,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -23675,6 +23915,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -23904,6 +24151,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -24133,6 +24387,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -24362,6 +24623,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -24591,6 +24859,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -24820,6 +25095,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -25049,6 +25331,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -25278,6 +25567,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -25507,6 +25803,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -25736,6 +26039,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -25965,6 +26275,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -26194,6 +26511,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -26423,6 +26747,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -26652,6 +26983,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -26881,6 +27219,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -27110,6 +27455,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -27339,6 +27691,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [
@@ -27568,6 +27927,13 @@
 						"nullable": true,
 						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
 						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
 					}
 				},
 				"required": [

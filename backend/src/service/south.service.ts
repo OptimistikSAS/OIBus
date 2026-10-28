@@ -1,5 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 
+import { Database } from 'better-sqlite3';
+
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
@@ -53,6 +55,7 @@ import {
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -84,7 +87,10 @@ export default class SouthService {
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly engine: DataStreamEngine,
     private readonly southItemGroupRepository: SouthItemGroupRepository,
-    private readonly transformerService: TransformerService
+    private readonly transformerService: TransformerService,
+    private readonly northConnectorRepository: NorthConnectorRepository,
+    /** The configuration database, to save items and the north transformers attached along with them in one transaction */
+    private readonly database: Database
   ) {}
 
   listManifest(): Array<SouthConnectorManifest> {
@@ -132,6 +138,7 @@ export default class SouthService {
       await this.validator.validateSettings(itemSettingsManifest, item.settings);
       item.id = null;
     }
+    this.checkNorthTransformers(command.items);
 
     // Create a minimal south entity first to get the ID, then create groups
     const southEntity = {} as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
@@ -152,9 +159,13 @@ export default class SouthService {
       item.updatedBy = createdBy;
     }
     const configurationWorkflows = this.toConfigurationWorkflowCommands(command, scanModes);
-    this.southConnectorRepository.saveSouth(southEntity, true, configurationWorkflows);
+    const northIds = this.saveWithNorthTransformers(command.items, createdBy, () => {
+      this.southConnectorRepository.saveSouth(southEntity, true, configurationWorkflows);
+      return southEntity.id;
+    });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.createSouth(southEntity.id);
+    this.updateNorths(northIds);
     if (configurationWorkflows) {
       this.engine.reloadWorkflows(southEntity.id);
     }
@@ -183,6 +194,7 @@ export default class SouthService {
     for (const item of command.items) {
       await this.validator.validateSettings(itemSettingsManifest, item.settings);
     }
+    this.checkNorthTransformers(command.items);
 
     const southEntity = { id: previousSettings.id } as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
     const scanModes = this.scanModeRepository.findAll();
@@ -203,9 +215,13 @@ export default class SouthService {
       item.updatedBy = updatedBy;
     }
     const configurationWorkflows = this.toConfigurationWorkflowCommands(command, scanModes);
-    this.southConnectorRepository.saveSouth(southEntity, false, configurationWorkflows);
+    const northIds = this.saveWithNorthTransformers(command.items, updatedBy, () => {
+      this.southConnectorRepository.saveSouth(southEntity, false, configurationWorkflows);
+      return southEntity.id;
+    });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouth(southEntity);
+    this.updateNorths(northIds);
     if (configurationWorkflows) {
       this.engine.reloadWorkflows(southEntity.id);
     }
@@ -659,6 +675,7 @@ export default class SouthService {
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
+    this.checkNorthTransformers([command]);
 
     const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
     await copySouthItemCommandToSouthItemEntity(
@@ -672,9 +689,13 @@ export default class SouthService {
     );
     southItemEntity.createdBy = createdBy;
     southItemEntity.updatedBy = createdBy;
-    this.southConnectorRepository.saveItem(southConnector.id, southItemEntity);
+    const northIds = this.saveWithNorthTransformers([command], createdBy, () => {
+      this.southConnectorRepository.saveItem(southConnector.id, southItemEntity);
+      return southConnector.id;
+    });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
+    this.updateNorths(northIds);
     return southItemEntity;
   }
 
@@ -686,6 +707,7 @@ export default class SouthService {
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
+    this.checkNorthTransformers([command]);
 
     const southItemEntity = { id: existingItem.id } as SouthConnectorItemEntity<SouthItemSettings>;
     await copySouthItemCommandToSouthItemEntity(
@@ -699,12 +721,81 @@ export default class SouthService {
     );
     southItemEntity.createdBy = existingItem.createdBy;
     southItemEntity.updatedBy = updatedBy;
-    this.southConnectorRepository.saveItem(southId, southItemEntity);
+    const northIds = this.saveWithNorthTransformers([command], updatedBy, () => {
+      this.southConnectorRepository.saveItem(southId, southItemEntity);
+      return southId;
+    });
     this.carryOverGroupTrackedInstant(southConnector, [
       { before: existingItem, afterGroupId: southItemEntity.group?.id ?? null, afterSyncWithGroup: southItemEntity.syncWithGroup }
     ]);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
+    this.updateNorths(northIds);
+  }
+
+  /**
+   * Checks the transformers to attach to norths along with items, before anything is saved: their norths and transformers
+   * must exist, and a transformer can only apply to the group of an item having one.
+   */
+  private checkNorthTransformers(items: Array<SouthConnectorItemCommandDTO>): void {
+    for (const item of items) {
+      for (const northTransformer of item.northTransformers ?? []) {
+        if (!this.northConnectorRepository.findNorthById(northTransformer.northId)) {
+          throw new NotFoundError(`North "${northTransformer.northId}" not found`);
+        }
+        this.transformerService.findById(northTransformer.transformerId);
+        if (northTransformer.scope === 'group' && !item.groupId && !item.groupName) {
+          throw new OIBusValidationError(`Item "${item.name}" has no group to attach a transformer to`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Saves items, and the transformers attached to norths along with them, in one transaction: a failure leaves neither saved.
+   * The transformers are attached once the items are saved, when a new item (or a new group) has an id. The items are found
+   * by name, which is unique in a south.
+   *
+   * @param save saves the items, and returns the id of their south (a new south has one once saved)
+   * @returns the ids of the norths given a transformer
+   */
+  private saveWithNorthTransformers(items: Array<SouthConnectorItemCommandDTO>, userId: string, save: () => string): Set<string> {
+    const northIds = new Set<string>();
+    this.database.transaction(() => {
+      const southId = save();
+      if (!items.some(item => item.northTransformers?.length)) return;
+      const south = this.southConnectorRepository.findSouthById(southId)!;
+      for (const itemCommand of items) {
+        const item = south.items.find(element => element.name === itemCommand.name)!;
+        for (const northTransformer of itemCommand.northTransformers ?? []) {
+          this.northConnectorRepository.addOrEditTransformer(
+            northTransformer.northId,
+            {
+              id: '',
+              transformer: this.transformerService.findById(northTransformer.transformerId),
+              options: northTransformer.options,
+              source: {
+                type: 'south',
+                south,
+                group: northTransformer.scope === 'group' ? this.southItemGroupRepository.findById(item.group!.id)! : undefined,
+                items: northTransformer.scope === 'item' ? [item] : [],
+                excludedItems: []
+              }
+            },
+            userId
+          );
+          northIds.add(northTransformer.northId);
+        }
+      }
+    })();
+    return northIds;
+  }
+
+  /** Reloads the norths whose transformers changed, so that they route the data of the items accordingly */
+  private updateNorths(northIds: Set<string>): void {
+    for (const northId of northIds) {
+      this.engine.updateNorthConfiguration(northId);
+    }
   }
 
   /**
