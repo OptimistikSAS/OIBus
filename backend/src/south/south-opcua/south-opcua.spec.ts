@@ -2275,6 +2275,72 @@ describe('SouthOPCUA', () => {
     );
   });
 
+  it('should wait for the revised keepalive interval before the subscription watchdog fires', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    // Keepalive every 150 * 10 = 1500 ms, above the 1000 ms read timeout
+    const subscriptionEmitter = Object.assign(new EventEmitter(), {
+      terminate: mock.fn(async () => undefined),
+      monitor: monitorFn,
+      publishingInterval: 150,
+      maxKeepAliveCount: 10
+    });
+    south['session'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+    configuration.settings.readTimeout = 1000;
+
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    await south.subscribe([configuration.items[2]]);
+
+    // Past the read timeout and a full keepalive interval: a healthy quiet subscription must not be reconnected
+    mock.timers.tick(2999);
+    await flushPromises();
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+
+    // Two keepalive intervals without any keepalive or data: the watchdog fires and reports the actual timeout
+    mock.timers.tick(1);
+    await flushPromises();
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.ok(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(c =>
+        (c.arguments[0] as string).includes('no keepalive or data received for 3000 ms')
+      )
+    );
+  });
+
+  it('should use the read timeout as a floor when the keepalive interval is short', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), {
+      terminate: mock.fn(async () => undefined),
+      monitor: monitorFn,
+      publishingInterval: 100,
+      maxKeepAliveCount: 2
+    });
+    south['session'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+    configuration.settings.readTimeout = 15000;
+
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    await south.subscribe([configuration.items[2]]);
+
+    mock.timers.tick(14999);
+    await flushPromises();
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+
+    mock.timers.tick(1);
+    await flushPromises();
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+  });
+
   it('should schedule a reconnect after triggerReconnect() successfully disconnects', async () => {
     const stream = new CustomStream();
     stream.terminate = mock.fn();
