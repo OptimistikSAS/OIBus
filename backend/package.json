@@ -6,8 +6,8 @@
   "homepage": "https://oibus.optimistik.com/",
   "license": "EUPL",
   "engines": {
-    "node": "=v26",
-    "npm": "=11"
+    "node": "26.12.1",
+    "npm": "11.20.0"
   },
   "scripts": {
     "start:macos-x64": "../build/bin/macos-x64/binaries/oibus --config ../data-folder",
