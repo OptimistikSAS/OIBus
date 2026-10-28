@@ -500,9 +500,12 @@ describe('SouthDetailComponent', () => {
       await tester.expectItems(...Array.from({ length: 10 }, (_, index) => `item 1${index}`));
     });
 
-    test('should create an item', async () => {
+    test('should create an item, with the transformers attached to norths along with it', async () => {
       const tester = await createTester();
-      const command = testData.south.itemCommand;
+      const command: SouthConnectorItemCommandDTO = {
+        ...testData.south.itemCommand,
+        northTransformers: [{ northId: 'northId1', scope: 'item', transformerId: 'transformerId2', options: {} }]
+      };
       const editModal = mockModal(createMock(EditSouthItemModalComponent), command);
       const open = vi.spyOn(modalService, 'open');
       southConnectorService.createItem.mockReturnValue(of(buildItem('newSouthItemId', 'New South Item')));
@@ -574,7 +577,12 @@ describe('SouthDetailComponent', () => {
 
     test('should edit an item', async () => {
       const tester = await createTester();
-      const command = { ...testData.south.itemCommand, id: 'itemA', name: 'item a renamed' };
+      const command: SouthConnectorItemCommandDTO = {
+        ...testData.south.itemCommand,
+        id: 'itemA',
+        name: 'item a renamed',
+        northTransformers: [{ northId: 'northId1', scope: 'group', transformerId: 'transformerId2', options: {} }]
+      };
       const editModal = mockModal(createMock(EditSouthItemModalComponent), command);
       const open = vi.spyOn(modalService, 'open');
       southConnectorService.updateItem.mockReturnValue(of(undefined));

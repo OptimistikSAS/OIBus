@@ -256,7 +256,8 @@ export class SouthDetailComponent {
             threshold: command.threshold,
             rangeLow: command.rangeLow,
             rangeHigh: command.rangeHigh,
-            maxCachingInterval: command.maxCachingInterval
+            maxCachingInterval: command.maxCachingInterval,
+            northTransformers: command.northTransformers
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -309,7 +310,8 @@ export class SouthDetailComponent {
             threshold: command.threshold,
             rangeLow: command.rangeLow,
             rangeHigh: command.rangeHigh,
-            maxCachingInterval: command.maxCachingInterval
+            maxCachingInterval: command.maxCachingInterval,
+            northTransformers: command.northTransformers
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -368,7 +370,8 @@ export class SouthDetailComponent {
             threshold: command.threshold,
             rangeLow: command.rangeLow,
             rangeHigh: command.rangeHigh,
-            maxCachingInterval: command.maxCachingInterval
+            maxCachingInterval: command.maxCachingInterval,
+            northTransformers: command.northTransformers
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {

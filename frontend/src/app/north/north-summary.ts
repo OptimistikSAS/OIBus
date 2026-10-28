@@ -85,7 +85,10 @@ export function transformerName(transformer: TransformerDTO, translateService: T
  * The options of a north transformer shown beside its name in the transformer lists: the ones its manifest displays in view
  * mode (e.g. the time precision of the OIAnalytics payloads), as "label: value"
  */
-export function transformerOptionsSummary(transformer: TransformerDTOWithOptions, translateService: TranslateService): string {
+export function transformerOptionsSummary(
+  transformer: Pick<TransformerDTOWithOptions, 'transformer' | 'options'>,
+  translateService: TranslateService
+): string {
   return FormUtils.buildColumn(transformer.transformer.manifest.attributes, [])
     .map(column => {
       const value = FormUtils.formatValue(transformer.options, column.path, column.type, column.translationKey, translateService, []);

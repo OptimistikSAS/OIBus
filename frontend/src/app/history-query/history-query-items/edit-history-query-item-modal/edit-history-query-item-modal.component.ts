@@ -32,7 +32,13 @@ import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.com
 import { submitsOnEnter } from '../../../shared/modal-steps/wizard-steps';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { countItemChanges, ItemModalStep, ItemModalSteps, ItemSummary } from '../../../south/south-items/item-modal-steps';
+import {
+  countItemChanges,
+  HISTORY_ITEM_MODAL_STEPS,
+  HistoryItemModalStep,
+  ItemModalSteps,
+  ItemSummary
+} from '../../../south/south-items/item-modal-steps';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
 type ItemForm = FormGroup<{
@@ -108,7 +114,7 @@ export class EditHistoryQueryItemModalComponent {
   /** The last change of the form (value, status, touched...) */
   private readonly formEvent = signal<unknown>(null);
 
-  readonly steps = new ItemModalSteps(step => this.stepControls(step), this.formEvent);
+  readonly steps = new ItemModalSteps(HISTORY_ITEM_MODAL_STEPS, step => this.stepControls(step), this.formEvent);
   /** A new item is saved from the last step, an edited or copied one from any step */
   readonly canSave = computed(() => this.mode() !== 'create' || this.steps.isLast());
 
@@ -246,7 +252,7 @@ export class EditHistoryQueryItemModalComponent {
   }
 
   /** The controls edited in each step */
-  private stepControls(step: ItemModalStep): Array<AbstractControl> {
+  private stepControls(step: HistoryItemModalStep): Array<AbstractControl> {
     const form = this.form();
     if (!form) {
       return [];
