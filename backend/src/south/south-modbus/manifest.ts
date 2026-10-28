@@ -412,7 +412,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'object',
               key: 'data',
-              translationKey: 'configuration.oibus.manifest.south.items.modbus.data',
+              translationKey: 'configuration.oibus.manifest.south.items.modbus.data.title',
               displayProperties: {
                 visible: true,
                 wrapInBox: false

@@ -172,7 +172,7 @@ const manifest: TransformerManifest = {
             {
               type: 'object',
               key: 'datetimeSettings',
-              translationKey: 'configuration.oibus.manifest.transformers.file-to-mqtt.object-fields.datetime-settings.title',
+              translationKey: 'configuration.oibus.manifest.transformers.file-to-mqtt.datetime-settings.title',
               displayProperties: { visible: true, wrapInBox: false },
               enablingConditions: [
                 { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputTimezone', values: ['string'] },
