@@ -19,6 +19,8 @@ import { TransformerService } from '../../../services/transformer.service';
 import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
 import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
+import { inMemoryTypeahead } from '../../../shared/form/typeahead';
+import { OI_TYPEAHEAD_DIRECTIVES } from '../../../shared/form/typeahead-directives';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
 
 /** Where the "from a source item" input pulls values from (or `none` for paste-only sources). */
@@ -49,7 +51,8 @@ interface TestItem {
     TranslatePipe,
     OibCodeBlockComponent,
     TransformerTestResultComponent,
-    DateRangeSelectorComponent
+    DateRangeSelectorComponent,
+    ...OI_TYPEAHEAD_DIRECTIVES
   ]
 })
 export class NorthTransformerTestComponent {
@@ -117,16 +120,20 @@ export class NorthTransformerTestComponent {
   readonly settingsCollapsed = signal(false);
 
   readonly form = this.fb.group({
-    inputSource: this.fb.control<'paste' | 'item'>('paste'),
+    inputSource: this.fb.control<'paste' | 'item'>('item'),
     inputData: this.fb.control<string>(''),
-    itemId: this.fb.control<string | null>(null),
+    item: this.fb.control<TestItem | null>(null),
     // No initial value here: <oib-date-range-selector> seeds itself from its `defaultRange` input
     // (last 10 minutes) and pushes the computed value up as soon as it initializes.
     dateRange: this.fb.control<DateRange | null>(null)
   });
-  readonly inputSource = toSignal(this.form.controls.inputSource.valueChanges, { initialValue: this.form.controls.inputSource.value });
+  private readonly chosenInputSource = toSignal(this.form.controls.inputSource.valueChanges, {
+    initialValue: this.form.controls.inputSource.value
+  });
+  /** What the test runs on: an item of the source by default, the pasted data when the source has no item to run */
+  readonly inputSource = computed(() => (this.canUseItemSource() ? this.chosenInputSource() : 'paste'));
   private readonly inputData = toSignal(this.form.controls.inputData.valueChanges, { initialValue: this.form.controls.inputData.value });
-  private readonly itemId = toSignal(this.form.controls.itemId.valueChanges, { initialValue: this.form.controls.itemId.value });
+  private readonly item = toSignal(this.form.controls.item.valueChanges, { initialValue: this.form.controls.item.value });
   private readonly dateRange = toSignal(this.form.controls.dateRange.valueChanges, { initialValue: this.form.controls.dateRange.value });
 
   constructor() {
@@ -147,6 +154,13 @@ export class NorthTransformerTestComponent {
       .subscribe(template => this.form.controls.inputData.setValue(template.data));
   }
 
+  /** Searches the items of the source by name */
+  readonly itemTypeahead = inMemoryTypeahead(
+    () => this.availableItems(),
+    item => item.name
+  );
+  readonly itemName = (item: TestItem): string => item.name;
+
   readonly canUseItemSource = computed(() => this.itemSource().kind !== 'none' && this.availableItems().length > 0);
 
   /**
@@ -157,7 +171,7 @@ export class NorthTransformerTestComponent {
     JSON.stringify({
       transformerId: this.transformer()?.id ?? null,
       options: this.options(),
-      input: this.inputSource() === 'paste' ? { data: this.inputData() } : { itemId: this.itemId() }
+      input: this.inputSource() === 'paste' ? { data: this.inputData() } : { itemId: this.item()?.id ?? null }
     })
   );
   /** The latest test result no longer matches what a test would run on: the options or the input changed since */
@@ -170,8 +184,7 @@ export class NorthTransformerTestComponent {
     if (this.inputSource() === 'paste') {
       return this.translate.instant('north.transformers.test.source-paste');
     }
-    const itemId = this.itemId();
-    const item = this.availableItems().find(candidate => candidate.id === itemId);
+    const item = this.item();
     const itemLabel = item?.name ?? this.translate.instant('north.transformers.test.source-item');
     if (!this.supportsHistory()) {
       return itemLabel;
@@ -181,6 +194,10 @@ export class NorthTransformerTestComponent {
     const rangeLabel = this.dateRangeSelector()?.getSummaryLabel() ?? '';
     return rangeLabel ? `${itemLabel} · ${rangeLabel}` : itemLabel;
   });
+
+  setInputSource(inputSource: 'paste' | 'item') {
+    this.form.controls.inputSource.setValue(inputSource);
+  }
 
   runTest() {
     const transformer = this.transformer();
@@ -196,7 +213,7 @@ export class NorthTransformerTestComponent {
     this.infoMessage.set(null);
     this.isTestRunning.set(true);
     this.lastTestedInput.set(this.testedInput());
-    const onItem = this.form.controls.inputSource.value === 'item';
+    const onItem = this.inputSource() === 'item';
     this.testSubscription = request
       .pipe(
         catchError((error: HttpErrorResponse) => {
@@ -222,7 +239,7 @@ export class NorthTransformerTestComponent {
   }
 
   private buildRequest(transformer: TransformerDTO): Observable<SouthConnectorItemTestResult> | null {
-    if (this.form.controls.inputSource.value === 'paste') {
+    if (this.inputSource() === 'paste') {
       return this.transformerService.testTransformer(transformer.id, {
         inputData: this.form.controls.inputData.value,
         options: this.options()
@@ -230,7 +247,7 @@ export class NorthTransformerTestComponent {
     }
 
     const source = this.itemSource();
-    const item = this.availableItems().find(candidate => candidate.id === this.form.controls.itemId.value);
+    const item = this.form.controls.item.value;
     const southSettings = this.southSettings();
     if (source.kind === 'none' || !item || !southSettings) {
       return null;
