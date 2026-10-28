@@ -799,6 +799,53 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
    * @example 3600000
    */
   maxCachingInterval: number | null;
+
+  /**
+   * Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved
+   * with the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of
+   * the norths are not changed.
+   */
+  northTransformers?: Array<SouthItemNorthTransformerCommandDTO>;
+}
+
+/**
+ * What a north transformer attached along with an item applies to: the item alone, all the items of its group, or all the
+ * items of its south
+ */
+export type SouthItemTransformerScope = 'item' | 'group' | 'south';
+
+/**
+ * A transformer to attach to a north connector along with an item, to send the data of the item (or of its group, or of its
+ * south) to the north
+ */
+export interface SouthItemNorthTransformerCommandDTO {
+  /**
+   * The ID of the north connector the data is sent to.
+   *
+   * @example "north-1"
+   */
+  northId: string;
+
+  /**
+   * What the transformer applies to: the item, its group (the item must have one), or its south.
+   *
+   * @example "item"
+   */
+  scope: SouthItemTransformerScope;
+
+  /**
+   * The ID of the transformer.
+   *
+   * @example "record-list-to-file"
+   */
+  transformerId: string;
+
+  /**
+   * The options of the transformer.
+   *
+   * @example { "precision": "ms" }
+   */
+  options: Record<string, unknown>;
 }
 
 // ── Named command variants (tsoa uses these as schema names) ──────────────

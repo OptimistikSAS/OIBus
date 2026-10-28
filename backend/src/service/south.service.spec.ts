@@ -2,9 +2,13 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
+import type { Database } from 'better-sqlite3';
+
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
 import {
   SouthConnectorCommandDTO,
+  SouthConnectorFolderScannerCommandDTO,
+  SouthConnectorFolderScannerItemCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthItemGroupCommandDTO
 } from '../../shared/model/api/south-connector.model';
@@ -17,6 +21,7 @@ import { SouthConnectorEntityLight, SouthConnectorItemEntity, SouthItemGroupEnti
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
 import type CertificateRepository from '../repository/config/certificate.repository';
+import type NorthConnectorRepository from '../repository/config/north-connector.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import type ScanModeRepository from '../repository/config/scan-mode.repository';
 import type SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -200,6 +205,8 @@ describe('South Service', () => {
   let engine: Mocked<DataStreamEngine>;
   let southItemGroupRepository: Mocked<SouthItemGroupRepository>;
   let transformerService: Mocked<TransformerService>;
+  let northConnectorRepository: Mocked<NorthConnectorRepository>;
+  let database: Mocked<Database>;
   let buildSouth: Mock<typeof buildSouthType>;
   let mockedSouth1: SouthConnectorMock;
   let logger: PinoLogger;
@@ -253,7 +260,9 @@ describe('South Service', () => {
     oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
     engine = createMock<DataStreamEngine>({ logger });
     southItemGroupRepository = createMock<SouthItemGroupRepository>({ findBySouthId: () => [] });
-    transformerService = createMock<TransformerService>();
+    transformerService = createMock<TransformerService>({ findById: () => testData.transformers.list[0] });
+    northConnectorRepository = createMock<NorthConnectorRepository>({ findNorthById: () => testData.north.list[0] });
+    database = createMock<Database>({ transaction: fn => fn });
 
     service = new SouthService(
       validator,
@@ -267,7 +276,9 @@ describe('South Service', () => {
       oIAnalyticsMessageService,
       engine,
       southItemGroupRepository,
-      transformerService
+      transformerService,
+      northConnectorRepository,
+      database
     );
   });
 
@@ -1210,6 +1221,135 @@ describe('South Service', () => {
 
     assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
     assert.deepStrictEqual(southConnectorRepository.saveItem.mock.calls[0].arguments[1].group, null);
+  });
+
+  describe('with north transformers attached along with the item', () => {
+    const savedSouth = testData.south.list[0];
+    const savedItem = savedSouth.items[0];
+    const attach = (
+      scope: 'item' | 'group' | 'south',
+      overrides: Partial<SouthConnectorFolderScannerItemCommandDTO> = {}
+    ): SouthConnectorFolderScannerItemCommandDTO => ({
+      ...(testData.south.itemCommand as SouthConnectorFolderScannerItemCommandDTO),
+      name: savedItem.name,
+      northTransformers: [
+        { northId: testData.north.list[0].id, scope, transformerId: testData.transformers.list[0].id, options: { a: 1 } }
+      ],
+      ...overrides
+    });
+
+    it('should attach a transformer to the item once it is created, in the same transaction', async () => {
+      await service.createItem(savedSouth.id, attach('item'), 'userTest');
+
+      assert.strictEqual(database.transaction.mock.calls.length, 1);
+      assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
+      assert.deepStrictEqual(northConnectorRepository.addOrEditTransformer.mock.calls[0].arguments, [
+        testData.north.list[0].id,
+        {
+          id: '',
+          transformer: testData.transformers.list[0],
+          options: { a: 1 },
+          source: { type: 'south', south: savedSouth, group: undefined, items: [savedItem], excludedItems: [] }
+        },
+        'userTest'
+      ]);
+      assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
+    });
+
+    it('should attach a transformer to the group of the item', async () => {
+      const group = buildGroup();
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [group]);
+      southItemGroupRepository.findById.mock.mockImplementation(() => group);
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({
+        ...savedSouth,
+        items: [{ ...savedItem, group }]
+      }));
+
+      await service.updateItem(savedSouth.id, savedItem.id, attach('group', { groupId: group.id }), 'userTest');
+
+      assert.deepStrictEqual(southItemGroupRepository.findById.mock.calls[0].arguments, [group.id]);
+      const source = northConnectorRepository.addOrEditTransformer.mock.calls[0].arguments[1].source;
+      assert.deepStrictEqual(source.type === 'south' && { group: source.group, items: source.items }, { group, items: [] });
+      assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
+    });
+
+    it('should attach a transformer to all the items of the south', async () => {
+      await service.updateItem(savedSouth.id, savedItem.id, attach('south'), 'userTest');
+
+      const source = northConnectorRepository.addOrEditTransformer.mock.calls[0].arguments[1].source;
+      assert.deepStrictEqual(source.type === 'south' && { group: source.group, items: source.items }, { group: undefined, items: [] });
+    });
+
+    it('should not change the norths when no transformer is attached', async () => {
+      await service.updateItem(savedSouth.id, savedItem.id, testData.south.itemCommand, 'userTest');
+
+      assert.strictEqual(northConnectorRepository.addOrEditTransformer.mock.calls.length, 0);
+      assert.strictEqual(engine.updateNorthConfiguration.mock.calls.length, 0);
+    });
+
+    it('should not save the item when the north does not exist', async () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => null);
+
+      await assert.rejects(
+        service.createItem(savedSouth.id, attach('item'), 'userTest'),
+        new NotFoundError(`North "${testData.north.list[0].id}" not found`)
+      );
+      assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 0);
+    });
+
+    it('should not save the item when the transformer does not exist', async () => {
+      transformerService.findById.mock.mockImplementation(() => {
+        throw new NotFoundError('Transformer "unknown" not found');
+      });
+
+      await assert.rejects(service.createItem(savedSouth.id, attach('item'), 'userTest'), NotFoundError);
+      assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 0);
+    });
+
+    it('should not attach a transformer to the group of an item without one', async () => {
+      await assert.rejects(
+        service.createItem(savedSouth.id, attach('group', { groupId: null, groupName: null }), 'userTest'),
+        new OIBusValidationError(`Item "${savedItem.name}" has no group to attach a transformer to`)
+      );
+      assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 0);
+    });
+
+    it('should not reload anything when a transformer cannot be attached', async () => {
+      northConnectorRepository.addOrEditTransformer.mock.mockImplementation(() => {
+        throw new Error('database error');
+      });
+
+      await assert.rejects(service.createItem(savedSouth.id, attach('item'), 'userTest'), new Error('database error'));
+      assert.strictEqual(engine.reloadSouthItems.mock.calls.length, 0);
+      assert.strictEqual(engine.updateNorthConfiguration.mock.calls.length, 0);
+    });
+
+    it('should attach the transformers of the items of a south once it is created', async () => {
+      mock.method(service, 'retrieveSecretsFromSouth', () => null);
+
+      await service.create(
+        { ...(testData.south.command as SouthConnectorFolderScannerCommandDTO), items: [attach('south')] },
+        null,
+        'userTest'
+      );
+
+      assert.strictEqual(database.transaction.mock.calls.length, 1);
+      const [northId, transformer] = northConnectorRepository.addOrEditTransformer.mock.calls[0].arguments;
+      assert.strictEqual(northId, testData.north.list[0].id);
+      assert.deepStrictEqual(transformer.source.type === 'south' && transformer.source.south, savedSouth);
+      assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
+    });
+
+    it('should attach the transformers of the items of a south when it is updated', async () => {
+      await service.update(
+        savedSouth.id,
+        { ...(testData.south.command as SouthConnectorFolderScannerCommandDTO), items: [attach('item')] },
+        'userTest'
+      );
+
+      assert.strictEqual(northConnectorRepository.addOrEditTransformer.mock.calls.length, 1);
+      assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
+    });
   });
 
   describe('when an opcua item synced with a group is updated', () => {
