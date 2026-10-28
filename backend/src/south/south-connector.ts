@@ -22,6 +22,8 @@ import {
 import path from 'node:path';
 import TypedEventEmitter from '../service/typed-event-emitter';
 
+type HistoryQueryWarning = 'missing-time-variable' | 'inline-offset';
+
 /** Events published by a South connector's {@link SouthConnector.metricsEvent}. */
 export interface SouthMetricsEvents {
   connect: { lastConnection: Instant };
@@ -101,6 +103,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   // id for connectors/items that don't group). Used to throttle that warning to once an hour
   // (logging the in-between occurrences as trace) to avoid flooding.
   private lastBackpressureWarnByUnitId: Map<string, DateTime> = new Map<string, DateTime>();
+  // History query warnings (see buildIntervals) already emitted per work-unit. Each one is logged as a warning
+  // the first time only, then as a trace, until the connector is restarted.
+  private historyQueryWarnedByUnitKey: Map<string, Set<HistoryQueryWarning>> = new Map<string, Set<HistoryQueryWarning>>();
   // Per-item scheduling status. Only enabled items are tracked; a missing entry is equivalent to 'pending'.
   private itemStatus = new Map<string, 'pending' | 'queued' | 'running'>();
   // FIFO queue of work-units (groups, or singleton arrays for connectors in SOUTH_SINGLE_ITEMS) waiting for a free slot.
@@ -198,6 +203,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     for (const unitKey of this.lastBackpressureWarnByUnitId.keys()) {
       if (!currentUnitKeys.has(unitKey)) {
         this.lastBackpressureWarnByUnitId.delete(unitKey);
+      }
+    }
+    for (const unitKey of this.historyQueryWarnedByUnitKey.keys()) {
+      if (!currentUnitKeys.has(unitKey)) {
+        this.historyQueryWarnedByUnitKey.delete(unitKey);
       }
     }
   }
@@ -652,8 +662,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     const usage = this.getHistoryQueryTimeVariablesUsage(lead);
     if (!usage.usesStartTime || !usage.usesEndTime) {
       const missing = [usage.usesStartTime ? null : '@StartTime', usage.usesEndTime ? null : '@EndTime'].filter(Boolean).join(' and ');
-      this.logger.warn(
-        workUnitLogCtx(items),
+      this.warnHistoryQueryOnce(
+        items,
+        'missing-time-variable',
         `The query does not use ${missing}: it cannot be split in ${intervals.length} sub-intervals of ${maxReadInterval} seconds ` +
           `(each one would return the same data again). Max read interval is ignored and [${startTime}, ${endTime}] is queried at once. ` +
           'Use both @StartTime and @EndTime in the query to split it'
@@ -661,14 +672,32 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       return [{ start: startTime, end: endTime }];
     }
     if (usage.hasInlineOffset) {
-      this.logger.warn(
-        workUnitLogCtx(items),
+      this.warnHistoryQueryOnce(
+        items,
+        'inline-offset',
         `The query shifts @StartTime or @EndTime itself: each of the ${intervals.length} sub-intervals re-reads data already ` +
           'retrieved by the previous one. Use the Start time offset and End time offset settings instead, they are applied ' +
           'once to the whole window and not to each sub-interval'
       );
     }
     return intervals;
+  }
+
+  /**
+   * Log a history query warning as a warning the first time it happens for a work-unit, then as a trace, so
+   * that a work-unit running every few minutes (or catching up over many runs) does not flood the logs. The
+   * state is in memory: the warning is emitted again after a restart of the connector.
+   */
+  private warnHistoryQueryOnce(items: Array<SouthConnectorItemEntity<I>>, warning: HistoryQueryWarning, message: string): void {
+    const unitKey = this.getUnitKey(items);
+    const warned = this.historyQueryWarnedByUnitKey.get(unitKey) ?? new Set<HistoryQueryWarning>();
+    if (warned.has(warning)) {
+      this.logger.trace(workUnitLogCtx(items), message);
+      return;
+    }
+    warned.add(warning);
+    this.historyQueryWarnedByUnitKey.set(unitKey, warned);
+    this.logger.warn(workUnitLogCtx(items), `${message}. The next occurrences will be logged as trace until the connector restarts`);
   }
 
   /**

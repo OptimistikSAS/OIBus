@@ -609,6 +609,73 @@ describe('SouthConnector', () => {
         );
       });
 
+      it('should warn only the first time about a query without time variables, then trace', async () => {
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: false, hasInlineOffset: false }));
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+
+        const warnCalls = (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+        assert.strictEqual(warnCalls.length, 1);
+        assert.ok(
+          (warnCalls[0].arguments[1] as string).endsWith('. The next occurrences will be logged as trace until the connector restarts')
+        );
+        const traceCalls = (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.filter(
+          (c: { arguments: Array<unknown> }) =>
+            typeof c.arguments[1] === 'string' && c.arguments[1].startsWith('The query does not use @EndTime')
+        );
+        assert.strictEqual(traceCalls.length, 2);
+      });
+
+      it('should warn only the first time about an inline offset, then trace', async () => {
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: true }));
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+
+        assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+        const traceCalls = (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.filter(
+          (c: { arguments: Array<unknown> }) =>
+            typeof c.arguments[1] === 'string' && c.arguments[1].startsWith('The query shifts @StartTime')
+        );
+        assert.strictEqual(traceCalls.length, 1);
+      });
+
+      it('should warn once for each kind of warning and each work-unit', async () => {
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+        const otherItems = [{ ...items[0], id: 'otherItemId', name: 'other item' }] as Array<
+          SouthConnectorItemEntity<SouthMSSQLItemSettings>
+        >;
+
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: false, hasInlineOffset: false }));
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+        await south.historyQueryHandler(otherItems, windowStart, windowEnd);
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: true }));
+        await south.historyQueryHandler(items, windowStart, windowEnd);
+
+        assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 3);
+      });
+
+      it('should warn again once the work-unit is removed from the connector configuration', async () => {
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+        utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: false, hasInlineOffset: false }));
+        // This item does not belong to the connector configuration, so it is dropped when the groups are rebuilt
+        const removedItems = [{ ...items[0], id: 'removedItemId', name: 'removed item' }] as Array<
+          SouthConnectorItemEntity<SouthMSSQLItemSettings>
+        >;
+
+        await south.historyQueryHandler(removedItems, windowStart, windowEnd);
+        await south.historyQueryHandler(removedItems, windowStart, windowEnd);
+        assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+
+        south['rebuildItemGroupsByScanMode']();
+        await south.historyQueryHandler(removedItems, windowStart, windowEnd);
+        assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 2);
+      });
+
       it('should not analyze the query nor warn when the window is not split', async () => {
         utilsExports.generateIntervals = mock.fn(() => [{ start: windowStart, end: windowEnd }]);
         utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: false, usesEndTime: false, hasInlineOffset: true }));
