@@ -2,7 +2,7 @@ import { InfluxDB } from '@influxdata/influxdb-client';
 import { InfluxDBClient } from '@influxdata/influxdb3-client';
 import { InfluxDB as InfluxDBv1 } from 'influx';
 import SouthConnector from '../south-connector';
-import { getErrorMessage, logQuery, workUnitLogCtx } from '../../service/utils';
+import { getErrorMessage, getQueryTimeVariablesUsage, logQuery, QueryTimeVariablesUsage, workUnitLogCtx } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
 import { SouthHistoryQuery } from '../south-interface';
@@ -140,6 +140,10 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
       connectionDuration: 0,
       queryDuration
     };
+  }
+
+  protected override getHistoryQueryTimeVariablesUsage(lead: SouthConnectorItemEntity<SouthInfluxDBItemSettings>): QueryTimeVariablesUsage {
+    return getQueryTimeVariablesUsage(lead.settings.query);
   }
 
   async historyQuery(

@@ -4,6 +4,8 @@ import {
   formatInstant,
   generateRandomId,
   getErrorMessage,
+  getQueryTimeVariablesUsage,
+  QueryTimeVariablesUsage,
   sanitizeFilename,
   workUnitLogCtx
 } from '../../service/utils';
@@ -97,6 +99,18 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       connectionDuration: 0,
       queryDuration
     };
+  }
+
+  /**
+   * The variables are replaced in the query params, the headers and the body (only sent with a method that has one)
+   */
+  protected override getHistoryQueryTimeVariablesUsage(lead: SouthConnectorItemEntity<SouthRestItemSettings>): QueryTimeVariablesUsage {
+    const { queryParams, headers, method, body } = lead.settings;
+    const texts = [...queryParams.map(queryParam => queryParam.value), ...headers.map(header => header.value)];
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && body?.content) {
+      texts.push(body.content);
+    }
+    return getQueryTimeVariablesUsage(texts.join('\n'));
   }
 
   async historyQuery(

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { delay, generateIntervals, getErrorMessage, groupItemsByGroup, workUnitLogCtx } from '../service/utils';
+import { delay, generateIntervals, getErrorMessage, groupItemsByGroup, QueryTimeVariablesUsage, workUnitLogCtx } from '../service/utils';
 
 import {
   SOUTH_SINGLE_ITEMS,
@@ -622,9 +622,62 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     const queryWindow = this.computeQueryWindow(southCache.trackedInstant, endTime, startTimeOffset, endTimeOffset);
     if (!queryWindow) return;
     const { effectiveStartTime, effectiveEndTime } = queryWindow;
-    const intervals = generateIntervals(effectiveStartTime, effectiveEndTime, maxReadInterval, recoveryStrategy);
+    const intervals = this.buildIntervals(lead, items, effectiveStartTime, effectiveEndTime, maxReadInterval, recoveryStrategy);
     this.logIntervals(intervals);
     await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy);
+  }
+
+  /**
+   * Split the effective window into sub-intervals of at most `maxReadInterval` seconds, unless the query cannot
+   * take advantage of it:
+   *  - a query that does not use both @StartTime and @EndTime ignores the interval bounds, so every sub-query
+   *    would return the same data again. The whole window is queried in a single call instead.
+   *  - a query that shifts @StartTime / @EndTime itself makes every sub-interval re-read the end of the previous
+   *    one. The split is kept (the data would be too large otherwise) but a warning points to the offset settings,
+   *    which are applied once to the whole window.
+   */
+  private buildIntervals(
+    lead: SouthConnectorItemEntity<I>,
+    items: Array<SouthConnectorItemEntity<I>>,
+    startTime: Instant,
+    endTime: Instant,
+    maxReadInterval: number,
+    strategy: SouthHistoryRecoveryStrategy
+  ): Array<Interval> {
+    const intervals = generateIntervals(startTime, endTime, maxReadInterval, strategy);
+    if (intervals.length <= 1) {
+      return intervals;
+    }
+
+    const usage = this.getHistoryQueryTimeVariablesUsage(lead);
+    if (!usage.usesStartTime || !usage.usesEndTime) {
+      const missing = [usage.usesStartTime ? null : '@StartTime', usage.usesEndTime ? null : '@EndTime'].filter(Boolean).join(' and ');
+      this.logger.warn(
+        workUnitLogCtx(items),
+        `The query does not use ${missing}: it cannot be split in ${intervals.length} sub-intervals of ${maxReadInterval} seconds ` +
+          `(each one would return the same data again). Max read interval is ignored and [${startTime}, ${endTime}] is queried at once. ` +
+          'Use both @StartTime and @EndTime in the query to split it'
+      );
+      return [{ start: startTime, end: endTime }];
+    }
+    if (usage.hasInlineOffset) {
+      this.logger.warn(
+        workUnitLogCtx(items),
+        `The query shifts @StartTime or @EndTime itself: each of the ${intervals.length} sub-intervals re-reads data already ` +
+          'retrieved by the previous one. Use the Start time offset and End time offset settings instead, they are applied ' +
+          'once to the whole window and not to each sub-interval'
+      );
+    }
+    return intervals;
+  }
+
+  /**
+   * How the query of `lead` uses the @StartTime / @EndTime variables. Connectors that hand the interval to the
+   * source's own historical read (OPC UA HA, OPC HDA, PI, OIAnalytics) always use both, which is the default.
+   * Connectors running a user-written query (SQL, InfluxDB, REST) override this to analyze it.
+   */
+  protected getHistoryQueryTimeVariablesUsage(_lead: SouthConnectorItemEntity<I>): QueryTimeVariablesUsage {
+    return { usesStartTime: true, usesEndTime: true, hasInlineOffset: false };
   }
 
   private async queryIntervals(

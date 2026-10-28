@@ -43,6 +43,7 @@ describe('SouthOLEDB', () => {
     formatInstant: mock.fn((value: unknown) => value),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     logQuery: mock.fn(),
+    getSqlQueryTimeVariablesUsage: mock.fn((_query: string) => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
     persistResults: mock.fn(async () => undefined),
     getErrorMessage: mock.fn((error: unknown) => {
       if (error instanceof Error) return error.message;
@@ -238,6 +239,16 @@ describe('SouthOLEDB', () => {
   afterEach(() => {
     mock.timers.reset();
     mock.restoreAll();
+  });
+
+  it('should analyze the time variables of the item query', () => {
+    const usage = { usesStartTime: true, usesEndTime: false, hasInlineOffset: true };
+    utilsExports.getSqlQueryTimeVariablesUsage = mock.fn((_query: string) => usage);
+
+    assert.deepStrictEqual(south['getHistoryQueryTimeVariablesUsage'](configuration.items[0]), usage);
+    assert.deepStrictEqual((utilsExports.getSqlQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      configuration.items[0].settings.query
+    ]);
   });
 
   it('should properly connect to remote agent and disconnect', async () => {

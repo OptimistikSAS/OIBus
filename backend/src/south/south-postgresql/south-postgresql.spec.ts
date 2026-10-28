@@ -74,6 +74,7 @@ describe('SouthPostgreSQL', () => {
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
+    getSqlQueryTimeVariablesUsage: mock.fn((_query: string) => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
     persistResults: mock.fn(async () => undefined),
     getErrorMessage: mock.fn((error: unknown) => {
       if (error instanceof Error) return error.message;
@@ -278,6 +279,16 @@ describe('SouthPostgreSQL', () => {
 
     beforeEach(() => {
       south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    });
+
+    it('should analyze the time variables of the item query', () => {
+      const usage = { usesStartTime: true, usesEndTime: false, hasInlineOffset: true };
+      utilsExports.getSqlQueryTimeVariablesUsage = mock.fn((_query: string) => usage);
+
+      assert.deepStrictEqual(south['getHistoryQueryTimeVariablesUsage'](configuration.items[0]), usage);
+      assert.deepStrictEqual((utilsExports.getSqlQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        configuration.items[0].settings.query
+      ]);
     });
 
     it('should properly run historyQuery', async () => {
