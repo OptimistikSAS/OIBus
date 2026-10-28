@@ -9,6 +9,7 @@ import {
   input,
   linkedSignal,
   signal,
+  untracked,
   viewChild
 } from '@angular/core';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -29,7 +30,6 @@ import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.m
 import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { NorthConnectorService } from '../../../services/north-connector.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
 import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
@@ -46,18 +46,20 @@ interface TransformerChoice {
   options: Record<string, unknown>;
 }
 
+/** The transformer a south item is tested through: the one a North sends its data with, with its options */
+export type ItemTestTransformer = Pick<TransformerDTOWithOptions, 'transformer' | 'options'>;
+
 type TestingSettingsForm = FormGroup<{
   history?: FormGroup<{ dateRange: FormControl<DateRange | null> }>;
-  northId: FormControl<string | null>;
   transformerId: FormControl<string | null>;
   options: FormGroup;
 }>;
 
 /**
- * Test panel for a South/History item. The user optionally selects a North (south context only) and
- * one of its transformers, tweaks that transformer's options for the test, and runs the item. The
- * result is shown as a pipeline: Raw result → transformer + its options → transformer output.
- * In a history-query context there is no North to pick — the history query's own transformers are used.
+ * Test panel for a South/History item: the item is run, and its raw result shown, then the output of a transformer when
+ * there is one (its options can be tweaked for the test). A south item is tested through the transformer given (the one a
+ * North sends its data with), raw without one; a history item through one of the transformers of the history query, picked
+ * in the panel.
  */
 @Component({
   selector: 'oib-south-item-test',
@@ -78,7 +80,6 @@ type TestingSettingsForm = FormGroup<{
 class SouthItemTestComponent {
   private readonly translate = inject(TranslateService);
   private readonly southConnectorService = inject(SouthConnectorService);
-  private readonly northConnectorService = inject(NorthConnectorService);
   private readonly historyQueryService = inject(HistoryQueryService);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
@@ -101,6 +102,8 @@ class SouthItemTestComponent {
    * in-memory list here so it's used instead of fetching the last-saved state from the API.
    */
   readonly inMemoryTransformers = input<Array<HistoryTransformerDTOWithOptions> | null>(null);
+  /** South context only: the transformer the item is tested through, raw when null */
+  readonly transformer = input<ItemTestTransformer | null>(null);
 
   private testSubscription: Subscription | null = null;
 
@@ -110,13 +113,6 @@ class SouthItemTestComponent {
 
   readonly supportsHistorySettings = computed(() => this.manifest().modes.history);
   readonly isHistory = computed(() => this.type() === 'history-south');
-
-  /** Norths available to pick from (south context only). */
-  private readonly northsResource = rxResource({
-    params: () => (!this.isHistory() && this.entityId() !== 'create' ? this.entityId() : undefined),
-    stream: () => this.northConnectorService.list().pipe(catchError(() => of([])))
-  });
-  readonly norths = computed(() => (this.northsResource.hasValue() ? this.northsResource.value() : []));
 
   /**
    * The last saved transformers of the history query (history context only). While the history query's transformers are
@@ -132,12 +128,11 @@ class SouthItemTestComponent {
       )
   });
 
-  /**
-   * Transformers of the currently selected north (south, set when a north is picked) or of the history query (history).
-   */
+  /** The transformer given (south) or the transformers of the history query applying to the item (history). */
   readonly transformerChoices = linkedSignal<Array<TransformerChoice>>(() => {
     if (!this.isHistory()) {
-      return [];
+      const transformer = this.transformer();
+      return transformer ? toTransformerChoices([transformer]) : [];
     }
     const historyTransformers =
       this.inMemoryTransformers() ?? (this.historyTransformersResource.hasValue() ? this.historyTransformersResource.value() : []);
@@ -160,11 +155,7 @@ class SouthItemTestComponent {
 
   readonly form = signal<TestingSettingsForm | null>(null);
   /** The value of the form, kept in sync by initForm(). */
-  private readonly formValue = signal<{ northId: string | null; transformerId: string | null; options: Record<string, unknown> } | null>(
-    null
-  );
-
-  readonly northId = computed(() => this.formValue()?.northId ?? null);
+  private readonly formValue = signal<{ transformerId: string | null; options: Record<string, unknown> } | null>(null);
 
   /** Options currently entered for the test. */
   readonly currentOptions = computed(() => this.formValue()?.options ?? {});
@@ -176,14 +167,6 @@ class SouthItemTestComponent {
       value: value !== null && typeof value === 'object' ? JSON.stringify(value) : String(value)
     }))
   );
-
-  /** Name of the north currently selected (south context only; null otherwise or until one is picked). */
-  readonly selectedNorthName = computed(() => {
-    if (this.isHistory()) {
-      return null;
-    }
-    return this.norths().find(n => n.id === this.northId())?.name ?? null;
-  });
 
   /**
    * What a test runs on: the item and its connector, and the transformer with its options. The date range is left out: a
@@ -210,20 +193,24 @@ class SouthItemTestComponent {
     if (this.supportsHistorySettings()) {
       parts.push(this.dateRangeSelector()?.getSummaryLabel() ?? '');
     }
-    if (!this.isHistory()) {
-      parts.push(this.selectedNorthName() ?? this.translate.instant('south.test-item.transformer-raw'));
-    }
-    if (this.isHistory() || this.northId()) {
-      const selectedTransformer = this.selectedTransformer();
-      parts.push(
-        selectedTransformer ? this.transformerLabel(selectedTransformer) : this.translate.instant('south.test-item.transformer-raw')
-      );
-    }
+    const selectedTransformer = this.selectedTransformer();
+    parts.push(
+      selectedTransformer ? this.transformerLabel(selectedTransformer) : this.translate.instant('south.test-item.transformer-raw')
+    );
     return parts.join(' · ');
   });
 
   constructor() {
     effect(() => this.manifest() && this.initForm());
+    // A south item is tested through the transformer given, from the start and each time it changes
+    effect(() => {
+      const form = this.form();
+      if (!form || this.isHistory()) {
+        return;
+      }
+      const transformerId = this.transformer()?.transformer.id ?? null;
+      untracked(() => form.controls.transformerId.setValue(transformerId));
+    });
   }
 
   private transformerLabel(transformer: TransformerDTO): string {
@@ -235,7 +222,6 @@ class SouthItemTestComponent {
   private initForm() {
     this.settingsCollapsed.set(false);
     const form: TestingSettingsForm = this.fb.group({
-      northId: this.fb.control<string | null>(null),
       transformerId: this.fb.control<string | null>(null),
       options: this.fb.group({})
     });
@@ -246,7 +232,6 @@ class SouthItemTestComponent {
       form.addControl('history', this.fb.group({ dateRange: this.fb.control<DateRange | null>(null, Validators.required) }));
     }
 
-    form.controls.northId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(northId => this.onNorthChange(northId));
     form.controls.transformerId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(transformerId => this.onTransformerChange(transformerId));
@@ -257,34 +242,9 @@ class SouthItemTestComponent {
 
   private updateFormValue(form: TestingSettingsForm) {
     this.formValue.set({
-      northId: form.controls.northId.value,
       transformerId: form.controls.transformerId.value,
       options: form.controls.options.value as Record<string, unknown>
     });
-  }
-
-  private onNorthChange(northId: string | null) {
-    this.form()?.controls.transformerId.setValue(null);
-    this.transformerChoices.set([]);
-    if (!northId) {
-      return;
-    }
-    this.northConnectorService
-      .findById(northId)
-      .pipe(catchError(() => of(null)))
-      .subscribe(north =>
-        this.transformerChoices.set(toTransformerChoices((north?.transformers ?? []).filter(t => this.appliesToItem(t))))
-      );
-  }
-
-  /** Whether a north transformer is attached to the tested item: its south, and all its items or a list containing it. */
-  private appliesToItem(transformer: TransformerDTOWithOptions): boolean {
-    const source = transformer.source;
-    return (
-      source.type === 'south' &&
-      source.south.id === this.entityId() &&
-      (source.items.length === 0 || source.items.some(item => item.name === this.item().name))
-    );
   }
 
   private onTransformerChange(transformerId: string | null) {
@@ -381,7 +341,7 @@ class SouthItemTestComponent {
   }
 }
 
-function toTransformerChoices(transformers: Array<TransformerDTOWithOptions | HistoryTransformerDTOWithOptions>): Array<TransformerChoice> {
+function toTransformerChoices(transformers: Array<ItemTestTransformer | HistoryTransformerDTOWithOptions>): Array<TransformerChoice> {
   return transformers.map(t => ({ transformerId: t.transformer.id, transformer: t.transformer, options: t.options }));
 }
 

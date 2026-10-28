@@ -1653,7 +1653,6 @@
       "transformer-raw": "Brut (pas de transformateur)",
       "transformer-options": "Options du transformateur",
       "edit-options": "Modifier les options",
-      "north": "North",
       "transformer-run-first": "Lancez le test une première fois pour charger les transformateurs correspondant à la sortie de cet élément.",
       "transformer-none-compatible": "Aucun transformateur configuré ne correspond au type de sortie de cet élément.",
       "hide-settings": "Masquer les paramètres",
@@ -1698,6 +1697,7 @@
       "step": {
         "general": "Nom et planification",
         "settings": "Paramètres",
+        "north": "North",
         "review": "Vérification et enregistrement"
       },
       "history-settings": "Paramètres d'historique",
@@ -1707,7 +1707,8 @@
       "ok-and-add-another": "OK et en ajouter un autre",
       "review-errors": "Corrigez ces étapes avant d'enregistrer :",
       "review-changes": "Paramètres modifiés depuis l'enregistrement de l'élément : {{count}}",
-      "review-no-changes": "Aucune modification depuis l'enregistrement de l'élément"
+      "review-no-changes": "Aucune modification depuis l'enregistrement de l'élément",
+      "north-transformers": "Transformateurs rattachés aux norths"
     },
     "items": {
       "title": "Éléments",
@@ -1831,7 +1832,46 @@
       "tooltips": {
         "audit": "Voir l'historique d'audit de l'élément"
       },
-      "more-actions": "Autres actions sur les éléments"
+      "more-actions": "Autres actions sur les éléments",
+      "norths": {
+        "description": "Les norths auxquels les données de cet item sont envoyées, et le transformateur par lequel elles passent : rattaché à l'item, à son groupe ou à tous les items du south.",
+        "loading": "Chargement des norths…",
+        "no-north": "Il n'y a aucun connecteur north auquel envoyer les données de cet item.",
+        "list": "Connecteurs north",
+        "disabled": "Désactivé",
+        "new": "Nouveau",
+        "not-sent": "Non envoyé",
+        "not-sent-description": "Les données de cet item ne sont pas envoyées à ce north : aucun de ses transformateurs ne s'y applique.",
+        "sent-through": "Envoyé via",
+        "attached-to": "Rattaché à {{scope}}",
+        "saved-with-item": "Rattaché à l'enregistrement de l'item",
+        "level": {
+          "item": "cet item",
+          "group": "groupe",
+          "south": "tout le south"
+        },
+        "scope": {
+          "item": "cet item",
+          "group": "son groupe ({{group}})",
+          "south": "tous les items du south"
+        },
+        "scope-option": {
+          "item": "Cet item",
+          "group": "Son groupe ({{group}})",
+          "south": "Tous les items du south"
+        },
+        "attach": "Rattacher un transformateur",
+        "attach-other": "Envoyer via un autre transformateur",
+        "routed-by-item": "Ce transformateur est rattaché à cet item : modifiez-le depuis les transformateurs du north.",
+        "applies-to": "S'applique à",
+        "impact": "Envoie aussi {{count}} autre(s) item(s) pas encore envoyé(s) à ce north",
+        "takes-over": "Il remplace le transformateur actuel de cet item.",
+        "transformer": "Transformateur",
+        "transformer-required": "Choisissez un transformateur",
+        "no-transformer": "Aucun transformateur ne peut envoyer les données de cet item à ce north.",
+        "add": "Rattacher",
+        "update": "Mettre à jour"
+      }
     },
     "groups": {
       "create-title": "Créer un nouveau groupe",

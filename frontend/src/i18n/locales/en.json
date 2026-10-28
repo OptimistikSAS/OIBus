@@ -2640,7 +2640,6 @@
       "transformer-raw": "Raw (no transformer)",
       "transformer-options": "Transformer options",
       "edit-options": "Edit options",
-      "north": "North",
       "transformer-run-first": "Run the test once to load the transformers that match this item's output.",
       "transformer-none-compatible": "No configured transformer matches this item's output type.",
       "hide-settings": "Hide settings",
@@ -2685,6 +2684,7 @@
       "step": {
         "general": "Name & schedule",
         "settings": "Settings",
+        "north": "North",
         "review": "Review & save"
       },
       "history-settings": "History settings",
@@ -2694,7 +2694,8 @@
       "ok-and-add-another": "OK & add another",
       "review-errors": "Fix these steps before saving:",
       "review-changes": "Settings changed since the item was saved: {{count}}",
-      "review-no-changes": "No change since the item was saved"
+      "review-no-changes": "No change since the item was saved",
+      "north-transformers": "Transformers attached to the norths"
     },
     "items": {
       "title": "Items",
@@ -2818,7 +2819,46 @@
       "tooltips": {
         "audit": "View item audit history"
       },
-      "more-actions": "More actions on the items"
+      "more-actions": "More actions on the items",
+      "norths": {
+        "description": "The norths the data of this item is sent to, and the transformer it goes through: attached to the item, to its group, or to all the items of the south.",
+        "loading": "Loading the norths…",
+        "no-north": "There is no north connector to send the data of this item to.",
+        "list": "North connectors",
+        "disabled": "Disabled",
+        "new": "New",
+        "not-sent": "Not sent",
+        "not-sent-description": "The data of this item is not sent to this north: none of its transformers applies to it.",
+        "sent-through": "Sent through",
+        "attached-to": "Attached to {{scope}}",
+        "saved-with-item": "Attached when the item is saved",
+        "level": {
+          "item": "this item",
+          "group": "group",
+          "south": "whole south"
+        },
+        "scope": {
+          "item": "this item",
+          "group": "its group ({{group}})",
+          "south": "all the items of the south"
+        },
+        "scope-option": {
+          "item": "This item",
+          "group": "Its group ({{group}})",
+          "south": "All the items of the south"
+        },
+        "attach": "Attach a transformer",
+        "attach-other": "Send through another transformer",
+        "routed-by-item": "This transformer is attached to this item: change it from the transformers of the north.",
+        "applies-to": "Applies to",
+        "impact": "Also sends {{count}} other item(s) not sent to this north yet",
+        "takes-over": "It takes over the current transformer of this item.",
+        "transformer": "Transformer",
+        "transformer-required": "Choose a transformer",
+        "no-transformer": "No transformer can send the data of this item to this north.",
+        "add": "Attach",
+        "update": "Update"
+      }
     },
     "groups": {
       "create-title": "Create a new group",

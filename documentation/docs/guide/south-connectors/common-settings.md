@@ -93,14 +93,16 @@ or kept up to date by an [items synchronisation](#items-synchronisation).
 
 ### Creating and Editing an Item {#creating-and-editing-an-item}
 
-The item modal walks through three steps, shown in a steps bar at its top. The settings come first, so that they can
-be tested before the item is named and scheduled:
+The item modal walks through four steps, shown in a steps bar at its top. The settings come first, so that they can
+be tested before the item is named and scheduled, and the North connectors its data is sent to come once its group is
+chosen:
 
 | Step                | Content                                                                                                                                                                      |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Settings**        | The connector's own item settings (see each connector's page), with the [test panel](#testing-an-item) right below them, to try the settings as they are edited.             |
 | **Name & schedule** | Name, **Status** (enabled or disabled), group and schedule, then the **History settings** (history-capable connectors) and the **Caching** settings (IoT-family connectors). |
-| **Review & save**   | A read-only summary of the whole item: general, history and caching settings, then its connector settings.                                                                   |
+| **North**           | The North connectors the data of the item is sent to, and the transformer it goes through — see [Where the Data of an Item Is Sent](#where-the-data-of-an-item-is-sent).     |
+| **Review & save**   | A read-only summary of the whole item: general, history and caching settings, its connector settings, then the transformers to attach to North connectors.                   |
 
 **Next** only moves on once the current step is valid. A new item is saved from the last step; an item being edited
 or copied can be saved from any step. When a save fails on an invalid field, the modal opens the first step that has
@@ -141,10 +143,32 @@ the step. **Run test** queries the data source with the settings as currently ed
 raw result. For history-capable connectors, **Query data from** / **Query data until** set the time range of the
 test query.
 
-The raw result can also be run through one of the item's North transformers, to preview the transformed output — see
+The test of the **Settings** step shows the raw result only. To preview what a North connector receives, test the item
+from the [**North** step](#where-the-data-of-an-item-is-sent), through the transformer of that North connector — or see
 [Testing a Transformer Against a Real South Item](../engine/transformers.mdx#testing-a-transformer-against-a-real-south-item).
 
 > **Tip**: Use **Test settings** on the connector first, to check the connection before testing individual items.
+
+### Where the Data of an Item Is Sent {#where-the-data-of-an-item-is-sent}
+
+The data of an item only reaches a North connector through a transformer attached to it for the item's south. The
+**North** step of the item modal, and the **North** section of the item view, list every North connector with the
+transformer the data of the item goes through, and what this transformer is attached to: the item itself, its group,
+or all the items of the south. A transformer attached to the item takes over one of its group, which takes over one of
+the whole south. The North connectors that don't get the data of the item show **Not sent**.
+
+Select a North connector to see its transformer and to test the item through it: the test panel runs the item and
+shows both the raw result and the transformer output.
+
+**Attach a transformer** (**Send through another transformer** when the item is already sent through the transformer
+of its group or of its south) attaches a new transformer to the selected North connector: choose what it applies to —
+**This item**, **Its group** (when the item has one) or **All the items of the south** —, then the transformer and its
+options. Only the scopes that take over the current transformer are offered: a transformer already attached to the item
+itself is changed from the [transformers of the North connector](../north-connectors/common-settings.md). For a group
+or the whole south, the step tells how many other items the transformer would send too.
+
+The transformers to attach are listed in the **Review & save** step, and saved with the item, in one operation: if the
+item can't be saved, none of them is attached. On the connector's create/edit page, they are saved with the connector.
 
 ### Item Actions {#item-actions}
 
