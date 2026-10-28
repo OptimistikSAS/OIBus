@@ -27,7 +27,7 @@ describe('TransformerTestResultComponent', () => {
     tester.fixture.componentRef.setInput('raw', { type: 'file', content: 'raw content' });
 
     await expect.element(tester.stages).toHaveLength(1);
-    await expect.element(tester.rawStage.getByCss('.oib-box-title')).toMatchTextContent(/^Raw result/);
+    await expect.element(tester.rawStage.getByCss('.pipeline-caption')).toMatchTextContent(/^Raw result/);
     await expect.element(tester.rawStage).toMatchTextContent(/raw content/);
   });
 
@@ -37,8 +37,34 @@ describe('TransformerTestResultComponent', () => {
     tester.fixture.componentRef.setInput('output', { type: 'file', content: 'transformed content' });
 
     await expect.element(tester.stages).toHaveLength(2);
-    await expect.element(tester.outputStage.getByCss('.oib-box-title')).toMatchTextContent(/^Transformer output/);
+    await expect.element(tester.outputStage.getByCss('.pipeline-caption')).toMatchTextContent(/^Transformer output/);
     await expect.element(tester.outputStage).toMatchTextContent(/transformed content/);
+  });
+
+  test('should show one of the stages on the full width', async () => {
+    tester.fixture.componentRef.setInput('raw', { type: 'file', content: 'raw content' });
+    tester.fixture.componentRef.setInput('hasTransformer', true);
+    tester.fixture.componentRef.setInput('output', { type: 'file', content: 'transformed content' });
+    const panes = tester.root.getByRole('group', { name: 'Show' });
+    await expect.element(panes.getByRole('button', { name: 'Both' })).toHaveAttribute('aria-pressed', 'true');
+
+    await panes.getByRole('button', { name: 'Transformer output' }).click();
+    await expect.element(tester.rawStage).not.toBeVisible();
+    await expect.element(tester.outputStage).toBeVisible();
+
+    await panes.getByRole('button', { name: 'Raw result' }).click();
+    await expect.element(tester.rawStage).toBeVisible();
+    await expect.element(tester.outputStage).not.toBeVisible();
+
+    await panes.getByRole('button', { name: 'Both' }).click();
+    await expect.element(tester.rawStage).toBeVisible();
+    await expect.element(tester.outputStage).toBeVisible();
+  });
+
+  test('should not offer to choose the stages without transformer', async () => {
+    tester.fixture.componentRef.setInput('raw', { type: 'file', content: 'raw content' });
+
+    await expect.element(tester.root.getByRole('group', { name: 'Show' })).not.toBeInTheDocument();
   });
 
   test('should switch the display mode of a stage', async () => {

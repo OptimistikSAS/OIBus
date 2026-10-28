@@ -10,10 +10,13 @@ import {
   ItemTestResultComponent
 } from '../../south/south-items/south-item-test/item-test-result/item-test-result.component';
 
+type PipelinePanes = 'both' | 'raw' | 'output';
+
 /**
  * Displays a transformer test as raw result and transformer output side by side (single column when
  * no transformer is involved). Reuses {@link ItemTestResultComponent} for each content section. The
- * output section is hidden until a transformer is provided (raw-only case).
+ * output section is hidden until a transformer is provided (raw-only case). Either section can be shown alone, on the full
+ * width.
  */
 @Component({
   selector: 'oib-transformer-test-result',
@@ -26,6 +29,10 @@ export class TransformerTestResultComponent {
   readonly raw = input<OIBusContent | null>(null);
   readonly hasTransformer = input<boolean>(false);
   readonly output = input<OIBusContent | null>(null);
+
+  /** The panes shown once a transformer is involved: both side by side, or one of them on the full width */
+  readonly panes = signal<PipelinePanes>('both');
+  readonly paneChoices: ReadonlyArray<PipelinePanes> = ['both', 'raw', 'output'];
 
   readonly rawView = viewChild<ItemTestResultComponent>('rawView');
   readonly outputView = viewChild<ItemTestResultComponent>('outputView');

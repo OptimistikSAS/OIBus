@@ -1,14 +1,35 @@
 <div class="transformer-pipeline">
+  <!-- Which panes are shown: both side by side, or one of them on the full width -->
+  @if (hasTransformer()) {
+    <div
+      class="d-flex flex-wrap align-items-center gap-1 mb-2"
+      role="group"
+      [attr.aria-label]="'south.test-item.pipeline.show' | translate"
+      id="pipeline-panes"
+    >
+      <span class="small text-body-secondary me-1" translate="south.test-item.pipeline.show"></span>
+      @for (choice of paneChoices; track choice) {
+        <button
+          type="button"
+          class="filter-chip px-2 py-1"
+          [class.active]="panes() === choice"
+          [attr.aria-pressed]="panes() === choice"
+          (click)="panes.set(choice)"
+          [translate]="'south.test-item.pipeline.' + choice"
+        ></button>
+      }
+    </div>
+  }
   <!-- flex + gap, not the Bootstrap grid: a .row's negative margins would bleed this wider than
        the plain-block .pipeline-transformer box above it, misaligning their borders. -->
   <div class="d-flex flex-column flex-md-row gap-3">
     <!-- Raw result -->
-    <div class="pipeline-stage">
-      <div class="d-flex justify-content-between align-items-center oib-box-title">
+    <div class="pipeline-stage" [class.d-none]="hasTransformer() && panes() === 'output'">
+      <div class="d-flex justify-content-between align-items-center pipeline-caption">
         <span translate="south.test-item.pipeline.raw"></span>
         @if (rawMode(); as rawMode) {
           <div ngbDropdown class="d-inline-block">
-            <button type="button" class="btn btn-link oib-box-btn m-0" ngbDropdownToggle>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0" ngbDropdownToggle>
               <span class="fa-solid {{ rawView.currentDisplayModeIcon }}" aria-hidden="true"></span>
               <span class="ms-1">{{ 'south.test-item.view.' + rawMode | translate }}</span>
             </button>
@@ -33,12 +54,12 @@
 
     @if (hasTransformer()) {
       <!-- Transformer output -->
-      <div class="pipeline-stage pipeline-stage-output">
-        <div class="d-flex justify-content-between align-items-center oib-box-title">
+      <div class="pipeline-stage pipeline-stage-output" [class.d-none]="panes() === 'raw'">
+        <div class="d-flex justify-content-between align-items-center pipeline-caption">
           <span translate="south.test-item.pipeline.output"></span>
           @if (outputMode(); as outputMode) {
             <div ngbDropdown class="d-inline-block">
-              <button type="button" class="btn btn-link oib-box-btn m-0" ngbDropdownToggle>
+              <button type="button" class="btn btn-sm btn-link text-secondary p-0" ngbDropdownToggle>
                 <span class="fa-solid {{ outputView.currentDisplayModeIcon }}" aria-hidden="true"></span>
                 <span class="ms-1">{{ 'south.test-item.view.' + outputMode | translate }}</span>
               </button>

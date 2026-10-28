@@ -44,26 +44,46 @@
     <div [class.d-none]="settingsCollapsed()">
       <!-- What the transformer runs on: pasted data, or what an item of its source retrieves -->
       @if (canUseItemSource()) {
-        <div class="row">
-          <div class="col-6 form-group">
-            <label class="form-label" for="test-input-source" translate="north.transformers.test.input"></label>
-            <select id="test-input-source" class="form-select" formControlName="inputSource">
-              <option value="paste" translate="north.transformers.test.source-paste"></option>
-              <option value="item" translate="north.transformers.test.source-item"></option>
-            </select>
-          </div>
-          @if (inputSource() === 'item') {
-            <div class="col-6 form-group">
-              <label class="form-label" for="test-item-select" translate="north.transformers.test.item"></label>
-              <select id="test-item-select" class="form-select" formControlName="itemId">
-                <option [ngValue]="null"></option>
-                @for (item of availableItems(); track item.id) {
-                  <option [ngValue]="item.id">{{ item.name }}</option>
-                }
-              </select>
-            </div>
-          }
+        <div
+          class="d-flex flex-wrap align-items-center gap-1 mb-2"
+          role="group"
+          [attr.aria-label]="'north.transformers.test.input' | translate"
+        >
+          <span class="small text-body-secondary me-1" translate="north.transformers.test.input"></span>
+          <button
+            type="button"
+            class="filter-chip px-2 py-1"
+            id="test-input-item"
+            [class.active]="inputSource() === 'item'"
+            [attr.aria-pressed]="inputSource() === 'item'"
+            (click)="setInputSource('item')"
+            translate="north.transformers.test.source-item"
+          ></button>
+          <button
+            type="button"
+            class="filter-chip px-2 py-1"
+            id="test-input-paste"
+            [class.active]="inputSource() === 'paste'"
+            [attr.aria-pressed]="inputSource() === 'paste'"
+            (click)="setInputSource('paste')"
+            translate="north.transformers.test.source-paste"
+          ></button>
         </div>
+        @if (inputSource() === 'item') {
+          <div class="form-group">
+            <label class="form-label" for="test-item" translate="north.transformers.test.item"></label>
+            <input
+              id="test-item"
+              class="form-control"
+              formControlName="item"
+              [ngbTypeahead]="itemTypeahead"
+              [inputFormatter]="itemName"
+              [resultFormatter]="itemName"
+              [editable]="false"
+              [placeholder]="'north.transformers.test.search-item' | translate"
+            />
+          </div>
+        }
       }
 
       @if (inputSource() === 'paste') {
