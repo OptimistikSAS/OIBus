@@ -173,7 +173,64 @@ function fakeJoinExplore() {
   return mock.fn(async (parentId: string | null) => (parentId === null ? Object.keys(columns).map(table) : columns[parentId]));
 }
 
+/** A database of tables with the columns given as `name` or `name*` for a primary key */
+function fakeTablesExplore(definitions: Record<string, Array<string>>) {
+  const columns = Object.fromEntries(
+    Object.entries(definitions).map(([tableId, names]) => [
+      tableId,
+      names.map((name): SouthConnectorExploreEntry => ({
+        id: `${tableId}.${name.replace('*', '')}`,
+        name: name.replace('*', ''),
+        metadata: name.endsWith('*') ? { type: 'int', primaryKey: 'yes' } : { type: 'int' },
+        hasChildren: false
+      }))
+    ])
+  );
+  return mock.fn(async (parentId: string | null) => (parentId === null ? Object.keys(columns).map(table) : columns[parentId]));
+}
+
 describe('discoverTables of several tables read together', () => {
+  it('should load the columns of every table at once', async () => {
+    const explore = fakeJoinExplore();
+
+    await discoverTables(explore, ['measures', 'tags', 'sites'], dialect, true);
+
+    assert.deepStrictEqual(
+      explore.mock.calls.map(call => call.arguments[0]),
+      [null, 'measures', 'tags', 'sites']
+    );
+  });
+
+  it('should join a table on the foreign key named after the one it refers to, rather than on their primary keys', async () => {
+    const explore = fakeTablesExplore({ orders: ['id*', 'customer_id', 'amount'], customers: ['id*', 'name'] });
+
+    const [ordersFirst] = await discoverTables(explore, ['orders', 'customers'], dialect, true);
+    const [customersFirst] = await discoverTables(explore, ['customers', 'orders'], dialect, true);
+
+    assert.ok(
+      (ordersFirst.plainQuery as string).endsWith('INNER JOIN "customers" "customers" ON "orders"."customer_id" = "customers"."id"')
+    );
+    assert.ok((customersFirst.plainQuery as string).endsWith('INNER JOIN "orders" "orders" ON "customers"."id" = "orders"."customer_id"'));
+  });
+
+  it('should never join two tables on their primary keys', async () => {
+    const explore = fakeTablesExplore({ readings: ['id*', 'value'], devices: ['id*', 'label'] });
+
+    const [record] = await discoverTables(explore, ['readings', 'devices'], dialect, true);
+
+    assert.ok((record.plainQuery as string).endsWith('ON 1 = 1 /* join condition to complete */'));
+  });
+
+  it('should rename a column to a name no other column has', async () => {
+    const explore = fakeTablesExplore({ measures: ['value'], tags: ['value', 'tags_value'] });
+
+    const [record] = await discoverTables(explore, ['measures', 'tags'], dialect, true);
+
+    assert.ok(
+      (record.plainQuery as string).startsWith('SELECT "measures"."value", "tags"."value" AS "tags_value_2", "tags"."tags_value" FROM')
+    );
+  });
+
   it('should keep one record per table unless asked to combine them', async () => {
     const records = await discoverTables(fakeJoinExplore(), ['measures', 'tags'], dialect);
 

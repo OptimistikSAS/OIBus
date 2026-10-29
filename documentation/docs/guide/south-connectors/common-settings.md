@@ -276,11 +276,13 @@ created before you save.
   starts where the last one stopped.
 
 - A table without any date/time column is read whole on each run, untracked: review its query before enabling it.
-- **Several tables** are read by one query that joins them, on a column they share (a primary key first) — for example
-  `FROM [dbo].[measures] [measures] INNER JOIN [dbo].[tags] [tags] ON [measures].[tag_id] = [tags].[tag_id]`. Two tables
-  with no column in common are joined on a condition left to complete (`ON 1 = 1 /* join condition to complete */`): it
-  is a suggestion, to check and finish in the item. A column whose name an earlier table already has is renamed after its
-  table (`tags_value`), and the time range is the one of the first table that has a date/time column.
+- **Several tables** are read by one query that joins each table to an earlier one. The join prefers a foreign key
+  named after the table it references (`orders.customer_id` to the `id` primary key of `customers`), then a column
+  they share that is the primary key of one of them (`[measures].[tag_id] = [tags].[tag_id]`), then any other column
+  they share. Two primary keys are never joined together. Two tables with no such column are joined on a condition
+  left to complete (`ON 1 = 1 /* join condition to complete */`): it is a suggestion, to check and finish in the item.
+  A column whose name an earlier table already has is renamed after its table (`tags_value`, or `tags_value_2` if that
+  name is taken too), and the time range is the one of the first table that has a date/time column.
 
 Table and column names are quoted in the connector's own SQL dialect. The generated query is a starting point: edit
 the item to filter rows or rename columns.
