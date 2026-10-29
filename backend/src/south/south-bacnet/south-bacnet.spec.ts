@@ -13,6 +13,7 @@ import type SouthCacheRepository from '../../repository/cache/south-cache.reposi
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import manifest from './manifest';
 import type SouthBACnetClass from './south-bacnet';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -1721,6 +1722,8 @@ describe('SouthBACnet', () => {
           units: null
         }
       ]);
+      // The fields the manifest tells the user about
+      assert.deepStrictEqual(Object.keys(records[0]).sort(), [...manifest.discovery!.recordFields!].sort());
     });
 
     it('should discover the picked devices whole and the picked objects alone, each device read once', async () => {

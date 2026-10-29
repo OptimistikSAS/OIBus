@@ -9,6 +9,7 @@ import {
   extractNodeIds,
   quoteAnsiIdentifier,
   splitSchemaTable,
+  SQL_TABLE_RECORD_FIELDS,
   SqlDialect,
   toColumnExploreEntry
 } from './sql-table-discovery';
@@ -57,6 +58,8 @@ describe('discoverTables', () => {
         dateTimeType: 'iso-string'
       }
     ]);
+    // The fields the manifests tell the user about
+    assert.deepStrictEqual(Object.keys(records[0]).sort(), [...SQL_TABLE_RECORD_FIELDS].sort());
   });
 
   it('should read the checked columns of a table only, and its time column, which the tracking instant reads', async () => {
