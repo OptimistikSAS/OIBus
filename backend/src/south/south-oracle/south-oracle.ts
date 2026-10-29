@@ -28,7 +28,7 @@ import {
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { ORACLE_DIALECT } from '../sql-dialects';
-import { discoverTables, extractNodeIds, toColumnExploreEntry } from '../sql-table-discovery';
+import { discoverTables, extractCombine, extractNodeIds, toColumnExploreEntry, withTableSelect } from '../sql-table-discovery';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send the resulting rows as record-list
@@ -266,7 +266,11 @@ export default class SouthOracle
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
     const connection = await oracledb.getConnection(await this.createConnectionAttributes());
     try {
-      return parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId);
+      return withTableSelect(
+        parentId,
+        parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId),
+        ORACLE_DIALECT
+      );
     } finally {
       await connection.close();
     }
@@ -334,7 +338,7 @@ export default class SouthOracle
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
     const nodeIds = extractNodeIds(scope);
     if (nodeIds) {
-      return discoverTables(parentId => this.explore(parentId), nodeIds, ORACLE_DIALECT);
+      return discoverTables(parentId => this.explore(parentId), nodeIds, ORACLE_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionAttributes();

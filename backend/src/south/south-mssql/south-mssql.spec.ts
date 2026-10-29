@@ -346,6 +346,7 @@ describe('SouthMSSQL', () => {
           id: 'dbo.production',
           name: 'dbo.production',
           query: 'SELECT [produced_at], [value] FROM [dbo].[production] WHERE [produced_at] > @StartTime AND [produced_at] <= @EndTime',
+          plainQuery: 'SELECT [produced_at], [value] FROM [dbo].[production]',
           trackInstant: true,
           timeColumn: 'produced_at',
           dateTimeType: 'date-time-2'
@@ -380,8 +381,13 @@ describe('SouthMSSQL', () => {
       assert.strictEqual(input.mock.calls.length, 0);
       assert.strictEqual(close.mock.calls.length, 1);
       assert.deepStrictEqual(result, [
-        { id: 'dbo.Reactor', name: 'dbo.Reactor', metadata: { columns: 3, rows: 120 }, hasChildren: true },
-        { id: 'dbo.Empty', name: 'dbo.Empty', metadata: { columns: 2, rows: 0 }, hasChildren: true }
+        {
+          id: 'dbo.Reactor',
+          name: 'dbo.Reactor',
+          metadata: { columns: 3, rows: 120, select: 'SELECT * FROM [dbo].[Reactor]' },
+          hasChildren: true
+        },
+        { id: 'dbo.Empty', name: 'dbo.Empty', metadata: { columns: 2, rows: 0, select: 'SELECT * FROM [dbo].[Empty]' }, hasChildren: true }
       ]);
     });
 

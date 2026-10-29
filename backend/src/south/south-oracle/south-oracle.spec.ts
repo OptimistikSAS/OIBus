@@ -419,7 +419,12 @@ describe('SouthOracle', () => {
       );
 
       assert.deepStrictEqual(await south.explore(null), [
-        { id: 'PRODUCTION', name: 'PRODUCTION', metadata: { columns: 2, rows: 1200 }, hasChildren: true }
+        {
+          id: 'PRODUCTION',
+          name: 'PRODUCTION',
+          metadata: { columns: 2, rows: 1200, select: 'SELECT * FROM "PRODUCTION"' },
+          hasChildren: true
+        }
       ]);
       assert.deepStrictEqual(await south.explore('PRODUCTION'), [
         { id: 'PRODUCTION.ID', name: 'ID', metadata: { nullable: 'no', type: 'NUMBER', primaryKey: 'yes' }, hasChildren: false },
@@ -447,6 +452,7 @@ describe('SouthOracle', () => {
           id: 'PRODUCTION',
           name: 'PRODUCTION',
           query: 'SELECT "produced_at", "value" FROM "PRODUCTION" WHERE "produced_at" > @StartTime AND "produced_at" <= @EndTime',
+          plainQuery: 'SELECT "produced_at", "value" FROM "PRODUCTION"',
           trackInstant: true,
           timeColumn: 'produced_at',
           dateTimeType: 'date-time'

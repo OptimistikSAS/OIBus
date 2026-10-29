@@ -232,6 +232,7 @@ describe('SouthSQLite', () => {
         id: 'production',
         name: 'production',
         query: 'SELECT "produced_at", "value" FROM "production" WHERE "produced_at" > @StartTime AND "produced_at" <= @EndTime',
+        plainQuery: 'SELECT "produced_at", "value" FROM "production"',
         trackInstant: true,
         timeColumn: 'produced_at',
         dateTimeType: 'iso-string'
@@ -400,8 +401,8 @@ describe('SouthSQLite', () => {
       const entries = await south.explore(null);
 
       assert.deepStrictEqual(entries, [
-        { id: 'sensors', name: 'sensors', metadata: { columns: 3, rows: 128 }, hasChildren: true },
-        { id: 'events', name: 'events', metadata: { columns: 1, rows: 0 }, hasChildren: true }
+        { id: 'sensors', name: 'sensors', metadata: { columns: 3, rows: 128, select: 'SELECT * FROM "sensors"' }, hasChildren: true },
+        { id: 'events', name: 'events', metadata: { columns: 1, rows: 0, select: 'SELECT * FROM "events"' }, hasChildren: true }
       ]);
       assert.strictEqual(database.close.mock.calls.length, 1);
     });
@@ -451,7 +452,9 @@ describe('SouthSQLite', () => {
 
       const entries = await south.explore(null);
 
-      assert.deepStrictEqual(entries, [{ id: 'broken', name: 'broken', metadata: { columns: 1 }, hasChildren: true }]);
+      assert.deepStrictEqual(entries, [
+        { id: 'broken', name: 'broken', metadata: { columns: 1, select: 'SELECT * FROM "broken"' }, hasChildren: true }
+      ]);
     });
 
     it('should close the database even when listing columns fails', async () => {

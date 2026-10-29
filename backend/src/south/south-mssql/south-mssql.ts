@@ -26,7 +26,7 @@ import {
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { MSSQL_DIALECT } from '../sql-dialects';
-import { discoverTables, extractNodeIds, splitSchemaTable } from '../sql-table-discovery';
+import { discoverTables, extractCombine, extractNodeIds, splitSchemaTable, withTableSelect } from '../sql-table-discovery';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send the resulting rows as record-list
@@ -250,7 +250,11 @@ export default class SouthMSSQL
     const config = await this.createConnectionOptions();
     const pool = await new mssql.ConnectionPool(config).connect();
     try {
-      const entries = parentId === null ? await this.exploreTables(pool) : await this.exploreColumns(pool, parentId);
+      const entries = withTableSelect(
+        parentId,
+        parentId === null ? await this.exploreTables(pool) : await this.exploreColumns(pool, parentId),
+        MSSQL_DIALECT
+      );
       await pool.close();
       return entries;
     } catch (error) {
@@ -338,7 +342,7 @@ export default class SouthMSSQL
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
     const nodeIds = extractNodeIds(scope);
     if (nodeIds) {
-      return discoverTables(parentId => this.explore(parentId), nodeIds, MSSQL_DIALECT);
+      return discoverTables(parentId => this.explore(parentId), nodeIds, MSSQL_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();

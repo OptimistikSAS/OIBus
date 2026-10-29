@@ -31,7 +31,14 @@ import {
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { POSTGRESQL_DIALECT } from '../sql-dialects';
-import { discoverTables, extractNodeIds, splitSchemaTable, toColumnExploreEntry } from '../sql-table-discovery';
+import {
+  discoverTables,
+  extractCombine,
+  extractNodeIds,
+  splitSchemaTable,
+  toColumnExploreEntry,
+  withTableSelect
+} from '../sql-table-discovery';
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send the resulting rows as
@@ -249,7 +256,11 @@ export default class SouthPostgreSQL
     const connection = new pg.Client(await this.createConnectionOptions());
     await connection.connect();
     try {
-      return parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId);
+      return withTableSelect(
+        parentId,
+        parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId),
+        POSTGRESQL_DIALECT
+      );
     } finally {
       await connection.end();
     }
@@ -326,7 +337,7 @@ export default class SouthPostgreSQL
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
     const nodeIds = extractNodeIds(scope);
     if (nodeIds) {
-      return discoverTables(parentId => this.explore(parentId), nodeIds, POSTGRESQL_DIALECT);
+      return discoverTables(parentId => this.explore(parentId), nodeIds, POSTGRESQL_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();

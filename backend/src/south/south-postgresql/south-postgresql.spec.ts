@@ -400,7 +400,12 @@ describe('SouthPostgreSQL', () => {
       );
 
       assert.deepStrictEqual(await south.explore(null), [
-        { id: 'public.production', name: 'public.production', metadata: { columns: 2, rows: 1200 }, hasChildren: true }
+        {
+          id: 'public.production',
+          name: 'public.production',
+          metadata: { columns: 2, rows: 1200, select: 'SELECT * FROM "public"."production"' },
+          hasChildren: true
+        }
       ]);
       assert.deepStrictEqual(await south.explore('public.production'), [
         { id: 'public.production.id', name: 'id', metadata: { nullable: 'no', type: 'integer', primaryKey: 'yes' }, hasChildren: false },
@@ -433,6 +438,7 @@ describe('SouthPostgreSQL', () => {
           id: 'public.production',
           name: 'public.production',
           query: 'SELECT "produced_at", "value" FROM "public"."production" WHERE "produced_at" > @StartTime AND "produced_at" <= @EndTime',
+          plainQuery: 'SELECT "produced_at", "value" FROM "public"."production"',
           trackInstant: true,
           timeColumn: 'produced_at',
           dateTimeType: 'timestamptz'

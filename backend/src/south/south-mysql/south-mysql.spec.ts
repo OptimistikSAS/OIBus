@@ -384,7 +384,12 @@ describe('SouthMySQL', () => {
       );
 
       assert.deepStrictEqual(await south.explore(null), [
-        { id: 'production', name: 'production', metadata: { columns: 2, rows: 1200 }, hasChildren: true }
+        {
+          id: 'production',
+          name: 'production',
+          metadata: { columns: 2, rows: 1200, select: 'SELECT * FROM `production`' },
+          hasChildren: true
+        }
       ]);
       assert.deepStrictEqual(await south.explore('production'), [
         { id: 'production.id', name: 'id', metadata: { nullable: 'no', type: 'int', primaryKey: 'yes' }, hasChildren: false },
@@ -426,6 +431,7 @@ describe('SouthMySQL', () => {
           id: 'production',
           name: 'production',
           query: 'SELECT `produced_at`, `value` FROM `production` WHERE `produced_at` > @StartTime AND `produced_at` <= @EndTime',
+          plainQuery: 'SELECT `produced_at`, `value` FROM `production`',
           trackInstant: true,
           timeColumn: 'produced_at',
           dateTimeType: 'date-time'
