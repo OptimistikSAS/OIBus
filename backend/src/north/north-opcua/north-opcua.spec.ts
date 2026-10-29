@@ -96,6 +96,8 @@ describe('NorthOPCUA', () => {
     north = new NorthOPCUA(
       buildNorthEntity<NorthOPCUASettings>('opcua', {
         url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+        connectionTimeout: 15000,
+        writeTimeout: 15000,
         retryInterval: 10000,
         authentication: { type: 'none', password: null },
         securityMode: 'none',
@@ -135,7 +137,9 @@ describe('NorthOPCUA', () => {
     await north.connect();
 
     assert.strictEqual(createSessionConfigs.mock.calls.length, 1);
+    assert.strictEqual(createSessionConfigs.mock.calls[0].arguments[3], north['connector'].settings.writeTimeout);
     assert.strictEqual(createOPCUASession.mock.calls.length, 1);
+    assert.strictEqual(createOPCUASession.mock.calls[0].arguments[3], north['connector'].settings.connectionTimeout);
     assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string).includes('connected')));
     // reconnectTimeout cleared — should be null after successful connect
     assert.strictEqual(north['reconnectTimeout'], null);

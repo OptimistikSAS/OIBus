@@ -13,6 +13,7 @@ import {
 import {
   addHttpsSettings,
   addOIAnalyticsReferenceProcess,
+  addOPCUATimeoutsAndSubscriptionSettings,
   addRegistrationPermissions,
   convertFileWriterLinks,
   convertOIAnalyticsSouths,
@@ -4167,5 +4168,109 @@ describe('Entity migration v3.10.0: moveFilenamePrefixAndSuffixToTransformers', 
 
     assert.deepStrictEqual(JSON.parse((await db('north_connectors').where('id', 'mqtt').first('settings')).settings), settings);
     assert.deepStrictEqual(await linkOptions('north_transformers', 'link'), fileAsIs);
+  });
+});
+
+describe('Entity migration v3.10.0: addOPCUATimeoutsAndSubscriptionSettings', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addOPCUATimeoutsAndSubscriptionSettings, db)
+  });
+  let db: Knex;
+  const settingsOf = async (table: string, column: string, id: string) =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+  const historyQuery = (id: string, southType: string, northType: string, southSettings: object, northSettings: object) => ({
+    ...caching,
+    id,
+    name: id,
+    start_time: NOW,
+    end_time: NOW,
+    south_type: southType,
+    north_type: northType,
+    south_settings: JSON.stringify(southSettings),
+    north_settings: JSON.stringify(northSettings)
+  });
+  const oldSouth = { url: 'opc.tcp://localhost', readTimeout: 20_000, maxNumberOfMessages: 500, flushMessageTimeout: 2000 };
+  const newSouth = {
+    url: 'opc.tcp://localhost',
+    readTimeout: 20_000,
+    connectionTimeout: 15_000,
+    subscription: {
+      publishingInterval: 150,
+      maxKeepAliveCount: 10,
+      numberOfMessageBeforeFlush: 500,
+      delayBetweenFlush: 2000
+    }
+  };
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+  });
+
+  afterEach(() => harness.afterEach());
+
+  it('should add the connection timeout and the subscription settings of the OPC UA souths, moving the flush settings', async () => {
+    await db('south_connectors').insert([
+      { id: 'opcua', name: 'OPCUA', type: 'opcua', enabled: true, settings: JSON.stringify(oldSouth) },
+      { id: 'mqtt', name: 'MQTT', type: 'mqtt', enabled: true, settings: JSON.stringify({ maxNumberOfMessages: 1 }) }
+    ]);
+    await db('history_queries').insert([
+      historyQuery('hq-opcua', 'opcua', 'console', oldSouth, {}),
+      historyQuery('hq-mqtt', 'mqtt', 'console', { maxNumberOfMessages: 1 }, {})
+    ]);
+
+    await addOPCUATimeoutsAndSubscriptionSettings(db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'opcua'), newSouth);
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-opcua'), newSouth);
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'mqtt'), { maxNumberOfMessages: 1 });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-mqtt'), { maxNumberOfMessages: 1 });
+  });
+
+  it('should use the default flush settings when the OPC UA south has none', async () => {
+    await db('south_connectors').insert({ id: 'opcua', name: 'OPCUA', type: 'opcua', enabled: true, settings: '{}' });
+
+    await addOPCUATimeoutsAndSubscriptionSettings(db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'opcua'), {
+      connectionTimeout: 15_000,
+      subscription: {
+        publishingInterval: 150,
+        maxKeepAliveCount: 10,
+        numberOfMessageBeforeFlush: 1000,
+        delayBetweenFlush: 1000
+      }
+    });
+  });
+
+  it('should add the connection and write timeouts of the OPC UA norths', async () => {
+    await db('north_connectors').insert([
+      { ...caching, id: 'opcua', name: 'OPCUA', type: 'opcua', enabled: true, settings: JSON.stringify({ url: 'opc.tcp://localhost' }) },
+      { ...caching, id: 'mqtt', name: 'MQTT', type: 'mqtt', enabled: true, settings: JSON.stringify({ host: 'h' }) }
+    ]);
+    await db('history_queries').insert([
+      historyQuery('hq-opcua', 'console', 'opcua', {}, { url: 'opc.tcp://localhost', connectionTimeout: 5000 }),
+      historyQuery('hq-mqtt', 'console', 'mqtt', {}, { host: 'h' })
+    ]);
+
+    await addOPCUATimeoutsAndSubscriptionSettings(db);
+
+    assert.deepStrictEqual(await settingsOf('north_connectors', 'settings', 'opcua'), {
+      url: 'opc.tcp://localhost',
+      connectionTimeout: 15_000,
+      writeTimeout: 15_000
+    });
+    // An already set timeout is kept
+    assert.deepStrictEqual(await settingsOf('history_queries', 'north_settings', 'hq-opcua'), {
+      url: 'opc.tcp://localhost',
+      connectionTimeout: 5000,
+      writeTimeout: 15_000
+    });
+    assert.deepStrictEqual(await settingsOf('north_connectors', 'settings', 'mqtt'), { host: 'h' });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'north_settings', 'hq-mqtt'), { host: 'h' });
   });
 });

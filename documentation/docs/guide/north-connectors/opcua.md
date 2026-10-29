@@ -14,11 +14,13 @@ the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data fro
 
 ### Connection Configuration {#connection-configuration}
 
-| Setting                | Description                              | Example Value              |
-| ---------------------- | ---------------------------------------- | -------------------------- |
-| **Endpoint URL**       | URL of the OPC UA server.                | `opc.tcp://localhost:4840` |
-| **Keep session alive** | Keep the session alive between messages. | Enabled/Disabled           |
-| **Retry Interval**     | Delay between retries (in milliseconds). | `5000`                     |
+| Setting                | Description                                                                                                 | Example Value              |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **Endpoint URL**       | URL of the OPC UA server.                                                                                   | `opc.tcp://localhost:4840` |
+| **Keep session alive** | Ping the server regularly so that it does not delete the session while it is idle. Enabled by default.      | Enabled/Disabled           |
+| **Connection timeout** | Maximum time in milliseconds to connect to the server: TCP connection, secure channel and session creation. | `15000`                    |
+| **Write timeout**      | Maximum time in milliseconds to wait for the response of a read or write request.                           | `15000`                    |
+| **Retry Interval**     | Delay between retries (in milliseconds).                                                                    | `5000`                     |
 
 ### Security Settings {#security-settings}
 

@@ -67,7 +67,7 @@ describe('Service utils OPCUA', () => {
     });
 
     it('should connect, open a session, and disconnect the client once the session is closed', async () => {
-      const session = await createOPCUASession('opc.tcp://localhost:50000', userIdentity, { applicationName: 'OIBus' });
+      const session = await createOPCUASession('opc.tcp://localhost:50000', userIdentity, { applicationName: 'OIBus' }, 15_000);
 
       assert.deepStrictEqual(client.connect.mock.calls[0].arguments, ['opc.tcp://localhost:50000']);
       assert.deepStrictEqual(client.createSession2.mock.calls[0].arguments, [userIdentity]);
@@ -79,11 +79,40 @@ describe('Service utils OPCUA', () => {
       assert.strictEqual(client.disconnect.mock.calls.length, 1);
     });
 
+    it('should disconnect the client and reject when the connection takes longer than the connection timeout', async () => {
+      mock.timers.enable({ apis: ['setTimeout'] });
+      client.connect.mock.mockImplementation(() => new Promise(() => undefined));
+
+      const connection = createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}, 15_000);
+      mock.timers.tick(14_999);
+      assert.strictEqual(client.disconnect.mock.calls.length, 0);
+      mock.timers.tick(1);
+
+      await assert.rejects(() => connection, { message: 'Connection timeout: not connected after 15000 ms' });
+      assert.strictEqual(client.createSession2.mock.calls.length, 0);
+      assert.strictEqual(client.disconnect.mock.calls.length, 1);
+      mock.timers.reset();
+    });
+
+    it('should bound the session creation by the connection timeout too', async () => {
+      mock.timers.enable({ apis: ['setTimeout'] });
+      client.createSession2.mock.mockImplementation(() => new Promise(() => undefined));
+
+      const connection = createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}, 1000);
+      // The connection is done: let the session creation start before the timeout
+      await new Promise<void>(resolve => setImmediate(resolve));
+      mock.timers.tick(1000);
+
+      await assert.rejects(() => connection, { message: 'Connection timeout: not connected after 1000 ms' });
+      assert.strictEqual(client.disconnect.mock.calls.length, 1);
+      mock.timers.reset();
+    });
+
     it('should still disconnect the client when closing the session fails', async () => {
       closeSession.mock.mockImplementation(async () => {
         throw new Error('BadSessionClosed');
       });
-      const session: ClientSession = await createOPCUASession('opc.tcp://localhost:50000', userIdentity, {});
+      const session: ClientSession = await createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}, 15_000);
 
       await assert.rejects(() => session.close(false), { message: 'BadSessionClosed' });
 
@@ -96,7 +125,9 @@ describe('Service utils OPCUA', () => {
         throw new Error('BadUserAccessDenied');
       });
 
-      await assert.rejects(() => createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}), { message: 'BadUserAccessDenied' });
+      await assert.rejects(() => createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}, 15_000), {
+        message: 'BadUserAccessDenied'
+      });
 
       assert.strictEqual(client.disconnect.mock.calls.length, 1);
     });
@@ -109,7 +140,7 @@ describe('Service utils OPCUA', () => {
         throw new Error('not connected');
       });
 
-      await assert.rejects(() => createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}), { message: 'ECONNREFUSED' });
+      await assert.rejects(() => createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}, 15_000), { message: 'ECONNREFUSED' });
 
       assert.strictEqual(client.createSession2.mock.calls.length, 0);
       assert.strictEqual(client.disconnect.mock.calls.length, 1);
@@ -224,11 +255,16 @@ describe('Service utils OPCUA', () => {
         securityMode: 'none',
         securityPolicy: 'none',
         keepSessionAlive: false,
+        connectionTimeout: 15_000,
         retryInterval: 10_000,
         readTimeout: 15_000,
         maxParallelRun: 1,
-        flushMessageTimeout: 1000,
-        maxNumberOfMessages: 1000
+        subscription: {
+          publishingInterval: 150,
+          maxKeepAliveCount: 10,
+          numberOfMessageBeforeFlush: 1000,
+          delayBetweenFlush: 1000
+        }
       };
       assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000), {
         options: {
@@ -243,7 +279,8 @@ describe('Service utils OPCUA', () => {
           endpointMustExist: false,
           keepPendingSessionsOnDisconnect: false,
           keepSessionAlive: false,
-          requestedSessionTimeout: 15000,
+          transportTimeout: 15000,
+          defaultTransactionTimeout: 15000,
           securityMode: 1,
           securityPolicy: 'none'
         },
@@ -258,11 +295,16 @@ describe('Service utils OPCUA', () => {
         securityMode: 'none',
         securityPolicy: 'none',
         keepSessionAlive: false,
+        connectionTimeout: 15_000,
         retryInterval: 10_000,
         readTimeout: 15_000,
         maxParallelRun: 1,
-        flushMessageTimeout: 1000,
-        maxNumberOfMessages: 1000
+        subscription: {
+          publishingInterval: 150,
+          maxKeepAliveCount: 10,
+          numberOfMessageBeforeFlush: 1000,
+          delayBetweenFlush: 1000
+        }
       };
       assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000), {
         options: {
@@ -276,7 +318,8 @@ describe('Service utils OPCUA', () => {
           endpointMustExist: false,
           keepPendingSessionsOnDisconnect: false,
           keepSessionAlive: false,
-          requestedSessionTimeout: 15000,
+          transportTimeout: 15000,
+          defaultTransactionTimeout: 15000,
           securityMode: 1,
           securityPolicy: 'none'
         },
@@ -296,6 +339,8 @@ describe('Service utils OPCUA', () => {
         securityMode: 'none',
         securityPolicy: 'none',
         keepSessionAlive: false,
+        connectionTimeout: 20_000,
+        writeTimeout: 5000,
         retryInterval: 10_000
       };
       readFileMock.mock.mockImplementation(async (filePath: unknown) => {
@@ -303,7 +348,7 @@ describe('Service utils OPCUA', () => {
         if (String(filePath).endsWith('key_file.pem')) return 'privateKey';
         return '';
       });
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', northSettings, undefined), {
+      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', northSettings, northSettings.writeTimeout), {
         options: {
           applicationName: 'OIBus',
           applicationUri: undefined,
@@ -315,7 +360,8 @@ describe('Service utils OPCUA', () => {
           endpointMustExist: false,
           keepPendingSessionsOnDisconnect: false,
           keepSessionAlive: false,
-          requestedSessionTimeout: undefined,
+          transportTimeout: 20000,
+          defaultTransactionTimeout: 5000,
           securityMode: 1,
           securityPolicy: 'none'
         },
