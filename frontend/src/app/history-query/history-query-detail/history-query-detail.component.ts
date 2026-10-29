@@ -31,6 +31,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { TransformerService } from '../../services/transformer.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DocsUrlService } from '../../shared/docs-url.service';
@@ -83,7 +84,8 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
     OIBusSettingsSummaryComponent,
     ExploreButtonComponent,
     ItemsMenuComponent,
-    NgTemplateOutlet
+    NgTemplateOutlet,
+    AuditInfoComponent
   ],
   templateUrl: './history-query-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush

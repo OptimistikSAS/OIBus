@@ -20,6 +20,15 @@
                     <span translate="north.disabled"></span>
                   }
                 </span>
+                <span class="d-flex align-items-center gap-1" id="north-audit-info">
+                  <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                  <oib-audit-info
+                    [createdAt]="northConnector.createdAt"
+                    [createdBy]="northConnector.createdBy.friendlyName"
+                    [updatedAt]="northConnector.updatedAt"
+                    [updatedBy]="northConnector.updatedBy.friendlyName"
+                  />
+                </span>
                 @if (oibusInfo(); as oibusInfo) {
                   <span>
                     <span translate="north.copy-cache-path" [translateParams]="{ id: northConnector.id }"></span>

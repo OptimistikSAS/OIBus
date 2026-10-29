@@ -10,6 +10,7 @@ import { SouthConnectorDTO, SouthConnectorItemDTO, SouthItemLastValueResponse } 
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthItemLastValue } from '@oibus/shared/domain/south-connector.model';
 
+import { AuditInfoComponent } from '../../../shared/audit-info/audit-info.component';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
 import { RoutedSouthItem, SouthItemNorthsComponent } from '../south-item-norths/south-item-norths.component';
@@ -23,7 +24,15 @@ import { getItemSettingsAttribute, summarizeSouthItem, toSouthItemSummaryValues 
   selector: 'oib-view-south-item-modal',
   templateUrl: './view-south-item-modal.component.html',
   styleUrl: './view-south-item-modal.component.scss',
-  imports: [TranslateDirective, TranslatePipe, DatetimePipe, JsonPipe, OIBusSettingsSummaryComponent, SouthItemNorthsComponent],
+  imports: [
+    AuditInfoComponent,
+    TranslateDirective,
+    TranslatePipe,
+    DatetimePipe,
+    JsonPipe,
+    OIBusSettingsSummaryComponent,
+    SouthItemNorthsComponent
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ViewSouthItemModalComponent {

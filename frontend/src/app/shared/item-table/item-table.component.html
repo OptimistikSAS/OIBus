@@ -92,12 +92,6 @@
         }
         @if (showDates()) {
           <th class="date-column">
-            <button type="button" class="sort-button" (click)="toggleSort('createdAt')">
-              <span [translate]="label('created-at')" class="me-2"></span>
-              <span class="fa-solid {{ sortIcon('createdAt') }}" aria-hidden="true"></span>
-            </button>
-          </th>
-          <th class="date-column">
             <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
               <span [translate]="label('updated-at')" class="me-2"></span>
               <span class="fa-solid {{ sortIcon('updatedAt') }}" aria-hidden="true"></span>
@@ -128,13 +122,13 @@
           }
           @if (showDates()) {
             <td>
-              @if (item.createdAt) {
-                {{ item.createdAt | datetime: 'ff' }}
-              }
-            </td>
-            <td>
-              @if (item.updatedAt) {
-                {{ item.updatedAt | datetime: 'ff' }}
+              @if (item.createdAt && item.createdBy && item.updatedAt && item.updatedBy) {
+                <oib-audit-info
+                  [createdAt]="item.createdAt"
+                  [createdBy]="item.createdBy.friendlyName"
+                  [updatedAt]="item.updatedAt"
+                  [updatedBy]="item.updatedBy.friendlyName"
+                />
               }
             </td>
           }

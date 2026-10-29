@@ -17,6 +17,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { TransformerService } from '../../services/transformer.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { OIBusSettingsSummaryComponent } from '../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
 import { SettingSummary, summarizeSettings } from '../../shared/form/oibus-settings-summary/settings-summary';
@@ -42,7 +43,8 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
     TranslatePipe,
     NgbTooltip,
     NorthTransformersComponent,
-    OIBusSettingsSummaryComponent
+    OIBusSettingsSummaryComponent,
+    AuditInfoComponent
   ],
   templateUrl: './north-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

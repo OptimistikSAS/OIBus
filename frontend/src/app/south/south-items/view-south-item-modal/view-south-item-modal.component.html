@@ -5,6 +5,16 @@
   </div>
 
   <div class="modal-body">
+    <div class="text-body-secondary mb-3" id="item-audit-info">
+      <i class="fa-solid fa-clock-rotate-left me-1" aria-hidden="true"></i>
+      <oib-audit-info
+        [createdAt]="item.createdAt"
+        [createdBy]="item.createdBy.friendlyName"
+        [updatedAt]="item.updatedAt"
+        [updatedBy]="item.updatedBy.friendlyName"
+      />
+    </div>
+
     <!-- Cache: what the item last retrieved, in place of the metrics of the connector page -->
     <section id="item-cache">
       <h5 class="oib-section-title" translate="south.items.view-item-modal.cache"></h5>

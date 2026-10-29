@@ -126,7 +126,7 @@ class SouthDetailComponentTester {
     return this.row(index).getByRole('button', { name: action });
   }
 
-  sortBy(column: 'Status' | 'Name' | 'Group (Schedule)' | 'Created' | 'Updated') {
+  sortBy(column: 'Status' | 'Name' | 'Group (Schedule)' | 'Updated') {
     return this.items.getByCss('thead').getByRole('button', { name: column, exact: true });
   }
 
@@ -469,8 +469,7 @@ describe('SouthDetailComponent', () => {
     test.each([
       { column: 'Name', ascending: ['item a', 'item b', 'item c'], descending: ['item c', 'item b', 'item a'] },
       { column: 'Status', ascending: ['item a', 'item b', 'item c'], descending: ['item b', 'item c', 'item a'] },
-      { column: 'Group (Schedule)', ascending: ['item b', 'item a', 'item c'], descending: ['item c', 'item b', 'item a'] },
-      { column: 'Created', ascending: ['item c', 'item b', 'item a'], descending: ['item a', 'item b', 'item c'] }
+      { column: 'Group (Schedule)', ascending: ['item b', 'item a', 'item c'], descending: ['item c', 'item b', 'item a'] }
     ] as const)('should sort the items by $column', async ({ column, ascending, descending }) => {
       const tester = await createTester();
       await tester.expectItems('item b', 'item a', 'item c');
