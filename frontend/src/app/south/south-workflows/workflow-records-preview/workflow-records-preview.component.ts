@@ -3,8 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, sign
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 import { OIBusRecord } from '@oibus/shared/common/content.model';
+import { createPageFromArray } from '@oibus/shared/common/types';
 
-import { ArrayPage } from '../../../shared/pagination/array-page';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 
 /** How many records give their fields to the columns: the records of a source all have the same ones. */
@@ -47,7 +47,7 @@ export class WorkflowRecordsPreviewComponent {
   });
   /** The page shown: the first one again whenever the records, or what is searched, change */
   private readonly pageNumber = linkedSignal<ReadonlyArray<OIBusRecord>, number>({ source: this.matching, computation: () => 0 });
-  readonly page = computed(() => new ArrayPage(Array.from(this.matching()), this.pageSize(), this.pageNumber()));
+  readonly page = computed(() => createPageFromArray(Array.from(this.matching()), this.pageSize(), this.pageNumber()));
 
   onSearch(event: Event) {
     this.search.set((event.target as HTMLInputElement).value);
