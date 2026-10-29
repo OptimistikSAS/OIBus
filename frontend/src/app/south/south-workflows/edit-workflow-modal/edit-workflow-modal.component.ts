@@ -1,5 +1,3 @@
-import { Clipboard } from '@angular/cdk/clipboard';
-import { NgTemplateOutlet } from '@angular/common';
 import {
   afterNextRender,
   AfterViewInit,
@@ -12,7 +10,6 @@ import {
   viewChild,
   WritableSignal
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -25,9 +22,9 @@ import {
   Validators
 } from '@angular/forms';
 
-import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { debounceTime, filter, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
@@ -48,12 +45,21 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
 import { trackControl } from '../../../shared/form/tracked-control';
 import { ModalService } from '../../../shared/modal.service';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
-import { NotificationService } from '../../../shared/notification.service';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { DiscoveredItemsReviewComponent } from '../../south-items/discovered-items-review/discovered-items-review.component';
-import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../../south-items/south-item-groups';
+import { SouthItemGroups } from '../../south-items/south-item-groups';
+import { AddItemsStepComponent } from '../add-items-step/add-items-step.component';
+import { ExploreStepComponent } from '../explore-step/explore-step.component';
+import {
+  buildItemMappableFields,
+  HISTORY_ITEM_DEFAULTS,
+  itemFieldMappingToSend,
+  itemMappingProblem,
+  MappableField,
+  SCHEDULE_ITEM_PATHS
+} from '../item-field-mapping-form/item-field-mapping';
+import { ItemFieldMappingFormComponent } from '../item-field-mapping-form/item-field-mapping-form.component';
 import { TEMP_ID_PREFIX } from '../workflow-command';
 import { WorkflowPreviewComponent } from '../workflow-preview/workflow-preview.component';
 import { WorkflowRecordsPreviewComponent } from '../workflow-records-preview/workflow-records-preview.component';
@@ -70,29 +76,6 @@ import {
   WorkflowProblem,
   WorkflowStep
 } from './explore-wizard';
-import {
-  ALWAYS_MANDATORY_ITEM_PATHS,
-  buildItemMappableFields,
-  CONSTANT_ONLY_ITEM_PATHS,
-  evaluatesTrue,
-  HISTORY_ITEM_DEFAULTS,
-  MappableField,
-  nonEmptyEntries,
-  resolveTemplate,
-  SCHEDULE_ITEM_PATH_ORDER,
-  SCHEDULE_ITEM_PATHS,
-  VARIABLE_SENTINEL
-} from './item-field-mapping';
-
-/** How long the mapping has to stay as it is, in ms, before the items to add are discovered again. */
-const ITEMS_DISCOVERY_DEBOUNCE = 400;
-
-/** The state of the discovery of the items to add. */
-interface ItemsDiscoveryState {
-  readonly loading: boolean;
-  readonly error: string | null;
-  readonly commands: ReadonlyArray<SouthConnectorItemCommandDTO> | null;
-}
 
 /** A preview run of the workflow as currently edited (see `ConfigurationWorkflowService.previewCommand`). */
 interface PreviewState {
@@ -110,41 +93,38 @@ const PREVIEW_RECORD_LIMIT = 20;
   styleUrl: './edit-workflow-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgTemplateOutlet,
     ReactiveFormsModule,
     FormsModule,
     TranslateDirective,
     TranslatePipe,
     OI_FORM_VALIDATION_DIRECTIVES,
     SaveButtonComponent,
-    NgbDropdownModule,
     ExploreTreeComponent,
     OibCodeBlockComponent,
     TransformerTestResultComponent,
     WorkflowPreviewComponent,
     WorkflowRecordsPreviewComponent,
     ModalStepsComponent,
-    DiscoveredItemsReviewComponent
+    ExploreStepComponent,
+    AddItemsStepComponent,
+    ItemFieldMappingFormComponent
   ]
 })
 export default class EditWorkflowModalComponent implements AfterViewInit {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
-  private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
   private configurationWorkflowService = inject(ConfigurationWorkflowService);
   private engineService = inject(EngineService);
   private injector = inject(Injector);
-  private clipboard = inject(Clipboard);
-  private notificationService = inject(NotificationService);
 
   // The inline, read-only explore tree shown alongside the SQL query editor (for the SQL connectors that can be
   // explored, see showSqlExploreTree) - undefined until that branch of the template actually renders it.
   private readonly inlineExploreTree = viewChild<ExploreTreeComponent>('inlineExploreTree');
-  /** The tree of the Explore step, where the nodes are checked - only when opened from the Explore button (see `exploring`) */
-  private readonly exploreStepTree = viewChild<ExploreTreeComponent>('exploreStepTree');
-  readonly itemsReview = viewChild(DiscoveredItemsReviewComponent);
+  /** The Explore step, where the nodes are checked - only when opened from the Explore button (see `exploring`) */
+  readonly exploreStep = viewChild(ExploreStepComponent);
+  readonly addItemsStep = viewChild(AddItemsStepComponent);
 
   readonly mode = signal<'create' | 'edit' | 'copy'>('create');
   /** Whether the wizard is opened from the Explore button: it then starts with the Explore step (see `prepareForExploration`) */
@@ -183,21 +163,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly reviewPreview = signal<PreviewState | null>(null);
   /** Every record the eligibility filter keeps */
   readonly previewResultRecords = computed(() => this.filterPreview()?.result?.records ?? []);
-  readonly previewRecords = computed(() => this.previewResultRecords().slice(0, PREVIEW_RECORD_LIMIT));
   /** The fields of the discovered records, suggested when writing a condition or an identity key */
   readonly recordFields = computed(() => {
     const records = this.filterPreview()?.result?.records ?? [];
     return Array.from(new Set(records.slice(0, PREVIEW_RECORD_LIMIT).flatMap(record => Object.keys(record))));
-  });
-  /** The names the first matching records would give their items, from the name mapping */
-  readonly exampleItemNames = computed(() => {
-    const template = this.itemFieldMappingValues()['name'] ?? '';
-    if (!template.trim()) {
-      return [];
-    }
-    return this.previewRecords()
-      .slice(0, 3)
-      .map(record => resolveTemplate(template, record));
   });
   private filterPreviewKey: string | null = null;
   readonly state = new ObservableState();
@@ -209,7 +178,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   /** The schedule an item of the connector accepts: a connector that only polls (or subscribes) has no use of the other one */
   private readonly itemScheduleType = signal<OIBusScanModeAttribute['acceptableType'] | null>(null);
-  private readonly subscriptionOnly = computed(() => this.itemScheduleType() === 'SUBSCRIPTION');
+  protected readonly subscriptionOnly = computed(() => this.itemScheduleType() === 'SUBSCRIPTION');
   /** The schedules an item can follow: the subscription is not one of them for a connector that only polls */
   readonly itemScanModes = computed(() =>
     this.itemScheduleType() === 'POLL' ? this.scanModes().filter(scanMode => scanMode.id !== 'subscription') : this.scanModes()
@@ -218,17 +187,16 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    * The groups of the page (south-detail saves them through the API, edit-south in memory), changed through it only, like
    * EditSouthItemModalComponent's own group dropdown.
    */
-  private readonly groupStore = signal<SouthItemGroups | null>(null);
-  readonly groups = computed(() => this.groupStore()?.list() ?? []);
+  protected readonly groupStore = signal<SouthItemGroups | null>(null);
   private workflow: ConfigurationWorkflowCommandDTO | null = null;
   /** Every other workflow of the connector, for the name uniqueness check. */
   private existingWorkflows: Array<{ id: string | null; name: string }> = [];
-  private readonly currentManifest = signal<SouthConnectorManifest | null>(null);
+  protected readonly currentManifest = signal<SouthConnectorManifest | null>(null);
   private southId!: string;
   private southSettings!: SouthSettings;
 
   /** What the wizard offers on the checked nodes of its Explore step - only when opened from the Explore button (see `exploring`) */
-  private readonly exploreOptions = signal<ExploreWizardOptions | null>(null);
+  protected readonly exploreOptions = signal<ExploreWizardOptions | null>(null);
   /** The ways to use the checked nodes, in the Explore step footer: the last one is the main one */
   readonly flowActions = computed<Array<ExploreFlowAction>>(() => {
     const options = this.exploreOptions();
@@ -259,12 +227,12 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }
     return actions;
   });
-  readonly exploreCheckedCount = computed(() => this.exploreStepTree()?.checkedIds().size ?? 0);
+  readonly exploreCheckedCount = computed(() => this.exploreStep()?.checkedIds().size ?? 0);
 
   /** The synchronisation the wizard edits - one given by the opener, or picked in the Source step - null for a new one */
   readonly syncTargetId = signal<string | null>(null);
   /** The nodes the edited synchronisation had when it was picked, to tell what the wizard adds to it and removes from it */
-  private readonly originalNodeIds = signal<Array<string>>([]);
+  protected readonly originalNodeIds = signal<Array<string>>([]);
   /** The nodes checked before an existing synchronisation was picked, which a new one goes back to */
   private pickedNodeIds: Array<string> | null = null;
   /** The synchronisations of the connector that discover from nodes, which the checked ones can be added to */
@@ -274,39 +242,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       return nodeIds ? [{ id: workflow.id, name: workflow.name, nodeIds }] : [];
     })
   );
-  /** The synchronisations already keeping items in sync with nodes, the edited one aside: its nodes are the checked ones */
-  private readonly otherTreeWorkflows = computed(() => this.treeWorkflows().filter(workflow => workflow.id !== this.syncTargetId()));
-  /** What the Explore step tells about the synchronisations: how many nodes each has, none for the whole data source */
-  readonly coverageChips = computed(() =>
-    this.otherTreeWorkflows().map(workflow => ({ name: workflow.name, count: workflow.nodeIds.length || null }))
-  );
-  /** The names of the synchronisations that keep the items of a node in sync: the ones of the node or of a folder it is in */
-  readonly exploreBadges = computed(() => {
-    const workflows = this.otherTreeWorkflows();
-    return (path: ReadonlyArray<string>) =>
-      workflows.filter(workflow => workflow.nodeIds.some(nodeId => path.includes(nodeId))).map(workflow => workflow.name);
-  });
-  /** The synchronisations that already keep in sync the items of the checked nodes - listed when they are added as items */
-  readonly coveringWorkflowNames = computed(() => {
-    const checkedPaths = this.exploreStepTree()?.checkedPaths() ?? [];
-    return this.otherTreeWorkflows()
-      .filter(
-        workflow => workflow.nodeIds.length === 0 || workflow.nodeIds.some(nodeId => checkedPaths.some(path => path.includes(nodeId)))
-      )
-      .map(workflow => workflow.name);
-  });
-  /** The nodes as checked in the Explore step */
-  private readonly checkedNodeIds = computed(() => Array.from(this.exploreStepTree()?.checkedIds() ?? this.discoveryNodeIds()));
-  /** The nodes of the edited synchronisation that are no longer checked: the items they gave are disabled by its next run */
-  readonly removedNodeIds = computed(() => {
-    const nodeIds = this.checkedNodeIds();
-    return this.originalNodeIds().filter(nodeId => !nodeIds.includes(nodeId));
-  });
-  /** The nodes checked that the edited synchronisation did not have */
-  readonly addedNodeIds = computed(() => {
-    const original = this.originalNodeIds();
-    return this.checkedNodeIds().filter(nodeId => !original.includes(nodeId));
-  });
   /** Whether the Explore step offers to keep in sync with a synchronisation the connector already has, rather than a new one */
   readonly showSyncTarget = computed(
     () =>
@@ -314,26 +249,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       this.flowActions().some(action => action.flow === 'sync') &&
       this.mode() !== 'copy' &&
       this.treeWorkflows().length > 0
-  );
-
-  /** The items the checked nodes give, mapped as in the mapping form - discovered when the Add as items step opens */
-  readonly itemsDiscovery = signal<ItemsDiscoveryState | null>(null);
-  /** What was discovered last: the checked nodes and the mapping */
-  private readonly itemsDiscoveryKey = signal<string | null>(null);
-  private readonly currentItemsDiscoveryKey = computed(() =>
-    JSON.stringify([Array.from(this.exploreStepTree()?.checkedIds() ?? []), this.itemFieldMappingToSend()])
-  );
-  /** Whether the mapping changed since the items were discovered: they are to be discovered again before they are added */
-  readonly itemsDiscoveryStale = computed(
-    () => this.itemsDiscoveryKey() !== null && this.itemsDiscoveryKey() !== this.currentItemsDiscoveryKey()
-  );
-  readonly existingItems = computed(() => this.exploreOptions()?.existingItems ?? []);
-  readonly itemsManifest = computed(() => this.exploreOptions()?.manifest ?? null);
-  /** Why the items can't be discovered yet: the mapping form is not complete - a translation key */
-  readonly itemMappingError = computed(() => this.itemMappingProblem());
-  readonly canAddItems = computed(
-    () =>
-      !this.itemMappingError() && !this.itemsDiscoveryStale() && !this.itemsDiscovery()?.loading && (this.itemsReview()?.valid() ?? false)
   );
 
   /** The nodes the workflow discovers from, checked in the Explore modal (tree-based connectors only) - none
@@ -352,7 +267,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly isRegistered = signal(false);
 
   readonly operators: ReadonlyArray<RecordFilterOperator> = RECORD_FILTER_OPERATORS;
-  readonly variableSentinel = VARIABLE_SENTINEL;
 
   /** Every field the connector's manifest (+ the historian fields it adds outside the manifest, when supported) exposes on an item. */
   readonly itemMappableFields = signal<Array<MappableField>>([]);
@@ -364,27 +278,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    * The fields the mapping form shows: all of them, but the schedule of the items of a connector that only subscribes - it is
    * the subscription, nothing to map (see `itemFieldMappingToSend`).
    */
-  private readonly activeMappableFields = computed(() =>
+  protected readonly activeMappableFields = computed(() =>
     this.subscriptionOnly() ? this.itemMappableFields().filter(field => field.path !== 'scanModeId') : this.itemMappableFields()
   );
-  /**
-   * The item mapping form, in the sections of the item modal on a single step: Name & schedule - with the history settings,
-   * which come and go with the group as in the item modal - then the settings of the connector.
-   */
-  readonly itemMappingSections = computed(() => {
-    const fields = this.activeMappableFields().filter(field => this.isItemFieldVisible(field));
-    const settingsFields = fields.filter(field => field.path.startsWith('settings.'));
-    const rank = (field: MappableField) => {
-      const index = SCHEDULE_ITEM_PATH_ORDER.indexOf(field.path);
-      return index === -1 ? SCHEDULE_ITEM_PATH_ORDER.length : index;
-    };
-    const scheduleFields = fields.filter(field => !settingsFields.includes(field)).sort((a, b) => rank(a) - rank(b));
-    const sections = [
-      { id: 'general', titleKey: 'south.edit-item-modal.step.general', fields: scheduleFields },
-      { id: 'settings', titleKey: this.itemSettingsTitleKey(), fields: settingsFields }
-    ];
-    return sections.filter(section => section.fields.length > 0);
-  });
   /**
    * The fields of the discovered records the mapping can use as `{{field}}`: the ones the connector tells about, and the ones
    * of the records the filter preview found
@@ -392,27 +288,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly availableRecordFields = computed(() =>
     Array.from(new Set([...(this.currentManifest()?.discovery?.recordFields ?? []), ...this.recordFields()]))
   );
-  /** The mapping input the user was typing in last, where a field goes when picked in the list */
-  private lastMappingFocus: { path: string; start: number; end: number } | null = null;
-  /** The title of the settings of the items of the connector, as in the item modal */
-  private readonly itemSettingsTitleKey = computed(
-    () =>
-      this.currentManifest()?.items.rootAttribute.attributes.find(attribute => attribute.key === 'settings')?.translationKey ??
-      'south.edit-item-modal.step.settings'
-  );
-  /** The schedule of the group the items are mapped into, which they follow: none while they have no group */
-  readonly groupScanModeName = computed(() => {
-    const groupId = this.itemFieldMappingValues()['groupId'];
-    const group = groupId ? this.groups().find(candidate => candidate.id === groupId) : null;
-    if (!group) {
-      return null;
-    }
-    // A group kept in memory only has the id of its schedule
-    const settings = group.standardSettings;
-    return 'scanMode' in settings
-      ? settings.scanMode.name
-      : (this.scanModes().find(scanMode => scanMode.id === settings.scanModeId)?.name ?? null);
-  });
   readonly eligibilityFilter = signal<Array<RecordFilterCondition>>([]);
 
   readonly formError = signal<string | null>(null);
@@ -462,26 +337,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    *  there, and a second tree would open a second explore session (through the connector's endpoints, whatever the
    *  wizard explores). */
   readonly showSqlExploreTree = computed(() => this.isSqlFamily() && this.currentManifest()?.explore === true && !this.exploring());
-
-  /** Name of the group currently mapped as a constant for the 'groupId' field, or '' when none is. */
-  readonly selectedGroupName = computed(() => {
-    const groupId = this.itemFieldMappingValues()['groupId'];
-    if (!groupId) {
-      return '';
-    }
-    return this.groups().find(group => group.id === groupId)?.standardSettings.name ?? groupId;
-  });
-
-  constructor() {
-    // The items to add follow the mapping: they are discovered again a moment after it stops changing
-    toObservable(this.currentItemsDiscoveryKey)
-      .pipe(
-        debounceTime(ITEMS_DISCOVERY_DEBOUNCE),
-        filter(() => this.step() === 'add-items'),
-        takeUntilDestroyed()
-      )
-      .subscribe(() => this.discoverItemsToAdd());
-  }
 
   /**
    * @param prefill - starting values for a new workflow, e.g. the nodes checked in the Explore modal (see
@@ -557,18 +412,18 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.pickedNodeIds = null;
     this.syncSelectionKey = null;
     this.originalNodeIds.set(target?.mode === 'edit' ? [...this.discoveryNodeIds()] : []);
-    this.itemsDiscovery.set(null);
-    this.itemsDiscoveryKey.set(null);
     this.step.set('explore');
     // The tree is rendered by the first change detection pass, which may come after this call
     afterNextRender(
       () =>
-        this.exploreStepTree()?.prepare(options.exploreConnectorId, options.southSettings, options.manifest.id, {
-          api: options.exploreApi,
-          // a node gets a checkbox only when there is something to do with the checked ones
-          checkable: this.flowActions().length > 0,
-          checkedIds: this.discoveryNodeIds()
-        }),
+        this.exploreStep()
+          ?.tree()
+          .prepare(options.exploreConnectorId, options.southSettings, options.manifest.id, {
+            api: options.exploreApi,
+            // a node gets a checkbox only when there is something to do with the checked ones
+            checkable: this.flowActions().length > 0,
+            checkedIds: this.discoveryNodeIds()
+          }),
       { injector: this.injector }
     );
   }
@@ -579,7 +434,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    */
   selectSyncTarget(workflowId: string | null) {
     const options = this.exploreOptions()!;
-    const tree = this.exploreStepTree();
+    const tree = this.exploreStep()?.tree();
     const checked = tree ? Array.from(tree.checkedIds()) : this.discoveryNodeIds();
     // The nodes the user picked are the ones of the next new synchronisation, whatever the existing ones add to them
     if (this.syncTargetId() === null) {
@@ -718,47 +573,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     });
   }
 
-  /** A field of the discovered records as the mapping expression that gets its value. */
-  fieldToken(field: string): string {
-    return `{{${field}}}`;
-  }
-
-  /** Remembers where the user was typing in the mapping, as the focus leaves it for the list of fields */
-  rememberMappingFocus(event: FocusEvent) {
-    const input = event.target;
-    if (!(input instanceof HTMLInputElement)) {
-      return;
-    }
-    const match = /^item-field-mapping-field-(.+?)(-expression)?$/.exec(input.id);
-    const field = match ? this.itemMappableFields().find(candidate => candidate.path === match[1]) : undefined;
-    // Only an input that takes an expression: not a constant-only field, nor a select unless it is on an expression
-    this.lastMappingFocus =
-      field && this.allowsVariable(field) && (!this.isSelectType(field) || !!match![2])
-        ? { path: field.path, start: input.selectionStart ?? input.value.length, end: input.selectionEnd ?? input.value.length }
-        : null;
-  }
-
-  /** Puts a field of the discovered records where the user was typing in the mapping, or copies it when there is no such place. */
-  useRecordField(field: string) {
-    const token = this.fieldToken(field);
-    const target = this.lastMappingFocus;
-    if (!target) {
-      this.clipboard.copy(token);
-      this.notificationService.success('south.explore.copied');
-      return;
-    }
-    const value = this.itemFieldMappingValues()[target.path] ?? '';
-    this.setMappingValue(target.path, `${value.slice(0, target.start)}${token}${value.slice(target.end)}`);
-    // The next field goes after this one
-    const end = target.start + token.length;
-    this.lastMappingFocus = { path: target.path, start: end, end };
-  }
-
-  /** Maps (or unmaps, with a blank value) an item field. */
-  setMappingValue(path: string, value: string) {
-    this.itemFieldMappingValues.update(values => ({ ...values, [path]: value }));
-  }
-
   addIdentityKeyField() {
     const field = this.newIdentityKeyField().trim();
     if (!field || this.identityKeyFields().includes(field)) {
@@ -829,175 +643,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.editingEligibilityValue.set('');
   }
 
-  /** Whether this field's constant value should be picked from a fixed list (checkbox/select) rather than typed freely. */
-  isSelectType(field: MappableField): boolean {
-    return (
-      field.attributeType === 'boolean' ||
-      field.attributeType === 'string-select' ||
-      field.attributeType === 'scan-mode' ||
-      field.attributeType === 'group-select'
-    );
-  }
-
-  /** The translation key for this field's row label. A manifest-driven 'string-select' attribute's translationKey is a
-   *  namespace object ({ title, <value>: ... } - see e.g. security-mode in the OPC-UA manifest translations), not a
-   *  flat string, so its label needs the same `.title` suffix the real manifest form uses for that control. Every
-   *  other field type (including the two hardcoded string-select fields, whose keys are already flat strings) uses
-   *  its translationKey directly. */
-  fieldLabelKey(field: MappableField): string {
-    if (field.attributeType === 'string-select' && field.path !== 'recoveryStrategy' && field.path !== 'resamplingMethod') {
-      return `${field.translationKey}.title`;
-    }
-    return field.translationKey;
-  }
-
-  /** The fixed set of valid constant values for a select-type field - used both to render its options and to tell a
-   *  constant value apart from a {{...}} expression (anything not in this list is treated as a variable). */
-  private fieldConcreteValues(field: MappableField): Array<string> {
-    switch (field.attributeType) {
-      case 'boolean':
-        return ['true', 'false'];
-      case 'string-select':
-        return field.selectableValues ?? [];
-      case 'scan-mode':
-        return this.itemScanModes().map(scanMode => scanMode.id);
-      case 'group-select':
-        return this.groups()
-          .map(group => group.id)
-          .filter((id): id is string => id != null);
-      default:
-        return [];
-    }
-  }
-
-  /** Translated option label for a 'string-select' field's value - mirrors the manifest form's own `translationKey.value`
-   *  convention, except for the hardcoded historian recoveryStrategy field, whose keys already exist under a different shape. */
-  stringSelectOptionLabel(field: MappableField, value: string): string {
-    if (field.path === 'recoveryStrategy') {
-      return `south.items.recovery-strategy-${value}`;
-    }
-    if (field.path === 'resamplingMethod') {
-      return `south.workflows.resampling-values.${value}`;
-    }
-    return `${field.translationKey}.${value}`;
-  }
-
-  /** True once the field's mapped value is set but isn't one of its fixed constant options - i.e. it's a {{...}} expression. */
-  isVariableMode(field: MappableField): boolean {
-    const value = this.itemFieldMappingValues()[field.path] ?? '';
-    if (!value) {
-      return false;
-    }
-    return !this.fieldConcreteValues(field).includes(value);
-  }
-
-  /** What the <select> itself should show: the sentinel option while in variable mode, the raw constant value otherwise. */
-  selectDisplayValue(field: MappableField): string {
-    return this.isVariableMode(field) ? VARIABLE_SENTINEL : (this.itemFieldMappingValues()[field.path] ?? '');
-  }
-
-  /** Handles a change on a select-type field's constant dropdown - switches into variable mode with a starter
-   *  expression when the sentinel is chosen, otherwise stores the picked constant value directly. */
-  onSelectChange(field: MappableField, newValue: string) {
-    this.setMappingValue(field.path, newValue === VARIABLE_SENTINEL ? '{{}}' : newValue);
-  }
-
-  /** Whether this field can be mapped to a {{ }} expression at all. False for a field other fields depend
-   *  on for their own visibility (its value must be knowable while editing), the schedule/group fields -
-   *  a workflow-created item's scan mode and group must always reference something real, never a
-   *  per-record expression - and the historian fields, which are either a fixed setting of the item's own
-   *  schedule (max read interval, read delay, the offsets, recovery strategy) or a plain toggle
-   *  (syncWithGroup), neither ever meaningfully varying per discovered record. */
-  /** A field controlling other fields' visibility can vary per record too (e.g. a BACnet object type): the fields
-   *  it controls are then shown (see evaluatesTrue), since they may apply to some of the records. */
-  allowsVariable(field: MappableField): boolean {
-    return field.attributeType !== 'scan-mode' && field.attributeType !== 'group-select' && !CONSTANT_ONLY_ITEM_PATHS.has(field.path);
-  }
-
-  /** Placeholder for a plain-text item field's input - a constant-only field (e.g. maxReadInterval) gets
-   *  a hint that it can't take a {{ }} expression, instead of the generic "constant or {{field}}" one. */
-  itemFieldPlaceholderKey(field: MappableField): string {
-    return this.allowsVariable(field)
-      ? 'south.workflows.item-field-mapping-expression-placeholder'
-      : 'south.workflows.mapping-constant-placeholder';
-  }
-
-  onSelectGroup(groupId: string | null) {
-    const grouped = !!this.itemFieldMappingValues()['groupId'];
-    this.setMappingValue('groupId', groupId ?? '');
-    // As in the item modal, an item that gets a group follows it, until the mapping says otherwise
-    if (!grouped && groupId) {
-      this.setMappingValue('syncWithGroup', 'true');
-    } else if (!groupId) {
-      this.setMappingValue('syncWithGroup', '');
-    }
-  }
-
-  /** Mirrors EditSouthItemModalComponent's own onAddGroup - creates the group through the groups of the page, then maps
-   *  the newly created group as this field's constant. */
-  onAddGroup() {
-    this.openGroupModal().subscribe(groupResult => this.onSelectGroup(groupResult.id!));
-  }
-
-  onEditGroup(group: SouthItemGroup, event: Event) {
-    event.stopPropagation();
-    this.openGroupModal(group).subscribe();
-  }
-
-  private openGroupModal(group?: SouthItemGroup) {
-    return openGroupModal(this.modalService, this.groupStore()!, {
-      scanModes: this.scanModes(),
-      manifest: this.currentManifest()!,
-      directSave: this.directSave,
-      group
-    });
-  }
-
-  onDeleteGroup(group: SouthItemGroup, event: Event) {
-    event.stopPropagation();
-    this.groupStore()!
-      .delete(group)
-      .subscribe(() => {
-        if (this.itemFieldMappingValues()['groupId'] === group.id) {
-          this.onSelectGroup(null);
-        }
-      });
-  }
-
-  /** Whether an item field should be shown at all - every enabling rule covering it (its own, plus any
-   *  inherited from an enclosing settings object) must currently pass against itemFieldMappingValues,
-   *  and a group-dependent historian field must agree with whether 'groupId' is currently mapped. */
-  isItemFieldVisible(field: MappableField): boolean {
-    const values = this.itemFieldMappingValues();
-    if (field.visibleWhenGrouped !== undefined) {
-      const isGrouped = !!values['groupId'];
-      if (field.visibleWhenGrouped !== isGrouped) {
-        return false;
-      }
-    }
-    // As in the item modal, the schedule of an item of a group is the one of its group
-    if (field.path === 'scanModeId' && !!values['groupId']) {
-      return false;
-    }
-    return (field.enablingRules ?? []).every(rule => evaluatesTrue(rule, values));
-  }
-
-  /** Whether a mandatory, currently-visible field is missing a mapped value - checked at save time.
-   *  Exempt: a field with a usable manifest defaultValue (e.g. a setting that falls back to it if left unmapped,
-   *  same as EditSouthItemModalComponent's own pre-filled control - never actually "missing"), unless it is
-   *  one of ALWAYS_MANDATORY_ITEM_PATHS, and scanModeId once the item is mapped into a group (mirrors that same
-   *  form's scanModeId.disable() when grouped: a grouped item's schedule comes from the group instead). */
-  isMandatoryFieldMissing(field: MappableField): boolean {
-    if (!ALWAYS_MANDATORY_ITEM_PATHS.has(field.path) && (!field.mandatory || field.hasUsableDefault)) {
-      return false;
-    }
-    const values = this.itemFieldMappingValues();
-    if (field.path === 'scanModeId' && !!values['groupId']?.trim()) {
-      return false;
-    }
-    return !(values[field.path] ?? '').trim();
-  }
-
   ngAfterViewInit() {
     if (this.showSqlExploreTree()) {
       this.inlineExploreTree()?.prepare(this.southId, this.southSettings, this.currentManifest()!.id);
@@ -1038,7 +683,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    */
   private useSelectedTables(flow: 'sync' | 'item') {
     const options = this.exploreOptions()!;
-    const nodeIds = Array.from(this.exploreStepTree()?.checkedIds() ?? []);
+    const nodeIds = Array.from(this.exploreStep()?.checkedIds() ?? []);
     // the plain query is the one of a metadata query, which is run as it is: with no time range
     const mapping =
       flow === 'item' ? options.manifest.discovery!.defaults!.itemFieldMapping : { name: '{{name}}', 'settings.query': '{{plainQuery}}' };
@@ -1082,19 +727,20 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    * The items a discovery scope gives, mapped as told: through the opener when the data source is not a south connector (a
    * history query), through the south connector endpoints otherwise.
    */
-  private discover(scope: Record<string, unknown>, mapping: Record<string, string>): Observable<Array<SouthConnectorItemCommandDTO>> {
+  readonly discover = (
+    scope: Record<string, unknown>,
+    mapping: Record<string, string>
+  ): Observable<Array<SouthConnectorItemCommandDTO>> => {
     const options = this.exploreOptions()!;
     return options.discover
       ? options.discover(scope, mapping)
       : this.southConnectorService.discoverItems(options.southId, options.manifest.id, options.southSettings, scope, mapping);
-  }
+  };
 
   goToStep(step: WizardStep) {
-    if (this.step() === 'explore') {
-      const tree = this.exploreStepTree();
-      if (tree) {
-        this.discoveryNodeIds.set(Array.from(tree.checkedIds()));
-      }
+    const exploreStep = this.exploreStep();
+    if (this.step() === 'explore' && exploreStep) {
+      this.discoveryNodeIds.set(Array.from(exploreStep.checkedIds()));
     }
     this.step.set(step);
     if (step === 'filter') {
@@ -1103,66 +749,15 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       this.ensureFilterPreview();
     } else if (step === 'review') {
       this.previewReview();
-    } else if (step === 'add-items') {
-      this.discoverItemsToAdd();
     }
-  }
-
-  /**
-   * The items the checked nodes give, mapped as in the mapping form: unless forced, nothing happens when it is what was
-   * discovered last, so that coming back to the step keeps what was reviewed in it.
-   */
-  discoverItemsToAdd(force = false) {
-    const nodeIds = Array.from(this.exploreStepTree()?.checkedIds() ?? []);
-    const mapping = this.itemFieldMappingToSend();
-    const key = this.currentItemsDiscoveryKey();
-    if (!force && key === this.itemsDiscoveryKey() && !this.itemsDiscovery()?.error) {
-      return;
-    }
-    this.itemsDiscoveryKey.set(key);
-    if (nodeIds.length === 0 || this.itemMappingError()) {
-      this.itemsDiscovery.set(null);
-      return;
-    }
-    this.itemsDiscovery.set({ loading: true, error: null, commands: null });
-    this.discover({ nodeIds }, mapping).subscribe({
-      next: commands => {
-        if (this.itemsDiscoveryKey() === key) {
-          this.itemsDiscovery.set({ loading: false, error: null, commands: commands.map(command => this.withScheduleNames(command)) });
-        }
-      },
-      error: error => {
-        if (this.itemsDiscoveryKey() === key) {
-          this.itemsDiscovery.set({ loading: false, error: extractErrorMessage(error), commands: null });
-        }
-      }
-    });
-  }
-
-  /**
-   * The item as the item form would give it: an item of a group has the schedule of its group, not one of its own, and the
-   * names of its group and schedule come with their ids.
-   */
-  private withScheduleNames(command: SouthConnectorItemCommandDTO): SouthConnectorItemCommandDTO {
-    const group = this.groups().find(candidate => candidate.id === command.groupId) ?? null;
-    const syncWithGroup = !!group && command.syncWithGroup;
-    const scanMode = group ? null : (this.scanModes().find(candidate => candidate.id === command.scanModeId) ?? null);
-    return {
-      ...command,
-      groupId: group?.id ?? null,
-      groupName: group?.standardSettings.name ?? null,
-      syncWithGroup,
-      scanModeId: scanMode?.id ?? null,
-      scanModeName: scanMode?.name ?? null
-    };
   }
 
   addItems() {
-    const review = this.itemsReview();
-    if (!this.canAddItems() || !review) {
+    const addItemsStep = this.addItemsStep();
+    if (!addItemsStep?.canAdd()) {
       return;
     }
-    const result: ExploreWizardResult = { kind: 'items', commands: review.includedCommands() };
+    const result: ExploreWizardResult = { kind: 'items', commands: addItemsStep.includedCommands() };
     this.modal.close(result);
   }
 
@@ -1296,55 +891,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.modal.close(this.exploring() ? ({ kind: 'workflow', command: built.command } satisfies ExploreWizardResult) : built.command);
   }
 
-  /**
-   * Why the item mapping can't be used yet, if it can't - a translation key.
-   */
-  private itemMappingProblem(): string | null {
-    const mappingValues = this.itemFieldMappingValues();
-    // A field other fields depend on for their own visibility, plus the schedule/group fields, must be
-    // knowable while editing (or reference something real) rather than resolved per-record at run time -
-    // a select-type one of these can't even reach this state through the UI (its {{ }} option is
-    // omitted), but a free-text one still could.
-    const hasConstantOnlyViolation = this.activeMappableFields().some(
-      field => !this.allowsVariable(field) && (mappingValues[field.path] ?? '').includes('{{')
-    );
-    if (hasConstantOnlyViolation) {
-      return 'south.workflows.mapping-constant-only';
-    }
-
-    // Every visible, manifest-REQUIRED field must be mapped to something - otherwise a workflow can be
-    // saved in a state item creation would only reject later, at run time (see isMandatoryFieldMissing).
-    const missingMandatoryFields = this.activeMappableFields().filter(
-      field => this.isItemFieldVisible(field) && this.isMandatoryFieldMissing(field)
-    );
-    if (missingMandatoryFields.length > 0) {
-      return 'south.workflows.mapping-mandatory-missing';
-    }
-    return null;
-  }
-
-  /**
-   * What the item mapping maps, to save in a workflow or to discover the items to add with. A field hidden by an unmet enabling
-   * condition keeps whatever value it had while editing (so toggling the referral back and forth doesn't lose data), but is left
-   * out here - it isn't actually part of the item this mapping would produce.
-   */
-  private itemFieldMappingToSend(): Record<string, string> {
-    const visibleItemPaths = new Set(
-      this.activeMappableFields()
-        .filter(field => this.isItemFieldVisible(field))
-        .map(field => field.path)
-    );
-    const values: Record<string, string> = {};
-    for (const [path, value] of Object.entries(this.itemFieldMappingValues())) {
-      if (visibleItemPaths.has(path)) {
-        values[path] = value;
-      }
-    }
-    const mapping = nonEmptyEntries(values);
-    // An item of a connector that only subscribes has no schedule to pick
-    return this.subscriptionOnly() ? { ...mapping, scanModeId: 'subscription' } : mapping;
-  }
-
   /** Everything that keeps the workflow from being previewed and saved, in the order of the steps - listed in the Review step. */
   readonly workflowProblems = computed<Array<WorkflowProblem>>(() => {
     const problems: Array<WorkflowProblem> = [];
@@ -1357,7 +903,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       if (this.identityKeyFields().length === 0) {
         problems.push({ step: 'items', key: 'south.workflows.identity-key-fields-none' });
       }
-      const mappingProblem = this.itemMappingProblem();
+      const mappingProblem = itemMappingProblem(this.activeMappableFields(), this.itemFieldMappingValues());
       if (mappingProblem) {
         problems.push({ step: 'items', key: mappingProblem });
       }
@@ -1394,7 +940,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
     let itemFieldMapping: Record<string, string> | null = null;
     if (!pushToOIAnalytics) {
-      itemFieldMapping = this.itemFieldMappingToSend();
+      itemFieldMapping = itemFieldMappingToSend(this.activeMappableFields(), this.itemFieldMappingValues(), this.subscriptionOnly());
     }
 
     const command: ConfigurationWorkflowCommandDTO = {

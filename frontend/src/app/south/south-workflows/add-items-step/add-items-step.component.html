@@ -1,0 +1,49 @@
+@if (coveringWorkflowNames().length > 0) {
+  <div class="alert alert-info py-1 px-2" id="items-covered-note" role="status">
+    <span [translate]="'south.add-discovered-items.covered'" [translateParams]="{ names: coveringWorkflowNames().join(', ') }"></span>
+  </div>
+}
+<oib-item-field-mapping-form
+  [fields]="fields()"
+  [(values)]="values"
+  [manifest]="manifest()"
+  [recordFields]="recordFields()"
+  [scanModes]="scanModes()"
+  [itemScanModes]="itemScanModes()"
+  [groupStore]="groupStore()"
+  [directSave]="directSave()"
+/>
+<div class="d-flex align-items-center gap-2 mb-2">
+  <button
+    type="button"
+    class="btn btn-secondary btn-sm"
+    id="discover-items"
+    [disabled]="!!mappingError() || discovery()?.loading"
+    (click)="discoverItems(true)"
+    translate="south.workflows.wizard.refresh-preview"
+  ></button>
+  @if (stale()) {
+    <span class="text-muted small" id="discovered-items-stale" translate="south.add-discovered-items.stale"></span>
+  }
+</div>
+@if (nodeIds().length === 0) {
+  <div class="alert alert-info" id="discovered-items-no-node" translate="south.add-discovered-items.no-node"></div>
+} @else if (mappingError(); as mappingError) {
+  <div class="alert alert-info" id="discovered-items-mapping-incomplete" [translate]="mappingError"></div>
+} @else if (discovery(); as discovery) {
+  @if (discovery.loading) {
+    <div class="text-center">
+      <div class="spinner-border" id="spinner" role="status"></div>
+    </div>
+  } @else if (discovery.error) {
+    <div class="alert alert-danger" id="discovered-items-error">
+      <div translate="south.add-discovered-items.error"></div>
+      <hr />
+      <div class="text-break">{{ discovery.error }}</div>
+    </div>
+  } @else if (discovery.commands && discovery.commands.length === 0) {
+    <div class="alert alert-info" id="discovered-items-empty" translate="south.add-discovered-items.none"></div>
+  } @else if (discovery.commands) {
+    <oib-discovered-items-review [commands]="discovery.commands" [manifest]="manifest()" [existingItems]="existingItems()" />
+  }
+}

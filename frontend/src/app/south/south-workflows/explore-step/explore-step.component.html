@@ -1,0 +1,80 @@
+<!-- What is already kept in sync: the synchronisations here, and their nodes marked in the tree -->
+@if (coverageChips().length > 0) {
+  <div class="d-flex flex-wrap align-items-center gap-1 mb-2" id="explore-coverage">
+    <span class="text-muted small" translate="south.explore.in-sync"></span>
+    @for (chip of coverageChips(); track chip.name) {
+      <span class="badge bg-secondary bg-opacity-25 text-secondary explore-coverage-chip">
+        <i class="fa-solid fa-sync me-1" aria-hidden="true"></i>{{ chip.name }}
+        <span class="ms-1">
+          @if (chip.count) {
+            ({{ chip.count }})
+          } @else {
+            (<span translate="south.explore.in-sync-all"></span>)
+          }
+        </span>
+      </span>
+    }
+  </div>
+}
+<oib-explore-tree [badges]="badges()" />
+@if (selectionNone()) {
+  <div class="alert alert-warning mt-2 mb-0" id="selection-none" role="alert" translate="south.explore.selection-none"></div>
+}
+@if (selectionError(); as error) {
+  <div class="alert alert-danger mt-2 mb-0" id="selection-error" role="alert">
+    <div translate="south.explore.selection-error"></div>
+    <div class="text-break small">{{ error }}</div>
+  </div>
+}
+<!-- What the checked nodes are added to: a new synchronisation, or one the connector already has -->
+@if (showSyncTarget()) {
+  <div class="form-group" id="sync-target">
+    <div class="form-label" translate="south.explore.sync-target"></div>
+    <div class="form-check">
+      <input
+        class="form-check-input"
+        type="radio"
+        id="sync-target-new"
+        name="sync-target"
+        [checked]="syncTargetId() === null"
+        (change)="syncTargetChange.emit(null)"
+      />
+      <label class="form-check-label" for="sync-target-new" translate="south.explore.sync-target-new"></label>
+    </div>
+    @for (workflow of workflows(); track workflow.id) {
+      <div class="form-check">
+        <input
+          class="form-check-input sync-target-existing"
+          type="radio"
+          name="sync-target"
+          [id]="'sync-target-' + workflow.id"
+          [checked]="syncTargetId() === workflow.id"
+          (change)="syncTargetChange.emit(workflow.id)"
+        />
+        <label class="form-check-label" [for]="'sync-target-' + workflow.id">
+          <span [translate]="'south.explore.sync-target-existing'" [translateParams]="{ name: workflow.name }"></span>
+          <span class="form-text d-block">
+            @if (workflow.nodeIds.length === 0) {
+              <span translate="south.explore.sync-target-all"></span>
+            } @else {
+              <span [translate]="'south.explore.sync-target-nodes'" [translateParams]="{ nodes: workflow.nodeIds.join(', ') }"></span>
+            }
+          </span>
+        </label>
+      </div>
+    }
+    @if (syncTargetId() !== null && addedNodeIds().length > 0) {
+      <div class="form-text" id="sync-target-added">
+        <span translate="south.explore.sync-target-adds"></span>
+        @for (nodeId of addedNodeIds(); track nodeId) {
+          <span class="badge bg-success bg-opacity-25 text-success ms-1">+ {{ nodeId }}</span>
+        }
+      </div>
+    }
+    @if (removedNodeIds().length > 0) {
+      <div class="alert alert-warning py-1 px-2 mt-2" id="sync-target-removed" role="alert">
+        <span [translate]="'south.explore.sync-target-removes'" [translateParams]="{ count: removedNodeIds().length }"></span>
+      </div>
+    }
+  </div>
+}
