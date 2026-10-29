@@ -2529,19 +2529,30 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthOPCUASettingsSubscription": {
+        "dataType": "refObject",
+        "properties": {
+            "publishingInterval": {"dataType":"double","required":true},
+            "maxKeepAliveCount": {"dataType":"double","required":true},
+            "numberOfMessageBeforeFlush": {"dataType":"double","required":true},
+            "delayBetweenFlush": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOPCUASettings": {
         "dataType": "refObject",
         "properties": {
             "url": {"dataType":"string","required":true},
             "keepSessionAlive": {"dataType":"boolean","required":true},
-            "readTimeout": {"dataType":"double","required":true},
+            "connectionTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
-            "maxNumberOfMessages": {"dataType":"double","required":true},
-            "flushMessageTimeout": {"dataType":"double","required":true},
             "securityMode": {"ref":"SouthOPCUASettingsSecurityMode","required":true},
             "securityPolicy": {"ref":"SouthOPCUASettingsSecurityPolicy"},
             "maxParallelRun": {"dataType":"double","required":true},
+            "readTimeout": {"dataType":"double","required":true},
             "authentication": {"ref":"SouthOPCUASettingsAuthentication","required":true},
+            "subscription": {"ref":"SouthOPCUASettingsSubscription","required":true},
         },
         "additionalProperties": false,
     },
@@ -6517,6 +6528,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "url": {"dataType":"string","required":true},
             "keepSessionAlive": {"dataType":"boolean","required":true},
+            "connectionTimeout": {"dataType":"double","required":true},
+            "writeTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "securityMode": {"ref":"NorthOPCUASettingsSecurityMode","required":true},
             "securityPolicy": {"ref":"NorthOPCUASettingsSecurityPolicy"},

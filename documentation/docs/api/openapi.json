@@ -10346,6 +10346,34 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthOPCUASettingsSubscription": {
+				"properties": {
+					"publishingInterval": {
+						"type": "number",
+						"format": "double"
+					},
+					"maxKeepAliveCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"numberOfMessageBeforeFlush": {
+						"type": "number",
+						"format": "double"
+					},
+					"delayBetweenFlush": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"publishingInterval",
+					"maxKeepAliveCount",
+					"numberOfMessageBeforeFlush",
+					"delayBetweenFlush"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthOPCUASettings": {
 				"properties": {
 					"url": {
@@ -10354,19 +10382,11 @@
 					"keepSessionAlive": {
 						"type": "boolean"
 					},
-					"readTimeout": {
+					"connectionTimeout": {
 						"type": "number",
 						"format": "double"
 					},
 					"retryInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"maxNumberOfMessages": {
-						"type": "number",
-						"format": "double"
-					},
-					"flushMessageTimeout": {
 						"type": "number",
 						"format": "double"
 					},
@@ -10380,20 +10400,27 @@
 						"type": "number",
 						"format": "double"
 					},
+					"readTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"authentication": {
 						"$ref": "#/components/schemas/SouthOPCUASettingsAuthentication"
+					},
+					"subscription": {
+						"$ref": "#/components/schemas/SouthOPCUASettingsSubscription"
 					}
 				},
 				"required": [
 					"url",
 					"keepSessionAlive",
-					"readTimeout",
+					"connectionTimeout",
 					"retryInterval",
-					"maxNumberOfMessages",
-					"flushMessageTimeout",
 					"securityMode",
 					"maxParallelRun",
-					"authentication"
+					"readTimeout",
+					"authentication",
+					"subscription"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -30662,6 +30689,14 @@
 					"keepSessionAlive": {
 						"type": "boolean"
 					},
+					"connectionTimeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"writeTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -30679,6 +30714,8 @@
 				"required": [
 					"url",
 					"keepSessionAlive",
+					"connectionTimeout",
+					"writeTimeout",
 					"retryInterval",
 					"securityMode",
 					"authentication"
@@ -45806,7 +45843,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.9.6",
+		"version": "3.10.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"

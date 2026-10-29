@@ -5,7 +5,7 @@ import Stream from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
-import type { ClientMonitoredItem, ClientSession, ClientSubscription } from 'node-opcua';
+import type { ClientMonitoredItem, ClientSession, ClientSubscription, OPCUAClientOptions } from 'node-opcua';
 // The values come from the node-opcua sub-packages: loading the whole node-opcua costs ~0.7 s
 import { AttributeIds, NodeClass } from 'node-opcua-data-model';
 import { NodeId } from 'node-opcua-nodeid';
@@ -98,11 +98,16 @@ const buildConfiguration = (): SouthConnectorEntity<SouthOPCUASettings, SouthOPC
   enabled: true,
   settings: {
     url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+    connectionTimeout: 15000,
     retryInterval: 10000,
     readTimeout: 15000,
     maxParallelRun: 1,
-    flushMessageTimeout: 1000,
-    maxNumberOfMessages: 1000,
+    subscription: {
+      publishingInterval: 150,
+      maxKeepAliveCount: 10,
+      numberOfMessageBeforeFlush: 1000,
+      delayBetweenFlush: 1000
+    },
     authentication: { type: 'none' },
     securityMode: 'none',
     securityPolicy: 'none',
@@ -217,7 +222,7 @@ describe('SouthOPCUA', () => {
   const utilsOpcuaExports = createUtilsOpcuaMocks();
 
   const createOpcuaMocks = () => ({
-    OPCUAClient: { create: mock.fn((): unknown => null) },
+    OPCUAClient: { create: mock.fn((_options?: OPCUAClientOptions): unknown => null) },
     readOperationLimits: mock.fn(async (_session: unknown): Promise<{ maxNodesPerRead?: number; maxNodesPerBrowse?: number }> => ({})),
     resolveNodeId: mock.fn((nodeId: unknown) => nodeId)
   });
@@ -315,7 +320,8 @@ describe('SouthOPCUA', () => {
     assert.deepStrictEqual(utilsOpcuaExports.createOPCUASession.mock.calls[0].arguments, [
       configuration.settings.url,
       opcuaUserIdentity,
-      opcuaOptions
+      opcuaOptions,
+      configuration.settings.connectionTimeout
     ]);
     assert.ok(
       logger.info.mock.calls.some(
@@ -460,7 +466,11 @@ describe('SouthOPCUA', () => {
       ]),
       disconnect: mock.fn(async () => undefined)
     };
-    opcuaExports.OPCUAClient.create.mock.mockImplementation(() => endpointClient);
+    let endpointClientOptions: OPCUAClientOptions | undefined;
+    opcuaExports.OPCUAClient.create.mock.mockImplementation((options?: OPCUAClientOptions) => {
+      endpointClientOptions = options;
+      return endpointClient;
+    });
     const session = createMock<ClientSession>({
       read: async () => serverStatusValues(),
       browse: async () => ({ references: [{ displayName: { text: 'Average' } }, { displayName: { text: 'Minimum' } }] })
@@ -476,6 +486,7 @@ describe('SouthOPCUA', () => {
     assert.ok(testResult.items.some(i => i.key === 'SupportedAggregates'));
     assert.strictEqual(endpointClient.connect.mock.calls.length, 1);
     assert.strictEqual(endpointClient.disconnect.mock.calls.length, 1);
+    assert.strictEqual(endpointClientOptions?.transportTimeout, configuration.settings.connectionTimeout);
   });
 
   it('should test connection and fall back to raw values for unmapped security mode, empty policy uri, and unmapped token type', async () => {
@@ -1133,6 +1144,28 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(createSubscription2.mock.calls.length, 1);
   });
 
+  it('should create the subscription from the subscription settings', async () => {
+    const { createSubscription2 } = mockSubscription();
+    configuration.settings.subscription = {
+      ...configuration.settings.subscription,
+      publishingInterval: 500,
+      maxKeepAliveCount: 20
+    };
+
+    await south.subscribe(configuration.items);
+
+    assert.deepStrictEqual(createSubscription2.mock.calls[0].arguments, [
+      {
+        requestedPublishingInterval: 500,
+        requestedLifetimeCount: 200,
+        requestedMaxKeepAliveCount: 20,
+        maxNotificationsPerPublish: 0,
+        publishingEnabled: true,
+        priority: 10
+      }
+    ]);
+  });
+
   it('should not subscribe if no items', async () => {
     const { createSubscription2, monitor } = mockSubscription();
 
@@ -1177,7 +1210,7 @@ describe('SouthOPCUA', () => {
     const flushMessages = mock.method(south, 'flushMessages', async () => undefined);
     utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => 'parsedValue');
     utilsOpcuaExports.parseOPCUAValue.mock.mockImplementationOnce(() => '');
-    south['connector'].settings.maxNumberOfMessages = 2;
+    south['connector'].settings.subscription.numberOfMessageBeforeFlush = 2;
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
     assert.strictEqual(flushMessages.mock.calls.length, 0);
@@ -1241,11 +1274,11 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(southCacheRepository.saveItemsLastValues.mock.calls.length, 0);
     assert.strictEqual(logger.debug.mock.calls.length, 0);
     assert.deepStrictEqual(south['bufferedValues'], []);
-    // The pending flush is replaced by a new one, which flushes (and re-arms) after flushMessageTimeout
+    // The pending flush is replaced by a new one, which flushes (and re-arms) after delayBetweenFlush
     const rescheduledTimeout = south['flushTimeout'];
     assert.ok(rescheduledTimeout);
     assert.notStrictEqual(rescheduledTimeout, previousTimeout);
-    mock.timers.tick(configuration.settings.flushMessageTimeout - 1);
+    mock.timers.tick(configuration.settings.subscription.delayBetweenFlush - 1);
     assert.strictEqual(south['flushTimeout'], rescheduledTimeout);
     mock.timers.tick(1);
     assert.notStrictEqual(south['flushTimeout'], rescheduledTimeout);
@@ -1466,7 +1499,7 @@ describe('SouthOPCUA', () => {
       throw flushError;
     });
     utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => 'parsedValue');
-    south['connector'].settings.maxNumberOfMessages = 1;
+    south['connector'].settings.subscription.numberOfMessageBeforeFlush = 1;
 
     stream.emit('changed', { value: { value: 1, dataType: DataType.Float }, statusCode: StatusCodes.Good });
     // Two microtask turns are needed: one for the async fn rejection to propagate,
@@ -1543,26 +1576,39 @@ describe('SouthOPCUA', () => {
     assert.notStrictEqual(watchdogBefore, watchdogAfter);
   });
 
-  it('should trigger reconnect when subscription watchdog fires after readTimeout ms', async () => {
+  it('should trigger reconnect when the subscription is silent for as long as its lifetime, whatever the readTimeout is', async () => {
     mockSubscription();
+    configuration.settings.readTimeout = 100;
     const disconnect = mock.method(south, 'disconnect', async () => undefined);
     await south.subscribe([configuration.items[2]]);
 
-    // Advance right up to (but not past) the configured readTimeout: must not fire yet
-    mock.timers.tick(configuration.settings.readTimeout - 1);
+    // The lifetime is 10 times the keep alive period: 150 ms * 10 * 10
+    mock.timers.tick(15_000 - 1);
     await flushPromises();
     assert.strictEqual(disconnect.mock.calls.length, 0);
 
-    // Advance past the boundary: watchdog fires, using the connector's readTimeout, not a hardcoded value
     mock.timers.tick(1);
     await flushPromises();
 
     assert.strictEqual(disconnect.mock.calls.length, 1);
-    assert.ok(
-      logger.error.mock.calls.some(
-        c => c.arguments[0].includes('OPC-UA subscription watchdog') && c.arguments[0].includes(String(configuration.settings.readTimeout))
-      )
-    );
+    assert.ok(logger.error.mock.calls.some(c => c.arguments[0].includes('no keepalive or data received for 15000 ms')));
+  });
+
+  it('should use the keep alive period revised by the server for the watchdog', async () => {
+    // The server revises the subscription: a keep alive every 30 s
+    const { subscription } = mockSubscription();
+    Object.assign(subscription, { publishingInterval: 3000, maxKeepAliveCount: 10 });
+    const disconnect = mock.method(south, 'disconnect', async () => undefined);
+    await south.subscribe([configuration.items[2]]);
+
+    mock.timers.tick(300_000 - 1);
+    await flushPromises();
+    assert.strictEqual(disconnect.mock.calls.length, 0);
+
+    mock.timers.tick(1);
+    await flushPromises();
+    assert.strictEqual(disconnect.mock.calls.length, 1);
+    assert.ok(logger.error.mock.calls.some(c => c.arguments[0].includes('no keepalive or data received for 300000 ms')));
   });
 
   it('should schedule a reconnect after triggerReconnect() successfully disconnects', async () => {

@@ -225,6 +225,8 @@ export interface NorthOIAnalyticsSettings {
 export interface NorthOPCUASettings {
   url: string;
   keepSessionAlive: boolean;
+  connectionTimeout: number;
+  writeTimeout: number;
   retryInterval: number;
   securityMode: NorthOPCUASettingsSecurityMode;
   securityPolicy?: NorthOPCUASettingsSecurityPolicy;

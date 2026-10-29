@@ -103,6 +103,9 @@ function isSessionError(error: unknown): boolean {
 // sent in one request regardless.
 const DEFAULT_MAX_NODES_PER_REQUEST = 1000;
 
+// The subscription lifetime, as a multiple of its keep alive period (the OPC UA specification requires at least 3)
+const SUBSCRIPTION_LIFETIME_FACTOR = 10;
+
 interface OperationLimits {
   maxNodesPerRead: number;
   maxNodesPerBrowse: number;
@@ -343,6 +346,7 @@ export default class SouthOPCUA
         const endpointClient = OPCUAClient.create({
           applicationName: 'OIBus',
           connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+          transportTimeout: this.connector.settings.connectionTimeout,
           endpointMustExist: false
         });
         try {
@@ -467,7 +471,7 @@ export default class SouthOPCUA
     );
     this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
     const connectStart = DateTime.now().toMillis();
-    const session = await createOPCUASession(this.connector.settings.url, userIdentity, options);
+    const session = await createOPCUASession(this.connector.settings.url, userIdentity, options, this.connector.settings.connectionTimeout);
     this.logger.info(`Connected to OPCUA server ${this.connector.settings.url} in ${DateTime.now().toMillis() - connectStart} ms`);
     return session;
   }
@@ -1251,11 +1255,15 @@ export default class SouthOPCUA
         }
       }
     }
+    const { subscription: subscriptionSettings } = this.connector.settings;
     if (!this.subscription) {
       this.subscription = await this.session!.createSubscription2({
-        requestedPublishingInterval: 150,
-        requestedLifetimeCount: 100,
-        requestedMaxKeepAliveCount: 10,
+        requestedPublishingInterval: subscriptionSettings.publishingInterval,
+        // The server drops the subscription after this many publishing intervals without a publish request, and requires at
+        // least 3 times the keep alive count: 10 times it gives the connection time to recover from a short network issue
+        requestedLifetimeCount: subscriptionSettings.maxKeepAliveCount * SUBSCRIPTION_LIFETIME_FACTOR,
+        requestedMaxKeepAliveCount: subscriptionSettings.maxKeepAliveCount,
+        // No limit: a cap would let the server fall behind a burst of changes and lose values
         maxNotificationsPerPublish: 0,
         publishingEnabled: true,
         priority: 10
@@ -1272,7 +1280,7 @@ export default class SouthOPCUA
       this.subscription.on('status_changed', (status: StatusCode) => {
         this.logger.warn(`OPC-UA subscription status changed: ${status}`);
       });
-      this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
+      this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.subscription.delayBetweenFlush);
       this.resetSubscriptionWatchdog();
     }
 
@@ -1327,7 +1335,7 @@ export default class SouthOPCUA
             value: parsedValue,
             quality: dataValue.statusCode.name
           });
-          if (this.bufferedValues.length >= this.connector.settings.maxNumberOfMessages) {
+          if (this.bufferedValues.length >= this.connector.settings.subscription.numberOfMessageBeforeFlush) {
             // flushMessages() is async; keep the event handler synchronous so any
             // rejection from flush is handled inside flushMessages itself rather than
             // becoming an unhandled rejection from an async event handler.
@@ -1378,21 +1386,31 @@ export default class SouthOPCUA
         this.logger.error(`Error when flushing messages: ${getErrorMessage(error)}`);
       }
     }
-    this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
+    this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.subscription.delayBetweenFlush);
+  }
+
+  /**
+   * The server sends a keep alive when it has no data to publish for `publishingInterval * maxKeepAliveCount` (the values it
+   * revised, see the subscription), and drops the subscription after `SUBSCRIPTION_LIFETIME_FACTOR` times that: once it is
+   * silent for as long, the server has given up on it, and the connector reconnects.
+   */
+  private getSubscriptionWatchdogTimeout(): number {
+    const { publishingInterval, maxKeepAliveCount } = this.connector.settings.subscription;
+    const revisedPeriod = (this.subscription?.publishingInterval ?? NaN) * (this.subscription?.maxKeepAliveCount ?? NaN);
+    return (revisedPeriod > 0 ? revisedPeriod : publishingInterval * maxKeepAliveCount) * SUBSCRIPTION_LIFETIME_FACTOR;
   }
 
   private resetSubscriptionWatchdog(): void {
     if (this.subscriptionWatchdog) {
       clearTimeout(this.subscriptionWatchdog);
     }
+    const timeout = this.getSubscriptionWatchdogTimeout();
     this.subscriptionWatchdog = setTimeout(() => {
       if (!this.disconnecting) {
-        this.logger.error(
-          `OPC-UA subscription watchdog: no keepalive or data received for ${this.connector.settings.readTimeout} ms. Triggering reconnect`
-        );
+        this.logger.error(`OPC-UA subscription watchdog: no keepalive or data received for ${timeout} ms. Triggering reconnect`);
         this.triggerReconnect();
       }
-    }, this.connector.settings.readTimeout);
+    }, timeout);
   }
 
   private clearSubscriptionWatchdog(): void {
