@@ -61,9 +61,9 @@ type TestingSettingsForm = FormGroup<{
 
 /**
  * Test panel for a South/History item: the item is run, and its raw result shown, then the output of a transformer when
- * there is one (its options can be tweaked for the test). A south item is tested through the transformer given (the one a
- * North sends its data with), raw without one; a history item through one of the transformers of the history query, picked
- * in the panel.
+ * there is one. A south item is tested through the transformer given with its options (the one a North sends its data with,
+ * shown and edited by the caller), raw without one; a history item through one of the transformers of the history query,
+ * picked in the panel, whose options can be tweaked for the test.
  */
 @Component({
   selector: 'oib-south-item-test',

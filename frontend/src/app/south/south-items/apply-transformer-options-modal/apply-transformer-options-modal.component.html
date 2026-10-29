@@ -1,0 +1,78 @@
+@if (change(); as change) {
+  <div class="modal-header">
+    <h4 class="modal-title" translate="south.items.norths.apply-modal.title"></h4>
+  </div>
+  <div class="modal-body">
+    <!-- The transformer changed: of this North only -->
+    <p id="apply-route">
+      {{
+        'south.items.norths.apply-modal.route'
+          | translate: { transformer: transformerName(), south: change.transformer.source.south.name, north: change.north.name }
+      }}
+    </p>
+
+    <h5 class="oib-section-title" translate="south.items.norths.apply-modal.changes"></h5>
+    @if (changeCount(); as count) {
+      <div class="alert alert-warning py-2" id="apply-change-count" role="status">
+        {{ 'south.items.norths.apply-modal.change-count' | translate: { count } }}
+      </div>
+    } @else {
+      <div
+        class="alert alert-secondary py-2"
+        id="apply-change-count"
+        role="status"
+        translate="south.items.norths.apply-modal.no-change"
+      ></div>
+    }
+    <oib-oibus-settings-summary id="apply-options" [settings]="options()" [previous]="savedOptions()" />
+
+    <!-- Every item of the south the North sends through the transformer -->
+    <h5 class="oib-section-title" translate="south.items.norths.apply-modal.impacted"></h5>
+    <p class="mb-2" id="apply-scope">
+      @if (change.transformer.source.items.length > 0) {
+        {{ 'south.items.norths.apply-modal.scope.items' | translate: { south: change.transformer.source.south.name } }}
+      } @else if (change.transformer.source.group; as group) {
+        {{ 'south.items.norths.apply-modal.scope.group' | translate: { south: change.transformer.source.south.name, group: group.name } }}
+      } @else {
+        {{ 'south.items.norths.apply-modal.scope.south' | translate: { south: change.transformer.source.south.name } }}
+      }
+      @if (change.transformer.source.excludedItems?.length; as excluded) {
+        {{ 'south.items.norths.apply-modal.excluded' | translate: { count: excluded } }}
+      }
+    </p>
+    <div class="small text-body-secondary mb-1" id="apply-item-count">
+      {{ 'south.items.norths.apply-modal.item-count' | translate: { count: change.impactedItems.length, north: change.north.name } }}
+    </div>
+    <div class="d-flex flex-wrap gap-1 mb-3" id="apply-items" role="list">
+      @for (item of shownItems(); track $index) {
+        <span class="badge text-bg-light border fw-normal" role="listitem">{{ item }}</span>
+      }
+      @if (hiddenItemCount(); as hidden) {
+        <span class="small text-body-secondary">{{ 'south.items.norths.apply-modal.more' | translate: { count: hidden } }}</span>
+      }
+    </div>
+
+    <ul class="small text-body-secondary mb-0 ps-3" id="apply-notes">
+      <li translate="south.items.norths.apply-modal.only-this-north"></li>
+      @if (change.transformer.transformer.type === 'custom') {
+        <li id="apply-custom">{{ 'south.items.norths.apply-modal.custom-unchanged' | translate: { name: transformerName() } }}</li>
+      }
+      @if (change.itemEdited) {
+        <li id="apply-saved-now" translate="south.items.norths.apply-modal.saved-now"></li>
+      }
+    </ul>
+  </div>
+  <div class="modal-footer">
+    <div class="btn-group">
+      <button
+        type="button"
+        [oib-save-button]="state"
+        id="apply-button"
+        translationKey="south.items.norths.apply-modal.confirm"
+        iconClass="fa-check"
+        (click)="apply()"
+      ></button>
+      <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+    </div>
+  </div>
+}

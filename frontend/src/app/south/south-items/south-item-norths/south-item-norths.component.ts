@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, model, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,7 +14,7 @@ import {
   SouthItemNorthTransformerCommandDTO,
   SouthItemTransformerScope
 } from '@oibus/shared/api/south-connector.model';
-import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { SourceOriginSouthDTO, TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
 import { transformerName, transformerOptionsSummary } from '../../../north/north-summary';
@@ -28,8 +29,13 @@ import { TransformerService } from '../../../services/transformer.service';
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import { SettingSummary, summarizeSettings } from '../../../shared/form/oibus-settings-summary/settings-summary';
+import { ModalService } from '../../../shared/modal.service';
+import { NotificationService } from '../../../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../../../shared/oibus-north-type-enum.pipe';
 import { getAssociatedInputType, isTransformerApplicable } from '../../../shared/utils/utils';
+import { ApplyTransformerOptionsModalComponent } from '../apply-transformer-options-modal/apply-transformer-options-modal.component';
 import SouthItemTestComponent, { ItemTestTransformer } from '../south-item-test/south-item-test.component';
 
 /** What tells where the data of an item goes: its id (none before it is saved), its group, and what it is tested with */
@@ -69,6 +75,8 @@ const groupOf = (item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO): { 
  * The Norths the data of a south item is sent to, and through which transformer: one attached to the item, to its group, or
  * to all the items of its south. The item can be tested through each of them, and new transformers can be attached to
  * send its data to more Norths, or through another transformer: they are saved with the item (see `attachments`).
+ * The options of the transformer a North sends the item with can be changed to test the item only, or applied to that
+ * transformer, for every item it sends.
  */
 @Component({
   selector: 'oib-south-item-norths',
@@ -80,10 +88,12 @@ const groupOf = (item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO): { 
     '../../../north/north-transformers/edit-north-transformer-modal/edit-north-transformer-modal.component.scss'
   ],
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     TranslateDirective,
     TranslatePipe,
     OIBusObjectFormControlComponent,
+    OIBusSettingsSummaryComponent,
     OIBusNorthTypeEnumPipe,
     SouthItemTestComponent
   ],
@@ -95,6 +105,8 @@ export class SouthItemNorthsComponent {
   private readonly northConnectorService = inject(NorthConnectorService);
   private readonly transformerService = inject(TransformerService);
   private readonly translateService = inject(TranslateService);
+  private readonly modalService = inject(ModalService);
+  private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(NonNullableFormBuilder);
 
   /** The south of the item ('create' while it is created) */
@@ -206,6 +218,27 @@ export class SouthItemNorthsComponent {
     }).length;
   });
 
+  /** The options the item is tested with in place of those of the transformer it is routed to, by North: not saved */
+  readonly testOptions = signal<Record<string, Record<string, unknown>>>({});
+  /** The North whose transformer options are being edited, until they are kept for the test, applied, or the edit cancelled */
+  readonly optionsNorthId = signal<string | null>(null);
+  readonly optionsForm = this.fb.group({ options: this.fb.group({}) });
+  private readonly optionsEvents = toSignal(this.optionsForm.events);
+
+  /** The options of the transformer the item is routed to for the selected North: as saved, or tried out for the test */
+  readonly routedOptions = computed(() => {
+    const route = this.selectedRoute();
+    if (!route?.routing) return null;
+    const saved = route.routing.transformer.options;
+    const tested = this.testOptions()[route.north.id] ?? null;
+    return {
+      tested,
+      settings: this.summarizeOptions(route.routing.transformer.transformer, tested ?? saved),
+      // the saved options, to tell what the test ones change
+      previous: tested ? this.summarizeOptions(route.routing.transformer.transformer, saved) : null
+    };
+  });
+
   /** What the item is tested with for the selected North: the transformer being attached, attached, or routed to */
   readonly testTransformer = computed<ItemTestTransformer | null>(() => {
     const route = this.selectedRoute();
@@ -219,13 +252,109 @@ export class SouthItemNorthsComponent {
       const transformer = this.findTransformer(route.attachment.transformerId);
       return transformer ? { transformer, options: route.attachment.options } : null;
     }
-    return route.routing ? { transformer: route.routing.transformer.transformer, options: route.routing.transformer.options } : null;
+    if (!route.routing) return null;
+    const transformer = route.routing.transformer.transformer;
+    // the options being edited are tried out right away
+    if (this.optionsNorthId() === route.north.id) {
+      this.optionsEvents();
+      return { transformer, options: this.optionsForm.controls.options.getRawValue() };
+    }
+    return { transformer, options: this.testOptions()[route.north.id] ?? route.routing.transformer.options };
   });
 
   selectNorth(northId: string) {
     if (northId === this.selectedNorthId()) return;
     this.selectedNorthId.set(northId);
     this.draftNorthId.set(null);
+    this.optionsNorthId.set(null);
+  }
+
+  /** Opens the form of the options of the transformer the item is routed to, with the ones it is tested with */
+  startOptionsEdit(route: NorthRoute) {
+    if (!route.routing) return;
+    const transformer = route.routing.transformer.transformer;
+    const options = this.fb.group({});
+    for (const attribute of transformer.manifest.attributes) {
+      addAttributeToForm(this.fb, options, attribute);
+    }
+    addEnablingConditions(options, transformer.manifest.enablingConditions);
+    options.patchValue(this.testOptions()[route.north.id] ?? route.routing.transformer.options);
+    this.optionsForm.setControl('options', options);
+    this.optionsNorthId.set(route.north.id);
+  }
+
+  /** Keeps the options edited to test the item, without saving them: the same as the saved ones drop the test ones */
+  useOptionsForTesting(route: NorthRoute) {
+    if (!route.routing || !this.validOptions()) return;
+    const options = this.optionsForm.controls.options.getRawValue();
+    const same = JSON.stringify(options) === JSON.stringify(route.routing.transformer.options);
+    this.testOptions.update(({ [route.north.id]: _previous, ...others }) => (same ? others : { ...others, [route.north.id]: options }));
+    this.optionsNorthId.set(null);
+  }
+
+  cancelOptionsEdit() {
+    this.optionsNorthId.set(null);
+  }
+
+  discardTestOptions(route: NorthRoute) {
+    this.testOptions.update(({ [route.north.id]: _previous, ...others }) => others);
+  }
+
+  /**
+   * Applies options to the transformer the item is routed to, once the user confirms it, seeing every item it sends: the ones
+   * being edited, or else the ones kept for the test
+   */
+  applyOptions(route: NorthRoute) {
+    if (!route.routing) return;
+    const editing = this.optionsNorthId() === route.north.id;
+    if (editing && !this.validOptions()) return;
+    const options = editing ? this.optionsForm.controls.options.getRawValue() : this.testOptions()[route.north.id];
+    if (!options) return;
+    const transformer = route.routing.transformer as TransformerDTOWithOptions & { source: SourceOriginSouthDTO };
+    const modal = this.modalService.open(ApplyTransformerOptionsModalComponent, { size: 'lg' });
+    modal.componentInstance.prepare({
+      north: route.north,
+      transformer,
+      options,
+      impactedItems: this.impactedItems(route),
+      itemEdited: this.editable()
+    });
+    modal.result.subscribe(() => {
+      this.notificationService.success('south.items.norths.options-applied', {
+        transformer: this.transformerName(transformer.transformer),
+        north: route.north.name
+      });
+      this.discardTestOptions(route);
+      this.optionsNorthId.set(null);
+      this.northsResource.reload();
+    });
+  }
+
+  /** The names of the items the North sends through the transformer the item is routed to: the item first */
+  impactedItems(route: NorthRoute): Array<string> {
+    if (!route.routing) return [];
+    const item = this.item();
+    const others = this.items()
+      .filter(other => (item.id ? other.id !== item.id : other.name !== item.name))
+      .filter(
+        other =>
+          resolveItemRouting(route.north.transformers, this.southId(), { id: other.id ?? '', groupId: groupOf(other).id })?.transformer
+            .id === route.routing!.transformer.id
+      )
+      .map(other => other.name);
+    return [item.name, ...others];
+  }
+
+  private validOptions(): boolean {
+    if (this.optionsForm.invalid) {
+      this.optionsForm.markAllAsTouched();
+      return false;
+    }
+    return true;
+  }
+
+  summarizeOptions(transformer: TransformerDTO, options: Record<string, unknown>): Array<SettingSummary> {
+    return summarizeSettings(transformer.manifest, options, { translateService: this.translateService, applyEnablingConditions: true });
   }
 
   /** Opens the form to attach a transformer to the North, or to change the one attached */
@@ -239,6 +368,7 @@ export class SouthItemNorthsComponent {
     if (attachment) {
       this.draftForm.controls.options.patchValue(attachment.options);
     }
+    this.optionsNorthId.set(null);
     this.draftNorthId.set(route.north.id);
   }
 
