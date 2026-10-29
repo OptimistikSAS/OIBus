@@ -12,6 +12,20 @@ const manifest: SouthConnectorManifest = {
   explore: true,
   discovery: {
     kind: 'tree',
+    recordFields: [
+      'id',
+      'name',
+      'deviceName',
+      'deviceAddress',
+      'deviceInstance',
+      'routed',
+      'networkNumber',
+      'macAddress',
+      'objectType',
+      'objectInstance',
+      'description',
+      'units'
+    ],
     defaults: {
       identityKeyFields: ['id'],
       // routed and objectType vary per discovered object: the settings they enable are mapped too, and

@@ -15,6 +15,9 @@ interface SqlColumn {
   type: string | null;
 }
 
+/** The fields of the record of each table discovered by `discoverTables()` */
+export const SQL_TABLE_RECORD_FIELDS = ['id', 'name', 'query', 'trackInstant', 'timeColumn', 'dateTimeType'];
+
 /** Column names that usually hold the time of a row, preferred when a table has several date/time columns. */
 const TIME_COLUMN_NAME = /^(timestamp|time|date|datetime)$|(_at|_time|_date|timestamp)$/i;
 

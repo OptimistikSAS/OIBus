@@ -99,6 +99,13 @@ export interface SouthConnectorDiscovery {
 
   /** How the records of checked nodes become items; absent when the connector can't tell (see SouthDiscoveryDefaults) */
   defaults?: SouthDiscoveryDefaults;
+
+  /**
+   * The fields of the records the connector discovers, to use as `{{field}}` in a workflow's eligibility filter, identity key
+   * and item mapping. A record may not have all of them: a node has no unit, for example, unless the server tells it.
+   * @example ["id", "name", "path", "nodeId", "type"]
+   */
+  recordFields?: Array<string>;
 }
 
 /**
