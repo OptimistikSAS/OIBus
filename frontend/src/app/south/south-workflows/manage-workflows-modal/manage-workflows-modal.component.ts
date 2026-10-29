@@ -27,8 +27,8 @@ import EditWorkflowModalComponent, {
 import { toConfigurationWorkflowCommand } from '../workflow-command';
 import { WorkflowCreationService } from '../workflow-creation.service';
 
-/** What the modal closes with when the wizard it opened gave items to add: the page saves them. */
-export type ExploreAndSyncResult = Extract<ExploreWizardResult, { kind: 'items' }>;
+/** What the modal closes with when the wizard it opened gave items to add, or the item to complete: the page handles them. */
+export type ExploreAndSyncResult = Extract<ExploreWizardResult, { kind: 'items' | 'item' }>;
 
 /**
  * The home of the Explore and sync button of a south connector with discovery: it starts exploring the data source (in the
@@ -166,6 +166,11 @@ export default class ManageWorkflowsModalComponent {
     return { component, result: modalRef.result };
   }
 
+  /** Whether the connector is a SQL database: its synchronisations push the records of a query, there is no item to keep in sync */
+  get isDatabase(): boolean {
+    return this.manifest.discovery?.kind === 'query';
+  }
+
   /** Whether the workflows discover from nodes, which are checked in the wizard (rather than from a query) */
   private get treeBased(): boolean {
     return this.manifest.discovery?.kind === 'tree';
@@ -188,7 +193,7 @@ export default class ManageWorkflowsModalComponent {
   /** The wizard gives a workflow to save, or items to add - which are the page's to save, so this modal closes with them */
   private runWizard(options: ExploreWizardOptions) {
     openExploreWizard(this.modalService, options).subscribe(result => {
-      if (result.kind === 'items') {
+      if (result.kind === 'items' || result.kind === 'item') {
         const closed: ExploreAndSyncResult = result;
         this.modal.close(closed);
       } else {

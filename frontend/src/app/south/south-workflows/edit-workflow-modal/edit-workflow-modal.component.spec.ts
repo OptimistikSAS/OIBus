@@ -1530,15 +1530,6 @@ describe('EditWorkflowModalComponent', () => {
         await expect.element(tester.keepInSyncButton).toBeInTheDocument();
       });
 
-      test('should only offer to add items for a query-based discovery', async () => {
-        const tester = explore({
-          manifest: { ...exploreManifest, discovery: { kind: 'query', defaults: exploreManifest.discovery!.defaults } }
-        });
-
-        await expect.element(tester.flowActionButtons).toHaveLength(1);
-        await expect.element(tester.addAsItemsButton).toBeInTheDocument();
-      });
-
       test('should close on the close button', async () => {
         const tester = explore();
 
@@ -1792,6 +1783,153 @@ describe('EditWorkflowModalComponent', () => {
         await tester.addAsItemsButton.click();
 
         await expect.element(tester.root.getByCss('#items-covered-note')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('SQL database', () => {
+      const sqlExploreManifest: SouthConnectorManifest = {
+        ...manifest,
+        id: 'mysql',
+        explore: true,
+        discovery: {
+          kind: 'query',
+          defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{name}}', 'settings.query': '{{query}}' } }
+        }
+      };
+      const tableItem = (): SouthConnectorItemCommandDTO => ({
+        ...discovered('measures_tags', 'unused'),
+        settings: { query: 'SELECT * FROM measures JOIN tags ON 1 = 1 WHERE ts > @StartTime' } as never
+      });
+
+      function exploreSql(options: Partial<ExploreWizardOptions> = {}) {
+        return explore({ manifest: sqlExploreManifest, ...options });
+      }
+
+      test('should offer to sync the metadata and to add in an item, the last one being the main action', async () => {
+        const tester = exploreSql();
+
+        await expect.element(tester.flowActionButtons).toHaveLength(2);
+        await expect.element(tester.root.getByRole('button', { name: 'Metadata sync' })).toBeInTheDocument();
+        await expect.element(tester.root.getByRole('button', { name: 'Add in an item' })).toHaveClass('btn-primary');
+        await expect.element(tester.addAsItemsButton).not.toBeInTheDocument();
+        await expect.element(tester.keepInSyncButton).not.toBeInTheDocument();
+        // nothing to do with the synchronisations the connector already has
+        await tester.exploreCheck('Reactor').click();
+        await expect.element(tester.root.getByCss('#sync-target')).not.toBeInTheDocument();
+      });
+
+      test('should only offer to add in an item for the database of a history query, which has no synchronisation', async () => {
+        const tester = exploreSql({ sync: undefined, schedule: undefined });
+
+        await expect.element(tester.flowActionButtons).toHaveLength(1);
+        await expect.element(tester.root.getByRole('button', { name: 'Add in an item' })).toBeInTheDocument();
+      });
+
+      test('should give the item of the tables checked, read together, to complete', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([tableItem()]));
+        const tester = exploreSql();
+        await expect.element(tester.root.getByRole('button', { name: 'Add in an item' })).toBeDisabled();
+        await tester.exploreCheck('Reactor').click();
+        await tester.exploreCheck('Boiler').click();
+
+        await tester.root.getByRole('button', { name: 'Add in an item' }).click();
+
+        // the tables are joined in one query: one item, whatever their number
+        expect(southConnectorService.discoverItems).toHaveBeenCalledWith(
+          southId,
+          'mysql',
+          southSettings,
+          { nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'], combine: true },
+          { name: '{{name}}', 'settings.query': '{{query}}' }
+        );
+        expect(closedWith()).toEqual({ kind: 'item', command: tableItem() });
+      });
+
+      test('should discover through the history query for its database', async () => {
+        const discover = vi.fn(() => of([tableItem()]));
+        const tester = exploreSql({ sync: undefined, schedule: undefined, discover });
+        await tester.exploreCheck('Reactor').click();
+
+        await tester.root.getByRole('button', { name: 'Add in an item' }).click();
+
+        expect(discover).toHaveBeenCalledWith(
+          { nodeIds: ['ns=1;s=Reactor'], combine: true },
+          expect.objectContaining({ name: '{{name}}' })
+        );
+        expect(southConnectorService.discoverItems).not.toHaveBeenCalled();
+        expect(closedWith()).toEqual({ kind: 'item', command: tableItem() });
+      });
+
+      test('should start a metadata synchronisation from the query of the tables checked, with no item to map', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([tableItem()]));
+        const tester = exploreSql();
+        await tester.exploreCheck('Reactor').click();
+
+        await tester.root.getByRole('button', { name: 'Metadata sync' }).click();
+
+        // the query a metadata query runs as it is: the plain one, with no time range
+        expect(southConnectorService.discoverItems).toHaveBeenCalledWith(
+          southId,
+          'mysql',
+          southSettings,
+          { nodeIds: ['ns=1;s=Reactor'], combine: true },
+          { name: '{{name}}', 'settings.query': '{{plainQuery}}' }
+        );
+        for (const step of ['explore', 'source', 'filter', 'schedule', 'review'] as const) {
+          await expect.element(tester.stepButton(step)).toBeInTheDocument();
+        }
+        await expect.element(tester.stepButton('items')).not.toBeInTheDocument();
+        await expect.element(tester.stepButton('source')).toHaveAttribute('aria-current', 'step');
+        await expect.element(tester.discoveryQueryInput).toMatchTextContent('SELECT * FROM measures JOIN tags');
+        // named after the tables, until the user chooses
+        await expect.element(tester.name).toHaveValue('measures_tags');
+      });
+
+      test('should keep the name already given to the synchronisation', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([tableItem()]));
+        const tester = exploreSql();
+        tester.fixture.componentInstance.form.controls.name.setValue('Tag list');
+        await tester.exploreCheck('Reactor').click();
+
+        await tester.root.getByRole('button', { name: 'Metadata sync' }).click();
+
+        await expect.element(tester.name).toHaveValue('Tag list');
+      });
+
+      test('should say why the query could not be built, and stay on the Explore step', async () => {
+        southConnectorService.discoverItems.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'unreachable' } })));
+        const tester = exploreSql();
+        await tester.exploreCheck('Reactor').click();
+
+        await tester.root.getByRole('button', { name: 'Add in an item' }).click();
+
+        await expect.element(tester.root.getByCss('#selection-error')).toMatchTextContent('unreachable');
+        expect(activeModal.close).not.toHaveBeenCalled();
+        await expect.element(tester.exploreStep).toBeVisible();
+        await expect.element(tester.root.getByRole('button', { name: 'Add in an item' })).toBeEnabled();
+      });
+
+      test('should say when the tables checked have nothing to read', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = exploreSql();
+        await tester.exploreCheck('Reactor').click();
+
+        await tester.root.getByRole('button', { name: 'Metadata sync' }).click();
+
+        await expect.element(tester.root.getByCss('#selection-none')).toMatchTextContent('have nothing to read');
+        await expect.element(tester.stepButton('source')).not.toBeInTheDocument();
+      });
+
+      test('should only browse the database when read-only: nothing to check, nothing to do with it', async () => {
+        const tester = exploreSql({ readOnly: true });
+
+        await expect.element(tester.exploreStep).toBeVisible();
+        await expect.element(tester.root.getByCss('#step-explore .explore-node')).toHaveLength(2);
+        await expect.element(tester.root.getByCss('#step-explore .explore-check')).not.toBeInTheDocument();
+        await expect.element(tester.flowActionButtons).not.toBeInTheDocument();
+        await expect.element(tester.checkedCount).not.toBeInTheDocument();
+        await tester.closeButton.click();
+        expect(activeModal.dismiss).toHaveBeenCalled();
       });
     });
 

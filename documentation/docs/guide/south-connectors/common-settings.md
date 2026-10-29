@@ -197,12 +197,12 @@ sync** for the connectors with [discovery](#items-synchronisation), which also k
 [Explore and Sync](#explore-and-sync)). It opens the **Explore data source** modal: a tree of what the data source
 holds, loaded level by level as nodes are expanded.
 
-| Connector                                                 | What the tree shows                                                                 | Actions on selected nodes           |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------- |
-| [OPC UA](./opcua.mdx#node-metadata)                       | The server's address space, with node metadata (node ID, type, description, unit…)  | **Add as items**, **Keep in sync…** |
-| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Devices, then the objects of each device                                            | **Add as items**, **Keep in sync…** |
-| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Tables (with column and row counts where available), then the columns of each table | **Add as items**                    |
-| [Folder Scanner](./folder-scanner.mdx)                    | Folders and files of the input folder, with size and dates                          | — (browsing only)                   |
+| Connector                                                 | What the tree shows                                                                 | Actions on selected nodes             |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------- |
+| [OPC UA](./opcua.mdx#node-metadata)                       | The server's address space, with node metadata (node ID, type, description, unit…)  | **Add as items**, **Keep in sync…**   |
+| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Devices, then the objects of each device                                            | **Add as items**, **Keep in sync…**   |
+| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Tables (with column and row counts where available), then the columns of each table | **Add in an item**, **Metadata sync** |
+| [Folder Scanner](./folder-scanner.mdx)                    | Folders and files of the input folder, with size and dates                          | — (browsing only)                     |
 
 Click a node to show its details (the metadata the data source gives for it) in a side panel, each value with a copy
 button. Explore uses the settings as currently edited, so it works from the connector's create/edit page before the
@@ -256,10 +256,11 @@ the mapping changes (or with **Refresh preview**), and the items can't be added 
 [discovery defaults](#discovery-defaults); every item setting left out of them gets its usual default value, as in the
 item modal.
 
-#### SQL Tables as Items {#sql-tables-as-items}
+#### SQL Tables in an Item {#sql-tables-as-items}
 
-For the SQL connectors, each selected table (or each table some selected columns belong to) gives one item, named
-after the table, whose query reads the table:
+For the SQL connectors, **Add in an item** gives **one item** for everything checked: its query is written from the
+tables and columns checked, and the item modal opens with it, to complete (name, schedule, group…) and save. Nothing is
+created before you save.
 
 - A selected table reads all its columns (`SELECT *`); selected columns read only those columns.
 - OIBus picks a **date/time column** to track the table: among the date/time columns of the table, it prefers a
@@ -275,9 +276,18 @@ after the table, whose query reads the table:
   starts where the last one stopped.
 
 - A table without any date/time column is read whole on each run, untracked: review its query before enabling it.
+- **Several tables** are read by one query that joins them, on a column they share (a primary key first) — for example
+  `FROM [dbo].[measures] [measures] INNER JOIN [dbo].[tags] [tags] ON [measures].[tag_id] = [tags].[tag_id]`. Two tables
+  with no column in common are joined on a condition left to complete (`ON 1 = 1 /* join condition to complete */`): it
+  is a suggestion, to check and finish in the item. A column whose name an earlier table already has is renamed after its
+  table (`tags_value`), and the time range is the one of the first table that has a date/time column.
 
 Table and column names are quoted in the connector's own SQL dialect. The generated query is a starting point: edit
-the item afterwards to filter rows or rename columns.
+the item to filter rows or rename columns.
+
+While writing the query of a SQL item, **Browse tables** (in the Settings step of the item modal) opens the database
+browser to look up a table or a column, without leaving the item. Each table lists its `SELECT` query among its details,
+with a copy button, as the names and types of its columns.
 
 ---
 
@@ -413,6 +423,10 @@ For a connector with discovery, the **Explore and sync** button opens a home scr
 - The connector's synchronisations are listed under it, with their discovery scope (their nodes, the whole data source,
   or a query), schedule, mode and whether they are enabled (a dash for one with no schedule, which only runs on demand). **New synchronisation** creates one (for a SQL connector,
   from its Source step, where the query is written).
+- For a SQL connector, the home offers to **Browse the database** instead, and lists **Metadata synchronisations**: the
+  records of their query are pushed to OIAnalytics. In the Explore step, **Metadata sync** starts one from the tables
+  checked (its query is written for you, with no time range, and the Items step is skipped since there is nothing to
+  map), and **Add in an item** starts an item, see [SQL Tables in an Item](#sql-tables-as-items).
 
 Each synchronisation of the list has these actions:
 
@@ -457,7 +471,8 @@ edited can be saved from any step.
 #### Source {#source}
 
 For SQL connectors, write a metadata query in the SQL editor — independent of any item's own query, each row it returns
-becomes one discovered record (e.g. `SELECT tag, description, unit FROM tag_list`). When the connector can be explored,
+becomes one discovered record (e.g. `SELECT tag, description, unit FROM tag_list`). Started from **Metadata sync** in the
+Explore step, it is already written from the tables checked, and the synchronisation is named after them. When the connector can be explored,
 its tables and columns are shown above the editor for reference. **Test query** runs the query and shows its raw rows, as
 a table or JSON.
 
@@ -503,7 +518,7 @@ for the other.
 :::note SQL connectors only push to OIAnalytics
 For a SQL connector, one item is one free-form query, and a query can return several distinct points at once — item
 and point aren't the same thing there. A synchronisation never creates or updates items for these connectors, and the
-mode picker is replaced by a note. To create items from SQL tables, use [Add as items](#sql-tables-as-items) in the
+mode picker is replaced by a note. To create an item from SQL tables, use [Add in an item](#sql-tables-as-items) in the
 Explore modal.
 :::
 

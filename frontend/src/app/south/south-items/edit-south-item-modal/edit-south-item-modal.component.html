@@ -14,6 +14,13 @@
       <!-- 1. Settings: those of the connector type -->
       <div [hidden]="steps.current() !== 'settings'" id="step-settings">
         <h5 class="oib-section-title" [translate]="itemSettingsAttribute()!.translationKey"></h5>
+        <!-- The query of a SQL item is written from what the database holds -->
+        @if (canBrowseTables()) {
+          <button type="button" class="btn btn-secondary btn-sm mb-2" id="browse-tables" (click)="browseTables()">
+            <span class="fa-solid fa-database me-1" aria-hidden="true"></span>
+            <span translate="south.explore.browse-tables"></span>
+          </button>
+        }
         <ng-container formGroupName="settings">
           <oib-oibus-object-form-control
             [scanModes]="scanModes()"

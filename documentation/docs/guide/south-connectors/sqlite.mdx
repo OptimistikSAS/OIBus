@@ -25,8 +25,9 @@ Connect to and query SQLite™ database files with OIBus.
 Click **Explore** to browse the database's tables (with their column count and, where the database gives it, an
 approximate row count) and the columns of each table, with their type and, where available, nullability, primary key
 and default value. Check tables or columns and click
-**Add as items** to create one item per table, whose query reads the checked columns and is tracked on a date/time
-column picked automatically — see [SQL Tables as Items](./common-settings.md#sql-tables-as-items).
+**Add in an item** to start an item whose query reads the checked columns (several tables are joined), tracked on a
+date/time column picked automatically — see [SQL Tables in an Item](./common-settings.md#sql-tables-as-items) — or
+**Metadata sync** to push the records of a table to OIAnalytics.
 
 An [items synchronisation](./common-settings.md#items-synchronisation) on this connector runs a metadata query and
 pushes its rows to OIAnalytics; it never creates items.

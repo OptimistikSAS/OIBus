@@ -270,7 +270,7 @@ export class HistoryQueryDetailComponent {
 
   explore() {
     const historyQuery = this.historyQuery()!;
-    // the items of the checked nodes can be added, with the discovery defaults of the connector: there is no synchronisation
+    // the checked nodes give items to add, or an item to complete (a SQL database), with the discovery defaults of the connector: there is no synchronisation
     openExploreWizard(this.modalService, {
       southId: historyQuery.id,
       exploreConnectorId: historyQuery.id,
@@ -292,16 +292,20 @@ export class HistoryQueryDetailComponent {
         )
     })
       .pipe(
-        switchMap(result =>
-          result.kind === 'items'
+        switchMap(result => {
+          if (result.kind === 'item') {
+            this.openItemCreation(historyQuery.items, null, toHistoryQueryItemCommand(result.command));
+            return EMPTY;
+          }
+          return result.kind === 'items'
             ? this.historyQueryService
                 .importItems(
                   historyQuery.id,
                   result.commands.map(command => toHistoryQueryItemCommand(command))
                 )
                 .pipe(map(() => result.commands.length))
-            : EMPTY
-        )
+            : EMPTY;
+        })
       )
       .subscribe(count => {
         this.refreshHistoryQuery();
@@ -335,7 +339,8 @@ export class HistoryQueryDetailComponent {
    */
   private openItemCreation(
     items: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
-    previousItem: HistoryQueryItemCommandDTO | null
+    previousItem: HistoryQueryItemCommandDTO | null,
+    prefill: HistoryQueryItemCommandDTO | null = null
   ) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, {
       size: 'xl',
@@ -347,7 +352,7 @@ export class HistoryQueryDetailComponent {
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     const historyQuery = this.historyQuery()!;
-    component.prepareForCreation(items, historyQuery.id, null, this.southConnectorCommand, this.southManifest()!, previousItem);
+    component.prepareForCreation(items, historyQuery.id, null, this.southConnectorCommand, this.southManifest()!, previousItem, prefill);
     modalRef.result
       .pipe(
         switchMap((command: HistoryQueryItemCommandDTO) =>

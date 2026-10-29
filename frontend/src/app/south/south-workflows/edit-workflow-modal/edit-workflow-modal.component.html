@@ -39,6 +39,15 @@
           </div>
         }
         <oib-explore-tree #exploreStepTree [badges]="exploreBadges()" />
+        @if (selectionNone()) {
+          <div class="alert alert-warning mt-2 mb-0" id="selection-none" role="alert" translate="south.explore.selection-none"></div>
+        }
+        @if (selectionError(); as error) {
+          <div class="alert alert-danger mt-2 mb-0" id="selection-error" role="alert">
+            <div translate="south.explore.selection-error"></div>
+            <div class="text-break small">{{ error }}</div>
+          </div>
+        }
         <!-- What the checked nodes are added to: a new synchronisation, or one the connector already has -->
         @if (showSyncTarget()) {
           <div class="form-group" id="sync-target">
@@ -574,12 +583,16 @@
 <div class="modal-footer">
   @if (step() === 'explore') {
     <!-- The nodes checked in the data source are used by one of the actions, which opens its own steps -->
-    <span
-      class="me-auto text-muted"
-      id="explore-checked-count"
-      [translate]="'south.explore.checked-count'"
-      [translateParams]="{ count: exploreCheckedCount() }"
-    ></span>
+    @if (flowActions().length > 0) {
+      <span
+        class="me-auto text-muted"
+        id="explore-checked-count"
+        [translate]="'south.explore.checked-count'"
+        [translateParams]="{ count: exploreCheckedCount() }"
+      ></span>
+    } @else {
+      <span class="me-auto"></span>
+    }
     @for (action of flowActions(); track action.flow) {
       <button
         type="button"
