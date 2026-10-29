@@ -77,10 +77,12 @@ export async function discoverTables(
     selection.set(tableId, (columns ?? new Set()).add(nodeId.slice(tableId.length + 1)));
   }
 
+  // The columns of the tables, all loaded at once: each explore may be a round trip to the database
+  const columnEntries = await Promise.all(Array.from(selection.keys(), tableId => explore(tableId)));
   const selectedTables: Array<SelectedTable> = [];
-  for (const [tableId, checkedColumns] of selection) {
+  for (const [tableIndex, [tableId, checkedColumns]] of Array.from(selection).entries()) {
     const table = tables.find(candidate => candidate.id === tableId)!;
-    const columns: Array<SqlColumn> = (await explore(tableId)).map(entry => ({
+    const columns: Array<SqlColumn> = columnEntries[tableIndex].map(entry => ({
       name: entry.name,
       type: typeof entry.metadata.type === 'string' ? entry.metadata.type : null,
       primaryKey: entry.metadata.primaryKey === 'yes'
@@ -118,10 +120,10 @@ export async function discoverTables(
 }
 
 /**
- * The one record of several tables read together: their selected columns, the tables joined on a column they share - the
- * primary key of one of them first - since the user has to complete what the names only suggest. Tables without a shared
- * column are joined on a condition to complete. A column whose name is already taken by an earlier table is renamed after
- * its table, so that the rows have distinct fields. The time range is the one of the first table with a date/time column.
+ * The one record of several tables read together: their selected columns, each table joined to the ones before it on what
+ * their names suggest (see `joinCondition`) - a suggestion the user completes. A column whose name is already taken is
+ * renamed after its table, so that the rows have distinct fields. The time range is the one of the first table with a
+ * date/time column.
  */
 function buildJoinRecord(tables: Array<SelectedTable>, dialect: SqlDialect): OIBusRecord {
   // The name of a table, unqualified, tells its columns apart in the query: a number when two tables have the same name
@@ -131,12 +133,18 @@ function buildJoinRecord(tables: Array<SelectedTable>, dialect: SqlDialect): OIB
       ? `t${index + 1}`
       : tableName;
   });
+  // A renamed column can't take the name of another one either, kept or renamed: a number makes it unique
+  const columnNames = new Set(tables.flatMap(table => table.selected.map(column => column.name)));
   const usedFields = new Set<string>();
   const outputNames = tables.map((table, tableIndex) =>
     table.selected.map(column => {
       let fieldName = column.name;
       if (usedFields.has(fieldName)) {
-        fieldName = `${aliases[tableIndex]}_${column.name}`;
+        const renamed = `${aliases[tableIndex]}_${column.name}`;
+        fieldName = renamed;
+        for (let suffix = 2; usedFields.has(fieldName) || columnNames.has(fieldName); suffix++) {
+          fieldName = `${renamed}_${suffix}`;
+        }
       }
       usedFields.add(fieldName);
       return fieldName;
@@ -180,20 +188,69 @@ function buildJoinRecord(tables: Array<SelectedTable>, dialect: SqlDialect): OIB
   };
 }
 
-/** What a table is joined to the ones before it on: a column they share, else a condition left to the user. */
+/** Two columns a join condition compares, and how likely they are to be the link between their tables */
+interface JoinCandidate {
+  earlierIndex: number;
+  earlierColumn: string;
+  column: string;
+  score: number;
+}
+
+/**
+ * What a table is joined to the ones before it on, from the names of their columns - the most likely link first:
+ * 1. a foreign key named after the table it refers to: `measures.tag_id` → `tags.id` (the primary key of `tags`),
+ * 2. a column both have, the primary key of one of them: `measures.tag_id` → `tags.tag_id`,
+ * 3. a column both have, a key of neither.
+ * The primary keys of both tables (`a.id = b.id`) are never compared: their values are unrelated. Without any link, the
+ * condition is left to the user.
+ */
 function joinCondition(tables: Array<SelectedTable>, aliases: Array<string>, index: number, dialect: SqlDialect): string {
   const table = tables[index];
-  const candidates = table.columns.flatMap(column =>
-    tables.slice(0, index).flatMap((earlier, earlierIndex) => {
+  const candidates: Array<JoinCandidate> = [];
+  tables.slice(0, index).forEach((earlier, earlierIndex) => {
+    const foreignKey = referencingColumn(table, earlier);
+    if (foreignKey) {
+      candidates.push({ earlierIndex, earlierColumn: foreignKey.primaryKey, column: foreignKey.column, score: 3 });
+    }
+    const reverseForeignKey = referencingColumn(earlier, table);
+    if (reverseForeignKey) {
+      candidates.push({ earlierIndex, earlierColumn: reverseForeignKey.column, column: reverseForeignKey.primaryKey, score: 3 });
+    }
+    for (const column of table.columns) {
       const shared = earlier.columns.find(earlierColumn => earlierColumn.name === column.name);
-      return shared ? [{ column, earlierIndex, primaryKey: column.primaryKey || shared.primaryKey }] : [];
-    })
+      if (shared && !(column.primaryKey && shared.primaryKey)) {
+        candidates.push({
+          earlierIndex,
+          earlierColumn: shared.name,
+          column: column.name,
+          score: column.primaryKey || shared.primaryKey ? 2 : 1
+        });
+      }
+    }
+  });
+  const match = candidates.reduce<JoinCandidate | null>(
+    (best, candidate) => (!best || candidate.score > best.score ? candidate : best),
+    null
   );
-  const match = candidates.find(candidate => candidate.primaryKey) ?? candidates[0];
   if (!match) {
     return '1 = 1 /* join condition to complete */';
   }
-  return `${dialect.quoteColumn(aliases[match.earlierIndex])}.${dialect.quoteColumn(match.column.name)} = ${dialect.quoteColumn(aliases[index])}.${dialect.quoteColumn(match.column.name)}`;
+  return `${dialect.quoteColumn(aliases[match.earlierIndex])}.${dialect.quoteColumn(match.earlierColumn)} = ${dialect.quoteColumn(aliases[index])}.${dialect.quoteColumn(match.column)}`;
+}
+
+/**
+ * The column of a table that refers to the primary key of another one by name: `<other table>_<its key>`, the table name
+ * singular or not (`tag_id` or `tags_id` for the `id` of `tags`). Null when there is none.
+ */
+function referencingColumn(table: SelectedTable, referenced: SelectedTable): { column: string; primaryKey: string } | null {
+  const primaryKey = referenced.columns.find(column => column.primaryKey);
+  if (!primaryKey) {
+    return null;
+  }
+  const referencedName = splitSchemaTable(referenced.id).table.toLowerCase();
+  const names = new Set([`${referencedName}_${primaryKey.name}`, `${referencedName.replace(/s$/, '')}_${primaryKey.name}`]);
+  const column = table.columns.find(candidate => names.has(candidate.name.toLowerCase()));
+  return column ? { column: column.name, primaryKey: primaryKey.name } : null;
 }
 
 function pickTimeColumn(columns: Array<SqlColumn>, dialect: SqlDialect): (SqlColumn & { dateTimeType: string }) | null {
