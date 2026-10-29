@@ -148,6 +148,15 @@ describe('SouthItemTestComponent', () => {
     );
   });
 
+  test('should leave the title to the caller', async () => {
+    const tester = new SouthItemTestComponentTester({ transformer: northTransformer });
+    await expect.element(tester.root.getByText('Testing item')).toBeVisible();
+
+    tester.fixture.componentRef.setInput('showTitle', false);
+
+    await expect.element(tester.root.getByText('Testing item')).not.toBeInTheDocument();
+  });
+
   test('should follow the transformer given when it changes', async () => {
     const tester = new SouthItemTestComponentTester({ transformer: northTransformer });
     await expect.element(tester.testButton).toBeVisible();

@@ -98,7 +98,14 @@ class SouthItemNorthsComponentTester {
   readonly applyTestOptionsButton = this.root.getByCss('#apply-test-options');
   readonly discardButton = this.root.getByRole('button', { name: 'Discard' });
 
-  constructor(options: { item?: RoutedSouthItem; editable?: boolean; attachments?: Array<SouthItemNorthTransformerCommandDTO> } = {}) {
+  constructor(
+    options: {
+      item?: RoutedSouthItem;
+      editable?: boolean;
+      attachments?: Array<SouthItemNorthTransformerCommandDTO>;
+      rawEntry?: boolean;
+    } = {}
+  ) {
     this.fixture.componentRef.setInput('southId', southId);
     this.fixture.componentRef.setInput('item', options.item ?? item1);
     this.fixture.componentRef.setInput('connectorCommand', testData.south.command);
@@ -106,6 +113,7 @@ class SouthItemNorthsComponentTester {
     this.fixture.componentRef.setInput('items', [options.item ?? item1, ...otherItems]);
     this.fixture.componentRef.setInput('editable', options.editable ?? true);
     this.fixture.componentRef.setInput('attachments', options.attachments ?? []);
+    this.fixture.componentRef.setInput('rawEntry', options.rawEntry ?? false);
   }
 
   north(name: string) {
@@ -394,8 +402,7 @@ describe('SouthItemNorthsComponent', () => {
         transformer: norths[0].transformers[1],
         options: { topic: 'applied' },
         // the item first, then the other items sent through it: item3 goes through its own
-        impactedItems: ['item2', 'item4'],
-        itemEdited: true
+        impactedItems: ['item2', 'item4']
       });
       expect(notificationService.success).toHaveBeenCalledWith('south.items.norths.options-applied', {
         transformer: 'topic transformer',
@@ -406,18 +413,25 @@ describe('SouthItemNorthsComponent', () => {
       await expect.poll(() => northConnectorService.findById.mock.calls.length).toBe(2);
     });
 
-    test('should apply the options tried out from the view of the item', async () => {
+    test('should apply the options tried out', async () => {
       const fakeModal = createMock(ApplyTransformerOptionsModalComponent);
       modalService.mockClosedModal(fakeModal);
-      const tester = new SouthItemNorthsComponentTester({ item: item2, editable: false });
+      const tester = new SouthItemNorthsComponentTester({ item: item2 });
       await tester.editOptionsButton.click();
       await tester.topic.fill('tested');
       await tester.useForTestingButton.click();
 
       await tester.applyTestOptionsButton.click();
 
-      expect(fakeModal.prepare).toHaveBeenCalledWith(expect.objectContaining({ options: { topic: 'tested' }, itemEdited: false }));
+      expect(fakeModal.prepare).toHaveBeenCalledWith(expect.objectContaining({ options: { topic: 'tested' } }));
       await expect.element(tester.testOptions).not.toBeInTheDocument();
+    });
+
+    test('should only show the options when not editable', async () => {
+      const tester = new SouthItemNorthsComponentTester({ item: item2, editable: false });
+
+      await expect.element(tester.routedOptions).toMatchTextContent(/saved/);
+      await expect.element(tester.editOptionsButton).not.toBeInTheDocument();
     });
 
     test('should keep the options tried out when the change is not applied', async () => {
@@ -447,6 +461,41 @@ describe('SouthItemNorthsComponent', () => {
       tester.fixture.componentInstance.startAttachment(tester.fixture.componentInstance.selectedRoute()!);
       await expect.element(tester.root.getByCss('#attachment-form')).toBeInTheDocument();
       expect(tester.fixture.componentInstance.optionsNorthId()).toBeNull();
+    });
+  });
+
+  describe('with a raw entry', () => {
+    test('should test the item raw, then through the transformer of the north picked', async () => {
+      const tester = new SouthItemNorthsComponentTester({ rawEntry: true, editable: false });
+      const raw = tester.root.getByCss('#north-raw');
+
+      await expect.element(tester.norths).toHaveLength(3);
+      await expect.element(raw).toHaveTextContent('RawThe data as the item gets it, without transformer');
+      await expect.element(raw).toHaveAttribute('aria-current', 'true');
+      await expect.element(tester.root.getByCss('#raw-test #test-item')).toBeVisible();
+      // the caller titles the test
+      await expect.element(tester.root.getByText('Testing item')).not.toBeInTheDocument();
+      expect(tester.tested).toBeNull();
+
+      await tester.north('North 1').click();
+      await expect.element(tester.north('North 1')).toHaveAttribute('aria-current', 'true');
+      await expect.element(tester.root.getByCss('#raw-test')).not.toBeInTheDocument();
+      await expect.element(tester.root.getByCss('#route-routing')).toMatchTextContent(/my transformer 1/);
+      await expect.element(tester.test.getByCss('#test-item')).toBeVisible();
+      await expect.element(tester.root.getByText('Testing item')).not.toBeInTheDocument();
+      expect(tester.tested).toEqual({ name: 'my transformer 1', options: north1.transformers[0].options });
+
+      await raw.click();
+      await expect.element(tester.root.getByCss('#raw-test')).toBeVisible();
+    });
+
+    test('should test the item raw when there is no north', async () => {
+      norths = [];
+      const tester = new SouthItemNorthsComponentTester({ rawEntry: true });
+
+      await expect.element(tester.norths).toHaveLength(1);
+      await expect.element(tester.noNorth).not.toBeInTheDocument();
+      await expect.element(tester.root.getByCss('#raw-test #test-item')).toBeVisible();
     });
   });
 

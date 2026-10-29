@@ -39,7 +39,6 @@ class ViewSouthItemModalComponentTester {
   readonly closeButton = this.root.getByRole('button', { name: 'Close' });
   readonly editButton = this.root.getByRole('button', { name: 'Edit' });
   readonly test = this.root.getByCss('#item-test');
-  readonly norths = this.root.getByCss('#item-norths');
 
   constructor(item: SouthConnectorItemDTO = savedItem, itemManifest: SouthConnectorManifest = manifest) {
     this.fixture.componentInstance.prepare(item, southConnector, itemManifest, scanModes, []);
@@ -113,8 +112,10 @@ describe('ViewSouthItemModalComponent', () => {
     await expect.element(tester.setting('Schedule')).toHaveTextContent('scanMode1');
     await expect.element(tester.setting('Start time offset')).toHaveTextContent('0 ms');
     await expect.element(tester.root.getByCss('#settings-summary')).toBeInTheDocument();
+    // a single test, raw at first
     await expect.element(tester.test.getByText('Testing item')).toBeVisible();
-    await expect.element(tester.test.getByRole('button', { name: 'Run test' })).toBeVisible();
+    await expect.element(tester.test.getByCss('#north-raw')).toHaveAttribute('aria-current', 'true');
+    await expect.element(tester.test.getByCss('#raw-test #test-item')).toBeVisible();
   });
 
   test('should display the history settings of the group the item is synced with', async () => {
@@ -249,14 +250,16 @@ describe('ViewSouthItemModalComponent', () => {
     await expect.element(tester.setting('Name')).toHaveTextContent('item1');
   });
 
-  test('should show the norths the data of the item is sent to, without attaching transformers', async () => {
+  test('should test the item through the transformer of a north it is sent to, without attaching transformers', async () => {
     const tester = new ViewSouthItemModalComponentTester();
 
-    await expect.element(tester.norths.getByRole('listitem')).toHaveLength(2);
-    await expect.element(tester.norths.getByRole('listitem').first()).toMatchTextContent(/my transformer 1this item/);
-    await tester.norths.getByRole('listitem').nth(1).click();
-    await expect.element(tester.norths.getByCss('#route-not-sent')).toBeVisible();
-    await expect.element(tester.norths.getByRole('button', { name: 'Attach a transformer' })).not.toBeInTheDocument();
+    await expect.element(tester.test.getByRole('listitem')).toHaveLength(3);
+    await tester.test.getByRole('listitem').filter({ hasText: 'North 1' }).click();
+    await expect.element(tester.test.getByCss('#route-routing')).toMatchTextContent(/my transformer 1/);
+    await expect.element(tester.test.getByCss('#north-test #test-item')).toBeVisible();
+    await tester.test.getByRole('listitem').filter({ hasText: 'North 2' }).click();
+    await expect.element(tester.test.getByCss('#route-not-sent')).toBeVisible();
+    await expect.element(tester.test.getByRole('button', { name: 'Attach a transformer' })).not.toBeInTheDocument();
   });
 
   test('should close the modal to edit the item', async () => {

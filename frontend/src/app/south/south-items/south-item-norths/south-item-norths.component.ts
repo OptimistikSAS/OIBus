@@ -117,8 +117,10 @@ export class SouthItemNorthsComponent {
   readonly manifest = input.required<SouthConnectorManifest>();
   /** The items of the south, to tell how many others a transformer of the group or of the south would send */
   readonly items = input<Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO>>([]);
-  /** False to only show where the data goes, without attaching transformers */
+  /** False to only show where the data goes and test the item, without attaching transformers nor editing their options */
   readonly editable = input(true);
+  /** True to test the item raw too, from an entry heading the list, selected at first (the test of the item view) */
+  readonly rawEntry = input(false);
   /** The transformers to attach along with the item when it is saved, one per North at most */
   readonly attachments = model<Array<SouthItemNorthTransformerCommandDTO>>([]);
 
@@ -176,11 +178,13 @@ export class SouthItemNorthsComponent {
       })
   );
 
-  /** The North shown beside the list: the first one, until another is selected */
+  /** The North shown beside the list: the first one, until another is selected. None (the raw test) at first with a raw entry. */
   readonly selectedNorthId = linkedSignal<Array<NorthRoute>, string | null>({
     source: this.routes,
-    computation: (routes, previous) =>
-      previous && routes.some(route => route.north.id === previous.value) ? previous.value : (routes[0]?.north.id ?? null)
+    computation: (routes, previous) => {
+      if (previous && routes.some(route => route.north.id === previous.value)) return previous.value;
+      return this.rawEntry() ? null : (routes[0]?.north.id ?? null);
+    }
   });
   readonly selectedRoute = computed(() => this.routes().find(route => route.north.id === this.selectedNorthId()) ?? null);
 
@@ -262,7 +266,8 @@ export class SouthItemNorthsComponent {
     return { transformer, options: this.testOptions()[route.north.id] ?? route.routing.transformer.options };
   });
 
-  selectNorth(northId: string) {
+  /** Selects a North, or none to test the item raw (with a raw entry) */
+  selectNorth(northId: string | null) {
     if (northId === this.selectedNorthId()) return;
     this.selectedNorthId.set(northId);
     this.draftNorthId.set(null);
@@ -316,8 +321,7 @@ export class SouthItemNorthsComponent {
       north: route.north,
       transformer,
       options,
-      impactedItems: this.impactedItems(route),
-      itemEdited: this.editable()
+      impactedItems: this.impactedItems(route)
     });
     modal.result.subscribe(() => {
       this.notificationService.success('south.items.norths.options-applied', {

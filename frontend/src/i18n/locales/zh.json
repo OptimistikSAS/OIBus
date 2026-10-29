@@ -1898,7 +1898,10 @@
           "custom-unchanged": "自定义转换器 {{name}} 的代码不会更改。",
           "saved-now": "更改会立即保存，无需等待保存该项。",
           "confirm": "应用"
-        }
+        },
+        "test-description": "直接测试该项，或通过 north 发送其数据所用的转换器进行测试。",
+        "raw": "原始",
+        "raw-description": "该项获取到的数据，不经转换器"
       }
     },
     "groups": {
