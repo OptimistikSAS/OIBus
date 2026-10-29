@@ -11,7 +11,7 @@ import { page, userEvent } from 'vitest/browser';
 import { HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
 import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { NorthType } from '@oibus/shared/connector/north-manifest.model';
-import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthType } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EmptyRouteComponent } from '../../../test/empty-route.component';
@@ -29,11 +29,12 @@ import { DefaultValidationErrorsComponent } from '../../shared/default-validatio
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { WindowService } from '../../shared/window.service';
-import { AddDiscoveredItemsModalComponent } from '../../south/south-items/add-discovered-items-modal/add-discovered-items-modal.component';
+import EditWorkflowModalComponent, {
+  ExploreWizardResult
+} from '../../south/south-workflows/edit-workflow-modal/edit-workflow-modal.component';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
@@ -308,55 +309,43 @@ describe('EditHistoryQueryComponent', () => {
       );
     });
 
-    test('should open the explore modal wired to the history query explore endpoints', async () => {
-      const exploreModal = createMock(SouthExploreModalComponent);
-      mockModal(exploreModal);
-      historyQueryService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
-      historyQueryService.browseExplore.mockReturnValue(of({ entries: [] }));
-      historyQueryService.closeExplore.mockReturnValue(of(undefined));
+    test('should open the explore wizard wired to the history query explore endpoints', async () => {
+      const wizard = createMock(EditWorkflowModalComponent);
+      mockModal(wizard);
       const tester = await createTester('items');
 
       await tester.exploreButton.click();
 
-      expect(exploreModal.prepare).toHaveBeenCalledWith(savedQuery.id, {}, 'folder-scanner', {
-        api: { start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) },
-        // no discovery defaults in the test manifest: nothing to add from the checked nodes
-        checkedActions: []
+      expect(wizard.prepareForExploration).toHaveBeenCalledWith({
+        southId: savedQuery.id,
+        exploreConnectorId: savedQuery.id,
+        exploreApi: { start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) },
+        southSettings: {},
+        manifest: testData.south.manifest,
+        existingItems: expect.any(Array),
+        discover: expect.any(Function)
       });
-      const api = exploreModal.prepare.mock.calls[0][3]!.api!;
-      api.start(testData.south.list[0].settings, 'folder-scanner');
+      const options = wizard.prepareForExploration.mock.calls[0][0];
+      expect(options.sync).toBeUndefined();
+      expect(options.schedule).toBeUndefined();
+      options.exploreApi!.start(testData.south.list[0].settings, 'folder-scanner');
       expect(historyQueryService.startExplore).toHaveBeenCalledWith(savedQuery.id, testData.south.list[0].settings, 'folder-scanner', null);
-      api.browse('sessionId', null);
+      options.exploreApi!.browse('sessionId', null);
       expect(historyQueryService.browseExplore).toHaveBeenCalledWith(savedQuery.id, 'sessionId', null);
-      api.close('sessionId');
+      options.exploreApi!.close('sessionId');
       expect(historyQueryService.closeExplore).toHaveBeenCalledWith(savedQuery.id, 'sessionId');
     });
 
-    test('should add the items of the nodes checked in the explore modal, once reviewed', async () => {
-      const presetManifest: SouthConnectorManifest = {
-        ...testData.south.manifest,
-        discovery: { kind: 'tree', defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}' } } }
-      };
-      southConnectorService.getSouthManifest.mockReturnValue(of(presetManifest));
-      const exploreModal = createMock(SouthExploreModalComponent);
-      const addItemsModal = createMock(AddDiscoveredItemsModalComponent);
+    test('should add the items of the explore wizard in memory, discovering them through the history query', async () => {
+      const wizard = createMock(EditWorkflowModalComponent);
       const discovered = { ...testData.south.itemCommand, id: null, name: 'Reactor/Temperature' };
-      vi.spyOn(TestBed.inject(MockModalService), 'open').mockImplementation(component =>
-        component === SouthExploreModalComponent
-          ? fakeModal(exploreModal, Promise.resolve({ action: 'add-items', nodeIds: ['ns=1;s=Reactor'] }))
-          : fakeModal(addItemsModal, Promise.resolve([discovered]))
-      );
+      mockModal(wizard, { kind: 'items', commands: [discovered] } satisfies ExploreWizardResult);
       const tester = await createTester('items');
 
       await tester.exploreButton.click();
 
-      expect(exploreModal.prepare.mock.lastCall![3]!.checkedActions).toEqual([{ id: 'add-items', labelKey: 'south.explore.add-as-items' }]);
-      await vi.waitFor(() => expect(addItemsModal.prepare).toHaveBeenCalled());
-      const options = addItemsModal.prepare.mock.lastCall![0];
-      expect(options.schedule).toBeUndefined();
-      expect(options.nodeIds).toEqual(['ns=1;s=Reactor']);
       historyQueryService.discoverItems.mockReturnValue(of([]));
-      options.discover!({ nodeIds: ['ns=1;s=Reactor'] }, { name: '{{path}}' });
+      wizard.prepareForExploration.mock.calls[0][0].discover!({ nodeIds: ['ns=1;s=Reactor'] }, { name: '{{path}}' });
       expect(historyQueryService.discoverItems).toHaveBeenCalledWith(
         savedQuery.id,
         'folder-scanner',
@@ -744,14 +733,15 @@ describe('EditHistoryQueryComponent', () => {
       configure({ queryParams: { southId: 'southId1' } });
       southConnectorService.findById.mockReturnValue(of(testData.south.list[0]));
       historyQueryService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
-      const exploreModal = createMock(SouthExploreModalComponent);
-      mockModal(exploreModal);
+      const wizard = createMock(EditWorkflowModalComponent);
+      mockModal(wizard);
       const tester = await createTester('items');
 
       await tester.exploreButton.click();
 
-      expect(exploreModal.prepare).toHaveBeenCalledWith(null, expect.anything(), 'folder-scanner', expect.anything());
-      exploreModal.prepare.mock.calls[0][3]!.api!.start(testData.south.list[0].settings, 'folder-scanner');
+      const options = wizard.prepareForExploration.mock.calls[0][0];
+      expect(options.exploreConnectorId).toBeNull();
+      options.exploreApi!.start(testData.south.list[0].settings, 'folder-scanner');
       expect(historyQueryService.startExplore).toHaveBeenCalledWith(
         'create',
         testData.south.list[0].settings,

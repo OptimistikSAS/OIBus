@@ -20,7 +20,6 @@ import {
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { CertificateService } from '../../services/certificate.service';
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
@@ -55,19 +54,19 @@ import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { SouthExploreModalComponent, SouthExploreResult } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
-import { AddDiscoveredItemsModalComponent } from '../south-items/add-discovered-items-modal/add-discovered-items-modal.component';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import { SaveGroupCommand, SouthItemGroup, SouthItemGroups } from '../south-items/south-item-groups';
-import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { openExploreWizard } from '../south-workflows/edit-workflow-modal/edit-workflow-modal.component';
+import ManageWorkflowsModalComponent, {
+  ExploreAndSyncResult
+} from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { toConfigurationWorkflowCommand } from '../south-workflows/workflow-command';
-import { exploreCheckedActions, WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 
 /** The group column is added by the page: the other columns are sorted by the item table. */
 function sortValue(item: SouthConnectorItemCommandDTO, column: string): string | number {
@@ -135,7 +134,6 @@ type SouthConnectorForm = FormGroup<{
 export class EditSouthComponent implements CanComponentDeactivate {
   private readonly southConnectorService = inject(SouthConnectorService);
   private readonly configurationWorkflowService = inject(ConfigurationWorkflowService);
-  private readonly workflowCreationService = inject(WorkflowCreationService);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly notificationService = inject(NotificationService);
@@ -466,53 +464,21 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.steps.current.set('settings');
       return;
     }
+    // With discovery, items can be kept in sync with the checked nodes through a workflow, and with discovery defaults, added
+    // once - both kept in memory, like the ones added otherwise, and saved along with the connector.
+    if (this.manifest()!.discovery) {
+      this.manageWorkflows();
+      return;
+    }
     const southId = this.southConnector()?.id || null;
-    const settings = this.formSouthConnectorCommand.settings;
-    const manifest = this.manifest()!;
-    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
-    const component: SouthExploreModalComponent = modalRef.componentInstance;
-    // With tree-based discovery, items can be kept in sync with the checked nodes through a workflow, and with
-    // discovery defaults, added once - both kept in memory, like the ones added otherwise, and saved along with
-    // the connector.
-    component.prepare(southId, settings, this.southType() as OIBusSouthType, { checkedActions: exploreCheckedActions(manifest) });
-    modalRef.result.subscribe((result: SouthExploreResult) => {
-      if (result.action === 'add-items') {
-        this.addDiscoveredItems(southId || 'create', settings, result.nodeIds);
-        return;
-      }
-      this.workflowCreationService
-        .createFromExploredNodes(
-          {
-            directSave: false,
-            southId: southId || 'create',
-            southSettings: settings,
-            scanModes: this.scanModes(),
-            manifest,
-            groups: this.itemGroups,
-            existingWorkflows: this.inMemoryWorkflows()
-          },
-          result.nodeIds
-        )
-        .subscribe(workflow => this.inMemoryWorkflows.update(workflows => [...workflows, workflow]));
-    });
-  }
-
-  /** Reviews the items the checked nodes give, then adds them in memory. */
-  private addDiscoveredItems(southId: string, southSettings: SouthSettings, nodeIds: Array<string>) {
-    const modalRef = this.modalService.open(AddDiscoveredItemsModalComponent, { size: 'xl', backdrop: 'static' });
-    const component: AddDiscoveredItemsModalComponent = modalRef.componentInstance;
-    component.prepare({
-      southId,
-      southSettings,
+    openExploreWizard(this.modalService, {
+      southId: southId || 'create',
+      exploreConnectorId: southId,
+      southSettings: this.formSouthConnectorCommand.settings,
       manifest: this.manifest()!,
       schedule: { scanModes: this.scanModes(), groups: this.itemGroups },
-      existingItems: this.inMemoryItems(),
-      nodeIds
-    });
-    modalRef.result.subscribe((commands: Array<SouthConnectorItemCommandDTO>) => {
-      this.inMemoryItems.update(items => [...items, ...commands]);
-      this.itemTable()?.goToFirstPage();
-    });
+      existingItems: this.inMemoryItems()
+    }).subscribe();
   }
 
   addItem() {
@@ -833,9 +799,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.formSouthConnectorCommand.settings,
       this.scanModes(),
       this.manifest()!,
-      this.itemGroups
+      this.itemGroups,
+      this.inMemoryItems()
     );
-    modalRef.result.subscribe(() => this.itemTable()?.goToFirstPage());
+    modalRef.result.subscribe((result: ExploreAndSyncResult | undefined) => {
+      // the wizard of the modal may have given items to add
+      if (result?.kind === 'items') {
+        this.inMemoryItems.update(items => [...items, ...result.commands]);
+      }
+      this.itemTable()?.goToFirstPage();
+    });
   }
 
   private checkUniqueness(): ValidatorFn {

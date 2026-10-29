@@ -192,8 +192,10 @@ item can't be saved, none of them is attached. On the connector's create/edit pa
 
 ## Exploring the Data Source {#exploring-the-data-source}
 
-Connectors that can browse their data source show an **Explore** button next to **Test settings**. It opens the
-**Explore data source** modal: a tree of what the data source holds, loaded level by level as nodes are expanded.
+Connectors that can browse their data source show an **Explore** button in the items section of their page (**Explore and
+sync** for the connectors with [discovery](#items-synchronisation), which also keep items in sync: see
+[Explore and Sync](#explore-and-sync)). It opens the **Explore data source** modal: a tree of what the data source
+holds, loaded level by level as nodes are expanded.
 
 | Connector                                                 | What the tree shows                                                                 | Actions on selected nodes           |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------- |
@@ -217,11 +219,13 @@ connector's own collection.
 
 For connectors with actions on selected nodes, every node has a checkbox. A node that has children also offers
 **Select all the sub-nodes**, which loads and checks its direct children at once (and unchecks them when they are all
-checked already). The number of selected nodes is shown at the bottom of the modal, next to the actions:
+checked already). The number of selected nodes is shown at the bottom of the modal, next to the actions. Choosing an
+action moves on to the next step of the same modal; the steps are listed under its title, and the **Explore** step stays
+one click away to change the selected nodes or the action:
 
 - **Add as items** creates items once from the selected nodes — see [below](#adding-explored-nodes-as-items).
 - **Keep in sync…** creates an [items synchronisation](#items-synchronisation) that discovers from the selected
-  nodes: the wizard opens with them as its discovery scope, and the connector's
+  nodes: the steps of the synchronisation wizard follow, with the nodes as its discovery scope, and the connector's
   [discovery defaults](#discovery-defaults). Unlike **Add as items**, the synchronisation keeps the items up to date
   on each run: new points get an item, and the items of points that disappeared are disabled.
 
@@ -230,11 +234,19 @@ stands for itself, any other node (a folder, a device, a table) for everything u
 
 ### Adding Explored Nodes as Items {#adding-explored-nodes-as-items}
 
-**Add as items** discovers the points under the selected nodes and opens the **Add items from the data source**
-modal, to review the items before they are created:
+**Add as items** moves on to the **Add as items** step of the Explore modal, to review the items before they are
+created. It has the **Item field mapping** of an [items synchronisation](#items-synchronisation), filled in from the
+connector's [discovery defaults](#discovery-defaults), in the sections of the item modal: **Name & schedule** (name,
+enabled, group, schedule and, when the connector supports history, the history settings) and the settings of the
+connector. As in the item modal, picking a group replaces the schedule with the one of the group and shows
+**Sync with group** (on by default), and the history settings are hidden while the item is synced with its group. The
+items are enabled, and the history settings start with the values of the item modal (max read interval 3600 s, read delay 200 ms, oldest
+recovery strategy, offsets 0). Each field is a constant or an expression of the discovered record: the fields of the records of the connector are listed
+above the mapping (the same list is in the Items step of a synchronisation), and clicking one puts `{{field}}` where you
+were typing — or copies it when you were not typing in a field that takes an expression. Under it, the
+points under the selected nodes are discovered with this mapping and listed; they are discovered again a moment after
+the mapping changes (or with **Refresh preview**), and the items can't be added until they are:
 
-- **Group**, **Schedule** and **Enable the items** apply to every added item. With a group, the items take the
-  group's schedule.
 - Each row is one item, with its name (editable) and its main settings. Uncheck a row to leave it out, or use the
   header checkbox to select all or none.
 - A row whose settings are already read by an existing item is flagged **Already read by** _that item_, and left
@@ -392,56 +404,66 @@ To create items once from what the data source holds, select the nodes in the Ex
 (new points, removed points) and the items must follow.
 :::
 
-### Managing Items Synchronisations {#managing-items-synchronisations}
+### Explore and Sync {#explore-and-sync}
 
-On a South connector's page, click **Manage items synchronisations** (next to **Manage groups**) to list the
-connector's synchronisations, and use the **+** button to create one. Each row shows the synchronisation's name,
-schedule, mode and whether it is enabled, with these actions:
+For a connector with discovery, the **Explore and sync** button opens a home screen, in a modal of its own:
+
+- **Explore the data source** starts the [Explore modal](#selecting-nodes): select nodes, then **Add as items** or
+  **Keep in sync…**.
+- The connector's synchronisations are listed under it, with their discovery scope (their nodes, the whole data source,
+  or a query), schedule, mode and whether they are enabled (a dash for one with no schedule, which only runs on demand). **New synchronisation** creates one (for a SQL connector,
+  from its Source step, where the query is written).
+
+Each synchronisation of the list has these actions:
 
 | Action          | Description                                                                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Run now** (▶) | Trigger a real run immediately — see [Running an Items Synchronisation](#running-an-items-synchronisation).  |
-| **Run history** | Past runs, with their status and counts — see [Run History](#run-history).                                   |
-| **Edit** (✏️)   | Open the synchronisation in the wizard.                                                                      |
+| **Past runs**   | The runs, with their status and counts — see [Run History](#run-history).                                    |
+| **Edit** (✏️)   | Open the synchronisation in the wizard, on its Explore step with its nodes checked.                          |
 | **Duplicate**   | Open the wizard pre-filled with this synchronisation's settings (name suffixed `-copy`), saved as a new one. |
 | **Delete**      | Remove the synchronisation. The items it created and the metadata it pushed are **not** deleted.             |
 
-A synchronisation can also be created from the [Explore modal](#selecting-nodes): select nodes, then
-**Keep in sync…**.
+In the Explore step, a row above the tree names the synchronisations that already keep nodes in sync, and the nodes
+they cover are marked with the name of their synchronisation (a synchronisation of the whole data source is only named
+in the row). Below the tree, the selected nodes can be added to an existing synchronisation instead of a new one
+(**Keep in sync…** then goes on with that synchronisation's own settings and its nodes plus the selected ones, and saving
+updates it). Unchecking nodes of a synchronisation being edited warns that the items they gave are disabled by its next
+run. **Add as items** on
+nodes a synchronisation already keeps in sync notes it above the mapping, since both may create the same items.
 
-The same **Manage items synchronisations** button is on the connector's create/edit page. There, changes are kept in
-the page and saved together with the connector (like items and groups), and previews run against the connector
-settings as currently edited — so a synchronisation can be tried before the connector itself is saved. **Run now**
-and **Run history** are only available from the connector's page, once it is saved.
+The same button is on the connector's create/edit page. There, changes are kept in the page and saved together with the
+connector (like items and groups), and previews run against the connector settings as currently edited — so a
+synchronisation can be tried before the connector itself is saved. **Run now** and **Past runs** are only available
+from the connector's page, once it is saved.
 
 ### The Wizard {#the-wizard}
 
-A synchronisation is created and edited in a five-step wizard. The steps bar at its top shows where you are, and a
-click on a step opens it.
+A synchronisation is created and edited in a wizard. For a tree-based connector it starts from the
+[Explore step](#selecting-nodes), where its nodes are checked, then goes through four steps; a SQL connector has a
+**Source** step first, for its query. The steps bar at its top shows where you are, and a click on a step opens it.
 
-| Step         | What it sets                                                                    |
-| ------------ | ------------------------------------------------------------------------------- |
-| **Source**   | The name, and what to discover: the nodes to browse, or the SQL metadata query. |
-| **Filter**   | Which discovered records to act on, with a preview of the matching records.     |
-| **Items**    | The mode, and for local mode how a record becomes an item.                      |
-| **Schedule** | When to run, and whether scheduled runs are enabled.                            |
-| **Review**   | A summary, and a preview of what a run would do.                                |
+| Step                | What it sets                                                                |
+| ------------------- | --------------------------------------------------------------------------- |
+| **Source**          | SQL connectors only: the metadata query to discover from.                   |
+| **Filter**          | Which discovered records to act on, with a preview of the matching records. |
+| **Items**           | The mode, and for local mode how a record becomes an item.                  |
+| **Name & schedule** | The name, when to run, and whether scheduled runs are enabled.              |
+| **Review**          | A summary, what to fix before saving, and a preview of what a run would do. |
 
-**Next** leaves the Source step once it has a name (and a query, for SQL). A new synchronisation is saved from the
-Review step; one being edited can be saved from any step.
+**Next** leaves the Source step once it has a query. A new synchronisation is saved from the Review step; one being
+edited can be saved from any step.
 
 #### Source {#source}
 
-- **Name** — unique among the connector's synchronisations.
-- **Discovery scope**:
-  - **Tree-based connectors**: **Pick nodes…** opens the Explore tree with the current nodes checked; check the
-    nodes to discover from and click **Use these nodes**. A point stands for itself, any other node (a folder, a
-    device) for everything under it. Remove a node with the cross on its badge. With no node, the whole data source
-    is discovered.
-  - **SQL connectors**: write a metadata query in the SQL editor — independent of any item's own query, each row it
-    returns becomes one discovered record (e.g. `SELECT tag, description, unit FROM tag_list`). When the connector
-    can be explored, its tables and columns are shown above the editor for reference. **Test query** runs the query
-    and shows its raw rows, as a table or JSON.
+For SQL connectors, write a metadata query in the SQL editor — independent of any item's own query, each row it returns
+becomes one discovered record (e.g. `SELECT tag, description, unit FROM tag_list`). When the connector can be explored,
+its tables and columns are shown above the editor for reference. **Test query** runs the query and shows its raw rows, as
+a table or JSON.
+
+A tree-based connector has no Source step: it discovers from the nodes checked in the Explore step. A point stands for
+itself, any other node (a folder, a device) for everything under it, and with no node the whole data source is
+discovered. The Filter step reminds the nodes; to change them, go back to the Explore step.
 
 #### Filter {#filter}
 
@@ -456,12 +478,16 @@ on — leave it empty to make every record eligible. Each condition has:
 
 Add a condition with the fields below the table; edit or remove one with its pencil and trash icons.
 
-Opening the step discovers the data source and shows **Matching records: _eligible_ of _discovered_**, with the first
-20 matching records in a table, to see which fields they have. Click **Refresh preview** after changing the
-conditions. Discovery is a real round trip to the data source: previewing a large source costs what a run costs,
+Opening the step discovers the data source and shows **Matching records: _eligible_ of _discovered_**, with the matching
+records in a table, to see which fields they have and their values. The table is paginated, and its search box looks for
+a text in the values of every field. Click **Refresh preview** after changing the conditions. Discovery is a real round trip to the data source: previewing a large source costs what a run costs,
 minus the writes.
 
 #### Items {#items-step}
+
+The Items step lists the same matching records, with the same search and pagination, under **Discovered records**, so
+the values of their fields are in front of you while you write the mapping. They are not discovered again when the
+nodes and the filter are the same as in the Filter step.
 
 ##### Mode {#mode}
 
@@ -491,22 +517,28 @@ Each field of the connector's items can be mapped to:
 - a `{{field}}` expression taking a value from the discovered record — see
   [Mapping Expressions](#mapping-expressions).
 
-**Name**, **Group** and **Schedule** are shown first. Under the name, **Example item names** shows the names the first
-matching records would give. The **Group** dropdown defaults to **None** and lets you create, edit or delete groups,
-as in the item modal; with a group, the item takes the group's schedule.
+The [identity key fields](#identity-key-fields) come first, then the mapping, in the sections of the item modal (the
+same form as [Add as items](#adding-explored-nodes-as-items)): **Name & schedule** — name, enabled, group, schedule and,
+when the connector supports history, the history settings — then the settings of the connector. Above the mapping, the
+fields of the discovered records are listed: click one to put `{{field}}` where you are typing. Under it, **Example
+item names** shows the names the first matching records would give.
 
-The other fields, and the [identity key fields](#identity-key-fields), are under **Advanced**. When the connector has
-[discovery defaults](#discovery-defaults), they fill this section, which stays collapsed with a summary (e.g.
-`3 other fields mapped, records identified by id`); otherwise, it opens expanded, since everything has to be mapped by
-hand.
+As in the item modal, the **Group** dropdown defaults to **None** and lets you create, edit or delete groups. Picking a
+group replaces the schedule with the one of the group and shows **Sync with group** (on by default); the history
+settings are hidden while the item is synced with its group. A new mapping starts with the items enabled and the history settings of the item
+modal (max read interval 3600 s, read delay 200 ms, oldest recovery strategy, offsets 0) and with the connector's
+[discovery defaults](#discovery-defaults), when it has some.
 
-Two badges guide the mapping:
+A **Required** badge guides the mapping:
 
 - **Required** — the field must be mapped for the item to be valid, given the other fields currently shown. Saving is
-  blocked otherwise. The schedule is exempt once the item is mapped into a group.
-- **Controls visibility** — the field decides whether other fields apply, so it can only take a constant: its value
-  must be known while editing, not resolved per record. The same holds for the group, the schedule and every history
-  setting (max read interval, read delay, time offsets, recovery strategy, sync with group).
+  blocked otherwise. The schedule is exempt once the item is mapped into a group. **Enabled** is always required: an
+  item is enabled or not on purpose (it starts mapped to yes in a new mapping). Note that for a synchronisation, a mapped
+  **Enabled** is applied to the items it updates too, whereas an unmapped one leaves them as they are.
+
+The group, the schedule and every history setting (max read interval, read delay, time offsets, recovery strategy, sync with
+group) take a constant only, since they can't vary from one record to the next: the other fields also take a `{{field}}`
+expression.
 
 ##### Identity Key Fields {#identity-key-fields}
 
@@ -535,30 +567,36 @@ Connectors whose discovered records always have the same shape come with discove
 (and [Add as items](#adding-explored-nodes-as-items)) starts with these identity key fields and this mapping, which
 can then be changed.
 
-| Connector | Identity key | Item field mapping                                                                                                                                                                                      |
-| --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OPC UA    | `id`         | Name `{{path}}` (the display names from the discovery root, joined by `/`), Node ID `{{nodeId}}`, mode `DA`, timestamp origin `OIBus`. See [Node Metadata](./opcua.mdx#node-metadata).                  |
-| BACnet/IP | `id`         | Name `{{deviceName}} - {{name}}`, device address and instance, object type and instance, routing (`{{routed}}`, network number, MAC address) from the record; property `present-value`, timezone `UTC`. |
+| Connector | Identity key | Item field mapping                                                                                                                                                                                              |
+| --------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OPC UA    | `id`         | Name `{{path}}` (the display names from the discovery root, joined by `/`), Node ID `{{nodeId}}`, mode `HA` with the `Raw` aggregate, timestamp origin `OIBus`. See [Node Metadata](./opcua.mdx#node-metadata). |
+| BACnet/IP | `id`         | Name `{{deviceName}} - {{name}}`, device address and instance, object type and instance, routing (`{{routed}}`, network number, MAC address) from the record; property `present-value`, timezone `UTC`.         |
 
-#### Schedule {#schedule}
+#### Name & Schedule {#schedule}
 
-- **Schedule** — the scan mode driving scheduled runs. Leave it on **Manual only** to run the synchronisation only
-  with **Run now**.
-- **Enabled** — whether scheduled runs fire. **Run now** works even when disabled.
+- **Name** — unique among the connector's synchronisations.
+- **Schedule** — the scan mode driving scheduled runs (the subscription is not one of them: it is the schedule of items
+  only). Leave it on **Manual only** to run the synchronisation only with **Run now**.
+- **Enabled** — whether scheduled runs fire. It only shows once a schedule is picked: with **Manual only**, nothing
+  fires. **Run now** works even when disabled.
 
 In local mode, a reminder states that when a point is no longer found, the item created for it is disabled.
 
 #### Review {#review}
 
 The Review step sums up the synchronisation (name, discovery scope, number of conditions, mode, schedule) and previews
-what a run would do — opening the step runs the preview, **Refresh preview** runs it again:
+what a run would do — opening the step runs the preview, **Refresh preview** runs it again. While something prevents it
+(a missing name or query, no identity key field, a mandatory item field not mapped…), the step lists what to fix, each
+with a button to the step where to fix it, and no preview runs:
 
 - **Create/update items locally**: each record is classified against the previous run as **New**, **Changed**,
   **Unchanged**, **Reactivated** or **Missing**, with its identity key and fields. A changed record highlights the
   fields that differ, with the previous value on hover; a missing one shows the previous run's values, dimmed.
 - **Push to OIAnalytics**: the records that would be pushed, exactly as discovered.
 
-**Export CSV** downloads the previewed rows. Nothing is written by a preview.
+A search box above the table looks for a text in the identity key, the status and the values of the rows (in memory, over
+the whole preview), and the table is paginated. **Export CSV** downloads all the previewed rows, whatever the search.
+Nothing is written by a preview.
 
 ### Running an Items Synchronisation {#running-an-items-synchronisation}
 
@@ -579,7 +617,7 @@ connector, as Explore does. A **scheduled** run, however, is skipped while the S
 
 ### Run History {#run-history}
 
-Every run — manual or scheduled, successful or not — is recorded. The **Run history** page, opened from the list of
+Every run — manual or scheduled, successful or not — is recorded. The **Run history** page, opened with **Past runs** from the list of
 synchronisations, starts with a search form:
 
 - **Started after / Started before** — a date range on when the run started.

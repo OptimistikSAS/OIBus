@@ -10,7 +10,7 @@ import { map, Observable, of, switchMap } from 'rxjs';
 import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
@@ -18,12 +18,23 @@ import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { ModalService } from '../../../shared/modal.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { SouthItemGroups } from '../../south-items/south-item-groups';
-import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
+import EditWorkflowModalComponent, {
+  ExploreWizardOptions,
+  ExploreWizardResult,
+  openExploreWizard,
+  workflowNodeIds
+} from '../edit-workflow-modal/edit-workflow-modal.component';
 import { toConfigurationWorkflowCommand } from '../workflow-command';
 import { WorkflowCreationService } from '../workflow-creation.service';
 
+/** What the modal closes with when the wizard it opened gave items to add: the page saves them. */
+export type ExploreAndSyncResult = Extract<ExploreWizardResult, { kind: 'items' }>;
+
 /**
- * Lists a south connector's Configuration Workflows, in one of two modes (like ManageGroupsModalComponent's
+ * The home of the Explore and sync button of a south connector with discovery: it starts exploring the data source (in the
+ * wizard, to add items from the nodes or keep them in sync), and lists the connector's Configuration Workflows, to edit,
+ * duplicate, run or delete them. Editing one goes on in the same wizard, from its Explore step. The workflows are kept in one
+ * of two modes (like ManageGroupsModalComponent's
  * own directSave):
  * - direct (prepareForDirectSave, from south-detail): every change is saved straight through the REST
  *   endpoints, and a workflow can also be run now and have its run history opened.
@@ -36,6 +47,7 @@ import { WorkflowCreationService } from '../workflow-creation.service';
 @Component({
   selector: 'oib-manage-workflows-modal',
   templateUrl: './manage-workflows-modal.component.html',
+  styleUrl: './manage-workflows-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
@@ -56,6 +68,8 @@ export default class ManageWorkflowsModalComponent {
   private readonly scanModes = signal<Array<ScanModeDTO>>([]);
   private groups!: SouthItemGroups;
   private manifest!: SouthConnectorManifest;
+  /** The items of the connector, which the items added from the explored nodes can't share their name with */
+  private existingItems: ReadonlyArray<{ name: string; settings: SouthItemSettings }> = [];
   /**
    * Where the workflows are kept: in in-memory mode, edit-south's own signal, so that the page gets the changes made
    * here, and this modal shows the ones made by the page (a deleted group is unmapped from the workflows); in direct
@@ -85,6 +99,7 @@ export default class ManageWorkflowsModalComponent {
     scanModes: Array<ScanModeDTO>,
     manifest: SouthConnectorManifest,
     groups: SouthItemGroups,
+    existingItems: ReadonlyArray<{ name: string; settings: SouthItemSettings }>,
     onWorkflowRun?: () => void
   ) {
     this.directSave.set(true);
@@ -93,6 +108,7 @@ export default class ManageWorkflowsModalComponent {
     this.scanModes.set(scanModes);
     this.manifest = manifest;
     this.groups = groups;
+    this.existingItems = existingItems;
     this.onWorkflowRun = onWorkflowRun;
     this.loading.set(true);
     this.workflowSource.set(signal([]));
@@ -112,7 +128,8 @@ export default class ManageWorkflowsModalComponent {
     southSettings: SouthSettings,
     scanModes: Array<ScanModeDTO>,
     manifest: SouthConnectorManifest,
-    groups: SouthItemGroups
+    groups: SouthItemGroups,
+    existingItems: ReadonlyArray<{ name: string; settings: SouthItemSettings }>
   ) {
     this.directSave.set(false);
     this.workflowSource.set(workflows);
@@ -121,6 +138,7 @@ export default class ManageWorkflowsModalComponent {
     this.scanModes.set(scanModes);
     this.manifest = manifest;
     this.groups = groups;
+    this.existingItems = existingItems;
     this.onWorkflowRun = undefined;
     this.loading.set(false);
   }
@@ -148,40 +166,109 @@ export default class ManageWorkflowsModalComponent {
     return { component, result: modalRef.result };
   }
 
+  /** Whether the workflows discover from nodes, which are checked in the wizard (rather than from a query) */
+  private get treeBased(): boolean {
+    return this.manifest.discovery?.kind === 'tree';
+  }
+
+  /** What the wizard needs to explore the data source, and to create or edit the workflows from its nodes */
+  private exploreOptions(extra: Partial<ExploreWizardOptions> = {}): ExploreWizardOptions {
+    return {
+      southId: this.southId,
+      exploreConnectorId: this.southId === 'create' ? null : this.southId,
+      southSettings: this.southSettings,
+      manifest: this.manifest,
+      schedule: { scanModes: this.scanModes(), groups: this.groups },
+      existingItems: this.existingItems,
+      sync: { directSave: this.directSave(), existingWorkflows: this.workflows() },
+      ...extra
+    };
+  }
+
+  /** The wizard gives a workflow to save, or items to add - which are the page's to save, so this modal closes with them */
+  private runWizard(options: ExploreWizardOptions) {
+    openExploreWizard(this.modalService, options).subscribe(result => {
+      if (result.kind === 'items') {
+        const closed: ExploreAndSyncResult = result;
+        this.modal.close(closed);
+      } else {
+        this.saveWorkflow(result.command);
+      }
+    });
+  }
+
+  onExplore() {
+    this.runWizard(this.exploreOptions());
+  }
+
   onAdd() {
+    if (this.treeBased) {
+      this.runWizard(this.exploreOptions({ syncOnly: true }));
+      return;
+    }
     const { component, result } = this.openEditModal();
     component.prepareForCreation(this.scanModes(), this.workflows(), this.manifest, this.southId, this.southSettings, this.groups);
     result.subscribe(command => this.createWorkflow(command));
   }
 
   onEdit(workflow: ConfigurationWorkflowCommandDTO) {
+    if (this.treeBased) {
+      this.runWizard(this.exploreOptions({ workflow: { command: workflow, mode: 'edit' } }));
+      return;
+    }
     const { component, result } = this.openEditModal();
     component.prepareForEdition(this.scanModes(), this.workflows(), this.manifest, workflow, this.southId, this.southSettings, this.groups);
-    result.subscribe(command => {
-      const save$: Observable<ConfigurationWorkflowCommandDTO> = this.directSave()
-        ? this.configurationWorkflowService
-            .update(this.southId, workflow.id!, command)
-            .pipe(map(updated => toConfigurationWorkflowCommand(updated)))
-        : of({ ...command, id: workflow.id });
-      save$.subscribe(updated => {
-        this.workflowSource().update(workflows => workflows.map(w => (w.id === workflow.id ? updated : w)));
-        if (this.directSave()) {
-          this.notificationService.success('south.workflows.updated');
-        }
-      });
-    });
+    result.subscribe(command => this.updateWorkflow(workflow.id!, command));
   }
 
   onDuplicate(workflow: ConfigurationWorkflowCommandDTO) {
+    if (this.treeBased) {
+      this.runWizard(this.exploreOptions({ workflow: { command: workflow, mode: 'copy' } }));
+      return;
+    }
     const { component, result } = this.openEditModal();
     component.prepareForCopy(this.scanModes(), this.workflows(), this.manifest, workflow, this.southId, this.southSettings, this.groups);
     result.subscribe(command => this.createWorkflow(command));
+  }
+
+  /** A workflow of the wizard is one of the list when it has its id, a new one otherwise */
+  private saveWorkflow(command: ConfigurationWorkflowCommandDTO) {
+    if (command.id && this.workflows().some(workflow => workflow.id === command.id)) {
+      this.updateWorkflow(command.id, command);
+    } else {
+      this.createWorkflow(command);
+    }
+  }
+
+  private updateWorkflow(workflowId: string, command: ConfigurationWorkflowCommandDTO) {
+    const save$: Observable<ConfigurationWorkflowCommandDTO> = this.directSave()
+      ? this.configurationWorkflowService
+          .update(this.southId, workflowId, command)
+          .pipe(map(updated => toConfigurationWorkflowCommand(updated)))
+      : of({ ...command, id: workflowId });
+    save$.subscribe(updated => {
+      this.workflowSource().update(workflows => workflows.map(w => (w.id === workflowId ? updated : w)));
+      if (this.directSave()) {
+        this.notificationService.success('south.workflows.updated');
+      }
+    });
   }
 
   private createWorkflow(command: ConfigurationWorkflowCommandDTO) {
     this.workflowCreationService
       .save(this.southId, command, this.directSave())
       .subscribe(created => this.workflowSource().update(workflows => [...workflows, created]));
+  }
+
+  /** What a workflow discovers from, for the list: its nodes, the whole data source, or a query */
+  getScope(workflow: ConfigurationWorkflowCommandDTO): { key: string; params: { count: number } } {
+    const nodeIds = workflowNodeIds(workflow.discoveryScope);
+    if (nodeIds === null) {
+      return { key: 'south.workflows.scope-query', params: { count: 0 } };
+    }
+    return nodeIds.length === 0
+      ? { key: 'south.workflows.scope-all', params: { count: 0 } }
+      : { key: 'south.workflows.scope-nodes', params: { count: nodeIds.length } };
   }
 
   onDelete(workflow: ConfigurationWorkflowCommandDTO) {
