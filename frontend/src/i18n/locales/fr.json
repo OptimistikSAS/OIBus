@@ -1898,7 +1898,10 @@
           "custom-unchanged": "Le code du transformateur personnalisé {{name}} ne change pas.",
           "saved-now": "La modification est enregistrée tout de suite, sans attendre l'enregistrement de l'item.",
           "confirm": "Appliquer"
-        }
+        },
+        "test-description": "Testez l'item brut, ou via le transformateur avec lequel un north envoie ses données.",
+        "raw": "Brut",
+        "raw-description": "Les données telles que l'item les obtient, sans transformateur"
       }
     },
     "groups": {

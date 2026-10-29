@@ -113,22 +113,12 @@
       <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" />
     }
 
-    <!-- Test: the item as saved, as in the Settings step of the edit modal -->
+    <!-- Test: the item as saved, raw or through the transformer of a North it is sent to -->
     @if (southConnector(); as southConnector) {
-      <div class="mt-4" id="item-test">
-        <oib-south-item-test
-          type="south"
-          [entityId]="southConnector.id"
-          [item]="item"
-          [connectorCommand]="southConnector"
-          [manifest]="manifest()!"
-        />
-      </div>
-
-      <!-- Norths: where the data of the item is sent, as in the North step of the edit modal -->
-      <section class="mt-4" id="item-norths">
-        <h5 class="oib-section-title" translate="south.edit-item-modal.step.north"></h5>
+      <section class="mt-4" id="item-test">
+        <h5 class="oib-section-title" translate="south.test-item.title"></h5>
         <oib-south-item-norths
+          [rawEntry]="true"
           [southId]="southConnector.id"
           [item]="routedItem()!"
           [connectorCommand]="southConnector"

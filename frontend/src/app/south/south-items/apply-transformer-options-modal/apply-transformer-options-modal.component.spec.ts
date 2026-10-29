@@ -59,7 +59,6 @@ class ApplyTransformerOptionsModalComponentTester {
       transformer: savedTransformer,
       options: { topic: 'applied' },
       impactedItems: ['item1', 'item2'],
-      itemEdited: true,
       ...change
     });
   }
@@ -108,14 +107,12 @@ describe('ApplyTransformerOptionsModalComponent', () => {
           group: { id: 'group1', name: 'GroupA' },
           excludedItems: [{ ...southSource.items[0], id: 'item3', name: 'item3' }]
         }
-      },
-      itemEdited: false
+      }
     });
 
     await expect
       .element(tester.scope)
       .toHaveTextContent(`The transformer applies to the items of the group GroupA of ${southSource.south.name}. 1 item(s) are left out.`);
-    await expect.element(tester.notes).not.toMatchTextContent(/saved right away/);
   });
 
   test('should tell the transformer of items chosen, a standard one, without change', async () => {

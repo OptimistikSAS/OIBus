@@ -2885,7 +2885,10 @@
           "custom-unchanged": "The code of the custom transformer {{name}} does not change.",
           "saved-now": "The change is saved right away, without waiting for the item to be saved.",
           "confirm": "Apply"
-        }
+        },
+        "test-description": "Test the item raw, or through the transformer a north sends its data with.",
+        "raw": "Raw",
+        "raw-description": "The data as the item gets it, without transformer"
       }
     },
     "groups": {

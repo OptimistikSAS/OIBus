@@ -23,13 +23,12 @@ export interface TransformerOptionsChange {
   options: Record<string, unknown>;
   /** The names of the items of the south the North sends through the transformer */
   impactedItems: Array<string>;
-  /** Whether the item is being edited: the change is saved right away, without waiting for the item */
-  itemEdited: boolean;
 }
 
 /**
  * Confirms that options tried out on a south item are applied to the transformer of a North: what changes, and every item of
- * the south it sends to the North. Saves the transformer, and closes with it once saved.
+ * the south it sends to the North. Saves the transformer right away, without waiting for the item, and closes with it once
+ * saved.
  */
 @Component({
   selector: 'oib-apply-transformer-options-modal',
