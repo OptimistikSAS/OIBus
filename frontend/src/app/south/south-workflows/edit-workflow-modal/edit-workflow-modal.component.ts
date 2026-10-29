@@ -32,22 +32,16 @@ import { debounceTime, filter, Observable } from 'rxjs';
 import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
-import { OIBusRecord, OIBusRecordListContent } from '@oibus/shared/common/content.model';
-import {
-  OIBusAttribute,
-  OIBusAttributeType,
-  OIBusEnablingCondition,
-  OIBusObjectAttribute,
-  OIBusScanModeAttribute
-} from '@oibus/shared/connector/form.model';
+import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
+import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '@oibus/shared/domain/configuration-workflow.model';
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
-import { ExploreTreeComponent, SouthExploreApi } from '../../../shared/explore-tree/explore-tree.component';
+import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
@@ -63,192 +57,32 @@ import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../../south-ite
 import { TEMP_ID_PREFIX } from '../workflow-command';
 import { WorkflowPreviewComponent } from '../workflow-preview/workflow-preview.component';
 import { WorkflowRecordsPreviewComponent } from '../workflow-records-preview/workflow-records-preview.component';
-
-// 'group-select' is not part of the manifest's own attribute-type vocabulary - it tags the
-// historian groupId field, whose options come from this south connector's item groups rather
-// than a static list.
-type MappableFieldType = OIBusAttributeType | 'group-select';
-
-/** One manifest enabling condition, resolved to full item-root-relative paths (the manifest's own
- *  referralPathFromRoot/targetPathFromRoot are only relative to the object that declares them - see
- *  buildItemMappableFields). A field is shown only once every rule covering it (its own, plus any
- *  inherited from an enclosing object) evaluates true against the referral field's current mapped value. */
-interface FieldEnablingRule {
-  referralPath: string;
-  values: OIBusEnablingCondition['values'];
-  operator?: OIBusEnablingCondition['operator'];
-}
-
-/** One field a mapping can target - a path into the item command shape, its translated label, and enough type
- *  information to render a type-appropriate constant input (checkbox, select, ...) instead of a bare text box. */
-interface MappableField {
-  path: string;
-  translationKey: string;
-  attributeType: MappableFieldType;
-  /** Only for 'string-select' - the manifest's own selectableValues. */
-  selectableValues?: Array<string>;
-  /** Every enabling condition gating this field's visibility (own + inherited from an ancestor object) -
-   *  all must pass for the field to be shown at all. Empty for fields outside the manifest tree. */
-  enablingRules?: Array<FieldEnablingRule>;
-  /** Translation keys of every object this field is nested under, beyond the top-level `settings` wrapper
-   *  every settings.* field already implies (e.g. ['...ha-mode.title'] for settings.haMode.aggregate) -
-   *  shown as breadcrumb context so a deeply-nested field isn't just a bare, ambiguous leaf name. */
-  ancestorLabelKeys?: Array<string>;
-  /** True for a manifest attribute carrying a REQUIRED validator (e.g. name, scanMode) - the same source
-   *  of truth EditSouthItemModalComponent's own form validators read from. Checked at save time so a
-   *  workflow can't be saved half-mapped in a way item creation would only reject later, at run time. */
-  mandatory?: boolean;
-  /** The manifest's own defaultValue for this attribute, when it has a usable one (e.g. `enabled`'s is
-   *  `true`) - such a field is left off isMandatoryFieldMissing()'s check even when mandatory, since an
-   *  unmapped item command falls back to it (matching EditSouthItemModalComponent's own pre-filled
-   *  control). Undefined for attribute types with no such concept (name's is `null`, scan-mode has none
-   *  at all) - those stay genuinely required to be explicit. */
-  hasUsableDefault?: boolean;
-  /** Historian fields whose relevance depends on whether the item is (going to be) mapped into a group,
-   *  mirroring the real item edit form's own group-dependent fields - `true` shows the field only when
-   *  'groupId' is mapped to something, `false` only when it isn't. Not expressible as an enablingRule
-   *  (those match against a known, finite set of values; "groupId is mapped to *something*" can't, since
-   *  the set of valid group ids is dynamic). Unset for every field outside this historian group. */
-  visibleWhenGrouped?: boolean;
-}
-
-/** Sentinel select-option value meaning "map this to a {{field}} expression instead of a fixed value". */
-const VARIABLE_SENTINEL = '__variable__';
-
-/**
- * The steps of the workflow wizard, in order: the Source step is for the connectors that discover from a query - the others
- * discover from the nodes checked in the Explore step - and the name comes with the schedule.
- */
-export const WORKFLOW_STEPS = ['source', 'filter', 'items', 'schedule', 'review'] as const;
-export type WorkflowStep = (typeof WORKFLOW_STEPS)[number];
-const TREE_WORKFLOW_STEPS: ReadonlyArray<WorkflowStep> = ['filter', 'items', 'schedule', 'review'];
-/** A synchronisation of a SQL connector pushes the records of its query as they are: there is no item to map */
-const SQL_WORKFLOW_STEPS: ReadonlyArray<WorkflowStep> = ['source', 'filter', 'schedule', 'review'];
-
-/** Why a workflow can't be previewed nor saved yet, and the step to fix it in. */
-interface WorkflowProblem {
-  step: WorkflowStep;
-  /** The translation key of what is wrong */
-  key: string;
-}
-
-/**
- * The steps of the wizard opened from the Explore button: the Explore step first, then the ones of what is done with the
- * checked nodes - the workflow steps to keep items in sync with them, or the one step to add them as items once.
- */
-export type WizardStep = 'explore' | WorkflowStep | 'add-items';
-
-/** What the nodes checked in the Explore step are used for. */
-/** Synchronising the checked nodes, adding them as items after a review (a tree), or in one item (a SQL database) */
-export type ExploreFlow = 'sync' | 'items' | 'item';
-
-/** An action of the Explore step footer, choosing what the checked nodes are used for. */
-interface ExploreFlowAction {
-  flow: ExploreFlow;
-  labelKey: string;
-}
-
-/** Everything the wizard needs when it is opened from the Explore button of a data source. */
-export interface ExploreWizardOptions {
-  /** The connector id, or `create` for a connector being created */
-  southId: string;
-  /** Scopes the explore session of a persisted data source; `null` for unsaved settings */
-  exploreConnectorId: string | null;
-  /** Override of the explore session calls, for settings that are not those of a south connector (a history query) */
-  exploreApi?: SouthExploreApi;
-  southSettings: SouthSettings;
-  manifest: SouthConnectorManifest;
-  /** The schedules the items can follow, with the groups; absent for the items of a history query, which have none */
-  schedule?: { scanModes: Array<ScanModeDTO>; groups: SouthItemGroups };
-  /** The items of the connector: a new one can't take their names, and one with the same settings is skipped by default */
-  existingItems: ReadonlyArray<{ name: string; settings: SouthItemSettings }>;
-  /**
-   * Discovers the items, when they are not those of a south connector (e.g. of a history query, whose secrets it holds);
-   * the mapping is the one of the item mapping form
-   */
-  discover?: (
-    discoveryScope: Record<string, unknown>,
-    itemFieldMapping: Record<string, string>
-  ) => Observable<Array<SouthConnectorItemCommandDTO>>;
-  /**
-   * Keeping items in sync with the checked nodes through a workflow, with tree-based discovery only: whether it is saved
-   * through the API (the caller saves it) or in memory, and the other workflows of the connector for the name uniqueness check
-   */
-  sync?: { directSave: boolean; existingWorkflows: Array<ConfigurationWorkflowCommandDTO> };
-  /** Only the synchronisation is offered on the checked nodes, whatever the connector can do besides - from its New button */
-  syncOnly?: boolean;
-  /** Nothing is offered on the checked nodes: the data source is only browsed - e.g. to write the query of an item */
-  readOnly?: boolean;
-  /** A synchronisation to edit or duplicate: its nodes start checked in the Explore step, which goes on with its steps */
-  workflow?: { command: ConfigurationWorkflowCommandDTO; mode: 'edit' | 'copy' };
-}
-
-/**
- * What a synchronisation discovers from: the nodes it was given, none standing for the whole data source - or null when it
- * discovers from a query, which has no node to check.
- */
-export function workflowNodeIds(scope: Record<string, unknown>): Array<string> | null {
-  if (typeof scope['query'] === 'string') {
-    return null;
-  }
-  const nodeIds = scope['nodeIds'];
-  if (Array.isArray(nodeIds)) {
-    return nodeIds.filter((nodeId): nodeId is string => typeof nodeId === 'string');
-  }
-  // A workflow saved before nodes could be picked one by one has a single root node
-  return typeof scope['rootNodeId'] === 'string' ? [scope['rootNodeId']] : [];
-}
-
-/** What the wizard closes with when opened from the Explore button: the workflow to create, or the items to add. */
-export type ExploreWizardResult =
-  | { kind: 'workflow'; command: ConfigurationWorkflowCommandDTO }
-  | { kind: 'items'; commands: Array<SouthConnectorItemCommandDTO> }
-  /** The item the checked tables of a SQL database give, for the item modal to complete */
-  | { kind: 'item'; command: SouthConnectorItemCommandDTO };
-
-/**
- * The fields of the Name & schedule section of the item mapping when the items are added once, in the order of the item
- * modal (see `itemMappingSections`): the others are the settings of the connector.
- */
-const SCHEDULE_ITEM_PATH_ORDER = [
-  'name',
-  'enabled',
-  'groupId',
-  'scanModeId',
-  'syncWithGroup',
-  'maxReadInterval',
-  'readDelay',
-  'recoveryStrategy',
-  'startTimeOffset',
-  'endTimeOffset'
-];
-
-/**
- * The item fields that have to be mapped, whatever the manifest says: an item is enabled or not on purpose - an unmapped
- * field would leave it to what the item had (a synchronisation) or to the backend (an item added), which is not a choice.
- */
-const ALWAYS_MANDATORY_ITEM_PATHS = new Set(['enabled']);
-
-/** The history settings an item starts with in the item modal - the ones a new item mapping starts with too (see `prepare`). */
-const HISTORY_ITEM_DEFAULTS: Record<string, string> = {
-  maxReadInterval: '3600',
-  readDelay: '200',
-  recoveryStrategy: 'oldest',
-  startTimeOffset: '0',
-  endTimeOffset: '0'
-};
-
-/** The item fields that give an item its schedule: an item of a history query has none, it is read over its time range. */
-const SCHEDULE_ITEM_PATHS = new Set([
-  'scanModeId',
-  'groupId',
-  'syncWithGroup',
-  'maxReadInterval',
-  'readDelay',
-  'startTimeOffset',
-  'endTimeOffset',
-  'recoveryStrategy'
-]);
+import {
+  ExploreFlow,
+  ExploreFlowAction,
+  ExploreWizardOptions,
+  ExploreWizardResult,
+  SQL_WORKFLOW_STEPS,
+  TREE_WORKFLOW_STEPS,
+  WizardStep,
+  WORKFLOW_STEPS,
+  workflowNodeIds,
+  WorkflowProblem,
+  WorkflowStep
+} from './explore-wizard';
+import {
+  ALWAYS_MANDATORY_ITEM_PATHS,
+  buildItemMappableFields,
+  CONSTANT_ONLY_ITEM_PATHS,
+  evaluatesTrue,
+  HISTORY_ITEM_DEFAULTS,
+  MappableField,
+  nonEmptyEntries,
+  resolveTemplate,
+  SCHEDULE_ITEM_PATH_ORDER,
+  SCHEDULE_ITEM_PATHS,
+  VARIABLE_SENTINEL
+} from './item-field-mapping';
 
 /** How long the mapping has to stay as it is, in ms, before the items to add are discovered again. */
 const ITEMS_DISCOVERY_DEBOUNCE = 400;
@@ -269,66 +103,6 @@ interface PreviewState {
 
 /** How many discovered records the Filter step lists, to keep it light on large sources. */
 const PREVIEW_RECORD_LIMIT = 20;
-
-/** `{{field}}` expressions of a mapping template. */
-const TEMPLATE_PLACEHOLDER = /\{\{\s*([^}\s]+)\s*\}\}/g;
-
-// maxReadInterval/readDelay/the offsets/recoveryStrategy only apply to an item that owns its own
-// schedule/history settings - once synced with a group, those come from the group instead, so mapping
-// them here would be pointless. An item can be *in* a group without being *synced* to it, though (its
-// own settings still apply then) - so this hinges on syncWithGroup itself, not merely on groupId being
-// mapped, and is expressed as a regular enablingRule since 'true'/'false' is a fixed, known value set.
-const HIDDEN_WHILE_SYNCED_WITH_GROUP: FieldEnablingRule = { referralPath: 'syncWithGroup', values: ['true'], operator: 'NOT_EQUAL' };
-
-// None of these vary meaningfully per discovered record - each is a fixed setting of the item's own
-// schedule, or a plain on/off toggle - so, like the schedule/group fields, they're constant-only.
-const CONSTANT_ONLY_ITEM_PATHS = new Set([
-  'maxReadInterval',
-  'readDelay',
-  'startTimeOffset',
-  'endTimeOffset',
-  'recoveryStrategy',
-  'syncWithGroup'
-]);
-
-// Item fields that exist on every south item but aren't part of the manifest's item attribute tree
-// (the real item edit form adds them by hand too, gated on the same manifest.modes.history flag).
-const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
-  { path: 'groupId', translationKey: 'south.items.group', attributeType: 'group-select' },
-  // syncWithGroup is only meaningful once there's a group to sync with at all.
-  { path: 'syncWithGroup', translationKey: 'south.items.sync-with-group', attributeType: 'boolean', visibleWhenGrouped: true },
-  {
-    path: 'maxReadInterval',
-    translationKey: 'south.items.max-read-interval',
-    attributeType: 'number',
-    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
-  },
-  {
-    path: 'readDelay',
-    translationKey: 'south.items.read-delay',
-    attributeType: 'number',
-    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
-  },
-  {
-    path: 'startTimeOffset',
-    translationKey: 'south.items.start-time-offset',
-    attributeType: 'number',
-    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
-  },
-  {
-    path: 'endTimeOffset',
-    translationKey: 'south.items.end-time-offset',
-    attributeType: 'number',
-    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
-  },
-  {
-    path: 'recoveryStrategy',
-    translationKey: 'south.items.recovery-strategy',
-    attributeType: 'string-select',
-    selectableValues: ['oldest', 'newest'],
-    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
-  }
-];
 
 @Component({
   selector: 'oib-edit-workflow-modal',
@@ -684,8 +458,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   /** Whether to show the read-only explore tree above the SQL query editor, for reference while
    *  writing the query - only for the SQL-family connectors that also have an `explore()`
-   *  implementation (a separate capability from discovery). */
-  readonly showSqlExploreTree = computed(() => this.isSqlFamily() && this.currentManifest()?.explore === true);
+   *  implementation (a separate capability from discovery). Not when the wizard has its Explore step: the tables are
+   *  there, and a second tree would open a second explore session (through the connector's endpoints, whatever the
+   *  wizard explores). */
+  readonly showSqlExploreTree = computed(() => this.isSqlFamily() && this.currentManifest()?.explore === true && !this.exploring());
 
   /** Name of the group currently mapped as a constant for the 'groupId' field, or '' when none is. */
   readonly selectedGroupName = computed(() => {
@@ -779,6 +555,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.flow.set(target || options.syncOnly ? 'sync' : null);
     this.syncTargetId.set(target?.mode === 'edit' ? target.command.id : null);
     this.pickedNodeIds = null;
+    this.syncSelectionKey = null;
     this.originalNodeIds.set(target?.mode === 'edit' ? [...this.discoveryNodeIds()] : []);
     this.itemsDiscovery.set(null);
     this.itemsDiscoveryKey.set(null);
@@ -788,7 +565,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       () =>
         this.exploreStepTree()?.prepare(options.exploreConnectorId, options.southSettings, options.manifest.id, {
           api: options.exploreApi,
-          checkable: !options.readOnly,
+          // a node gets a checkbox only when there is something to do with the checked ones
+          checkable: this.flowActions().length > 0,
           checkedIds: this.discoveryNodeIds()
         }),
       { injector: this.injector }
@@ -1241,6 +1019,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly selectionError = signal<string | null>(null);
   /** Whether the tables checked have nothing to read */
   readonly selectionNone = signal(false);
+  /** The tables the metadata query was last written from, to keep it (maybe edited) when they are checked again */
+  private syncSelectionKey: string | null = null;
 
   /** Uses the checked nodes for what the action says: the first step of the way to do so follows. */
   chooseFlow(flow: ExploreFlow) {
@@ -1262,14 +1042,17 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     // the plain query is the one of a metadata query, which is run as it is: with no time range
     const mapping =
       flow === 'item' ? options.manifest.discovery!.defaults!.itemFieldMapping : { name: '{{name}}', 'settings.query': '{{plainQuery}}' };
-    const discover =
-      options.discover ??
-      ((scope, itemMapping) =>
-        this.southConnectorService.discoverItems(options.southId, options.manifest.id, options.southSettings, scope, itemMapping));
+    // Checked again with the same tables, the query already written (and maybe edited) is kept
+    const selectionKey = JSON.stringify(nodeIds);
+    if (flow === 'sync' && selectionKey === this.syncSelectionKey && this.discoveryQuery().trim()) {
+      this.flow.set('sync');
+      this.goToStep(this.workflowSteps()[0]);
+      return;
+    }
     this.selectionPending.set(true);
     this.selectionError.set(null);
     this.selectionNone.set(false);
-    discover({ nodeIds, combine: true }, mapping).subscribe({
+    this.discover({ nodeIds, combine: true }, mapping).subscribe({
       next: commands => {
         this.selectionPending.set(false);
         const command = commands[0];
@@ -1279,7 +1062,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
           const result: ExploreWizardResult = { kind: 'item', command };
           this.modal.close(result);
         } else {
-          this.discoveryQuery.set(String((command.settings as unknown as Record<string, unknown>)['query'] ?? ''));
+          this.discoveryQuery.set('query' in command.settings ? String(command.settings.query) : '');
+          this.syncSelectionKey = selectionKey;
           if (!this.form.controls.name.value) {
             this.form.controls.name.setValue(command.name);
           }
@@ -1292,6 +1076,17 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
         this.selectionError.set(extractErrorMessage(error));
       }
     });
+  }
+
+  /**
+   * The items a discovery scope gives, mapped as told: through the opener when the data source is not a south connector (a
+   * history query), through the south connector endpoints otherwise.
+   */
+  private discover(scope: Record<string, unknown>, mapping: Record<string, string>): Observable<Array<SouthConnectorItemCommandDTO>> {
+    const options = this.exploreOptions()!;
+    return options.discover
+      ? options.discover(scope, mapping)
+      : this.southConnectorService.discoverItems(options.southId, options.manifest.id, options.southSettings, scope, mapping);
   }
 
   goToStep(step: WizardStep) {
@@ -1318,7 +1113,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    * discovered last, so that coming back to the step keeps what was reviewed in it.
    */
   discoverItemsToAdd(force = false) {
-    const options = this.exploreOptions()!;
     const nodeIds = Array.from(this.exploreStepTree()?.checkedIds() ?? []);
     const mapping = this.itemFieldMappingToSend();
     const key = this.currentItemsDiscoveryKey();
@@ -1331,11 +1125,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       return;
     }
     this.itemsDiscovery.set({ loading: true, error: null, commands: null });
-    const discover =
-      options.discover ??
-      ((scope, itemMapping) =>
-        this.southConnectorService.discoverItems(options.southId, options.manifest.id, options.southSettings, scope, itemMapping));
-    discover({ nodeIds }, mapping).subscribe({
+    this.discover({ nodeIds }, mapping).subscribe({
       next: commands => {
         if (this.itemsDiscoveryKey() === key) {
           this.itemsDiscovery.set({ loading: false, error: null, commands: commands.map(command => this.withScheduleNames(command)) });
@@ -1633,130 +1423,4 @@ export function openExploreWizard(modalService: ModalService, options: ExploreWi
   const component: EditWorkflowModalComponent = modalRef.componentInstance;
   component.prepareForExploration(options);
   return modalRef.result;
-}
-
-/** Whether one enabling rule passes against the referral field's current mapped value. */
-function evaluatesTrue(rule: FieldEnablingRule, values: Record<string, string>): boolean {
-  const referralValue = values[rule.referralPath] ?? '';
-  // Resolved per record at run time: the rule may pass for some of them
-  if (referralValue.includes('{{')) {
-    return true;
-  }
-  const matchesAnyValue = rule.values.some(value => String(value) === referralValue);
-  if (rule.operator === 'CONTAINS') {
-    return rule.values.some(value => referralValue.includes(String(value)));
-  }
-  if (rule.operator === 'NOT_EQUAL') {
-    return !matchesAnyValue;
-  }
-  return matchesAnyValue;
-}
-
-/** Builds a MappableField from a manifest attribute, capturing its type (and selectableValues, for 'string-select')
- *  so the mapping UI can render a type-appropriate constant input instead of a bare text box. */
-function toMappableField(
-  attribute: OIBusAttribute,
-  path: string,
-  enablingRules: Array<FieldEnablingRule>,
-  ancestorLabelKeys: Array<string>
-): MappableField {
-  const field: MappableField = {
-    path,
-    translationKey: attribute.translationKey,
-    attributeType: attribute.type,
-    enablingRules,
-    ancestorLabelKeys,
-    mandatory: attribute.validators?.some(validator => validator.type === 'REQUIRED') ?? false,
-    // Only a subset of attribute shapes even carry a defaultValue property, and it's nullable on most
-    // of those (meaning "no real default", still genuinely required) - 'boolean' is the one type whose
-    // defaultValue is never null.
-    hasUsableDefault: 'defaultValue' in attribute && attribute.defaultValue !== null
-  };
-  if (attribute.type === 'string-select') {
-    field.selectableValues = attribute.selectableValues;
-  }
-  return field;
-}
-
-// `scanMode` is the one manifest key renamed on its way into a mappable path (to `scanModeId`, what the
-// workflow command actually uses) - applied wherever it appears, including as a referral/target of some
-// enabling condition, so path resolution stays consistent with the field's own listed path.
-function resolveChildPath(pathPrefix: string, key: string): string {
-  const resolvedKey = key === 'scanMode' ? 'scanModeId' : key;
-  return pathPrefix ? `${pathPrefix}.${resolvedKey}` : resolvedKey;
-}
-
-/**
- * Recursively walks one object attribute's children (the item root, `settings`, or any object nested
- * further under it), resolving each `enablingConditions` entry declared on it - relative to its own
- * direct children per the manifest convention (see dynamic-form.builder.ts's addEnablingConditions) -
- * into full item-root-relative paths, and pushing one MappableField per non-object child. A child that
- * is itself an object is recursed into (never pushed as its own field - there's no single value to map
- * a whole nested group of settings to); its own children inherit every rule gating the parent, plus
- * whatever rule of its own further narrows them, and every ancestor's own label beyond the top-level
- * `settings` wrapper (skipped as a breadcrumb entry - every settings.* field already implies it).
- */
-function walkItemAttributes(
-  objectAttribute: OIBusObjectAttribute,
-  pathPrefix: string,
-  inheritedRules: Array<FieldEnablingRule>,
-  ancestorLabelKeys: Array<string>,
-  fields: Array<MappableField>
-): void {
-  const ownRuleByChildKey = new Map<string, FieldEnablingRule>();
-  for (const condition of objectAttribute.enablingConditions) {
-    const referralPath = resolveChildPath(pathPrefix, condition.referralPathFromRoot);
-    ownRuleByChildKey.set(condition.targetPathFromRoot, { referralPath, values: condition.values, operator: condition.operator });
-  }
-
-  for (const attribute of objectAttribute.attributes) {
-    const childPath = resolveChildPath(pathPrefix, attribute.key);
-    const ownRule = ownRuleByChildKey.get(attribute.key);
-    const rules = ownRule ? [...inheritedRules, ownRule] : inheritedRules;
-
-    if (attribute.type === 'object') {
-      const childAncestors = pathPrefix === '' ? ancestorLabelKeys : [...ancestorLabelKeys, attribute.translationKey];
-      walkItemAttributes(attribute, childPath, rules, childAncestors, fields);
-    } else {
-      fields.push(toMappableField(attribute, childPath, rules, ancestorLabelKeys));
-    }
-  }
-}
-
-/**
- * Flattens a south connector's item manifest into a mappable-field list: every top-level item
- * attribute (name, enabled, ...), the connector-specific settings.* fields nested arbitrarily deep
- * under the manifest's own `settings` object attribute, `scanMode` renamed to the `scanModeId` path
- * the workflow command actually uses, plus the historian fields the real item form adds by hand
- * outside the manifest tree (gated on the same `manifest.modes.history` flag it uses). Each field
- * carries the manifest's own `enablingConditions`, resolved to full paths, so the UI can hide a field
- * until its condition is met.
- */
-function buildItemMappableFields(manifest: SouthConnectorManifest): Array<MappableField> {
-  const fields: Array<MappableField> = [];
-  walkItemAttributes(manifest.items.rootAttribute, '', [], [], fields);
-  if (manifest.modes.history) {
-    fields.push(...HISTORIAN_ITEM_FIELDS);
-  }
-  return fields;
-}
-
-/** A mapping template with its `{{field}}` expressions replaced by the record values - an example item name. */
-function resolveTemplate(template: string, record: OIBusRecord): string {
-  return template.replace(TEMPLATE_PLACEHOLDER, (_match, field: string) => {
-    const value = record[field];
-    return value === null || value === undefined ? '' : String(value);
-  });
-}
-
-/** Trims every value, keeping only non-empty entries - a blank expression means "not mapped". */
-function nonEmptyEntries(values: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const [key, value] of Object.entries(values)) {
-    const trimmed = value?.trim();
-    if (trimmed) {
-      result[key] = trimmed;
-    }
-  }
-  return result;
 }

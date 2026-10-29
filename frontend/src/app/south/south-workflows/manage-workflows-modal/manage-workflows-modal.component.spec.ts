@@ -9,6 +9,7 @@ import { page } from 'vitest/browser';
 
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
+import { SouthItemSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildWorkflow, buildWorkflowCommand } from '../../../../test/builders';
@@ -461,7 +462,7 @@ describe('ManageWorkflowsModalComponent', () => {
       toConfigurationWorkflowCommand(buildWorkflow(id, name, { discoveryScope }));
     let wizard: MockObject<EditWorkflowModalComponent>;
 
-    function prepare(directSave = true, items: Array<{ name: string; settings: never }> = []) {
+    function prepare(directSave = true, items: Array<{ name: string; settings: SouthItemSettings }> = []) {
       commands = [
         scoped('workflow1', 'Reactor sync', { nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] }),
         scoped('workflow2', 'Everything', {}),
@@ -505,7 +506,8 @@ describe('ManageWorkflowsModalComponent', () => {
 
     test('should explore the data source in the wizard, with what it needs to add items and keep them in sync', async () => {
       mockWizard();
-      prepare(true, [{ name: 'item', settings: {} as never }]);
+      const itemSettings = testData.south.itemCommand.settings;
+      prepare(true, [{ name: 'item', settings: itemSettings }]);
 
       await tester.exploreButton.click();
 
@@ -515,7 +517,7 @@ describe('ManageWorkflowsModalComponent', () => {
         southSettings,
         manifest: treeManifest,
         schedule: { scanModes, groups },
-        existingItems: [{ name: 'item', settings: {} }],
+        existingItems: [{ name: 'item', settings: itemSettings }],
         sync: { directSave: true, existingWorkflows: commands }
       });
     });

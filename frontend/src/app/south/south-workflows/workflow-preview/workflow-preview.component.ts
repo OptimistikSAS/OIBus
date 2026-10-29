@@ -11,6 +11,7 @@ import { createPageFromArray } from '@oibus/shared/common/types';
 import { DownloadService } from '../../../services/download.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { flattenPlainObject } from '../../../shared/utils/csv.utils';
+import { WorkflowRecordsPreviewComponent } from '../workflow-records-preview/workflow-records-preview.component';
 
 /**
  * A live dry-run preview and a historical run's full discovered payload share the same discoveredCount/eligibleCount/
@@ -39,7 +40,8 @@ export interface PreviewEntryRow {
 
 /**
  * What a Configuration Workflow run would do, or did: the entries of a local workflow classified against the previous
- * run (new, changed, missing...), or the raw records a remote one pushes - searchable and paginated in memory, exportable as CSV. Shown in the
+ * run (new, changed, missing...), or the raw records a remote one pushes (in the records table of the wizard) - searchable
+ * and paginated in memory, exportable as CSV. Shown in the
  * Review step of the workflow wizard, and for the payload of a past run.
  */
 @Component({
@@ -47,7 +49,7 @@ export interface PreviewEntryRow {
   templateUrl: './workflow-preview.component.html',
   styleUrl: './workflow-preview.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, TranslatePipe, PaginationComponent]
+  imports: [TranslateDirective, TranslatePipe, PaginationComponent, WorkflowRecordsPreviewComponent]
 })
 export class WorkflowPreviewComponent {
   private downloadService = inject(DownloadService);
@@ -72,7 +74,7 @@ export class WorkflowPreviewComponent {
     collectColumns(this.entryRows().length > 0 ? this.entryRows().map(row => row.values) : this.recordRows())
   );
 
-  /** The text searched, in the values of the rows and the identity key of the entries */
+  /** The text searched, in the identity key, the status and the values of the entries */
   readonly search = signal('');
   private readonly searchText = computed(() => this.search().trim().toLowerCase());
   /** The entries with the searched text in their identity key, status or one of their values - all of them when nothing is searched */
@@ -87,29 +89,18 @@ export class WorkflowPreviewComponent {
         )
       : this.entryRows();
   });
-  private readonly matchingRecordRows = computed(() => {
-    const text = this.searchText();
-    return text ? this.recordRows().filter(row => Object.values(row).some(value => value.toLowerCase().includes(text))) : this.recordRows();
-  });
-  /** How many rows are listed - the entries of a local workflow, or the records a remote one pushes - and how many of them match the search */
-  readonly rowCount = computed(() => ({
-    total: this.entryRows().length > 0 ? this.entryRows().length : this.recordRows().length,
-    matching: this.entryRows().length > 0 ? this.matchingEntryRows().length : this.matchingRecordRows().length
-  }));
 
   // Back to the first page whenever the result, or what is searched, changes (a refreshed preview)
   private readonly entriesPage = linkedSignal({ source: () => [this.result(), this.searchText()], computation: () => 0 });
-  private readonly recordsPage = linkedSignal({ source: () => [this.result(), this.searchText()], computation: () => 0 });
   readonly hasEntries = computed(() => this.entryRows().length > 0);
-  readonly hasRecords = computed(() => this.recordRows().length > 0);
-  // Null when no row matches - the template's @if/@else if chain on `hasEntries`/`hasRecords` picks which table (or the
-  // empty state, or the "no match" message) to show.
+  /** Null when no entry matches - the template then says so */
   readonly paginatedEntries = computed(() =>
     this.matchingEntryRows().length > 0 ? createPageFromArray(this.matchingEntryRows(), PAGE_SIZE, this.entriesPage()) : null
   );
-  readonly paginatedRecords = computed(() =>
-    this.matchingRecordRows().length > 0 ? createPageFromArray(this.matchingRecordRows(), PAGE_SIZE, this.recordsPage()) : null
-  );
+  readonly matchingEntryCount = computed(() => this.matchingEntryRows().length);
+  readonly pageSize = PAGE_SIZE;
+  /** The records a remote workflow pushes, listed by the records table of the wizard (searchable and paginated as well) */
+  readonly records = computed(() => (this.hasEntries() ? [] : this.result().records));
 
   /** The full created/updated/disabled/pushed breakdown behind a run's summary - only available (and only ever shown)
    *  for a historical run's payload, never for a live preview. */
@@ -125,10 +116,6 @@ export class WorkflowPreviewComponent {
 
   changeEntriesPage(pageNumber: number): void {
     this.entriesPage.set(pageNumber);
-  }
-
-  changeRecordsPage(pageNumber: number): void {
-    this.recordsPage.set(pageNumber);
   }
 
   /** The identity key as shown in the table - its segments are joined by an invisible control character
