@@ -26,7 +26,7 @@ import {
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { MYSQL_DIALECT } from '../sql-dialects';
-import { discoverTables, extractNodeIds, toColumnExploreEntry } from '../sql-table-discovery';
+import { discoverTables, extractCombine, extractNodeIds, toColumnExploreEntry, withTableSelect } from '../sql-table-discovery';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send the resulting rows as
@@ -244,7 +244,11 @@ export default class SouthMySQL
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
     const connection = await mysql.createConnection(await this.createConnectionOptions());
     try {
-      return parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId);
+      return withTableSelect(
+        parentId,
+        parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId),
+        MYSQL_DIALECT
+      );
     } finally {
       await connection.end();
     }
@@ -300,7 +304,7 @@ export default class SouthMySQL
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
     const nodeIds = extractNodeIds(scope);
     if (nodeIds) {
-      return discoverTables(parentId => this.explore(parentId), nodeIds, MYSQL_DIALECT);
+      return discoverTables(parentId => this.explore(parentId), nodeIds, MYSQL_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
     const config = await this.createConnectionOptions();

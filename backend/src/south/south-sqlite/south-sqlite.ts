@@ -20,7 +20,7 @@ import { convertDateTimeToInstant, extractDiscoveryQuery, formatInstant, logQuer
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { SQLITE_DIALECT } from '../sql-dialects';
-import { discoverTables, extractNodeIds, quoteAnsiIdentifier } from '../sql-table-discovery';
+import { discoverTables, extractCombine, extractNodeIds, quoteAnsiIdentifier, withTableSelect } from '../sql-table-discovery';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send the resulting rows as record-list
@@ -141,7 +141,7 @@ export default class SouthSQLite
           .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name`)
           .all() as Array<{ name: string }>;
 
-        return tables.map(table => {
+        const entries = tables.map(table => {
           const columnCount = (database.prepare(`PRAGMA table_info(${quoteAnsiIdentifier(table.name)})`).all() as Array<unknown>).length;
           // A table can exist without being queryable (e.g. a broken virtual table) — a row count that
           // can't be read shouldn't stop the rest of the tree from being explorable.
@@ -166,6 +166,7 @@ export default class SouthSQLite
             hasChildren: columnCount > 0
           };
         });
+        return withTableSelect(parentId, entries, SQLITE_DIALECT);
       }
 
       const columns = database.prepare(`PRAGMA table_info(${quoteAnsiIdentifier(parentId)})`).all() as Array<{
@@ -292,7 +293,7 @@ export default class SouthSQLite
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
     const nodeIds = extractNodeIds(scope);
     if (nodeIds) {
-      return discoverTables(parentId => this.explore(parentId), nodeIds, SQLITE_DIALECT);
+      return discoverTables(parentId => this.explore(parentId), nodeIds, SQLITE_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
     const database = db(path.resolve(this.connector.settings.databasePath));
