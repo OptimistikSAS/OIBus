@@ -2589,6 +2589,7 @@
       "copied": "Copied to clipboard",
       "copy-error": "Error while copying to clipboard",
       "metadata": {
+        "select": "SELECT query",
         "nodeId": "Node ID",
         "type": "Type",
         "description": "Description",
@@ -2631,7 +2632,15 @@
       "home-title": "Explore and sync",
       "home-explore": "Explore the data source",
       "home-hint": "Browse the nodes, then add them as items or keep them in sync",
-      "home-go": "Explore"
+      "home-go": "Explore",
+      "metadata-sync": "Metadata sync",
+      "add-in-item": "Add in an item",
+      "selection-none": "The tables checked have nothing to read",
+      "selection-error": "Error while building the query of the tables checked",
+      "home-explore-sql": "Browse the database",
+      "home-hint-sql": "See its tables and columns, to write the queries of your items",
+      "home-go-sql": "Browse",
+      "browse-tables": "Browse tables"
     },
     "add-discovered-items": {
       "error": "Error while discovering the selected nodes",
@@ -3012,6 +3021,10 @@
       "delete-error": "Error deleting items synchronisation: {{error}}",
       "none-title": "No items synchronisation yet",
       "none-hint": "Keep items in sync with the data source: explore it, check the nodes to follow, and choose Keep in sync…. You can also start from New synchronisation.",
+      "none-title-sql": "No metadata synchronisation yet",
+      "none-hint-sql": "Push the records of a query, such as a list of tags, to OIAnalytics: browse the database, check a table and choose Metadata sync. You can also start from New synchronisation.",
+      "manage-title-sql": "Metadata synchronisations ({{count}})",
+      "manage-subtitle-sql": "Their records are pushed to OIAnalytics",
       "none-match": "No items synchronisation matches the current filters",
       "search-placeholder": "Search synchronisations by name",
       "run-now": "Run now",

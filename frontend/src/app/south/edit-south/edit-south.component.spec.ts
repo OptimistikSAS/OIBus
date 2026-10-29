@@ -548,6 +548,35 @@ describe('EditSouthComponent', () => {
       await expect.element(tester.root.getByText('added')).toBeInTheDocument();
     });
 
+    test('should open the item modal with the item the tables checked in the explore and sync home give', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
+      const tester = await createTester('edit');
+      const prefilled = { ...southConnector.items[0], id: null, name: 'measures_tags' };
+      const itemModal = createMock(EditSouthItemModalComponent);
+      vi.spyOn(modalService, 'open')
+        .mockReturnValueOnce(fakeModal(createMock(ManageWorkflowsModalComponent), Promise.resolve({ kind: 'item', command: prefilled })))
+        .mockReturnValueOnce(fakeModal(itemModal, Promise.resolve({ ...prefilled, name: 'completed' })));
+
+      await tester.goTo('items');
+      await tester.exploreButton.click();
+
+      await vi.waitFor(() =>
+        expect(itemModal.prepareForCreation).toHaveBeenCalledWith(
+          expect.any(Array),
+          scanModes,
+          expect.anything(),
+          expect.anything(),
+          discoveryManifest,
+          'southId1',
+          expect.anything(),
+          null,
+          prefilled
+        )
+      );
+      // saved with the connector, like the items added otherwise
+      await expect.element(tester.root.getByText('completed')).toBeInTheDocument();
+    });
+
     test('should show the workflows the home kept in memory', async () => {
       southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
       const tester = await createTester('edit');
@@ -619,6 +648,7 @@ describe('EditSouthComponent', () => {
         manifest,
         'southId1',
         expect.objectContaining({ name: 'South 1', items: itemCommands }),
+        null,
         null
       );
       expect(editModal.prepareForCreation.mock.lastCall![3].list()).toEqual([groupACommand, createdGroup('New group')]);
@@ -654,7 +684,8 @@ describe('EditSouthComponent', () => {
         manifest,
         'southId1',
         expect.objectContaining({ name: 'South 1' }),
-        firstItem
+        firstItem,
+        null
       );
       // the last one was added with the main action: no other item
       expect(open).toHaveBeenCalledTimes(2);

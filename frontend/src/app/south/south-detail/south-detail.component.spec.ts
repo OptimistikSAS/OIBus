@@ -365,6 +365,33 @@ describe('SouthDetailComponent', () => {
       expect(notificationService.success).toHaveBeenCalledWith('south.add-discovered-items.added', { count: '1' });
     });
 
+    test('should open the item modal with the item the tables checked in the explore and sync home give', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
+      const tester = await createTester();
+      const prefilled = { ...testData.south.itemCommand, id: null, name: 'measures_tags' };
+      const itemModal = createMock(EditSouthItemModalComponent);
+      vi.spyOn(modalService, 'open')
+        .mockReturnValueOnce(fakeModal(createMock(ManageWorkflowsModalComponent), Promise.resolve({ kind: 'item', command: prefilled })))
+        .mockReturnValueOnce(fakeModal(itemModal, new Promise(() => undefined)));
+
+      await tester.exploreButton.click();
+
+      await vi.waitFor(() =>
+        expect(itemModal.prepareForCreation).toHaveBeenCalledWith(
+          southConnector.items,
+          scanModes,
+          [],
+          expect.anything(),
+          discoveryManifest,
+          'southId1',
+          expect.objectContaining({ id: 'southId1' }),
+          null,
+          prefilled
+        )
+      );
+      expect(southConnectorService.importItems).not.toHaveBeenCalled();
+    });
+
     test('should open the audit history of the south connector and of its items', async () => {
       const tester = await createTester();
       const auditModal = mockModal(createMock(AuditHistoryModalComponent));
@@ -498,6 +525,7 @@ describe('SouthDetailComponent', () => {
         manifest,
         'southId1',
         expect.objectContaining({ id: 'southId1', configurationWorkflows: [] }),
+        null,
         null
       );
       expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', command);
@@ -539,7 +567,8 @@ describe('SouthDetailComponent', () => {
         manifest,
         'southId1',
         expect.objectContaining({ id: 'southId1' }),
-        firstCommand
+        firstCommand,
+        null
       );
       expect(southConnectorService.createItem).toHaveBeenNthCalledWith(1, 'southId1', firstCommand);
       expect(southConnectorService.createItem).toHaveBeenNthCalledWith(2, 'southId1', nextCommand);

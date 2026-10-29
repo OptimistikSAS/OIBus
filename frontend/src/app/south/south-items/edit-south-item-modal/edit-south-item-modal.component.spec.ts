@@ -26,6 +26,7 @@ import { TransformerService } from '../../../services/transformer.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import EditWorkflowModalComponent from '../../south-workflows/edit-workflow-modal/edit-workflow-modal.component';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { ITEM_MODAL_STEPS, ItemModalStep } from '../item-modal-steps';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../south-item-groups.testing';
@@ -194,6 +195,8 @@ describe('EditSouthItemModalComponent', () => {
     tableIndex?: number;
     directSave?: boolean;
     previousItem?: SouthConnectorItemCommandDTO;
+    /** The item a new one starts from, e.g. the one the tables of a database give */
+    prefill?: SouthConnectorItemCommandDTO;
     /** The step to open: the name & schedule one by default, where most of the item is edited */
     step?: ItemModalStep;
   }
@@ -207,6 +210,7 @@ describe('EditSouthItemModalComponent', () => {
       tableIndex = 0,
       directSave = true,
       previousItem = null,
+      prefill = null,
       step = 'general'
     } = options;
     const tester = new EditSouthItemModalComponentTester();
@@ -214,7 +218,7 @@ describe('EditSouthItemModalComponent', () => {
     component.directSave = directSave;
     switch (mode) {
       case 'create':
-        component.prepareForCreation(itemList, scanModes, [], groups, itemManifest, southId, southConnectorCommand, previousItem);
+        component.prepareForCreation(itemList, scanModes, [], groups, itemManifest, southId, southConnectorCommand, previousItem, prefill);
         break;
       case 'edit':
         component.prepareForEdition(itemList, scanModes, [], groups, itemManifest, item, southId, southConnectorCommand, tableIndex);
@@ -793,6 +797,81 @@ describe('EditSouthItemModalComponent', () => {
 
       await typeName(tester, savedItem1.name);
       await expect.element(tester.mustBeUnique).toBeInTheDocument();
+    });
+  });
+
+  describe('new item from the tables of a database', () => {
+    const databaseManifest: SouthConnectorManifest = { ...manifest, id: 'mysql', explore: true, discovery: { kind: 'query' } };
+
+    test('should start from the item the tables checked give, which is completed', async () => {
+      const prefill: SouthConnectorItemCommandDTO = {
+        ...testData.south.itemCommand,
+        id: '',
+        name: 'measures_tags',
+        scanModeId: null,
+        scanModeName: null
+      };
+      const tester = await open('create', { prefill });
+
+      await expect.element(tester.name).toHaveValue('measures_tags');
+      await tester.scanMode.selectOptions(scanModes[1].name);
+      await tester.step('review').click();
+      await tester.saveButton.click();
+
+      expect(savedCommand()).toEqual(expect.objectContaining({ name: 'measures_tags', scanModeId: scanModes[1].id }));
+    });
+
+    test('should not take the name of another item', async () => {
+      const prefill: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, id: '', name: savedItem2.name };
+      const tester = await open('create', { prefill, itemList: [savedItem1, savedItem2] });
+
+      await tester.step('review').click();
+      await expect.element(tester.root.getByCss('#review-errors')).toBeInTheDocument();
+    });
+
+    test('should offer to browse the tables of a database from the settings, nothing more', async () => {
+      const tester = await open('create', { itemManifest: databaseManifest, step: 'settings' });
+      const wizard = createMock(EditWorkflowModalComponent);
+      TestBed.inject(MockModalService).mockDismissedModal(wizard);
+
+      await tester.root.getByCss('#browse-tables').click();
+
+      expect(wizard.prepareForExploration).toHaveBeenCalledWith({
+        southId,
+        exploreConnectorId: southId,
+        southSettings: southConnectorCommand.settings,
+        manifest: databaseManifest,
+        existingItems: [],
+        readOnly: true
+      });
+    });
+
+    test('should browse a connector being created without a session to scope', async () => {
+      const tester = new EditSouthItemModalComponentTester();
+      tester.fixture.componentInstance.prepareForCreation(
+        [],
+        scanModes,
+        [],
+        groups,
+        databaseManifest,
+        'create',
+        southConnectorCommand,
+        null
+      );
+      const wizard = createMock(EditWorkflowModalComponent);
+      TestBed.inject(MockModalService).mockDismissedModal(wizard);
+
+      await tester.root.getByCss('#browse-tables').click();
+
+      expect(wizard.prepareForExploration).toHaveBeenCalledWith(expect.objectContaining({ southId: 'create', exploreConnectorId: null }));
+    });
+
+    test('should not offer to browse the tables of a connector that is not a database, or cannot be explored', async () => {
+      const iot = await open('create', { itemManifest: { ...manifest, explore: true, discovery: { kind: 'tree' } }, step: 'settings' });
+      await expect.element(iot.root.getByCss('#browse-tables')).not.toBeInTheDocument();
+
+      const notExplorable = await open('create', { itemManifest: { ...databaseManifest, explore: false }, step: 'settings' });
+      await expect.element(notExplorable.root.getByCss('#browse-tables')).not.toBeInTheDocument();
     });
   });
 

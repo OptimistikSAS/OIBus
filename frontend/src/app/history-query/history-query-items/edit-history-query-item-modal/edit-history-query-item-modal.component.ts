@@ -101,6 +101,8 @@ export class EditHistoryQueryItemModalComponent {
   private item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO | null = null;
   /** The item added just before, in a row of new items: the new one starts enabled or not like it */
   private previousItem: HistoryQueryItemCommandDTO | null = null;
+  /** The item a new one starts from, e.g. the one the tables of a database give, which the user completes */
+  private prefill: HistoryQueryItemCommandDTO | null = null;
   private itemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO> = [];
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
@@ -162,10 +164,12 @@ export class EditHistoryQueryItemModalComponent {
     fromSouth: string | null,
     southConnectorCommand: SouthConnectorCommandDTO,
     manifest: SouthConnectorManifest,
-    previousItem: HistoryQueryItemCommandDTO | null = null
+    previousItem: HistoryQueryItemCommandDTO | null = null,
+    prefill: HistoryQueryItemCommandDTO | null = null
   ) {
     this.mode.set('create');
     this.previousItem = previousItem;
+    this.prefill = prefill;
     this.manifest.set(manifest);
     this.historyId.set(historyId);
     this.fromSouth.set(fromSouth);
@@ -306,6 +310,8 @@ export class EditHistoryQueryItemModalComponent {
     // if we have an item, we initialize the values
     if (this.item) {
       form.patchValue(this.item);
+    } else if (this.prefill) {
+      form.patchValue({ name: this.prefill.name, enabled: this.prefill.enabled, settings: this.prefill.settings });
     } else {
       // An item added after another one starts enabled or not like it, but with neither its name nor its connector
       // settings, which tell the items apart

@@ -941,6 +941,9 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       if (result.kind === 'items') {
         this.inMemoryItems.update(items => [...items, ...result.commands.map(command => toHistoryQueryItemCommand(command))]);
         this.itemTable()?.goToFirstPage();
+      } else if (result.kind === 'item') {
+        // the item the tables checked give, which the item modal completes
+        this.openItemCreation(null, toHistoryQueryItemCommand(result.command));
       }
     });
   }
@@ -972,7 +975,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
    * Opens the modal for a new item, and again after each item added with "add another".
    * @param previousItem the item added just before, whose shared settings the new one starts with
    */
-  private openItemCreation(previousItem: HistoryQueryItemCommandDTO | null) {
+  private openItemCreation(previousItem: HistoryQueryItemCommandDTO | null, prefill: HistoryQueryItemCommandDTO | null = null) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -990,7 +993,8 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       this.fromSouthId,
       this.southConnectorCommand,
       this.southManifest()!,
-      previousItem
+      previousItem,
+      prefill
     );
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
       this.inMemoryItems.update(items => [...items, command]);

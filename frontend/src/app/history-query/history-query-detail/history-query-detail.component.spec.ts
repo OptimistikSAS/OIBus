@@ -208,6 +208,30 @@ describe('HistoryQueryDetailComponent', () => {
     expect(notificationService.success).toHaveBeenCalledWith('south.add-discovered-items.added', { count: '1' });
   });
 
+  test('should open the item modal with the item the tables checked give, to complete', async () => {
+    const itemModal = createMock(EditHistoryQueryItemModalComponent);
+    const discovered = { ...testData.south.itemCommand, id: null, name: 'measures_tags' };
+    vi.spyOn(TestBed.inject(MockModalService), 'open')
+      .mockReturnValueOnce(fakeModal(createMock(EditWorkflowModalComponent), Promise.resolve({ kind: 'item', command: discovered })))
+      .mockReturnValueOnce(fakeModal(itemModal, new Promise(() => undefined)));
+    const tester = new HistoryQueryDetailComponentTester();
+
+    await tester.exploreButton.click();
+
+    await vi.waitFor(() =>
+      expect(itemModal.prepareForCreation).toHaveBeenCalledWith(
+        historyQuery.items,
+        historyQuery.id,
+        null,
+        { type: testData.south.manifest.id, settings: historyQuery.southSettings },
+        testData.south.manifest,
+        null,
+        { id: '', name: 'measures_tags', enabled: discovered.enabled, settings: discovered.settings }
+      )
+    );
+    expect(historyQueryService.importItems).not.toHaveBeenCalled();
+  });
+
   test.each(['north', 'south'] as const)('should test the %s connection', async type => {
     const testModal = createMock(TestConnectionResultModalComponent);
     mockModal(testModal);
@@ -319,6 +343,7 @@ describe('HistoryQueryDetailComponent', () => {
       null,
       { type: testData.south.manifest.id, settings: historyQuery.southSettings },
       testData.south.manifest,
+      null,
       null
     );
     expect(historyQueryService.createItem).toHaveBeenCalledWith(historyQuery.id, command);
@@ -348,7 +373,8 @@ describe('HistoryQueryDetailComponent', () => {
       null,
       { type: testData.south.manifest.id, settings: historyQuery.southSettings },
       testData.south.manifest,
-      firstCommand
+      firstCommand,
+      null
     );
     expect(historyQueryService.createItem).toHaveBeenNthCalledWith(1, historyQuery.id, firstCommand);
     expect(historyQueryService.createItem).toHaveBeenNthCalledWith(2, historyQuery.id, nextCommand);
