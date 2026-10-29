@@ -1871,7 +1871,34 @@
         "transformer-required": "Choisissez un transformateur",
         "no-transformer": "Aucun transformateur ne peut envoyer les données de cet item à ce north.",
         "add": "Rattacher",
-        "update": "Mettre à jour"
+        "update": "Mettre à jour",
+        "edit-options": "Modifier les options",
+        "no-options": "Ce transformateur n'a pas d'options.",
+        "use-for-testing": "Utiliser pour le test seulement",
+        "apply-to-transformer": "Appliquer au transformateur…",
+        "test-options": "Testé avec d'autres options, non enregistrées",
+        "discard-test-options": "Abandonner",
+        "options-applied": "Les options de {{transformer}} sont enregistrées pour {{north}}",
+        "apply-modal": {
+          "title": "Appliquer les modifications au transformateur ?",
+          "route": "{{transformer}}, qui envoie les données de {{south}} à {{north}}",
+          "changes": "Modifications",
+          "change-count": "{{count}} option(s) modifiée(s)",
+          "no-change": "Aucune option modifiée.",
+          "impacted": "Items concernés",
+          "scope": {
+            "south": "Le transformateur s'applique à tous les items de {{south}}.",
+            "group": "Le transformateur s'applique aux items du groupe {{group}} de {{south}}.",
+            "items": "Le transformateur s'applique à des items choisis de {{south}}."
+          },
+          "excluded": "{{count}} item(s) en sont exclus.",
+          "item-count": "{{count}} item(s) envoyé(s) à {{north}} par ce transformateur :",
+          "more": "et {{count}} de plus",
+          "only-this-north": "Seul le transformateur de ce north change : les autres norths gardent leurs propres options.",
+          "custom-unchanged": "Le code du transformateur personnalisé {{name}} ne change pas.",
+          "saved-now": "La modification est enregistrée tout de suite, sans attendre l'enregistrement de l'item.",
+          "confirm": "Appliquer"
+        }
       }
     },
     "groups": {

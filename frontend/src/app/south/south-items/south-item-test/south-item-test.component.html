@@ -87,9 +87,10 @@
       }
     </div>
 
-    <!-- Selected transformer + its options: shown as soon as a transformer is picked, independent of
-             whether the settings above are collapsed or a test has even run yet. -->
-    @if (selectedTransformer(); as selected) {
+    <!-- History item: the selected transformer + its options, shown as soon as a transformer is picked, independent of
+         whether the settings above are collapsed or a test has even run yet. A south item shows the transformer it is tested
+         through, and edits its options, in its own section above the test. -->
+    @if (isHistory() ? selectedTransformer() : null; as selected) {
       <div class="pipeline-transformer mt-2">
         <div class="d-flex justify-content-between align-items-start">
           <div class="fw-bold">

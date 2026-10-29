@@ -2858,7 +2858,34 @@
         "transformer-required": "Choose a transformer",
         "no-transformer": "No transformer can send the data of this item to this north.",
         "add": "Attach",
-        "update": "Update"
+        "update": "Update",
+        "edit-options": "Edit options",
+        "no-options": "This transformer has no options.",
+        "use-for-testing": "Use for testing only",
+        "apply-to-transformer": "Apply to the transformer…",
+        "test-options": "Tested with other options, not saved",
+        "discard-test-options": "Discard",
+        "options-applied": "The options of {{transformer}} are saved for {{north}}",
+        "apply-modal": {
+          "title": "Apply the changes to the transformer?",
+          "route": "{{transformer}}, which sends the data of {{south}} to {{north}}",
+          "changes": "Changes",
+          "change-count": "{{count}} option(s) changed",
+          "no-change": "No option changed.",
+          "impacted": "Items affected",
+          "scope": {
+            "south": "The transformer applies to all the items of {{south}}.",
+            "group": "The transformer applies to the items of the group {{group}} of {{south}}.",
+            "items": "The transformer applies to items chosen in {{south}}."
+          },
+          "excluded": "{{count}} item(s) are left out.",
+          "item-count": "{{count}} item(s) sent to {{north}} through it:",
+          "more": "and {{count}} more",
+          "only-this-north": "Only the transformer of this north changes: the other norths keep their own options.",
+          "custom-unchanged": "The code of the custom transformer {{name}} does not change.",
+          "saved-now": "The change is saved right away, without waiting for the item to be saved.",
+          "confirm": "Apply"
+        }
       }
     },
     "groups": {
