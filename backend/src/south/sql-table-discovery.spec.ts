@@ -6,12 +6,14 @@ import { SouthConnectorExploreEntry } from '../../shared/model/domain/south-conn
 import {
   buildTableQuery,
   discoverTables,
+  extractCombine,
   extractNodeIds,
   quoteAnsiIdentifier,
   splitSchemaTable,
   SQL_TABLE_RECORD_FIELDS,
   SqlDialect,
-  toColumnExploreEntry
+  toColumnExploreEntry,
+  withTableSelect
 } from './sql-table-discovery';
 
 const dialect: SqlDialect = {
@@ -53,6 +55,7 @@ describe('discoverTables', () => {
         id: 'production',
         name: 'production',
         query: 'SELECT * FROM "production" WHERE "produced_at" > @StartTime AND "produced_at" <= @EndTime',
+        plainQuery: 'SELECT * FROM "production"',
         trackInstant: true,
         timeColumn: 'produced_at',
         dateTimeType: 'iso-string'
@@ -75,7 +78,15 @@ describe('discoverTables', () => {
     const records = await discoverTables(fakeExplore(), ['settings'], dialect);
 
     assert.deepStrictEqual(records, [
-      { id: 'settings', name: 'settings', query: 'SELECT * FROM "settings"', trackInstant: false, timeColumn: null, dateTimeType: null }
+      {
+        id: 'settings',
+        name: 'settings',
+        query: 'SELECT * FROM "settings"',
+        plainQuery: 'SELECT * FROM "settings"',
+        trackInstant: false,
+        timeColumn: null,
+        dateTimeType: null
+      }
     ]);
   });
 
@@ -138,5 +149,127 @@ describe('SQL table discovery helpers', () => {
   it('should extract the checked nodes of a discovery scope, if it has some', () => {
     assert.deepStrictEqual(extractNodeIds({ nodeIds: ['a', 1, 'b'] }), ['a', 'b']);
     assert.strictEqual(extractNodeIds({ query: 'SELECT 1' }), null);
+  });
+});
+
+/** A database to join: `measures` read over time, `tags` it refers to by `tag_id`, and `sites`, which has nothing in common with them. */
+function fakeJoinExplore() {
+  const withKey = (tableId: string, name: string, type: string, primaryKey: boolean): SouthConnectorExploreEntry => ({
+    id: `${tableId}.${name}`,
+    name,
+    metadata: primaryKey ? { type, primaryKey: 'yes' } : { type },
+    hasChildren: false
+  });
+  const columns: Record<string, Array<SouthConnectorExploreEntry>> = {
+    measures: [
+      withKey('measures', 'id', 'int', true),
+      withKey('measures', 'tag_id', 'int', false),
+      withKey('measures', 'ts', 'timestamp', false),
+      withKey('measures', 'value', 'float', false)
+    ],
+    tags: [withKey('tags', 'tag_id', 'int', true), withKey('tags', 'name', 'text', false), withKey('tags', 'value', 'text', false)],
+    sites: [withKey('sites', 'code', 'text', true), withKey('sites', 'label', 'text', false)]
+  };
+  return mock.fn(async (parentId: string | null) => (parentId === null ? Object.keys(columns).map(table) : columns[parentId]));
+}
+
+describe('discoverTables of several tables read together', () => {
+  it('should keep one record per table unless asked to combine them', async () => {
+    const records = await discoverTables(fakeJoinExplore(), ['measures', 'tags'], dialect);
+
+    assert.deepStrictEqual(
+      records.map(record => record.id),
+      ['measures', 'tags']
+    );
+  });
+
+  it('should read the tables together, joined on the column they share, with the time range of the first one', async () => {
+    const records = await discoverTables(fakeJoinExplore(), ['measures', 'tags'], dialect, true);
+
+    assert.strictEqual(records.length, 1);
+    assert.deepStrictEqual(records[0], {
+      id: 'measures,tags',
+      name: 'measures_tags',
+      plainQuery:
+        'SELECT "measures"."id", "measures"."tag_id", "measures"."ts", "measures"."value", "tags"."tag_id" AS "tags_tag_id", "tags"."name", "tags"."value" AS "tags_value" ' +
+        'FROM "measures" "measures" INNER JOIN "tags" "tags" ON "measures"."tag_id" = "tags"."tag_id"',
+      query:
+        'SELECT "measures"."id", "measures"."tag_id", "measures"."ts", "measures"."value", "tags"."tag_id" AS "tags_tag_id", "tags"."name", "tags"."value" AS "tags_value" ' +
+        'FROM "measures" "measures" INNER JOIN "tags" "tags" ON "measures"."tag_id" = "tags"."tag_id" ' +
+        'WHERE "measures"."ts" > @StartTime AND "measures"."ts" <= @EndTime',
+      trackInstant: true,
+      timeColumn: 'ts',
+      dateTimeType: 'iso-string'
+    });
+  });
+
+  it('should read only the columns checked, and the time column of a table whose columns are checked', async () => {
+    const records = await discoverTables(
+      fakeJoinExplore(),
+      ['tags.name', 'measures.value', 'tags.tag_id', 'measures.tag_id'],
+      dialect,
+      true
+    );
+
+    assert.strictEqual(
+      records[0].plainQuery,
+      'SELECT "tags"."tag_id", "tags"."name", "measures"."ts", "measures"."tag_id" AS "measures_tag_id", "measures"."value" ' +
+        'FROM "tags" "tags" INNER JOIN "measures" "measures" ON "tags"."tag_id" = "measures"."tag_id"'
+    );
+    // the time column is read, though not checked, and tracked under its own name
+    assert.strictEqual(records[0].timeColumn, 'ts');
+    assert.ok((records[0].query as string).endsWith('WHERE "measures"."ts" > @StartTime AND "measures"."ts" <= @EndTime'));
+  });
+
+  it('should leave a join condition to complete when the tables have no column in common', async () => {
+    const records = await discoverTables(fakeJoinExplore(), ['tags', 'sites'], dialect, true);
+
+    assert.ok((records[0].plainQuery as string).endsWith('INNER JOIN "sites" "sites" ON 1 = 1 /* join condition to complete */'));
+    assert.strictEqual(records[0].trackInstant, false);
+    assert.strictEqual(records[0].timeColumn, null);
+    assert.strictEqual(records[0].query, records[0].plainQuery);
+  });
+
+  it('should join each table to the ones before it', async () => {
+    const records = await discoverTables(fakeJoinExplore(), ['measures', 'tags', 'sites'], dialect, true);
+
+    assert.ok(
+      (records[0].plainQuery as string).includes(
+        'INNER JOIN "tags" "tags" ON "measures"."tag_id" = "tags"."tag_id" INNER JOIN "sites" "sites" ON 1 = 1'
+      )
+    );
+  });
+
+  it('should tell two tables of the same name apart by a number', async () => {
+    const explore = mock.fn(async (parentId: string | null) =>
+      parentId === null ? [table('a.logs'), table('b.logs')] : [column(parentId, 'id', 'int')]
+    );
+
+    const records = await discoverTables(explore, ['a.logs', 'b.logs'], dialect, true);
+
+    assert.strictEqual(
+      records[0].plainQuery,
+      'SELECT "t1"."id", "t2"."id" AS "t2_id" FROM "a.logs" "t1" INNER JOIN "b.logs" "t2" ON "t1"."id" = "t2"."id"'
+    );
+  });
+
+  it('should combine a single table as any other', async () => {
+    const records = await discoverTables(fakeJoinExplore(), ['tags'], dialect, true);
+
+    assert.strictEqual(records[0].plainQuery, 'SELECT * FROM "tags"');
+  });
+
+  it('should know whether the scope asks to combine the tables', () => {
+    assert.strictEqual(extractCombine({ nodeIds: ['a'], combine: true }), true);
+    assert.strictEqual(extractCombine({ nodeIds: ['a'] }), false);
+  });
+
+  it('should give the tables of an explore their SELECT query, and leave the columns as they are', () => {
+    const tables = [{ id: 'logs', name: 'logs', metadata: { columns: 2 }, hasChildren: true }];
+
+    assert.deepStrictEqual(withTableSelect(null, tables, dialect), [
+      { id: 'logs', name: 'logs', metadata: { columns: 2, select: 'SELECT * FROM "logs"' }, hasChildren: true }
+    ]);
+    assert.strictEqual(withTableSelect('logs', tables, dialect), tables);
   });
 });

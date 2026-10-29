@@ -13,10 +13,25 @@ export interface SqlDialect {
 interface SqlColumn {
   name: string;
   type: string | null;
+  primaryKey: boolean;
 }
 
-/** The fields of the record of each table discovered by `discoverTables()` */
-export const SQL_TABLE_RECORD_FIELDS = ['id', 'name', 'query', 'trackInstant', 'timeColumn', 'dateTimeType'];
+/** A table of the selection, with its columns and the ones to read */
+interface SelectedTable {
+  id: string;
+  name: string;
+  columns: Array<SqlColumn>;
+  /** The columns to read: all of them for a table checked as a whole */
+  selected: Array<SqlColumn>;
+  timeColumn: (SqlColumn & { dateTimeType: string }) | null;
+}
+
+/**
+ * The fields of the record of each table discovered by `discoverTables()`: `query` is what an item reads (restricted to the
+ * time range of each run when the table has a date/time column), `plainQuery` the same without that restriction - e.g. for
+ * a metadata query, which is run as it is.
+ */
+export const SQL_TABLE_RECORD_FIELDS = ['id', 'name', 'query', 'plainQuery', 'trackInstant', 'timeColumn', 'dateTimeType'];
 
 /** Column names that usually hold the time of a row, preferred when a table has several date/time columns. */
 const TIME_COLUMN_NAME = /^(timestamp|time|date|datetime)$|(_at|_time|_date|timestamp)$/i;
@@ -32,11 +47,13 @@ const TIME_COLUMN_NAME = /^(timestamp|time|date|datetime)$|(_at|_time|_date|time
  * (the tracking instant is read from the rows). A table without any reads all its rows on each run, untracked.
  *
  * @param explore - the explore of the connector: the tables at the root, the columns of a table under it
+ * @param combine - whether several tables give one record, reading them together (see `buildJoinRecord`) rather than one each
  */
 export async function discoverTables(
   explore: (parentId: string | null) => Promise<Array<SouthConnectorExploreEntry>>,
   nodeIds: Array<string>,
-  dialect: SqlDialect
+  dialect: SqlDialect,
+  combine = false
 ): Promise<Array<OIBusRecord>> {
   const tables = await explore(null);
   // Longest first: a column id is its table id and its name, joined by a dot - both can hold dots too
@@ -60,37 +77,123 @@ export async function discoverTables(
     selection.set(tableId, (columns ?? new Set()).add(nodeId.slice(tableId.length + 1)));
   }
 
-  const records: Array<OIBusRecord> = [];
+  const selectedTables: Array<SelectedTable> = [];
   for (const [tableId, checkedColumns] of selection) {
     const table = tables.find(candidate => candidate.id === tableId)!;
     const columns: Array<SqlColumn> = (await explore(tableId)).map(entry => ({
       name: entry.name,
-      type: typeof entry.metadata.type === 'string' ? entry.metadata.type : null
+      type: typeof entry.metadata.type === 'string' ? entry.metadata.type : null,
+      primaryKey: entry.metadata.primaryKey === 'yes'
     }));
     const timeColumn = pickTimeColumn(columns, dialect);
     const selected = checkedColumns ? columns.filter(column => checkedColumns.has(column.name)) : [];
     if (checkedColumns && timeColumn && !checkedColumns.has(timeColumn.name)) {
       selected.unshift(timeColumn);
     }
-    let query = buildTableQuery(
-      dialect,
-      tableId,
-      selected.map(column => column.name)
-    );
-    if (timeColumn) {
-      const quotedTimeColumn = dialect.quoteColumn(timeColumn.name);
+    selectedTables.push({ id: tableId, name: table.name, columns, selected: checkedColumns ? selected : columns, timeColumn });
+  }
+
+  // Several tables are read by one query, joining them - when asked to: a record each otherwise
+  if (combine && selectedTables.length > 1) {
+    return [buildJoinRecord(selectedTables, dialect)];
+  }
+  return selectedTables.map(table => {
+    const columnNames = table.selected === table.columns ? [] : table.selected.map(column => column.name);
+    const plainQuery = buildTableQuery(dialect, table.id, columnNames);
+    let query = plainQuery;
+    if (table.timeColumn) {
+      const quotedTimeColumn = dialect.quoteColumn(table.timeColumn.name);
       query += ` WHERE ${quotedTimeColumn} > @StartTime AND ${quotedTimeColumn} <= @EndTime`;
     }
-    records.push({
-      id: tableId,
+    return {
+      id: table.id,
       name: table.name,
       query,
-      trackInstant: !!timeColumn,
-      timeColumn: timeColumn?.name ?? null,
-      dateTimeType: timeColumn?.dateTimeType ?? null
-    });
+      plainQuery,
+      trackInstant: !!table.timeColumn,
+      timeColumn: table.timeColumn?.name ?? null,
+      dateTimeType: table.timeColumn?.dateTimeType ?? null
+    };
+  });
+}
+
+/**
+ * The one record of several tables read together: their selected columns, the tables joined on a column they share - the
+ * primary key of one of them first - since the user has to complete what the names only suggest. Tables without a shared
+ * column are joined on a condition to complete. A column whose name is already taken by an earlier table is renamed after
+ * its table, so that the rows have distinct fields. The time range is the one of the first table with a date/time column.
+ */
+function buildJoinRecord(tables: Array<SelectedTable>, dialect: SqlDialect): OIBusRecord {
+  // The name of a table, unqualified, tells its columns apart in the query: a number when two tables have the same name
+  const aliases = tables.map((table, index) => {
+    const { table: tableName } = splitSchemaTable(table.id);
+    return tables.some((other, otherIndex) => otherIndex !== index && splitSchemaTable(other.id).table === tableName)
+      ? `t${index + 1}`
+      : tableName;
+  });
+  const usedFields = new Set<string>();
+  const outputNames = tables.map((table, tableIndex) =>
+    table.selected.map(column => {
+      let fieldName = column.name;
+      if (usedFields.has(fieldName)) {
+        fieldName = `${aliases[tableIndex]}_${column.name}`;
+      }
+      usedFields.add(fieldName);
+      return fieldName;
+    })
+  );
+  const select = tables
+    .flatMap((table, tableIndex) =>
+      table.selected.map((column, columnIndex) => {
+        const reference = `${dialect.quoteColumn(aliases[tableIndex])}.${dialect.quoteColumn(column.name)}`;
+        const fieldName = outputNames[tableIndex][columnIndex];
+        return fieldName === column.name ? reference : `${reference} AS ${dialect.quoteColumn(fieldName)}`;
+      })
+    )
+    .join(', ');
+
+  let plainQuery = `SELECT ${select} FROM ${dialect.quoteTable(tables[0].id)} ${dialect.quoteColumn(aliases[0])}`;
+  for (let index = 1; index < tables.length; index++) {
+    plainQuery += ` INNER JOIN ${dialect.quoteTable(tables[index].id)} ${dialect.quoteColumn(aliases[index])} ON ${joinCondition(tables, aliases, index, dialect)}`;
   }
-  return records;
+
+  const timeTableIndex = tables.findIndex(table => table.timeColumn !== null);
+  let query = plainQuery;
+  let timeField: string | null = null;
+  let dateTimeType: string | null = null;
+  if (timeTableIndex !== -1) {
+    const timeColumn = tables[timeTableIndex].timeColumn!;
+    const reference = `${dialect.quoteColumn(aliases[timeTableIndex])}.${dialect.quoteColumn(timeColumn.name)}`;
+    query += ` WHERE ${reference} > @StartTime AND ${reference} <= @EndTime`;
+    const timeSelectedIndex = tables[timeTableIndex].selected.findIndex(column => column.name === timeColumn.name);
+    timeField = outputNames[timeTableIndex][timeSelectedIndex];
+    dateTimeType = timeColumn.dateTimeType;
+  }
+  return {
+    id: tables.map(table => table.id).join(','),
+    name: tables.map((table, index) => aliases[index]).join('_'),
+    query,
+    plainQuery,
+    trackInstant: timeField !== null,
+    timeColumn: timeField,
+    dateTimeType
+  };
+}
+
+/** What a table is joined to the ones before it on: a column they share, else a condition left to the user. */
+function joinCondition(tables: Array<SelectedTable>, aliases: Array<string>, index: number, dialect: SqlDialect): string {
+  const table = tables[index];
+  const candidates = table.columns.flatMap(column =>
+    tables.slice(0, index).flatMap((earlier, earlierIndex) => {
+      const shared = earlier.columns.find(earlierColumn => earlierColumn.name === column.name);
+      return shared ? [{ column, earlierIndex, primaryKey: column.primaryKey || shared.primaryKey }] : [];
+    })
+  );
+  const match = candidates.find(candidate => candidate.primaryKey) ?? candidates[0];
+  if (!match) {
+    return '1 = 1 /* join condition to complete */';
+  }
+  return `${dialect.quoteColumn(aliases[match.earlierIndex])}.${dialect.quoteColumn(match.column.name)} = ${dialect.quoteColumn(aliases[index])}.${dialect.quoteColumn(match.column.name)}`;
 }
 
 function pickTimeColumn(columns: Array<SqlColumn>, dialect: SqlDialect): (SqlColumn & { dateTimeType: string }) | null {
@@ -123,6 +226,25 @@ export function toColumnExploreEntry(
 export function buildTableQuery(dialect: SqlDialect, tableId: string, columns: Array<string>): string {
   const select = columns.length > 0 ? columns.map(column => dialect.quoteColumn(column)).join(', ') : '*';
   return `SELECT ${select} FROM ${dialect.quoteTable(tableId)}`;
+}
+
+/** Whether the tables checked give one record, joined, rather than one each - the `combine` of the discovery scope. */
+export function extractCombine(scope: Record<string, unknown>): boolean {
+  return scope.combine === true;
+}
+
+/**
+ * The tables of an explore result with their SELECT query, which the user can copy to start a query of their own: all the
+ * columns, in the dialect of the connector. The columns of a table are left as they are.
+ */
+export function withTableSelect(
+  parentId: string | null,
+  entries: Array<SouthConnectorExploreEntry>,
+  dialect: SqlDialect
+): Array<SouthConnectorExploreEntry> {
+  return parentId === null
+    ? entries.map(entry => ({ ...entry, metadata: { ...entry.metadata, select: buildTableQuery(dialect, entry.id, []) } }))
+    : entries;
 }
 
 /** The nodes checked in the Explore modal, when the discovery scope is made of them rather than a query. */
