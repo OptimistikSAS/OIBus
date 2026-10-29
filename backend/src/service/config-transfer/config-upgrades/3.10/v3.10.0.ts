@@ -429,6 +429,38 @@ export function withPrefixAndSuffix(filename: string, prefix: string, suffix: st
   return `${resolve(prefix)}${filename.slice(0, filename.length - extension.length)}${resolve(suffix)}${extension}`;
 }
 
+/** The default of the OPC UA connection, read and write timeouts, in ms */
+const OPCUA_DEFAULT_TIMEOUT = 15_000;
+
+/**
+ * The OPC UA South settings gain a connection timeout and a `subscription` group: the number of messages before a flush
+ * and the delay between flushes (`maxNumberOfMessages` and `flushMessageTimeout`) move into it, next to the publishing
+ * interval and keep alive count of the OPC UA subscription, which were fixed
+ * until now.
+ */
+export function toOPCUASouthSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  const { maxNumberOfMessages, flushMessageTimeout, ...rest } = settings;
+  return {
+    ...rest,
+    connectionTimeout: rest.connectionTimeout ?? OPCUA_DEFAULT_TIMEOUT,
+    subscription: rest.subscription ?? {
+      publishingInterval: 150,
+      maxKeepAliveCount: 10,
+      numberOfMessageBeforeFlush: maxNumberOfMessages ?? 1000,
+      delayBetweenFlush: flushMessageTimeout ?? 1000
+    }
+  };
+}
+
+/** The OPC UA North settings gain a connection timeout and a write timeout (until now the node-opcua defaults) */
+export function toOPCUANorthSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...settings,
+    connectionTimeout: settings.connectionTimeout ?? OPCUA_DEFAULT_TIMEOUT,
+    writeTimeout: settings.writeTimeout ?? OPCUA_DEFAULT_TIMEOUT
+  };
+}
+
 /**
  * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
  * record-list ones.
@@ -1345,6 +1377,22 @@ function moveFilenamePrefixAndSuffixToTransformers(config: JsonObject): void {
   });
 }
 
+/**
+ * The OPC UA South and North settings gain connection (and write) timeouts, and the OPC UA South flush settings move into
+ * a new `subscription` group (see `toOPCUASouthSettings`).
+ */
+function addOPCUATimeoutsAndSubscriptionSettings(config: JsonObject): void {
+  const update = (owner: JsonObject, key: string, convert: (settings: Record<string, unknown>) => Record<string, unknown>): void => {
+    if (owner[key]) owner[key] = convert(owner[key] as JsonObject);
+  };
+  forEachSouth(config, 'opcua', south => update(south.settings as JsonObject, 'settings', toOPCUASouthSettings));
+  forEachNorth(config, 'opcua', north => update(north.settings as JsonObject, 'settings', toOPCUANorthSettings));
+  forEachHistoryQuery(config, 'opcua', settings => update(settings, 'southSettings', toOPCUASouthSettings));
+  forEachHistoryQuery(config, null, settings => {
+    if (settings.northType === 'opcua') update(settings, 'northSettings', toOPCUANorthSettings);
+  });
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -1360,7 +1408,8 @@ export const upgrade: ConfigUpgrade = {
     'record-list-to-file transformers; compress the files of the folder scanner, FTP and SFTP souths in file-to-file transformers; ' +
     'send the OIAnalytics setpoints as record lists, replacing the setpoint transformers by record-list ones; ' +
     'replace the file transformer by file-to-file ones sending the files as they are; ' +
-    'move the filename prefix and suffix of the File Writer and SFTP norths to the filename of their transformers',
+    'move the filename prefix and suffix of the File Writer and SFTP norths to the filename of their transformers; ' +
+    'add the connection and write timeouts of the OPC UA norths, and the connection timeout and subscription settings of the OPC UA souths',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1456,6 +1505,7 @@ export const upgrade: ConfigUpgrade = {
     mergeSetpointsIntoRecordLists(config);
     replaceFileTransformer(config);
     moveFilenamePrefixAndSuffixToTransformers(config);
+    addOPCUATimeoutsAndSubscriptionSettings(config);
 
     return config;
   }

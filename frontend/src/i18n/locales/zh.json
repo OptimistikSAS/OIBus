@@ -163,6 +163,8 @@
           "opcua": {
             "url": "URL",
             "keep-session-alive": "保持会话活动",
+            "connection-timeout": "连接超时",
+            "write-timeout": "写入超时",
             "retry-interval": "重试间隔",
             "security-mode": {
               "title": "安全模式",
@@ -954,12 +956,11 @@
           },
           "opcua": {
             "url": "URL",
+            "connection-timeout": "连接超时",
             "keep-session-alive": "保持会话活动",
             "read-timeout": "读取超时",
             "retry-interval": "重试间隔",
             "max-parallel-run": "最大并行查询数",
-            "flush-message-timeout": "刷新间隔",
-            "max-number-of-messages": "刷新前的消息数量",
             "security-mode": {
               "title": "安全模式",
               "none": "无",
@@ -989,7 +990,14 @@
             "username": "用户名",
             "password": "密码",
             "cert-file-path": "证书文件路径",
-            "key-file-path": "密钥文件路径"
+            "key-file-path": "密钥文件路径",
+            "subscription": {
+              "title": "订阅",
+              "publishing-interval": "发布间隔",
+              "max-keep-alive-count": "最大保活计数",
+              "number-of-message-before-flush": "刷新前的消息数量",
+              "delay-between-flush": "刷新间隔"
+            }
           },
           "oracle": {
             "thick-mode": "厚模式",

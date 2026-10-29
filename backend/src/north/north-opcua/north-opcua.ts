@@ -103,6 +103,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         const endpointClient = OPCUAClient.create({
           applicationName: 'OIBus',
           connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+          transportTimeout: this.connector.settings.connectionTimeout,
           endpointMustExist: false
         });
         try {
@@ -182,10 +183,10 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       this.connector.id,
       this.connector.name,
       this.connector.settings,
-      undefined
+      this.connector.settings.writeTimeout
     );
     this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
-    return await createOPCUASession(this.connector.settings.url, userIdentity, options);
+    return await createOPCUASession(this.connector.settings.url, userIdentity, options, this.connector.settings.connectionTimeout);
   }
 
   async handleContent(fileStream: ReadStream, _cacheMetadata: CacheMetadata): Promise<void> {

@@ -325,6 +325,13 @@ export interface SouthOPCUASettingsAuthentication {
   keyFilePath?: string;
 }
 
+export interface SouthOPCUASettingsSubscription {
+  publishingInterval: number;
+  maxKeepAliveCount: number;
+  numberOfMessageBeforeFlush: number;
+  delayBetweenFlush: number;
+}
+
 export interface SouthRestSettingsAuthentication {
   type: SouthRestSettingsAuthenticationType;
   username?: string;
@@ -504,14 +511,14 @@ export interface SouthOPCSettings {
 export interface SouthOPCUASettings {
   url: string;
   keepSessionAlive: boolean;
-  readTimeout: number;
+  connectionTimeout: number;
   retryInterval: number;
-  maxNumberOfMessages: number;
-  flushMessageTimeout: number;
   securityMode: SouthOPCUASettingsSecurityMode;
   securityPolicy?: SouthOPCUASettingsSecurityPolicy;
   maxParallelRun: number;
+  readTimeout: number;
   authentication: SouthOPCUASettingsAuthentication;
+  subscription: SouthOPCUASettingsSubscription;
 }
 
 export interface SouthOracleSettings {

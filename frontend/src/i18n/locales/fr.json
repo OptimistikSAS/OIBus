@@ -163,6 +163,8 @@
           "opcua": {
             "url": "URL",
             "keep-session-alive": "Maintenir la session active",
+            "connection-timeout": "Délai de connexion",
+            "write-timeout": "Délai d'écriture",
             "retry-interval": "Intervalle de nouvelle tentative",
             "security-mode": {
               "title": "Mode de sécurité",
@@ -954,12 +956,11 @@
           },
           "opcua": {
             "url": "URL",
+            "connection-timeout": "Délai de connexion",
             "keep-session-alive": "Maintenir la session active",
             "read-timeout": "Délai de lecture",
             "retry-interval": "Intervalle de nouvelle tentative",
             "max-parallel-run": "Requêtes parallèles max",
-            "flush-message-timeout": "Délai entre les vidages",
-            "max-number-of-messages": "Nombre de messages avant vidage",
             "security-mode": {
               "title": "Mode de sécurité",
               "none": "Aucun",
@@ -989,7 +990,14 @@
             "username": "Nom d'utilisateur",
             "password": "Mot de passe",
             "cert-file-path": "Chemin du fichier de certificat",
-            "key-file-path": "Chemin du fichier de clé"
+            "key-file-path": "Chemin du fichier de clé",
+            "subscription": {
+              "title": "Souscription",
+              "publishing-interval": "Intervalle de publication",
+              "max-keep-alive-count": "Nombre max de cycles avant keep-alive",
+              "number-of-message-before-flush": "Nombre de messages avant vidage",
+              "delay-between-flush": "Délai entre les vidages"
+            }
           },
           "oracle": {
             "thick-mode": "Mode thick",

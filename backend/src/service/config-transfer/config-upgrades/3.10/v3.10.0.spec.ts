@@ -520,6 +520,64 @@ describe('3.10.0 config upgrade', () => {
     });
   });
 
+  describe('OPC UA timeouts and subscription settings', () => {
+    const subscription = {
+      publishingInterval: 150,
+      maxKeepAliveCount: 10,
+      numberOfMessageBeforeFlush: 500,
+      delayBetweenFlush: 2000
+    };
+    const buildConfig = (): JsonObject => ({
+      southConnectors: [
+        {
+          type: 'opcua',
+          settings: { name: 'South', settings: { url: 'u', readTimeout: 20_000, maxNumberOfMessages: 500, flushMessageTimeout: 2000 } }
+        },
+        { type: 'mqtt', settings: { name: 'MQTT', settings: { maxNumberOfMessages: 1 } } }
+      ],
+      northConnectors: [
+        { type: 'opcua', settings: { name: 'North', settings: { url: 'u' } } },
+        { type: 'mqtt', settings: { name: 'MQTT', settings: { host: 'h' } } }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'opcua',
+            northType: 'opcua',
+            southSettings: { url: 'u', maxNumberOfMessages: 500, flushMessageTimeout: 2000 },
+            northSettings: { url: 'u', connectionTimeout: 5000 }
+          }
+        },
+        { settings: { southType: 'mqtt', northType: 'mqtt', southSettings: { maxNumberOfMessages: 1 }, northSettings: { host: 'h' } } }
+      ]
+    });
+
+    it('adds them to the OPC UA souths, norths and history queries, moving the flush settings', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const settingsOf = (connectors: unknown) => (connectors as Array<JsonObject>).map(c => (c.settings as JsonObject).settings);
+      assert.deepStrictEqual(settingsOf(config.southConnectors), [
+        { url: 'u', readTimeout: 20_000, connectionTimeout: 15_000, subscription },
+        { maxNumberOfMessages: 1 }
+      ]);
+      assert.deepStrictEqual(settingsOf(config.northConnectors), [
+        { url: 'u', connectionTimeout: 15_000, writeTimeout: 15_000 },
+        { host: 'h' }
+      ]);
+      const [opcua, mqtt] = (config.historyQueries as Array<JsonObject>).map(historyQuery => historyQuery.settings as JsonObject);
+      assert.deepStrictEqual(opcua.southSettings, { url: 'u', connectionTimeout: 15_000, subscription });
+      assert.deepStrictEqual(opcua.northSettings, { url: 'u', connectionTimeout: 5000, writeTimeout: 15_000 });
+      assert.deepStrictEqual(mqtt.southSettings, { maxNumberOfMessages: 1 });
+      assert.deepStrictEqual(mqtt.northSettings, { host: 'h' });
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
   describe('OIAnalytics setpoints', () => {
     const standard = (id: string, functionName: string, inputType: string, outputType: string) => ({
       oIBusInternalId: id,

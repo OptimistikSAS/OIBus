@@ -1150,6 +1150,8 @@
           "opcua": {
             "url": "URL",
             "keep-session-alive": "Keep session alive",
+            "connection-timeout": "Connection timeout",
+            "write-timeout": "Write timeout",
             "retry-interval": "Retry interval",
             "security-mode": {
               "title": "Security mode",
@@ -1941,12 +1943,11 @@
           },
           "opcua": {
             "url": "URL",
+            "connection-timeout": "Connection timeout",
             "keep-session-alive": "Keep session alive",
             "read-timeout": "Read timeout",
             "retry-interval": "Retry interval",
             "max-parallel-run": "Max parallel queries",
-            "flush-message-timeout": "Delay between flush",
-            "max-number-of-messages": "Number of messages before flush",
             "security-mode": {
               "title": "Security mode",
               "none": "None",
@@ -1976,7 +1977,14 @@
             "username": "Username",
             "password": "Password",
             "cert-file-path": "Cert file path",
-            "key-file-path": "Key file path"
+            "key-file-path": "Key file path",
+            "subscription": {
+              "title": "Subscription",
+              "publishing-interval": "Publishing interval",
+              "max-keep-alive-count": "Max keep alive count",
+              "number-of-message-before-flush": "Number of messages before flush",
+              "delay-between-flush": "Delay between flush"
+            }
           },
           "oracle": {
             "thick-mode": "Thick mode",

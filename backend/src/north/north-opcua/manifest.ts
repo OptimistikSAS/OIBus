@@ -46,7 +46,7 @@ const manifest: NorthConnectorManifest = {
         type: 'boolean',
         key: 'keepSessionAlive',
         translationKey: 'configuration.oibus.manifest.north.opcua.keep-session-alive',
-        defaultValue: false,
+        defaultValue: true,
         validators: [
           {
             type: 'REQUIRED',
@@ -55,6 +55,58 @@ const manifest: NorthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'connectionTimeout',
+        translationKey: 'configuration.oibus.manifest.north.opcua.connection-timeout',
+        unit: 'ms',
+        defaultValue: 15000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['3600000']
+          }
+        ],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'writeTimeout',
+        translationKey: 'configuration.oibus.manifest.north.opcua.write-timeout',
+        unit: 'ms',
+        defaultValue: 15000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['3600000']
+          }
+        ],
+        displayProperties: {
+          row: 1,
           columns: 4,
           displayInViewMode: true
         }

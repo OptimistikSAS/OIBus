@@ -64,7 +64,7 @@ const manifest: SouthConnectorManifest = {
         type: 'boolean',
         key: 'keepSessionAlive',
         translationKey: 'configuration.oibus.manifest.south.opcua.keep-session-alive',
-        defaultValue: false,
+        defaultValue: true,
         validators: [
           {
             type: 'REQUIRED',
@@ -79,8 +79,8 @@ const manifest: SouthConnectorManifest = {
       },
       {
         type: 'number',
-        key: 'readTimeout',
-        translationKey: 'configuration.oibus.manifest.south.opcua.read-timeout',
+        key: 'connectionTimeout',
+        translationKey: 'configuration.oibus.manifest.south.opcua.connection-timeout',
         unit: 'ms',
         defaultValue: 15000,
         validators: [
@@ -130,58 +130,6 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'number',
-        key: 'maxNumberOfMessages',
-        translationKey: 'configuration.oibus.manifest.south.opcua.max-number-of-messages',
-        defaultValue: 1000,
-        unit: null,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['1']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['1000000']
-          }
-        ],
-        displayProperties: {
-          row: 2,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'number',
-        key: 'flushMessageTimeout',
-        translationKey: 'configuration.oibus.manifest.south.opcua.flush-message-timeout',
-        unit: 'ms',
-        defaultValue: 1000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['1']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['1000000']
-          }
-        ],
-        displayProperties: {
-          row: 2,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
         type: 'string-select',
         key: 'securityMode',
         translationKey: 'configuration.oibus.manifest.south.opcua.security-mode',
@@ -194,7 +142,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 2,
           columns: 6,
           displayInViewMode: true
         }
@@ -224,7 +172,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 2,
           columns: 6,
           displayInViewMode: true
         }
@@ -250,7 +198,33 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 4,
+          row: 3,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'readTimeout',
+        translationKey: 'configuration.oibus.manifest.south.opcua.read-timeout',
+        unit: 'ms',
+        defaultValue: 15000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['3600000']
+          }
+        ],
+        displayProperties: {
+          row: 3,
           columns: 6,
           displayInViewMode: true
         }
@@ -369,6 +343,128 @@ const manifest: SouthConnectorManifest = {
             displayProperties: {
               row: 0,
               columns: 4,
+              displayInViewMode: true
+            }
+          }
+        ]
+      },
+      {
+        type: 'object',
+        key: 'subscription',
+        translationKey: 'configuration.oibus.manifest.south.opcua.subscription.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: true
+        },
+        enablingConditions: [],
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        attributes: [
+          {
+            type: 'number',
+            key: 'publishingInterval',
+            translationKey: 'configuration.oibus.manifest.south.opcua.subscription.publishing-interval',
+            unit: 'ms',
+            defaultValue: 150,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['10']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['3600000']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'maxKeepAliveCount',
+            translationKey: 'configuration.oibus.manifest.south.opcua.subscription.max-keep-alive-count',
+            unit: null,
+            defaultValue: 10,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['1000']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'numberOfMessageBeforeFlush',
+            translationKey: 'configuration.oibus.manifest.south.opcua.subscription.number-of-message-before-flush',
+            unit: null,
+            defaultValue: 1000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['1000000']
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'delayBetweenFlush',
+            translationKey: 'configuration.oibus.manifest.south.opcua.subscription.delay-between-flush',
+            unit: 'ms',
+            defaultValue: 1000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['1000000']
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 6,
               displayInViewMode: true
             }
           }

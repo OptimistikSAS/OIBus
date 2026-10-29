@@ -103,7 +103,7 @@ export const createSessionConfigs = async (
   connectorId: string,
   connectorName: string,
   settings: SouthOPCUASettings | NorthOPCUASettings,
-  readTimeout: number | undefined
+  requestTimeout: number
 ) => {
   const options: OPCUAClientOptions = {
     applicationName: 'OIBus',
@@ -117,7 +117,11 @@ export const createSessionConfigs = async (
     securityPolicy: toOPCUASecurityPolicy(settings.securityPolicy),
     endpointMustExist: false,
     keepSessionAlive: settings.keepSessionAlive,
-    requestedSessionTimeout: readTimeout,
+    // Bounds the TCP connection and the OPC-UA handshake (HEL/ACK) of each connection attempt, see createOPCUASession for the whole connection
+    transportTimeout: settings.connectionTimeout,
+    // How long a request (read, history read, browse, write...) waits for its response. The session timeout is left to the node-opcua
+    // default: it is how long the server keeps an idle session, which has nothing to do with the duration of one request
+    defaultTransactionTimeout: requestTimeout,
     keepPendingSessionsOnDisconnect: false,
     clientName: `${connectorName}-${connectorId}`,
     // Use OIBus's existing cert/key files directly — no PKI folder tree on disk, no copies.
@@ -156,23 +160,51 @@ export const createSessionConfigs = async (
 };
 
 /**
+ * Runs `task` and rejects with `message` when it is not done after `timeoutMs`. Wired through a single promise settled by
+ * either branch, instead of a `Promise.race`, so that neither branch is left pending once the other one settled (see
+ * `getDAValues` of the OPC UA South connector). The task itself is not aborted: the caller has to clean up after a timeout.
+ */
+const withTimeout = <T>(task: () => Promise<T>, timeoutMs: number, message: string): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+    task().then(
+      result => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      },
+      (error: unknown) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    );
+  });
+
+/**
  * Same as node-opcua's `OPCUAClient.createSession(endpointUrl, userIdentity, options)` - connect a client,
  * open a session on it, and disconnect that client when the session is closed - except that the client
  * is also disconnected when connecting or creating the session fails. node-opcua's static helper leaves
  * the client connected in that case (e.g. a rejected user or certificate): nothing references it anymore,
  * so it can never be closed and keeps reconnecting to the server in the background for the lifetime of
  * the process, silently - while every later attempt opens yet another one.
+ *
+ * The whole connection (client connection with its retries, secure channel, session creation and activation) is bounded by
+ * `connectionTimeout`: node-opcua only bounds each step, so an unreachable or slow server could otherwise keep the
+ * connector connecting for much longer.
  */
 export const createOPCUASession = async (
   endpointUrl: string,
   userIdentity: UserIdentityInfo,
-  options: OPCUAClientOptions
+  options: OPCUAClientOptions,
+  connectionTimeout: number
 ): Promise<ClientSession> => {
   const client = OPCUAClient.create(options);
   let session: ClientSession;
   try {
-    await client.connect(endpointUrl);
-    session = await client.createSession2(userIdentity);
+    const connect = async () => {
+      await client.connect(endpointUrl);
+      return await client.createSession2(userIdentity);
+    };
+    session = await withTimeout(connect, connectionTimeout, `Connection timeout: not connected after ${connectionTimeout} ms`);
   } catch (error: unknown) {
     await client.disconnect().catch(() => {
       /* already broken - the original error is the one worth reporting */

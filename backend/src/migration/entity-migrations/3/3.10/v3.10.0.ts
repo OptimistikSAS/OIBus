@@ -45,6 +45,8 @@ import {
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
   toOIAnalyticsItemFileOptions,
+  toOPCUANorthSettings,
+  toOPCUASouthSettings,
   toRecordListTransformerOptions,
   toSetpointTransformerOptions,
   usesRemoteAgent,
@@ -101,7 +103,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   moveCompressionToNorths,
   mergeSetpointsIntoRecordLists,
   replaceFileTransformer,
-  moveFilenamePrefixAndSuffixToTransformers
+  moveFilenamePrefixAndSuffixToTransformers,
+  addOPCUATimeoutsAndSubscriptionSettings
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -1562,6 +1565,30 @@ export async function moveFilenamePrefixAndSuffixToTransformers(knex: Knex): Pro
       `${customLinks} link(s) of File Writer and SFTP North connectors to custom transformers no longer add the prefix and suffix ` +
         'of their North to the file names: the custom transformers name the files'
     );
+  }
+}
+
+/**
+ * The OPC UA South and North settings gain connection (and write) timeouts, and the OPC UA South flush settings move into
+ * a new `subscription` group (see `toOPCUASouthSettings` in the config upgrade), for the connectors and the history
+ * queries.
+ */
+export async function addOPCUATimeoutsAndSubscriptionSettings(knex: Knex): Promise<void> {
+  const targets = [
+    { table: SOUTH_CONNECTORS_TABLE, typeColumn: 'type', settingsColumn: 'settings', convert: toOPCUASouthSettings },
+    { table: HISTORY_QUERIES_TABLE, typeColumn: 'south_type', settingsColumn: 'south_settings', convert: toOPCUASouthSettings },
+    { table: NORTH_CONNECTORS_TABLE, typeColumn: 'type', settingsColumn: 'settings', convert: toOPCUANorthSettings },
+    { table: HISTORY_QUERIES_TABLE, typeColumn: 'north_type', settingsColumn: 'north_settings', convert: toOPCUANorthSettings }
+  ];
+  for (const { table, typeColumn, settingsColumn, convert } of targets) {
+    const rows: Array<{ id: string; settings: string }> = await knex(table)
+      .select('id', `${settingsColumn} as settings`)
+      .where(typeColumn, 'opcua');
+    for (const row of rows) {
+      await knex(table)
+        .where('id', row.id)
+        .update({ [settingsColumn]: JSON.stringify(convert(JSON.parse(row.settings))) });
+    }
   }
 }
 

@@ -708,11 +708,16 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     updatedAt: '',
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+      connectionTimeout: 15000,
       retryInterval: 10000,
       readTimeout: 15000,
       maxParallelRun: 1,
-      flushMessageTimeout: 1000,
-      maxNumberOfMessages: 1000,
+      subscription: {
+        publishingInterval: 150,
+        maxKeepAliveCount: 10,
+        numberOfMessageBeforeFlush: 1000,
+        delayBetweenFlush: 1000
+      },
       authentication: {
         type: 'none'
       },

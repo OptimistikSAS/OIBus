@@ -56,13 +56,18 @@ interoperable**.
 
 ### Connection Configuration {#connection-configuration}
 
-| Setting                                     | Description                                                                                                               | Example Value              |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| **Endpoint URL**                            | URL of the OPC UA server.                                                                                                 | `opc.tcp://localhost:4840` |
-| **Keep session alive**                      | Keep the session alive between messages.                                                                                  | Enabled/Disabled           |
-| **Retry Interval**                          | Delay in milliseconds between retries.                                                                                    | `5000`                     |
-| **Read timeout**                            | Maximum execution time in milliseconds for requests.                                                                      | `15000`                    |
-| **Max parallel queries** (`maxParallelRun`) | Maximum number of item/group queries OIBus may run concurrently against this server. From `1` (fully sequential) to `32`. | `1`                        |
+| Setting                                     | Description                                                                                                                                                     | Example Value              |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **Endpoint URL**                            | URL of the OPC UA server.                                                                                                                                       | `opc.tcp://localhost:4840` |
+| **Keep session alive**                      | Ping the server regularly so that it does not delete the session while it is idle. Enabled by default.                                                          | Enabled/Disabled           |
+| **Connection timeout**                      | Maximum time in milliseconds to connect to the server: TCP connection, secure channel and session creation. The connector retries after the **Retry Interval**. | `15000`                    |
+| **Retry Interval**                          | Delay in milliseconds between retries.                                                                                                                          | `5000`                     |
+| **Max parallel queries** (`maxParallelRun`) | Maximum number of item/group queries OIBus may run concurrently against this server. From `1` (fully sequential) to `32`.                                       | `1`                        |
+| **Read timeout**                            | Maximum time in milliseconds to wait for the response of a request (read, history read, browse...).                                                             | `15000`                    |
+
+The OPC UA server deletes a session that stays idle for too long (60 seconds by default). When **Keep session alive** is
+disabled and the scan mode of an item is longer than that, the session has expired by the next scan, which fails, and the
+connector reconnects. Keep this setting enabled, unless the server does not support it.
 
 ### Parallel Queries {#parallel-queries}
 
@@ -85,12 +90,20 @@ logs — a server with limited processing capacity may respond better to a lower
 concurrent queries would technically be allowed.
 :::
 
-### Data Throttling {#data-throttling}
+### Subscription {#subscription}
 
-| Setting                         | Description                                                                    | Example Value |
-| ------------------------------- | ------------------------------------------------------------------------------ | ------------- |
-| Number of messages before flush | Number of messages to accumulate before flushing to North caches               | `1000`        |
-| Delay between flush             | Time delay (in milliseconds) between automatic flushes of accumulated messages | `1000`        |
+These settings apply to the items in subscription mode.
+
+| Setting                                               | Description                                                                                                              | Example Value |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| **Publishing interval**                               | Interval in milliseconds at which the server sends the notifications of the monitored items. The server may revise it.   | `150`         |
+| **Max keep alive count**                              | Number of publishing intervals without data after which the server sends a keep alive message. The server may revise it. | `10`          |
+| **Number of messages before flush** (data throttling) | Number of messages to accumulate before flushing to North caches.                                                        | `1000`        |
+| **Delay between flush** (data throttling)             | Time delay (in milliseconds) between automatic flushes of accumulated messages.                                          | `1000`        |
+
+The keep alive period is the **Publishing interval** multiplied by the **Max keep alive count**. The server drops the
+subscription when it has not received a publish request for 10 keep alive periods: when the subscription is silent for as
+long, OIBus considers it lost and reconnects. The **Read timeout** is not used for subscriptions.
 
 ### Security Settings {#security-settings}
 
