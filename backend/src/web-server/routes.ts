@@ -558,6 +558,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "kind": {"ref":"SouthDiscoveryKind","required":true},
             "defaults": {"ref":"SouthDiscoveryDefaults"},
+            "recordFields": {"dataType":"array","array":{"dataType":"string"}},
         },
         "additionalProperties": false,
     },

@@ -12,12 +12,15 @@ const manifest: SouthConnectorManifest = {
   explore: true,
   discovery: {
     kind: 'tree',
+    // The id, the name and the path (the display names from the discovery root, joined by `/`) of the node, and its metadata
+    recordFields: ['id', 'name', 'path', 'nodeId', 'type', 'description', 'unit', 'min', 'max'],
     defaults: {
       identityKeyFields: ['id'],
       itemFieldMapping: {
         name: '{{path}}',
         'settings.nodeId': '{{nodeId}}',
-        'settings.mode': 'da',
+        'settings.mode': 'ha',
+        'settings.haMode.aggregate': 'raw',
         'settings.timestampOrigin': 'oibus'
       }
     }

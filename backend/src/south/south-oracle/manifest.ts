@@ -1,5 +1,7 @@
 import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
 
+import { SQL_TABLE_RECORD_FIELDS } from '../sql-table-discovery';
+
 const manifest: SouthConnectorManifest = {
   id: 'oracle',
   category: 'database',
@@ -12,6 +14,7 @@ const manifest: SouthConnectorManifest = {
   explore: true,
   discovery: {
     kind: 'query',
+    recordFields: SQL_TABLE_RECORD_FIELDS,
     // The item of each table checked in the Explore modal (see discoverTables())
     defaults: {
       identityKeyFields: ['id'],

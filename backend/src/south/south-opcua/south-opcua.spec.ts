@@ -24,6 +24,7 @@ import type SouthCacheRepository from '../../repository/cache/south-cache.reposi
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, type Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import manifest from './manifest';
 import type SouthOPCUAClass from './south-opcua';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -2145,6 +2146,8 @@ describe('SouthOPCUA', () => {
       { id: 'ns=1;s=Folder.Pressure', name: 'Pressure', path: 'Folder/Pressure', nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable' },
       { id: 'ns=1;s=Temperature', name: 'Temperature', path: 'Temperature', nodeId: 'ns=1;s=Temperature', type: 'Variable' }
     ]);
+    // The fields the manifest tells the user about
+    assert.ok(records.every(record => Object.keys(record).every(field => manifest.discovery!.recordFields!.includes(field))));
     assert.strictEqual(browseForDiscovery.mock.calls.length, 2);
   });
 
