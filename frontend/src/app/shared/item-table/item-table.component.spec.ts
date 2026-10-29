@@ -16,7 +16,9 @@ interface TestItem {
   enabled: boolean;
   group: string;
   createdAt?: string;
+  createdBy?: { friendlyName: string };
   updatedAt?: string;
+  updatedBy?: { friendlyName: string };
 }
 
 const buildItem = (name: string, enabled: boolean, group: string, createdAt = '2024-01-01T00:00:00.000Z'): TestItem => ({
@@ -24,7 +26,9 @@ const buildItem = (name: string, enabled: boolean, group: string, createdAt = '2
   enabled,
   group,
   createdAt,
-  updatedAt: createdAt
+  createdBy: { friendlyName: 'creator' },
+  updatedAt: createdAt,
+  updatedBy: { friendlyName: 'editor' }
 });
 
 @Component({
@@ -126,15 +130,8 @@ describe('ItemTableComponent', () => {
   test('should display the items with the columns of the page and the actions', async () => {
     await tester.expectItems('item b', 'item a', 'item c');
     await expect.element(tester.row('item a')).toMatchTextContent(/Disabled\s*item a\s*A/);
-    expect(tester.headers.elements().map(header => header.textContent!.trim())).toEqual([
-      '',
-      'Status',
-      'Name',
-      'Group',
-      'Created',
-      'Updated',
-      ''
-    ]);
+    await expect.element(tester.row('item a').getByCss('oib-audit-info')).toBeVisible();
+    expect(tester.headers.elements().map(header => header.textContent!.trim())).toEqual(['', 'Status', 'Name', 'Group', 'Updated', '']);
 
     await tester.row('item c').getByRole('button', { name: 'Edit item c' }).click();
 

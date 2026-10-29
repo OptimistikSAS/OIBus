@@ -20,6 +20,15 @@
                     <span translate="south.disabled"></span>
                   }
                 </span>
+                <span class="d-flex align-items-center gap-1" id="south-audit-info">
+                  <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                  <oib-audit-info
+                    [createdAt]="southConnector.createdAt"
+                    [createdBy]="southConnector.createdBy.friendlyName"
+                    [updatedAt]="southConnector.updatedAt"
+                    [updatedBy]="southConnector.updatedBy.friendlyName"
+                  />
+                </span>
                 <span>
                   <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
                   <button

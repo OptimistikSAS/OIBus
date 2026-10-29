@@ -23,6 +23,15 @@
                 <img class="oib-type-image" [src]="'/' + northManifest()!.category + '.svg'" alt="" />
                 {{ historyQuery.northType | oIBusNorthTypeEnum }}
               </span>
+              <span class="d-flex align-items-center gap-1" id="history-query-audit-info">
+                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                <oib-audit-info
+                  [createdAt]="historyQuery.createdAt"
+                  [createdBy]="historyQuery.createdBy.friendlyName"
+                  [updatedAt]="historyQuery.updatedAt"
+                  [updatedBy]="historyQuery.updatedBy.friendlyName"
+                />
+              </span>
               <span>
                 {{ historyQuery.id }}
                 <button

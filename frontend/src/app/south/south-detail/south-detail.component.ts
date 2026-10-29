@@ -27,6 +27,7 @@ import { EngineService } from '../../services/engine.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExploreButtonComponent } from '../../shared/explore-button/explore-button.component';
@@ -84,7 +85,8 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
     OIBusSettingsSummaryComponent,
     ExploreButtonComponent,
     ItemsMenuComponent,
-    NgTemplateOutlet
+    NgTemplateOutlet,
+    AuditInfoComponent
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
