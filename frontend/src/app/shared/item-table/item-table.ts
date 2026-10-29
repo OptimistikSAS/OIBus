@@ -8,7 +8,9 @@ export interface TableItem {
   name: string;
   enabled: boolean;
   createdAt?: string;
+  createdBy?: { friendlyName: string };
   updatedAt?: string;
+  updatedBy?: { friendlyName: string };
 }
 
 export type SortOrder = 'none' | 'asc' | 'desc';

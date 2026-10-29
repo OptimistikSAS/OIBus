@@ -20,7 +20,7 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 import { createPageFromArray } from '@oibus/shared/common/types';
 
-import { DatetimePipe } from '../datetime.pipe';
+import { AuditInfoComponent } from '../audit-info/audit-info.component';
 import { PaginationComponent } from '../pagination/pagination.component';
 import {
   builtInSortValue,
@@ -68,7 +68,7 @@ const PAGE_SIZE = 20;
     NgbDropdownToggle,
     NgbDropdownMenu,
     NgbDropdownItem,
-    DatetimePipe,
+    AuditInfoComponent,
     PaginationComponent
   ]
 })
