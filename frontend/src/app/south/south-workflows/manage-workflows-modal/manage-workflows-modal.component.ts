@@ -18,12 +18,8 @@ import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { ModalService } from '../../../shared/modal.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { SouthItemGroups } from '../../south-items/south-item-groups';
-import EditWorkflowModalComponent, {
-  ExploreWizardOptions,
-  ExploreWizardResult,
-  openExploreWizard,
-  workflowNodeIds
-} from '../edit-workflow-modal/edit-workflow-modal.component';
+import EditWorkflowModalComponent, { openExploreWizard } from '../edit-workflow-modal/edit-workflow-modal.component';
+import { ExploreWizardOptions, ExploreWizardResult, workflowNodeIds } from '../edit-workflow-modal/explore-wizard';
 import { toConfigurationWorkflowCommand } from '../workflow-command';
 import { WorkflowCreationService } from '../workflow-creation.service';
 

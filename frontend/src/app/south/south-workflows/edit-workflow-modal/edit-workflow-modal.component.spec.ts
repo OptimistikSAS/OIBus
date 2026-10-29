@@ -12,7 +12,7 @@ import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
 import { SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-settings.model';
+import { SouthFolderScannerItemSettings, SouthMySQLItemSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflowCommand } from '../../../../test/builders';
@@ -27,7 +27,8 @@ import { NotificationService } from '../../../shared/notification.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
-import EditWorkflowModalComponent, { ExploreWizardOptions, WizardStep, WorkflowStep } from './edit-workflow-modal.component';
+import EditWorkflowModalComponent from './edit-workflow-modal.component';
+import { ExploreWizardOptions, WizardStep, WorkflowStep } from './explore-wizard';
 
 const scanModes = testData.scanMode.list;
 const southId = 'southId1';
@@ -1796,10 +1797,12 @@ describe('EditWorkflowModalComponent', () => {
           defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{name}}', 'settings.query': '{{query}}' } }
         }
       };
-      const tableItem = (): SouthConnectorItemCommandDTO => ({
-        ...discovered('measures_tags', 'unused'),
-        settings: { query: 'SELECT * FROM measures JOIN tags ON 1 = 1 WHERE ts > @StartTime' } as never
-      });
+      const tableSettings: SouthMySQLItemSettings = {
+        query: 'SELECT * FROM measures JOIN tags ON 1 = 1 WHERE ts > @StartTime',
+        requestTimeout: 1000,
+        trackingInstant: null
+      };
+      const tableItem = (): SouthConnectorItemCommandDTO => ({ ...discovered('measures_tags', 'unused'), settings: tableSettings });
 
       function exploreSql(options: Partial<ExploreWizardOptions> = {}) {
         return explore({ manifest: sqlExploreManifest, ...options });

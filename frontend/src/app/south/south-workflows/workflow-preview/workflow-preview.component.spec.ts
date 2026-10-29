@@ -18,7 +18,8 @@ class WorkflowPreviewComponentTester {
   readonly runCounts = this.root.getByCss('#run-payload-counts');
   readonly none = this.root.getByCss('#preview-none');
   readonly entriesTable = this.root.getByCss('#preview-entries-table');
-  readonly recordsTable = this.root.getByCss('#preview-records-table');
+  readonly recordsTable = this.root.getByCss('#preview-records .records-table');
+  readonly recordsSearch = this.root.getByCss('#preview-records .records-search');
   readonly headers = this.root.getByCss('thead th');
   readonly rows = this.root.getByCss('tbody tr');
   readonly changedCells = this.root.getByCss('.preview-changed-cell');
@@ -328,13 +329,14 @@ describe('WorkflowPreviewComponent', () => {
         { nodeId: 'b', unit: 'bar' }
       ];
       const tester = new WorkflowPreviewComponentTester(result({ eligibleCount: 2, records }));
+      // the records table of the wizard has its own search: there is no other one
+      await expect.element(tester.search).not.toBeInTheDocument();
 
-      await tester.search.fill('bar');
+      await tester.recordsSearch.fill('bar');
 
       await expect.element(tester.rows).toHaveLength(1);
-      await expect.element(tester.shown).toHaveTextContent('Shown: 1 of 2');
-      await tester.search.fill('zzz');
-      await expect.element(tester.noMatch).toBeInTheDocument();
+      await expect.element(tester.root.getByCss('#preview-records .records-count')).toHaveTextContent('Records shown: 1 of 2');
+      await tester.recordsSearch.fill('zzz');
       await expect.element(tester.recordsTable).not.toBeInTheDocument();
     });
 

@@ -32,9 +32,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { emptyPage } from '../../shared/utils/page.utils';
 import { WindowService } from '../../shared/window.service';
-import EditWorkflowModalComponent, {
-  ExploreWizardResult
-} from '../../south/south-workflows/edit-workflow-modal/edit-workflow-modal.component';
+import EditWorkflowModalComponent from '../../south/south-workflows/edit-workflow-modal/edit-workflow-modal.component';
+import { ExploreWizardResult } from '../../south/south-workflows/edit-workflow-modal/explore-wizard';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryDetailComponent } from './history-query-detail.component';
