@@ -359,6 +359,31 @@ describe('EditHistoryQueryComponent', () => {
       expect(historyQueryService.importItems).not.toHaveBeenCalled();
     });
 
+    test('should open the item modal with the item the tables checked give, and keep the completed item in memory', async () => {
+      const itemModal = itemModalMock();
+      const discovered = { ...testData.south.itemCommand, id: null, name: 'measures_tags' };
+      const completed: HistoryQueryItemCommandDTO = { ...testData.historyQueries.itemCommand, name: 'completed' };
+      vi.spyOn(TestBed.inject(MockModalService), 'open')
+        .mockReturnValueOnce(fakeModal(createMock(EditWorkflowModalComponent), Promise.resolve({ kind: 'item', command: discovered })))
+        .mockReturnValueOnce(fakeModal(itemModal, Promise.resolve(completed)));
+      const tester = await createTester('items');
+
+      await tester.exploreButton.click();
+
+      await vi.waitFor(() =>
+        expect(itemModal.prepareForCreation).toHaveBeenCalledWith(
+          expect.any(Array),
+          savedQuery.id,
+          '',
+          expect.anything(),
+          testData.south.manifest,
+          null,
+          { id: '', name: 'measures_tags', enabled: discovered.enabled, settings: discovered.settings }
+        )
+      );
+      await tester.expectItemNames('item1', 'item2', 'completed');
+    });
+
     test('should reload the transformers when they are saved directly', async () => {
       const tester = await createTester();
       await expect.element(tester.name).toHaveValue(savedQuery.name);
@@ -384,6 +409,7 @@ describe('EditHistoryQueryComponent', () => {
         '',
         expect.objectContaining({ type: 'folder-scanner' }),
         testData.south.manifest,
+        null,
         null
       );
       await tester.expectItemNames('item1', 'item2', 'new item');
@@ -421,7 +447,8 @@ describe('EditHistoryQueryComponent', () => {
         '',
         expect.objectContaining({ type: 'folder-scanner' }),
         testData.south.manifest,
-        newItem
+        newItem,
+        null
       );
       // the last one was added with the main action: no other item
       expect(open).toHaveBeenCalledTimes(2);

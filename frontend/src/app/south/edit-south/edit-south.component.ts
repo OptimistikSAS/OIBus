@@ -489,7 +489,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
    * Opens the modal for a new item, and again after each item added with "add another".
    * @param previousItem the item added just before, whose shared settings the new one starts with
    */
-  private openItemCreation(previousItem: SouthConnectorItemCommandDTO | null) {
+  private openItemCreation(previousItem: SouthConnectorItemCommandDTO | null, prefill: SouthConnectorItemCommandDTO | null = null) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -508,7 +508,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.manifest()!,
       this.southConnector()?.id || 'create',
       this.formSouthConnectorCommand,
-      previousItem
+      previousItem,
+      prefill
     );
     modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => {
       this.inMemoryItems.update(items => [...items, command]);
@@ -806,6 +807,9 @@ export class EditSouthComponent implements CanComponentDeactivate {
       // the wizard of the modal may have given items to add
       if (result?.kind === 'items') {
         this.inMemoryItems.update(items => [...items, ...result.commands]);
+      } else if (result?.kind === 'item') {
+        // the item the tables checked give, which the item modal completes
+        this.openItemCreation(null, result.command);
       }
       this.itemTable()?.goToFirstPage();
     });

@@ -390,6 +390,67 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.rows).toHaveLength(1);
     });
   });
+  describe('SQL database', () => {
+    const databaseManifest = {
+      ...manifest,
+      explore: true,
+      discovery: { kind: 'query' as const, defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{name}}' } } }
+    };
+    const metadataWorkflow = toConfigurationWorkflowCommand(
+      buildWorkflow('workflow1', 'Tag list', { discoveryScope: { query: 'SELECT 1' } })
+    );
+
+    function prepare(workflows: Array<ConfigurationWorkflowCommandDTO> = [metadataWorkflow]) {
+      configurationWorkflowService.list.mockReturnValue(
+        of(workflows.map(command => buildWorkflow(command.id!, command.name, { discoveryScope: command.discoveryScope })))
+      );
+      tester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, databaseManifest, groups, []);
+    }
+
+    test('should offer to browse the database, and list the metadata synchronisations pushed to OIAnalytics', async () => {
+      prepare();
+
+      await expect.element(tester.homeTitle).toHaveTextContent('Explore and sync');
+      await expect.element(tester.root.getByCss('#explore-data-source')).toMatchTextContent('Browse the database');
+      await expect.element(tester.exploreButton).toHaveTextContent('Browse');
+      await expect.element(tester.title).toHaveTextContent('Metadata synchronisations (1)');
+      await expect.element(tester.root.getByText('Their records are pushed to OIAnalytics')).toBeInTheDocument();
+    });
+
+    test('should explain what a metadata synchronisation is when there is none', async () => {
+      prepare([]);
+
+      await expect.element(tester.none).toMatchTextContent('No metadata synchronisation yet');
+      await expect.element(tester.none).toMatchTextContent('Push the records of a query');
+    });
+
+    test('should keep the items-based wording for the other connectors', async () => {
+      tester.fixture.componentInstance.prepareForDirectSave(
+        'southId1',
+        southSettings,
+        scanModes,
+        { ...databaseManifest, discovery: { kind: 'tree' } },
+        groups,
+        []
+      );
+
+      await expect.element(tester.root.getByCss('#explore-data-source')).toMatchTextContent('Explore the data source');
+      await expect.element(tester.title).toHaveTextContent('Items synchronisations (2)');
+      await expect.element(tester.root.getByText('Their records are pushed to OIAnalytics')).not.toBeInTheDocument();
+    });
+
+    test('should close with the item the tables checked give, for the page to complete', async () => {
+      const item = testData.south.itemCommand;
+      const wizard = createMock(EditWorkflowModalComponent);
+      modalService.mockClosedModal(wizard, { kind: 'item', command: item });
+      prepare();
+
+      await tester.exploreButton.click();
+
+      expect(activeModal.close).toHaveBeenCalledWith({ kind: 'item', command: item });
+    });
+  });
+
   describe('explore and sync', () => {
     const treeManifest = {
       ...manifest,

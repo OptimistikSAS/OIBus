@@ -1602,6 +1602,7 @@
       "copied": "已复制到剪贴板",
       "copy-error": "复制到剪贴板时出错",
       "metadata": {
+        "select": "SELECT 查询",
         "nodeId": "节点 ID",
         "type": "类型",
         "description": "描述",
@@ -1644,7 +1645,15 @@
       "home-title": "浏览并同步",
       "home-explore": "浏览数据源",
       "home-hint": "浏览节点，然后将它们添加为项或保持同步",
-      "home-go": "浏览"
+      "home-go": "浏览",
+      "metadata-sync": "元数据同步",
+      "add-in-item": "添加到项",
+      "selection-none": "所选表没有可读取的内容",
+      "selection-error": "构建所选表的查询时出错",
+      "home-explore-sql": "浏览数据库",
+      "home-hint-sql": "查看其表和列，以编写项的查询",
+      "home-go-sql": "浏览",
+      "browse-tables": "浏览表"
     },
     "add-discovered-items": {
       "error": "发现所选节点时出错",
@@ -2025,6 +2034,10 @@
       "delete-error": "删除项同步时出错：{{error}}",
       "none-title": "尚无项同步",
       "none-hint": "让项与数据源保持同步：浏览数据源，勾选要跟踪的节点，然后选择“保持同步…”。也可以从“新建同步”开始。",
+      "none-title-sql": "尚无元数据同步",
+      "none-hint-sql": "将查询的记录（例如标签列表）发送到 OIAnalytics：浏览数据库，勾选一个表并选择“元数据同步”。也可以从“新建同步”开始。",
+      "manage-title-sql": "元数据同步（{{count}}）",
+      "manage-subtitle-sql": "其记录将发送到 OIAnalytics",
       "none-match": "没有与当前筛选条件匹配的项同步",
       "search-placeholder": "按名称搜索同步",
       "run-now": "立即运行",

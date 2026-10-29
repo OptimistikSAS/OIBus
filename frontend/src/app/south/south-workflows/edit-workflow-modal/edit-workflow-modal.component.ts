@@ -122,6 +122,8 @@ const VARIABLE_SENTINEL = '__variable__';
 export const WORKFLOW_STEPS = ['source', 'filter', 'items', 'schedule', 'review'] as const;
 export type WorkflowStep = (typeof WORKFLOW_STEPS)[number];
 const TREE_WORKFLOW_STEPS: ReadonlyArray<WorkflowStep> = ['filter', 'items', 'schedule', 'review'];
+/** A synchronisation of a SQL connector pushes the records of its query as they are: there is no item to map */
+const SQL_WORKFLOW_STEPS: ReadonlyArray<WorkflowStep> = ['source', 'filter', 'schedule', 'review'];
 
 /** Why a workflow can't be previewed nor saved yet, and the step to fix it in. */
 interface WorkflowProblem {
@@ -137,7 +139,8 @@ interface WorkflowProblem {
 export type WizardStep = 'explore' | WorkflowStep | 'add-items';
 
 /** What the nodes checked in the Explore step are used for. */
-export type ExploreFlow = 'sync' | 'items';
+/** Synchronising the checked nodes, adding them as items after a review (a tree), or in one item (a SQL database) */
+export type ExploreFlow = 'sync' | 'items' | 'item';
 
 /** An action of the Explore step footer, choosing what the checked nodes are used for. */
 interface ExploreFlowAction {
@@ -174,6 +177,8 @@ export interface ExploreWizardOptions {
   sync?: { directSave: boolean; existingWorkflows: Array<ConfigurationWorkflowCommandDTO> };
   /** Only the synchronisation is offered on the checked nodes, whatever the connector can do besides - from its New button */
   syncOnly?: boolean;
+  /** Nothing is offered on the checked nodes: the data source is only browsed - e.g. to write the query of an item */
+  readOnly?: boolean;
   /** A synchronisation to edit or duplicate: its nodes start checked in the Explore step, which goes on with its steps */
   workflow?: { command: ConfigurationWorkflowCommandDTO; mode: 'edit' | 'copy' };
 }
@@ -196,7 +201,10 @@ export function workflowNodeIds(scope: Record<string, unknown>): Array<string> |
 
 /** What the wizard closes with when opened from the Explore button: the workflow to create, or the items to add. */
 export type ExploreWizardResult =
-  { kind: 'workflow'; command: ConfigurationWorkflowCommandDTO } | { kind: 'items'; commands: Array<SouthConnectorItemCommandDTO> };
+  | { kind: 'workflow'; command: ConfigurationWorkflowCommandDTO }
+  | { kind: 'items'; commands: Array<SouthConnectorItemCommandDTO> }
+  /** The item the checked tables of a SQL database give, for the item modal to complete */
+  | { kind: 'item'; command: SouthConnectorItemCommandDTO };
 
 /**
  * The fields of the Name & schedule section of the item mapping when the items are added once, in the order of the item
@@ -370,7 +378,12 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   /** What the checked nodes are used for, chosen in the Explore step - none until then */
   readonly flow = signal<ExploreFlow | null>(null);
   /** The steps of a workflow: the ones of the connector - a tree-based one has no Source step */
-  readonly workflowSteps = computed<ReadonlyArray<WorkflowStep>>(() => (this.isTreeBased() ? TREE_WORKFLOW_STEPS : WORKFLOW_STEPS));
+  readonly workflowSteps = computed<ReadonlyArray<WorkflowStep>>(() => {
+    if (this.isTreeBased()) {
+      return TREE_WORKFLOW_STEPS;
+    }
+    return this.isSqlFamily() ? SQL_WORKFLOW_STEPS : WORKFLOW_STEPS;
+  });
   readonly steps = computed<ReadonlyArray<WizardStep>>(() => {
     if (!this.exploring()) {
       return this.workflowSteps();
@@ -448,15 +461,27 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     if (!options) {
       return [];
     }
+    if (options.readOnly) {
+      return [];
+    }
     const actions: Array<ExploreFlowAction> = [];
     if (options.syncOnly || options.workflow) {
       return [{ flow: 'sync', labelKey: 'south.workflows.wizard.next' }];
     }
-    if (options.sync && options.manifest.discovery?.kind === 'tree') {
+    const kind = options.manifest.discovery?.kind;
+    if (options.sync && kind === 'tree') {
       actions.push({ flow: 'sync', labelKey: 'south.explore.keep-in-sync' });
     }
+    // The records of a SQL database are those of a query: pushed as they are by a synchronisation
+    if (options.sync && kind === 'query') {
+      actions.push({ flow: 'sync', labelKey: 'south.explore.metadata-sync' });
+    }
     if (options.manifest.discovery?.defaults) {
-      actions.push({ flow: 'items', labelKey: 'south.explore.add-as-items' });
+      actions.push(
+        kind === 'query'
+          ? { flow: 'item', labelKey: 'south.explore.add-in-item' }
+          : { flow: 'items', labelKey: 'south.explore.add-as-items' }
+      );
     }
     return actions;
   });
@@ -510,7 +535,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   });
   /** Whether the Explore step offers to keep in sync with a synchronisation the connector already has, rather than a new one */
   readonly showSyncTarget = computed(
-    () => this.flowActions().some(action => action.flow === 'sync') && this.mode() !== 'copy' && this.treeWorkflows().length > 0
+    () =>
+      !this.isSqlFamily() &&
+      this.flowActions().some(action => action.flow === 'sync') &&
+      this.mode() !== 'copy' &&
+      this.treeWorkflows().length > 0
   );
 
   /** The items the checked nodes give, mapped as in the mapping form - discovered when the Add as items step opens */
@@ -759,7 +788,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       () =>
         this.exploreStepTree()?.prepare(options.exploreConnectorId, options.southSettings, options.manifest.id, {
           api: options.exploreApi,
-          checkable: true,
+          checkable: !options.readOnly,
           checkedIds: this.discoveryNodeIds()
         }),
       { injector: this.injector }
@@ -1203,13 +1232,66 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   /** An action needs a node checked - but for editing a synchronisation, whose nodes can be none: the whole data source */
   actionDisabled(action: ExploreFlowAction): boolean {
-    return this.exploreCheckedCount() === 0 && !(action.flow === 'sync' && this.syncTargetId() !== null);
+    return this.selectionPending() || (this.exploreCheckedCount() === 0 && !(action.flow === 'sync' && this.syncTargetId() !== null));
   }
+
+  /** Whether the tables checked are being turned into a query - see `useSelectedTables` */
+  readonly selectionPending = signal(false);
+  /** Why the tables checked could not be turned into a query - a message, or null */
+  readonly selectionError = signal<string | null>(null);
+  /** Whether the tables checked have nothing to read */
+  readonly selectionNone = signal(false);
 
   /** Uses the checked nodes for what the action says: the first step of the way to do so follows. */
   chooseFlow(flow: ExploreFlow) {
+    if (this.isSqlFamily() && flow !== 'items') {
+      this.useSelectedTables(flow);
+      return;
+    }
     this.flow.set(flow);
     this.goToStep(flow === 'sync' ? this.workflowSteps()[0] : 'add-items');
+  }
+
+  /**
+   * The query the tables and columns checked of a SQL database give - one query reading them together when there are several,
+   * joined on what they share - for the item the modal completes, or for the metadata query of a synchronisation.
+   */
+  private useSelectedTables(flow: 'sync' | 'item') {
+    const options = this.exploreOptions()!;
+    const nodeIds = Array.from(this.exploreStepTree()?.checkedIds() ?? []);
+    // the plain query is the one of a metadata query, which is run as it is: with no time range
+    const mapping =
+      flow === 'item' ? options.manifest.discovery!.defaults!.itemFieldMapping : { name: '{{name}}', 'settings.query': '{{plainQuery}}' };
+    const discover =
+      options.discover ??
+      ((scope, itemMapping) =>
+        this.southConnectorService.discoverItems(options.southId, options.manifest.id, options.southSettings, scope, itemMapping));
+    this.selectionPending.set(true);
+    this.selectionError.set(null);
+    this.selectionNone.set(false);
+    discover({ nodeIds, combine: true }, mapping).subscribe({
+      next: commands => {
+        this.selectionPending.set(false);
+        const command = commands[0];
+        if (!command) {
+          this.selectionNone.set(true);
+        } else if (flow === 'item') {
+          const result: ExploreWizardResult = { kind: 'item', command };
+          this.modal.close(result);
+        } else {
+          this.discoveryQuery.set(String((command.settings as unknown as Record<string, unknown>)['query'] ?? ''));
+          if (!this.form.controls.name.value) {
+            this.form.controls.name.setValue(command.name);
+          }
+          this.flow.set('sync');
+          this.goToStep(this.workflowSteps()[0]);
+        }
+      },
+      error: error => {
+        this.selectionPending.set(false);
+        this.selectionError.set(extractErrorMessage(error));
+      }
+    });
   }
 
   goToStep(step: WizardStep) {

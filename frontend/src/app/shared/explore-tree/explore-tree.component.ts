@@ -60,7 +60,8 @@ const TRANSLATED_METADATA_KEYS = new Set([
   'networkNumber',
   'macAddress',
   'objectType',
-  'objectInstance'
+  'objectInstance',
+  'select'
 ]);
 
 /** The metadata fields shown next to the node name in the tree, the first one an entry has. */

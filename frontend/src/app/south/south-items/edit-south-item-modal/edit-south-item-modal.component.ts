@@ -40,6 +40,7 @@ import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.com
 import { submitsOnEnter } from '../../../shared/modal-steps/wizard-steps';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { openExploreWizard } from '../../south-workflows/edit-workflow-modal/edit-workflow-modal.component';
 import { countItemChanges, ITEM_MODAL_STEPS, ItemModalStep, ItemModalSteps, ItemSummary } from '../item-modal-steps';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 import { SouthItemNorthsComponent } from '../south-item-norths/south-item-norths.component';
@@ -287,10 +288,12 @@ class EditSouthItemModalComponent {
     manifest: SouthConnectorManifest,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO,
-    previousItem: SouthConnectorItemCommandDTO | null = null
+    previousItem: SouthConnectorItemCommandDTO | null = null,
+    prefill: SouthConnectorItemCommandDTO | null = null
   ) {
     this.previousItem = previousItem;
-    this.prepare('create', itemList, scanModes, certificates, groups, manifest, null, southId, southConnectorCommand, null);
+    // a new item may start from the one the tables of a database give, which the user completes
+    this.prepare('create', itemList, scanModes, certificates, groups, manifest, prefill, southId, southConnectorCommand, null);
   }
 
   prepareForCopy(
@@ -351,6 +354,25 @@ class EditSouthItemModalComponent {
     this.southConnectorCommand.set(southConnectorCommand);
     this.tableIndex = tableIndex;
     this.initForm(manifest);
+  }
+
+  /** Whether the connector is a SQL database that can be browsed: the tables and columns help to write the query of the item */
+  readonly canBrowseTables = computed(() => {
+    const manifest = this.manifest();
+    return !!manifest?.explore && manifest.discovery?.kind === 'query';
+  });
+
+  /** Browses the tables and columns of the database, nothing more: to copy a name or a query, then come back to the item */
+  browseTables() {
+    const manifest = this.manifest()!;
+    openExploreWizard(this.modalService, {
+      southId: this.southId(),
+      exploreConnectorId: this.southId() === 'create' ? null : this.southId(),
+      southSettings: this.southConnectorCommand()!.settings,
+      manifest,
+      existingItems: [],
+      readOnly: true
+    }).subscribe();
   }
 
   canDismiss(): Observable<boolean> | boolean {

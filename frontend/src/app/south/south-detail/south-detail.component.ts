@@ -212,7 +212,7 @@ export class SouthDetailComponent {
    * Opens the modal for a new item, and again after each item saved with "save and add another".
    * @param previousItem the item added just before, whose shared settings the new one starts with
    */
-  private openItemCreation(previousItem: SouthConnectorItemCommandDTO | null) {
+  private openItemCreation(previousItem: SouthConnectorItemCommandDTO | null, prefill: SouthConnectorItemCommandDTO | null = null) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -230,7 +230,8 @@ export class SouthDetailComponent {
       this.manifest()!,
       this.southConnector()!.id,
       this.southConnectorCommand,
-      previousItem
+      previousItem,
+      prefill
     );
     let savedItem: SouthConnectorItemCommandDTO;
     modalRef.result
@@ -695,9 +696,14 @@ export class SouthDetailComponent {
       .pipe(
         tap(() => this.workflowsResource.reload()),
         // the wizard of the modal may have given items to add
-        switchMap((result: ExploreAndSyncResult | undefined) =>
-          result?.kind === 'items' ? this.addDiscoveredItems(result.commands) : of(null)
-        )
+        switchMap((result: ExploreAndSyncResult | undefined) => {
+          if (result?.kind === 'item') {
+            // the item the tables checked give, which the item modal completes
+            this.openItemCreation(null, result.command);
+            return of(null);
+          }
+          return result?.kind === 'items' ? this.addDiscoveredItems(result.commands) : of(null);
+        })
       )
       .subscribe();
   }
