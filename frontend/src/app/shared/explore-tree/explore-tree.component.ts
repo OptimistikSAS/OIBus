@@ -115,7 +115,7 @@ export interface SouthExploreApi {
  * (a container query, so it adapts to the host: a modal, or inline in a form).
  *
  * Owns its own session end to end so it can be embedded either inside a dedicated modal
- * (`SouthExploreModalComponent`, read-only browsing) or directly inline in another form (e.g. the
+ * (the Explore step of the workflow wizard) or directly inline in another form (e.g. the
  * Configuration Workflow discovery-scope editor), with no other coordination needed from the host.
  *
  * With checkable nodes (see `prepare()`), every node gets a checkbox to pick several of them at once (see
@@ -143,6 +143,12 @@ export class ExploreTreeComponent implements OnDestroy {
    * `overflow: auto` container of its own - two nested scroll regions produce two vertical scrollbars.
    */
   readonly maxHeight = input('50vh');
+
+  /**
+   * What to tell about a node besides its type, e.g. the synchronisations that already keep its items in sync: a badge per
+   * text. Given the ids of the entries from the root down to the node, itself included.
+   */
+  readonly badges = input<(path: ReadonlyArray<string>) => ReadonlyArray<string>>(() => []);
 
   private api: SouthExploreApi | null = null;
   readonly checkable = signal(false);
@@ -184,6 +190,25 @@ export class ExploreTreeComponent implements OnDestroy {
       value,
       kind: entry.metadataKinds?.[key]
     }));
+  });
+
+  /**
+   * The ids of the entries from the root down to each checked node, itself included - just its id when it is not loaded (it
+   * was checked before the session started)
+   */
+  readonly checkedPaths = computed<ReadonlyArray<ReadonlyArray<string>>>(() => {
+    const checkedIds = this.checkedIds();
+    const paths = new Map<string, ReadonlyArray<string>>();
+    const visit = (nodes: ReadonlyArray<ExploreTreeNode>) => {
+      for (const node of nodes) {
+        if (checkedIds.has(node.entry.id)) {
+          paths.set(node.entry.id, node.path);
+        }
+        visit(node.children);
+      }
+    };
+    visit(this.nodes());
+    return Array.from(checkedIds, id => paths.get(id) ?? [id]);
   });
 
   /**

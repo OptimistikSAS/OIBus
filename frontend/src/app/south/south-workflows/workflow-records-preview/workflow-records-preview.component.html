@@ -1,0 +1,43 @@
+<div class="d-flex align-items-center gap-2 mb-2">
+  <input
+    type="search"
+    class="form-control form-control-sm records-search"
+    [value]="search()"
+    (input)="onSearch($event)"
+    (keydown.enter)="$event.preventDefault()"
+    [placeholder]="'south.workflows.wizard.search-records' | translate"
+    [attr.aria-label]="'south.workflows.wizard.search-records' | translate"
+  />
+  <span
+    class="text-muted small text-nowrap records-count"
+    [translate]="'south.workflows.wizard.records-shown'"
+    [translateParams]="{ count: matching().length, total: records().length }"
+  ></span>
+</div>
+@if (matching().length === 0) {
+  <div class="text-muted small records-none" translate="south.workflows.wizard.records-none"></div>
+} @else {
+  <div class="table-responsive records-table-container">
+    <table class="table table-sm records-table">
+      <thead>
+        <tr>
+          @for (field of fields(); track field) {
+            <th>{{ field }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (record of page().content; track $index) {
+          <tr>
+            @for (field of fields(); track field) {
+              <td class="text-break small">{{ record[field] }}</td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (page().totalPages > 1) {
+    <oib-pagination class="d-flex justify-content-end" [page]="page()" (pageChanged)="changePage($event)" />
+  }
+}

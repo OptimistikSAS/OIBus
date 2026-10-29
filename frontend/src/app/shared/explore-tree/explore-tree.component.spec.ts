@@ -439,4 +439,30 @@ describe('ExploreTreeComponent', () => {
     expect(api.close).toHaveBeenCalledWith('customSession');
     expect(southConnectorService.startExplore).not.toHaveBeenCalled();
   });
+  test('should tell about the nodes with the badges, given the path of each node', async () => {
+    // the entries of the root, and the ones under Objects
+    southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Server', false)] }));
+    tester.fixture.componentRef.setInput('badges', (path: ReadonlyArray<string>) => (path.includes('Objects') ? ['Reactor sync'] : []));
+    prepareWith([entry('Objects', true), entry('Other', false)]);
+
+    await expect.element(tester.node('Objects').getByCss('.explore-badge')).toHaveTextContent('Reactor sync');
+    await expect.element(tester.node('Other').getByCss('.explore-badge')).not.toBeInTheDocument();
+    // what is under a node it badges is badged too
+    await tester.expandButton('Objects').click();
+    await expect.element(tester.node('Server').getByCss('.explore-badge')).toHaveTextContent('Reactor sync');
+  });
+
+  test('should give the path of each checked node, and just its id when it is not loaded', async () => {
+    southConnectorService.browseExplore.mockReturnValue(of({ entries: [entry('Server', false)] }));
+    southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [entry('Objects', true)] }));
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, {
+      checkable: true,
+      checkedIds: ['Elsewhere']
+    });
+    await tester.expandButton('Objects').click();
+
+    await tester.node('Server').getByCss('.explore-check').click();
+
+    expect(tester.component.checkedPaths()).toEqual([['Elsewhere'], ['Objects', 'Server']]);
+  });
 });

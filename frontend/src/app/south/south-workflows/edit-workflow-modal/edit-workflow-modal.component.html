@@ -1,59 +1,111 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'south.workflows.' + mode() + '-title'"></h4>
+  <h4 class="modal-title" [translate]="exploring() ? 'south.explore.title' : 'south.workflows.' + mode() + '-title'"></h4>
 </div>
-<oib-modal-steps
-  [steps]="steps"
-  [current]="step()"
-  (currentChange)="goToStep($event)"
-  labelPrefix="south.workflows.wizard.step."
-  ariaLabel="south.workflows.wizard.steps"
-  idPrefix="workflow-step-"
-/>
+@if (steps().length > 1) {
+  <oib-modal-steps
+    [steps]="steps()"
+    [current]="step()"
+    (currentChange)="goToStep($event)"
+    labelPrefix="south.workflows.wizard.step."
+    [ariaLabel]="exploring() ? 'south.workflows.wizard.explore-steps' : 'south.workflows.wizard.steps'"
+    idPrefix="workflow-step-"
+  />
+}
 <div class="modal-body">
   <form [formGroup]="form" (ngSubmit)="save()" id="workflow-form">
     @if (formError(); as formError) {
       <div class="alert alert-danger py-1 px-2" id="form-error" role="alert" [translate]="formError"></div>
     }
 
-    <!-- 1. Source: what to discover -->
-    <div [hidden]="step() !== 'source'" id="step-source">
-      <div class="form-group">
-        <label class="form-label" for="workflow-name" translate="south.workflows.name"></label>
-        <input formControlName="name" id="workflow-name" class="form-control" />
-        <val-errors controlName="name" />
-      </div>
-
-      <div class="form-group">
-        <div class="form-label" translate="south.workflows.discovery-scope"></div>
-        @if (isTreeBased()) {
-          <div class="form-text" translate="south.workflows.wizard.nodes-hint"></div>
-          <div class="d-flex flex-wrap align-items-center gap-1 mb-2" id="discovery-nodes">
-            @for (nodeId of discoveryNodeIds(); track nodeId) {
-              <span class="badge bg-secondary d-flex align-items-center discovery-node">
-                {{ nodeId }}
-                <button
-                  type="button"
-                  class="btn-close btn-close-white ms-1"
-                  [attr.aria-label]="'south.workflows.wizard.remove-node' | translate: { node: nodeId }"
-                  (click)="removeDiscoveryNode(nodeId)"
-                ></button>
+    <!-- Explore: the nodes to use, checked in the data source -->
+    @if (exploring()) {
+      <div [hidden]="step() !== 'explore'" id="step-explore">
+        <!-- What is already kept in sync: the synchronisations here, and their nodes marked in the tree -->
+        @if (coverageChips().length > 0) {
+          <div class="d-flex flex-wrap align-items-center gap-1 mb-2" id="explore-coverage">
+            <span class="text-muted small" translate="south.explore.in-sync"></span>
+            @for (chip of coverageChips(); track chip.name) {
+              <span class="badge bg-secondary bg-opacity-25 text-secondary explore-coverage-chip">
+                <i class="fa-solid fa-sync me-1" aria-hidden="true"></i>{{ chip.name }}
+                <span class="ms-1">
+                  @if (chip.count) {
+                    ({{ chip.count }})
+                  } @else {
+                    (<span translate="south.explore.in-sync-all"></span>)
+                  }
+                </span>
               </span>
-            } @empty {
-              <span class="text-muted small" id="discovery-nodes-none" translate="south.workflows.wizard.nodes-none"></span>
             }
           </div>
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            id="browse-nodes"
-            (click)="openNodePicker()"
-            translate="south.workflows.wizard.browse-nodes"
-          ></button>
-        } @else if (isSqlFamily()) {
+        }
+        <oib-explore-tree #exploreStepTree [badges]="exploreBadges()" />
+        <!-- What the checked nodes are added to: a new synchronisation, or one the connector already has -->
+        @if (showSyncTarget()) {
+          <div class="form-group" id="sync-target">
+            <div class="form-label" translate="south.explore.sync-target"></div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="sync-target-new"
+                name="sync-target"
+                [checked]="syncTargetId() === null"
+                (change)="selectSyncTarget(null)"
+              />
+              <label class="form-check-label" for="sync-target-new" translate="south.explore.sync-target-new"></label>
+            </div>
+            @for (workflow of treeWorkflows(); track workflow.id) {
+              <div class="form-check">
+                <input
+                  class="form-check-input sync-target-existing"
+                  type="radio"
+                  name="sync-target"
+                  [id]="'sync-target-' + workflow.id"
+                  [checked]="syncTargetId() === workflow.id"
+                  (change)="selectSyncTarget(workflow.id)"
+                />
+                <label class="form-check-label" [for]="'sync-target-' + workflow.id">
+                  <span [translate]="'south.explore.sync-target-existing'" [translateParams]="{ name: workflow.name }"></span>
+                  <span class="form-text d-block">
+                    @if (workflow.nodeIds.length === 0) {
+                      <span translate="south.explore.sync-target-all"></span>
+                    } @else {
+                      <span
+                        [translate]="'south.explore.sync-target-nodes'"
+                        [translateParams]="{ nodes: workflow.nodeIds.join(', ') }"
+                      ></span>
+                    }
+                  </span>
+                </label>
+              </div>
+            }
+            @if (syncTargetId() !== null && addedNodeIds().length > 0) {
+              <div class="form-text" id="sync-target-added">
+                <span translate="south.explore.sync-target-adds"></span>
+                @for (nodeId of addedNodeIds(); track nodeId) {
+                  <span class="badge bg-success bg-opacity-25 text-success ms-1">+ {{ nodeId }}</span>
+                }
+              </div>
+            }
+            @if (removedNodeIds().length > 0) {
+              <div class="alert alert-warning py-1 px-2 mt-2" id="sync-target-removed" role="alert">
+                <span [translate]="'south.explore.sync-target-removes'" [translateParams]="{ count: removedNodeIds().length }"></span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Source: the query a SQL connector discovers from (a tree-based one discovers from the nodes checked in the Explore step) -->
+    <div [hidden]="step() !== 'source'" id="step-source">
+      <div class="form-group">
+        <div class="form-label" translate="south.workflows.discovery-scope"></div>
+        @if (isSqlFamily()) {
           <div class="form-text" translate="south.workflows.discovery-scope-query-hint"></div>
           @if (showSqlExploreTree()) {
             <div class="border rounded p-2 mb-2" id="discovery-explore-tree">
-              <oib-explore-tree maxHeight="12rem" />
+              <oib-explore-tree #inlineExploreTree maxHeight="12rem" />
             </div>
           }
           <oib-code-block
@@ -90,6 +142,19 @@
 
     <!-- 2. Filter: which records -->
     <div [hidden]="step() !== 'filter'" id="step-filter">
+      <!-- What is discovered from, as chosen in the Explore step -->
+      @if (isTreeBased()) {
+        <div class="form-group" id="filter-scope">
+          <div class="form-label" translate="south.workflows.discovery-scope"></div>
+          <div class="d-flex flex-wrap align-items-center gap-1" id="discovery-nodes">
+            @for (nodeId of discoveryNodeIds(); track nodeId) {
+              <span class="badge bg-secondary discovery-node">{{ nodeId }}</span>
+            } @empty {
+              <span class="text-muted small" id="discovery-nodes-none" translate="south.workflows.wizard.nodes-none"></span>
+            }
+          </div>
+        </div>
+      }
       <!-- Eligibility filter -->
       <div class="form-group">
         <div class="form-label" translate="south.workflows.eligibility-filter"></div>
@@ -255,27 +320,8 @@
           }
         }
       </div>
-      @if (previewRecords().length > 0) {
-        <div class="table-responsive workflow-preview-records">
-          <table class="table table-sm" id="filter-preview-records">
-            <thead>
-              <tr>
-                @for (field of recordFields(); track field) {
-                  <th>{{ field }}</th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (record of previewRecords(); track $index) {
-                <tr>
-                  @for (field of recordFields(); track field) {
-                    <td class="text-break small">{{ record[field] }}</td>
-                  }
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+      @if (previewResultRecords().length > 0) {
+        <oib-workflow-records-preview [records]="previewResultRecords()" />
       }
     </div>
 
@@ -305,124 +351,93 @@
         }
       </div>
 
+      <!-- The records the filter keeps, with the values of their fields: what the mapping reads from -->
+      <div class="form-group" id="items-records">
+        <div class="form-label" translate="south.workflows.wizard.discovered-records"></div>
+        @if (filterPreview(); as preview) {
+          @if (preview.loading) {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          } @else if (preview.error) {
+            <span class="text-danger small" id="items-preview-error">{{ preview.error }}</span>
+          } @else if (previewResultRecords().length > 0) {
+            <oib-workflow-records-preview [records]="previewResultRecords()" />
+          } @else if (preview.result) {
+            <div class="text-muted small" id="items-records-none" translate="south.workflows.wizard.discovered-records-none"></div>
+          }
+        }
+      </div>
+
       <!-- Item field mapping - local mode only. Never rendered for a SQL-family connector (always
              remote, see buildForm()'s own comment) or while "Push to OIAnalytics" is picked - that mode is
              already explained by the mode section above, so nothing needs to be shown here in that case. -->
-      @if (!pushToOIAnalytics()) {
+      @if (!pushToOIAnalytics() && flow() !== 'items') {
+        <!-- Records are identified to tell the items of a workflow apart between two runs -->
         <div class="form-group">
-          <div class="form-label" translate="south.workflows.item-field-mapping"></div>
-          <div class="form-text" translate="south.workflows.item-field-mapping-hint"></div>
-          <table class="table table-sm" id="item-field-mapping-table">
-            <tbody>
-              @for (field of basicMappableFields(); track field.path) {
-                @if (isItemFieldVisible(field)) {
-                  <ng-container *ngTemplateOutlet="mappingRow; context: { $implicit: field }" />
-                }
-              }
-            </tbody>
-          </table>
-          @if (exampleItemNames().length > 0) {
-            <div class="form-text" id="example-item-names">
-              <span translate="south.workflows.wizard.example-item-names"></span>
-              @for (name of exampleItemNames(); track $index) {
-                <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1">{{ name }}</span>
-              }
-            </div>
-          }
-        </div>
-
-        <!-- Advanced: filled by the connector's discovery defaults when it has some -->
-        <div class="form-group">
-          <button
-            type="button"
-            class="btn btn-link p-0 advanced-mapping-toggle"
-            id="advanced-mapping-toggle"
-            [attr.aria-expanded]="showAdvancedMapping()"
-            (click)="showAdvancedMapping.set(!showAdvancedMapping())"
-          >
-            <i class="fa-solid {{ showAdvancedMapping() ? 'fa-caret-down' : 'fa-caret-right' }} me-1" aria-hidden="true"></i>
-            <span translate="south.workflows.advanced-mapping"></span>
-            @if (!showAdvancedMapping()) {
-              <span
-                class="text-muted ms-1"
-                id="advanced-mapping-summary"
-                [translate]="'south.workflows.advanced-mapping-summary'"
-                [translateParams]="{ count: advancedMappedCount(), keys: identityKeyFields().join(', ') }"
-              ></span>
+          <label class="form-label" for="new-identity-key-field" translate="south.workflows.identity-key-fields"></label>
+          <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
+          <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
+            @for (field of identityKeyFields(); track field) {
+              <span class="badge bg-secondary d-flex align-items-center">
+                {{ field }}
+                <button
+                  type="button"
+                  class="btn-close btn-close-white ms-1 remove-identity-key-field"
+                  [attr.aria-label]="'common.delete' | translate"
+                  (click)="removeIdentityKeyField(field)"
+                ></button>
+              </span>
             }
-          </button>
-          @if (showAdvancedMapping()) {
-            <div class="mt-2" id="advanced-mapping">
-              <div class="form-group">
-                <label class="form-label" for="new-identity-key-field" translate="south.workflows.identity-key-fields"></label>
-                <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
-                <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
-                  @for (field of identityKeyFields(); track field) {
-                    <span class="badge bg-secondary d-flex align-items-center">
-                      {{ field }}
-                      <button
-                        type="button"
-                        class="btn-close btn-close-white ms-1 remove-identity-key-field"
-                        [attr.aria-label]="'common.delete' | translate"
-                        (click)="removeIdentityKeyField(field)"
-                      ></button>
-                    </span>
-                  }
-                </div>
-                <div class="input-group input-group-sm identity-key-field-input">
-                  <input
-                    class="form-control"
-                    id="new-identity-key-field"
-                    [(ngModel)]="newIdentityKeyField"
-                    [ngModelOptions]="{ standalone: true }"
-                    [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
-                    (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
-                  />
-                  <button
-                    type="button"
-                    class="btn btn-secondary"
-                    id="add-identity-key-field"
-                    [attr.aria-label]="'common.add' | translate"
-                    (click)="addIdentityKeyField()"
-                  >
-                    <span class="fa-solid fa-plus" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-
-              <table class="table table-sm" id="advanced-item-field-mapping-table">
-                <tbody>
-                  @for (field of advancedMappableFields(); track field.path) {
-                    @if (isItemFieldVisible(field)) {
-                      <ng-container *ngTemplateOutlet="mappingRow; context: { $implicit: field }" />
-                    }
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
+          </div>
+          <div class="input-group input-group-sm identity-key-field-input">
+            <input
+              class="form-control"
+              id="new-identity-key-field"
+              [(ngModel)]="newIdentityKeyField"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
+              (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
+            />
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="add-identity-key-field"
+              [attr.aria-label]="'common.add' | translate"
+              (click)="addIdentityKeyField()"
+            >
+              <span class="fa-solid fa-plus" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
+        <ng-container *ngTemplateOutlet="itemMapping" />
       }
     </div>
 
-    <!-- 4. Schedule: when to run -->
+    <!-- 4. Name & schedule: what the synchronisation is called, and when it runs -->
     <div [hidden]="step() !== 'schedule'" id="step-schedule">
+      <div class="form-group">
+        <label class="form-label" for="workflow-name" translate="south.workflows.name"></label>
+        <input formControlName="name" id="workflow-name" class="form-control" />
+        <val-errors controlName="name" />
+      </div>
       <!-- Scan mode -->
       <div class="form-group">
         <label class="form-label" for="workflow-scan-mode" translate="south.workflows.scan-mode"></label>
         <select class="form-select" id="workflow-scan-mode" formControlName="scanModeId">
           <option [ngValue]="null" translate="south.workflows.scan-mode-manual-only"></option>
-          @for (scanMode of scanModes(); track scanMode.id) {
+          @for (scanMode of workflowScanModes(); track scanMode.id) {
             <option [value]="scanMode.id">{{ scanMode.name }}</option>
           }
         </select>
       </div>
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input formControlName="enabled" id="workflow-enabled" type="checkbox" class="form-check-input" />
-          <label class="form-check-label" for="workflow-enabled" translate="south.workflows.enabled"></label>
+      <!-- Without a schedule the workflow only runs on demand: nothing fires, so there is nothing to enable -->
+      @if (!manualSchedule()) {
+        <div class="form-group">
+          <div class="form-check form-switch">
+            <input formControlName="enabled" id="workflow-enabled" type="checkbox" class="form-check-input" />
+            <label class="form-check-label" for="workflow-enabled" translate="south.workflows.enabled"></label>
+          </div>
         </div>
-      </div>
+      }
       @if (!pushToOIAnalytics()) {
         <div class="form-text" translate="south.workflows.wizard.missing-points"></div>
       }
@@ -461,12 +476,34 @@
         </dd>
       </dl>
 
+      <!-- What to fix before the synchronisation can be previewed and saved -->
+      @if (workflowProblems().length > 0) {
+        <div class="alert alert-danger py-2" id="review-errors" role="alert">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
+            <span translate="south.workflows.review-errors"></span>
+          </div>
+          <ul class="mb-0 ps-4">
+            @for (problem of workflowProblems(); track $index) {
+              <li class="review-error">
+                <span [translate]="problem.key"></span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger py-0 ms-1"
+                  (click)="goToStep(problem.step)"
+                  [translate]="'south.workflows.wizard.step.' + problem.step"
+                ></button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
       <div class="d-flex align-items-center gap-2 mb-2" id="review-preview">
         <button
           type="button"
           class="btn btn-secondary btn-sm"
           id="preview-review"
-          [disabled]="reviewPreview()?.loading"
+          [disabled]="reviewPreview()?.loading || workflowProblems().length > 0"
           (click)="previewReview()"
           translate="south.workflows.wizard.refresh-preview"
         ></button>
@@ -475,45 +512,182 @@
             <span class="spinner-border spinner-border-sm" role="status"></span>
           } @else if (preview.error) {
             <span class="text-danger small" id="review-preview-error">{{ preview.error }}</span>
-          } @else if (!preview.result) {
-            <span class="text-muted small" id="review-preview-incomplete" translate="south.workflows.wizard.review-incomplete"></span>
           }
         }
       </div>
       <!-- What a run would do: the entries classified against the previous run, or the records pushed -->
-      @if (reviewPreview()?.result; as result) {
+      @if (workflowProblems().length === 0 && reviewPreview()?.result; as result) {
         <oib-workflow-preview [result]="result" [workflowName]="form.controls.name.value" />
+      }
+    </div>
+
+    <!-- Add as items: how the nodes are mapped to items, and the items they give -->
+    <div [hidden]="step() !== 'add-items'" id="step-add-items">
+      @if (flow() === 'items') {
+        @if (coveringWorkflowNames().length > 0) {
+          <div class="alert alert-info py-1 px-2" id="items-covered-note" role="status">
+            <span
+              [translate]="'south.add-discovered-items.covered'"
+              [translateParams]="{ names: coveringWorkflowNames().join(', ') }"
+            ></span>
+          </div>
+        }
+        <ng-container *ngTemplateOutlet="itemMapping" />
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            id="discover-items"
+            [disabled]="!!itemMappingError() || itemsDiscovery()?.loading"
+            (click)="discoverItemsToAdd(true)"
+            translate="south.workflows.wizard.refresh-preview"
+          ></button>
+          @if (itemsDiscoveryStale()) {
+            <span class="text-muted small" id="discovered-items-stale" translate="south.add-discovered-items.stale"></span>
+          }
+        </div>
+        @if (exploreCheckedCount() === 0) {
+          <div class="alert alert-info" id="discovered-items-no-node" translate="south.add-discovered-items.no-node"></div>
+        } @else if (itemMappingError(); as mappingError) {
+          <div class="alert alert-info" id="discovered-items-mapping-incomplete" [translate]="mappingError"></div>
+        } @else if (itemsDiscovery(); as discovery) {
+          @if (discovery.loading) {
+            <div class="text-center">
+              <div class="spinner-border" id="spinner" role="status"></div>
+            </div>
+          } @else if (discovery.error) {
+            <div class="alert alert-danger" id="discovered-items-error">
+              <div translate="south.add-discovered-items.error"></div>
+              <hr />
+              <div class="text-break">{{ discovery.error }}</div>
+            </div>
+          } @else if (discovery.commands && discovery.commands.length === 0) {
+            <div class="alert alert-info" id="discovered-items-empty" translate="south.add-discovered-items.none"></div>
+          } @else if (discovery.commands) {
+            <oib-discovered-items-review [commands]="discovery.commands" [manifest]="itemsManifest()!" [existingItems]="existingItems()" />
+          }
+        }
       }
     </div>
   </form>
 </div>
 <div class="modal-footer">
-  <!-- Moving between the steps, apart from saving: the main action is Save once it shows, Next before -->
-  <div class="d-flex gap-2 me-auto">
-    @if (!isFirstStep()) {
-      <button type="button" class="btn btn-subtle" id="previous-step" (click)="back()">
-        <i class="fa-solid fa-chevron-left me-1" aria-hidden="true"></i><span translate="south.workflows.wizard.back"></span>
-      </button>
-    }
-    @if (!isLastStep()) {
-      <button type="button" class="btn" [class.btn-primary]="!canSave()" [class.btn-subtle]="canSave()" id="next-step" (click)="next()">
-        <span translate="south.workflows.wizard.next"></span><i class="fa-solid fa-chevron-right ms-1" aria-hidden="true"></i>
-      </button>
-    }
-  </div>
-  <div class="btn-group">
-    @if (canSave()) {
+  @if (step() === 'explore') {
+    <!-- The nodes checked in the data source are used by one of the actions, which opens its own steps -->
+    <span
+      class="me-auto text-muted"
+      id="explore-checked-count"
+      [translate]="'south.explore.checked-count'"
+      [translateParams]="{ count: exploreCheckedCount() }"
+    ></span>
+    @for (action of flowActions(); track action.flow) {
       <button
-        type="submit"
-        [oib-save-button]="state"
-        form="workflow-form"
-        [translationKey]="directSave ? 'common.save' : 'common.ok'"
-        [iconClass]="directSave ? 'fa-floppy-disk' : 'fa-check'"
+        type="button"
+        class="btn explore-checked-action"
+        [class.btn-primary]="$last"
+        [class.btn-secondary]="!$last"
+        [disabled]="actionDisabled(action)"
+        (click)="chooseFlow(action.flow)"
+        [translate]="action.labelKey"
       ></button>
     }
-    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
-  </div>
+    <div class="btn-group">
+      <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.close" id="cancel-button"></button>
+    </div>
+  } @else {
+    <!-- Moving between the steps, apart from saving: the main action is Save once it shows, Next before -->
+    <div class="d-flex gap-2 me-auto">
+      @if (!isFirstStep()) {
+        <button type="button" class="btn btn-subtle" id="previous-step" (click)="back()">
+          <i class="fa-solid fa-chevron-left me-1" aria-hidden="true"></i><span translate="south.workflows.wizard.back"></span>
+        </button>
+      }
+      @if (!isLastStep()) {
+        <button type="button" class="btn" [class.btn-primary]="!canSave()" [class.btn-subtle]="canSave()" id="next-step" (click)="next()">
+          <span translate="south.workflows.wizard.next"></span><i class="fa-solid fa-chevron-right ms-1" aria-hidden="true"></i>
+        </button>
+      }
+    </div>
+    <div class="btn-group">
+      @if (step() === 'add-items') {
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="add-discovered-items"
+          [disabled]="!canAddItems()"
+          (click)="addItems()"
+          [translate]="'south.add-discovered-items.add'"
+          [translateParams]="{ count: itemsReview()?.includedCount() ?? 0 }"
+        ></button>
+      } @else if (canSave()) {
+        <button
+          type="submit"
+          [oib-save-button]="state"
+          form="workflow-form"
+          [translationKey]="directSave ? 'common.save' : 'common.ok'"
+          [iconClass]="directSave ? 'fa-floppy-disk' : 'fa-check'"
+        ></button>
+      }
+      <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+    </div>
+  }
 </div>
+
+<!-- The item field mapping: of a workflow (Items step), or of the items added once from the Explore step (Add as items step) -->
+
+<!-- The fields of the discovered records the mapping can use, to put where the user is typing -->
+<ng-template #recordFieldsList>
+  @if (availableRecordFields().length > 0) {
+    <div class="mb-2" id="available-record-fields">
+      <div class="form-text" translate="south.workflows.available-fields-hint"></div>
+      <div class="d-flex flex-wrap gap-1 mt-1">
+        @for (field of availableRecordFields(); track field) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary py-0 record-field"
+            [attr.aria-label]="'south.workflows.available-field' | translate: { field }"
+            (click)="useRecordField(field)"
+          >
+            <code>{{ fieldToken(field) }}</code>
+          </button>
+        }
+      </div>
+    </div>
+  }
+</ng-template>
+
+<!-- The item field mapping, in the sections of the item modal: of a workflow (Items step), or of the items added once (Add as items step) -->
+<ng-template #itemMapping>
+  <div (focusout)="rememberMappingFocus($event)">
+    <div class="form-text mb-2" translate="south.workflows.item-field-mapping-hint"></div>
+    <ng-container *ngTemplateOutlet="recordFieldsList" />
+    @if (exampleItemNames().length > 0) {
+      <div class="form-text mb-2" id="example-item-names">
+        <span translate="south.workflows.wizard.example-item-names"></span>
+        @for (name of exampleItemNames(); track $index) {
+          <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1">{{ name }}</span>
+        }
+      </div>
+    }
+    @for (section of itemMappingSections(); track section.id) {
+      <h5 class="oib-section-title" [translate]="section.titleKey"></h5>
+      <table class="table table-sm" [id]="'item-field-mapping-' + section.id">
+        <tbody>
+          @for (field of section.fields; track field.path) {
+            <ng-container *ngTemplateOutlet="mappingRow; context: { $implicit: field }" />
+            <!-- The schedule of an item of a group is the one of its group, as in the item modal -->
+            @if (field.path === 'groupId' && groupScanModeName(); as scanModeName) {
+              <tr id="group-scan-mode">
+                <td class="align-middle" translate="configuration.oibus.manifest.south.items.scan-mode"></td>
+                <td class="text-muted">{{ 'south.edit-item-modal.group-scan-mode' | translate: { scanMode: scanModeName } }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</ng-template>
 
 <ng-template #mappingRow let-field>
   <tr>
@@ -529,9 +703,6 @@
         </div>
       }
       <label [attr.for]="'item-field-mapping-field-' + field.path" [translate]="fieldLabelKey(field)"></label>
-      @if (field.isEnablingReferral) {
-        <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1" translate="south.workflows.enabling-referral-badge"></span>
-      }
       @if (isMandatoryFieldMissing(field)) {
         <span class="badge bg-danger bg-opacity-25 text-danger ms-1" translate="south.workflows.mandatory-badge"></span>
       }
@@ -598,7 +769,7 @@
               }
             }
             @case ('scan-mode') {
-              @for (scanMode of scanModes(); track scanMode.id) {
+              @for (scanMode of itemScanModes(); track scanMode.id) {
                 <option [value]="scanMode.id">{{ scanMode.name }}</option>
               }
             }

@@ -1,23 +1,19 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 
 /**
- * Where the items of a south connector come from its data source: exploring it, to add items or keep them in sync, and the
- * items synchronisations kept that way. A connector without discovery only explores its data source; the page shows this
- * button only for a connector that explores it.
+ * The entry of a south connector page to its data source: exploring it, and with discovery, keeping items in sync with it
+ * too. The page shows this button only for a connector that explores its data source.
  */
 @Component({
   selector: 'oib-explore-button',
   templateUrl: './explore-button.component.html',
-  styleUrl: './explore-button.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, TranslatePipe, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem]
+  imports: [TranslateDirective]
 })
 export class ExploreButtonComponent {
-  /** How many items synchronisations the connector has; null when it has no discovery, hence no synchronisation */
-  readonly synchronisations = input<number | null>(null);
+  /** Whether the connector has discovery, hence items synchronisations next to the exploration */
+  readonly sync = input(false);
   readonly explore = output();
-  readonly manageSynchronisations = output();
 }

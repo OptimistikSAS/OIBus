@@ -1,35 +1,4 @@
-@let synchronisations = this.synchronisations();
-@if (synchronisations === null) {
-  <button type="button" class="btn btn-secondary btn-sm" id="explore" (click)="explore.emit()">
-    <span class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></span>
-    <span translate="south.explore.button"></span>
-  </button>
-} @else {
-  <div class="btn-group" role="group" ngbDropdown placement="bottom-end">
-    <button type="button" class="btn btn-secondary btn-sm" id="explore" (click)="explore.emit()">
-      <span class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></span>
-      <span translate="south.explore.button"></span>
-    </button>
-    <button
-      type="button"
-      class="btn btn-secondary btn-sm dropdown-toggle dropdown-toggle-split"
-      ngbDropdownToggle
-      id="explore-menu"
-      [attr.aria-label]="'south.explore.menu' | translate: { count: synchronisations }"
-    >
-      @if (synchronisations > 0) {
-        <span class="badge bg-light text-dark me-1">{{ synchronisations }}</span>
-      }
-    </button>
-    <div ngbDropdownMenu>
-      <button type="button" ngbDropdownItem id="explore-data-source" (click)="explore.emit()">
-        <span class="fa-solid fa-magnifying-glass me-2" aria-hidden="true"></span>
-        <span translate="south.explore.explore-data-source"></span>
-      </button>
-      <button type="button" ngbDropdownItem id="manage-workflows-button" (click)="manageSynchronisations.emit()">
-        <span class="fa-solid fa-sync me-2" aria-hidden="true"></span>
-        <span translate="south.workflows.manage-count" [translateParams]="{ count: synchronisations }"></span>
-      </button>
-    </div>
-  </div>
-}
+<button type="button" class="btn btn-secondary btn-sm" id="explore" (click)="explore.emit()">
+  <span class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></span>
+  <span [translate]="sync() ? 'south.explore.button-sync' : 'south.explore.button'"></span>
+</button>

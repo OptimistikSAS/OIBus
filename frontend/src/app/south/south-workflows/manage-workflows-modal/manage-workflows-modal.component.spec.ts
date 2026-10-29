@@ -46,22 +46,24 @@ const workflowRun: WorkflowRunDTO = {
 class ManageWorkflowsModalComponentTester {
   readonly fixture = TestBed.createComponent(ManageWorkflowsModalComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly title = this.root.getByRole('heading', { level: 4 });
+  readonly homeTitle = this.root.getByRole('heading', { level: 4 });
+  readonly title = this.root.getByRole('heading', { level: 5 });
+  readonly exploreButton = this.root.getByCss('#explore');
   readonly spinner = this.root.getByRole('status');
-  readonly addButton = this.root.getByRole('button', { name: 'Create a new items synchronisation' });
+  readonly addButton = this.root.getByRole('button', { name: 'New synchronisation' });
   readonly closeButton = this.root.getByRole('button', { name: 'Close' });
   readonly search = this.root.getByPlaceholder('Search synchronisations by name');
   readonly rows = this.root.getByCss('tbody tr');
-  readonly none = this.root.getByText('No items synchronisation for this south connector');
+  readonly none = this.root.getByCss('#no-workflow');
   readonly noMatch = this.root.getByText('No items synchronisation matches the current filters');
   readonly runButtons = this.root.getByRole('button', { name: 'Run now' });
-  readonly historyButtons = this.root.getByRole('button', { name: 'Run history' });
+  readonly historyButtons = this.root.getByRole('button', { name: 'Past runs' });
 
   row(index: number) {
     return this.rows.nth(index);
   }
 
-  rowButton(index: number, name: 'Run now' | 'Run history' | 'Edit items synchronisation' | 'Duplicate' | 'Delete') {
+  rowButton(index: number, name: 'Run now' | 'Past runs' | 'Edit items synchronisation' | 'Duplicate' | 'Delete') {
     return this.row(index).getByRole('button', { name });
   }
 }
@@ -118,23 +120,28 @@ describe('ManageWorkflowsModalComponent', () => {
 
     beforeEach(() => {
       onWorkflowRun = vi.fn();
-      tester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, manifest, groups, onWorkflowRun);
+      tester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, manifest, groups, [], onWorkflowRun);
     });
 
     test('should load and render every workflow of the south connector', async () => {
       expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
       await expect.element(tester.title).toHaveTextContent('Items synchronisations (2)');
       await expect.element(tester.rows).toHaveLength(2);
-      await expect.element(tester.row(0)).toMatchTextContent(/Alpha\s*Manual only\s*Create\/update items locally/);
-      await expect.element(tester.row(1)).toMatchTextContent(new RegExp(`Beta\\s*${scanModes[0].name}\\s*Push to OIAnalytics`));
-      await expect.element(tester.row(0).getByRole('img', { name: 'Yes' })).toBeInTheDocument();
+      await expect.element(tester.row(0)).toMatchTextContent(/Alpha\s*Whole data source\s*Manual only\s*Create\/update items locally/);
+      await expect
+        .element(tester.row(1))
+        .toMatchTextContent(new RegExp(`Beta\\s*Whole data source\\s*${scanModes[0].name}\\s*Push to OIAnalytics`));
+      // a workflow with no schedule only runs on demand: there is nothing to enable
+      await expect.element(tester.row(0).getByRole('img')).not.toBeInTheDocument();
+      await expect.element(tester.row(0).getByCss('.workflow-not-scheduled')).toHaveTextContent('-');
+      await expect.element(tester.row(1).getByRole('img', { name: 'Yes' })).toBeInTheDocument();
     });
 
     test('should show a spinner while loading', async () => {
       const workflows$ = new Subject<Array<ConfigurationWorkflowDTO>>();
       configurationWorkflowService.list.mockReturnValue(workflows$);
       const loadingTester = new ManageWorkflowsModalComponentTester();
-      loadingTester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, manifest, groups);
+      loadingTester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, manifest, groups, []);
 
       await expect.element(loadingTester.spinner).toBeInTheDocument();
 
@@ -143,7 +150,7 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(loadingTester.spinner).not.toBeInTheDocument();
     });
 
-    test('should offer run now and run history for every workflow', async () => {
+    test('should offer run now and the past runs for every workflow', async () => {
       await expect.element(tester.runButtons).toHaveLength(2);
       await expect.element(tester.historyButtons).toHaveLength(2);
     });
@@ -275,8 +282,8 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.rowButton(0, 'Run now')).toBeEnabled();
     });
 
-    test('should navigate to the run history page and close the modal', async () => {
-      await tester.rowButton(0, 'Run history').click();
+    test('should navigate to the past runs page and close the modal', async () => {
+      await tester.rowButton(0, 'Past runs').click();
 
       expect(activeModal.close).toHaveBeenCalled();
       expect(router.navigate).toHaveBeenCalledWith(['/south', 'southId1', 'workflows', 'workflow1', 'history']);
@@ -295,7 +302,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
     function prepareInMemory(southId = 'create') {
       pageWorkflows = signal(commands);
-      tester.fixture.componentInstance.prepareForInMemory(pageWorkflows, southId, southSettings, scanModes, manifest, groups);
+      tester.fixture.componentInstance.prepareForInMemory(pageWorkflows, southId, southSettings, scanModes, manifest, groups, []);
     }
 
     test("should display the page's own workflows without loading anything, resolving scan mode names by id", async () => {
@@ -381,6 +388,171 @@ describe('ManageWorkflowsModalComponent', () => {
       expect(configurationWorkflowService.delete).not.toHaveBeenCalled();
       expect(pageWorkflows().map(workflow => workflow.id)).toEqual(['workflow2']);
       await expect.element(tester.rows).toHaveLength(1);
+    });
+  });
+  describe('explore and sync', () => {
+    const treeManifest = {
+      ...manifest,
+      explore: true,
+      discovery: { kind: 'tree' as const, defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}' } } }
+    };
+    const scoped = (id: string, name: string, discoveryScope: Record<string, unknown>) =>
+      toConfigurationWorkflowCommand(buildWorkflow(id, name, { discoveryScope }));
+    let wizard: MockObject<EditWorkflowModalComponent>;
+
+    function prepare(directSave = true, items: Array<{ name: string; settings: never }> = []) {
+      commands = [
+        scoped('workflow1', 'Reactor sync', { nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] }),
+        scoped('workflow2', 'Everything', {}),
+        scoped('workflow3', 'Tables', { query: 'SELECT 1' })
+      ];
+      if (directSave) {
+        configurationWorkflowService.list.mockReturnValue(
+          of(commands.map(command => buildWorkflow(command.id!, command.name, { discoveryScope: command.discoveryScope })))
+        );
+        tester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, treeManifest, groups, items);
+      } else {
+        tester.fixture.componentInstance.prepareForInMemory(
+          signal(commands),
+          'create',
+          southSettings,
+          scanModes,
+          treeManifest,
+          groups,
+          items
+        );
+      }
+    }
+
+    function mockWizard(result?: unknown) {
+      wizard = createMock(EditWorkflowModalComponent);
+      if (result === undefined) {
+        modalService.mockDismissedModal(wizard);
+      } else {
+        modalService.mockClosedModal(wizard, result);
+      }
+    }
+
+    test('should be titled Explore and sync, and say what each synchronisation discovers from', async () => {
+      prepare();
+
+      await expect.element(tester.homeTitle).toHaveTextContent('Explore and sync');
+      await expect.element(tester.row(0)).toMatchTextContent('2 node(s)');
+      await expect.element(tester.row(1)).toMatchTextContent('Whole data source');
+      await expect.element(tester.row(2)).toMatchTextContent('SQL query');
+    });
+
+    test('should explore the data source in the wizard, with what it needs to add items and keep them in sync', async () => {
+      mockWizard();
+      prepare(true, [{ name: 'item', settings: {} as never }]);
+
+      await tester.exploreButton.click();
+
+      expect(wizard.prepareForExploration).toHaveBeenCalledWith({
+        southId: 'southId1',
+        exploreConnectorId: 'southId1',
+        southSettings,
+        manifest: treeManifest,
+        schedule: { scanModes, groups },
+        existingItems: [{ name: 'item', settings: {} }],
+        sync: { directSave: true, existingWorkflows: commands }
+      });
+    });
+
+    test('should explore a connector being created without a session to scope', async () => {
+      mockWizard();
+      prepare(false);
+
+      await tester.exploreButton.click();
+
+      expect(wizard.prepareForExploration).toHaveBeenCalledWith(
+        expect.objectContaining({ southId: 'create', exploreConnectorId: null, sync: { directSave: false, existingWorkflows: commands } })
+      );
+    });
+
+    test('should close with the items the wizard gave, for the page to save', async () => {
+      const items = [testData.south.itemCommand];
+      mockWizard({ kind: 'items', commands: items });
+      prepare();
+
+      await tester.exploreButton.click();
+
+      expect(activeModal.close).toHaveBeenCalledWith({ kind: 'items', commands: items });
+    });
+
+    test('should create the workflow the wizard gave, and stay open', async () => {
+      const command = buildWorkflowCommand(null, 'Boiler sync');
+      mockWizard({ kind: 'workflow', command });
+      configurationWorkflowService.create.mockReturnValue(of(buildWorkflow('workflow4', 'Boiler sync')));
+      prepare();
+
+      await tester.exploreButton.click();
+
+      expect(configurationWorkflowService.create).toHaveBeenCalledWith('southId1', command);
+      expect(activeModal.close).not.toHaveBeenCalled();
+      await expect.element(tester.rows).toHaveLength(4);
+    });
+
+    test('should update the workflow the wizard gave when it is one of the list', async () => {
+      const command = { ...commands[0], name: 'Reactor sync renamed' };
+      mockWizard({ kind: 'workflow', command: { ...command, id: 'workflow1' } });
+      configurationWorkflowService.update.mockReturnValue(of(buildWorkflow('workflow1', 'Reactor sync renamed')));
+      prepare();
+
+      await tester.exploreButton.click();
+
+      expect(configurationWorkflowService.update).toHaveBeenCalledWith(
+        'southId1',
+        'workflow1',
+        expect.objectContaining({ id: 'workflow1' })
+      );
+      await expect.element(tester.row(0)).toMatchTextContent('Reactor sync renamed');
+    });
+
+    test('should start a new synchronisation from the wizard, which only offers to keep in sync', async () => {
+      mockWizard();
+      prepare();
+
+      await tester.addButton.click();
+
+      expect(wizard.prepareForExploration).toHaveBeenCalledWith(expect.objectContaining({ syncOnly: true }));
+      expect(wizard.prepareForCreation).not.toHaveBeenCalled();
+    });
+
+    test('should edit and duplicate a synchronisation from the Explore step of the wizard, with its nodes checked', async () => {
+      mockWizard();
+      prepare();
+
+      await tester.rowButton(0, 'Edit items synchronisation').click();
+      expect(wizard.prepareForExploration).toHaveBeenLastCalledWith(
+        expect.objectContaining({ workflow: { command: commands[0], mode: 'edit' } })
+      );
+
+      mockWizard();
+      await tester.rowButton(0, 'Duplicate').click();
+      expect(wizard.prepareForExploration).toHaveBeenLastCalledWith(
+        expect.objectContaining({ workflow: { command: commands[0], mode: 'copy' } })
+      );
+      expect(wizard.prepareForEdition).not.toHaveBeenCalled();
+    });
+
+    test('should keep the wizard for a connector that discovers from a query: no node to check', async () => {
+      const queryManifest = { ...treeManifest, discovery: { kind: 'query' as const } };
+      commands = [scoped('workflow3', 'Tables', { query: 'SELECT 1' })];
+      configurationWorkflowService.list.mockReturnValue(
+        of([buildWorkflow('workflow3', 'Tables', { discoveryScope: { query: 'SELECT 1' } })])
+      );
+      tester.fixture.componentInstance.prepareForDirectSave('southId1', southSettings, scanModes, queryManifest, groups, []);
+      mockWizard(buildWorkflowCommand(null, 'Gamma'));
+      configurationWorkflowService.create.mockReturnValue(of(buildWorkflow('workflow5', 'Gamma')));
+
+      await tester.addButton.click();
+      expect(wizard.prepareForCreation).toHaveBeenCalled();
+      expect(wizard.prepareForExploration).not.toHaveBeenCalled();
+
+      mockWizard();
+      await tester.rowButton(0, 'Edit items synchronisation').click();
+      expect(wizard.prepareForEdition).toHaveBeenCalled();
     });
   });
 });

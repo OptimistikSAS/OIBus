@@ -29,17 +29,15 @@ import { DefaultValidationErrorsComponent } from '../../shared/default-validatio
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
-import { AddDiscoveredItemsModalComponent } from '../south-items/add-discovered-items-modal/add-discovered-items-modal.component';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import { SouthItemGroups } from '../south-items/south-item-groups';
+import EditWorkflowModalComponent from '../south-workflows/edit-workflow-modal/edit-workflow-modal.component';
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
-import { WorkflowCreationService } from '../south-workflows/workflow-creation.service';
 import { EditSouthComponent, SOUTH_CONNECTOR_STEPS, SouthConnectorStep } from './edit-south.component';
 
 const manifest = testData.south.manifest;
@@ -108,7 +106,7 @@ class EditSouthComponentTester {
   readonly enabled = this.root.getByCss('#south-enabled');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly testConnectionButton = this.root.getByRole('button', { name: 'Test settings' });
-  readonly exploreButton = this.root.getByRole('button', { name: 'Explore' });
+  readonly exploreButton = this.root.getByCss('#explore');
   readonly nextButton = this.root.getByRole('button', { name: 'Next' });
   readonly reviewErrors = this.root.getByCss('#review-errors');
   readonly reviewChanges = this.root.getByCss('#review-changes');
@@ -124,13 +122,11 @@ class EditSouthComponentTester {
 
   readonly items = this.root.getByCss('section.oib-south-items');
   readonly manageGroupsButton = this.root.getByCss('#manage-groups-button');
-  readonly exploreMenu = this.root.getByCss('#explore-menu');
   readonly synchronisationsInfo = this.root.getByCss('#synchronisations-info');
 
-  /** Opens the items synchronisations, from the menu of the Explore button */
+  /** Opens the home of the items synchronisations, from the Explore and sync button of a connector with discovery */
   async manageWorkflows() {
-    await this.exploreMenu.click();
-    await this.root.getByCss('#manage-workflows-button').click();
+    await this.exploreButton.click();
   }
   readonly addItemButton = this.items.getByRole('button', { name: 'Add', exact: true });
   /** The menu of the actions on all the items: managing their groups, importing, exporting and deleting them */
@@ -185,7 +181,6 @@ class EditSouthComponentTester {
 describe('EditSouthComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
-  let workflowCreationService: MockObject<WorkflowCreationService>;
   let notificationService: MockObject<NotificationService>;
   let confirmationService: MockObject<ConfirmationService>;
   let unsavedChangesService: MockObject<UnsavedChangesConfirmationService>;
@@ -194,7 +189,6 @@ describe('EditSouthComponent', () => {
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
-    workflowCreationService = createMock(WorkflowCreationService);
     const scanModeService = createMock(ScanModeService);
     const certificateService = createMock(CertificateService);
     const engineService = createMock(EngineService);
@@ -218,7 +212,6 @@ describe('EditSouthComponent', () => {
         provideModalTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
-        { provide: WorkflowCreationService, useValue: workflowCreationService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService },
         { provide: EngineService, useValue: engineService },
@@ -336,7 +329,6 @@ describe('EditSouthComponent', () => {
       await expect.element(tester.noItems).toBeInTheDocument();
       // no discovery, no items synchronisation
       await expect.element(tester.root.getByCss('#explore')).toBeInTheDocument();
-      await expect.element(tester.exploreMenu).not.toBeInTheDocument();
       expect(configurationWorkflowService.list).not.toHaveBeenCalled();
       expect(southConnectorService.findById).not.toHaveBeenCalled();
       southConnectorService.create.mockReturnValue(of(southConnector));
@@ -395,7 +387,6 @@ describe('EditSouthComponent', () => {
       const tester = await createTester('edit');
       await expect.element(tester.title).toHaveTextContent('Edit South 1');
       await expect.element(tester.name).toHaveValue('South 1');
-      await expect.element(tester.exploreMenu).toHaveAttribute('aria-label', 'Items synchronisations: 1');
       await expect
         .element(tester.synchronisationsInfo)
         .toHaveTextContent('Items synchronisations keeping items in sync with the data source: 1Manage');
@@ -495,59 +486,50 @@ describe('EditSouthComponent', () => {
       expect(open).not.toHaveBeenCalled();
     });
 
-    test('should explore the data source with the settings of the form', async () => {
+    test('should only browse the data source of a connector without discovery, with the settings of the form', async () => {
       const tester = await createTester('create');
-      const exploreModal = createMock(SouthExploreModalComponent);
-      modalService.mockDismissedModal(exploreModal);
-      const open = vi.spyOn(modalService, 'open');
-
-      await tester.goTo('items');
-      await tester.exploreButton.click();
-
-      expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
-      // no discovery: read-only browsing
-      expect(exploreModal.prepare).toHaveBeenCalledWith(null, undefined, 'folder-scanner', { checkedActions: [] });
-    });
-
-    test('should add a workflow keeping items in sync with the checked nodes to the in-memory workflows', async () => {
-      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
-      const tester = await createTester('edit');
-      const exploreModal = mockModal(createMock(SouthExploreModalComponent), { action: 'keep-in-sync', nodeIds: ['folder/sub'] });
-      workflowCreationService.createFromExploredNodes.mockReturnValue(of(buildWorkflowCommand('temp_1', 'sub')));
-      await expect.element(tester.exploreMenu).toHaveAttribute('aria-label', 'Items synchronisations: 0');
-      await expect.element(tester.synchronisationsInfo).not.toBeInTheDocument();
+      const wizard = mockModal(createMock(EditWorkflowModalComponent));
+      await expect.element(tester.exploreButton).toHaveTextContent('Explore');
+      await expect.element(tester.exploreButton).not.toHaveTextContent('Explore and sync');
 
       await tester.goTo('items');
       await tester.exploreButton.click();
 
       // the settings of the form (none in the test manifest)
-      expect(exploreModal.prepare).toHaveBeenCalledWith('southId1', undefined, 'folder-scanner', {
-        checkedActions: [{ id: 'keep-in-sync', labelKey: 'south.explore.keep-in-sync' }]
+      expect(wizard.prepareForExploration).toHaveBeenCalledWith({
+        southId: 'create',
+        exploreConnectorId: null,
+        southSettings: undefined,
+        manifest,
+        schedule: { scanModes, groups: expect.anything() },
+        existingItems: []
       });
-      expect(workflowCreationService.createFromExploredNodes).toHaveBeenCalledWith(
-        {
-          directSave: false,
-          southId: 'southId1',
-          southSettings: undefined,
-          scanModes,
-          manifest: discoveryManifest,
-          groups: expect.anything(),
-          existingWorkflows: []
-        },
-        ['folder/sub']
-      );
-      await expect.element(tester.exploreMenu).toHaveAttribute('aria-label', 'Items synchronisations: 1');
     });
 
-    test('should add the reviewed items of the nodes checked in the explore modal to the in-memory items', async () => {
-      const presetManifest: SouthConnectorManifest = {
-        ...manifest,
-        discovery: { kind: 'tree', defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}' } } }
-      };
-      southConnectorService.getSouthManifest.mockReturnValue(of(presetManifest));
+    test('should open the home of the items synchronisations of a connector with discovery, kept in memory', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
+      const tester = await createTester('create');
+      const homeModal = mockModal(createMock(ManageWorkflowsModalComponent));
+      await tester.goTo('items');
+      await expect.element(tester.exploreButton).toHaveTextContent('Explore and sync');
+
+      await tester.exploreButton.click();
+
+      expect(homeModal.prepareForInMemory).toHaveBeenCalledWith(
+        tester.fixture.componentInstance.inMemoryWorkflows,
+        'create',
+        undefined,
+        scanModes,
+        discoveryManifest,
+        expect.anything(),
+        []
+      );
+    });
+
+    test('should add the items of the explore and sync home to the in-memory items', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
       const tester = await createTester('edit');
       await expect.element(tester.rows).toHaveLength(3);
-      const addItemsModal = createMock(AddDiscoveredItemsModalComponent);
       const command = {
         ...southConnector.items[0],
         id: null,
@@ -557,22 +539,29 @@ describe('EditSouthComponent', () => {
         groupId: null,
         groupName: null
       };
-      vi.spyOn(modalService, 'open').mockImplementation(component =>
-        component === SouthExploreModalComponent
-          ? fakeModal(createMock(SouthExploreModalComponent), Promise.resolve({ action: 'add-items', nodeIds: ['folder/sub'] }))
-          : fakeModal(addItemsModal, Promise.resolve([command]))
-      );
+      mockModal(createMock(ManageWorkflowsModalComponent), { kind: 'items', commands: [command] });
 
       await tester.goTo('items');
       await tester.exploreButton.click();
 
-      await vi.waitFor(() =>
-        expect(addItemsModal.prepare).toHaveBeenCalledWith(
-          expect.objectContaining({ southId: 'southId1', manifest: presetManifest, nodeIds: ['folder/sub'] })
-        )
-      );
       await expect.element(tester.rows).toHaveLength(4);
       await expect.element(tester.root.getByText('added')).toBeInTheDocument();
+    });
+
+    test('should show the workflows the home kept in memory', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
+      const tester = await createTester('edit');
+      await expect.element(tester.synchronisationsInfo).not.toBeInTheDocument();
+      const home = createMock(ManageWorkflowsModalComponent);
+      mockModal(home);
+      await tester.goTo('items');
+      await tester.exploreButton.click();
+
+      tester.fixture.componentInstance.inMemoryWorkflows.update(workflows => [...workflows, buildWorkflowCommand('temp_1', 'sub')]);
+
+      await expect
+        .element(tester.synchronisationsInfo)
+        .toHaveTextContent('Items synchronisations keeping items in sync with the data source: 1Manage');
     });
 
     test('should ask for confirmation before leaving with unsaved changes', async () => {
@@ -1050,10 +1039,10 @@ describe('EditSouthComponent', () => {
         undefined,
         scanModes,
         discoveryManifest,
-        expect.anything()
+        expect.anything(),
+        expect.any(Array)
       );
       expect(manageWorkflowsModal.prepareForInMemory.mock.lastCall![5].list()).toEqual([groupACommand]);
-      await expect.element(tester.exploreMenu).toHaveAttribute('aria-label', 'Items synchronisations: 1');
       expect((await lastSavedCommand(tester)).configurationWorkflows).toEqual([buildWorkflowCommandFor('temp_1')]);
     });
 

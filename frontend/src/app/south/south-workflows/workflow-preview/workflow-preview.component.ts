@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
@@ -39,7 +39,7 @@ export interface PreviewEntryRow {
 
 /**
  * What a Configuration Workflow run would do, or did: the entries of a local workflow classified against the previous
- * run (new, changed, missing...), or the raw records a remote one pushes - paginated, exportable as CSV. Shown in the
+ * run (new, changed, missing...), or the raw records a remote one pushes - searchable and paginated in memory, exportable as CSV. Shown in the
  * Review step of the workflow wizard, and for the payload of a past run.
  */
 @Component({
@@ -72,16 +72,43 @@ export class WorkflowPreviewComponent {
     collectColumns(this.entryRows().length > 0 ? this.entryRows().map(row => row.values) : this.recordRows())
   );
 
-  // Back to the first page whenever the result changes (a refreshed preview)
-  private readonly entriesPage = linkedSignal({ source: this.result, computation: () => 0 });
-  private readonly recordsPage = linkedSignal({ source: this.result, computation: () => 0 });
-  // Null when the corresponding list is empty - the template's @if/@else if chain on these (rather than on
-  // result.entries/records directly) is what picks which table (or the empty state) to show.
+  /** The text searched, in the values of the rows and the identity key of the entries */
+  readonly search = signal('');
+  private readonly searchText = computed(() => this.search().trim().toLowerCase());
+  /** The entries with the searched text in their identity key, status or one of their values - all of them when nothing is searched */
+  private readonly matchingEntryRows = computed(() => {
+    const text = this.searchText();
+    return text
+      ? this.entryRows().filter(
+          row =>
+            this.displayKey(row.entry.key).toLowerCase().includes(text) ||
+            row.entry.status.includes(text) ||
+            Object.values(row.values).some(value => value.toLowerCase().includes(text))
+        )
+      : this.entryRows();
+  });
+  private readonly matchingRecordRows = computed(() => {
+    const text = this.searchText();
+    return text ? this.recordRows().filter(row => Object.values(row).some(value => value.toLowerCase().includes(text))) : this.recordRows();
+  });
+  /** How many rows are listed - the entries of a local workflow, or the records a remote one pushes - and how many of them match the search */
+  readonly rowCount = computed(() => ({
+    total: this.entryRows().length > 0 ? this.entryRows().length : this.recordRows().length,
+    matching: this.entryRows().length > 0 ? this.matchingEntryRows().length : this.matchingRecordRows().length
+  }));
+
+  // Back to the first page whenever the result, or what is searched, changes (a refreshed preview)
+  private readonly entriesPage = linkedSignal({ source: () => [this.result(), this.searchText()], computation: () => 0 });
+  private readonly recordsPage = linkedSignal({ source: () => [this.result(), this.searchText()], computation: () => 0 });
+  readonly hasEntries = computed(() => this.entryRows().length > 0);
+  readonly hasRecords = computed(() => this.recordRows().length > 0);
+  // Null when no row matches - the template's @if/@else if chain on `hasEntries`/`hasRecords` picks which table (or the
+  // empty state, or the "no match" message) to show.
   readonly paginatedEntries = computed(() =>
-    this.entryRows().length > 0 ? createPageFromArray(this.entryRows(), PAGE_SIZE, this.entriesPage()) : null
+    this.matchingEntryRows().length > 0 ? createPageFromArray(this.matchingEntryRows(), PAGE_SIZE, this.entriesPage()) : null
   );
   readonly paginatedRecords = computed(() =>
-    this.recordRows().length > 0 ? createPageFromArray(this.recordRows(), PAGE_SIZE, this.recordsPage()) : null
+    this.matchingRecordRows().length > 0 ? createPageFromArray(this.matchingRecordRows(), PAGE_SIZE, this.recordsPage()) : null
   );
 
   /** The full created/updated/disabled/pushed breakdown behind a run's summary - only available (and only ever shown)
@@ -91,6 +118,10 @@ export class WorkflowPreviewComponent {
   /** True once there is at least one entry or raw record worth exporting - disables the export button rather than let
    *  it produce an empty file. */
   readonly hasExportableRows = computed(() => this.result().entries.length > 0 || this.result().records.length > 0);
+
+  onSearch(event: Event): void {
+    this.search.set((event.target as HTMLInputElement).value);
+  }
 
   changeEntriesPage(pageNumber: number): void {
     this.entriesPage.set(pageNumber);

@@ -102,6 +102,11 @@
         <span class="explore-type text-truncate">{{ type }}</span>
       }
     </button>
+    @for (badge of badges()(node.path); track badge) {
+      <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1 explore-badge">
+        <i class="fa-solid fa-sync me-1" aria-hidden="true"></i>{{ badge }}
+      </span>
+    }
     @if (checkable() && node.entry.hasChildren) {
       @let childrenChecked = allChildrenChecked(node);
       <button

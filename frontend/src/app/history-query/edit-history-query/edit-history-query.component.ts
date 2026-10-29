@@ -38,7 +38,7 @@ import {
 } from '@oibus/shared/api/history-query.model';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO } from '@oibus/shared/api/south-connector.model';
 import { HistoryTransformerDTOWithOptions, SourceOriginSouthDTO, TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { NorthConnectorManifest, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
@@ -82,12 +82,10 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { SouthExploreModalComponent, SouthExploreResult } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
-import { AddDiscoveredItemsModalComponent } from '../../south/south-items/add-discovered-items-modal/add-discovered-items-modal.component';
-import { exploreCheckedActions } from '../../south/south-workflows/workflow-creation.service';
+import { openExploreWizard } from '../../south/south-workflows/edit-workflow-modal/edit-workflow-modal.component';
 import {
   ConnectorChoice,
   HistoryQueryConnectorsComponent,
@@ -918,43 +916,32 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const historyQueryId = this.historyQuery()?.id ?? null;
     const fromSouthId = this.fromSouthId || null;
     const southCommand = this.southConnectorCommand;
-    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
-    const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(historyQueryId, southCommand.settings, southCommand.type, {
-      api: {
+    // the items of the checked nodes can be added, with the discovery defaults of the connector: there is no synchronisation
+    openExploreWizard(this.modalService, {
+      southId: historyQueryId || 'create',
+      exploreConnectorId: historyQueryId,
+      exploreApi: {
         start: (settings, type) => this.historyQueryService.startExplore(historyQueryId || 'create', settings, type, fromSouthId),
         browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQueryId || 'create', sessionId, parentId),
         close: sessionId => this.historyQueryService.closeExplore(historyQueryId || 'create', sessionId)
       },
-      // the items of the checked nodes can be added, with the discovery defaults of the connector: there is no synchronisation
-      checkedActions: exploreCheckedActions(this.southManifest()!).filter(action => action.id === 'add-items')
-    });
-    modalRef.result.subscribe((result: SouthExploreResult) => {
-      if (result?.action !== 'add-items') {
-        return;
-      }
-      const modal = this.modalService.open(AddDiscoveredItemsModalComponent, { size: 'xl', backdrop: 'static' });
-      const addItems: AddDiscoveredItemsModalComponent = modal.componentInstance;
-      addItems.prepare({
-        southId: historyQueryId || 'create',
-        southSettings: southCommand.settings,
-        manifest: this.southManifest()!,
-        existingItems: this.inMemoryItems(),
-        nodeIds: result.nodeIds,
-        discover: (discoveryScope, itemFieldMapping) =>
-          this.historyQueryService.discoverItems(
-            historyQueryId || 'create',
-            southCommand.type,
-            southCommand.settings,
-            discoveryScope,
-            itemFieldMapping,
-            fromSouthId
-          )
-      });
-      modal.result.subscribe((commands: Array<SouthConnectorItemCommandDTO>) => {
-        this.inMemoryItems.update(items => [...items, ...commands.map(command => toHistoryQueryItemCommand(command))]);
+      southSettings: southCommand.settings,
+      manifest: this.southManifest()!,
+      existingItems: this.inMemoryItems(),
+      discover: (discoveryScope, itemFieldMapping) =>
+        this.historyQueryService.discoverItems(
+          historyQueryId || 'create',
+          southCommand.type,
+          southCommand.settings,
+          discoveryScope,
+          itemFieldMapping,
+          fromSouthId
+        )
+    }).subscribe(result => {
+      if (result.kind === 'items') {
+        this.inMemoryItems.update(items => [...items, ...result.commands.map(command => toHistoryQueryItemCommand(command))]);
         this.itemTable()?.goToFirstPage();
-      });
+      }
     });
   }
 

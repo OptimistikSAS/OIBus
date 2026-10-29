@@ -1,3 +1,5 @@
+import { Clipboard } from '@angular/cdk/clipboard';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -7,8 +9,10 @@ import { page, userEvent } from 'vitest/browser';
 
 import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
+import { SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflowCommand } from '../../../../test/builders';
@@ -19,11 +23,11 @@ import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
-import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
+import { NotificationService } from '../../../shared/notification.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
-import EditWorkflowModalComponent, { WorkflowStep } from './edit-workflow-modal.component';
+import EditWorkflowModalComponent, { ExploreWizardOptions, WizardStep, WorkflowStep } from './edit-workflow-modal.component';
 
 const scanModes = testData.scanMode.list;
 const southId = 'southId1';
@@ -101,11 +105,31 @@ const enablingManifest: SouthConnectorManifest = {
   }
 };
 
+// A connector whose discovery defaults give a workflow everything to be saved but its name
+const presetManifest: SouthConnectorManifest = {
+  ...enablingManifest,
+  discovery: {
+    kind: 'tree',
+    defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}', 'settings.mode': 'da' } }
+  }
+};
+
 const existingWorkflow = buildWorkflowCommand('workflowId1', 'Reactor discovery', {
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+  itemFieldMapping: { name: '{{name}}', enabled: 'true' },
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   scanModeId: scanModes[0].id
 });
+
+/** What a new item mapping starts with besides the discovery defaults: enabled, and the history settings of the item modal */
+const historyDefaults = {
+  enabled: 'true',
+  maxReadInterval: '3600',
+  readDelay: '200',
+  recoveryStrategy: 'oldest',
+  startTimeOffset: '0',
+  endTimeOffset: '0'
+};
 
 const notRegistered: RegistrationSettingsDTO = { ...testData.oIAnalytics.registration.completed, status: 'NOT_REGISTERED' };
 const registered: RegistrationSettingsDTO = { ...testData.oIAnalytics.registration.completed, status: 'REGISTERED' };
@@ -124,7 +148,6 @@ class EditWorkflowModalComponentTester {
   readonly mustBeUnique = this.root.getByText('Must be unique');
   // discovery scope
   readonly discoveryNodes = this.root.getByCss('#discovery-nodes');
-  readonly browseButton = this.root.getByRole('button', { name: 'Pick nodes...' });
   readonly discoveryQuery = this.root.getByCss('#discovery-query');
   readonly discoveryQueryInput = this.root.getByCss('#discovery-query .cm-content');
   readonly exploreTree = this.root.getByCss('#discovery-explore-tree');
@@ -145,23 +168,42 @@ class EditWorkflowModalComponentTester {
   readonly newEligibilityValue = this.root.getByCss('#new-eligibility-value');
   readonly addEligibilityConditionButton = this.root.getByCss('#add-eligibility-condition');
   // item field mapping
-  readonly mappingTable = this.root.getByCss('#item-field-mapping-table');
-  readonly advancedToggle = this.root.getByCss('#advanced-mapping-toggle');
-  readonly advancedSummary = this.root.getByCss('#advanced-mapping-summary');
-  readonly advancedSection = this.root.getByCss('#advanced-mapping');
+  readonly mappingTable = this.root.getByCss('#item-field-mapping-general');
+  readonly enabledSwitch = this.root.getByCss('#workflow-enabled');
   readonly groupToggle = this.root.getByCss('#item-field-mapping-field-groupId');
   readonly createGroupButton = this.root.getByRole('button', { name: 'Create a new group...' });
+  // explore wizard
+  readonly exploreStep = this.root.getByCss('#step-explore');
+  readonly checkedCount = this.root.getByCss('#explore-checked-count');
+  readonly keepInSyncButton = this.root.getByRole('button', { name: 'Keep in sync…' });
+  readonly addAsItemsButton = this.root.getByRole('button', { name: 'Add as items' });
+  readonly flowActionButtons = this.root.getByCss('.explore-checked-action');
+  readonly closeButton = this.root.getByRole('button', { name: 'Close' });
+  readonly discoveredItemsTable = this.root.getByCss('#discovered-items-table');
+  readonly discoveredItemNames = this.root.getByCss('.discovered-item-name');
+  readonly discoveredItemsError = this.root.getByCss('#discovered-items-error');
+  readonly discoveredItemsEmpty = this.root.getByCss('#discovered-items-empty');
+  readonly discoveredItemsIncomplete = this.root.getByCss('#discovered-items-mapping-incomplete');
+  readonly discoveredItemsNoNode = this.root.getByCss('#discovered-items-no-node');
+  readonly discoveredItemsStale = this.root.getByCss('#discovered-items-stale');
+  readonly refreshItemsButton = this.root.getByCss('#discover-items');
+  readonly addItemsButton = this.root.getByCss('#add-discovered-items');
   // footer
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly okButton = this.root.getByRole('button', { name: 'OK' });
   readonly nextButton = this.root.getByCss('#next-step');
   readonly backButton = this.root.getByCss('#previous-step');
 
-  stepButton(step: WorkflowStep) {
+  /** The checkbox of a node of the Explore step tree */
+  exploreCheck(nodeName: string) {
+    return this.root.getByCss('.explore-node').filter({ hasText: nodeName }).getByCss('.explore-check').first();
+  }
+
+  stepButton(step: WizardStep) {
     return this.root.getByCss(`#workflow-step-${step}`);
   }
 
-  async goToStep(step: WorkflowStep) {
+  async goToStep(step: WizardStep) {
     await this.stepButton(step).click();
   }
 
@@ -235,6 +277,8 @@ describe('EditWorkflowModalComponent', () => {
   let engineService: MockObject<EngineService>;
   let unsavedChangesService: MockObject<UnsavedChangesConfirmationService>;
   let modalService: MockModalService<unknown>;
+  let clipboard: MockObject<Clipboard>;
+  let notificationService: MockObject<NotificationService>;
   let groups: FakeSouthItemGroups;
   let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
   /** The step the tests of a group are about, see CreateOptions.step */
@@ -246,8 +290,10 @@ describe('EditWorkflowModalComponent', () => {
     engineService = createMock(EngineService);
     unsavedChangesService = createMock(UnsavedChangesConfirmationService);
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
+    clipboard = createMock(Clipboard);
+    notificationService = createMock(NotificationService);
     configurationWorkflowService.previewCommand.mockReturnValue(NEVER);
-    startStep = 'source';
+    startStep = 'schedule';
     groups = fakeSouthItemGroups([buildSouthItemGroup('group1', 'Group 1')]);
     // Default: OIBus isn't registered with OIAnalytics - individual tests override this to exercise the
     // "Push to OIAnalytics" mode.
@@ -264,6 +310,8 @@ describe('EditWorkflowModalComponent', () => {
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: EngineService, useValue: engineService },
         { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
+        { provide: Clipboard, useValue: clipboard },
+        { provide: NotificationService, useValue: notificationService },
         { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesService }
       ]
     });
@@ -394,12 +442,9 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should close the modal with a valid command when everything is filled in', async () => {
-      const tester = create();
-      const exploreModal = createMock(SouthExploreModalComponent);
-      modalService.mockClosedModal(exploreModal, { action: 'use', nodeIds: ['ns=1;s=Root'] });
+      // the nodes come from the Explore step
+      const tester = create({ prefill: { name: '', discoveryScope: { nodeIds: ['ns=1;s=Root'] } } });
       await tester.name.fill('New workflow');
-      await tester.browseButton.click();
-      await tester.goToStep('schedule');
       await tester.scanMode.selectOptions(scanModes[0].name);
       await tester.goToStep('items');
       await tester.addIdentityKeyField('nodeId');
@@ -410,13 +455,14 @@ describe('EditWorkflowModalComponent', () => {
 
       await tester.save();
 
+      const { maxReadInterval: _blank, ...withoutMaxReadInterval } = historyDefaults;
       expect(activeModal.close).toHaveBeenCalledWith({
         id: null,
         name: 'New workflow',
         discoveryScope: { nodeIds: ['ns=1;s=Root'] },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [],
-        itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id },
+        itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id, ...withoutMaxReadInterval },
         pushToOIAnalytics: false,
         scanModeId: scanModes[0].id,
         enabled: true
@@ -453,36 +499,33 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   describe('discovery scope', () => {
-    test('should pick the nodes to discover from in the explore modal for a tree-based connector', async () => {
-      const tester = create();
-      await expect.element(tester.browseButton).toBeInTheDocument();
+    test('should remind, in the Filter step, the nodes a tree-based connector discovers from', async () => {
+      const tester = create({ step: 'filter' });
       await expect.element(tester.discoveryQuery).not.toBeInTheDocument();
       await expect.element(tester.unsupportedScope).not.toBeInTheDocument();
       await expect.element(tester.discoveryNodes).toHaveTextContent('The whole data source');
-      const exploreModal = createMock(SouthExploreModalComponent);
-      modalService.mockClosedModal(exploreModal, { action: 'use', nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] });
-      const open = vi.spyOn(modalService, 'open');
 
-      await tester.browseButton.click();
-
-      expect(open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'xl' });
-      expect(exploreModal.prepare).toHaveBeenCalledWith(southId, southSettings, manifest.id, {
-        checkedActions: [{ id: 'use', labelKey: 'south.workflows.wizard.use-nodes' }],
-        checkedIds: []
+      const picked = create({
+        mode: 'edit',
+        step: 'filter',
+        workflow: { ...existingWorkflow, discoveryScope: { nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] } }
       });
-      await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Reactor ns=1;s=Boiler');
 
-      await tester.root.getByRole('button', { name: 'Remove ns=1;s=Reactor' }).click();
-      await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Boiler');
+      await expect.element(picked.discoveryNodes).toMatchTextContent(/Reactor.*Boiler/);
+      // the nodes are the ones of the Explore step: nothing to pick, nor to remove, here
+      await expect.element(picked.root.getByRole('button', { name: 'Remove ns=1;s=Reactor' })).not.toBeInTheDocument();
+      await expect.element(picked.root.getByRole('button', { name: /nodes/ })).not.toBeInTheDocument();
     });
 
-    test('should check the nodes already picked when picking again, and save them as the discovery scope', async () => {
-      const tester = create({ mode: 'edit' });
-      const exploreModal = createMock(SouthExploreModalComponent);
-      modalService.mockDismissedModal(exploreModal);
+    test('should have no Source step for a tree-based connector, which has its Explore step', async () => {
+      const tester = create({ step: 'filter' });
 
-      await tester.browseButton.click();
-      expect(exploreModal.prepare.mock.lastCall![3]!.checkedIds).toEqual(['ns=1;s=Root']);
+      await expect.element(tester.stepButton('source')).not.toBeInTheDocument();
+      await expect.element(tester.stepButton('filter')).toBeInTheDocument();
+    });
+
+    test('should save the nodes of the workflow as its discovery scope', async () => {
+      const tester = create({ mode: 'edit' });
 
       await tester.goToStep('items');
       await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
@@ -502,16 +545,15 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should show a query-only editor, with no reference tree, for a SQL-family connector without explore()', async () => {
-      const tester = create({ workflowManifest: sqlManifest });
+      const tester = create({ workflowManifest: sqlManifest, step: 'source' });
 
       await expect.element(tester.discoveryQuery).toBeInTheDocument();
-      await expect.element(tester.browseButton).not.toBeInTheDocument();
       await expect.element(tester.exploreTree).not.toBeInTheDocument();
       await expect.element(tester.unsupportedScope).not.toBeInTheDocument();
     });
 
     test('should show the reference explore tree above the query editor for SQLite', async () => {
-      const tester = create({ workflowManifest: sqliteManifest });
+      const tester = create({ workflowManifest: sqliteManifest, step: 'source' });
 
       await expect.element(tester.exploreTree).toBeInTheDocument();
       await expect.element(tester.discoveryQuery).toBeInTheDocument();
@@ -527,15 +569,14 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should show an unsupported-connector message when the connector has no discovery, even if it can be explored', async () => {
-      const tester = create({ workflowManifest: unsupportedManifest });
+      const tester = create({ workflowManifest: unsupportedManifest, step: 'source' });
 
       await expect.element(tester.unsupportedScope).toBeInTheDocument();
-      await expect.element(tester.browseButton).not.toBeInTheDocument();
       await expect.element(tester.discoveryQuery).not.toBeInTheDocument();
     });
 
     test('should test the discovery query as currently typed and show the raw rows', async () => {
-      const tester = create({ workflowManifest: sqlManifest, workflowSouthId: 'create' });
+      const tester = create({ workflowManifest: sqlManifest, workflowSouthId: 'create', step: 'source' });
       await expect.element(tester.testQueryButton).toBeDisabled();
       southConnectorService.testDiscoveryQuery.mockReturnValue(of([{ name: 'sensor1', unit: 'C' }]));
 
@@ -553,7 +594,7 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should show an error when the discovery query test fails', async () => {
-      const tester = create({ workflowManifest: sqlManifest });
+      const tester = create({ workflowManifest: sqlManifest, step: 'source' });
       southConnectorService.testDiscoveryQuery.mockReturnValue(throwError(() => ({ error: { message: 'no such table: nope' } })));
 
       await tester.discoveryQueryInput.fill('SELECT * FROM nope');
@@ -566,14 +607,20 @@ describe('EditWorkflowModalComponent', () => {
 
     test('should read discoveryScope.query back for a SQL-family workflow being edited', async () => {
       const sqlWorkflow = { ...existingWorkflow, discoveryScope: { query: 'SELECT 1' }, pushToOIAnalytics: true };
-      const tester = create({ mode: 'edit', workflow: sqlWorkflow, existingWorkflows: [sqlWorkflow], workflowManifest: sqlManifest });
+      const tester = create({
+        mode: 'edit',
+        workflow: sqlWorkflow,
+        existingWorkflows: [sqlWorkflow],
+        workflowManifest: sqlManifest,
+        step: 'source'
+      });
 
       await expect.element(tester.discoveryQueryInput).toHaveTextContent('SELECT 1');
       await expect.element(tester.testQueryButton).toBeEnabled();
     });
 
     test('should force "Push to OIAnalytics" and hide the mode picker and item field mapping for a SQL-family connector', async () => {
-      const tester = create({ workflowManifest: sqlManifest });
+      const tester = create({ workflowManifest: sqlManifest, step: 'source' });
 
       await expect.element(tester.sqlFixedMode).toBeInTheDocument();
       await expect.element(tester.localMode).not.toBeInTheDocument();
@@ -584,7 +631,7 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test("should reject saving when a SQL connector's metadata query is blank", async () => {
-      const tester = create({ workflowManifest: sqlManifest });
+      const tester = create({ workflowManifest: sqlManifest, step: 'schedule' });
       await tester.name.fill('SQL workflow');
 
       await tester.save();
@@ -625,7 +672,7 @@ describe('EditWorkflowModalComponent', () => {
       await tester.remoteMode.click();
 
       await expect.element(tester.notRegisteredWarning).toBeInTheDocument();
-      await tester.goToStep('source');
+      await tester.goToStep('schedule');
       await tester.name.fill('New workflow');
       await tester.save();
       expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: true }));
@@ -681,7 +728,7 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should reject saving a local workflow without identity key field', async () => {
-      const tester = create({ step: 'source' });
+      const tester = create({ step: 'schedule' });
       await tester.name.fill('New workflow');
 
       await tester.save();
@@ -862,11 +909,9 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingExpression('enabled')).toHaveValue('{{isEnabled}}');
     });
 
-    test('should flag a field referenced by an enablingCondition, which can still vary per record', async () => {
+    test('should let a field referenced by an enablingCondition vary per record', async () => {
       const tester = create({ workflowManifest: enablingManifest });
 
-      await expect.element(tester.mappingRow('settings.mode')).toMatchTextContent('Controls visibility');
-      await expect.element(tester.mappingRow('name')).not.toMatchTextContent('Controls visibility');
       await expect.element(tester.mappingField('settings.mode').getByRole('option', { name: 'HA' })).toBeInTheDocument();
       await expect
         .element(tester.mappingField('settings.mode').getByRole('option', { name: 'Use a {{ field }} expression...' }))
@@ -955,6 +1000,26 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.formError).toMatchTextContent('Every mandatory field (marked "Required") must be mapped');
       expect(activeModal.close).not.toHaveBeenCalled();
     });
+
+    test('should make the enabled field mandatory, whatever the manifest says', async () => {
+      const tester = create({
+        mode: 'edit',
+        workflow: { ...existingWorkflow, itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id } }
+      });
+      await expect.element(tester.mappingRow('enabled')).toMatchTextContent('Required');
+      await expect.element(tester.mappingField('enabled')).toHaveDisplayValue('Not mapped');
+
+      await tester.save();
+
+      await expect.element(tester.formError).toMatchTextContent('Every mandatory field');
+      expect(activeModal.close).not.toHaveBeenCalled();
+      await expect.element(tester.stepButton('items')).toHaveAttribute('aria-current', 'step');
+
+      await tester.mappingField('enabled').selectOptions('No');
+      await expect.element(tester.mappingRow('enabled')).not.toMatchTextContent('Required');
+      await tester.save();
+      expect(savedCommand().itemFieldMapping).toEqual(expect.objectContaining({ enabled: 'false' }));
+    });
   });
 
   describe('wizard', () => {
@@ -967,20 +1032,16 @@ describe('EditWorkflowModalComponent', () => {
       return { discoveredCount: 3, eligibleCount: 2, entries: [], records, ...overrides };
     }
 
-    test('should walk through the steps, a new workflow being saved from the last one', async () => {
-      const tester = create();
-      await expect.element(tester.stepButton('source')).toHaveAttribute('aria-current', 'step');
+    test('should walk through the steps of a tree-based connector, a new workflow being saved from the last one', async () => {
+      const tester = create({ step: 'filter' });
+      await expect.element(tester.stepButton('filter')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.backButton).not.toBeInTheDocument();
       await expect.element(tester.saveButton).not.toBeInTheDocument();
 
-      // the Source step needs a name before going on
       await tester.nextButton.click();
-      await expect.element(tester.stepButton('source')).toHaveAttribute('aria-current', 'step');
-      await tester.name.fill('Reactor');
+      await expect.element(tester.stepButton('items')).toHaveAttribute('aria-current', 'step');
       await tester.nextButton.click();
-      await expect.element(tester.stepButton('filter')).toHaveAttribute('aria-current', 'step');
-      await tester.nextButton.click();
-      await tester.nextButton.click();
+      await expect.element(tester.stepButton('schedule')).toHaveAttribute('aria-current', 'step');
       await tester.nextButton.click();
 
       await expect.element(tester.stepButton('review')).toHaveAttribute('aria-current', 'step');
@@ -990,9 +1051,16 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.stepButton('schedule')).toHaveAttribute('aria-current', 'step');
     });
 
+    test('should name the workflow with its schedule', async () => {
+      const tester = create({ step: 'schedule' });
+
+      await expect.element(tester.stepButton('schedule')).toMatchTextContent('Name & schedule');
+      await expect.element(tester.name).toBeVisible();
+      await expect.element(tester.scanMode).toBeVisible();
+    });
+
     test('should need a query before leaving the Source step of a SQL-family connector', async () => {
-      const tester = create({ workflowManifest: sqlManifest });
-      await tester.name.fill('Metadata');
+      const tester = create({ workflowManifest: sqlManifest, step: 'source' });
 
       await tester.nextButton.click();
 
@@ -1014,7 +1082,7 @@ describe('EditWorkflowModalComponent', () => {
     });
 
     test('should go back to the step to fix when saving fails', async () => {
-      const tester = create({ step: 'source' });
+      const tester = create({ step: 'schedule' });
       await tester.name.fill('Reactor');
 
       await tester.save();
@@ -1031,9 +1099,67 @@ describe('EditWorkflowModalComponent', () => {
 
       expect(configurationWorkflowService.previewCommand.mock.lastCall![4].eligibilityFilter).toEqual(existingWorkflow.eligibilityFilter);
       await expect.element(tester.root.getByCss('#filter-preview-count')).toHaveTextContent('Matching records: 2 of 3');
-      await expect.element(tester.root.getByCss('#filter-preview-records tbody tr')).toHaveLength(2);
+      await expect.element(tester.root.getByCss('#step-filter .records-table tbody tr')).toHaveLength(2);
       await expect.element(tester.root.getByCss('#record-fields option')).toHaveLength(3);
       await expect.element(tester.newEligibilityField).toHaveAttribute('list', 'record-fields');
+    });
+
+    test('should show the records, with the values of their fields, on the Items step too', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const tester = create({ mode: 'edit', step: 'schedule' });
+      await tester.goToStep('filter');
+      configurationWorkflowService.previewCommand.mockClear();
+
+      await tester.goToStep('items');
+
+      const rows = tester.root.getByCss('#items-records .records-table tbody tr');
+      await expect.element(rows).toHaveLength(2);
+      await expect.element(rows.nth(0)).toMatchTextContent('Reactor/Temperature');
+      await expect.element(rows.nth(1)).toMatchTextContent('bar');
+      // the Filter step just discovered them, for the same nodes and filter
+      expect(configurationWorkflowService.previewCommand).not.toHaveBeenCalled();
+    });
+
+    test('should discover the records again on the Items step when the filter changed since', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const tester = create({ mode: 'edit', step: 'schedule' });
+      await tester.goToStep('filter');
+      await tester.addEligibilityCondition('unit', 'equals', 'bar');
+      configurationWorkflowService.previewCommand.mockClear();
+
+      await tester.goToStep('items');
+
+      expect(configurationWorkflowService.previewCommand).toHaveBeenCalledTimes(1);
+      expect(configurationWorkflowService.previewCommand.mock.lastCall![4].eligibilityFilter).toContainEqual({
+        field: 'unit',
+        operator: 'equals',
+        value: 'bar'
+      });
+    });
+
+    test('should discover the records of the Items step when the Filter step was not opened', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const tester = create({ mode: 'edit', step: 'schedule' });
+
+      await tester.goToStep('items');
+
+      expect(configurationWorkflowService.previewCommand).toHaveBeenCalledTimes(1);
+      await expect.element(tester.root.getByCss('#items-records .records-table tbody tr')).toHaveLength(2);
+    });
+
+    test('should say why there is no record on the Items step', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ error: { message: 'unreachable' } }))
+      );
+      const tester = create({ mode: 'edit', step: 'schedule' });
+
+      await tester.goToStep('items');
+      await expect.element(tester.root.getByCss('#items-preview-error')).toHaveTextContent('unreachable');
+
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult({ records: [], eligibleCount: 0 })));
+      await tester.goToStep('schedule');
+      await tester.goToStep('items');
+      await expect.element(tester.root.getByCss('#items-records-none')).toMatchTextContent('No record is discovered');
     });
 
     test('should show the names the matching records would give their items', async () => {
@@ -1072,16 +1198,53 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.root.getByCss('#review-summary')).toMatchTextContent(/Reactor discovery/);
     });
 
-    test('should ask to complete the previous steps before previewing a run', async () => {
-      const tester = create({ step: 'source' });
+    test('should list what to fix on the Review step instead of previewing a run', async () => {
+      const tester = create({ step: 'review' });
+
+      const errors = tester.root.getByCss('#review-errors');
+      await expect.element(errors).toMatchTextContent('At least one identity key field is required');
+      await expect.element(errors).toMatchTextContent('A name is required');
+      // and the mapping, whose schedule is mandatory
+      await expect.element(errors.getByCss('.review-error')).toHaveLength(3);
+      await expect.element(tester.root.getByCss('#preview-review')).toBeDisabled();
+      expect(configurationWorkflowService.previewCommand).not.toHaveBeenCalled();
+    });
+
+    test('should go to the step of an error, and stop listing it once it is fixed', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const tester = create({ step: 'review', workflowManifest: presetManifest });
+
+      await expect.element(tester.root.getByCss('#review-errors')).toMatchTextContent('A name is required');
+      await tester.root.getByCss('#review-errors .review-error button').click();
+      await expect.element(tester.stepButton('schedule')).toHaveAttribute('aria-current', 'step');
       await tester.name.fill('Reactor');
+      await tester.goToStep('review');
+
+      await expect.element(tester.root.getByCss('#review-errors')).not.toBeInTheDocument();
+      await expect.element(tester.root.getByCss('#preview-review')).toBeEnabled();
+      expect(configurationWorkflowService.previewCommand).toHaveBeenCalled();
+    });
+
+    test('should name a name that is already used among the errors', async () => {
+      const tester = create({ step: 'schedule', workflowManifest: presetManifest });
+      await tester.name.fill('Reactor discovery');
 
       await tester.goToStep('review');
 
       await expect
-        .element(tester.root.getByCss('#review-preview-incomplete'))
-        .toHaveTextContent('Complete the previous steps to preview a run');
-      expect(configurationWorkflowService.previewCommand).not.toHaveBeenCalled();
+        .element(tester.root.getByCss('#review-errors'))
+        .toMatchTextContent('This name is already used by another synchronisation');
+    });
+
+    test('should list the missing query of a SQL-family connector among the errors', async () => {
+      const tester = create({ step: 'schedule', workflowManifest: sqlManifest });
+      await tester.name.fill('Metadata');
+
+      await tester.goToStep('review');
+
+      await expect.element(tester.root.getByCss('#review-errors')).toMatchTextContent('A metadata query is required');
+      await tester.root.getByCss('#review-errors .review-error button').click();
+      await expect.element(tester.stepButton('source')).toHaveAttribute('aria-current', 'step');
     });
 
     test('should show why a preview failed', async () => {
@@ -1094,31 +1257,72 @@ describe('EditWorkflowModalComponent', () => {
     });
   });
 
+  describe('schedule', () => {
+    beforeEach(() => {
+      startStep = 'schedule';
+    });
+
+    test('should not offer the subscription, which is the schedule of items only', async () => {
+      const subscription: (typeof scanModes)[number] = { ...scanModes[0], id: 'subscription', name: 'Subscription' };
+      scanModes.push(subscription);
+      try {
+        const tester = create();
+
+        await expect.element(tester.scanMode.getByRole('option', { name: scanModes[0].name })).toBeInTheDocument();
+        await expect.element(tester.scanMode.getByRole('option', { name: 'Subscription' })).not.toBeInTheDocument();
+      } finally {
+        scanModes.pop();
+      }
+    });
+
+    test('should only offer to enable a workflow that has a schedule', async () => {
+      // a new workflow runs on demand only, until a schedule is picked
+      const tester = create();
+      await expect.element(tester.enabledSwitch).not.toBeInTheDocument();
+
+      await tester.scanMode.selectOptions(scanModes[0].name);
+      await expect.element(tester.enabledSwitch).toBeInTheDocument();
+
+      await tester.scanMode.selectOptions('Manual only');
+      await expect.element(tester.enabledSwitch).not.toBeInTheDocument();
+    });
+
+    test('should have no switch for a workflow edited with no schedule', async () => {
+      const tester = create({ mode: 'edit', workflow: { ...existingWorkflow, scanModeId: null } });
+
+      await expect.element(tester.enabledSwitch).not.toBeInTheDocument();
+    });
+  });
+
   describe('discovery defaults', () => {
     beforeEach(() => {
       startStep = 'items';
     });
 
-    const presetManifest: SouthConnectorManifest = {
-      ...enablingManifest,
-      discovery: {
-        kind: 'tree',
-        defaults: { identityKeyFields: ['id'], itemFieldMapping: { name: '{{path}}', 'settings.mode': 'da' } }
-      }
-    };
-
-    test('should start a new workflow from the connector defaults, with the Advanced section collapsed', async () => {
+    test('should start a new workflow from the connector defaults', async () => {
       const tester = create({ workflowManifest: presetManifest });
 
       await expect.element(tester.mappingField('name')).toHaveValue('{{path}}');
-      await expect.element(tester.advancedSection).not.toBeInTheDocument();
-      await expect.element(tester.advancedToggle).toHaveAttribute('aria-expanded', 'false');
-      await expect.element(tester.advancedSummary).toHaveTextContent('1 other fields mapped, records identified by id');
-
-      await tester.advancedToggle.click();
-
       await expect.element(tester.identityKeyFields).toHaveTextContent('id');
       await expect.element(tester.mappingField('settings.mode')).toHaveDisplayValue('DA');
+    });
+
+    test('should start a new workflow with its items enabled, and keep the mapping of an edited one', async () => {
+      const created = create();
+      await expect.element(created.mappingField('enabled')).toHaveDisplayValue('Yes');
+
+      const edited = create({ mode: 'edit', workflow: { ...existingWorkflow, itemFieldMapping: { name: '{{name}}' } } });
+      await expect.element(edited.mappingField('enabled')).toHaveDisplayValue('Not mapped');
+    });
+
+    test('should start a new workflow with the history settings of the item modal', async () => {
+      const tester = create();
+
+      await expect.element(tester.mappingField('maxReadInterval')).toHaveValue('3600');
+      await expect.element(tester.mappingField('readDelay')).toHaveValue('200');
+      await expect.element(tester.mappingField('recoveryStrategy')).toHaveDisplayValue('From oldest to newest');
+      await expect.element(tester.mappingField('startTimeOffset')).toHaveValue('0');
+      await expect.element(tester.mappingField('endTimeOffset')).toHaveValue('0');
     });
 
     test('should keep the mapping of an edited workflow rather than the defaults', async () => {
@@ -1126,29 +1330,20 @@ describe('EditWorkflowModalComponent', () => {
       const tester = create({ mode: 'edit', workflow, workflowManifest: presetManifest });
 
       await expect.element(tester.mappingField('name')).toHaveValue('{{name}}');
-      await expect.element(tester.advancedSummary).toHaveTextContent('0 other fields mapped, records identified by nodeId');
+      await expect.element(tester.identityKeyFields).toHaveTextContent('nodeId');
+      await expect.element(tester.mappingField('maxReadInterval')).toHaveValue('');
     });
 
-    test('should expand the Advanced section when what is missing is in it', async () => {
-      const tester = create({ workflowManifest: presetManifest, step: 'source' });
+    test('should say an identity key field is missing, on the Items step', async () => {
+      const tester = create({ workflowManifest: presetManifest, step: 'schedule' });
       await tester.name.fill('Reactor');
       await tester.goToStep('items');
-      await tester.advancedToggle.click();
       await tester.root.getByCss('.remove-identity-key-field').click();
-      await tester.advancedToggle.click();
-      await expect.element(tester.advancedSection).not.toBeInTheDocument();
 
       await tester.save();
 
       await expect.element(tester.formError).toMatchTextContent('At least one identity key field is required');
-      await expect.element(tester.advancedSection).toBeInTheDocument();
-    });
-
-    test('should show the Advanced section expanded when the connector has no defaults', async () => {
-      const tester = create();
-
-      await expect.element(tester.advancedSection).toBeInTheDocument();
-      await expect.element(tester.advancedSummary).not.toBeInTheDocument();
+      await expect.element(tester.stepButton('items')).toHaveAttribute('aria-current', 'step');
     });
   });
 
@@ -1164,10 +1359,11 @@ describe('EditWorkflowModalComponent', () => {
 
       await tester.selectGroup('Group 1');
       await expect.element(tester.groupToggle).toHaveTextContent('Group 1');
-      // scanModeId is no longer mandatory once the item is mapped into a group
-      await expect.element(tester.mappingRow('scanModeId')).not.toMatchTextContent('Required');
+      // the schedule is the one of the group: scanModeId is no longer mandatory, nor shown
+      await expect.element(tester.mappingField('scanModeId')).not.toBeInTheDocument();
       await tester.save();
-      expect(savedCommand().itemFieldMapping).toEqual({ name: '{{name}}', groupId: 'group1' });
+      // as in the item modal, an item that gets a group follows it
+      expect(savedCommand().itemFieldMapping).toEqual({ name: '{{name}}', enabled: 'true', groupId: 'group1', syncWithGroup: 'true' });
 
       await tester.goToStep('items');
       await tester.selectGroup('None');
@@ -1183,25 +1379,32 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingField('syncWithGroup')).not.toBeInTheDocument();
     });
 
-    test('should still show the item-owned historian fields once grouped, as long as the item is not synced with the group', async () => {
+    test('should follow the group by default, hiding the item-owned historian fields and the schedule', async () => {
       const tester = create();
 
       await tester.selectGroup('Group 1');
 
-      for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy', 'syncWithGroup']) {
-        await expect.element(tester.mappingField(path)).toBeInTheDocument();
-      }
-    });
-
-    test('should hide the item-owned historian fields once the item is actually synced with its group', async () => {
-      const tester = create();
-      await tester.selectGroup('Group 1');
-
-      await tester.mappingField('syncWithGroup').selectOptions('Yes');
-
-      for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
+      await expect.element(tester.mappingField('syncWithGroup')).toHaveDisplayValue('Yes');
+      for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy', 'scanModeId']) {
         await expect.element(tester.mappingField(path)).not.toBeInTheDocument();
       }
+      await expect.element(tester.root.getByCss('#group-scan-mode')).toMatchTextContent('(from the group)');
+    });
+
+    test('should show the item-owned historian fields once the item is not synced with its group', async () => {
+      const tester = create();
+      await tester.selectGroup('Group 1');
+
+      await tester.mappingField('syncWithGroup').selectOptions('No');
+
+      for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
+        await expect.element(tester.mappingField(path)).toBeInTheDocument();
+      }
+      // the schedule is still the one of the group
+      await expect.element(tester.mappingField('scanModeId')).not.toBeInTheDocument();
+
+      await tester.mappingField('syncWithGroup').selectOptions('Yes');
+      await expect.element(tester.mappingField('maxReadInterval')).not.toBeInTheDocument();
     });
 
     test('should create a group through the groups of the page and map it', async () => {
@@ -1248,6 +1451,872 @@ describe('EditWorkflowModalComponent', () => {
       expect(groups.delete).toHaveBeenCalledWith(deletedGroup);
       await expect.element(tester.groupToggle).toHaveTextContent('None');
       await expect.element(tester.groupOption('Group 1')).not.toBeInTheDocument();
+    });
+  });
+  describe('explore wizard', () => {
+    const exploreManifest: SouthConnectorManifest = {
+      ...manifest,
+      discovery: {
+        kind: 'tree',
+        recordFields: ['id', 'name', 'path'],
+        defaults: { identityKeyFields: ['nodeId'], itemFieldMapping: { name: '{{name}}' } }
+      }
+    };
+    const entries = [
+      { id: 'ns=1;s=Reactor', name: 'Reactor', metadata: { type: 'Object' }, hasChildren: false },
+      { id: 'ns=1;s=Boiler', name: 'Boiler', metadata: { type: 'Object' }, hasChildren: false }
+    ];
+
+    function discovered(name: string, regex: string): SouthConnectorItemCommandDTO {
+      const command = testData.south.itemCommand;
+      return { ...command, id: null, name, scanModeId: null, settings: { ...(command.settings as SouthFolderScannerItemSettings), regex } };
+    }
+
+    function explore(options: Partial<ExploreWizardOptions> = {}) {
+      southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries }));
+      const tester = new EditWorkflowModalComponentTester();
+      tester.fixture.componentInstance.prepareForExploration({
+        southId,
+        exploreConnectorId: southId,
+        southSettings,
+        manifest: exploreManifest,
+        schedule: { scanModes, groups },
+        existingItems: [],
+        sync: { directSave: true, existingWorkflows: [] },
+        ...options
+      });
+      return tester;
+    }
+
+    function closedWith(): unknown {
+      return activeModal.close.mock.lastCall![0];
+    }
+
+    describe('Explore step', () => {
+      test('should start on the explore tree of the data source, with nothing to do until a node is checked', async () => {
+        const tester = explore();
+
+        await expect.element(tester.title).toHaveTextContent('Explore data source');
+        await expect.element(tester.exploreStep).toBeVisible();
+        expect(southConnectorService.startExplore).toHaveBeenCalledWith(southId, southSettings, 'folder-scanner');
+        await expect.element(tester.checkedCount).toHaveTextContent('0 selected');
+        await expect.element(tester.flowActionButtons).toHaveLength(2);
+        await expect.element(tester.keepInSyncButton).toBeDisabled();
+        await expect.element(tester.addAsItemsButton).toBeDisabled();
+        // there is only the Explore step until the nodes are used
+        await expect.element(tester.stepButton('explore')).not.toBeInTheDocument();
+      });
+
+      test('should explore the settings of a history query through its own endpoints, and only offer to add items', async () => {
+        const api = {
+          start: vi.fn(() => of({ sessionId: 'historySession', entries })),
+          browse: vi.fn(),
+          close: vi.fn(() => of(undefined))
+        };
+        const tester = explore({ exploreApi: api, exploreConnectorId: null, schedule: undefined, sync: undefined });
+
+        await expect.element(tester.exploreStep).toBeVisible();
+        expect(api.start).toHaveBeenCalledWith(southSettings, 'folder-scanner');
+        expect(southConnectorService.startExplore).not.toHaveBeenCalled();
+        await expect.element(tester.flowActionButtons).toHaveLength(1);
+        await expect.element(tester.addAsItemsButton).toBeInTheDocument();
+        await expect.element(tester.keepInSyncButton).not.toBeInTheDocument();
+      });
+
+      test('should only offer to keep in sync with tree-based discovery, and to add items with discovery defaults', async () => {
+        const tester = explore({ manifest: { ...exploreManifest, discovery: { kind: 'tree' } } });
+
+        await expect.element(tester.flowActionButtons).toHaveLength(1);
+        await expect.element(tester.keepInSyncButton).toBeInTheDocument();
+      });
+
+      test('should only offer to add items for a query-based discovery', async () => {
+        const tester = explore({
+          manifest: { ...exploreManifest, discovery: { kind: 'query', defaults: exploreManifest.discovery!.defaults } }
+        });
+
+        await expect.element(tester.flowActionButtons).toHaveLength(1);
+        await expect.element(tester.addAsItemsButton).toBeInTheDocument();
+      });
+
+      test('should close on the close button', async () => {
+        const tester = explore();
+
+        await tester.closeButton.click();
+
+        expect(activeModal.dismiss).toHaveBeenCalled();
+      });
+
+      test('should not save when the form is submitted from the Explore step', () => {
+        const tester = explore();
+
+        tester.fixture.componentInstance.save();
+
+        expect(activeModal.close).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('existing synchronisations', () => {
+      // complete workflows, which can be saved as they are
+      const mapping = { identityKeyFields: ['id'], itemFieldMapping: { name: '{{name}}', enabled: 'true', scanModeId: scanModes[0].id } };
+      const reactorSync = buildWorkflowCommand('workflow1', 'Reactor sync', {
+        ...mapping,
+        discoveryScope: { nodeIds: ['ns=1;s=Reactor'] },
+        scanModeId: scanModes[0].id
+      });
+      const everything = buildWorkflowCommand('workflow2', 'Everything', { ...mapping, discoveryScope: {} });
+      const tables = buildWorkflowCommand('workflow3', 'Tables', { discoveryScope: { query: 'SELECT 1' } });
+      const existingWorkflows = [reactorSync, everything, tables];
+
+      function exploreWith(options: Partial<ExploreWizardOptions> = {}) {
+        return explore({ sync: { directSave: true, existingWorkflows }, ...options });
+      }
+
+      test('should say which synchronisations already keep nodes in sync, and mark their nodes in the tree', async () => {
+        const tester = exploreWith();
+
+        const chips = tester.root.getByCss('#explore-coverage .explore-coverage-chip');
+        await expect.element(chips).toHaveLength(2);
+        await expect.element(chips.nth(0)).toMatchTextContent('Reactor sync (1)');
+        await expect.element(chips.nth(1)).toMatchTextContent('Everything (whole data source)');
+        // a synchronisation of the whole data source marks no node, and one of a query has none to mark
+        const badges = tester.root.getByCss('.explore-node .explore-badge');
+        await expect.element(badges).toHaveLength(1);
+        await expect
+          .element(tester.root.getByCss('.explore-node').filter({ hasText: 'Reactor' }).getByCss('.explore-badge'))
+          .toHaveTextContent('Reactor sync');
+      });
+
+      test('should show nothing of the sort when the connector has no synchronisation', async () => {
+        const tester = exploreWith({ sync: { directSave: true, existingWorkflows: [] } });
+
+        await expect.element(tester.exploreStep).toBeVisible();
+        await expect.element(tester.root.getByCss('#explore-coverage')).not.toBeInTheDocument();
+        await expect.element(tester.root.getByCss('.explore-badge')).not.toBeInTheDocument();
+      });
+
+      test('should only offer to go on with a new synchronisation when opened from the New button', async () => {
+        const tester = exploreWith({ syncOnly: true });
+
+        await expect.element(tester.flowActionButtons).toHaveLength(1);
+        await expect.element(tester.keepInSyncButton).not.toBeInTheDocument();
+        // the steps of the synchronisation are there from the start
+        await expect.element(tester.stepButton('filter')).toBeInTheDocument();
+        await expect.element(tester.stepButton('review')).toBeInTheDocument();
+        await tester.exploreCheck('Boiler').click();
+
+        await tester.root.getByRole('button', { name: 'Next' }).click();
+
+        await expect.element(tester.stepButton('filter')).toHaveAttribute('aria-current', 'step');
+        await expect.element(tester.discoveryNodes).toMatchTextContent('ns=1;s=Boiler');
+      });
+
+      test('should edit a synchronisation from the Explore step, with its nodes checked', async () => {
+        const tester = exploreWith({ workflow: { command: reactorSync, mode: 'edit' } });
+
+        await expect.element(tester.exploreStep).toBeVisible();
+        await expect.element(tester.checkedCount).toHaveTextContent('1 selected');
+        await expect.element(tester.stepButton('review')).toBeInTheDocument();
+        // the synchronisation being edited is not one that already covers its own nodes
+        await expect.element(tester.root.getByCss('.explore-node .explore-badge')).not.toBeInTheDocument();
+
+        await tester.root.getByRole('button', { name: 'Next' }).click();
+        await tester.goToStep('schedule');
+        await expect.element(tester.name).toHaveValue('Reactor sync');
+      });
+
+      test('should save the edited synchronisation under its id, with the nodes checked', async () => {
+        const tester = exploreWith({ workflow: { command: reactorSync, mode: 'edit' } });
+        await tester.exploreCheck('Boiler').click();
+        await tester.root.getByRole('button', { name: 'Next' }).click();
+
+        await tester.saveButton.click();
+
+        expect(closedWith()).toEqual({
+          kind: 'workflow',
+          command: expect.objectContaining({
+            id: 'workflow1',
+            name: 'Reactor sync',
+            discoveryScope: { nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] }
+          })
+        });
+      });
+
+      test('should duplicate a synchronisation as a new one, with its nodes checked', async () => {
+        const tester = exploreWith({ workflow: { command: reactorSync, mode: 'copy' } });
+
+        await expect.element(tester.checkedCount).toHaveTextContent('1 selected');
+        // a duplicate has no target to choose
+        await expect.element(tester.root.getByCss('#sync-target')).not.toBeInTheDocument();
+        await tester.root.getByRole('button', { name: 'Next' }).click();
+
+        await tester.goToStep('schedule');
+        await expect.element(tester.name).toHaveValue('Reactor sync-copy');
+        await tester.save();
+        expect(closedWith()).toEqual({ kind: 'workflow', command: expect.objectContaining({ id: null, name: 'Reactor sync-copy' }) });
+      });
+
+      test('should warn, in the Explore step, when nodes are removed from the synchronisation', async () => {
+        const tester = exploreWith({ workflow: { command: reactorSync, mode: 'edit' } });
+        await expect.element(tester.root.getByCss('#sync-target-removed')).not.toBeInTheDocument();
+
+        await tester.exploreCheck('Reactor').click();
+
+        await expect.element(tester.root.getByCss('#sync-target-removed')).toMatchTextContent('1 node(s) removed from the synchronisation');
+      });
+
+      describe('target', () => {
+        /** The target is picked in the Explore step, where the nodes are checked: the action comes after */
+        async function checkBoiler(tester: EditWorkflowModalComponentTester) {
+          await tester.exploreCheck('Boiler').click();
+        }
+
+        test('should offer a new synchronisation, or the ones that discover from nodes, to add the nodes to', async () => {
+          const tester = exploreWith();
+
+          await checkBoiler(tester);
+
+          await expect.element(tester.root.getByCss('#sync-target-new')).toBeChecked();
+          const existing = tester.root.getByCss('.sync-target-existing');
+          await expect.element(existing).toHaveLength(2);
+          await expect.element(tester.root.getByCss('#sync-target')).toMatchTextContent('Add the selected nodes to Reactor sync');
+          await expect.element(tester.root.getByCss('#sync-target')).toMatchTextContent('Already covers the whole data source');
+          await expect.element(tester.root.getByCss('#sync-target')).not.toMatchTextContent('Tables');
+        });
+
+        test('should add the nodes checked to an existing synchronisation, which then has its own settings', async () => {
+          const tester = exploreWith();
+          await checkBoiler(tester);
+
+          await tester.root.getByCss('#sync-target-workflow1').click();
+
+          // the tree has the nodes of the synchronisation too, and it no longer marks its own nodes
+          await expect.element(tester.checkedCount).toHaveTextContent('2 selected');
+          await expect.element(tester.root.getByCss('#sync-target-added')).toMatchTextContent('+ ns=1;s=Boiler');
+          await expect.element(tester.root.getByCss('.explore-node .explore-badge')).not.toBeInTheDocument();
+
+          await tester.keepInSyncButton.click();
+          await expect.element(tester.discoveryNodes).toMatchTextContent('ns=1;s=Reactor');
+          await expect.element(tester.discoveryNodes).toMatchTextContent('ns=1;s=Boiler');
+          await tester.goToStep('schedule');
+          await expect.element(tester.name).toHaveValue('Reactor sync');
+          await tester.saveButton.click();
+          expect(closedWith()).toEqual({
+            kind: 'workflow',
+            command: expect.objectContaining({
+              id: 'workflow1',
+              scanModeId: scanModes[0].id,
+              discoveryScope: { nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] }
+            })
+          });
+        });
+
+        test('should leave a synchronisation of the whole data source as it is', async () => {
+          const tester = exploreWith();
+          await checkBoiler(tester);
+
+          await tester.root.getByCss('#sync-target-workflow2').click();
+          await tester.keepInSyncButton.click();
+
+          await tester.goToStep('schedule');
+          await tester.saveButton.click();
+          expect(closedWith()).toEqual({
+            kind: 'workflow',
+            command: expect.objectContaining({ id: 'workflow2', discoveryScope: {} })
+          });
+        });
+
+        test('should go back to a new synchronisation of the nodes checked', async () => {
+          const tester = exploreWith();
+          await checkBoiler(tester);
+          await tester.root.getByCss('#sync-target-workflow1').click();
+
+          await tester.root.getByCss('#sync-target-new').click();
+
+          await expect.element(tester.root.getByCss('#sync-target-added')).not.toBeInTheDocument();
+          await expect.element(tester.checkedCount).toHaveTextContent('1 selected');
+          await tester.keepInSyncButton.click();
+          await expect.element(tester.discoveryNodes).toMatchTextContent('ns=1;s=Boiler');
+          await expect.element(tester.discoveryNodes).not.toMatchTextContent('ns=1;s=Reactor');
+          await tester.goToStep('items');
+          await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+          await tester.goToStep('schedule');
+          await tester.name.fill('Boiler sync');
+          await tester.save();
+          expect(closedWith()).toEqual({
+            kind: 'workflow',
+            command: expect.objectContaining({ id: null, name: 'Boiler sync', discoveryScope: { nodeIds: ['ns=1;s=Boiler'] } })
+          });
+        });
+
+        test('should not offer any target when no synchronisation discovers from nodes', async () => {
+          const tester = exploreWith({ sync: { directSave: true, existingWorkflows: [tables] } });
+
+          await checkBoiler(tester);
+
+          await expect.element(tester.root.getByCss('#sync-target')).not.toBeInTheDocument();
+        });
+
+        test('should not offer any target to add items', async () => {
+          const tester = exploreWith({
+            manifest: { ...exploreManifest, discovery: { kind: 'query', defaults: exploreManifest.discovery!.defaults } }
+          });
+
+          await checkBoiler(tester);
+
+          await expect.element(tester.root.getByCss('#sync-target')).not.toBeInTheDocument();
+        });
+      });
+
+      test('should note the synchronisations that already keep the checked nodes in sync, when they are added as items', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = exploreWith();
+        await tester.exploreCheck('Boiler').click();
+        await tester.addAsItemsButton.click();
+
+        // the synchronisation of the whole data source covers every node, the one of the Reactor does not
+        const note = tester.root.getByCss('#items-covered-note');
+        await expect.element(note).toMatchTextContent('Already kept in sync by Everything');
+        await expect.element(note).not.toMatchTextContent('Reactor sync');
+
+        await tester.goToStep('explore');
+        await tester.exploreCheck('Reactor').click();
+        await tester.addAsItemsButton.click();
+        await expect.element(note).toMatchTextContent('Already kept in sync by Reactor sync, Everything');
+      });
+
+      test('should not note anything when no synchronisation covers the checked nodes', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = exploreWith({ sync: { directSave: true, existingWorkflows: [reactorSync] } });
+        await tester.exploreCheck('Boiler').click();
+        await tester.addAsItemsButton.click();
+
+        await expect.element(tester.root.getByCss('#items-covered-note')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('Keep in sync', () => {
+      async function keepInSync(tester: EditWorkflowModalComponentTester) {
+        await tester.exploreCheck('Reactor').click();
+        await tester.keepInSyncButton.click();
+      }
+
+      test('should go on with the workflow steps, after the Explore one, on the nodes checked', async () => {
+        const tester = explore();
+        await tester.exploreCheck('Reactor').click();
+        await expect.element(tester.checkedCount).toHaveTextContent('1 selected');
+
+        await tester.keepInSyncButton.click();
+
+        // no Source step: the nodes are the ones of the Explore step
+        for (const step of ['explore', 'filter', 'items', 'schedule', 'review'] as const) {
+          await expect.element(tester.stepButton(step)).toBeInTheDocument();
+        }
+        await expect.element(tester.stepButton('source')).not.toBeInTheDocument();
+        await expect.element(tester.stepButton('filter')).toHaveAttribute('aria-current', 'step');
+        // the Filter step reminds them
+        await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Reactor');
+        // nothing is created until the workflow is saved
+        expect(southConnectorService.discoverItems).not.toHaveBeenCalled();
+      });
+
+      test('should come back to the Explore step to change the nodes, keeping what was checked', async () => {
+        const tester = explore();
+        await keepInSync(tester);
+        // changing nodes is the action of the Explore step: the Filter step has no button for it
+        await expect.element(tester.root.getByRole('button', { name: /nodes/i })).not.toBeInTheDocument();
+
+        await tester.goToStep('explore');
+
+        await expect.element(tester.exploreStep).toBeVisible();
+        await expect.element(tester.checkedCount).toHaveTextContent('1 selected');
+        await tester.exploreCheck('Boiler').click();
+        await tester.keepInSyncButton.click();
+        await expect.element(tester.discoveryNodes).toMatchTextContent('ns=1;s=Reactor');
+        await expect.element(tester.discoveryNodes).toMatchTextContent('ns=1;s=Boiler');
+      });
+
+      test('should go back to the Explore step from the first workflow step', async () => {
+        const tester = explore();
+        await keepInSync(tester);
+
+        await tester.backButton.click();
+
+        await expect.element(tester.exploreStep).toBeVisible();
+      });
+
+      test('should close with the workflow, which discovers from the nodes checked', async () => {
+        const tester = explore();
+        await keepInSync(tester);
+        await tester.goToStep('items');
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+        await tester.goToStep('schedule');
+        await tester.name.fill('Reactor sync');
+
+        await tester.save();
+
+        expect(closedWith()).toEqual({
+          kind: 'workflow',
+          command: expect.objectContaining({
+            id: null,
+            name: 'Reactor sync',
+            discoveryScope: { nodeIds: ['ns=1;s=Reactor'] },
+            identityKeyFields: ['nodeId'],
+            itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id, ...historyDefaults }
+          })
+        });
+      });
+    });
+
+    describe('Add as items', () => {
+      async function addAsItems(tester: EditWorkflowModalComponentTester) {
+        await tester.exploreCheck('Reactor').click();
+        await tester.addAsItemsButton.click();
+      }
+
+      test('should list the items of the nodes checked, mapped with the discovery defaults', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([discovered('Reactor/a', 'a.csv'), discovered('Reactor/b', 'b.csv')]));
+        const tester = explore();
+
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+
+        await expect.element(tester.stepButton('add-items')).toHaveAttribute('aria-current', 'step');
+        await expect.element(tester.discoveredItemNames).toHaveLength(2);
+        await expect.element(tester.discoveredItemNames.nth(0)).toHaveValue('Reactor/a');
+        expect(southConnectorService.discoverItems).toHaveBeenLastCalledWith(
+          southId,
+          exploreManifest.id,
+          southSettings,
+          { nodeIds: ['ns=1;s=Reactor'] },
+          { name: '{{name}}', scanModeId: scanModes[0].id, ...historyDefaults }
+        );
+      });
+
+      test('should show the item mapping in the sections of the item modal, on the same step', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+
+        await addAsItems(tester);
+
+        const sections = tester.root.getByCss('#step-add-items h5.oib-section-title');
+        await expect.element(sections).toHaveLength(2);
+        await expect.element(sections.nth(0)).toHaveTextContent('Name & schedule');
+        const general = tester.root.getByCss('#item-field-mapping-general');
+        for (const path of ['name', 'groupId', 'scanModeId', 'maxReadInterval', 'readDelay', 'recoveryStrategy', 'startTimeOffset']) {
+          await expect.element(general.getByCss(`[id="item-field-mapping-field-${path}"]`)).toBeInTheDocument();
+        }
+        await expect
+          .element(tester.root.getByCss('#item-field-mapping-settings').getByCss('[id="item-field-mapping-field-settings.objectArray"]'))
+          .toBeInTheDocument();
+        // nothing is folded away, and what only a workflow needs is not there
+        await expect.element(tester.remoteMode).not.toBeVisible();
+      });
+
+      test('should start with the history settings of the item modal', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+
+        await addAsItems(tester);
+
+        await expect.element(tester.mappingField('maxReadInterval')).toHaveValue('3600');
+        await expect.element(tester.mappingField('readDelay')).toHaveValue('200');
+        await expect.element(tester.mappingField('recoveryStrategy')).toHaveDisplayValue('From oldest to newest');
+        await expect.element(tester.mappingField('startTimeOffset')).toHaveValue('0');
+        await expect.element(tester.mappingField('endTimeOffset')).toHaveValue('0');
+      });
+
+      test('should start a synchronisation with the same history settings', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.mappingField('readDelay').fill('500');
+
+        await tester.goToStep('explore');
+        await tester.keepInSyncButton.click();
+        await tester.goToStep('items');
+
+        // the mapping is the same one
+        await expect.element(tester.mappingField('maxReadInterval')).toHaveValue('3600');
+        await expect.element(tester.mappingField('readDelay')).toHaveValue('500');
+      });
+
+      test('should follow the group of the item, hiding the schedule and the history settings, as the item modal does', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+        await addAsItems(tester);
+        await expect.element(tester.mappingField('syncWithGroup')).not.toBeInTheDocument();
+        await expect.element(tester.mappingField('scanModeId')).toBeInTheDocument();
+
+        await tester.selectGroup('Group 1');
+
+        await expect.element(tester.mappingField('scanModeId')).not.toBeInTheDocument();
+        await expect.element(tester.root.getByCss('#group-scan-mode')).toMatchTextContent('(from the group)');
+        await expect.element(tester.mappingField('syncWithGroup')).toHaveDisplayValue('Yes');
+        await expect.element(tester.mappingField('maxReadInterval')).not.toBeInTheDocument();
+        await expect.element(tester.mappingField('readDelay')).not.toBeInTheDocument();
+
+        // the item can have its own history settings in its group
+        await tester.mappingField('syncWithGroup').selectOptions('No');
+        await expect.element(tester.mappingField('maxReadInterval')).toBeInTheDocument();
+        await expect.element(tester.mappingField('scanModeId')).not.toBeInTheDocument();
+
+        await tester.selectGroup('None');
+        await expect.element(tester.mappingField('syncWithGroup')).not.toBeInTheDocument();
+        await expect.element(tester.mappingField('scanModeId')).toBeInTheDocument();
+        await expect.element(tester.mappingField('maxReadInterval')).toBeInTheDocument();
+      });
+
+      test('should list the fields of the discovered records, as the connector tells them', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+
+        await addAsItems(tester);
+
+        const fields = tester.root.getByCss('#available-record-fields .record-field');
+        await expect.element(fields).toHaveLength(3);
+        await expect.element(fields.nth(0)).toHaveTextContent('{{id}}');
+        await expect.element(fields.nth(2)).toHaveTextContent('{{path}}');
+        // not when the connector tells nothing
+        const without = explore({
+          manifest: { ...exploreManifest, discovery: { kind: 'tree', defaults: exploreManifest.discovery!.defaults } }
+        });
+        await addAsItems(without);
+        await expect.element(without.root.getByCss('#available-record-fields')).not.toBeInTheDocument();
+      });
+
+      test('should put a field where the user was typing, after the previous one', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.mappingField('name').fill('item-');
+
+        await tester.root.getByCss('.record-field').nth(2).click();
+        await tester.root.getByCss('.record-field').nth(0).click();
+
+        await expect.element(tester.mappingField('name')).toHaveValue('item-{{path}}{{id}}');
+        expect(clipboard.copy).not.toHaveBeenCalled();
+      });
+
+      test('should copy a field when the user was not typing in an input that takes it', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+        await addAsItems(tester);
+
+        // nothing focused yet
+        await tester.root.getByCss('.record-field').nth(1).click();
+        expect(clipboard.copy).toHaveBeenLastCalledWith('{{name}}');
+        expect(notificationService.success).toHaveBeenCalledWith('south.explore.copied');
+
+        // a field that only takes a constant
+        await tester.mappingField('readDelay').fill('5');
+        await tester.root.getByCss('.record-field').nth(0).click();
+        expect(clipboard.copy).toHaveBeenLastCalledWith('{{id}}');
+        await expect.element(tester.mappingField('readDelay')).toHaveValue('5');
+
+        // a select, which only takes a constant until it is on an expression
+        tester.mappingField('recoveryStrategy').element().focus();
+        await tester.root.getByCss('.record-field').nth(0).click();
+        expect(clipboard.copy).toHaveBeenCalledTimes(3);
+      });
+
+      test('should list the fields in the Items step of a synchronisation too', async () => {
+        const tester = explore();
+        await tester.exploreCheck('Reactor').click();
+        await tester.keepInSyncButton.click();
+        await tester.goToStep('items');
+
+        await expect.element(tester.root.getByCss('#available-record-fields .record-field')).toHaveLength(3);
+      });
+
+      test('should say what is missing in the mapping, instead of discovering', async () => {
+        const tester = explore();
+
+        await addAsItems(tester);
+
+        await expect.element(tester.discoveredItemsIncomplete).toMatchTextContent('Every mandatory field');
+        expect(southConnectorService.discoverItems).not.toHaveBeenCalled();
+        await expect.element(tester.refreshItemsButton).toBeDisabled();
+        await expect.element(tester.addItemsButton).toBeDisabled();
+      });
+
+      test('should discover again once the mapping changed, refusing to add the items it gave until then', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([discovered('Reactor/a', 'a.csv')]));
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+        await expect.element(tester.discoveredItemNames).toHaveLength(1);
+        southConnectorService.discoverItems.mockClear();
+        southConnectorService.discoverItems.mockReturnValue(of([discovered('Boiler/a', 'a.csv')]));
+
+        await tester.mappingField('name').fill('{{path}}');
+
+        await expect.element(tester.discoveredItemsStale).toBeInTheDocument();
+        await expect.element(tester.addItemsButton).toBeDisabled();
+        await expect.element(tester.discoveredItemNames.nth(0)).toHaveValue('Boiler/a');
+        expect(southConnectorService.discoverItems).toHaveBeenCalledTimes(1);
+        await expect.element(tester.discoveredItemsStale).not.toBeInTheDocument();
+        await expect.element(tester.addItemsButton).toBeEnabled();
+      });
+
+      test('should discover again on demand', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([discovered('Reactor/a', 'a.csv')]));
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+        await expect.element(tester.discoveredItemNames).toHaveLength(1);
+        southConnectorService.discoverItems.mockClear();
+
+        await tester.refreshItemsButton.click();
+
+        expect(southConnectorService.discoverItems).toHaveBeenCalledTimes(1);
+      });
+
+      test('should keep the review when coming back to the step with the same nodes and mapping', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([discovered('Reactor/a', 'a.csv'), discovered('Reactor/b', 'b.csv')]));
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+        await expect.element(tester.discoveredItemNames).toHaveLength(2);
+        await tester.discoveredItemNames.nth(0).fill('renamed');
+        southConnectorService.discoverItems.mockClear();
+
+        await tester.goToStep('explore');
+        await tester.addAsItemsButton.click();
+
+        await expect.element(tester.discoveredItemNames.nth(0)).toHaveValue('renamed');
+        expect(southConnectorService.discoverItems).not.toHaveBeenCalled();
+      });
+
+      test('should discover again from the nodes when they changed', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([discovered('Reactor/a', 'a.csv')]));
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+        await expect.element(tester.discoveredItemNames).toHaveLength(1);
+
+        await tester.goToStep('explore');
+        await tester.exploreCheck('Boiler').click();
+        await tester.addAsItemsButton.click();
+
+        await vi.waitFor(() =>
+          expect(southConnectorService.discoverItems).toHaveBeenLastCalledWith(
+            southId,
+            exploreManifest.id,
+            southSettings,
+            { nodeIds: ['ns=1;s=Reactor', 'ns=1;s=Boiler'] },
+            expect.anything()
+          )
+        );
+      });
+
+      test('should show why the discovery failed', async () => {
+        southConnectorService.discoverItems.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'unreachable' } })));
+        const tester = explore();
+
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+
+        await expect.element(tester.discoveredItemsError).toMatchTextContent(/unreachable$/);
+        await expect.element(tester.addItemsButton).toBeDisabled();
+      });
+
+      test('should say when there is nothing to add', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+
+        await expect.element(tester.discoveredItemsEmpty).toMatchTextContent(/^Nothing to add/);
+      });
+
+      test('should ask for nodes when none is checked', async () => {
+        const tester = explore();
+        await tester.exploreCheck('Reactor').click();
+        await tester.addAsItemsButton.click();
+        await tester.goToStep('explore');
+        await tester.exploreCheck('Reactor').click();
+
+        await tester.goToStep('add-items');
+
+        await expect.element(tester.discoveredItemsNoNode).toBeInTheDocument();
+        expect(southConnectorService.discoverItems).not.toHaveBeenCalled();
+      });
+
+      test('should close with the items included, under the name given, with the schedule picked in the form', async () => {
+        const scheduled = (name: string, regex: string) => ({ ...discovered(name, regex), scanModeId: scanModes[0].id });
+        southConnectorService.discoverItems.mockReturnValue(of([scheduled('Reactor/a', 'a.csv'), scheduled('Reactor/b', 'b.csv')]));
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+        await expect.element(tester.discoveredItemNames).toHaveLength(2);
+
+        await tester.root.getByCss('.discovered-item-included').nth(0).click();
+        await tester.discoveredItemNames.nth(1).fill('Reactor/b2');
+        await expect.element(tester.addItemsButton).toHaveTextContent('Add items (1)');
+        await tester.addItemsButton.click();
+
+        expect(closedWith()).toEqual({
+          kind: 'items',
+          commands: [
+            {
+              ...scheduled('Reactor/b2', 'b.csv'),
+              groupId: null,
+              groupName: null,
+              syncWithGroup: false,
+              scanModeId: scanModes[0].id,
+              scanModeName: scanModes[0].name
+            }
+          ]
+        });
+      });
+
+      test('should have the items of a group follow its schedule', async () => {
+        southConnectorService.discoverItems.mockReturnValue(
+          of([{ ...discovered('Reactor/a', 'a.csv'), groupId: 'group1', syncWithGroup: true }])
+        );
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.selectGroup('Group 1');
+
+        await expect.element(tester.discoveredItemNames).toHaveLength(1);
+        await tester.addItemsButton.click();
+
+        expect(southConnectorService.discoverItems).toHaveBeenLastCalledWith(
+          southId,
+          exploreManifest.id,
+          southSettings,
+          expect.anything(),
+          { name: '{{name}}', enabled: 'true', groupId: 'group1', syncWithGroup: 'true' }
+        );
+        expect(closedWith()).toEqual({
+          kind: 'items',
+          commands: [
+            expect.objectContaining({ groupId: 'group1', groupName: 'Group 1', syncWithGroup: true, scanModeId: null, scanModeName: null })
+          ]
+        });
+      });
+
+      test('should give an item of a group its group schedule, even when it has its own history settings', async () => {
+        southConnectorService.discoverItems.mockReturnValue(
+          of([{ ...discovered('Reactor/a', 'a.csv'), groupId: 'group1', scanModeId: scanModes[0].id, syncWithGroup: false }])
+        );
+        const tester = explore();
+        await addAsItems(tester);
+        await tester.selectGroup('Group 1');
+        await tester.mappingField('syncWithGroup').selectOptions('No');
+        await expect.element(tester.discoveredItemNames).toHaveLength(1);
+
+        await tester.addItemsButton.click();
+
+        expect(closedWith()).toEqual({
+          kind: 'items',
+          commands: [expect.objectContaining({ groupId: 'group1', syncWithGroup: false, scanModeId: null, scanModeName: null })]
+        });
+      });
+
+      test('should discover the items of a history query through it, with no schedule to give them', async () => {
+        const discover = vi.fn(() => of([discovered('Reactor/a', 'a.csv')]));
+        const tester = explore({ schedule: undefined, sync: undefined, discover });
+
+        await addAsItems(tester);
+
+        await expect.element(tester.discoveredItemNames).toHaveLength(1);
+        expect(discover).toHaveBeenCalledWith({ nodeIds: ['ns=1;s=Reactor'] }, { name: '{{name}}', enabled: 'true' });
+        expect(southConnectorService.discoverItems).not.toHaveBeenCalled();
+        await expect.element(tester.mappingField('scanModeId')).not.toBeInTheDocument();
+        await expect.element(tester.mappingField('groupId')).not.toBeInTheDocument();
+        await expect.element(tester.mappingField('maxReadInterval')).not.toBeInTheDocument();
+        await expect.element(tester.root.getByCss('#item-field-mapping-history')).not.toBeInTheDocument();
+        await tester.addItemsButton.click();
+        expect(closedWith()).toEqual({ kind: 'items', commands: [expect.objectContaining({ name: 'Reactor/a' })] });
+      });
+
+      test('should give the items of a connector that only subscribes the subscription, with nothing to pick', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([{ ...discovered('Reactor/a', 'a.csv'), scanModeId: 'subscription' }]));
+        const subscriptionManifest: SouthConnectorManifest = {
+          ...exploreManifest,
+          items: {
+            ...exploreManifest.items,
+            rootAttribute: {
+              ...exploreManifest.items.rootAttribute,
+              attributes: exploreManifest.items.rootAttribute.attributes.map(attribute =>
+                attribute.type === 'scan-mode' ? { ...attribute, acceptableType: 'SUBSCRIPTION' as const } : attribute
+              )
+            }
+          }
+        };
+        const subscription: (typeof scanModes)[number] = { ...scanModes[0], id: 'subscription', name: 'Subscription' };
+        const tester = explore({
+          manifest: subscriptionManifest,
+          schedule: { scanModes: [...scanModes, subscription], groups }
+        });
+
+        await addAsItems(tester);
+
+        await expect.element(tester.discoveredItemNames).toHaveLength(1);
+        await expect.element(tester.mappingField('scanModeId')).not.toBeInTheDocument();
+        expect(southConnectorService.discoverItems).toHaveBeenLastCalledWith(
+          southId,
+          exploreManifest.id,
+          southSettings,
+          expect.anything(),
+          { name: '{{name}}', scanModeId: 'subscription', ...historyDefaults }
+        );
+        await tester.addItemsButton.click();
+        expect(closedWith()).toEqual({
+          kind: 'items',
+          commands: [expect.objectContaining({ scanModeId: 'subscription', scanModeName: 'Subscription' })]
+        });
+      });
+
+      test('should not offer the subscription as a schedule to a connector that only polls', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const subscription: (typeof scanModes)[number] = { ...scanModes[0], id: 'subscription', name: 'Subscription' };
+        const tester = explore({ schedule: { scanModes: [...scanModes, subscription], groups } });
+
+        await addAsItems(tester);
+
+        await expect.element(tester.mappingField('scanModeId')).toBeInTheDocument();
+        await expect.element(tester.mappingField('scanModeId').getByRole('option', { name: 'Subscription' })).not.toBeInTheDocument();
+        await expect.element(tester.mappingField('scanModeId').getByRole('option', { name: scanModes[0].name })).toBeInTheDocument();
+      });
+
+      test('should go back to the Explore step', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+        await addAsItems(tester);
+
+        await tester.backButton.click();
+
+        await expect.element(tester.exploreStep).toBeVisible();
+        await expect.element(tester.nextButton).not.toBeInTheDocument();
+      });
+
+      test('should not submit anything from the Add as items step', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+        await addAsItems(tester);
+
+        tester.fixture.componentInstance.save();
+        tester.fixture.componentInstance.addItems();
+
+        expect(activeModal.close).not.toHaveBeenCalled();
+      });
+
+      test('should change the flow when coming back to the Explore step', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([]));
+        const tester = explore();
+        await addAsItems(tester);
+
+        await tester.goToStep('explore');
+        await tester.keepInSyncButton.click();
+
+        await expect.element(tester.stepButton('filter')).toBeInTheDocument();
+        await expect.element(tester.stepButton('add-items')).not.toBeInTheDocument();
+        await expect.element(tester.discoveredItemsTable).not.toBeInTheDocument();
+      });
     });
   });
 });

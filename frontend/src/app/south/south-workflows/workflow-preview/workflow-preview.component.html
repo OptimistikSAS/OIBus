@@ -2,9 +2,28 @@
   <div class="text-muted" id="preview-counts">
     {{ 'south.workflows.preview-discovered' | translate: { discovered: result().discoveredCount, eligible: result().eligibleCount } }}
   </div>
+  @if (hasEntries() || hasRecords()) {
+    <input
+      type="search"
+      class="form-control form-control-sm ms-auto preview-search"
+      id="preview-search"
+      [value]="search()"
+      (input)="onSearch($event)"
+      (keydown.enter)="$event.preventDefault()"
+      [placeholder]="'south.workflows.preview-search' | translate"
+      [attr.aria-label]="'south.workflows.preview-search' | translate"
+    />
+    <span
+      class="text-muted small text-nowrap mx-2"
+      id="preview-shown"
+      [translate]="'south.workflows.preview-shown'"
+      [translateParams]="{ count: rowCount().matching, total: rowCount().total }"
+    ></span>
+  }
   <button
     type="button"
-    class="btn btn-secondary btn-sm ms-auto"
+    class="btn btn-secondary btn-sm"
+    [class.ms-auto]="!hasEntries() && !hasRecords()"
     id="export-csv-button"
     [disabled]="!hasExportableRows()"
     (click)="exportCsv()"
@@ -25,7 +44,9 @@
     }}
   </div>
 }
-@if (paginatedEntries(); as entries) {
+@if (hasEntries() && !paginatedEntries()) {
+  <div class="oib-grey-container" id="preview-no-match" translate="south.workflows.preview-no-match"></div>
+} @else if (paginatedEntries(); as entries) {
   <!-- Local (item-creating) workflow: each entry classified against the previous run. Status and
        identity key lead (leftmost) since they're what every row is scanned for, followed by one column
        per discovered field. A "missing" entry shows the previous run's snapshot, dimmed; a "changed"
@@ -74,6 +95,8 @@
     </table>
   </div>
   <oib-pagination class="d-flex justify-content-end" [page]="entries" (pageChanged)="changeEntriesPage($event)" />
+} @else if (hasRecords() && !paginatedRecords()) {
+  <div class="oib-grey-container" id="preview-no-match" translate="south.workflows.preview-no-match"></div>
 } @else if (paginatedRecords(); as records) {
   <!-- Remote (push-to-OIAnalytics) workflow: no diffing at all - just the raw records that would be sent. -->
   <div class="table-responsive preview-table-container">
