@@ -60,7 +60,6 @@ class SouthItemTestComponentTester {
   readonly dateRange = this.root.getByCss('oib-date-range-selector');
   readonly transformerSelect = this.root.getByLabelText('Transformer', { exact: true });
   readonly pipelineTransformer = this.root.getByCss('.pipeline-transformer');
-  readonly editOptionsButton = this.root.getByRole('button', { name: 'Edit options' });
   readonly optionsSummary = this.root.getByCss('.pipeline-options');
   readonly info = this.root.getByCss('.alert-primary');
   readonly error = this.root.getByCss('.alert-danger');
@@ -130,16 +129,12 @@ describe('SouthItemTestComponent', () => {
     );
   });
 
-  test('should test a south item through the transformer given, with its options edited for the test', async () => {
+  test('should test a south item through the transformer given, with its options', async () => {
     const tester = new SouthItemTestComponentTester({ transformer: northTransformer });
 
     await expect.element(tester.transformerSelect).not.toBeInTheDocument();
-    await expect.element(tester.pipelineTransformer).toMatchTextContent(/^\s*my transformer 1/);
-    await expect.element(tester.optionsSummary).toHaveTextContent('name: configured');
-
-    await tester.editOptionsButton.click();
-    await expect.element(tester.optionsSummary).not.toBeInTheDocument();
-    await tester.root.getByRole('textbox', { name: 'Name' }).fill('edited');
+    // the caller shows the transformer and edits its options
+    await expect.element(tester.pipelineTransformer).not.toBeInTheDocument();
 
     await tester.testButton.click();
 
@@ -149,21 +144,35 @@ describe('SouthItemTestComponent', () => {
       item.name,
       connectorCommand.settings,
       item.settings,
-      { history: undefined, transformer: { transformerId: 'transformerId1', options: { name: 'edited' } } }
+      { history: undefined, transformer: { transformerId: 'transformerId1', options: { name: 'configured' } } }
     );
-    // running a test leaves the options edit mode
-    await expect.element(tester.optionsSummary).toHaveTextContent('name: edited');
   });
 
   test('should follow the transformer given when it changes', async () => {
     const tester = new SouthItemTestComponentTester({ transformer: northTransformer });
-    await expect.element(tester.optionsSummary).toHaveTextContent('name: configured');
+    await expect.element(tester.testButton).toBeVisible();
 
     tester.fixture.componentRef.setInput('transformer', { transformer, options: { name: 'changed' } });
-    await expect.element(tester.optionsSummary).toHaveTextContent('name: changed');
+    await tester.testButton.click();
+    expect(southConnectorService.testItem).toHaveBeenLastCalledWith(
+      'southId1',
+      connectorCommand.type,
+      item.name,
+      connectorCommand.settings,
+      item.settings,
+      { history: undefined, transformer: { transformerId: 'transformerId1', options: { name: 'changed' } } }
+    );
 
     tester.fixture.componentRef.setInput('transformer', null);
-    await expect.element(tester.pipelineTransformer).not.toBeInTheDocument();
+    await tester.testButton.click();
+    expect(southConnectorService.testItem).toHaveBeenLastCalledWith(
+      'southId1',
+      connectorCommand.type,
+      item.name,
+      connectorCommand.settings,
+      item.settings,
+      { history: undefined, transformer: undefined }
+    );
   });
 
   test('should run the test and display the result', async () => {

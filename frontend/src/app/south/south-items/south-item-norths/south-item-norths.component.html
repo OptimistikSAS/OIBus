@@ -52,22 +52,30 @@
         <h6 class="mb-0">{{ route.north.name }}</h6>
         <div class="small text-body-secondary mb-2">{{ route.north.type | oIBusNorthTypeEnum }}</div>
 
-        @if (draftNorthId() !== route.north.id) {
-          @if (route.attachment; as attachment) {
-            @let transformer = findTransformer(attachment.transformerId);
-            <div class="route-summary" id="route-attachment">
-              <div class="routing-transformer">
-                <span translate="south.items.norths.sent-through"></span>
-                <span class="routing-chip routing-sent">{{ transformer ? transformerName(transformer) : attachment.transformerId }}</span>
-                <span class="badge text-bg-primary" translate="south.items.norths.new"></span>
-              </div>
-              <div class="small text-body-secondary">
-                {{ 'south.items.norths.attached-to' | translate: { scope: scopeLabel(attachment.scope) } }}
-                @if (transformer && optionsSummary({ transformer, options: attachment.options }); as options) {
-                  · {{ options }}
+        <!-- The transformer the data of the item goes through for this North, before the item is tested through it -->
+        <section id="north-transformer">
+          <h5 class="oib-section-title" translate="south.items.norths.transformer"></h5>
+          @if (draftNorthId() !== route.north.id) {
+            @if (route.attachment; as attachment) {
+              @let transformer = findTransformer(attachment.transformerId);
+              <div class="route-summary" id="route-attachment">
+                @if (transformer) {
+                  <ng-container
+                    [ngTemplateOutlet]="transformerCard"
+                    [ngTemplateOutletContext]="{ $implicit: transformer, scope: scopeLabel(attachment.scope), isNew: true }"
+                  />
+                } @else {
+                  <span class="fw-medium">{{ attachment.transformerId }}</span>
                 }
+                <small class="d-block text-body-secondary" translate="south.items.norths.saved-with-item"></small>
               </div>
-              <div class="small text-body-secondary" translate="south.items.norths.saved-with-item"></div>
+              @if (transformer && transformer.manifest.attributes.length > 0) {
+                <oib-oibus-settings-summary
+                  class="d-block mt-2"
+                  id="attachment-options"
+                  [settings]="summarizeOptions(transformer, attachment.options)"
+                />
+              }
               @if (editable()) {
                 <div class="d-flex gap-2 mt-2">
                   <button type="button" class="btn btn-sm btn-outline-secondary" id="edit-attachment" (click)="startAttachment(route)">
@@ -78,135 +86,200 @@
                   </button>
                 </div>
               }
-            </div>
-          } @else if (route.routing; as routing) {
-            <div class="route-summary" id="route-routing">
-              <div class="routing-transformer">
-                <span translate="south.items.norths.sent-through"></span>
-                <span class="routing-chip routing-sent">{{ transformerName(routing.transformer.transformer) }}</span>
+            } @else if (route.routing; as routing) {
+              @let transformer = routing.transformer.transformer;
+              <div class="route-summary" id="route-routing">
+                <ng-container
+                  [ngTemplateOutlet]="transformerCard"
+                  [ngTemplateOutletContext]="{ $implicit: transformer, scope: scopeLabel(routing.level), isNew: false }"
+                />
               </div>
-              <div class="small text-body-secondary">
-                {{ 'south.items.norths.attached-to' | translate: { scope: scopeLabel(routing.level) } }}
-                @if (optionsSummary(routing.transformer); as options) {
-                  · {{ options }}
-                }
-              </div>
-            </div>
-          } @else {
-            <div class="route-summary text-body-secondary" id="route-not-sent" translate="south.items.norths.not-sent-description"></div>
-          }
-
-          @if (editable() && !route.attachment) {
-            @if (route.scopes.length > 0) {
-              <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="start-attachment" (click)="startAttachment(route)">
-                <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
-                <span [translate]="route.routing ? 'south.items.norths.attach-other' : 'south.items.norths.attach'"></span>
-              </button>
-            } @else {
-              <div class="small text-body-secondary mt-2" id="routed-by-item" translate="south.items.norths.routed-by-item"></div>
-            }
-          }
-        } @else {
-          <!-- A transformer to attach: what it applies to, the transformer, and its options -->
-          <form [formGroup]="draftForm" id="attachment-form" class="route-summary" (ngSubmit)="addAttachment()">
-            <div class="form-group">
-              <div class="form-label" id="scope-label" translate="south.items.norths.applies-to"></div>
-              <div role="radiogroup" aria-labelledby="scope-label">
-                @for (scope of route.scopes; track scope) {
-                  <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" formControlName="scope" [value]="scope" [id]="'scope-' + scope" />
-                    <label class="form-check-label" [for]="'scope-' + scope">{{
-                      'south.items.norths.scope-option.' + scope | translate: { group: item().groupName }
-                    }}</label>
+              @if (optionsNorthId() === route.north.id) {
+                <!-- The options, tried out right away by the test below: kept for the test only, or applied to the transformer -->
+                <form [formGroup]="optionsForm" id="options-form" class="mt-2" (ngSubmit)="useOptionsForTesting(route)">
+                  <div formGroupName="options">
+                    <oib-oibus-object-form-control
+                      [scanModes]="[]"
+                      [certificates]="[]"
+                      [group]="optionsForm.controls.options"
+                      [objectAttribute]="transformer.manifest"
+                      layout="sections"
+                    />
                   </div>
-                }
-              </div>
-              @if (draftImpact(); as impact) {
-                <div class="small text-body-secondary" id="attachment-impact">
-                  {{ 'south.items.norths.impact' | translate: { count: impact } }}
-                </div>
-              }
-              @if (route.routing) {
-                <div class="small text-body-secondary" id="attachment-takes-over" translate="south.items.norths.takes-over"></div>
-              }
-            </div>
-
-            <div class="form-label" id="transformer-label" translate="south.items.norths.transformer"></div>
-            @if (route.transformers.length === 0) {
-              <div class="alert alert-warning py-2" id="no-transformer" translate="south.items.norths.no-transformer"></div>
-            } @else {
-              <div class="row row-cols-1 row-cols-lg-2 g-2 mb-2" role="radiogroup" aria-labelledby="transformer-label" id="transformers">
-                @for (transformer of route.transformers; track transformer.id) {
-                  @let selected = draftTransformer()?.id === transformer.id;
-                  <div class="col">
+                  <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-sm btn-outline-primary" id="use-for-testing">
+                      <span class="fa-solid fa-flask me-1" aria-hidden="true"></span>
+                      <span translate="south.items.norths.use-for-testing"></span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" id="apply-options" (click)="applyOptions(route)">
+                      <span class="fa-solid fa-check me-1" aria-hidden="true"></span>
+                      <span translate="south.items.norths.apply-to-transformer"></span>
+                    </button>
                     <button
                       type="button"
-                      role="radio"
-                      class="transformer-card"
-                      [class.selected]="selected"
-                      [attr.aria-checked]="selected"
-                      [attr.aria-labelledby]="'attach-transformer-name-' + $index"
-                      [attr.aria-describedby]="'attach-transformer-description-' + $index"
-                      (click)="selectTransformer(transformer)"
+                      class="btn btn-sm btn-cancel"
+                      id="cancel-options"
+                      (click)="cancelOptionsEdit()"
+                      translate="common.cancel"
+                    ></button>
+                  </div>
+                </form>
+              } @else if (transformer.manifest.attributes.length > 0) {
+                @if (routedOptions(); as options) {
+                  @if (options.tested) {
+                    <div
+                      class="alert alert-warning d-flex flex-wrap align-items-center gap-2 py-1 px-2 mt-2 mb-0"
+                      id="test-options"
+                      role="status"
                     >
-                      <span class="d-flex align-items-center gap-2 mb-1">
-                        <span
-                          [class]="selected ? 'fa-solid fa-circle-dot text-primary' : 'fa-regular fa-circle text-body-secondary'"
-                          aria-hidden="true"
-                        ></span>
-                        <span class="fw-medium flex-grow-1" [id]="'attach-transformer-name-' + $index">{{
-                          transformerName(transformer)
-                        }}</span>
-                        @if (transformer.type === 'custom') {
-                          <span class="badge text-bg-secondary" translate="configuration.oibus.manifest.transformers.custom"></span>
-                        }
-                      </span>
-                      <small class="d-block text-body-secondary" [id]="'attach-transformer-description-' + $index">
-                        @if (transformer.type === 'standard') {
-                          {{ 'configuration.oibus.manifest.transformers.standard-description.' + transformer.functionName | translate }}
-                        } @else if (transformer.description) {
-                          {{ transformer.description }}
-                        } @else {
-                          <span class="fst-italic" translate="configuration.oibus.manifest.transformers.no-description"></span>
-                        }
-                      </small>
-                    </button>
+                      <span class="fa-solid fa-flask" aria-hidden="true"></span>
+                      <span class="flex-grow-1" translate="south.items.norths.test-options"></span>
+                      <button type="button" class="btn btn-sm btn-outline-primary" id="apply-test-options" (click)="applyOptions(route)">
+                        <span translate="south.items.norths.apply-to-transformer"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        id="discard-test-options"
+                        (click)="discardTestOptions(route)"
+                        translate="south.items.norths.discard-test-options"
+                      ></button>
+                    </div>
+                  }
+                  <oib-oibus-settings-summary
+                    class="d-block mt-2"
+                    id="routed-options"
+                    [settings]="options.settings"
+                    [previous]="options.previous"
+                  />
+                }
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary mt-2 me-1"
+                  id="edit-options"
+                  (click)="startOptionsEdit(route)"
+                >
+                  <span class="fa-solid fa-pencil me-1" aria-hidden="true"></span><span translate="south.items.norths.edit-options"></span>
+                </button>
+              } @else {
+                <div class="small text-body-secondary mt-2" id="no-options" translate="south.items.norths.no-options"></div>
+              }
+            } @else {
+              <div class="route-summary text-body-secondary" id="route-not-sent" translate="south.items.norths.not-sent-description"></div>
+            }
+
+            @if (editable() && !route.attachment && optionsNorthId() !== route.north.id) {
+              @if (route.scopes.length > 0) {
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="start-attachment" (click)="startAttachment(route)">
+                  <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+                  <span [translate]="route.routing ? 'south.items.norths.attach-other' : 'south.items.norths.attach'"></span>
+                </button>
+              } @else {
+                <div class="small text-body-secondary mt-2" id="routed-by-item" translate="south.items.norths.routed-by-item"></div>
+              }
+            }
+          } @else {
+            <!-- A transformer to attach: what it applies to, the transformer, and its options -->
+            <form [formGroup]="draftForm" id="attachment-form" class="route-summary" (ngSubmit)="addAttachment()">
+              <div class="form-group">
+                <div class="form-label" id="scope-label" translate="south.items.norths.applies-to"></div>
+                <div role="radiogroup" aria-labelledby="scope-label">
+                  @for (scope of route.scopes; track scope) {
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" formControlName="scope" [value]="scope" [id]="'scope-' + scope" />
+                      <label class="form-check-label" [for]="'scope-' + scope">{{
+                        'south.items.norths.scope-option.' + scope | translate: { group: item().groupName }
+                      }}</label>
+                    </div>
+                  }
+                </div>
+                @if (draftImpact(); as impact) {
+                  <div class="small text-body-secondary" id="attachment-impact">
+                    {{ 'south.items.norths.impact' | translate: { count: impact } }}
                   </div>
                 }
+                @if (route.routing) {
+                  <div class="small text-body-secondary" id="attachment-takes-over" translate="south.items.norths.takes-over"></div>
+                }
               </div>
-              @if (draftForm.controls.transformer.touched && draftForm.controls.transformer.invalid) {
-                <div class="text-danger small mb-2" id="transformer-required" translate="south.items.norths.transformer-required"></div>
-              }
-            }
 
-            @if (draftTransformer(); as transformer) {
-              @if (transformer.manifest.attributes.length > 0) {
-                <div formGroupName="options">
-                  <oib-oibus-object-form-control
-                    [scanModes]="[]"
-                    [certificates]="[]"
-                    [group]="draftForm.controls.options"
-                    [objectAttribute]="transformer.manifest"
-                  />
+              <div class="form-label" id="transformer-label" translate="south.items.norths.transformer"></div>
+              @if (route.transformers.length === 0) {
+                <div class="alert alert-warning py-2" id="no-transformer" translate="south.items.norths.no-transformer"></div>
+              } @else {
+                <div class="row row-cols-1 row-cols-lg-2 g-2 mb-2" role="radiogroup" aria-labelledby="transformer-label" id="transformers">
+                  @for (transformer of route.transformers; track transformer.id) {
+                    @let selected = draftTransformer()?.id === transformer.id;
+                    <div class="col">
+                      <button
+                        type="button"
+                        role="radio"
+                        class="transformer-card"
+                        [class.selected]="selected"
+                        [attr.aria-checked]="selected"
+                        [attr.aria-labelledby]="'attach-transformer-name-' + $index"
+                        [attr.aria-describedby]="'attach-transformer-description-' + $index"
+                        (click)="selectTransformer(transformer)"
+                      >
+                        <span class="d-flex align-items-center gap-2 mb-1">
+                          <span
+                            [class]="selected ? 'fa-solid fa-circle-dot text-primary' : 'fa-regular fa-circle text-body-secondary'"
+                            aria-hidden="true"
+                          ></span>
+                          <span class="fw-medium flex-grow-1" [id]="'attach-transformer-name-' + $index">{{
+                            transformerName(transformer)
+                          }}</span>
+                          @if (transformer.type === 'custom') {
+                            <span class="badge text-bg-secondary" translate="configuration.oibus.manifest.transformers.custom"></span>
+                          }
+                        </span>
+                        <small class="d-block text-body-secondary" [id]="'attach-transformer-description-' + $index">
+                          @if (transformer.type === 'standard') {
+                            {{ 'configuration.oibus.manifest.transformers.standard-description.' + transformer.functionName | translate }}
+                          } @else if (transformer.description) {
+                            {{ transformer.description }}
+                          } @else {
+                            <span class="fst-italic" translate="configuration.oibus.manifest.transformers.no-description"></span>
+                          }
+                        </small>
+                      </button>
+                    </div>
+                  }
                 </div>
+                @if (draftForm.controls.transformer.touched && draftForm.controls.transformer.invalid) {
+                  <div class="text-danger small mb-2" id="transformer-required" translate="south.items.norths.transformer-required"></div>
+                }
               }
-            }
 
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-sm btn-primary" id="add-attachment">
-                <span class="fa-solid fa-check me-1" aria-hidden="true"></span>
-                <span [translate]="route.attachment ? 'south.items.norths.update' : 'south.items.norths.add'"></span>
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-cancel"
-                id="cancel-attachment"
-                (click)="cancelAttachment()"
-                translate="common.cancel"
-              ></button>
-            </div>
-          </form>
-        }
+              @if (draftTransformer(); as transformer) {
+                @if (transformer.manifest.attributes.length > 0) {
+                  <div formGroupName="options">
+                    <oib-oibus-object-form-control
+                      [scanModes]="[]"
+                      [certificates]="[]"
+                      [group]="draftForm.controls.options"
+                      [objectAttribute]="transformer.manifest"
+                    />
+                  </div>
+                }
+              }
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary" id="add-attachment">
+                  <span class="fa-solid fa-check me-1" aria-hidden="true"></span>
+                  <span [translate]="route.attachment ? 'south.items.norths.update' : 'south.items.norths.add'"></span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-cancel"
+                  id="cancel-attachment"
+                  (click)="cancelAttachment()"
+                  translate="common.cancel"
+                ></button>
+              </div>
+            </form>
+          }
+        </section>
 
         <!-- The item tested through the transformer of this North: a new test for each North -->
         @if (testTransformer(); as transformer) {
@@ -227,3 +300,28 @@
     }
   </div>
 }
+
+<!-- A transformer: its name, what it does, and the items it applies to -->
+<ng-template #transformerCard let-transformer let-scope="scope" let-isNew="isNew">
+  <span class="d-flex flex-wrap align-items-center gap-2 mb-1">
+    <span class="fa-solid fa-shuffle text-body-secondary" aria-hidden="true"></span>
+    <span class="fw-medium flex-grow-1" id="transformer-name">{{ transformerName(transformer) }}</span>
+    @if (isNew) {
+      <span class="badge text-bg-primary" translate="south.items.norths.new"></span>
+    }
+    @if (transformer.type === 'custom') {
+      <span class="badge text-bg-secondary" translate="configuration.oibus.manifest.transformers.custom"></span>
+    }
+    <span class="badge text-bg-light border">{{ 'enums.oibus-output-data-type.' + transformer.outputType | translate }}</span>
+  </span>
+  <small class="d-block text-body-secondary">
+    @if (transformer.type === 'standard') {
+      {{ 'configuration.oibus.manifest.transformers.standard-description.' + transformer.functionName | translate }}
+    } @else if (transformer.description) {
+      {{ transformer.description }}
+    } @else {
+      <span class="fst-italic" translate="configuration.oibus.manifest.transformers.no-description"></span>
+    }
+  </small>
+  <small class="d-block text-body-secondary">{{ 'south.items.norths.attached-to' | translate: { scope } }}</small>
+</ng-template>

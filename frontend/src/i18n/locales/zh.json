@@ -1871,7 +1871,34 @@
         "transformer-required": "请选择转换器",
         "no-transformer": "没有转换器可以将此数据项的数据发送到此北向连接器。",
         "add": "附加",
-        "update": "更新"
+        "update": "更新",
+        "edit-options": "编辑选项",
+        "no-options": "此转换器没有选项。",
+        "use-for-testing": "仅用于测试",
+        "apply-to-transformer": "应用到转换器…",
+        "test-options": "使用其他选项测试，未保存",
+        "discard-test-options": "放弃",
+        "options-applied": "{{transformer}} 的选项已为 {{north}} 保存",
+        "apply-modal": {
+          "title": "将更改应用到转换器？",
+          "route": "{{transformer}}，将 {{south}} 的数据发送到 {{north}}",
+          "changes": "更改",
+          "change-count": "{{count}} 个选项已更改",
+          "no-change": "没有选项更改。",
+          "impacted": "受影响的项",
+          "scope": {
+            "south": "该转换器应用于 {{south}} 的所有项。",
+            "group": "该转换器应用于 {{south}} 的组 {{group}} 中的项。",
+            "items": "该转换器应用于 {{south}} 中选定的项。"
+          },
+          "excluded": "排除了 {{count}} 个项。",
+          "item-count": "通过它发送到 {{north}} 的 {{count}} 个项：",
+          "more": "另外 {{count}} 个",
+          "only-this-north": "只有此 north 的转换器会更改：其他 north 保留各自的选项。",
+          "custom-unchanged": "自定义转换器 {{name}} 的代码不会更改。",
+          "saved-now": "更改会立即保存，无需等待保存该项。",
+          "confirm": "应用"
+        }
       }
     },
     "groups": {
