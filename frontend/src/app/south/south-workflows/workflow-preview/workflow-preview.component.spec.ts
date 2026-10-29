@@ -24,6 +24,9 @@ class WorkflowPreviewComponentTester {
   readonly changedCells = this.root.getByCss('.preview-changed-cell');
   readonly pagination = this.root.getByCss('ngb-pagination');
   readonly exportButton = this.root.getByRole('button', { name: 'Export CSV' });
+  readonly search = this.root.getByCss('#preview-search');
+  readonly shown = this.root.getByCss('#preview-shown');
+  readonly noMatch = this.root.getByCss('#preview-no-match');
 
   constructor(result: WorkflowPreviewResultDTO | WorkflowRunDetailDTO, context: WorkflowPreviewContext = 'preview') {
     this.fixture.componentRef.setInput('result', result);
@@ -279,6 +282,80 @@ describe('WorkflowPreviewComponent', () => {
       await tester.exportButton.click();
 
       expect(downloadService.downloadFile.mock.lastCall![0].name).toMatch(/^run-payload_Reactor_discovery_.*\.csv$/);
+    });
+  });
+  describe('search', () => {
+    const entries = [
+      entry('ns=1;s=Reactor.Temperature', { record: { nodeId: 'ns=1;s=Reactor.Temperature', unit: '°C' } }),
+      entry('ns=1;s=Reactor.Pressure', { status: 'changed', record: { nodeId: 'ns=1;s=Reactor.Pressure', unit: 'bar' } }),
+      entry('ns=1;s=Boiler.Level', { status: 'missing', record: null, previousMetadata: { nodeId: 'ns=1;s=Boiler.Level', unit: 'm' } })
+    ];
+
+    test('should search the entries by key, status or value, in memory', async () => {
+      const tester = new WorkflowPreviewComponentTester(result({ eligibleCount: 3, entries }));
+      await expect.element(tester.shown).toHaveTextContent('Shown: 3 of 3');
+
+      await tester.search.fill('boiler');
+      await expect.element(tester.rows).toHaveLength(1);
+      await expect.element(tester.shown).toHaveTextContent('Shown: 1 of 3');
+
+      await tester.search.fill('BAR');
+      await expect.element(tester.rows).toHaveLength(1);
+      await expect.element(tester.rows.nth(0)).toMatchTextContent('Pressure');
+
+      await tester.search.fill('changed');
+      await expect.element(tester.rows).toHaveLength(1);
+
+      await tester.search.fill('reactor');
+      await expect.element(tester.rows).toHaveLength(2);
+    });
+
+    test('should say when no entry matches, and list them all again when the search is cleared', async () => {
+      const tester = new WorkflowPreviewComponentTester(result({ eligibleCount: 3, entries }));
+
+      await tester.search.fill('nothing like this');
+
+      await expect.element(tester.noMatch).toHaveTextContent('No entry matches the search');
+      await expect.element(tester.entriesTable).not.toBeInTheDocument();
+      await expect.element(tester.none).not.toBeInTheDocument();
+      await tester.search.fill('');
+      await expect.element(tester.rows).toHaveLength(3);
+    });
+
+    test('should search the records a remote workflow pushes', async () => {
+      const records = [
+        { nodeId: 'a', unit: '°C' },
+        { nodeId: 'b', unit: 'bar' }
+      ];
+      const tester = new WorkflowPreviewComponentTester(result({ eligibleCount: 2, records }));
+
+      await tester.search.fill('bar');
+
+      await expect.element(tester.rows).toHaveLength(1);
+      await expect.element(tester.shown).toHaveTextContent('Shown: 1 of 2');
+      await tester.search.fill('zzz');
+      await expect.element(tester.noMatch).toBeInTheDocument();
+      await expect.element(tester.recordsTable).not.toBeInTheDocument();
+    });
+
+    test('should go back to the first page when searching', async () => {
+      const many = Array.from({ length: 45 }, (_, index) => entry(`node${index}`));
+      const tester = new WorkflowPreviewComponentTester(result({ eligibleCount: 45, entries: many }));
+      await tester.root.getByRole('link', { name: '2' }).click();
+      await expect.element(tester.cell(0, 1)).toHaveTextContent('node20');
+
+      await tester.search.fill('node4');
+
+      await expect.element(tester.rows).toHaveLength(6);
+      await expect.element(tester.cell(0, 1)).toHaveTextContent('node4');
+      await expect.element(tester.pagination).not.toBeInTheDocument();
+    });
+
+    test('should have nothing to search when there is nothing listed', async () => {
+      const tester = new WorkflowPreviewComponentTester(result());
+
+      await expect.element(tester.search).not.toBeInTheDocument();
+      await expect.element(tester.none).toBeInTheDocument();
     });
   });
 });

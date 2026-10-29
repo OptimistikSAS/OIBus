@@ -12,7 +12,7 @@ import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { OIBusInfo } from '@oibus/shared/api/engine.model';
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/api/history-query.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorCommandDTO } from '@oibus/shared/api/south-connector.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
@@ -52,10 +52,8 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
 import { pollMetrics } from '../../shared/polling';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
-import { SouthExploreModalComponent, SouthExploreResult } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
-import { AddDiscoveredItemsModalComponent } from '../../south/south-items/add-discovered-items-modal/add-discovered-items-modal.component';
-import { exploreCheckedActions } from '../../south/south-workflows/workflow-creation.service';
+import { openExploreWizard } from '../../south/south-workflows/edit-workflow-modal/edit-workflow-modal.component';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { toHistoryQueryItemCommand } from '../history-query-items/history-query-item-command';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
@@ -272,35 +270,18 @@ export class HistoryQueryDetailComponent {
 
   explore() {
     const historyQuery = this.historyQuery()!;
-    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'xl' });
-    const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(historyQuery.id, historyQuery.southSettings, historyQuery.southType, {
-      api: {
+    // the items of the checked nodes can be added, with the discovery defaults of the connector: there is no synchronisation
+    openExploreWizard(this.modalService, {
+      southId: historyQuery.id,
+      exploreConnectorId: historyQuery.id,
+      exploreApi: {
         start: (settings, type) => this.historyQueryService.startExplore(historyQuery.id, settings, type),
         browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQuery.id, sessionId, parentId),
         close: sessionId => this.historyQueryService.closeExplore(historyQuery.id, sessionId)
       },
-      // the items of the checked nodes can be added, with the discovery defaults of the connector: there is no synchronisation
-      checkedActions: exploreCheckedActions(this.southManifest()!).filter(action => action.id === 'add-items')
-    });
-    modalRef.result.subscribe((result: SouthExploreResult) => {
-      if (result?.action === 'add-items') {
-        this.addDiscoveredItems(result.nodeIds);
-      }
-    });
-  }
-
-  /** Reviews the items the checked nodes give, then creates them and reloads the history query. */
-  private addDiscoveredItems(nodeIds: Array<string>) {
-    const historyQuery = this.historyQuery()!;
-    const modalRef = this.modalService.open(AddDiscoveredItemsModalComponent, { size: 'xl', backdrop: 'static' });
-    const component: AddDiscoveredItemsModalComponent = modalRef.componentInstance;
-    component.prepare({
-      southId: historyQuery.id,
       southSettings: historyQuery.southSettings,
       manifest: this.southManifest()!,
       existingItems: historyQuery.items,
-      nodeIds,
       discover: (discoveryScope, itemFieldMapping) =>
         this.historyQueryService.discoverItems(
           historyQuery.id,
@@ -309,16 +290,17 @@ export class HistoryQueryDetailComponent {
           discoveryScope,
           itemFieldMapping
         )
-    });
-    modalRef.result
+    })
       .pipe(
-        switchMap((commands: Array<SouthConnectorItemCommandDTO>) =>
-          this.historyQueryService
-            .importItems(
-              historyQuery.id,
-              commands.map(command => toHistoryQueryItemCommand(command))
-            )
-            .pipe(map(() => commands.length))
+        switchMap(result =>
+          result.kind === 'items'
+            ? this.historyQueryService
+                .importItems(
+                  historyQuery.id,
+                  result.commands.map(command => toHistoryQueryItemCommand(command))
+                )
+                .pipe(map(() => result.commands.length))
+            : EMPTY
         )
       )
       .subscribe(count => {

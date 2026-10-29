@@ -1,0 +1,24 @@
+.records-table-container {
+  max-height: 20rem;
+}
+
+.records-table {
+  // the columns are whatever the discovered records carry: each sizes to its content
+  table-layout: auto;
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    white-space: nowrap;
+    background-color: var(--bs-body-bg);
+  }
+
+  td {
+    max-width: 24rem;
+  }
+}
+
+.records-search {
+  max-width: 20rem;
+}

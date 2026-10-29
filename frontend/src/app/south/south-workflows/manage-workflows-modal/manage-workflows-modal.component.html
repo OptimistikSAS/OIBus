@@ -1,20 +1,25 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'south.workflows.manage-title'" [translateParams]="{ count: workflows().length }"></h4>
+  <h4 class="modal-title" translate="south.explore.home-title"></h4>
 </div>
 <div class="modal-body">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div></div>
-    <div class="ms-3">
-      <button
-        type="button"
-        class="btn btn-primary btn-sm oib-box-btn"
-        id="add-workflow"
-        [attr.aria-label]="'south.workflows.create-title' | translate"
-        (click)="onAdd()"
-      >
-        <span class="fa-solid fa-plus" aria-hidden="true"></span>
-      </button>
+  <!-- Exploring the data source: to add items from its nodes, or keep them in sync -->
+  <div class="d-flex align-items-center gap-3 border rounded p-3 mb-3" id="explore-data-source">
+    <span class="fa-solid fa-magnifying-glass fa-lg" aria-hidden="true"></span>
+    <div class="me-auto">
+      <div class="fw-bold" translate="south.explore.home-explore"></div>
+      <div class="text-muted small" translate="south.explore.home-hint"></div>
     </div>
+    <button type="button" class="btn btn-primary btn-sm" id="explore" (click)="onExplore()">
+      <span translate="south.explore.home-go"></span>
+    </button>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0" [translate]="'south.workflows.manage-title'" [translateParams]="{ count: workflows().length }"></h5>
+    <button type="button" class="btn btn-secondary btn-sm" id="add-workflow" (click)="onAdd()">
+      <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+      <span translate="south.workflows.new-sync"></span>
+    </button>
   </div>
 
   @if (loading()) {
@@ -22,7 +27,12 @@
       <div class="spinner-border" id="spinner" role="status"></div>
     </div>
   } @else if (workflows().length === 0) {
-    <div class="oib-grey-container" translate="south.workflows.none"></div>
+    <!-- Nothing to list yet: what a synchronisation is for, and where to start -->
+    <div class="text-center border rounded p-4 no-workflow" id="no-workflow">
+      <span class="fa-solid fa-sync fa-2x text-muted mb-2" aria-hidden="true"></span>
+      <div class="fw-bold" translate="south.workflows.none-title"></div>
+      <div class="text-muted small mx-auto no-workflow-hint" translate="south.workflows.none-hint"></div>
+    </div>
   } @else {
     <div class="d-flex align-items-center gap-2 my-2">
       <input
@@ -42,6 +52,7 @@
         <thead class="light">
           <tr>
             <th translate="south.workflows.name"></th>
+            <th translate="south.workflows.scope"></th>
             <th translate="south.workflows.scan-mode"></th>
             <th translate="south.workflows.mode"></th>
             <th translate="south.workflows.enabled"></th>
@@ -52,6 +63,10 @@
           @for (workflow of displayed; track workflow.id) {
             <tr>
               <td>{{ workflow.name }}</td>
+              <td class="text-muted">
+                @let scope = getScope(workflow);
+                <span [translate]="scope.key" [translateParams]="scope.params"></span>
+              </td>
               <td>
                 @if (getScanModeName(workflow); as scanModeName) {
                   {{ scanModeName }}
@@ -61,13 +76,18 @@
               </td>
               <td [translate]="getModeKey(workflow)"></td>
               <td>
-                <span
-                  class="fa-solid"
-                  role="img"
-                  [class.fa-check]="workflow.enabled"
-                  [class.fa-times]="!workflow.enabled"
-                  [attr.aria-label]="(workflow.enabled ? 'enums.boolean.true' : 'enums.boolean.false') | translate"
-                ></span>
+                <!-- With no schedule the synchronisation only runs on demand: nothing to enable -->
+                @if (workflow.scanModeId) {
+                  <span
+                    class="fa-solid"
+                    role="img"
+                    [class.fa-check]="workflow.enabled"
+                    [class.fa-times]="!workflow.enabled"
+                    [attr.aria-label]="(workflow.enabled ? 'enums.boolean.true' : 'enums.boolean.false') | translate"
+                  ></span>
+                } @else {
+                  <span class="text-muted workflow-not-scheduled">-</span>
+                }
               </td>
               <td class="oib-actions">
                 <!-- Run now/run history only exist for a persisted workflow of a persisted connector (direct mode) -->
@@ -91,8 +111,8 @@
                   <button
                     type="button"
                     class="btn btn-link history-workflow"
-                    [ngbTooltip]="'south.workflows.run-history' | translate"
-                    [attr.aria-label]="'south.workflows.run-history' | translate"
+                    [ngbTooltip]="'south.workflows.past-runs' | translate"
+                    [attr.aria-label]="'south.workflows.past-runs' | translate"
                     (click)="onViewHistory(workflow)"
                   >
                     <span class="fa-solid fa-history" aria-hidden="true"></span>

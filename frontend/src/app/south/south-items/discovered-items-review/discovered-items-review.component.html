@@ -1,0 +1,72 @@
+<div class="text-muted mb-1" id="discovered-items-count">
+  <span
+    [translate]="'south.add-discovered-items.selected-count'"
+    [translateParams]="{ count: includedCount(), total: rows().length }"
+  ></span>
+</div>
+<table class="table table-sm align-middle" id="discovered-items-table">
+  <thead>
+    <tr>
+      <th>
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="discovered-items-all"
+          [checked]="allIncluded()"
+          (change)="toggleAll()"
+          [attr.aria-label]="'south.add-discovered-items.select-all' | translate"
+        />
+      </th>
+      <th translate="south.add-discovered-items.name"></th>
+      @for (column of settingColumns(); track column.key) {
+        <th>{{ column.labelKey ? (column.labelKey | translate) : column.key }}</th>
+      }
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track $index; let index = $index) {
+      <tr [class.text-muted]="!row.included">
+        <td>
+          <input
+            class="form-check-input discovered-item-included"
+            type="checkbox"
+            [checked]="row.included"
+            (change)="toggleRow(index)"
+            [attr.aria-label]="'south.add-discovered-items.include' | translate: { name: row.name }"
+          />
+        </td>
+        <td>
+          <input
+            class="form-control form-control-sm discovered-item-name"
+            [class.is-invalid]="nameErrors()[index]"
+            [ngModel]="row.name"
+            (ngModelChange)="setName(index, $event)"
+            [attr.aria-label]="'south.add-discovered-items.name' | translate"
+          />
+          @if (nameErrors()[index]; as nameError) {
+            <div class="invalid-feedback" [translate]="nameError"></div>
+          }
+        </td>
+        @for (column of settingColumns(); track column.key) {
+          <td class="text-break small">
+            @if (settingValueKey(row, column.key); as valueKey) {
+              {{ valueKey | translate }}
+            } @else {
+              {{ settingValue(row, column.key) }}
+            }
+          </td>
+        }
+        <td>
+          @if (row.existingItemName) {
+            <span
+              class="badge bg-secondary bg-opacity-25 text-secondary discovered-item-existing"
+              [translate]="'south.add-discovered-items.already-read'"
+              [translateParams]="{ name: row.existingItemName }"
+            ></span>
+          }
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

@@ -116,11 +116,7 @@
                 </ng-template>
               </h5>
               @if (manifest.explore) {
-                <oib-explore-button
-                  [synchronisations]="workflowCount()"
-                  (explore)="explore()"
-                  (manageSynchronisations)="manageWorkflows()"
-                />
+                <oib-explore-button [sync]="!!manifest.discovery" (explore)="explore()" />
               }
               <button type="button" class="btn btn-primary btn-sm" id="add-item" (click)="addItem()">
                 <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
