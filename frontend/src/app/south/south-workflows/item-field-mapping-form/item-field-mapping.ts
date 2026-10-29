@@ -76,7 +76,7 @@ export const SCHEDULE_ITEM_PATH_ORDER = [
  * The item fields that have to be mapped, whatever the manifest says: an item is enabled or not on purpose - an unmapped
  * field would leave it to what the item had (a synchronisation) or to the backend (an item added), which is not a choice.
  */
-export const ALWAYS_MANDATORY_ITEM_PATHS = new Set(['enabled']);
+const ALWAYS_MANDATORY_ITEM_PATHS = new Set(['enabled']);
 
 /** The history settings an item starts with in the item modal - the ones a new item mapping starts with too (see `prepare`). */
 export const HISTORY_ITEM_DEFAULTS: Record<string, string> = {
@@ -111,7 +111,7 @@ const HIDDEN_WHILE_SYNCED_WITH_GROUP: FieldEnablingRule = { referralPath: 'syncW
 
 // None of these vary meaningfully per discovered record - each is a fixed setting of the item's own
 // schedule, or a plain on/off toggle - so, like the schedule/group fields, they're constant-only.
-export const CONSTANT_ONLY_ITEM_PATHS = new Set([
+const CONSTANT_ONLY_ITEM_PATHS = new Set([
   'maxReadInterval',
   'readDelay',
   'startTimeOffset',
@@ -160,7 +160,7 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
 ];
 
 /** Whether one enabling rule passes against the referral field's current mapped value. */
-export function evaluatesTrue(rule: FieldEnablingRule, values: Record<string, string>): boolean {
+function evaluatesTrue(rule: FieldEnablingRule, values: Record<string, string>): boolean {
   const referralValue = values[rule.referralPath] ?? '';
   // Resolved per record at run time: the rule may pass for some of them
   if (referralValue.includes('{{')) {
@@ -274,7 +274,7 @@ export function resolveTemplate(template: string, record: OIBusRecord): string {
 }
 
 /** Trims every value, keeping only non-empty entries - a blank expression means "not mapped". */
-export function nonEmptyEntries(values: Record<string, string>): Record<string, string> {
+function nonEmptyEntries(values: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(values)) {
     const trimmed = value?.trim();
@@ -283,4 +283,84 @@ export function nonEmptyEntries(values: Record<string, string>): Record<string, 
     }
   }
   return result;
+}
+
+/** Whether this field can be mapped to a {{ }} expression at all. False for the schedule/group fields - a
+ *  workflow-created item's scan mode and group must always reference something real, never a per-record
+ *  expression - and the historian fields, which are either a fixed setting of the item's own schedule (max
+ *  read interval, read delay, the offsets, recovery strategy) or a plain toggle (syncWithGroup), neither ever
+ *  meaningfully varying per discovered record. A field controlling other fields' visibility can vary per record
+ *  (e.g. a BACnet object type): the fields it controls are then shown (see evaluatesTrue), since they may apply
+ *  to some of the records. */
+export function allowsVariable(field: MappableField): boolean {
+  return field.attributeType !== 'scan-mode' && field.attributeType !== 'group-select' && !CONSTANT_ONLY_ITEM_PATHS.has(field.path);
+}
+
+/** Whether an item field should be shown at all - every enabling rule covering it (its own, plus any
+ *  inherited from an enclosing settings object) must currently pass against the mapped values,
+ *  and a group-dependent historian field must agree with whether 'groupId' is currently mapped. */
+export function isItemFieldVisible(field: MappableField, values: Record<string, string>): boolean {
+  if (field.visibleWhenGrouped !== undefined) {
+    const isGrouped = !!values['groupId'];
+    if (field.visibleWhenGrouped !== isGrouped) {
+      return false;
+    }
+  }
+  // As in the item modal, the schedule of an item of a group is the one of its group
+  if (field.path === 'scanModeId' && !!values['groupId']) {
+    return false;
+  }
+  return (field.enablingRules ?? []).every(rule => evaluatesTrue(rule, values));
+}
+
+/** Whether a mandatory field is missing a mapped value.
+ *  Exempt: a field with a usable manifest defaultValue (e.g. a setting that falls back to it if left unmapped,
+ *  same as EditSouthItemModalComponent's own pre-filled control - never actually "missing"), unless it is
+ *  one of ALWAYS_MANDATORY_ITEM_PATHS, and scanModeId once the item is mapped into a group (mirrors that same
+ *  form's scanModeId.disable() when grouped: a grouped item's schedule comes from the group instead). */
+export function isMandatoryFieldMissing(field: MappableField, values: Record<string, string>): boolean {
+  if (!ALWAYS_MANDATORY_ITEM_PATHS.has(field.path) && (!field.mandatory || field.hasUsableDefault)) {
+    return false;
+  }
+  if (field.path === 'scanModeId' && !!values['groupId']?.trim()) {
+    return false;
+  }
+  return !(values[field.path] ?? '').trim();
+}
+
+/** Why the item mapping can't be used yet, if it can't - a translation key. */
+export function itemMappingProblem(fields: ReadonlyArray<MappableField>, values: Record<string, string>): string | null {
+  // A constant-only field must be knowable while editing (or reference something real) rather than resolved
+  // per-record at run time - a select-type one can't even reach this state through the UI (its {{ }} option is
+  // omitted), but a free-text one still could.
+  if (fields.some(field => !allowsVariable(field) && (values[field.path] ?? '').includes('{{'))) {
+    return 'south.workflows.mapping-constant-only';
+  }
+  // Every visible, manifest-REQUIRED field must be mapped to something - otherwise a workflow can be
+  // saved in a state item creation would only reject later, at run time.
+  if (fields.some(field => isItemFieldVisible(field, values) && isMandatoryFieldMissing(field, values))) {
+    return 'south.workflows.mapping-mandatory-missing';
+  }
+  return null;
+}
+
+/**
+ * What an item mapping maps, to save in a workflow or to discover the items to add with. A field hidden by an unmet enabling
+ * condition keeps whatever value it had while editing (so toggling the referral back and forth doesn't lose data), but is left
+ * out here - it isn't actually part of the item this mapping would produce. An item of a connector that only subscribes has
+ * no schedule to pick: it is the subscription.
+ */
+export function itemFieldMappingToSend(
+  fields: ReadonlyArray<MappableField>,
+  values: Record<string, string>,
+  subscriptionOnly: boolean
+): Record<string, string> {
+  const visibleValues: Record<string, string> = {};
+  for (const field of fields) {
+    if (field.path in values && isItemFieldVisible(field, values)) {
+      visibleValues[field.path] = values[field.path];
+    }
+  }
+  const mapping = nonEmptyEntries(visibleValues);
+  return subscriptionOnly ? { ...mapping, scanModeId: 'subscription' } : mapping;
 }
