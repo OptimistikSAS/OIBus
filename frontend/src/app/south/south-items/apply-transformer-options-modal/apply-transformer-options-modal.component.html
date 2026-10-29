@@ -57,9 +57,7 @@
       @if (change.transformer.transformer.type === 'custom') {
         <li id="apply-custom">{{ 'south.items.norths.apply-modal.custom-unchanged' | translate: { name: transformerName() } }}</li>
       }
-      @if (change.itemEdited) {
-        <li id="apply-saved-now" translate="south.items.norths.apply-modal.saved-now"></li>
-      }
+      <li id="apply-saved-now" translate="south.items.norths.apply-modal.saved-now"></li>
     </ul>
   </div>
   <div class="modal-footer">

@@ -18,9 +18,11 @@
   </button>
 </ng-template>
 
-<div class="oib-section-title">
-  <h5 translate="south.test-item.title"></h5>
-</div>
+@if (showTitle()) {
+  <div class="oib-section-title">
+    <h5 translate="south.test-item.title"></h5>
+  </div>
+}
 
 @if (form(); as form) {
   <form [formGroup]="form" id="testing-settings-form">

@@ -1,15 +1,32 @@
-<p class="text-body-secondary small" translate="south.items.norths.description"></p>
-@if (loading()) {
+<p
+  class="text-body-secondary small"
+  [translate]="rawEntry() ? 'south.items.norths.test-description' : 'south.items.norths.description'"
+></p>
+@if (loading() && !rawEntry()) {
   <div class="text-body-secondary" id="norths-loading">
     <span class="fa-solid fa-spinner fa-spin me-1" aria-hidden="true"></span><span translate="south.items.norths.loading"></span>
   </div>
-} @else if (routes().length === 0) {
+} @else if (routes().length === 0 && !rawEntry()) {
   <div class="alert alert-secondary py-2" id="no-north" role="status" translate="south.items.norths.no-north"></div>
 } @else {
   <div class="row g-3">
-    <!-- The Norths, with the transformer the data of the item goes through -->
+    <!-- The Norths, with the transformer the data of the item goes through: after the item raw, when it is tested raw too -->
     <div class="col-md-4">
       <div class="d-flex flex-column gap-2" role="list" [attr.aria-label]="'south.items.norths.list' | translate" id="north-list">
+        @if (rawEntry()) {
+          <button
+            type="button"
+            role="listitem"
+            class="north-entry"
+            [class.selected]="!selectedRoute()"
+            [attr.aria-current]="!selectedRoute()"
+            id="north-raw"
+            (click)="selectNorth(null)"
+          >
+            <span class="fw-medium d-block" translate="south.items.norths.raw"></span>
+            <span class="d-block mt-1 small text-body-secondary" translate="south.items.norths.raw-description"></span>
+          </button>
+        }
         @for (route of routes(); track route.north.id) {
           @let selected = route.north.id === selectedNorthId();
           <button
@@ -42,6 +59,11 @@
               }
             </span>
           </button>
+        }
+        @if (loading()) {
+          <div class="small text-body-secondary" id="norths-loading">
+            <span class="fa-solid fa-spinner fa-spin me-1" aria-hidden="true"></span><span translate="south.items.norths.loading"></span>
+          </div>
         }
       </div>
     </div>
@@ -153,14 +175,18 @@
                     [previous]="options.previous"
                   />
                 }
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary mt-2 me-1"
-                  id="edit-options"
-                  (click)="startOptionsEdit(route)"
-                >
-                  <span class="fa-solid fa-pencil me-1" aria-hidden="true"></span><span translate="south.items.norths.edit-options"></span>
-                </button>
+                <!-- The view of an item only tests it -->
+                @if (editable()) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary mt-2 me-1"
+                    id="edit-options"
+                    (click)="startOptionsEdit(route)"
+                  >
+                    <span class="fa-solid fa-pencil me-1" aria-hidden="true"></span
+                    ><span translate="south.items.norths.edit-options"></span>
+                  </button>
+                }
               } @else {
                 <div class="small text-body-secondary mt-2" id="no-options" translate="south.items.norths.no-options"></div>
               }
@@ -292,10 +318,25 @@
                 [connectorCommand]="connectorCommand()"
                 [manifest]="manifest()"
                 [transformer]="transformer"
+                [showTitle]="!rawEntry()"
               />
             </div>
           }
         }
+      </div>
+    } @else if (rawEntry()) {
+      <!-- The item tested raw -->
+      <div class="col-md-8" id="raw-test">
+        <h6 class="mb-0" translate="south.items.norths.raw"></h6>
+        <div class="small text-body-secondary mb-2" translate="south.items.norths.raw-description"></div>
+        <oib-south-item-test
+          type="south"
+          [entityId]="southId()"
+          [item]="item()"
+          [connectorCommand]="connectorCommand()"
+          [manifest]="manifest()"
+          [showTitle]="false"
+        />
       </div>
     }
   </div>

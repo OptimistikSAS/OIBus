@@ -110,6 +110,8 @@ class SouthItemTestComponent {
   readonly inMemoryTransformers = input<Array<HistoryTransformerDTOWithOptions> | null>(null);
   /** South context only: the transformer the item is tested through, raw when null */
   readonly transformer = input<ItemTestTransformer | null>(null);
+  /** False when the caller titles the test itself */
+  readonly showTitle = input(true);
 
   private testSubscription: Subscription | null = null;
 
