@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, forwardRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, forwardRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -97,6 +97,8 @@ export class EditHistoryQueryTransformerModalComponent {
   private selectableItems: Array<ItemLightDTO> = [];
   readonly selectedItems = signal<Array<ItemLightDTO>>([]);
   readonly selectionType = signal<'all' | 'items'>('all');
+  /** The ids of the items the transformer applies to, the first one being tested; `null` for all the items */
+  readonly scopeItemIds = computed(() => (this.selectionType() === 'items' ? this.selectedItems().map(item => item.id) : null));
   readonly searchResults = signal<Array<ItemLightDTO>>([]);
   readonly filteredItems = signal<Array<ItemLightDTO>>([]);
   readonly totalSearchResults = signal(0);

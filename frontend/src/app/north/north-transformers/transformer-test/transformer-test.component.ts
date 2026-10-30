@@ -1,6 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -71,6 +71,11 @@ export class NorthTransformerTestComponent {
   readonly transformer = input<TransformerDTO | null>(null);
   readonly options = input<Record<string, unknown>>({});
   readonly itemSource = input<TransformerTestItemSource>({ kind: 'none' });
+  /**
+   * The ids of the items of the source the transformer applies to (those listed, of its group, or not left out), the first
+   * of them in the source being tested by default; `null` when it applies to all of them.
+   */
+  readonly scopeItemIds = input<ReadonlyArray<string> | null>(null);
 
   readonly dateRangeSelector = viewChild<DateRangeSelectorComponent>('dateRangeSelector');
 
@@ -158,6 +163,19 @@ export class NorthTransformerTestComponent {
         takeUntilDestroyed()
       )
       .subscribe(template => this.form.controls.inputData.setValue(template.data));
+
+    // The item tested is the first one the transformer applies to, kept while it still does, none when it applies to none
+    effect(() => {
+      const scopeItemIds = this.scopeItemIds();
+      const items = this.availableItems();
+      untracked(() => {
+        const inScope = scopeItemIds ? items.filter(item => scopeItemIds.includes(item.id)) : items;
+        const current = this.form.controls.item.value;
+        if (!current || !inScope.some(item => item.id === current.id)) {
+          this.form.controls.item.setValue(inScope[0] ?? null);
+        }
+      });
+    });
   }
 
   /** Searches the items of the source by name */
