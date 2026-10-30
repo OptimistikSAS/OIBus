@@ -14,7 +14,8 @@
           "edit": "Modifier l'élément",
           "copy": "Copier l'élément",
           "delete": "Supprimer l'élément"
-        }
+        },
+        "more-actions": "Autres actions sur les éléments"
       },
       "manifest": {
         "north": {

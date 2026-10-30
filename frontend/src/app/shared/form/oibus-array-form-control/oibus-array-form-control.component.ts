@@ -1,7 +1,15 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import {
+  NgbDropdown,
+  NgbDropdownButtonItem,
+  NgbDropdownItem,
+  NgbDropdownMenu,
+  NgbDropdownToggle,
+  NgbTooltip
+} from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { of, switchMap } from 'rxjs';
@@ -39,6 +47,7 @@ export type ArrayElement = Record<string, unknown>;
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     TranslatePipe,
     TranslateDirective,
@@ -47,7 +56,12 @@ export type ArrayElement = Record<string, unknown>;
     PaginationComponent,
     ValErrorDelayDirective,
     ValidationErrorsComponent,
-    NgbTooltip
+    NgbTooltip,
+    NgbDropdown,
+    NgbDropdownToggle,
+    NgbDropdownMenu,
+    NgbDropdownItem,
+    NgbDropdownButtonItem
   ]
 })
 export class OIBusArrayFormControlComponent {
@@ -60,6 +74,8 @@ export class OIBusArrayFormControlComponent {
   readonly parentGroup = input.required<FormGroup>();
   readonly control = input.required<FormControl<Array<ArrayElement>>>();
   readonly arrayAttribute = input.required<OIBusArrayAttribute>();
+  /** As the object holding the array: a box, or a group of a section under a light title */
+  readonly layout = input<'boxes' | 'sections'>('boxes');
 
   /** The control is tracked so that this OnPush component renders its changes made from outside (value patched, touched...) */
   protected readonly trackedControl = trackControl(() => this.control());
@@ -77,7 +93,7 @@ export class OIBusArrayFormControlComponent {
 
   addElement(event: Event) {
     event.preventDefault();
-    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
+    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'lg' });
     modal.componentInstance.prepareForCreation(
       this.scanModes(),
       this.certificates(),
@@ -89,7 +105,7 @@ export class OIBusArrayFormControlComponent {
   }
 
   copyElement(element: ArrayElement) {
-    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
+    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'lg' });
     modal.componentInstance.prepareForCopy(
       this.scanModes(),
       this.certificates(),
@@ -102,7 +118,7 @@ export class OIBusArrayFormControlComponent {
   }
 
   editElement(element: ArrayElement) {
-    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'xl' });
+    const modal = this.modalService.open(OIBusEditArrayElementModalComponent, { size: 'lg' });
     modal.componentInstance.prepareForEdition(
       this.scanModes(),
       this.certificates(),

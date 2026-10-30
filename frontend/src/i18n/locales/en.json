@@ -1010,7 +1010,8 @@
           "edit": "Edit element",
           "copy": "Copy element",
           "delete": "Delete element"
-        }
+        },
+        "more-actions": "More actions on the elements"
       },
       "manifest": {
         "north": {

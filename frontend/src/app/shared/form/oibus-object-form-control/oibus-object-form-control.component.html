@@ -89,6 +89,7 @@
               [parentGroup]="group()"
               [control]="asFormControl(group().controls[row.attribute.key])"
               [arrayAttribute]="row.attribute"
+              [layout]="layout()"
             />
           }
           @default never(row.attribute);
