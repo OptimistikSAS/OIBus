@@ -18,7 +18,7 @@ class OIBusEditArrayElementModalComponentTester {
   readonly fixture = TestBed.createComponent(OIBusEditArrayElementModalComponent);
   readonly component = this.fixture.componentInstance;
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly title = this.root.getByRole('heading', { level: 3 });
+  readonly title = this.root.getByRole('heading', { level: 4 });
   readonly save = this.root.getByCss('#save-button');
   readonly cancel = this.root.getByCss('#cancel-button');
   readonly name = this.root.getByLabelText('Name');

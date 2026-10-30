@@ -1,27 +1,33 @@
 <div class="modal-header">
-  @if (elementManifest()) {
-    <h3 class="modal-title" [translate]="'configuration.oibus.edit-array-element-modal.title.' + mode()"></h3>
-  }
+  <h4 class="modal-title" [translate]="'configuration.oibus.edit-array-element-modal.title.' + mode()"></h4>
 </div>
 <div class="modal-body">
   @if (elementManifest(); as elementManifest) {
-    <form [id]="'edit-array-element-form-' + elementManifest.key" [formGroup]="form">
+    <form [id]="'edit-array-element-form-' + elementManifest.key" [formGroup]="form" (ngSubmit)="submit()">
+      <h5 class="oib-section-title" [translate]="elementManifest.translationKey"></h5>
       <ng-container [formGroupName]="elementManifest.key">
         <oib-oibus-object-form-control
           [scanModes]="scanModes()"
           [certificates]="certificates()"
           [group]="asFormGroup(form.controls[elementManifest.key])"
           [objectAttribute]="elementManifest"
+          layout="sections"
         />
       </ng-container>
     </form>
   }
 </div>
 <div class="modal-footer">
-  <div class="btn-group pull-right">
-    @if (elementManifest()) {
-      <button type="button" class="btn btn-primary" (click)="submit()" translate="common.ok" id="save-button"></button>
+  <div class="btn-group">
+    @if (elementManifest(); as elementManifest) {
+      <button
+        type="submit"
+        [oib-save-button]="state"
+        [form]="'edit-array-element-form-' + elementManifest.key"
+        translationKey="common.ok"
+        iconClass="fa-check"
+      ></button>
     }
-    <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.close" id="cancel-button"></button>
+    <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

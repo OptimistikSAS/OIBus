@@ -8,6 +8,7 @@ import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 
+import { ObservableState, SaveButtonComponent } from '../../../save-button/save-button.component';
 import { addAttributeToForm, extractFormValue } from '../../dynamic-form.builder';
 import { OIBUS_FORM_MODE } from '../../oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control/oibus-object-form-control.component';
@@ -16,9 +17,8 @@ import type { ArrayElement } from '../oibus-array-form-control.component';
 @Component({
   selector: 'oib-oibus-edit-array-element-modal',
   templateUrl: './oibus-edit-array-element-modal.component.html',
-  styleUrl: './oibus-edit-array-element-modal.component.scss',
   // Remove circular dependencies between OIBusObjectFormControlComponent and OIBusEditArrayElementModalComponent with forwardRef
-  imports: [ReactiveFormsModule, TranslateDirective, forwardRef(() => OIBusObjectFormControlComponent)],
+  imports: [ReactiveFormsModule, TranslateDirective, SaveButtonComponent, forwardRef(() => OIBusObjectFormControlComponent)],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     {
@@ -33,6 +33,7 @@ export class OIBusEditArrayElementModalComponent {
   private readonly fb = inject(NonNullableFormBuilder);
 
   readonly mode = signal<'create' | 'edit'>('create');
+  readonly state = new ObservableState();
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
   parentGroup: FormGroup | null = null;
@@ -101,6 +102,8 @@ export class OIBusEditArrayElementModalComponent {
   }
 
   submit() {
+    // the errors of the fields not filled in yet show up
+    this.form.markAllAsTouched();
     if (this.form.valid) {
       this.activeModal.close(extractFormValue(this.form.value[this.elementManifest()!.key]));
     }

@@ -67,6 +67,7 @@ const arrayAttribute: OIBusArrayAttribute = {
           [parentGroup]="form"
           [scanModes]="scanModes"
           [certificates]="certificates"
+          [layout]="layout()"
         />
       </ng-container>
     </form>`,
@@ -88,6 +89,7 @@ class TestComponent {
   readonly scanModes = testData.scanMode.list;
   readonly certificates = testData.certificates.list;
   readonly arrayAttribute = signal(arrayAttribute);
+  readonly layout = signal<'boxes' | 'sections'>('boxes');
 }
 
 class TestComponentTester {
@@ -306,5 +308,55 @@ describe('OIBusArrayFormControlComponent', () => {
       )
     );
     expect(tester.control.value.length).toBe(2);
+  });
+
+  describe('in the sections layout', () => {
+    test('should display the elements in a frame, under their title and count', async () => {
+      const tester = new TestComponentTester();
+      tester.component.layout.set('sections');
+
+      await expect.element(tester.root.getByCss('.array-group-title')).toMatchTextContent(/^Item\s*\(2\)$/);
+      await expect.element(tester.root.getByCss('oib-box')).not.toBeInTheDocument();
+      await expect.element(tester.rows).toHaveLength(2);
+    });
+
+    test('should add an element', async () => {
+      const tester = new TestComponentTester();
+      tester.component.layout.set('sections');
+      modalService.mockClosedModal(createMock(OIBusEditArrayElementModalComponent), { name: 'item3', enabled: true });
+
+      await tester.addButton.click();
+
+      await expect.element(tester.rows).toHaveLength(3);
+    });
+
+    test('should export and import the elements from the menu', async () => {
+      const tester = new TestComponentTester();
+      tester.component.layout.set('sections');
+      const menu = tester.root.getByRole('button', { name: 'More actions on the elements' });
+      const fakeExportModal = createMock(ExportItemModalComponent);
+      modalService.mockDismissedModal(fakeExportModal);
+
+      await menu.click();
+      await tester.root.getByRole('button', { name: 'Export' }).click();
+      expect(fakeExportModal.prepare).toHaveBeenCalledWith('items');
+
+      const fakeImportModal = createMock(ImportItemModalComponent);
+      modalService.mockDismissedModal(fakeImportModal);
+      await menu.click();
+      await tester.root.getByRole('button', { name: 'Import' }).click();
+      expect(fakeImportModal.prepare).toHaveBeenCalledWith(['name'], ['enabled'], [], false, true);
+    });
+
+    test('should not export an empty array', async () => {
+      const tester = new TestComponentTester();
+      tester.component.layout.set('sections');
+      tester.control.setValue([]);
+
+      await tester.root.getByRole('button', { name: 'More actions on the elements' }).click();
+
+      await expect.element(tester.root.getByRole('button', { name: 'Export' })).toBeDisabled();
+      await expect.element(tester.root.getByText('No items')).toBeInTheDocument();
+    });
   });
 });
