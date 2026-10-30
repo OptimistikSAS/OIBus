@@ -3,7 +3,12 @@ import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
-import type { SouthItemSettings, SouthMySQLItemSettings, SouthMySQLSettings } from '../../../shared/model/connector/south-settings.model';
+import type {
+  SouthItemSettings,
+  SouthMySQLItemSettings,
+  SouthMySQLSettings,
+  SouthMySQLSettingsConnectionSettings
+} from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -11,7 +16,7 @@ import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthMySQLClass from './south-mysql';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -86,8 +91,9 @@ const buildItem = (
 });
 
 const buildConfiguration = (
-  settings: Partial<SouthMySQLSettings>,
-  items: Array<SouthConnectorItemEntity<SouthMySQLItemSettings>>
+  connectionSettings: Partial<SouthMySQLSettingsConnectionSettings>,
+  items: Array<SouthConnectorItemEntity<SouthMySQLItemSettings>>,
+  maxParallelRun = 1
 ): SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> => ({
   id: 'southId',
   name: 'south',
@@ -95,13 +101,17 @@ const buildConfiguration = (
   description: 'my test connector',
   enabled: true,
   settings: {
-    host: 'localhost',
-    port: 3306,
-    database: 'db',
-    username: 'username',
-    password: 'password',
-    connectionTimeout: 1000,
-    ...settings
+    connectionSettings: {
+      host: 'localhost',
+      port: 3306,
+      database: 'db',
+      username: 'username',
+      password: 'password',
+      connectionTimeout: 1000,
+      idleTimeout: 30000,
+      ...connectionSettings
+    },
+    maxParallelRun
   },
   groups: [],
   items,
@@ -264,12 +274,12 @@ describe('SouthMySQL', () => {
 
       assert.strictEqual(createConnection.mock.calls.length, 1);
       assert.deepStrictEqual(createConnection.mock.calls[0].arguments[0], {
-        host: configuration.settings.host,
-        port: configuration.settings.port,
-        user: configuration.settings.username,
-        password: configuration.settings.password,
-        database: configuration.settings.database,
-        connectTimeout: configuration.settings.connectionTimeout,
+        host: configuration.settings.connectionSettings.host,
+        port: configuration.settings.connectionSettings.port,
+        user: configuration.settings.connectionSettings.username,
+        password: configuration.settings.connectionSettings.password,
+        database: configuration.settings.connectionSettings.database,
+        connectTimeout: configuration.settings.connectionSettings.connectionTimeout,
         timezone: 'Z'
       });
 
@@ -472,12 +482,12 @@ describe('SouthMySQL', () => {
 
       assert.strictEqual(createConnection.mock.calls.length, 1);
       assert.deepStrictEqual(createConnection.mock.calls[0].arguments[0], {
-        host: configuration.settings.host,
-        port: configuration.settings.port,
+        host: configuration.settings.connectionSettings.host,
+        port: configuration.settings.connectionSettings.port,
         user: undefined,
         password: undefined,
-        database: configuration.settings.database,
-        connectTimeout: configuration.settings.connectionTimeout,
+        database: configuration.settings.connectionSettings.database,
+        connectTimeout: configuration.settings.connectionSettings.connectionTimeout,
         timezone: 'Z'
       });
     });
@@ -555,7 +565,7 @@ describe('SouthMySQL', () => {
 
       await assert.rejects(
         south.testConnection(),
-        new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
+        new Error(`Unable to read tables in database "${configuration.settings.connectionSettings.database}". ${errorMessage}`)
       );
       assert.ok(end.mock.calls.length > 0);
     });
@@ -563,14 +573,20 @@ describe('SouthMySQL', () => {
     it('Database has no tables', async () => {
       execute.mock.mockImplementation(async () => [[{ table_count: 0 }]]);
 
-      await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Database "${configuration.settings.connectionSettings.database}" has no tables`)
+      );
       assert.ok(end.mock.calls.length > 0);
     });
 
     it('Database does not return count of tables', async () => {
       execute.mock.mockImplementation(async () => [[]]);
 
-      await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Database "${configuration.settings.connectionSettings.database}" has no tables`)
+      );
       assert.ok(end.mock.calls.length > 0);
     });
 
@@ -600,6 +616,86 @@ describe('SouthMySQL', () => {
         });
         assert.strictEqual(end.mock.calls.length, index + 1);
       }
+    });
+  });
+
+  describe('SouthMySQL parallel runs', () => {
+    it('should run up to maxParallelRun work-units in parallel, within the ceiling of the manifest', () => {
+      for (const [maxParallelRun, expected] of [
+        [1, 1],
+        [4, 4],
+        [50, 8],
+        [0, 1]
+      ]) {
+        const south = new SouthMySQL(
+          buildConfiguration({}, items, maxParallelRun),
+          addContentCallback,
+          createMock<SouthCacheRepository>(),
+          'cacheFolder'
+        );
+        assert.strictEqual(south['getMaxParallelRun'](), expected);
+      }
+    });
+
+    it('should open its own connection for each query running at the same time when the connector is not running', async () => {
+      const south = new SouthMySQL(buildConfiguration({}, items, 2), addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      const resolvers: Array<() => void> = [];
+      execute.mock.mockImplementation(() => new Promise(resolve => resolvers.push(() => resolve([[{ value: 1 }]]))));
+
+      const runs = Promise.all([
+        south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW),
+        south.queryData(items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW)
+      ]);
+      await flushPromises();
+      assert.strictEqual(createConnection.mock.calls.length, 2);
+      assert.strictEqual(end.mock.calls.length, 0);
+
+      resolvers.forEach(resolve => resolve());
+      assert.deepStrictEqual(await runs, [[{ value: 1 }], [{ value: 1 }]]);
+      assert.strictEqual(end.mock.calls.length, 2);
+    });
+    it('should share one connection pool between the queries while running, and end it on disconnect', async () => {
+      const release = mock.fn();
+      const poolEnd = mock.fn(async () => undefined);
+      const createPool = mock.fn((_options: Record<string, unknown>) => ({
+        getConnection: async () => ({ execute, release }),
+        end: poolEnd
+      }));
+      mysqlExports.createPool = createPool;
+      const south = new SouthMySQL(buildConfiguration({}, items, 2), addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      await south.connect();
+
+      await south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      await south.queryData(items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(createPool.mock.calls.length, 1);
+      const { connectionLimit, maxIdle, idleTimeout, enableKeepAlive } = createPool.mock.calls[0].arguments[0];
+      assert.deepStrictEqual(
+        { connectionLimit, maxIdle, idleTimeout, enableKeepAlive },
+        {
+          connectionLimit: 2,
+          maxIdle: 2,
+          idleTimeout: 30000,
+          enableKeepAlive: true
+        }
+      );
+      assert.strictEqual(release.mock.calls.length, 2);
+      assert.strictEqual(createConnection.mock.calls.length, 0);
+
+      await south.disconnect();
+      assert.strictEqual(poolEnd.mock.calls.length, 1);
+    });
+
+    it('should give the connection back to the pool when its query fails', async () => {
+      const release = mock.fn();
+      mysqlExports.createPool = mock.fn(() => ({ getConnection: async () => ({ execute, release }), end: mock.fn() }));
+      execute.mock.mockImplementationOnce(() => Promise.reject(new Error('query error')));
+      const south = new SouthMySQL(buildConfiguration({}, items, 2), addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      await south.connect();
+
+      await assert.rejects(south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW), {
+        message: 'query error'
+      });
+      assert.strictEqual(release.mock.calls.length, 1);
     });
   });
 });

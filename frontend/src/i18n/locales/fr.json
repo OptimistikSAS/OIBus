@@ -853,24 +853,33 @@
             "max-number-of-messages": "Nombre de messages avant vidage"
           },
           "mssql": {
-            "host": "Hôte",
-            "port": "Port",
-            "connection-timeout": "Délai de connexion",
-            "database": "Base de données",
-            "username": "Nom d'utilisateur",
-            "password": "Mot de passe",
-            "domain": "Domaine",
-            "encryption": "Utiliser le chiffrement",
-            "trust-server-certificate": "Faire confiance au certificat du serveur",
-            "request-timeout": "Délai de requête"
+            "connection-settings": {
+              "title": "Paramètres de connexion",
+              "host": "Hôte",
+              "port": "Port",
+              "connection-timeout": "Délai de connexion",
+              "database": "Base de données",
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "domain": "Domaine",
+              "encryption": "Utiliser le chiffrement",
+              "trust-server-certificate": "Faire confiance au certificat du serveur",
+              "idle-timeout": "Délai d'inactivité des connexions"
+            },
+            "max-parallel-run": "Requêtes parallèles max"
           },
           "mysql": {
-            "host": "Hôte",
-            "port": "Port",
-            "connection-timeout": "Délai de connexion",
-            "database": "Base de données",
-            "username": "Nom d'utilisateur",
-            "password": "Mot de passe"
+            "connection-settings": {
+              "title": "Paramètres de connexion",
+              "host": "Hôte",
+              "port": "Port",
+              "connection-timeout": "Délai de connexion",
+              "database": "Base de données",
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "idle-timeout": "Délai d'inactivité des connexions"
+            },
+            "max-parallel-run": "Requêtes parallèles max"
           },
           "mongodb": {
             "connection-string": "Chaîne de connexion",
@@ -879,26 +888,30 @@
             "password": "Mot de passe"
           },
           "influxdb": {
-            "version": {
-              "1": "v1 (InfluxDB 1.x – InfluxQL)",
-              "2": "v2 (InfluxDB 2.x – Flux)",
-              "3": "v3 (InfluxDB 3.x – SQL)",
-              "title": "Version"
+            "connection-settings": {
+              "title": "Paramètres de connexion",
+              "version": {
+                "1": "v1 (InfluxDB 1.x – InfluxQL)",
+                "2": "v2 (InfluxDB 2.x – Flux)",
+                "3": "v3 (InfluxDB 3.x – SQL)",
+                "title": "Version"
+              },
+              "host": "Hôte",
+              "port": "Port",
+              "protocol": {
+                "title": "Protocole",
+                "http": "HTTP",
+                "https": "HTTPS"
+              },
+              "database": "Base de données",
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "url": "URL",
+              "token": "Jeton API",
+              "organisation": "Organisation",
+              "bucket": "Bucket"
             },
-            "host": "Hôte",
-            "port": "Port",
-            "protocol": {
-              "title": "Protocole",
-              "http": "HTTP",
-              "https": "HTTPS"
-            },
-            "database": "Base de données",
-            "username": "Nom d'utilisateur",
-            "password": "Mot de passe",
-            "url": "URL",
-            "token": "Jeton API",
-            "organisation": "Organisation",
-            "bucket": "Bucket"
+            "max-parallel-run": "Requêtes parallèles max"
           },
           "odbc": {
             "remote-agent": "Utiliser un agent distant",
@@ -907,7 +920,8 @@
             "retry-interval": "Intervalle de nouvelle tentative",
             "request-timeout": "Délai de requête",
             "connection-string": "Chaîne de connexion",
-            "password": "Mot de passe"
+            "password": "Mot de passe",
+            "max-parallel-run": "Requêtes parallèles max"
           },
           "oianalytics": {
             "use-oia-module": "Utiliser l'enregistrement OIAnalytics",
@@ -1000,28 +1014,37 @@
             }
           },
           "oracle": {
-            "thick-mode": "Mode thick",
-            "oracle-client": "Bibliothèque cliente Oracle",
-            "host": "Hôte",
-            "port": "Port",
-            "connection-timeout": "Délai de connexion",
-            "database": "Base de données",
-            "username": "Nom d'utilisateur",
-            "password": "Mot de passe"
+            "connection-settings": {
+              "title": "Paramètres de connexion",
+              "thick-mode": "Mode thick",
+              "oracle-client": "Bibliothèque cliente Oracle",
+              "host": "Hôte",
+              "port": "Port",
+              "connection-timeout": "Délai de connexion",
+              "database": "Base de données",
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "idle-timeout": "Délai d'inactivité des connexions"
+            },
+            "max-parallel-run": "Requêtes parallèles max"
           },
           "osisoft-pi": {
             "agent-url": "URL de l'agent distant",
             "retry-interval": "Intervalle de nouvelle tentative"
           },
           "postgresql": {
-            "host": "Hôte",
-            "port": "Port",
-            "ssl-mode": "SSL",
-            "connection-timeout": "Délai de connexion",
-            "request-timeout": "Délai de requête",
-            "database": "Base de données",
-            "username": "Nom d'utilisateur",
-            "password": "Mot de passe"
+            "connection-settings": {
+              "title": "Paramètres de connexion",
+              "host": "Hôte",
+              "port": "Port",
+              "ssl-mode": "SSL",
+              "connection-timeout": "Délai de connexion",
+              "database": "Base de données",
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "idle-timeout": "Délai d'inactivité des connexions"
+            },
+            "max-parallel-run": "Requêtes parallèles max"
           },
           "rest": {
             "host": "Hôte",
@@ -1189,6 +1212,7 @@
             },
             "mssql": {
               "query": "Requête",
+              "request-timeout": "Délai de requête",
               "tracking-instant": {
                 "title": "Suivi de l'instant",
                 "track-instant": "Suivre l'instant",
@@ -1445,6 +1469,7 @@
             },
             "postgresql": {
               "query": "Requête",
+              "request-timeout": "Délai de requête",
               "tracking-instant": {
                 "title": "Suivi de l'instant",
                 "track-instant": "Suivre l'instant",

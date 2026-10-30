@@ -19,18 +19,23 @@ This connector is commonly used to extract process and historian data from indus
 
 ## Specific Settings {#specific-settings}
 
-| Setting                  | Description                                                            | Example Value    |
-| ------------------------ | ---------------------------------------------------------------------- | ---------------- |
-| Host                     | IP address or hostname of the SQL Server instance.                     | `192.168.1.10`   |
-| Port                     | SQL Server port number. Default: `1433`.                               | `1433`           |
-| Connection timeout       | Maximum time in milliseconds to establish connection. Default: `5000`. | `5000`           |
-| Database                 | Name of the database to connect to.                                    | `production`     |
-| Use encryption           | Enable data encryption between OIBus and the database.                 | Enabled/Disabled |
-| Trust server certificate | Accept self-signed or expired certificates. Use with caution.          | Enabled/Disabled |
-| Username                 | Authentication username.                                               | `sa`             |
-| Password                 | Authentication password.                                               | `••••••••`       |
-| Domain                   | Active Directory domain for domain authentication (optional).          | `CORP`           |
-| Request timeout          | Maximum execution time in milliseconds for individual SQL queries.     | `15000`          |
+| Setting                  | Description                                                                                             | Example Value    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------- | ---------------- |
+| Host                     | IP address or hostname of the SQL Server instance.                                                      | `192.168.1.10`   |
+| Port                     | SQL Server port number. Default: `1433`.                                                                | `1433`           |
+| Connection timeout       | Maximum time in milliseconds to establish connection. Default: `5000`.                                  | `5000`           |
+| Database                 | Name of the database to connect to.                                                                     | `production`     |
+| Use encryption           | Enable data encryption between OIBus and the database.                                                  | Enabled/Disabled |
+| Trust server certificate | Accept self-signed or expired certificates. Use with caution.                                           | Enabled/Disabled |
+| Username                 | Authentication username.                                                                                | `sa`             |
+| Password                 | Authentication password.                                                                                | `••••••••`       |
+| Domain                   | Active Directory domain for domain authentication (optional).                                           | `CORP`           |
+| Idle connection timeout  | Time in milliseconds an unused connection of the pool stays open before being closed. Default: `30000`. | `30000`          |
+| Max parallel queries     | Maximum number of items or groups queried at the same time, from `1` (sequential) to `8`. Default: `1`. | `2`              |
+
+:::note Parallel queries
+OIBus keeps a pool of up to this number of connections to the database, opened when the queries need them and closed after the idle connection timeout: each one adds to the load of the source. Keep the value below the number of connections the SQL Server login can use.
+:::
 
 ### Security Best Practices {#security-best-practices}
 
@@ -66,6 +71,12 @@ An [items synchronisation](./common-settings.md#items-synchronisation) on this c
 pushes its rows to OIAnalytics; it never creates items.
 
 <ItemSettings />
+
+:::note MSSQL item request timeout
+Each MSSQL item has its own **Request timeout** field (milliseconds), setting the maximum execution time for that
+item's query. **Connection timeout** only bounds how long OIBus waits to establish a connection, and the queries run
+outside an item (connection test, explore, discovery) time out after 15 seconds.
+:::
 
 :::note MSSQL datetime field types
 The following **Type** values are available for the tracking instant's datetime field in Microsoft SQL Server:

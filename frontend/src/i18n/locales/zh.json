@@ -853,24 +853,33 @@
             "max-number-of-messages": "刷新前的消息数量"
           },
           "mssql": {
-            "host": "主机",
-            "port": "端口",
-            "connection-timeout": "连接超时",
-            "database": "数据库",
-            "username": "用户名",
-            "password": "密码",
-            "domain": "域",
-            "encryption": "使用加密",
-            "trust-server-certificate": "信任服务器证书",
-            "request-timeout": "请求超时"
+            "connection-settings": {
+              "title": "连接设置",
+              "host": "主机",
+              "port": "端口",
+              "connection-timeout": "连接超时",
+              "database": "数据库",
+              "username": "用户名",
+              "password": "密码",
+              "domain": "域",
+              "encryption": "使用加密",
+              "trust-server-certificate": "信任服务器证书",
+              "idle-timeout": "空闲连接超时"
+            },
+            "max-parallel-run": "最大并行查询数"
           },
           "mysql": {
-            "host": "主机",
-            "port": "端口",
-            "connection-timeout": "连接超时",
-            "database": "数据库",
-            "username": "用户名",
-            "password": "密码"
+            "connection-settings": {
+              "title": "连接设置",
+              "host": "主机",
+              "port": "端口",
+              "connection-timeout": "连接超时",
+              "database": "数据库",
+              "username": "用户名",
+              "password": "密码",
+              "idle-timeout": "空闲连接超时"
+            },
+            "max-parallel-run": "最大并行查询数"
           },
           "mongodb": {
             "connection-string": "连接字符串",
@@ -879,26 +888,30 @@
             "password": "密码"
           },
           "influxdb": {
-            "version": {
-              "1": "v1（InfluxDB 1.x – InfluxQL）",
-              "2": "v2（InfluxDB 2.x – Flux）",
-              "3": "v3（InfluxDB 3.x – SQL）",
-              "title": "版本"
+            "connection-settings": {
+              "title": "连接设置",
+              "version": {
+                "1": "v1（InfluxDB 1.x – InfluxQL）",
+                "2": "v2（InfluxDB 2.x – Flux）",
+                "3": "v3（InfluxDB 3.x – SQL）",
+                "title": "版本"
+              },
+              "host": "主机",
+              "port": "端口",
+              "protocol": {
+                "title": "协议",
+                "http": "HTTP",
+                "https": "HTTPS"
+              },
+              "database": "数据库",
+              "username": "用户名",
+              "password": "密码",
+              "url": "URL",
+              "token": "API 令牌",
+              "organisation": "组织",
+              "bucket": "存储桶"
             },
-            "host": "主机",
-            "port": "端口",
-            "protocol": {
-              "title": "协议",
-              "http": "HTTP",
-              "https": "HTTPS"
-            },
-            "database": "数据库",
-            "username": "用户名",
-            "password": "密码",
-            "url": "URL",
-            "token": "API 令牌",
-            "organisation": "组织",
-            "bucket": "存储桶"
+            "max-parallel-run": "最大并行查询数"
           },
           "odbc": {
             "remote-agent": "使用远程代理",
@@ -907,7 +920,8 @@
             "retry-interval": "重试间隔",
             "request-timeout": "请求超时",
             "connection-string": "连接字符串",
-            "password": "密码"
+            "password": "密码",
+            "max-parallel-run": "最大并行查询数"
           },
           "oianalytics": {
             "use-oia-module": "使用 OIAnalytics 注册",
@@ -1000,28 +1014,37 @@
             }
           },
           "oracle": {
-            "thick-mode": "厚模式",
-            "oracle-client": "Oracle 客户端库",
-            "host": "主机",
-            "port": "端口",
-            "connection-timeout": "连接超时",
-            "database": "数据库",
-            "username": "用户名",
-            "password": "密码"
+            "connection-settings": {
+              "title": "连接设置",
+              "thick-mode": "厚模式",
+              "oracle-client": "Oracle 客户端库",
+              "host": "主机",
+              "port": "端口",
+              "connection-timeout": "连接超时",
+              "database": "数据库",
+              "username": "用户名",
+              "password": "密码",
+              "idle-timeout": "空闲连接超时"
+            },
+            "max-parallel-run": "最大并行查询数"
           },
           "osisoft-pi": {
             "agent-url": "远程代理 URL",
             "retry-interval": "重试间隔"
           },
           "postgresql": {
-            "host": "主机",
-            "port": "端口",
-            "ssl-mode": "SSL",
-            "connection-timeout": "连接超时",
-            "request-timeout": "请求超时",
-            "database": "数据库",
-            "username": "用户名",
-            "password": "密码"
+            "connection-settings": {
+              "title": "连接设置",
+              "host": "主机",
+              "port": "端口",
+              "ssl-mode": "SSL",
+              "connection-timeout": "连接超时",
+              "database": "数据库",
+              "username": "用户名",
+              "password": "密码",
+              "idle-timeout": "空闲连接超时"
+            },
+            "max-parallel-run": "最大并行查询数"
           },
           "rest": {
             "host": "主机",
@@ -1189,6 +1212,7 @@
             },
             "mssql": {
               "query": "查询",
+              "request-timeout": "请求超时",
               "tracking-instant": {
                 "title": "跟踪时间戳",
                 "track-instant": "跟踪时间戳",
@@ -1445,6 +1469,7 @@
             },
             "postgresql": {
               "query": "查询",
+              "request-timeout": "请求超时",
               "tracking-instant": {
                 "title": "跟踪时间戳",
                 "track-instant": "跟踪时间戳",

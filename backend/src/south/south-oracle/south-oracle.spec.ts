@@ -4,7 +4,12 @@ import path from 'node:path';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
-import type { SouthItemSettings, SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/connector/south-settings.model';
+import type {
+  SouthItemSettings,
+  SouthOracleItemSettings,
+  SouthOracleSettings,
+  SouthOracleSettingsConnectionSettings
+} from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -12,7 +17,7 @@ import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthOracleClass from './south-oracle';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -86,8 +91,9 @@ const buildItem = (
 });
 
 const buildConfiguration = (
-  settings: Partial<SouthOracleSettings>,
-  items: Array<SouthConnectorItemEntity<SouthOracleItemSettings>>
+  connectionSettings: Partial<SouthOracleSettingsConnectionSettings>,
+  items: Array<SouthConnectorItemEntity<SouthOracleItemSettings>>,
+  maxParallelRun = 1
 ): SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> => ({
   id: 'southId',
   name: 'south',
@@ -95,14 +101,18 @@ const buildConfiguration = (
   description: 'my test connector',
   enabled: true,
   settings: {
-    host: 'localhost',
-    port: 1521,
-    database: 'db',
-    username: 'username',
-    password: 'password',
-    connectionTimeout: 1000,
-    thickMode: false,
-    ...settings
+    connectionSettings: {
+      host: 'localhost',
+      port: 1521,
+      database: 'db',
+      username: 'username',
+      password: 'password',
+      connectionTimeout: 1000,
+      thickMode: false,
+      idleTimeout: 30000,
+      ...connectionSettings
+    },
+    maxParallelRun
   },
   groups: [],
   items,
@@ -279,9 +289,9 @@ describe('SouthOracle', () => {
 
       assert.strictEqual(getConnection.mock.calls.length, 1);
       assert.deepStrictEqual(getConnection.mock.calls[0].arguments[0], {
-        user: configuration.settings.username,
+        user: configuration.settings.connectionSettings.username,
         password: 'password',
-        connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}?connect_timeout=${configuration.settings.connectionTimeout}ms`
+        connectString: `${configuration.settings.connectionSettings.host}:${configuration.settings.connectionSettings.port}/${configuration.settings.connectionSettings.database}?connect_timeout=${configuration.settings.connectionSettings.connectionTimeout}ms`
       });
 
       assert.strictEqual(utilsExports.generateReplacementParameters.mock.calls.length, 1);
@@ -487,7 +497,7 @@ describe('SouthOracle', () => {
     it('should call initOracleClient when thick mode is enabled and oracleClientVersion is not set', () => {
       assert.strictEqual(initOracleClient.mock.calls.length, 1);
       assert.deepStrictEqual(initOracleClient.mock.calls[0].arguments[0], {
-        libDir: path.resolve(configuration.settings.oracleClient!)
+        libDir: path.resolve(configuration.settings.connectionSettings.oracleClient!)
       });
     });
 
@@ -505,7 +515,7 @@ describe('SouthOracle', () => {
       assert.deepStrictEqual(getConnection.mock.calls[0].arguments[0], {
         user: undefined,
         password: undefined,
-        connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}`
+        connectString: `${configuration.settings.connectionSettings.host}:${configuration.settings.connectionSettings.port}/${configuration.settings.connectionSettings.database}`
       });
     });
   });
@@ -557,7 +567,10 @@ describe('SouthOracle', () => {
     it('Database is reachable but returns no tables', async () => {
       execute.mock.mockImplementation(async () => ({ rows: [{ TABLE_COUNT: 0 }] }));
 
-      await assert.rejects(south.testConnection(), new Error(`No tables in the "${configuration.settings.username}" schema`));
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`No tables in the "${configuration.settings.connectionSettings.username}" schema`)
+      );
       assert.ok(close.mock.calls.length > 0);
     });
 
@@ -592,7 +605,7 @@ describe('SouthOracle', () => {
 
       await assert.rejects(
         south.testConnection(),
-        new Error(`Unable to read tables in database "${configuration.settings.database}": ${errorMessage}`)
+        new Error(`Unable to read tables in database "${configuration.settings.connectionSettings.database}": ${errorMessage}`)
       );
       assert.ok(close.mock.calls.length > 0);
     });
@@ -600,7 +613,10 @@ describe('SouthOracle', () => {
     it('Database does not return count of tables', async () => {
       execute.mock.mockImplementation(async () => ({ rows: [] }));
 
-      await assert.rejects(south.testConnection(), new Error(`No tables in the "${configuration.settings.username}" schema`));
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`No tables in the "${configuration.settings.connectionSettings.username}" schema`)
+      );
       assert.ok(close.mock.calls.length > 0);
     });
 
@@ -624,6 +640,117 @@ describe('SouthOracle', () => {
         ]);
         assert.strictEqual(close.mock.calls.length, index + 1);
       }
+    });
+  });
+
+  describe('SouthOracle parallel runs', () => {
+    it('should run up to maxParallelRun work-units in parallel, within the ceiling of the manifest', () => {
+      for (const [maxParallelRun, expected] of [
+        [1, 1],
+        [4, 4],
+        [50, 8],
+        [0, 1]
+      ]) {
+        const south = new SouthOracle(
+          buildConfiguration({}, items, maxParallelRun),
+          addContentCallback,
+          createMock<SouthCacheRepository>(),
+          'cacheFolder'
+        );
+        assert.strictEqual(south['getMaxParallelRun'](), expected);
+      }
+    });
+
+    it('should open its own connection for each query running at the same time when the connector is not running', async () => {
+      const south = new SouthOracle(
+        buildConfiguration({}, items, 2),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
+      const resolvers: Array<() => void> = [];
+      execute.mock.mockImplementation(() => new Promise(resolve => resolvers.push(() => resolve({ rows: [{ value: 1 }] }))));
+
+      const runs = Promise.all([
+        south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW),
+        south.queryData(items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW)
+      ]);
+      await flushPromises();
+      assert.strictEqual(getConnection.mock.calls.length, 2);
+      assert.strictEqual(close.mock.calls.length, 0);
+
+      resolvers.forEach(resolve => resolve());
+      assert.deepStrictEqual(await runs, [[{ value: 1 }], [{ value: 1 }]]);
+      assert.strictEqual(close.mock.calls.length, 2);
+    });
+    it('should share one connection pool between the queries while running, and close it on disconnect', async () => {
+      const poolClose = mock.fn(async (_drainTime: number) => undefined);
+      const connection = { execute, close, callTimeout: 0 };
+      const createPool = mock.fn(async (_attributes: Record<string, unknown>) => ({
+        getConnection: async () => connection,
+        close: poolClose
+      }));
+      oracledbExports.createPool = createPool;
+      const south = new SouthOracle(
+        buildConfiguration({}, items, 2),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
+      await south.connect();
+
+      await south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      await south.queryData(items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(createPool.mock.calls.length, 1);
+      const { poolMin, poolMax, poolIncrement, poolTimeout } = createPool.mock.calls[0].arguments[0];
+      assert.deepStrictEqual(
+        { poolMin, poolMax, poolIncrement, poolTimeout },
+        { poolMin: 0, poolMax: 2, poolIncrement: 1, poolTimeout: 30 }
+      );
+      assert.strictEqual(connection.callTimeout, items[1].settings.requestTimeout);
+      // Each connection goes back to the pool
+      assert.strictEqual(close.mock.calls.length, 2);
+      assert.strictEqual(getConnection.mock.calls.length, 0);
+
+      await south.disconnect();
+      assert.deepStrictEqual(
+        poolClose.mock.calls.map(c => c.arguments),
+        [[10]]
+      );
+    });
+
+    it('should create the pool again on the next query after a failed creation', async () => {
+      const createPool = mock.fn(async () => ({ getConnection: async () => ({ execute, close, callTimeout: 0 }), close: mock.fn() }));
+      createPool.mock.mockImplementationOnce(() => Promise.reject(new Error('unreachable')));
+      oracledbExports.createPool = createPool;
+      const south = new SouthOracle(
+        buildConfiguration({}, items, 2),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
+      await south.connect();
+
+      await assert.rejects(south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW), {
+        message: 'unreachable'
+      });
+      await south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(createPool.mock.calls.length, 2);
+    });
+
+    it('should disconnect while the pool fails to be created', async () => {
+      oracledbExports.createPool = mock.fn(() => Promise.reject(new Error('unreachable')));
+      const south = new SouthOracle(
+        buildConfiguration({}, items, 2),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
+      await south.connect();
+
+      const query = south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      await south.disconnect();
+      await assert.rejects(query, { message: 'unreachable' });
     });
   });
 });

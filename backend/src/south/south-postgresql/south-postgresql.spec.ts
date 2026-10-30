@@ -8,7 +8,8 @@ import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type {
   SouthItemSettings,
   SouthPostgreSQLItemSettings,
-  SouthPostgreSQLSettings
+  SouthPostgreSQLSettings,
+  SouthPostgreSQLSettingsConnectionSettings
 } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -17,7 +18,7 @@ import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthPostgreSQLClass from './south-postgresql';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -46,6 +47,7 @@ class PGError extends Error {
 
 const trackedItemSettings = (query: string): SouthPostgreSQLItemSettings => ({
   query,
+  requestTimeout: 1000,
   trackingInstant: {
     trackInstant: true,
     fieldName: 'timestamp',
@@ -90,8 +92,9 @@ const buildItem = (
 });
 
 const buildConfiguration = (
-  settings: Partial<SouthPostgreSQLSettings>,
-  items: Array<SouthConnectorItemEntity<SouthPostgreSQLItemSettings>>
+  connectionSettings: Partial<SouthPostgreSQLSettingsConnectionSettings>,
+  items: Array<SouthConnectorItemEntity<SouthPostgreSQLItemSettings>>,
+  maxParallelRun = 1
 ): SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings> => ({
   id: 'southId',
   name: 'south',
@@ -99,15 +102,18 @@ const buildConfiguration = (
   description: 'my test connector',
   enabled: true,
   settings: {
-    host: 'localhost',
-    port: 5432,
-    database: 'db',
-    sslMode: false,
-    username: 'username',
-    password: 'password',
-    connectionTimeout: 1000,
-    requestTimeout: 1000,
-    ...settings
+    connectionSettings: {
+      host: 'localhost',
+      port: 5432,
+      database: 'db',
+      sslMode: false,
+      username: 'username',
+      password: 'password',
+      connectionTimeout: 1000,
+      idleTimeout: 30000,
+      ...connectionSettings
+    },
+    maxParallelRun
   },
   groups: [],
   items,
@@ -119,7 +125,7 @@ const buildConfiguration = (
 
 const items = [
   buildItem('id1', trackedItemSettings('query1')),
-  buildItem('id2', { query: 'query2', trackingInstant: { trackInstant: false } }),
+  buildItem('id2', { query: 'query2', requestTimeout: 2000, trackingInstant: { trackInstant: false } }),
   buildItem('id3', trackedItemSettings('query3'), testData.scanMode.list[1])
 ];
 
@@ -136,7 +142,7 @@ describe('SouthPostgreSQL', () => {
   let Client: Mock<(config: unknown) => unknown>;
 
   // `import * as pg` copies the keys present when the SUT loads: Client must exist from the start
-  const pgExports: Record<string, unknown> = { __esModule: true, Client: undefined };
+  const pgExports: Record<string, unknown> = { __esModule: true, Client: undefined, Pool: undefined };
   pgExports.default = pgExports;
 
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
@@ -280,21 +286,25 @@ describe('SouthPostgreSQL', () => {
 
       assert.strictEqual(Client.mock.calls.length, 1);
       assert.deepStrictEqual(Client.mock.calls[0].arguments[0], {
-        host: configuration.settings.host,
-        port: configuration.settings.port,
-        user: configuration.settings.username,
-        password: configuration.settings.password,
-        database: configuration.settings.database,
-        connectionTimeoutMillis: configuration.settings.connectionTimeout,
-        query_timeout: configuration.settings.requestTimeout,
+        host: configuration.settings.connectionSettings.host,
+        port: configuration.settings.connectionSettings.port,
+        user: configuration.settings.connectionSettings.username,
+        password: configuration.settings.connectionSettings.password,
+        database: configuration.settings.connectionSettings.database,
+        connectionTimeoutMillis: configuration.settings.connectionSettings.connectionTimeout,
+        query_timeout: 15_000,
         ssl: true
       });
 
       assert.strictEqual(clientConnect.mock.calls.length, 1);
 
+      // The timeout of the item overrides the one of the client
       assert.deepStrictEqual(clientQuery.mock.calls[0].arguments, [
-        configuration.items[0].settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2'),
-        replacementParams
+        {
+          text: configuration.items[0].settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2'),
+          values: replacementParams,
+          query_timeout: configuration.items[0].settings.requestTimeout
+        }
       ]);
 
       assert.strictEqual(clientEnd.mock.calls.length, 1);
@@ -536,7 +546,7 @@ describe('SouthPostgreSQL', () => {
 
       await assert.rejects(
         south.testConnection(),
-        new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
+        new Error(`Unable to read tables in database "${configuration.settings.connectionSettings.database}". ${errorMessage}`)
       );
       assert.ok(clientEnd.mock.calls.length > 0);
     });
@@ -544,14 +554,20 @@ describe('SouthPostgreSQL', () => {
     it('Database has no tables', async () => {
       clientQuery.mock.mockImplementation(async () => ({ rows: [{ table_count: 0 }] }));
 
-      await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Database "${configuration.settings.connectionSettings.database}" has no tables`)
+      );
       assert.ok(clientEnd.mock.calls.length > 0);
     });
 
     it('Database does not return count of tables', async () => {
       clientQuery.mock.mockImplementation(async () => ({ rows: [] }));
 
-      await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Database "${configuration.settings.connectionSettings.database}" has no tables`)
+      );
       assert.ok(clientEnd.mock.calls.length > 0);
     });
 
@@ -562,6 +578,103 @@ describe('SouthPostgreSQL', () => {
         });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_MESSAGES[errorMessage]} ${errorMessage}`));
       }
+    });
+  });
+
+  describe('SouthPostgreSQL parallel runs', () => {
+    it('should run up to maxParallelRun work-units in parallel, within the ceiling of the manifest', () => {
+      for (const [maxParallelRun, expected] of [
+        [1, 1],
+        [4, 4],
+        [50, 8],
+        [0, 1]
+      ]) {
+        const south = new SouthPostgreSQL(
+          buildConfiguration({}, items, maxParallelRun),
+          addContentCallback,
+          createMock<SouthCacheRepository>(),
+          'cacheFolder'
+        );
+        assert.strictEqual(south['getMaxParallelRun'](), expected);
+      }
+    });
+
+    it('should open its own client for each query running at the same time when the connector is not running', async () => {
+      const south = new SouthPostgreSQL(
+        buildConfiguration({}, items, 2),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
+      const resolvers: Array<() => void> = [];
+      clientQuery.mock.mockImplementation(() => new Promise(resolve => resolvers.push(() => resolve({ rows: [{ value: 1 }] }))));
+
+      const runs = Promise.all([
+        south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW),
+        south.queryData(items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW)
+      ]);
+      await flushPromises();
+      assert.strictEqual(Client.mock.calls.length, 2);
+      assert.strictEqual(clientEnd.mock.calls.length, 0);
+
+      resolvers.forEach(resolve => resolve());
+      assert.deepStrictEqual(await runs, [[{ value: 1 }], [{ value: 1 }]]);
+      assert.strictEqual(clientEnd.mock.calls.length, 2);
+    });
+    it('should share one connection pool between the queries while running, and end it on disconnect', async () => {
+      const release = mock.fn((_error?: Error) => undefined);
+      const on = mock.fn((_event: string, _listener: (error: Error) => void) => undefined);
+      const poolEnd = mock.fn(async () => undefined);
+      const Pool = mock.fn(function (_options: Record<string, unknown>) {
+        return { connect: async () => ({ query: clientQuery, release }), on, end: poolEnd };
+      });
+      pgExports.Pool = Pool;
+      const south = new SouthPostgreSQL(
+        buildConfiguration({}, items, 2),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
+      await south.connect();
+
+      await south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      await south.queryData(items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(Pool.mock.calls.length, 1);
+      const { max, idleTimeoutMillis } = Pool.mock.calls[0].arguments[0];
+      assert.deepStrictEqual({ max, idleTimeoutMillis }, { max: 2, idleTimeoutMillis: 30000 });
+      assert.deepStrictEqual(
+        release.mock.calls.map(c => c.arguments),
+        [[], []]
+      );
+      assert.strictEqual(Client.mock.calls.length, 0);
+
+      // The error of an idle client is logged rather than crashing the process
+      on.mock.calls[0].arguments[1](new Error('connection lost'));
+      assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'PostgreSQL connection pool error: connection lost'));
+
+      await south.disconnect();
+      assert.strictEqual(poolEnd.mock.calls.length, 1);
+    });
+
+    it('should close the client of a failed query rather than giving it to another query', async () => {
+      const release = mock.fn((_error?: Error) => undefined);
+      pgExports.Pool = mock.fn(function () {
+        return { connect: async () => ({ query: clientQuery, release }), on: mock.fn(), end: mock.fn() };
+      });
+      const error = new Error('query error');
+      clientQuery.mock.mockImplementationOnce(() => Promise.reject(error));
+      const south = new SouthPostgreSQL(
+        buildConfiguration({}, items, 2),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder'
+      );
+      await south.connect();
+
+      await assert.rejects(south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW), {
+        message: 'query error'
+      });
+      assert.deepStrictEqual(release.mock.calls[0].arguments, [error]);
     });
   });
 });

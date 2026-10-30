@@ -17,14 +17,20 @@ Connect to and query MySQL® or MariaDB™ databases with OIBus.
 
 ## Specific Settings {#specific-settings}
 
-| Setting            | Description                                                            | Example Value  |
-| ------------------ | ---------------------------------------------------------------------- | -------------- |
-| Host               | IP address or hostname of the MySQL/MariaDB server.                    | `192.168.1.10` |
-| Port               | Server port number. Default: `3306`.                                   | `3306`         |
-| Connection timeout | Maximum time in milliseconds to establish connection. Default: `5000`. | `5000`         |
-| Database           | Name of the database to connect to.                                    | `production`   |
-| Username           | Authentication username.                                               | `db_user`      |
-| Password           | Authentication password.                                               | `••••••••`     |
+| Setting                 | Description                                                                                             | Example Value  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- | -------------- |
+| Host                    | IP address or hostname of the MySQL/MariaDB server.                                                     | `192.168.1.10` |
+| Port                    | Server port number. Default: `3306`.                                                                    | `3306`         |
+| Connection timeout      | Maximum time in milliseconds to establish connection. Default: `5000`.                                  | `5000`         |
+| Database                | Name of the database to connect to.                                                                     | `production`   |
+| Username                | Authentication username.                                                                                | `db_user`      |
+| Password                | Authentication password.                                                                                | `••••••••`     |
+| Idle connection timeout | Time in milliseconds an unused connection of the pool stays open before being closed. Default: `30000`. | `30000`        |
+| Max parallel queries    | Maximum number of items or groups queried at the same time, from `1` (sequential) to `8`. Default: `1`. | `2`            |
+
+:::note Parallel queries
+OIBus keeps a pool of up to this number of connections to the database, opened when the queries need them and closed after the idle connection timeout: each one adds to the load of the source. Keep the value within the `max_connections` budget of the server for this user.
+:::
 
 :::caution User Permissions
 

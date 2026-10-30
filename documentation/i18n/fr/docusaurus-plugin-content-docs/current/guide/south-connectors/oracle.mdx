@@ -20,16 +20,22 @@ Connectez-vous à Oracle Database™ et interrogez-le avec OIBus, avec la prise 
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Paramètre                   | Description                                                                                                                                            | Exemple de valeur              |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| Mode thick                  | Utiliser la bibliothèque cliente Oracle pour l'accès à la base de données. Nécessite l'installation d'Instant Client.                                  | Activé/Désactivé               |
-| Bibliothèque cliente Oracle | Chemin vers Oracle Instant Client. Requis quand le mode thick est activé.                                                                              | `C:\oracle\instantclient_23_5` |
-| Hôte                        | Adresse IP ou nom d'hôte du serveur Oracle.                                                                                                            | `192.168.1.10`                 |
-| Port                        | Port du serveur. Par défaut : `1521`.                                                                                                                  | `1521`                         |
-| Délai de connexion          | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                                        | `15000`                        |
-| Base de données             | Nom du service de la base de données cible (format Oracle Easy Connect : `host:port/service_name` ; la forme SID classique n'est pas prise en charge). | `ORCL`                         |
-| Nom d'utilisateur           | Nom d'utilisateur d'authentification.                                                                                                                  | `db_user`                      |
-| Mot de passe                | Mot de passe d'authentification.                                                                                                                       | `••••••••`                     |
+| Paramètre                         | Description                                                                                                                                            | Exemple de valeur              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| Mode thick                        | Utiliser la bibliothèque cliente Oracle pour l'accès à la base de données. Nécessite l'installation d'Instant Client.                                  | Activé/Désactivé               |
+| Bibliothèque cliente Oracle       | Chemin vers Oracle Instant Client. Requis quand le mode thick est activé.                                                                              | `C:\oracle\instantclient_23_5` |
+| Hôte                              | Adresse IP ou nom d'hôte du serveur Oracle.                                                                                                            | `192.168.1.10`                 |
+| Port                              | Port du serveur. Par défaut : `1521`.                                                                                                                  | `1521`                         |
+| Délai de connexion                | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                                        | `15000`                        |
+| Base de données                   | Nom du service de la base de données cible (format Oracle Easy Connect : `host:port/service_name` ; la forme SID classique n'est pas prise en charge). | `ORCL`                         |
+| Nom d'utilisateur                 | Nom d'utilisateur d'authentification.                                                                                                                  | `db_user`                      |
+| Mot de passe                      | Mot de passe d'authentification.                                                                                                                       | `••••••••`                     |
+| Délai d'inactivité des connexions | Temps en millisecondes pendant lequel une connexion inutilisée du pool reste ouverte avant d'être fermée. Par défaut : `30000`.                        | `30000`                        |
+| Requêtes parallèles max           | Nombre maximal d'éléments ou de groupes interrogés en même temps, de `1` (séquentiel) à `8`. Par défaut : `1`.                                         | `2`                            |
+
+:::note Requêtes parallèles
+OIBus garde un pool d'au plus ce nombre de connexions à la base de données, ouvertes quand les requêtes en ont besoin et fermées après le délai d'inactivité : chacune augmente la charge de la source. Gardez une valeur inférieure aux limites de sessions de l'utilisateur Oracle. En mode Thick, les requêtes s'exécutent sur le pool de threads de Node.js (4 threads par défaut, partagés avec les accès aux fichiers) : une valeur supérieure à `4` ne les accélère pas.
+:::
 
 ### Modes de connexion {#connection-modes}
 

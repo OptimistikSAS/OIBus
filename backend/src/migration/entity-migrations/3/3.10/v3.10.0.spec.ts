@@ -11,6 +11,7 @@ import {
   createMigrationSchemaHarness
 } from '../../../../tests/utils/migration-test-utils';
 import {
+  addDatabaseConnectionSettings,
   addEmptyIntervalStrategies,
   addHttpsSettings,
   addItemAndWorkflowDescriptions,
@@ -4373,5 +4374,95 @@ describe('Entity migration v3.10.0: addEmptyIntervalStrategies', () => {
     assert.ok(!(await columnNames(db, 'south_items')).includes('empty_interval_strategy'));
     assert.ok(!(await columnNames(db, 'south_item_groups')).includes('empty_interval_strategy'));
     assert.strictEqual((await db('south_items').select('id')).length, 2);
+  });
+});
+
+describe('Entity migration v3.10.0: addDatabaseConnectionSettings', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addDatabaseConnectionSettings, db)
+  });
+  let db: Knex;
+  const settingsOf = async (table: string, column: string, id: string) =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+  const historyQuery = (id: string, southType: string, southSettings: object) => ({
+    ...caching,
+    id,
+    name: id,
+    start_time: NOW,
+    end_time: NOW,
+    south_type: southType,
+    north_type: 'console',
+    south_settings: JSON.stringify(southSettings),
+    north_settings: '{}'
+  });
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+  });
+
+  afterEach(() => harness.afterEach());
+
+  it('should group the connection settings of the database souths and keep their queries sequential', async () => {
+    await db('south_connectors').insert([
+      {
+        id: 'mssql',
+        name: 'MSSQL',
+        type: 'mssql',
+        enabled: true,
+        settings: JSON.stringify({ host: 'h', port: 1433, domain: null, requestTimeout: 5000 })
+      },
+      { id: 'influxdb', name: 'InfluxDB', type: 'influxdb', enabled: true, settings: JSON.stringify({ version: '3', url: 'u' }) },
+      { id: 'odbc', name: 'ODBC', type: 'odbc', enabled: true, settings: JSON.stringify({ remoteAgent: true }) },
+      { id: 'oledb', name: 'OLEDB', type: 'oledb', enabled: true, settings: JSON.stringify({ agentUrl: 'u' }) }
+    ]);
+    await db('history_queries').insert([
+      historyQuery('hq-postgresql', 'postgresql', { host: 'h', sslMode: true }),
+      historyQuery('hq-mysql', 'mysql', { host: 'h' }),
+      historyQuery('hq-oracle', 'oracle', { thickMode: false, host: 'h', maxParallelRun: 3 }),
+      historyQuery('hq-sqlite', 'sqlite', { databasePath: 'p' })
+    ]);
+
+    await db('south_items').insert([
+      { id: 'mssql-item', name: 'MSSQL item', enabled: true, connector_id: 'mssql', scan_mode_id: 'sm1', settings: '{"query":"q"}' },
+      { id: 'odbc-item', name: 'ODBC item', enabled: true, connector_id: 'odbc', scan_mode_id: 'sm1', settings: '{"query":"q"}' }
+    ]);
+    await db('history_items').insert([
+      { id: 'postgresql-item', history_id: 'hq-postgresql', name: 'PostgreSQL item', enabled: true, settings: '{"query":"q"}' },
+      { id: 'mysql-item', history_id: 'hq-mysql', name: 'MySQL item', enabled: true, settings: '{"query":"q","requestTimeout":2000}' }
+    ]);
+
+    await addDatabaseConnectionSettings(db);
+
+    // The request timeout of the MSSQL and PostgreSQL connectors moves to their items, the default one when missing
+    assert.deepStrictEqual(await settingsOf('south_items', 'settings', 'mssql-item'), { query: 'q', requestTimeout: 5000 });
+    assert.deepStrictEqual(await settingsOf('history_items', 'settings', 'postgresql-item'), { query: 'q', requestTimeout: 15_000 });
+    assert.deepStrictEqual(await settingsOf('south_items', 'settings', 'odbc-item'), { query: 'q' });
+    assert.deepStrictEqual(await settingsOf('history_items', 'settings', 'mysql-item'), { query: 'q', requestTimeout: 2000 });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'mssql'), {
+      connectionSettings: { host: 'h', port: 1433, domain: null, idleTimeout: 30_000 },
+      maxParallelRun: 1
+    });
+    // No connection pool for InfluxDB
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'influxdb'), {
+      connectionSettings: { version: '3', url: 'u' },
+      maxParallelRun: 1
+    });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'odbc'), { remoteAgent: true, maxParallelRun: 1 });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { agentUrl: 'u' });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-postgresql'), {
+      connectionSettings: { host: 'h', sslMode: true, idleTimeout: 30_000 },
+      maxParallelRun: 1
+    });
+    // An already set value is kept
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-oracle'), {
+      connectionSettings: { thickMode: false, host: 'h', idleTimeout: 30_000 },
+      maxParallelRun: 3
+    });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-sqlite'), { databasePath: 'p' });
   });
 });

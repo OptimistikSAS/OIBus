@@ -40,6 +40,11 @@ import {
   withTableSelect
 } from '../sql-table-discovery';
 
+// Upper bound of maxParallelRun, as in the manifest.
+const MAX_PARALLEL_RUN_CEILING = 8;
+// Timeout of the queries run outside an item (connection test, explore, discovery), in ms
+const DEFAULT_REQUEST_TIMEOUT = 15_000;
+
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send the resulting rows as
  * record-list content to the cache. Row values are passed through untouched — datetime parsing for
@@ -50,6 +55,11 @@ export default class SouthPostgreSQL
   extends SouthConnector<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
   implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
+  // Connection pool shared by the queries while the connector runs, sized to getMaxParallelRun(). Its clients are
+  // connected on demand. Null when the connector is not running: the queries of a test then connect their own client.
+  private pool: Promise<pg.Pool> | null = null;
+  private poolEnabled = false;
+
   constructor(
     connector: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
     engineAddContentCallback: (
@@ -65,16 +75,75 @@ export default class SouthPostgreSQL
   }
 
   async createConnectionOptions(): Promise<ClientConfig> {
+    const settings = this.connector.settings.connectionSettings;
     return {
-      host: this.connector.settings.host,
-      port: this.connector.settings.port,
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
-      database: this.connector.settings.database,
-      query_timeout: this.connector.settings.requestTimeout,
-      connectionTimeoutMillis: this.connector.settings.connectionTimeout,
-      ssl: this.connector.settings.sslMode
+      host: settings.host,
+      port: settings.port,
+      user: settings.username || undefined,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
+      database: settings.database,
+      query_timeout: DEFAULT_REQUEST_TIMEOUT,
+      connectionTimeoutMillis: settings.connectionTimeout,
+      ssl: settings.sslMode
     };
+  }
+
+  override async connect(): Promise<void> {
+    this.poolEnabled = true;
+    await super.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    this.poolEnabled = false;
+    const pool = this.pool;
+    this.pool = null;
+    if (pool) {
+      await (await pool).end();
+    }
+    await super.disconnect();
+  }
+
+  /** Each work-unit queries on its own client of the pool (see withClient). */
+  protected override getMaxParallelRun(): number {
+    return Math.max(1, Math.min(this.connector.settings.maxParallelRun, MAX_PARALLEL_RUN_CEILING));
+  }
+
+  /**
+   * Runs `fn` on a client of the pool of the running connector, or on a client of its own closed afterwards when the
+   * connector is not running (e.g. testing an item).
+   */
+  private async withClient<T>(fn: (client: pg.ClientBase) => Promise<T>): Promise<T> {
+    if (!this.poolEnabled) {
+      const client = new pg.Client(await this.createConnectionOptions());
+      try {
+        await client.connect();
+        return await fn(client);
+      } finally {
+        await client.end();
+      }
+    }
+    this.pool ??= this.createPool();
+    const client = await (await this.pool).connect();
+    try {
+      const result = await fn(client);
+      client.release();
+      return result;
+    } catch (error: unknown) {
+      // Released with the error, the client is closed rather than given to another query
+      client.release(error instanceof Error ? error : new Error(getErrorMessage(error)));
+      throw error;
+    }
+  }
+
+  private async createPool(): Promise<pg.Pool> {
+    const pool = new pg.Pool({
+      ...(await this.createConnectionOptions()),
+      max: this.getMaxParallelRun(),
+      idleTimeoutMillis: this.connector.settings.connectionSettings.idleTimeout
+    });
+    // Without a listener, the error of an idle client (e.g. the server restarting) would crash the process
+    pool.on('error', error => this.logger.error(`PostgreSQL connection pool error: ${getErrorMessage(error)}`));
+    return pool;
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -97,11 +166,11 @@ export default class SouthPostgreSQL
       }
 
       switch ((error as Error).message) {
-        case `password authentication failed for user "${this.connector.settings.username}"`:
+        case `password authentication failed for user "${this.connector.settings.connectionSettings.username}"`:
           throw new Error(`Please check username and password. ${getErrorMessage(error)}`);
 
-        case `database "${this.connector.settings.database}" does not exist`:
-          throw new Error(`Database "${this.connector.settings.database}" does not exist. ${getErrorMessage(error)}`);
+        case `database "${this.connector.settings.connectionSettings.database}" does not exist`:
+          throw new Error(`Database "${this.connector.settings.connectionSettings.database}" does not exist. ${getErrorMessage(error)}`);
 
         default:
           throw new Error(`Unexpected error. ${getErrorMessage(error)}`);
@@ -119,12 +188,14 @@ export default class SouthPostgreSQL
       table_count = rows[0]?.table_count ?? 0;
     } catch (error: unknown) {
       await connection.end();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${getErrorMessage(error)}`);
+      throw new Error(
+        `Unable to read tables in database "${this.connector.settings.connectionSettings.database}". ${getErrorMessage(error)}`
+      );
     }
 
     if (table_count === 0) {
       await connection.end();
-      throw new Error(`Database "${this.connector.settings.database}" has no tables`);
+      throw new Error(`Database "${this.connector.settings.connectionSettings.database}" has no tables`);
     }
 
     const items: Array<{ key: string; value: string }> = [{ key: 'Tables', value: String(table_count) }];
@@ -222,27 +293,15 @@ export default class SouthPostgreSQL
     endTime: Instant
   ): Promise<Array<OIBusRecord>> {
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2');
-    const config = await this.createConnectionOptions();
-
     const dateTimeInput = item.settings.trackingInstant?.trackInstant ? item.settings.trackingInstant.dateTimeInput : null;
     const postgresqlStartTime = dateTimeInput == null ? startTime : formatInstant(startTime, dateTimeInput);
     const postgresqlEndTime = dateTimeInput == null ? endTime : formatInstant(endTime, dateTimeInput);
     logQuery(item.settings.query, postgresqlStartTime, postgresqlEndTime, this.logger, workUnitLogCtx([item]));
 
-    let connection;
-    try {
-      connection = new pg.Client(config);
-      await connection.connect();
-      const params = generateReplacementParameters(item.settings.query, postgresqlStartTime, postgresqlEndTime);
-      const { rows } = await connection.query(adaptedQuery, params);
-      await connection.end();
-      return rows;
-    } catch (error) {
-      if (connection) {
-        await connection.end();
-      }
-      throw error;
-    }
+    const params = generateReplacementParameters(item.settings.query, postgresqlStartTime, postgresqlEndTime);
+    return await this.withClient(
+      async client => (await client.query({ text: adaptedQuery, values: params, query_timeout: item.settings.requestTimeout })).rows
+    );
   }
 
   /**
@@ -253,20 +312,16 @@ export default class SouthPostgreSQL
    * @param parentId - a "schema.table" id to list the columns of, or null to list the tables
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
-    const connection = new pg.Client(await this.createConnectionOptions());
-    await connection.connect();
-    try {
-      return withTableSelect(
+    return await this.withClient(async client =>
+      withTableSelect(
         parentId,
-        parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId),
+        parentId === null ? await this.exploreTables(client) : await this.exploreColumns(client, parentId),
         POSTGRESQL_DIALECT
-      );
-    } finally {
-      await connection.end();
-    }
+      )
+    );
   }
 
-  private async exploreTables(connection: pg.Client): Promise<Array<SouthConnectorExploreEntry>> {
+  private async exploreTables(connection: pg.ClientBase): Promise<Array<SouthConnectorExploreEntry>> {
     const { rows } = await connection.query<{ tableSchema: string; tableName: string; columnCount: number; rowCount: string }>(`
       SELECT
         t.table_schema AS "tableSchema",
@@ -288,7 +343,7 @@ export default class SouthPostgreSQL
     }));
   }
 
-  private async exploreColumns(connection: pg.Client, tableId: string): Promise<Array<SouthConnectorExploreEntry>> {
+  private async exploreColumns(connection: pg.ClientBase, tableId: string): Promise<Array<SouthConnectorExploreEntry>> {
     const { schema, table } = splitSchemaTable(tableId);
     const { rows } = await connection.query<{
       name: string;
@@ -340,20 +395,6 @@ export default class SouthPostgreSQL
       return discoverTables(parentId => this.explore(parentId), nodeIds, POSTGRESQL_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
-    const config = await this.createConnectionOptions();
-
-    let connection;
-    try {
-      connection = new pg.Client(config);
-      await connection.connect();
-      const { rows } = await connection.query(query);
-      await connection.end();
-      return rows;
-    } catch (error) {
-      if (connection) {
-        await connection.end();
-      }
-      throw error;
-    }
+    return await this.withClient(async client => (await client.query(query)).rows);
   }
 }

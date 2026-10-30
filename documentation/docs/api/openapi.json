@@ -4899,7 +4899,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthInfluxDBSettingsVersion": {
+			"SouthInfluxDBSettingsConnectionSettingsVersion": {
 				"type": "string",
 				"enum": [
 					"1",
@@ -4907,17 +4907,17 @@
 					"3"
 				]
 			},
-			"SouthInfluxDBSettingsProtocol": {
+			"SouthInfluxDBSettingsConnectionSettingsProtocol": {
 				"type": "string",
 				"enum": [
 					"http",
 					"https"
 				]
 			},
-			"SouthInfluxDBSettings": {
+			"SouthInfluxDBSettingsConnectionSettings": {
 				"properties": {
 					"version": {
-						"$ref": "#/components/schemas/SouthInfluxDBSettingsVersion"
+						"$ref": "#/components/schemas/SouthInfluxDBSettingsConnectionSettingsVersion"
 					},
 					"host": {
 						"type": "string"
@@ -4927,7 +4927,7 @@
 						"format": "double"
 					},
 					"protocol": {
-						"$ref": "#/components/schemas/SouthInfluxDBSettingsProtocol"
+						"$ref": "#/components/schemas/SouthInfluxDBSettingsConnectionSettingsProtocol"
 					},
 					"database": {
 						"type": "string"
@@ -4956,6 +4956,23 @@
 				},
 				"required": [
 					"version"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthInfluxDBSettings": {
+				"properties": {
+					"connectionSettings": {
+						"$ref": "#/components/schemas/SouthInfluxDBSettingsConnectionSettings"
+					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"connectionSettings",
+					"maxParallelRun"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7306,7 +7323,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMSSQLSettings": {
+			"SouthMSSQLSettingsConnectionSettings": {
 				"properties": {
 					"host": {
 						"type": "string"
@@ -7343,6 +7360,10 @@
 					"requestTimeout": {
 						"type": "number",
 						"format": "double"
+					},
+					"idleTimeout": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -7355,7 +7376,25 @@
 					"username",
 					"password",
 					"domain",
-					"requestTimeout"
+					"requestTimeout",
+					"idleTimeout"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthMSSQLSettings": {
+				"properties": {
+					"connectionSettings": {
+						"$ref": "#/components/schemas/SouthMSSQLSettingsConnectionSettings"
+					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"connectionSettings",
+					"maxParallelRun"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7915,7 +7954,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMySQLSettings": {
+			"SouthMySQLSettingsConnectionSettings": {
 				"properties": {
 					"host": {
 						"type": "string"
@@ -7938,6 +7977,10 @@
 					"password": {
 						"type": "string",
 						"nullable": true
+					},
+					"idleTimeout": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -7946,7 +7989,25 @@
 					"connectionTimeout",
 					"database",
 					"username",
-					"password"
+					"password",
+					"idleTimeout"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthMySQLSettings": {
+				"properties": {
+					"connectionSettings": {
+						"$ref": "#/components/schemas/SouthMySQLSettingsConnectionSettings"
+					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"connectionSettings",
+					"maxParallelRun"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8526,6 +8587,10 @@
 					"password": {
 						"type": "string",
 						"nullable": true
+					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -8533,7 +8598,8 @@
 					"connectionTimeout",
 					"retryInterval",
 					"connectionString",
-					"password"
+					"password",
+					"maxParallelRun"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11535,7 +11601,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOracleSettings": {
+			"SouthOracleSettingsConnectionSettings": {
 				"properties": {
 					"thickMode": {
 						"type": "boolean"
@@ -11564,6 +11630,10 @@
 					"password": {
 						"type": "string",
 						"nullable": true
+					},
+					"idleTimeout": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -11573,7 +11643,25 @@
 					"connectionTimeout",
 					"database",
 					"username",
-					"password"
+					"password",
+					"idleTimeout"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthOracleSettings": {
+				"properties": {
+					"connectionSettings": {
+						"$ref": "#/components/schemas/SouthOracleSettingsConnectionSettings"
+					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"connectionSettings",
+					"maxParallelRun"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12646,7 +12734,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthPostgreSQLSettings": {
+			"SouthPostgreSQLSettingsConnectionSettings": {
 				"properties": {
 					"host": {
 						"type": "string"
@@ -12676,6 +12764,10 @@
 					"password": {
 						"type": "string",
 						"nullable": true
+					},
+					"idleTimeout": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -12686,7 +12778,25 @@
 					"connectionTimeout",
 					"requestTimeout",
 					"username",
-					"password"
+					"password",
+					"idleTimeout"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthPostgreSQLSettings": {
+				"properties": {
+					"connectionSettings": {
+						"$ref": "#/components/schemas/SouthPostgreSQLSettingsConnectionSettings"
+					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"connectionSettings",
+					"maxParallelRun"
 				],
 				"type": "object",
 				"additionalProperties": false

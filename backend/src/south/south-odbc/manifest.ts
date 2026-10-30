@@ -170,6 +170,32 @@ const manifest: SouthConnectorManifest = {
           columns: 3,
           displayInViewMode: false
         }
+      },
+      {
+        type: 'number',
+        key: 'maxParallelRun',
+        translationKey: 'configuration.oibus.manifest.south.odbc.max-parallel-run',
+        unit: null,
+        defaultValue: 1,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['8']
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
       }
     ]
   },

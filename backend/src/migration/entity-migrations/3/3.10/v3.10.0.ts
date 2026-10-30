@@ -26,7 +26,9 @@ import {
   FILENAME_FUNCTION_NAMES,
   HISTORY_SOUTH_TYPES,
   IOT_FAMILY_SOUTH_TYPES,
+  ITEM_REQUEST_TIMEOUT_SOUTH_TYPES,
   keepsResolvedTransformer,
+  MAX_PARALLEL_RUN_SOUTH_TYPES,
   OIANALYTICS_TRANSFORMER_FUNCTION_NAMES,
   OldSqlItemSettings,
   POINT_SOUTH_TYPES,
@@ -38,6 +40,7 @@ import {
   SETPOINT_TRANSFORMER_REPLACEMENTS,
   SQL_SOUTH_TYPES,
   TIME_VALUES_TRANSFORMER_REPLACEMENTS,
+  toDatabaseSouthSettings,
   toFileDataType,
   toFileOutputTransformerOptions,
   toFileTransformerOptions,
@@ -51,6 +54,7 @@ import {
   toRecordListTransformerOptions,
   toSetpointTransformerOptions,
   usesRemoteAgent,
+  withItemRequestTimeout,
   withPrefixAndSuffix
 } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
 import { generateRandomId } from '../../../../service/utils';
@@ -107,7 +111,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   moveFilenamePrefixAndSuffixToTransformers,
   addOPCUATimeoutsAndSubscriptionSettings,
   addItemAndWorkflowDescriptions,
-  addEmptyIntervalStrategies
+  addEmptyIntervalStrategies,
+  addDatabaseConnectionSettings
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -1627,6 +1632,48 @@ export async function addEmptyIntervalStrategies(knex: Knex): Promise<void> {
   const historyConnectorIds = knex(SOUTH_CONNECTORS_TABLE).select('id').whereIn('type', HISTORY_SOUTH_TYPES);
   await knex(SOUTH_ITEM_GROUPS_TABLE).whereIn('south_id', historyConnectorIds).update({ empty_interval_strategy: 'keep' });
   await knex(SOUTH_ITEMS_TABLE).whereIn('connector_id', historyConnectorIds).update({ empty_interval_strategy: 'keep' });
+}
+
+/**
+ * The database South settings gain a `maxParallelRun`, 1 keeping the queries sequential, and their connection settings move
+ * into a `connectionSettings` group (see `toDatabaseSouthSettings` in the config upgrade), for the connectors and the
+ * history queries. The request timeout of the MSSQL and PostgreSQL ones moves to their items (see `withItemRequestTimeout`).
+ */
+export async function addDatabaseConnectionSettings(knex: Knex): Promise<void> {
+  const targets = [
+    {
+      table: SOUTH_CONNECTORS_TABLE,
+      typeColumn: 'type',
+      settingsColumn: 'settings',
+      itemsTable: SOUTH_ITEMS_TABLE,
+      parentColumn: 'connector_id'
+    },
+    {
+      table: HISTORY_QUERIES_TABLE,
+      typeColumn: 'south_type',
+      settingsColumn: 'south_settings',
+      itemsTable: HISTORY_ITEMS_TABLE,
+      parentColumn: 'history_id'
+    }
+  ];
+  for (const { table, typeColumn, settingsColumn, itemsTable, parentColumn } of targets) {
+    const rows: Array<{ id: string; type: string; settings: string }> = await knex(table)
+      .select('id', `${typeColumn} as type`, `${settingsColumn} as settings`)
+      .whereIn(typeColumn, MAX_PARALLEL_RUN_SOUTH_TYPES);
+    for (const row of rows) {
+      if (ITEM_REQUEST_TIMEOUT_SOUTH_TYPES.includes(row.type)) {
+        const items: Array<{ id: string; settings: string }> = await knex(itemsTable).select('id', 'settings').where(parentColumn, row.id);
+        for (const item of items) {
+          await knex(itemsTable)
+            .where('id', item.id)
+            .update({ settings: JSON.stringify(withItemRequestTimeout(JSON.parse(item.settings), JSON.parse(row.settings))) });
+        }
+      }
+      await knex(table)
+        .where('id', row.id)
+        .update({ [settingsColumn]: JSON.stringify(toDatabaseSouthSettings(row.type, JSON.parse(row.settings))) });
+    }
+  }
 }
 
 /** The id of a standard transformer, created when missing (the startup seeding runs after the migrations). */

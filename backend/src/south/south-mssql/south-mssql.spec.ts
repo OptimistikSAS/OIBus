@@ -3,7 +3,12 @@ import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
-import type { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/connector/south-settings.model';
+import type {
+  SouthItemSettings,
+  SouthMSSQLItemSettings,
+  SouthMSSQLSettings,
+  SouthMSSQLSettingsConnectionSettings
+} from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -11,7 +16,7 @@ import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthMSSQLClass from './south-mssql';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -39,6 +44,7 @@ class MSSQLError extends Error {
 
 const trackedItemSettings = (query: string): SouthMSSQLItemSettings => ({
   query,
+  requestTimeout: 1000,
   trackingInstant: {
     trackInstant: true,
     fieldName: 'timestamp',
@@ -83,8 +89,9 @@ const buildItem = (
 });
 
 const buildConfiguration = (
-  settings: Partial<SouthMSSQLSettings>,
-  items: Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>
+  connectionSettings: Partial<SouthMSSQLSettingsConnectionSettings>,
+  items: Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>,
+  maxParallelRun = 1
 ): SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> => ({
   id: 'southId',
   name: 'south',
@@ -92,17 +99,20 @@ const buildConfiguration = (
   description: 'my test connector',
   enabled: true,
   settings: {
-    host: 'localhost',
-    port: 1433,
-    database: 'db',
-    username: 'username',
-    password: 'password',
-    domain: 'domain',
-    encryption: false,
-    connectionTimeout: 1000,
-    requestTimeout: 1000,
-    trustServerCertificate: true,
-    ...settings
+    connectionSettings: {
+      host: 'localhost',
+      port: 1433,
+      database: 'db',
+      username: 'username',
+      password: 'password',
+      domain: 'domain',
+      encryption: false,
+      connectionTimeout: 1000,
+      trustServerCertificate: true,
+      idleTimeout: 30000,
+      ...connectionSettings
+    },
+    maxParallelRun
   },
   groups: [],
   items,
@@ -114,7 +124,7 @@ const buildConfiguration = (
 
 const items = [
   buildItem('id1', trackedItemSettings('SELECT * FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime')),
-  buildItem('id2', { query: 'query2', trackingInstant: { trackInstant: false } }),
+  buildItem('id2', { query: 'query2', requestTimeout: 2000, trackingInstant: { trackInstant: false } }),
   buildItem('id3', trackedItemSettings('query3'), testData.scanMode.list[1])
 ];
 
@@ -126,6 +136,7 @@ describe('SouthMSSQL', () => {
     (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
   >;
   let query: Mock<(sql?: unknown) => unknown>;
+  let request: Mock<(overrides?: { requestTimeout?: number }) => unknown>;
   let input: Mock<(...args: Array<unknown>) => void>;
   let close: Mock<() => void>;
   let connect: Mock<() => unknown>;
@@ -166,7 +177,8 @@ describe('SouthMSSQL', () => {
     }));
     input = mock.fn();
     close = mock.fn();
-    connect = mock.fn(() => ({ request: () => ({ input, query }), close }));
+    request = mock.fn(() => ({ input, query }));
+    connect = mock.fn(() => ({ request, close }));
     connectionPool = mock.fn(function () {
       return { connect };
     });
@@ -270,23 +282,25 @@ describe('SouthMSSQL', () => {
 
       assert.strictEqual(connectionPool.mock.calls.length, 1);
       assert.deepStrictEqual(connectionPool.mock.calls[0].arguments[0], {
-        user: configuration.settings.username,
+        user: configuration.settings.connectionSettings.username,
         password: 'password',
-        server: configuration.settings.host,
-        port: configuration.settings.port,
-        database: configuration.settings.database,
-        connectionTimeout: configuration.settings.connectionTimeout,
-        requestTimeout: configuration.settings.requestTimeout,
+        server: configuration.settings.connectionSettings.host,
+        port: configuration.settings.connectionSettings.port,
+        database: configuration.settings.connectionSettings.database,
+        connectionTimeout: configuration.settings.connectionSettings.connectionTimeout,
+        requestTimeout: 15_000,
         options: {
-          trustServerCertificate: configuration.settings.trustServerCertificate,
-          encrypt: configuration.settings.encryption,
+          trustServerCertificate: configuration.settings.connectionSettings.trustServerCertificate,
+          encrypt: configuration.settings.connectionSettings.encryption,
           useUTC: true
         },
-        domain: configuration.settings.domain
+        domain: configuration.settings.connectionSettings.domain
       });
       assert.ok(input.mock.calls.some(c => c.arguments[0] === 'StartTime' && c.arguments[1] === '2020-01-01 00:00:00.000'));
       assert.ok(input.mock.calls.some(c => c.arguments[0] === 'EndTime' && c.arguments[1] === '2022-01-01 00:00:00.000'));
       assert.ok(query.mock.calls.some(c => c.arguments[0] === configuration.items[0].settings.query));
+      // The timeout of the item overrides the one of the pool
+      assert.deepStrictEqual(request.mock.calls[0].arguments, [{ requestTimeout: configuration.items[0].settings.requestTimeout }]);
       assert.strictEqual(close.mock.calls.length, 1);
       assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
     });
@@ -477,14 +491,14 @@ describe('SouthMSSQL', () => {
       assert.deepStrictEqual(connectionPool.mock.calls[0].arguments[0], {
         user: undefined,
         password: undefined,
-        server: configuration.settings.host,
-        port: configuration.settings.port,
-        database: configuration.settings.database,
-        connectionTimeout: configuration.settings.connectionTimeout,
-        requestTimeout: configuration.settings.requestTimeout,
+        server: configuration.settings.connectionSettings.host,
+        port: configuration.settings.connectionSettings.port,
+        database: configuration.settings.connectionSettings.database,
+        connectionTimeout: configuration.settings.connectionSettings.connectionTimeout,
+        requestTimeout: 15_000,
         options: {
-          encrypt: configuration.settings.encryption,
-          trustServerCertificate: configuration.settings.trustServerCertificate,
+          encrypt: configuration.settings.connectionSettings.encryption,
+          trustServerCertificate: configuration.settings.connectionSettings.trustServerCertificate,
           useUTC: true
         }
       });
@@ -550,20 +564,26 @@ describe('SouthMSSQL', () => {
       });
       await assert.rejects(
         south.testConnection(),
-        new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
+        new Error(`Unable to read tables in database "${configuration.settings.connectionSettings.database}". ${errorMessage}`)
       );
       assert.ok(close.mock.calls.length > 0);
     });
 
     it('Database has no tables', async () => {
       query.mock.mockImplementation(() => ({ recordsets: [[{ table_count: 0 }]] }));
-      await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Database "${configuration.settings.connectionSettings.database}" has no tables`)
+      );
       assert.ok(close.mock.calls.length > 0);
     });
 
     it('Database does not return count of tables', async () => {
       query.mock.mockImplementation(() => ({ recordsets: [[]] }));
-      await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Database "${configuration.settings.connectionSettings.database}" has no tables`)
+      );
       assert.ok(close.mock.calls.length > 0);
     });
 
@@ -575,6 +595,98 @@ describe('SouthMSSQL', () => {
         });
         await assert.rejects(south.testConnection(), new Error(`${ERROR_CODES[code]} ${errorMessage}`));
       }
+    });
+  });
+
+  describe('SouthMSSQL parallel runs', () => {
+    it('should run up to maxParallelRun work-units in parallel, within the ceiling of the manifest', () => {
+      for (const [maxParallelRun, expected] of [
+        [1, 1],
+        [4, 4],
+        [50, 8],
+        [0, 1]
+      ]) {
+        const south = new SouthMSSQL(
+          buildConfiguration({}, items, maxParallelRun),
+          addContentCallback,
+          createMock<SouthCacheRepository>(),
+          'cacheFolder'
+        );
+        assert.strictEqual(south['getMaxParallelRun'](), expected);
+      }
+    });
+
+    it('should open its own connection pool for each query running at the same time when the connector is not running', async () => {
+      const south = new SouthMSSQL(buildConfiguration({}, items, 2), addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      const resolvers: Array<() => void> = [];
+      query.mock.mockImplementation(() => new Promise(resolve => resolvers.push(() => resolve({ recordsets: [[{ value: 1 }]] }))));
+
+      const runs = Promise.all([
+        south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW),
+        south.queryData(items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW)
+      ]);
+      await flushPromises();
+      assert.strictEqual(connectionPool.mock.calls.length, 2);
+      assert.strictEqual(close.mock.calls.length, 0);
+
+      resolvers.forEach(resolve => resolve());
+      assert.deepStrictEqual(await runs, [[{ value: 1 }], [{ value: 1 }]]);
+      assert.strictEqual(close.mock.calls.length, 2);
+    });
+    it('should share one connection pool between the queries while running, and close it on disconnect', async () => {
+      const on = mock.fn((_event: string, _listener: (error: Error) => void) => undefined);
+      connectionPool.mock.mockImplementation(function () {
+        return { connect, on };
+      });
+      const south = new SouthMSSQL(buildConfiguration({}, items, 2), addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      await south.connect();
+
+      await south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      await south.queryData(items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(connectionPool.mock.calls.length, 1);
+      assert.deepStrictEqual((connectionPool.mock.calls[0].arguments[0] as { pool: unknown }).pool, {
+        min: 0,
+        max: 2,
+        idleTimeoutMillis: 30000
+      });
+      assert.strictEqual(connect.mock.calls.length, 1);
+      assert.strictEqual(close.mock.calls.length, 0);
+
+      // A connection error raised outside a query is logged rather than crashing the process
+      on.mock.calls[0].arguments[1](new Error('connection lost'));
+      assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'MSSQL connection pool error: connection lost'));
+
+      await south.disconnect();
+      assert.strictEqual(close.mock.calls.length, 1);
+    });
+
+    it('should connect the pool again on the next query after a failed connection', async () => {
+      connectionPool.mock.mockImplementation(function () {
+        return { connect, on: mock.fn() };
+      });
+      connect.mock.mockImplementationOnce(() => Promise.reject(new Error('unreachable')));
+      const south = new SouthMSSQL(buildConfiguration({}, items, 2), addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      await south.connect();
+
+      await assert.rejects(south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW), {
+        message: 'unreachable'
+      });
+      await south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(connectionPool.mock.calls.length, 2);
+    });
+
+    it('should disconnect while the pool fails to connect', async () => {
+      connectionPool.mock.mockImplementation(function () {
+        return { connect, on: mock.fn() };
+      });
+      connect.mock.mockImplementationOnce(() => Promise.reject(new Error('unreachable')));
+      const south = new SouthMSSQL(buildConfiguration({}, items, 2), addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      await south.connect();
+
+      const query = south.queryData(items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      await south.disconnect();
+      await assert.rejects(query, { message: 'unreachable' });
+      assert.strictEqual(close.mock.calls.length, 0);
     });
   });
 });

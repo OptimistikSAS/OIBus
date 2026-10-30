@@ -6,6 +6,7 @@ import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type {
   SouthInfluxDBItemSettings,
   SouthInfluxDBSettings,
+  SouthInfluxDBSettingsConnectionSettings,
   SouthItemSettings
 } from '../../../shared/model/connector/south-settings.model';
 
@@ -14,7 +15,7 @@ import type SouthCacheRepository from '../../repository/cache/south-cache.reposi
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthInfluxDBClass from './south-influxdb';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -79,13 +80,16 @@ const baseItem: SouthConnectorItemEntity<SouthInfluxDBItemSettings> = {
   updatedAt: ''
 };
 
-const buildConfiguration = (settings: SouthInfluxDBSettings): SouthConnectorEntity<SouthInfluxDBSettings, SouthInfluxDBItemSettings> => ({
+const buildConfiguration = (
+  connectionSettings: SouthInfluxDBSettingsConnectionSettings,
+  maxParallelRun = 1
+): SouthConnectorEntity<SouthInfluxDBSettings, SouthInfluxDBItemSettings> => ({
   id: 'southId',
   name: 'south',
   type: 'influxdb',
-  description: `my influxdb v${settings.version} connector`,
+  description: `my influxdb v${connectionSettings.version} connector`,
   enabled: true,
-  settings,
+  settings: { connectionSettings, maxParallelRun },
   groups: [],
   items: [baseItem],
   createdBy: '',
@@ -290,7 +294,10 @@ describe('SouthInfluxDB', () => {
     });
 
     it('should throw for unsupported version', async () => {
-      const southBadVersion = createSouth({ ...configV1, settings: { ...configV1.settings, version: 'invalid' as '1' } });
+      const southBadVersion = createSouth({
+        ...configV1,
+        settings: { ...configV1.settings, connectionSettings: { ...configV1.settings.connectionSettings, version: 'invalid' as '1' } }
+      });
       await assert.rejects(southBadVersion.testConnection(), /Unsupported InfluxDB version/);
       await assert.rejects(
         southBadVersion.queryData(baseItem, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2),
@@ -339,7 +346,10 @@ describe('SouthInfluxDB', () => {
     });
 
     it('should test connection and run queryData without token', async () => {
-      const southNoToken = createSouth({ ...configV2, settings: { ...configV2.settings, token: null } });
+      const southNoToken = createSouth({
+        ...configV2,
+        settings: { ...configV2.settings, connectionSettings: { ...configV2.settings.connectionSettings, token: null } }
+      });
       influxV2.queryRows.mock.mockImplementation(streamRows({}));
       const connResult = await southNoToken.testConnection();
       assert.equal(connResult.items.find(i => i.key === 'Buckets')?.value, '1');
@@ -405,7 +415,10 @@ describe('SouthInfluxDB', () => {
     });
 
     it('should test connection and run queryData without token', async () => {
-      const southNoToken = createSouth({ ...configV3, settings: { ...configV3.settings, token: null } });
+      const southNoToken = createSouth({
+        ...configV3,
+        settings: { ...configV3.settings, connectionSettings: { ...configV3.settings.connectionSettings, token: null } }
+      });
       influxV3.query.mock.mockImplementation(yieldRows({ name: 'measurement1' }));
       const connResult = await southNoToken.testConnection();
       assert.equal(connResult.items.find(i => i.key === 'Connected')?.value, 'true');
@@ -423,6 +436,64 @@ describe('SouthInfluxDB', () => {
 
       const queryResult = await south.queryData(baseItem, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
       assert.equal(queryResult.length, 0);
+    });
+  });
+
+  describe('parallel runs', () => {
+    const configV3 = (maxParallelRun: number) =>
+      buildConfiguration({ version: '3', url: 'http://localhost:8181', token: 'token', database: 'mydb' }, maxParallelRun);
+
+    it('should run up to maxParallelRun work-units in parallel, within the ceiling of the manifest', () => {
+      for (const [maxParallelRun, expected] of [
+        [1, 1],
+        [4, 4],
+        [50, 8],
+        [0, 1]
+      ]) {
+        assert.strictEqual(createSouth(configV3(maxParallelRun))['getMaxParallelRun'](), expected);
+      }
+    });
+
+    it('should create its own client for each query running at the same time when the connector is not running', async () => {
+      const south = createSouth(configV3(2));
+      const resolvers: Array<() => void> = [];
+      influxV3.query.mock.mockImplementation(async function* () {
+        await new Promise<void>(resolve => resolvers.push(resolve));
+        yield { time: '2020-02-01T00:00:00Z', value: 1 };
+      });
+
+      const runs = Promise.all([
+        south.queryData(baseItem, testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW),
+        south.queryData(baseItem, testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW)
+      ]);
+      await flushPromises();
+      assert.strictEqual(influxV3.query.mock.calls.length, 2);
+      assert.strictEqual(influxV3.close.mock.calls.length, 0);
+
+      resolvers.forEach(resolve => resolve());
+      assert.deepStrictEqual(await runs, [[{ time: '2020-02-01T00:00:00Z', value: 1 }], [{ time: '2020-02-01T00:00:00Z', value: 1 }]]);
+      assert.strictEqual(influxV3.close.mock.calls.length, 2);
+    });
+
+    it('should share the v3 client between the queries while running, and close it on disconnect', async () => {
+      const south = createSouth(configV3(2));
+      await south.connect();
+
+      await south.queryData(baseItem, testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      await south.queryData(baseItem, testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(influxV3.query.mock.calls.length, 2);
+      assert.deepStrictEqual(influxV3.query.mock.calls[0].arguments.slice(1), ['mydb', { timeout: baseItem.settings.requestTimeout }]);
+      assert.strictEqual(influxV3.close.mock.calls.length, 0);
+
+      await south.disconnect();
+      assert.strictEqual(influxV3.close.mock.calls.length, 1);
+    });
+
+    it('should not close any client on disconnect when no v3 query ran', async () => {
+      const south = createSouth(configV3(2));
+      await south.connect();
+      await south.disconnect();
+      assert.strictEqual(influxV3.close.mock.calls.length, 0);
     });
   });
 });

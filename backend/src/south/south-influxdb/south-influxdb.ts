@@ -16,7 +16,15 @@ import { getErrorMessage, logQuery, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
 
+// Upper bound of maxParallelRun, as in the manifest.
+const MAX_PARALLEL_RUN_CEILING = 8;
+
 export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings, SouthInfluxDBItemSettings> implements SouthHistoryQuery {
+  // InfluxDB v3 client shared by the queries while the connector runs: the queries run concurrently over its single
+  // HTTP/2 connection (gRPC). Null when the connector is not running: the queries of a test then use their own client.
+  private v3Client: InfluxDBClient | null = null;
+  private v3ClientEnabled = false;
+
   constructor(
     connector: SouthConnectorEntity<SouthInfluxDBSettings, SouthInfluxDBItemSettings>,
     engineAddContentCallback: (
@@ -31,8 +39,28 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
+  override async connect(): Promise<void> {
+    this.v3ClientEnabled = true;
+    await super.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    this.v3ClientEnabled = false;
+    const client = this.v3Client;
+    this.v3Client = null;
+    if (client) {
+      await client.close();
+    }
+    await super.disconnect();
+  }
+
+  /** The v1 and v2 queries are independent HTTP requests, the v3 ones share a client (see queryDataV3). */
+  protected override getMaxParallelRun(): number {
+    return Math.max(1, Math.min(this.connector.settings.maxParallelRun, MAX_PARALLEL_RUN_CEILING));
+  }
+
   override testConnection(): Promise<OIBusConnectionTestResult> {
-    const { version } = this.connector.settings;
+    const { version } = this.connector.settings.connectionSettings;
     switch (version) {
       case '1':
         return this.testConnectionV1();
@@ -46,8 +74,8 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
   }
 
   private async testConnectionV1(): Promise<OIBusConnectionTestResult> {
-    const { host, port, database, username } = this.connector.settings;
-    const password = this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : undefined;
+    const { host, port, database, username, password: encryptedPassword } = this.connector.settings.connectionSettings;
+    const password = encryptedPassword ? encryptionService.decryptText(encryptedPassword) : undefined;
 
     const client = new InfluxDBv1({
       host: host!,
@@ -55,7 +83,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
       database: database!,
       username: username ?? undefined,
       password: password ?? undefined,
-      protocol: this.connector.settings.protocol ?? 'http'
+      protocol: this.connector.settings.connectionSettings.protocol ?? 'http'
     });
 
     let pingResults: Awaited<ReturnType<typeof client.ping>>;
@@ -80,8 +108,8 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
   }
 
   private async testConnectionV2(): Promise<OIBusConnectionTestResult> {
-    const { url, organisation } = this.connector.settings;
-    const token = this.connector.settings.token ? encryptionService.decryptText(this.connector.settings.token) : '';
+    const { url, organisation, token: encryptedToken } = this.connector.settings.connectionSettings;
+    const token = encryptedToken ? encryptionService.decryptText(encryptedToken) : '';
 
     const client = new InfluxDB({ url: url!, token });
     const queryApi = client.getQueryApi(organisation!);
@@ -105,8 +133,8 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
   }
 
   private async testConnectionV3(): Promise<OIBusConnectionTestResult> {
-    const { url, database } = this.connector.settings;
-    const token = this.connector.settings.token ? encryptionService.decryptText(this.connector.settings.token) : '';
+    const { url, database, token: encryptedToken } = this.connector.settings.connectionSettings;
+    const token = encryptedToken ? encryptionService.decryptText(encryptedToken) : '';
 
     const client = new InfluxDBClient({ host: url!, token, database: database! });
     try {
@@ -170,7 +198,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
   // InfluxDB returns rows in ascending time order by default (InfluxQL, Flux, IOx SQL),
   // so the last row always carries the most recent timestamp.
   private extractMaxInstant(results: Array<Record<string, string | number>>): Instant | null {
-    const field = this.connector.settings.version === '2' ? '_time' : 'time';
+    const field = this.connector.settings.connectionSettings.version === '2' ? '_time' : 'time';
     const v = results[results.length - 1]?.[field];
     return typeof v === 'string' && v.length > 0 ? (v as Instant) : null;
   }
@@ -180,7 +208,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<Record<string, string | number>>> {
-    switch (this.connector.settings.version) {
+    switch (this.connector.settings.connectionSettings.version) {
       case '1':
         return this.queryDataV1(item, startTime, endTime);
       case '2':
@@ -188,7 +216,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
       case '3':
         return this.queryDataV3(item, startTime, endTime);
       default:
-        return Promise.reject(new Error(`Unsupported InfluxDB version: ${this.connector.settings.version as string}`));
+        return Promise.reject(new Error(`Unsupported InfluxDB version: ${this.connector.settings.connectionSettings.version as string}`));
     }
   }
 
@@ -197,8 +225,8 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<Record<string, string | number>>> {
-    const { host, port, database, username } = this.connector.settings;
-    const password = this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : undefined;
+    const { host, port, database, username, password: encryptedPassword } = this.connector.settings.connectionSettings;
+    const password = encryptedPassword ? encryptionService.decryptText(encryptedPassword) : undefined;
 
     logQuery(item.settings.query, startTime, endTime, this.logger, workUnitLogCtx([item]));
 
@@ -210,7 +238,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
       database: database!,
       username: username ?? undefined,
       password: password ?? undefined,
-      protocol: this.connector.settings.protocol ?? 'http',
+      protocol: this.connector.settings.connectionSettings.protocol ?? 'http',
       pool: { requestTimeout: item.settings.requestTimeout }
     });
 
@@ -234,8 +262,8 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<Record<string, string | number>>> {
-    const { url, organisation } = this.connector.settings;
-    const token = this.connector.settings.token ? encryptionService.decryptText(this.connector.settings.token) : '';
+    const { url, organisation, token: encryptedToken } = this.connector.settings.connectionSettings;
+    const token = encryptedToken ? encryptionService.decryptText(encryptedToken) : '';
 
     logQuery(item.settings.query, startTime, endTime, this.logger, workUnitLogCtx([item]));
 
@@ -262,22 +290,33 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<Record<string, string | number>>> {
-    const { url, database } = this.connector.settings;
-    const token = this.connector.settings.token ? encryptionService.decryptText(this.connector.settings.token) : '';
+    const { database } = this.connector.settings.connectionSettings;
 
     logQuery(item.settings.query, startTime, endTime, this.logger, workUnitLogCtx([item]));
 
     const query = item.settings.query.replace(/@StartTime/g, startTime).replace(/@EndTime/g, endTime);
-
-    const client = new InfluxDBClient({ host: url!, token, database: database! });
-    try {
+    const run = async (client: InfluxDBClient) => {
       const rows: Array<Record<string, string | number>> = [];
-      for await (const row of client.query(query, database!)) {
+      for await (const row of client.query(query, database!, { timeout: item.settings.requestTimeout })) {
         rows.push(row as Record<string, string | number>);
       }
       return rows;
-    } finally {
-      await client.close();
+    };
+
+    if (!this.v3ClientEnabled) {
+      const client = this.createV3Client();
+      try {
+        return await run(client);
+      } finally {
+        await client.close();
+      }
     }
+    this.v3Client ??= this.createV3Client();
+    return run(this.v3Client);
+  }
+
+  private createV3Client(): InfluxDBClient {
+    const { url, database, token } = this.connector.settings.connectionSettings;
+    return new InfluxDBClient({ host: url!, token: token ? encryptionService.decryptText(token) : '', database: database! });
   }
 }
