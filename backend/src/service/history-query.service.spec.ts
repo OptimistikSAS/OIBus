@@ -39,6 +39,7 @@ const nodeRequire = createRequire(import.meta.url);
 
 // Looked up by id rather than by position: northManifestList order shifts whenever a connector is added.
 const fileWriterManifest = northManifestList.find(northManifest => northManifest.id === 'file-writer')!;
+const mssqlManifest = southManifestList.find(southManifest => southManifest.id === 'mssql')!;
 
 const realUtils: typeof Utils = nodeRequire('./utils');
 // Only the CSV parsing is controlled by the tests
@@ -965,16 +966,10 @@ describe('History Query service', () => {
 
   it('should retrieve secrets from history query', () => {
     const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
-    historySource.southType = southManifestList[4].id;
+    historySource.southType = mssqlManifest.id;
     historySource.northType = fileWriterManifest.id;
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
-    const result = service.retrieveSecrets(
-      undefined,
-      undefined,
-      testData.historyQueries.list[0].id,
-      southManifestList[4],
-      fileWriterManifest
-    );
+    const result = service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, mssqlManifest, fileWriterManifest);
     assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
     assert.deepStrictEqual(result, historySource);
   });
@@ -985,21 +980,21 @@ describe('History Query service', () => {
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
 
     assert.throws(
-      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], fileWriterManifest),
+      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, mssqlManifest, fileWriterManifest),
       new Error(
-        `History query "${historySource.id}" (South type "${historySource.southType}") must be of the South type "${southManifestList[4].id}"`
+        `History query "${historySource.id}" (South type "${historySource.southType}") must be of the South type "${mssqlManifest.id}"`
       )
     );
   });
 
   it('should throw an error if history query north type does not match manifest', () => {
     const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
-    historySource.southType = southManifestList[4].id;
+    historySource.southType = mssqlManifest.id;
     historySource.northType = 'bad';
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
 
     assert.throws(
-      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], fileWriterManifest),
+      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, mssqlManifest, fileWriterManifest),
       new Error(
         `History query "${historySource.id}" (North type "${historySource.northType}") must be of the North type "${fileWriterManifest.id}"`
       )
@@ -1013,7 +1008,7 @@ describe('History Query service', () => {
       testData.south.list[1].id,
       testData.north.list[0].id,
       undefined,
-      southManifestList[4],
+      mssqlManifest,
       fileWriterManifest
     );
 
@@ -1029,7 +1024,7 @@ describe('History Query service', () => {
   it('should retrieve secrets from south only', () => {
     southService.findById.mock.mockImplementationOnce(() => testData.south.list[1]); // retrieve the mssql connector
 
-    const result = service.retrieveSecrets(testData.south.list[1].id, undefined, undefined, southManifestList[4], fileWriterManifest);
+    const result = service.retrieveSecrets(testData.south.list[1].id, undefined, undefined, mssqlManifest, fileWriterManifest);
 
     assert.deepStrictEqual(result, {
       southType: testData.south.list[1].type,
@@ -1039,7 +1034,7 @@ describe('History Query service', () => {
   });
 
   it('should retrieve secrets from north only', () => {
-    const result = service.retrieveSecrets(undefined, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest);
+    const result = service.retrieveSecrets(undefined, testData.north.list[0].id, undefined, mssqlManifest, fileWriterManifest);
 
     assert.deepStrictEqual(result, {
       items: [],
@@ -1054,9 +1049,8 @@ describe('History Query service', () => {
     southService.findById.mock.mockImplementationOnce(() => south);
 
     assert.throws(
-      () =>
-        service.retrieveSecrets(testData.south.list[0].id, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest),
-      new Error(`South connector "${testData.south.list[0].id}" (type "${south.type}") must be of the type "${southManifestList[4].id}"`)
+      () => service.retrieveSecrets(testData.south.list[0].id, testData.north.list[0].id, undefined, mssqlManifest, fileWriterManifest),
+      new Error(`South connector "${testData.south.list[0].id}" (type "${south.type}") must be of the type "${mssqlManifest.id}"`)
     );
   });
 
@@ -1068,14 +1062,13 @@ describe('History Query service', () => {
     northService.findById.mock.mockImplementationOnce(() => north);
 
     assert.throws(
-      () =>
-        service.retrieveSecrets(testData.north.list[0].id, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest),
+      () => service.retrieveSecrets(testData.north.list[0].id, testData.north.list[0].id, undefined, mssqlManifest, fileWriterManifest),
       new Error(`North connector "${testData.north.list[0].id}" (type "${north.type}") must be of the type "${fileWriterManifest.id}"`)
     );
   });
 
   it('should return null', () => {
-    assert.strictEqual(service.retrieveSecrets(undefined, undefined, undefined, southManifestList[4], fileWriterManifest), null);
+    assert.strictEqual(service.retrieveSecrets(undefined, undefined, undefined, mssqlManifest, fileWriterManifest), null);
   });
 
   it('should properly convert to DTO', () => {
