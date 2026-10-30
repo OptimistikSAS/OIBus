@@ -33,7 +33,13 @@ import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
-import { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '@oibus/shared/domain/configuration-workflow.model';
+import {
+  FieldOperation,
+  RECORD_FILTER_OPERATORS,
+  RecordFieldProcess,
+  RecordFilterCondition,
+  RecordFilterOperator
+} from '@oibus/shared/domain/configuration-workflow.model';
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { EngineService } from '../../../services/engine.service';
@@ -51,6 +57,7 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 import { SouthItemGroups } from '../../south-items/south-item-groups';
 import { AddItemsStepComponent } from '../add-items-step/add-items-step.component';
 import { ExploreStepComponent } from '../explore-step/explore-step.component';
+import { FieldProcessModalComponent } from '../field-process-modal/field-process-modal.component';
 import {
   buildItemMappableFields,
   HISTORY_ITEM_DEFAULTS,
@@ -117,6 +124,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private southConnectorService = inject(SouthConnectorService);
   private configurationWorkflowService = inject(ConfigurationWorkflowService);
   private engineService = inject(EngineService);
+  private modalService = inject(ModalService);
   private injector = inject(Injector);
 
   // The inline, read-only explore tree shown alongside the SQL query editor (for the SQL connectors that can be
@@ -163,10 +171,13 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly reviewPreview = signal<PreviewState | null>(null);
   /** Every record the eligibility filter keeps */
   readonly previewResultRecords = computed(() => this.filterPreview()?.result?.records ?? []);
-  /** The fields of the discovered records, suggested when writing a condition or an identity key */
+  /** The fields of the discovered records, suggested when writing a condition or an identity key, or processing a field */
   readonly recordFields = computed(() => {
-    const records = this.filterPreview()?.result?.records ?? [];
-    return Array.from(new Set(records.slice(0, PREVIEW_RECORD_LIMIT).flatMap(record => Object.keys(record))));
+    const result = this.filterPreview()?.result;
+    const records = result?.records ?? [];
+    return Array.from(
+      new Set([...Object.keys(result?.samples ?? {}), ...records.slice(0, PREVIEW_RECORD_LIMIT).flatMap(record => Object.keys(record))])
+    );
   });
   private filterPreviewKey: string | null = null;
   readonly state = new ObservableState();
@@ -288,6 +299,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly availableRecordFields = computed(() =>
     Array.from(new Set([...(this.currentManifest()?.discovery?.recordFields ?? []), ...this.recordFields()]))
   );
+  /** How fields of the discovered records are processed, before the eligibility filter */
+  readonly fieldProcesses = signal<Array<RecordFieldProcess>>([]);
+  readonly processedFields = computed(() => this.fieldProcesses().map(process => process.field));
+  readonly newProcessedField = signal('');
   readonly eligibilityFilter = signal<Array<RecordFilterCondition>>([]);
 
   readonly formError = signal<string | null>(null);
@@ -532,6 +547,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }
     this.itemFieldMappingValues.set(itemFieldMapping);
     this.identityKeyFields.set([...(startingValues?.identityKeyFields ?? [])]);
+    this.fieldProcesses.set(workflow ? structuredClone(workflow.fieldProcesses) : []);
     this.eligibilityFilter.set(workflow ? workflow.eligibilityFilter.map(condition => ({ ...condition })) : []);
     this.refreshRegistrationStatus();
     this.initForm(prefill?.name ?? '');
@@ -636,6 +652,47 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }
     this.eligibilityFilter.update(conditions => conditions.map((existing, index) => (index === editingIndex ? condition : existing)));
     this.cancelEditEligibilityCondition();
+  }
+
+  /**
+   * Sets up how a field of the discovered records is processed, tested on the first values discovered for it - the records
+   * are then discovered again, as processed and filtered.
+   */
+  openFieldProcess(field: string) {
+    const modalRef = this.modalService.open(FieldProcessModalComponent, { size: 'lg', backdrop: 'static' });
+    modalRef.componentInstance.initialize(
+      this.southId,
+      field,
+      this.fieldProcesses().find(process => process.field === field)?.operations ?? [],
+      this.filterPreview()?.result?.samples[field] ?? []
+    );
+    modalRef.result.subscribe((operations: Array<FieldOperation>) => {
+      this.fieldProcesses.update(processes => {
+        if (operations.length === 0) {
+          return processes.filter(process => process.field !== field);
+        }
+        // An edited process keeps its place in the list
+        return processes.some(process => process.field === field)
+          ? processes.map(process => (process.field === field ? { field, operations } : process))
+          : [...processes, { field, operations }];
+      });
+      this.previewFilter();
+    });
+  }
+
+  /** Processes a field that is not a column of the records shown, e.g. one the eligibility filter leaves out */
+  addFieldProcess() {
+    const field = this.newProcessedField().trim();
+    if (!field) {
+      return;
+    }
+    this.newProcessedField.set('');
+    this.openFieldProcess(field);
+  }
+
+  removeFieldProcess(field: string) {
+    this.fieldProcesses.update(processes => processes.filter(process => process.field !== field));
+    this.previewFilter();
   }
 
   /** Leave inline edit mode without saving any change. */
@@ -786,9 +843,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.runPreview(this.filterPreview, this.recordsPreviewCommand(), null);
   }
 
-  /** What the records depend on: where they are discovered from, and the filter */
+  /** What the records depend on: where they are discovered from, how they are processed and the filter */
   private currentFilterPreviewKey(): string {
-    return JSON.stringify([this.currentDiscoveryScope(), this.eligibilityFilter()]);
+    return JSON.stringify([this.currentDiscoveryScope(), this.fieldProcesses(), this.eligibilityFilter()]);
   }
 
   /** The Items step shows the records too: they are not discovered again when they were, for the same scope and filter. */
@@ -819,6 +876,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       description: null,
       discoveryScope: this.currentDiscoveryScope(),
       identityKeyFields: [],
+      fieldProcesses: this.fieldProcesses(),
       eligibilityFilter: this.eligibilityFilter(),
       itemFieldMapping: null,
       pushToOIAnalytics: true,
@@ -955,6 +1013,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       description: formValue.description.trim() || null,
       discoveryScope,
       identityKeyFields: pushToOIAnalytics ? [] : this.identityKeyFields(),
+      fieldProcesses: this.fieldProcesses(),
       eligibilityFilter: this.eligibilityFilter(),
       itemFieldMapping,
       pushToOIAnalytics,

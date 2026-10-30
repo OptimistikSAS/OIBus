@@ -420,6 +420,7 @@ export default class ConfigTransferBuilderService {
       description: workflow.description,
       discoveryScope: workflow.discoveryScope,
       identityKeyFields: workflow.identityKeyFields,
+      fieldProcesses: workflow.fieldProcesses,
       eligibilityFilter: workflow.eligibilityFilter,
       itemFieldMapping: workflow.itemFieldMapping,
       pushToOIAnalytics: workflow.pushToOIAnalytics,

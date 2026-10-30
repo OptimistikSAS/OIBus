@@ -484,8 +484,44 @@ n'importe quelle étape.
 
 #### Filtre {#filter}
 
+##### Traitement des champs {#field-processing}
+
+Le **Traitement des champs** transforme des champs de chaque enregistrement découvert avant toute autre lecture : le
+filtre d'éligibilité, les clés d'identité, la correspondance des points et l'envoi à OIAnalytics utilisent tous les
+valeurs traitées. Configurez le traitement d'un champ avec le bouton baguette de sa colonne dans le tableau des
+enregistrements, ou saisissez n'importe quel nom de champ sous **Traitement des champs** et cliquez sur **+** — par
+exemple un champ que le filtre d'éligibilité exclut du tableau. Chaque champ reçoit une liste d'opérations, appliquées
+dans l'ordre, chacune au résultat de la précédente :
+
+| Opération                 | Description                                                                                                                       | Exemple                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Majuscules**            | Écrit la valeur en majuscules.                                                                                                    | `temp` → `TEMP`                           |
+| **Minuscules**            | Écrit la valeur en minuscules.                                                                                                    | `TEMP` → `temp`                           |
+| **Supprimer les espaces** | Supprime les espaces de début et de fin.                                                                                          | `temp` → `temp`                           |
+| **Sous-chaîne**           | Garde les caractères de **Début** à **Fin** (exclue). Une position négative compte depuis la fin, une Fin vide va jusqu'à la fin. | Début `-4` : `Plant/Flow` → `Flow`        |
+| **Ajouter du texte**      | Ajoute un **Préfixe** avant la valeur et un **Suffixe** après.                                                                    | Préfixe `site1.` : `Flow` → `site1.Flow`  |
+| **Remplacer du texte**    | Remplace chaque occurrence d'un texte.                                                                                            | `/` par `.` : `Plant/Flow` → `Plant.Flow` |
+| **Opération numérique**   | Ajoute, soustrait, multiplie ou divise un nombre (ou un texte qui en contient un) par une opérande.                               | Multiplier par `0.001` : `1500` → `1.5`   |
+| **Arrondir**              | Arrondit un nombre à un nombre de décimales.                                                                                      | 2 décimales : `3.14159` → `3.14`          |
+| **Conversion de date**    | Convertit une date d'un type à un autre : chaîne ISO, epoch Unix (s ou ms), ou chaîne avec un format, un fuseau et une locale.    | Epoch Unix (ms) → chaîne ISO              |
+| **Expression**            | Tout autre traitement, sous forme d'expression JavaScript sur `value` — comme le traitement de champ des transformateurs.         | `value.split('/').pop()`                  |
+
+**Tester** applique les opérations aux cinq premières valeurs découvertes pour le champ (telles que découvertes, avant
+tout traitement) et affiche chaque résultat, ou pourquoi une opération échoue sur une valeur. Une valeur absente ou vide
+est laissée telle quelle. Lors d'une exécution, une valeur sur laquelle une opération échoue devient vide, et un
+avertissement est journalisé une fois par champ. Enregistrer le traitement d'un champ découvre à nouveau les
+enregistrements, traités et filtrés.
+
+:::caution
+Traiter un champ utilisé comme clé d'identité change les clés : les points des exécutions précédentes sont alors vus
+comme manquants, et de nouveaux sont créés.
+:::
+
+##### Filtre d'éligibilité {#eligibility-filter}
+
 Le **Filtre d'éligibilité** liste les conditions qu'un enregistrement découvert doit **toutes** satisfaire (ET
-logique) pour être traité — laissez-le vide pour rendre tous les enregistrements éligibles. Chaque condition possède :
+logique) pour être traité — laissez-le vide pour rendre tous les enregistrements éligibles. Il compare les valeurs
+traitées. Chaque condition possède :
 
 | Paramètre     | Description                                                                                           | Exemple de valeur |
 | ------------- | ----------------------------------------------------------------------------------------------------- | ----------------- |
@@ -509,7 +545,7 @@ aller-retour vers la source de données : prévisualiser une source volumineuse 
 Choisissez **Créer/mettre à jour les points localement** ou **Envoyer à OIAnalytics**. Passer de l'un à l'autre
 efface ce qui avait été configuré pour l'autre.
 
-- **Envoyer à OIAnalytics** transmet tels quels à OIAnalytics les enregistrements éligibles de chaque exécution.
+- **Envoyer à OIAnalytics** transmet à OIAnalytics les enregistrements éligibles de chaque exécution, tels que traités.
   L'enregistrement et l'exécution ne sont jamais bloqués par le statut d'enregistrement, mais l'envoi n'a lieu qu'une
   fois OIBus [enregistré auprès d'OIAnalytics](../installation/oianalytics.mdx) : d'ici là, un avertissement est
   affiché dans l'assistant, et chaque exécution journalise un avertissement et n'envoie rien.
@@ -612,15 +648,15 @@ l'aperçu** le relance :
 
 ### Exécuter une synchronisation des points {#running-an-items-synchronisation}
 
-Une exécution découvre toujours la source de données (telle que définie par le périmètre de découverte) et conserve
-les enregistrements éligibles, puis agit selon le mode :
+Une exécution découvre toujours la source de données (telle que définie par le périmètre de découverte), traite les
+champs des enregistrements et conserve les éligibles, puis agit selon le mode :
 
 - **Créer/mettre à jour les points localement** rapproche les enregistrements éligibles de l'exécution précédente par
   clé d'identité : elle crée ou met à jour un élément pour chaque enregistrement nouveau, modifié ou réactivé, ignore
   les inchangés, et désactive — sans jamais le supprimer — l'élément de chaque enregistrement manquant, avec le motif
   "Configuration workflow no longer discovers this entry". Un nouvel élément reçoit la valeur par défaut habituelle de
   chaque champ que la correspondance ne couvre pas, lorsqu'elle s'applique.
-- **Envoyer à OIAnalytics** transmet tels quels les enregistrements éligibles à OIAnalytics, sous la forme d'un message
+- **Envoyer à OIAnalytics** transmet les enregistrements éligibles, tels que traités, à OIAnalytics, sous la forme d'un message
   par exécution. Rien n'est créé, mis à jour ni désactivé.
 
 :::tip Exécuter maintenant fonctionne sur un connecteur désactivé

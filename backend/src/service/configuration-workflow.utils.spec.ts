@@ -2,15 +2,21 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
+import { OIBusRecord } from '../../shared/model/common/content.model';
+import { FieldOperation } from '../../shared/model/domain/configuration-workflow.model';
 
 import { RecordFilterCondition } from '../model/configuration-workflow.model';
 import { OIBusValidationError } from '../model/types';
+import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import {
   checkWorkflowMode,
   computeIdentityKey,
   isEligible,
+  processRecords,
   resolveFieldMapping,
-  resolveIdentityKeyFields
+  resolveIdentityKeyFields,
+  sampleFieldValues,
+  testFieldOperations
 } from './configuration-workflow.utils';
 
 describe('configuration-workflow.utils', () => {
@@ -20,6 +26,7 @@ describe('configuration-workflow.utils', () => {
     description: null,
     discoveryScope: {},
     identityKeyFields: ['nodeId'],
+    fieldProcesses: [],
     eligibilityFilter: [],
     itemFieldMapping: { name: '{{name}}' },
     pushToOIAnalytics: false,
@@ -206,6 +213,164 @@ describe('configuration-workflow.utils', () => {
 
     it('should return an empty object for an empty mapping', () => {
       assert.deepStrictEqual(resolveFieldMapping({ name: 'Temperature' }, {}), {});
+    });
+  });
+  describe('processRecords', () => {
+    it('should apply the operations of each field in order, leaving the other fields, missing and empty values as they are', () => {
+      const records: Array<OIBusRecord> = [
+        { name: ' Temperature ', unit: '°C', description: null },
+        { unit: 'bar', description: 'Pressure' }
+      ];
+
+      const processed = processRecords(records, [
+        {
+          field: 'name',
+          operations: [{ type: 'trim' }, { type: 'lowercase' }, { type: 'add-to-string', prefix: 'reactor.', suffix: '_pv' }]
+        },
+        { field: 'description', operations: [{ type: 'uppercase' }] }
+      ]);
+
+      assert.deepStrictEqual(processed, [
+        { name: 'reactor.temperature_pv', unit: '°C', description: null },
+        { unit: 'bar', description: 'PRESSURE' }
+      ]);
+      // The discovered records are left untouched
+      assert.strictEqual(records[0].name, ' Temperature ');
+    });
+
+    it('should return the records as they are without any operation', () => {
+      const records = [{ name: 'Temperature' }];
+      assert.strictEqual(processRecords(records, []), records);
+      assert.strictEqual(processRecords(records, [{ field: 'name', operations: [] }]), records);
+    });
+
+    it('should set a value an operation fails on to null, warning once per field', () => {
+      const logger = new LoggerMock();
+
+      const processed = processRecords(
+        [{ value: 'abc' }, { value: '2' }, { value: 'def' }],
+        [{ field: 'value', operations: [{ type: 'number-operation', operator: 'multiply', operand: 2 }] }],
+        logger
+      );
+
+      assert.deepStrictEqual(processed, [{ value: null }, { value: 4 }, { value: null }]);
+      assert.strictEqual(logger.warn.mock.calls.length, 1);
+      assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, [
+        'Field process of "value" failed: "abc" is not a number - the field is set to null (later failures of this field are not logged)'
+      ]);
+    });
+  });
+
+  describe('testFieldOperations', () => {
+    const test = (operations: Array<FieldOperation>, value: string | number | boolean) => testFieldOperations(operations, [value])[0];
+
+    it('should change the case and trim', () => {
+      assert.strictEqual(test([{ type: 'uppercase' }], 'Temperature').result, 'TEMPERATURE');
+      assert.strictEqual(test([{ type: 'lowercase' }], 'Temperature').result, 'temperature');
+      assert.strictEqual(test([{ type: 'trim' }], '  Temperature ').result, 'Temperature');
+      assert.strictEqual(test([{ type: 'uppercase' }], 12).result, '12');
+    });
+
+    it('should keep a part of the value, counting from the end with a negative index', () => {
+      assert.strictEqual(test([{ type: 'substring', start: 0, end: 4 }], 'Temperature').result, 'Temp');
+      assert.strictEqual(test([{ type: 'substring', start: 6, end: null }], 'Plant/Reactor').result, 'Reactor');
+      assert.strictEqual(test([{ type: 'substring', start: -3, end: null }], 'Temperature').result, 'ure');
+    });
+
+    it('should add text around the value and replace text in it', () => {
+      assert.strictEqual(test([{ type: 'add-to-string', prefix: 'a.', suffix: '.b' }], 12).result, 'a.12.b');
+      assert.strictEqual(test([{ type: 'replace', search: '/', replacement: '.' }], 'Plant/Reactor/T1').result, 'Plant.Reactor.T1');
+      assert.strictEqual(test([{ type: 'replace', search: '', replacement: '.' }], 'T1').result, 'T1');
+    });
+
+    it('should compute on numbers, and numeric texts', () => {
+      assert.strictEqual(test([{ type: 'number-operation', operator: 'add', operand: 2 }], 1).result, 3);
+      assert.strictEqual(test([{ type: 'number-operation', operator: 'subtract', operand: 2 }], '1').result, -1);
+      assert.strictEqual(test([{ type: 'number-operation', operator: 'multiply', operand: 2 }], '1.5').result, 3);
+      assert.strictEqual(test([{ type: 'number-operation', operator: 'divide', operand: 4 }], 1).result, 0.25);
+      assert.strictEqual(test([{ type: 'round', decimals: 2 }], 3.14159).result, 3.14);
+      assert.strictEqual(test([{ type: 'round', decimals: 0 }], '2.5').result, 3);
+    });
+
+    it('should tell why a number operation fails', () => {
+      assert.deepStrictEqual(test([{ type: 'number-operation', operator: 'divide', operand: 0 }], 1), {
+        value: 1,
+        result: null,
+        error: 'division by zero'
+      });
+      assert.strictEqual(test([{ type: 'round', decimals: 1 }], '').error, '"" is not a number');
+      assert.strictEqual(test([{ type: 'round', decimals: 1 }], true).error, '"true" is not a number');
+    });
+
+    it('should convert date times', () => {
+      assert.strictEqual(
+        test([{ type: 'datetime', inputType: 'unix-epoch-ms', outputType: 'iso-string' }], 1704067200000).result,
+        '2024-01-01T00:00:00.000Z'
+      );
+      assert.strictEqual(
+        test([{ type: 'datetime', inputType: 'iso-string', outputType: 'unix-epoch' }], '2024-01-01T00:00:00.000Z').result,
+        1704067200
+      );
+      assert.strictEqual(
+        test(
+          [
+            {
+              type: 'datetime',
+              inputType: 'string',
+              inputFormat: 'dd/MM/yyyy HH:mm',
+              inputTimezone: 'Europe/Paris',
+              outputType: 'string',
+              outputFormat: 'yyyy-MM-dd HH:mm',
+              outputTimezone: 'UTC'
+            }
+          ],
+          '01/01/2024 01:00'
+        ).result,
+        '2024-01-01 00:00'
+      );
+    });
+
+    it('should tell why a date time conversion fails', () => {
+      assert.strictEqual(
+        test([{ type: 'datetime', inputType: 'iso-string', outputType: 'unix-epoch' }], 'not a date').error,
+        '"not a date" is not a valid date time of type "iso-string"'
+      );
+      assert.strictEqual(
+        test([{ type: 'datetime', inputType: 'string', outputType: 'unix-epoch' }], '01/01/2024').error,
+        'the input format and timezone are required to read a date time string'
+      );
+      assert.strictEqual(
+        test([{ type: 'datetime', inputType: 'iso-string', outputType: 'string', outputFormat: 'yyyy' }], '2024-01-01T00:00:00Z').error,
+        'the output format and timezone are required to write a date time string'
+      );
+      assert.strictEqual(
+        test([{ type: 'datetime', inputType: 'iso-string', outputType: 'unix-epoch' }], false).error,
+        '"false" is not a date time'
+      );
+    });
+
+    it('should evaluate an expression, an object it returns as JSON', () => {
+      assert.strictEqual(test([{ type: 'expression', expression: "value.split('/').pop()" }], 'Plant/Reactor/T1').result, 'T1');
+      assert.strictEqual(test([{ type: 'expression', expression: "value.split('/')" }], 'a/b').result, '["a","b"]');
+      assert.strictEqual(test([{ type: 'expression', expression: 'undefined' }], 'a').result, null);
+      assert.match(test([{ type: 'expression', expression: 'value.(' }], 'a').error!, /Field process evaluation failed/);
+    });
+
+    it('should stop processing a value an expression makes null', () => {
+      assert.strictEqual(test([{ type: 'expression', expression: 'null' }, { type: 'uppercase' }], 'a').result, null);
+    });
+
+    it('should keep an empty value empty', () => {
+      assert.deepStrictEqual(testFieldOperations([{ type: 'uppercase' }], [null]), [{ value: null, result: null, error: null }]);
+    });
+  });
+
+  describe('sampleFieldValues', () => {
+    it('should keep the first five non-empty values of each field', () => {
+      const records = Array.from({ length: 7 }, (_, index) => ({ name: `T${index}`, unit: index < 6 ? null : 'bar' }));
+
+      assert.deepStrictEqual(sampleFieldValues(records), { name: ['T0', 'T1', 'T2', 'T3', 'T4'], unit: ['bar'] });
+      assert.deepStrictEqual(sampleFieldValues([]), {});
     });
   });
 });
