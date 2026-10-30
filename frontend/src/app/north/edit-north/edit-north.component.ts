@@ -451,6 +451,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
         tap(() => {
           this.notificationService.success('north.updated', { name: command.name });
           this.form()?.markAsPristine();
+          this.connectorForm.markAsPristine();
         }),
         switchMap(() => this.northConnectorService.findById(this.northConnector()!.id))
       );
@@ -459,6 +460,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
         tap(() => {
           this.notificationService.success('north.created', { name: command.name });
           this.form()?.markAsPristine();
+          this.connectorForm.markAsPristine();
         })
       );
     }

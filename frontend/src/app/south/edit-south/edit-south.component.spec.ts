@@ -414,6 +414,20 @@ describe('EditSouthComponent', () => {
       await expect.element(tester.noItems).toBeVisible();
     });
 
+    test('should not ask for confirmation to leave once the connector is saved', async () => {
+      const tester = await createChoosingTester();
+      await tester.connectorCard('Folder scanner').click();
+      await tester.nextButton.click();
+      await tester.goTo('general');
+      await tester.name.fill('New south');
+
+      await lastSavedCommand(tester);
+
+      expect(southConnectorService.create).toHaveBeenCalled();
+      expect(tester.fixture.componentInstance.canDeactivate()).toBe(true);
+      expect(unsavedChangesService.confirmUnsavedChanges).not.toHaveBeenCalled();
+    });
+
     test('should ask for confirmation before leaving once a connector is chosen', async () => {
       const tester = await createChoosingTester();
       expect(tester.fixture.componentInstance.canDeactivate()).toBe(true);

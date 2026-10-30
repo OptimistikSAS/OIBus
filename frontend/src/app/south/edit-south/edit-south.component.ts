@@ -477,6 +477,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
         tap(() => {
           this.notificationService.success('south.updated', { name: command.name });
           this.form()?.markAsPristine();
+          this.connectorForm.markAsPristine();
         }),
         switchMap(() => this.southConnectorService.findById(this.southConnector()!.id))
       );
@@ -485,6 +486,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
         tap(() => {
           this.notificationService.success('south.created', { name: command.name });
           this.form()?.markAsPristine();
+          this.connectorForm.markAsPristine();
         })
       );
     }
