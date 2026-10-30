@@ -246,6 +246,14 @@ export class EditNorthTransformerModalComponent {
     return impact;
   });
 
+  /** The ids of the items of the south the transformer applies to, the first one being tested in the options step */
+  readonly scopeItemIds = computed<Array<string>>(() => {
+    const southConnector = this.southConnector();
+    const source = this.southSource();
+    if (!southConnector || !source) return [];
+    return southConnector.items.filter(item => this.inScope(source, item)).map(item => item.id);
+  });
+
   prepareForCreation(
     southConnectors: Array<SouthConnectorLightDTO>,
     scanModes: Array<ScanModeDTO>,
