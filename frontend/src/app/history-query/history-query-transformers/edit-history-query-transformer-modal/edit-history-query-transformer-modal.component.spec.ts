@@ -58,7 +58,7 @@ const delimiterManifest: OIBusObjectAttribute = {
     {
       type: 'string',
       key: 'delimiter',
-      translationKey: '',
+      translationKey: 'common.delimiter',
       defaultValue: ',',
       validators: [],
       displayProperties: { row: 0, columns: 4, displayInViewMode: true }

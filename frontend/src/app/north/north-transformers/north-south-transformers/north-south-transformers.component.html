@@ -7,6 +7,7 @@
       [attr.aria-label]="'configuration.oibus.manifest.transformers.search-items' | translate"
       [placeholder]="'configuration.oibus.manifest.transformers.search-items' | translate"
       [ngModel]="itemSearch()"
+      [ngModelOptions]="{ standalone: true }"
       (ngModelChange)="search($event)"
     />
   </div>
